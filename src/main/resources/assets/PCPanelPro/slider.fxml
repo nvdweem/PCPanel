@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.paint.LinearGradient?>
+<?import javafx.scene.paint.Stop?>
+<?import javafx.scene.shape.Rectangle?>
+<?import javafx.scene.shape.SVGPath?>
+<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="240.0" prefWidth="100.0" style="-fx-background-color: transparent;"
+      xmlns="http://javafx.com/javafx/8">
+    <Rectangle height="240.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="100.0">
+        <fill>
+            <LinearGradient endX="0.48543689320388345" endY="0.024271844660194174" startX="0.5145631067961164" startY="0.970873786407767">
+                <stops>
+                    <Stop color="#61656b"/>
+                    <Stop color="#acb4c1" offset="1.0"/>
+                </stops>
+            </LinearGradient>
+        </fill>
+    </Rectangle>
+    <SVGPath content="M0,0,1.84,4h17l1.85-4V48.48l-1.85-4h-17L0,48.48Z" layoutX="40.0" layoutY="96.0" scaleX="4.85" scaleY="5.0">
+        <fill>
+            <LinearGradient endY="0.5048543689320388" startY="0.5242718446601942">
+                <stops>
+                    <Stop color="#d1dae8"/>
+                    <Stop color="#61656b" offset="1.0"/>
+                </stops>
+            </LinearGradient>
+        </fill>
+    </SVGPath>
+    <Rectangle height="200.44" layoutX="9.0" layoutY="20.0" stroke="#a7aeb7" strokeType="INSIDE" strokeWidth="0.5" width="82.19">
+        <fill>
+            <LinearGradient endX="0.48058252427184467" endY="0.004854368932038833" startX="0.5048543689320388" startY="0.9902912621359223">
+                <stops>
+                    <Stop color="#acb4c1"/>
+                    <Stop color="#61656b" offset="1.0"/>
+                </stops>
+            </LinearGradient>
+        </fill>
+    </Rectangle>
+    <Rectangle fill="#3c3f42" height="16.0" layoutX="9.0" layoutY="115.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="82.19"/>
+</Pane>

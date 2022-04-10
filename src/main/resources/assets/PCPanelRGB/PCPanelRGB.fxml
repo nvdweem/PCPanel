@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.shape.Rectangle?>
+<?import javafx.scene.web.WebView?>
+<Pane fx:id="panelPane" prefHeight="170.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <GridPane fx:id="lightPanes" hgap="10.0" layoutX="40.0" layoutY="55.0" prefHeight="96.0" prefWidth="428.0">
+            <columnConstraints>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+            </columnConstraints>
+            <rowConstraints>
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+            </rowConstraints>
+            <children>
+                <Rectangle fill="DODGERBLUE" height="95.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="102.0"/>
+                <Rectangle fill="DODGERBLUE" height="95.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="102.0" GridPane.columnIndex="1"/>
+                <Rectangle fill="DODGERBLUE" height="95.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="102.0" GridPane.columnIndex="2"/>
+                <Rectangle fill="DODGERBLUE" height="95.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="102.0" GridPane.columnIndex="3"/>
+            </children>
+        </GridPane>
+        <WebView fx:id="webview" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-1.0" minWidth="-1.0" prefHeight="170.0" prefWidth="600.0"
+                 style="-fx-effect: dropshadow(three-pass-box, black, 0, 3, 0, 3);"/>
+    </children>
+</Pane>

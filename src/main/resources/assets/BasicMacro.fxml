@@ -1,0 +1,532 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+<VBox prefHeight="593.0" prefWidth="890.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+    <TabPane fx:id="mainTabPane" layoutX="70.0" layoutY="72.0" prefHeight="523.0" prefWidth="723.0" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
+        <Tab fx:id="buttonpane" closable="false" text="Button">
+            <TabPane fx:id="buttonTabPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="209.0" prefWidth="376.0" rotateGraphic="true" side="LEFT"
+                     tabClosingPolicy="UNAVAILABLE">
+                <Tab fx:id="keystroke" text="Keystroke">
+                    <VBox layoutX="181.0" layoutY="200.0" spacing="15.0">
+                        <padding>
+                            <Insets left="8.0" right="8.0" top="8.0"/>
+                        </padding>
+                        <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" prefWidth="205.0" text="Enter a keystroke"/>
+                        <HBox spacing="10.0">
+                            <TextField fx:id="keystrokeField" editable="false" prefHeight="27.0" prefWidth="278.0" HBox.hgrow="ALWAYS"/>
+                            <Button mnemonicParsing="false" onAction="#clearKeystroke" text="Clear"/>
+                        </HBox>
+                    </VBox>
+                </Tab>
+                <Tab fx:id="shortcut" text="Shortcut">
+                    <VBox layoutX="102.0" layoutY="208.0" spacing="15.0">
+                        <padding>
+                            <Insets left="8.0" right="8.0" top="8.0"/>
+                        </padding>
+                        <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="Enter a command or file to launch"/>
+                        <HBox spacing="10.0">
+                            <TextField fx:id="shortcutField" prefHeight="27.0" prefWidth="290.0" HBox.hgrow="ALWAYS"/>
+                            <Button fx:id="scFileButton" mnemonicParsing="false" onAction="#scFile" prefHeight="25.0" prefWidth="34.0" text="..."/>
+                        </HBox>
+                    </VBox>
+                </Tab>
+                <Tab fx:id="media" text="Music Control">
+                    <VBox spacing="15.0">
+                        <padding>
+                            <Insets left="8.0" top="8.0"/>
+                        </padding>
+                        <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="Select a control"/>
+                        <RadioButton fx:id="media1" mnemonicParsing="false" selected="true" text="Play/Pause">
+                            <toggleGroup>
+                                <ToggleGroup fx:id="mediagroup"/>
+                            </toggleGroup>
+                        </RadioButton>
+                        <RadioButton fx:id="media2" mnemonicParsing="false" text="Stop" toggleGroup="$mediagroup"/>
+                        <RadioButton fx:id="media3" mnemonicParsing="false" text="Previous Track" toggleGroup="$mediagroup"/>
+                        <RadioButton fx:id="media4" mnemonicParsing="false" text="Next Track" toggleGroup="$mediagroup"/>
+                        <RadioButton fx:id="media5" mnemonicParsing="false" text="Mute" toggleGroup="$mediagroup"/>
+                    </VBox>
+                </Tab>
+                <Tab fx:id="end_program" text="End Program">
+                    <content>
+                        <VBox spacing="15.0">
+                            <padding>
+                                <Insets left="8.0" right="8.0" top="8.0"/>
+                            </padding>
+                            <children>
+                                <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="Select a process to kill"/>
+                                <HBox alignment="CENTER_LEFT" spacing="5.0">
+                                    <children>
+                                        <RadioButton fx:id="rdioEndSpecificProgram" mnemonicParsing="false" onAction="#onRadioButton" selected="true" text="Specific Program">
+                                            <toggleGroup>
+                                                <ToggleGroup fx:id="endProgramGroup"/>
+                                            </toggleGroup>
+                                        </RadioButton>
+                                        <TextField fx:id="endProcessField" prefHeight="27.0" prefWidth="330.0" promptText="spotify.exe" HBox.hgrow="ALWAYS">
+                                            <HBox.margin>
+                                                <Insets left="5.0"/>
+                                            </HBox.margin>
+                                        </TextField>
+                                        <Button fx:id="findAppEndProcess" mnemonicParsing="false" onAction="#findApps" prefHeight="31.0" prefWidth="34.0" text="..."/>
+                                    </children>
+                                </HBox>
+                                <RadioButton fx:id="rdioEndFocusedProgram" mnemonicParsing="false" onAction="#onRadioButton" text="Focused Program" toggleGroup="$endProgramGroup"/>
+                            </children>
+                        </VBox>
+                    </content>
+                </Tab>
+                <Tab fx:id="sound_device" text="Sound Device">
+                    <content>
+                        <VBox spacing="15.0">
+                            <padding>
+                                <Insets left="8.0" right="8.0" top="8.0"/>
+                            </padding>
+                            <children>
+                                <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="Select a sound device to use"/>
+                                <ChoiceBox fx:id="sounddevices" prefHeight="31.0" prefWidth="588.0" HBox.hgrow="ALWAYS"/>
+                            </children>
+                        </VBox>
+                    </content>
+                </Tab>
+                <Tab fx:id="toggle_device" text="Toggle Device">
+                    <content>
+                        <VBox spacing="15.0">
+                            <padding>
+                                <Insets bottom="8.0" left="8.0" right="8.0" top="8.0"/>
+                            </padding>
+                            <children>
+                                <Label prefHeight="71.0" prefWidth="660.0"
+                                       text="Select multiple sound devices to toggle in between.&#10;Drag sound devices from the left list to the right list.&#10;Everytime you click, the default sound device will be rotated between the list."
+                                       wrapText="true"/>
+                                <GridPane hgap="10.0" prefHeight="297.0" prefWidth="676.0" vgap="5.0" VBox.vgrow="ALWAYS">
+                                    <columnConstraints>
+                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                                        <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                                    </columnConstraints>
+                                    <rowConstraints>
+                                        <RowConstraints maxHeight="30.0" minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                    </rowConstraints>
+                                    <children>
+                                        <Label prefHeight="25.0" prefWidth="153.0" text="Available Devices"/>
+                                        <Label prefHeight="25.0" prefWidth="153.0" text="Selected Devices" GridPane.columnIndex="1"/>
+                                        <ListView fx:id="soundDeviceSource" prefHeight="150.0" prefWidth="164.0" GridPane.rowIndex="1"/>
+                                        <ListView fx:id="soundDevices2" prefHeight="150.0" prefWidth="164.0" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                                    </children>
+                                </GridPane>
+                            </children>
+                        </VBox>
+                    </content>
+                </Tab>
+                <Tab fx:id="mute_app" text="Mute App">
+                    <content>
+                        <VBox spacing="15.0">
+                            <padding>
+                                <Insets left="8.0" right="8.0" top="8.0"/>
+                            </padding>
+                            <children>
+                                <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="Enter an application to mute"/>
+                                <HBox spacing="5.0">
+                                    <children>
+                                        <TextField fx:id="muteAppProcessField" prefHeight="27.0" prefWidth="330.0" promptText="spotify.exe" HBox.hgrow="ALWAYS"/>
+                                        <Button fx:id="findAppMute" mnemonicParsing="false" onAction="#findApps" prefHeight="31.0" prefWidth="34.0" text="..."/>
+                                    </children>
+                                </HBox>
+
+                                <RadioButton fx:id="rdio_mute_toggle" mnemonicParsing="false" selected="true" text="Toggle Mute/Unmute">
+                                    <toggleGroup>
+                                        <ToggleGroup fx:id="xxx"/>
+                                    </toggleGroup>
+                                </RadioButton>
+                                <RadioButton fx:id="rdio_mute_mute" mnemonicParsing="false" text="Mute" toggleGroup="$xxx"/>
+                                <RadioButton fx:id="rdio_mute_unmute" mnemonicParsing="false" text="Unmute" toggleGroup="$xxx"/>
+                            </children>
+                        </VBox>
+                    </content>
+                </Tab>
+                <Tab fx:id="mute_device" text="Mute Device">
+                    <content>
+                        <VBox spacing="15.0">
+                            <children>
+                                <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="Enter a device to mute"/>
+                                <RadioButton fx:id="rdio_muteDevice_Default" mnemonicParsing="false" onAction="#onRadioButton" selected="true" text="Default Device">
+                                    <toggleGroup>
+                                        <ToggleGroup fx:id="muteDeviceGroup"/>
+                                    </toggleGroup>
+                                </RadioButton>
+                                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                    <children>
+                                        <RadioButton fx:id="rdio_muteDevice_Specific" mnemonicParsing="false" onAction="#onRadioButton" text="Specific Device"
+                                                     toggleGroup="$muteDeviceGroup"/>
+                                        <ChoiceBox fx:id="muteSoundDevice" prefHeight="31.0" prefWidth="524.0" HBox.hgrow="ALWAYS"/>
+                                    </children>
+                                </HBox>
+                                <Label text="Mute Mode"/>
+                                <RadioButton fx:id="rdio_muteDevice_toggle" mnemonicParsing="false" selected="true" text="Toggle Mute/Unmute">
+                                    <toggleGroup>
+                                        <ToggleGroup fx:id="deviceMuteGroup"/>
+                                    </toggleGroup>
+                                </RadioButton>
+                                <RadioButton fx:id="rdio_muteDevice_mute" mnemonicParsing="false" text="Mute" toggleGroup="$deviceMuteGroup"/>
+                                <RadioButton fx:id="rdio_muteDevice_unmute" mnemonicParsing="false" text="Unmute" toggleGroup="$deviceMuteGroup"/>
+                            </children>
+                            <padding>
+                                <Insets left="8.0" right="8.0" top="8.0"/>
+                            </padding>
+                        </VBox>
+                    </content>
+                </Tab>
+                <Tab fx:id="obs_button" text="OBS">
+                    <content>
+                        <VBox prefHeight="200.0" prefWidth="100.0" spacing="5.0">
+                            <padding>
+                                <Insets bottom="8.0" left="8.0" right="8.0" top="8.0"/>
+                            </padding>
+                            <RadioButton fx:id="obs_rdio_SetScene" mnemonicParsing="false" onAction="#onRadioButton" selected="true" text="Set Scene">
+                                <toggleGroup>
+                                    <ToggleGroup fx:id="obsButtonMainGroup"/>
+                                </toggleGroup>
+                            </RadioButton>
+                            <VBox>
+                                <children>
+                                    <HBox fx:id="obsPaneSetScene" alignment="CENTER_LEFT" spacing="10.0">
+                                        <children>
+                                            <Label prefHeight="21.0" prefWidth="73.0" text="Scene:"/>
+                                            <ChoiceBox fx:id="obsSetScene" prefHeight="31.0" prefWidth="345.0"/>
+                                        </children>
+                                    </HBox>
+                                </children>
+                                <VBox.margin>
+                                    <Insets left="20.0"/>
+                                </VBox.margin>
+                            </VBox>
+                            <RadioButton fx:id="obs_rdio_MuteSource" mnemonicParsing="false" onAction="#onRadioButton" text="Mute Source" toggleGroup="$obsButtonMainGroup"/>
+                            <VBox fx:id="obsPaneMuteSource" spacing="5.0">
+                                <VBox.margin>
+                                    <Insets left="20.0"/>
+                                </VBox.margin>
+                                <children>
+                                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                        <children>
+                                            <Label prefHeight="21.0" prefWidth="73.0" text="Source:"/>
+                                            <ChoiceBox fx:id="obsSourceToMute" prefHeight="31.0" prefWidth="345.0"/>
+                                        </children>
+                                        <VBox.margin>
+                                            <Insets bottom="5.0"/>
+                                        </VBox.margin>
+                                    </HBox>
+                                    <RadioButton fx:id="obsMuteToggle" mnemonicParsing="false" selected="true" text="Toggle Mute/Unmute">
+                                        <toggleGroup>
+                                            <ToggleGroup fx:id="obsMute"/>
+                                        </toggleGroup>
+                                    </RadioButton>
+                                    <RadioButton fx:id="obsMuteMute" mnemonicParsing="false" text="Mute" toggleGroup="$obsMute"/>
+                                    <RadioButton fx:id="obsMuteUnmute" mnemonicParsing="false" text="Unmute" toggleGroup="$obsMute"/>
+                                </children>
+                            </VBox>
+                        </VBox>
+                    </content>
+                </Tab>
+                <Tab fx:id="voicemeeter_button" text="Voicemeeter">
+                    <content>
+                        <TabPane fx:id="voicemeeterTabPaneButton" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
+                            <tabs>
+                                <Tab text="Basic">
+                                    <content>
+                                        <VBox spacing="15.0">
+                                            <children>
+                                                <GridPane alignment="CENTER_LEFT" vgap="10.0">
+                                                    <children>
+                                                        <Label text="Input/Output"/>
+                                                        <Label text="Index" GridPane.rowIndex="1"/>
+                                                        <ChoiceBox fx:id="voicemeeterBasicButtonIO" prefWidth="150.0" GridPane.columnIndex="1"/>
+                                                        <ChoiceBox fx:id="voicemeeterBasicButtonIndex" prefHeight="31.0" prefWidth="150.0" GridPane.columnIndex="1"
+                                                                   GridPane.rowIndex="1"/>
+                                                        <Label text="Button" GridPane.rowIndex="2"/>
+                                                        <ChoiceBox fx:id="voicemeeterBasicButton" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                                                    </children>
+                                                    <columnConstraints>
+                                                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="411.0" minWidth="10.0" prefWidth="173.0"/>
+                                                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="703.0" minWidth="10.0" prefWidth="658.0"/>
+                                                    </columnConstraints>
+                                                    <rowConstraints>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                                    </rowConstraints>
+                                                </GridPane>
+                                            </children>
+                                            <padding>
+                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
+                                            </padding>
+                                        </VBox>
+                                    </content>
+                                </Tab>
+                                <Tab text="Advanced">
+                                    <content>
+                                        <VBox prefHeight="200.0" prefWidth="100.0" spacing="8.0">
+                                            <children>
+                                                <Label prefHeight="21.0" prefWidth="164.0" text="Parameter"/>
+                                                <TextField fx:id="voicemeeterButtonParameter" promptText="Strip[0].Mute"/>
+                                                <Label prefHeight="21.0" prefWidth="164.0" text="Control Mode"/>
+                                                <ChoiceBox fx:id="voicemeeterButtonType" prefHeight="31.0" prefWidth="331.0"/>
+                                            </children>
+                                            <padding>
+                                                <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
+                                            </padding>
+                                        </VBox>
+                                    </content>
+                                </Tab>
+                            </tabs>
+                        </TabPane>
+                    </content>
+                </Tab>
+                <Tab fx:id="profile" text="Profile">
+                    <content>
+                        <VBox spacing="15.0">
+                            <children>
+                                <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="Select a profile to switch to"/>
+                                <ChoiceBox fx:id="profileDropdown" prefHeight="31.0" prefWidth="251.0" HBox.hgrow="ALWAYS"/>
+                            </children>
+                            <padding>
+                                <Insets left="8.0" right="8.0" top="8.0"/>
+                            </padding>
+                        </VBox>
+                    </content>
+                </Tab>
+            </TabPane>
+        </Tab>
+        <Tab fx:id="dialpane" closable="false" text="Dial">
+            <content>
+                <TabPane fx:id="dialTabPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="209.0" prefWidth="376.0" rotateGraphic="true" side="LEFT"
+                         tabClosingPolicy="UNAVAILABLE">
+                    <tabs>
+                        <Tab fx:id="app_volume" text="App Volume">
+                            <content>
+                                <VBox layoutX="-77.0" layoutY="-61.0" spacing="15.0">
+                                    <padding>
+                                        <Insets left="8.0" right="8.0" top="8.0"/>
+                                    </padding>
+                                    <children>
+                                        <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="Enter a proccess to control volume"/>
+
+                                        <Label prefHeight="25.0" prefWidth="496.0" text="Program #1"/>
+                                        <HBox spacing="5.0">
+                                            <children>
+                                                <TextField fx:id="volumeProcessField1" editable="true" prefHeight="25.0" prefWidth="319.0" promptText="Enter Process Name    ex) chrome.exe"
+                                                           HBox.hgrow="ALWAYS"/>
+                                                <Button fx:id="findApp1" mnemonicParsing="false" onAction="#findApps" prefHeight="31.0" prefWidth="34.0" text="..."/>
+                                            </children>
+                                        </HBox>
+
+                                        <Label prefHeight="25.0" prefWidth="205.0" text="Program #2"/>
+                                        <HBox spacing="5.0">
+                                            <children>
+                                                <TextField fx:id="volumeProcessField2" editable="true" prefHeight="25.0" prefWidth="319.0" promptText="Enter Process Name    ex) chrome.exe"
+                                                           HBox.hgrow="ALWAYS"/>
+                                                <Button fx:id="findApp2" mnemonicParsing="false" onAction="#findApps" prefHeight="31.0" prefWidth="34.0" text="..."/>
+                                            </children>
+                                        </HBox>
+
+                                        <Label prefHeight="25.0" prefWidth="305.0" text="Sound Device to control the application on"/>
+                                        <GridPane vgap="5.0">
+                                            <columnConstraints>
+                                                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+                                            </columnConstraints>
+                                            <rowConstraints>
+                                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                            </rowConstraints>
+                                            <children>
+
+                                                <RadioButton fx:id="rdio_app_output_default" mnemonicParsing="false" onAction="#onRadioButton" selected="true" text="Default Device">
+                                                    <toggleGroup>
+                                                        <ToggleGroup fx:id="app_volume_output_group"/>
+                                                    </toggleGroup>
+                                                </RadioButton>
+                                                <RadioButton fx:id="rdio_app_output_all" mnemonicParsing="false" onAction="#onRadioButton" text="All Devices"
+                                                             toggleGroup="$app_volume_output_group" GridPane.rowIndex="1"/>
+                                                <HBox alignment="CENTER_LEFT" spacing="10.0" GridPane.rowIndex="2">
+                                                    <children>
+                                                        <RadioButton fx:id="rdio_app_output_specific" mnemonicParsing="false" onAction="#onRadioButton" text="Specific Device"
+                                                                     toggleGroup="$app_volume_output_group"/>
+
+                                                        <ChoiceBox fx:id="app_vol_output_device" prefHeight="31.0" prefWidth="504.0"/>
+                                                    </children>
+                                                </HBox>
+                                            </children>
+                                        </GridPane>
+                                    </children>
+                                </VBox>
+                            </content>
+                        </Tab>
+                        <Tab fx:id="focus_volume" text="Focus Volume">
+                            <content>
+                                <VBox spacing="15.0">
+                                    <padding>
+                                        <Insets left="8.0" top="8.0"/>
+                                    </padding>
+                                    <children>
+
+                                        <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="Control currently focused Application"/>
+
+                                        <Label maxWidth="1.7976931348623157E308" prefHeight="76.0"
+                                               text="The dial will control the volume of the application that is in focus at the time.  No further configuration is required." wrapText="true"/>
+                                    </children>
+                                </VBox>
+                            </content>
+                        </Tab>
+                        <Tab fx:id="device_volume" text="Device Volume">
+                            <content>
+                                <VBox spacing="15.0">
+                                    <children>
+
+                                        <Label maxWidth="1.7976931348623157E308" prefHeight="28.0" text="Control the System Volume"/>
+
+                                        <RadioButton fx:id="rdio_device_default" layoutX="5.0" layoutY="55.0" mnemonicParsing="false" onAction="#onRadioButton" selected="true"
+                                                     text="Default Device">
+                                            <toggleGroup>
+                                                <ToggleGroup fx:id="devicesoundgroup"/>
+                                            </toggleGroup>
+                                        </RadioButton>
+                                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                                            <children>
+                                                <RadioButton fx:id="rdio_device_specific" layoutX="5.0" layoutY="80.0" mnemonicParsing="false" onAction="#onRadioButton" text="Specific Device"
+                                                             toggleGroup="$devicesoundgroup"/>
+
+                                                <ChoiceBox fx:id="volumedevice" prefHeight="31.0" prefWidth="514.0"/>
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                    <padding>
+                                        <Insets left="8.0" top="8.0"/>
+                                    </padding>
+                                </VBox>
+                            </content>
+                        </Tab>
+                        <Tab fx:id="obs_dial" text="OBS">
+                            <content>
+                                <VBox spacing="15.0">
+                                    <padding>
+                                        <Insets left="8.0" top="8.0"/>
+                                    </padding>
+                                    <children>
+                                        <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" prefWidth="205.0" text="Select an OBS Audio Source to Control"/>
+                                        <ChoiceBox fx:id="obsAudioSources" prefHeight="31.0" prefWidth="299.0"/>
+                                    </children>
+                                </VBox>
+                            </content>
+                        </Tab>
+                        <Tab fx:id="voicemeeter_dial" text="Voicemeeter">
+                            <content>
+                                <TabPane fx:id="voicemeeterTabPaneDial" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
+                                    <tabs>
+                                        <Tab text="Basic">
+                                            <content>
+                                                <VBox spacing="15.0">
+                                                    <children>
+                                                        <GridPane alignment="CENTER_LEFT" vgap="10.0">
+                                                            <children>
+                                                                <Label text="Input/Output"/>
+                                                                <Label text="Index" GridPane.rowIndex="1"/>
+                                                                <ChoiceBox fx:id="voicemeeterBasicDialIO" prefWidth="150.0" GridPane.columnIndex="1"/>
+                                                                <ChoiceBox fx:id="voicemeeterBasicDialIndex" prefHeight="31.0" prefWidth="150.0" GridPane.columnIndex="1"
+                                                                           GridPane.rowIndex="1"/>
+                                                                <Label text="Dial" GridPane.rowIndex="2"/>
+                                                                <ChoiceBox fx:id="voicemeeterBasicDial" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                                                            </children>
+                                                            <columnConstraints>
+                                                                <ColumnConstraints hgrow="SOMETIMES" maxWidth="411.0" minWidth="10.0" prefWidth="173.0"/>
+                                                                <ColumnConstraints hgrow="SOMETIMES" maxWidth="703.0" minWidth="10.0" prefWidth="658.0"/>
+                                                            </columnConstraints>
+                                                            <rowConstraints>
+                                                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                                            </rowConstraints>
+                                                        </GridPane>
+                                                    </children>
+                                                    <padding>
+                                                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
+                                                    </padding>
+                                                </VBox>
+                                            </content>
+                                        </Tab>
+                                        <Tab text="Advanced">
+                                            <content>
+                                                <VBox prefHeight="200.0" prefWidth="100.0" spacing="8.0">
+                                                    <padding>
+                                                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
+                                                    </padding>
+                                                    <children>
+                                                        <Label prefHeight="21.0" prefWidth="164.0" text="Parameter"/>
+                                                        <TextField fx:id="voicemeeterDialParameter" promptText="Strip[0].Gain"/>
+                                                        <Label prefHeight="21.0" prefWidth="164.0" text="Control Mode"/>
+                                                        <ChoiceBox fx:id="voicemeeterDialType" prefHeight="31.0" prefWidth="331.0"/>
+                                                    </children>
+                                                </VBox>
+                                            </content>
+                                        </Tab>
+                                    </tabs>
+                                </TabPane>
+                            </content>
+                        </Tab>
+                    </tabs>
+                </TabPane>
+            </content>
+        </Tab>
+        <Tab text="Settings">
+            <content>
+                <VBox layoutX="226.0" layoutY="50.0" prefHeight="200.0" prefWidth="100.0" spacing="10.0">
+                    <padding>
+                        <Insets bottom="12.0" left="12.0" right="12.0" top="12.0"/>
+                    </padding>
+                    <children>
+                        <Label text="Dial Settings"/>
+                        <Separator prefWidth="200.0"/>
+                        <CheckBox fx:id="logarithmic" mnemonicParsing="false" text="Logarithmic Scaling"/>
+                        <HBox alignment="CENTER_LEFT">
+                            <children>
+                                <Label prefHeight="21.0" prefWidth="93.0" text="Trim Min"/>
+                                <TextField fx:id="trimMin" prefWidth="100.0" text="0"/>
+                            </children>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT">
+                            <children>
+                                <Label prefHeight="21.0" prefWidth="93.0" text="Trim Max">
+                                    <HBox.margin>
+                                        <Insets/>
+                                    </HBox.margin>
+                                </Label>
+                                <TextField fx:id="trimMax" prefWidth="100.0" text="100"/>
+                            </children>
+                        </HBox>
+                        <Separator prefWidth="200.0"/>
+                        <HBox alignment="CENTER_LEFT" visible="false">
+                            <children>
+                                <Label prefHeight="21.0" prefWidth="99.0" text="Debounce"/>
+                                <TextField fx:id="buttonDebounceTime"/>
+                            </children>
+                        </HBox>
+                    </children>
+                </VBox>
+            </content>
+        </Tab>
+    </TabPane>
+    <HBox alignment="CENTER_RIGHT" spacing="15.0">
+        <children>
+            <Button mnemonicParsing="false" onAction="#ok" prefHeight="25.0" prefWidth="66.0" text="Ok"/>
+            <Button fx:id="cancelButton" layoutX="661.0" layoutY="872.0" mnemonicParsing="false" onAction="#closeButtonAction" prefHeight="25.0" prefWidth="73.0" text="Cancel"/>
+        </children>
+        <VBox.margin>
+            <Insets bottom="10.0" right="10.0"/>
+        </VBox.margin>
+    </HBox>
+</VBox>

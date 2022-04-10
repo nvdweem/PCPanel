@@ -1,0 +1,8 @@
+#dial_button {
+    -fx-border-color: transparent;
+    -fx-background-radius: 0;
+    -fx-background-color: transparent;
+    -fx-background-size: 100px 100px;
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: center;
+}

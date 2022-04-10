@@ -1,0 +1,154 @@
+.root {
+    -fx-font-family: Roboto;
+    -fx-base: #25262A;
+    -fx-accent: #e7eff7;
+    -fx-default-button: #7f878f;
+
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+
+    -fx-focused-text-base-color: ladder(
+            -fx-selection-bar,
+            -fx-light-text-color 45%,
+            -fx-dark-text-color 46%,
+            -fx-dark-text-color 59%,
+            -fx-mid-text-color 60%
+    );
+    -fx-focused-mark-color: -fx-focused-text-base-color;
+
+}
+
+.text-input:focused {
+    -fx-highlight-text-fill: ladder(
+            -fx-highlight-fill,
+            -fx-light-text-color 45%,
+            -fx-dark-text-color 46%,
+            -fx-dark-text-color 59%,
+            -fx-mid-text-color 60%
+    );
+}
+
+#pane {
+    -fx-background-image: url("background_image.png"), url("dots.png");
+    -fx-background-repeat: stretch, round;
+    -fx-background-size: cover, contain;
+    -fx-background-position: center center, center center;
+    -fx-effect: dropshadow(three-pass-box, black, 30, 0.5, 0, 0);
+}
+
+@font-face {
+    font-family: 'Apex Mk2 Regular';
+    src: url('apex-mk2.regular.otf');
+}
+
+@font-face {
+    font-family: 'Roboto Medium';
+    src: url('Roboto-Medium.ttf');
+}
+
+.list-cell {
+    -fx-font-size: 20.0;
+    -fx-font-family: 'Roboto Medium';
+    -fx-graphic-text-gap: 5.0;
+    -fx-text-fill: white;
+}
+
+
+.list-cell:odd {
+    -fx-background-color: #25262A;
+}
+
+.list-cell:even {
+    -fx-background-color: #1C1D20;
+}
+
+
+.list-cell:focused {
+    -fx-text-fill: black;
+    -fx-background-color: #FFC940;
+}
+
+.list-view {
+    -fx-focus-color: transparent;
+}
+
+#close {
+    -icon-paint: white;
+    -fx-background-color: -icon-paint;
+    -size: 20;
+    -fx-min-height: -size;
+    -fx-min-width: -size;
+    -fx-max-height: -size;
+    -fx-max-width: -size;
+
+    -fx-shape: "M194.6,164.8L322.7,36.7c8.3-8.3,8.3-21.8,0-30.1s-21.8-8.3-30.1,0l-128.1,128L36.4,6.5c-8.3-8.3-21.8-8.3-30.1,0 s-8.3,21.8,0,30.1l128.1,128.1L6.3,292.9c-8.3,8.3-8.3,21.8,0,30.1c4.2,4.2,9.6,6.2,15.1,6.2s10.9-2.1,15.1-6.2l128.1-128.1 l128,128.1c4.2,4.2,9.6,6.2,15.1,6.2s10.9-2.1,15.1-6.2c8.3-8.3,8.3-21.8,0-30.1L194.6,164.8z";
+}
+
+#addProfile2 {
+    -icon-paint: white;
+    -fx-background-color: -icon-paint;
+    -size: 20;
+    -fx-min-height: -size;
+    -fx-min-width: -size;
+    -fx-max-height: -size;
+    -fx-max-width: -size;
+
+    -fx-shape: "M28,14H18V4c0-1.104-0.896-2-2-2s-2,0.896-2,2v10H4c-1.104,0-2,0.896-2,2s0.896,2,2,2h10v10c0,1.104,0.896,2,2,2  s2-0.896,2-2V18h10c1.104,0,2-0.896,2-2S29.104,14,28,14z";
+}
+
+#versionLabel {
+    -fx-font-family: 'Roboto Medium';
+    -fx-font-size: 16;
+}
+
+#deviceListToggle {
+    -icon-paint: white;
+    -fx-background-color: -icon-paint;
+    -height: 20;
+    -width: 25;
+    -fx-min-height: -height;
+    -fx-min-width: -width;
+    -fx-max-height: -height;
+    -fx-max-width: -width;
+
+    -fx-shape: "M10.368,0h102.144c5.703,0,10.367,4.665,10.367,10.367v0 c0,5.702-4.664,10.368-10.367,10.368H10.368C4.666,20.735,0,16.07,0,10.368v0C0,4.665,4.666,0,10.368,0L10.368,0z M10.368,82.875 h102.144c5.703,0,10.367,4.665,10.367,10.367l0,0c0,5.702-4.664,10.367-10.367,10.367H10.368C4.666,103.609,0,98.944,0,93.242l0,0 C0,87.54,4.666,82.875,10.368,82.875L10.368,82.875z M10.368,41.438h102.144c5.703,0,10.367,4.665,10.367,10.367l0,0 c0,5.702-4.664,10.368-10.367,10.368H10.368C4.666,62.173,0,57.507,0,51.805l0,0C0,46.103,4.666,41.438,10.368,41.438 L10.368,41.438z";
+}
+
+#settings {
+    -icon-paint: white;
+    -fx-background-color: -icon-paint;
+    -height: 28;
+    -width: 28;
+    -fx-min-height: -height;
+    -fx-min-width: -width;
+    -fx-max-height: -height;
+    -fx-max-width: -width;
+}
+
+
+#min {
+    -fx-border-color: transparent;
+    -fx-background-radius: 0;
+    -fx-background-color: transparent;
+
+    -size: 20;
+    -fx-min-height: -size;
+    -fx-min-width: -size;
+    -fx-max-height: -size;
+    -fx-max-width: -size;
+
+    -icon-paint: red;
+    -fx-content-display: graphic-only;
+}
+
+#icon {
+    -icon-paint: white;
+    -fx-background-color: -icon-paint;
+    -size: 10;
+    -fx-min-height: 3;
+    -fx-min-width: 22;
+    -fx-max-height: 3;
+    -fx-max-width: 22;
+
+    -fx-shape: "M306.6,139.3l-284-0.5c-12.4,0-22.5,7.1-22.5,15.9l0,10.6c0,8.8,10,15.9,22.4,16l284,0.5c12.4,0,22.5-7.1,22.5-15.9l0-10.6 C329,146.4,319,139.3,306.6,139.3z";
+}

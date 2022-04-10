@@ -1,0 +1,66 @@
+package main;
+
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.DataFormat;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.input.TransferMode;
+import javafx.util.Callback;
+import util.SoundDevice;
+
+public class SoundDeviceExportFactory implements Callback<ListView<SoundDevice>, ListCell<SoundDevice>> {
+    private static final DataFormat JAVA_FORMAT = SoundDeviceImportFactory.JAVA_FORMAT;
+
+    public SoundDeviceExportFactory(ListView<SoundDevice> listView) {
+        setupListView(listView);
+    }
+
+    @Override
+    public ListCell<SoundDevice> call(ListView<SoundDevice> listView) {
+        ListCell<SoundDevice> cell = new ListCell<>() {
+            @Override
+            protected void updateItem(SoundDevice item, boolean empty) {
+                super.updateItem(item, empty);
+                if (item == null) {
+                    setText("");
+                    return;
+                }
+                setText(item.toString());
+            }
+        };
+        cell.setOnDragDetected(event -> dragDetected(event, cell));
+        return cell;
+    }
+
+    private void dragDetected(MouseEvent event, ListCell<SoundDevice> treeCell) {
+        SoundDevice draggedItem = treeCell.getItem();
+        Dragboard db = treeCell.startDragAndDrop(TransferMode.MOVE);
+        ClipboardContent content = new ClipboardContent();
+        content.put(JAVA_FORMAT, draggedItem);
+        db.setContent(content);
+        db.setDragView(treeCell.snapshot(null, null));
+        event.consume();
+    }
+
+    private static void setupListView(ListView<SoundDevice> listView) {
+        listView.setOnDragOver(event -> {
+            if (!event.getDragboard().hasContent(JAVA_FORMAT))
+                return;
+            SoundDevice dropContent = (SoundDevice) event.getDragboard().getContent(JAVA_FORMAT);
+            if (listView.getItems().contains(dropContent))
+                return;
+            event.acceptTransferModes(TransferMode.MOVE);
+        });
+        listView.setOnDragDropped(event -> {
+            Dragboard db = event.getDragboard();
+            boolean success = false;
+            if (!db.hasContent(JAVA_FORMAT))
+                return;
+            int index = 0;
+            listView.getItems().add(index, (SoundDevice) db.getContent(JAVA_FORMAT));
+            event.setDropCompleted(success);
+        });
+    }
+}

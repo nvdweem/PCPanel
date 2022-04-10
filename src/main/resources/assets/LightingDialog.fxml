@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<VBox prefHeight="486.0" prefWidth="933.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+    <TabPane fx:id="knobsTabbedPane" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
+        <Tab text="All Knobs">
+            <TabPane fx:id="allKnobsTabbedPane" prefHeight="200.0" prefWidth="200.0" rotateGraphic="true" side="LEFT" tabClosingPolicy="UNAVAILABLE">
+                <Tab text="Color">
+                    <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0"/>
+                </Tab>
+                <Tab text="Rainbow">
+                    <VBox spacing="12.0">
+                        <padding>
+                            <Insets left="20.0" right="20.0" top="20.0"/>
+                        </padding>
+                        <Label text="Phase Shift"/>
+                        <Slider fx:id="rainbowPhaseShift" blockIncrement="1.0" max="255.0" value="120.0"/>
+                        <Label text="Brightness"/>
+                        <Slider fx:id="rainbowBrightness" blockIncrement="1.0" max="255.0" value="255.0"/>
+                        <Label text="Speed"/>
+                        <Slider fx:id="rainbowSpeed" blockIncrement="1.0" max="255.0" value="200.0"/>
+                        <CheckBox fx:id="rainbowReverse" mnemonicParsing="false" text="Reverse Direction"/>
+                    </VBox>
+                </Tab>
+                <Tab text="Wave">
+                    <VBox fx:id="wavebox" spacing="12.0">
+                        <padding>
+                            <Insets left="20.0" right="20.0" top="20.0"/>
+                        </padding>
+                        <Label prefHeight="21.0" prefWidth="102.0" text="Hue"/>
+                        <Label prefHeight="21.0" prefWidth="160.0" text="Brightness"/>
+                        <Slider fx:id="waveBrightness" blockIncrement="1.0" max="255.0" value="255.0"/>
+                        <Label prefHeight="21.0" prefWidth="199.0" text="Speed"/>
+                        <Slider fx:id="waveSpeed" blockIncrement="1.0" max="255.0" value="200.0"/>
+                        <CheckBox fx:id="waveReverse" mnemonicParsing="false" text="Reverse Direction"/>
+                        <CheckBox fx:id="waveBounce" mnemonicParsing="false" text="Bounce"/>
+                    </VBox>
+                </Tab>
+                <Tab text="Breath">
+                    <VBox fx:id="breathbox" spacing="12.0">
+                        <padding>
+                            <Insets left="20.0" right="20.0" top="20.0"/>
+                        </padding>
+                        <Label prefHeight="21.0" prefWidth="102.0" text="Hue"/>
+                        <Label prefHeight="21.0" prefWidth="160.0" text="Brightness"/>
+                        <Slider fx:id="breathBrightness" blockIncrement="1.0" max="255.0" value="255.0"/>
+                        <Label prefHeight="21.0" prefWidth="199.0" text="Speed"/>
+                        <Slider fx:id="breathSpeed" blockIncrement="1.0" max="255.0" value="200.0"/>
+                    </VBox>
+                </Tab>
+            </TabPane>
+        </Tab>
+    </TabPane>
+    <HBox alignment="CENTER_RIGHT" spacing="15.0">
+        <VBox.margin>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
+        </VBox.margin>
+        <HBox alignment="CENTER_LEFT" spacing="40.0" HBox.hgrow="ALWAYS">
+            <Button mnemonicParsing="false" onAction="#turnOffLights" text="Turn Off Lights">
+                <HBox.margin>
+                    <Insets/>
+                </HBox.margin>
+            </Button>
+            <HBox fx:id="volumeFollowBox" alignment="CENTER_LEFT" spacing="20.0">
+                <Label text="Enable Volume-Brightness Tracking"/>
+                <HBox fx:id="volumeFollowCheckboxContainer" alignment="CENTER_LEFT" minWidth="50.0" spacing="10.0"/>
+            </HBox>
+        </HBox>
+        <Button mnemonicParsing="false" onAction="#ok" prefHeight="25.0" prefWidth="66.0" text="Ok"/>
+        <Button cancelButton="true" mnemonicParsing="false" onAction="#onCancel" text="Cancel"/>
+    </HBox>
+</VBox>
