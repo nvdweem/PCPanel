@@ -56,27 +56,24 @@ public class LightingConfig {
 
     public LightingConfig(int numKnobs, int numSliders) {
         knobConfigs = new SingleKnobLightingConfig[numKnobs];
-        int i;
-        for (i = 0; i < knobConfigs.length; ) {
+        for (var i = 0; i < knobConfigs.length; i++) {
             knobConfigs[i] = new SingleKnobLightingConfig();
-            i++;
         }
         sliderLabelConfigs = new SingleSliderLabelLightingConfig[numSliders];
-        for (i = 0; i < sliderLabelConfigs.length; ) {
+        for (var i = 0; i < sliderLabelConfigs.length; i++) {
             sliderLabelConfigs[i] = new SingleSliderLabelLightingConfig();
-            i++;
         }
         sliderConfigs = new SingleSliderLightingConfig[numSliders];
-        for (i = 0; i < sliderConfigs.length; ) {
+        for (var i = 0; i < sliderConfigs.length; i++) {
             sliderConfigs[i] = new SingleSliderLightingConfig();
-            i++;
         }
         logoConfig = new SingleLogoLightingConfig();
     }
 
+    @SuppressWarnings("MagicNumber")
     public static LightingConfig defaultLightingConfig(DeviceType dt) {
         if (dt == DeviceType.PCPANEL_RGB) {
-            LightingConfig lc = new LightingConfig();
+            var lc = new LightingConfig();
             lc.lightingMode = LightingMode.ALL_COLOR;
             lc.allColor = "#0065FF";
             return lc;
@@ -84,7 +81,7 @@ public class LightingConfig {
         if (dt == DeviceType.PCPANEL_MINI)
             return createRainbowAnimation((byte) -128, (byte) -1, (byte) -106, false, false);
         if (dt == DeviceType.PCPANEL_PRO) {
-            LightingConfig lc = new LightingConfig(5, 4);
+            var lc = new LightingConfig(5, 4);
             lc.lightingMode = LightingMode.ALL_RAINBOW;
             lc.setRainbowPhaseShift((byte) 125);
             lc.setRainbowSpeed((byte) -96);
@@ -95,17 +92,17 @@ public class LightingConfig {
     }
 
     public static LightingConfig createSingleColor(Color[] color, boolean[] volumeTracking) {
-        LightingConfig lc = new LightingConfig();
+        var lc = new LightingConfig();
         lc.lightingMode = LightingMode.SINGLE_COLOR;
         lc.individualColors = new String[color.length];
-        for (int i = 0; i < color.length; i++)
+        for (var i = 0; i < color.length; i++)
             lc.individualColors[i] = Util.formatHexString(color[i]);
         lc.volumeBrightnessTrackingEnabled = volumeTracking;
         return lc;
     }
 
     public static LightingConfig createAllColor(Color color, boolean[] volumeTracking) {
-        LightingConfig lc = new LightingConfig();
+        var lc = new LightingConfig();
         lc.lightingMode = LightingMode.ALL_COLOR;
         lc.allColor = Util.formatHexString(color);
         lc.volumeBrightnessTrackingEnabled = volumeTracking;
@@ -113,14 +110,14 @@ public class LightingConfig {
     }
 
     public static LightingConfig createAllColor(Color color) {
-        LightingConfig lc = new LightingConfig();
+        var lc = new LightingConfig();
         lc.lightingMode = LightingMode.ALL_COLOR;
         lc.allColor = Util.formatHexString(color);
         return lc;
     }
 
     public static LightingConfig createRainbowAnimation(byte phaseShift, byte brightness, byte speed, boolean reverse) {
-        LightingConfig lc = new LightingConfig();
+        var lc = new LightingConfig();
         lc.lightingMode = LightingMode.ALL_RAINBOW;
         lc.rainbowPhaseShift = phaseShift;
         lc.rainbowBrightness = brightness;
@@ -130,7 +127,7 @@ public class LightingConfig {
     }
 
     public static LightingConfig createRainbowAnimation(byte phaseShift, byte brightness, byte speed, boolean reverse, boolean vertical) {
-        LightingConfig lc = new LightingConfig();
+        var lc = new LightingConfig();
         lc.lightingMode = LightingMode.ALL_RAINBOW;
         lc.rainbowPhaseShift = phaseShift;
         lc.rainbowBrightness = brightness;
@@ -141,7 +138,7 @@ public class LightingConfig {
     }
 
     public static LightingConfig createWaveAnimation(byte hue, byte brightness, byte speed, boolean reverse, boolean bounce) {
-        LightingConfig lc = new LightingConfig();
+        var lc = new LightingConfig();
         lc.lightingMode = LightingMode.ALL_WAVE;
         lc.waveHue = hue;
         lc.waveBrightness = brightness;
@@ -152,7 +149,7 @@ public class LightingConfig {
     }
 
     public static LightingConfig createBreathAnimation(byte hue, byte brightness, byte speed) {
-        LightingConfig lc = new LightingConfig();
+        var lc = new LightingConfig();
         lc.lightingMode = LightingMode.ALL_BREATH;
         lc.breathHue = hue;
         lc.breathBrightness = brightness;
@@ -172,16 +169,8 @@ public class LightingConfig {
         return individualColors;
     }
 
-    public void setIndividualColors(String[] individualColors) {
-        this.individualColors = individualColors;
-    }
-
     public String getAllColor() {
         return allColor;
-    }
-
-    public void setAllColor(String allColor) {
-        this.allColor = allColor;
     }
 
     public boolean[] getVolumeBrightnessTrackingEnabled() {
@@ -210,10 +199,6 @@ public class LightingConfig {
         return rainbowVertical;
     }
 
-    public void setRainbowVertical(byte rainbowVertical) {
-        this.rainbowVertical = rainbowVertical;
-    }
-
     public void setRainbowPhaseShift(byte rainbowPhaseShift) {
         this.rainbowPhaseShift = rainbowPhaseShift;
     }
@@ -224,10 +209,6 @@ public class LightingConfig {
 
     public void setRainbowSpeed(byte rainbowSpeed) {
         this.rainbowSpeed = rainbowSpeed;
-    }
-
-    public void setRainbowReverse(byte rainbowReverse) {
-        this.rainbowReverse = rainbowReverse;
     }
 
     public byte getWaveHue() {
