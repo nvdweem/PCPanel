@@ -1,7 +1,5 @@
 package main;
 
-import java.util.Objects;
-
 import javafx.geometry.Pos;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.ListCell;
@@ -10,6 +8,8 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.VBox;
 import save.Save;
+
+import java.util.Objects;
 
 public class DeviceCell extends ListCell<Device> {
     ImageView imageView = new ImageView();
@@ -33,7 +33,7 @@ public class DeviceCell extends ListCell<Device> {
         textField.setMaxWidth(listView.getWidth() - 30.0D);
         textField.setMaxHeight(30.0D);
         setOnMouseClicked(mouseClickedEvent -> {
-            if (mouseClickedEvent.getButton().equals(MouseButton.PRIMARY) && mouseClickedEvent.getClickCount() == 1)
+            if (mouseClickedEvent.getButton() == MouseButton.PRIMARY && mouseClickedEvent.getClickCount() == 1)
                 if (isEditing())
                     cancelEdit();
         });

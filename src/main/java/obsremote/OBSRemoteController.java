@@ -1,17 +1,16 @@
 package obsremote;
 
-import java.net.URI;
-import java.util.Map;
-
-import org.java_websocket.client.WebSocketClient;
-import org.java_websocket.drafts.Draft_6455;
-import org.java_websocket.handshake.ServerHandshake;
-
 import obsremote.callbacks.Callback;
 import obsremote.callbacks.ErrorCallback;
 import obsremote.callbacks.StringCallback;
 import obsremote.objects.throwables.OBSResponseError;
+import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.drafts.Draft_6455;
+import org.java_websocket.handshake.ServerHandshake;
 import util.Util;
+
+import java.net.URI;
+import java.util.Map;
 
 public class OBSRemoteController {
     private final String address;
@@ -84,7 +83,6 @@ public class OBSRemoteController {
             System.err.println("Failed to start WebSocketClient.");
             e.printStackTrace();
             runOnError("Failed to start WebSocketClient", e);
-            return;
         }
     }
 
@@ -204,7 +202,7 @@ public class OBSRemoteController {
 
     public void changeSceneWithTransition(String scene, String transition, Callback callback) {
         communicator.setCurrentTransition(transition, response -> {
-            if (!response.getStatus().equals("ok")) {
+            if (!"ok".equals(response.getStatus())) {
                 System.out.println("Failed to change transition. Pls fix.");
                 runOnError("Error response for changeSceneWithTransition", new OBSResponseError(response.getError()));
             }

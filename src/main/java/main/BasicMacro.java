@@ -1,12 +1,5 @@
 package main;
 
-import java.io.File;
-import java.net.URL;
-import java.util.Arrays;
-import java.util.List;
-import java.util.ResourceBundle;
-import java.util.stream.Collectors;
-
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -17,17 +10,8 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
+import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.ListView;
-import javafx.scene.control.RadioButton;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
-import javafx.scene.control.TextField;
-import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -35,6 +19,7 @@ import javafx.scene.layout.Pane;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import lombok.extern.slf4j.Slf4j;
 import obs.OBS;
 import save.DeviceSave;
 import save.KnobSetting;
@@ -44,12 +29,16 @@ import util.SoundAudit;
 import util.SoundDevice;
 import util.Util;
 import voicemeeter.Voicemeeter;
-import voicemeeter.Voicemeeter.ButtonControlMode;
 import voicemeeter.Voicemeeter.ButtonType;
-import voicemeeter.Voicemeeter.ControlType;
-import voicemeeter.Voicemeeter.DialControlMode;
-import voicemeeter.Voicemeeter.DialType;
+import voicemeeter.Voicemeeter.*;
 
+import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
+import java.util.ResourceBundle;
+import java.util.stream.Collectors;
+
+@Slf4j
 public class BasicMacro extends Application implements Initializable {
     @FXML
     private Pane topPane;
@@ -287,7 +276,7 @@ public class BasicMacro extends Application implements Initializable {
     @Override
     public void start(Stage basicmacro) throws Exception {
         stage = basicmacro;
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/assets/BasicMacro.fxml"));
+        var loader = new FXMLLoader(getClass().getResource("/assets/BasicMacro.fxml"));
         loader.setController(this);
         Pane mainPane = loader.load();
         scene = new Scene(mainPane);
@@ -315,24 +304,24 @@ public class BasicMacro extends Application implements Initializable {
     }
 
     private String getSelectedTabName(TabPane tabPane) {
-        Tab tab = tabPane.getSelectionModel().getSelectedItem();
+        var tab = tabPane.getSelectionModel().getSelectedItem();
         return (tab == null) ? null : tab.getId();
     }
 
     private void selectTabByName(TabPane tabPane, String name) {
-        Tab tab = getTabByName(tabPane, name);
+        var tab = getTabByName(tabPane, name);
         if (tab != null)
             tabPane.getSelectionModel().select(tab);
     }
 
     private void removeTabByName(TabPane tabPane, String name) {
-        Tab tab = getTabByName(tabPane, name);
+        var tab = getTabByName(tabPane, name);
         if (tab != null)
             tabPane.getTabs().remove(tab);
     }
 
     private Tab getTabByName(TabPane tabPane, String name) {
-        for (Tab tab : tabPane.getTabs()) {
+        for (var tab : tabPane.getTabs()) {
             if (tab.getId().equals(name))
                 return tab;
         }
@@ -342,25 +331,23 @@ public class BasicMacro extends Application implements Initializable {
     @FXML
     private void findApps(ActionEvent event) {
         TextField processTextField;
-        Button button = (Button) event.getSource();
-        String id = button.getId();
-        AppFinderDialog afd = new AppFinderDialog(stage);
-        Stage afdStage = new Stage();
+        var button = (Button) event.getSource();
+        var id = button.getId();
+        var afd = new AppFinderDialog(stage);
+        var afdStage = new Stage();
         afd.start(afdStage);
-        String processNameResult = afd.getProcessName();
+        var processNameResult = afd.getProcessName();
         if (processNameResult == null)
             return;
-        if (id.equals("findApp1")) {
-            processTextField = volumeProcessField1;
-        } else if (id.equals("findApp2")) {
-            processTextField = volumeProcessField2;
-        } else if (id.equals("findAppMute")) {
-            processTextField = muteAppProcessField;
-        } else if (id.equals("findAppEndProcess")) {
-            processTextField = endProcessField;
-        } else {
-            System.err.println("invalid findApp button");
-            return;
+        switch (id) {
+            case "findApp1" -> processTextField = volumeProcessField1;
+            case "findApp2" -> processTextField = volumeProcessField2;
+            case "findAppMute" -> processTextField = muteAppProcessField;
+            case "findAppEndProcess" -> processTextField = endProcessField;
+            case null, default -> {
+                log.error("invalid findApp button");
+                return;
+            }
         }
         processTextField.setText(processNameResult);
     }
@@ -368,18 +355,18 @@ public class BasicMacro extends Application implements Initializable {
     @FXML
     private void ok(ActionEvent event) {
         System.out.println();
-        String buttonType = getSelectedTabName(buttonTabPane);
-        String dialType = getSelectedTabName(dialTabPane);
-        if (buttonType.equals("keystroke")) {
+        var buttonType = getSelectedTabName(buttonTabPane);
+        var dialType = getSelectedTabName(dialTabPane);
+        if ("keystroke".equals(buttonType)) {
             buttonData = new String[2];
             buttonData[1] = keystrokeField.getText();
-        } else if (buttonType.equals("shortcut")) {
+        } else if ("shortcut".equals(buttonType)) {
             buttonData = new String[2];
             buttonData[1] = shortcutField.getText();
-        } else if (buttonType.equals("media")) {
+        } else if ("media".equals(buttonType)) {
             buttonData = new String[2];
             buttonData[1] = ((RadioButton) mediagroup.getSelectedToggle()).getId();
-        } else if (buttonType.equals("end_program")) {
+        } else if ("end_program".equals(buttonType)) {
             buttonData = new String[3];
             if (rdioEndSpecificProgram.isSelected()) {
                 buttonData[1] = "specific";
@@ -387,13 +374,13 @@ public class BasicMacro extends Application implements Initializable {
             } else if (rdioEndFocusedProgram.isSelected()) {
                 buttonData[1] = "focused";
             }
-        } else if (buttonType.equals("sound_device")) {
+        } else if ("sound_device".equals(buttonType)) {
             buttonData = new String[2];
             buttonData[1] = sounddevices.getValue().getId();
-        } else if (buttonType.equals("toggle_device")) {
+        } else if ("toggle_device".equals(buttonType)) {
             buttonData = new String[3];
             buttonData[1] = Util.listToPipeDelimitedString(soundDevices2.getItems().stream().map(c -> c.getId()).collect(Collectors.toList()));
-        } else if (buttonType.equals("mute_app")) {
+        } else if ("mute_app".equals(buttonType)) {
             buttonData = new String[3];
             buttonData[1] = muteAppProcessField.getText();
             if (rdio_mute_unmute.isSelected()) {
@@ -403,7 +390,7 @@ public class BasicMacro extends Application implements Initializable {
             } else if (rdio_mute_toggle.isSelected()) {
                 buttonData[2] = "toggle";
             }
-        } else if (buttonType.equals("mute_device")) {
+        } else if ("mute_device".equals(buttonType)) {
             buttonData = new String[3];
             if (rdio_muteDevice_Default.isSelected() || muteSoundDevice.getValue() == null) {
                 buttonData[1] = "default";
@@ -417,7 +404,7 @@ public class BasicMacro extends Application implements Initializable {
             } else if (rdio_muteDevice_toggle.isSelected()) {
                 buttonData[2] = "toggle";
             }
-        } else if (buttonType.equals("obs_button")) {
+        } else if ("obs_button".equals(buttonType)) {
             buttonData = new String[4];
             if (obs_rdio_SetScene.isSelected()) {
                 buttonData[1] = "set_scene";
@@ -435,13 +422,13 @@ public class BasicMacro extends Application implements Initializable {
             } else {
                 System.err.println("ERROR INVALID RADIO BUTTON IN BUTTON OBS");
             }
-        } else if (buttonType.equals("voicemeeter_button")) {
+        } else if ("voicemeeter_button".equals(buttonType)) {
             buttonData = new String[5];
             if (voicemeeterTabPaneButton.getSelectionModel().getSelectedIndex() == 0) {
                 buttonData[1] = "basic";
                 buttonData[2] = voicemeeterBasicButtonIO.getValue().name();
                 buttonData[3] = String.valueOf(voicemeeterBasicButtonIndex.getValue().intValue() - 1);
-                ButtonType bt = voicemeeterBasicButton.getValue();
+                var bt = voicemeeterBasicButton.getValue();
                 buttonData[4] = (bt == null) ? null : bt.name();
             } else if (voicemeeterTabPaneButton.getSelectionModel().getSelectedIndex() == 1) {
                 if (voicemeeterButtonType.getValue() == null) {
@@ -452,11 +439,11 @@ public class BasicMacro extends Application implements Initializable {
                 buttonData[2] = voicemeeterButtonParameter.getText();
                 buttonData[3] = voicemeeterButtonType.getValue().name();
             }
-        } else if (buttonType.equals("profile")) {
+        } else if ("profile".equals(buttonType)) {
             buttonData = new String[2];
             buttonData[1] = (profileDropdown.getValue() == null) ? null : profileDropdown.getValue().getName();
         }
-        if (dialType.equals("app_volume")) {
+        if ("app_volume".equals(dialType)) {
             volData[1] = volumeProcessField1.getText();
             volData[2] = volumeProcessField2.getText();
             if (rdio_app_output_all.isSelected()) {
@@ -466,22 +453,22 @@ public class BasicMacro extends Application implements Initializable {
             } else if (rdio_app_output_default.isSelected()) {
                 volData[3] = "";
             }
-        } else if (!dialType.equals("focus_volume")) {
-            if (dialType.equals("device_volume")) {
+        } else if (!"focus_volume".equals(dialType)) {
+            if ("device_volume".equals(dialType)) {
                 if (rdio_device_specific.isSelected() && volumedevice.getSelectionModel().getSelectedItem() != null) {
                     volData[1] = volumedevice.getSelectionModel().getSelectedItem().getId();
                 } else {
                     volData[1] = "";
                 }
-            } else if (dialType.equals("obs_dial")) {
+            } else if ("obs_dial".equals(dialType)) {
                 volData[1] = "mix";
                 volData[2] = obsAudioSources.getSelectionModel().getSelectedItem();
-            } else if (dialType.equals("voicemeeter_dial")) {
+            } else if ("voicemeeter_dial".equals(dialType)) {
                 if (voicemeeterTabPaneDial.getSelectionModel().getSelectedIndex() == 0) {
                     volData[1] = "basic";
                     volData[2] = voicemeeterBasicDialIO.getValue().name();
                     volData[3] = String.valueOf(voicemeeterBasicDialIndex.getValue().intValue() - 1);
-                    DialType dt = voicemeeterBasicDial.getValue();
+                    var dt = voicemeeterBasicDial.getValue();
                     volData[4] = (dt == null) ? null : dt.name();
                 } else if (voicemeeterTabPaneDial.getSelectionModel().getSelectedIndex() == 1) {
                     if (voicemeeterDialType.getValue() == null) {
@@ -508,7 +495,7 @@ public class BasicMacro extends Application implements Initializable {
         int i;
         String[] arrayOfString;
         for (i = (arrayOfString = buttonData).length, b = 0; b < i; ) {
-            String s = arrayOfString[b];
+            var s = arrayOfString[b];
             System.out.println(s);
             b++;
         }
@@ -518,17 +505,17 @@ public class BasicMacro extends Application implements Initializable {
     }
 
     private void showError(String error) {
-        Alert a = new Alert(AlertType.ERROR, error);
+        var a = new Alert(AlertType.ERROR, error);
         a.initOwner(stage);
         a.show();
     }
 
     @FXML
     private void scFile(ActionEvent event) {
-        Stage stage = (Stage) scFileButton.getScene().getWindow();
-        FileChooser fileChooser = new FileChooser();
+        var stage = (Stage) scFileButton.getScene().getWindow();
+        var fileChooser = new FileChooser();
         fileChooser.setTitle("Open File");
-        File f = fileChooser.showOpenDialog(stage);
+        var f = fileChooser.showOpenDialog(stage);
         if (f == null)
             return;
         shortcutField.setText(f.getPath());
@@ -565,23 +552,23 @@ public class BasicMacro extends Application implements Initializable {
         Util.adjustTabs(dialTabPane, 120, 30);
         Util.adjustTabs(buttonTabPane, 120, 30);
         if (OBS.isConnected()) {
-            List<String> sourcesWithAudio = OBS.getSourcesWithAudio();
-            List<String> scenes = OBS.getScenes();
+            var sourcesWithAudio = OBS.getSourcesWithAudio();
+            var scenes = OBS.getScenes();
             obsAudioSources.getItems().addAll(sourcesWithAudio);
             obsSourceToMute.getItems().addAll(sourcesWithAudio);
             obsSetScene.getItems().addAll(scenes);
         } else {
-            if (volData[0] != null && volData[0].equals("obs_dial")) {
-                if (volData[1] != null && volData[1].equals("mix"))
+            if (volData[0] != null && "obs_dial".equals(volData[0])) {
+                if (volData[1] != null && "mix".equals(volData[1]))
                     obsAudioSources.getItems().add(volData[2]);
             } else {
                 removeTabByName(dialTabPane, "obs_dial");
             }
-            if (buttonData != null && buttonData.length > 0 && buttonData[0] != null && buttonData[0].equals("obs_button")) {
+            if (buttonData != null && buttonData.length > 0 && buttonData[0] != null && "obs_button".equals(buttonData[0])) {
                 if (buttonData[1] != null)
-                    if (buttonData[1].equals("set_scene")) {
+                    if ("set_scene".equals(buttonData[1])) {
                         obsSetScene.getItems().add(buttonData[2]);
-                    } else if (buttonData[1].equals("mute_source")) {
+                    } else if ("mute_source".equals(buttonData[1])) {
                         obsSourceToMute.getItems().add(buttonData[2]);
                     }
             } else {
@@ -628,8 +615,8 @@ public class BasicMacro extends Application implements Initializable {
             voicemeeterBasicButtonIndex.getSelectionModel().selectFirst();
             voicemeeterBasicDialIndex.getSelectionModel().selectFirst();
         } else {
-            if (volData[0] != null && volData[0].equals("voicemeeter_dial")) {
-                if (volData[1] != null && volData[1].equals("basic")) {
+            if (volData[0] != null && "voicemeeter_dial".equals(volData[0])) {
+                if (volData[1] != null && "basic".equals(volData[1])) {
                     voicemeeterBasicDialIO.getItems().add(ControlType.valueOf(volData[2]));
                     voicemeeterBasicDialIndex.getItems().add(Integer.valueOf(Util.toInt(volData[3], 0) + 1));
                     voicemeeterBasicDial.getItems().add(DialType.valueOf(volData[4]));
@@ -637,8 +624,8 @@ public class BasicMacro extends Application implements Initializable {
             } else {
                 removeTabByName(dialTabPane, "voicemeeter_dial");
             }
-            if (buttonData != null && buttonData.length > 0 && buttonData[0] != null && buttonData[0].equals("voicemeeter_button")) {
-                if (buttonData[1] != null && buttonData[1].equals("basic")) {
+            if (buttonData != null && buttonData.length > 0 && buttonData[0] != null && "voicemeeter_button".equals(buttonData[0])) {
+                if (buttonData[1] != null && "basic".equals(buttonData[1])) {
                     voicemeeterBasicButtonIO.getItems().add(ControlType.valueOf(buttonData[2]));
                     voicemeeterBasicButtonIndex.getItems().add(Integer.valueOf(Util.toInt(buttonData[3], 0) + 1));
                     voicemeeterBasicButton.getItems().add(ButtonType.valueOf(buttonData[4]));
@@ -647,10 +634,10 @@ public class BasicMacro extends Application implements Initializable {
                 removeTabByName(buttonTabPane, "voicemeeter_button");
             }
         }
-        String curProfile = deviceSave.getCurrentProfileName();
+        var curProfile = deviceSave.getCurrentProfileName();
         profileDropdown.getItems().addAll(deviceSave.getProfiles().stream().filter(c -> !c.getName().equals(curProfile)).collect(Collectors.toList()));
         allSoundDevices = SoundAudit.getDevices();
-        List<SoundDevice> outputDevices = allSoundDevices.stream().filter(c -> c.isOutput()).collect(Collectors.toList());
+        var outputDevices = allSoundDevices.stream().filter(c -> c.isOutput()).collect(Collectors.toList());
         volumedevice.getItems().addAll(allSoundDevices);
         muteSoundDevice.getItems().addAll(allSoundDevices);
         sounddevices.getItems().addAll(allSoundDevices);
@@ -675,7 +662,7 @@ public class BasicMacro extends Application implements Initializable {
         keystrokeField.setOnKeyPressed(new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent event) {
-                KeyCode code = event.getCode();
+                var code = event.getCode();
                 if (code == KeyCode.ALT) {
                     k_alt = true;
                 } else if (code == KeyCode.SHIFT) {
@@ -691,10 +678,10 @@ public class BasicMacro extends Application implements Initializable {
                         keystrokeField.setText(code.name());
                     }
                 } else {
-                    String str = "";
-                    boolean[] bools = { k_ctrl, k_shift, k_alt, k_win };
-                    String[] keys = { "ctrl", "shift", "alt", "windows" };
-                    for (int i = 0; i < 4; i++) {
+                    var str = "";
+                    var bools = new boolean[]{k_ctrl, k_shift, k_alt, k_win};
+                    var keys = new String[]{"ctrl", "shift", "alt", "windows"};
+                    for (var i = 0; i < 4; i++) {
                         if (bools[i])
                             str = str + keys[i] + " + ";
                     }
@@ -710,7 +697,7 @@ public class BasicMacro extends Application implements Initializable {
         keystrokeField.setOnKeyReleased(new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent event) {
-                KeyCode code = event.getCode();
+                var code = event.getCode();
                 if (code == KeyCode.ALT) {
                     k_alt = false;
                 } else if (code == KeyCode.SHIFT) {
@@ -725,10 +712,10 @@ public class BasicMacro extends Application implements Initializable {
         trimMin.textProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-                if (!newValue.matches("\\d*") || newValue.contains("-") || newValue.equals("")) {
+                if (!newValue.matches("\\d*") || newValue.contains("-") || "".equals(newValue)) {
                     trimMin.setText(newValue.replace("-", "").replaceAll("[^\\d]", ""));
                 } else {
-                    int num = Integer.parseInt(newValue);
+                    var num = Integer.parseInt(newValue);
                     if (num < 0 || num > 100) {
                         trimMin.setText(oldValue);
                         return;
@@ -740,10 +727,10 @@ public class BasicMacro extends Application implements Initializable {
         trimMax.textProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-                if (!newValue.matches("\\d*") || newValue.contains("-") || newValue.equals("")) {
+                if (!newValue.matches("\\d*") || newValue.contains("-") || "".equals(newValue)) {
                     trimMax.setText(newValue.replace("-", "").replaceAll("[^\\d]", ""));
                 } else {
-                    int num = Integer.parseInt(newValue);
+                    var num = Integer.parseInt(newValue);
                     if (num < 0 || num > 100) {
                         trimMax.setText(oldValue);
                         return;
@@ -755,10 +742,10 @@ public class BasicMacro extends Application implements Initializable {
         buttonDebounceTime.textProperty().addListener(new ChangeListener<String>() {
             @Override
             public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-                if (!newValue.matches("\\d*") || newValue.contains("-") || newValue.equals("")) {
+                if (!newValue.matches("\\d*") || newValue.contains("-") || "".equals(newValue)) {
                     buttonDebounceTime.setText(newValue.replace("-", "").replaceAll("[^\\d]", ""));
                 } else {
-                    int num = Integer.parseInt(newValue);
+                    var num = Integer.parseInt(newValue);
                     if (num < 0 || num > 10000) {
                         buttonDebounceTime.setText(oldValue);
                         return;
@@ -777,7 +764,7 @@ public class BasicMacro extends Application implements Initializable {
     }
 
     private SoundDevice getSoundDeviceById(String id) {
-        for (SoundDevice sd : allSoundDevices) {
+        for (var sd : allSoundDevices) {
             if (sd.getId().equals(id))
                 return sd;
         }
@@ -788,98 +775,98 @@ public class BasicMacro extends Application implements Initializable {
         if (volData[0] == null)
             return;
         if (hasButton && buttonData != null && buttonData[0] != null) {
-            String buttonType = buttonData[0];
+            var buttonType = buttonData[0];
             selectTabByName(buttonTabPane, buttonType);
-            if (buttonType.equals("keystroke")) {
+            if ("keystroke".equals(buttonType)) {
                 keystrokeField.setText(buttonData[1]);
-            } else if (buttonType.equals("shortcut")) {
+            } else if ("shortcut".equals(buttonType)) {
                 shortcutField.setText(buttonData[1]);
-            } else if (buttonType.equals("media")) {
-                if (buttonData[1].equals("media1")) {
+            } else if ("media".equals(buttonType)) {
+                if ("media1".equals(buttonData[1])) {
                     mediagroup.getToggles().get(0).setSelected(true);
-                } else if (buttonData[1].equals("media2")) {
+                } else if ("media2".equals(buttonData[1])) {
                     mediagroup.getToggles().get(1).setSelected(true);
-                } else if (buttonData[1].equals("media3")) {
+                } else if ("media3".equals(buttonData[1])) {
                     mediagroup.getToggles().get(2).setSelected(true);
-                } else if (buttonData[1].equals("media4")) {
+                } else if ("media4".equals(buttonData[1])) {
                     mediagroup.getToggles().get(3).setSelected(true);
-                } else if (buttonData[1].equals("media5")) {
+                } else if ("media5".equals(buttonData[1])) {
                     mediagroup.getToggles().get(4).setSelected(true);
                 }
-            } else if (buttonType.equals("end_program")) {
-                if (buttonData[1].equals("specific")) {
+            } else if ("end_program".equals(buttonType)) {
+                if ("specific".equals(buttonData[1])) {
                     rdioEndSpecificProgram.setSelected(true);
                     endProcessField.setText(buttonData[2]);
-                } else if (buttonData[1].equals("focused")) {
+                } else if ("focused".equals(buttonData[1])) {
                     rdioEndFocusedProgram.setSelected(true);
                 }
-            } else if (buttonType.equals("sound_device")) {
+            } else if ("sound_device".equals(buttonType)) {
                 sounddevices.setValue(getSoundDeviceById(buttonData[1]));
-            } else if (buttonType.equals("toggle_device")) {
-                String[] devicesStr = buttonData[1].split("\\|");
-                List<SoundDevice> devices = Arrays.stream(devicesStr).map(c -> getSoundDeviceById(c)).collect(Collectors.toList());
+            } else if ("toggle_device".equals(buttonType)) {
+                var devicesStr = buttonData[1].split("\\|");
+                var devices = Arrays.stream(devicesStr).map(c -> getSoundDeviceById(c)).collect(Collectors.toList());
                 soundDevices2.getItems().addAll(devices);
                 soundDeviceSource.getItems().removeAll(devices);
-            } else if (buttonType.equals("mute_app")) {
+            } else if ("mute_app".equals(buttonType)) {
                 muteAppProcessField.setText(buttonData[1]);
                 if (buttonData.length >= 3 && buttonData[2] != null)
-                    if (buttonData[2].equals("unmute")) {
+                    if ("unmute".equals(buttonData[2])) {
                         rdio_mute_unmute.setSelected(true);
-                    } else if (buttonData[2].equals("mute")) {
+                    } else if ("mute".equals(buttonData[2])) {
                         rdio_mute_mute.setSelected(true);
-                    } else if (buttonData[2].equals("toggle")) {
+                    } else if ("toggle".equals(buttonData[2])) {
                         rdio_mute_toggle.setSelected(true);
                     }
-            } else if (buttonType.equals("mute_device")) {
-                if (buttonData[1].equals("default")) {
+            } else if ("mute_device".equals(buttonType)) {
+                if ("default".equals(buttonData[1])) {
                     rdio_muteDevice_Default.setSelected(true);
                 } else {
                     rdio_muteDevice_Specific.setSelected(true);
                     muteSoundDevice.setValue(getSoundDeviceById(buttonData[1]));
                 }
-                if (buttonData[2].equals("unmute")) {
+                if ("unmute".equals(buttonData[2])) {
                     rdio_muteDevice_unmute.setSelected(true);
-                } else if (buttonData[2].equals("mute")) {
+                } else if ("mute".equals(buttonData[2])) {
                     rdio_muteDevice_mute.setSelected(true);
-                } else if (buttonData[2].equals("toggle")) {
+                } else if ("toggle".equals(buttonData[2])) {
                     rdio_muteDevice_toggle.setSelected(true);
                 }
-            } else if (buttonType.equals("obs_button")) {
-                if (buttonData[1].equals("set_scene")) {
+            } else if ("obs_button".equals(buttonType)) {
+                if ("set_scene".equals(buttonData[1])) {
                     obs_rdio_SetScene.setSelected(true);
                     obsSetScene.getSelectionModel().select(buttonData[2]);
-                } else if (buttonData[1].equals("mute_source")) {
+                } else if ("mute_source".equals(buttonData[1])) {
                     obs_rdio_MuteSource.setSelected(true);
                     obsSourceToMute.getSelectionModel().select(buttonData[2]);
-                    if (buttonData[3].equals("unmute")) {
+                    if ("unmute".equals(buttonData[3])) {
                         obsMuteUnmute.setSelected(true);
-                    } else if (buttonData[3].equals("mute")) {
+                    } else if ("mute".equals(buttonData[3])) {
                         obsMuteMute.setSelected(true);
-                    } else if (buttonData[3].equals("toggle")) {
+                    } else if ("toggle".equals(buttonData[3])) {
                         obsMuteToggle.setSelected(true);
                     }
                 }
-            } else if (buttonType.equals("voicemeeter_button")) {
-                if (buttonData[1].equals("basic")) {
+            } else if ("voicemeeter_button".equals(buttonType)) {
+                if ("basic".equals(buttonData[1])) {
                     voicemeeterTabPaneButton.getSelectionModel().select(0);
                     voicemeeterBasicButtonIO.setValue(ControlType.valueOf(buttonData[2]));
                     voicemeeterBasicButtonIndex.setValue(Integer.valueOf(Util.toInt(buttonData[3], 0) + 1));
                     voicemeeterBasicButton.setValue(ButtonType.valueOf(buttonData[4]));
-                } else if (buttonData[1].equals("advanced")) {
+                } else if ("advanced".equals(buttonData[1])) {
                     voicemeeterTabPaneButton.getSelectionModel().select(1);
                     voicemeeterButtonParameter.setText(buttonData[2]);
                     voicemeeterButtonType.setValue(ButtonControlMode.valueOf(buttonData[3]));
                 }
-            } else if (buttonType.equals("profile")) {
+            } else if ("profile".equals(buttonType)) {
                 profileDropdown.setValue(deviceSave.getProfile(buttonData[1]));
             }
         }
-        String dialType = volData[0];
+        var dialType = volData[0];
         selectTabByName(dialTabPane, dialType);
-        if (dialType.equals("app_volume")) {
+        if ("app_volume".equals(dialType)) {
             volumeProcessField1.setText(volData[1]);
             volumeProcessField2.setText(volData[2]);
-            if (!Util.isNullOrEmpty(volData[3]) && volData[3].equals("*")) {
+            if (!Util.isNullOrEmpty(volData[3]) && "*".equals(volData[3])) {
                 rdio_app_output_all.setSelected(true);
             } else if (!Util.isNullOrEmpty(volData[3]) && !volData[3].endsWith(".exe")) {
                 rdio_app_output_specific.setSelected(true);
@@ -887,24 +874,24 @@ public class BasicMacro extends Application implements Initializable {
             } else {
                 rdio_app_output_default.setSelected(true);
             }
-        } else if (!dialType.equals("focus_volume")) {
-            if (dialType.equals("device_volume")) {
+        } else if (!"focus_volume".equals(dialType)) {
+            if ("device_volume".equals(dialType)) {
                 if (volData.length >= 2 && !Util.isNullOrEmpty(volData[1])) {
                     rdio_device_specific.setSelected(true);
                     volumedevice.setValue(getSoundDeviceById(volData[1]));
                 } else {
                     rdio_device_default.setSelected(true);
                 }
-            } else if (dialType.equals("obs_dial")) {
-                if (volData[1].equals("mix"))
+            } else if ("obs_dial".equals(dialType)) {
+                if ("mix".equals(volData[1]))
                     obsAudioSources.getSelectionModel().select(volData[2]);
-            } else if (dialType.equals("voicemeeter_dial")) {
-                if (volData[1].equals("basic")) {
+            } else if ("voicemeeter_dial".equals(dialType)) {
+                if ("basic".equals(volData[1])) {
                     voicemeeterTabPaneDial.getSelectionModel().select(0);
                     voicemeeterBasicDialIO.setValue(ControlType.valueOf(volData[2]));
                     voicemeeterBasicDialIndex.setValue(Integer.valueOf(Util.toInt(volData[3], 0) + 1));
                     voicemeeterBasicDial.setValue(DialType.valueOf(volData[4]));
-                } else if (volData[1].equals("advanced")) {
+                } else if ("advanced".equals(volData[1])) {
                     voicemeeterTabPaneDial.getSelectionModel().select(1);
                     voicemeeterDialParameter.setText(volData[2]);
                     voicemeeterDialType.setValue(DialControlMode.valueOf(volData[3]));

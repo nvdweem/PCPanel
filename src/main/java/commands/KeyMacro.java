@@ -1,7 +1,6 @@
 package commands;
 
-import java.awt.AWTException;
-import java.awt.Robot;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.Field;
 
@@ -60,11 +59,11 @@ public class KeyMacro {
     }
 
     private static int modifierToKeyEvent(String mod) {
-        if (mod.equals("ctrl"))
+        if ("ctrl".equals(mod))
             return 17;
-        if (mod.equals("shift"))
+        if ("shift".equals(mod))
             return 16;
-        if (mod.equals("alt"))
+        if ("alt".equals(mod))
             return 18;
         return 0;
     }

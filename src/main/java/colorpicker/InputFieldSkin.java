@@ -1,7 +1,6 @@
 package colorpicker;
 
 import com.sun.javafx.event.EventDispatchChainImpl;
-
 import javafx.beans.InvalidationListener;
 import javafx.event.EventDispatchChain;
 import javafx.scene.Node;
@@ -17,7 +16,7 @@ abstract class InputFieldSkin implements Skin<InputField> {
 
     private final InvalidationListener InputFieldStyleClassListener;
 
-    public InputFieldSkin(InputField control) {
+    protected InputFieldSkin(InputField control) {
         this.control = control;
         textField = new InnerTextField() {
             @Override

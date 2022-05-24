@@ -1,8 +1,5 @@
 package main;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import hid.DeviceScanner;
 import hid.OutputInterpreter;
 import javafx.application.Application;
@@ -23,6 +20,9 @@ import obs.OBSListener;
 import save.Save;
 import util.FileChecker;
 import util.SleepDetector;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Window extends Application {
     @FXML
@@ -89,7 +89,7 @@ public class Window extends Application {
     }
 
     public static void main(String[] args) {
-        if (args.length > 0 && args[0].equals("quiet"))
+        if (args.length > 0 && "quiet".equals(args[0]))
             quiet = true;
         FileChecker.checkIsDuplicateRunning();
         TrayWork.tray();

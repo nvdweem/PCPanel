@@ -7,12 +7,7 @@ import javafx.collections.FXCollections;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.ContentDisplay;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.MenuItem;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -35,7 +30,7 @@ public abstract class Device {
 
     protected DeviceSave save;
 
-    public Device(String serialNum, DeviceSave deviceSave) {
+    protected Device(String serialNum, DeviceSave deviceSave) {
         serialNumber = serialNum;
         save = deviceSave;
         initProfileMenu();

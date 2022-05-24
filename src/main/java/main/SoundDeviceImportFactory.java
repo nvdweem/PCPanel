@@ -1,17 +1,12 @@
 package main;
 
-import java.util.Objects;
-
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
-import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.DataFormat;
-import javafx.scene.input.DragEvent;
-import javafx.scene.input.Dragboard;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.input.TransferMode;
+import javafx.scene.input.*;
 import javafx.util.Callback;
 import util.SoundDevice;
+
+import java.util.Objects;
 
 public class SoundDeviceImportFactory implements Callback<ListView<SoundDevice>, ListCell<SoundDevice>> {
     public static final DataFormat JAVA_FORMAT = new DataFormat("application/x-java-serialized-object");
@@ -93,7 +88,7 @@ public class SoundDeviceImportFactory implements Callback<ListView<SoundDevice>,
             return;
         SoundDevice thisItem = treeCell.getItem();
         int index = listView.getItems().indexOf(thisItem);
-        if (treeCell.getStyle().equals("-fx-border-color: #eea82f; -fx-border-width: 0 0 2 0; -fx-padding: 3 7 1 7"))
+        if ("-fx-border-color: #eea82f; -fx-border-width: 0 0 2 0; -fx-padding: 3 7 1 7".equals(treeCell.getStyle()))
             index++;
         if (index == -1)
             index = listView.getItems().size();

@@ -1,19 +1,5 @@
 package main;
 
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ResourceBundle;
-import java.util.Scanner;
-
-import javax.imageio.ImageIO;
-
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -34,6 +20,18 @@ import javafx.scene.text.TextAlignment;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import me.marnic.jiconextract2.JIconExtract;
+
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ResourceBundle;
+import java.util.Scanner;
 
 public class AppFinderDialog extends Application implements Initializable {
     private Scene scene;
@@ -117,7 +115,7 @@ public class AppFinderDialog extends Application implements Initializable {
 
     private ImageView getImage(App app) throws Exception {
         BufferedImage bi;
-        if (app.processName.equals("ShellExperienceHost.exe")) {
+        if ("ShellExperienceHost.exe".equals(app.processName)) {
             app.displayName = "System Sounds";
             bi = resize(ImageIO.read(getClass().getResourceAsStream("/assets/systemsounds.ico")), 90, 90);
         } else {

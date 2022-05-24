@@ -1,14 +1,13 @@
 package util;
 
+import util.SoundDevice.SoundDeviceType;
+
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Mixer.Info;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Mixer.Info;
-
-import util.SoundDevice.SoundDeviceType;
 
 public class SoundAudit {
     public static List<String> getSoundDevices() {
@@ -19,8 +18,8 @@ public class SoundAudit {
             Info[] arrayOfInfo;
             for (i = (arrayOfInfo = AudioSystem.getMixerInfo()).length, b = 0; b < i; ) {
                 Info thisMixerInfo = arrayOfInfo[b];
-                if ((thisMixerInfo.getDescription().equals("Direct Audio Device: DirectSound Playback") || thisMixerInfo.getDescription().equals("Direct Audio Device: DirectSound Capture"))
-                        && !thisMixerInfo.getName().equals("Primary Sound Driver") &&
+                if (("Direct Audio Device: DirectSound Playback".equals(thisMixerInfo.getDescription()) || "Direct Audio Device: DirectSound Capture".equals(thisMixerInfo.getDescription()))
+                        && !"Primary Sound Driver".equals(thisMixerInfo.getName()) &&
                         !ar.contains(convert(thisMixerInfo.getName())))
                     ar.add(convert(thisMixerInfo.getName()));
                 b++;
@@ -46,9 +45,9 @@ public class SoundAudit {
     }
 
     private static SoundDeviceType toEnum(String type) {
-        if (type.equals("eRender"))
+        if ("eRender".equals(type))
             return SoundDeviceType.OUTPUT;
-        if (type.equals("eCapture"))
+        if ("eCapture".equals(type))
             return SoundDeviceType.INPUT;
         return null;
     }

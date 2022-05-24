@@ -1,5 +1,7 @@
 package util;
 
+import obs.OBS;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -9,8 +11,6 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-
-import obs.OBS;
 
 public class CommandHandler {
     private static final Map<String, List<String>> map = new ConcurrentHashMap<>();
@@ -67,24 +67,24 @@ public class CommandHandler {
                 if (!OBS.isConnected())
                     continue;
                 String[] args = cmd.split("\"?( |$)(?=(([^\"]*\"){2})*[^\"]*$)\"?");
-                if (args[1].equals("setsourcevolume")) {
+                if ("setsourcevolume".equals(args[1])) {
                     OBS.setSourceVolume(args[2], Util.toInt(args[3], 0));
                     continue;
                 }
-                if (args[1].equals("setscene")) {
+                if ("setscene".equals(args[1])) {
                     OBS.setCurrentScene(args[2]);
                     continue;
                 }
-                if (args[1].equals("mutesource")) {
-                    if (args[3].equals("toggle")) {
+                if ("mutesource".equals(args[1])) {
+                    if ("toggle".equals(args[3])) {
                         OBS.toggleSourceMute(args[2]);
                         continue;
                     }
-                    if (args[3].equals("mute")) {
+                    if ("mute".equals(args[3])) {
                         OBS.setSourceMute(args[2], true);
                         continue;
                     }
-                    if (args[3].equals("unmute"))
+                    if ("unmute".equals(args[3]))
                         OBS.setSourceMute(args[2], false);
                 }
                 continue;
@@ -106,12 +106,12 @@ public class CommandHandler {
                 if (!foundAnyOnPrevSweep)
                     waitFunc();
                 foundAnyOnPrevSweep = false;
-                for (String key : CommandHandler.map.keySet()) {
-                    List<String> cmds = CommandHandler.map.get(key);
+                for (String key : map.keySet()) {
+                    List<String> cmds = map.get(key);
                     if (cmds == null)
                         continue;
-                    CommandHandler.map.remove(key);
-                    CommandHandler.dispatchSndCtrl(cmds);
+                    map.remove(key);
+                    dispatchSndCtrl(cmds);
                     foundAnyOnPrevSweep = true;
                 }
             }
@@ -119,8 +119,8 @@ public class CommandHandler {
 
         private void waitFunc() {
             try {
-                synchronized (CommandHandler.waiter) {
-                    CommandHandler.waiter.wait();
+                synchronized (waiter) {
+                    waiter.wait();
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();

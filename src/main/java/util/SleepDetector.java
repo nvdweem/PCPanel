@@ -1,8 +1,5 @@
 package util;
 
-import java.io.InputStream;
-import java.util.Scanner;
-
 import hid.DeviceCommunicationHandler;
 import hid.DeviceScanner;
 import hid.OutputInterpreter;
@@ -11,6 +8,9 @@ import javafx.scene.paint.Color;
 import main.Device;
 import main.DeviceType;
 import main.Window;
+
+import java.io.InputStream;
+import java.util.Scanner;
 
 public class SleepDetector {
     public static void start() {
@@ -27,11 +27,11 @@ public class SleepDetector {
                 scan.nextLine();
                 while (scan.hasNextLine()) {
                     String x = scan.nextLine();
-                    if (x.equals("Suspend")) {
+                    if ("Suspend".equals(x)) {
                         onSuspended();
                         continue;
                     }
-                    if (x.equals("Resume")) {
+                    if ("Resume".equals(x)) {
                         onResumed();
                         continue;
                     }

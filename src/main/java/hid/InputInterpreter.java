@@ -1,12 +1,6 @@
 package hid;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.sun.glass.ui.Application;
-
 import commands.KeyMacro;
 import commands.MediaKeys;
 import main.Device;
@@ -17,11 +11,12 @@ import save.Save;
 import util.CommandHandler;
 import util.Util;
 import voicemeeter.Voicemeeter;
-import voicemeeter.Voicemeeter.ButtonControlMode;
-import voicemeeter.Voicemeeter.ButtonType;
-import voicemeeter.Voicemeeter.ControlType;
-import voicemeeter.Voicemeeter.DialControlMode;
-import voicemeeter.Voicemeeter.DialType;
+import voicemeeter.Voicemeeter.*;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class InputInterpreter {
     private static final Runtime rt = Runtime.getRuntime();
@@ -52,10 +47,10 @@ public class InputInterpreter {
         String[] data = Save.getDeviceSave(serialNum).dialData[knob];
         if (data == null || data[0] == null)
             return;
-        if (data[0].equals("app_volume")) {
+        if ("app_volume".equals(data[0])) {
             List<String> cmds = new ArrayList<>(2);
             for (int i = 1; i <= 2; i++) {
-                if (data[i] != null && !data[i].equals("")) {
+                if (data[i] != null && !"".equals(data[i])) {
                     String cmd, device = data[3];
                     if (Util.isNullOrEmpty(device)) {
                         cmd = "sndctrl setappvolume \"" + data[i] + "\" " + v;
@@ -66,10 +61,10 @@ public class InputInterpreter {
                 }
             }
             CommandHandler.pushVolumeChange(serialNum, knob, cmds);
-        } else if (data[0].equals("focus_volume")) {
+        } else if ("focus_volume".equals(data[0])) {
             String cmd = "sndctrl setappvolume focused " + v;
             CommandHandler.pushVolumeChange(serialNum, knob, cmd);
-        } else if (data[0].equals("device_volume")) {
+        } else if ("device_volume".equals(data[0])) {
             if (Util.isNullOrEmpty(data[1])) {
                 String cmd = "sndctrl setsysvolume " + v;
                 CommandHandler.pushVolumeChange(serialNum, knob, cmd);
@@ -77,17 +72,17 @@ public class InputInterpreter {
                 String cmd = "sndctrl setsysvolume " + v + " \"" + data[1] + "\"";
                 CommandHandler.pushVolumeChange(serialNum, knob, cmd);
             }
-        } else if (data[0].equals("obs_dial")) {
-            if (data[1].equals("mix")) {
+        } else if ("obs_dial".equals(data[0])) {
+            if ("mix".equals(data[1])) {
                 String cmd = "obs setsourcevolume \"" + data[2] + "\" " + v;
                 CommandHandler.pushVolumeChange(serialNum, knob, cmd);
             }
-        } else if (data[0].equals("voicemeeter_dial")) {
+        } else if ("voicemeeter_dial".equals(data[0])) {
             if (!Voicemeeter.login())
                 return;
-            if (data[1].equals("basic")) {
+            if ("basic".equals(data[1])) {
                 Voicemeeter.controlLevel(ControlType.valueOf(data[2]), Util.toInt(data[3], 1), DialType.valueOf(data[4]), v);
-            } else if (data[1].equals("advanced")) {
+            } else if ("advanced".equals(data[1])) {
                 DialControlMode dt = DialControlMode.valueOf(data[3]);
                 if (dt == null)
                     return;
@@ -100,38 +95,38 @@ public class InputInterpreter {
         String[] data = Save.getDeviceSave(serialNum).buttonData[knob];
         if (data == null || data[0] == null)
             return;
-        if (data[0].equals("keystroke")) {
+        if ("keystroke".equals(data[0])) {
             if (Util.isNullOrEmpty(data[1]))
                 return;
             KeyMacro.executeKeyStroke(data[1]);
-        } else if (data[0].equals("shortcut")) {
+        } else if ("shortcut".equals(data[0])) {
             File file = new File(data[1]);
             if (file.isFile() && Util.isFileExecutable(file)) {
                 rt.exec("cmd.exe /c \"" + file.getName() + "\"", null, file.getParentFile());
             } else {
                 rt.exec("cmd.exe /c \"" + data[1] + "\"");
             }
-        } else if (data[0].equals("media")) {
-            if (data[1].equals("media1")) {
+        } else if ("media".equals(data[0])) {
+            if ("media1".equals(data[1])) {
                 MediaKeys.songPlayPause();
-            } else if (data[1].equals("media2")) {
+            } else if ("media2".equals(data[1])) {
                 MediaKeys.mediaStop();
-            } else if (data[1].equals("media3")) {
+            } else if ("media3".equals(data[1])) {
                 MediaKeys.songPrevious();
-            } else if (data[1].equals("media4")) {
+            } else if ("media4".equals(data[1])) {
                 MediaKeys.songNext();
-            } else if (data[1].equals("media5")) {
+            } else if ("media5".equals(data[1])) {
                 MediaKeys.volumeMute();
             }
-        } else if (data[0].equals("end_program")) {
-            if (data[1].equals("specific")) {
+        } else if ("end_program".equals(data[0])) {
+            if ("specific".equals(data[1])) {
                 rt.exec("cmd.exe /c taskkill /IM " + data[2] + " /F");
-            } else if (data[1].equals("focused")) {
+            } else if ("focused".equals(data[1])) {
                 rt.exec("sndctrl killfocusedprocess");
             }
-        } else if (data[0].equals("sound_device")) {
+        } else if ("sound_device".equals(data[0])) {
             rt.exec("sndctrl setdefaultdevice \"" + data[1] + "\"");
-        } else if (data[0].equals("toggle_device")) {
+        } else if ("toggle_device".equals(data[0])) {
             String[] deviceArray = data[1].split("\\|");
             if (deviceArray.length == 0)
                 return;
@@ -145,30 +140,30 @@ public class InputInterpreter {
             String device = deviceArray[index];
             rt.exec("sndctrl setdefaultdevice \"" + device + "\"");
             data[2] = String.valueOf(index + 1);
-        } else if (data[0].equals("mute_app")) {
+        } else if ("mute_app".equals(data[0])) {
             rt.exec("sndctrl muteappvolume \"" + data[1] + "\" " + data[2]);
-        } else if (data[0].equals("mute_device")) {
+        } else if ("mute_device".equals(data[0])) {
             rt.exec("sndctrl mutedevice \"" + data[1] + "\" " + data[2]);
-        } else if (data[0].equals("obs_button")) {
-            if (data[1].equals("set_scene")) {
+        } else if ("obs_button".equals(data[0])) {
+            if ("set_scene".equals(data[1])) {
                 String cmd = "obs setscene \"" + data[2] + "\"";
                 CommandHandler.pushVolumeChange(serialNum, knob, cmd);
-            } else if (data[1].equals("mute_source")) {
+            } else if ("mute_source".equals(data[1])) {
                 String cmd = "obs mutesource \"" + data[2] + "\" " + data[3];
                 CommandHandler.pushVolumeChange(serialNum, knob, cmd);
             }
-        } else if (data[0].equals("voicemeeter_button")) {
+        } else if ("voicemeeter_button".equals(data[0])) {
             if (!Voicemeeter.login())
                 return;
-            if (data[1].equals("basic")) {
+            if ("basic".equals(data[1])) {
                 Voicemeeter.controlButton(ControlType.valueOf(data[2]), Util.toInt(data[3], 1), ButtonType.valueOf(data[4]));
-            } else if (data[1].equals("advanced")) {
+            } else if ("advanced".equals(data[1])) {
                 ButtonControlMode bt = ButtonControlMode.valueOf(data[3]);
                 if (bt == null)
                     return;
                 Voicemeeter.controlButton(data[2], bt);
             }
-        } else if (data[0].equals("profile")) {
+        } else if ("profile".equals(data[0])) {
             if (data[1] == null)
                 return;
             Application.invokeAndWait(() -> Window.devices.get(serialNum).setProfile(data[1]));

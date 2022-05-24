@@ -1,20 +1,9 @@
 package obsremote;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-
 import obsremote.callbacks.Callback;
 import obsremote.callbacks.ErrorCallback;
 import obsremote.callbacks.StringCallback;
@@ -24,78 +13,17 @@ import obsremote.events.responses.SwitchScenesResponse;
 import obsremote.events.responses.TransitionBeginResponse;
 import obsremote.events.responses.TransitionEndResponse;
 import obsremote.objects.throwables.InvalidResponseTypeError;
-import obsremote.requests.AuthenticateRequest;
-import obsremote.requests.AuthenticateResponse;
-import obsremote.requests.GetAuthRequiredRequest;
-import obsremote.requests.GetAuthRequiredResponse;
-import obsremote.requests.GetCurrentProfileRequest;
-import obsremote.requests.GetCurrentProfileResponse;
-import obsremote.requests.GetCurrentSceneRequest;
-import obsremote.requests.GetCurrentSceneResponse;
-import obsremote.requests.GetPreviewSceneRequest;
-import obsremote.requests.GetPreviewSceneResponse;
-import obsremote.requests.GetSceneItemPropertiesRequest;
-import obsremote.requests.GetSceneListRequest;
-import obsremote.requests.GetSceneListResponse;
-import obsremote.requests.GetSourceListRequest;
-import obsremote.requests.GetSourceListResponse;
-import obsremote.requests.GetSourceSettingsRequest;
-import obsremote.requests.GetSourceSettingsResponse;
-import obsremote.requests.GetSourceTypeListRequest;
-import obsremote.requests.GetSourceTypeListResponse;
-import obsremote.requests.GetStreamingStatusRequest;
-import obsremote.requests.GetStreamingStatusResponse;
-import obsremote.requests.GetStudioModeEnabledRequest;
-import obsremote.requests.GetStudioModeEnabledResponse;
-import obsremote.requests.GetTransitionDurationRequest;
-import obsremote.requests.GetTransitionDurationResponse;
-import obsremote.requests.GetTransitionListRequest;
-import obsremote.requests.GetTransitionListResponse;
-import obsremote.requests.GetVersionRequest;
-import obsremote.requests.GetVersionResponse;
-import obsremote.requests.GetVolumeRequest;
-import obsremote.requests.GetVolumeResponse;
-import obsremote.requests.ListProfilesRequest;
-import obsremote.requests.ListProfilesResponse;
-import obsremote.requests.ResponseBase;
-import obsremote.requests.SaveReplayBufferRequest;
-import obsremote.requests.SaveReplayBufferResponse;
-import obsremote.requests.SetCurrentProfileRequest;
-import obsremote.requests.SetCurrentProfileResponse;
-import obsremote.requests.SetCurrentSceneRequest;
-import obsremote.requests.SetCurrentSceneResponse;
-import obsremote.requests.SetCurrentTransitionRequest;
-import obsremote.requests.SetCurrentTransitionResponse;
-import obsremote.requests.SetMuteRequest;
-import obsremote.requests.SetMuteResponse;
-import obsremote.requests.SetPreviewSceneRequest;
-import obsremote.requests.SetPreviewSceneResponse;
-import obsremote.requests.SetSceneItemPropertiesRequest;
-import obsremote.requests.SetSceneItemPropertiesResponse;
-import obsremote.requests.SetSourceSettingsRequest;
-import obsremote.requests.SetSourceSettingsResponse;
-import obsremote.requests.SetStudioModeEnabledRequest;
-import obsremote.requests.SetStudioModeEnabledResponse;
-import obsremote.requests.SetTransitionDurationRequest;
-import obsremote.requests.SetTransitionDurationResponse;
-import obsremote.requests.SetVolumeRequest;
-import obsremote.requests.SetVolumeResponse;
-import obsremote.requests.StartRecordingRequest;
-import obsremote.requests.StartRecordingResponse;
-import obsremote.requests.StartReplayBufferRequest;
-import obsremote.requests.StartReplayBufferResponse;
-import obsremote.requests.StartStreamingRequest;
-import obsremote.requests.StartStreamingResponse;
-import obsremote.requests.StopRecordingRequest;
-import obsremote.requests.StopRecordingResponse;
-import obsremote.requests.StopReplayBufferRequest;
-import obsremote.requests.StopReplayBufferResponse;
-import obsremote.requests.StopStreamingRequest;
-import obsremote.requests.StopStreamingResponse;
-import obsremote.requests.ToggleMuteRequest;
-import obsremote.requests.ToggleMuteResponse;
-import obsremote.requests.TransitionToProgramRequest;
-import obsremote.requests.TransitionToProgramResponse;
+import obsremote.requests.*;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class OBSCommunicator {
     private final boolean debug;
@@ -227,35 +155,35 @@ public class OBSCommunicator {
         AuthenticateResponse authenticateResponse;
         String str;
         switch ((str = type.getSimpleName()).hashCode()) {
-        case -245944746:
-            if (!str.equals("AuthenticateResponse"))
-                break;
-            authenticateResponse = (AuthenticateResponse) responseBase;
-            if ("ok".equals(authenticateResponse.getStatus())) {
-                runOnConnect(versionInfo);
-            } else {
-                runOnConnectionFailed("Failed to authenticate with password. Error: " + authenticateResponse.getError());
-            }
-            return;
-        case 468908830:
-            if (!str.equals("GetAuthRequiredResponse"))
-                break;
-            authRequiredResponse = (GetAuthRequiredResponse) responseBase;
-            if (authRequiredResponse.isAuthRequired()) {
-                System.out.println("Authentication is required.");
-                authenticateWithServer(authRequiredResponse.getChallenge(), authRequiredResponse.getSalt());
-            } else {
-                System.out.println("Authentication is not required. You're ready to go!");
-                runOnConnect(versionInfo);
-            }
-            return;
-        case 663604003:
-            if (!str.equals("GetVersionResponse"))
-                break;
-            versionInfo = (GetVersionResponse) responseBase;
-            System.out.printf("Connected to OBS. Websocket Version: %s, Studio Version: %s\n", versionInfo.getObsWebsocketVersion(), versionInfo.getObsStudioVersion());
-            sendMessage(new Gson().toJson(new GetAuthRequiredRequest(this)));
-            return;
+            case -245944746:
+                if (!"AuthenticateResponse".equals(str))
+                    break;
+                authenticateResponse = (AuthenticateResponse) responseBase;
+                if ("ok".equals(authenticateResponse.getStatus())) {
+                    runOnConnect(versionInfo);
+                } else {
+                    runOnConnectionFailed("Failed to authenticate with password. Error: " + authenticateResponse.getError());
+                }
+                return;
+            case 468908830:
+                if (!"GetAuthRequiredResponse".equals(str))
+                    break;
+                authRequiredResponse = (GetAuthRequiredResponse) responseBase;
+                if (authRequiredResponse.isAuthRequired()) {
+                    System.out.println("Authentication is required.");
+                    authenticateWithServer(authRequiredResponse.getChallenge(), authRequiredResponse.getSalt());
+                } else {
+                    System.out.println("Authentication is not required. You're ready to go!");
+                    runOnConnect(versionInfo);
+                }
+                return;
+            case 663604003:
+                if (!"GetVersionResponse".equals(str))
+                    break;
+                versionInfo = (GetVersionResponse) responseBase;
+                System.out.printf("Connected to OBS. Websocket Version: %s, Studio Version: %s\n", versionInfo.getObsWebsocketVersion(), versionInfo.getObsStudioVersion());
+                sendMessage(new Gson().toJson(new GetAuthRequiredRequest(this)));
+                return;
         }
         if (!callbacks.containsKey(type)) {
             System.out.println("Invalid type received: " + type.getName());
@@ -273,18 +201,22 @@ public class OBSCommunicator {
 
     private void processIncomingEvent(String msg, EventType eventType) {
         switch (eventType) {
-        case ReplayStarted -> Optional.ofNullable(onReplayStarted).ifPresent(v -> v.run(null));
-        case ReplayStarting -> Optional.ofNullable(onReplayStarting).ifPresent(v -> v.run(null));
-        case ReplayStopped -> Optional.ofNullable(onReplayStopped).ifPresent(v -> v.run(null));
-        case ReplayStopping -> Optional.ofNullable(onReplayStopping).ifPresent(v -> v.run(null));
-        case SwitchScenes -> Optional.ofNullable(onSwitchScenes).ifPresent(v -> v.run(new Gson().fromJson(msg, SwitchScenesResponse.class)));
-        case ScenesChanged -> Optional.ofNullable(onScenesChanged).ifPresent(v -> v.run(new Gson().fromJson(msg, ScenesChangedResponse.class)));
-        case TransitionBegin -> Optional.ofNullable(onTransitionBegin).ifPresent(v -> v.run(new Gson().fromJson(msg, TransitionBeginResponse.class)));
-        case TransitionEnd -> Optional.ofNullable(onTransitionEnd).ifPresent(v -> v.run(new Gson().fromJson(msg, TransitionEndResponse.class)));
-        case RecordingStopped -> Optional.ofNullable(onRecordingStopped).ifPresent(v -> v.run(null));
-        case StreamStarted -> Optional.ofNullable(onStreamStarted).ifPresent(v -> v.run(null));
-        case StreamStopped -> Optional.ofNullable(onStreamStopped).ifPresent(v -> v.run(null));
-        case null, default -> Optional.ofNullable(onRecordingStarted).ifPresent(v -> v.run(null));
+            case ReplayStarted -> Optional.ofNullable(onReplayStarted).ifPresent(v -> v.run(null));
+            case ReplayStarting -> Optional.ofNullable(onReplayStarting).ifPresent(v -> v.run(null));
+            case ReplayStopped -> Optional.ofNullable(onReplayStopped).ifPresent(v -> v.run(null));
+            case ReplayStopping -> Optional.ofNullable(onReplayStopping).ifPresent(v -> v.run(null));
+            case SwitchScenes ->
+                    Optional.ofNullable(onSwitchScenes).ifPresent(v -> v.run(new Gson().fromJson(msg, SwitchScenesResponse.class)));
+            case ScenesChanged ->
+                    Optional.ofNullable(onScenesChanged).ifPresent(v -> v.run(new Gson().fromJson(msg, ScenesChangedResponse.class)));
+            case TransitionBegin ->
+                    Optional.ofNullable(onTransitionBegin).ifPresent(v -> v.run(new Gson().fromJson(msg, TransitionBeginResponse.class)));
+            case TransitionEnd ->
+                    Optional.ofNullable(onTransitionEnd).ifPresent(v -> v.run(new Gson().fromJson(msg, TransitionEndResponse.class)));
+            case RecordingStopped -> Optional.ofNullable(onRecordingStopped).ifPresent(v -> v.run(null));
+            case StreamStarted -> Optional.ofNullable(onStreamStarted).ifPresent(v -> v.run(null));
+            case StreamStopped -> Optional.ofNullable(onStreamStopped).ifPresent(v -> v.run(null));
+            case null, default -> Optional.ofNullable(onRecordingStarted).ifPresent(v -> v.run(null));
         }
     }
 

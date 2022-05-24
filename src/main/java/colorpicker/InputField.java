@@ -1,13 +1,6 @@
 package colorpicker;
 
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.IntegerPropertyBase;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ObjectPropertyBase;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.StringProperty;
-import javafx.beans.property.StringPropertyBase;
+import javafx.beans.property.*;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.Control;
@@ -129,7 +122,7 @@ abstract class InputField extends Control {
         onActionProperty().set(value);
     }
 
-    public InputField() {
+    protected InputField() {
         getStyleClass().setAll("input-field");
     }
 }

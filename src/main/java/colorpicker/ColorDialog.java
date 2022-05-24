@@ -1,16 +1,9 @@
 package colorpicker;
 
 import com.sun.javafx.scene.control.skin.resources.ControlResources;
-
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.Property;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.*;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -20,46 +13,22 @@ import javafx.scene.control.Slider;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.RowConstraints;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.Stop;
 
+import java.util.Objects;
+
 public class ColorDialog extends HBox {
     private ColorRectPane colorRectPane;
-
-    private ControlsPane controlsPane;
-
     private final ObjectProperty<Color> customColorProperty = new SimpleObjectProperty<>(Color.TRANSPARENT);
-
-    private Runnable onSave;
-
-    private Runnable onUse;
-
-    private Runnable onCancel;
-
-    private WebColorField webField;
 
     public ColorDialog(Color color) {
         getStyleClass().add("custom-color-dialog");
         buildUI();
-        if (color == null) {
-            setCustomColor(Color.BLACK);
-        } else {
-            setCustomColor(color);
-        }
+        setCustomColor(Objects.requireNonNullElse(color, Color.BLACK));
     }
 
     public ColorDialog() {
@@ -68,7 +37,7 @@ public class ColorDialog extends HBox {
 
     private void buildUI() {
         colorRectPane = new ColorRectPane();
-        controlsPane = new ControlsPane();
+        var controlsPane = new ControlsPane();
         setHgrow(controlsPane, Priority.ALWAYS);
         getChildren().setAll(colorRectPane, controlsPane);
     }
@@ -81,7 +50,7 @@ public class ColorDialog extends HBox {
         return customColorProperty;
     }
 
-    public void setCustomColor(Color color) {
+    public final void setCustomColor(Color color) {
         customColorProperty.set(color);
     }
 
@@ -89,43 +58,10 @@ public class ColorDialog extends HBox {
         return customColorProperty.get();
     }
 
-    public Runnable getOnSave() {
-        return onSave;
-    }
-
-    public void setOnSave(Runnable onSave) {
-        this.onSave = onSave;
-    }
-
-    public Runnable getOnUse() {
-        return onUse;
-    }
-
-    public void setOnUse(Runnable onUse) {
-        this.onUse = onUse;
-    }
-
-    public Runnable getOnCancel() {
-        return onCancel;
-    }
-
-    public void setOnCancel(Runnable onCancel) {
-        this.onCancel = onCancel;
-    }
-
     private class ColorRectPane extends HBox {
         private final Pane colorRect;
-
         private final Pane colorBar;
-
-        private final Pane colorRectOverlayOne;
-
-        private final Pane colorRectOverlayTwo;
-
         private final Region colorRectIndicator;
-
-        private final Region colorBarIndicator;
-
         private boolean changeIsLocal;
 
         private final DoubleProperty hue = new SimpleDoubleProperty(-1.0D) {
@@ -203,14 +139,14 @@ public class ColorDialog extends HBox {
                             getCustomColor().getRed(),
                             getCustomColor().getGreen(),
                             getCustomColor().getBlue(),
-                            ColorDialog.clamp(alpha.get() / 100.0D)));
+                            clamp(alpha.get() / 100.0D)));
                     changeIsLocal = false;
                 }
             }
         };
 
         private void updateRGBColor() {
-            Color newColor = Color.rgb(red.get(), green.get(), blue.get(), ColorDialog.clamp(alpha.get() / 100.0D));
+            var newColor = Color.rgb(red.get(), green.get(), blue.get(), clamp(alpha.get() / 100.0D));
             hue.set(newColor.getHue());
             sat.set(newColor.getSaturation() * 100.0D);
             bright.set(newColor.getBrightness() * 100.0D);
@@ -218,11 +154,11 @@ public class ColorDialog extends HBox {
         }
 
         private void updateHSBColor() {
-            Color newColor = Color.hsb(hue.get(), ColorDialog.clamp(sat.get() / 100.0D),
-                    ColorDialog.clamp(bright.get() / 100.0D), ColorDialog.clamp(alpha.get() / 100.0D));
-            red.set(ColorDialog.doubleToInt(newColor.getRed()));
-            green.set(ColorDialog.doubleToInt(newColor.getGreen()));
-            blue.set(ColorDialog.doubleToInt(newColor.getBlue()));
+            var newColor = Color.hsb(hue.get(), clamp(sat.get() / 100.0D),
+                    clamp(bright.get() / 100.0D), clamp(alpha.get() / 100.0D));
+            red.set(doubleToInt(newColor.getRed()));
+            green.set(doubleToInt(newColor.getGreen()));
+            blue.set(doubleToInt(newColor.getBlue()));
             setCustomColor(newColor);
         }
 
@@ -232,9 +168,9 @@ public class ColorDialog extends HBox {
                 hue.set(getCustomColor().getHue());
                 sat.set(getCustomColor().getSaturation() * 100.0D);
                 bright.set(getCustomColor().getBrightness() * 100.0D);
-                red.set(ColorDialog.doubleToInt(getCustomColor().getRed()));
-                green.set(ColorDialog.doubleToInt(getCustomColor().getGreen()));
-                blue.set(ColorDialog.doubleToInt(getCustomColor().getBlue()));
+                red.set(doubleToInt(getCustomColor().getRed()));
+                green.set(doubleToInt(getCustomColor().getGreen()));
+                blue.set(doubleToInt(getCustomColor().getBlue()));
                 changeIsLocal = false;
             }
         }
@@ -247,7 +183,7 @@ public class ColorDialog extends HBox {
             colorRectIndicator.setManaged(false);
             colorRectIndicator.setMouseTransparent(true);
             colorRectIndicator.setCache(true);
-            StackPane stackPane = new StackPane();
+            var stackPane = new StackPane();
             colorRect = new StackPane() {
                 @Override
                 public Orientation getContentBias() {
@@ -265,8 +201,8 @@ public class ColorDialog extends HBox {
                 }
             };
             colorRect.getStyleClass().addAll("color-rect", "transparent-pattern");
-            Pane colorRectHue = new Pane();
-            colorRectHue.backgroundProperty().bind(new ObjectBinding<Background>() {
+            var colorRectHue = new Pane();
+            colorRectHue.backgroundProperty().bind(new ObjectBinding<>() {
                 @Override
                 protected Background computeValue() {
                     return new Background(new BackgroundFill(
@@ -274,42 +210,42 @@ public class ColorDialog extends HBox {
                             CornerRadii.EMPTY, Insets.EMPTY));
                 }
             });
-            colorRectOverlayOne = new Pane();
+            var colorRectOverlayOne = new Pane();
             colorRectOverlayOne.getStyleClass().add("color-rect");
             colorRectOverlayOne.setBackground(new Background(new BackgroundFill(
                     new LinearGradient(0.0D, 0.0D, 1.0D, 0.0D, true, CycleMethod.NO_CYCLE, new Stop(0.0D, Color.rgb(255, 255, 255, 1.0D)),
                             new Stop(1.0D, Color.rgb(255, 255, 255, 0.0D))), CornerRadii.EMPTY, Insets.EMPTY)));
             EventHandler<MouseEvent> rectMouseHandler = event -> {
-                double x = event.getX();
-                double y = event.getY();
-                sat.set(ColorDialog.clamp(x / colorRect.getWidth()) * 100.0D);
-                bright.set(100.0D - ColorDialog.clamp(y / colorRect.getHeight()) * 100.0D);
+                var x = event.getX();
+                var y = event.getY();
+                sat.set(clamp(x / colorRect.getWidth()) * 100.0D);
+                bright.set(100.0D - clamp(y / colorRect.getHeight()) * 100.0D);
             };
-            colorRectOverlayTwo = new Pane();
+            var colorRectOverlayTwo = new Pane();
             colorRectOverlayTwo.getStyleClass().addAll("color-rect");
             colorRectOverlayTwo.setBackground(new Background(new BackgroundFill(
                     new LinearGradient(0.0D, 0.0D, 0.0D, 1.0D, true, CycleMethod.NO_CYCLE, new Stop(0.0D, Color.rgb(0, 0, 0, 0.0D)), new Stop(1.0D, Color.rgb(0, 0, 0, 1.0D))),
                     CornerRadii.EMPTY, Insets.EMPTY)));
             colorRectOverlayTwo.setOnMouseDragged(rectMouseHandler);
             colorRectOverlayTwo.setOnMousePressed(rectMouseHandler);
-            Pane colorRectBlackBorder = new Pane();
+            var colorRectBlackBorder = new Pane();
             colorRectBlackBorder.setMouseTransparent(true);
             colorRectBlackBorder.getStyleClass().addAll("color-rect", "color-rect-border");
             colorBar = new Pane();
             colorBar.getStyleClass().add("color-bar");
             colorBar.setBackground(new Background(new BackgroundFill(createHueGradient(), CornerRadii.EMPTY, Insets.EMPTY)));
-            colorBarIndicator = new Region();
+            var colorBarIndicator = new Region();
             colorBarIndicator.setId("color-bar-indicator");
             colorBarIndicator.setMouseTransparent(true);
             colorBarIndicator.setCache(true);
             colorRectIndicator.layoutXProperty().bind(sat.divide(100).multiply(colorRect.widthProperty()));
             colorRectIndicator.layoutYProperty()
-                              .bind(Bindings.subtract(1, bright.divide(100)).multiply(colorRect.heightProperty()));
+                    .bind(Bindings.subtract(1, bright.divide(100)).multiply(colorRect.heightProperty()));
             colorBarIndicator.layoutYProperty().bind(hue.divide(360).multiply(colorBar.heightProperty()));
             stackPane.opacityProperty().bind(alpha.divide(100));
             EventHandler<MouseEvent> barMouseHandler = event -> {
-                double y = event.getY();
-                hue.set(ColorDialog.clamp(y / colorRect.getHeight()) * 360.0D);
+                var y = event.getY();
+                hue.set(clamp(y / colorRect.getHeight()) * 360.0D);
             };
             colorBar.setOnMouseDragged(barMouseHandler);
             colorBar.setOnMousePressed(barMouseHandler);
@@ -324,26 +260,17 @@ public class ColorDialog extends HBox {
         protected void layoutChildren() {
             super.layoutChildren();
             colorRectIndicator.autosize();
-            double size = Math.min(colorRect.getWidth(), colorRect.getHeight());
+            var size = Math.min(colorRect.getWidth(), colorRect.getHeight());
             colorRect.resize(size, size);
             colorBar.resize(colorBar.getWidth(), size);
         }
     }
 
     private class ControlsPane extends VBox {
-        private final Label newColorLabel;
-
-        private final Region newColorRect;
-
-        private final GridPane currentAndNewColor;
 
         private final ToggleButton hsbButton;
 
         private final ToggleButton rgbButton;
-
-        private final ToggleButton webButton;
-
-        private final HBox hBox;
 
         private final Label[] labels = new Label[4];
 
@@ -351,81 +278,75 @@ public class ColorDialog extends HBox {
 
         private final IntegerField[] fields = new IntegerField[4];
 
-        private final Label[] units = new Label[4];
-
-        private final Region whiteBox;
-
-        private GridPane settingsPane = new GridPane();
-
         private final Property<Number>[] bindedProperties;
 
         private void showHSBSettings() {
-            set(0, ColorDialog.getString("hue_colon"), 360, colorRectPane.hue);
-            set(1, ColorDialog.getString("saturation_colon"), 100, colorRectPane.sat);
-            set(2, ColorDialog.getString("brightness_colon"), 100, colorRectPane.bright);
+            set(0, getString("hue_colon"), 360, colorRectPane.hue);
+            set(1, getString("saturation_colon"), 100, colorRectPane.sat);
+            set(2, getString("brightness_colon"), 100, colorRectPane.bright);
         }
 
         private void showRGBSettings() {
-            set(0, ColorDialog.getString("red_colon"), 255, colorRectPane.red);
-            set(1, ColorDialog.getString("green_colon"), 255, colorRectPane.green);
-            set(2, ColorDialog.getString("blue_colon"), 255, colorRectPane.blue);
+            set(0, getString("red_colon"), 255, colorRectPane.red);
+            set(1, getString("green_colon"), 255, colorRectPane.green);
+            set(2, getString("blue_colon"), 255, colorRectPane.blue);
         }
 
         private void showWebSettings() {
-            labels[0].setText(ColorDialog.getString("web_colon"));
+            labels[0].setText(getString("web_colon"));
         }
 
         public ControlsPane() {
             bindedProperties = new Property[4];
             getStyleClass().add("controls-pane");
-            newColorRect = new Region();
+            var newColorRect = new Region();
             newColorRect.getStyleClass().add("color-rect");
             newColorRect.setId("new-color");
-            newColorRect.backgroundProperty().bind(new ObjectBinding<Background>() {
+            newColorRect.backgroundProperty().bind(new ObjectBinding<>() {
                 @Override
                 protected Background computeValue() {
                     return new Background(
                             new BackgroundFill(Color.RED/*(Paint) ColorDialog.access$2(ControlsPane.access$0(this.this$1)).get() */, CornerRadii.EMPTY, Insets.EMPTY));
                 }
             });
-            newColorLabel = new Label("Color");
-            whiteBox = new Region();
+            var newColorLabel = new Label("Color");
+            var whiteBox = new Region();
             whiteBox.getStyleClass().add("customcolor-controls-background");
-            hsbButton = new ToggleButton(ColorDialog.getString("colorType.hsb"));
+            hsbButton = new ToggleButton(getString("colorType.hsb"));
             hsbButton.getStyleClass().add("left-pill");
-            rgbButton = new ToggleButton(ColorDialog.getString("colorType.rgb"));
+            rgbButton = new ToggleButton(getString("colorType.rgb"));
             rgbButton.getStyleClass().add("center-pill");
-            webButton = new ToggleButton(ColorDialog.getString("colorType.web"));
+            var webButton = new ToggleButton(getString("colorType.web"));
             webButton.getStyleClass().add("right-pill");
-            ToggleGroup group = new ToggleGroup();
-            hBox = new HBox();
+            var group = new ToggleGroup();
+            var hBox = new HBox();
             hBox.setAlignment(Pos.CENTER);
             hBox.getChildren().addAll(hsbButton, rgbButton, webButton);
-            Region leftSpacer = new Region();
+            var leftSpacer = new Region();
             leftSpacer.setId("spacer-side");
-            Region rightSpacer = new Region();
+            var rightSpacer = new Region();
             rightSpacer.setId("spacer-side");
-            Region bottomSpacer = new Region();
+            var bottomSpacer = new Region();
             bottomSpacer.setId("spacer-bottom");
-            currentAndNewColor = new GridPane();
+            var currentAndNewColor = new GridPane();
             currentAndNewColor.getColumnConstraints().addAll(new ColumnConstraints());
             currentAndNewColor.getColumnConstraints().get(0).setHgrow(Priority.ALWAYS);
             currentAndNewColor.getRowConstraints().addAll(new RowConstraints(), new RowConstraints(), new RowConstraints());
             currentAndNewColor.getRowConstraints().get(2).setVgrow(Priority.ALWAYS);
-            HBox labelCenterer = new HBox(newColorLabel);
+            var labelCenterer = new HBox(newColorLabel);
             labelCenterer.setAlignment(Pos.CENTER);
             currentAndNewColor.getStyleClass().add("current-new-color-grid");
             currentAndNewColor.add(labelCenterer, 0, 0);
             currentAndNewColor.add(newColorRect, 0, 2);
             currentAndNewColor.setPrefHeight(80.0D);
             currentAndNewColor.setMaxHeight(80.0D);
-            settingsPane = new GridPane();
+            var settingsPane = new GridPane();
             settingsPane.setMaxHeight(Double.MAX_VALUE);
             VBox.setVgrow(settingsPane, Priority.ALWAYS);
             settingsPane.setId("settings-pane");
             settingsPane.getColumnConstraints()
-                        .addAll(new ColumnConstraints(), new ColumnConstraints(), new ColumnConstraints(), new ColumnConstraints(), new ColumnConstraints(),
-                                new ColumnConstraints());
+                    .addAll(new ColumnConstraints(), new ColumnConstraints(), new ColumnConstraints(), new ColumnConstraints(), new ColumnConstraints(),
+                            new ColumnConstraints());
             settingsPane.getColumnConstraints().get(0).setHgrow(Priority.NEVER);
             settingsPane.getColumnConstraints().get(2).setHgrow(Priority.ALWAYS);
             settingsPane.getColumnConstraints().get(3).setHgrow(Priority.NEVER);
@@ -436,19 +357,20 @@ public class ColorDialog extends HBox {
             settingsPane.add(leftSpacer, 0, 0);
             settingsPane.add(rightSpacer, 5, 0);
             settingsPane.add(bottomSpacer, 0, 4);
-            webField = new WebColorField();
+            var webField = new WebColorField();
             webField.getStyleClass().add("web-field");
             webField.setSkin(new WebColorFieldSkin(webField));
             webField.valueProperty().bindBidirectional(customColorProperty);
             webField.visibleProperty().bind(group.selectedToggleProperty().isEqualTo(webButton));
             settingsPane.add(webField, 2, 1);
-            for (int i = 0; i < 4; i++) {
+            for (var i = 0; i < 4; i++) {
                 labels[i] = new Label();
                 labels[i].getStyleClass().add("settings-label");
                 sliders[i] = new Slider();
                 fields[i] = new IntegerField();
                 fields[i].getStyleClass().add("color-input-field");
                 fields[i].setSkin(new IntegerFieldSkin(fields[i]));
+                var units = new Label[4];
                 units[i] = new Label((i == 0) ? "°" : "%");
                 units[i].getStyleClass().add("settings-unit");
                 if (i > 0 && i < 3)
@@ -458,7 +380,7 @@ public class ColorDialog extends HBox {
                     fields[i].visibleProperty().bind(group.selectedToggleProperty().isNotEqualTo(webButton));
                     units[i].visibleProperty().bind(group.selectedToggleProperty().isEqualTo(hsbButton));
                 }
-                int row = 1 + i;
+                var row = 1 + i;
                 if (i == 3)
                     row++;
                 if (i != 3) {
@@ -468,23 +390,23 @@ public class ColorDialog extends HBox {
                     settingsPane.add(units[i], 4, row);
                 }
             }
-            set(3, ColorDialog.getString("opacity_colon"), 100, colorRectPane.alpha);
+            set(3, getString("opacity_colon"), 100, colorRectPane.alpha);
             hsbButton.setToggleGroup(group);
             rgbButton.setToggleGroup(group);
             webButton.setToggleGroup(group);
             group.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
                 if (newValue == null) {
                     group.selectToggle(oldValue);
-                } else if (newValue == hsbButton) {
+                } else if (Objects.equals(newValue, hsbButton)) {
                     showHSBSettings();
-                } else if (newValue == rgbButton) {
+                } else if (Objects.equals(newValue, rgbButton)) {
                     showRGBSettings();
                 } else {
                     showWebSettings();
                 }
             });
             group.selectToggle(hsbButton);
-            VBox spacer = new VBox();
+            var spacer = new VBox();
             VBox.setVgrow(spacer, Priority.ALWAYS);
             getChildren().addAll(currentAndNewColor, spacer, settingsPane);
         }
@@ -509,10 +431,10 @@ public class ColorDialog extends HBox {
     }
 
     private static LinearGradient createHueGradient() {
-        Stop[] stops = new Stop[255];
-        for (int y = 0; y < 255; y++) {
-            double offset = 1.0D - 0.00392156862745098D * y;
-            int h = (int) (y / 255.0D * 360.0D);
+        var stops = new Stop[255];
+        for (var y = 0; y < 255; y++) {
+            var offset = 1.0D - 0.00392156862745098D * y;
+            var h = (int) (y / 255.0D * 360.0D);
             stops[y] = new Stop(offset, Color.hsb(h, 1.0D, 1.0D));
         }
         return new LinearGradient(0.0D, 1.0D, 0.0D, 0.0D, true, CycleMethod.NO_CYCLE, stops);
