@@ -1,5 +1,12 @@
 package main;
 
+import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ResourceBundle;
+import java.util.stream.IntStream;
+
 import colorpicker.ColorDialog;
 import colorpicker.HueSlider;
 import hid.DeviceScanner;
@@ -26,79 +33,32 @@ import save.LightingConfig.LightingMode;
 import save.Save;
 import util.Util;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ResourceBundle;
-
 @Log4j2
 public class RGBLightingDialog extends Application implements Initializable {
-
     private Stage stage;
-
-    @FXML
-    private TabPane knobsTabbedPane;
-
-    @FXML
-    private TabPane allKnobsTabbedPane;
-
-    @FXML
-    private Slider rainbowPhaseShift;
-
-    @FXML
-    private Slider rainbowBrightness;
-
-    @FXML
-    private Slider rainbowSpeed;
-
-    @FXML
-    private CheckBox rainbowReverse;
-
+    @FXML private TabPane knobsTabbedPane;
+    @FXML private TabPane allKnobsTabbedPane;
+    @FXML private Slider rainbowPhaseShift;
+    @FXML private Slider rainbowBrightness;
+    @FXML private Slider rainbowSpeed;
+    @FXML private CheckBox rainbowReverse;
     private HueSlider waveHue;
-
-    @FXML
-    private Slider waveBrightness;
-
-    @FXML
-    private Slider waveSpeed;
-
-    @FXML
-    private CheckBox waveReverse;
-
-    @FXML
-    private CheckBox waveBounce;
-
+    @FXML private Slider waveBrightness;
+    @FXML private Slider waveSpeed;
+    @FXML private CheckBox waveReverse;
+    @FXML private CheckBox waveBounce;
     private HueSlider breathHue;
-
-    @FXML
-    private Slider breathBrightness;
-
-    @FXML
-    private Slider breathSpeed;
-
-    @FXML
-    private VBox wavebox;
-
-    @FXML
-    private VBox breathbox;
-
-    @FXML
-    private HBox volumeFollowBox;
-
-    @FXML
-    private HBox volumeFollowCheckboxContainer;
-
+    @FXML private Slider breathBrightness;
+    @FXML private Slider breathSpeed;
+    @FXML private VBox wavebox;
+    @FXML private VBox breathbox;
+    @FXML private HBox volumeFollowBox;
+    @FXML private HBox volumeFollowCheckboxContainer;
     private ColorDialog allKnobColor;
-
     private final List<ColorDialog> cds = new ArrayList<>();
-
     private final List<CheckBox> volumeFollowingCheckBoxes = new ArrayList<>();
-
     private final PCPanelRGBUI device;
-
     private final LightingConfig ogConfig;
-
     private boolean pressedOk;
 
     public RGBLightingDialog(PCPanelRGBUI device) {
@@ -109,7 +69,7 @@ public class RGBLightingDialog extends Application implements Initializable {
     @Override
     public void start(Stage stage) {
         this.stage = stage;
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/assets/LightingDialog.fxml"));
+        var loader = new FXMLLoader(getClass().getResource("/assets/LightingDialog.fxml"));
         loader.setController(this);
         Pane mainPane = null;
         try {
@@ -117,7 +77,7 @@ public class RGBLightingDialog extends Application implements Initializable {
         } catch (IOException e) {
             log.error("Unable to load loader", e);
         }
-        Scene scene = new Scene(mainPane);
+        var scene = new Scene(mainPane);
         scene.getStylesheets().add(getClass().getResource("/assets/dark_theme.css").toExternalForm());
         stage.getIcons().add(new Image("/assets/256x256.png"));
         stage.setOnHiding(e -> {
@@ -159,12 +119,12 @@ public class RGBLightingDialog extends Application implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        for (int i = 0; i < device.getKnobCount(); i++) {
-            int knob = i + 1;
-            Tab tab = new Tab("Knob " + knob);
-            ColorDialog cd = new ColorDialog(Color.BLACK);
+        for (var i = 0; i < device.getKnobCount(); i++) {
+            var knob = i + 1;
+            var tab = new Tab("Knob " + knob);
+            var cd = new ColorDialog(Color.BLACK);
             cds.add(cd);
-            CheckBox cb = new CheckBox("K" + knob);
+            var cb = new CheckBox("K" + knob);
             volumeFollowingCheckBoxes.add(cb);
             volumeFollowCheckboxContainer.getChildren().add(cb);
             tab.setContent(cd);
@@ -173,11 +133,11 @@ public class RGBLightingDialog extends Application implements Initializable {
         Util.adjustTabs(allKnobsTabbedPane, 120, 30);
         allKnobColor = new ColorDialog();
         allKnobsTabbedPane.getTabs().get(0).setContent(allKnobColor);
-        Slider[] allSliders = {rainbowPhaseShift, rainbowBrightness, rainbowSpeed,
+        var allSliders = new Slider[] { rainbowPhaseShift, rainbowBrightness, rainbowSpeed,
                 waveBrightness, waveSpeed,
-                breathBrightness, breathSpeed};
-        CheckBox[] allCheckBoxes = {rainbowReverse,
-                waveReverse, waveBounce};
+                breathBrightness, breathSpeed };
+        var allCheckBoxes = new CheckBox[] { rainbowReverse,
+                waveReverse, waveBounce };
         waveHue = new HueSlider();
         wavebox.getChildren().add(1, waveHue);
         breathHue = new HueSlider();
@@ -187,23 +147,23 @@ public class RGBLightingDialog extends Application implements Initializable {
     }
 
     private void initFields() {
-        LightingConfig config = device.getLightingConfig();
-        LightingMode mode = config.getLightingMode();
+        var config = device.getLightingConfig();
+        var mode = config.getLightingMode();
         setFollowingControlsVisible(false);
         if (mode == LightingMode.ALL_COLOR) {
             setFollowingControlsVisible(true);
             setVolumeTrackingData(config.getVolumeBrightnessTrackingEnabled());
             knobsTabbedPane.getSelectionModel().select(0);
             allKnobsTabbedPane.getSelectionModel().select(0);
-            Color color = Color.valueOf(config.getAllColor());
+            var color = Color.valueOf(config.getAllColor());
             allKnobColor.setCustomColor(color);
-            for (ColorDialog cd : cds)
+            for (var cd : cds)
                 cd.setCustomColor(color);
         } else if (mode == LightingMode.SINGLE_COLOR) {
             setFollowingControlsVisible(true);
             setVolumeTrackingData(config.getVolumeBrightnessTrackingEnabled());
             knobsTabbedPane.getSelectionModel().select(1);
-            for (int i = 0; i < device.getKnobCount(); i++)
+            for (var i = 0; i < device.getKnobCount(); i++)
                 cds.get(i).setCustomColor(Color.valueOf(config.getIndividualColors()[i]));
         } else if (mode == LightingMode.ALL_RAINBOW) {
             knobsTabbedPane.getSelectionModel().select(0);
@@ -232,28 +192,20 @@ public class RGBLightingDialog extends Application implements Initializable {
     }
 
     private void initListeners(Slider[] allSliders, CheckBox[] allCheckBoxes) {
-        for (ColorDialog cd : cds)
+        for (var cd : cds)
             cd.customColorProperty().addListener((observable, oldValue, newValue) -> updateColors());
         allKnobColor.customColorProperty().addListener((observable, oldValue, newValue) -> {
-            for (ColorDialog cd : cds)
+            for (var cd : cds)
                 cd.setCustomColor(newValue);
             updateColors();
         });
-        byte b;
-        int i;
-        Slider[] arrayOfSlider;
-        for (i = (arrayOfSlider = allSliders).length, b = 0; b < i; ) {
-            Slider slider = arrayOfSlider[b];
+        for (var slider : allSliders) {
             slider.valueProperty().addListener((observable, oldValue, newValue) -> updateColors());
-            b++;
         }
-        CheckBox[] arrayOfCheckBox;
-        for (i = (arrayOfCheckBox = allCheckBoxes).length, b = 0; b < i; ) {
-            CheckBox cb = arrayOfCheckBox[b];
+        for (var cb : allCheckBoxes) {
             cb.selectedProperty().addListener((observable, oldValue, newValue) -> updateColors());
-            b++;
         }
-        for (CheckBox cb : volumeFollowingCheckBoxes)
+        for (var cb : volumeFollowingCheckBoxes)
             cb.selectedProperty().addListener((observable, oldValue, newValue) -> updateColors());
         waveHue.getHueProperty().addListener((observable, oldValue, newValue) -> updateColors());
         breathHue.getHueProperty().addListener((observable, oldValue, newValue) -> updateColors());
@@ -266,28 +218,24 @@ public class RGBLightingDialog extends Application implements Initializable {
         if (knobsTabbedPane.getSelectionModel().getSelectedIndex() == 0) {
             if (allKnobsTabbedPane.getSelectionModel().getSelectedIndex() == 0) {
                 setFollowingControlsVisible(true);
-                LightingConfig config = LightingConfig.createAllColor(allKnobColor.getCustomColor(), getVolumeTrackingData());
+                var config = LightingConfig.createAllColor(allKnobColor.getCustomColor(), getVolumeTrackingData());
                 device.setLighting(config, false);
             } else if (allKnobsTabbedPane.getSelectionModel().getSelectedIndex() == 1) {
-                LightingConfig config = LightingConfig.createRainbowAnimation((byte) (int) rainbowPhaseShift.getValue(), (byte) (int) rainbowBrightness.getValue(),
+                var config = LightingConfig.createRainbowAnimation((byte) (int) rainbowPhaseShift.getValue(), (byte) (int) rainbowBrightness.getValue(),
                         (byte) (int) rainbowSpeed.getValue(), rainbowReverse.isSelected());
                 device.setLighting(config, false);
             } else if (allKnobsTabbedPane.getSelectionModel().getSelectedIndex() == 2) {
-                LightingConfig config = LightingConfig.createWaveAnimation((byte) waveHue.getHue(), (byte) (int) waveBrightness.getValue(), (byte) (int) waveSpeed.getValue(),
+                var config = LightingConfig.createWaveAnimation((byte) waveHue.getHue(), (byte) (int) waveBrightness.getValue(), (byte) (int) waveSpeed.getValue(),
                         waveReverse.isSelected(), waveBounce.isSelected());
                 device.setLighting(config, false);
             } else if (allKnobsTabbedPane.getSelectionModel().getSelectedIndex() == 3) {
-                LightingConfig config = LightingConfig.createBreathAnimation((byte) breathHue.getHue(), (byte) (int) breathBrightness.getValue(), (byte) (int) breathSpeed.getValue());
+                var config = LightingConfig.createBreathAnimation((byte) breathHue.getHue(), (byte) (int) breathBrightness.getValue(), (byte) (int) breathSpeed.getValue());
                 device.setLighting(config, false);
             }
         } else {
             setFollowingControlsVisible(true);
-            Color[] colors = new Color[device.getKnobCount()];
-            for (int i = 0; i < device.getKnobCount(); ) {
-                colors[i] = cds.get(i).getCustomColor();
-                i++;
-            }
-            LightingConfig config = LightingConfig.createSingleColor(colors, getVolumeTrackingData());
+            var colors = IntStream.range(0, device.getKnobCount()).mapToObj(i -> cds.get(i).getCustomColor()).toArray(Color[]::new);
+            var config = LightingConfig.createSingleColor(colors, getVolumeTrackingData());
             device.setLighting(config, false);
         }
     }
@@ -297,14 +245,14 @@ public class RGBLightingDialog extends Application implements Initializable {
     }
 
     private boolean[] getVolumeTrackingData() {
-        boolean[] ret = new boolean[device.getKnobCount()];
-        for (int i = 0; i < ret.length; i++)
+        var ret = new boolean[device.getKnobCount()];
+        for (var i = 0; i < ret.length; i++)
             ret[i] = volumeFollowingCheckBoxes.get(i).isSelected();
         return ret;
     }
 
     private void setVolumeTrackingData(boolean[] data) {
-        for (int i = 0; i < data.length; i++)
+        for (var i = 0; i < data.length; i++)
             volumeFollowingCheckBoxes.get(i).setSelected(data[i]);
     }
 }

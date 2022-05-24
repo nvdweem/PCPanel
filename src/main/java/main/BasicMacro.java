@@ -1,20 +1,32 @@
 package main;
 
+import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.ResourceBundle;
+import java.util.stream.Collectors;
+
 import javafx.application.Application;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.ListView;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
+import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Pane;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
@@ -29,228 +41,88 @@ import util.SoundAudit;
 import util.SoundDevice;
 import util.Util;
 import voicemeeter.Voicemeeter;
+import voicemeeter.Voicemeeter.ButtonControlMode;
 import voicemeeter.Voicemeeter.ButtonType;
-import voicemeeter.Voicemeeter.*;
-
-import java.net.URL;
-import java.util.Arrays;
-import java.util.List;
-import java.util.ResourceBundle;
-import java.util.stream.Collectors;
+import voicemeeter.Voicemeeter.ControlType;
+import voicemeeter.Voicemeeter.DialControlMode;
+import voicemeeter.Voicemeeter.DialType;
 
 @Log4j2
 public class BasicMacro extends Application implements Initializable {
-    @FXML
-    private Pane topPane;
-
-    @FXML
-    private TabPane mainTabPane;
-
-    @FXML
-    private TabPane buttonTabPane;
-
-    @FXML
-    private TabPane dialTabPane;
-
-    @FXML
-    private TextField keystrokeField;
-
-    @FXML
-    private TextField shortcutField;
-
-    @FXML
-    private Button scFileButton;
-
-    @FXML
-    private ToggleGroup mediagroup;
-
-    @FXML
-    private TextField endProcessField;
-
-    @FXML
-    private RadioButton rdioEndFocusedProgram;
-
-    @FXML
-    private RadioButton rdioEndSpecificProgram;
-
-    @FXML
-    private Button findAppEndProcess;
-
-    @FXML
-    private ChoiceBox<SoundDevice> sounddevices;
-
-    @FXML
-    private ListView<SoundDevice> soundDeviceSource;
-
-    @FXML
-    private ListView<SoundDevice> soundDevices2;
-
-    @FXML
-    private TextField muteAppProcessField;
-
-    @FXML
-    private RadioButton rdio_mute_toggle;
-
-    @FXML
-    private RadioButton rdio_mute_mute;
-
-    @FXML
-    private RadioButton rdio_mute_unmute;
-
-    @FXML
-    private ChoiceBox<SoundDevice> muteSoundDevice;
-
-    @FXML
-    private RadioButton rdio_muteDevice_toggle;
-
-    @FXML
-    private RadioButton rdio_muteDevice_mute;
-
-    @FXML
-    private RadioButton rdio_muteDevice_unmute;
-
-    @FXML
-    private RadioButton rdio_muteDevice_Default;
-
-    @FXML
-    private RadioButton rdio_muteDevice_Specific;
-
-    @FXML
-    private RadioButton obs_rdio_SetScene;
-
-    @FXML
-    private RadioButton obs_rdio_MuteSource;
-
-    @FXML
-    private Pane obsPaneSetScene;
-
-    @FXML
-    private Pane obsPaneMuteSource;
-
-    @FXML
-    private ChoiceBox<String> obsSetScene;
-
-    @FXML
-    private ChoiceBox<String> obsSourceToMute;
-
-    @FXML
-    private RadioButton obsMuteToggle;
-
-    @FXML
-    private RadioButton obsMuteMute;
-
-    @FXML
-    private RadioButton obsMuteUnmute;
-
-    @FXML
-    private TabPane voicemeeterTabPaneButton;
-
-    @FXML
-    private ChoiceBox<ControlType> voicemeeterBasicDialIO;
-
-    @FXML
-    private ChoiceBox<Integer> voicemeeterBasicDialIndex;
-
-    @FXML
-    private ChoiceBox<DialType> voicemeeterBasicDial;
-
-    @FXML
-    private TextField voicemeeterButtonParameter;
-
-    @FXML
-    private ChoiceBox<ButtonControlMode> voicemeeterButtonType;
-
-    @FXML
-    private ChoiceBox<Profile> profileDropdown;
-
-    @FXML
-    private TextField volumeProcessField1;
-
-    @FXML
-    private TextField volumeProcessField2;
-
-    @FXML
-    private RadioButton rdio_app_output_specific;
-
-    @FXML
-    private RadioButton rdio_app_output_default;
-
-    @FXML
-    private RadioButton rdio_app_output_all;
-
-    @FXML
-    private ChoiceBox<SoundDevice> app_vol_output_device;
-
-    @FXML
-    private RadioButton rdio_device_default;
-
-    @FXML
-    private RadioButton rdio_device_specific;
-
-    @FXML
-    private ChoiceBox<SoundDevice> volumedevice;
-
-    @FXML
-    private ChoiceBox<String> obsAudioSources;
-
-    @FXML
-    private TabPane voicemeeterTabPaneDial;
-
-    @FXML
-    private ChoiceBox<ControlType> voicemeeterBasicButtonIO;
-
-    @FXML
-    private ChoiceBox<Integer> voicemeeterBasicButtonIndex;
-
-    @FXML
-    private ChoiceBox<ButtonType> voicemeeterBasicButton;
-
-    @FXML
-    private TextField voicemeeterDialParameter;
-
-    @FXML
-    private ChoiceBox<DialControlMode> voicemeeterDialType;
-
-    @FXML
-    private TextField trimMin;
-
-    @FXML
-    private TextField trimMax;
-
-    @FXML
-    private TextField buttonDebounceTime;
-
-    @FXML
-    private CheckBox logarithmic;
-
-    private Scene scene;
-
+    @FXML private Pane topPane;
+    @FXML private TabPane mainTabPane;
+    @FXML private TabPane buttonTabPane;
+    @FXML private TabPane dialTabPane;
+    @FXML private TextField keystrokeField;
+    @FXML private TextField shortcutField;
+    @FXML private Button scFileButton;
+    @FXML private ToggleGroup mediagroup;
+    @FXML private TextField endProcessField;
+    @FXML private RadioButton rdioEndFocusedProgram;
+    @FXML private RadioButton rdioEndSpecificProgram;
+    @FXML private Button findAppEndProcess;
+    @FXML private ChoiceBox<SoundDevice> sounddevices;
+    @FXML private ListView<SoundDevice> soundDeviceSource;
+    @FXML private ListView<SoundDevice> soundDevices2;
+    @FXML private TextField muteAppProcessField;
+    @FXML private RadioButton rdio_mute_toggle;
+    @FXML private RadioButton rdio_mute_mute;
+    @FXML private RadioButton rdio_mute_unmute;
+    @FXML private ChoiceBox<SoundDevice> muteSoundDevice;
+    @FXML private RadioButton rdio_muteDevice_toggle;
+    @FXML private RadioButton rdio_muteDevice_mute;
+    @FXML private RadioButton rdio_muteDevice_unmute;
+    @FXML private RadioButton rdio_muteDevice_Default;
+    @FXML private RadioButton rdio_muteDevice_Specific;
+    @FXML private RadioButton obs_rdio_SetScene;
+    @FXML private RadioButton obs_rdio_MuteSource;
+    @FXML private Pane obsPaneSetScene;
+    @FXML private Pane obsPaneMuteSource;
+    @FXML private ChoiceBox<String> obsSetScene;
+    @FXML private ChoiceBox<String> obsSourceToMute;
+    @FXML private RadioButton obsMuteToggle;
+    @FXML private RadioButton obsMuteMute;
+    @FXML private RadioButton obsMuteUnmute;
+    @FXML private TabPane voicemeeterTabPaneButton;
+    @FXML private ChoiceBox<ControlType> voicemeeterBasicDialIO;
+    @FXML private ChoiceBox<Integer> voicemeeterBasicDialIndex;
+    @FXML private ChoiceBox<DialType> voicemeeterBasicDial;
+    @FXML private TextField voicemeeterButtonParameter;
+    @FXML private ChoiceBox<ButtonControlMode> voicemeeterButtonType;
+    @FXML private ChoiceBox<Profile> profileDropdown;
+    @FXML private TextField volumeProcessField1;
+    @FXML private TextField volumeProcessField2;
+    @FXML private RadioButton rdio_app_output_specific;
+    @FXML private RadioButton rdio_app_output_default;
+    @FXML private RadioButton rdio_app_output_all;
+    @FXML private ChoiceBox<SoundDevice> app_vol_output_device;
+    @FXML private RadioButton rdio_device_default;
+    @FXML private RadioButton rdio_device_specific;
+    @FXML private ChoiceBox<SoundDevice> volumedevice;
+    @FXML private ChoiceBox<String> obsAudioSources;
+    @FXML private TabPane voicemeeterTabPaneDial;
+    @FXML private ChoiceBox<ControlType> voicemeeterBasicButtonIO;
+    @FXML private ChoiceBox<Integer> voicemeeterBasicButtonIndex;
+    @FXML private ChoiceBox<ButtonType> voicemeeterBasicButton;
+    @FXML private TextField voicemeeterDialParameter;
+    @FXML private ChoiceBox<DialControlMode> voicemeeterDialType;
+    @FXML private TextField trimMin;
+    @FXML private TextField trimMax;
+    @FXML private TextField buttonDebounceTime;
+    @FXML private CheckBox logarithmic;
     private Stage stage;
-
     private String[] buttonData;
-
     private final String[] volData;
-
     private final int dialNum;
-
     private final KnobSetting knobSetting;
-
     private List<SoundDevice> allSoundDevices;
-
     private boolean k_alt;
-
     private boolean k_shift;
-
     private boolean k_win;
-
     private boolean k_ctrl;
-
     private final DeviceSave deviceSave;
-
     private final boolean hasButton;
-
     private String name;
-
     private String analogType;
 
     public BasicMacro(Device device, int knob, boolean hasButton, String name, String analogType) {
@@ -279,18 +151,14 @@ public class BasicMacro extends Application implements Initializable {
         var loader = new FXMLLoader(getClass().getResource("/assets/BasicMacro.fxml"));
         loader.setController(this);
         Pane mainPane = loader.load();
-        scene = new Scene(mainPane);
+        var scene = new Scene(mainPane);
         scene.getStylesheets().add(getClass().getResource("/assets/dark_theme.css").toExternalForm());
         basicmacro.getIcons().add(new Image("/assets/256x256.png"));
         basicmacro.initModality(Modality.APPLICATION_MODAL);
         // basicmacro.initOwner((Window)Window.stage);
         basicmacro.setScene(scene);
         basicmacro.sizeToScene();
-        if (name == null) {
-            basicmacro.setTitle("Knob " + (dialNum + 1));
-        } else {
-            basicmacro.setTitle(name);
-        }
+        basicmacro.setTitle(Objects.requireNonNullElseGet(name, () -> "Knob " + (dialNum + 1)));
         basicmacro.show();
     }
 
@@ -378,7 +246,7 @@ public class BasicMacro extends Application implements Initializable {
             buttonData[1] = sounddevices.getValue().getId();
         } else if ("toggle_device".equals(buttonType)) {
             buttonData = new String[3];
-            buttonData[1] = Util.listToPipeDelimitedString(soundDevices2.getItems().stream().map(c -> c.getId()).collect(Collectors.toList()));
+            buttonData[1] = Util.listToPipeDelimitedString(soundDevices2.getItems().stream().map(SoundDevice::getId).collect(Collectors.toList()));
         } else if ("mute_app".equals(buttonType)) {
             buttonData = new String[3];
             buttonData[1] = muteAppProcessField.getText();
@@ -426,7 +294,7 @@ public class BasicMacro extends Application implements Initializable {
             if (voicemeeterTabPaneButton.getSelectionModel().getSelectedIndex() == 0) {
                 buttonData[1] = "basic";
                 buttonData[2] = voicemeeterBasicButtonIO.getValue().name();
-                buttonData[3] = String.valueOf(voicemeeterBasicButtonIndex.getValue().intValue() - 1);
+                buttonData[3] = String.valueOf(voicemeeterBasicButtonIndex.getValue() - 1);
                 var bt = voicemeeterBasicButton.getValue();
                 buttonData[4] = (bt == null) ? null : bt.name();
             } else if (voicemeeterTabPaneButton.getSelectionModel().getSelectedIndex() == 1) {
@@ -466,7 +334,7 @@ public class BasicMacro extends Application implements Initializable {
                 if (voicemeeterTabPaneDial.getSelectionModel().getSelectedIndex() == 0) {
                     volData[1] = "basic";
                     volData[2] = voicemeeterBasicDialIO.getValue().name();
-                    volData[3] = String.valueOf(voicemeeterBasicDialIndex.getValue().intValue() - 1);
+                    volData[3] = String.valueOf(voicemeeterBasicDialIndex.getValue() - 1);
                     var dt = voicemeeterBasicDial.getValue();
                     volData[4] = (dt == null) ? null : dt.name();
                 } else if (voicemeeterTabPaneDial.getSelectionModel().getSelectedIndex() == 1) {
@@ -489,16 +357,13 @@ public class BasicMacro extends Application implements Initializable {
         if (hasButton)
             deviceSave.buttonData[dialNum] = buttonData;
         deviceSave.dialData[dialNum] = volData;
-        log.debug("-----------------");
-        byte b;
-        int i;
-        String[] arrayOfString;
-        for (i = (arrayOfString = buttonData).length, b = 0; b < i; ) {
-            var s = arrayOfString[b];
-            log.debug(s);
-            b++;
+        if (log.isDebugEnabled()) {
+            log.debug("-----------------");
+            for (var d : buttonData) {
+                log.debug(d);
+            }
+            log.debug("-----------------");
         }
-        log.debug("-----------------");
         Save.saveFile();
         stage.close();
     }
@@ -599,7 +464,7 @@ public class BasicMacro extends Application implements Initializable {
                     return;
                 }
                 Util.changeItemsTo(voicemeeterBasicButton,
-                        Voicemeeter.getButtonTypes(voicemeeterBasicButtonIO.getValue(), voicemeeterBasicButtonIndex.getValue().intValue() - 1));
+                        Voicemeeter.getButtonTypes(voicemeeterBasicButtonIO.getValue(), voicemeeterBasicButtonIndex.getValue() - 1));
             });
             voicemeeterBasicDialIndex.valueProperty().addListener((o, oldVal, newVal) -> {
                 if (newVal == null) {
@@ -607,7 +472,7 @@ public class BasicMacro extends Application implements Initializable {
                     return;
                 }
                 Util.changeItemsTo(voicemeeterBasicDial,
-                        Voicemeeter.getDialTypes(voicemeeterBasicDialIO.getValue(), voicemeeterBasicDialIndex.getValue().intValue() - 1));
+                        Voicemeeter.getDialTypes(voicemeeterBasicDialIO.getValue(), voicemeeterBasicDialIndex.getValue() - 1));
             });
             voicemeeterBasicButtonIO.getSelectionModel().selectFirst();
             voicemeeterBasicDialIO.getSelectionModel().selectFirst();
@@ -617,7 +482,7 @@ public class BasicMacro extends Application implements Initializable {
             if (volData[0] != null && "voicemeeter_dial".equals(volData[0])) {
                 if (volData[1] != null && "basic".equals(volData[1])) {
                     voicemeeterBasicDialIO.getItems().add(ControlType.valueOf(volData[2]));
-                    voicemeeterBasicDialIndex.getItems().add(Integer.valueOf(Util.toInt(volData[3], 0) + 1));
+                    voicemeeterBasicDialIndex.getItems().add(Util.toInt(volData[3], 0) + 1);
                     voicemeeterBasicDial.getItems().add(DialType.valueOf(volData[4]));
                 }
             } else {
@@ -626,7 +491,7 @@ public class BasicMacro extends Application implements Initializable {
             if (buttonData != null && buttonData.length > 0 && buttonData[0] != null && "voicemeeter_button".equals(buttonData[0])) {
                 if (buttonData[1] != null && "basic".equals(buttonData[1])) {
                     voicemeeterBasicButtonIO.getItems().add(ControlType.valueOf(buttonData[2]));
-                    voicemeeterBasicButtonIndex.getItems().add(Integer.valueOf(Util.toInt(buttonData[3], 0) + 1));
+                    voicemeeterBasicButtonIndex.getItems().add(Util.toInt(buttonData[3], 0) + 1);
                     voicemeeterBasicButton.getItems().add(ButtonType.valueOf(buttonData[4]));
                 }
             } else {
@@ -634,123 +499,80 @@ public class BasicMacro extends Application implements Initializable {
             }
         }
         var curProfile = deviceSave.getCurrentProfileName();
-        profileDropdown.getItems().addAll(deviceSave.getProfiles().stream().filter(c -> !c.getName().equals(curProfile)).collect(Collectors.toList()));
+        profileDropdown.getItems().addAll(deviceSave.getProfiles().stream().filter(c -> !c.getName().equals(curProfile)).toList());
         allSoundDevices = SoundAudit.getDevices();
-        var outputDevices = allSoundDevices.stream().filter(c -> c.isOutput()).collect(Collectors.toList());
+        var outputDevices = allSoundDevices.stream().filter(SoundDevice::isOutput).toList();
         volumedevice.getItems().addAll(allSoundDevices);
         muteSoundDevice.getItems().addAll(allSoundDevices);
         sounddevices.getItems().addAll(allSoundDevices);
         soundDeviceSource.getItems().addAll(allSoundDevices);
         soundDeviceSource.setCellFactory(new SoundDeviceExportFactory(soundDeviceSource));
-        soundDevices2.getItems().addListener(new ListChangeListener<SoundDevice>() {
-            @Override
-            public void onChanged(Change<? extends SoundDevice> change) {
-                if (soundDeviceSource.getItems().stream().anyMatch(c -> soundDevices2.getItems().contains(c)))
-                    soundDeviceSource.getItems().removeAll(soundDevices2.getItems());
-            }
+        soundDevices2.getItems().addListener((ListChangeListener<SoundDevice>) change -> {
+            if (soundDeviceSource.getItems().stream().anyMatch(c -> soundDevices2.getItems().contains(c)))
+                soundDeviceSource.getItems().removeAll(soundDevices2.getItems());
         });
-        soundDeviceSource.getItems().addListener(new ListChangeListener<SoundDevice>() {
-            @Override
-            public void onChanged(Change<? extends SoundDevice> change) {
-                if (soundDevices2.getItems().stream().anyMatch(c -> soundDeviceSource.getItems().contains(c)))
-                    soundDevices2.getItems().removeAll(soundDeviceSource.getItems());
-            }
+        soundDeviceSource.getItems().addListener((ListChangeListener<SoundDevice>) change -> {
+            if (soundDevices2.getItems().stream().anyMatch(c -> soundDeviceSource.getItems().contains(c)))
+                soundDevices2.getItems().removeAll(soundDeviceSource.getItems());
         });
         soundDevices2.setCellFactory(new SoundDeviceImportFactory(soundDevices2));
         app_vol_output_device.getItems().addAll(outputDevices);
-        keystrokeField.setOnKeyPressed(new EventHandler<KeyEvent>() {
-            @Override
-            public void handle(KeyEvent event) {
-                var code = event.getCode();
-                if (code == KeyCode.ALT) {
-                    k_alt = true;
-                } else if (code == KeyCode.SHIFT) {
-                    k_shift = true;
-                } else if (code == KeyCode.WINDOWS) {
-                    k_win = true;
-                } else if (code == KeyCode.CONTROL) {
-                    k_ctrl = true;
-                } else if (!k_alt && !k_shift && !k_win && !k_ctrl) {
-                    if (code.name().startsWith("DIGIT")) {
-                        keystrokeField.setText(code.name().substring(5));
-                    } else {
-                        keystrokeField.setText(code.name());
-                    }
+        keystrokeField.setOnKeyPressed(event -> {
+            var code = event.getCode();
+            if (code == KeyCode.ALT) {
+                k_alt = true;
+            } else if (code == KeyCode.SHIFT) {
+                k_shift = true;
+            } else if (code == KeyCode.WINDOWS) {
+                k_win = true;
+            } else if (code == KeyCode.CONTROL) {
+                k_ctrl = true;
+            } else if (!k_alt && !k_shift && !k_win && !k_ctrl) {
+                if (code.name().startsWith("DIGIT")) {
+                    keystrokeField.setText(code.name().substring(5));
                 } else {
-                    var str = "";
-                    var bools = new boolean[]{k_ctrl, k_shift, k_alt, k_win};
-                    var keys = new String[]{"ctrl", "shift", "alt", "windows"};
-                    for (var i = 0; i < 4; i++) {
-                        if (bools[i])
-                            str = str + keys[i] + " + ";
-                    }
-                    if (code.name().startsWith("DIGIT")) {
-                        str = str + code.name().substring(5);
-                    } else {
-                        str = str + code.name();
-                    }
-                    keystrokeField.setText(str);
+                    keystrokeField.setText(code.name());
                 }
+            } else {
+                var str = new StringBuilder();
+                var bools = new boolean[] { k_ctrl, k_shift, k_alt, k_win };
+                var keys = new String[] { "ctrl", "shift", "alt", "windows" };
+                for (var i = 0; i < 4; i++) {
+                    if (bools[i])
+                        str.append(keys[i]).append(" + ");
+                }
+                if (code.name().startsWith("DIGIT")) {
+                    str.append(code.name().substring(5));
+                } else {
+                    str.append(code.name());
+                }
+                keystrokeField.setText(str.toString());
             }
         });
-        keystrokeField.setOnKeyReleased(new EventHandler<KeyEvent>() {
-            @Override
-            public void handle(KeyEvent event) {
-                var code = event.getCode();
-                if (code == KeyCode.ALT) {
-                    k_alt = false;
-                } else if (code == KeyCode.SHIFT) {
-                    k_shift = false;
-                } else if (code == KeyCode.WINDOWS) {
-                    k_win = false;
-                } else if (code == KeyCode.CONTROL) {
-                    k_ctrl = false;
-                }
+        keystrokeField.setOnKeyReleased(event -> {
+            var code = event.getCode();
+            if (code == KeyCode.ALT) {
+                k_alt = false;
+            } else if (code == KeyCode.SHIFT) {
+                k_shift = false;
+            } else if (code == KeyCode.WINDOWS) {
+                k_win = false;
+            } else if (code == KeyCode.CONTROL) {
+                k_ctrl = false;
             }
         });
-        trimMin.textProperty().addListener(new ChangeListener<String>() {
-            @Override
-            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-                if (!newValue.matches("\\d*") || newValue.contains("-") || "".equals(newValue)) {
-                    trimMin.setText(newValue.replace("-", "").replaceAll("[^\\d]", ""));
-                } else {
-                    var num = Integer.parseInt(newValue);
-                    if (num < 0 || num > 100) {
-                        trimMin.setText(oldValue);
-                        return;
-                    }
-                    trimMin.setText(String.valueOf(num));
+        trimMin.textProperty().addListener((observable, oldValue, newValue) -> trimMinMax(oldValue, newValue, trimMin));
+        trimMax.textProperty().addListener((observable, oldValue, newValue) -> trimMinMax(oldValue, newValue, trimMax));
+        buttonDebounceTime.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue.matches("\\d*") || newValue.contains("-") || "".equals(newValue)) {
+                buttonDebounceTime.setText(newValue.replace("-", "").replaceAll("[^\\d]", ""));
+            } else {
+                var num = Integer.parseInt(newValue);
+                if (num < 0 || num > 10000) {
+                    buttonDebounceTime.setText(oldValue);
+                    return;
                 }
-            }
-        });
-        trimMax.textProperty().addListener(new ChangeListener<String>() {
-            @Override
-            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-                if (!newValue.matches("\\d*") || newValue.contains("-") || "".equals(newValue)) {
-                    trimMax.setText(newValue.replace("-", "").replaceAll("[^\\d]", ""));
-                } else {
-                    var num = Integer.parseInt(newValue);
-                    if (num < 0 || num > 100) {
-                        trimMax.setText(oldValue);
-                        return;
-                    }
-                    trimMax.setText(String.valueOf(num));
-                }
-            }
-        });
-        buttonDebounceTime.textProperty().addListener(new ChangeListener<String>() {
-            @Override
-            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-                if (!newValue.matches("\\d*") || newValue.contains("-") || "".equals(newValue)) {
-                    buttonDebounceTime.setText(newValue.replace("-", "").replaceAll("[^\\d]", ""));
-                } else {
-                    var num = Integer.parseInt(newValue);
-                    if (num < 0 || num > 10000) {
-                        buttonDebounceTime.setText(oldValue);
-                        return;
-                    }
-                    buttonDebounceTime.setText(String.valueOf(num));
-                }
+                buttonDebounceTime.setText(String.valueOf(num));
             }
         });
         onRadioButton(null);
@@ -762,12 +584,21 @@ public class BasicMacro extends Application implements Initializable {
         onRadioButton(null);
     }
 
-    private SoundDevice getSoundDeviceById(String id) {
-        for (var sd : allSoundDevices) {
-            if (sd.getId().equals(id))
-                return sd;
+    private void trimMinMax(String oldValue, String newValue, TextField trimMin) {
+        if (!newValue.matches("\\d*") || newValue.contains("-") || "".equals(newValue)) {
+            trimMin.setText(newValue.replace("-", "").replaceAll("[^\\d]", ""));
+        } else {
+            var num = Integer.parseInt(newValue);
+            if (num < 0 || num > 100) {
+                trimMin.setText(oldValue);
+                return;
+            }
+            trimMin.setText(String.valueOf(num));
         }
-        return null;
+    }
+
+    private SoundDevice getSoundDeviceById(String id) {
+        return allSoundDevices.stream().filter(sd -> sd.getId().equals(id)).findFirst().orElse(null);
     }
 
     private void initFields() {
@@ -776,88 +607,92 @@ public class BasicMacro extends Application implements Initializable {
         if (hasButton && buttonData != null && buttonData[0] != null) {
             var buttonType = buttonData[0];
             selectTabByName(buttonTabPane, buttonType);
-            if ("keystroke".equals(buttonType)) {
-                keystrokeField.setText(buttonData[1]);
-            } else if ("shortcut".equals(buttonType)) {
-                shortcutField.setText(buttonData[1]);
-            } else if ("media".equals(buttonType)) {
-                if ("media1".equals(buttonData[1])) {
-                    mediagroup.getToggles().get(0).setSelected(true);
-                } else if ("media2".equals(buttonData[1])) {
-                    mediagroup.getToggles().get(1).setSelected(true);
-                } else if ("media3".equals(buttonData[1])) {
-                    mediagroup.getToggles().get(2).setSelected(true);
-                } else if ("media4".equals(buttonData[1])) {
-                    mediagroup.getToggles().get(3).setSelected(true);
-                } else if ("media5".equals(buttonData[1])) {
-                    mediagroup.getToggles().get(4).setSelected(true);
+            switch (buttonType) {
+                case "keystroke" -> keystrokeField.setText(buttonData[1]);
+                case "shortcut" -> shortcutField.setText(buttonData[1]);
+                case "media" -> {
+                    if ("media1".equals(buttonData[1])) {
+                        mediagroup.getToggles().get(0).setSelected(true);
+                    } else if ("media2".equals(buttonData[1])) {
+                        mediagroup.getToggles().get(1).setSelected(true);
+                    } else if ("media3".equals(buttonData[1])) {
+                        mediagroup.getToggles().get(2).setSelected(true);
+                    } else if ("media4".equals(buttonData[1])) {
+                        mediagroup.getToggles().get(3).setSelected(true);
+                    } else if ("media5".equals(buttonData[1])) {
+                        mediagroup.getToggles().get(4).setSelected(true);
+                    }
                 }
-            } else if ("end_program".equals(buttonType)) {
-                if ("specific".equals(buttonData[1])) {
-                    rdioEndSpecificProgram.setSelected(true);
-                    endProcessField.setText(buttonData[2]);
-                } else if ("focused".equals(buttonData[1])) {
-                    rdioEndFocusedProgram.setSelected(true);
+                case "end_program" -> {
+                    if ("specific".equals(buttonData[1])) {
+                        rdioEndSpecificProgram.setSelected(true);
+                        endProcessField.setText(buttonData[2]);
+                    } else if ("focused".equals(buttonData[1])) {
+                        rdioEndFocusedProgram.setSelected(true);
+                    }
                 }
-            } else if ("sound_device".equals(buttonType)) {
-                sounddevices.setValue(getSoundDeviceById(buttonData[1]));
-            } else if ("toggle_device".equals(buttonType)) {
-                var devicesStr = buttonData[1].split("\\|");
-                var devices = Arrays.stream(devicesStr).map(c -> getSoundDeviceById(c)).collect(Collectors.toList());
-                soundDevices2.getItems().addAll(devices);
-                soundDeviceSource.getItems().removeAll(devices);
-            } else if ("mute_app".equals(buttonType)) {
-                muteAppProcessField.setText(buttonData[1]);
-                if (buttonData.length >= 3 && buttonData[2] != null)
+                case "sound_device" -> sounddevices.setValue(getSoundDeviceById(buttonData[1]));
+                case "toggle_device" -> {
+                    var devicesStr = buttonData[1].split("\\|");
+                    var devices = Arrays.stream(devicesStr).map(this::getSoundDeviceById).toList();
+                    soundDevices2.getItems().addAll(devices);
+                    soundDeviceSource.getItems().removeAll(devices);
+                }
+                case "mute_app" -> {
+                    muteAppProcessField.setText(buttonData[1]);
+                    if (buttonData.length >= 3 && buttonData[2] != null)
+                        if ("unmute".equals(buttonData[2])) {
+                            rdio_mute_unmute.setSelected(true);
+                        } else if ("mute".equals(buttonData[2])) {
+                            rdio_mute_mute.setSelected(true);
+                        } else if ("toggle".equals(buttonData[2])) {
+                            rdio_mute_toggle.setSelected(true);
+                        }
+                }
+                case "mute_device" -> {
+                    if ("default".equals(buttonData[1])) {
+                        rdio_muteDevice_Default.setSelected(true);
+                    } else {
+                        rdio_muteDevice_Specific.setSelected(true);
+                        muteSoundDevice.setValue(getSoundDeviceById(buttonData[1]));
+                    }
                     if ("unmute".equals(buttonData[2])) {
-                        rdio_mute_unmute.setSelected(true);
+                        rdio_muteDevice_unmute.setSelected(true);
                     } else if ("mute".equals(buttonData[2])) {
-                        rdio_mute_mute.setSelected(true);
+                        rdio_muteDevice_mute.setSelected(true);
                     } else if ("toggle".equals(buttonData[2])) {
-                        rdio_mute_toggle.setSelected(true);
-                    }
-            } else if ("mute_device".equals(buttonType)) {
-                if ("default".equals(buttonData[1])) {
-                    rdio_muteDevice_Default.setSelected(true);
-                } else {
-                    rdio_muteDevice_Specific.setSelected(true);
-                    muteSoundDevice.setValue(getSoundDeviceById(buttonData[1]));
-                }
-                if ("unmute".equals(buttonData[2])) {
-                    rdio_muteDevice_unmute.setSelected(true);
-                } else if ("mute".equals(buttonData[2])) {
-                    rdio_muteDevice_mute.setSelected(true);
-                } else if ("toggle".equals(buttonData[2])) {
-                    rdio_muteDevice_toggle.setSelected(true);
-                }
-            } else if ("obs_button".equals(buttonType)) {
-                if ("set_scene".equals(buttonData[1])) {
-                    obs_rdio_SetScene.setSelected(true);
-                    obsSetScene.getSelectionModel().select(buttonData[2]);
-                } else if ("mute_source".equals(buttonData[1])) {
-                    obs_rdio_MuteSource.setSelected(true);
-                    obsSourceToMute.getSelectionModel().select(buttonData[2]);
-                    if ("unmute".equals(buttonData[3])) {
-                        obsMuteUnmute.setSelected(true);
-                    } else if ("mute".equals(buttonData[3])) {
-                        obsMuteMute.setSelected(true);
-                    } else if ("toggle".equals(buttonData[3])) {
-                        obsMuteToggle.setSelected(true);
+                        rdio_muteDevice_toggle.setSelected(true);
                     }
                 }
-            } else if ("voicemeeter_button".equals(buttonType)) {
-                if ("basic".equals(buttonData[1])) {
-                    voicemeeterTabPaneButton.getSelectionModel().select(0);
-                    voicemeeterBasicButtonIO.setValue(ControlType.valueOf(buttonData[2]));
-                    voicemeeterBasicButtonIndex.setValue(Integer.valueOf(Util.toInt(buttonData[3], 0) + 1));
-                    voicemeeterBasicButton.setValue(ButtonType.valueOf(buttonData[4]));
-                } else if ("advanced".equals(buttonData[1])) {
-                    voicemeeterTabPaneButton.getSelectionModel().select(1);
-                    voicemeeterButtonParameter.setText(buttonData[2]);
-                    voicemeeterButtonType.setValue(ButtonControlMode.valueOf(buttonData[3]));
+                case "obs_button" -> {
+                    if ("set_scene".equals(buttonData[1])) {
+                        obs_rdio_SetScene.setSelected(true);
+                        obsSetScene.getSelectionModel().select(buttonData[2]);
+                    } else if ("mute_source".equals(buttonData[1])) {
+                        obs_rdio_MuteSource.setSelected(true);
+                        obsSourceToMute.getSelectionModel().select(buttonData[2]);
+                        if ("unmute".equals(buttonData[3])) {
+                            obsMuteUnmute.setSelected(true);
+                        } else if ("mute".equals(buttonData[3])) {
+                            obsMuteMute.setSelected(true);
+                        } else if ("toggle".equals(buttonData[3])) {
+                            obsMuteToggle.setSelected(true);
+                        }
+                    }
                 }
-            } else if ("profile".equals(buttonType)) {
-                profileDropdown.setValue(deviceSave.getProfile(buttonData[1]));
+                case "voicemeeter_button" -> {
+                    if ("basic".equals(buttonData[1])) {
+                        voicemeeterTabPaneButton.getSelectionModel().select(0);
+                        voicemeeterBasicButtonIO.setValue(ControlType.valueOf(buttonData[2]));
+                        voicemeeterBasicButtonIndex.setValue(Util.toInt(buttonData[3], 0) + 1);
+                        voicemeeterBasicButton.setValue(ButtonType.valueOf(buttonData[4]));
+                    } else if ("advanced".equals(buttonData[1])) {
+                        voicemeeterTabPaneButton.getSelectionModel().select(1);
+                        voicemeeterButtonParameter.setText(buttonData[2]);
+                        voicemeeterButtonType.setValue(ButtonControlMode.valueOf(buttonData[3]));
+                    }
+                }
+                case "profile" -> profileDropdown.setValue(deviceSave.getProfile(buttonData[1]));
             }
         }
         var dialType = volData[0];
@@ -888,7 +723,7 @@ public class BasicMacro extends Application implements Initializable {
                 if ("basic".equals(volData[1])) {
                     voicemeeterTabPaneDial.getSelectionModel().select(0);
                     voicemeeterBasicDialIO.setValue(ControlType.valueOf(volData[2]));
-                    voicemeeterBasicDialIndex.setValue(Integer.valueOf(Util.toInt(volData[3], 0) + 1));
+                    voicemeeterBasicDialIndex.setValue(Util.toInt(volData[3], 0) + 1);
                     voicemeeterBasicDial.setValue(DialType.valueOf(volData[4]));
                 } else if ("advanced".equals(volData[1])) {
                     voicemeeterTabPaneDial.getSelectionModel().select(1);

@@ -1,25 +1,29 @@
 package util;
 
+import java.io.File;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import org.apache.commons.io.FilenameUtils;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.IntStreamEx;
-import org.apache.commons.io.FilenameUtils;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 @Log4j2
-public class Util {
+public final class Util {
+    private Util() {
+    }
+
     public static String listToPipeDelimitedString(String... elements) {
         return String.join("|", elements);
     }
@@ -41,11 +45,11 @@ public class Util {
 
     public static void adjustTabs(TabPane tabPane) {
         tabPane.setRotateGraphic(true);
-        for (Tab tab : tabPane.getTabs()) {
-            Label l = new Label(tab.getText());
+        for (var tab : tabPane.getTabs()) {
+            var l = new Label(tab.getText());
             l.setPadding(new Insets(0.0D, 0.0D, 0.0D, 10.0D));
             l.setRotate(90.0D);
-            StackPane stp = new StackPane(new Group(l));
+            var stp = new StackPane(new Group(l));
             stp.setAlignment(Pos.TOP_CENTER);
             stp.setPrefHeight(200.0D);
             stp.setRotate(90.0D);
@@ -56,9 +60,9 @@ public class Util {
 
     public static String formatHexString(Color c) {
         if (c != null)
-            return String.format(null, "#%02x%02x%02x", new Object[]{Long.valueOf(Math.round(c.getRed() * 255.0D)),
-                    Long.valueOf(Math.round(c.getGreen() * 255.0D)),
-                    Long.valueOf(Math.round(c.getBlue() * 255.0D))});
+            return String.format(null, "#%02x%02x%02x", new Object[] { Math.round(c.getRed() * 255.0D),
+                    Math.round(c.getGreen() * 255.0D),
+                    Math.round(c.getBlue() * 255.0D) });
         return null;
     }
 
@@ -70,19 +74,14 @@ public class Util {
         }
     }
 
-    public static void printByteArray(byte[] array) {
+    public static void debugByteArray(byte[] array) {
         if (log.isDebugEnabled()) {
             log.debug("{}", IntStreamEx.of(array).mapToObj("%02X"::formatted).joining("\t"));
         }
     }
 
     public static List<Integer> numToList(int num) {
-        List<Integer> ret = new ArrayList<>();
-        for (int i = 1; i <= num; ) {
-            ret.add(Integer.valueOf(i));
-            i++;
-        }
-        return ret;
+        return IntStream.rangeClosed(1, num).boxed().collect(Collectors.toList());
     }
 
     public static <T> void changeItemsTo(ChoiceBox<T> cb, List<T> list) {
@@ -90,7 +89,7 @@ public class Util {
     }
 
     public static <T> void changeItemsTo(ChoiceBox<T> cb, List<T> list, boolean nevernull) {
-        T prev = cb.getValue();
+        var prev = cb.getValue();
         cb.getItems().setAll(list);
         if (list.contains(prev)) {
             cb.setValue(prev);
@@ -109,13 +108,13 @@ public class Util {
     public static boolean matches(String str, String comp) {
         if (str.length() == 0)
             return false;
-        char curStr = Character.MIN_VALUE;
-        int strIndex = 0;
-        boolean skipPart = false;
-        for (int i = 0; i < comp.length(); i++) {
+        var curStr = Character.MIN_VALUE;
+        var strIndex = 0;
+        var skipPart = false;
+        for (var i = 0; i < comp.length(); i++) {
             if (!skipPart)
                 curStr = str.charAt(strIndex);
-            char curComp = comp.charAt(i);
+            var curComp = comp.charAt(i);
             if (!skipPart || curComp == '|')
                 if (curComp == '|') {
                     skipPart = false;
@@ -136,7 +135,7 @@ public class Util {
     }
 
     public static boolean isFileExecutable(File file) {
-        String ext = FilenameUtils.getExtension(file.getName());
+        var ext = FilenameUtils.getExtension(file.getName());
         return matches(ext, "bat|bin|cmd|com|cpl|exe|gadget|inf1|ins|inx|isu|job|jse|lnk|msc|msi|msp|mst|paf|pif|ps1|reg|rgs|scr|sct|shb|shs|u3p|vb|vbe|vbs|vbscript|ws|wsf|wsh");
     }
 
@@ -149,9 +148,9 @@ public class Util {
     }
 
     public static void main(String[] args) {
-        for (int i = 0; i <= 100; i++) {
-            int tech = percentToBytePreserve(i);
-            int back = map(tech, 0, 255, 0, 100);
+        for (var i = 0; i <= 100; i++) {
+            var tech = percentToBytePreserve(i);
+            var back = map(tech, 0, 255, 0, 100);
             log.info("{}\t{}\t{}", i, tech, back);
             if (i != back)
                 log.error("ERROR: {}\t{}\t{}", i, tech, back);
@@ -159,7 +158,7 @@ public class Util {
     }
 
     public static int percentToBytePreserve(int percent) {
-        int ret = map(percent, 0, 100, 0, 255);
+        var ret = map(percent, 0, 100, 0, 255);
         return (ret == 0 || ret == 255) ? ret : (ret + 1);
     }
 
@@ -167,12 +166,8 @@ public class Util {
         return 3 * x + 30;
     }
 
-    @SafeVarargs
-    public static <T> void fill(Object[] ar, Object... objs) {
-        for (int i = 0; i < objs.length; ) {
-            ar[i] = objs[i];
-            i++;
-        }
+    public static void fill(Object[] ar, Object... objs) {
+        System.arraycopy(objs, 0, ar, 0, objs.length);
     }
 }
 

@@ -7,6 +7,7 @@ import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import com.sun.jna.win32.StdCallLibrary;
 
+@SuppressWarnings("unused")
 public interface VoicemeeterInstance extends StdCallLibrary {
     int VBVMR_RESULT_OK = 0;
 
@@ -328,4 +329,3 @@ public interface VoicemeeterInstance extends StdCallLibrary {
         boolean callback(Pointer param1Pointer1, int param1Int1, Pointer param1Pointer2, int param1Int2);
     }
 }
-

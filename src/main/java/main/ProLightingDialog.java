@@ -1,5 +1,9 @@
 package main;
 
+import java.io.IOException;
+import java.net.URL;
+import java.util.ResourceBundle;
+
 import colorpicker.ColorDialog;
 import colorpicker.HueSlider;
 import hid.DeviceScanner;
@@ -11,7 +15,12 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TabPane.TabClosingPolicy;
 import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
@@ -21,138 +30,63 @@ import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import lombok.extern.log4j.Log4j2;
-import save.*;
+import save.LightingConfig;
 import save.LightingConfig.LightingMode;
+import save.Save;
 import save.SingleKnobLightingConfig.SINGLE_KNOB_MODE;
 import save.SingleLogoLightingConfig.SINGLE_LOGO_MODE;
 import save.SingleSliderLabelLightingConfig.SINGLE_SLIDER_LABEL_MODE;
 import save.SingleSliderLightingConfig.SINGLE_SLIDER_MODE;
 import util.Util;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.ResourceBundle;
-
 @Log4j2
 public class ProLightingDialog extends Application implements Initializable {
-    private Scene scene;
-
     private Stage stage;
-
-    @FXML
-    private TabPane mainPane;
-
-    @FXML
-    private TabPane knobsTabbedPane;
-
-    @FXML
-    private TabPane slidersTabbedPane;
-
-    @FXML
-    private TabPane sliderLabelsTabbedPane;
-
-    @FXML
-    private TabPane logoTabPane;
-
-    @FXML
-    private TabPane fullBodyTabbedPane;
-
-    @FXML
-    private Slider rainbowPhaseShift;
-
-    @FXML
-    private Slider rainbowBrightness;
-
-    @FXML
-    private Slider rainbowSpeed;
-
-    @FXML
-    private CheckBox rainbowReverse;
-
+    @FXML private TabPane mainPane;
+    @FXML private TabPane knobsTabbedPane;
+    @FXML private TabPane slidersTabbedPane;
+    @FXML private TabPane sliderLabelsTabbedPane;
+    @FXML private TabPane logoTabPane;
+    @FXML private TabPane fullBodyTabbedPane;
+    @FXML private Slider rainbowPhaseShift;
+    @FXML private Slider rainbowBrightness;
+    @FXML private Slider rainbowSpeed;
+    @FXML private CheckBox rainbowReverse;
     private HueSlider waveHue;
-
-    @FXML
-    private Slider waveBrightness;
-
-    @FXML
-    private Slider waveSpeed;
-
-    @FXML
-    private CheckBox waveReverse;
-
-    @FXML
-    private CheckBox waveBounce;
-
+    @FXML private Slider waveBrightness;
+    @FXML private Slider waveSpeed;
+    @FXML private CheckBox waveReverse;
+    @FXML private CheckBox waveBounce;
     private HueSlider breathHue;
-
-    @FXML
-    private Slider breathBrightness;
-
-    @FXML
-    private Slider breathSpeed;
-
-    @FXML
-    private VBox wavebox;
-
-    @FXML
-    private VBox breathbox;
-
-    @FXML
-    private Button applyToAllButton;
-
+    @FXML private Slider breathBrightness;
+    @FXML private Slider breathSpeed;
+    @FXML private VBox wavebox;
+    @FXML private VBox breathbox;
+    @FXML private Button applyToAllButton;
     private ColorDialog allKnobColor;
-
     private static final int NUM_KNOBS = 5;
-
     private static final int NUM_SLIDERS = 4;
-
-    private final TabPane[] knobSingleTabPane = new TabPane[5];
-
-    private final TabPane[] sliderSingleTabPane = new TabPane[4];
-
-    private final TabPane[] sliderLabelSingleTabPane = new TabPane[4];
-
-    private final ColorDialog[] knobStaticCDs = new ColorDialog[5];
-
-    private final ColorDialog[] knobVolumeGradientCD1 = new ColorDialog[5];
-
-    private final ColorDialog[] knobVolumeGradientCD2 = new ColorDialog[5];
-
-    private final ColorDialog[] sliderStaticCDs = new ColorDialog[4];
-
-    private final ColorDialog[] sliderStaticGradientTopCD = new ColorDialog[4];
-
-    private final ColorDialog[] sliderStaticGradientBottomCD = new ColorDialog[4];
-
-    private final ColorDialog[] sliderVolumeGradientCD1 = new ColorDialog[4];
-
-    private final ColorDialog[] sliderVolumeGradientCD2 = new ColorDialog[4];
-
-    private final ColorDialog[] sliderLabelStaticCDs = new ColorDialog[4];
-
+    private final TabPane[] knobSingleTabPane = new TabPane[NUM_KNOBS];
+    private final TabPane[] sliderSingleTabPane = new TabPane[NUM_SLIDERS];
+    private final TabPane[] sliderLabelSingleTabPane = new TabPane[NUM_SLIDERS];
+    private final ColorDialog[] knobStaticCDs = new ColorDialog[NUM_KNOBS];
+    private final ColorDialog[] knobVolumeGradientCD1 = new ColorDialog[NUM_KNOBS];
+    private final ColorDialog[] knobVolumeGradientCD2 = new ColorDialog[NUM_KNOBS];
+    private final ColorDialog[] sliderStaticCDs = new ColorDialog[NUM_SLIDERS];
+    private final ColorDialog[] sliderStaticGradientTopCD = new ColorDialog[NUM_SLIDERS];
+    private final ColorDialog[] sliderStaticGradientBottomCD = new ColorDialog[NUM_SLIDERS];
+    private final ColorDialog[] sliderVolumeGradientCD1 = new ColorDialog[NUM_SLIDERS];
+    private final ColorDialog[] sliderVolumeGradientCD2 = new ColorDialog[NUM_SLIDERS];
+    private final ColorDialog[] sliderLabelStaticCDs = new ColorDialog[NUM_SLIDERS];
     private ColorDialog logoStaticColor;
-
-    @FXML
-    private Slider logoRainbowSpeed;
-
-    @FXML
-    private Slider logoRainbowBrightness;
-
+    @FXML private Slider logoRainbowSpeed;
+    @FXML private Slider logoRainbowBrightness;
     private HueSlider logoBreathHue;
-
-    @FXML
-    private VBox logoBreathBox;
-
-    @FXML
-    private Slider logoBreathBrightness;
-
-    @FXML
-    private Slider logoBreathSpeed;
-
+    @FXML private VBox logoBreathBox;
+    @FXML private Slider logoBreathBrightness;
+    @FXML private Slider logoBreathSpeed;
     private final Device device;
-
     private final LightingConfig ogConfig;
-
     private boolean pressedOk;
 
     public ProLightingDialog(Device device) {
@@ -163,7 +97,7 @@ public class ProLightingDialog extends Application implements Initializable {
     @Override
     public void start(Stage stage) {
         this.stage = stage;
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/assets/ProLightingDialog.fxml"));
+        var loader = new FXMLLoader(getClass().getResource("/assets/ProLightingDialog.fxml"));
         loader.setController(this);
         Pane mainPane = null;
         try {
@@ -171,7 +105,7 @@ public class ProLightingDialog extends Application implements Initializable {
         } catch (IOException e) {
             log.error("Unable to load loader", e);
         }
-        scene = new Scene(mainPane);
+        var scene = new Scene(mainPane);
         scene.getStylesheets().add(getClass().getResource("/assets/dark_theme.css").toExternalForm());
         stage.getIcons().add(new Image("/assets/256x256.png"));
         stage.setOnHiding(e -> {
@@ -214,19 +148,19 @@ public class ProLightingDialog extends Application implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         int i;
-        for (i = 0; i < 5; i++) {
-            int knob = i + 1;
-            Tab tab = new Tab("Knob " + knob);
-            ColorDialog cd = new ColorDialog(Color.BLACK);
+        for (i = 0; i < NUM_KNOBS; i++) {
+            var knob = i + 1;
+            var tab = new Tab("Knob " + knob);
+            var cd = new ColorDialog(Color.BLACK);
             knobStaticCDs[i] = cd;
             knobVolumeGradientCD1[i] = new ColorDialog();
             knobVolumeGradientCD2[i] = new ColorDialog();
-            GridPane volGradientGP = makeFourPanelGridPane("Color when volume is 100", "Color when volume is 0",
+            var volGradientGP = makeFourPanelGridPane("Color when volume is 100", "Color when volume is 0",
                     knobVolumeGradientCD2[i], knobVolumeGradientCD1[i]);
-            VBox vbox = new VBox(volGradientGP);
-            Tab staticTab = new Tab("Static", cd);
-            Tab volGradient = new Tab("Volume Gradient", vbox);
-            TabPane singleKnobTabPane = new TabPane(staticTab, volGradient);
+            var vbox = new VBox(volGradientGP);
+            var staticTab = new Tab("Static", cd);
+            var volGradient = new Tab("Volume Gradient", vbox);
+            var singleKnobTabPane = new TabPane(staticTab, volGradient);
             knobSingleTabPane[i] = singleKnobTabPane;
             Util.adjustTabs(singleKnobTabPane, 140, 30);
             singleKnobTabPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
@@ -234,21 +168,21 @@ public class ProLightingDialog extends Application implements Initializable {
             tab.setContent(singleKnobTabPane);
             knobsTabbedPane.getTabs().add(tab);
         }
-        for (i = 0; i < 4; i++) {
-            Tab tab = new Tab("Slider " + (i + 1));
-            ColorDialog cd = new ColorDialog(Color.BLACK);
+        for (i = 0; i < NUM_SLIDERS; i++) {
+            var tab = new Tab("Slider " + (i + 1));
+            var cd = new ColorDialog(Color.BLACK);
             sliderStaticCDs[i] = cd;
             sliderStaticGradientTopCD[i] = new ColorDialog();
             sliderStaticGradientBottomCD[i] = new ColorDialog();
-            GridPane staticGradientGP = makeFourPanelGridPane("Top Color", "Bottom Color", sliderStaticGradientTopCD[i], sliderStaticGradientBottomCD[i]);
+            var staticGradientGP = makeFourPanelGridPane("Top Color", "Bottom Color", sliderStaticGradientTopCD[i], sliderStaticGradientBottomCD[i]);
             sliderVolumeGradientCD1[i] = new ColorDialog();
             sliderVolumeGradientCD2[i] = new ColorDialog();
-            GridPane volGradientGP = makeFourPanelGridPane("Color when volume is 100", "Color when volume is 0",
+            var volGradientGP = makeFourPanelGridPane("Color when volume is 100", "Color when volume is 0",
                     sliderVolumeGradientCD2[i], sliderVolumeGradientCD1[i]);
-            Tab staticTab = new Tab("Static", cd);
-            Tab staticGradient = new Tab("Static Gradient", staticGradientGP);
-            Tab volGradient = new Tab("Volume Gradient", volGradientGP);
-            TabPane singleSliderTabPane = new TabPane(staticTab, staticGradient, volGradient);
+            var staticTab = new Tab("Static", cd);
+            var staticGradient = new Tab("Static Gradient", staticGradientGP);
+            var volGradient = new Tab("Volume Gradient", volGradientGP);
+            var singleSliderTabPane = new TabPane(staticTab, staticGradient, volGradient);
             sliderSingleTabPane[i] = singleSliderTabPane;
             Util.adjustTabs(singleSliderTabPane, 140, 30);
             singleSliderTabPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
@@ -256,11 +190,11 @@ public class ProLightingDialog extends Application implements Initializable {
             tab.setContent(singleSliderTabPane);
             slidersTabbedPane.getTabs().add(tab);
         }
-        for (i = 0; i < 4; i++) {
-            Tab tab = new Tab("Slider " + (i + 1));
+        for (i = 0; i < NUM_SLIDERS; i++) {
+            var tab = new Tab("Slider " + (i + 1));
             sliderLabelStaticCDs[i] = new ColorDialog();
-            Tab staticTab = new Tab("Static", sliderLabelStaticCDs[i]);
-            TabPane singleSliderLabelTabPane = new TabPane(staticTab);
+            var staticTab = new Tab("Static", sliderLabelStaticCDs[i]);
+            var singleSliderLabelTabPane = new TabPane(staticTab);
             sliderLabelSingleTabPane[i] = singleSliderLabelTabPane;
             Util.adjustTabs(singleSliderLabelTabPane, 140, 30);
             singleSliderLabelTabPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
@@ -274,15 +208,15 @@ public class ProLightingDialog extends Application implements Initializable {
         logoTabPane.getTabs().get(0).setContent(logoStaticColor);
         allKnobColor = new ColorDialog();
         fullBodyTabbedPane.getTabs().get(0).setContent(allKnobColor);
-        Slider[] allSliders = {
+        var allSliders = new Slider[] {
                 rainbowPhaseShift, rainbowBrightness, rainbowSpeed,
                 waveBrightness, waveSpeed,
                 breathBrightness, breathSpeed,
                 logoRainbowBrightness, logoRainbowSpeed,
                 logoBreathBrightness,
-                logoBreathSpeed};
-        CheckBox[] allCheckBoxes = {rainbowReverse,
-                waveReverse, waveBounce};
+                logoBreathSpeed };
+        var allCheckBoxes = new CheckBox[] { rainbowReverse,
+                waveReverse, waveBounce };
         waveHue = new HueSlider();
         wavebox.getChildren().add(1, waveHue);
         breathHue = new HueSlider();
@@ -290,22 +224,22 @@ public class ProLightingDialog extends Application implements Initializable {
         logoBreathHue = new HueSlider();
         logoBreathBox.getChildren().add(1, logoBreathHue);
         applyToAllButton.setOnAction(e -> {
-            LightingConfig config = device.getLightingConfig();
+            var config = device.getLightingConfig();
             if (mainPane.getSelectionModel().getSelectedIndex() == 1) {
-                int knobIndex = knobsTabbedPane.getSelectionModel().getSelectedIndex();
-                for (int idx = 0; idx < config.getKnobConfigs().length; idx++) {
+                var knobIndex = knobsTabbedPane.getSelectionModel().getSelectedIndex();
+                for (var idx = 0; idx < config.getKnobConfigs().length; idx++) {
                     if (idx != knobIndex)
                         config.getKnobConfigs()[idx].set(config.getKnobConfigs()[knobIndex]);
                 }
             } else if (mainPane.getSelectionModel().getSelectedIndex() == 2) {
-                int index = slidersTabbedPane.getSelectionModel().getSelectedIndex();
-                for (int idx = 0; idx < config.getSliderConfigs().length; idx++) {
+                var index = slidersTabbedPane.getSelectionModel().getSelectedIndex();
+                for (var idx = 0; idx < config.getSliderConfigs().length; idx++) {
                     if (idx != index)
                         config.getSliderConfigs()[idx].set(config.getSliderConfigs()[index]);
                 }
             } else if (mainPane.getSelectionModel().getSelectedIndex() == 3) {
-                int index = sliderLabelsTabbedPane.getSelectionModel().getSelectedIndex();
-                for (int idx = 0; idx < config.getSliderLabelConfigs().length; idx++) {
+                var index = sliderLabelsTabbedPane.getSelectionModel().getSelectedIndex();
+                for (var idx = 0; idx < config.getSliderLabelConfigs().length; idx++) {
                     if (idx != index)
                         config.getSliderLabelConfigs()[idx].set(config.getSliderLabelConfigs()[index]);
                 }
@@ -317,8 +251,8 @@ public class ProLightingDialog extends Application implements Initializable {
     }
 
     private void initFields() {
-        LightingConfig config = device.getLightingConfig();
-        LightingMode mode = config.getLightingMode();
+        var config = device.getLightingConfig();
+        var mode = config.getLightingMode();
         if (mode == LightingMode.ALL_COLOR) {
             mainPane.getSelectionModel().select(0);
             fullBodyTabbedPane.getSelectionModel().select(0);
@@ -347,13 +281,13 @@ public class ProLightingDialog extends Application implements Initializable {
         } else if (mode == LightingMode.CUSTOM) {
             if (mainPane.getSelectionModel().getSelectedIndex() == 0)
                 mainPane.getSelectionModel().select(1);
-            SingleKnobLightingConfig[] knobConfigs = config.getKnobConfigs();
-            SingleSliderLabelLightingConfig[] sliderLabelConfigs = config.getSliderLabelConfigs();
-            SingleSliderLightingConfig[] sliderConfigs = config.getSliderConfigs();
-            SingleLogoLightingConfig logoConfig = config.getLogoConfig();
+            var knobConfigs = config.getKnobConfigs();
+            var sliderLabelConfigs = config.getSliderLabelConfigs();
+            var sliderConfigs = config.getSliderConfigs();
+            var logoConfig = config.getLogoConfig();
             int i;
-            for (i = 0; i < 5; i++) {
-                SingleKnobLightingConfig knobConfig = knobConfigs[i];
+            for (i = 0; i < NUM_KNOBS; i++) {
+                var knobConfig = knobConfigs[i];
                 if (knobConfig.getMode() == SINGLE_KNOB_MODE.STATIC) {
                     knobSingleTabPane[i].getSelectionModel().select(0);
                     knobStaticCDs[i].setCustomColor(Color.web(knobConfig.getColor1()));
@@ -363,15 +297,15 @@ public class ProLightingDialog extends Application implements Initializable {
                     knobVolumeGradientCD2[i].setCustomColor(Color.web(knobConfig.getColor2()));
                 }
             }
-            for (i = 0; i < 4; i++) {
-                SingleSliderLabelLightingConfig sliderLabelConfig = sliderLabelConfigs[i];
+            for (i = 0; i < NUM_SLIDERS; i++) {
+                var sliderLabelConfig = sliderLabelConfigs[i];
                 if (sliderLabelConfig.getMode() == SINGLE_SLIDER_LABEL_MODE.STATIC) {
                     sliderLabelSingleTabPane[i].getSelectionModel().select(0);
                     sliderLabelStaticCDs[i].setCustomColor(Color.web(sliderLabelConfig.getColor()));
                 }
             }
-            for (i = 0; i < 4; i++) {
-                SingleSliderLightingConfig sliderConfig = sliderConfigs[i];
+            for (i = 0; i < NUM_SLIDERS; i++) {
+                var sliderConfig = sliderConfigs[i];
                 if (sliderConfig.getMode() == SINGLE_SLIDER_MODE.STATIC) {
                     sliderSingleTabPane[i].getSelectionModel().select(0);
                     sliderStaticCDs[i].setCustomColor(Color.web(sliderConfig.getColor1()));
@@ -403,49 +337,24 @@ public class ProLightingDialog extends Application implements Initializable {
     }
 
     private void addListener(ColorDialog[]... xs) {
-        byte b;
-        int i;
-        ColorDialog[][] arrayOfColorDialog;
-        for (i = (arrayOfColorDialog = xs).length, b = 0; b < i; ) {
-            ColorDialog[] x = arrayOfColorDialog[b];
-            byte b1;
-            int j;
-            ColorDialog[] arrayOfColorDialog1;
-            for (j = (arrayOfColorDialog1 = x).length, b1 = 0; b1 < j; ) {
-                ColorDialog cd = arrayOfColorDialog1[b1];
+        for (var x : xs) {
+            for (var cd : x) {
                 cd.customColorProperty().addListener((a, bb, c) -> updateColors());
-                b1++;
             }
-            b++;
         }
     }
 
     private void addListener(TabPane[]... xs) {
-        byte b;
-        int i;
-        TabPane[][] arrayOfTabPane;
-        for (i = (arrayOfTabPane = xs).length, b = 0; b < i; ) {
-            TabPane[] x = arrayOfTabPane[b];
-            byte b1;
-            int j;
-            TabPane[] arrayOfTabPane1;
-            for (j = (arrayOfTabPane1 = x).length, b1 = 0; b1 < j; ) {
-                TabPane cd = arrayOfTabPane1[b1];
+        for (var x : xs) {
+            for (var cd : x) {
                 cd.getSelectionModel().selectedItemProperty().addListener((a, bb, c) -> updateColors());
-                b1++;
             }
-            b++;
         }
     }
 
     private void addListener(TabPane... tbs) {
-        byte b;
-        int i;
-        TabPane[] arrayOfTabPane;
-        for (i = (arrayOfTabPane = tbs).length, b = 0; b < i; ) {
-            TabPane tb = arrayOfTabPane[b];
+        for (var tb : tbs) {
             tb.getSelectionModel().selectedItemProperty().addListener((a, bb, c) -> updateColors());
-            b++;
         }
     }
 
@@ -456,28 +365,17 @@ public class ProLightingDialog extends Application implements Initializable {
         addListener(knobSingleTabPane, sliderLabelSingleTabPane, sliderSingleTabPane);
         logoStaticColor.customColorProperty().addListener((a, b, c) -> updateColors());
         allKnobColor.customColorProperty().addListener((observable, oldValue, newValue) -> {
-            ColorDialog[] arrayOfColorDialog;
-            int i = (arrayOfColorDialog = knobStaticCDs).length;
-            for (byte b = 0; b < i; b++) {
-                ColorDialog cd = arrayOfColorDialog[b];
+            for (var cd : knobStaticCDs) {
                 cd.setCustomColor(newValue);
             }
             updateColors();
         });
         addListener(logoTabPane, fullBodyTabbedPane);
-        byte b;
-        int i;
-        Slider[] arrayOfSlider;
-        for (i = (arrayOfSlider = allSliders).length, b = 0; b < i; ) {
-            Slider slider = arrayOfSlider[b];
+        for (var slider : allSliders) {
             slider.valueProperty().addListener((observable, oldValue, newValue) -> updateColors());
-            b++;
         }
-        CheckBox[] arrayOfCheckBox;
-        for (i = (arrayOfCheckBox = allCheckBoxes).length, b = 0; b < i; ) {
-            CheckBox cb = arrayOfCheckBox[b];
+        for (var cb : allCheckBoxes) {
             cb.selectedProperty().addListener((observable, oldValue, newValue) -> updateColors());
-            b++;
         }
         waveHue.getHueProperty().addListener((observable, oldValue, newValue) -> updateColors());
         breathHue.getHueProperty().addListener((observable, oldValue, newValue) -> updateColors());
@@ -506,24 +404,24 @@ public class ProLightingDialog extends Application implements Initializable {
     private void updateColors() {
         if (mainPane.getSelectionModel().getSelectedIndex() == 0) {
             if (fullBodyTabbedPane.getSelectionModel().getSelectedIndex() == 0) {
-                LightingConfig config = LightingConfig.createAllColor(allKnobColor.getCustomColor());
+                var config = LightingConfig.createAllColor(allKnobColor.getCustomColor());
                 device.setLighting(config, false);
             } else if (fullBodyTabbedPane.getSelectionModel().getSelectedIndex() == 1) {
-                LightingConfig config = LightingConfig.createRainbowAnimation((byte) (int) rainbowPhaseShift.getValue(), (byte) (int) rainbowBrightness.getValue(),
+                var config = LightingConfig.createRainbowAnimation((byte) (int) rainbowPhaseShift.getValue(), (byte) (int) rainbowBrightness.getValue(),
                         (byte) (int) rainbowSpeed.getValue(), rainbowReverse.isSelected());
                 device.setLighting(config, false);
             } else if (fullBodyTabbedPane.getSelectionModel().getSelectedIndex() == 2) {
-                LightingConfig config = LightingConfig.createWaveAnimation((byte) waveHue.getHue(), (byte) (int) waveBrightness.getValue(), (byte) (int) waveSpeed.getValue(),
+                var config = LightingConfig.createWaveAnimation((byte) waveHue.getHue(), (byte) (int) waveBrightness.getValue(), (byte) (int) waveSpeed.getValue(),
                         waveReverse.isSelected(), waveBounce.isSelected());
                 device.setLighting(config, false);
             } else if (fullBodyTabbedPane.getSelectionModel().getSelectedIndex() == 3) {
-                LightingConfig config = LightingConfig.createBreathAnimation((byte) breathHue.getHue(), (byte) (int) breathBrightness.getValue(), (byte) (int) breathSpeed.getValue());
+                var config = LightingConfig.createBreathAnimation((byte) breathHue.getHue(), (byte) (int) breathBrightness.getValue(), (byte) (int) breathSpeed.getValue());
                 device.setLighting(config, false);
             }
         } else {
-            LightingConfig config = new LightingConfig(5, 4);
+            var config = new LightingConfig(NUM_KNOBS, NUM_SLIDERS);
             config.setLightingMode(LightingMode.CUSTOM);
-            for (int knob = 0; knob < 5; knob++) {
+            for (var knob = 0; knob < NUM_KNOBS; knob++) {
                 if (knobSingleTabPane[knob].getSelectionModel().getSelectedIndex() == 0) {
                     config.getKnobConfigs()[knob].setMode(SINGLE_KNOB_MODE.STATIC);
                     config.getKnobConfigs()[knob].setColor1(knobStaticCDs[knob].getCustomColor());
@@ -534,13 +432,13 @@ public class ProLightingDialog extends Application implements Initializable {
                 }
             }
             int slider;
-            for (slider = 0; slider < 4; slider++) {
+            for (slider = 0; slider < NUM_SLIDERS; slider++) {
                 if (sliderLabelSingleTabPane[slider].getSelectionModel().getSelectedIndex() == 0) {
                     config.getSliderLabelConfigs()[slider].setMode(SINGLE_SLIDER_LABEL_MODE.STATIC);
                     config.getSliderLabelConfigs()[slider].setColor(sliderLabelStaticCDs[slider].getCustomColor());
                 }
             }
-            for (slider = 0; slider < 4; slider++) {
+            for (slider = 0; slider < NUM_SLIDERS; slider++) {
                 if (sliderSingleTabPane[slider].getSelectionModel().getSelectedIndex() == 0) {
                     config.getSliderConfigs()[slider].setMode(SINGLE_SLIDER_MODE.STATIC);
                     config.getSliderConfigs()[slider].setColor1(sliderStaticCDs[slider].getCustomColor());
@@ -572,9 +470,9 @@ public class ProLightingDialog extends Application implements Initializable {
     }
 
     private static GridPane makeFourPanelGridPane(String str1, String str2, Node obj1, Node obj2) {
-        GridPane gp = new GridPane();
-        Label l1 = new Label(str1);
-        Label l2 = new Label(str2);
+        var gp = new GridPane();
+        var l1 = new Label(str1);
+        var l2 = new Label(str2);
         l1.setWrapText(true);
         l2.setWrapText(true);
         gp.addColumn(0, l1, l2);
