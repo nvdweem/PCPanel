@@ -16,11 +16,13 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.SVGPath;
+import lombok.extern.log4j.Log4j2;
 import save.DeviceSave;
 import save.LightingConfig;
 import save.Profile;
 import save.Save;
 
+@Log4j2
 public abstract class Device {
     private HBox profileMenu;
 
@@ -48,7 +50,7 @@ public abstract class Device {
             public void changed(ObservableValue<? extends Profile> observable, Profile oldValue, Profile newValue) {
                 if (newValue == null)
                     return;
-                System.err.println("change");
+                log.debug("change");
                 String name = newValue.getName();
                 boolean success = save.setCurrentProfile(name);
                 if (!success)
@@ -187,10 +189,10 @@ public abstract class Device {
             try {
                 OutputInterpreter.sendLightingConfig(getSerialNumber(), getDeviceType(), config, priority);
             } catch (Exception e) {
-                e.printStackTrace();
+                log.error("Unable to send lighting config", e);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Unable to set lighting", e);
             setLighting(LightingConfig.defaultLightingConfig(getDeviceType()), priority);
         }
     }

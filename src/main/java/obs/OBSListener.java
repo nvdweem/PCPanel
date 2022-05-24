@@ -1,10 +1,10 @@
 package obs;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import obsremote.OBSRemoteController;
 import save.Save;
 
-@Slf4j
+@Log4j2
 public class OBSListener implements Runnable {
     private static final long SLEEP_DURATION = 1000L;
     private static volatile boolean check;
@@ -25,7 +25,7 @@ public class OBSListener implements Runnable {
             synchronized (OBS.OBSMutex) {
                 if (!Save.isObsEnabled()) {
                     if (OBS.controller != null && OBS.controller.isConnected()) {
-                        System.err.println("DISCONNECT");
+                        log.info("OBS Disconnected");
                         OBS.controller.disconnect();
                         OBS.controller = null;
                     }

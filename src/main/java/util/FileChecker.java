@@ -1,20 +1,15 @@
 package util;
 
+import lombok.extern.log4j.Log4j2;
+import main.Window;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.nio.file.StandardWatchEventKinds;
-import java.nio.file.WatchEvent;
-import java.nio.file.WatchKey;
-import java.nio.file.WatchService;
+import java.nio.file.*;
 
-import lombok.extern.slf4j.Slf4j;
-import main.Window;
-
-@Slf4j
+@Log4j2
 public class FileChecker implements Runnable {
     private static final File REOPEN_FILE = new File("reopen.txt");
 
@@ -43,13 +38,13 @@ public class FileChecker implements Runnable {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Unable to check if duplicate is running", e);
         }
     }
 
     @Override
     public void run() {
-        System.out.println("FILE checker started");
+        log.info("FILE checker started");
         WatchService watcher = null;
         try {
             watcher = FileSystems.getDefault().newWatchService();
@@ -62,7 +57,7 @@ public class FileChecker implements Runnable {
         try {
             watchkey = folder.register(watcher, StandardWatchEventKinds.ENTRY_CREATE);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Unable to register for event in file checker", e);
         }
         while (true) {
             try {
@@ -78,7 +73,7 @@ public class FileChecker implements Runnable {
                     }
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                log.error("Error in checking file", e);
             }
         }
     }

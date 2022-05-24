@@ -1,5 +1,6 @@
 package util;
 
+import lombok.extern.log4j.Log4j2;
 import obs.OBS;
 
 import java.io.IOException;
@@ -12,6 +13,7 @@ import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+@Log4j2
 public class CommandHandler {
     private static final Map<String, List<String>> map = new ConcurrentHashMap<>();
 
@@ -33,8 +35,7 @@ public class CommandHandler {
             InputStream in = sndctrlProc.getInputStream();
             scan = new Scanner(in);
         } catch (IOException e1) {
-            System.err.println("UNABLE TO START SNDCTRL");
-            e1.printStackTrace();
+            log.error("UNABLE TO START SNDCTRL", e1);
         }
         new Thread(new HandlerThread(), "Command Handler Thread").start();
     }
@@ -59,7 +60,7 @@ public class CommandHandler {
                     out.flush();
                     scan.nextLine();
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.error("Unable to write in dispatchSndCtrl", e);
                 }
                 continue;
             }
@@ -93,7 +94,7 @@ public class CommandHandler {
                 Process p = rt.exec(cmd);
                 p.waitFor(1L, TimeUnit.SECONDS);
             } catch (Exception e) {
-                e.printStackTrace();
+                log.error("Unable to wait for '{}' to load", cmd, e);
             }
         }
     }
@@ -123,7 +124,7 @@ public class CommandHandler {
                     waiter.wait();
                 }
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                log.error("Interrupted", e);
             }
         }
     }

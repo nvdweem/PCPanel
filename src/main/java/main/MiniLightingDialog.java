@@ -1,9 +1,5 @@
 package main;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.ResourceBundle;
-
 import colorpicker.ColorDialog;
 import colorpicker.HueSlider;
 import hid.DeviceScanner;
@@ -15,12 +11,7 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.Slider;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
+import javafx.scene.control.*;
 import javafx.scene.control.TabPane.TabClosingPolicy;
 import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
@@ -29,6 +20,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import lombok.extern.log4j.Log4j2;
 import save.LightingConfig;
 import save.LightingConfig.LightingMode;
 import save.Save;
@@ -36,6 +28,11 @@ import save.SingleKnobLightingConfig;
 import save.SingleKnobLightingConfig.SINGLE_KNOB_MODE;
 import util.Util;
 
+import java.io.IOException;
+import java.net.URL;
+import java.util.ResourceBundle;
+
+@Log4j2
 public class MiniLightingDialog extends Application implements Initializable {
     private Scene scene;
 
@@ -128,7 +125,7 @@ public class MiniLightingDialog extends Application implements Initializable {
         try {
             mainPane = loader.load();
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Unable to load main page");
         }
         scene = new Scene(mainPane);
         scene.getStylesheets().add(getClass().getResource("/assets/dark_theme.css").toExternalForm());
@@ -156,7 +153,7 @@ public class MiniLightingDialog extends Application implements Initializable {
 
     @FXML
     private void ok(ActionEvent event) {
-        System.err.println(stage.getWidth() + " " + stage.getHeight());
+        log.debug("{} {}", stage.getWidth(), stage.getHeight());
         pressedOk = true;
         Save.saveFile();
         stage.close();
@@ -195,11 +192,11 @@ public class MiniLightingDialog extends Application implements Initializable {
         Util.adjustTabs(fullBodyTabbedPane, 120, 30);
         allKnobColor = new ColorDialog();
         fullBodyTabbedPane.getTabs().get(0).setContent(allKnobColor);
-        Slider[] allSliders = { rainbowPhaseShift, rainbowBrightness, rainbowSpeed,
+        Slider[] allSliders = {rainbowPhaseShift, rainbowBrightness, rainbowSpeed,
                 waveBrightness, waveSpeed,
-                breathBrightness, breathSpeed };
-        CheckBox[] allCheckBoxes = { rainbowReverse, rainbowVertical,
-                waveReverse, waveBounce };
+                breathBrightness, breathSpeed};
+        CheckBox[] allCheckBoxes = {rainbowReverse, rainbowVertical,
+                waveReverse, waveBounce};
         waveHue = new HueSlider();
         wavebox.getChildren().add(1, waveHue);
         breathHue = new HueSlider();

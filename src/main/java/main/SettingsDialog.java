@@ -1,10 +1,5 @@
 package main;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.Objects;
-import java.util.ResourceBundle;
-
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -19,10 +14,17 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import lombok.extern.log4j.Log4j2;
 import obs.OBSListener;
 import obsremote.OBSRemoteController;
 import save.Save;
 
+import java.io.IOException;
+import java.net.URL;
+import java.util.Objects;
+import java.util.ResourceBundle;
+
+@Log4j2
 public class SettingsDialog extends Application implements Initializable {
 
     private Stage stage;
@@ -73,7 +75,7 @@ public class SettingsDialog extends Application implements Initializable {
         try {
             pane = loader.load();
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Unable to load loader", e);
         }
         Scene scene = new Scene(pane);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/assets/dark_theme.css"), "Unable to find dark_theme.css").toExternalForm());
@@ -131,7 +133,7 @@ public class SettingsDialog extends Application implements Initializable {
         try {
             Runtime.getRuntime().exec("cmd /c \"start logs\"");
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Unable to open logs folder", e);
         }
     }
 

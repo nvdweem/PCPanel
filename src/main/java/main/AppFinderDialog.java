@@ -19,6 +19,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import lombok.extern.log4j.Log4j2;
 import me.marnic.jiconextract2.JIconExtract;
 
 import javax.imageio.ImageIO;
@@ -33,6 +34,7 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Scanner;
 
+@Log4j2
 public class AppFinderDialog extends Application implements Initializable {
     private Scene scene;
 
@@ -67,7 +69,7 @@ public class AppFinderDialog extends Application implements Initializable {
         try {
             pane = loader.load();
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Unable to load loader", e);
         }
         scene = new Scene(pane);
         scene.getStylesheets().add(getClass().getResource("/assets/dark_theme.css").toExternalForm());
@@ -155,7 +157,7 @@ public class AppFinderDialog extends Application implements Initializable {
             while (!(x = scan.nextLine()).startsWith("Elapsed Milliseconds : "))
                 ret.add(new App(x, scan.nextLine(), scan.nextLine()));
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Unable to scan line", e);
         }
         scan.close();
         in.close();
@@ -201,7 +203,7 @@ public class AppFinderDialog extends Application implements Initializable {
                 flowPane.getChildren().add(button);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Unable to add app-buttons", e);
         }
     }
 }

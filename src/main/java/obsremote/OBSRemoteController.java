@@ -1,5 +1,6 @@
 package obsremote;
 
+import lombok.extern.log4j.Log4j2;
 import obsremote.callbacks.Callback;
 import obsremote.callbacks.ErrorCallback;
 import obsremote.callbacks.StringCallback;
@@ -12,6 +13,7 @@ import util.Util;
 import java.net.URI;
 import java.util.Map;
 
+@Log4j2
 public class OBSRemoteController {
     private final String address;
 
@@ -80,8 +82,7 @@ public class OBSRemoteController {
             client.connectBlocking();
         } catch (Exception e) {
             failed = true;
-            System.err.println("Failed to start WebSocketClient.");
-            e.printStackTrace();
+            log.error("Failed to start WebSocketClient.", e);
             runOnError("Failed to start WebSocketClient", e);
         }
     }
@@ -94,7 +95,7 @@ public class OBSRemoteController {
         try {
             client.closeBlocking();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            log.error("Unable to disconnect from OBS", e);
         }
     }
 
@@ -203,7 +204,7 @@ public class OBSRemoteController {
     public void changeSceneWithTransition(String scene, String transition, Callback callback) {
         communicator.setCurrentTransition(transition, response -> {
             if (!"ok".equals(response.getStatus())) {
-                System.out.println("Failed to change transition. Pls fix.");
+                log.error("Failed to change transition. Pls fix.");
                 runOnError("Error response for changeSceneWithTransition", new OBSResponseError(response.getError()));
             }
             communicator.setCurrentScene(scene, callback);
@@ -328,7 +329,7 @@ public class OBSRemoteController {
         try {
             onError.run(message, throwable);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Unable to run on error", e);
         }
     }
 
@@ -338,7 +339,7 @@ public class OBSRemoteController {
         try {
             onConnectionFailed.run(message);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Unable to run on connection failed", e);
         }
     }
 }

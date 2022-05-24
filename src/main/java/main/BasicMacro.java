@@ -19,7 +19,7 @@ import javafx.scene.layout.Pane;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import obs.OBS;
 import save.DeviceSave;
 import save.KnobSetting;
@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
-@Slf4j
+@Log4j2
 public class BasicMacro extends Application implements Initializable {
     @FXML
     private Pane topPane;
@@ -354,7 +354,6 @@ public class BasicMacro extends Application implements Initializable {
 
     @FXML
     private void ok(ActionEvent event) {
-        System.out.println();
         var buttonType = getSelectedTabName(buttonTabPane);
         var dialType = getSelectedTabName(dialTabPane);
         if ("keystroke".equals(buttonType)) {
@@ -420,7 +419,7 @@ public class BasicMacro extends Application implements Initializable {
                     buttonData[3] = "toggle";
                 }
             } else {
-                System.err.println("ERROR INVALID RADIO BUTTON IN BUTTON OBS");
+                log.error("ERROR INVALID RADIO BUTTON IN BUTTON OBS");
             }
         } else if ("voicemeeter_button".equals(buttonType)) {
             buttonData = new String[5];
@@ -490,16 +489,16 @@ public class BasicMacro extends Application implements Initializable {
         if (hasButton)
             deviceSave.buttonData[dialNum] = buttonData;
         deviceSave.dialData[dialNum] = volData;
-        System.out.println("-----------------");
+        log.debug("-----------------");
         byte b;
         int i;
         String[] arrayOfString;
         for (i = (arrayOfString = buttonData).length, b = 0; b < i; ) {
             var s = arrayOfString[b];
-            System.out.println(s);
+            log.debug(s);
             b++;
         }
-        System.out.println("-----------------");
+        log.debug("-----------------");
         Save.saveFile();
         stage.close();
     }
@@ -519,7 +518,7 @@ public class BasicMacro extends Application implements Initializable {
         if (f == null)
             return;
         shortcutField.setText(f.getPath());
-        System.out.println(f.getPath());
+        log.debug(f.getPath());
     }
 
     @FXML
@@ -758,7 +757,7 @@ public class BasicMacro extends Application implements Initializable {
         try {
             initFields();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Unable to init fields", e);
         }
         onRadioButton(null);
     }

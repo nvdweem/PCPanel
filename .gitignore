@@ -36,6 +36,6 @@ build/
 
 ### Mac OS ###
 .DS_Store
-/sndctrl.exe
 /save.json
 /lock.txt
+/logs/

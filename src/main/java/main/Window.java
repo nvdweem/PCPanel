@@ -16,6 +16,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import lombok.extern.log4j.Log4j2;
 import obs.OBSListener;
 import save.Save;
 import util.FileChecker;
@@ -24,6 +25,7 @@ import util.SleepDetector;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Log4j2
 public class Window extends Application {
     @FXML
     private Pane deviceHolder;
@@ -78,11 +80,11 @@ public class Window extends Application {
 
     public static final String VERSION = "2.1.1";
 
-    public static final String TITLE = "PCPanel Software 2.1.1";
+    public static final String TITLE = "PCPanel Software " + VERSION;
 
     public Window() {
         if (window != null) {
-            System.err.println("Error 2 windows");
+            log.error("Error 2 windows");
             return;
         }
         window = this;
@@ -115,7 +117,7 @@ public class Window extends Application {
         Platform.setImplicitExit(false);
         stage.initStyle(StageStyle.UNDECORATED);
         stage.sizeToScene();
-        stage.setTitle("PCPanel Software 2.1.1");
+        stage.setTitle(TITLE);
         if (!quiet)
             stage.show();
         OBSListener.start();
@@ -226,7 +228,7 @@ public class Window extends Application {
                 Stage childDialogStage = new Stage();
                 sd.start(childDialogStage);
             } catch (Exception ex) {
-                ex.printStackTrace();
+                log.error("Unable to open settings dialog", e);
             }
         });
         min.setOnAction(e -> stage.setIconified(true));
@@ -234,6 +236,6 @@ public class Window extends Application {
         icon.setId("icon");
         min.setGraphic(icon);
         deviceListToggle.setOnAction(e -> setConnectedDeviceListVisible(!isConnectedDeviceListVisisble()));
-        versionLabel.setText("PCPanel Software 2.1.1");
+        versionLabel.setText(TITLE);
     }
 }

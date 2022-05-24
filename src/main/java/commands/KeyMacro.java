@@ -1,9 +1,12 @@
 package commands;
 
+import lombok.extern.log4j.Log4j2;
+
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.lang.reflect.Field;
 
+@Log4j2
 public class KeyMacro {
     private static Robot robot;
 
@@ -11,7 +14,7 @@ public class KeyMacro {
         try {
             robot = new Robot();
         } catch (AWTException e) {
-            e.printStackTrace();
+            log.error("Unable to construct robot", e);
         }
     }
 
@@ -23,7 +26,7 @@ public class KeyMacro {
             for (int i = 0; i < ar.length - 1; i++) {
                 int result = modifierToKeyEvent(ar[i]);
                 if (result == 0) {
-                    System.err.println("bad key modifier: " + ar[i]);
+                    log.error("bad key modifier: {}", ar[i]);
                 } else {
                     robot.keyPress(result);
                 }
@@ -34,21 +37,20 @@ public class KeyMacro {
             for (int j = 0; j < ar.length - 1; j++) {
                 int result = modifierToKeyEvent(ar[j]);
                 if (result == 0) {
-                    System.err.println("bad key modifier: " + ar[j]);
+                    log.error("bad key modifier: {}", ar[j]);
                 } else {
                     robot.keyRelease(result);
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println("bad input: " + input);
+            log.error("bad input: {}", input, e);
         }
     }
 
     public static void main(String[] args) throws Exception {
         long s = System.currentTimeMillis();
         executeKeyStroke("ctrl + shift + alt + S");
-        System.err.println((System.currentTimeMillis() - s) / 1000.0D);
+        log.error("{}", (System.currentTimeMillis() - s) / 1000.0D);
     }
 
     private static int letterToKeyEvent(String letter) throws Exception {

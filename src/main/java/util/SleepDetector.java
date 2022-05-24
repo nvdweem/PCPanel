@@ -5,6 +5,7 @@ import hid.DeviceScanner;
 import hid.OutputInterpreter;
 import javafx.application.Platform;
 import javafx.scene.paint.Color;
+import lombok.extern.log4j.Log4j2;
 import main.Device;
 import main.DeviceType;
 import main.Window;
@@ -12,6 +13,7 @@ import main.Window;
 import java.io.InputStream;
 import java.util.Scanner;
 
+@Log4j2
 public class SleepDetector {
     public static void start() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> onSuspended(true),
@@ -35,13 +37,13 @@ public class SleepDetector {
                         onResumed();
                         continue;
                     }
-                    System.err.println("SD ERROR: " + x);
+                    log.error("SD ERROR: {}", x);
                 }
                 scan.close();
                 in.close();
                 proc.destroy();
             } catch (Exception e) {
-                e.printStackTrace();
+                log.error("Unable to listen to sleep", e);
             }
         }, "Sleep Detector Thread").start();
     }
@@ -55,13 +57,13 @@ public class SleepDetector {
             for (Device device : Window.devices.values()) {
                 if (device.getDeviceType() != DeviceType.PCPANEL_RGB)
                     continue;
-                System.err.println("pause: " + device.getSerialNumber());
+                log.debug("pause: {}", device.getSerialNumber());
                 boolean[] bs = new boolean[device.getDeviceType().getAnalogCount()];
                 OutputInterpreter.sendRGBAll(device.getSerialNumber(), Color.BLACK, bs, true);
                 if (shutdown) {
                     DeviceCommunicationHandler handler = DeviceScanner.CONNECTED_DEVICE_MAP.get(device.getSerialNumber());
                     for (int i = 0; i < 20; i++) {
-                        System.err.println(i);
+                        log.debug("{}", i);
                         if (handler.getPriorityQueue().isEmpty())
                             break;
                         try {
@@ -84,7 +86,7 @@ public class SleepDetector {
     private static void onResumed() {
         Platform.runLater(() -> {
             for (Device device : Window.devices.values()) {
-                System.err.println("RESUME: " + device.getSerialNumber());
+                log.info("RESUME: {}", device.getSerialNumber());
                 OutputInterpreter.sendLightingConfig(device.getSerialNumber(), device.getDeviceType(), device.getLightingConfig(), true);
             }
         });

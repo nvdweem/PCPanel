@@ -1,22 +1,16 @@
 package hid;
 
+import lombok.NonNull;
+import lombok.extern.log4j.Log4j2;
+import main.DeviceType;
+import main.Window;
+import org.hid4java.*;
+import org.hid4java.event.HidServicesEvent;
+
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.hid4java.HidDevice;
-import org.hid4java.HidManager;
-import org.hid4java.HidServices;
-import org.hid4java.HidServicesListener;
-import org.hid4java.HidServicesSpecification;
-import org.hid4java.ScanMode;
-import org.hid4java.event.HidServicesEvent;
-
-import lombok.NonNull;
-import lombok.extern.slf4j.Slf4j;
-import main.DeviceType;
-import main.Window;
-
-@Slf4j
+@Log4j2
 public class DeviceScanner implements HidServicesListener {
     public static final ConcurrentHashMap<String, DeviceCommunicationHandler> CONNECTED_DEVICE_MAP = new ConcurrentHashMap<>();
     private static HidServices hidServices;
@@ -58,20 +52,20 @@ public class DeviceScanner implements HidServicesListener {
     }
 
     private static void foundPCPanel(HidDevice newPCPanel, DeviceType deviceType) {
-        System.out.println("FOUND PCPANEL : " + newPCPanel);
+        log.info("FOUND PCPANEL : {}", newPCPanel);
         try {
             deviceAdded(newPCPanel.getSerialNumber(), newPCPanel, deviceType);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Unable to handle device added", e);
         }
     }
 
     private static void lostPCPanel(HidDevice lostPCPanel) {
-        System.err.println("LOST PCPANEL : " + lostPCPanel);
+        log.info("LOST PCPANEL : {}", lostPCPanel);
         try {
             deviceRemoved(lostPCPanel.getSerialNumber(), lostPCPanel);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Unable to handle device disconnect", e);
         }
     }
 

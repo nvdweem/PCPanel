@@ -1,18 +1,18 @@
 package save;
 
+import com.google.gson.Gson;
+import lombok.extern.log4j.Log4j2;
+import main.DeviceType;
+import main.Window;
+import org.apache.commons.io.FileUtils;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.commons.io.FileUtils;
-
-import com.google.gson.Gson;
-
-import main.DeviceType;
-import main.Window;
-
+@Log4j2
 public class Save {
     private static Save save = new Save();
 
@@ -68,7 +68,7 @@ public class Save {
         try {
             FileUtils.writeStringToFile(SAVE_FILE, g.toJson(save), Charset.defaultCharset());
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Unable to save file", e);
         }
     }
 

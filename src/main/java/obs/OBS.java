@@ -1,8 +1,6 @@
 package obs;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import lombok.extern.log4j.Log4j2;
 import obsremote.OBSRemoteController;
 import obsremote.objects.Scene;
 import obsremote.objects.SourceType;
@@ -10,6 +8,10 @@ import obsremote.requests.GetSceneListResponse;
 import obsremote.requests.GetSourceTypeListResponse;
 import save.Save;
 
+import java.util.ArrayList;
+import java.util.List;
+
+@Log4j2
 public class OBS {
     public static volatile OBSRemoteController controller;
 
@@ -20,8 +22,8 @@ public class OBS {
     public static void main(String[] args) throws InterruptedException {
         controller = new OBSRemoteController("ws://localhost:4444", false, "123");
         if (controller.isFailed())
-            System.err.println("FAILURE");
-        System.err.println(getScenes());
+            log.error("FAILURE: Controller failed");
+        log.debug("{}", getScenes());
         setCurrentScene("Scene");
     }
 
@@ -42,7 +44,7 @@ public class OBS {
                 sourcesWithAudio.wait(WAIT_TIME);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Unable to get sources with audio", e);
         }
         return sourcesWithAudio;
     }
@@ -63,7 +65,7 @@ public class OBS {
                 scenes.wait(WAIT_TIME);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Unable to get scenes", e);
         }
         return scenes;
     }
@@ -81,7 +83,7 @@ public class OBS {
                 waiter.wait(WAIT_TIME);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Unable to get source volume", e);
         }
     }
 
@@ -97,7 +99,7 @@ public class OBS {
                 waiter.wait(WAIT_TIME);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Unable to toggle source mute {}", sourceName, e);
         }
     }
 
@@ -113,7 +115,7 @@ public class OBS {
                 waiter.wait(WAIT_TIME);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Unable to set source mute {} {}", sourceName, mute, e);
         }
     }
 
@@ -129,7 +131,7 @@ public class OBS {
                 waiter.wait(WAIT_TIME);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Unable to set current scene to {}", sceneName, e);
         }
     }
 

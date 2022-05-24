@@ -6,9 +6,9 @@ import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 
-@Slf4j
+@Log4j2
 public class VoicemeeterAPI {
     private static VoicemeeterInstance instance;
 
@@ -138,7 +138,8 @@ public class VoicemeeterAPI {
             case -3 -> throw new VoicemeeterException("Not available");
             case -5 -> throw new VoicemeeterException("Structure mismatch");
             case Integer i && i < 0 -> throw new VoicemeeterException("Unknown voicemeter error occurred " + code);
-            case null, default -> throw new VoicemeeterException("Unexpected function return value. Function returned " + code);
+            case null, default ->
+                    throw new VoicemeeterException("Unexpected function return value. Function returned " + code);
         };
     }
 

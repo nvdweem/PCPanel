@@ -1,5 +1,6 @@
 package util;
 
+import lombok.extern.log4j.Log4j2;
 import util.SoundDevice.SoundDeviceType;
 
 import javax.sound.sampled.AudioSystem;
@@ -9,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+@Log4j2
 public class SoundAudit {
     public static List<String> getSoundDevices() {
         List<String> ar = new ArrayList<>();
@@ -25,7 +27,7 @@ public class SoundAudit {
                 b++;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Unable to get sound devices", e);
         }
         return ar;
     }
@@ -39,9 +41,9 @@ public class SoundAudit {
     }
 
     public static void main(String[] args) throws Exception {
-        System.err.println(getDevices().size());
+        log.debug("{}", getDevices().size());
         for (SoundDevice device : getDevices())
-            System.err.println(device.getCombinedName() + " " + device.getId());
+            log.info("{} {}", device.getCombinedName(), device.getId());
     }
 
     private static SoundDeviceType toEnum(String type) {
@@ -65,7 +67,7 @@ public class SoundAudit {
             scan.close();
             sndctrlProc.destroy();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Unable to get devices", e);
         }
         return ret;
     }

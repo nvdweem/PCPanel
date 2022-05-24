@@ -14,8 +14,10 @@ import org.hid4java.HidServicesSpecification;
 import org.hid4java.ScanMode;
 import org.hid4java.event.HidServicesEvent;
 
+import lombok.extern.log4j.Log4j2;
 import util.Util;
 
+@Log4j2
 public class PureTest implements HidServicesListener {
     public static void main(String[] args) throws IOException {
         HidServicesSpecification hidServicesSpecification = new HidServicesSpecification();
@@ -25,21 +27,21 @@ public class PureTest implements HidServicesListener {
         hidServicesSpecification.setPauseInterval(2000);
         hidServicesSpecification.setScanMode(ScanMode.SCAN_AT_FIXED_INTERVAL);
         HidServices hidServices = HidManager.getHidServices(hidServicesSpecification);
-        System.out.println("Starting HID services.");
+        log.info("Starting HID services.");
         hidServices.addHidServicesListener(new PureTest());
         hidServices.start();
         Iterator<HidDevice> iterator = hidServices.getAttachedHidDevices().iterator();
         if (iterator.hasNext()) {
             HidDevice device = iterator.next();
-            System.err.println(device);
+            log.error("{}", device);
             device.open();
             device.setNonBlocking(false);
             while (true) {
                 Byte[] x = device.read();
-                System.err.println(Arrays.toString(x));
+                log.error(Arrays.toString(x));
                 if (x.length == 0)
                     continue;
-                System.err.println(x[0] + "  " + x[1] + " " + (x[2].byteValue() & 0xFF));
+                log.error(x[0] + "  " + x[1] + " " + (x[2].byteValue() & 0xFF));
                 if (x[0].byteValue() == 2) {
                     if (x[1].byteValue() == 2) {
                         if (x[2].byteValue() != 1) {
@@ -50,7 +52,7 @@ public class PureTest implements HidServicesListener {
                                     -1,
                                     5,
                                     -1, -1,
-                                    -1 };
+                                    -1};
                             byte[] data = new byte[64];
                             System.arraycopy(ar, 0, data, 0, ar.length);
                             Util.printByteArray(data);
@@ -90,7 +92,7 @@ public class PureTest implements HidServicesListener {
                                     2, -1, -1,
                                     1, -1, -1,
                                     -1,
-                                    3, -1, -1 };
+                                    3, -1, -1};
                             byte[] data = new byte[64];
                             System.arraycopy(ar, 0, data, 0, ar.length);
                             Util.printByteArray(data);
@@ -105,16 +107,16 @@ public class PureTest implements HidServicesListener {
                                     1, -1, -1, -1,
                                     1, -1, -1, -1,
                                     1, -1, -1, -1,
-                                    1, -1, -1, -1 };
+                                    1, -1, -1, -1};
                             byte[] arrayOfByte2 = new byte[64];
                             System.arraycopy(arrayOfByte1, 0, arrayOfByte2, 0, arrayOfByte1.length);
                             Util.printByteArray(arrayOfByte2);
                             device.write(arrayOfByte2, 64, (byte) 0);
                             continue;
                         }
-                        byte[] ar = { 5, 3,
+                        byte[] ar = {5, 3,
 
-                                2, -1, -1, -1 };
+                                2, -1, -1, -1};
                         byte[] data = new byte[64];
                         System.arraycopy(ar, 0, data, 0, ar.length);
                         Util.printByteArray(data);
@@ -123,19 +125,19 @@ public class PureTest implements HidServicesListener {
                     }
                     if (x[1].byteValue() == 4) {
                         if (x[2].byteValue() == 1) {
-                            byte[] arrayOfByte1 = { 5, 1,
+                            byte[] arrayOfByte1 = {5, 1,
                                     -1,
                                     -1, -1,
                                     1, -1, -1,
-                                    1, -1 };
+                                    1, -1};
                             byte[] arrayOfByte2 = new byte[64];
                             System.arraycopy(arrayOfByte1, 0, arrayOfByte2, 0, arrayOfByte1.length);
                             Util.printByteArray(arrayOfByte2);
                             device.write(arrayOfByte2, 64, (byte) 0);
                             continue;
                         }
-                        byte[] ar = { 5, 3,
-                                1, -1 };
+                        byte[] ar = {5, 3,
+                                1, -1};
                         byte[] data = new byte[64];
                         System.arraycopy(ar, 0, data, 0, ar.length);
                         Util.printByteArray(data);
@@ -150,7 +152,7 @@ public class PureTest implements HidServicesListener {
     public void hidDeviceAttached(HidServicesEvent event) {
         HidDevice device = event.getHidDevice();
         device.open();
-        System.err.println(device.getSerialNumber());
+        log.error(device.getSerialNumber());
     }
 
     @Override

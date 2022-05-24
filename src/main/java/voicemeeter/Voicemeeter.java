@@ -1,10 +1,12 @@
 package voicemeeter;
 
+import lombok.extern.log4j.Log4j2;
+import save.Save;
+
 import java.util.Arrays;
 import java.util.List;
 
-import save.Save;
-
+@Log4j2
 public class Voicemeeter {
     private static int version = -1;
 
@@ -12,7 +14,7 @@ public class Voicemeeter {
 
     private static volatile boolean hasLoggedIn;
 
-    private static final VoicemeeterVersion[] versions = { VoicemeeterVersion.VOICEMEETER, VoicemeeterVersion.BANANA, VoicemeeterVersion.POTATO };
+    private static final VoicemeeterVersion[] versions = {VoicemeeterVersion.VOICEMEETER, VoicemeeterVersion.BANANA, VoicemeeterVersion.POTATO};
 
     public enum ControlType {
         STRIP("Input"),
@@ -145,19 +147,19 @@ public class Voicemeeter {
     }
 
     public static void main(String[] args) throws InterruptedException {
-        System.err.println(VoicemeeterVersion.POTATO.getStripDials());
+        log.debug("{}", VoicemeeterVersion.POTATO.getStripDials());
         Save.setVoicemeeterEnabled(true);
         login();
-        System.err.println(hasFinishedConnection);
+        log.debug("{}", hasFinishedConnection);
         login();
-        System.err.println(VoicemeeterAPI.getVoicemeeterType());
-        System.err.println(VoicemeeterAPI.getVoicemeeterVersion());
+        log.debug("{}", VoicemeeterAPI.getVoicemeeterType());
+        log.debug("{}", VoicemeeterAPI.getVoicemeeterVersion());
         while (true) {
             for (int i = 0; i <= 100; i++) {
                 try {
                     controlLevel("STRIP[0].gaIn", DialControlMode.NEG_INF_TO_12, i);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.error("Unable to strip gain", e);
                 }
                 Thread.sleep(50L);
             }

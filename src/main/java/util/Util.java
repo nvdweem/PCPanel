@@ -1,12 +1,5 @@
 package util;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import org.apache.commons.io.FilenameUtils;
-
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -16,7 +9,16 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import lombok.extern.log4j.Log4j2;
+import one.util.streamex.IntStreamEx;
+import org.apache.commons.io.FilenameUtils;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+@Log4j2
 public class Util {
     public static String listToPipeDelimitedString(String... elements) {
         return String.join("|", elements);
@@ -54,9 +56,9 @@ public class Util {
 
     public static String formatHexString(Color c) {
         if (c != null)
-            return String.format(null, "#%02x%02x%02x", new Object[] { Long.valueOf(Math.round(c.getRed() * 255.0D)),
+            return String.format(null, "#%02x%02x%02x", new Object[]{Long.valueOf(Math.round(c.getRed() * 255.0D)),
                     Long.valueOf(Math.round(c.getGreen() * 255.0D)),
-                    Long.valueOf(Math.round(c.getBlue() * 255.0D)) });
+                    Long.valueOf(Math.round(c.getBlue() * 255.0D))});
         return null;
     }
 
@@ -69,15 +71,9 @@ public class Util {
     }
 
     public static void printByteArray(byte[] array) {
-        byte b;
-        int i;
-        byte[] arrayOfByte;
-        for (i = (arrayOfByte = array).length, b = 0; b < i; ) {
-            byte b1 = arrayOfByte[b];
-            System.out.printf("%02X\t", Byte.valueOf(b1));
-            b++;
+        if (log.isDebugEnabled()) {
+            log.debug("{}", IntStreamEx.of(array).mapToObj("%02X"::formatted).joining("\t"));
         }
-        System.out.println();
     }
 
     public static List<Integer> numToList(int num) {
@@ -156,9 +152,9 @@ public class Util {
         for (int i = 0; i <= 100; i++) {
             int tech = percentToBytePreserve(i);
             int back = map(tech, 0, 255, 0, 100);
-            System.out.println(i + "\t" + tech + "\t" + back);
+            log.info("{}\t{}\t{}", i, tech, back);
             if (i != back)
-                System.err.println("ERROR: " + i + "\t" + tech + "\t" + back);
+                log.error("ERROR: {}\t{}\t{}", i, tech, back);
         }
     }
 

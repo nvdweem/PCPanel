@@ -1,13 +1,15 @@
 package colorpicker;
 
-import java.util.Locale;
-
 import javafx.beans.InvalidationListener;
 import javafx.geometry.NodeOrientation;
 import javafx.scene.Node;
 import javafx.scene.paint.Color;
+import lombok.extern.log4j.Log4j2;
 import util.Util;
 
+import java.util.Locale;
+
+@Log4j2
 class WebColorFieldSkin extends InputFieldSkin {
     private final InvalidationListener integerFieldValueListener;
 
@@ -67,7 +69,7 @@ class WebColorFieldSkin extends InputFieldSkin {
                     noChangeInValue = false;
                 }
             } catch (IllegalArgumentException ex) {
-                System.out.println("Failed to parse [" + text + "]");
+                log.error("Failed to parse [{}]", text);
             }
     }
 }

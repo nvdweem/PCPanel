@@ -1,7 +1,7 @@
 package hid;
 
 import javafx.scene.paint.Color;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import main.DeviceType;
 import save.*;
 import save.SingleKnobLightingConfig.SINGLE_KNOB_MODE;
@@ -11,7 +11,7 @@ import save.SingleSliderLightingConfig.SINGLE_SLIDER_MODE;
 
 import java.util.Arrays;
 
-@Slf4j
+@Log4j2
 public final class OutputInterpreter {
     private static final byte[] OUTPUT_CODE_INIT = {1};
     private static final byte ANIMATION_RAINBOW_HORIZONTAL = 1;

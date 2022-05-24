@@ -1,11 +1,5 @@
 package main;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ResourceBundle;
-
 import colorpicker.ColorDialog;
 import colorpicker.HueSlider;
 import hid.DeviceScanner;
@@ -26,11 +20,19 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import lombok.extern.log4j.Log4j2;
 import save.LightingConfig;
 import save.LightingConfig.LightingMode;
 import save.Save;
 import util.Util;
 
+import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ResourceBundle;
+
+@Log4j2
 public class RGBLightingDialog extends Application implements Initializable {
 
     private Stage stage;
@@ -113,7 +115,7 @@ public class RGBLightingDialog extends Application implements Initializable {
         try {
             mainPane = loader.load();
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Unable to load loader", e);
         }
         Scene scene = new Scene(mainPane);
         scene.getStylesheets().add(getClass().getResource("/assets/dark_theme.css").toExternalForm());
@@ -141,7 +143,7 @@ public class RGBLightingDialog extends Application implements Initializable {
 
     @FXML
     private void ok(ActionEvent event) {
-        System.err.println(stage.getWidth() + " " + stage.getHeight());
+        log.debug("{} {}", stage.getWidth(), stage.getHeight());
         pressedOk = true;
         Save.saveFile();
         stage.close();
@@ -171,11 +173,11 @@ public class RGBLightingDialog extends Application implements Initializable {
         Util.adjustTabs(allKnobsTabbedPane, 120, 30);
         allKnobColor = new ColorDialog();
         allKnobsTabbedPane.getTabs().get(0).setContent(allKnobColor);
-        Slider[] allSliders = { rainbowPhaseShift, rainbowBrightness, rainbowSpeed,
+        Slider[] allSliders = {rainbowPhaseShift, rainbowBrightness, rainbowSpeed,
                 waveBrightness, waveSpeed,
-                breathBrightness, breathSpeed };
-        CheckBox[] allCheckBoxes = { rainbowReverse,
-                waveReverse, waveBounce };
+                breathBrightness, breathSpeed};
+        CheckBox[] allCheckBoxes = {rainbowReverse,
+                waveReverse, waveBounce};
         waveHue = new HueSlider();
         wavebox.getChildren().add(1, waveHue);
         breathHue = new HueSlider();
@@ -225,7 +227,7 @@ public class RGBLightingDialog extends Application implements Initializable {
             breathBrightness.setValue(config.getBreathBrightness() & 0xFF);
             breathSpeed.setValue(config.getBreathSpeed() & 0xFF);
         } else {
-            System.err.println("unexpected mode in lightingdialog");
+            log.error("unexpected mode in lightingdialog");
         }
     }
 

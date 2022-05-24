@@ -1,16 +1,15 @@
 package main;
 
-import java.awt.MenuItem;
-import java.awt.PopupMenu;
-import java.awt.SystemTray;
-import java.awt.TrayIcon;
+import lombok.extern.log4j.Log4j2;
+
+import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.util.Objects;
 
-import javax.imageio.ImageIO;
-
+@Log4j2
 public class TrayWork {
     public static void tray() {
         PopupMenu popup = new PopupMenu();
@@ -21,7 +20,7 @@ public class TrayWork {
             int trayIconWidth = new TrayIcon(trayIconImage).getSize().width;
             trayIcon = new TrayIcon(trayIconImage.getScaledInstance(trayIconWidth, -1, 4));
         } catch (Exception e1) {
-            e1.printStackTrace();
+            log.error("Unable to initialize tray icon", e1);
             return;
         }
         MenuItem exitItem = new MenuItem("Exit");
@@ -55,7 +54,7 @@ public class TrayWork {
         try {
             tray.add(trayIcon);
         } catch (Exception e) {
-            System.out.println("TrayIcon could not be added.");
+            log.error("TrayIcon could not be added.", e);
         }
     }
 }
