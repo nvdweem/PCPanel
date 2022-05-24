@@ -1,6 +1,7 @@
 package colorpicker;
 
 import com.sun.javafx.scene.control.skin.resources.ControlResources;
+import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.*;
@@ -202,7 +203,7 @@ public class ColorDialog extends HBox {
             };
             colorRect.getStyleClass().addAll("color-rect", "transparent-pattern");
             var colorRectHue = new Pane();
-            colorRectHue.backgroundProperty().bind(new ObjectBinding<>() {
+            colorRectHue.backgroundProperty().bind(new BindingObjectBinding<>(hue) {
                 @Override
                 protected Background computeValue() {
                     return new Background(new BackgroundFill(
@@ -302,11 +303,11 @@ public class ColorDialog extends HBox {
             var newColorRect = new Region();
             newColorRect.getStyleClass().add("color-rect");
             newColorRect.setId("new-color");
-            newColorRect.backgroundProperty().bind(new ObjectBinding<>() {
+            newColorRect.backgroundProperty().bind(new BindingObjectBinding<>(customColorProperty) {
                 @Override
                 protected Background computeValue() {
                     return new Background(
-                            new BackgroundFill(Color.RED/*(Paint) ColorDialog.access$2(ControlsPane.access$0(this.this$1)).get() */, CornerRadii.EMPTY, Insets.EMPTY));
+                            new BackgroundFill(customColorProperty.get(), CornerRadii.EMPTY, Insets.EMPTY));
                 }
             });
             var newColorLabel = new Label("Color");
@@ -442,5 +443,11 @@ public class ColorDialog extends HBox {
 
     private static int doubleToInt(double value) {
         return (int) (value * 255.0D + 0.5D);
+    }
+
+    private abstract static class BindingObjectBinding<T> extends ObjectBinding<T> {
+        protected BindingObjectBinding(Observable... obs) {
+            bind(obs);
+        }
     }
 }
