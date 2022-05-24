@@ -1,10 +1,6 @@
 package util;
 
-import lombok.extern.log4j.Log4j2;
-import obs.OBS;
-
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.List;
@@ -13,26 +9,24 @@ import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import lombok.extern.log4j.Log4j2;
+import obs.OBS;
+
 @Log4j2
 public class CommandHandler {
     private static final Map<String, List<String>> map = new ConcurrentHashMap<>();
-
     private static final Object waiter = new Object();
-
     private static final Runtime rt = Runtime.getRuntime();
-
     private static Scanner scan;
-
     private static OutputStream out;
-
     private static Process sndctrlProc;
 
     static {
-        ProcessBuilder c = new ProcessBuilder("sndctrl");
+        var c = new ProcessBuilder("sndctrl");
         try {
             sndctrlProc = c.start();
             out = sndctrlProc.getOutputStream();
-            InputStream in = sndctrlProc.getInputStream();
+            var in = sndctrlProc.getInputStream();
             scan = new Scanner(in);
         } catch (IOException e1) {
             log.error("UNABLE TO START SNDCTRL", e1);
@@ -52,9 +46,9 @@ public class CommandHandler {
     }
 
     private static void dispatchSndCtrl(List<String> cmds) {
-        for (String cmd : cmds) {
+        for (var cmd : cmds) {
             if (cmd.startsWith("sndctrl ") && sndctrlProc != null) {
-                String input = cmd.substring(8);
+                var input = cmd.substring(8);
                 try {
                     out.write((input + "\n").getBytes());
                     out.flush();
@@ -67,7 +61,7 @@ public class CommandHandler {
             if (cmd.startsWith("obs ")) {
                 if (!OBS.isConnected())
                     continue;
-                String[] args = cmd.split("\"?( |$)(?=(([^\"]*\"){2})*[^\"]*$)\"?");
+                var args = cmd.split("\"?( |$)(?=(([^\"]*\"){2})*[^\"]*$)\"?");
                 if ("setsourcevolume".equals(args[1])) {
                     OBS.setSourceVolume(args[2], Util.toInt(args[3], 0));
                     continue;
@@ -91,7 +85,7 @@ public class CommandHandler {
                 continue;
             }
             try {
-                Process p = rt.exec(cmd);
+                var p = rt.exec(cmd);
                 p.waitFor(1L, TimeUnit.SECONDS);
             } catch (Exception e) {
                 log.error("Unable to wait for '{}' to load", cmd, e);
@@ -102,16 +96,16 @@ public class CommandHandler {
     public static class HandlerThread extends Thread {
         @Override
         public void run() {
-            boolean foundAnyOnPrevSweep = false;
+            var foundAnyOnPrevSweep = false;
             while (true) {
                 if (!foundAnyOnPrevSweep)
                     waitFunc();
                 foundAnyOnPrevSweep = false;
-                for (String key : map.keySet()) {
-                    List<String> cmds = map.get(key);
+                for (var entry : map.entrySet()) {
+                    var cmds = entry.getValue();
                     if (cmds == null)
                         continue;
-                    map.remove(key);
+                    map.remove(entry.getKey());
                     dispatchSndCtrl(cmds);
                     foundAnyOnPrevSweep = true;
                 }

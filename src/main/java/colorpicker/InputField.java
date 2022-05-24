@@ -1,6 +1,13 @@
 package colorpicker;
 
-import javafx.beans.property.*;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.IntegerPropertyBase;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ObjectPropertyBase;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.StringProperty;
+import javafx.beans.property.StringPropertyBase;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.Control;
@@ -25,7 +32,7 @@ abstract class InputField extends Control {
     private final StringProperty promptText = new StringPropertyBase("") {
         @Override
         protected void invalidated() {
-            String txt = get();
+            var txt = get();
             if (txt != null && txt.contains("\n")) {
                 txt = txt.replace("\n", "");
                 set(txt);
@@ -55,12 +62,12 @@ abstract class InputField extends Control {
         promptText.set(value);
     }
 
-    private final IntegerProperty prefColumnCount = new IntegerPropertyBase(12) {
+    private final IntegerProperty prefColumnCount = new IntegerPropertyBase(DEFAULT_PREF_COLUMN_COUNT) {
         private int oldValue = get();
 
         @Override
         protected void invalidated() {
-            int value = get();
+            var value = get();
             if (value < 0) {
                 if (isBound())
                     unbind();

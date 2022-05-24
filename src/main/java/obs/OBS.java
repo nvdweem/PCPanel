@@ -1,26 +1,22 @@
 package obs;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.extern.log4j.Log4j2;
 import obsremote.OBSRemoteController;
-import obsremote.objects.Scene;
-import obsremote.objects.SourceType;
 import obsremote.requests.GetSceneListResponse;
 import obsremote.requests.GetSourceTypeListResponse;
 import save.Save;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Log4j2
 public class OBS {
     public static volatile OBSRemoteController controller;
-
     public static final Object OBSMutex = new Object();
-
     private static final long WAIT_TIME = 1000L;
 
     public static void main(String[] args) throws InterruptedException {
-        controller = new OBSRemoteController("ws://localhost:4444", false, "123");
+        controller = new OBSRemoteController("ws://localhost:4444", "123");
         if (controller.isFailed())
             log.error("FAILURE: Controller failed");
         log.debug("{}", getScenes());
@@ -32,8 +28,8 @@ public class OBS {
         List<String> typesWithAudio = new ArrayList<>();
         try {
             controller.getSourceTypes(r -> {
-                GetSourceTypeListResponse response = (GetSourceTypeListResponse) r;
-                for (SourceType st : response.getSourceTypes()) {
+                var response = (GetSourceTypeListResponse) r;
+                for (var st : response.getSourceTypes()) {
                     if (st.getCaps().isAudio())
                         typesWithAudio.add(st.getTypeId());
                 }
@@ -54,9 +50,9 @@ public class OBS {
         try {
             controller.getScenes(r -> {
                 synchronized (scenes) {
-                    GetSceneListResponse response = (GetSceneListResponse) r;
+                    var response = (GetSceneListResponse) r;
                     if (response.getScenes() != null)
-                        for (Scene scene : response.getScenes())
+                        for (var scene : response.getScenes())
                             scenes.add(scene.getName());
                     scenes.notify();
                 }
@@ -71,9 +67,9 @@ public class OBS {
     }
 
     public static void setSourceVolume(String sourceName, int vol) {
-        Object waiter = new Object();
+        var waiter = new Object();
         try {
-            double decimal = vol / 100.0D;
+            var decimal = vol / 100.0D;
             controller.setVolume(sourceName, decimal, c -> {
                 synchronized (waiter) {
                     waiter.notify();
@@ -88,7 +84,7 @@ public class OBS {
     }
 
     public static void toggleSourceMute(String sourceName) {
-        Object waiter = new Object();
+        var waiter = new Object();
         try {
             controller.toggleMute(sourceName, c -> {
                 synchronized (waiter) {
@@ -104,7 +100,7 @@ public class OBS {
     }
 
     public static void setSourceMute(String sourceName, boolean mute) {
-        Object waiter = new Object();
+        var waiter = new Object();
         try {
             controller.setMute(sourceName, mute, c -> {
                 synchronized (waiter) {
@@ -120,7 +116,7 @@ public class OBS {
     }
 
     public static void setCurrentScene(String sceneName) {
-        Object waiter = new Object();
+        var waiter = new Object();
         try {
             controller.setCurrentScene(sceneName, c -> {
                 synchronized (waiter) {

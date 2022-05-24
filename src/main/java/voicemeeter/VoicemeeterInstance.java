@@ -10,31 +10,18 @@ import com.sun.jna.win32.StdCallLibrary;
 @SuppressWarnings("unused")
 public interface VoicemeeterInstance extends StdCallLibrary {
     int VBVMR_RESULT_OK = 0;
-
     int VBVMR_DEVTYPE_MME = 1;
-
     int VBVMR_DEVTYPE_WDM = 3;
-
     int VBVMR_DEVTYPE_KS = 4;
-
     int VBVMR_DEVTYPE_ASIO = 5;
-
     int VBVMR_CBCOMMAND_STARTING = 1;
-
     int VBVMR_CBCOMMAND_ENDING = 2;
-
     int VBVMR_CBCOMMAND_CHANGE = 3;
-
     int VBVMR_CBCOMMAND_BUFFER_IN = 10;
-
     int VBVMR_CBCOMMAND_BUFFER_OUT = 11;
-
     int VBVMR_CBCOMMAND_BUFFER_MAIN = 20;
-
     int VBVMR_AUDIOCALLBACK_IN = 1;
-
     int VBVMR_AUDIOCALLBACK_OUT = 2;
-
     int VBVMR_AUDIOCALLBACK_MAIN = 4;
 
     class tagVBVMR_AUDIOINFO extends Structure {

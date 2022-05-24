@@ -5,9 +5,7 @@ import util.Util;
 
 public class SingleKnobLightingConfig {
     private SINGLE_KNOB_MODE mode;
-
     private String color1;
-
     private String color2;
 
     public SingleKnobLightingConfig() {

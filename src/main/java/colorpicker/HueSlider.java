@@ -26,14 +26,14 @@ public class HueSlider extends Pane {
         setBackground(new Background(new BackgroundFill(createHueGradient(),
                 CornerRadii.EMPTY, Insets.EMPTY)));
         setMinHeight(20.0D);
-        Circle colorBarIndicator = new Circle(10.0D);
+        var colorBarIndicator = new Circle(10.0D);
         colorBarIndicator.setFill(Paint.valueOf("#25262A"));
         colorBarIndicator.setId("color-bar-indicator");
         colorBarIndicator.setMouseTransparent(true);
         colorBarIndicator.setCache(true);
-        colorBarIndicator.layoutXProperty().bind(hue.multiply(widthProperty()).divide(255));
+        colorBarIndicator.layoutXProperty().bind(hue.multiply(widthProperty()).divide(MAX_HUE));
         EventHandler<MouseEvent> barMouseHandler = event -> {
-            double x = event.getX();
+            var x = event.getX();
             hue.set((int) (clamp(x / getWidth()) * 255.0D));
         };
         setOnMouseDragged(barMouseHandler);
@@ -55,10 +55,10 @@ public class HueSlider extends Pane {
     }
 
     private static LinearGradient createHueGradient() {
-        Stop[] stops = new Stop[255];
-        for (int y = 0; y < 255; y++) {
-            double offset = 1.0D - 0.00392156862745098D * y;
-            int h = (int) (y / 255.0D * 360.0D);
+        var stops = new Stop[255];
+        for (var y = 0; y < 255; y++) {
+            var offset = 1.0D - 0.00392156862745098D * y;
+            var h = (int) (y / 255.0D * 360.0D);
             stops[y] = new Stop(offset, Color.hsb(h, 1.0D, 1.0D));
         }
         return new LinearGradient(1.0D, 0.0D, 0.0D, 0.0D, true, CycleMethod.NO_CYCLE, stops);

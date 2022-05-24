@@ -138,7 +138,7 @@ public class PCPanelMiniUI extends Device {
                     childDialogStage = new Stage();
                     bm.start(childDialogStage);
                 } catch (Exception ex) {
-                    log.error("Unable to init button", e);
+                    log.error("Unable to init button", ex);
                 }
             });
             knobs[i].setOnMouseClicked(c -> {
@@ -194,9 +194,8 @@ public class PCPanelMiniUI extends Device {
     }
 
     private void setAllKnobUIColor(Paint color) {
-        for (var i = 0; i < getKnobCount(); ) {
+        for (var i = 0; i < getKnobCount(); i++) {
             setKnobUIColor(i, color);
-            i++;
         }
     }
 

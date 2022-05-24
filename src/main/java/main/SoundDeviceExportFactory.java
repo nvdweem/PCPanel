@@ -4,7 +4,6 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DataFormat;
-import javafx.scene.input.Dragboard;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 import javafx.util.Callback;
@@ -35,9 +34,9 @@ public class SoundDeviceExportFactory implements Callback<ListView<SoundDevice>,
     }
 
     private void dragDetected(MouseEvent event, ListCell<SoundDevice> treeCell) {
-        SoundDevice draggedItem = treeCell.getItem();
-        Dragboard db = treeCell.startDragAndDrop(TransferMode.MOVE);
-        ClipboardContent content = new ClipboardContent();
+        var draggedItem = treeCell.getItem();
+        var db = treeCell.startDragAndDrop(TransferMode.MOVE);
+        var content = new ClipboardContent();
         content.put(JAVA_FORMAT, draggedItem);
         db.setContent(content);
         db.setDragView(treeCell.snapshot(null, null));
@@ -48,17 +47,17 @@ public class SoundDeviceExportFactory implements Callback<ListView<SoundDevice>,
         listView.setOnDragOver(event -> {
             if (!event.getDragboard().hasContent(JAVA_FORMAT))
                 return;
-            SoundDevice dropContent = (SoundDevice) event.getDragboard().getContent(JAVA_FORMAT);
+            var dropContent = (SoundDevice) event.getDragboard().getContent(JAVA_FORMAT);
             if (listView.getItems().contains(dropContent))
                 return;
             event.acceptTransferModes(TransferMode.MOVE);
         });
         listView.setOnDragDropped(event -> {
-            Dragboard db = event.getDragboard();
-            boolean success = false;
+            var db = event.getDragboard();
+            var success = false;
             if (!db.hasContent(JAVA_FORMAT))
                 return;
-            int index = 0;
+            var index = 0;
             listView.getItems().add(index, (SoundDevice) db.getContent(JAVA_FORMAT));
             event.setDropCompleted(success);
         });

@@ -1,37 +1,30 @@
 package save;
 
-import com.google.gson.Gson;
-import lombok.extern.log4j.Log4j2;
-import main.DeviceType;
-import main.Window;
-import org.apache.commons.io.FileUtils;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.io.FileUtils;
+
+import com.google.gson.Gson;
+
+import lombok.extern.log4j.Log4j2;
+import main.DeviceType;
+import main.Window;
+
 @Log4j2
 public class Save {
     private static Save save = new Save();
-
     private static final Gson g = new Gson();
-
     private static final File SAVE_FILE = new File("save.json");
-
     private final Map<String, DeviceSave> devices = new ConcurrentHashMap<>();
-
     private volatile boolean obsEnabled;
-
     private volatile String obsAddress = "localhost";
-
     private volatile String obsPort = "4444";
-
     private volatile String obsPassword;
-
     private volatile boolean voicemeeterEnabled;
-
     private volatile String voicemeeterPath = "C:\\Program Files (x86)\\VB\\Voicemeeter";
 
     public static Map<String, DeviceSave> getDevices() {
@@ -49,7 +42,7 @@ public class Save {
     public static boolean doesDeviceDisplayNameExist(String displayName) {
         if (displayName == null)
             throw new IllegalArgumentException("cannot have null displayName");
-        for (DeviceSave device : getDevices().values()) {
+        for (var device : getDevices().values()) {
             if (displayName.equals(device.getDisplayName()))
                 return true;
         }
@@ -58,8 +51,8 @@ public class Save {
 
     public static synchronized void saveFile() {
         Window.saveFileExists = true;
-        for (DeviceSave ds : getDevices().values()) {
-            Profile p = ds.getCurrentProfile();
+        for (var ds : getDevices().values()) {
+            var p = ds.getCurrentProfile();
             p.buttonData = ds.buttonData;
             p.dialData = ds.dialData;
             p.lightingConfig = ds.getLightingConfig();

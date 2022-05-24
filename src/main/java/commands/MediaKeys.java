@@ -1,8 +1,11 @@
 package commands;
 
-public class MediaKeys {
+public final class MediaKeys {
     static {
         System.loadLibrary("MediaKeys");
+    }
+
+    private MediaKeys() {
     }
 
     public static native void volumeMute();

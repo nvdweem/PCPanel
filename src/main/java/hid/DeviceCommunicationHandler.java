@@ -52,7 +52,7 @@ public class DeviceCommunicationHandler extends Thread {
 
     @Override
     public void run() {
-        while (DeviceScanner.CONNECTED_DEVICE_MAP.get(key) == this) {
+        while (DeviceScanner.getConnectedDevice(key) == this) {
             var moreData = true;
             while (moreData) {
                 var data = new byte[PACKET_LENGTH];

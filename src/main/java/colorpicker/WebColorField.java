@@ -6,7 +6,7 @@ import javafx.scene.control.Skin;
 import javafx.scene.paint.Color;
 
 class WebColorField extends InputField {
-    private final ObjectProperty<Color> value = new SimpleObjectProperty<Color>(this, "value");
+    private final ObjectProperty<Color> value = new SimpleObjectProperty<>(this, "value");
 
     public final Color getValue() {
         return value.get();

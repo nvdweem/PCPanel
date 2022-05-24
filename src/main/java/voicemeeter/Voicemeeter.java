@@ -1,20 +1,20 @@
 package voicemeeter;
 
-import lombok.extern.log4j.Log4j2;
-import save.Save;
-
 import java.util.Arrays;
 import java.util.List;
 
+import lombok.extern.log4j.Log4j2;
+import save.Save;
+
 @Log4j2
-public class Voicemeeter {
+public final class Voicemeeter {
     private static int version = -1;
-
     private static volatile boolean hasFinishedConnection;
-
     private static volatile boolean hasLoggedIn;
+    private static final VoicemeeterVersion[] versions = { VoicemeeterVersion.VOICEMEETER, VoicemeeterVersion.BANANA, VoicemeeterVersion.POTATO };
 
-    private static final VoicemeeterVersion[] versions = {VoicemeeterVersion.VOICEMEETER, VoicemeeterVersion.BANANA, VoicemeeterVersion.POTATO};
+    private Voicemeeter() {
+    }
 
     public enum ControlType {
         STRIP("Input"),
@@ -155,7 +155,7 @@ public class Voicemeeter {
         log.debug("{}", VoicemeeterAPI.getVoicemeeterType());
         log.debug("{}", VoicemeeterAPI.getVoicemeeterVersion());
         while (true) {
-            for (int i = 0; i <= 100; i++) {
+            for (var i = 0; i <= 100; i++) {
                 try {
                     controlLevel("STRIP[0].gaIn", DialControlMode.NEG_INF_TO_12, i);
                 } catch (Exception e) {
@@ -247,7 +247,7 @@ public class Voicemeeter {
     public static void controlButton(String fullParam, ButtonControlMode bt) {
         if (bt == ButtonControlMode.TOGGLE) {
             VoicemeeterAPI.areParametersDirty();
-            boolean status = VoicemeeterAPI.getParameterFloat(fullParam) == 1.0F;
+            var status = VoicemeeterAPI.getParameterFloat(fullParam) == 1.0F;
             VoicemeeterAPI.setParameterFloat(fullParam, status ? 0.0F : 1.0F);
             VoicemeeterAPI.areParametersDirty();
         } else if (bt == ButtonControlMode.ENABLE) {

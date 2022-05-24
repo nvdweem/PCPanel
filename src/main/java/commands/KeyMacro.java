@@ -1,41 +1,46 @@
 package commands;
 
+import java.awt.AWTException;
+import java.awt.Robot;
+import java.awt.event.KeyEvent;
+
 import lombok.extern.log4j.Log4j2;
 
-import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.lang.reflect.Field;
-
 @Log4j2
-public class KeyMacro {
-    private static Robot robot;
+public final class KeyMacro {
+    private static final Robot robot;
 
     static {
+        Robot toSet = null;
         try {
-            robot = new Robot();
+            toSet = new Robot();
         } catch (AWTException e) {
             log.error("Unable to construct robot", e);
         }
+        robot = toSet;
+    }
+
+    private KeyMacro() {
     }
 
     public static void executeKeyStroke(String input) {
         try {
             if (input.contains("UNDEFINED"))
                 return;
-            String[] ar = input.replace(" ", "").split("\\+");
-            for (int i = 0; i < ar.length - 1; i++) {
-                int result = modifierToKeyEvent(ar[i]);
+            var ar = input.replace(" ", "").split("\\+");
+            for (var i = 0; i < ar.length - 1; i++) {
+                var result = modifierToKeyEvent(ar[i]);
                 if (result == 0) {
                     log.error("bad key modifier: {}", ar[i]);
                 } else {
                     robot.keyPress(result);
                 }
             }
-            int keyEvent = letterToKeyEvent(ar[ar.length - 1]);
+            var keyEvent = letterToKeyEvent(ar[ar.length - 1]);
             robot.keyPress(keyEvent);
             robot.keyRelease(keyEvent);
-            for (int j = 0; j < ar.length - 1; j++) {
-                int result = modifierToKeyEvent(ar[j]);
+            for (var j = 0; j < ar.length - 1; j++) {
+                var result = modifierToKeyEvent(ar[j]);
                 if (result == 0) {
                     log.error("bad key modifier: {}", ar[j]);
                 } else {
@@ -48,15 +53,15 @@ public class KeyMacro {
     }
 
     public static void main(String[] args) throws Exception {
-        long s = System.currentTimeMillis();
+        var s = System.currentTimeMillis();
         executeKeyStroke("ctrl + shift + alt + S");
         log.error("{}", (System.currentTimeMillis() - s) / 1000.0D);
     }
 
     private static int letterToKeyEvent(String letter) throws Exception {
-        letter = letter.toUpperCase();
-        String code = "VK_" + letter;
-        Field f = KeyEvent.class.getField(code);
+        var ucLetter = letter.toUpperCase();
+        var code = "VK_" + ucLetter;
+        var f = KeyEvent.class.getField(code);
         return f.getInt(null);
     }
 

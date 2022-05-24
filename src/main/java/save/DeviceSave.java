@@ -7,37 +7,30 @@ import main.DeviceType;
 
 public class DeviceSave {
     private String displayName;
-
     private List<Profile> profiles;
-
     private String currentProfile;
-
     public String[][] buttonData;
-
     public String[][] dialData;
-
     private KnobSetting[] knobSettings;
-
     private LightingConfig lightingConfig;
 
     public DeviceSave(DeviceType dt) {
-        int analogCount = dt.getAnalogCount();
-        int buttonCount = dt.getButtonCount();
+        var analogCount = dt.getAnalogCount();
+        var buttonCount = dt.getButtonCount();
         buttonData = new String[buttonCount][10];
         dialData = new String[analogCount][10];
         displayName = generateDefaultDisplayName();
         lightingConfig = LightingConfig.defaultLightingConfig(dt);
         knobSettings = new KnobSetting[analogCount];
-        for (int i = 0; i < analogCount; ) {
+        for (var i = 0; i < analogCount; i++) {
             knobSettings[i] = new KnobSetting();
-            i++;
         }
     }
 
     private static String generateDefaultDisplayName() {
-        int i = 1;
+        var i = 1;
         while (true) {
-            String name = "pcpanel" + i;
+            var name = "pcpanel" + i;
             i++;
             if (!Save.doesDeviceDisplayNameExist(name))
                 return name;
@@ -63,9 +56,8 @@ public class DeviceSave {
     public KnobSetting[] getKnobSettings() {
         if (knobSettings == null) {
             knobSettings = new KnobSetting[buttonData.length];
-            for (int i = 0; i < buttonData.length; ) {
+            for (var i = 0; i < buttonData.length; i++) {
                 knobSettings[i] = new KnobSetting();
-                i++;
             }
         }
         return knobSettings;
@@ -75,7 +67,7 @@ public class DeviceSave {
         if (profiles == null || profiles.isEmpty()) {
             if (profiles == null)
                 profiles = new ArrayList<>();
-            Profile profile = new Profile();
+            var profile = new Profile();
             profile.name = "profile1";
             profile.buttonData = buttonData;
             profile.dialData = dialData;
@@ -88,7 +80,7 @@ public class DeviceSave {
     }
 
     public boolean setCurrentProfile(String p) {
-        Profile profile = getProfile(p);
+        var profile = getProfile(p);
         if (profile == null)
             return false;
         currentProfile = p;
@@ -102,7 +94,7 @@ public class DeviceSave {
     public Profile getProfile(String name) {
         if (name == null)
             return null;
-        for (Profile p : getProfiles()) {
+        for (var p : getProfiles()) {
             if (p.name.equals(name))
                 return p;
         }
@@ -110,16 +102,16 @@ public class DeviceSave {
     }
 
     public String getCurrentProfileName() {
-        Profile p = getProfile(currentProfile);
+        var p = getProfile(currentProfile);
         if (p == null)
-            getProfiles().get(0);
+            return getProfiles().get(0).getName();
         return currentProfile;
     }
 
     public Profile getCurrentProfile() {
-        Profile p = getProfile(currentProfile);
+        var p = getProfile(currentProfile);
         if (p == null)
-            getProfiles().get(0);
+            return getProfiles().get(0);
         return p;
     }
 }

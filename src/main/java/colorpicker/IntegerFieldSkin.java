@@ -30,13 +30,13 @@ public class IntegerFieldSkin extends InputFieldSkin {
 
     @Override
     protected boolean accept(String text) {
-        if (text.length() == 0)
+        if (text.isEmpty())
             return true;
         if (text.matches("[0-9]*"))
             try {
                 Integer.parseInt(text);
-                int value = Integer.parseInt(text);
-                int maxValue = ((IntegerField) control).getMaxValue();
+                var value = Integer.parseInt(text);
+                var maxValue = ((IntegerField) control).getMaxValue();
                 return maxValue == -1 || (value <= maxValue);
             } catch (NumberFormatException numberFormatException) {
             }
@@ -50,10 +50,10 @@ public class IntegerFieldSkin extends InputFieldSkin {
 
     @Override
     protected void updateValue() {
-        int value = ((IntegerField) control).getValue();
-        String text = (getTextField().getText() == null) ? "" : getTextField().getText().trim();
+        var value = ((IntegerField) control).getValue();
+        var text = (getTextField().getText() == null) ? "" : getTextField().getText().trim();
         try {
-            int newValue = Integer.parseInt(text);
+            var newValue = Integer.parseInt(text);
             if (newValue != value)
                 ((IntegerField) control).setValue(newValue);
         } catch (NumberFormatException ex) {

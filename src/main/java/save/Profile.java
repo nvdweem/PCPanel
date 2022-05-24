@@ -4,13 +4,9 @@ import main.DeviceType;
 
 public class Profile {
     protected String name;
-
     public String[][] buttonData;
-
     public String[][] dialData;
-
     protected KnobSetting[] knobSettings;
-
     protected LightingConfig lightingConfig;
 
     public Profile(String name, DeviceType dt) {
@@ -19,9 +15,8 @@ public class Profile {
         dialData = new String[dt.getAnalogCount()][10];
         lightingConfig = LightingConfig.defaultLightingConfig(dt);
         knobSettings = new KnobSetting[dt.getAnalogCount()];
-        for (int i = 0; i < dt.getAnalogCount(); ) {
+        for (var i = 0; i < dt.getAnalogCount(); i++) {
             knobSettings[i] = new KnobSetting();
-            i++;
         }
     }
 

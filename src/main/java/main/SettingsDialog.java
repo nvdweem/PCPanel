@@ -1,5 +1,10 @@
 package main;
 
+import java.io.IOException;
+import java.net.URL;
+import java.util.Objects;
+import java.util.ResourceBundle;
+
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -19,49 +24,21 @@ import obs.OBSListener;
 import obsremote.OBSRemoteController;
 import save.Save;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.Objects;
-import java.util.ResourceBundle;
-
 @Log4j2
 public class SettingsDialog extends Application implements Initializable {
-
     private Stage stage;
-
     private Pane pane;
-
     private final Stage parentStage;
-
-    @FXML
-    private CheckBox obsEnable;
-
-    @FXML
-    private Pane obsControls;
-
-    @FXML
-    private TextField obsAddress;
-
-    @FXML
-    private TextField obsPort;
-
-    @FXML
-    private TextField obsPassword;
-
-    @FXML
-    private Label obsTestResult;
-
-    @FXML
-    private Hyperlink obsLink;
-
-    @FXML
-    private CheckBox vmEnable;
-
-    @FXML
-    private Pane vmControls;
-
-    @FXML
-    private TextField vmPath;
+    @FXML private CheckBox obsEnable;
+    @FXML private Pane obsControls;
+    @FXML private TextField obsAddress;
+    @FXML private TextField obsPort;
+    @FXML private TextField obsPassword;
+    @FXML private Label obsTestResult;
+    @FXML private Hyperlink obsLink;
+    @FXML private CheckBox vmEnable;
+    @FXML private Pane vmControls;
+    @FXML private TextField vmPath;
 
     public SettingsDialog(Stage parentStage) {
         this.parentStage = parentStage;
@@ -70,14 +47,14 @@ public class SettingsDialog extends Application implements Initializable {
     @Override
     public void start(Stage stage) {
         this.stage = stage;
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/assets/SettingsDialog.fxml"));
+        var loader = new FXMLLoader(getClass().getResource("/assets/SettingsDialog.fxml"));
         loader.setController(this);
         try {
             pane = loader.load();
         } catch (IOException e) {
             log.error("Unable to load loader", e);
         }
-        Scene scene = new Scene(pane);
+        var scene = new Scene(pane);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/assets/dark_theme.css"), "Unable to find dark_theme.css").toExternalForm());
         stage.getIcons().add(new Image("/assets/256x256.png"));
         stage.setScene(scene);
@@ -101,7 +78,7 @@ public class SettingsDialog extends Application implements Initializable {
 
     @FXML
     private void obsTest(ActionEvent event) {
-        OBSRemoteController controller = new OBSRemoteController(obsAddress.getText(), obsPort.getText(), obsPassword.getText());
+        var controller = new OBSRemoteController(obsAddress.getText(), obsPort.getText(), obsPassword.getText());
         if (controller.isFailed()) {
             obsTestResult.setText("result: connection failed");
         } else {

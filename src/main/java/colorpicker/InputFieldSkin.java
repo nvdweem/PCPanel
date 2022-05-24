@@ -1,6 +1,7 @@
 package colorpicker;
 
 import com.sun.javafx.event.EventDispatchChainImpl;
+
 import javafx.beans.InvalidationListener;
 import javafx.event.EventDispatchChain;
 import javafx.scene.Node;
@@ -21,7 +22,7 @@ abstract class InputFieldSkin implements Skin<InputField> {
         textField = new InnerTextField() {
             @Override
             public void replaceText(int start, int end, String text) {
-                String t = (textField.getText() == null) ? "" : textField.getText();
+                var t = (textField.getText() == null) ? "" : textField.getText();
                 t = t.substring(0, start) + text + t.substring(end);
                 if (accept(t))
                     super.replaceText(start, end, text);
@@ -29,9 +30,9 @@ abstract class InputFieldSkin implements Skin<InputField> {
 
             @Override
             public void replaceSelection(String text) {
-                String t = (textField.getText() == null) ? "" : textField.getText();
-                int start = Math.min(textField.getAnchor(), textField.getCaretPosition());
-                int end = Math.max(textField.getAnchor(), textField.getCaretPosition());
+                var t = (textField.getText() == null) ? "" : textField.getText();
+                var start = Math.min(textField.getAnchor(), textField.getCaretPosition());
+                var end = Math.max(textField.getAnchor(), textField.getCaretPosition());
                 t = t.substring(0, start) + text + t.substring(end);
                 if (accept(t))
                     super.replaceSelection(text);
@@ -86,7 +87,7 @@ abstract class InputFieldSkin implements Skin<InputField> {
 
         @Override
         public EventDispatchChain buildEventDispatchChain(EventDispatchChain tail) {
-            EventDispatchChainImpl eventDispatchChainImpl = new EventDispatchChainImpl();
+            var eventDispatchChainImpl = new EventDispatchChainImpl();
             eventDispatchChainImpl.append(textField.getEventDispatcher());
             return eventDispatchChainImpl;
         }

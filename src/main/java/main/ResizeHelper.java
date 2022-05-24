@@ -1,16 +1,16 @@
 package main;
 
-import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
-import javafx.event.EventType;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 
-public class ResizeHelper {
+public final class ResizeHelper {
+    private ResizeHelper() {
+    }
+
     public static void addResizeListener(Stage stage) {
         addResizeListener(stage, 1.0D, 1.0D, Double.MAX_VALUE, Double.MAX_VALUE);
     }
@@ -20,7 +20,7 @@ public class ResizeHelper {
     }
 
     public static void addResizeListener(Stage stage, double minWidth, double minHeight, double maxWidth, double maxHeight) {
-        ResizeListener resizeListener = new ResizeListener(stage);
+        var resizeListener = new ResizeListener(stage);
         stage.getScene().addEventHandler(MouseEvent.MOUSE_MOVED, resizeListener);
         stage.getScene().addEventHandler(MouseEvent.MOUSE_PRESSED, resizeListener);
         stage.getScene().addEventHandler(MouseEvent.MOUSE_DRAGGED, resizeListener);
@@ -30,8 +30,8 @@ public class ResizeHelper {
         resizeListener.setMinHeight(minHeight);
         resizeListener.setMaxWidth(maxWidth);
         resizeListener.setMaxHeight(maxHeight);
-        ObservableList<Node> children = stage.getScene().getRoot().getChildrenUnmodifiable();
-        for (Node child : children)
+        var children = stage.getScene().getRoot().getChildrenUnmodifiable();
+        for (var child : children)
             addListenerDeeply(child, resizeListener);
     }
 
@@ -42,8 +42,8 @@ public class ResizeHelper {
         node.addEventHandler(MouseEvent.MOUSE_EXITED, listener);
         node.addEventHandler(MouseEvent.MOUSE_EXITED_TARGET, listener);
         if (node instanceof Parent parent) {
-            ObservableList<Node> children = parent.getChildrenUnmodifiable();
-            for (Node child : children)
+            var children = parent.getChildrenUnmodifiable();
+            for (var child : children)
                 addListenerDeeply(child, listener);
         }
     }
@@ -95,12 +95,12 @@ public class ResizeHelper {
 
         @Override
         public void handle(MouseEvent mouseEvent) {
-            EventType<? extends MouseEvent> mouseEventType = mouseEvent.getEventType();
-            Scene scene = stage.getScene();
-            double mouseEventX = mouseEvent.getSceneX();
-            double mouseEventY = mouseEvent.getSceneY();
-            double sceneWidth = scene.getWidth();
-            double sceneHeight = scene.getHeight();
+            var mouseEventType = mouseEvent.getEventType();
+            var scene = stage.getScene();
+            var mouseEventX = mouseEvent.getSceneX();
+            var mouseEventY = mouseEvent.getSceneY();
+            var sceneWidth = scene.getWidth();
+            var sceneHeight = scene.getHeight();
             if (MouseEvent.MOUSE_MOVED.equals(mouseEventType)) {
                 if (mouseEventX < border && mouseEventY < border) {
                     cursorEvent = Cursor.NW_RESIZE;
@@ -131,7 +131,7 @@ public class ResizeHelper {
                     !Cursor.DEFAULT.equals(cursorEvent)) {
                 resizing = true;
                 if (!Cursor.W_RESIZE.equals(cursorEvent) && !Cursor.E_RESIZE.equals(cursorEvent)) {
-                    double minHeight = (stage.getMinHeight() > (border * 2)) ? stage.getMinHeight() : (border * 2);
+                    var minHeight = (stage.getMinHeight() > (border * 2)) ? stage.getMinHeight() : (border * 2);
                     if (Cursor.NW_RESIZE.equals(cursorEvent) || Cursor.N_RESIZE.equals(cursorEvent) ||
                             Cursor.NE_RESIZE.equals(cursorEvent)) {
                         if (stage.getHeight() > minHeight || mouseEventY < 0.0D) {
@@ -143,7 +143,7 @@ public class ResizeHelper {
                     }
                 }
                 if (!Cursor.N_RESIZE.equals(cursorEvent) && !Cursor.S_RESIZE.equals(cursorEvent)) {
-                    double minWidth = (stage.getMinWidth() > (border * 2)) ? stage.getMinWidth() : (border * 2);
+                    var minWidth = (stage.getMinWidth() > (border * 2)) ? stage.getMinWidth() : (border * 2);
                     if (Cursor.NW_RESIZE.equals(cursorEvent) || Cursor.W_RESIZE.equals(cursorEvent) ||
                             Cursor.SW_RESIZE.equals(cursorEvent)) {
                         if (stage.getWidth() > minWidth || mouseEventX < 0.0D) {

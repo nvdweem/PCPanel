@@ -2,11 +2,13 @@ package main;
 
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
-import javafx.scene.input.*;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.DataFormat;
+import javafx.scene.input.DragEvent;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.input.TransferMode;
 import javafx.util.Callback;
 import util.SoundDevice;
-
-import java.util.Objects;
 
 public class SoundDeviceImportFactory implements Callback<ListView<SoundDevice>, ListCell<SoundDevice>> {
     public static final DataFormat JAVA_FORMAT = new DataFormat("application/x-java-serialized-object");
@@ -19,7 +21,7 @@ public class SoundDeviceImportFactory implements Callback<ListView<SoundDevice>,
 
     private SoundDevice draggedItem;
 
-    protected ListView<SoundDevice> listView;
+    private final ListView<SoundDevice> listView;
 
     public SoundDeviceImportFactory(ListView<SoundDevice> listView) {
         this.listView = listView;
@@ -28,7 +30,7 @@ public class SoundDeviceImportFactory implements Callback<ListView<SoundDevice>,
 
     @Override
     public ListCell<SoundDevice> call(ListView<SoundDevice> listView) {
-        ListCell<SoundDevice> cell = new ListCell<SoundDevice>() {
+        var cell = new ListCell<SoundDevice>() {
             @Override
             protected void updateItem(SoundDevice item, boolean empty) {
                 super.updateItem(item, empty);
@@ -49,8 +51,8 @@ public class SoundDeviceImportFactory implements Callback<ListView<SoundDevice>,
 
     private void dragDetected(MouseEvent event, ListCell<SoundDevice> treeCell, ListView<SoundDevice> treeView) {
         draggedItem = treeCell.getItem();
-        Dragboard db = treeCell.startDragAndDrop(TransferMode.MOVE);
-        ClipboardContent content = new ClipboardContent();
+        var db = treeCell.startDragAndDrop(TransferMode.MOVE);
+        var content = new ClipboardContent();
         content.put(JAVA_FORMAT, draggedItem);
         db.setContent(content);
         db.setDragView(treeCell.snapshot(null, null));
@@ -60,8 +62,8 @@ public class SoundDeviceImportFactory implements Callback<ListView<SoundDevice>,
     private void dragOver(DragEvent event, ListCell<SoundDevice> treeCell, ListView<SoundDevice> treeView) {
         if (!event.getDragboard().hasContent(JAVA_FORMAT))
             return;
-        SoundDevice thisItem = treeCell.getItem();
-        SoundDevice dropContent = (SoundDevice) event.getDragboard().getContent(JAVA_FORMAT);
+        var thisItem = treeCell.getItem();
+        var dropContent = (SoundDevice) event.getDragboard().getContent(JAVA_FORMAT);
         if (event.getGestureSource().getClass().getEnclosingClass().getName().contains("SoundDeviceImportFactory")) {
             if (thisItem == draggedItem)
                 return;
@@ -71,29 +73,28 @@ public class SoundDeviceImportFactory implements Callback<ListView<SoundDevice>,
         event.acceptTransferModes(TransferMode.MOVE);
         if (thisItem == null)
             return;
-        Objects.equals(dropZone, treeCell);
         clearDropLocation();
         dropZone = treeCell;
         if (event.getY() < treeCell.getHeight() / 2.0D) {
-            dropZone.setStyle("-fx-border-color: #eea82f; -fx-border-width: 2 0 0 0; -fx-padding: 1 7 3 7;");
+            dropZone.setStyle(DROP_HINT_STYLE_ABOVE);
         } else {
-            dropZone.setStyle("-fx-border-color: #eea82f; -fx-border-width: 0 0 2 0; -fx-padding: 3 7 1 7");
+            dropZone.setStyle(DROP_HINT_STYLE_BELLOW);
         }
     }
 
     private void drop(DragEvent event, ListCell<SoundDevice> treeCell, ListView<SoundDevice> treeView) {
-        Dragboard db = event.getDragboard();
-        boolean success = false;
+        var db = event.getDragboard();
+        var success = false;
         if (!db.hasContent(JAVA_FORMAT))
             return;
-        SoundDevice thisItem = treeCell.getItem();
-        int index = listView.getItems().indexOf(thisItem);
-        if ("-fx-border-color: #eea82f; -fx-border-width: 0 0 2 0; -fx-padding: 3 7 1 7".equals(treeCell.getStyle()))
+        var thisItem = treeCell.getItem();
+        var index = listView.getItems().indexOf(thisItem);
+        if (DROP_HINT_STYLE_BELLOW.equals(treeCell.getStyle()))
             index++;
         if (index == -1)
             index = listView.getItems().size();
         if (event.getGestureSource().getClass().getEnclosingClass().getName().contains("SoundDeviceImportFactory")) {
-            int moverLocation = listView.getItems().indexOf(draggedItem);
+            var moverLocation = listView.getItems().indexOf(draggedItem);
             if (index > moverLocation)
                 index--;
             listView.getItems().remove(draggedItem);
@@ -115,17 +116,17 @@ public class SoundDeviceImportFactory implements Callback<ListView<SoundDevice>,
         listView.setOnDragOver(event -> {
             if (!event.getDragboard().hasContent(JAVA_FORMAT) || !listView.getItems().isEmpty())
                 return;
-            SoundDevice dropContent = (SoundDevice) event.getDragboard().getContent(JAVA_FORMAT);
+            var dropContent = (SoundDevice) event.getDragboard().getContent(JAVA_FORMAT);
             if (listView.getItems().contains(dropContent))
                 return;
             event.acceptTransferModes(TransferMode.MOVE);
         });
         listView.setOnDragDropped(event -> {
-            Dragboard db = event.getDragboard();
-            boolean success = false;
+            var db = event.getDragboard();
+            var success = false;
             if (!db.hasContent(JAVA_FORMAT) || !listView.getItems().isEmpty())
                 return;
-            int index = listView.getItems().size();
+            var index = listView.getItems().size();
             listView.getItems().add(index, (SoundDevice) db.getContent(JAVA_FORMAT));
             event.setDropCompleted(success);
         });

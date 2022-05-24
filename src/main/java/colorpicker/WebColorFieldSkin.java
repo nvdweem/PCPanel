@@ -1,13 +1,13 @@
 package colorpicker;
 
+import java.util.Locale;
+
 import javafx.beans.InvalidationListener;
 import javafx.geometry.NodeOrientation;
 import javafx.scene.Node;
 import javafx.scene.paint.Color;
 import lombok.extern.log4j.Log4j2;
 import util.Util;
-
-import java.util.Locale;
 
 @Log4j2
 class WebColorFieldSkin extends InputFieldSkin {
@@ -46,7 +46,7 @@ class WebColorFieldSkin extends InputFieldSkin {
 
     @Override
     protected void updateText() {
-        Color color = ((WebColorField) control).getValue();
+        var color = ((WebColorField) control).getValue();
         if (color == null)
             color = Color.BLACK;
         getTextField().setText(Util.formatHexString(color));
@@ -56,11 +56,11 @@ class WebColorFieldSkin extends InputFieldSkin {
     protected void updateValue() {
         if (noChangeInValue)
             return;
-        Color value = ((WebColorField) control).getValue();
-        String text = (getTextField().getText() == null) ? "" : getTextField().getText().trim().toUpperCase(Locale.ROOT);
+        var value = ((WebColorField) control).getValue();
+        var text = (getTextField().getText() == null) ? "" : getTextField().getText().trim().toUpperCase(Locale.ROOT);
         if (text.matches("#[A-F0-9]{6}") || text.matches("[A-F0-9]{6}"))
             try {
-                Color newValue = (text.charAt(0) == '#') ? Color.web(text) : Color.web("#" + text);
+                var newValue = (text.charAt(0) == '#') ? Color.web(text) : Color.web("#" + text);
                 if (!newValue.equals(value)) {
                     ((WebColorField) control).setValue(newValue);
                 } else {

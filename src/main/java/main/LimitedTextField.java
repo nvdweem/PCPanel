@@ -31,13 +31,13 @@ public class LimitedTextField extends TextField {
         if (getMaxLength() <= 0) {
             super.replaceText(start, end, insertedText);
         } else {
-            String currentText = (getText() == null) ? "" : getText();
-            String finalText = currentText.substring(0, start) + insertedText + currentText.substring(end);
-            int numberOfexceedingCharacters = finalText.length() - getMaxLength();
+            var currentText = (getText() == null) ? "" : getText();
+            var finalText = currentText.substring(0, start) + insertedText + currentText.substring(end);
+            var numberOfexceedingCharacters = finalText.length() - getMaxLength();
             if (numberOfexceedingCharacters <= 0) {
                 super.replaceText(start, end, insertedText);
             } else {
-                String cutInsertedText = insertedText.substring(
+                var cutInsertedText = insertedText.substring(
                         0,
                         insertedText.length() - numberOfexceedingCharacters);
                 super.replaceText(start, end, cutInsertedText);

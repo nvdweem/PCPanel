@@ -5,13 +5,9 @@ import util.Util;
 
 public class SingleLogoLightingConfig {
     private SINGLE_LOGO_MODE mode;
-
     private String color;
-
     private byte brightness;
-
     private byte speed;
-
     private byte hue;
 
     public SingleLogoLightingConfig() {

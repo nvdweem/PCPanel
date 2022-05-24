@@ -1,5 +1,8 @@
 package main;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import hid.DeviceScanner;
 import hid.OutputInterpreter;
 import javafx.application.Application;
@@ -22,64 +25,28 @@ import save.Save;
 import util.FileChecker;
 import util.SleepDetector;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 @Log4j2
 public class Window extends Application {
-    @FXML
-    private Pane deviceHolder;
-
-    @FXML
-    private Pane titleHolder;
-
-    @FXML
-    private Pane hintHolder;
-
-    @FXML
-    private Pane lightingButtonHolder;
-
-    @FXML
-    private Pane profileHolder;
-
-    @FXML
-    private Button close;
-
-    @FXML
-    private Button min;
-
-    @FXML
-    private Button deviceListToggle;
-
-    @FXML
-    private Button settings;
-
-    @FXML
-    private Label versionLabel;
-
-    @FXML
-    private Label noDevicesLabel;
-
-    @FXML
-    private Label hintLabel;
-
-    @FXML
-    private ListView<Device> connectedDeviceList;
-
+    @FXML private Pane deviceHolder;
+    @FXML private Pane titleHolder;
+    @FXML private Pane hintHolder;
+    @FXML private Pane lightingButtonHolder;
+    @FXML private Pane profileHolder;
+    @FXML private Button close;
+    @FXML private Button min;
+    @FXML private Button deviceListToggle;
+    @FXML private Button settings;
+    @FXML private Label versionLabel;
+    @FXML private Label noDevicesLabel;
+    @FXML private Label hintLabel;
+    @FXML private ListView<Device> connectedDeviceList;
     public static Stage stage;
-
     private Pane pane;
-
     private static Window window;
-
     private static boolean quiet;
-
     public static volatile boolean saveFileExists;
-
     public static Map<String, Device> devices = new ConcurrentHashMap<>();
-
     public static final String VERSION = "2.1.1";
-
     public static final String TITLE = "PCPanel Software " + VERSION;
 
     public Window() {
@@ -102,11 +69,11 @@ public class Window extends Application {
     @Override
     public void start(Stage stage) throws Exception {
         Window.stage = stage;
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/assets/HomePage.fxml"));
+        var loader = new FXMLLoader(getClass().getResource("/assets/HomePage.fxml"));
         loader.setController(this);
         pane = loader.load();
         pane.setId("pane");
-        Scene scene = new Scene(pane, 1000.0D, 870.0D);
+        var scene = new Scene(pane, 1000.0D, 870.0D);
         showHint(false);
         Save.readFile();
         initWindow();
@@ -170,7 +137,7 @@ public class Window extends Application {
 
     public static void onDeviceDisconnected(String serialNum) {
         Platform.runLater(() -> {
-            Device device = devices.remove(serialNum);
+            var device = devices.remove(serialNum);
             window.connectedDeviceList.getItems().remove(device);
             device.closeDialogs();
         });
@@ -216,23 +183,23 @@ public class Window extends Application {
                 profileHolder.getChildren().add(newValue.getProfileMenu());
             }
         });
-        connectedDeviceList.setCellFactory(c -> new DeviceCell(c));
+        connectedDeviceList.setCellFactory(DeviceCell::new);
         connectedDeviceList.setEditable(true);
         setConnectedDeviceListVisible(false);
-        Font apex = Font.loadFont(getClass().getResourceAsStream("/assets/apex-mk2.regular.otf"), 50.0D);
+        var apex = Font.loadFont(getClass().getResourceAsStream("/assets/apex-mk2.regular.otf"), 50.0D);
         noDevicesLabel.setFont(apex);
         close.setOnAction(e -> stage.hide());
         settings.setOnAction(e -> {
             try {
-                SettingsDialog sd = new SettingsDialog(stage);
-                Stage childDialogStage = new Stage();
+                var sd = new SettingsDialog(stage);
+                var childDialogStage = new Stage();
                 sd.start(childDialogStage);
             } catch (Exception ex) {
-                log.error("Unable to open settings dialog", e);
+                log.error("Unable to open settings dialog", ex);
             }
         });
         min.setOnAction(e -> stage.setIconified(true));
-        Region icon = new Region();
+        var icon = new Region();
         icon.setId("icon");
         min.setGraphic(icon);
         deviceListToggle.setOnAction(e -> setConnectedDeviceListVisible(!isConnectedDeviceListVisisble()));

@@ -1,5 +1,7 @@
 package main;
 
+import java.util.Objects;
+
 import javafx.geometry.Pos;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.ListCell;
@@ -9,16 +11,11 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.layout.VBox;
 import save.Save;
 
-import java.util.Objects;
-
 public class DeviceCell extends ListCell<Device> {
-    ImageView imageView = new ImageView();
-
-    LimitedTextField textField = new LimitedTextField(15);
-
-    VBox vbox = new VBox(imageView);
-
-    ListView<Device> listView;
+    private final ImageView imageView = new ImageView();
+    private final LimitedTextField textField = new LimitedTextField(15);
+    private final VBox vbox = new VBox(imageView);
+    private final ListView<Device> listView;
 
     public DeviceCell(ListView<Device> listView) {
         this.listView = listView;
@@ -26,7 +23,7 @@ public class DeviceCell extends ListCell<Device> {
         vbox.getStylesheets().addAll(Objects.requireNonNull(getClass().getResource("/assets/1.css"), "Unable to find 1.css").toExternalForm());
         vbox.setAlignment(Pos.TOP_CENTER);
         textField.setOnAction(e -> {
-            if (textField.getText().trim().length() == 0)
+            if (textField.getText().trim().isEmpty())
                 return;
             commitEdit(getItem());
         });
@@ -73,7 +70,7 @@ public class DeviceCell extends ListCell<Device> {
 
     @Override
     public void commitEdit(Device device) {
-        String newValue = textField.getText().trim();
+        var newValue = textField.getText().trim();
         super.commitEdit(device);
         listView.getSelectionModel().select(device);
         setText(newValue);

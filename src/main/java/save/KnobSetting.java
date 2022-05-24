@@ -2,11 +2,8 @@ package save;
 
 public class KnobSetting {
     private int minTrim;
-
     private int maxTrim = 100;
-
     private boolean logarithmic;
-
     private int buttonDebounce = 50;
 
     public int getMinTrim() {

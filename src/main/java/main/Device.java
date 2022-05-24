@@ -1,13 +1,15 @@
 package main;
 
 import hid.OutputInterpreter;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
-import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.ContentDisplay;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -25,11 +27,8 @@ import save.Save;
 @Log4j2
 public abstract class Device {
     private HBox profileMenu;
-
     private ComboBox<Profile> profiles;
-
     protected String serialNumber;
-
     protected DeviceSave save;
 
     protected Device(String serialNum, DeviceSave deviceSave) {
@@ -41,25 +40,22 @@ public abstract class Device {
     private void initProfileMenu() {
         profileMenu = new HBox();
         profileMenu.setAlignment(Pos.CENTER_RIGHT);
-        profiles = new ComboBox(FXCollections.observableArrayList(save.getProfiles()));
+        profiles = new ComboBox<>(FXCollections.observableArrayList(save.getProfiles()));
         profiles.setPrefWidth(200.0D);
         profiles.getSelectionModel().select(save.getCurrentProfile());
-        LimitedTextField textfield = new LimitedTextField(10);
-        profiles.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Profile>() {
-            @Override
-            public void changed(ObservableValue<? extends Profile> observable, Profile oldValue, Profile newValue) {
-                if (newValue == null)
-                    return;
-                log.debug("change");
-                String name = newValue.getName();
-                boolean success = save.setCurrentProfile(name);
-                if (!success)
-                    return;
-                setLighting(save.getLightingConfig(), true);
-                Save.saveFile();
-            }
+        var textfield = new LimitedTextField(10);
+        profiles.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue == null)
+                return;
+            log.debug("change");
+            var name = newValue.getName();
+            var success = save.setCurrentProfile(name);
+            if (!success)
+                return;
+            setLighting(save.getLightingConfig(), true);
+            Save.saveFile();
         });
-        ListCell<Profile> buttonCell = new ListCell<Profile>() {
+        var buttonCell = new ListCell<Profile>() {
             @Override
             protected void updateItem(Profile item, boolean btl) {
                 super.updateItem(item, btl);
@@ -69,9 +65,9 @@ public abstract class Device {
             }
         };
         textfield.setOnAction(c -> {
-            Profile p = buttonCell.getItem();
-            String oldName = p.getName();
-            String newName = textfield.getText();
+            var p = buttonCell.getItem();
+            var oldName = p.getName();
+            var newName = textfield.getText();
             buttonCell.setGraphic(null);
             if (save.getProfile(newName) != null) {
                 buttonCell.setText(oldName);
@@ -84,7 +80,7 @@ public abstract class Device {
             Save.saveFile();
         });
         textfield.focusedProperty().addListener((arg, oldVal, newVal) -> {
-            if (!newVal.booleanValue()) {
+            if (!newVal) {
                 buttonCell.setGraphic(null);
                 buttonCell.setText(buttonCell.getItem().getName());
             }
@@ -96,38 +92,35 @@ public abstract class Device {
             }
         });
         profiles.setButtonCell(buttonCell);
-        profiles.addEventFilter(MouseEvent.MOUSE_RELEASED, new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent event) {
-                if (event.getButton() == MouseButton.SECONDARY) {
-                    event.consume();
-                    MenuItem rename = new MenuItem("Rename");
-                    MenuItem delete = new MenuItem("Delete");
-                    rename.setOnAction(c -> {
-                        buttonCell.setGraphic(textfield);
-                        textfield.requestFocus();
-                        textfield.setText(buttonCell.getText());
-                        textfield.selectAll();
-                        buttonCell.setText("");
-                    });
-                    delete.setOnAction(c -> {
-                        save.getProfiles().remove(buttonCell.getItem());
-                        profiles.getItems().remove(buttonCell.getItem());
-                        if (profiles.getValue() == null)
-                            profiles.getSelectionModel().select(0);
-                    });
-                    if (profiles.getItems().size() <= 1)
-                        delete.setDisable(true);
-                    ContextMenu cm = new ContextMenu(rename, delete);
-                    profiles.setContextMenu(cm);
-                } else if (event.getButton() == MouseButton.PRIMARY) {
-                    buttonCell.getGraphic();
-                }
+        profiles.addEventFilter(MouseEvent.MOUSE_RELEASED, event -> {
+            if (event.getButton() == MouseButton.SECONDARY) {
+                event.consume();
+                var rename = new MenuItem("Rename");
+                var delete = new MenuItem("Delete");
+                rename.setOnAction(c -> {
+                    buttonCell.setGraphic(textfield);
+                    textfield.requestFocus();
+                    textfield.setText(buttonCell.getText());
+                    textfield.selectAll();
+                    buttonCell.setText("");
+                });
+                delete.setOnAction(c -> {
+                    save.getProfiles().remove(buttonCell.getItem());
+                    profiles.getItems().remove(buttonCell.getItem());
+                    if (profiles.getValue() == null)
+                        profiles.getSelectionModel().select(0);
+                });
+                if (profiles.getItems().size() <= 1)
+                    delete.setDisable(true);
+                var cm = new ContextMenu(rename, delete);
+                profiles.setContextMenu(cm);
+            } else if (event.getButton() == MouseButton.PRIMARY) {
+                buttonCell.getGraphic();
             }
         });
-        Button addButton = new Button();
-        String svgCode = "M28,14H18V4c0-1.104-0.896-2-2-2s-2,0.896-2,2v10H4c-1.104,0-2,0.896-2,2s0.896,2,2,2h10v10c0,1.104,0.896,2,2,2  s2-0.896,2-2V18h10c1.104,0,2-0.896,2-2S29.104,14,28,14z";
-        SVGPath path = new SVGPath();
+        var addButton = new Button();
+        var svgCode = "M28,14H18V4c0-1.104-0.896-2-2-2s-2,0.896-2,2v10H4c-1.104,0-2,0.896-2,2s0.896,2,2,2h10v10c0,1.104,0.896,2,2,2  s2-0.896,2-2V18h10c1.104,0,2-0.896,2-2S29.104,14,28,14z";
+        var path = new SVGPath();
         path.setStyle("-fx-fill:white;");
         path.setContent(svgCode);
         path.setScaleX(0.7D);
@@ -136,12 +129,12 @@ public abstract class Device {
         addButton.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         addButton.setOnAction(c -> {
             String newName;
-            for (int i = 1; ; i++) {
+            for (var i = 1; ; i++) {
                 newName = "profile" + i;
                 if (save.getProfile(newName) == null)
                     break;
             }
-            Profile newProfile = new Profile(newName, getDeviceType());
+            var newProfile = new Profile(newName, getDeviceType());
             save.getProfiles().add(newProfile);
             profiles.getItems().add(newProfile);
             profiles.getSelectionModel().select(newProfile);
@@ -160,7 +153,7 @@ public abstract class Device {
     }
 
     public void setProfile(String name) {
-        Profile p = save.getProfile(name);
+        var p = save.getProfile(name);
         if (p != null)
             profiles.setValue(p);
     }

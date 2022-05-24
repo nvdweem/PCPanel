@@ -110,7 +110,7 @@ public class ProLightingDialog extends Application implements Initializable {
         stage.getIcons().add(new Image("/assets/256x256.png"));
         stage.setOnHiding(e -> {
             if (!pressedOk)
-                if (DeviceScanner.CONNECTED_DEVICE_MAP.get(device.getSerialNumber()) == null) {
+                if (DeviceScanner.getConnectedDevice(device.getSerialNumber()) == null) {
                     Save.getDeviceSave(device.getSerialNumber()).setLightingConfig(ogConfig);
                 } else {
                     device.setLighting(ogConfig, true);
@@ -401,6 +401,7 @@ public class ProLightingDialog extends Application implements Initializable {
         }
     }
 
+    @SuppressWarnings("NumericCastThatLosesPrecision")
     private void updateColors() {
         if (mainPane.getSelectionModel().getSelectedIndex() == 0) {
             if (fullBodyTabbedPane.getSelectionModel().getSelectedIndex() == 0) {

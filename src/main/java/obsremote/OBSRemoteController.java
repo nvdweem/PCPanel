@@ -1,47 +1,43 @@
 package obsremote;
 
+import java.net.URI;
+import java.util.Map;
+
+import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.drafts.Draft_6455;
+import org.java_websocket.handshake.ServerHandshake;
+
 import lombok.extern.log4j.Log4j2;
 import obsremote.callbacks.Callback;
 import obsremote.callbacks.ErrorCallback;
 import obsremote.callbacks.StringCallback;
 import obsremote.objects.throwables.OBSResponseError;
-import org.java_websocket.client.WebSocketClient;
-import org.java_websocket.drafts.Draft_6455;
-import org.java_websocket.handshake.ServerHandshake;
 import util.Util;
-
-import java.net.URI;
-import java.util.Map;
 
 @Log4j2
 public class OBSRemoteController {
     private final String address;
-
     private final OBSCommunicator communicator;
-
     private WebSocketClient client;
-
     private StringCallback onConnectionFailed;
-
     private ErrorCallback onError;
-
     private boolean failed;
 
-    public OBSRemoteController(String address, boolean debug, String password, boolean autoConnect) {
+    public OBSRemoteController(String address, String password, boolean autoConnect) {
         if (Util.isNullOrEmpty(password))
             password = null;
         this.address = address;
-        communicator = new OBSCommunicator(debug, password);
+        communicator = new OBSCommunicator(password);
         if (autoConnect)
             connect();
     }
 
-    public OBSRemoteController(String address, boolean debug, String password) {
-        this(address, debug, password, true);
+    public OBSRemoteController(String address, String password) {
+        this(address, password, true);
     }
 
-    public OBSRemoteController(String address, boolean debug) {
-        this(address, debug, null);
+    public OBSRemoteController(String address) {
+        this(address, null);
     }
 
     public OBSRemoteController(String address, String port, String password) {
@@ -52,7 +48,7 @@ public class OBSRemoteController {
         if (Util.isNullOrEmpty(password))
             password = null;
         this.address = "ws://" + address + ":" + port;
-        communicator = new OBSCommunicator(false, password);
+        communicator = new OBSCommunicator(password);
         connect();
     }
 

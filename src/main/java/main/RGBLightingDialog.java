@@ -82,7 +82,7 @@ public class RGBLightingDialog extends Application implements Initializable {
         stage.getIcons().add(new Image("/assets/256x256.png"));
         stage.setOnHiding(e -> {
             if (!pressedOk)
-                if (DeviceScanner.CONNECTED_DEVICE_MAP.get(device.getSerialNumber()) == null) {
+                if (DeviceScanner.getConnectedDevice(device.getSerialNumber()) == null) {
                     Save.getDeviceSave(device.getSerialNumber()).setLightingConfig(ogConfig);
                 } else {
                     device.setLighting(ogConfig, true);
@@ -213,6 +213,7 @@ public class RGBLightingDialog extends Application implements Initializable {
         allKnobsTabbedPane.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> updateColors());
     }
 
+    @SuppressWarnings("NumericCastThatLosesPrecision")
     private void updateColors() {
         setFollowingControlsVisible(false);
         if (knobsTabbedPane.getSelectionModel().getSelectedIndex() == 0) {

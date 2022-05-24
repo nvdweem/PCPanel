@@ -22,12 +22,13 @@ public class ByteWriter {
     }
 
     public ByteWriter append(Byte... bytes) {
-        for (int i = 0; i < bytes.length; i++) {
+        for (var i = 0; i < bytes.length; i++) {
             buff[pos + i] = bytes[i];
         }
         return skip(bytes.length);
     }
 
+    @SuppressWarnings("NumericCastThatLosesPrecision")
     public ByteWriter append(Color c) {
         return append((byte) (c.getRed() * 255), (byte) (c.getGreen() * 255), (byte) (c.getBlue() * 255));
     }
@@ -37,8 +38,8 @@ public class ByteWriter {
         return this;
     }
 
-    public ByteWriter skipFromMark(int len) {
-        return skip(len - (pos - marked));
+    public void skipFromMark(int len) {
+        skip(len - (pos - marked));
     }
 
     public byte[] get() {

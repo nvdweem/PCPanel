@@ -1,30 +1,46 @@
 package hid;
 
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.hid4java.HidDevice;
+import org.hid4java.HidManager;
+import org.hid4java.HidServices;
+import org.hid4java.HidServicesListener;
+import org.hid4java.HidServicesSpecification;
+import org.hid4java.ScanMode;
+import org.hid4java.event.HidServicesEvent;
+
 import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
 import main.DeviceType;
 import main.Window;
-import org.hid4java.*;
-import org.hid4java.event.HidServicesEvent;
-
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Log4j2
-public class DeviceScanner implements HidServicesListener {
-    public static final ConcurrentHashMap<String, DeviceCommunicationHandler> CONNECTED_DEVICE_MAP = new ConcurrentHashMap<>();
-    private static HidServices hidServices;
+public enum DeviceScanner implements HidServicesListener {
+    INSTANCE;
+
+    private final ConcurrentHashMap<String, DeviceCommunicationHandler> CONNECTED_DEVICE_MAP = new ConcurrentHashMap<>();
+    private HidServices hidServices;
+
+    public static DeviceCommunicationHandler getConnectedDevice(String key) {
+        return INSTANCE.CONNECTED_DEVICE_MAP.get(key);
+    }
 
     public static void start() {
+        INSTANCE.doStart();
+    }
+
+    private void doStart() {
         hidServices = HidManager.getHidServices(buildSpecification());
-        hidServices.addHidServicesListener(new DeviceScanner());
+        hidServices.addHidServicesListener(INSTANCE);
         log.info("Starting HID services.");
         hidServices.start();
         log.info("Enumerating attached devices...");
     }
 
     private static HidServicesSpecification buildSpecification() {
-        HidServicesSpecification hidServicesSpecification = new HidServicesSpecification();
+        var hidServicesSpecification = new HidServicesSpecification();
         hidServicesSpecification.setAutoShutdown(false);
         hidServicesSpecification.setAutoStart(false);
         hidServicesSpecification.setScanInterval(3000);
@@ -37,8 +53,8 @@ public class DeviceScanner implements HidServicesListener {
         if (!device.isOpen()) {
             device.open();
         }
-        DeviceCommunicationHandler deviceHandler = new DeviceCommunicationHandler(key, device);
-        CONNECTED_DEVICE_MAP.put(key, deviceHandler);
+        var deviceHandler = new DeviceCommunicationHandler(key, device);
+        INSTANCE.CONNECTED_DEVICE_MAP.put(key, deviceHandler);
         deviceHandler.start();
         Window.onDeviceConnected(key, deviceType);
     }
@@ -46,8 +62,7 @@ public class DeviceScanner implements HidServicesListener {
     public static void deviceRemoved(String key, HidDevice device) {
         if (key == null || device == null)
             throw new IllegalArgumentException("key or device cannot be null key: " + key + " device: " + device);
-        DeviceCommunicationHandler old = CONNECTED_DEVICE_MAP.remove(key);
-        if (old != null)
+        if (INSTANCE.CONNECTED_DEVICE_MAP.remove(key) != null)
             Window.onDeviceDisconnected(key);
     }
 
@@ -94,7 +109,7 @@ public class DeviceScanner implements HidServicesListener {
 
     public static void close() {
         try {
-            hidServices.shutdown();
+            INSTANCE.hidServices.shutdown();
         } catch (Exception e) {
             log.error("Error occurred when closing device", e);
         }

@@ -4,11 +4,8 @@ import java.io.Serializable;
 
 public class SoundDevice implements Serializable {
     private final String mainName;
-
     private final String descName;
-
     private final String id;
-
     private final SoundDeviceType type;
 
     public enum SoundDeviceType {
