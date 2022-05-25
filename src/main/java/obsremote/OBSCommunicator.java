@@ -243,6 +243,10 @@ public class OBSCommunicator {
     }
 
     private void processIncomingEvent(String msg, EventType eventType) {
+        if (eventType == null) {
+            Optional.ofNullable(onRecordingStarted).ifPresent(v -> v.run(null));
+            return;
+        }
         switch (eventType) {
             case ReplayStarted -> Optional.ofNullable(onReplayStarted).ifPresent(v -> v.run(null));
             case ReplayStarting -> Optional.ofNullable(onReplayStarting).ifPresent(v -> v.run(null));
@@ -255,7 +259,7 @@ public class OBSCommunicator {
             case RecordingStopped -> Optional.ofNullable(onRecordingStopped).ifPresent(v -> v.run(null));
             case StreamStarted -> Optional.ofNullable(onStreamStarted).ifPresent(v -> v.run(null));
             case StreamStopped -> Optional.ofNullable(onStreamStopped).ifPresent(v -> v.run(null));
-            case null, default -> Optional.ofNullable(onRecordingStarted).ifPresent(v -> v.run(null));
+            default -> Optional.ofNullable(onRecordingStarted).ifPresent(v -> v.run(null));
         }
     }
 

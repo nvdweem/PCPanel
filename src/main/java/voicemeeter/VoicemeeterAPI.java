@@ -129,14 +129,23 @@ public class VoicemeeterAPI {
     }
 
     private static int ensureNoError(Integer code, Integer... expected) {
+        if (code == null) {
+            throw new VoicemeeterException("Unexpected function return value. Function returned null");
+        }
         return switch (code) {
-            case Integer i && Set.of(expected).contains(i) -> code;
             case -1 -> throw new VoicemeeterException("Unable to get the Voicemeeter client");
             case -2 -> throw new VoicemeeterException("Unable to get the Voicemeeter server");
             case -3 -> throw new VoicemeeterException("Not available");
             case -5 -> throw new VoicemeeterException("Structure mismatch");
-            case Integer i && i < 0 -> throw new VoicemeeterException("Unknown voicemeter error occurred " + code);
-            case null, default -> throw new VoicemeeterException("Unexpected function return value. Function returned " + code);
+            default -> {
+                if (Set.of(expected).contains(code)) {
+                    yield code;
+                }
+                if (code < 0) {
+                    throw new VoicemeeterException("Unknown voicemeter error occurred " + code);
+                }
+                throw new VoicemeeterException("Unexpected function return value. Function returned " + code);
+            }
         };
     }
 

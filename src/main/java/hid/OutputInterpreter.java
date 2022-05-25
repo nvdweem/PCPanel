@@ -70,11 +70,13 @@ public final class OutputInterpreter {
     }
 
     public static void sendLightingConfig(String serialNumber, DeviceType dt, LightingConfig config, boolean priority) {
+        if (dt == null) {
+            throw new IllegalArgumentException("Empty device type");
+        }
         switch (dt) {
             case PCPANEL_RGB -> sendLightingConfigRGB(serialNumber, config, priority);
             case PCPANEL_MINI -> sendLightingConfigMini(serialNumber, config, priority);
             case PCPANEL_PRO -> sendLightingConfigPro(serialNumber, config, priority);
-            case null -> throw new IllegalArgumentException("Empty device type");
         }
     }
 
@@ -230,13 +232,18 @@ public final class OutputInterpreter {
 
     private static void sendLightingConfigRGB(String serialNumber, LightingConfig config, boolean priority) {
         var mode = config.getLightingMode();
+        if (mode == null) {
+            log.error("unexpected lighting mode in deviceOutputHandler");
+            return;
+        }
+
         switch (mode) {
             case ALL_COLOR -> sendRGBAll(serialNumber, Color.valueOf(config.getAllColor()), config.getVolumeBrightnessTrackingEnabled(), priority);
             case SINGLE_COLOR -> sendFullLEDData(serialNumber, config.getIndividualColors(), config.getVolumeBrightnessTrackingEnabled(), priority);
             case ALL_RAINBOW -> sendRainbow(serialNumber, config.getRainbowPhaseShift(), (byte) -1, config.getRainbowBrightness(), config.getRainbowSpeed(), config.getRainbowReverse(), priority);
             case ALL_WAVE -> sendWave(serialNumber, config.getWaveHue(), (byte) -1, config.getWaveBrightness(), config.getWaveSpeed(), config.getWaveReverse(), config.getWaveBounce(), priority);
             case ALL_BREATH -> sendBreath(serialNumber, config.getBreathHue(), (byte) -1, config.getBreathBrightness(), config.getBreathSpeed(), priority);
-            case null, default -> log.error("unexpected lighting mode in deviceOutputHandler");
+            default -> log.error("unexpected lighting mode in deviceOutputHandler");
         }
     }
 

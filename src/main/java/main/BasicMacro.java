@@ -205,14 +205,14 @@ public class BasicMacro extends Application implements Initializable {
         var afdStage = new Stage();
         afd.start(afdStage);
         var processNameResult = afd.getProcessName();
-        if (processNameResult == null)
+        if (processNameResult == null || id == null)
             return;
         switch (id) {
             case "findApp1" -> processTextField = volumeProcessField1;
             case "findApp2" -> processTextField = volumeProcessField2;
             case "findAppMute" -> processTextField = muteAppProcessField;
             case "findAppEndProcess" -> processTextField = endProcessField;
-            case null, default -> {
+            default -> {
                 log.error("invalid findApp button");
                 return;
             }
