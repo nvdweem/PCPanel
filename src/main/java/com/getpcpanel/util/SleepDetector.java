@@ -17,9 +17,7 @@ public final class SleepDetector {
     }
 
     public static void start() {
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> onSuspended(true),
-
-                "Shutdown Hook Thread"));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> onSuspended(true), "Shutdown Hook Thread"));
         new Thread(() -> {
             var c = new ProcessBuilder("sndctrl.exe", "sleeplistener");
             c.redirectErrorStream(true);

@@ -87,7 +87,7 @@ public class Main extends Application {
         Save.readFile();
         initWindow();
         scene.getStylesheets().addAll(getClass().getResource("/assets/1.css").toExternalForm());
-        stage.getIcons().add(new Image("/assets/256x256.png"));
+        stage.getIcons().add(new Image(getClass().getResource("/assets/256x256.png").toExternalForm()));
         stage.setScene(scene);
         ResizeHelper.addResizeListener(stage, 200.0D, 200.0D);
         Platform.setImplicitExit(false);

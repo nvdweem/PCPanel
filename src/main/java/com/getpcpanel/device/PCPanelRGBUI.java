@@ -40,7 +40,7 @@ public class PCPanelRGBUI extends Device {
     private Label label;
     private Button lightingButton;
     private final Button[] knobs = new Button[KNOB_COUNT];
-    private static final Image previewImage = new Image(PCPanelRGBUI.class.getResourceAsStream("/assets/PCPanelRGB/preview.png"));
+    private static final Image previewImage = new Image(PCPanelRGBUI.class.getResource("/assets/PCPanelRGB/preview.png").toExternalForm());
     private Stage childDialogStage;
 
     public PCPanelRGBUI(String serialNum, DeviceSave deviceSave) {

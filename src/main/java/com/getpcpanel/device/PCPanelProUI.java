@@ -47,7 +47,7 @@ public class PCPanelProUI extends Device {
     private Label label;
     private Button lightingButton;
     private final Button[] knobs = new Button[9];
-    private static final Image previewImage = new Image(PCPanelProUI.class.getResourceAsStream("/assets/PCPanelPro/Pro_Cutout.png"));
+    private static final Image previewImage = new Image(PCPanelProUI.class.getResource("/assets/PCPanelPro/Pro_Cutout.png").toExternalForm());
     private Stage childDialogStage;
     @FXML private Pane sliderHolder1;
     @FXML private Pane sliderHolder2;

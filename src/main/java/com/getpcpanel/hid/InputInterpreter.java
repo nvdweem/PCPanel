@@ -13,8 +13,8 @@ import com.getpcpanel.profile.Save;
 import com.getpcpanel.util.CommandHandler;
 import com.getpcpanel.util.Util;
 import com.getpcpanel.voicemeeter.Voicemeeter;
-import com.sun.glass.ui.Application;
 
+import javafx.application.Platform;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -178,7 +178,7 @@ public final class InputInterpreter {
             case "profile" -> {
                 if (data[1] == null)
                     return;
-                Application.invokeAndWait(() -> Main.devices.get(serialNum).setProfile(data[1]));
+                Platform.runLater(() -> Main.devices.get(serialNum).setProfile(data[1]));
             }
         }
     }

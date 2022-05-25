@@ -23,6 +23,7 @@
         <javafx.plugin.version>0.0.8</javafx.plugin.version>
         <jna.version>5.11.0</jna.version>
         <asm.version>9.3</asm.version>
+        <lombok.version>1.18.24</lombok.version>
     </properties>
 
     <dependencies>
@@ -175,12 +176,37 @@
                     <mainClass>${main.class}</mainClass>
                     <options>
                         <option>--add-modules=javafx.controls,javafx.fxml,javafx.web</option>
-                        <option>--add-exports javafx.web/com.sun.javafx.webkit=ALL-UNNAMED</option>
-                        <option>--add-exports javafx.web/com.sun.webkit=ALL-UNNAMED</option>
-                        <option>--add-exports javafx.controls/com.sun.javafx.scene.control.skin.resources=ALL-UNNAMED</option>
-                        <option>--add-exports javafx.base/com.sun.javafx.event=ALL-UNNAMED</option>
+                        <option>--add-exports javafx.web/com.sun.javafx.webkit=PCPanel</option>
+                        <option>--add-exports javafx.web/com.sun.webkit=PCPanel</option>
+                        <option>--add-exports javafx.controls/com.sun.javafx.scene.control.skin.resources=PCPanel</option>
+                        <option>--add-exports javafx.base/com.sun.javafx.event=PCPanel</option>
                     </options>
                     <includePathExceptionsInClasspath>true</includePathExceptionsInClasspath>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.10.1</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+
+                    <compilerArgs>
+                        <arg>--add-modules=javafx.controls,javafx.fxml,javafx.web</arg>
+                        <arg>--add-exports=javafx.web/com.sun.javafx.webkit=PCPanel</arg>
+                        <arg>--add-exports=javafx.web/com.sun.webkit=PCPanel</arg>
+                        <arg>--add-exports=javafx.controls/com.sun.javafx.scene.control.skin.resources=PCPanel</arg>
+                        <arg>--add-exports=javafx.base/com.sun.javafx.event=PCPanel</arg>
+                    </compilerArgs>
+
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
         </plugins>

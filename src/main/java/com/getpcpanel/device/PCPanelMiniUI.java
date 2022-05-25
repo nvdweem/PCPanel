@@ -43,7 +43,7 @@ public class PCPanelMiniUI extends Device {
     private Button lightingButton;
     private final Button[] knobs = new Button[KNOB_COUNT];
     private final int[] analogValue = new int[KNOB_COUNT];
-    private static final Image previewImage = new Image(PCPanelMiniUI.class.getResourceAsStream("/assets/PCPanelMini/preview.png"));
+    private static final Image previewImage = new Image(PCPanelMiniUI.class.getResource("/assets/PCPanelMini/preview.png").toExternalForm());
     private Stage childDialogStage;
 
     public PCPanelMiniUI(String serialNum, DeviceSave deviceSave) {

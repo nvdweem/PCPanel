@@ -56,7 +56,7 @@ class AppFinderDialog extends Application implements Initializable {
         }
         var scene = new Scene(pane);
         scene.getStylesheets().add(getClass().getResource("/assets/dark_theme.css").toExternalForm());
-        stage.getIcons().add(new Image("/assets/256x256.png"));
+        stage.getIcons().add(new Image(getClass().getResource("/assets/256x256.png").toExternalForm()));
         stage.setScene(scene);
         stage.sizeToScene();
         stage.setTitle("Application Finder");

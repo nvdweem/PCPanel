@@ -155,7 +155,7 @@ public class BasicMacro extends Application implements Initializable {
         Pane mainPane = loader.load();
         var scene = new Scene(mainPane);
         scene.getStylesheets().add(getClass().getResource("/assets/dark_theme.css").toExternalForm());
-        basicmacro.getIcons().add(new Image("/assets/256x256.png"));
+        basicmacro.getIcons().add(new Image(getClass().getResource("/assets/256x256.png").toExternalForm()));
         basicmacro.initModality(Modality.APPLICATION_MODAL);
         // basicmacro.initOwner((Window)Window.stage);
         basicmacro.setScene(scene);
