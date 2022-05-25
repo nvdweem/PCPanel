@@ -5,9 +5,9 @@
             <PatternLayout disableAnsi="false"
                            pattern="%highlight{%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:-%5p} [%15.15t] %36.36C.%-20.20M @%-4.4L :} %m%n%ex"/>
         </Console>
-        <RollingFile name="File" fileName="logs/logging.log" filePattern="logs/%d{yyyyMMdd}-%i.log.gz">
+        <RollingFile name="File" fileName="logs/logging.log" filePattern="logs/logfile.log.gz">
             <Policies>
-                <OnStartupTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="5 MB"/>
             </Policies>
             <DefaultRolloverStrategy max="10"/>
             <PatternLayout
@@ -15,9 +15,14 @@
         </RollingFile>
     </Appenders>
     <Loggers>
-        <Root level="trace">
+        <Root level="warn">
             <AppenderRef ref="Console"/>
             <AppenderRef ref="File"/>
         </Root>
+
+        <Logger name="com.getpcpanel" level="debug" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="File"/>
+        </Logger>
     </Loggers>
 </Configuration>
