@@ -1,5 +1,6 @@
 package com.getpcpanel.util;
 
+import java.io.IOException;
 import java.util.Scanner;
 
 import com.getpcpanel.Main;
@@ -12,46 +13,52 @@ import javafx.scene.paint.Color;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public final class SleepDetector {
+public final class SleepDetector extends Thread {
+    private Process process;
+
+    public static void init() {
+        new SleepDetector().start();
+    }
+
     private SleepDetector() {
-    }
-
-    public static void start() {
+        super("Sleep Detector Thread");
         Runtime.getRuntime().addShutdownHook(new Thread(() -> onSuspended(true), "Shutdown Hook Thread"));
-        new Thread(() -> {
-            var c = new ProcessBuilder("sndctrl.exe", "sleeplistener");
-            c.redirectErrorStream(true);
-            try {
-                var proc = c.start();
-                var in = proc.getInputStream();
-                var scan = new Scanner(in);
-                scan.nextLine();
-                while (scan.hasNextLine()) {
-                    var x = scan.nextLine();
-                    if ("Suspend".equals(x)) {
-                        onSuspended();
-                        continue;
-                    }
-                    if ("Resume".equals(x)) {
-                        onResumed();
-                        continue;
-                    }
-                    log.error("SD ERROR: {}", x);
-                }
-                scan.close();
-                in.close();
-                proc.destroy();
-            } catch (Exception e) {
-                log.error("Unable to listen to sleep", e);
-            }
-        }, "Sleep Detector Thread").start();
     }
 
-    private static void onSuspended() {
+    @Override
+    public void run() {
+        var c = new ProcessBuilder(Util.sndCtrlExecutable.toString(), "sleeplistener");
+        c.redirectErrorStream(true);
+        try {
+            process = c.start();
+            var in = process.getInputStream();
+            var scan = new Scanner(in);
+            scan.nextLine();
+            while (scan.hasNextLine()) {
+                var x = scan.nextLine();
+                if ("Suspend".equals(x)) {
+                    onSuspended();
+                    continue;
+                }
+                if ("Resume".equals(x)) {
+                    onResumed();
+                    continue;
+                }
+                log.error("SD ERROR: {}", x);
+            }
+            scan.close();
+            in.close();
+            process.destroy();
+        } catch (IOException e) {
+            log.error("Unable to listen to sleep", e);
+        }
+    }
+
+    private void onSuspended() {
         onSuspended(false);
     }
 
-    private static void onSuspended(boolean shutdown) {
+    private void onSuspended(boolean shutdown) {
         Runnable r = () -> {
             for (var device : Main.devices.values()) {
                 if (device.getDeviceType() != DeviceType.PCPANEL_RGB)
@@ -78,12 +85,14 @@ public final class SleepDetector {
         };
         if (shutdown) {
             r.run();
+            process.destroy();
         } else {
             Platform.runLater(r);
         }
+        log.info("Stopped sleep detector");
     }
 
-    private static void onResumed() {
+    private void onResumed() {
         Platform.runLater(() -> {
             for (var device : Main.devices.values()) {
                 log.info("RESUME: {}", device.getSerialNumber());

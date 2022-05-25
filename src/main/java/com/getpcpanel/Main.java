@@ -98,7 +98,7 @@ public class Main extends Application {
             stage.show();
         OBSListener.start();
         DeviceScanner.start();
-        SleepDetector.start();
+        SleepDetector.init();
     }
 
     @Override

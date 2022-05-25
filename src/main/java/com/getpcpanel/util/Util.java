@@ -1,11 +1,13 @@
 package com.getpcpanel.util;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 
 import javafx.geometry.Insets;
@@ -17,15 +19,12 @@ import javafx.scene.control.TabPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import lombok.extern.log4j.Log4j2;
-import one.util.streamex.IntStreamEx;
 
 @Log4j2
 public final class Util {
-    private Util() {
-    }
+    public static final File sndCtrlExecutable = extractAndDeleteOnExit("sndctrl.exe");
 
-    public static String listToPipeDelimitedString(String... elements) {
-        return String.join("|", elements);
+    private Util() {
     }
 
     public static String listToPipeDelimitedString(Collection<String> elements) {
@@ -71,12 +70,6 @@ public final class Util {
             return Integer.parseInt(str);
         } catch (Exception e) {
             return defaultVal;
-        }
-    }
-
-    public static void debugByteArray(byte[] array) {
-        if (log.isDebugEnabled()) {
-            log.debug("{}", IntStreamEx.of(array).mapToObj("%02X"::formatted).joining("\t"));
         }
     }
 
@@ -169,5 +162,16 @@ public final class Util {
     public static void fill(Object[] ar, Object... objs) {
         System.arraycopy(objs, 0, ar, 0, objs.length);
     }
-}
 
+    public static File extractAndDeleteOnExit(String file) {
+        var extracted = new File(System.getProperty("java.io.tmpdir"), file);
+        try {
+            var resource = Util.class.getResource("/" + file);
+            FileUtils.copyURLToFile(resource, extracted);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        extracted.deleteOnExit();
+        return extracted;
+    }
+}

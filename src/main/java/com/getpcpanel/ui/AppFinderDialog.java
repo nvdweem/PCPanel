@@ -11,6 +11,8 @@ import java.util.Scanner;
 
 import javax.imageio.ImageIO;
 
+import com.getpcpanel.util.Util;
+
 import javafx.application.Application;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
@@ -129,9 +131,8 @@ class AppFinderDialog extends Application implements Initializable {
     }
 
     private static List<App> getProgs() throws Exception {
-        List<App> ret = new ArrayList<>();
-        var program = new File("sndctrl.exe");
-        var c = new ProcessBuilder(program.toString(), "listapps");
+        var ret = new ArrayList<App>();
+        var c = new ProcessBuilder(Util.sndCtrlExecutable.toString(), "listapps");
         var sndctrlProc = c.start();
         var in = sndctrlProc.getInputStream();
         var scan = new Scanner(in);

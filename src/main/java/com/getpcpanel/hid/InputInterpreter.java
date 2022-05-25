@@ -7,13 +7,13 @@ import java.util.List;
 
 import com.getpcpanel.Main;
 import com.getpcpanel.commands.KeyMacro;
-import com.getpcpanel.commands.MediaKeys;
 import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.profile.Save;
 import com.getpcpanel.util.CommandHandler;
 import com.getpcpanel.util.Util;
 import com.getpcpanel.voicemeeter.Voicemeeter;
 
+import commands.MediaKeys;
 import javafx.application.Platform;
 import lombok.extern.log4j.Log4j2;
 

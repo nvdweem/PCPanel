@@ -1,6 +1,5 @@
 package com.getpcpanel.util;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -54,8 +53,7 @@ public final class SoundAudit {
     public static List<SoundDevice> getDevices() {
         List<SoundDevice> ret = new ArrayList<>();
         try {
-            var program = new File("sndctrl.exe");
-            var c = new ProcessBuilder(program.toString(), "listdevices");
+            var c = new ProcessBuilder(Util.sndCtrlExecutable.toString(), "listdevices");
             var sndctrlProc = c.start();
             var scan = new Scanner(sndctrlProc.getInputStream());
             String x;

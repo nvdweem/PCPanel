@@ -1,8 +1,10 @@
-package com.getpcpanel.commands;
+package commands;
+
+import com.getpcpanel.util.Util;
 
 public final class MediaKeys {
     static {
-        System.loadLibrary("MediaKeys");
+        System.load(Util.extractAndDeleteOnExit("MediaKeys.dll").toString());
     }
 
     private MediaKeys() {

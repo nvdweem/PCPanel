@@ -14,7 +14,7 @@ import com.getpcpanel.obs.OBS;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public class CommandHandler {
+public final class CommandHandler {
     private static final Map<String, List<String>> map = new ConcurrentHashMap<>();
     private static final Object waiter = new Object();
     private static final Runtime rt = Runtime.getRuntime();
@@ -23,7 +23,7 @@ public class CommandHandler {
     private static Process sndctrlProc;
 
     static {
-        var c = new ProcessBuilder("sndctrl");
+        var c = new ProcessBuilder(Util.sndCtrlExecutable.toString());
         try {
             sndctrlProc = c.start();
             out = sndctrlProc.getOutputStream();
@@ -33,6 +33,9 @@ public class CommandHandler {
             log.error("UNABLE TO START SNDCTRL", e1);
         }
         new Thread(new HandlerThread(), "Command Handler Thread").start();
+    }
+
+    private CommandHandler() {
     }
 
     public static void pushVolumeChange(String serialNum, int knob, String... cmds) {
