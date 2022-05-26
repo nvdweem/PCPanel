@@ -17,7 +17,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class Save {
     private static Save save = new Save();
-    private static final File SAVE_FILE = new File("save.json");
+    private static final File SAVE_FILE = new File(System.getProperty("user.home"), ".pcpanel");
     private final Map<String, DeviceSave> devices = new ConcurrentHashMap<>();
     private volatile boolean obsEnabled;
     private volatile String obsAddress = "localhost";

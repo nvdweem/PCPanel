@@ -19,4 +19,3 @@ target/
 # Application files
 /logs/
 /lock.txt
-/save.json
