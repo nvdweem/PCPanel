@@ -5,10 +5,12 @@ var database = installer.OpenDatabase("${app.name}-${app.version}.msi", 1);
 var sql
 var view
 
-sql = "SELECT File FROM File WHERE FileName='${app.name}.exe'";
+sql = "SELECT File, Component_ FROM File WHERE FileName='${app.name}.exe'";
 view = database.OpenView(sql);
 view.Execute();
-var file = view.Fetch().StringData(1)
+var viewRow = view.Fetch();
+var file = viewRow.StringData(1)
+var component = viewRow.StringData(2)
 WScript.StdErr.WriteLine(file);
 view.Close();
 
@@ -24,6 +26,13 @@ try {
     view = database.OpenView(sql);
     view.Execute();
     view.Close();
+
+    sql = "INSERT INTO `Registry` (`Registry`,`Root`,`Key`, `Name`, `Value`, `Component_`) VALUES ('1337','-1','Software\\Microsoft\\Windows\\CurrentVersion\\Run', 'PCPanel', '\"[#" + file + "]\" quiet', '" + component + "')"
+    WScript.StdErr.WriteLine(sql);
+    view = database.OpenView(sql);
+    view.Execute();
+    view.Close();
+
     WScript.StdErr.WriteLine("Committing changes");
     database.Commit();
 } catch (e) {

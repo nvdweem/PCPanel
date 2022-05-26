@@ -21,3 +21,4 @@
 --win-menu-group ${windows.vendor}
 --win-dir-chooser
 --win-per-user-install
+--win-shortcut-prompt
