@@ -4,6 +4,13 @@ Decompiled from the getpcpanel.com software and restructured to be editable.
 
 Build template from [wiverson](https://github.com/wiverson/maven-jpackage-template)
 
+# Running in IntelliJ
+
+1. Import the project
+1. Install [JavaFX](https://download2.gluonhq.com/openjfx/18.0.1/openjfx-18.0.1_windows-x64_bin-sdk.zip)
+1. Setup the `JAVAFX_HOME` environment variable to the `javafx-sdk-x.y.z` directory
+1. Use the `PCPanel` run configuration
+
 # Installation
 
 1. Install [OpenJDK Java 17](https://adoptium.net/?variant=openjdk17) or
