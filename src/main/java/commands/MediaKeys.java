@@ -1,3 +1,6 @@
+/**
+ * Needs to be here because of the JNI bindings
+ */
 package commands;
 
 import com.getpcpanel.util.Util;
@@ -23,8 +26,4 @@ public final class MediaKeys {
     public static native void songPlayPause();
 
     public static native void mediaStop();
-
-    public static void main(String[] args) {
-        volumeMute();
-    }
 }
