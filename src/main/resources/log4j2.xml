@@ -5,7 +5,7 @@
             <PatternLayout disableAnsi="false"
                            pattern="%highlight{%d{yyyy-MM-dd HH:mm:ss.SSS} ${LOG_LEVEL_PATTERN:-%5p} [%15.15t] %36.36C.%-20.20M @%-4.4L :} %m%n%ex"/>
         </Console>
-        <RollingFile name="File" fileName="logs/logging.log" filePattern="logs/logfile.log.gz">
+        <RollingFile name="File" fileName="logs/logging.log" filePattern="logs/logfile-%i.log.gz">
             <Policies>
                 <SizeBasedTriggeringPolicy size="5 MB"/>
             </Policies>
