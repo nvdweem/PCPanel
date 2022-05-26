@@ -165,6 +165,11 @@ public final class Util {
 
     public static File extractAndDeleteOnExit(String file) {
         var extracted = new File(System.getProperty("java.io.tmpdir"), file);
+        if (extracted.exists() && !extracted.delete()) {
+            log.info("{} already exists, not updating", extracted);
+            return extracted;
+        }
+
         try {
             var resource = Util.class.getResource("/" + file);
             FileUtils.copyURLToFile(resource, extracted);
