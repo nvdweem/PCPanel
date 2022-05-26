@@ -8,46 +8,78 @@ import java.nio.file.Path;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.getpcpanel.Main;
 
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public class FileChecker implements Runnable {
+public class FileChecker extends Thread {
     private static final File REOPEN_FILE = new File("reopen.txt");
-    private static FileChecker fc;
+    private static final File LOCK_FILE = new File("lock.txt");
+    private static final AtomicBoolean started = new AtomicBoolean(false);
+    @SuppressWarnings("FieldCanBeLocal") // If this field is local then the lock will be released.
+    private RandomAccessFile randomFile;
 
-    public static void start() {
-        if (fc != null)
-            throw new IllegalAccessError("Cannot start file checker thread more than once");
-        REOPEN_FILE.delete();
-        fc = new FileChecker();
-        new Thread(fc, "File Checker Thread").start();
+    public static void createAndStart() {
+        if (started.getAndSet(true)) {
+            log.error("Trying to start FileChecker when it is already started.");
+            return;
+        }
+
+        tryCreateLockFile();
+        var result = new FileChecker();
+        try {
+            if (result.isDuplicate()) {
+                log.warn("Application already running, exiting and showing the already started instance.");
+                showOtherAndExit();
+            }
+        } catch (IOException e) {
+            log.warn("Unable to determine if the application is already running, pretending it isn't.", e);
+        }
+        result.start();
     }
 
-    public static void checkIsDuplicateRunning() {
-        try {
-            var lockFile = new File("lock.txt");
-            if (!lockFile.exists())
-                lockFile.createNewFile();
+    public FileChecker() {
+        super("File Checker Thread");
+        if (!REOPEN_FILE.delete()) {
+            log.trace("Unable to delete {}", REOPEN_FILE);
+        }
 
-            try (var randomFile = new RandomAccessFile(lockFile, "rw")) {
-                var channel = randomFile.getChannel();
-                if (channel.tryLock() == null) {
-                    log.warn("Sorry but you already have a running instance of the application");
-                    REOPEN_FILE.createNewFile();
-                    System.exit(0);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> started.set(false), "FileChecker shutdown hook"));
+    }
+
+    private boolean isDuplicate() throws IOException {
+        randomFile = new RandomAccessFile(LOCK_FILE, "rw");
+        var channel = randomFile.getChannel();
+        var lock = channel.tryLock();
+        return lock == null;
+    }
+
+    private static void showOtherAndExit() throws IOException {
+        if (!REOPEN_FILE.createNewFile()) {
+            log.debug("Unable to create reopen file.");
+        }
+        //noinspection CallToSystemExit
+        System.exit(0);
+    }
+
+    private static void tryCreateLockFile() {
+        try {
+            if (!LOCK_FILE.exists()) {
+                if (!LOCK_FILE.createNewFile()) {
+                    log.debug("Unable to create lock file.");
                 }
             }
-        } catch (Exception e) {
-            log.error("Unable to check if duplicate is running", e);
+        } catch (IOException e) {
+            log.error("Unable to create lock file {}, allowing duplicate instances.", LOCK_FILE, e);
         }
     }
 
     @Override
     public void run() {
-        log.info("FILE checker started");
+        log.info("File checker started");
         WatchService watcher;
         try {
             watcher = FileSystems.getDefault().newWatchService();
@@ -62,16 +94,18 @@ public class FileChecker implements Runnable {
         } catch (IOException e) {
             log.error("Unable to register for event in file checker", e);
         }
-        while (true) {
+        while (started.get()) {
             try {
                 var key = watcher.take();
                 key.reset();
-                if (key != watchkey)
+                if (!key.equals(watchkey))
                     continue;
                 for (var event : watchkey.pollEvents()) {
                     var file = (Path) event.context();
                     if (file.toString().equals(REOPEN_FILE.getName())) {
-                        file.toFile().delete();
+                        if (!file.toFile().delete()) {
+                            log.trace("Unable to delete {}", file);
+                        }
                         Main.reopen();
                     }
                 }
@@ -79,6 +113,6 @@ public class FileChecker implements Runnable {
                 log.error("Error in checking file", e);
             }
         }
+        log.info("File Checker ended");
     }
 }
-

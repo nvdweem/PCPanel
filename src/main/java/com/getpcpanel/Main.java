@@ -83,9 +83,8 @@ public class Main extends Application {
     public static void main(String[] args) {
         if (args.length > 0 && "quiet".equals(args[0]))
             quiet = true;
-        FileChecker.checkIsDuplicateRunning();
+        FileChecker.createAndStart();
         TrayWork.tray();
-        FileChecker.start();
         launch(args);
     }
 
