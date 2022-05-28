@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "Listeners.h"
 
-
 EDataFlow getDataFlow(IMMDevice& device)
 {
     CComPtr<IMMEndpoint> pEndPoint = NULL;

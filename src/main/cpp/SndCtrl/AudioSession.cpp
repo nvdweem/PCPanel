@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "AudioSession.h"
+#include "helpers.h"
 #include <winver.h>
 
 
@@ -16,29 +17,13 @@ DWORD GetProcessId(IAudioSessionControl2& control2) {
     return procID;
 }
 
-wstring ProcessIdToName(DWORD processId) {
-    HANDLE handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, processId);
-    if (handle) {
-        WCHAR buffer[1024];
-        DWORD bufferSize = 1024;
-        if (!QueryFullProcessImageName(handle, 0, buffer, &bufferSize)) {
-            printf("Error GetModuleBaseNameA : %lu", GetLastError());
-        }
-        CloseHandle(handle);
-        return wstring(buffer);
-    }
-    else {
-        return wstring();
-    }
-}
-
 AudioSession::AudioSession(CComPtr<IAudioSessionControl> session)
     : pSession(session), pListener(nullptr), pVolumeControl(session), pid(0), name()
 {
     auto session2 = GetSession2(*session);
     pid = GetProcessId(*session2);
     if (pid > 0) {
-        name = ProcessIdToName(pid);
+        name = GetProcessName(pid);
     }
 }
 

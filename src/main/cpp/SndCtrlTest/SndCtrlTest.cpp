@@ -4,9 +4,12 @@
 #include <iostream>
 #include "..\SndCtrl\pch.h"
 #include "..\SndCtrl\sndctrl.h"
+#include "..\SndCtrl\com_getpcpanel_cpp_SndCtrlNative.h"
 
 int main()
 {
+    Java_com_getpcpanel_cpp_SndCtrlNative_addAllRunningProcesses(nullptr, nullptr, nullptr);
+
     std::cout << "Hello World!\n";
     auto sndctrl = make_unique<SndCtrl>(nullptr);
     //Sleep(1000);

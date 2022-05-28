@@ -42,10 +42,12 @@ class AppFinderDialog extends Application implements Initializable {
     private ScrollPane pane;
     private String processName;
     private final Stage parentStage;
+    private final boolean volumeApps;
     private static final int ICON_SIZE = 90;
 
-    public AppFinderDialog(Stage parentStage) {
+    public AppFinderDialog(Stage parentStage, boolean volumeApps) {
         this.parentStage = parentStage;
+        this.volumeApps = volumeApps;
     }
 
     @Override
@@ -113,11 +115,15 @@ class AppFinderDialog extends Application implements Initializable {
         return new ImageView(writableImage);
     }
 
-    private static List<AudioSession> getProgs() {
-        return StreamEx.of(SndCtrl.getDevices()).flatCollection(ad -> ad.getSessions().values())
-                       .distinct(AudioSession::pid)
-                       .sorted(Comparator.nullsLast(Comparator.comparing(AudioSession::title).thenComparing(AudioSession::executable)))
-                       .toImmutableList();
+    private List<AudioSession> getProgs() {
+        if (volumeApps) {
+            return StreamEx.of(SndCtrl.getDevices()).flatCollection(ad -> ad.getSessions().values())
+                           .distinct(AudioSession::pid)
+                           .sorted(Comparator.nullsLast(Comparator.comparing(AudioSession::title).thenComparing(AudioSession::executable)))
+                           .toImmutableList();
+        } else {
+            return StreamEx.of(SndCtrl.getRunningApplications()).map(f -> new AudioSession(null, 1, f, f.getName(), null, 0, false)).toList();
+        }
     }
 
     public static void main(String[] args) {

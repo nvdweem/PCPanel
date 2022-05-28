@@ -8,9 +8,6 @@
 // @author EreTIk
 // ----------------------------------------------------------------------------
 
-
-
-
 interface DECLSPEC_UUID("f8679f50-850a-41cf-9c72-430f290290c8")
     IPolicyConfig;
 class DECLSPEC_UUID("870af99c-171d-4f9e-af0d-e63df40c2bc9")

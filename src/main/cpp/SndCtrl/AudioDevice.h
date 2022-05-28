@@ -1,7 +1,7 @@
 #pragma once
+#include "AudioSession.h"
 #include "JniCaller.h"
 #include "Listeners.h"
-#include "AudioSession.h"
 
 
 class AudioDevice : public SessionListenerCB

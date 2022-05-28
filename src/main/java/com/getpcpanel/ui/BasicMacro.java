@@ -205,7 +205,7 @@ public class BasicMacro extends Application implements Initializable {
         TextField processTextField;
         var button = (Button) event.getSource();
         var id = button.getId();
-        var afd = new AppFinderDialog(stage);
+        var afd = new AppFinderDialog(stage, !"findAppEndProcess".equals(id));
         var afdStage = new Stage();
         afd.start(afdStage);
         var processNameResult = afd.getProcessName();

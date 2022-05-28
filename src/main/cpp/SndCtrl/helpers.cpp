@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "helpers.h"
 
-
 DWORD GetFocusProcessId()
 {
     DWORD procId;
@@ -13,7 +12,10 @@ wstring GetProcessName(DWORD procId) {
     DWORD buffSize = MAX_PATH;
     WCHAR buffer[MAX_PATH] = { 0 };
     HANDLE hProc = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, procId);
-    QueryFullProcessImageNameW(hProc, NULL, buffer, &buffSize);
+    if (!hProc) {
+        return wstring();
+    }
+    QueryFullProcessImageName(hProc, NULL, buffer, &buffSize);
     CloseHandle(hProc);
     return wstring(buffer);
 }

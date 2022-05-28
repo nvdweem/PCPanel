@@ -1,8 +1,12 @@
 #include "pch.h"
 #include "com_getpcpanel_cpp_SndCtrlNative.h"
-#include <iostream>
+#include "JniCaller.h"
 #include "SndCtrl.h"
 #include "helpers.h"
+#include <iostream>
+#include <psapi.h>
+#include <set>
+#include <windows.h>
 
 std::wstring str(JNIEnv* env, jstring string)
 {
@@ -104,4 +108,36 @@ JNIEXPORT jstring JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_getFocusApplicat
     auto pid = GetFocusProcessId();
     auto name = GetProcessName(pid);
     return env->NewString((jchar*) name.c_str(), (jsize) name.length());
+}
+
+/*
+ * Class:     com_getpcpanel_cpp_SndCtrlNative
+ * Method:    addAllRunningProcesses
+ * Signature: (Ljava/util/Set;)V
+ */
+JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_addAllRunningProcesses(JNIEnv* env, jobject, jobject target) {
+    DWORD aProcesses[1024], cbNeeded;
+
+    if (!EnumProcesses(aProcesses, sizeof(aProcesses), &cbNeeded))
+        return;
+
+    auto cProcesses = cbNeeded / sizeof(DWORD);
+    set<wstring> seen;
+
+    JThread thread(env);
+    JniCaller caller(thread, target);
+
+    for (auto i = 0; i < cProcesses; i++) {
+        if (aProcesses[i] != 0) {
+            auto pid = aProcesses[i];
+            auto szProcessName = GetProcessName(pid);
+            if (seen.find(szProcessName) != seen.end()) {
+                continue;
+            }
+            seen.insert(szProcessName);
+
+            auto fileName = env->NewString((jchar*)szProcessName.c_str(), (jsize)szProcessName.length());
+            caller.CallVoid("add", "(Ljava/lang/Object;)Z", fileName);
+        }
+    }
 }

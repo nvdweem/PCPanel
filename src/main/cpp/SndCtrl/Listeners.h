@@ -4,10 +4,10 @@
 
 EDataFlow getDataFlow(IMMDevice& device);
 
-class SndCtrl;
+class AudioSessionListener;
 class DeviceVolumeListener;
 class SessionListener;
-class AudioSessionListener;
+class SndCtrl;
 
 struct CoRelease {
     void operator()(LPVOID itm) {

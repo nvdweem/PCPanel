@@ -1,8 +1,12 @@
 package com.getpcpanel.cpp;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -92,6 +96,12 @@ public enum SndCtrl {
 
     public static String getFocusApplication() {
         return SndCtrlNative.instance.getFocusApplication();
+    }
+
+    public static List<File> getRunningApplications() {
+        var running = new HashSet<String>();
+        SndCtrlNative.instance.addAllRunningProcesses(running);
+        return StreamEx.of(running).map(StringUtils::trimToNull).nonNull().map(File::new).sorted(Comparator.comparing(File::getName)).toImmutableList();
     }
 
     private static String defaultDeviceOnEmpty(String deviceId) {

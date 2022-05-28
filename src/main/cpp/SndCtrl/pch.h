@@ -12,13 +12,14 @@
 #include <atlbase.h>
 #include <jni.h>
 
-#include <mmdeviceapi.h>
-#include <iostream>
-#include <functional>
-#include <functiondiscoverykeys_devpkey.h>
+#include <audioclient.h>
 #include <audiopolicy.h>
 #include <endpointvolume.h>
-#include <audioclient.h>
+#include <functional>
+#include <iostream>
+#include <mmdeviceapi.h>
+
+#include <functiondiscoverykeys_devpkey.h> // Must be after mmdeviceapi
 
 using namespace std;
 

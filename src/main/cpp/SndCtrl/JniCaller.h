@@ -1,8 +1,5 @@
 #pragma once
-
-
 extern JavaVM* pJvm;
-
 
 class JThread {
 private:
@@ -11,6 +8,7 @@ private:
     bool needsDetach;
     bool error;
 public:
+    JThread(JNIEnv* pEnv) : pEnv(pEnv), needsDetach(false), error(false) {}
     JThread() : pEnv(nullptr), needsDetach(false), error(false) {
 #ifndef NO_JNI
         auto getEnvStat = pJvm->GetEnv((void**)&pEnv, JNI_VERSION_10);

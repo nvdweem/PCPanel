@@ -1,7 +1,7 @@
 #pragma once
-#include "Listeners.h"
-#include "JniCaller.h"
 #include "AudioDevice.h"
+#include "JniCaller.h"
+#include "Listeners.h"
 
 struct SDeviceNameId {
     co_ptr<WCHAR> name;
