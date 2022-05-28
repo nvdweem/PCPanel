@@ -42,15 +42,15 @@
                             <Insets left="8.0" top="8.0"/>
                         </padding>
                         <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="Select a control"/>
-                        <RadioButton fx:id="media1" mnemonicParsing="false" selected="true" text="Play/Pause">
+                        <RadioButton fx:id="playPause" mnemonicParsing="false" selected="true" text="Play/Pause">
                             <toggleGroup>
                                 <ToggleGroup fx:id="mediagroup"/>
                             </toggleGroup>
                         </RadioButton>
-                        <RadioButton fx:id="media2" mnemonicParsing="false" text="Stop" toggleGroup="$mediagroup"/>
-                        <RadioButton fx:id="media3" mnemonicParsing="false" text="Previous Track" toggleGroup="$mediagroup"/>
-                        <RadioButton fx:id="media4" mnemonicParsing="false" text="Next Track" toggleGroup="$mediagroup"/>
-                        <RadioButton fx:id="media5" mnemonicParsing="false" text="Mute" toggleGroup="$mediagroup"/>
+                        <RadioButton fx:id="stop" mnemonicParsing="false" text="Stop" toggleGroup="$mediagroup"/>
+                        <RadioButton fx:id="prev" mnemonicParsing="false" text="Previous Track" toggleGroup="$mediagroup"/>
+                        <RadioButton fx:id="next" mnemonicParsing="false" text="Next Track" toggleGroup="$mediagroup"/>
+                        <RadioButton fx:id="mute" mnemonicParsing="false" text="Mute" toggleGroup="$mediagroup"/>
                     </VBox>
                 </Tab>
                 <Tab fx:id="end_program" text="End Program">

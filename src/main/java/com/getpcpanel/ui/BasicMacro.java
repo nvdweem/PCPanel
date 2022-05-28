@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.getpcpanel.commands.command.CommandMedia;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.obs.OBS;
 import com.getpcpanel.profile.DeviceSave;
@@ -615,17 +616,16 @@ public class BasicMacro extends Application implements Initializable {
                 case "keystroke" -> keystrokeField.setText(buttonData[1]);
                 case "shortcut" -> shortcutField.setText(buttonData[1]);
                 case "media" -> {
-                    if ("media1".equals(buttonData[1])) {
-                        mediagroup.getToggles().get(0).setSelected(true);
-                    } else if ("media2".equals(buttonData[1])) {
-                        mediagroup.getToggles().get(1).setSelected(true);
-                    } else if ("media3".equals(buttonData[1])) {
-                        mediagroup.getToggles().get(2).setSelected(true);
-                    } else if ("media4".equals(buttonData[1])) {
-                        mediagroup.getToggles().get(3).setSelected(true);
-                    } else if ("media5".equals(buttonData[1])) {
-                        mediagroup.getToggles().get(4).setSelected(true);
-                    }
+                    CommandMedia.VolumeButton.tryValueOf(buttonData[1]).ifPresent(v -> {
+                        var idx = switch (v) {
+                            case playPause -> 0;
+                            case stop -> 1;
+                            case prev -> 2;
+                            case next -> 3;
+                            case mute -> 4;
+                        };
+                        mediagroup.getToggles().get(idx).setSelected(true);
+                    });
                 }
                 case "end_program" -> {
                     if ("specific".equals(buttonData[1])) {

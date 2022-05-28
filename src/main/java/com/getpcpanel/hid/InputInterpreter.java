@@ -10,6 +10,7 @@ import com.getpcpanel.Main;
 import com.getpcpanel.commands.CommandDispatcher;
 import com.getpcpanel.commands.KeyMacro;
 import com.getpcpanel.commands.command.Command;
+import com.getpcpanel.commands.command.CommandMedia;
 import com.getpcpanel.commands.command.CommandObsMuteSource;
 import com.getpcpanel.commands.command.CommandObsSetScene;
 import com.getpcpanel.commands.command.CommandObsSetSource;
@@ -23,7 +24,6 @@ import com.getpcpanel.profile.Save;
 import com.getpcpanel.util.Util;
 import com.getpcpanel.voicemeeter.Voicemeeter;
 
-import commands.MediaKeys;
 import javafx.application.Platform;
 import lombok.extern.log4j.Log4j2;
 
@@ -105,19 +105,9 @@ public final class InputInterpreter {
                     rt.exec("cmd.exe /c \"" + data[1] + "\"");
                 }
             }
-            case "media" -> {
-                if ("media1".equals(data[1])) {
-                    MediaKeys.songPlayPause();
-                } else if ("media2".equals(data[1])) {
-                    MediaKeys.mediaStop();
-                } else if ("media3".equals(data[1])) {
-                    MediaKeys.songPrevious();
-                } else if ("media4".equals(data[1])) {
-                    MediaKeys.songNext();
-                } else if ("media5".equals(data[1])) {
-                    MediaKeys.volumeMute();
-                }
-            }
+            case "media" -> CommandMedia.VolumeButton.tryValueOf(data[1]).ifPresent(v ->
+                    CommandDispatcher.pushVolumeChange(serialNum, knob, new CommandMedia(serialNum, knob, v))
+            );
             case "end_program" -> {
                 if ("specific".equals(data[1])) {
                     rt.exec("cmd.exe /c taskkill /IM " + data[2] + " /F");
