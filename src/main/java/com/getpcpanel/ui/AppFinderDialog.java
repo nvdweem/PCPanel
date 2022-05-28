@@ -4,14 +4,15 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.ResourceBundle;
-import java.util.Scanner;
 
 import javax.imageio.ImageIO;
 
-import com.getpcpanel.util.Util;
+import com.getpcpanel.cpp.AudioSession;
+import com.getpcpanel.cpp.SndCtrl;
 
 import javafx.application.Application;
 import javafx.embed.swing.SwingFXUtils;
@@ -31,6 +32,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import lombok.extern.log4j.Log4j2;
 import me.marnic.jiconextract2.JIconExtract;
+import one.util.streamex.StreamEx;
 
 @Log4j2
 class AppFinderDialog extends Application implements Initializable {
@@ -57,8 +59,8 @@ class AppFinderDialog extends Application implements Initializable {
             log.error("Unable to load loader", e);
         }
         var scene = new Scene(pane);
-        scene.getStylesheets().add(getClass().getResource("/assets/dark_theme.css").toExternalForm());
-        stage.getIcons().add(new Image(getClass().getResource("/assets/256x256.png").toExternalForm()));
+        scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/assets/dark_theme.css")).toExternalForm());
+        stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/assets/256x256.png")).toExternalForm()));
         stage.setScene(scene);
         stage.sizeToScene();
         stage.setTitle("Application Finder");
@@ -97,56 +99,25 @@ class AppFinderDialog extends Application implements Initializable {
     }
 
     private static BufferedImage getDefaultImage() throws IOException {
-        return resize(ImageIO.read(AppFinderDialog.class.getResourceAsStream("/assets/DefaultExeIcon.ico")), ICON_SIZE, ICON_SIZE);
+        return resize(ImageIO.read(Objects.requireNonNull(AppFinderDialog.class.getResourceAsStream("/assets/DefaultExeIcon.ico"))), ICON_SIZE, ICON_SIZE);
     }
 
-    private ImageView getImage(App app) throws Exception {
+    private ImageView getImage(AudioSession session) throws Exception {
         BufferedImage bi;
-        if ("ShellExperienceHost.exe".equals(app.processName)) {
-            app.displayName = "System Sounds";
-            bi = resize(ImageIO.read(getClass().getResourceAsStream("/assets/systemsounds.ico")), ICON_SIZE, ICON_SIZE);
+        if (session.pid() == 0) {
+            bi = resize(ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/assets/systemsounds.ico"))), ICON_SIZE, ICON_SIZE);
         } else {
-            bi = toBufferedImage(app.exeLocation);
+            bi = toBufferedImage(session.executable());
         }
         var writableImage = SwingFXUtils.toFXImage(bi, null);
         return new ImageView(writableImage);
     }
 
-    static class App {
-        private final String processName;
-
-        private String displayName;
-
-        private final File exeLocation;
-
-        public App(String processName, String displayName, String exeLocation) {
-            this.processName = processName;
-            this.displayName = displayName;
-            this.exeLocation = new File(exeLocation);
-        }
-
-        public String toString() {
-            return "App [processName=" + processName + ", displayName=" + displayName + ", exeLocation=" + exeLocation + "]\n";
-        }
-    }
-
-    private static List<App> getProgs() throws Exception {
-        var ret = new ArrayList<App>();
-        var c = new ProcessBuilder(Util.sndCtrlExecutable.toString(), "listapps");
-        var sndctrlProc = c.start();
-        var in = sndctrlProc.getInputStream();
-        var scan = new Scanner(in);
-        try {
-            String x;
-            while (!(x = scan.nextLine()).startsWith("Elapsed Milliseconds : "))
-                ret.add(new App(x, scan.nextLine(), scan.nextLine()));
-        } catch (Exception e) {
-            log.error("Unable to scan line", e);
-        }
-        scan.close();
-        in.close();
-        sndctrlProc.destroy();
-        return ret;
+    private static List<AudioSession> getProgs() {
+        return StreamEx.of(SndCtrl.getDevices()).flatCollection(ad -> ad.getSessions().values())
+                       .distinct(AudioSession::pid)
+                       .sorted(Comparator.nullsLast(Comparator.comparing(AudioSession::title).thenComparing(AudioSession::executable)))
+                       .toImmutableList();
     }
 
     public static void main(String[] args) {
@@ -164,7 +135,7 @@ class AppFinderDialog extends Application implements Initializable {
             var apps = getProgs();
             for (var app : apps) {
                 var iv = getImage(app);
-                var button = new Button(app.displayName, iv);
+                var button = new Button(app.title(), iv);
                 var size = 180;
                 var ivSize = 64;
                 iv.minHeight(ivSize);
@@ -179,7 +150,7 @@ class AppFinderDialog extends Application implements Initializable {
                 button.setTextAlignment(TextAlignment.CENTER);
                 button.setContentDisplay(ContentDisplay.TOP);
                 button.setOnAction(a -> {
-                    processName = app.processName;
+                    processName = app.pid() == 0 ? AudioSession.SYSTEM : app.executable().getName();
                     stage.close();
                 });
                 flowPane.getChildren().add(button);
