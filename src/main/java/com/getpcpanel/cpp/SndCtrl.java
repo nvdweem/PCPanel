@@ -7,6 +7,8 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.getpcpanel.util.Util;
+
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
@@ -16,7 +18,12 @@ public enum SndCtrl {
     instance;
 
     static {
-        System.loadLibrary("SndCtrl");
+        try {
+            System.loadLibrary("SndCtrl");
+            log.warn("Debugging? Loading SndCtrl from the path.");
+        } catch (Throwable e) {
+            System.load(Util.extractAndDeleteOnExit("SndCtrl.dll").toString());
+        }
         SndCtrlNative.instance.start(instance);
     }
 
@@ -33,7 +40,7 @@ public enum SndCtrl {
 
     public static void setDeviceVolume(String deviceId, float volume) {
         var deviceOrDefault = defaultDeviceOnEmpty(deviceId);
-        log.debug("Set device volume to {} for {}", volume, deviceOrDefault);
+        log.trace("Set device volume to {} for {}", volume, deviceOrDefault);
         SndCtrlNative.instance.setDeviceVolume(deviceOrDefault, volume);
     }
 
@@ -44,7 +51,7 @@ public enum SndCtrl {
     }
 
     public static void setProcessVolume(AudioSession session, float volume) {
-        log.debug("Setting volume to {} for {}", volume, session);
+        log.trace("Setting volume to {} for {}", volume, session);
         SndCtrlNative.instance.setProcessVolume(session.device().id(), session.pid(), volume);
     }
 
@@ -62,7 +69,7 @@ public enum SndCtrl {
     private AudioDevice deviceAdded(String name, String id, float volume, boolean muted, int dataFlow) {
         var result = new AudioDevice(name, id).volume(volume).muted(muted).dataflow(dataFlow);
         devices.put(id, result);
-        log.debug("{}", result);
+        log.trace("Device added: {}", result);
 
         return result;
     }
@@ -73,7 +80,7 @@ public enum SndCtrl {
 
     private void setDefaultDevice(String id, int dataFlow, int role) {
         defaults.put(new DefaultFor(dataFlow, role), id);
-        log.debug("Default changed: {}: {}", new DefaultFor(dataFlow, role), id);
+        log.trace("Default changed: {}: {}", new DefaultFor(dataFlow, role), id);
     }
 
     record DefaultFor(int dataFlow, int role) {

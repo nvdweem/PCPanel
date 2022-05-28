@@ -39,7 +39,7 @@ public class AudioDevice {
 
     private void setState(float volume, boolean muted) {
         volume(volume).muted(muted);
-        log.debug("State changed: {}", this);
+        log.trace("State changed: {}", this);
     }
 
     private AudioSession addSession(int pid, String name, String title, String icon, float volume, boolean muted) {
@@ -48,13 +48,13 @@ public class AudioDevice {
             log.debug("Not adding {}, no title known", result);
         } else {
             sessions.put(pid, result);
-            log.debug("Session added: {}", result);
+            log.trace("Session added: {}", result);
         }
         return result;
     }
 
     private void removeSession(int pid) {
         sessions.remove(pid);
-        log.debug("Session removed: {}", pid);
+        log.trace("Session removed: {}", pid);
     }
 }
