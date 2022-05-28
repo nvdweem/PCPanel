@@ -17,5 +17,4 @@ target/
 *.ipr
 
 # Application files
-/logs/
-/lock.txt
+/SndCtrl.dll
