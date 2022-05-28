@@ -1,7 +1,9 @@
 package com.getpcpanel.voicemeeter;
 
+import java.io.File;
 import java.util.Set;
 
+import com.getpcpanel.profile.Save;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
@@ -9,22 +11,26 @@ import com.sun.jna.Pointer;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public class VoicemeeterAPI {
+public final class VoicemeeterAPI {
     private static VoicemeeterInstance instance;
-    public static String DEFAULT_VM_WINDOWS_64BIT_PATH = "C:/Program Files (x86)/VB/Voicemeeter/VoicemeeterRemote64.dll";
-    public static String DEFAULT_VM_WINDOWS_32BIT_PATH = "";
+    public static final String DEFAULT_VM_WINDOWS_64BIT_PATH = "VoicemeeterRemote64.dll";
+    public static final String DEFAULT_VM_WINDOWS_32BIT_PATH = "VoicemeeterRemote.dll";
+
+    private VoicemeeterAPI() {
+    }
 
     public static void init() {
         init(true);
     }
 
     public static void init(boolean is64bit) {
-        init(is64bit, is64bit ? DEFAULT_VM_WINDOWS_64BIT_PATH : DEFAULT_VM_WINDOWS_32BIT_PATH);
-    }
-
-    public static void init(boolean is64bit, String vmWindowsPath) {
-        System.load(vmWindowsPath);
-        instance = Native.loadLibrary("VoicemeeterRemote" + (is64bit ? "64" : ""), VoicemeeterInstance.class);
+        var dllPath = new File(Save.getVoicemeeterPath(), is64bit ? DEFAULT_VM_WINDOWS_64BIT_PATH : DEFAULT_VM_WINDOWS_32BIT_PATH);
+        try {
+            System.load(dllPath.getAbsolutePath());
+            instance = Native.loadLibrary("VoicemeeterRemote" + (is64bit ? "64" : ""), VoicemeeterInstance.class);
+        } catch (Throwable t) {
+            log.error("Unable to load VoiceMeeter");
+        }
     }
 
     public static void init(VoicemeeterInstance voicemeeterInstance) {
