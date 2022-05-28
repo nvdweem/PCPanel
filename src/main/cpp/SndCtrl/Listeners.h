@@ -192,7 +192,9 @@ public:
         return S_OK;
     }
     virtual HRESULT STDMETHODCALLTYPE OnStateChanged(AudioSessionState NewState) {
-        removed();
+        if (NewState == AudioSessionStateExpired) {
+            removed();
+        }
         return S_OK;
     }
 

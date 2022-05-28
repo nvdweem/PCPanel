@@ -65,9 +65,7 @@ public:
 #ifndef NO_JNI
         JThread env;
         if (*env) {
-            cout << "Cleaning" << endl;
             env->DeleteGlobalRef(this->obj);
-            cout << "/Cleaning" << endl;
         }
         else {
             cout << "Env has error, not cleaning up";
