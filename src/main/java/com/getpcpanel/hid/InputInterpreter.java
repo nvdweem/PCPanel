@@ -31,6 +31,7 @@ import com.getpcpanel.voicemeeter.Voicemeeter;
 
 import javafx.application.Platform;
 import lombok.extern.log4j.Log4j2;
+import one.util.streamex.StreamEx;
 
 @Log4j2
 public final class InputInterpreter {
@@ -68,11 +69,8 @@ public final class InputInterpreter {
         var cmds = new ArrayList<Command>(2);
         switch (data[0]) {
             case "app_volume" -> {
-                for (var i = 1; i <= 2; i++) {
-                    if (StringUtils.isNotBlank(data[i])) {
-                        cmds.add(new CommandVolumeProcess(serialNum, knob, data[i], v));
-                    }
-                }
+                var device = data[3];
+                StreamEx.of(data[1], data[2]).map(StringUtils::trimToNull).nonNull().map(val -> new CommandVolumeProcess(serialNum, knob, val, device, v)).into(cmds);
             }
             case "focus_volume" -> cmds.add(new CommandVolumeFocus(serialNum, knob, v));
             case "device_volume" -> cmds.add(new CommandVolumeDevice(serialNum, knob, data[1], v));

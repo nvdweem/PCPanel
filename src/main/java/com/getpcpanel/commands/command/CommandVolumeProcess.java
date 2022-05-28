@@ -7,16 +7,18 @@ import lombok.Getter;
 @Getter
 public class CommandVolumeProcess extends CommandVolume {
     private final String processName;
+    private final String device;
     private final int volume;
 
-    public CommandVolumeProcess(String device, int knob, String processName, int volume) {
-        super(device, knob);
+    public CommandVolumeProcess(String serial, int knob, String processName, String device, int volume) {
+        super(serial, knob);
         this.processName = processName;
+        this.device = device;
         this.volume = volume;
     }
 
     @Override
     public void execute() {
-        SndCtrl.setProcessVolume(processName, volume / 100f);
+        SndCtrl.setProcessVolume(processName, device, volume / 100f);
     }
 }

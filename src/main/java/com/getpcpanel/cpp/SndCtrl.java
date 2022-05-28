@@ -61,9 +61,12 @@ public enum SndCtrl {
         SndCtrlNative.instance.setDefaultDevice(deviceId, AudioDevice.dfAll, AudioDevice.roleMultimedia);
     }
 
-    public static void setProcessVolume(String fileName, float volume) {
-        StreamEx.ofValues(instance.devices).flatCollection(d -> d.getSessions().values())
-                .filter(s -> s.executable() != null && StringUtils.equals(fileName, s.executable().getName()))
+    public static void setProcessVolume(String fileName, String device, float volume) {
+        var deviceId = defaultDeviceOnEmpty(device);
+        StreamEx.ofValues(instance.devices)
+                .filter(d -> device.equals("*") || deviceId.equals(d.id()))
+                .flatCollection(d -> d.getSessions().values())
+                .filter(s -> (fileName.equals(AudioSession.SYSTEM) && s.pid() == 0) || (s.executable() != null && StringUtils.equals(fileName, s.executable().getName())))
                 .forEach(s -> setProcessVolume(s, volume));
     }
 
