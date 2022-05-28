@@ -39,6 +39,38 @@ JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_setProcessVolume
 JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_setFocusVolume
   (JNIEnv *, jobject, jfloat);
 
+/*
+ * Class:     com_getpcpanel_cpp_SndCtrlNative
+ * Method:    setDefaultDevice
+ * Signature: (Ljava/lang/String;II)V
+ */
+JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_setDefaultDevice
+  (JNIEnv *, jobject, jstring, jint, jint);
+
+/*
+ * Class:     com_getpcpanel_cpp_SndCtrlNative
+ * Method:    muteDevice
+ * Signature: (Ljava/lang/String;Z)V
+ */
+JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_muteDevice
+  (JNIEnv *, jobject, jstring, jboolean);
+
+/*
+ * Class:     com_getpcpanel_cpp_SndCtrlNative
+ * Method:    muteSession
+ * Signature: (Ljava/lang/String;IZ)V
+ */
+JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_muteSession
+  (JNIEnv *, jobject, jstring, jint, jboolean);
+
+/*
+ * Class:     com_getpcpanel_cpp_SndCtrlNative
+ * Method:    getFocusApplication
+ * Signature: ()Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_getFocusApplication
+  (JNIEnv *, jobject);
+
 #ifdef __cplusplus
 }
 #endif

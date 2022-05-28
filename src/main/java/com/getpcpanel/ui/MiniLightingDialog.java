@@ -2,6 +2,7 @@ package com.getpcpanel.ui;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Objects;
 import java.util.ResourceBundle;
 
 import com.getpcpanel.Main;
@@ -85,11 +86,11 @@ public class MiniLightingDialog extends Application implements Initializable {
         try {
             mainPane = loader.load();
         } catch (IOException e) {
-            log.error("Unable to load main page");
+            log.error("Unable to load main page", e);
         }
-        var scene = new Scene(mainPane);
-        scene.getStylesheets().add(getClass().getResource("/assets/dark_theme.css").toExternalForm());
-        stage.getIcons().add(new Image(getClass().getResource("/assets/256x256.png").toExternalForm()));
+        var scene = new Scene(Objects.requireNonNull(mainPane));
+        scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/assets/dark_theme.css")).toExternalForm());
+        stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/assets/256x256.png")).toExternalForm()));
         stage.setOnHiding(e -> {
             if (!pressedOk)
                 if (DeviceScanner.getConnectedDevice(device.getSerialNumber()) == null) {

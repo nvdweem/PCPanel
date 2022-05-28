@@ -44,6 +44,23 @@ public enum SndCtrl {
         SndCtrlNative.instance.setDeviceVolume(deviceOrDefault, volume);
     }
 
+    public static void muteDevice(String deviceId, MuteType mute) {
+        var deviceOrDefault = defaultDeviceOnEmpty(deviceId);
+        var device = instance.devices.get(deviceOrDefault);
+        if (device == null) {
+            log.warn("No device found for {}", deviceOrDefault);
+            return;
+        }
+
+        log.trace("Mute device {}", deviceOrDefault);
+        SndCtrlNative.instance.muteDevice(deviceOrDefault, mute.convert(device.muted()));
+    }
+
+    public static void setDefaultDevice(String deviceId) {
+        log.trace("Set default device to {}", deviceId);
+        SndCtrlNative.instance.setDefaultDevice(deviceId, AudioDevice.dfAll, AudioDevice.roleMultimedia);
+    }
+
     public static void setProcessVolume(String fileName, float volume) {
         StreamEx.ofValues(instance.devices).flatCollection(d -> d.getSessions().values())
                 .filter(s -> s.executable() != null && StringUtils.equals(fileName, s.executable().getName()))
@@ -59,8 +76,23 @@ public enum SndCtrl {
         SndCtrlNative.instance.setFocusVolume(volume);
     }
 
+    public static void muteProcess(String fileName, MuteType mute) {
+        StreamEx.ofValues(instance.devices).flatCollection(d -> d.getSessions().values())
+                .filter(s -> s.executable() != null && StringUtils.equals(fileName, s.executable().getName()))
+                .forEach(s -> muteProcess(s, mute));
+    }
+
+    public static void muteProcess(AudioSession session, MuteType muted) {
+        log.trace("Muting session {}", session);
+        SndCtrlNative.instance.muteSession(session.device().id(), session.pid(), muted.convert(session.muted()));
+    }
+
+    public static String getFocusApplication() {
+        return SndCtrlNative.instance.getFocusApplication();
+    }
+
     private static String defaultDeviceOnEmpty(String deviceId) {
-        if (StringUtils.isNotBlank(deviceId)) {
+        if (StringUtils.isNotBlank(deviceId) && !StringUtils.equals("default", deviceId)) {
             return deviceId;
         }
         return instance.defaults.get(new DefaultFor(AudioDevice.dfRender, AudioDevice.roleMultimedia));

@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "sndctrl.h"
 #include "JniCaller.h"
+#include "helpers.h"
 
 unique_ptr<SndCtrl> pSndCtrl;
 
@@ -87,6 +88,14 @@ void SndCtrl::SetDeviceVolume(wstring deviceId, float volume)
     }
 }
 
+void SndCtrl::MuteDevice(wstring deviceId, bool muted)
+{
+    auto found = devices.find(deviceId);
+    if (found != devices.end()) {
+        found->second->Mute(muted);
+    }
+}
+
 void SndCtrl::SetProcessVolume(wstring deviceId, int pid, float volume)
 {
     auto found = devices.find(deviceId);
@@ -95,21 +104,17 @@ void SndCtrl::SetProcessVolume(wstring deviceId, int pid, float volume)
     }
 }
 
-wstring GetProcessName(DWORD procId) {
-    DWORD buffSize = MAX_PATH;
-    WCHAR buffer[MAX_PATH] = { 0 };
-    HANDLE hProc = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, procId);
-    QueryFullProcessImageNameW(hProc, NULL, buffer, &buffSize);
-    CloseHandle(hProc);
-    return wstring(buffer);
+void SndCtrl::MuteProcess(wstring deviceId, int pid, bool muted)
+{
+    auto found = devices.find(deviceId);
+    if (found != devices.end()) {
+        found->second->MuteProcess(pid, muted);
+    }
 }
 
 void SndCtrl::SetFocusVolume(float volume)
 {
-    DWORD procId;
-    GetWindowThreadProcessId(GetForegroundWindow(), &procId);
-    int pid = (int)procId;
-
+    auto pid = GetFocusProcessId();
     bool found = false;
     for (auto& entry : devices) {
         found = entry.second->SetProcessVolume(pid, volume) || found;
@@ -119,13 +124,21 @@ void SndCtrl::SetFocusVolume(float volume)
     }
 
     // Not found by pid, find by name
-    auto name = GetProcessName(procId);
+    auto name = GetProcessName(pid);
     for (auto& dEntry : devices) {
         for (auto& sEntry : dEntry.second->GetSessions()) {
             if (sEntry.second->GetName() == name) {
                 sEntry.second->SetVolume(volume);
             }
         }
+    }
+}
+
+void SndCtrl::UpdateDefaultDevice(wstring id, EDataFlow dataFlow, ERole role)
+{
+    auto device = devices.find(id);
+    if (device != devices.end()) {
+        device->second->SetDefault(dataFlow, role);
     }
 }
 

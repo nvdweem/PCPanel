@@ -12,6 +12,7 @@ private:
     bool error;
 public:
     JThread() : pEnv(nullptr), needsDetach(false), error(false) {
+#ifndef NO_JNI
         auto getEnvStat = pJvm->GetEnv((void**)&pEnv, JNI_VERSION_10);
         if (getEnvStat == JNI_EDETACHED) {
             if (pJvm->AttachCurrentThreadAsDaemon((void**)&pEnv, &attachArgs) == 0) {
@@ -21,11 +22,14 @@ public:
                 error = true;
             }
         }
+#endif // !NO_JNI
     }
     ~JThread() {
+#ifndef NO_JNI
         if (needsDetach) {
             pJvm->DetachCurrentThread();
         }
+#endif
     }
 
     jstring jstr(const char* str);
@@ -52,8 +56,13 @@ public:
         return JniCaller(env, obj);
     }
 
-    JniCaller(JThread& env, jobject obj) : obj(env->NewGlobalRef(obj)) {}
+    JniCaller(JThread& env, jobject obj) : obj(
+#ifndef NO_JNI
+        env->NewGlobalRef(obj)
+#endif
+    ) {}
     ~JniCaller() {
+#ifndef NO_JNI
         JThread env;
         if (*env) {
             cout << "Cleaning" << endl;
@@ -63,8 +72,10 @@ public:
         else {
             cout << "Env has error, not cleaning up";
         }
+#endif
     }
 
+#ifndef NO_JNI
     void CallVoid(const char* name, const char* sig, ...) {
         JThread env;
         auto method = GetMethod(env, name, sig);
@@ -109,4 +120,9 @@ private:
         }
         return method;
     }
+#else
+    void CallVoid(const char* name, const char* sig, ...) {}
+    jobject CallObject(const char* name, const char* sig, ...) {return nullptr;}
+    float CallFloat(const char* name, const char* sig, ...) {return 0;}
+#endif
 };

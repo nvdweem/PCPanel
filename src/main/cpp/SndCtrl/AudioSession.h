@@ -17,6 +17,7 @@ public:
 
     void Init(JniCaller& audioDevice, function<void()> onRemoved);
     void SetVolume(float volume);
+    void Mute(bool muted);
 
     int GetPid() const {
         return pid;

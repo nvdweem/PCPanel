@@ -57,14 +57,15 @@ void AudioSession::Init(JniCaller& audioDevice, function<void()> onRemoved)
     cc->GetMute(&muted);
 
     auto pname = GetProductName();
+    auto nameCopy = pname;
     JThread thread;
     auto jObj = audioDevice.CallObject("addSession", "(ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;FZ)Lcom/getpcpanel/cpp/AudioSession;",
         pid, thread.jstr(name.c_str()), thread.jstr(pname.c_str()), thread.jstr(icon), level, muted
     );
 
-    pListener = make_unique<AudioSessionListener>(pSession, [&]() {
+    pListener = make_unique<AudioSessionListener>(pSession, [&, onRemoved]() {
         JThread thread;
-        audioDevice.CallVoid("removeSession", "(I)V", pid);       
+        audioDevice.CallVoid("removeSession", "(I)V", pid);
         onRemoved();
     }, jObj);
 }
@@ -72,6 +73,11 @@ void AudioSession::Init(JniCaller& audioDevice, function<void()> onRemoved)
 void AudioSession::SetVolume(float volume)
 {
     pVolumeControl->SetMasterVolume(volume, nullptr);
+}
+
+void AudioSession::Mute(bool muted)
+{
+    pVolumeControl->SetMute(muted, nullptr);
 }
 
 basic_string<TCHAR> AudioSession::GetProductName()

@@ -27,7 +27,10 @@ public:
 
     // Called from Java
     void SetVolume(float volume);
+    void Mute(bool muted);
     bool SetProcessVolume(int pid, float volume);
+    bool MuteProcess(int pid, bool muted);
+    void SetDefault(EDataFlow dataFlow, ERole role);
 
     const unordered_map<int, unique_ptr<AudioSession>>& GetSessions() const {
         return sessions;

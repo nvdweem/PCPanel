@@ -54,7 +54,7 @@ public class AudioDevice {
     }
 
     private void removeSession(int pid) {
-        sessions.remove(pid);
-        log.trace("Session removed: {}", pid);
+        var sess = sessions.remove(pid);
+        log.trace("Session removed: {} ({})", pid, sess == null ? "not found" : sess);
     }
 }

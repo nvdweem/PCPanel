@@ -70,7 +70,7 @@ class WebColorFieldSkin extends InputFieldSkin {
                     noChangeInValue = false;
                 }
             } catch (IllegalArgumentException ex) {
-                log.error("Failed to parse [{}]", text);
+                log.error("Failed to parse [{}]", text, ex);
             }
     }
 }

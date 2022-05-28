@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "AudioDevice.h"
+#include "policyconfig.h"
 
 AudioDevice::AudioDevice(wstring id, CComPtr<IMMDevice> pDevice, jobject obj)
     : id(id),
@@ -10,7 +11,7 @@ AudioDevice::AudioDevice(wstring id, CComPtr<IMMDevice> pDevice, jobject obj)
 {
     auto pSessionManager = Activate(*pDevice);
     pSessionListener = make_unique<SessionListener>(*this, pSessionManager);
-
+    
     // Get current sessions
     auto pSessionList = GetSessionEnumerator(*pSessionManager);
     auto sessionCount = GetCount(*pSessionList);
@@ -25,6 +26,11 @@ void AudioDevice::SetVolume(float volume)
     pVolume->SetMasterVolumeLevelScalar(volume, nullptr);
 }
 
+void AudioDevice::Mute(bool muted)
+{
+    pVolume->SetMute(muted, nullptr);
+}
+
 bool AudioDevice::SetProcessVolume(int pid, float volume)
 {
     auto entry = sessions.find(pid);
@@ -35,11 +41,32 @@ bool AudioDevice::SetProcessVolume(int pid, float volume)
     return false;
 }
 
+bool AudioDevice::MuteProcess(int pid, bool muted)
+{
+    auto entry = sessions.find(pid);
+    if (entry != sessions.end()) {
+        entry->second->Mute(muted);
+        return true;
+    }
+    return false;
+}
+
+void AudioDevice::SetDefault(EDataFlow dataFlow, ERole role)
+{
+    CComPtr<IPolicyConfigVista> pPolicyConfig;
+    ERole reserved = (ERole)role;
+
+    HRESULT hr = CoCreateInstance(__uuidof(CPolicyConfigVistaClient), NULL, CLSCTX_ALL, __uuidof(IPolicyConfigVista), (LPVOID*)&pPolicyConfig);
+    if (SUCCEEDED(hr)) {
+        pPolicyConfig->SetDefaultEndpoint(id.c_str(), reserved);
+    }
+}
+
 void AudioDevice::SessionAdded(CComPtr<IAudioSessionControl> session)
 {
     auto ptr = make_unique<AudioSession>(session);
     auto pid = ptr->GetPid();
-    ptr->Init(jni, [&]() { sessions.erase(pid); });
+    ptr->Init(jni, [this, pid]() { sessions.erase(pid); });
     sessions.insert({pid, std::move(ptr)});
 }
 

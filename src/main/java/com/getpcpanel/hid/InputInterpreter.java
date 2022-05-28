@@ -1,6 +1,5 @@
 package com.getpcpanel.hid;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -10,15 +9,21 @@ import com.getpcpanel.Main;
 import com.getpcpanel.commands.CommandDispatcher;
 import com.getpcpanel.commands.KeyMacro;
 import com.getpcpanel.commands.command.Command;
+import com.getpcpanel.commands.command.CommandEndProgram;
 import com.getpcpanel.commands.command.CommandMedia;
 import com.getpcpanel.commands.command.CommandObsMuteSource;
 import com.getpcpanel.commands.command.CommandObsSetScene;
 import com.getpcpanel.commands.command.CommandObsSetSource;
+import com.getpcpanel.commands.command.CommandShortcut;
 import com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced;
 import com.getpcpanel.commands.command.CommandVoiceMeeterBasic;
+import com.getpcpanel.commands.command.CommandVolumeDefaultDevice;
 import com.getpcpanel.commands.command.CommandVolumeDevice;
+import com.getpcpanel.commands.command.CommandVolumeDeviceMute;
 import com.getpcpanel.commands.command.CommandVolumeFocus;
 import com.getpcpanel.commands.command.CommandVolumeProcess;
+import com.getpcpanel.commands.command.CommandVolumeProcessMute;
+import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.profile.Save;
 import com.getpcpanel.util.Util;
@@ -29,7 +34,6 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public final class InputInterpreter {
-    private static final Runtime rt = Runtime.getRuntime();
 
     private InputInterpreter() {
     }
@@ -87,7 +91,7 @@ public final class InputInterpreter {
         CommandDispatcher.pushVolumeChange(serialNum, knob, cmds);
     }
 
-    private static void doClickAction(String serialNum, int knob) throws IOException {
+    private static void doClickAction(String serialNum, int knob) {
         var data = Save.getDeviceSave(serialNum).buttonData[knob];
         if (data == null || data[0] == null)
             return;
@@ -97,25 +101,12 @@ public final class InputInterpreter {
                     return;
                 KeyMacro.executeKeyStroke(data[1]);
             }
-            case "shortcut" -> {
-                var file = new File(data[1]);
-                if (file.isFile() && Util.isFileExecutable(file)) {
-                    rt.exec("cmd.exe /c \"" + file.getName() + "\"", null, file.getParentFile());
-                } else {
-                    rt.exec("cmd.exe /c \"" + data[1] + "\"");
-                }
-            }
+            case "shortcut" -> CommandDispatcher.pushVolumeChange(serialNum, knob, new CommandShortcut(serialNum, knob, data[1]));
             case "media" -> CommandMedia.VolumeButton.tryValueOf(data[1]).ifPresent(v ->
                     CommandDispatcher.pushVolumeChange(serialNum, knob, new CommandMedia(serialNum, knob, v))
             );
-            case "end_program" -> {
-                if ("specific".equals(data[1])) {
-                    rt.exec("cmd.exe /c taskkill /IM " + data[2] + " /F");
-                } else if ("focused".equals(data[1])) {
-                    rt.exec("sndctrl killfocusedprocess");
-                }
-            }
-            case "sound_device" -> rt.exec("sndctrl setdefaultdevice \"" + data[1] + "\"");
+            case "end_program" -> CommandDispatcher.pushVolumeChange(serialNum, knob, new CommandEndProgram(serialNum, knob, StringUtils.equals("specific", data[1]), data[2]));
+            case "sound_device" -> CommandDispatcher.pushVolumeChange(serialNum, knob, new CommandVolumeDefaultDevice(serialNum, knob, data[1]));
             case "toggle_device" -> {
                 var deviceArray = data[1].split("\\|");
                 if (deviceArray.length == 0)
@@ -129,11 +120,11 @@ public final class InputInterpreter {
                 if (index >= deviceArray.length)
                     index = 0;
                 var device = deviceArray[index];
-                rt.exec("sndctrl setdefaultdevice \"" + device + "\"");
+                CommandDispatcher.pushVolumeChange(serialNum, knob, new CommandVolumeDefaultDevice(serialNum, knob, device));
                 data[2] = String.valueOf(index + 1);
             }
-            case "mute_app" -> rt.exec("sndctrl muteappvolume \"" + data[1] + "\" " + data[2]);
-            case "mute_device" -> rt.exec("sndctrl mutedevice \"" + data[1] + "\" " + data[2]);
+            case "mute_app" -> CommandDispatcher.pushVolumeChange(serialNum, knob, new CommandVolumeProcessMute(serialNum, knob, data[1], MuteType.valueOf(data[2])));
+            case "mute_device" -> CommandDispatcher.pushVolumeChange(serialNum, knob, new CommandVolumeDeviceMute(serialNum, knob, data[1], MuteType.valueOf(data[2])));
             case "obs_button" -> {
                 if ("set_scene".equals(data[1])) {
                     CommandDispatcher.pushVolumeChange(serialNum, knob, new CommandObsSetScene(serialNum, knob, data[2]));

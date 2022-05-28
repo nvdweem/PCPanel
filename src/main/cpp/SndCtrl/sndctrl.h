@@ -26,8 +26,11 @@ public:
 
     // Called from Java
     void SetDeviceVolume(wstring deviceId, float volume);
+    void MuteDevice(wstring deviceId, bool muted);
     void SetProcessVolume(wstring deviceId, int pid, float volume);
+    void MuteProcess(wstring deviceId, int pid, bool muted);
     void SetFocusVolume(float volume);
+    void UpdateDefaultDevice(wstring id, EDataFlow dataFlow, ERole role);
 
 private:
     void InitDevices();
