@@ -18,7 +18,7 @@
         <app.name>PCPanel</app.name>
         <maven.build.timestamp.format>yy.ww.WWkkmm</maven.build.timestamp.format>
         <app.version>${maven.build.timestamp}</app.version>
-        <jvm.modules>javafx.controls,javafx.fxml,javafx.web,java.desktop,java.management,java.logging</jvm.modules>
+        <jvm.modules>javafx.controls,javafx.fxml,javafx.web,javafx.swing,java.desktop,java.management,java.logging</jvm.modules>
         <windows.upgrade.uuid>9421bff0-3840-414c-8563-407fbcd1d04d</windows.upgrade.uuid>
         <windows.vendor>PCPanel</windows.vendor>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -269,7 +269,7 @@
                                 <arg>--strip-debug</arg>
                                 <arg>--no-man-pages</arg>
                                 <arg>--compress=2</arg>
-                                <arg>--add-modules=javafx.controls,javafx.fxml,javafx.web</arg>
+                                <arg>--add-modules=javafx.controls,javafx.fxml,javafx.web,javafx.swing</arg>
                             </args>
                         </configuration>
                     </execution>
