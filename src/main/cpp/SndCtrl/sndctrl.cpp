@@ -79,6 +79,56 @@ void SndCtrl::DeviceRemoved(wstring pDevice)
     );
 }
 
+void SndCtrl::SetDeviceVolume(wstring deviceId, float volume)
+{
+    auto found = devices.find(deviceId);
+    if (found != devices.end()) {
+        found->second->SetVolume(volume);
+    }
+}
+
+void SndCtrl::SetProcessVolume(wstring deviceId, int pid, float volume)
+{
+    auto found = devices.find(deviceId);
+    if (found != devices.end()) {
+        found->second->SetProcessVolume(pid, volume);
+    }
+}
+
+wstring GetProcessName(DWORD procId) {
+    DWORD buffSize = MAX_PATH;
+    WCHAR buffer[MAX_PATH] = { 0 };
+    HANDLE hProc = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, procId);
+    QueryFullProcessImageNameW(hProc, NULL, buffer, &buffSize);
+    CloseHandle(hProc);
+    return wstring(buffer);
+}
+
+void SndCtrl::SetFocusVolume(float volume)
+{
+    DWORD procId;
+    GetWindowThreadProcessId(GetForegroundWindow(), &procId);
+    int pid = (int)procId;
+
+    bool found = false;
+    for (auto& entry : devices) {
+        found = entry.second->SetProcessVolume(pid, volume) || found;
+    }
+    if (found) {
+        return; // Volume was set, we are done.
+    }
+
+    // Not found by pid, find by name
+    auto name = GetProcessName(procId);
+    for (auto& dEntry : devices) {
+        for (auto& sEntry : dEntry.second->GetSessions()) {
+            if (sEntry.second->GetName() == name) {
+                sEntry.second->SetVolume(volume);
+            }
+        }
+    }
+}
+
 void SndCtrl::SetDefaultDevice(wstring id, EDataFlow dataFlow, ERole role)
 {
     JThread thread;

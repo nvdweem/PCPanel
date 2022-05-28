@@ -21,9 +21,6 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="com_getpcpanel_cpp_SndCtrl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="helpers.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -42,6 +39,9 @@
     <ClInclude Include="AudioSession.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="com_getpcpanel_cpp_SndCtrlNative.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -50,7 +50,7 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="com_getpcpanel_cpp_SndCtrl.cpp">
+    <ClCompile Include="com_getpcpanel_cpp_SndCtrlNative.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="sndctrl.cpp">

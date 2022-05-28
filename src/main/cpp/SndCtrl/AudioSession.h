@@ -7,6 +7,7 @@ class AudioSession
 private:
     CComPtr<IAudioSessionControl> pSession;
     unique_ptr<AudioSessionListener> pListener;
+    CComQIPtr<ISimpleAudioVolume> pVolumeControl;
 
     int pid;
     wstring name;
@@ -15,9 +16,13 @@ public:
     AudioSession(const AudioSession&) = delete;
 
     void Init(JniCaller& audioDevice, function<void()> onRemoved);
+    void SetVolume(float volume);
 
-    int GetPid() {
+    int GetPid() const {
         return pid;
+    }
+    const wstring& GetName() const {
+        return name;
     }
 
 private:

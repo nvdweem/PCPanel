@@ -7,6 +7,8 @@ import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.getpcpanel.device.Device;
 import com.getpcpanel.obs.OBS;
 import com.getpcpanel.profile.DeviceSave;
@@ -154,8 +156,8 @@ public class BasicMacro extends Application implements Initializable {
         loader.setController(this);
         Pane mainPane = loader.load();
         var scene = new Scene(mainPane);
-        scene.getStylesheets().add(getClass().getResource("/assets/dark_theme.css").toExternalForm());
-        basicmacro.getIcons().add(new Image(getClass().getResource("/assets/256x256.png").toExternalForm()));
+        scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/assets/dark_theme.css")).toExternalForm());
+        basicmacro.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/assets/256x256.png")).toExternalForm()));
         basicmacro.initModality(Modality.APPLICATION_MODAL);
         // basicmacro.initOwner((Window)Window.stage);
         basicmacro.setScene(scene);
@@ -245,7 +247,7 @@ public class BasicMacro extends Application implements Initializable {
             }
         } else if ("sound_device".equals(buttonType)) {
             buttonData = new String[2];
-            buttonData[1] = sounddevices.getValue().getId();
+            buttonData[1] = sounddevices.getValue() == null ? null : sounddevices.getValue().getId();
         } else if ("toggle_device".equals(buttonType)) {
             buttonData = new String[3];
             buttonData[1] = Util.listToPipeDelimitedString(soundDevices2.getItems().stream().map(SoundDevice::getId).collect(Collectors.toList()));
@@ -566,7 +568,7 @@ public class BasicMacro extends Application implements Initializable {
         trimMin.textProperty().addListener((observable, oldValue, newValue) -> trimMinMax(oldValue, newValue, trimMin));
         trimMax.textProperty().addListener((observable, oldValue, newValue) -> trimMinMax(oldValue, newValue, trimMax));
         buttonDebounceTime.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue.matches("\\d*") || newValue.contains("-") || "".equals(newValue)) {
+            if (!newValue.matches("\\d*") || newValue.contains("-") || StringUtils.isBlank(newValue)) {
                 buttonDebounceTime.setText(newValue.replace("-", "").replaceAll("[^\\d]", ""));
             } else {
                 var num = Integer.parseInt(newValue);
@@ -587,7 +589,7 @@ public class BasicMacro extends Application implements Initializable {
     }
 
     private void trimMinMax(String oldValue, String newValue, TextField trimMin) {
-        if (!newValue.matches("\\d*") || newValue.contains("-") || "".equals(newValue)) {
+        if (!newValue.matches("\\d*") || newValue.contains("-") || StringUtils.isBlank(newValue)) {
             trimMin.setText(newValue.replace("-", "").replaceAll("[^\\d]", ""));
         } else {
             var num = Integer.parseInt(newValue);

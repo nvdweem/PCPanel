@@ -107,10 +107,9 @@ private:
 class DeviceVolumeListener : public Listener, public IAudioEndpointVolumeCallback {
 private:
     JniCaller& jni;
-    CComPtr<IMMDevice> pDevice;
     CComPtr<IAudioEndpointVolume> pVolume;
 public:
-    DeviceVolumeListener(CComPtr<IMMDevice> pDevice, JniCaller& jni) : pDevice(pDevice), pVolume(GetVolumeControl(*pDevice)), jni(jni) {
+    DeviceVolumeListener(CComPtr<IAudioEndpointVolume> pVolume, JniCaller& jni) : pVolume(pVolume), jni(jni) {
         pVolume->RegisterControlChangeNotify(this);
     }
     ~DeviceVolumeListener() {
@@ -118,19 +117,13 @@ public:
     }
 
     virtual HRESULT STDMETHODCALLTYPE OnNotify(PAUDIO_VOLUME_NOTIFICATION_DATA pNotify) {
-        jni.CallVoid("setState", "(FZI)V", pNotify->fMasterVolume, pNotify->bMuted, getDataFlow(*pDevice));
+        jni.CallVoid("setState", "(FZ)V", pNotify->fMasterVolume, pNotify->bMuted);
         return S_OK;
     }
 
     HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppv) override { return Listener::QueryInterface(riid, ppv); }
     ULONG STDMETHODCALLTYPE AddRef() override { return Listener::AddRef(); }
     ULONG STDMETHODCALLTYPE Release() override { return Listener::Release(); }
-private:
-    CComPtr<IAudioEndpointVolume> GetVolumeControl(IMMDevice& device) {
-        CComPtr<IAudioEndpointVolume> pVol;
-        device.Activate(__uuidof(IAudioEndpointVolume), CLSCTX_ALL, NULL, (void**)&pVol);
-        return pVol;
-    }
 };
 
 class SessionListenerCB {

@@ -9,6 +9,8 @@ class AudioDevice : public SessionListenerCB
 private:
     wstring id;
     CComPtr<IMMDevice> pDevice;
+
+    CComPtr<IAudioEndpointVolume> pVolume;
     JniCaller jni;
 
     DeviceVolumeListener deviceVolumeListener;
@@ -23,6 +25,13 @@ public:
         SessionAdded(pSess);
     };
 
+    // Called from Java
+    void SetVolume(float volume);
+    bool SetProcessVolume(int pid, float volume);
+
+    const unordered_map<int, unique_ptr<AudioSession>>& GetSessions() const {
+        return sessions;
+    }
 private:
     void SessionAdded(CComPtr<IAudioSessionControl> session);
 
@@ -31,5 +40,11 @@ private:
     int GetCount(IAudioSessionEnumerator& collection);
     CComPtr<IAudioSessionControl> GetSession(IAudioSessionEnumerator& collection, int idx);
 
+
+    CComPtr<IAudioEndpointVolume> GetVolumeControl(IMMDevice& device) {
+        CComPtr<IAudioEndpointVolume> pVol;
+        device.Activate(__uuidof(IAudioEndpointVolume), CLSCTX_ALL, NULL, (void**)&pVol);
+        return pVol;
+    }
 };
 

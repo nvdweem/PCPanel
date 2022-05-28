@@ -28,13 +28,12 @@ wstring ProcessIdToName(DWORD processId) {
         return wstring(buffer);
     }
     else {
-        printf("Error OpenProcess : %lu", GetLastError());
         return wstring();
     }
 }
 
 AudioSession::AudioSession(CComPtr<IAudioSessionControl> session)
-    : pSession(session), pListener(nullptr), pid(0), name()
+    : pSession(session), pListener(nullptr), pVolumeControl(session), pid(0), name()
 {
     auto session2 = GetSession2(*session);
     pid = GetProcessId(*session2);
@@ -68,6 +67,11 @@ void AudioSession::Init(JniCaller& audioDevice, function<void()> onRemoved)
         audioDevice.CallVoid("removeSession", "(I)V", pid);       
         onRemoved();
     }, jObj);
+}
+
+void AudioSession::SetVolume(float volume)
+{
+    pVolumeControl->SetMasterVolume(volume, nullptr);
 }
 
 basic_string<TCHAR> AudioSession::GetProductName()

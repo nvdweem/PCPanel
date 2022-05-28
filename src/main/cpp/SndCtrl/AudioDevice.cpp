@@ -2,14 +2,15 @@
 #include "AudioDevice.h"
 
 AudioDevice::AudioDevice(wstring id, CComPtr<IMMDevice> pDevice, jobject obj)
-    : id(id), 
-      pDevice(pDevice), 
+    : id(id),
+      pDevice(pDevice),
       jni(JniCaller::Create(obj)),
-      deviceVolumeListener(pDevice, jni)
+      pVolume(GetVolumeControl(*pDevice)),
+      deviceVolumeListener(pVolume, jni)
 {
     auto pSessionManager = Activate(*pDevice);
     pSessionListener = make_unique<SessionListener>(*this, pSessionManager);
-    
+
     // Get current sessions
     auto pSessionList = GetSessionEnumerator(*pSessionManager);
     auto sessionCount = GetCount(*pSessionList);
@@ -17,6 +18,21 @@ AudioDevice::AudioDevice(wstring id, CComPtr<IMMDevice> pDevice, jobject obj)
         auto session = GetSession(*pSessionList, index);
         SessionAdded(session);
     }
+}
+
+void AudioDevice::SetVolume(float volume)
+{
+    pVolume->SetMasterVolumeLevelScalar(volume, nullptr);
+}
+
+bool AudioDevice::SetProcessVolume(int pid, float volume)
+{
+    auto entry = sessions.find(pid);
+    if (entry != sessions.end()) {
+        entry->second->SetVolume(volume);
+        return true;
+    }
+    return false;
 }
 
 void AudioDevice::SessionAdded(CComPtr<IAudioSessionControl> session)

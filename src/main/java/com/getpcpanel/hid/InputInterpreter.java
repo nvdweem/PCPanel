@@ -3,13 +3,23 @@ package com.getpcpanel.hid;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.Main;
+import com.getpcpanel.commands.CommandDispatcher;
 import com.getpcpanel.commands.KeyMacro;
+import com.getpcpanel.commands.command.Command;
+import com.getpcpanel.commands.command.CommandObsMuteSource;
+import com.getpcpanel.commands.command.CommandObsSetScene;
+import com.getpcpanel.commands.command.CommandObsSetSource;
+import com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced;
+import com.getpcpanel.commands.command.CommandVoiceMeeterBasic;
+import com.getpcpanel.commands.command.CommandVolumeDevice;
+import com.getpcpanel.commands.command.CommandVolumeFocus;
+import com.getpcpanel.commands.command.CommandVolumeProcess;
 import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.profile.Save;
-import com.getpcpanel.util.CommandHandler;
 import com.getpcpanel.util.Util;
 import com.getpcpanel.voicemeeter.Voicemeeter;
 
@@ -50,53 +60,31 @@ public final class InputInterpreter {
         var data = Save.getDeviceSave(serialNum).dialData[knob];
         if (data == null || data[0] == null)
             return;
+
+        var cmds = new ArrayList<Command>(2);
         switch (data[0]) {
             case "app_volume" -> {
-                List<String> cmds = new ArrayList<>(2);
                 for (var i = 1; i <= 2; i++) {
-                    if (data[i] != null && !"".equals(data[i])) {
-                        String cmd;
-                        var device = data[3];
-                        if (Util.isNullOrEmpty(device)) {
-                            cmd = "sndctrl setappvolume \"" + data[i] + "\" " + v;
-                        } else {
-                            cmd = "sndctrl setappvolume \"" + data[i] + "\" " + v + " \"" + device + "\"";
-                        }
-                        cmds.add(cmd);
+                    if (StringUtils.isNotBlank(data[i])) {
+                        cmds.add(new CommandVolumeProcess(serialNum, knob, data[i], v));
                     }
                 }
-                CommandHandler.pushVolumeChange(serialNum, knob, cmds);
             }
-            case "focus_volume" -> {
-                var cmd = "sndctrl setappvolume focused " + v;
-                CommandHandler.pushVolumeChange(serialNum, knob, cmd);
-            }
-            case "device_volume" -> {
-                if (Util.isNullOrEmpty(data[1])) {
-                    var cmd = "sndctrl setsysvolume " + v;
-                    CommandHandler.pushVolumeChange(serialNum, knob, cmd);
-                } else {
-                    var cmd = "sndctrl setsysvolume " + v + " \"" + data[1] + "\"";
-                    CommandHandler.pushVolumeChange(serialNum, knob, cmd);
-                }
-            }
-            case "obs_dial" -> {
-                if ("mix".equals(data[1])) {
-                    var cmd = "obs setsourcevolume \"" + data[2] + "\" " + v;
-                    CommandHandler.pushVolumeChange(serialNum, knob, cmd);
-                }
-            }
+            case "focus_volume" -> cmds.add(new CommandVolumeFocus(serialNum, knob, v));
+            case "device_volume" -> cmds.add(new CommandVolumeDevice(serialNum, knob, data[1], v));
+            case "obs_dial" -> cmds.add(new CommandObsSetSource(serialNum, knob, data[2], v));
             case "voicemeeter_dial" -> {
                 if (!Voicemeeter.login())
                     return;
                 if ("basic".equals(data[1])) {
-                    Voicemeeter.controlLevel(Voicemeeter.ControlType.valueOf(data[2]), Util.toInt(data[3], 1), Voicemeeter.DialType.valueOf(data[4]), v);
+                    cmds.add(new CommandVoiceMeeterBasic(serialNum, knob, Voicemeeter.ControlType.valueOf(data[2]), Util.toInt(data[3], 1), Voicemeeter.DialType.valueOf(data[4]), v));
                 } else if ("advanced".equals(data[1])) {
                     var dt = Voicemeeter.DialControlMode.valueOf(data[3]);
-                    Voicemeeter.controlLevel(data[2], dt, v);
+                    cmds.add(new CommandVoiceMeeterAdvanced(serialNum, knob, data[2], dt, v));
                 }
             }
         }
+        CommandDispatcher.pushVolumeChange(serialNum, knob, cmds);
     }
 
     private static void doClickAction(String serialNum, int knob) throws IOException {
@@ -158,11 +146,9 @@ public final class InputInterpreter {
             case "mute_device" -> rt.exec("sndctrl mutedevice \"" + data[1] + "\" " + data[2]);
             case "obs_button" -> {
                 if ("set_scene".equals(data[1])) {
-                    var cmd = "obs setscene \"" + data[2] + "\"";
-                    CommandHandler.pushVolumeChange(serialNum, knob, cmd);
+                    CommandDispatcher.pushVolumeChange(serialNum, knob, new CommandObsSetScene(serialNum, knob, data[2]));
                 } else if ("mute_source".equals(data[1])) {
-                    var cmd = "obs mutesource \"" + data[2] + "\" " + data[3];
-                    CommandHandler.pushVolumeChange(serialNum, knob, cmd);
+                    CommandDispatcher.pushVolumeChange(serialNum, knob, new CommandObsMuteSource(serialNum, knob, data[2], CommandObsMuteSource.MuteType.valueOf(data[3])));
                 }
             }
             case "voicemeeter_button" -> {

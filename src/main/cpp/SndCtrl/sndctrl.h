@@ -23,6 +23,12 @@ public:
     virtual void SetDefaultDevice(wstring id, EDataFlow dataFlow, ERole role);
     virtual void DeviceAdded(CComPtr<IMMDevice> pDevice);
     virtual void DeviceRemoved(wstring pDevice);
+
+    // Called from Java
+    void SetDeviceVolume(wstring deviceId, float volume);
+    void SetProcessVolume(wstring deviceId, int pid, float volume);
+    void SetFocusVolume(float volume);
+
 private:
     void InitDevices();
 

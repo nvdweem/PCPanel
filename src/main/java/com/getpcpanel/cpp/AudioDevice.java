@@ -17,9 +17,13 @@ import lombok.extern.slf4j.Slf4j;
 @Setter(AccessLevel.PACKAGE)
 @SuppressWarnings("unused") // Methods called from JNI
 public class AudioDevice {
-    public static final int eRender = 0;
-    public static final int eCapture = 1;
-    public static final int eAll = 2;
+    public static final int dfRender = 0;
+    public static final int dfCapture = 1;
+    public static final int dfAll = 2;
+
+    public static final int roleConsole = 0;
+    public static final int roleMultimedia = 1;
+    public static final int roleCommunications = 2;
 
     private final String name;
     private final String id;
@@ -33,13 +37,13 @@ public class AudioDevice {
         return Collections.unmodifiableMap(sessions);
     }
 
-    private void setState(float volume, boolean muted, int dataflow) {
-        volume(volume).muted(muted).dataflow(dataflow);
+    private void setState(float volume, boolean muted) {
+        volume(volume).muted(muted);
         log.debug("State changed: {}", this);
     }
 
     private AudioSession addSession(int pid, String name, String title, String icon, float volume, boolean muted) {
-        var result = new AudioSession(pid, new File(name), title, icon, volume, muted);
+        var result = new AudioSession(this, pid, new File(name), title, icon, volume, muted);
         if (StringUtils.isBlank(result.title())) {
             log.debug("Not adding {}, no title known", result);
         } else {

@@ -157,7 +157,7 @@
   <ItemGroup>
     <ClInclude Include="AudioDevice.h" />
     <ClInclude Include="AudioSession.h" />
-    <ClInclude Include="com_getpcpanel_cpp_SndCtrl.h" />
+    <ClInclude Include="com_getpcpanel_cpp_SndCtrlNative.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="helpers.h" />
     <ClInclude Include="JniCaller.h" />
@@ -168,7 +168,7 @@
   <ItemGroup>
     <ClCompile Include="AudioDevice.cpp" />
     <ClCompile Include="AudioSession.cpp" />
-    <ClCompile Include="com_getpcpanel_cpp_SndCtrl.cpp" />
+    <ClCompile Include="com_getpcpanel_cpp_SndCtrlNative.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="JniCaller.cpp" />
     <ClCompile Include="Listeners.cpp" />
