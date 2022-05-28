@@ -1,7 +1,9 @@
 package com.getpcpanel;
 
+import java.io.File;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.getpcpanel.device.Device;
@@ -37,6 +39,14 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class Main extends Application {
+    public static final File FILES_ROOT = new File(System.getProperty("user.home"), ".pcpanel");
+
+    static {
+        if (!FILES_ROOT.exists() && !FILES_ROOT.mkdirs()) {
+            log.error("Unable to create file root: {}", FILES_ROOT);
+        }
+    }
+
     @FXML private Pane deviceHolder;
     @FXML private Pane titleHolder;
     @FXML private Pane hintHolder;
@@ -81,9 +91,12 @@ public class Main extends Application {
     }
 
     public static void main(String[] args) {
-        if (args.length > 0 && "quiet".equals(args[0]))
-            quiet = true;
-        FileChecker.createAndStart();
+        var argSet = Set.of(args);
+        quiet = argSet.contains("quiet");
+
+        if (!argSet.contains("skipfilecheck")) {
+            FileChecker.createAndStart();
+        }
         TrayWork.tray();
         launch(args);
     }

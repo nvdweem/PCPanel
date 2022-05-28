@@ -1,5 +1,7 @@
 package com.getpcpanel.util;
 
+import static com.getpcpanel.Main.FILES_ROOT;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -16,8 +18,8 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class FileChecker extends Thread {
-    private static final File REOPEN_FILE = new File("reopen.txt");
-    private static final File LOCK_FILE = new File("lock.txt");
+    private static final File REOPEN_FILE = new File(FILES_ROOT, "reopen.txt");
+    private static final File LOCK_FILE = new File(FILES_ROOT, "lock.txt");
     private static final AtomicBoolean started = new AtomicBoolean(false);
     @SuppressWarnings("FieldCanBeLocal") // If this field is local then the lock will be released.
     private RandomAccessFile randomFile;
@@ -87,7 +89,7 @@ public class FileChecker extends Thread {
             log.error("Unable to start watch service", e);
             return;
         }
-        var folder = new File("").toPath();
+        var folder = REOPEN_FILE.getParentFile().toPath();
         WatchKey watchkey = null;
         try {
             watchkey = folder.register(watcher, StandardWatchEventKinds.ENTRY_CREATE);
@@ -103,9 +105,10 @@ public class FileChecker extends Thread {
                 for (var event : watchkey.pollEvents()) {
                     var file = (Path) event.context();
                     if (file.toString().equals(REOPEN_FILE.getName())) {
-                        if (!file.toFile().delete()) {
+                        if (!REOPEN_FILE.delete()) {
                             log.trace("Unable to delete {}", file);
                         }
+                        log.debug("Showing window because another process was started");
                         Main.reopen();
                     }
                 }

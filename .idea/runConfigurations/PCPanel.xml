@@ -4,6 +4,7 @@
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
     <option name="MAIN_CLASS_NAME" value="com.getpcpanel.Main" />
     <module name="pcpanel" />
+    <option name="PROGRAM_PARAMETERS" value="skipfilecheck" />
     <option name="VM_PARAMETERS" value="--module-path=&quot;${JAVAFX_HOME}\lib&quot; --add-modules=javafx.controls,javafx.fxml,javafx.web --add-exports javafx.web/com.sun.javafx.webkit=ALL-UNNAMED --add-exports javafx.web/com.sun.webkit=ALL-UNNAMED --add-exports javafx.controls/com.sun.javafx.scene.control.skin.resources=ALL-UNNAMED --add-exports javafx.base/com.sun.javafx.event=ALL-UNNAMED" />
     <extension name="coverage">
       <pattern>
