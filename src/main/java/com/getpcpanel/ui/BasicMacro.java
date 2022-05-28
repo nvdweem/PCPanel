@@ -47,7 +47,6 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.Pane;
-import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import lombok.extern.log4j.Log4j2;
@@ -381,14 +380,7 @@ public class BasicMacro extends Application implements Initializable {
 
     @FXML
     private void scFile(ActionEvent event) {
-        var stage = (Stage) scFileButton.getScene().getWindow();
-        var fileChooser = new FileChooser();
-        fileChooser.setTitle("Open File");
-        var f = fileChooser.showOpenDialog(stage);
-        if (f == null)
-            return;
-        shortcutField.setText(f.getPath());
-        log.debug(f.getPath());
+        UIHelper.showFilePicker("Pick file", shortcutField);
     }
 
     @FXML
@@ -615,18 +607,16 @@ public class BasicMacro extends Application implements Initializable {
             switch (buttonType) {
                 case "keystroke" -> keystrokeField.setText(buttonData[1]);
                 case "shortcut" -> shortcutField.setText(buttonData[1]);
-                case "media" -> {
-                    CommandMedia.VolumeButton.tryValueOf(buttonData[1]).ifPresent(v -> {
-                        var idx = switch (v) {
-                            case playPause -> 0;
-                            case stop -> 1;
-                            case prev -> 2;
-                            case next -> 3;
-                            case mute -> 4;
-                        };
-                        mediagroup.getToggles().get(idx).setSelected(true);
-                    });
-                }
+                case "media" -> CommandMedia.VolumeButton.tryValueOf(buttonData[1]).ifPresent(v -> {
+                    var idx = switch (v) {
+                        case playPause -> 0;
+                        case stop -> 1;
+                        case prev -> 2;
+                        case next -> 3;
+                        case mute -> 4;
+                    };
+                    mediagroup.getToggles().get(idx).setSelected(true);
+                });
                 case "end_program" -> {
                     if ("specific".equals(buttonData[1])) {
                         rdioEndSpecificProgram.setSelected(true);

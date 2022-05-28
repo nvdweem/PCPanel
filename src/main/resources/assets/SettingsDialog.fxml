@@ -48,11 +48,11 @@
                 </padding>
                 <CheckBox fx:id="vmEnable" mnemonicParsing="false" onAction="#onVMEnablePressed" text="Voicemeeter Enable"/>
                 <VBox fx:id="vmControls">
-                    <HBox alignment="CENTER_LEFT" spacing="10.0" visible="false">
+                    <HBox alignment="CENTER_LEFT" spacing="10.0">
                         <Label text="Voicemeeter Installation Path:"/>
                         <TextField fx:id="vmPath" prefHeight="31.0" prefWidth="167.0" promptText="C:\Program Files (x86)\VB\Voicemeeter"
                                    text="C:\Program Files (x86)\VB\Voicemeeter" HBox.hgrow="ALWAYS"/>
-                        <Button mnemonicParsing="false" text="..."/>
+                        <Button mnemonicParsing="false" text="..." onAction="#onVoiceMeeterBrowse"/>
                     </HBox>
                 </VBox>
             </VBox>

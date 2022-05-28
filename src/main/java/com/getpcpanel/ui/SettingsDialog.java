@@ -57,7 +57,7 @@ public class SettingsDialog extends Application implements Initializable {
         }
         var scene = new Scene(pane);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/assets/dark_theme.css"), "Unable to find dark_theme.css").toExternalForm());
-        stage.getIcons().add(new Image(getClass().getResource("/assets/256x256.png").toExternalForm()));
+        stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/assets/256x256.png")).toExternalForm()));
         stage.setScene(scene);
         stage.setResizable(false);
         stage.sizeToScene();
@@ -86,6 +86,11 @@ public class SettingsDialog extends Application implements Initializable {
             obsTestResult.setText("result: success");
         }
         controller.disconnect();
+    }
+
+    @FXML
+    private void onVoiceMeeterBrowse(ActionEvent event) {
+        UIHelper.showFolderPicker("Pick VoiceMeeter directory", vmPath);
     }
 
     @FXML
