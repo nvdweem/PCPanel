@@ -56,8 +56,8 @@ public class OBSCommunicator {
             var preResponse = Json.read(msg, JsonObject.class).get("message-id");
             if (preResponse != null) {
                 var type = messageTypes.remove(preResponse.getAsString());
-                var responseBase = Json.read(msg, type.getResponse());
-                processIncomingResponse(responseBase, type.getResponse());
+                var responseBase = Json.read(msg, type.response());
+                processIncomingResponse(responseBase, type.response());
             }
         } catch (Throwable t) {
             log.error("Failed to process message from websocket.", t);
