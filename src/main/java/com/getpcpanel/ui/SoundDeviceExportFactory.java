@@ -1,6 +1,6 @@
 package com.getpcpanel.ui;
 
-import com.getpcpanel.util.SoundDevice;
+import com.getpcpanel.cpp.AudioDevice;
 
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -10,18 +10,18 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 import javafx.util.Callback;
 
-public class SoundDeviceExportFactory implements Callback<ListView<SoundDevice>, ListCell<SoundDevice>> {
+public class SoundDeviceExportFactory implements Callback<ListView<AudioDevice>, ListCell<AudioDevice>> {
     private static final DataFormat JAVA_FORMAT = SoundDeviceImportFactory.JAVA_FORMAT;
 
-    public SoundDeviceExportFactory(ListView<SoundDevice> listView) {
+    public SoundDeviceExportFactory(ListView<AudioDevice> listView) {
         setupListView(listView);
     }
 
     @Override
-    public ListCell<SoundDevice> call(ListView<SoundDevice> listView) {
-        ListCell<SoundDevice> cell = new ListCell<>() {
+    public ListCell<AudioDevice> call(ListView<AudioDevice> listView) {
+        ListCell<AudioDevice> cell = new ListCell<>() {
             @Override
-            protected void updateItem(SoundDevice item, boolean empty) {
+            protected void updateItem(AudioDevice item, boolean empty) {
                 super.updateItem(item, empty);
                 if (item == null) {
                     setText("");
@@ -34,7 +34,7 @@ public class SoundDeviceExportFactory implements Callback<ListView<SoundDevice>,
         return cell;
     }
 
-    private void dragDetected(MouseEvent event, ListCell<SoundDevice> treeCell) {
+    private void dragDetected(MouseEvent event, ListCell<AudioDevice> treeCell) {
         var draggedItem = treeCell.getItem();
         var db = treeCell.startDragAndDrop(TransferMode.MOVE);
         var content = new ClipboardContent();
@@ -44,11 +44,11 @@ public class SoundDeviceExportFactory implements Callback<ListView<SoundDevice>,
         event.consume();
     }
 
-    private static void setupListView(ListView<SoundDevice> listView) {
+    private static void setupListView(ListView<AudioDevice> listView) {
         listView.setOnDragOver(event -> {
             if (!event.getDragboard().hasContent(JAVA_FORMAT))
                 return;
-            var dropContent = (SoundDevice) event.getDragboard().getContent(JAVA_FORMAT);
+            var dropContent = (AudioDevice) event.getDragboard().getContent(JAVA_FORMAT);
             if (listView.getItems().contains(dropContent))
                 return;
             event.acceptTransferModes(TransferMode.MOVE);
@@ -59,7 +59,7 @@ public class SoundDeviceExportFactory implements Callback<ListView<SoundDevice>,
             if (!db.hasContent(JAVA_FORMAT))
                 return;
             var index = 0;
-            listView.getItems().add(index, (SoundDevice) db.getContent(JAVA_FORMAT));
+            listView.getItems().add(index, (AudioDevice) db.getContent(JAVA_FORMAT));
             event.setDropCompleted(success);
         });
     }

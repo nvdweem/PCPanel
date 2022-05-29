@@ -2,22 +2,23 @@ package com.getpcpanel.ui;
 
 import java.net.URL;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 
 import com.getpcpanel.commands.command.CommandMedia;
+import com.getpcpanel.cpp.AudioDevice;
+import com.getpcpanel.cpp.SndCtrl;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.obs.OBS;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.KnobSetting;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.Save;
-import com.getpcpanel.util.SoundAudit;
-import com.getpcpanel.util.SoundDevice;
 import com.getpcpanel.util.Util;
 import com.getpcpanel.voicemeeter.Voicemeeter;
 import com.getpcpanel.voicemeeter.Voicemeeter.ButtonControlMode;
@@ -65,14 +66,14 @@ public class BasicMacro extends Application implements Initializable {
     @FXML private RadioButton rdioEndFocusedProgram;
     @FXML private RadioButton rdioEndSpecificProgram;
     @FXML private Button findAppEndProcess;
-    @FXML private ChoiceBox<SoundDevice> sounddevices;
-    @FXML private ListView<SoundDevice> soundDeviceSource;
-    @FXML private ListView<SoundDevice> soundDevices2;
+    @FXML private ChoiceBox<AudioDevice> sounddevices;
+    @FXML private ListView<AudioDevice> soundDeviceSource;
+    @FXML private ListView<AudioDevice> soundDevices2;
     @FXML private TextField muteAppProcessField;
     @FXML private RadioButton rdio_mute_toggle;
     @FXML private RadioButton rdio_mute_mute;
     @FXML private RadioButton rdio_mute_unmute;
-    @FXML private ChoiceBox<SoundDevice> muteSoundDevice;
+    @FXML private ChoiceBox<AudioDevice> muteSoundDevice;
     @FXML private RadioButton rdio_muteDevice_toggle;
     @FXML private RadioButton rdio_muteDevice_mute;
     @FXML private RadioButton rdio_muteDevice_unmute;
@@ -99,10 +100,10 @@ public class BasicMacro extends Application implements Initializable {
     @FXML private RadioButton rdio_app_output_specific;
     @FXML private RadioButton rdio_app_output_default;
     @FXML private RadioButton rdio_app_output_all;
-    @FXML private ChoiceBox<SoundDevice> app_vol_output_device;
+    @FXML private ChoiceBox<AudioDevice> app_vol_output_device;
     @FXML private RadioButton rdio_device_default;
     @FXML private RadioButton rdio_device_specific;
-    @FXML private ChoiceBox<SoundDevice> volumedevice;
+    @FXML private ChoiceBox<AudioDevice> volumedevice;
     @FXML private ChoiceBox<String> obsAudioSources;
     @FXML private TabPane voicemeeterTabPaneDial;
     @FXML private ChoiceBox<ControlType> voicemeeterBasicButtonIO;
@@ -119,7 +120,7 @@ public class BasicMacro extends Application implements Initializable {
     private final String[] volData;
     private final int dialNum;
     private final KnobSetting knobSetting;
-    private List<SoundDevice> allSoundDevices;
+    private Collection<AudioDevice> allSoundDevices;
     private boolean k_alt;
     private boolean k_shift;
     private boolean k_win;
@@ -247,10 +248,10 @@ public class BasicMacro extends Application implements Initializable {
             }
         } else if ("sound_device".equals(buttonType)) {
             buttonData = new String[2];
-            buttonData[1] = sounddevices.getValue() == null ? null : sounddevices.getValue().getId();
+            buttonData[1] = sounddevices.getValue() == null ? null : sounddevices.getValue().id();
         } else if ("toggle_device".equals(buttonType)) {
             buttonData = new String[3];
-            buttonData[1] = Util.listToPipeDelimitedString(soundDevices2.getItems().stream().map(SoundDevice::getId).collect(Collectors.toList()));
+            buttonData[1] = Util.listToPipeDelimitedString(soundDevices2.getItems().stream().map(AudioDevice::id).collect(Collectors.toList()));
         } else if ("mute_app".equals(buttonType)) {
             buttonData = new String[3];
             buttonData[1] = muteAppProcessField.getText();
@@ -266,7 +267,7 @@ public class BasicMacro extends Application implements Initializable {
             if (rdio_muteDevice_Default.isSelected() || muteSoundDevice.getValue() == null) {
                 buttonData[1] = "default";
             } else {
-                buttonData[1] = muteSoundDevice.getValue().getId();
+                buttonData[1] = muteSoundDevice.getValue().id();
             }
             if (rdio_muteDevice_unmute.isSelected()) {
                 buttonData[2] = "unmute";
@@ -320,14 +321,14 @@ public class BasicMacro extends Application implements Initializable {
             if (rdio_app_output_all.isSelected()) {
                 volData[3] = "*";
             } else if (rdio_app_output_specific.isSelected()) {
-                volData[3] = app_vol_output_device.getSelectionModel().getSelectedItem().getId();
+                volData[3] = app_vol_output_device.getSelectionModel().getSelectedItem().id();
             } else if (rdio_app_output_default.isSelected()) {
                 volData[3] = "";
             }
         } else if (!"focus_volume".equals(dialType)) {
             if ("device_volume".equals(dialType)) {
                 if (rdio_device_specific.isSelected() && volumedevice.getSelectionModel().getSelectedItem() != null) {
-                    volData[1] = volumedevice.getSelectionModel().getSelectedItem().getId();
+                    volData[1] = volumedevice.getSelectionModel().getSelectedItem().id();
                 } else {
                     volData[1] = "";
                 }
@@ -352,9 +353,9 @@ public class BasicMacro extends Application implements Initializable {
                 }
             }
         }
-        knobSetting.setMinTrim(Util.toInt(trimMin.getText(), 0));
-        knobSetting.setMaxTrim(Util.toInt(trimMax.getText(), 100));
-        knobSetting.setButtonDebounce(Util.toInt(buttonDebounceTime.getText(), 50));
+        knobSetting.setMinTrim(NumberUtils.toInt(trimMin.getText(), 0));
+        knobSetting.setMaxTrim(NumberUtils.toInt(trimMax.getText(), 100));
+        knobSetting.setButtonDebounce(NumberUtils.toInt(buttonDebounceTime.getText(), 50));
         knobSetting.setLogarithmic(logarithmic.isSelected());
         buttonData[0] = buttonType;
         volData[0] = dialType;
@@ -479,7 +480,7 @@ public class BasicMacro extends Application implements Initializable {
             if (volData[0] != null && "voicemeeter_dial".equals(volData[0])) {
                 if (volData[1] != null && "basic".equals(volData[1])) {
                     voicemeeterBasicDialIO.getItems().add(ControlType.valueOf(volData[2]));
-                    voicemeeterBasicDialIndex.getItems().add(Util.toInt(volData[3], 0) + 1);
+                    voicemeeterBasicDialIndex.getItems().add(NumberUtils.toInt(volData[3], 0) + 1);
                     voicemeeterBasicDial.getItems().add(DialType.valueOf(volData[4]));
                 }
             } else {
@@ -488,7 +489,7 @@ public class BasicMacro extends Application implements Initializable {
             if (buttonData != null && buttonData.length > 0 && buttonData[0] != null && "voicemeeter_button".equals(buttonData[0])) {
                 if (buttonData[1] != null && "basic".equals(buttonData[1])) {
                     voicemeeterBasicButtonIO.getItems().add(ControlType.valueOf(buttonData[2]));
-                    voicemeeterBasicButtonIndex.getItems().add(Util.toInt(buttonData[3], 0) + 1);
+                    voicemeeterBasicButtonIndex.getItems().add(NumberUtils.toInt(buttonData[3], 0) + 1);
                     voicemeeterBasicButton.getItems().add(ButtonType.valueOf(buttonData[4]));
                 }
             } else {
@@ -497,18 +498,18 @@ public class BasicMacro extends Application implements Initializable {
         }
         var curProfile = deviceSave.getCurrentProfileName();
         profileDropdown.getItems().addAll(deviceSave.getProfiles().stream().filter(c -> !c.getName().equals(curProfile)).toList());
-        allSoundDevices = SoundAudit.getDevices();
-        var outputDevices = allSoundDevices.stream().filter(SoundDevice::isOutput).toList();
+        allSoundDevices = SndCtrl.getDevices();
+        var outputDevices = allSoundDevices.stream().filter(AudioDevice::isOutput).toList();
         volumedevice.getItems().addAll(allSoundDevices);
         muteSoundDevice.getItems().addAll(allSoundDevices);
         sounddevices.getItems().addAll(allSoundDevices);
         soundDeviceSource.getItems().addAll(allSoundDevices);
         soundDeviceSource.setCellFactory(new SoundDeviceExportFactory(soundDeviceSource));
-        soundDevices2.getItems().addListener((ListChangeListener<SoundDevice>) change -> {
+        soundDevices2.getItems().addListener((ListChangeListener<AudioDevice>) change -> {
             if (soundDeviceSource.getItems().stream().anyMatch(c -> soundDevices2.getItems().contains(c)))
                 soundDeviceSource.getItems().removeAll(soundDevices2.getItems());
         });
-        soundDeviceSource.getItems().addListener((ListChangeListener<SoundDevice>) change -> {
+        soundDeviceSource.getItems().addListener((ListChangeListener<AudioDevice>) change -> {
             if (soundDevices2.getItems().stream().anyMatch(c -> soundDeviceSource.getItems().contains(c)))
                 soundDevices2.getItems().removeAll(soundDeviceSource.getItems());
         });
@@ -594,8 +595,8 @@ public class BasicMacro extends Application implements Initializable {
         }
     }
 
-    private SoundDevice getSoundDeviceById(String id) {
-        return allSoundDevices.stream().filter(sd -> sd.getId().equals(id)).findFirst().orElse(null);
+    private AudioDevice getSoundDeviceById(String id) {
+        return allSoundDevices.stream().filter(sd -> sd.id().equals(id)).findFirst().orElse(null);
     }
 
     private void initFields() {
@@ -678,7 +679,7 @@ public class BasicMacro extends Application implements Initializable {
                     if ("basic".equals(buttonData[1])) {
                         voicemeeterTabPaneButton.getSelectionModel().select(0);
                         voicemeeterBasicButtonIO.setValue(ControlType.valueOf(buttonData[2]));
-                        voicemeeterBasicButtonIndex.setValue(Util.toInt(buttonData[3], 0) + 1);
+                        voicemeeterBasicButtonIndex.setValue(NumberUtils.toInt(buttonData[3], 0) + 1);
                         voicemeeterBasicButton.setValue(ButtonType.valueOf(buttonData[4]));
                     } else if ("advanced".equals(buttonData[1])) {
                         voicemeeterTabPaneButton.getSelectionModel().select(1);
@@ -694,9 +695,9 @@ public class BasicMacro extends Application implements Initializable {
         if ("app_volume".equals(dialType)) {
             volumeProcessField1.setText(volData[1]);
             volumeProcessField2.setText(volData[2]);
-            if (!Util.isNullOrEmpty(volData[3]) && "*".equals(volData[3])) {
+            if (!StringUtils.isBlank(volData[3]) && "*".equals(volData[3])) {
                 rdio_app_output_all.setSelected(true);
-            } else if (!Util.isNullOrEmpty(volData[3]) && !volData[3].endsWith(".exe")) {
+            } else if (!StringUtils.isBlank(volData[3]) && !volData[3].endsWith(".exe")) {
                 rdio_app_output_specific.setSelected(true);
                 app_vol_output_device.setValue(getSoundDeviceById(volData[3]));
             } else {
@@ -704,7 +705,7 @@ public class BasicMacro extends Application implements Initializable {
             }
         } else if (!"focus_volume".equals(dialType)) {
             if ("device_volume".equals(dialType)) {
-                if (volData.length >= 2 && !Util.isNullOrEmpty(volData[1])) {
+                if (volData.length >= 2 && !StringUtils.isBlank(volData[1])) {
                     rdio_device_specific.setSelected(true);
                     volumedevice.setValue(getSoundDeviceById(volData[1]));
                 } else {
@@ -717,7 +718,7 @@ public class BasicMacro extends Application implements Initializable {
                 if ("basic".equals(volData[1])) {
                     voicemeeterTabPaneDial.getSelectionModel().select(0);
                     voicemeeterBasicDialIO.setValue(ControlType.valueOf(volData[2]));
-                    voicemeeterBasicDialIndex.setValue(Util.toInt(volData[3], 0) + 1);
+                    voicemeeterBasicDialIndex.setValue(NumberUtils.toInt(volData[3], 0) + 1);
                     voicemeeterBasicDial.setValue(DialType.valueOf(volData[4]));
                 } else if ("advanced".equals(volData[1])) {
                     voicemeeterTabPaneDial.getSelectionModel().select(1);

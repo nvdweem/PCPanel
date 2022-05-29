@@ -1,6 +1,7 @@
 package com.getpcpanel.cpp;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,22 +17,19 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Setter(AccessLevel.PACKAGE)
 @SuppressWarnings("unused") // Methods called from JNI
-public class AudioDevice {
-    public static final int dfRender = 0;
-    public static final int dfCapture = 1;
-    public static final int dfAll = 2;
-
-    public static final int roleConsole = 0;
-    public static final int roleMultimedia = 1;
-    public static final int roleCommunications = 2;
-
+public class AudioDevice implements Serializable {
     private final String name;
     private final String id;
     private float volume;
     private boolean muted;
-    private int dataflow;
+    private DataFlow dataflow;
 
-    private Map<Integer, AudioSession> sessions = new HashMap<>();
+    private transient Map<Integer, AudioSession> sessions = new HashMap<>();
+
+    public AudioDevice(String name, String id) {
+        this.name = name;
+        this.id = id;
+    }
 
     public Map<Integer, AudioSession> getSessions() {
         return Collections.unmodifiableMap(sessions);
@@ -56,5 +54,13 @@ public class AudioDevice {
     private void removeSession(int pid) {
         var sess = sessions.remove(pid);
         log.trace("Session removed: {} ({})", pid, sess == null ? "not found" : sess);
+    }
+
+    public boolean isOutput() {
+        return dataflow.output();
+    }
+
+    public String toString() {
+        return name;
     }
 }

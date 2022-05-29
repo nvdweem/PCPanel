@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 
 import com.getpcpanel.Main;
 import com.getpcpanel.commands.CommandDispatcher;
@@ -79,7 +80,7 @@ public final class InputInterpreter {
                 if (!Voicemeeter.login())
                     return;
                 if ("basic".equals(data[1])) {
-                    cmds.add(new CommandVoiceMeeterBasic(serialNum, knob, Voicemeeter.ControlType.valueOf(data[2]), Util.toInt(data[3], 1), Voicemeeter.DialType.valueOf(data[4]), v));
+                    cmds.add(new CommandVoiceMeeterBasic(serialNum, knob, Voicemeeter.ControlType.valueOf(data[2]), NumberUtils.toInt(data[3], 1), Voicemeeter.DialType.valueOf(data[4]), v));
                 } else if ("advanced".equals(data[1])) {
                     var dt = Voicemeeter.DialControlMode.valueOf(data[3]);
                     cmds.add(new CommandVoiceMeeterAdvanced(serialNum, knob, data[2], dt, v));
@@ -95,7 +96,7 @@ public final class InputInterpreter {
             return;
         switch (data[0]) {
             case "keystroke" -> {
-                if (Util.isNullOrEmpty(data[1]))
+                if (StringUtils.isBlank(data[1]))
                     return;
                 KeyMacro.executeKeyStroke(data[1]);
             }
@@ -134,7 +135,7 @@ public final class InputInterpreter {
                 if (!Voicemeeter.login())
                     return;
                 if ("basic".equals(data[1])) {
-                    Voicemeeter.controlButton(Voicemeeter.ControlType.valueOf(data[2]), Util.toInt(data[3], 1), Voicemeeter.ButtonType.valueOf(data[4]));
+                    Voicemeeter.controlButton(Voicemeeter.ControlType.valueOf(data[2]), NumberUtils.toInt(data[3], 1), Voicemeeter.ButtonType.valueOf(data[4]));
                 } else if ("advanced".equals(data[1])) {
                     var bt = Voicemeeter.ButtonControlMode.valueOf(data[3]);
                     Voicemeeter.controlButton(data[2], bt);

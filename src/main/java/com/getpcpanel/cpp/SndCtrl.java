@@ -62,7 +62,7 @@ public enum SndCtrl {
 
     public static void setDefaultDevice(String deviceId) {
         log.trace("Set default device to {}", deviceId);
-        SndCtrlNative.instance.setDefaultDevice(deviceId, AudioDevice.dfAll, AudioDevice.roleMultimedia);
+        SndCtrlNative.instance.setDefaultDevice(deviceId, DataFlow.dfAll.ordinal(), Role.roleMultimedia.ordinal());
     }
 
     public static void setProcessVolume(String fileName, String device, float volume) {
@@ -108,11 +108,11 @@ public enum SndCtrl {
         if (StringUtils.isNotBlank(deviceId) && !StringUtils.equals("default", deviceId)) {
             return deviceId;
         }
-        return instance.defaults.get(new DefaultFor(AudioDevice.dfRender, AudioDevice.roleMultimedia));
+        return instance.defaults.get(new DefaultFor(DataFlow.dfRender.ordinal(), Role.roleMultimedia.ordinal()));
     }
 
     private AudioDevice deviceAdded(String name, String id, float volume, boolean muted, int dataFlow) {
-        var result = new AudioDevice(name, id).volume(volume).muted(muted).dataflow(dataFlow);
+        var result = new AudioDevice(name, id).volume(volume).muted(muted).dataflow(DataFlow.from(dataFlow));
         devices.put(id, result);
         log.trace("Device added: {}", result);
 

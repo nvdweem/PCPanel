@@ -11,6 +11,7 @@
 - Terminate process dialog shows all processes, not only the ones with sound
 - Removed javafx.web dependency to make the bundle smaller
 - Sleep detection is now done without sndctrl.exe, turns off the lights for all devices and works on lock/unlock too
+- List of devices is also done without sndctrl.exe, sndctrl.exe is no longer needed
 
 ## [1.0]
 

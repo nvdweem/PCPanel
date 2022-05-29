@@ -4,11 +4,14 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -22,17 +25,14 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public final class Util {
-    public static final File sndCtrlExecutable = extractAndDeleteOnExit("sndctrl.exe");
+    private static final Set<String> executables = Set.of("bat", "bin", "cmd", "com", "cpl", "exe", "gadget", "inf1", "ins", "inx", "isu", "job", "jse", "lnk", "msc", "msi", "msp", "mst", "paf",
+            "pif", "ps1", "reg", "rgs", "scr", "sct", "shb", "shs", "u3p", "vb", "vbe", "vbs", "vbscript", "ws", "wsf", "wsh");
 
     private Util() {
     }
 
     public static String listToPipeDelimitedString(Collection<String> elements) {
         return String.join("|", elements);
-    }
-
-    public static boolean isNullOrEmpty(String str) {
-        return !(str != null && str.length() != 0);
     }
 
     public static void adjustTabs(TabPane tabPane, int width, int height) {
@@ -65,14 +65,6 @@ public final class Util {
         return null;
     }
 
-    public static int toInt(String str, int defaultVal) {
-        try {
-            return Integer.parseInt(str);
-        } catch (Exception e) {
-            return defaultVal;
-        }
-    }
-
     public static List<Integer> numToList(int num) {
         return IntStream.rangeClosed(1, num).boxed().collect(Collectors.toList());
     }
@@ -98,38 +90,8 @@ public final class Util {
         cb.getItems().clear();
     }
 
-    public static boolean matches(String str, String comp) {
-        if (str.length() == 0)
-            return false;
-        var curStr = Character.MIN_VALUE;
-        var strIndex = 0;
-        var skipPart = false;
-        for (var i = 0; i < comp.length(); i++) {
-            if (!skipPart)
-                curStr = str.charAt(strIndex);
-            var curComp = comp.charAt(i);
-            if (!skipPart || curComp == '|')
-                if (curComp == '|') {
-                    skipPart = false;
-                    strIndex = 0;
-                } else if (curComp == curStr) {
-                    if (strIndex + 1 == str.length()) {
-                        if (i + 1 == comp.length() || comp.charAt(i + 1) == '|')
-                            return true;
-                        skipPart = true;
-                    } else {
-                        strIndex++;
-                    }
-                } else {
-                    skipPart = true;
-                }
-        }
-        return false;
-    }
-
     public static boolean isFileExecutable(File file) {
-        var ext = FilenameUtils.getExtension(file.getName());
-        return matches(ext, "bat|bin|cmd|com|cpl|exe|gadget|inf1|ins|inx|isu|job|jse|lnk|msc|msi|msp|mst|paf|pif|ps1|reg|rgs|scr|sct|shb|shs|u3p|vb|vbe|vbs|vbscript|ws|wsf|wsh");
+        return executables.contains(StringUtils.lowerCase(FilenameUtils.getExtension(file.getName())));
     }
 
     public static int map(int x, int in_min, int in_max, int out_min, int out_max) {
@@ -138,21 +100,6 @@ public final class Util {
 
     public static double map(double x, double in_min, double in_max, double out_min, double out_max) {
         return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-    }
-
-    public static void main(String[] args) {
-        for (var i = 0; i <= 100; i++) {
-            var tech = percentToBytePreserve(i);
-            var back = map(tech, 0, 255, 0, 100);
-            log.info("{}\t{}\t{}", i, tech, back);
-            if (i != back)
-                log.error("ERROR: {}\t{}\t{}", i, tech, back);
-        }
-    }
-
-    public static int percentToBytePreserve(int percent) {
-        var ret = map(percent, 0, 100, 0, 255);
-        return (ret == 0 || ret == 255) ? ret : (ret + 1);
     }
 
     public static int analogValueToRotation(int x) {
@@ -172,7 +119,7 @@ public final class Util {
 
         try {
             var resource = Util.class.getResource("/" + file);
-            FileUtils.copyURLToFile(resource, extracted);
+            FileUtils.copyURLToFile(Objects.requireNonNull(resource), extracted);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
