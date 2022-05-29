@@ -40,11 +40,27 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class Main extends Application {
     public static final File FILES_ROOT = new File(System.getProperty("user.home"), ".pcpanel");
+    public static final String VERSION = getVersion();
+    public static final String TITLE = "PCPanel Controller %s".formatted(VERSION);
 
     static {
         if (!FILES_ROOT.exists() && !FILES_ROOT.mkdirs()) {
             log.error("Unable to create file root: {}", FILES_ROOT);
         }
+    }
+
+    public static String getVersion() {
+        try {
+            var properties = new Properties();
+            properties.load(Main.class.getResourceAsStream("/application.properties"));
+            var version = properties.getProperty("application.version");
+            if (!"${project.version}".equals(version)) {
+                return version;
+            }
+        } catch (Exception e) {
+            log.debug("Unable to read application properties");
+        }
+        return "SNAPSHOT";
     }
 
     @FXML private Pane deviceHolder;
@@ -66,21 +82,6 @@ public class Main extends Application {
     private static boolean quiet;
     public static volatile boolean saveFileExists;
     public static Map<String, Device> devices = new ConcurrentHashMap<>();
-    public static final String TITLE_FORMAT = "PCPanel Controller %s";
-    public static final String TITLE = buildTitle();
-
-    private static String buildTitle() {
-        try {
-            var properties = new Properties();
-            properties.load(Main.class.getResourceAsStream("/application.properties"));
-            var readVersion = properties.getProperty("application.version");
-            if (!"${project.version}".equals(readVersion))
-                return TITLE_FORMAT.formatted(readVersion);
-        } catch (Exception e) {
-            log.debug("Unable to determine version");
-        }
-        return TITLE_FORMAT.formatted("SNAPSHOT");
-    }
 
     public Main() {
         if (window != null) {

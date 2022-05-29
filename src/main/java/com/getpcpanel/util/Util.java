@@ -13,6 +13,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import com.getpcpanel.Main;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -111,7 +113,10 @@ public final class Util {
     }
 
     public static File extractAndDeleteOnExit(String file) {
-        var extracted = new File(System.getProperty("java.io.tmpdir"), file);
+        var name = FilenameUtils.getBaseName(file);
+        var ext = FilenameUtils.getExtension(file);
+
+        var extracted = new File(System.getProperty("java.io.tmpdir"), String.join(".", name, Main.VERSION, ext));
         if (extracted.exists() && !extracted.delete()) {
             log.info("{} already exists, not updating", extracted);
             return extracted;
