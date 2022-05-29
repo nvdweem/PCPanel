@@ -10,7 +10,7 @@
 <?import javafx.scene.shape.Rectangle?>
 <?import javafx.scene.shape.SVGPath?>
 <Pane fx:id="panelPane" prefHeight="610.0" prefWidth="480.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
-    <Pane fx:id="webview" layoutX="80.0" layoutY="40.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="300.0" prefWidth="600.0" scaleX="1.25" scaleY="1.25"
+    <Pane layoutX="80.0" layoutY="40.0" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="300.0" prefWidth="600.0" scaleX="1.25" scaleY="1.25"
           style="-fx-effect: dropshadow(three-pass-box, black, 0, 3, 0, 3);">
         <SVGPath fill="#acb4c1"
                  content="M346.27,0H50.32A30.13,30.13,0,0,0,32.85,5.57c-.24.15-.48.29-.72.45L13.66,18.18A30.27,30.27,0,0,0,0,43.48V451.93a30.31,30.31,0,0,0,30.28,30.28h296a30.13,30.13,0,0,0,17-5.24l18.47-12.17.32-.22a30.3,30.3,0,0,0,14.52-25.85V30.28A30.32,30.32,0,0,0,346.27,0Z"/>

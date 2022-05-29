@@ -1,5 +1,7 @@
 package com.getpcpanel.device;
 
+import java.util.Objects;
+
 import com.getpcpanel.hid.OutputInterpreter;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.LightingConfig;
@@ -17,6 +19,7 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.MenuItem;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
@@ -28,6 +31,8 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public abstract class Device {
+    private static final Image lightingImage = new Image(Objects.requireNonNull(PCPanelProUI.class.getResource("/assets/lighting.png")).toExternalForm());
+
     private HBox profileMenu;
     private ComboBox<Profile> profiles;
     protected String serialNumber;
@@ -190,6 +195,13 @@ public abstract class Device {
             log.error("Unable to set lighting", e);
             setLighting(LightingConfig.defaultLightingConfig(getDeviceType()), priority);
         }
+    }
+
+    protected ImageView getLightingImage() {
+        var lightingImageView = new ImageView(lightingImage);
+        lightingImageView.setFitWidth(40);
+        lightingImageView.setPreserveRatio(true);
+        return lightingImageView;
     }
 
     public abstract Pane getDevicePane();

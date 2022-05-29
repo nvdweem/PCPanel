@@ -24,7 +24,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
@@ -47,7 +46,6 @@ public class PCPanelProUI extends Device {
     private Button lightingButton;
     private final Button[] knobs = new Button[9];
     private static final Image previewImage = new Image(Objects.requireNonNull(PCPanelProUI.class.getResource("/assets/PCPanelPro/Pro_Cutout.png")).toExternalForm());
-    private static final Image lightingImage = new Image(Objects.requireNonNull(PCPanelProUI.class.getResource("/assets/lighting.png")).toExternalForm());
     private Stage childDialogStage;
     @FXML private Pane sliderHolder1;
     @FXML private Pane sliderHolder2;
@@ -123,11 +121,7 @@ public class PCPanelProUI extends Device {
     }
 
     private void initLightingButton() {
-        var lightingImageView = new ImageView(lightingImage);
-        lightingImageView.setFitWidth(40);
-        lightingImageView.setPreserveRatio(true);
-
-        lightingButton = new Button("Lighting", lightingImageView);
+        lightingButton = new Button("Lighting", getLightingImage());
         lightingButton.setStyle("-fx-background-color: transparent;");
         lightingButton.setContentDisplay(ContentDisplay.TOP);
         lightingButton.setMinHeight(100.0D);
