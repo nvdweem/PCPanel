@@ -113,7 +113,7 @@ public final class InputInterpreter {
                 try {
                     index = Integer.parseInt(data[2]);
                 } catch (Exception e) {
-                    log.debug("Unable to parse {}", data[2], e);
+                    log.trace("Unable to parse {}", data[2], e);
                 }
                 if (index >= deviceArray.length)
                     index = 0;
