@@ -1,7 +1,7 @@
 // run with command
 // cscript add-change.js
 var installer = WScript.CreateObject("WindowsInstaller.Installer");
-var database = installer.OpenDatabase("${app.name}-${app.version}.msi", 1);
+var database = installer.OpenDatabase("${app.name}-${project.version}.msi", 1);
 var sql
 var view
 
