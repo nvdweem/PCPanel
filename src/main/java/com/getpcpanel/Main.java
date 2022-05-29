@@ -15,11 +15,11 @@ import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.hid.OutputInterpreter;
 import com.getpcpanel.obs.OBSListener;
 import com.getpcpanel.profile.Save;
+import com.getpcpanel.sleepdetection.SleepDetector;
 import com.getpcpanel.ui.DeviceCell;
 import com.getpcpanel.ui.ResizeHelper;
 import com.getpcpanel.ui.SettingsDialog;
 import com.getpcpanel.util.FileChecker;
-import com.getpcpanel.util.SleepDetector;
 
 import javafx.application.Application;
 import javafx.application.Platform;

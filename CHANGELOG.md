@@ -9,6 +9,8 @@
 - File pickers start at their current selection
 - System Sounds volume can be changed
 - Terminate process dialog shows all processes, not only the ones with sound
+- Removed javafx.web dependency to make the bundle smaller
+- Sleep detection is now done without sndctrl.exe, turns off the lights for all devices and works on lock/unlock too
 
 ## [1.0]
 
