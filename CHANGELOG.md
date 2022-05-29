@@ -2,6 +2,10 @@
 
 <!-- Releasenotes without version are included in releases -->
 
+- Nothing yet...
+
+## [1.1]
+
 - Added SndCtrl.dll as a replacement for sndctrl.exe
 - Put all changing files in the user directory (settings, log-files, etc)
 - Removed dependency on MediaKeys.dll

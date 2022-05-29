@@ -12,8 +12,6 @@
 --win-upgrade-uuid ${windows.upgrade.uuid}
 --description "${project.description}"
 --copyright "(C) ${windows.vendor}"
---java-options "--add-exports javafx.web/com.sun.javafx.webkit=${module.name}"
---java-options "--add-exports javafx.web/com.sun.webkit=${module.name}"
 --java-options "--add-exports javafx.controls/com.sun.javafx.scene.control.skin.resources=${module.name}"
 --java-options "--add-exports javafx.base/com.sun.javafx.event=${module.name}"
 --about-url "https://github.com/nvdweem/PCPanel"
