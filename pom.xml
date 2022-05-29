@@ -18,7 +18,7 @@
         <app.name>PCPanel</app.name>
         <maven.build.timestamp.format>yy.ww.WWkkmm</maven.build.timestamp.format>
         <app.version>${maven.build.timestamp}</app.version>
-        <jvm.modules>javafx.controls,javafx.fxml,javafx.web,javafx.swing,java.desktop,java.management,java.logging</jvm.modules>
+        <jvm.modules>javafx.controls,javafx.fxml,javafx.swing,java.desktop,java.management,java.logging</jvm.modules>
         <windows.upgrade.uuid>9421bff0-3840-414c-8563-407fbcd1d04d</windows.upgrade.uuid>
         <windows.vendor>PCPanel</windows.vendor>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -56,11 +56,6 @@
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-fxml</artifactId>
-            <version>${javafx.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-web</artifactId>
             <version>${javafx.version}</version>
         </dependency>
 
@@ -235,8 +230,6 @@
                 <configuration>
                     <mainClass>${main-class}</mainClass>
                     <options>
-                        <option>--add-exports javafx.web/com.sun.javafx.webkit=${module.name}</option>
-                        <option>--add-exports javafx.web/com.sun.webkit=${module.name}</option>
                         <option>--add-exports javafx.controls/com.sun.javafx.scene.control.skin.resources=${module.name}</option>
                         <option>--add-exports javafx.base/com.sun.javafx.event=${module.name}</option>
                     </options>
@@ -269,7 +262,7 @@
                                 <arg>--strip-debug</arg>
                                 <arg>--no-man-pages</arg>
                                 <arg>--compress=2</arg>
-                                <arg>--add-modules=javafx.controls,javafx.fxml,javafx.web,javafx.swing</arg>
+                                <arg>--add-modules=javafx.controls,javafx.fxml,javafx.swing</arg>
                             </args>
                         </configuration>
                     </execution>
@@ -322,8 +315,6 @@
                     <source>${maven.compiler.source}</source>
                     <target>${maven.compiler.target}</target>
                     <compilerArgs>
-                        <arg>--add-exports=javafx.web/com.sun.javafx.webkit=${module.name}</arg>
-                        <arg>--add-exports=javafx.web/com.sun.webkit=${module.name}</arg>
                         <arg>--add-exports=javafx.controls/com.sun.javafx.scene.control.skin.resources=${module.name}</arg>
                         <arg>--add-exports=javafx.base/com.sun.javafx.event=${module.name}</arg>
                     </compilerArgs>
