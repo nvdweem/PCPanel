@@ -1,6 +1,7 @@
 #pragma once
 #include <unordered_map>
 #include "JniCaller.h"
+#include <thread>
 
 EDataFlow getDataFlow(IMMDevice& device);
 
@@ -18,6 +19,41 @@ struct CoRelease {
 };
 template<typename T> using co_ptr = std::unique_ptr<T, CoRelease>;
 
+template<typename T> class StoppingHandle {
+private:
+    CComPtr<T> cpListener;
+
+public:
+    StoppingHandle() : cpListener(nullptr) {}
+    StoppingHandle(CComPtr<T> cpListener) : cpListener(cpListener) {
+        Start();
+    }
+    ~StoppingHandle() {
+        Stop();
+    }
+    void Set(CComPtr<T> cpListener) {
+        Stop();
+        this->cpListener = cpListener;
+        Start();
+    }
+
+    T* operator->() { return cpListener; }
+
+private:
+    void Stop() {
+        if (cpListener != nullptr) {
+            cpListener->Stop();
+            cpListener = nullptr;
+        }
+    }
+
+    void Start() {
+        if (cpListener != nullptr) {
+            cpListener->Start();
+        }
+    }
+};
+
 class Listener {
 public:
     LONG m_cRefAll;
@@ -25,22 +61,19 @@ public:
 public:
     Listener() : m_cRefAll(0) {}
     virtual ~Listener() {}
+    virtual void Start() = 0;
+    virtual void Stop() = 0;
 
-    // IUnknown
     HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppv) {
         if (IID_IUnknown == riid) {
             AddRef();
-            *ppv = (IUnknown*)this;
-        }
-        else if (__uuidof(IAudioSessionNotification) == riid) {
-            AddRef();
-            *ppv = (IAudioSessionNotification*)this;
+            *ppv = this;
+            return S_OK;
         }
         else {
-            *ppv = NULL;
+            *ppv = nullptr;
             return E_NOINTERFACE;
         }
-        return S_OK;
     }
 
     ULONG STDMETHODCALLTYPE AddRef() {
@@ -50,7 +83,7 @@ public:
     ULONG STDMETHODCALLTYPE Release() {
         ULONG ulRef = InterlockedDecrement(&m_cRefAll);
         if (0 == ulRef) {
-            // delete this; // We keep our references correctly (right?)
+            delete this;
         }
         return ulRef;
     }
@@ -66,17 +99,39 @@ public:
 class DeviceListener : public Listener, public IMMNotificationClient {
 private:
     DeviceListenerCB& ctrl;
-    CComPtr<IMMDeviceEnumerator> pEnumerator;
+    CComPtr<IMMDeviceEnumerator> cpEnumerator;
 public:
-    DeviceListener(DeviceListenerCB& ctrl, CComPtr<IMMDeviceEnumerator> e)
-        : ctrl(ctrl), pEnumerator(e) {
-        e->RegisterEndpointNotificationCallback(this);
-    }
-    ~DeviceListener() {
-        pEnumerator->UnregisterEndpointNotificationCallback(this);
+    DeviceListener(DeviceListenerCB& ctrl, CComPtr<IMMDeviceEnumerator> e) :
+        ctrl(ctrl), cpEnumerator(e) {
     }
 
-    virtual HRESULT STDMETHODCALLTYPE OnDeviceStateChanged(LPCWSTR pwstrDeviceId, DWORD dwNewState) { return S_OK; }
+    virtual void Start() {
+        cpEnumerator->RegisterEndpointNotificationCallback(this);
+    }
+
+    virtual void Stop() {
+        cpEnumerator->UnregisterEndpointNotificationCallback(this);
+    }
+
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppv) {
+        if (__uuidof(IMMNotificationClient) == riid)
+        {
+            AddRef();
+            *ppv = (IMMNotificationClient*)this;
+            return S_OK;
+        }
+        return Listener::QueryInterface(riid, ppv);
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE OnDeviceStateChanged(LPCWSTR pwstrDeviceId, DWORD dwNewState) { 
+        if (dwNewState != DEVICE_STATE_ACTIVE) {
+            return OnDeviceRemoved(pwstrDeviceId);
+        }
+        else {
+            return OnDeviceAdded(pwstrDeviceId);
+        }
+    }
+
     virtual HRESULT STDMETHODCALLTYPE OnDefaultDeviceChanged(EDataFlow flow, ERole role, LPCWSTR pwstrDefaultDeviceId) {
         wstring tempStr(pwstrDefaultDeviceId);
         ctrl.SetDefaultDevice(tempStr, flow, role);
@@ -84,9 +139,9 @@ public:
     }
     virtual HRESULT STDMETHODCALLTYPE OnPropertyValueChanged(LPCWSTR pwstrDeviceId, const PROPERTYKEY key) { return S_OK; }
     virtual HRESULT STDMETHODCALLTYPE OnDeviceAdded(LPCWSTR pwstrDeviceId) {
-        CComPtr<IMMDevice> pDevice;
-        pEnumerator->GetDevice(pwstrDeviceId, &pDevice);
-        ctrl.DeviceAdded(pDevice);
+        CComPtr<IMMDevice> cpDevice;
+        cpEnumerator->GetDevice(pwstrDeviceId, &cpDevice);
+        ctrl.DeviceAdded(cpDevice);
         return S_OK;
     }
 
@@ -96,7 +151,6 @@ public:
         return S_OK;
     }
 
-    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppv) override { return Listener::QueryInterface(riid, ppv); }
     ULONG STDMETHODCALLTYPE AddRef() override { return Listener::AddRef(); }
     ULONG STDMETHODCALLTYPE Release() override { return Listener::Release(); }
 
@@ -110,9 +164,11 @@ private:
     CComPtr<IAudioEndpointVolume> pVolume;
 public:
     DeviceVolumeListener(CComPtr<IAudioEndpointVolume> pVolume, JniCaller& jni) : pVolume(pVolume), jni(jni) {
+    }
+    virtual void Start() {
         pVolume->RegisterControlChangeNotify(this);
     }
-    ~DeviceVolumeListener() {
+    virtual void Stop() {
         pVolume->UnregisterControlChangeNotify(this);
     }
 
@@ -121,7 +177,14 @@ public:
         return S_OK;
     }
 
-    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppv) override { return Listener::QueryInterface(riid, ppv); }
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppv) override {
+        if (__uuidof(IAudioEndpointVolumeCallback) == riid) {
+            AddRef();
+            *ppv = this;
+            return S_OK;
+        }
+        return Listener::QueryInterface(riid, ppv);
+    }
     ULONG STDMETHODCALLTYPE AddRef() override { return Listener::AddRef(); }
     ULONG STDMETHODCALLTYPE Release() override { return Listener::Release(); }
 };
@@ -139,9 +202,11 @@ private:
 public:
     SessionListener(SessionListenerCB& cb, CComPtr<IAudioSessionManager2> sessionManager)
         : cb(cb), sessionManager(sessionManager) {
+    }
+    virtual void Start() {
         sessionManager->RegisterSessionNotification(this);
     }
-    ~SessionListener() {
+    virtual void Stop() {
         sessionManager->UnregisterSessionNotification(this);
     }
 
@@ -152,7 +217,14 @@ public:
         return S_OK;
     }
 
-    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppv) override { return Listener::QueryInterface(riid, ppv); }
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppv) override { 
+        if (__uuidof(IAudioSessionNotification) == riid) {
+            AddRef();
+            *ppv = this;
+            return S_OK;
+        }
+        return Listener::QueryInterface(riid, ppv); 
+    }
     ULONG STDMETHODCALLTYPE AddRef() override { return Listener::AddRef(); }
     ULONG STDMETHODCALLTYPE Release() override { return Listener::Release(); }
 };
@@ -166,9 +238,11 @@ private:
 public:
     AudioSessionListener(CComPtr<IAudioSessionControl> sessionControl, function<void()> removed, jobject obj)
         : sessionControl(sessionControl), removed(removed), jni(JniCaller::Create(obj)) {
+    }
+    virtual void Start() {
         sessionControl->RegisterAudioSessionNotification(this);
     }
-    ~AudioSessionListener() {
+    virtual void Stop() {
         sessionControl->UnregisterAudioSessionNotification(this);
     }
 
@@ -198,7 +272,14 @@ public:
         return S_OK;
     }
 
-    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppv) override { return Listener::QueryInterface(riid, ppv); }
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppv) override { 
+        if (__uuidof(IAudioSessionEvents) == riid) {
+            AddRef();
+            *ppv = this;
+            return S_OK;
+        }
+        return Listener::QueryInterface(riid, ppv); 
+    }
     ULONG STDMETHODCALLTYPE AddRef() override { return Listener::AddRef(); }
     ULONG STDMETHODCALLTYPE Release() override { return Listener::Release(); }
 };

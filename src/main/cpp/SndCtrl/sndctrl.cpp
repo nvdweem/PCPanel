@@ -5,9 +5,9 @@
 
 unique_ptr<SndCtrl> pSndCtrl;
 
-SndCtrl::SndCtrl(jobject obj)
-    : jni(JniCaller::Create(obj))
-{
+SndCtrl::SndCtrl(jobject obj) :
+    jni(JniCaller::Create(obj)),
+    cpDeviceListener(nullptr) {
     if (CoInitialize(nullptr) != S_OK) {
         cerr << "Unable to CoInitialize" << endl;
     }
@@ -15,35 +15,34 @@ SndCtrl::SndCtrl(jobject obj)
     const CLSID CLSID_MMDeviceEnumerator = __uuidof(MMDeviceEnumerator);
     const IID IID_IMMDeviceEnumerator = __uuidof(IMMDeviceEnumerator);
 
-    IMMDeviceEnumerator* enumerator = NULL;
-    if (FAILED(CoCreateInstance(CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, IID_IMMDeviceEnumerator, (void**)&enumerator))) {
+    CComPtr<IMMDeviceEnumerator> cpEnumeratorL = NULL;
+    if (FAILED(CoCreateInstance(CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, IID_IMMDeviceEnumerator, (void**)&cpEnumeratorL))) {
         cerr << "Unable to create device enumerator, more will fail later :(" << endl;
     }
-    pEnumerator = enumerator;
-    pDeviceListener = make_unique<DeviceListener>(*this, pEnumerator);
-    cout << "Device enumerator created!" << endl;
+    cpEnumerator = cpEnumeratorL;
+    
+    cpDeviceListener.Set(new DeviceListener(*this, cpEnumerator));
     InitDevices();
 }
 
-void SndCtrl::InitDevices()
-{
-    auto pDevices = EnumAudioEndpoints(*pEnumerator);
-    auto count = GetCount(*pDevices);
+void SndCtrl::InitDevices() {
+    auto cpDevices = EnumAudioEndpoints(*cpEnumerator);
+    auto count = GetCount(*cpDevices);
     for (UINT idx = 0; idx < count; idx++) {
-        auto pDevice = DeviceFromCollection(*pDevices, idx);
-        DeviceAdded(pDevice);
+        auto cpDevice = DeviceFromCollection(*cpDevices, idx);
+        DeviceAdded(cpDevice);
     }
 
     for (int dataflow = eRender; dataflow < eAll; dataflow++) {
-        EDataFlow df = (EDataFlow)dataflow;
+        auto df = (EDataFlow)dataflow;
         for (int role = 0; role < ERole_enum_count; role++) {
-            CComPtr<IMMDevice> pDevice = nullptr;
+            CComPtr<IMMDevice> cpDevice = nullptr;
             ERole rl = (ERole)role;
-            pEnumerator->GetDefaultAudioEndpoint(df, rl, &pDevice);
+            cpEnumerator->GetDefaultAudioEndpoint(df, rl, &cpDevice);
 
-            if (pDevice) {
+            if (cpDevice) {
                 LPWSTR id = nullptr;
-                pDevice->GetId(&id);
+                cpDevice->GetId(&id);
 
                 co_ptr<WCHAR> pId(id);
                 SetDefaultDevice(id, df, rl);
@@ -52,68 +51,66 @@ void SndCtrl::InitDevices()
     }
 }
 
-void SndCtrl::DeviceAdded(CComPtr<IMMDevice> pDevice)
-{
-    auto nameAndId = DeviceNameId(*pDevice);
+void SndCtrl::DeviceAdded(CComPtr<IMMDevice> cpDevice) {
+    auto nameAndId = DeviceNameId(*cpDevice);
     wstring deviceId(nameAndId.id.get());
 
     float volume = 0;
     BOOL muted = 0;
-    auto volumeCtrl = GetVolumeControl(*pDevice);
-    volumeCtrl->GetMasterVolumeLevelScalar(&volume);
-    volumeCtrl->GetMute(&muted);
+    auto volumeCtrl = GetVolumeControl(*cpDevice);
+    if (volumeCtrl) {
+        volumeCtrl->GetMasterVolumeLevelScalar(&volume);
+        volumeCtrl->GetMute(&muted);
+    }
 
     JThread thread;
     auto jObj = jni.CallObject("deviceAdded", "(Ljava/lang/String;Ljava/lang/String;FZI)Lcom/getpcpanel/cpp/AudioDevice;",
-        thread.jstr(nameAndId.name.get()), thread.jstr(nameAndId.id.get()), volume, muted, getDataFlow(*pDevice)
+        thread.jstr(nameAndId.name.get()), thread.jstr(nameAndId.id.get()), volume, muted, getDataFlow(*cpDevice)
     );
-    devices.insert({ deviceId, make_unique<AudioDevice>(deviceId, pDevice, jObj)});
+    devices.insert({ deviceId, make_unique<AudioDevice>(deviceId, cpDevice, jObj)});
 }
 
-void SndCtrl::DeviceRemoved(wstring pDevice)
-{
-    devices.erase(pDevice);
+void SndCtrl::DeviceRemoved(wstring deviceId) {
 
-    JThread thread;
-    auto jObj = jni.CallObject("deviceRemoved", "(Ljava/lang/String;)V",
-        thread.jstr(pDevice.c_str())
-    );
+    thread detacher([&, deviceId]() {
+        devices.erase(deviceId);
+        JThread thread;
+        auto jObj = jni.CallObject("deviceRemoved", "(Ljava/lang/String;)V",
+            thread.jstr(deviceId.c_str())
+        );
+    });
+    detacher.detach();
 }
 
-void SndCtrl::SetDeviceVolume(wstring deviceId, float volume)
-{
+void SndCtrl::SetDeviceVolume(wstring deviceId, float volume) {
     auto found = devices.find(deviceId);
     if (found != devices.end()) {
         found->second->SetVolume(volume);
     }
 }
 
-void SndCtrl::MuteDevice(wstring deviceId, bool muted)
-{
+void SndCtrl::MuteDevice(wstring deviceId, bool muted) {
     auto found = devices.find(deviceId);
     if (found != devices.end()) {
         found->second->Mute(muted);
     }
 }
 
-void SndCtrl::SetProcessVolume(wstring deviceId, int pid, float volume)
-{
+void SndCtrl::SetProcessVolume(wstring deviceId, int pid, float volume) {
     auto found = devices.find(deviceId);
     if (found != devices.end()) {
         found->second->SetProcessVolume(pid, volume);
     }
 }
 
-void SndCtrl::MuteProcess(wstring deviceId, int pid, bool muted)
-{
+void SndCtrl::MuteProcess(wstring deviceId, int pid, bool muted) {
     auto found = devices.find(deviceId);
     if (found != devices.end()) {
         found->second->MuteProcess(pid, muted);
     }
 }
 
-void SndCtrl::SetFocusVolume(float volume)
-{
+void SndCtrl::SetFocusVolume(float volume) {
     auto pid = GetFocusProcessId();
     bool found = false;
     for (auto& entry : devices) {
@@ -134,45 +131,39 @@ void SndCtrl::SetFocusVolume(float volume)
     }
 }
 
-void SndCtrl::UpdateDefaultDevice(wstring id, EDataFlow dataFlow, ERole role)
-{
+void SndCtrl::UpdateDefaultDevice(wstring id, EDataFlow dataFlow, ERole role) {
     auto device = devices.find(id);
     if (device != devices.end()) {
         device->second->SetDefault(dataFlow, role);
     }
 }
 
-void SndCtrl::SetDefaultDevice(wstring id, EDataFlow dataFlow, ERole role)
-{
+void SndCtrl::SetDefaultDevice(wstring id, EDataFlow dataFlow, ERole role) {
     JThread thread;
     auto jObj = jni.CallObject("setDefaultDevice", "(Ljava/lang/String;II)V",
         thread.jstr(id.c_str()), dataFlow, role
     );
 }
 
-CComPtr<IMMDeviceCollection> SndCtrl::EnumAudioEndpoints(IMMDeviceEnumerator& enumerator)
-{
-    IMMDeviceCollection* pDeviceCol = NULL;
-    enumerator.EnumAudioEndpoints(eAll, DEVICE_STATE_ACTIVE, &pDeviceCol);
-    return CComPtr<IMMDeviceCollection>(pDeviceCol);
+CComPtr<IMMDeviceCollection> SndCtrl::EnumAudioEndpoints(IMMDeviceEnumerator& enumerator) {
+    CComPtr<IMMDeviceCollection> cpDeviceCol;
+    enumerator.EnumAudioEndpoints(eAll, DEVICE_STATE_ACTIVE, &cpDeviceCol);
+    return cpDeviceCol;
 }
 
-UINT SndCtrl::GetCount(IMMDeviceCollection& collection)
-{
+UINT SndCtrl::GetCount(IMMDeviceCollection& collection) {
     UINT count;
     collection.GetCount(&count);
     return count;;
 }
 
-CComPtr<IMMDevice> SndCtrl::DeviceFromCollection(IMMDeviceCollection& collection, UINT idx)
-{
+CComPtr<IMMDevice> SndCtrl::DeviceFromCollection(IMMDeviceCollection& collection, UINT idx) {
     CComPtr<IMMDevice> pDevice;
     collection.Item(idx, &pDevice);
     return pDevice;
 }
 
-SDeviceNameId SndCtrl::DeviceNameId(IMMDevice& device)
-{
+SDeviceNameId SndCtrl::DeviceNameId(IMMDevice& device) {
     LPWSTR pwszID = NULL;
     device.GetId(&pwszID);
 
@@ -189,8 +180,7 @@ SDeviceNameId SndCtrl::DeviceNameId(IMMDevice& device)
     return SDeviceNameId{ co_ptr<WCHAR>(varName.pwszVal), co_ptr<WCHAR>(pwszID) };
 }
 
-CComPtr<IAudioEndpointVolume> SndCtrl::GetVolumeControl(IMMDevice& device)
-{
+CComPtr<IAudioEndpointVolume> SndCtrl::GetVolumeControl(IMMDevice& device) {
     CComPtr<IAudioEndpointVolume> pVol;
     device.Activate(__uuidof(IAudioEndpointVolume), CLSCTX_ALL, NULL, (void**)&pVol);
     return pVol;

@@ -8,7 +8,7 @@
 
 int main()
 {
-    Java_com_getpcpanel_cpp_SndCtrlNative_addAllRunningProcesses(nullptr, nullptr, nullptr);
+    //Java_com_getpcpanel_cpp_SndCtrlNative_addAllRunningProcesses(nullptr, nullptr, nullptr);
 
     std::cout << "Hello World!\n";
     auto sndctrl = make_unique<SndCtrl>(nullptr);
@@ -23,4 +23,3 @@ int main()
     std::cout << "Bye World!\n";
 
 }
-

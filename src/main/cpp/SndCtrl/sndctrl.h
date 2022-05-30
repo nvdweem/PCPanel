@@ -13,16 +13,16 @@ class SndCtrl : public DeviceListenerCB
 private:
     JniCaller jni;
 
-    unique_ptr<DeviceListener> pDeviceListener;
-    CComPtr<IMMDeviceEnumerator> pEnumerator;
+    StoppingHandle<DeviceListener> cpDeviceListener;
+    CComPtr<IMMDeviceEnumerator> cpEnumerator;
     unordered_map<wstring, unique_ptr<AudioDevice>> devices;
 
 public:
     SndCtrl(jobject obj);
 
     virtual void SetDefaultDevice(wstring id, EDataFlow dataFlow, ERole role);
-    virtual void DeviceAdded(CComPtr<IMMDevice> pDevice);
-    virtual void DeviceRemoved(wstring pDevice);
+    virtual void DeviceAdded(CComPtr<IMMDevice> cpDevice);
+    virtual void DeviceRemoved(wstring deviceId);
 
     // Called from Java
     void SetDeviceVolume(wstring deviceId, float volume);

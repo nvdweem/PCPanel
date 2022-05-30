@@ -120,6 +120,7 @@ public enum SndCtrl {
     }
 
     private void deviceRemoved(String id) {
+        log.trace("Device removed: {}", id);
         devices.remove(id);
     }
 

@@ -5,9 +5,9 @@
 class AudioSession
 {
 private:
-    CComPtr<IAudioSessionControl> pSession;
-    unique_ptr<AudioSessionListener> pListener;
-    CComQIPtr<ISimpleAudioVolume> pVolumeControl;
+    CComPtr<IAudioSessionControl> cpSession;
+    StoppingHandle<AudioSessionListener> cpListener;
+    CComQIPtr<ISimpleAudioVolume> cpVolumeControl;
 
     int pid;
     wstring name;

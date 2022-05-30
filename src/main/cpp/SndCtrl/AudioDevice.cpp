@@ -2,37 +2,35 @@
 #include "AudioDevice.h"
 #include "policyconfig.h"
 
-AudioDevice::AudioDevice(wstring id, CComPtr<IMMDevice> pDevice, jobject obj)
-    : id(id),
-      pDevice(pDevice),
-      jni(JniCaller::Create(obj)),
-      pVolume(GetVolumeControl(*pDevice)),
-      deviceVolumeListener(pVolume, jni)
-{
-    auto pSessionManager = Activate(*pDevice);
-    pSessionListener = make_unique<SessionListener>(*this, pSessionManager);
-    
+AudioDevice::AudioDevice(wstring id, CComPtr<IMMDevice> cpDevice, jobject obj) :
+    id(id),
+    cpDevice(cpDevice),
+    jni(JniCaller::Create(obj)),
+    cpVolume(GetVolumeControl(*cpDevice)),
+    cpDeviceVolumeListener(new DeviceVolumeListener(cpVolume, jni)),
+    cpSessionListener() {
+
+    auto cpSessionManager = Activate(*cpDevice);
+    cpSessionListener.Set(new SessionListener(*this, cpSessionManager));
+
     // Get current sessions
-    auto pSessionList = GetSessionEnumerator(*pSessionManager);
-    auto sessionCount = GetCount(*pSessionList);
+    auto cpSessionList = GetSessionEnumerator(*cpSessionManager);
+    auto sessionCount = GetCount(*cpSessionList);
     for (int index = 0; index < sessionCount; index++) {
-        auto session = GetSession(*pSessionList, index);
+        auto session = GetSession(*cpSessionList, index);
         SessionAdded(session);
     }
 }
 
-void AudioDevice::SetVolume(float volume)
-{
-    pVolume->SetMasterVolumeLevelScalar(volume, nullptr);
+void AudioDevice::SetVolume(float volume) {
+    cpVolume->SetMasterVolumeLevelScalar(volume, nullptr);
 }
 
-void AudioDevice::Mute(bool muted)
-{
-    pVolume->SetMute(muted, nullptr);
+void AudioDevice::Mute(bool muted) {
+    cpVolume->SetMute(muted, nullptr);
 }
 
-bool AudioDevice::SetProcessVolume(int pid, float volume)
-{
+bool AudioDevice::SetProcessVolume(int pid, float volume) {
     auto entry = sessions.find(pid);
     if (entry != sessions.end()) {
         entry->second->SetVolume(volume);
@@ -41,8 +39,7 @@ bool AudioDevice::SetProcessVolume(int pid, float volume)
     return false;
 }
 
-bool AudioDevice::MuteProcess(int pid, bool muted)
-{
+bool AudioDevice::MuteProcess(int pid, bool muted) {
     auto entry = sessions.find(pid);
     if (entry != sessions.end()) {
         entry->second->Mute(muted);
@@ -51,49 +48,43 @@ bool AudioDevice::MuteProcess(int pid, bool muted)
     return false;
 }
 
-void AudioDevice::SetDefault(EDataFlow dataFlow, ERole role)
-{
-    CComPtr<IPolicyConfigVista> pPolicyConfig;
+void AudioDevice::SetDefault(EDataFlow dataFlow, ERole role) {
+    CComPtr<IPolicyConfigVista> cpPolicyConfig;
     ERole reserved = (ERole)role;
 
-    HRESULT hr = CoCreateInstance(__uuidof(CPolicyConfigVistaClient), NULL, CLSCTX_ALL, __uuidof(IPolicyConfigVista), (LPVOID*)&pPolicyConfig);
+    HRESULT hr = CoCreateInstance(__uuidof(CPolicyConfigVistaClient), NULL, CLSCTX_ALL, __uuidof(IPolicyConfigVista), (LPVOID*)&cpPolicyConfig);
     if (SUCCEEDED(hr)) {
-        pPolicyConfig->SetDefaultEndpoint(id.c_str(), reserved);
+        cpPolicyConfig->SetDefaultEndpoint(id.c_str(), reserved);
     }
 }
 
-void AudioDevice::SessionAdded(CComPtr<IAudioSessionControl> session)
-{
+void AudioDevice::SessionAdded(CComPtr<IAudioSessionControl> session) {
     auto ptr = make_unique<AudioSession>(session);
     auto pid = ptr->GetPid();
     ptr->Init(jni, [this, pid]() { sessions.erase(pid); });
     sessions.insert({pid, std::move(ptr)});
 }
 
-CComPtr<IAudioSessionManager2> AudioDevice::Activate(IMMDevice& device)
-{
-    CComPtr<IAudioSessionManager2> pSessionManager;
-    device.Activate(__uuidof(IAudioSessionManager2), CLSCTX_ALL, NULL, (void**)&pSessionManager);
-    return pSessionManager;
+CComPtr<IAudioSessionManager2> AudioDevice::Activate(IMMDevice& device) {
+    CComPtr<IAudioSessionManager2> cpSessionManager;
+    device.Activate(__uuidof(IAudioSessionManager2), CLSCTX_ALL, NULL, (void**)&cpSessionManager);
+    return cpSessionManager;
 }
 
-CComPtr<IAudioSessionEnumerator> AudioDevice::GetSessionEnumerator(IAudioSessionManager2& sessionManager)
-{
-    CComPtr<IAudioSessionEnumerator> pSessionList;
-    sessionManager.GetSessionEnumerator(&pSessionList);
-    return pSessionList;
+CComPtr<IAudioSessionEnumerator> AudioDevice::GetSessionEnumerator(IAudioSessionManager2& sessionManager) {
+    CComPtr<IAudioSessionEnumerator> cpSessionList;
+    sessionManager.GetSessionEnumerator(&cpSessionList);
+    return cpSessionList;
 }
 
-int AudioDevice::GetCount(IAudioSessionEnumerator& collection)
-{
+int AudioDevice::GetCount(IAudioSessionEnumerator& collection) {
     int sessionCount;
     collection.GetCount(&sessionCount);
     return sessionCount;
 }
 
-CComPtr<IAudioSessionControl> AudioDevice::GetSession(IAudioSessionEnumerator& collection, int idx)
-{
-    CComPtr<IAudioSessionControl> pSessionControl;
-    collection.GetSession(idx, &pSessionControl);
-    return pSessionControl;
+CComPtr<IAudioSessionControl> AudioDevice::GetSession(IAudioSessionEnumerator& collection, int idx) {
+    CComPtr<IAudioSessionControl> cpSessionControl;
+    collection.GetSession(idx, &cpSessionControl);
+    return cpSessionControl;
 }

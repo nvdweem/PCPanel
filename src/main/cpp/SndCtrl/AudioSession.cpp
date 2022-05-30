@@ -4,11 +4,10 @@
 #include <winver.h>
 
 
-CComPtr<IAudioSessionControl2> GetSession2(IAudioSessionControl& control)
-{
-    CComPtr<IAudioSessionControl2> pSessionControl2 = NULL;
-    control.QueryInterface(__uuidof(IAudioSessionControl2), (void**)&pSessionControl2);
-    return pSessionControl2;
+CComPtr<IAudioSessionControl2> GetSession2(IAudioSessionControl& control) {
+    CComPtr<IAudioSessionControl2> cpSessionControl2 = NULL;
+    control.QueryInterface(__uuidof(IAudioSessionControl2), (void**)&cpSessionControl2);
+    return cpSessionControl2;
 }
 
 DWORD GetProcessId(IAudioSessionControl2& control2) {
@@ -17,26 +16,26 @@ DWORD GetProcessId(IAudioSessionControl2& control2) {
     return procID;
 }
 
-AudioSession::AudioSession(CComPtr<IAudioSessionControl> session)
-    : pSession(session), pListener(nullptr), pVolumeControl(session), pid(0), name()
-{
-    auto session2 = GetSession2(*session);
-    pid = GetProcessId(*session2);
+AudioSession::AudioSession(CComPtr<IAudioSessionControl> session) :
+    cpSession(session),
+    cpListener(nullptr),
+    cpVolumeControl(session),
+    pid(0),
+    name() {
+    auto cpSession2 = GetSession2(*session);
+    pid = GetProcessId(*cpSession2);
     if (pid > 0) {
         name = GetProcessName(pid);
     }
 }
 
-typedef std::basic_string<TCHAR> stlString;
-
-void AudioSession::Init(JniCaller& audioDevice, function<void()> onRemoved)
-{
+void AudioSession::Init(JniCaller& audioDevice, function<void()> onRemoved) {
     LPWSTR icon = NULL;
-    pSession->GetIconPath(&icon);
+    cpSession->GetIconPath(&icon);
     co_ptr<WCHAR> pIcon(icon);
 
     BOOL muted;
-    CComQIPtr<ISimpleAudioVolume> cc = pSession.p;
+    CComQIPtr<ISimpleAudioVolume> cc(cpSession);
     float level = 0;
     cc->GetMasterVolume(&level);
     cc->GetMute(&muted);
@@ -48,25 +47,22 @@ void AudioSession::Init(JniCaller& audioDevice, function<void()> onRemoved)
         pid, thread.jstr(name.c_str()), thread.jstr(pname.c_str()), thread.jstr(icon), level, muted
     );
 
-    pListener = make_unique<AudioSessionListener>(pSession, [&, onRemoved]() {
+    cpListener.Set(new AudioSessionListener(cpSession, [&, onRemoved]() {
         JThread thread;
         audioDevice.CallVoid("removeSession", "(I)V", pid);
         onRemoved();
-    }, jObj);
+    }, jObj));
 }
 
-void AudioSession::SetVolume(float volume)
-{
-    pVolumeControl->SetMasterVolume(volume, nullptr);
+void AudioSession::SetVolume(float volume) {
+    cpVolumeControl->SetMasterVolume(volume, nullptr);
 }
 
-void AudioSession::Mute(bool muted)
-{
-    pVolumeControl->SetMute(muted, nullptr);
+void AudioSession::Mute(bool muted) {
+    cpVolumeControl->SetMute(muted, nullptr);
 }
 
-basic_string<TCHAR> AudioSession::GetProductName()
-{
+basic_string<TCHAR> AudioSession::GetProductName() {
     DWORD	dwHandle;
     DWORD	dwFileVersionInfoSize = GetFileVersionInfoSize(name.c_str(), &dwHandle);
     LPVOID	lpData = (LPVOID)new BYTE[dwFileVersionInfoSize];
@@ -74,7 +70,7 @@ basic_string<TCHAR> AudioSession::GetProductName()
     UINT	unInfoLen;
     if (GetFileVersionInfo(name.c_str(), dwHandle, dwFileVersionInfoSize, lpData)) {
         if (VerQueryValue(lpData, _T("\\StringFileInfo\\040904B0\\ProductName"), &lpInfo, &unInfoLen))
-            return stlString((LPCTSTR)lpInfo);
+            return wstring((LPCTSTR)lpInfo);
     }
     return _T("");
 }

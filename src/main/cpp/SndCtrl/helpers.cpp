@@ -1,8 +1,7 @@
 #include "pch.h"
 #include "helpers.h"
 
-DWORD GetFocusProcessId()
-{
+DWORD GetFocusProcessId() {
     DWORD procId;
     GetWindowThreadProcessId(GetForegroundWindow(), &procId);
     return (int)procId;

@@ -8,21 +8,21 @@ class AudioDevice : public SessionListenerCB
 {
 private:
     wstring id;
-    CComPtr<IMMDevice> pDevice;
+    CComPtr<IMMDevice> cpDevice;
 
-    CComPtr<IAudioEndpointVolume> pVolume;
+    CComPtr<IAudioEndpointVolume> cpVolume;
     JniCaller jni;
 
-    DeviceVolumeListener deviceVolumeListener;
-    unique_ptr<SessionListener> pSessionListener;
+    StoppingHandle<DeviceVolumeListener> cpDeviceVolumeListener;
+    StoppingHandle<SessionListener> cpSessionListener;
 
     unordered_map<int, unique_ptr<AudioSession>> sessions;
 public:
-    AudioDevice(wstring id, CComPtr<IMMDevice> pDevice, jobject obj);
+    AudioDevice(wstring id, CComPtr<IMMDevice> cpDevice, jobject obj);
     AudioDevice(const AudioDevice&) = delete;
 
-    virtual void OnNewSession(IAudioSessionControl* pSess) {
-        SessionAdded(pSess);
+    virtual void OnNewSession(IAudioSessionControl* cpSess) {
+        SessionAdded(cpSess);
     };
 
     // Called from Java
@@ -36,18 +36,16 @@ public:
         return sessions;
     }
 private:
-    void SessionAdded(CComPtr<IAudioSessionControl> session);
+    void SessionAdded(CComPtr<IAudioSessionControl> cpSession);
 
     CComPtr<IAudioSessionManager2> Activate(IMMDevice& device);
     CComPtr<IAudioSessionEnumerator> GetSessionEnumerator(IAudioSessionManager2& sessionManager);
     int GetCount(IAudioSessionEnumerator& collection);
     CComPtr<IAudioSessionControl> GetSession(IAudioSessionEnumerator& collection, int idx);
 
-
     CComPtr<IAudioEndpointVolume> GetVolumeControl(IMMDevice& device) {
-        CComPtr<IAudioEndpointVolume> pVol;
-        device.Activate(__uuidof(IAudioEndpointVolume), CLSCTX_ALL, NULL, (void**)&pVol);
-        return pVol;
+        CComPtr<IAudioEndpointVolume> cpVol;
+        device.Activate(__uuidof(IAudioEndpointVolume), CLSCTX_ALL, NULL, (void**)&cpVol);
+        return cpVol;
     }
 };
-
