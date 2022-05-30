@@ -2,7 +2,7 @@
 
 <!-- Releasenotes without version are included in releases -->
 
-- Nothing yet...
+- Adding/removing devices should now work
 
 ## [1.1]
 
