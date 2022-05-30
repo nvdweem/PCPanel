@@ -5,9 +5,10 @@
 
 unique_ptr<SndCtrl> pSndCtrl;
 
-SndCtrl::SndCtrl(jobject obj) :
-    jni(JniCaller::Create(obj)),
+SndCtrl::SndCtrl(JNIEnv* env, jobject obj) :
+    pJni(new JniCaller(env, obj)),
     cpDeviceListener(nullptr) {
+
     if (CoInitialize(nullptr) != S_OK) {
         cerr << "Unable to CoInitialize" << endl;
     }
@@ -20,9 +21,11 @@ SndCtrl::SndCtrl(jobject obj) :
         cerr << "Unable to create device enumerator, more will fail later :(" << endl;
     }
     cpEnumerator = cpEnumeratorL;
-    
+
     cpDeviceListener.Set(new DeviceListener(*this, cpEnumerator));
     InitDevices();
+
+    pFocusListener = make_unique<FocusListener>(pJni);
 }
 
 void SndCtrl::InitDevices() {
@@ -64,7 +67,7 @@ void SndCtrl::DeviceAdded(CComPtr<IMMDevice> cpDevice) {
     }
 
     JThread thread;
-    auto jObj = jni.CallObject("deviceAdded", "(Ljava/lang/String;Ljava/lang/String;FZI)Lcom/getpcpanel/cpp/AudioDevice;",
+    auto jObj = pJni->CallObject("deviceAdded", "(Ljava/lang/String;Ljava/lang/String;FZI)Lcom/getpcpanel/cpp/AudioDevice;",
         thread.jstr(nameAndId.name.get()), thread.jstr(nameAndId.id.get()), volume, muted, getDataFlow(*cpDevice)
     );
     devices.insert({ deviceId, make_unique<AudioDevice>(deviceId, cpDevice, jObj)});
@@ -75,7 +78,7 @@ void SndCtrl::DeviceRemoved(wstring deviceId) {
     thread detacher([&, deviceId]() {
         devices.erase(deviceId);
         JThread thread;
-        auto jObj = jni.CallObject("deviceRemoved", "(Ljava/lang/String;)V",
+        auto jObj = pJni->CallObject("deviceRemoved", "(Ljava/lang/String;)V",
             thread.jstr(deviceId.c_str())
         );
     });
@@ -140,7 +143,7 @@ void SndCtrl::UpdateDefaultDevice(wstring id, EDataFlow dataFlow, ERole role) {
 
 void SndCtrl::SetDefaultDevice(wstring id, EDataFlow dataFlow, ERole role) {
     JThread thread;
-    auto jObj = jni.CallObject("setDefaultDevice", "(Ljava/lang/String;II)V",
+    auto jObj = pJni->CallObject("setDefaultDevice", "(Ljava/lang/String;II)V",
         thread.jstr(id.c_str()), dataFlow, role
     );
 }

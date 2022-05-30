@@ -45,6 +45,9 @@
     <ClInclude Include="policyconfig.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="FocusListener.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -72,6 +75,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="helpers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FocusListener.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

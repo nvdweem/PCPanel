@@ -11,7 +11,7 @@ int main()
     //Java_com_getpcpanel_cpp_SndCtrlNative_addAllRunningProcesses(nullptr, nullptr, nullptr);
 
     std::cout << "Hello World!\n";
-    auto sndctrl = make_unique<SndCtrl>(nullptr);
+    auto sndctrl = make_unique<SndCtrl>(nullptr, nullptr);
     //Sleep(1000);
     //std::cout << "Change default device\n";
     //sndctrl->UpdateDefaultDevice(_T("{0.0.0.00000000}.{75599dff-bd64-486e-b5d6-62c94d3ae881}"), eRender, eMultimedia);

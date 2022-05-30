@@ -158,6 +158,7 @@
     <ClInclude Include="AudioDevice.h" />
     <ClInclude Include="AudioSession.h" />
     <ClInclude Include="com_getpcpanel_cpp_SndCtrlNative.h" />
+    <ClInclude Include="FocusListener.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="helpers.h" />
     <ClInclude Include="JniCaller.h" />
@@ -171,6 +172,7 @@
     <ClCompile Include="AudioSession.cpp" />
     <ClCompile Include="com_getpcpanel_cpp_SndCtrlNative.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="FocusListener.cpp" />
     <ClCompile Include="helpers.cpp" />
     <ClCompile Include="JniCaller.cpp" />
     <ClCompile Include="Listeners.cpp" />

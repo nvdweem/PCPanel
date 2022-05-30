@@ -28,9 +28,9 @@ std::wstring str(JNIEnv* env, jstring string)
  * Method:    start
  * Signature: (Ljava/lang/Object;)V
  */
-JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_start(JNIEnv*, jclass, jobject obj) {
+JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_start(JNIEnv* env, jclass, jobject obj) {
     //cout << "Java_com_getpcpanel_cpp_SndCtrlNative_start" << endl;
-    pSndCtrl = make_unique<SndCtrl>(obj);
+    pSndCtrl = make_unique<SndCtrl>(env, obj);
 }
 
 /*

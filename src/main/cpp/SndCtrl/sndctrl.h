@@ -2,6 +2,7 @@
 #include "AudioDevice.h"
 #include "JniCaller.h"
 #include "Listeners.h"
+#include "FocusListener.h"
 
 struct SDeviceNameId {
     co_ptr<WCHAR> name;
@@ -11,14 +12,14 @@ struct SDeviceNameId {
 class SndCtrl : public DeviceListenerCB
 {
 private:
-    JniCaller jni;
-
+    shared_ptr<JniCaller> pJni;
+    unique_ptr<FocusListener> pFocusListener;
     StoppingHandle<DeviceListener> cpDeviceListener;
     CComPtr<IMMDeviceEnumerator> cpEnumerator;
     unordered_map<wstring, unique_ptr<AudioDevice>> devices;
 
 public:
-    SndCtrl(jobject obj);
+    SndCtrl(JNIEnv* env, jobject obj);
 
     virtual void SetDefaultDevice(wstring id, EDataFlow dataFlow, ERole role);
     virtual void DeviceAdded(CComPtr<IMMDevice> cpDevice);

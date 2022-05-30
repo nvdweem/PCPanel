@@ -129,6 +129,10 @@ public enum SndCtrl {
         log.trace("Default changed: {}: {}", new DefaultFor(dataFlow, role), id);
     }
 
+    private void focusChanged(String to) {
+        log.trace("Focus changed to {}", to);
+    }
+
     record DefaultFor(int dataFlow, int role) {
     }
 }

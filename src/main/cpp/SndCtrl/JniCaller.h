@@ -59,6 +59,11 @@ public:
         env->NewGlobalRef(obj)
 #endif
     ) {}
+    JniCaller(JNIEnv* env, jobject obj) : obj(
+#ifndef NO_JNI
+        env->NewGlobalRef(obj)
+#endif
+    ) {}
     ~JniCaller() {
 #ifndef NO_JNI
         JThread env;

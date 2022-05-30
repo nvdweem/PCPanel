@@ -45,6 +45,9 @@
     <ClCompile Include="..\SndCtrl\JniCaller.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\SndCtrl\FocusListener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\SndCtrl\AudioDevice.h">
@@ -72,6 +75,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\SndCtrl\JniCaller.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SndCtrl\FocusListener.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
