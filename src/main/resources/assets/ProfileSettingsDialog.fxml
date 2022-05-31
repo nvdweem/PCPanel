@@ -7,6 +7,7 @@
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
@@ -35,6 +36,9 @@
                             <padding>
                                 <Insets top="10.0"/>
                             </padding>
+                            <tooltip>
+                                <Tooltip text="The main profile will be loaded on startup"/>
+                            </tooltip>
                         </CheckBox>
                     </children>
                 </VBox>

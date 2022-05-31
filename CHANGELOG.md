@@ -2,7 +2,8 @@
 
 <!-- Releasenotes without version are included in releases -->
 
-- It's now possible to load a profile when focussing a window
+- Added options to automatically switch to a profile when other windows get focus
+- You can set a main profile which will be loaded when you start the application
 
 ## [1.1.1]
 
