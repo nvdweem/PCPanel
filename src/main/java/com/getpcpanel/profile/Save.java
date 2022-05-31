@@ -54,10 +54,10 @@ public class Save {
         Main.saveFileExists = true;
         for (var ds : getDevices().values()) {
             var p = ds.getCurrentProfile();
-            p.buttonData = ds.buttonData;
-            p.dialData = ds.dialData;
-            p.lightingConfig = ds.getLightingConfig();
-            p.knobSettings = ds.getKnobSettings();
+            p.buttonData(ds.buttonData);
+            p.dialData(ds.dialData);
+            p.lightingConfig(ds.getLightingConfig());
+            p.knobSettings(ds.getKnobSettings());
         }
         try {
             FileUtils.writeStringToFile(SAVE_FILE, Json.writePretty(save), Charset.defaultCharset());

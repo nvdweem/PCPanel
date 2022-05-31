@@ -11,6 +11,7 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.getpcpanel.util.ApplicationFocusListener;
 import com.getpcpanel.util.Util;
 
 import lombok.extern.log4j.Log4j2;
@@ -131,6 +132,7 @@ public enum SndCtrl {
 
     private void focusChanged(String to) {
         log.trace("Focus changed to {}", to);
+        ApplicationFocusListener.setFocusApplication(to);
     }
 
     record DefaultFor(int dataFlow, int role) {

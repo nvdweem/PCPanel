@@ -1,13 +1,22 @@
 package com.getpcpanel.profile;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.getpcpanel.device.DeviceType;
 
+import lombok.Data;
+
+@Data
 public class Profile {
-    protected String name;
-    public String[][] buttonData;
-    public String[][] dialData;
-    protected KnobSetting[] knobSettings;
-    protected LightingConfig lightingConfig;
+    private String name;
+    private boolean isMainProfile;
+    private String[][] buttonData;
+    private String[][] dialData;
+    private KnobSetting[] knobSettings;
+    private LightingConfig lightingConfig;
+    private boolean focusBackOnLost;
+    private List<String> activateApplications = new ArrayList<>();
 
     public Profile(String name, DeviceType dt) {
         this.name = name;
@@ -21,14 +30,6 @@ public class Profile {
     }
 
     protected Profile() {
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String toString() {

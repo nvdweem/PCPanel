@@ -58,7 +58,7 @@
                 </font>
             </Label>
             <HBox alignment="BOTTOM_RIGHT" HBox.hgrow="ALWAYS">
-                <HBox fx:id="profileHolder" alignment="BOTTOM_RIGHT" prefHeight="100.0" prefWidth="200.0">
+                <HBox fx:id="profileHolder" alignment="BOTTOM_RIGHT" prefHeight="100.0" prefWidth="300.0">
                     <HBox.margin>
                         <Insets right="10.0"/>
                     </HBox.margin>

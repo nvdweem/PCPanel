@@ -68,13 +68,13 @@ public class DeviceSave {
             if (profiles == null)
                 profiles = new ArrayList<>();
             var profile = new Profile();
-            profile.name = "profile1";
-            profile.buttonData = buttonData;
-            profile.dialData = dialData;
-            profile.knobSettings = getKnobSettings();
-            profile.lightingConfig = getLightingConfig();
+            profile.name("profile1");
+            profile.buttonData(buttonData);
+            profile.dialData(dialData);
+            profile.knobSettings(getKnobSettings());
+            profile.lightingConfig(getLightingConfig());
             profiles.add(profile);
-            currentProfile = profile.name;
+            currentProfile = profile.name();
         }
         return profiles;
     }
@@ -84,27 +84,23 @@ public class DeviceSave {
         if (profile == null)
             return false;
         currentProfile = p;
-        buttonData = profile.buttonData;
-        dialData = profile.dialData;
-        knobSettings = profile.knobSettings;
-        lightingConfig = profile.lightingConfig;
+        buttonData = profile.buttonData();
+        dialData = profile.dialData();
+        knobSettings = profile.knobSettings();
+        lightingConfig = profile.lightingConfig();
         return true;
     }
 
     public Profile getProfile(String name) {
         if (name == null)
             return null;
-        for (var p : getProfiles()) {
-            if (p.name.equals(name))
-                return p;
-        }
-        return null;
+        return getProfiles().stream().filter(p -> p.name().equals(name)).findFirst().orElse(null);
     }
 
     public String getCurrentProfileName() {
         var p = getProfile(currentProfile);
         if (p == null)
-            return getProfiles().get(0).getName();
+            return getProfiles().get(0).name();
         return currentProfile;
     }
 

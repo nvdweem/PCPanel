@@ -313,7 +313,7 @@ public class BasicMacro extends Application implements Initializable {
             }
         } else if ("profile".equals(buttonType)) {
             buttonData = new String[2];
-            buttonData[1] = (profileDropdown.getValue() == null) ? null : profileDropdown.getValue().getName();
+            buttonData[1] = (profileDropdown.getValue() == null) ? null : profileDropdown.getValue().name();
         }
         if ("app_volume".equals(dialType)) {
             volData[1] = volumeProcessField1.getText();
@@ -497,7 +497,7 @@ public class BasicMacro extends Application implements Initializable {
             }
         }
         var curProfile = deviceSave.getCurrentProfileName();
-        profileDropdown.getItems().addAll(deviceSave.getProfiles().stream().filter(c -> !c.getName().equals(curProfile)).toList());
+        profileDropdown.getItems().addAll(deviceSave.getProfiles().stream().filter(c -> !c.name().equals(curProfile)).toList());
         allSoundDevices = SndCtrl.getDevices();
         var outputDevices = allSoundDevices.stream().filter(AudioDevice::isOutput).toList();
         volumedevice.getItems().addAll(allSoundDevices);

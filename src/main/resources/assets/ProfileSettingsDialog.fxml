@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+<VBox prefHeight="524.0" prefWidth="946.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <TitledPane animated="false" text="Profile settings">
+            <content>
+                <VBox>
+                    <children>
+                        <GridPane>
+                            <columnConstraints>
+                                <ColumnConstraints hgrow="NEVER" maxWidth="457.0" minWidth="10.0" prefWidth="147.0"/>
+                                <ColumnConstraints hgrow="NEVER" maxWidth="810.0" minWidth="10.0" prefWidth="777.0"/>
+                            </columnConstraints>
+                            <rowConstraints>
+                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                            </rowConstraints>
+                            <children>
+                                <Label text="Name"/>
+                                <TextField fx:id="profileName" promptText="Profile name" GridPane.columnIndex="1"/>
+                            </children>
+                        </GridPane>
+                        <CheckBox fx:id="mainProfile" mnemonicParsing="false" text="Main profile">
+                            <padding>
+                                <Insets top="10.0"/>
+                            </padding>
+                        </CheckBox>
+                    </children>
+                </VBox>
+            </content>
+        </TitledPane>
+        <ScrollPane fitToHeight="true" fitToWidth="true" prefWidth="200.0">
+            <content>
+                <TitledPane text="Automatic switching">
+                    <content>
+                        <VBox prefWidth="50.0">
+                            <children>
+                                <Label text="Applications that will automatically enable the profile"/>
+                                <VBox fx:id="applicationRows"/>
+                                <CheckBox fx:id="focusBackOnLost" mnemonicParsing="false" text="Back to main profile on focus lost">
+                                    <VBox.margin>
+                                        <Insets/>
+                                    </VBox.margin>
+                                    <padding>
+                                        <Insets top="10.0"/>
+                                    </padding>
+                                </CheckBox>
+                            </children>
+                        </VBox>
+                    </content>
+                    <padding>
+                        <Insets top="10.0"/>
+                    </padding>
+                </TitledPane>
+            </content>
+        </ScrollPane>
+        <HBox alignment="BOTTOM_RIGHT" spacing="15.0" VBox.vgrow="ALWAYS">
+            <padding>
+                <Insets bottom="10.0" right="10.0" top="10.0"/>
+            </padding>
+            <children>
+                <Button mnemonicParsing="false" onAction="#ok" prefHeight="25.0" prefWidth="66.0" text="Ok"/>
+                <Button fx:id="cancelButton" layoutX="661.0" layoutY="872.0" mnemonicParsing="false" onAction="#closeButtonAction" prefHeight="25.0" prefWidth="73.0" text="Cancel"/>
+            </children>
+        </HBox>
+    </children>
+</VBox>

@@ -175,7 +175,7 @@ public class Main extends Application {
         Platform.runLater(() -> {
             var device = devices.remove(serialNum);
             window.connectedDeviceList.getItems().remove(device);
-            device.closeDialogs();
+            device.disconnected();
         });
     }
 
