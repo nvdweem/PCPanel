@@ -15,6 +15,7 @@ import com.getpcpanel.Main;
 import com.getpcpanel.device.DeviceType;
 
 import lombok.extern.log4j.Log4j2;
+import one.util.streamex.StreamEx;
 
 @Log4j2
 public class Save {
@@ -69,6 +70,7 @@ public class Save {
     public static void readFile() {
         try {
             save = Json.read(FileUtils.readFileToString(SAVE_FILE, Charset.defaultCharset()), Save.class);
+            StreamEx.ofValues(save.devices).forEach(d -> StreamEx.of(d.getProfiles()).findFirst(Profile::isMainProfile).ifPresent(p -> d.setCurrentProfile(p.name())));
             Main.saveFileExists = true;
         } catch (Exception e) {
             save = new Save();
