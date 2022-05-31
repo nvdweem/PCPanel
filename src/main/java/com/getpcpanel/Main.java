@@ -20,6 +20,7 @@ import com.getpcpanel.ui.DeviceCell;
 import com.getpcpanel.ui.ResizeHelper;
 import com.getpcpanel.ui.SettingsDialog;
 import com.getpcpanel.util.FileChecker;
+import com.getpcpanel.util.VersionChecker;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -32,6 +33,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -40,7 +42,9 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class Main extends Application {
     public static final File FILES_ROOT = new File(System.getProperty("user.home"), ".pcpanel");
+    public static final Properties applicationProperties = new Properties();
     public static final String VERSION = getVersion();
+    public static final String UNKNOWN_VERSION = "${project.version}";
     public static final String TITLE = "PCPanel Controller %s".formatted(VERSION);
 
     static {
@@ -51,10 +55,9 @@ public class Main extends Application {
 
     public static String getVersion() {
         try {
-            var properties = new Properties();
-            properties.load(Main.class.getResourceAsStream("/application.properties"));
-            var version = properties.getProperty("application.version");
-            if (!"${project.version}".equals(version)) {
+            applicationProperties.load(Main.class.getResourceAsStream("/application.properties"));
+            var version = applicationProperties.getProperty("application.version");
+            if (!UNKNOWN_VERSION.equals(version)) {
                 return version;
             }
         } catch (Exception e) {
@@ -73,6 +76,7 @@ public class Main extends Application {
     @FXML private Button deviceListToggle;
     @FXML private Button settings;
     @FXML private Label versionLabel;
+    @FXML private VBox labelTarget;
     @FXML private Label noDevicesLabel;
     @FXML private Label hintLabel;
     @FXML private ListView<Device> connectedDeviceList;
@@ -126,6 +130,7 @@ public class Main extends Application {
         OBSListener.start();
         DeviceScanner.start();
         SleepDetector.init();
+        VersionChecker.init(labelTarget);
     }
 
     @Override

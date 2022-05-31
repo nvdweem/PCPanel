@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
-<HBox prefHeight="524.0" prefWidth="946.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+<HBox prefHeight="524.0" prefWidth="946.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
     <ListView fx:id="connectedDeviceList" minWidth="-Infinity" prefWidth="230.0"/>
     <VBox prefHeight="524.0" prefWidth="340.0" HBox.hgrow="ALWAYS">
         <VBox alignment="TOP_CENTER" maxHeight="-Infinity" prefHeight="100.0">
@@ -52,11 +52,15 @@
             <VBox.margin>
                 <Insets bottom="5.0" left="5.0" right="5.0"/>
             </VBox.margin>
-            <Label fx:id="versionLabel" opacity="0.5" prefHeight="22.0" prefWidth="336.0" text="PCPanel Editor 1.0.0" textFill="WHITE" HBox.hgrow="ALWAYS">
-                <font>
-                    <Font name="Roboto Bold" size="16.0"/>
-                </font>
-            </Label>
+            <VBox fx:id="labelTarget" alignment="BOTTOM_LEFT" prefHeight="200.0" prefWidth="336.0">
+                <children>
+                    <Label fx:id="versionLabel" opacity="0.5" prefHeight="22.0" prefWidth="336.0" text="PCPanel Editor 1.0.0" textFill="WHITE">
+                        <font>
+                            <Font name="Roboto Bold" size="16.0"/>
+                        </font>
+                    </Label>
+                </children>
+            </VBox>
             <HBox alignment="BOTTOM_RIGHT" HBox.hgrow="ALWAYS">
                 <HBox fx:id="profileHolder" alignment="BOTTOM_RIGHT" prefHeight="100.0" prefWidth="300.0">
                     <HBox.margin>
