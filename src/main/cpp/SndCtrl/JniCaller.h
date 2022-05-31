@@ -15,8 +15,7 @@ public:
         if (getEnvStat == JNI_EDETACHED) {
             if (pJvm->AttachCurrentThreadAsDaemon((void**)&pEnv, &attachArgs) == 0) {
                 needsDetach = true;
-            }
-            else {
+            } else {
                 error = true;
             }
         }
@@ -39,7 +38,11 @@ public:
     }
 
     bool operator*() {
-        return !error;
+        if (error) {
+            cout << "Env has error :(";
+            return false;
+        }
+        return true;
     }
 };
 
@@ -54,64 +57,64 @@ public:
         return JniCaller(env, obj);
     }
 
-    JniCaller(JThread& env, jobject obj) : obj(
+    JniCaller(JThread& env, jobject obj) {
 #ifndef NO_JNI
-        env->NewGlobalRef(obj)
+        if (*env) {
+            this->obj = env->NewGlobalRef(obj);
+        }
 #endif
-    ) {}
-    JniCaller(JNIEnv* env, jobject obj) : obj(
+    }
+    JniCaller(JNIEnv* env, jobject obj) {
 #ifndef NO_JNI
-        env->NewGlobalRef(obj)
+        this->obj = env->NewGlobalRef(obj);
 #endif
-    ) {}
+    }
     ~JniCaller() {
 #ifndef NO_JNI
         JThread env;
         if (*env) {
             env->DeleteGlobalRef(this->obj);
         }
-        else {
-            cout << "Env has error, not cleaning up";
-        }
 #endif
     }
 
 #ifndef NO_JNI
-    void CallVoid(const char* name, const char* sig, ...) {
-        JThread env;
-        auto method = GetMethod(env, name, sig);
-
-        va_list args;
-        va_start(args, sig);
-        env->CallVoidMethodV(obj, method, args);
-        va_end(args);
+    void CallVoid(JThread& env, const char* name, const char* sig, ...) {
+        if (*env) {
+            auto method = GetMethod(env, name, sig);
+            va_list args;
+            va_start(args, sig);
+            env->CallVoidMethodV(obj, method, args);
+            va_end(args);
+        }
     }
 
-    jobject CallObject(const char* name, const char* sig, ...) {
-        JThread env;
-        auto method = GetMethod(env, name, sig);
-
-        va_list args;
-        va_start(args, sig);
-        auto result = env->CallObjectMethodV(obj, method, args);
-        va_end(args);
-        return result;
+    jobject CallObject(JThread& env, const char* name, const char* sig, ...) {
+        if (*env) {
+            auto method = GetMethod(env, name, sig);
+            va_list args;
+            va_start(args, sig);
+            auto result = env->CallObjectMethodV(obj, method, args);
+            va_end(args);
+            return result;
+        }
+        return nullptr;
     }
 
-    float CallFloat(const char* name, const char* sig, ...) {
-        JThread env;
-        auto method = GetMethod(env, name, sig);
-
-        va_list args;
-        va_start(args, sig);
-        auto result = env->CallFloatMethod(obj, method, args);
-        va_end(args);
-        return result;
+    float CallFloat(JThread& env, const char* name, const char* sig, ...) {
+        if (*env) {
+            auto method = GetMethod(env, name, sig);
+            va_list args;
+            va_start(args, sig);
+            auto result = env->CallFloatMethod(obj, method, args);
+            va_end(args);
+            return result;
+        }
     }
 
 private:
     jmethodID GetMethod(JThread& env, const char* name, const char* sig) {
-     auto cls = env->GetObjectClass(obj);
+        auto cls = env->GetObjectClass(obj);
         if (!cls) {
             cerr << "Unable to find class for method " << name << "(" << sig << ")" << endl;
         }
@@ -122,8 +125,8 @@ private:
         return method;
     }
 #else
-    void CallVoid(const char* name, const char* sig, ...) {}
-    jobject CallObject(const char* name, const char* sig, ...) {return nullptr;}
-    float CallFloat(const char* name, const char* sig, ...) {return 0;}
+    void CallVoid(JThread& env, const char* name, const char* sig, ...) {}
+    jobject CallObject(JThread& env, const char* name, const char* sig, ...) {return nullptr;}
+    float CallFloat(JThread& env, const char* name, const char* sig, ...) {return 0;}
 #endif
 };

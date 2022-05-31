@@ -2,6 +2,10 @@
 
 <!-- Releasenotes without version are included in releases -->
 
+- It's now possible to load a profile when focussing a window
+
+## [1.1.1]
+
 - Adding/removing devices should now work
 
 ## [1.1]

@@ -7,16 +7,15 @@
 class AudioDevice : public SessionListenerCB
 {
 private:
+    JniCaller jni;
     wstring id;
     CComPtr<IMMDevice> cpDevice;
 
     CComPtr<IAudioEndpointVolume> cpVolume;
-    JniCaller jni;
-
     StoppingHandle<DeviceVolumeListener> cpDeviceVolumeListener;
-    StoppingHandle<SessionListener> cpSessionListener;
 
     unordered_map<int, unique_ptr<AudioSession>> sessions;
+    StoppingHandle<SessionListener> cpSessionListener;
 public:
     AudioDevice(wstring id, CComPtr<IMMDevice> cpDevice, jobject obj);
     AudioDevice(const AudioDevice&) = delete;

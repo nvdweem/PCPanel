@@ -173,7 +173,10 @@ public:
     }
 
     virtual HRESULT STDMETHODCALLTYPE OnNotify(PAUDIO_VOLUME_NOTIFICATION_DATA pNotify) {
-        jni.CallVoid("setState", "(FZ)V", pNotify->fMasterVolume, pNotify->bMuted);
+        JThread env;
+        if (*env) {
+            jni.CallVoid(env, "setState", "(FZ)V", pNotify->fMasterVolume, pNotify->bMuted);
+        }
         return S_OK;
     }
 
@@ -248,12 +251,16 @@ public:
 
     virtual HRESULT STDMETHODCALLTYPE OnDisplayNameChanged(LPCWSTR NewDisplayName, LPCGUID EventContext) { 
         JThread env;
-        jni.CallObject("name", "(Ljava/lang/String;)Lcom/getpcpanel/cpp/AudioSession;", env.jstr(NewDisplayName));
+        if (*env) {
+            jni.CallObject(env, "name", "(Ljava/lang/String;)Lcom/getpcpanel/cpp/AudioSession;", env.jstr(NewDisplayName));
+        }
         return S_OK; 
     }
     virtual HRESULT STDMETHODCALLTYPE OnIconPathChanged(LPCWSTR NewIconPath, LPCGUID EventContext) {
         JThread env;
-        jni.CallObject("icon", "(Ljava/lang/String;)Lcom/getpcpanel/cpp/AudioSession;", env.jstr(NewIconPath));
+        if (*env) {
+            jni.CallObject(env, "icon", "(Ljava/lang/String;)Lcom/getpcpanel/cpp/AudioSession;", env.jstr(NewIconPath));
+        }
         return S_OK;
     }
     virtual HRESULT STDMETHODCALLTYPE OnChannelVolumeChanged(DWORD ChannelCount, float NewChannelVolumeArray[], DWORD ChangedChannel, LPCGUID EventContext) { return S_OK; }
@@ -261,8 +268,10 @@ public:
     virtual HRESULT STDMETHODCALLTYPE OnSessionDisconnected(AudioSessionDisconnectReason DisconnectReason) { return S_OK; }
     virtual HRESULT STDMETHODCALLTYPE OnSimpleVolumeChanged(float NewVolume, BOOL NewMute, LPCGUID EventContext) {
         JThread env;
-        jni.CallObject("volume", "(F)Lcom/getpcpanel/cpp/AudioSession;", NewVolume);
-        jni.CallObject("muted", "(Z)Lcom/getpcpanel/cpp/AudioSession;", NewMute);
+        if (*env) {
+            jni.CallObject(env, "volume", "(F)Lcom/getpcpanel/cpp/AudioSession;", NewVolume);
+            jni.CallObject(env, "muted", "(Z)Lcom/getpcpanel/cpp/AudioSession;", NewMute);
+        }
         return S_OK;
     }
     virtual HRESULT STDMETHODCALLTYPE OnStateChanged(AudioSessionState NewState) {

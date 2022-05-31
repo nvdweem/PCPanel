@@ -42,11 +42,11 @@ void SndCtrl::InitDevices() {
             CComPtr<IMMDevice> cpDevice = nullptr;
             ERole rl = (ERole)role;
             cpEnumerator->GetDefaultAudioEndpoint(df, rl, &cpDevice);
-
+    
             if (cpDevice) {
                 LPWSTR id = nullptr;
                 cpDevice->GetId(&id);
-
+    
                 co_ptr<WCHAR> pId(id);
                 SetDefaultDevice(id, df, rl);
             }
@@ -67,20 +67,23 @@ void SndCtrl::DeviceAdded(CComPtr<IMMDevice> cpDevice) {
     }
 
     JThread thread;
-    auto jObj = pJni->CallObject("deviceAdded", "(Ljava/lang/String;Ljava/lang/String;FZI)Lcom/getpcpanel/cpp/AudioDevice;",
-        thread.jstr(nameAndId.name.get()), thread.jstr(nameAndId.id.get()), volume, muted, getDataFlow(*cpDevice)
-    );
-    devices.insert({ deviceId, make_unique<AudioDevice>(deviceId, cpDevice, jObj)});
+    if (*thread) {
+        auto jObj = pJni->CallObject(thread, "deviceAdded", "(Ljava/lang/String;Ljava/lang/String;FZI)Lcom/getpcpanel/cpp/AudioDevice;",
+            thread.jstr(nameAndId.name.get()), thread.jstr(nameAndId.id.get()), volume, muted, getDataFlow(*cpDevice)
+        );
+        devices.insert({ deviceId, make_unique<AudioDevice>(deviceId, cpDevice, jObj)});
+    }
 }
 
 void SndCtrl::DeviceRemoved(wstring deviceId) {
-
     thread detacher([&, deviceId]() {
         devices.erase(deviceId);
         JThread thread;
-        auto jObj = pJni->CallObject("deviceRemoved", "(Ljava/lang/String;)V",
-            thread.jstr(deviceId.c_str())
-        );
+        if (*thread) {
+            auto jObj = pJni->CallObject(thread, "deviceRemoved", "(Ljava/lang/String;)V",
+                thread.jstr(deviceId.c_str())
+            );
+        }
     });
     detacher.detach();
 }
@@ -143,9 +146,11 @@ void SndCtrl::UpdateDefaultDevice(wstring id, EDataFlow dataFlow, ERole role) {
 
 void SndCtrl::SetDefaultDevice(wstring id, EDataFlow dataFlow, ERole role) {
     JThread thread;
-    auto jObj = pJni->CallObject("setDefaultDevice", "(Ljava/lang/String;II)V",
-        thread.jstr(id.c_str()), dataFlow, role
-    );
+    if (*thread) {
+        auto jObj = pJni->CallObject(thread, "setDefaultDevice", "(Ljava/lang/String;II)V",
+            thread.jstr(id.c_str()), dataFlow, role
+        );
+    }
 }
 
 CComPtr<IMMDeviceCollection> SndCtrl::EnumAudioEndpoints(IMMDeviceEnumerator& enumerator) {

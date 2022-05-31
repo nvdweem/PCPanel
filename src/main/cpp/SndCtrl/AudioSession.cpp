@@ -43,15 +43,17 @@ void AudioSession::Init(JniCaller& audioDevice, function<void()> onRemoved) {
     auto pname = GetProductName();
     auto nameCopy = pname;
     JThread thread;
-    auto jObj = audioDevice.CallObject("addSession", "(ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;FZ)Lcom/getpcpanel/cpp/AudioSession;",
-        pid, thread.jstr(name.c_str()), thread.jstr(pname.c_str()), thread.jstr(icon), level, muted
-    );
+    if (*thread) {
+        auto jObj = audioDevice.CallObject(thread, "addSession", "(ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;FZ)Lcom/getpcpanel/cpp/AudioSession;",
+            pid, thread.jstr(name.c_str()), thread.jstr(pname.c_str()), thread.jstr(icon), level, muted
+        );
 
-    cpListener.Set(new AudioSessionListener(cpSession, [&, onRemoved]() {
-        JThread thread;
-        audioDevice.CallVoid("removeSession", "(I)V", pid);
-        onRemoved();
-    }, jObj));
+        cpListener.Set(new AudioSessionListener(cpSession, [&, onRemoved]() {
+            JThread thread;
+            audioDevice.CallVoid(thread, "removeSession", "(I)V", pid);
+            onRemoved();
+            }, jObj));
+    }
 }
 
 void AudioSession::SetVolume(float volume) {

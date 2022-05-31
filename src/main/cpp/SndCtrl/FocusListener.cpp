@@ -8,18 +8,13 @@ unique_ptr<JThread> pJThread;
 unique_ptr<thread> pThread;
 shared_ptr<JniCaller> pJni;
 
-VOID CALLBACK WinEventProcCallback(HWINEVENTHOOK hWinEventHook, DWORD dwEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
-{
+VOID CALLBACK WinEventProcCallback(HWINEVENTHOOK hWinEventHook, DWORD dwEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime) {
     auto name = GetProcessName(GetFocusProcessId());
-
-    pJni->CallVoid("focusChanged", "(Ljava/lang/String;)V", pJThread->jstr(name.c_str()));
+    pJni->CallVoid(*pJThread, "focusChanged", "(Ljava/lang/String;)V", pJThread->jstr(name.c_str()));
 }
 
 FocusListener::FocusListener(shared_ptr<JniCaller>& pJniCaller) {
     pJni = pJniCaller;
-
-    JThread thread;
-    pJni->CallVoid("focusChanged", "(Ljava/lang/String;)V", thread.jstr("Nog een test?!"));
 
     pThread = make_unique<std::thread>([this]() {
         pJThread = make_unique<JThread>();
@@ -32,8 +27,7 @@ FocusListener::FocusListener(shared_ptr<JniCaller>& pJniCaller) {
     });
 }
 
-FocusListener::~FocusListener()
-{
+FocusListener::~FocusListener() {
     pThread.release();
     pJni.reset();
     pJThread.release();
