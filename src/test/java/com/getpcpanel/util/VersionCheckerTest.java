@@ -18,10 +18,12 @@ class VersionCheckerTest {
             "1.1.1|1.0|false",
             "1.1.1|1.0.0|false",
             "1.2|1.1.1|false",
+            "1.2-SNAPSHOT|1.1.1|false",
+            "1.2-SNAPSHOT|1.2|true",
     })
     void isVersionNewer(String current, String latest, boolean shouldBeNewer) {
         assertEquals(shouldBeNewer, VersionChecker.isVersionNewer(current, latest));
-        if (!StringUtils.equals(current, latest)) {
+        if (!StringUtils.equals(current, latest) && !StringUtils.contains(current, '-')) {
             assertEquals(!shouldBeNewer, VersionChecker.isVersionNewer(latest, current));
         }
     }

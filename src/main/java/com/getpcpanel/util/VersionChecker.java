@@ -59,7 +59,8 @@ public final class VersionChecker extends Thread {
         if (Main.UNKNOWN_VERSION.equals(current))
             return false;
 
-        var currentParts = StreamEx.of(current.split("\\.")).mapToInt(NumberUtils::toInt).toArray();
+        var currentSnapshot = current.split("-");
+        var currentParts = StreamEx.of(currentSnapshot[0].split("\\.")).mapToInt(NumberUtils::toInt).toArray();
         var latestParts = StreamEx.of(latest.split("\\.")).mapToInt(NumberUtils::toInt).toArray();
 
         for (var i = 0; i < currentParts.length && i < latestParts.length; i++) {
@@ -69,6 +70,9 @@ public final class VersionChecker extends Thread {
             if (currentParts[i] > latestParts[i]) {
                 return false;
             }
+        }
+        if (currentParts.length == latestParts.length) {
+            return currentSnapshot.length == 2;
         }
         return currentParts.length < latestParts.length;
     }
