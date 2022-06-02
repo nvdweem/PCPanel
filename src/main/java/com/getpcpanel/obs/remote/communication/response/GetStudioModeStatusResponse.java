@@ -1,13 +1,12 @@
 package com.getpcpanel.obs.remote.communication.response;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+import lombok.Data;
+
+@Data
 public class GetStudioModeStatusResponse extends BaseResponse {
-    @SerializedName("studio-mode")
+    @JsonProperty("studio-mode")
     private boolean enabled;
-
-    public boolean isEnabled() {
-        return enabled;
-    }
 }
 

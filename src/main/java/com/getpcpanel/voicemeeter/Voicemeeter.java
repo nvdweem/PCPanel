@@ -149,7 +149,7 @@ public final class Voicemeeter {
 
     public static void main(String[] args) throws InterruptedException {
         log.debug("{}", VoicemeeterVersion.POTATO.getStripDials());
-        Save.setVoicemeeterEnabled(true);
+        Save.get().setVoicemeeterEnabled(true);
         login();
         log.debug("{}", hasFinishedConnection);
         login();
@@ -168,7 +168,7 @@ public final class Voicemeeter {
     }
 
     public static boolean login() {
-        if (!Save.isVoicemeeterEnabled())
+        if (!Save.get().isVoicemeeterEnabled())
             return false;
         if (hasFinishedConnection)
             return true;

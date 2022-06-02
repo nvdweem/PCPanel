@@ -24,7 +24,7 @@ public final class VoicemeeterAPI {
     }
 
     public static void init(boolean is64bit) {
-        var dllPath = new File(Save.getVoicemeeterPath(), is64bit ? DEFAULT_VM_WINDOWS_64BIT_PATH : DEFAULT_VM_WINDOWS_32BIT_PATH);
+        var dllPath = new File(Save.get().getVoicemeeterPath(), is64bit ? DEFAULT_VM_WINDOWS_64BIT_PATH : DEFAULT_VM_WINDOWS_32BIT_PATH);
         try {
             System.load(dllPath.getAbsolutePath());
             instance = Native.loadLibrary("VoicemeeterRemote" + (is64bit ? "64" : ""), VoicemeeterInstance.class);

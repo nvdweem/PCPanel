@@ -3,6 +3,7 @@ package com.getpcpanel.profile;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.device.DeviceType;
 
 import lombok.Data;
@@ -10,6 +11,7 @@ import lombok.Data;
 @Data
 public class Profile {
     private String name;
+    @JsonProperty("isMainProfile")
     private boolean isMainProfile;
     private String[][] buttonData;
     private String[][] dialData;

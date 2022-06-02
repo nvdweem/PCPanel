@@ -24,7 +24,8 @@ public class OBSListener implements Runnable {
         while (running) {
             sleep();
             synchronized (OBS.OBSMutex) {
-                if (!Save.isObsEnabled()) {
+                var save = Save.get();
+                if (!save.isObsEnabled()) {
                     if (OBS.controller != null && OBS.controller.isConnected()) {
                         log.info("OBS Disconnected");
                         OBS.controller.disconnect();
@@ -33,12 +34,12 @@ public class OBSListener implements Runnable {
                     continue;
                 }
                 if (OBS.controller == null) {
-                    OBS.controller = new OBSRemoteController(Save.getObsAddress(), Save.getObsPort(), Save.getObsPassword());
+                    OBS.controller = new OBSRemoteController(save.getObsAddress(), save.getObsPort(), save.getObsPassword());
                 } else if (check) {
                     OBS.controller.disconnect();
-                    OBS.controller = new OBSRemoteController(Save.getObsAddress(), Save.getObsPort(), Save.getObsPassword());
+                    OBS.controller = new OBSRemoteController(save.getObsAddress(), save.getObsPort(), save.getObsPassword());
                 } else if (!OBS.controller.isConnected()) {
-                    OBS.controller = new OBSRemoteController(Save.getObsAddress(), Save.getObsPort(), Save.getObsPassword());
+                    OBS.controller = new OBSRemoteController(save.getObsAddress(), save.getObsPort(), save.getObsPassword());
                 }
                 check = false;
             }

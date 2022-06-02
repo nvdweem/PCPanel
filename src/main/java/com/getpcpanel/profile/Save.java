@@ -14,23 +14,25 @@ import com.getpcpanel.Json;
 import com.getpcpanel.Main;
 import com.getpcpanel.device.DeviceType;
 
+import lombok.Data;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
+@Data
 @Log4j2
 public class Save {
     private static Save save = new Save();
     private static final File SAVE_FILE = new File(FILES_ROOT, "profiles.json");
-    private final Map<String, DeviceSave> devices = new ConcurrentHashMap<>();
-    private volatile boolean obsEnabled;
-    private volatile String obsAddress = "localhost";
-    private volatile String obsPort = "4444";
-    private volatile String obsPassword;
-    private volatile boolean voicemeeterEnabled;
-    private volatile String voicemeeterPath = "C:\\Program Files (x86)\\VB\\Voicemeeter";
+    private Map<String, DeviceSave> devices = new ConcurrentHashMap<>();
+    private boolean obsEnabled;
+    private String obsAddress = "localhost";
+    private String obsPort = "4444";
+    private String obsPassword;
+    private boolean voicemeeterEnabled;
+    private String voicemeeterPath = "C:\\Program Files (x86)\\VB\\Voicemeeter";
 
-    public static Map<String, DeviceSave> getDevices() {
-        return save.devices;
+    public static Save get() {
+        return save;
     }
 
     public static DeviceSave getDeviceSave(String serialNum) {
@@ -38,13 +40,13 @@ public class Save {
     }
 
     public static void createSaveForNewDevice(String serialNum, DeviceType dt) {
-        getDevices().put(serialNum, new DeviceSave(dt));
+        get().getDevices().put(serialNum, new DeviceSave(dt));
     }
 
     public static boolean doesDeviceDisplayNameExist(String displayName) {
         if (displayName == null)
             throw new IllegalArgumentException("cannot have null displayName");
-        for (var device : getDevices().values()) {
+        for (var device : get().getDevices().values()) {
             if (displayName.equals(device.getDisplayName()))
                 return true;
         }
@@ -53,12 +55,12 @@ public class Save {
 
     public static synchronized void saveFile() {
         Main.saveFileExists = true;
-        for (var ds : getDevices().values()) {
+        for (var ds : get().getDevices().values()) {
             var p = ds.getCurrentProfile();
-            p.buttonData(ds.buttonData);
-            p.dialData(ds.dialData);
-            p.lightingConfig(ds.getLightingConfig());
-            p.knobSettings(ds.getKnobSettings());
+            p.setButtonData(ds.buttonData);
+            p.setDialData(ds.dialData);
+            p.setLightingConfig(ds.getLightingConfig());
+            p.setKnobSettings(ds.getKnobSettings());
         }
         try {
             FileUtils.writeStringToFile(SAVE_FILE, Json.writePretty(save), Charset.defaultCharset());
@@ -68,61 +70,20 @@ public class Save {
     }
 
     public static void readFile() {
+        if (!SAVE_FILE.exists()) {
+            log.info("No save file found, creating new one");
+            save = new Save();
+            return;
+        }
+
         try {
             save = Json.read(FileUtils.readFileToString(SAVE_FILE, Charset.defaultCharset()), Save.class);
-            StreamEx.ofValues(save.devices).forEach(d -> StreamEx.of(d.getProfiles()).findFirst(Profile::isMainProfile).ifPresent(p -> d.setCurrentProfile(p.name())));
+            StreamEx.ofValues(save.devices).forEach(d -> StreamEx.of(d.getProfiles()).findFirst(Profile::isMainProfile).ifPresent(p -> d.setCurrentProfile(p.getName())));
             Main.saveFileExists = true;
         } catch (Exception e) {
+            log.error("Unable to read file", e);
             save = new Save();
         }
-    }
-
-    public static boolean isObsEnabled() {
-        return save.obsEnabled;
-    }
-
-    public static void setObsEnabled(boolean obsEnabled) {
-        save.obsEnabled = obsEnabled;
-    }
-
-    public static String getObsAddress() {
-        return save.obsAddress;
-    }
-
-    public static void setObsAddress(String obsAddress) {
-        save.obsAddress = obsAddress;
-    }
-
-    public static String getObsPort() {
-        return save.obsPort;
-    }
-
-    public static void setObsPort(String obsPort) {
-        save.obsPort = obsPort;
-    }
-
-    public static String getObsPassword() {
-        return save.obsPassword;
-    }
-
-    public static void setObsPassword(String obsPassword) {
-        save.obsPassword = obsPassword;
-    }
-
-    public static boolean isVoicemeeterEnabled() {
-        return save.voicemeeterEnabled;
-    }
-
-    public static void setVoicemeeterEnabled(boolean voicemeeterEnabled) {
-        save.voicemeeterEnabled = voicemeeterEnabled;
-    }
-
-    public static String getVoicemeeterPath() {
-        return save.voicemeeterPath;
-    }
-
-    public static void setVoicemeeterPath(String voicemeeterPath) {
-        save.voicemeeterPath = voicemeeterPath;
     }
 }
 

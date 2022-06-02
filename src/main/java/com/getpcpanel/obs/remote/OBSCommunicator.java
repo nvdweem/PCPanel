@@ -26,7 +26,6 @@ import com.getpcpanel.obs.remote.communication.response.GetSceneListResponse;
 import com.getpcpanel.obs.remote.communication.response.GetSourceTypesListResponse;
 import com.getpcpanel.obs.remote.communication.response.GetSourcesListResponse;
 import com.getpcpanel.obs.remote.communication.response.GetVersionResponse;
-import com.google.gson.JsonObject;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -53,11 +52,11 @@ public class OBSCommunicator {
         }
         log.debug(msg);
         try {
-            var preResponse = Json.read(msg, JsonObject.class).get("message-id");
+            var preResponse = Json.read(msg, Map.class).get("message-id");
             if (preResponse != null) {
-                var type = messageTypes.remove(preResponse.getAsString());
-                var responseBase = Json.read(msg, type.response());
-                processIncomingResponse(responseBase, type.response());
+                var type = messageTypes.remove(preResponse.toString());
+                var responseBase = Json.read(msg, type.getResponse());
+                processIncomingResponse(responseBase, type.getResponse());
             }
         } catch (Throwable t) {
             log.error("Failed to process message from websocket.", t);

@@ -3,8 +3,14 @@ package com.getpcpanel.profile;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.getpcpanel.device.DeviceType;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
 public class DeviceSave {
     private String displayName;
     private List<Profile> profiles;
@@ -37,22 +43,6 @@ public class DeviceSave {
         }
     }
 
-    public String getDisplayName() {
-        return displayName;
-    }
-
-    public void setDisplayName(String displayName) {
-        this.displayName = displayName;
-    }
-
-    public LightingConfig getLightingConfig() {
-        return lightingConfig;
-    }
-
-    public void setLightingConfig(LightingConfig lightingConfig) {
-        this.lightingConfig = lightingConfig;
-    }
-
     public KnobSetting[] getKnobSettings() {
         if (knobSettings == null) {
             knobSettings = new KnobSetting[buttonData.length];
@@ -68,13 +58,13 @@ public class DeviceSave {
             if (profiles == null)
                 profiles = new ArrayList<>();
             var profile = new Profile();
-            profile.name("profile1");
-            profile.buttonData(buttonData);
-            profile.dialData(dialData);
-            profile.knobSettings(getKnobSettings());
-            profile.lightingConfig(getLightingConfig());
+            profile.setName("profile1");
+            profile.setButtonData(buttonData);
+            profile.setDialData(dialData);
+            profile.setKnobSettings(getKnobSettings());
+            profile.setLightingConfig(getLightingConfig());
             profiles.add(profile);
-            currentProfile = profile.name();
+            currentProfile = profile.getName();
         }
         return profiles;
     }
@@ -84,26 +74,28 @@ public class DeviceSave {
         if (profile == null)
             return false;
         currentProfile = p;
-        buttonData = profile.buttonData();
-        dialData = profile.dialData();
-        knobSettings = profile.knobSettings();
-        lightingConfig = profile.lightingConfig();
+        buttonData = profile.getButtonData();
+        dialData = profile.getDialData();
+        knobSettings = profile.getKnobSettings();
+        lightingConfig = profile.getLightingConfig();
         return true;
     }
 
     public Profile getProfile(String name) {
         if (name == null)
             return null;
-        return getProfiles().stream().filter(p -> p.name().equals(name)).findFirst().orElse(null);
+        return getProfiles().stream().filter(p -> p.getName().equals(name)).findFirst().orElse(null);
     }
 
+    @JsonIgnore
     public String getCurrentProfileName() {
         var p = getProfile(currentProfile);
         if (p == null)
-            return getProfiles().get(0).name();
+            return getProfiles().get(0).getName();
         return currentProfile;
     }
 
+    @JsonIgnore
     public Profile getCurrentProfile() {
         var p = getProfile(currentProfile);
         if (p == null)

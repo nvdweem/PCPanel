@@ -1,6 +1,6 @@
 package com.getpcpanel.obs.remote.events;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -12,7 +12,7 @@ public class BaseEvent {
         return eventType;
     }
 
-    @SerializedName("update-type")
+    @JsonProperty("update-type")
     public void setUpdateType(String updateType) {
         log.debug(updateType);
         eventType = EventType.valueOf(updateType);

@@ -1,12 +1,11 @@
 package com.getpcpanel.obs.remote.objects;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+import lombok.Data;
+
+@Data
 public class Profile {
-    @SerializedName("profile-name")
+    @JsonProperty("profile-name")
     private String name;
-
-    public String getName() {
-        return name;
-    }
 }

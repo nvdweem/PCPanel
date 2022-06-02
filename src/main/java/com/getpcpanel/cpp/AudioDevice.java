@@ -11,10 +11,10 @@ import org.apache.commons.lang3.StringUtils;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 
 @Data
-@Slf4j
+@Log4j2
 @Setter(AccessLevel.PACKAGE)
 @SuppressWarnings("unused") // Methods called from JNI
 public class AudioDevice implements Serializable {

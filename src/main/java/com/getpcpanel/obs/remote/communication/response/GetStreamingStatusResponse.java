@@ -1,32 +1,14 @@
 package com.getpcpanel.obs.remote.communication.response;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+import lombok.Data;
+
+@Data
 public class GetStreamingStatusResponse extends BaseResponse {
     private boolean streaming;
-
     private boolean recording;
-
-    @SerializedName("stream-timecode")
-    private String streamTimecode;
-
-    @SerializedName("rec-timecode")
-    private String recTimecode;
-
-    public boolean isStreaming() {
-        return streaming;
-    }
-
-    public boolean isRecording() {
-        return recording;
-    }
-
-    public String getStreamTimecode() {
-        return streamTimecode;
-    }
-
-    public String getRecTimecode() {
-        return recTimecode;
-    }
+    @JsonProperty("stream-timecode") private String streamTimecode;
+    @JsonProperty("rec-timecode") private String recTimecode;
 }
 

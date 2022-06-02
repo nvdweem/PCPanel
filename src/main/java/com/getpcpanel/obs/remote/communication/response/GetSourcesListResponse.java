@@ -4,10 +4,9 @@ import java.util.List;
 
 import com.getpcpanel.obs.remote.objects.Source;
 
+import lombok.Data;
+
+@Data
 public class GetSourcesListResponse extends BaseResponse {
     private List<Source> sources;
-
-    public List<Source> getSources() {
-        return sources;
-    }
 }

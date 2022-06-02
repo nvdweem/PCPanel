@@ -1,14 +1,14 @@
 package com.getpcpanel.obs.remote.communication.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.obs.remote.OBSCommunicator;
 import com.getpcpanel.obs.remote.communication.RequestType;
-import com.google.gson.annotations.SerializedName;
 
 import lombok.Data;
 
 @Data
 public class SetCurrentSceneRequest extends BaseRequest {
-    @SerializedName("scene-name")
+    @JsonProperty("scene-name")
     private String scene;
 
     public SetCurrentSceneRequest(OBSCommunicator com, String scene) {

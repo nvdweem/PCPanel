@@ -1,14 +1,14 @@
 package com.getpcpanel.obs.remote.communication.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.obs.remote.OBSCommunicator;
 import com.getpcpanel.obs.remote.communication.RequestType;
-import com.google.gson.annotations.SerializedName;
 
 import lombok.Data;
 
 @Data
 public class TransitionToProgramRequest extends BaseRequest {
-    @SerializedName("with-transition")
+    @JsonProperty("with-transition")
     private WithTransition withTransition;
 
     @Data

@@ -95,12 +95,13 @@ public class SettingsDialog extends Application implements Initializable {
 
     @FXML
     private void ok(ActionEvent event) {
-        Save.setObsEnabled(obsEnable.isSelected());
-        Save.setObsAddress(obsAddress.getText());
-        Save.setObsPort(obsPort.getText());
-        Save.setObsPassword(obsPassword.getText());
-        Save.setVoicemeeterEnabled(vmEnable.isSelected());
-        Save.setVoicemeeterPath(vmPath.getText());
+        var save = Save.get();
+        save.setObsEnabled(obsEnable.isSelected());
+        save.setObsAddress(obsAddress.getText());
+        save.setObsPort(obsPort.getText());
+        save.setObsPassword(obsPassword.getText());
+        save.setVoicemeeterEnabled(vmEnable.isSelected());
+        save.setVoicemeeterPath(vmPath.getText());
         Save.saveFile();
         OBSListener.check();
         stage.close();
@@ -121,13 +122,14 @@ public class SettingsDialog extends Application implements Initializable {
     }
 
     private void initFields() {
-        obsEnable.setSelected(Save.isObsEnabled());
-        obsAddress.setText(Save.getObsAddress());
-        obsPort.setText(Save.getObsPort());
-        obsPassword.setText(Save.getObsPassword());
+        var save = Save.get();
+        obsEnable.setSelected(save.isObsEnabled());
+        obsAddress.setText(save.getObsAddress());
+        obsPort.setText(save.getObsPort());
+        obsPassword.setText(save.getObsPassword());
         onOBSEnablePressed(null);
-        vmEnable.setSelected(Save.isVoicemeeterEnabled());
-        vmPath.setText(Save.getVoicemeeterPath());
+        vmEnable.setSelected(save.isVoicemeeterEnabled());
+        vmPath.setText(save.getVoicemeeterPath());
         onVMEnablePressed(null);
     }
 

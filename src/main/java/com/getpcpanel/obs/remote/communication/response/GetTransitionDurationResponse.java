@@ -1,13 +1,12 @@
 package com.getpcpanel.obs.remote.communication.response;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+import lombok.Data;
+
+@Data
 public class GetTransitionDurationResponse extends BaseResponse {
-    @SerializedName("transition-duration")
+    @JsonProperty("transition-duration")
     private int transitionDuration;
-
-    public int getTransitionDuration() {
-        return transitionDuration;
-    }
 }
 

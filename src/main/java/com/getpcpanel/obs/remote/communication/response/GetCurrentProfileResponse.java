@@ -1,12 +1,11 @@
 package com.getpcpanel.obs.remote.communication.response;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+import lombok.Data;
+
+@Data
 public class GetCurrentProfileResponse extends BaseResponse {
-    @SerializedName("profile-name")
+    @JsonProperty("profile-name")
     private String profileName;
-
-    public String getProfileName() {
-        return profileName;
-    }
 }

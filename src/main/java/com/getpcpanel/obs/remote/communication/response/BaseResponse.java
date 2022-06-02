@@ -1,9 +1,9 @@
 package com.getpcpanel.obs.remote.communication.response;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class BaseResponse {
-    @SerializedName("message-id")
+    @JsonProperty("message-id")
     private String messageId;
 
     private String status;

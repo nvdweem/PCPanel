@@ -63,7 +63,7 @@ public abstract class Device {
             if (newValue == null)
                 return;
             log.debug("change");
-            var name = newValue.name();
+            var name = newValue.getName();
             updateCurrentProfileName(name);
         });
         var buttonCell = new ListCell<Profile>() {
@@ -72,19 +72,19 @@ public abstract class Device {
                 super.updateItem(item, btl);
                 setGraphic(null);
                 if (item != null)
-                    setText(item.name());
+                    setText(item.getName());
             }
         };
         textfield.setOnAction(c -> {
             var p = buttonCell.getItem();
-            var oldName = p.name();
+            var oldName = p.getName();
             var newName = textfield.getText();
             buttonCell.setGraphic(null);
             if (save.getProfile(newName) != null) {
                 buttonCell.setText(oldName);
                 return;
             }
-            p.name(newName);
+            p.setName(newName);
             buttonCell.setText(newName);
             profiles.getItems().set(profiles.getItems().indexOf(p), p);
             Save.saveFile();
@@ -92,13 +92,13 @@ public abstract class Device {
         textfield.focusedProperty().addListener((arg, oldVal, newVal) -> {
             if (!newVal) {
                 buttonCell.setGraphic(null);
-                buttonCell.setText(buttonCell.getItem().name());
+                buttonCell.setText(buttonCell.getItem().getName());
             }
         });
         textfield.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
             if (event.getCode() == KeyCode.ESCAPE) {
                 buttonCell.setGraphic(null);
-                buttonCell.setText(buttonCell.getItem().name());
+                buttonCell.setText(buttonCell.getItem().getName());
             }
         });
         profiles.setButtonCell(buttonCell);
@@ -153,7 +153,7 @@ public abstract class Device {
         var result = new boolean[] { false };
         save.getProfiles()
             .stream()
-            .filter(p -> StreamEx.of(p.activateApplications()).anyMatch(i -> StringUtils.equalsIgnoreCase(i, to)))
+            .filter(p -> StreamEx.of(p.getActivateApplications()).anyMatch(i -> StringUtils.equalsIgnoreCase(i, to)))
             .findFirst()
             .ifPresent(p -> {
                 Platform.runLater(() -> profiles.getSelectionModel().select(p));
@@ -164,10 +164,10 @@ public abstract class Device {
 
     private void switchAwayFromApplication(String from) {
         var mainProfile = StreamEx.of(save.getProfiles()).findFirst(Profile::isMainProfile);
-        if (!profiles.getSelectionModel().getSelectedItem().focusBackOnLost() || mainProfile.isEmpty()) {
+        if (!profiles.getSelectionModel().getSelectedItem().isFocusBackOnLost() || mainProfile.isEmpty()) {
             return;
         }
-        if (StreamEx.of(profiles.getSelectionModel().getSelectedItem().activateApplications()).anyMatch(a -> StringUtils.equalsIgnoreCase(a, from))) {
+        if (StreamEx.of(profiles.getSelectionModel().getSelectedItem().getActivateApplications()).anyMatch(a -> StringUtils.equalsIgnoreCase(a, from))) {
             Platform.runLater(() -> profiles.getSelectionModel().select(mainProfile.get()));
         }
     }
@@ -226,9 +226,9 @@ public abstract class Device {
                 var selection = profiles.getSelectionModel().getSelectedItem();
                 new ProfileSettingsDialog(save, selection).start(stage);
                 stage.setOnHidden(e -> Platform.runLater(() -> {
-                    profiles.getButtonCell().setText(selection.name());
+                    profiles.getButtonCell().setText(selection.getName());
                     if (profiles.getSelectionModel().getSelectedItem().equals(selection)) {
-                        updateCurrentProfileName(selection.name());
+                        updateCurrentProfileName(selection.getName());
                     }
                 }));
             } catch (Exception e) {

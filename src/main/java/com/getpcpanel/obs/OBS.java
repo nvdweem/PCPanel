@@ -25,8 +25,8 @@ public final class OBS {
         var typesWithAudio = new HashSet<String>();
         try {
             controller.getSourceTypes(response -> {
-                for (var st : response.getSourceTypes()) {
-                    if (st.getCaps().isAudio())
+                for (var st : response.getTypes()) {
+                    if (st.getCaps().isHasAudio())
                         typesWithAudio.add(st.getTypeId());
                 }
                 controller.getSources(sr -> StreamEx.of(sr.getSources()).filter(s -> typesWithAudio.contains(s.getTypeId())).map(Source::getName).into(sourcesWithAudio));
@@ -126,6 +126,6 @@ public final class OBS {
     }
 
     public static boolean isConnected() {
-        return Save.isObsEnabled() && controller != null && controller.isConnected();
+        return Save.get().isObsEnabled() && controller != null && controller.isConnected();
     }
 }

@@ -1,20 +1,12 @@
 package com.getpcpanel.obs.remote.communication.response;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+import lombok.Data;
+
+@Data
 public class GetVersionResponse extends BaseResponse {
-    @SerializedName("obs-websocket-version")
-    private String obsWebsocketVersion;
-
-    @SerializedName("obs-studio-version")
-    private String obsStudioVersion;
-
-    public String getObsWebsocketVersion() {
-        return obsWebsocketVersion;
-    }
-
-    public String getObsStudioVersion() {
-        return obsStudioVersion;
-    }
+    @JsonProperty("obs-websocket-version") private String obsWebsocketVersion;
+    @JsonProperty("obs-studio-version") private String obsStudioVersion;
 }
 

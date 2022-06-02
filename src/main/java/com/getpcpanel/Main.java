@@ -159,7 +159,7 @@ public class Main extends Application {
             Device device;
             if (!saveFileExists)
                 showHint(true);
-            if (!Save.getDevices().containsKey(serialNum))
+            if (!Save.get().getDevices().containsKey(serialNum))
                 Save.createSaveForNewDevice(serialNum, dt);
             if (dt == DeviceType.PCPANEL_RGB) {
                 device = new PCPanelRGBUI(serialNum, Save.getDeviceSave(serialNum));

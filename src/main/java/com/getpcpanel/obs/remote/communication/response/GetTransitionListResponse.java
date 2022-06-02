@@ -2,13 +2,13 @@ package com.getpcpanel.obs.remote.communication.response;
 
 import java.util.List;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Data;
 
 @Data
 public class GetTransitionListResponse extends BaseResponse {
-    @SerializedName("current-transition")
+    @JsonProperty("current-transition")
     private String currentTransition;
     private List<Transition> transitions;
 

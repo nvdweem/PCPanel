@@ -60,17 +60,17 @@ public class ProfileSettingsDialog extends Application {
         Platform.setImplicitExit(false);
         stage.sizeToScene();
 
-        stage.setTitle("Profile: " + profile.name());
+        stage.setTitle("Profile: " + profile.getName());
 
         stage.show();
     }
 
     private void initWindow() {
-        profileName.setText(profile.name());
+        profileName.setText(profile.getName());
         mainProfile.setSelected(profile.isMainProfile());
 
-        focusBackOnLost.setSelected(profile.focusBackOnLost());
-        StreamEx.of(profile.activateApplications()).map(this::createApplicationPane).forEach(applicationRows.getChildren()::add);
+        focusBackOnLost.setSelected(profile.isFocusBackOnLost());
+        StreamEx.of(profile.getActivateApplications()).map(this::createApplicationPane).forEach(applicationRows.getChildren()::add);
         applicationRows.getChildren().add(createApplicationPane(""));
     }
 
@@ -121,19 +121,19 @@ public class ProfileSettingsDialog extends Application {
 
     @FXML
     private void ok(ActionEvent event) {
-        profile.name(profileName.getText());
-        profile.isMainProfile(mainProfile.isSelected());
+        profile.setName(profileName.getText());
+        profile.setMainProfile(mainProfile.isSelected());
         if (profile.isMainProfile()) {
-            StreamEx.of(deviceSave.getProfiles()).remove(profile::equals).forEach(p -> p.isMainProfile(false));
+            StreamEx.of(deviceSave.getProfiles()).remove(profile::equals).forEach(p -> p.setMainProfile(false));
         }
 
-        profile.focusBackOnLost(focusBackOnLost.isSelected());
-        profile.activateApplications().clear();
+        profile.setFocusBackOnLost(focusBackOnLost.isSelected());
+        profile.getActivateApplications().clear();
         StreamEx.of(applicationRows.getChildren())
                 .select(Pane.class)
                 .map(p -> ((TextField) p.getChildren().get(0)).getText())
                 .filter(StringUtils::isNotBlank)
-                .into(profile.activateApplications());
+                .into(profile.getActivateApplications());
 
         Save.saveFile();
         stage.close();
