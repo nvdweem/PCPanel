@@ -54,6 +54,7 @@ void AudioDevice::SetDefault(EDataFlow dataFlow, ERole role) {
 
     HRESULT hr = CoCreateInstance(__uuidof(CPolicyConfigVistaClient), NULL, CLSCTX_ALL, __uuidof(IPolicyConfigVista), (LPVOID*)&cpPolicyConfig);
     if (SUCCEEDED(hr)) {
+        NOTNULL(cpPolicyConfig);
         cpPolicyConfig->SetDefaultEndpoint(id.c_str(), reserved);
     }
 }
@@ -68,12 +69,14 @@ void AudioDevice::SessionAdded(CComPtr<IAudioSessionControl> session) {
 CComPtr<IAudioSessionManager2> AudioDevice::Activate(IMMDevice& device) {
     CComPtr<IAudioSessionManager2> cpSessionManager;
     device.Activate(__uuidof(IAudioSessionManager2), CLSCTX_ALL, NULL, (void**)&cpSessionManager);
+    NOTNULL(cpSessionManager);
     return cpSessionManager;
 }
 
 CComPtr<IAudioSessionEnumerator> AudioDevice::GetSessionEnumerator(IAudioSessionManager2& sessionManager) {
     CComPtr<IAudioSessionEnumerator> cpSessionList;
     sessionManager.GetSessionEnumerator(&cpSessionList);
+    NOTNULL(cpSessionList);
     return cpSessionList;
 }
 
@@ -86,5 +89,6 @@ int AudioDevice::GetCount(IAudioSessionEnumerator& collection) {
 CComPtr<IAudioSessionControl> AudioDevice::GetSession(IAudioSessionEnumerator& collection, int idx) {
     CComPtr<IAudioSessionControl> cpSessionControl;
     collection.GetSession(idx, &cpSessionControl);
+    NOTNULL(cpSessionControl);
     return cpSessionControl;
 }

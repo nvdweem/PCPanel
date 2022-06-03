@@ -20,20 +20,21 @@ SndCtrl::SndCtrl(JNIEnv* env, jobject obj) :
     if (FAILED(CoCreateInstance(CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, IID_IMMDeviceEnumerator, (void**)&cpEnumeratorL))) {
         cerr << "Unable to create device enumerator, more will fail later :(" << endl;
     }
-    cpEnumerator = cpEnumeratorL;
+    cpEnumerator = NOTNULL(cpEnumeratorL);
 
     cpDeviceListener.Set(new DeviceListener(*this, cpEnumerator));
     InitDevices();
 
-    pFocusListener = make_unique<FocusListener>(pJni);
+    pFocusListener = make_unique<FocusListener>(NOTNULL(pJni));
 }
 
 void SndCtrl::InitDevices() {
     auto cpDevices = EnumAudioEndpoints(*cpEnumerator);
+    NOTNULL(cpDevices);
     auto count = GetCount(*cpDevices);
     for (UINT idx = 0; idx < count; idx++) {
         auto cpDevice = DeviceFromCollection(*cpDevices, idx);
-        DeviceAdded(cpDevice);
+        DeviceAdded(NOTNULL(cpDevice));
     }
 
     for (int dataflow = eRender; dataflow < eAll; dataflow++) {
@@ -41,9 +42,8 @@ void SndCtrl::InitDevices() {
         for (int role = 0; role < ERole_enum_count; role++) {
             CComPtr<IMMDevice> cpDevice = nullptr;
             ERole rl = (ERole)role;
-            cpEnumerator->GetDefaultAudioEndpoint(df, rl, &cpDevice);
-    
-            if (cpDevice) {
+            
+            if (cpEnumerator->GetDefaultAudioEndpoint(df, rl, &cpDevice) == S_OK && cpDevice) {
                 LPWSTR id = nullptr;
                 cpDevice->GetId(&id);
     
@@ -60,10 +60,10 @@ void SndCtrl::DeviceAdded(CComPtr<IMMDevice> cpDevice) {
 
     float volume = 0;
     BOOL muted = 0;
-    auto volumeCtrl = GetVolumeControl(*cpDevice);
-    if (volumeCtrl) {
-        volumeCtrl->GetMasterVolumeLevelScalar(&volume);
-        volumeCtrl->GetMute(&muted);
+    auto cpVolumeCtrl = GetVolumeControl(*cpDevice);
+    if (cpVolumeCtrl) {
+        cpVolumeCtrl->GetMasterVolumeLevelScalar(&volume);
+        cpVolumeCtrl->GetMute(&muted);
     }
 
     JThread thread;
@@ -71,6 +71,7 @@ void SndCtrl::DeviceAdded(CComPtr<IMMDevice> cpDevice) {
         auto jObj = pJni->CallObject(thread, "deviceAdded", "(Ljava/lang/String;Ljava/lang/String;FZI)Lcom/getpcpanel/cpp/AudioDevice;",
             thread.jstr(nameAndId.name.get()), thread.jstr(nameAndId.id.get()), volume, muted, getDataFlow(*cpDevice)
         );
+        NOTNULL(jObj);
         devices.insert({ deviceId, make_unique<AudioDevice>(deviceId, cpDevice, jObj)});
     }
 }
@@ -147,7 +148,7 @@ void SndCtrl::UpdateDefaultDevice(wstring id, EDataFlow dataFlow, ERole role) {
 void SndCtrl::SetDefaultDevice(wstring id, EDataFlow dataFlow, ERole role) {
     JThread thread;
     if (*thread) {
-        auto jObj = pJni->CallObject(thread, "setDefaultDevice", "(Ljava/lang/String;II)V",
+        pJni->CallVoid(thread, "setDefaultDevice", "(Ljava/lang/String;II)V",
             thread.jstr(id.c_str()), dataFlow, role
         );
     }
@@ -156,6 +157,7 @@ void SndCtrl::SetDefaultDevice(wstring id, EDataFlow dataFlow, ERole role) {
 CComPtr<IMMDeviceCollection> SndCtrl::EnumAudioEndpoints(IMMDeviceEnumerator& enumerator) {
     CComPtr<IMMDeviceCollection> cpDeviceCol;
     enumerator.EnumAudioEndpoints(eAll, DEVICE_STATE_ACTIVE, &cpDeviceCol);
+    NOTNULL(cpDeviceCol);
     return cpDeviceCol;
 }
 
@@ -168,12 +170,15 @@ UINT SndCtrl::GetCount(IMMDeviceCollection& collection) {
 CComPtr<IMMDevice> SndCtrl::DeviceFromCollection(IMMDeviceCollection& collection, UINT idx) {
     CComPtr<IMMDevice> pDevice;
     collection.Item(idx, &pDevice);
+    NOTNULL(pDevice);
     return pDevice;
 }
 
 SDeviceNameId SndCtrl::DeviceNameId(IMMDevice& device) {
     LPWSTR pwszID = NULL;
-    device.GetId(&pwszID);
+    if (device.GetId(&pwszID) != S_OK) {
+        cout << "Unable to get device id" << endl;
+    }
 
     IPropertyStore* pProps = NULL;
     device.OpenPropertyStore(STGM_READ, &pProps);
@@ -183,7 +188,9 @@ SDeviceNameId SndCtrl::DeviceNameId(IMMDevice& device) {
     PropVariantInit(&varName);
 
     // Get the endpoint's friendly-name property.
-    pProps->GetValue(PKEY_Device_FriendlyName, &varName);
+    if (pProps->GetValue(PKEY_Device_FriendlyName, &varName) != S_OK) {
+        cout << "Unable to get name for " << pwszID << endl;
+    }
 
     return SDeviceNameId{ co_ptr<WCHAR>(varName.pwszVal), co_ptr<WCHAR>(pwszID) };
 }
@@ -191,5 +198,6 @@ SDeviceNameId SndCtrl::DeviceNameId(IMMDevice& device) {
 CComPtr<IAudioEndpointVolume> SndCtrl::GetVolumeControl(IMMDevice& device) {
     CComPtr<IAudioEndpointVolume> pVol;
     device.Activate(__uuidof(IAudioEndpointVolume), CLSCTX_ALL, NULL, (void**)&pVol);
+    NOTNULL(pVol);
     return pVol;
 }

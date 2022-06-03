@@ -1,4 +1,5 @@
 #pragma once
+#include "helpers.h"
 extern JavaVM* pJvm;
 
 class JThread {
@@ -34,6 +35,7 @@ public:
     void jstr(jstring str);
 
     JNIEnv* operator->() {
+        NOTNULL(pEnv);
         return pEnv;
     }
 
@@ -53,6 +55,7 @@ private:
 
 public:
     static JniCaller Create(jobject obj) {
+        NOTNULL(obj);
         JThread env;
         return JniCaller(env, obj);
     }
@@ -61,18 +64,21 @@ public:
 #ifndef NO_JNI
         if (*env) {
             this->obj = env->NewGlobalRef(obj);
+            NOTNULL(this->obj);
         }
 #endif
     }
     JniCaller(JNIEnv* env, jobject obj) {
 #ifndef NO_JNI
         this->obj = env->NewGlobalRef(obj);
+        NOTNULL(this->obj);
 #endif
     }
     ~JniCaller() {
 #ifndef NO_JNI
         JThread env;
         if (*env) {
+            NOTNULL(this->obj);
             env->DeleteGlobalRef(this->obj);
         }
 #endif
@@ -96,6 +102,7 @@ public:
             va_start(args, sig);
             auto result = env->CallObjectMethodV(obj, method, args);
             va_end(args);
+            NOTNULL(result);
             return result;
         }
         return nullptr;
@@ -115,6 +122,7 @@ public:
 private:
     jmethodID GetMethod(JThread& env, const char* name, const char* sig) {
         auto cls = env->GetObjectClass(obj);
+        NOTNULL(cls);
         if (!cls) {
             cerr << "Unable to find class for method " << name << "(" << sig << ")" << endl;
         }
@@ -122,6 +130,7 @@ private:
         if (!method) {
             cerr << "Unable to find method " << name << "(" << sig << ")" << endl;
         }
+        NOTNULL(method);
         return method;
     }
 #else

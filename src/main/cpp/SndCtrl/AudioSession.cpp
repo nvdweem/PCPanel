@@ -7,6 +7,7 @@
 CComPtr<IAudioSessionControl2> GetSession2(IAudioSessionControl& control) {
     CComPtr<IAudioSessionControl2> cpSessionControl2 = NULL;
     control.QueryInterface(__uuidof(IAudioSessionControl2), (void**)&cpSessionControl2);
+    NOTNULL(cpSessionControl2);
     return cpSessionControl2;
 }
 
@@ -47,6 +48,7 @@ void AudioSession::Init(JniCaller& audioDevice, function<void()> onRemoved) {
         auto jObj = audioDevice.CallObject(thread, "addSession", "(ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;FZ)Lcom/getpcpanel/cpp/AudioSession;",
             pid, thread.jstr(name.c_str()), thread.jstr(pname.c_str()), thread.jstr(icon), level, muted
         );
+        NOTNULL(jObj);
 
         cpListener.Set(new AudioSessionListener(cpSession, [&, onRemoved]() {
             JThread thread;

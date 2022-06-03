@@ -2,6 +2,7 @@
 #include "AudioSession.h"
 #include "JniCaller.h"
 #include "Listeners.h"
+#include "helpers.h"
 
 
 class AudioDevice : public SessionListenerCB
@@ -21,6 +22,7 @@ public:
     AudioDevice(const AudioDevice&) = delete;
 
     virtual void OnNewSession(IAudioSessionControl* cpSess) {
+        NOTNULL(cpSess);
         SessionAdded(cpSess);
     };
 
@@ -45,6 +47,7 @@ private:
     CComPtr<IAudioEndpointVolume> GetVolumeControl(IMMDevice& device) {
         CComPtr<IAudioEndpointVolume> cpVol;
         device.Activate(__uuidof(IAudioEndpointVolume), CLSCTX_ALL, NULL, (void**)&cpVol);
+        NOTNULL(cpVol);
         return cpVol;
     }
 };

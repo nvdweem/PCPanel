@@ -13,6 +13,7 @@ class SndCtrl;
 struct CoRelease {
     void operator()(LPVOID itm) {
         if (itm != NULL) {
+            NOTNULL(itm);
             CoTaskMemFree(itm);
         }
     }
@@ -106,10 +107,12 @@ public:
     }
 
     virtual void Start() {
+        NOTNULL(cpEnumerator);
         cpEnumerator->RegisterEndpointNotificationCallback(this);
     }
 
     virtual void Stop() {
+        NOTNULL(cpEnumerator);
         cpEnumerator->UnregisterEndpointNotificationCallback(this);
     }
 
@@ -166,9 +169,11 @@ public:
     DeviceVolumeListener(CComPtr<IAudioEndpointVolume> pVolume, JniCaller& jni) : pVolume(pVolume), jni(jni) {
     }
     virtual void Start() {
+        NOTNULL(pVolume);
         pVolume->RegisterControlChangeNotify(this);
     }
     virtual void Stop() {
+        NOTNULL(pVolume);
         pVolume->UnregisterControlChangeNotify(this);
     }
 
@@ -243,9 +248,11 @@ public:
         : sessionControl(sessionControl), removed(removed), jni(JniCaller::Create(obj)) {
     }
     virtual void Start() {
+        NOTNULL(sessionControl);
         sessionControl->RegisterAudioSessionNotification(this);
     }
     virtual void Stop() {
+        NOTNULL(sessionControl);
         sessionControl->UnregisterAudioSessionNotification(this);
     }
 
