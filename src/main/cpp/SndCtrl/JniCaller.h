@@ -117,6 +117,18 @@ public:
             va_end(args);
             return result;
         }
+        return 0;
+    }
+    jboolean CallBoolean(JThread& env, const char* name, const char* sig, ...) {
+        if (*env) {
+            auto method = GetMethod(env, name, sig);
+            va_list args;
+            va_start(args, sig);
+            auto result = env->CallBooleanMethod(obj, method, args);
+            va_end(args);
+            return result;
+        }
+        return false;
     }
 
 private:
@@ -137,5 +149,6 @@ private:
     void CallVoid(JThread& env, const char* name, const char* sig, ...) {}
     jobject CallObject(JThread& env, const char* name, const char* sig, ...) {return nullptr;}
     float CallFloat(JThread& env, const char* name, const char* sig, ...) {return 0;}
+    jboolean CallBoolean(JThread& env, const char* name, const char* sig, ...) {return 0;}
 #endif
 };

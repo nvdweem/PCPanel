@@ -137,7 +137,7 @@ JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_addAllRunningProces
             seen.insert(szProcessName);
 
             auto fileName = env->NewString((jchar*)szProcessName.c_str(), (jsize)szProcessName.length());
-            caller.CallVoid(thread, "add", "(Ljava/lang/Object;)Z", fileName);
+            caller.CallBoolean(thread, "add", "(Ljava/lang/Object;)Z", fileName);
         }
     }
 }

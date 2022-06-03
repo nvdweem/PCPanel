@@ -81,7 +81,7 @@ void SndCtrl::DeviceRemoved(wstring deviceId) {
         devices.erase(deviceId);
         JThread thread;
         if (*thread) {
-            auto jObj = pJni->CallObject(thread, "deviceRemoved", "(Ljava/lang/String;)V",
+            pJni->CallVoid(thread, "deviceRemoved", "(Ljava/lang/String;)V",
                 thread.jstr(deviceId.c_str())
             );
         }
