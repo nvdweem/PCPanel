@@ -6,16 +6,17 @@ class AudioSession
 {
 private:
     CComPtr<IAudioSessionControl> cpSession;
-    StoppingHandle<AudioSessionListener> cpListener;
     CComQIPtr<ISimpleAudioVolume> cpVolumeControl;
 
     int pid;
     wstring name;
+
+    StoppingHandle<AudioSessionListener> cpListener;
 public:
     AudioSession(CComPtr<IAudioSessionControl> ctrl);
     AudioSession(const AudioSession&) = delete;
 
-    void Init(JniCaller& audioDevice, function<void()> onRemoved);
+    void Init(JniCaller& audioDevice, AudioSessionListenerCB& callback);
     void SetVolume(float volume);
     void Mute(bool muted);
 

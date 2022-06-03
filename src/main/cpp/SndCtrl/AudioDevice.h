@@ -5,17 +5,17 @@
 #include "helpers.h"
 
 
-class AudioDevice : public SessionListenerCB
+class AudioDevice : public SessionListenerCB, public AudioSessionListenerCB
 {
 private:
     JniCaller jni;
-    wstring id;
     CComPtr<IMMDevice> cpDevice;
-
     CComPtr<IAudioEndpointVolume> cpVolume;
-    StoppingHandle<DeviceVolumeListener> cpDeviceVolumeListener;
 
+    wstring id;
     unordered_map<int, unique_ptr<AudioSession>> sessions;
+
+    StoppingHandle<DeviceVolumeListener> cpDeviceVolumeListener;
     StoppingHandle<SessionListener> cpSessionListener;
 public:
     AudioDevice(wstring id, CComPtr<IMMDevice> cpDevice, jobject obj);
@@ -36,6 +36,8 @@ public:
     const unordered_map<int, unique_ptr<AudioSession>>& GetSessions() const {
         return sessions;
     }
+
+    virtual void SessionRemoved(int pid) override;
 private:
     void SessionAdded(CComPtr<IAudioSessionControl> cpSession);
 

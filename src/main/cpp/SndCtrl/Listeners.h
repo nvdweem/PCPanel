@@ -237,15 +237,21 @@ public:
     ULONG STDMETHODCALLTYPE Release() override { return Listener::Release(); }
 };
 
+class AudioSessionListenerCB {
+public:
+    virtual void SessionRemoved(int pid) = 0;
+};
+
 class AudioSessionListener : public Listener, public IAudioSessionEvents {
 private:
-    CComPtr<IAudioSessionControl> sessionControl;
-    function<void()> removed;
     JniCaller jni;
+    AudioSessionListenerCB& callback;
+    CComPtr<IAudioSessionControl> sessionControl;
+    int pid;
 
 public:
-    AudioSessionListener(CComPtr<IAudioSessionControl> sessionControl, function<void()> removed, jobject obj)
-        : sessionControl(sessionControl), removed(removed), jni(JniCaller::Create(obj)) {
+    AudioSessionListener(CComPtr<IAudioSessionControl> sessionControl, int pid, AudioSessionListenerCB& callback, jobject obj)
+        : sessionControl(sessionControl), pid(pid), callback(callback), jni(JniCaller::Create(obj)) {
     }
     virtual void Start() {
         NOTNULL(sessionControl);
@@ -283,7 +289,7 @@ public:
     }
     virtual HRESULT STDMETHODCALLTYPE OnStateChanged(AudioSessionState NewState) {
         if (NewState == AudioSessionStateExpired) {
-            removed();
+            callback.SessionRemoved(pid);
         }
         return S_OK;
     }

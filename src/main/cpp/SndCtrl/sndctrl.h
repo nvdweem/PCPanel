@@ -14,9 +14,9 @@ class SndCtrl : public DeviceListenerCB
 private:
     shared_ptr<JniCaller> pJni;
     unique_ptr<FocusListener> pFocusListener;
-    StoppingHandle<DeviceListener> cpDeviceListener;
     CComPtr<IMMDeviceEnumerator> cpEnumerator;
     unordered_map<wstring, unique_ptr<AudioDevice>> devices;
+    StoppingHandle<DeviceListener> cpDeviceListener;
 
 public:
     SndCtrl(JNIEnv* env, jobject obj);
@@ -43,7 +43,6 @@ private:
     SDeviceNameId DeviceNameId(IMMDevice& device);
     CComPtr<IAudioEndpointVolume> GetVolumeControl(IMMDevice& device);
     CComPtr<IAudioSessionManager2> Activate(IMMDevice& device);
-
 };
 
 extern unique_ptr<SndCtrl> pSndCtrl;

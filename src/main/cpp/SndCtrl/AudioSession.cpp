@@ -30,7 +30,7 @@ AudioSession::AudioSession(CComPtr<IAudioSessionControl> session) :
     }
 }
 
-void AudioSession::Init(JniCaller& audioDevice, function<void()> onRemoved) {
+void AudioSession::Init(JniCaller& audioDevice, AudioSessionListenerCB& callback) {
     LPWSTR icon = NULL;
     cpSession->GetIconPath(&icon);
     co_ptr<WCHAR> pIcon(icon);
@@ -50,11 +50,7 @@ void AudioSession::Init(JniCaller& audioDevice, function<void()> onRemoved) {
         );
         NOTNULL(jObj);
 
-        cpListener.Set(new AudioSessionListener(cpSession, [&, onRemoved]() {
-            JThread thread;
-            audioDevice.CallVoid(thread, "removeSession", "(I)V", pid);
-            onRemoved();
-            }, jObj));
+        cpListener.Set(new AudioSessionListener(cpSession, pid, callback, jObj));
     }
 }
 

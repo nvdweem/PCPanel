@@ -59,10 +59,15 @@ void AudioDevice::SetDefault(EDataFlow dataFlow, ERole role) {
     }
 }
 
+void AudioDevice::SessionRemoved(int pid) {
+    JThread thread;
+    jni.CallVoid(thread, "removeSession", "(I)V", pid);
+}
+
 void AudioDevice::SessionAdded(CComPtr<IAudioSessionControl> session) {
     auto ptr = make_unique<AudioSession>(session);
     auto pid = ptr->GetPid();
-    ptr->Init(jni, [this, pid]() { sessions.erase(pid); });
+    ptr->Init(jni, *this);
     sessions.insert({pid, std::move(ptr)});
 }
 
