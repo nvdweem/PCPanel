@@ -2,8 +2,18 @@
 
 <!-- Releasenotes without version are included in releases -->
 
+**New:**
+
 - Added options to automatically switch to a profile when other windows get focus
 - You can set a main profile which will be loaded when you start the application
+- Added version checker. If a new version is released the UI will show that with a link to the download page.
+- More than 2 processes can be selected for volume control
+
+**Fixes:**
+
+- Profile save structure is changed to allow adding new features more easily
+- Getting the list of running processes doesn't crash the application anymore
+- The 'Open logfile' button now opens the correct folder
 
 ## [1.1.1]
 
