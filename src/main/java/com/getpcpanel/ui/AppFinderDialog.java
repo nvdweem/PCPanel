@@ -52,6 +52,10 @@ class AppFinderDialog extends Application implements Initializable {
 
     @Override
     public void start(Stage stage) {
+        start(stage, false);
+    }
+
+    public void start(Stage stage, boolean andWait) {
         this.stage = stage;
         var loader = new FXMLLoader(getClass().getResource("/assets/AppFinderDialog.fxml"));
         loader.setController(this);
@@ -66,7 +70,7 @@ class AppFinderDialog extends Application implements Initializable {
         stage.setScene(scene);
         stage.sizeToScene();
         stage.setTitle("Application Finder");
-        if (parentStage != null) {
+        if (parentStage != null || andWait) {
             stage.initModality(Modality.WINDOW_MODAL);
             stage.initOwner(parentStage);
             stage.showAndWait();

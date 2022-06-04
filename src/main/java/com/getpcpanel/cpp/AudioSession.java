@@ -32,4 +32,9 @@ public class AudioSession {
         this.volume = volume;
         this.muted = muted;
     }
+
+    public AudioSession name(String title) {
+        this.title = title;
+        return this;
+    }
 }

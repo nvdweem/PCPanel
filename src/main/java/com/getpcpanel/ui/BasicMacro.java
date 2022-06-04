@@ -5,7 +5,6 @@ import static com.getpcpanel.commands.command.CommandNoOp.NOOP;
 import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -121,8 +120,7 @@ public class BasicMacro extends Application implements Initializable {
     @FXML private TextField voicemeeterButtonParameter;
     @FXML private ChoiceBox<ButtonControlMode> voicemeeterButtonType;
     @FXML private ChoiceBox<Profile> profileDropdown;
-    @FXML private TextField volumeProcessField1;
-    @FXML private TextField volumeProcessField2;
+    @FXML private PickProcessesController appVolumeController;
     @FXML private RadioButton rdio_app_output_specific;
     @FXML private RadioButton rdio_app_output_default;
     @FXML private RadioButton rdio_app_output_all;
@@ -239,8 +237,6 @@ public class BasicMacro extends Application implements Initializable {
         if (processNameResult == null || id == null)
             return;
         switch (id) {
-            case "findApp1" -> processTextField = volumeProcessField1;
-            case "findApp2" -> processTextField = volumeProcessField2;
             case "findAppMute" -> processTextField = muteAppProcessField;
             case "findAppEndProcess" -> processTextField = endProcessField;
             default -> {
@@ -281,7 +277,7 @@ public class BasicMacro extends Application implements Initializable {
                         rdio_app_output_all.isSelected() ? "*" :
                                 rdio_app_output_specific.isSelected() ? Optional.ofNullable(app_vol_output_device.getSelectionModel().getSelectedItem()).map(AudioDevice::id).orElse("") :
                                         "";
-                yield new CommandVolumeProcess(List.of(volumeProcessField1.getText(), volumeProcessField2.getText()), device);
+                yield new CommandVolumeProcess(appVolumeController.getSelection(), device);
             }
             case "dialCommandVolumeFocus" -> new CommandVolumeFocus();
             case "dialCommandVolumeDevice" -> new CommandVolumeDevice(
@@ -687,10 +683,7 @@ public class BasicMacro extends Application implements Initializable {
         var dialInitializers = new HashMap<Class<? extends Command>, Consumer<?>>(); // Blegh
 
         dialInitializers.put(CommandVolumeProcess.class, (CommandVolumeProcess cmd) -> {
-            if (cmd.getProcessName().size() > 0)
-                volumeProcessField1.setText(cmd.getProcessName().get(0));
-            if (cmd.getProcessName().size() > 1)
-                volumeProcessField2.setText(cmd.getProcessName().get(1));
+            appVolumeController.setSelection(PickProcessesController.PickType.soundSource, cmd.getProcessName());
 
             if (StringUtils.equals(cmd.getDevice(), "*")) {
                 rdio_app_output_all.setSelected(true);

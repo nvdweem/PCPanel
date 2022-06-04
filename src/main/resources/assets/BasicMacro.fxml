@@ -315,24 +315,7 @@
                                     </padding>
                                     <children>
                                         <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="Enter a proccess to control volume"/>
-
-                                        <Label prefHeight="25.0" prefWidth="496.0" text="Program #1"/>
-                                        <HBox spacing="5.0">
-                                            <children>
-                                                <TextField fx:id="volumeProcessField1" editable="true" prefHeight="25.0" prefWidth="319.0" promptText="Enter Process Name    ex) chrome.exe"
-                                                           HBox.hgrow="ALWAYS"/>
-                                                <Button fx:id="findApp1" mnemonicParsing="false" onAction="#findApps" prefHeight="31.0" prefWidth="34.0" text="..."/>
-                                            </children>
-                                        </HBox>
-
-                                        <Label prefHeight="25.0" prefWidth="205.0" text="Program #2"/>
-                                        <HBox spacing="5.0">
-                                            <children>
-                                                <TextField fx:id="volumeProcessField2" editable="true" prefHeight="25.0" prefWidth="319.0" promptText="Enter Process Name    ex) chrome.exe"
-                                                           HBox.hgrow="ALWAYS"/>
-                                                <Button fx:id="findApp2" mnemonicParsing="false" onAction="#findApps" prefHeight="31.0" prefWidth="34.0" text="..."/>
-                                            </children>
-                                        </HBox>
+                                        <fx:include fx:id="appVolume" source="PickProcesses.fxml"/>
 
                                         <Label prefHeight="25.0" prefWidth="305.0" text="Sound Device to control the application on"/>
                                         <GridPane vgap="5.0">
