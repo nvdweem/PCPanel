@@ -51,7 +51,7 @@
                         <VBox prefWidth="50.0">
                             <children>
                                 <Label text="Applications that will automatically enable the profile"/>
-                                <VBox fx:id="applicationRows"/>
+                                <fx:include fx:id="focusOnListList" source="PickProcesses.fxml"/>
                                 <CheckBox fx:id="focusBackOnLost" mnemonicParsing="false" text="Back to main profile on focus lost">
                                     <VBox.margin>
                                         <Insets/>

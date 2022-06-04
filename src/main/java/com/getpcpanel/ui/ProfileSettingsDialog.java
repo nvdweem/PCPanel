@@ -2,8 +2,6 @@ package com.getpcpanel.ui;
 
 import java.util.Objects;
 
-import org.apache.commons.lang3.StringUtils;
-
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.Save;
@@ -14,14 +12,10 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import one.util.streamex.StreamEx;
 
@@ -29,8 +23,8 @@ public class ProfileSettingsDialog extends Application {
     private Stage stage;
     @FXML private TextField profileName;
     @FXML private CheckBox mainProfile;
-    @FXML private VBox applicationRows;
     @FXML private CheckBox focusBackOnLost;
+    @FXML private PickProcessesController focusOnListListController;
     private final DeviceSave deviceSave;
     private final Profile profile;
 
@@ -70,53 +64,7 @@ public class ProfileSettingsDialog extends Application {
         mainProfile.setSelected(profile.isMainProfile());
 
         focusBackOnLost.setSelected(profile.isFocusBackOnLost());
-        StreamEx.of(profile.getActivateApplications()).map(this::createApplicationPane).forEach(applicationRows.getChildren()::add);
-        applicationRows.getChildren().add(createApplicationPane(""));
-    }
-
-    private void removeEmptyIfNotLast() {
-        var toRemove = StreamEx.of(applicationRows.getChildren())
-                               .select(Pane.class)
-                               .filter(ar -> StringUtils.isBlank(((TextField) ar.getChildren().get(0)).getText()))
-                               .filter(ar -> !ar.equals(applicationRows.getChildren().get(applicationRows.getChildren().size() - 1)))
-                               .toList();
-        toRemove.forEach(applicationRows.getChildren()::remove);
-    }
-
-    private void ensureLastEmpty() {
-        if (applicationRows.getChildren().isEmpty()) {
-            applicationRows.getChildren().add(createApplicationPane(""));
-        } else {
-            var pane = (Pane) applicationRows.getChildren().get(applicationRows.getChildren().size() - 1);
-            if (!StringUtils.isBlank(((TextField) pane.getChildren().get(0)).getText())) {
-                applicationRows.getChildren().add(createApplicationPane(""));
-            }
-        }
-    }
-
-    private Pane createApplicationPane(String value) {
-        var pane = new HBox();
-
-        var textField = new TextField();
-        textField.setPromptText("Application");
-        textField.setText(value);
-
-        var button = new Button("...");
-        button.setOnAction(e -> {
-            UIHelper.showFilePicker("Application", textField);
-            ensureLastEmpty();
-        });
-        textField.setOnKeyReleased(e -> ensureLastEmpty());
-        textField.focusedProperty().addListener((o, oldPropertyValue, newPropertyValue) -> {
-            if (!newPropertyValue) {
-                removeEmptyIfNotLast();
-            }
-        });
-
-        HBox.setHgrow(textField, Priority.ALWAYS);
-        pane.getChildren().add(textField);
-        pane.getChildren().add(button);
-        return pane;
+        focusOnListListController.setSelection(PickProcessesController.PickType.process, profile.getActivateApplications());
     }
 
     @FXML
@@ -129,11 +77,7 @@ public class ProfileSettingsDialog extends Application {
 
         profile.setFocusBackOnLost(focusBackOnLost.isSelected());
         profile.getActivateApplications().clear();
-        StreamEx.of(applicationRows.getChildren())
-                .select(Pane.class)
-                .map(p -> ((TextField) p.getChildren().get(0)).getText())
-                .filter(StringUtils::isNotBlank)
-                .into(profile.getActivateApplications());
+        profile.setActivateApplications(focusOnListListController.getSelection());
 
         Save.saveFile();
         stage.close();
