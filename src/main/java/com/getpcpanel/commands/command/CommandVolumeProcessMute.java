@@ -1,5 +1,7 @@
 package com.getpcpanel.commands.command;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.cpp.SndCtrl;
 
@@ -12,7 +14,8 @@ public class CommandVolumeProcessMute extends CommandVolume implements ButtonAct
     private final String processName;
     private final MuteType muteType;
 
-    public CommandVolumeProcessMute(String processName, MuteType muteType) {
+    @JsonCreator
+    public CommandVolumeProcessMute(@JsonProperty("processName") String processName, @JsonProperty("muteType") MuteType muteType) {
         this.processName = processName;
         this.muteType = muteType;
     }

@@ -1,5 +1,7 @@
 package com.getpcpanel.commands.command;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.obs.OBS;
 
 import lombok.Getter;
@@ -10,7 +12,8 @@ import lombok.ToString;
 public class CommandObsSetScene extends CommandObs implements ButtonAction {
     private final String scene;
 
-    public CommandObsSetScene(String scene) {
+    @JsonCreator
+    public CommandObsSetScene(@JsonProperty("scene") String scene) {
         this.scene = scene;
     }
 

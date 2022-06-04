@@ -2,6 +2,9 @@ package com.getpcpanel.commands.command;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
@@ -12,7 +15,8 @@ import lombok.extern.log4j.Log4j2;
 public class CommandVolumeDefaultDeviceToggle extends CommandVolume implements ButtonAction {
     private final List<String> devices;
 
-    public CommandVolumeDefaultDeviceToggle(List<String> devices) {
+    @JsonCreator
+    public CommandVolumeDefaultDeviceToggle(@JsonProperty("devices") List<String> devices) {
         this.devices = devices;
     }
 

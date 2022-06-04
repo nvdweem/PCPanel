@@ -1,5 +1,7 @@
 package com.getpcpanel.commands.command;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.voicemeeter.Voicemeeter;
 
 import lombok.Getter;
@@ -11,7 +13,8 @@ public class CommandVoiceMeeterAdvanced extends CommandVoiceMeeter implements Di
     private final String fullParam;
     private final Voicemeeter.DialControlMode ct;
 
-    public CommandVoiceMeeterAdvanced(String fullParam, Voicemeeter.DialControlMode ct) {
+    @JsonCreator
+    public CommandVoiceMeeterAdvanced(@JsonProperty("fullParam") String fullParam, @JsonProperty("ct") Voicemeeter.DialControlMode ct) {
         this.fullParam = fullParam;
         this.ct = ct;
     }

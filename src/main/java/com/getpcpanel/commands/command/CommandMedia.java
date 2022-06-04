@@ -2,6 +2,8 @@ package com.getpcpanel.commands.command;
 
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.sun.jna.platform.win32.BaseTSD;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef;
@@ -35,7 +37,8 @@ public class CommandMedia extends Command implements ButtonAction {
         }
     }
 
-    public CommandMedia(VolumeButton button) {
+    @JsonCreator
+    public CommandMedia(@JsonProperty("button") VolumeButton button) {
         this.button = button;
     }
 

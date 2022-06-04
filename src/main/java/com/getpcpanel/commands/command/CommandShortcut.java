@@ -3,6 +3,8 @@ package com.getpcpanel.commands.command;
 import java.io.File;
 import java.io.IOException;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.util.Util;
 
 import lombok.Getter;
@@ -16,7 +18,8 @@ public class CommandShortcut extends Command implements ButtonAction {
     private static final Runtime rt = Runtime.getRuntime();
     private final String shortcut;
 
-    public CommandShortcut(String shortcut) {
+    @JsonCreator
+    public CommandShortcut(@JsonProperty("shortcut") String shortcut) {
         this.shortcut = shortcut;
     }
 

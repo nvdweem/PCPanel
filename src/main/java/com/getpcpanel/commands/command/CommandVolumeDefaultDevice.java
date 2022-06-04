@@ -1,5 +1,7 @@
 package com.getpcpanel.commands.command;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.cpp.SndCtrl;
 
 import lombok.Getter;
@@ -10,7 +12,8 @@ import lombok.ToString;
 public class CommandVolumeDefaultDevice extends CommandVolume implements ButtonAction {
     private final String deviceId;
 
-    public CommandVolumeDefaultDevice(String deviceId) {
+    @JsonCreator
+    public CommandVolumeDefaultDevice(@JsonProperty("deviceId") String deviceId) {
         this.deviceId = deviceId;
     }
 

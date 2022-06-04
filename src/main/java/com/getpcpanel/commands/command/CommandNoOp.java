@@ -6,7 +6,7 @@ import lombok.ToString;
 public final class CommandNoOp extends Command implements ButtonAction, DialAction {
     public static final CommandNoOp NOOP = new CommandNoOp();
 
-    private CommandNoOp() {
+    public CommandNoOp() {
     }
 
     @Override

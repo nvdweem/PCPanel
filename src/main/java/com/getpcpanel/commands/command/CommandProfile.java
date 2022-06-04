@@ -1,5 +1,7 @@
 package com.getpcpanel.commands.command;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.Main;
 
 import javafx.application.Platform;
@@ -10,7 +12,8 @@ import lombok.ToString;
 public class CommandProfile extends Command implements DeviceAction {
     @Getter private final String profile;
 
-    public CommandProfile(String profile) {
+    @JsonCreator
+    public CommandProfile(@JsonProperty("profile") String profile) {
         this.profile = profile;
     }
 

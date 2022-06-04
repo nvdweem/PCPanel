@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.function.Consumer;
 
@@ -275,18 +276,18 @@ public class BasicMacro extends Application implements Initializable {
 
     private Command determineVolCommand(String dialType) {
         return switch (dialType) {
-            case "app_volume" -> {
+            case "dialCommandVolumeProcess" -> {
                 var device =
                         rdio_app_output_all.isSelected() ? "*" :
-                                rdio_app_output_specific.isSelected() ? app_vol_output_device.getSelectionModel().getSelectedItem().id() :
+                                rdio_app_output_specific.isSelected() ? Optional.ofNullable(app_vol_output_device.getSelectionModel().getSelectedItem()).map(AudioDevice::id).orElse("") :
                                         "";
                 yield new CommandVolumeProcess(List.of(volumeProcessField1.getText(), volumeProcessField2.getText()), device);
             }
-            case "focus_volume" -> new CommandVolumeFocus();
-            case "device_volume" -> new CommandVolumeDevice(
+            case "dialCommandVolumeFocus" -> new CommandVolumeFocus();
+            case "dialCommandVolumeDevice" -> new CommandVolumeDevice(
                     rdio_device_specific.isSelected() && volumedevice.getSelectionModel().getSelectedItem() != null ? volumedevice.getSelectionModel().getSelectedItem().id() : "");
-            case "obs_dial" -> new CommandObsSetSourceVolume(obsAudioSources.getSelectionModel().getSelectedItem());
-            case "voicemeeter_dial" -> {
+            case "dialCommandObs" -> new CommandObsSetSourceVolume(obsAudioSources.getSelectionModel().getSelectedItem());
+            case "dialCommandVoiceMeeter" -> {
                 if (voicemeeterTabPaneDial.getSelectionModel().getSelectedIndex() == 0) {
                     yield new CommandVoiceMeeterBasic(voicemeeterBasicDialIO.getValue(), voicemeeterBasicDialIndex.getValue() - 1, voicemeeterBasicDial.getValue());
                 }
@@ -305,19 +306,19 @@ public class BasicMacro extends Application implements Initializable {
 
     private Command determineButtonCommand(String buttonType) {
         return switch (buttonType) {
-            case "keystroke" -> new CommandKeystroke(keystrokeField.getText());
-            case "shortcut" -> new CommandShortcut(shortcutField.getText());
-            case "media" -> new CommandMedia(CommandMedia.VolumeButton.valueOf(((RadioButton) mediagroup.getSelectedToggle()).getId()));
-            case "end_program" -> new CommandEndProgram(rdioEndSpecificProgram.isSelected(), endProcessField.getText());
-            case "sound_device" -> sounddevices.getValue() == null ? NOOP : new CommandVolumeDefaultDevice(sounddevices.getValue().id());
-            case "toggle_device" -> new CommandVolumeDefaultDeviceToggle(soundDevices2.getItems().stream().map(AudioDevice::id).toList());
-            case "mute_app" ->
+            case "btnCommandKeystroke" -> new CommandKeystroke(keystrokeField.getText());
+            case "btnCommandShortcut" -> new CommandShortcut(shortcutField.getText());
+            case "btnCommandMedia" -> new CommandMedia(CommandMedia.VolumeButton.valueOf(((RadioButton) mediagroup.getSelectedToggle()).getId()));
+            case "btnCommandEndProgram" -> new CommandEndProgram(rdioEndSpecificProgram.isSelected(), endProcessField.getText());
+            case "btnCommandVolumeDefaultDevice" -> sounddevices.getValue() == null ? NOOP : new CommandVolumeDefaultDevice(sounddevices.getValue().id());
+            case "btnCommandVolumeDefaultDeviceToggle" -> new CommandVolumeDefaultDeviceToggle(soundDevices2.getItems().stream().map(AudioDevice::id).toList());
+            case "btnCommandVolumeProcessMute" ->
                     new CommandVolumeProcessMute(muteAppProcessField.getText(), rdio_mute_unmute.isSelected() ? MuteType.unmute : rdio_mute_mute.isSelected() ? MuteType.mute : MuteType.toggle);
-            case "mute_device" -> {
+            case "btnCommandVolumeDeviceMute" -> {
                 var device = rdio_muteDevice_Default.isSelected() || muteSoundDevice.getValue() == null ? "" : muteSoundDevice.getValue().id();
                 yield new CommandVolumeDeviceMute(device, rdio_muteDevice_unmute.isSelected() ? MuteType.unmute : rdio_muteDevice_mute.isSelected() ? MuteType.mute : MuteType.toggle);
             }
-            case "obs_button" -> {
+            case "btnCommandObs" -> {
                 if (obs_rdio_SetScene.isSelected()) {
                     yield new CommandObsSetScene(obsSetScene.getSelectionModel().getSelectedItem());
                 } else if (obs_rdio_MuteSource.isSelected()) {
@@ -328,7 +329,7 @@ public class BasicMacro extends Application implements Initializable {
                     yield NOOP;
                 }
             }
-            case "voicemeeter_button" -> {
+            case "btnCommandVoiceMeeter" -> {
                 if (voicemeeterTabPaneButton.getSelectionModel().getSelectedIndex() == 0) {
                     yield new CommandVoiceMeeterBasicButton(voicemeeterBasicButtonIO.getValue(), voicemeeterBasicButtonIndex.getValue() - 1, voicemeeterBasicButton.getValue());
                 } else if (voicemeeterTabPaneButton.getSelectionModel().getSelectedIndex() == 1) {
@@ -339,7 +340,7 @@ public class BasicMacro extends Application implements Initializable {
                 }
                 yield NOOP;
             }
-            case "profile" -> new CommandProfile(profileDropdown.getValue() == null ? null : profileDropdown.getValue().getName());
+            case "btnCommandProfile" -> new CommandProfile(profileDropdown.getValue() == null ? null : profileDropdown.getValue().getName());
             default -> NOOP;
         };
     }
@@ -581,7 +582,7 @@ public class BasicMacro extends Application implements Initializable {
     }
 
     private void initButtonFields() {
-        if (!hasButton || buttonData == null || buttonData == NOOP)
+        if (!hasButton || buttonData == null || buttonData.equals(NOOP))
             return;
         selectTabById(buttonTabPane, "btn" + buttonData.getClass().getSimpleName());
         selectTabById(buttonTabPane, "btn" + buttonData.getClass().getSuperclass().getSimpleName());
@@ -591,7 +592,7 @@ public class BasicMacro extends Application implements Initializable {
     }
 
     private void initDialFields() {
-        if (volData == null || volData == NOOP)
+        if (volData == null || volData.equals(NOOP))
             return;
         selectTabById(dialTabPane, "dial" + volData.getClass().getSimpleName());
         selectTabById(dialTabPane, "dial" + volData.getClass().getSuperclass().getSimpleName());
@@ -693,7 +694,7 @@ public class BasicMacro extends Application implements Initializable {
 
             if (StringUtils.equals(cmd.getDevice(), "*")) {
                 rdio_app_output_all.setSelected(true);
-            } else if (!StringUtils.isNotBlank(cmd.getDevice())) {
+            } else if (StringUtils.isNotBlank(cmd.getDevice())) {
                 rdio_app_output_specific.setSelected(true);
                 app_vol_output_device.setValue(getSoundDeviceById(cmd.getDevice()));
             } else {

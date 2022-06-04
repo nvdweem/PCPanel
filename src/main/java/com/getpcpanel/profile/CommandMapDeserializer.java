@@ -6,6 +6,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.node.ValueNode;
@@ -20,7 +21,9 @@ public class CommandMapDeserializer extends JsonDeserializer<Map<Integer, Comman
         if (p.currentToken() == JsonToken.START_ARRAY) {
             return readOldFormat(p);
         }
-        return null;
+        var type = new TypeReference<Map<Integer, Command>>() {
+        };
+        return p.readValueAs(type);
     }
 
     private Map<Integer, Command> readOldFormat(JsonParser p) throws IOException {

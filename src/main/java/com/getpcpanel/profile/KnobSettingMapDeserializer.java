@@ -6,6 +6,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 
@@ -15,7 +16,10 @@ public class KnobSettingMapDeserializer extends JsonDeserializer<Map<Integer, Kn
         if (p.currentToken() == JsonToken.START_ARRAY) {
             return readOldFormat(p);
         }
-        return null;
+
+        var type = new TypeReference<Map<Integer, KnobSetting>>() {
+        };
+        return p.readValueAs(type);
     }
 
     private Map<Integer, KnobSetting> readOldFormat(JsonParser p) throws IOException {

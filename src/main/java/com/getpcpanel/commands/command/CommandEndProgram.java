@@ -4,6 +4,8 @@ import java.io.IOException;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.cpp.SndCtrl;
 
 import lombok.Getter;
@@ -18,7 +20,8 @@ public class CommandEndProgram extends Command implements ButtonAction {
     private final boolean specific;
     private final String name;
 
-    public CommandEndProgram(boolean specific, String name) {
+    @JsonCreator
+    public CommandEndProgram(@JsonProperty("specific") boolean specific, @JsonProperty("name") String name) {
         this.specific = specific;
         this.name = name;
     }

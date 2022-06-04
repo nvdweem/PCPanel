@@ -1,5 +1,7 @@
 package com.getpcpanel.commands.command;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.voicemeeter.Voicemeeter;
 
 import lombok.Getter;
@@ -12,7 +14,8 @@ public class CommandVoiceMeeterBasicButton extends CommandVoiceMeeter implements
     private final int index;
     private final Voicemeeter.ButtonType bt;
 
-    public CommandVoiceMeeterBasicButton(Voicemeeter.ControlType ct, int index, Voicemeeter.ButtonType bt) {
+    @JsonCreator
+    public CommandVoiceMeeterBasicButton(@JsonProperty("ct") Voicemeeter.ControlType ct, @JsonProperty("index") int index, @JsonProperty("bt") Voicemeeter.ButtonType bt) {
         this.ct = ct;
         this.index = index;
         this.bt = bt;

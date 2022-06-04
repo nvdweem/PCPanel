@@ -1,5 +1,7 @@
 package com.getpcpanel.commands.command;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.voicemeeter.Voicemeeter;
 
 import lombok.Getter;
@@ -12,7 +14,8 @@ public class CommandVoiceMeeterBasic extends CommandVoiceMeeter implements DialA
     private final int index;
     private final Voicemeeter.DialType dt;
 
-    public CommandVoiceMeeterBasic(Voicemeeter.ControlType ct, int index, Voicemeeter.DialType dt) {
+    @JsonCreator
+    public CommandVoiceMeeterBasic(@JsonProperty("ct") Voicemeeter.ControlType ct, @JsonProperty("index") int index, @JsonProperty("dt") Voicemeeter.DialType dt) {
         this.ct = ct;
         this.index = index;
         this.dt = dt;

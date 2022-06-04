@@ -2,6 +2,8 @@ package com.getpcpanel.commands.command;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.cpp.SndCtrl;
 
 import lombok.Getter;
@@ -13,7 +15,8 @@ public class CommandVolumeProcess extends CommandVolume implements DialAction {
     private final List<String> processName;
     private final String device;
 
-    public CommandVolumeProcess(List<String> processName, String device) {
+    @JsonCreator
+    public CommandVolumeProcess(@JsonProperty("processName") List<String> processName, @JsonProperty("device") String device) {
         this.processName = processName;
         this.device = device;
     }

@@ -1,5 +1,7 @@
 package com.getpcpanel.commands.command;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.cpp.SndCtrl;
 
@@ -12,7 +14,8 @@ public class CommandVolumeDeviceMute extends CommandVolume implements ButtonActi
     private final String deviceId;
     private final MuteType muteType;
 
-    public CommandVolumeDeviceMute(String deviceId, MuteType muteType) {
+    @JsonCreator
+    public CommandVolumeDeviceMute(@JsonProperty("deviceId") String deviceId, @JsonProperty("muteType") MuteType muteType) {
         this.deviceId = deviceId;
         this.muteType = muteType;
     }

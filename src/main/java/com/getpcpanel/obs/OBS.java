@@ -61,6 +61,8 @@ public final class OBS {
     }
 
     public static void setSourceVolume(String sourceName, int vol) {
+        if (controller == null)
+            return;
         var waiter = new Object();
         try {
             var decimal = vol / 100.0D;
