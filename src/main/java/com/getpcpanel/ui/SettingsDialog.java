@@ -1,10 +1,12 @@
 package com.getpcpanel.ui;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
+import com.getpcpanel.Main;
 import com.getpcpanel.obs.OBSListener;
 import com.getpcpanel.obs.remote.OBSRemoteController;
 import com.getpcpanel.profile.Save;
@@ -115,7 +117,7 @@ public class SettingsDialog extends Application implements Initializable {
     @FXML
     private void openLogsFolder(ActionEvent event) {
         try {
-            Runtime.getRuntime().exec("cmd /c \"start logs\"");
+            Runtime.getRuntime().exec("cmd /c \"start %s\"".formatted(new File(Main.FILES_ROOT, "logs").getAbsolutePath()));
         } catch (IOException e) {
             log.error("Unable to open logs folder", e);
         }
