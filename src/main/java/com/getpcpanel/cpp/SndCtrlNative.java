@@ -1,7 +1,5 @@
 package com.getpcpanel.cpp;
 
-import java.util.Set;
-
 enum SndCtrlNative {
     instance;
 
@@ -21,5 +19,5 @@ enum SndCtrlNative {
 
     public native String getFocusApplication();
 
-    public native void addAllRunningProcesses(Set<String> process); // Object because the javac compiler doesn't like the actual type
+    public native String[] getAllRunningProcesses();
 }

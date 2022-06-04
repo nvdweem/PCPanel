@@ -112,32 +112,36 @@ JNIEXPORT jstring JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_getFocusApplicat
 
 /*
  * Class:     com_getpcpanel_cpp_SndCtrlNative
- * Method:    addAllRunningProcesses
- * Signature: (Ljava/util/Set;)V
+ * Method:    getAllRunningProcesses
+ * Signature: ()[Ljava/lang/String;
  */
-JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_addAllRunningProcesses(JNIEnv* env, jobject, jobject target) {
+JNIEXPORT jobjectArray JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_getAllRunningProcesses(JNIEnv* env, jobject) {
     DWORD aProcesses[1024], cbNeeded;
 
     if (!EnumProcesses(aProcesses, sizeof(aProcesses), &cbNeeded))
-        return;
+        return nullptr;
 
     auto cProcesses = cbNeeded / sizeof(DWORD);
     set<wstring> seen;
-
-    JThread thread(env);
-    JniCaller caller(thread, target);
 
     for (auto i = 0; i < cProcesses; i++) {
         if (aProcesses[i] != 0) {
             auto pid = aProcesses[i];
             auto szProcessName = GetProcessName(pid);
-            if (seen.find(szProcessName) != seen.end()) {
+            if (szProcessName.empty() || seen.find(szProcessName) != seen.end()) {
                 continue;
             }
             seen.insert(szProcessName);
-
-            auto fileName = env->NewString((jchar*)szProcessName.c_str(), (jsize)szProcessName.length());
-            caller.CallBoolean(thread, "add", "(Ljava/lang/Object;)Z", fileName);
         }
     }
+
+    JThread thread(env);
+    auto ret = (jobjectArray)env->NewObjectArray((jsize) seen.size(), env->FindClass("java/lang/String"), env->NewStringUTF(""));
+    auto idx = 0;
+    for (auto entry : seen) {
+        auto str = thread.jstr(entry.c_str());
+        env->SetObjectArrayElement(ret, idx++, str);
+    }
+
+    return ret;
 }

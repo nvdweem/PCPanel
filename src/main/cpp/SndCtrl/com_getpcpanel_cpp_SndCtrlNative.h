@@ -73,11 +73,11 @@ JNIEXPORT jstring JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_getFocusApplicat
 
 /*
  * Class:     com_getpcpanel_cpp_SndCtrlNative
- * Method:    addAllRunningProcesses
- * Signature: (Ljava/util/Set;)V
+ * Method:    getAllRunningProcesses
+ * Signature: ()[Ljava/lang/String;
  */
-JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_addAllRunningProcesses
-  (JNIEnv *, jobject, jobject);
+JNIEXPORT jobjectArray JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_getAllRunningProcesses
+  (JNIEnv *, jobject);
 
 #ifdef __cplusplus
 }

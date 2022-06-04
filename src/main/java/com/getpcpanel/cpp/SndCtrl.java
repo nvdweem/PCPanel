@@ -101,8 +101,8 @@ public enum SndCtrl {
 
     public static List<File> getRunningApplications() {
         var running = new HashSet<String>();
-        SndCtrlNative.instance.addAllRunningProcesses(running);
-        return StreamEx.of(running).map(StringUtils::trimToNull).nonNull().map(File::new).sorted(Comparator.comparing(File::getName)).toImmutableList();
+        var arr = SndCtrlNative.instance.getAllRunningProcesses();
+        return StreamEx.of(arr).map(StringUtils::trimToNull).nonNull().map(File::new).sorted(Comparator.comparing(File::getName)).toImmutableList();
     }
 
     private static String defaultDeviceOnEmpty(String deviceId) {

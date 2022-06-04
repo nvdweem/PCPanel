@@ -4,6 +4,8 @@
 DWORD   GetFocusProcessId();
 wstring GetProcessName(DWORD procId);
 
+#undef DEBUG
+
 #ifdef DEBUG
 #define NOTNULL(x) notNull(x, __LINE__, __FILE__)
 #else
