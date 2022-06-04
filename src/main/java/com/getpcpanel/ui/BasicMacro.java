@@ -5,6 +5,7 @@ import static com.getpcpanel.commands.command.CommandNoOp.NOOP;
 import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -94,7 +95,6 @@ public class BasicMacro extends Application implements Initializable {
     @FXML private ChoiceBox<AudioDevice> sounddevices;
     @FXML private ListView<AudioDevice> soundDeviceSource;
     @FXML private ListView<AudioDevice> soundDevices2;
-    @FXML private TextField muteAppProcessField;
     @FXML private RadioButton rdio_mute_toggle;
     @FXML private RadioButton rdio_mute_mute;
     @FXML private RadioButton rdio_mute_unmute;
@@ -121,6 +121,7 @@ public class BasicMacro extends Application implements Initializable {
     @FXML private ChoiceBox<ButtonControlMode> voicemeeterButtonType;
     @FXML private ChoiceBox<Profile> profileDropdown;
     @FXML private PickProcessesController appVolumeController;
+    @FXML private PickProcessesController appMuteController;
     @FXML private RadioButton rdio_app_output_specific;
     @FXML private RadioButton rdio_app_output_default;
     @FXML private RadioButton rdio_app_output_all;
@@ -236,13 +237,11 @@ public class BasicMacro extends Application implements Initializable {
         var processNameResult = afd.getProcessName();
         if (processNameResult == null || id == null)
             return;
-        switch (id) {
-            case "findAppMute" -> processTextField = muteAppProcessField;
-            case "findAppEndProcess" -> processTextField = endProcessField;
-            default -> {
-                log.error("invalid findApp button");
-                return;
-            }
+        if ("findAppEndProcess".equals(id)) {
+            processTextField = endProcessField;
+        } else {
+            log.error("invalid findApp button");
+            return;
         }
         processTextField.setText(processNameResult);
     }
@@ -308,8 +307,8 @@ public class BasicMacro extends Application implements Initializable {
             case "btnCommandEndProgram" -> new CommandEndProgram(rdioEndSpecificProgram.isSelected(), endProcessField.getText());
             case "btnCommandVolumeDefaultDevice" -> sounddevices.getValue() == null ? NOOP : new CommandVolumeDefaultDevice(sounddevices.getValue().id());
             case "btnCommandVolumeDefaultDeviceToggle" -> new CommandVolumeDefaultDeviceToggle(soundDevices2.getItems().stream().map(AudioDevice::id).toList());
-            case "btnCommandVolumeProcessMute" ->
-                    new CommandVolumeProcessMute(muteAppProcessField.getText(), rdio_mute_unmute.isSelected() ? MuteType.unmute : rdio_mute_mute.isSelected() ? MuteType.mute : MuteType.toggle);
+            case "btnCommandVolumeProcessMute" -> new CommandVolumeProcessMute(new HashSet<>(appMuteController.getSelection()),
+                    rdio_mute_unmute.isSelected() ? MuteType.unmute : rdio_mute_mute.isSelected() ? MuteType.mute : MuteType.toggle);
             case "btnCommandVolumeDeviceMute" -> {
                 var device = rdio_muteDevice_Default.isSelected() || muteSoundDevice.getValue() == null ? "" : muteSoundDevice.getValue().id();
                 yield new CommandVolumeDeviceMute(device, rdio_muteDevice_unmute.isSelected() ? MuteType.unmute : rdio_muteDevice_mute.isSelected() ? MuteType.mute : MuteType.toggle);
@@ -630,7 +629,7 @@ public class BasicMacro extends Application implements Initializable {
             soundDeviceSource.getItems().removeAll(devices);
         });
         buttonInitializers.put(CommandVolumeProcessMute.class, (CommandVolumeProcessMute cmd) -> {
-            muteAppProcessField.setText(cmd.getProcessName());
+            appMuteController.setSelection(PickProcessesController.PickType.soundSource, cmd.getProcessName());
             switch (cmd.getMuteType()) {
                 case unmute -> rdio_mute_unmute.setSelected(true);
                 case mute -> rdio_mute_mute.setSelected(true);

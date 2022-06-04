@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -84,9 +85,9 @@ public enum SndCtrl {
         SndCtrlNative.instance.setFocusVolume(volume);
     }
 
-    public static void muteProcess(String fileName, MuteType mute) {
+    public static void muteProcesses(Set<String> fileName, MuteType mute) {
         StreamEx.ofValues(instance.devices).flatCollection(d -> d.getSessions().values())
-                .filter(s -> s.executable() != null && StringUtils.equals(fileName, s.executable().getName()))
+                .filter(s -> s.executable() != null && fileName.contains(s.executable().getName()))
                 .forEach(s -> muteProcess(s, mute));
     }
 

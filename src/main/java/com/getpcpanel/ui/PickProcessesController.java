@@ -1,5 +1,6 @@
 package com.getpcpanel.ui;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,10 +28,11 @@ public class PickProcessesController {
         return StreamEx.of(pickRows.getChildren()).select(Pane.class).map(pane -> pane.getChildren().get(0)).select(TextField.class).map(TextField::getText).filter(StringUtils::isNotBlank).toList();
     }
 
-    public void setSelection(PickType type, List<String> volData) {
+    public void setSelection(PickType type, Collection<String> volData) {
         pickType = type;
         StreamEx.of(volData).map(StringUtils::trimToNull).nonNull().map(this::createProcessRow).forEach(pickRows.getChildren()::add);
         pickRows.getChildren().add(createProcessRow(""));
+        ensureLastEmpty();
     }
 
     private void removeEmptyIfNotLast() {

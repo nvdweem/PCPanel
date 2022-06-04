@@ -132,12 +132,7 @@
                             </padding>
                             <children>
                                 <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="Enter an application to mute"/>
-                                <HBox spacing="5.0">
-                                    <children>
-                                        <TextField fx:id="muteAppProcessField" prefHeight="27.0" prefWidth="330.0" promptText="spotify.exe" HBox.hgrow="ALWAYS"/>
-                                        <Button fx:id="findAppMute" mnemonicParsing="false" onAction="#findApps" prefHeight="31.0" prefWidth="34.0" text="..."/>
-                                    </children>
-                                </HBox>
+                                <fx:include fx:id="appMute" source="PickProcesses.fxml"/>
 
                                 <RadioButton fx:id="rdio_mute_toggle" mnemonicParsing="false" selected="true" text="Toggle Mute/Unmute">
                                     <toggleGroup>

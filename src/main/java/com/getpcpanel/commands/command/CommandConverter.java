@@ -3,6 +3,7 @@ package com.getpcpanel.commands.command;
 import static com.getpcpanel.commands.command.CommandNoOp.NOOP;
 
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -54,7 +55,7 @@ public final class CommandConverter {
             case "end_program" -> new CommandEndProgram(StringUtils.equals("specific", data[1]), data[2]);
             case "sound_device" -> new CommandVolumeDefaultDevice(data[1]);
             case "toggle_device" -> new CommandVolumeDefaultDeviceToggle(List.of(data[1].split("\\|")));
-            case "mute_app" -> new CommandVolumeProcessMute(data[1], MuteType.valueOf(data[2]));
+            case "mute_app" -> new CommandVolumeProcessMute(Set.of(data[1]), MuteType.valueOf(data[2]));
             case "mute_device" -> new CommandVolumeDeviceMute(data[1], MuteType.valueOf(data[2]));
             case "obs_button" -> {
                 if ("set_scene".equals(data[1])) {
