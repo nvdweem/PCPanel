@@ -3,20 +3,19 @@ package com.getpcpanel.commands.command;
 import com.getpcpanel.cpp.SndCtrl;
 
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
-public class CommandVolumeDevice extends CommandVolume {
+@ToString(callSuper = true)
+public class CommandVolumeDevice extends CommandVolume implements DialAction {
     private final String deviceId;
-    private final int volume;
 
-    public CommandVolumeDevice(String device, int knob, String deviceId, int volume) {
-        super(device, knob);
+    public CommandVolumeDevice(String deviceId) {
         this.deviceId = deviceId;
-        this.volume = volume;
     }
 
     @Override
-    public void execute() {
+    public void execute(int volume) {
         SndCtrl.setDeviceVolume(deviceId, volume / 100f);
     }
 }

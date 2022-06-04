@@ -57,8 +57,8 @@ public class Save {
         Main.saveFileExists = true;
         for (var ds : get().getDevices().values()) {
             var p = ds.getCurrentProfile();
-            p.setButtonData(ds.buttonData);
-            p.setDialData(ds.dialData);
+            p.setButtonData(ds.getButtonData());
+            p.setDialData(ds.getDialData());
             p.setLightingConfig(ds.getLightingConfig());
             p.setKnobSettings(ds.getKnobSettings());
         }

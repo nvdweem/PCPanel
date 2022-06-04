@@ -3,16 +3,17 @@ package com.getpcpanel.commands.command;
 import java.util.concurrent.TimeUnit;
 
 import lombok.Getter;
+import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
 
 @Getter
 @Log4j2
-public class CommandRun extends Command {
+@ToString(callSuper = true)
+public class CommandRun extends Command implements ButtonAction {
     private static final Runtime rt = Runtime.getRuntime();
     private final String command;
 
-    public CommandRun(String device, int knob, String command) {
-        super(device, knob);
+    public CommandRun(String command) {
         this.command = command;
     }
 

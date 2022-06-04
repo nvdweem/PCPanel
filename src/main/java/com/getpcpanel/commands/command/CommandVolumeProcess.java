@@ -1,24 +1,25 @@
 package com.getpcpanel.commands.command;
 
+import java.util.List;
+
 import com.getpcpanel.cpp.SndCtrl;
 
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
-public class CommandVolumeProcess extends CommandVolume {
-    private final String processName;
+@ToString(callSuper = true)
+public class CommandVolumeProcess extends CommandVolume implements DialAction {
+    private final List<String> processName;
     private final String device;
-    private final int volume;
 
-    public CommandVolumeProcess(String serial, int knob, String processName, String device, int volume) {
-        super(serial, knob);
+    public CommandVolumeProcess(List<String> processName, String device) {
         this.processName = processName;
         this.device = device;
-        this.volume = volume;
     }
 
     @Override
-    public void execute() {
-        SndCtrl.setProcessVolume(processName, device, volume / 100f);
+    public void execute(int volume) {
+        processName.forEach(process -> SndCtrl.setProcessVolume(process, device, volume / 100f));
     }
 }

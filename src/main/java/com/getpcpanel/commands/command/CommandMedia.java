@@ -7,9 +7,13 @@ import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.platform.win32.WinUser;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
-public class CommandMedia extends Command {
+@Getter
+@ToString(callSuper = true)
+public class CommandMedia extends Command implements ButtonAction {
     private final VolumeButton button;
 
     @RequiredArgsConstructor
@@ -31,8 +35,7 @@ public class CommandMedia extends Command {
         }
     }
 
-    public CommandMedia(String device, int knob, VolumeButton button) {
-        super(device, knob);
+    public CommandMedia(VolumeButton button) {
         this.button = button;
     }
 

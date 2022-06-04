@@ -1,9 +1,13 @@
 package com.getpcpanel.profile;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.device.DeviceType;
 
 import lombok.Data;
@@ -15,22 +19,15 @@ public class DeviceSave {
     private String displayName;
     private List<Profile> profiles;
     private String currentProfile;
-    public String[][] buttonData;
-    public String[][] dialData;
-    private KnobSetting[] knobSettings;
+    @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Command> buttonData = new HashMap<>();
+    @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Command> dialData = new HashMap<>();
+    @JsonDeserialize(using = KnobSettingMapDeserializer.class) private Map<Integer, KnobSetting> knobSettings = new HashMap<>();
+
     private LightingConfig lightingConfig;
 
     public DeviceSave(DeviceType dt) {
-        var analogCount = dt.getAnalogCount();
-        var buttonCount = dt.getButtonCount();
-        buttonData = new String[buttonCount][10];
-        dialData = new String[analogCount][10];
         displayName = generateDefaultDisplayName();
         lightingConfig = LightingConfig.defaultLightingConfig(dt);
-        knobSettings = new KnobSetting[analogCount];
-        for (var i = 0; i < analogCount; i++) {
-            knobSettings[i] = new KnobSetting();
-        }
     }
 
     private static String generateDefaultDisplayName() {
@@ -43,14 +40,24 @@ public class DeviceSave {
         }
     }
 
-    public KnobSetting[] getKnobSettings() {
-        if (knobSettings == null) {
-            knobSettings = new KnobSetting[buttonData.length];
-            for (var i = 0; i < buttonData.length; i++) {
-                knobSettings[i] = new KnobSetting();
-            }
-        }
-        return knobSettings;
+    public KnobSetting getKnobSettings(int knob) {
+        return knobSettings.computeIfAbsent(knob, k -> new KnobSetting());
+    }
+
+    public Command getButtonData(int button) {
+        return buttonData.get(button);
+    }
+
+    public void setButtonData(int button, Command data) {
+        buttonData.put(button, data);
+    }
+
+    public Command getDialData(int dial) {
+        return dialData.get(dial);
+    }
+
+    public void setDialData(int dial, Command data) {
+        dialData.put(dial, data);
     }
 
     public List<Profile> getProfiles() {
@@ -103,4 +110,3 @@ public class DeviceSave {
         return p;
     }
 }
-

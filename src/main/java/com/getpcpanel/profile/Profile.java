@@ -1,9 +1,13 @@
 package com.getpcpanel.profile;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.device.DeviceType;
 
 import lombok.Data;
@@ -11,24 +15,17 @@ import lombok.Data;
 @Data
 public class Profile {
     private String name;
-    @JsonProperty("isMainProfile")
-    private boolean isMainProfile;
-    private String[][] buttonData;
-    private String[][] dialData;
-    private KnobSetting[] knobSettings;
+    @JsonProperty("isMainProfile") private boolean isMainProfile;
+    @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Command> buttonData = new HashMap<>();
+    @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Command> dialData = new HashMap<>();
+    @JsonDeserialize(using = KnobSettingMapDeserializer.class) private Map<Integer, KnobSetting> knobSettings = new HashMap<>();
     private LightingConfig lightingConfig;
     private boolean focusBackOnLost;
     private List<String> activateApplications = new ArrayList<>();
 
     public Profile(String name, DeviceType dt) {
         this.name = name;
-        buttonData = new String[dt.getButtonCount()][10];
-        dialData = new String[dt.getAnalogCount()][10];
         lightingConfig = LightingConfig.defaultLightingConfig(dt);
-        knobSettings = new KnobSetting[dt.getAnalogCount()];
-        for (var i = 0; i < dt.getAnalogCount(); i++) {
-            knobSettings[i] = new KnobSetting();
-        }
     }
 
     protected Profile() {

@@ -1,17 +1,13 @@
 package com.getpcpanel.commands;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import com.getpcpanel.commands.command.Command;
 
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public final class CommandDispatcher {
-    private static final Map<String, List<? extends Command>> map = new ConcurrentHashMap<>();
+    private static final Map<String, Runnable> map = new ConcurrentHashMap<>();
     private static final HandlerThread handler;
 
     static {
@@ -23,19 +19,9 @@ public final class CommandDispatcher {
     private CommandDispatcher() {
     }
 
-    public static void pushVolumeChange(String serialNum, int knob, Command... cmds) {
-        pushVolumeChange(serialNum, knob, Arrays.asList(cmds));
-    }
-
-    public static void pushVolumeChange(String serialNum, int knob, List<Command> cmds) {
-        map.put(String.valueOf(serialNum) + knob, cmds);
+    public static void pushVolumeChange(String serialNum, int knob, Runnable cmd) {
+        map.put(String.valueOf(serialNum) + knob, cmd);
         handler.doNotify();
-    }
-
-    private static void dispatchCommand(List<? extends Command> cmds) {
-        for (var cmd : cmds) {
-            cmd.execute();
-        }
     }
 
     private static final class HandlerThread extends Thread {
@@ -59,11 +45,11 @@ public final class CommandDispatcher {
                     waitForWaiter();
                 foundAnyOnPrevSweep = false;
                 for (var entry : map.entrySet()) {
-                    var cmds = entry.getValue();
-                    if (cmds == null)
+                    var cmd = entry.getValue();
+                    if (cmd == null)
                         continue;
                     map.remove(entry.getKey());
-                    dispatchCommand(cmds);
+                    cmd.run();
                     foundAnyOnPrevSweep = true;
                 }
             }

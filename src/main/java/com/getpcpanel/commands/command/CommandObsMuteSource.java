@@ -3,9 +3,11 @@ package com.getpcpanel.commands.command;
 import com.getpcpanel.obs.OBS;
 
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
-public class CommandObsMuteSource extends CommandObs {
+@ToString(callSuper = true)
+public class CommandObsMuteSource extends CommandObs implements ButtonAction {
     public enum MuteType {
         toggle, mute, unmute
     }
@@ -13,8 +15,7 @@ public class CommandObsMuteSource extends CommandObs {
     private final String source;
     private final MuteType type;
 
-    public CommandObsMuteSource(String device, int knob, String source, MuteType type) {
-        super(device, knob);
+    public CommandObsMuteSource(String source, MuteType type) {
         this.source = source;
         this.type = type;
     }

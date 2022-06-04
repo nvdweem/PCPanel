@@ -27,8 +27,6 @@ public final class Json {
 
     @SneakyThrows
     public static <T> T read(String in, Class<T> clazz) {
-        log.error("Reading {}: {}", clazz, in);
-
         return mapper.readValue(in, clazz);
     }
 

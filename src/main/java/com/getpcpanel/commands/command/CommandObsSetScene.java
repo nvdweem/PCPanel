@@ -3,13 +3,14 @@ package com.getpcpanel.commands.command;
 import com.getpcpanel.obs.OBS;
 
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
-public class CommandObsSetScene extends CommandObs {
+@ToString(callSuper = true)
+public class CommandObsSetScene extends CommandObs implements ButtonAction {
     private final String scene;
 
-    public CommandObsSetScene(String device, int knob, String scene) {
-        super(device, knob);
+    public CommandObsSetScene(String scene) {
         this.scene = scene;
     }
 

@@ -4,14 +4,15 @@ import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.cpp.SndCtrl;
 
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
-public class CommandVolumeDeviceMute extends CommandVolume {
+@ToString(callSuper = true)
+public class CommandVolumeDeviceMute extends CommandVolume implements ButtonAction {
     private final String deviceId;
     private final MuteType muteType;
 
-    public CommandVolumeDeviceMute(String device, int knob, String deviceId, MuteType muteType) {
-        super(device, knob);
+    public CommandVolumeDeviceMute(String deviceId, MuteType muteType) {
         this.deviceId = deviceId;
         this.muteType = muteType;
     }

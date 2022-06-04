@@ -6,16 +6,17 @@ import java.io.IOException;
 import com.getpcpanel.util.Util;
 
 import lombok.Getter;
+import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
 
 @Getter
 @Log4j2
-public class CommandShortcut extends Command {
+@ToString(callSuper = true)
+public class CommandShortcut extends Command implements ButtonAction {
     private static final Runtime rt = Runtime.getRuntime();
     private final String shortcut;
 
-    public CommandShortcut(String device, int knob, String shortcut) {
-        super(device, knob);
+    public CommandShortcut(String shortcut) {
         this.shortcut = shortcut;
     }
 

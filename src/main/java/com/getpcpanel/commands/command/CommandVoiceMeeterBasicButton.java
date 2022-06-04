@@ -7,21 +7,21 @@ import lombok.ToString;
 
 @Getter
 @ToString(callSuper = true)
-public class CommandVoiceMeeterBasic extends CommandVoiceMeeter implements DialAction {
+public class CommandVoiceMeeterBasicButton extends CommandVoiceMeeter implements ButtonAction {
     private final Voicemeeter.ControlType ct;
     private final int index;
-    private final Voicemeeter.DialType dt;
+    private final Voicemeeter.ButtonType bt;
 
-    public CommandVoiceMeeterBasic(Voicemeeter.ControlType ct, int index, Voicemeeter.DialType dt) {
+    public CommandVoiceMeeterBasicButton(Voicemeeter.ControlType ct, int index, Voicemeeter.ButtonType bt) {
         this.ct = ct;
         this.index = index;
-        this.dt = dt;
+        this.bt = bt;
     }
 
     @Override
-    public void execute(int level) {
+    public void execute() {
         if (Voicemeeter.login()) {
-            Voicemeeter.controlLevel(ct, index, dt, level);
+            Voicemeeter.controlButton(ct, index, bt);
         }
     }
 }

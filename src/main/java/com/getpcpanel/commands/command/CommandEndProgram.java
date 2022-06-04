@@ -7,17 +7,18 @@ import org.apache.commons.lang3.StringUtils;
 import com.getpcpanel.cpp.SndCtrl;
 
 import lombok.Getter;
+import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
 
 @Getter
 @Log4j2
-public class CommandEndProgram extends Command {
+@ToString(callSuper = true)
+public class CommandEndProgram extends Command implements ButtonAction {
     private static final Runtime rt = Runtime.getRuntime();
     private final boolean specific;
     private final String name;
 
-    public CommandEndProgram(String device, int knob, boolean specific, String name) {
-        super(device, knob);
+    public CommandEndProgram(boolean specific, String name) {
         this.specific = specific;
         this.name = name;
     }

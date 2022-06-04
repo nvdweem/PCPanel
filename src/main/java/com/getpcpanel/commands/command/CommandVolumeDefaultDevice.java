@@ -3,13 +3,14 @@ package com.getpcpanel.commands.command;
 import com.getpcpanel.cpp.SndCtrl;
 
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
-public class CommandVolumeDefaultDevice extends CommandVolume {
+@ToString(callSuper = true)
+public class CommandVolumeDefaultDevice extends CommandVolume implements ButtonAction {
     private final String deviceId;
 
-    public CommandVolumeDefaultDevice(String device, int knob, String deviceId) {
-        super(device, knob);
+    public CommandVolumeDefaultDevice(String deviceId) {
         this.deviceId = deviceId;
     }
 

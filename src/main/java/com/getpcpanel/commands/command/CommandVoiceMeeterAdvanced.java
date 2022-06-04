@@ -3,22 +3,23 @@ package com.getpcpanel.commands.command;
 import com.getpcpanel.voicemeeter.Voicemeeter;
 
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
-public class CommandVoiceMeeterAdvanced extends CommandVoiceMeeter {
+@ToString(callSuper = true)
+public class CommandVoiceMeeterAdvanced extends CommandVoiceMeeter implements DialAction {
     private final String fullParam;
     private final Voicemeeter.DialControlMode ct;
-    private final int level;
 
-    public CommandVoiceMeeterAdvanced(String device, int knob, String fullParam, Voicemeeter.DialControlMode ct, int level) {
-        super(device, knob);
+    public CommandVoiceMeeterAdvanced(String fullParam, Voicemeeter.DialControlMode ct) {
         this.fullParam = fullParam;
         this.ct = ct;
-        this.level = level;
     }
 
     @Override
-    public void execute() {
-        Voicemeeter.controlLevel(fullParam, ct, level);
+    public void execute(int level) {
+        if (Voicemeeter.login()) {
+            Voicemeeter.controlLevel(fullParam, ct, level);
+        }
     }
 }

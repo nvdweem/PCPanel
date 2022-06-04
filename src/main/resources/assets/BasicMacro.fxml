@@ -12,7 +12,7 @@
         <Tab fx:id="buttonpane" closable="false" text="Button">
             <TabPane fx:id="buttonTabPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="209.0" prefWidth="376.0" rotateGraphic="true" side="LEFT"
                      tabClosingPolicy="UNAVAILABLE">
-                <Tab fx:id="keystroke" text="Keystroke">
+                <Tab fx:id="btnCommandKeystroke" text="Keystroke">
                     <VBox layoutX="181.0" layoutY="200.0" spacing="15.0">
                         <padding>
                             <Insets left="8.0" right="8.0" top="8.0"/>
@@ -24,7 +24,7 @@
                         </HBox>
                     </VBox>
                 </Tab>
-                <Tab fx:id="shortcut" text="Shortcut">
+                <Tab fx:id="btnCommandShortcut" text="Shortcut">
                     <VBox layoutX="102.0" layoutY="208.0" spacing="15.0">
                         <padding>
                             <Insets left="8.0" right="8.0" top="8.0"/>
@@ -36,7 +36,7 @@
                         </HBox>
                     </VBox>
                 </Tab>
-                <Tab fx:id="media" text="Music Control">
+                <Tab fx:id="btnCommandMedia" text="Music Control">
                     <VBox spacing="15.0">
                         <padding>
                             <Insets left="8.0" top="8.0"/>
@@ -53,7 +53,7 @@
                         <RadioButton fx:id="mute" mnemonicParsing="false" text="Mute" toggleGroup="$mediagroup"/>
                     </VBox>
                 </Tab>
-                <Tab fx:id="end_program" text="End Program">
+                <Tab fx:id="btnCommandEndProgram" text="End Program">
                     <content>
                         <VBox spacing="15.0">
                             <padding>
@@ -81,7 +81,7 @@
                         </VBox>
                     </content>
                 </Tab>
-                <Tab fx:id="sound_device" text="Sound Device">
+                <Tab fx:id="btnCommandVolumeDefaultDevice" text="Sound Device">
                     <content>
                         <VBox spacing="15.0">
                             <padding>
@@ -94,7 +94,7 @@
                         </VBox>
                     </content>
                 </Tab>
-                <Tab fx:id="toggle_device" text="Toggle Device">
+                <Tab fx:id="btnCommandVolumeDefaultDeviceToggle" text="Toggle Device">
                     <content>
                         <VBox spacing="15.0">
                             <padding>
@@ -124,7 +124,7 @@
                         </VBox>
                     </content>
                 </Tab>
-                <Tab fx:id="mute_app" text="Mute App">
+                <Tab fx:id="btnCommandVolumeProcessMute" text="Mute App">
                     <content>
                         <VBox spacing="15.0">
                             <padding>
@@ -150,7 +150,7 @@
                         </VBox>
                     </content>
                 </Tab>
-                <Tab fx:id="mute_device" text="Mute Device">
+                <Tab fx:id="btnCommandVolumeDeviceMute" text="Mute Device">
                     <content>
                         <VBox spacing="15.0">
                             <children>
@@ -182,7 +182,7 @@
                         </VBox>
                     </content>
                 </Tab>
-                <Tab fx:id="obs_button" text="OBS">
+                <Tab fx:id="btnCommandObs" text="OBS">
                     <content>
                         <VBox prefHeight="200.0" prefWidth="100.0" spacing="5.0">
                             <padding>
@@ -233,7 +233,7 @@
                         </VBox>
                     </content>
                 </Tab>
-                <Tab fx:id="voicemeeter_button" text="Voicemeeter">
+                <Tab fx:id="btnCommandVoiceMeeter" text="Voicemeeter">
                     <content>
                         <TabPane fx:id="voicemeeterTabPaneButton" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
                             <tabs>
@@ -287,7 +287,7 @@
                         </TabPane>
                     </content>
                 </Tab>
-                <Tab fx:id="profile" text="Profile">
+                <Tab fx:id="btnCommandProfile" text="Profile">
                     <content>
                         <VBox spacing="15.0">
                             <children>
@@ -307,7 +307,7 @@
                 <TabPane fx:id="dialTabPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="209.0" prefWidth="376.0" rotateGraphic="true" side="LEFT"
                          tabClosingPolicy="UNAVAILABLE">
                     <tabs>
-                        <Tab fx:id="app_volume" text="App Volume">
+                        <Tab fx:id="dialCommandVolumeProcess" text="App Volume">
                             <content>
                                 <VBox layoutX="-77.0" layoutY="-61.0" spacing="15.0">
                                     <padding>
@@ -367,7 +367,7 @@
                                 </VBox>
                             </content>
                         </Tab>
-                        <Tab fx:id="focus_volume" text="Focus Volume">
+                        <Tab fx:id="dialCommandVolumeFocus" text="Focus Volume">
                             <content>
                                 <VBox spacing="15.0">
                                     <padding>
@@ -383,7 +383,7 @@
                                 </VBox>
                             </content>
                         </Tab>
-                        <Tab fx:id="device_volume" text="Device Volume">
+                        <Tab fx:id="dialCommandVolumeDevice" text="Device Volume">
                             <content>
                                 <VBox spacing="15.0">
                                     <children>
@@ -411,7 +411,7 @@
                                 </VBox>
                             </content>
                         </Tab>
-                        <Tab fx:id="obs_dial" text="OBS">
+                        <Tab fx:id="dialCommandObs" text="OBS">
                             <content>
                                 <VBox spacing="15.0">
                                     <padding>
@@ -424,7 +424,7 @@
                                 </VBox>
                             </content>
                         </Tab>
-                        <Tab fx:id="voicemeeter_dial" text="Voicemeeter">
+                        <Tab fx:id="dialCommandVoiceMeeter" text="Voicemeeter">
                             <content>
                                 <TabPane fx:id="voicemeeterTabPaneDial" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
                                     <tabs>

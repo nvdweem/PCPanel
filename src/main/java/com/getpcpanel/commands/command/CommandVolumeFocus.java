@@ -3,18 +3,13 @@ package com.getpcpanel.commands.command;
 import com.getpcpanel.cpp.SndCtrl;
 
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
-public class CommandVolumeFocus extends CommandVolume {
-    private final int volume;
-
-    public CommandVolumeFocus(String device, int knob, int volume) {
-        super(device, knob);
-        this.volume = volume;
-    }
-
+@ToString(callSuper = true)
+public class CommandVolumeFocus extends CommandVolume implements DialAction {
     @Override
-    public void execute() {
+    public void execute(int volume) {
         SndCtrl.setFocusVolume(volume / 100f);
     }
 }

@@ -4,14 +4,15 @@ import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.cpp.SndCtrl;
 
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
-public class CommandVolumeProcessMute extends CommandVolume {
+@ToString(callSuper = true)
+public class CommandVolumeProcessMute extends CommandVolume implements ButtonAction {
     private final String processName;
     private final MuteType muteType;
 
-    public CommandVolumeProcessMute(String device, int knob, String processName, MuteType muteType) {
-        super(device, knob);
+    public CommandVolumeProcessMute(String processName, MuteType muteType) {
         this.processName = processName;
         this.muteType = muteType;
     }
