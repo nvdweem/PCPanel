@@ -19,6 +19,8 @@ public class CommandObsSetSourceVolume extends CommandObs implements DialAction 
 
     @Override
     public void execute(int volume) {
-        OBS.setSourceVolume(sourceName, volume);
+        if (OBS.isConnected()) {
+            OBS.setSourceVolume(sourceName, volume);
+        }
     }
 }

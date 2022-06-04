@@ -19,6 +19,8 @@ public class CommandObsSetScene extends CommandObs implements ButtonAction {
 
     @Override
     public void execute() {
-        OBS.setCurrentScene(scene);
+        if (OBS.isConnected()) {
+            OBS.setCurrentScene(scene);
+        }
     }
 }

@@ -25,10 +25,12 @@ public class CommandObsMuteSource extends CommandObs implements ButtonAction {
 
     @Override
     public void execute() {
-        switch (type) {
-            case toggle -> OBS.toggleSourceMute(source);
-            case mute -> OBS.setSourceMute(source, true);
-            case unmute -> OBS.setSourceMute(source, false);
+        if (OBS.isConnected()) {
+            switch (type) {
+                case toggle -> OBS.toggleSourceMute(source);
+                case mute -> OBS.setSourceMute(source, true);
+                case unmute -> OBS.setSourceMute(source, false);
+            }
         }
     }
 }
