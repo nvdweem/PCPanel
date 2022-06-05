@@ -125,6 +125,7 @@ public class PCPanelRGBUI extends Device {
                     log.error("Unable to init button", ex);
                 }
             });
+            var idx = i;
             knobs[i].setOnMouseClicked(c -> {
                 if (c.getButton() == MouseButton.MIDDLE) {
                     try {
@@ -137,6 +138,8 @@ public class PCPanelRGBUI extends Device {
                     } catch (IOException e1) {
                         log.error("Unable to handle button release", e1);
                     }
+                } else if (c.getButton() == MouseButton.SECONDARY) {
+                    getFxHelper().buildRGBLightingDialog(this).select(idx).start(new Stage());
                 }
             });
             panelPane.getChildren().add(knobs[i]);

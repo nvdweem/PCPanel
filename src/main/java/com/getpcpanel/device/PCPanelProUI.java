@@ -185,6 +185,7 @@ public class PCPanelProUI extends Device {
                     log.error("Unable to start dialog", ex);
                 }
             });
+            var idx = i;
             knobs[i].setOnMouseClicked(c -> {
                 if (c.getButton() == MouseButton.MIDDLE) {
                     try {
@@ -197,6 +198,8 @@ public class PCPanelProUI extends Device {
                     } catch (IOException e1) {
                         log.error("Unable to handle button release", e1);
                     }
+                } else if (c.getButton() == MouseButton.SECONDARY) {
+                    getFxHelper().buildProLightingDialog(this).select(idx).start(new Stage());
                 }
             });
             if (i < 5) {

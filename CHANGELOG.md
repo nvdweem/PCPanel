@@ -4,6 +4,13 @@
 
 **New:**
 
+- Right clicking a knob or slider opens the lighting dialog
+    - Middle click already triggered the click action (I did not know that)
+
+## [1.2]
+
+**New:**
+
 - Added options to automatically switch to a profile when other windows get focus
 - You can set a main profile which will be loaded when you start the application
 - Added version checker. If a new version is released the UI will show that with a link to the download page.

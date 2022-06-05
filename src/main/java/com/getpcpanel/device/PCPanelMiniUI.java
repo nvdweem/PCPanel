@@ -132,6 +132,7 @@ public class PCPanelMiniUI extends Device {
                     log.error("Unable to init button", ex);
                 }
             });
+            var idx = i;
             knobs[i].setOnMouseClicked(c -> {
                 if (c.getButton() == MouseButton.MIDDLE) {
                     try {
@@ -144,6 +145,8 @@ public class PCPanelMiniUI extends Device {
                     } catch (IOException e1) {
                         log.error("Unable to handle button up", e1);
                     }
+                } else if (c.getButton() == MouseButton.SECONDARY) {
+                    getFxHelper().buildMiniLightingDialog(this).select(idx).start(new Stage());
                 }
             });
             panelPane.getChildren().add(knobs[i]);

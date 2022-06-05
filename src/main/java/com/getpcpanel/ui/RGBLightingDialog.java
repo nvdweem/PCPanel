@@ -65,6 +65,12 @@ public class RGBLightingDialog extends Application implements Initializable {
     private final PCPanelRGBUI device;
     private final LightingConfig ogConfig;
     private boolean pressedOk;
+    private Integer selectOnLoad;
+
+    public RGBLightingDialog select(int idx) {
+        selectOnLoad = idx;
+        return this;
+    }
 
     public RGBLightingDialog(SaveService saveService, DeviceScanner deviceScanner, FxHelper fxHelper, PCPanelRGBUI device) {
         this.saveService = saveService;
@@ -152,6 +158,13 @@ public class RGBLightingDialog extends Application implements Initializable {
         breathbox.getChildren().add(1, breathHue);
         initFields();
         initListeners(allSliders, allCheckBoxes);
+        doSelectOnLoad();
+    }
+
+    private void doSelectOnLoad() {
+        if (selectOnLoad != null) {
+            knobsTabbedPane.getSelectionModel().select(selectOnLoad + 1);
+        }
     }
 
     private void initFields() {

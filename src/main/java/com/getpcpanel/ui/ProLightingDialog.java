@@ -93,6 +93,7 @@ public class ProLightingDialog extends Application implements Initializable {
     private final Device device;
     private final LightingConfig ogConfig;
     private boolean pressedOk;
+    private Integer selectOnLoad;
 
     public ProLightingDialog(SaveService saveService, DeviceScanner deviceScanner, FxHelper fxHelper, Device device) {
         this.saveService = saveService;
@@ -100,6 +101,11 @@ public class ProLightingDialog extends Application implements Initializable {
         this.fxHelper = fxHelper;
         this.device = device;
         ogConfig = device.getLightingConfig();
+    }
+
+    public ProLightingDialog select(int button) {
+        selectOnLoad = button;
+        return this;
     }
 
     @Override
@@ -256,6 +262,20 @@ public class ProLightingDialog extends Application implements Initializable {
         });
         initFields();
         initListeners(allSliders, allCheckBoxes);
+        doSelectOnLoad();
+    }
+
+    private void doSelectOnLoad() {
+        if (selectOnLoad != null) {
+            if (selectOnLoad > 4) {
+                selectOnLoad -= 5;
+                mainPane.getSelectionModel().select(2);
+                slidersTabbedPane.getSelectionModel().select(selectOnLoad);
+            } else {
+                mainPane.getSelectionModel().select(1);
+                knobsTabbedPane.getSelectionModel().select(selectOnLoad);
+            }
+        }
     }
 
     private void initFields() {

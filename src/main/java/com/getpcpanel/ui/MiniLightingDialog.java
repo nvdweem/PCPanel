@@ -74,6 +74,12 @@ public class MiniLightingDialog extends Application implements Initializable {
     private final ColorDialog[] knobVolumeGradientCD1 = new ColorDialog[NUM_KNOBS];
     private final ColorDialog[] knobVolumeGradientCD2 = new ColorDialog[NUM_KNOBS];
     private boolean pressedOk;
+    private Integer selectOnLoad;
+
+    public MiniLightingDialog select(int idx) {
+        selectOnLoad = idx;
+        return this;
+    }
 
     @Override
     public void start(Stage stage) {
@@ -173,6 +179,14 @@ public class MiniLightingDialog extends Application implements Initializable {
         });
         initFields();
         initListeners(allSliders, allCheckBoxes);
+        doSelectOnLoad();
+    }
+
+    private void doSelectOnLoad() {
+        if (selectOnLoad != null) {
+            mainPane.getSelectionModel().select(1);
+            knobsTabbedPane.getSelectionModel().select(selectOnLoad);
+        }
     }
 
     private void initFields() {
