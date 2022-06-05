@@ -31,18 +31,20 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class OBSCommunicator {
+    private final Json json;
     private final String password;
     public final Map<String, RequestType> messageTypes = new HashMap<>();
     private final Map<Class<?>, Callback> callbacks = new HashMap<>();
     private OBSRemoteController com;
 
-    public OBSCommunicator(String password) {
+    public OBSCommunicator(Json json, String password) {
+        this.json = json;
         this.password = password;
     }
 
     public void onConnect(OBSRemoteController com) {
         this.com = com;
-        sendMessage(Json.write(new GetVersionRequest(this)));
+        sendMessage(json.write(new GetVersionRequest(this)));
     }
 
     public void onMessage(String msg) {
@@ -52,10 +54,10 @@ public class OBSCommunicator {
         }
         log.debug(msg);
         try {
-            var preResponse = Json.read(msg, Map.class).get("message-id");
+            var preResponse = json.read(msg, Map.class).get("message-id");
             if (preResponse != null) {
                 var type = messageTypes.remove(preResponse.toString());
-                var responseBase = Json.read(msg, type.getResponse());
+                var responseBase = json.read(msg, type.getResponse());
                 processIncomingResponse(responseBase, type.getResponse());
             }
         } catch (Throwable t) {
@@ -82,7 +84,7 @@ public class OBSCommunicator {
             case "GetVersionResponse" -> {
                 var versionInfo = (GetVersionResponse) baseResponse;
                 log.info("Connected to OBS. Websocket Version: {}}, Studio Version: {}}\n", versionInfo.getObsWebsocketVersion(), versionInfo.getObsStudioVersion());
-                sendMessage(Json.write(new GetAuthRequiredRequest(this)));
+                sendMessage(json.write(new GetAuthRequiredRequest(this)));
                 return;
             }
         }
@@ -105,7 +107,7 @@ public class OBSCommunicator {
         var authResponse = generateAuthenticationResponseString(challenge, salt);
         if (authResponse == null)
             return;
-        sendMessage(Json.write(new AuthenticateRequest(this, authResponse)));
+        sendMessage(json.write(new AuthenticateRequest(this, authResponse)));
     }
 
     private String generateAuthenticationResponseString(String challenge, String salt) {
@@ -125,40 +127,40 @@ public class OBSCommunicator {
     }
 
     public void getScenes(Callback<GetSceneListResponse> callback) {
-        sendMessage(Json.write(new GetSceneListRequest(this)));
+        sendMessage(json.write(new GetSceneListRequest(this)));
         callbacks.put(GetSceneListResponse.class, callback);
     }
 
     public void getSourceTypes(Callback<GetSourceTypesListResponse> callback) {
-        sendMessage(Json.write(new GetSourceTypesListRequest(this)));
+        sendMessage(json.write(new GetSourceTypesListRequest(this)));
         callbacks.put(GetSourceTypesListResponse.class, callback);
     }
 
     public void getSources(Callback<GetSourcesListResponse> callback) {
-        sendMessage(Json.write(new GetSourcesListRequest(this)));
+        sendMessage(json.write(new GetSourcesListRequest(this)));
         callbacks.put(GetSourcesListResponse.class, callback);
     }
 
     public void setCurrentScene(String scene, Callback<BaseResponse> callback) {
-        sendMessage(Json.write(new SetCurrentSceneRequest(this, scene)));
+        sendMessage(json.write(new SetCurrentSceneRequest(this, scene)));
         callbacks.put(BaseResponse.class, callback);
     }
 
     public void setVolume(String source, double volume, Callback<BaseResponse> callback) {
         var request = new SetVolumeRequest(this, source, volume);
-        sendMessage(Json.write(request));
+        sendMessage(json.write(request));
         callbacks.put(BaseResponse.class, callback);
     }
 
     public void setMute(String source, boolean mute, Callback<BaseResponse> callback) {
         var request = new SetMuteRequest(this, source, mute);
-        sendMessage(Json.write(request));
+        sendMessage(json.write(request));
         callbacks.put(BaseResponse.class, callback);
     }
 
     public void toggleMute(String source, Callback<BaseResponse> callback) {
         var request = new ToggleMuteRequest(this, source);
-        sendMessage(Json.write(request));
+        sendMessage(json.write(request));
         callbacks.put(BaseResponse.class, callback);
     }
 

@@ -2,13 +2,14 @@ package com.getpcpanel.sleepdetection;
 
 import javax.annotation.PostConstruct;
 
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.getpcpanel.device.Device;
+import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.hid.OutputInterpreter;
 import com.getpcpanel.profile.LightingConfig;
-import com.getpcpanel.ui.HomePage;
 
 import javafx.application.Platform;
 import javafx.scene.paint.Color;
@@ -22,36 +23,24 @@ public final class SleepDetector {
     private static final LightingConfig ALL_OFF = LightingConfig.createAllColor(Color.BLACK);
     private final DeviceScanner deviceScanner;
     private final OutputInterpreter outputInterpreter;
+    private final DeviceHolder devices;
 
     @PostConstruct
     public void init() {
-        Win32SystemMonitor.addListener(new Win32SystemMonitor.IWin32SystemMonitorListener() {
-            @Override
-            public void onMachineGoingToSuspend() {
-                onSuspended(false);
-            }
-
-            @Override
-            public void onMachineLocked() {
-                onSuspended(false);
-            }
-
-            @Override
-            public void onMachineUnlocked() {
-                onResumed();
-            }
-
-            @Override
-            public void onMachineResumedFromSuspend() {
-                onResumed();
-            }
-        });
         Runtime.getRuntime().addShutdownHook(new Thread(() -> onSuspended(true), "Shutdown SleepDetector Hook Thread"));
+    }
+
+    @EventListener
+    public void onEvent(WindowsSystemEventService.WindowsSystemEvent event) {
+        switch (event.type()) {
+            case goingToSuspend, locked -> onSuspended(false);
+            case resumedFromSuspend, unlocked -> onResumed();
+        }
     }
 
     private void onSuspended(boolean shutdown) {
         Runnable r = () -> {
-            for (var device : HomePage.devices.values()) {
+            for (var device : devices.values()) {
                 log.debug("Pause: {}", device.getSerialNumber());
                 outputInterpreter.sendLightingConfig(device.getSerialNumber(), device.getDeviceType(), ALL_OFF, true);
 
@@ -86,7 +75,7 @@ public final class SleepDetector {
 
     private void onResumed() {
         Platform.runLater(() -> {
-            for (var device : HomePage.devices.values()) {
+            for (var device : devices.values()) {
                 log.info("RESUME: {}", device.getSerialNumber());
                 outputInterpreter.sendLightingConfig(device.getSerialNumber(), device.getDeviceType(), device.getLightingConfig(), true);
             }

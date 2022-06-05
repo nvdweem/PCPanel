@@ -1,8 +1,5 @@
 package com.getpcpanel.ui;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 import javax.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -10,10 +7,8 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import com.getpcpanel.device.Device;
-import com.getpcpanel.device.DeviceFactory;
-import com.getpcpanel.device.DeviceType;
+import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.hid.DeviceScanner;
-import com.getpcpanel.hid.OutputInterpreter;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.util.VersionChecker;
 
@@ -33,6 +28,7 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import one.util.streamex.StreamEx;
 
 @Log4j2
 @Component
@@ -42,8 +38,7 @@ public class HomePage extends Application {
     private final FxHelper fxHelper;
     private final SaveService saveService;
     private final DeviceScanner deviceScanner;
-    private final DeviceFactory deviceFactory;
-    private final OutputInterpreter outputInterpreter;
+    private final DeviceHolder devices;
 
     @Value("${application.version}") private String version;
 
@@ -64,7 +59,6 @@ public class HomePage extends Application {
     public static Stage stage;
     private Pane pane;
     private static HomePage window;
-    public static Map<String, Device> devices = new ConcurrentHashMap<>();
 
     @Override
     @PostConstruct
@@ -123,32 +117,12 @@ public class HomePage extends Application {
 
     @EventListener
     public void onDeviceConnected(DeviceScanner.DeviceConnectedEvent event) {
-        Platform.runLater(() -> {
-            Device device;
-            var save = saveService.get();
-            if (!save.getDevices().containsKey(event.serialNum()))
-                save.createSaveForNewDevice(event.serialNum(), event.deviceType());
-            if (event.deviceType() == DeviceType.PCPANEL_RGB) {
-                device = deviceFactory.buildRgb(event.serialNum(), save.getDeviceSave(event.serialNum()));
-            } else if (event.deviceType() == DeviceType.PCPANEL_MINI) {
-                device = deviceFactory.buildMini(event.serialNum(), save.getDeviceSave(event.serialNum()));
-            } else if (event.deviceType() == DeviceType.PCPANEL_PRO) {
-                device = deviceFactory.buildPro(event.serialNum(), save.getDeviceSave(event.serialNum()));
-            } else {
-                throw new IllegalArgumentException("unknown devicetype: " + event.deviceType().name());
-            }
-            devices.put(event.serialNum(), device);
-            outputInterpreter.sendInit(event.serialNum());
-            window.addDeviceToUI(device);
-        });
+        Platform.runLater(() -> addDeviceToUI(devices.getDevice(event.serialNum())));
     }
 
-    public static void onDeviceDisconnected(String serialNum) {
-        Platform.runLater(() -> {
-            var device = devices.remove(serialNum);
-            window.connectedDeviceList.getItems().remove(device);
-            device.disconnected();
-        });
+    @EventListener
+    public void onDeviceDisconnected(DeviceScanner.DeviceDisconnectedEvent event) {
+        Platform.runLater(() -> StreamEx.of(connectedDeviceList.getItems()).filterBy(Device::getSerialNumber, event.serialNum()).findFirst().ifPresent(connectedDeviceList.getItems()::remove));
     }
 
     private void addDeviceToUI(Device device) {

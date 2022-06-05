@@ -13,9 +13,9 @@ import java.util.Set;
 import javax.annotation.PostConstruct;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
-import com.getpcpanel.util.ApplicationFocusListener;
 import com.getpcpanel.util.ExtractUtil;
 
 import lombok.RequiredArgsConstructor;
@@ -28,6 +28,7 @@ import one.util.streamex.StreamEx;
 @RequiredArgsConstructor
 public class SndCtrl {
     private final ExtractUtil extractUtil;
+    private final ApplicationEventPublisher eventPublisher;
 
     @PostConstruct
     public void init() {
@@ -140,7 +141,7 @@ public class SndCtrl {
 
     private void focusChanged(String to) {
         log.trace("Focus changed to {}", to);
-        ApplicationFocusListener.setFocusApplication(to);
+        eventPublisher.publishEvent(new WindowFocusChangedEvent(to));
     }
 
     record DefaultFor(int dataFlow, int role) {

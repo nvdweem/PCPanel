@@ -31,10 +31,6 @@ public class ProfileSettingsDialog extends Application {
     @FXML private CheckBox focusBackOnLost;
     @FXML private PickProcessesController focusOnListListController;
 
-    public static void main(String[] args) {
-        launch(args);
-    }
-
     @Override
     public void start(Stage stage) throws Exception {
         this.stage = stage;

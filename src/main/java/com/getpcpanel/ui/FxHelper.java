@@ -4,6 +4,7 @@ import java.net.URL;
 
 import org.springframework.stereotype.Service;
 
+import com.getpcpanel.Json;
 import com.getpcpanel.MainFX;
 import com.getpcpanel.cpp.SndCtrl;
 import com.getpcpanel.device.Device;
@@ -30,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class FxHelper {
     private final SaveService saveService;
+    private final Json json;
     private final DeviceScanner deviceScanner;
     private final OBSListener obsListener;
     private final OBS obs;
@@ -48,7 +50,7 @@ public class FxHelper {
     }
 
     public SettingsDialog buildSettingsDialog(Stage parentStage) {
-        return new SettingsDialog(saveService, obsListener, fileUtil, this, parentStage);
+        return new SettingsDialog(saveService, json, obsListener, fileUtil, this, parentStage);
     }
 
     public RGBLightingDialog buildRGBLightingDialog(PCPanelRGBUI device) {
@@ -69,10 +71,6 @@ public class FxHelper {
 
     public BasicMacro buildBasicMacro(Device device, int knob) {
         return new BasicMacro(this, saveService, obs, voicemeeter, sndCtrl, device, knob);
-    }
-
-    public BasicMacro buildBasicMacro(Device device, int knob, boolean hasButton) {
-        return new BasicMacro(this, saveService, obs, voicemeeter, sndCtrl, device, knob, hasButton);
     }
 
     public AppFinderDialog buildAppFinderDialog(Stage parentStage, boolean volumeApps) {

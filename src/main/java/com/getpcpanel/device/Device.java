@@ -11,7 +11,6 @@ import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.ui.FxHelper;
 import com.getpcpanel.ui.LimitedTextField;
-import com.getpcpanel.util.ApplicationFocusListener;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -44,10 +43,9 @@ public abstract class Device {
     @Getter(AccessLevel.PROTECTED) private final FxHelper fxHelper;
     private final SaveService saveService;
     private final OutputInterpreter outputInterpreter;
-    private final ApplicationFocusListener.FocusListenerRemover removeFocusListener;
-    private HBox profileMenu;
+    @Getter private HBox profileMenu;
     private ComboBox<Profile> profiles;
-    protected String serialNumber;
+    @Getter protected String serialNumber;
     protected DeviceSave save;
 
     protected Device(FxHelper fxHelper, SaveService saveService, OutputInterpreter outputInterpreter, String serialNum, DeviceSave deviceSave) {
@@ -57,7 +55,6 @@ public abstract class Device {
         serialNumber = serialNum;
         save = deviceSave;
         initProfileMenu();
-        removeFocusListener = ApplicationFocusListener.addFocusListener(this::focusChanged);
     }
 
     private void initProfileMenu() {
@@ -150,7 +147,7 @@ public abstract class Device {
         saveService.save();
     }
 
-    private void focusChanged(String from, String to) {
+    public void focusChanged(String from, String to) {
         if (switchForApplication(to))
             return;
 
@@ -247,14 +244,6 @@ public abstract class Device {
         return settingsButton;
     }
 
-    public Pane getProfileMenu() {
-        return profileMenu;
-    }
-
-    public String getSerialNumber() {
-        return serialNumber;
-    }
-
     public void setProfile(String name) {
         var p = save.getProfile(name);
         if (p != null)
@@ -320,6 +309,5 @@ public abstract class Device {
 
     public void disconnected() {
         closeDialogs();
-        removeFocusListener.run();
     }
 }

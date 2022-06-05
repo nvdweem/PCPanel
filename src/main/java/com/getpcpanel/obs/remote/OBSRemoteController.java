@@ -7,6 +7,7 @@ import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft_6455;
 import org.java_websocket.handshake.ServerHandshake;
 
+import com.getpcpanel.Json;
 import com.getpcpanel.obs.remote.callbacks.Callback;
 import com.getpcpanel.obs.remote.communication.response.BaseResponse;
 import com.getpcpanel.obs.remote.communication.response.GetSceneListResponse;
@@ -27,19 +28,15 @@ public class OBSRemoteController {
     private WebSocketClient client;
     private boolean failed;
 
-    public OBSRemoteController(String address, String password, boolean autoConnect) {
+    public OBSRemoteController(Json json, String address, String password, boolean autoConnect) {
         this.address = address;
-        communicator = new OBSCommunicator(StringUtils.trimToNull(password));
+        communicator = new OBSCommunicator(json, StringUtils.trimToNull(password));
         if (autoConnect)
             connect();
     }
 
-    public OBSRemoteController(String address, String password) {
-        this(address, password, true);
-    }
-
-    public OBSRemoteController(String address, String port, String password) {
-        this("ws://" + StringUtils.firstNonBlank(address, "localhost") + ":" + StringUtils.firstNonBlank(port, "4444"), password, true);
+    public OBSRemoteController(Json json, String address, String port, String password) {
+        this(json, "ws://" + StringUtils.firstNonBlank(address, "localhost") + ":" + StringUtils.firstNonBlank(port, "4444"), password, true);
     }
 
     public void connect() {

@@ -1,7 +1,6 @@
 package com.getpcpanel.util;
 
 import java.io.File;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -26,10 +25,6 @@ public final class Util {
             "pif", "ps1", "reg", "rgs", "scr", "sct", "shb", "shs", "u3p", "vb", "vbe", "vbs", "vbscript", "ws", "wsf", "wsh");
 
     private Util() {
-    }
-
-    public static String listToPipeDelimitedString(Collection<String> elements) {
-        return String.join("|", elements);
     }
 
     public static void adjustTabs(TabPane tabPane, int width, int height) {

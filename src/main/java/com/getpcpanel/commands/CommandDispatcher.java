@@ -3,15 +3,21 @@ package com.getpcpanel.commands;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.annotation.PostConstruct;
+
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Service;
+
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
+@Service
 public final class CommandDispatcher {
-    private static final Map<String, Runnable> map = new ConcurrentHashMap<>();
-    private static final HandlerThread handler;
+    private final Map<String, Runnable> map = new ConcurrentHashMap<>();
+    private final HandlerThread handler = new HandlerThread();
 
-    static {
-        handler = new HandlerThread();
+    @PostConstruct
+    public void init() {
         handler.start();
         Runtime.getRuntime().addShutdownHook(new Thread(handler::doStop, "CommandHandler shutdown hook"));
     }
@@ -19,13 +25,14 @@ public final class CommandDispatcher {
     private CommandDispatcher() {
     }
 
-    public static void pushVolumeChange(String serialNum, int knob, Runnable cmd) {
-        map.put(String.valueOf(serialNum) + knob, cmd);
+    @EventListener
+    public void onCommand(PCPanelControlEvent event) {
+        map.put(event.serialNum() + event.knob(), event.cmd());
         handler.doNotify();
     }
 
-    private static final class HandlerThread extends Thread {
-        private static final Object waiter = new Object();
+    private final class HandlerThread extends Thread {
+        private final Object waiter = new Object();
         private volatile boolean stopped;
 
         private HandlerThread() {
@@ -55,7 +62,7 @@ public final class CommandDispatcher {
             }
         }
 
-        private static void waitForWaiter() {
+        private void waitForWaiter() {
             try {
                 synchronized (waiter) {
                     waiter.wait();

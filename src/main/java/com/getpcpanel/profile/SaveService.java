@@ -23,6 +23,7 @@ public class SaveService {
     private static final String saveFileName = "profiles.json";
     private final ApplicationEventPublisher eventPublisher;
     private final FileUtil fileUtil;
+    private final Json json;
     private Save save;
 
     public Save get() {
@@ -40,7 +41,7 @@ public class SaveService {
         }
 
         try {
-            save = Json.read(FileUtils.readFileToString(saveFile, Charset.defaultCharset()), Save.class);
+            save = json.read(FileUtils.readFileToString(saveFile, Charset.defaultCharset()), Save.class);
             StreamEx.ofValues(save.getDevices()).forEach(d -> StreamEx.of(d.getProfiles()).findFirst(Profile::isMainProfile).ifPresent(p -> d.setCurrentProfile(p.getName())));
             eventPublisher.publishEvent(new SaveEvent(save, false));
         } catch (Exception e) {
@@ -59,7 +60,7 @@ public class SaveService {
             p.setKnobSettings(ds.getKnobSettings());
         }
         try {
-            FileUtils.writeStringToFile(saveFile, Json.writePretty(save), Charset.defaultCharset());
+            FileUtils.writeStringToFile(saveFile, json.writePretty(save), Charset.defaultCharset());
         } catch (IOException e) {
             log.error("Unable to save file", e);
         }

@@ -5,6 +5,7 @@ import javax.annotation.PreDestroy;
 
 import org.springframework.stereotype.Service;
 
+import com.getpcpanel.Json;
 import com.getpcpanel.obs.remote.OBSRemoteController;
 import com.getpcpanel.profile.SaveService;
 
@@ -17,6 +18,7 @@ import lombok.extern.log4j.Log4j2;
 public class OBSListener extends Thread {
     private static final long SLEEP_DURATION = 1000L;
     private final SaveService saveService;
+    private final Json json;
     private final OBS obs;
     private volatile boolean check;
     private volatile boolean running = true;
@@ -47,12 +49,12 @@ public class OBSListener extends Thread {
                     continue;
                 }
                 if (obs.controller == null) {
-                    obs.controller = new OBSRemoteController(save.getObsAddress(), save.getObsPort(), save.getObsPassword());
+                    obs.controller = new OBSRemoteController(json, save.getObsAddress(), save.getObsPort(), save.getObsPassword());
                 } else if (check) {
                     obs.controller.disconnect();
-                    obs.controller = new OBSRemoteController(save.getObsAddress(), save.getObsPort(), save.getObsPassword());
+                    obs.controller = new OBSRemoteController(json, save.getObsAddress(), save.getObsPort(), save.getObsPassword());
                 } else if (!obs.controller.isConnected()) {
-                    obs.controller = new OBSRemoteController(save.getObsAddress(), save.getObsPort(), save.getObsPassword());
+                    obs.controller = new OBSRemoteController(json, save.getObsAddress(), save.getObsPort(), save.getObsPassword());
                 }
                 check = false;
             }

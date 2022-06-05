@@ -1,7 +1,9 @@
 package com.getpcpanel.sleepdetection;
 
-import java.util.ArrayList;
-import java.util.function.Consumer;
+import javax.annotation.PostConstruct;
+
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
 
 import com.sun.jna.WString;
 import com.sun.jna.platform.win32.Kernel32;
@@ -16,29 +18,24 @@ import com.sun.jna.platform.win32.WinUser.WNDCLASSEX;
 import com.sun.jna.platform.win32.WinUser.WindowProc;
 import com.sun.jna.platform.win32.Wtsapi32;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 /**
  * https://gist.github.com/luanht/88ba957b94f94792a1fd
  */
 @Log4j2
-public enum Win32SystemMonitor implements WindowProc {
-    instance;
-
+@Service
+@RequiredArgsConstructor
+public class WindowsSystemEventService implements WindowProc {
     private static final int WM_POWERBROADCAST = 536;
     private static final int PBT_APMRESUMESUSPEND = 7;
     private static final int PBT_APMSUSPEND = 4;
-    private static final ArrayList<IWin32SystemMonitorListener> LISTENERS = new ArrayList<>();
 
-    public static void removeListener(IWin32SystemMonitorListener listener) {
-        LISTENERS.remove(listener);
-    }
+    private final ApplicationEventPublisher eventPublisher;
 
-    public static void addListener(IWin32SystemMonitorListener listener) {
-        LISTENERS.add(listener);
-    }
-
-    Win32SystemMonitor() {
+    @PostConstruct
+    public void init() {
         new Thread(() -> {
             var windowClass = new WString("AnotherWindowClass");
             var hInst = Kernel32.INSTANCE.GetModuleHandle("");
@@ -110,19 +107,19 @@ public enum Win32SystemMonitor implements WindowProc {
         switch (wParam.intValue()) {
             case Wtsapi32.WTS_SESSION_LOGON -> {
                 lParam.intValue();
-                allListeners(IWin32SystemMonitorListener::onMachineLogon);
+                triggerEvent(WindowsSystemEventType.logon);
             }
             case Wtsapi32.WTS_SESSION_LOGOFF -> {
                 lParam.intValue();
-                allListeners(IWin32SystemMonitorListener::onMachineLogoff);
+                triggerEvent(WindowsSystemEventType.logoff);
             }
             case Wtsapi32.WTS_SESSION_LOCK -> {
                 lParam.intValue();
-                allListeners(IWin32SystemMonitorListener::onMachineLocked);
+                triggerEvent(WindowsSystemEventType.locked);
             }
             case Wtsapi32.WTS_SESSION_UNLOCK -> {
                 lParam.intValue();
-                allListeners(IWin32SystemMonitorListener::onMachineUnlocked);
+                triggerEvent(WindowsSystemEventType.unlocked);
             }
             default -> log.trace("Unknown event: {}", wParam.intValue());
         }
@@ -130,33 +127,25 @@ public enum Win32SystemMonitor implements WindowProc {
 
     private void onPowerChange(WPARAM wParam) {
         if (wParam.intValue() == PBT_APMSUSPEND) {
-            allListeners(IWin32SystemMonitorListener::onMachineGoingToSuspend);
+            triggerEvent(WindowsSystemEventType.goingToSuspend);
         } else if (wParam.intValue() == PBT_APMRESUMESUSPEND) {
-            allListeners(IWin32SystemMonitorListener::onMachineResumedFromSuspend);
+            triggerEvent(WindowsSystemEventType.resumedFromSuspend);
         }
     }
 
-    private void allListeners(Consumer<IWin32SystemMonitorListener> run) {
-        LISTENERS.forEach(run);
+    private void triggerEvent(WindowsSystemEventType type) {
+        eventPublisher.publishEvent(new WindowsSystemEvent(type));
     }
 
-    interface IWin32SystemMonitorListener {
-        default void onMachineGoingToSuspend() {
-        }
+    public record WindowsSystemEvent(WindowsSystemEventType type) {
+    }
 
-        default void onMachineLocked() {
-        }
-
-        default void onMachineUnlocked() {
-        }
-
-        default void onMachineLogon() {
-        }
-
-        default void onMachineLogoff() {
-        }
-
-        default void onMachineResumedFromSuspend() {
-        }
+    public enum WindowsSystemEventType {
+        goingToSuspend,
+        locked,
+        unlocked,
+        logon,
+        logoff,
+        resumedFromSuspend
     }
 }

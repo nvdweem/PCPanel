@@ -18,9 +18,9 @@ import one.util.streamex.StreamEx;
 @Service
 @RequiredArgsConstructor
 public final class OBS {
-    public volatile OBSRemoteController controller;
-    public static final Object OBSMutex = new Object();
     private static final long WAIT_TIME = 1000L;
+    public volatile OBSRemoteController controller;
+    static final Object OBSMutex = new Object();
     private final SaveService save;
 
     public List<String> getSourcesWithAudio() {

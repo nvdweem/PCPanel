@@ -82,7 +82,7 @@ class AppFinderDialog extends Application implements Initializable {
         return processName;
     }
 
-    public static BufferedImage resize(BufferedImage img, int newW, int newH) {
+    private static BufferedImage resize(BufferedImage img, int newW, int newH) {
         var tmp = img.getScaledInstance(newW, newH, 4);
         var dimg = new BufferedImage(newW, newH, 2);
         var g2d = dimg.createGraphics();
@@ -127,10 +127,6 @@ class AppFinderDialog extends Application implements Initializable {
         } else {
             return StreamEx.of(sndCtrl.getRunningApplications()).map(f -> new AudioSession(null, 1, f, f.getName(), null, 0, false)).toList();
         }
-    }
-
-    public static void main(String[] args) {
-        launch(args);
     }
 
     @Override

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import com.getpcpanel.Json;
 import com.getpcpanel.obs.OBSListener;
 import com.getpcpanel.obs.remote.OBSRemoteController;
 import com.getpcpanel.profile.SaveService;
@@ -36,6 +37,7 @@ import lombok.extern.log4j.Log4j2;
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class SettingsDialog extends Application implements Initializable {
     private final SaveService saveService;
+    private final Json json;
     private final OBSListener obsListener;
     private final FileUtil fileUtil;
     private final FxHelper fxHelper;
@@ -88,7 +90,7 @@ public class SettingsDialog extends Application implements Initializable {
 
     @FXML
     private void obsTest(ActionEvent event) {
-        var controller = new OBSRemoteController(obsAddress.getText(), obsPort.getText(), obsPassword.getText());
+        var controller = new OBSRemoteController(json, obsAddress.getText(), obsPort.getText(), obsPassword.getText());
         if (controller.isFailed()) {
             obsTestResult.setText("result: connection failed");
         } else {

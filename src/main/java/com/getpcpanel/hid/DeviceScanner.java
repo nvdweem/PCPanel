@@ -16,7 +16,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.getpcpanel.device.DeviceType;
-import com.getpcpanel.ui.HomePage;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -70,7 +69,7 @@ public class DeviceScanner implements HidServicesListener {
         if (key == null || device == null)
             throw new IllegalArgumentException("serialNum or device cannot be null serialNum: " + key + " device: " + device);
         if (CONNECTED_DEVICE_MAP.remove(key) != null)
-            HomePage.onDeviceDisconnected(key);
+            eventPublisher.publishEvent(new DeviceDisconnectedEvent(key));
     }
 
     private void foundPCPanel(HidDevice newPCPanel, DeviceType deviceType) {
@@ -123,5 +122,8 @@ public class DeviceScanner implements HidServicesListener {
     }
 
     public record DeviceConnectedEvent(String serialNum, DeviceType deviceType) {
+    }
+
+    public record DeviceDisconnectedEvent(String serialNum) {
     }
 }
