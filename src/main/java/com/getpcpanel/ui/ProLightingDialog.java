@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.getpcpanel.device.Device;
 import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.profile.LightingConfig;
@@ -77,6 +79,8 @@ public class ProLightingDialog extends Application implements Initializable {
     private final ColorDialog[] knobStaticCDs = new ColorDialog[NUM_KNOBS];
     private final ColorDialog[] knobVolumeGradientCD1 = new ColorDialog[NUM_KNOBS];
     private final ColorDialog[] knobVolumeGradientCD2 = new ColorDialog[NUM_KNOBS];
+    private final CheckBox[] muteOverrideCheckboxes = new CheckBox[NUM_KNOBS];
+    private final ColorDialog[] muteOverrideColors = new ColorDialog[NUM_KNOBS];
     private final ColorDialog[] sliderStaticCDs = new ColorDialog[NUM_SLIDERS];
     private final ColorDialog[] sliderStaticGradientTopCD = new ColorDialog[NUM_SLIDERS];
     private final ColorDialog[] sliderStaticGradientBottomCD = new ColorDialog[NUM_SLIDERS];
@@ -159,6 +163,22 @@ public class ProLightingDialog extends Application implements Initializable {
         fullBodyTabbedPane.getSelectionModel().select(0);
     }
 
+    private TabPane tabWithMuteOverride(int button, TabPane tab) {
+        var vBox = new VBox();
+        muteOverrideColors[button] = new ColorDialog();
+        muteOverrideCheckboxes[button] = new CheckBox("Override color when button's mute action is active");
+        vBox.getChildren().addAll(
+                muteOverrideCheckboxes[button],
+                muteOverrideColors[button]
+        );
+        var muteTab = new Tab("Mute override", vBox);
+        var originalTab = new Tab("Color", tab);
+
+        var result = new TabPane(originalTab, muteTab);
+        result.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
+        return result;
+    }
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         int i;
@@ -169,8 +189,7 @@ public class ProLightingDialog extends Application implements Initializable {
             knobStaticCDs[i] = cd;
             knobVolumeGradientCD1[i] = new ColorDialog();
             knobVolumeGradientCD2[i] = new ColorDialog();
-            var volGradientGP = makeFourPanelGridPane("Color when volume is 100", "Color when volume is 0",
-                    knobVolumeGradientCD2[i], knobVolumeGradientCD1[i]);
+            var volGradientGP = makeFourPanelGridPane("Color when volume is 100", "Color when volume is 0", knobVolumeGradientCD2[i], knobVolumeGradientCD1[i]);
             var vbox = new VBox(volGradientGP);
             var staticTab = new Tab("Static", cd);
             var volGradient = new Tab("Volume Gradient", vbox);
@@ -179,7 +198,7 @@ public class ProLightingDialog extends Application implements Initializable {
             Util.adjustTabs(singleKnobTabPane, 140, 30);
             singleKnobTabPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
             singleKnobTabPane.setSide(Side.LEFT);
-            tab.setContent(singleKnobTabPane);
+            tab.setContent(tabWithMuteOverride(i, singleKnobTabPane));
             knobsTabbedPane.getTabs().add(tab);
         }
         for (i = 0; i < NUM_SLIDERS; i++) {
@@ -323,6 +342,7 @@ public class ProLightingDialog extends Application implements Initializable {
                     knobSingleTabPane[i].getSelectionModel().select(1);
                     knobVolumeGradientCD1[i].setCustomColor(Color.web(knobConfig.getColor1()));
                     knobVolumeGradientCD2[i].setCustomColor(Color.web(knobConfig.getColor2()));
+                    muteOverrideColors[i].setCustomColor(Color.web(StringUtils.defaultIfBlank(knobConfig.getMuteOverrideColor(), "black")));
                 }
             }
             for (i = 0; i < NUM_SLIDERS; i++) {
@@ -386,11 +406,20 @@ public class ProLightingDialog extends Application implements Initializable {
         }
     }
 
+    private void addListener(CheckBox[]... checkss) {
+        for (var checks : checkss) {
+            for (var check : checks) {
+                check.setOnAction(a -> updateColors());
+            }
+        }
+    }
+
     private void initListeners(Slider[] allSliders, CheckBox[] allCheckBoxes) {
-        addListener(knobStaticCDs, knobVolumeGradientCD1, knobVolumeGradientCD2,
+        addListener(knobStaticCDs, knobVolumeGradientCD1, muteOverrideColors, knobVolumeGradientCD2,
                 sliderStaticCDs, sliderStaticGradientBottomCD, sliderStaticGradientTopCD, sliderVolumeGradientCD1, sliderVolumeGradientCD2,
                 sliderLabelStaticCDs);
         addListener(knobSingleTabPane, sliderLabelSingleTabPane, sliderSingleTabPane);
+        addListener(muteOverrideCheckboxes);
         logoStaticColor.customColorProperty().addListener((a, b, c) -> updateColors());
         allKnobColor.customColorProperty().addListener((observable, oldValue, newValue) -> {
             for (var cd : knobStaticCDs) {
@@ -453,12 +482,14 @@ public class ProLightingDialog extends Application implements Initializable {
             for (var knob = 0; knob < NUM_KNOBS; knob++) {
                 if (knobSingleTabPane[knob].getSelectionModel().getSelectedIndex() == 0) {
                     config.getKnobConfigs()[knob].setMode(SINGLE_KNOB_MODE.STATIC);
-                    config.getKnobConfigs()[knob].setColor1(knobStaticCDs[knob].getCustomColor());
+                    config.getKnobConfigs()[knob].setColor1FromColor(knobStaticCDs[knob].getCustomColor());
                 } else if (knobSingleTabPane[knob].getSelectionModel().getSelectedIndex() == 1) {
                     config.getKnobConfigs()[knob].setMode(SINGLE_KNOB_MODE.VOLUME_GRADIENT);
-                    config.getKnobConfigs()[knob].setColor1(knobVolumeGradientCD1[knob].getCustomColor());
-                    config.getKnobConfigs()[knob].setColor2(knobVolumeGradientCD2[knob].getCustomColor());
+                    config.getKnobConfigs()[knob].setColor1FromColor(knobVolumeGradientCD1[knob].getCustomColor());
+                    config.getKnobConfigs()[knob].setColor2FromColor(knobVolumeGradientCD2[knob].getCustomColor());
                 }
+                var overrideColor = muteOverrideCheckboxes[knob].isSelected() ? muteOverrideColors[knob].getCustomColor() : null;
+                config.getKnobConfigs()[knob].setMuteOverrideColorFromColor(overrideColor);
             }
             int slider;
             for (slider = 0; slider < NUM_SLIDERS; slider++) {

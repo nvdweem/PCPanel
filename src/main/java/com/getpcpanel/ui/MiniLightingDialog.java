@@ -141,7 +141,7 @@ public class MiniLightingDialog extends Application implements Initializable {
             knobStaticCDs[i] = cd;
             knobVolumeGradientCD1[i] = new ColorDialog();
             knobVolumeGradientCD2[i] = new ColorDialog();
-            var volGradientGP = makeFourPanelGridPane("Color when volume is 100", "Color when volume is 0",
+            var volGradientGP = makeFourPanelGridPane(
                     knobVolumeGradientCD2[i], knobVolumeGradientCD1[i]);
             var vbox = new VBox(volGradientGP);
             var staticTab = new Tab("Static", cd);
@@ -315,21 +315,21 @@ public class MiniLightingDialog extends Application implements Initializable {
             for (var knob = 0; knob < NUM_KNOBS; knob++) {
                 if (knobSingleTabPane[knob].getSelectionModel().getSelectedIndex() == 0) {
                     config.getKnobConfigs()[knob].setMode(SINGLE_KNOB_MODE.STATIC);
-                    config.getKnobConfigs()[knob].setColor1(knobStaticCDs[knob].getCustomColor());
+                    config.getKnobConfigs()[knob].setColor1FromColor(knobStaticCDs[knob].getCustomColor());
                 } else if (knobSingleTabPane[knob].getSelectionModel().getSelectedIndex() == 1) {
                     config.getKnobConfigs()[knob].setMode(SINGLE_KNOB_MODE.VOLUME_GRADIENT);
-                    config.getKnobConfigs()[knob].setColor1(knobVolumeGradientCD1[knob].getCustomColor());
-                    config.getKnobConfigs()[knob].setColor2(knobVolumeGradientCD2[knob].getCustomColor());
+                    config.getKnobConfigs()[knob].setColor1FromColor(knobVolumeGradientCD1[knob].getCustomColor());
+                    config.getKnobConfigs()[knob].setColor2FromColor(knobVolumeGradientCD2[knob].getCustomColor());
                 }
             }
             device.setLighting(config, false);
         }
     }
 
-    private static GridPane makeFourPanelGridPane(String str1, String str2, Node obj1, Node obj2) {
+    private static GridPane makeFourPanelGridPane(Node obj1, Node obj2) {
         var gp = new GridPane();
-        var l1 = new Label(str1);
-        var l2 = new Label(str2);
+        var l1 = new Label("Color when volume is 100");
+        var l2 = new Label("Color when volume is 0");
         l1.setWrapText(true);
         l2.setWrapText(true);
         gp.addColumn(0, l1, l2);
