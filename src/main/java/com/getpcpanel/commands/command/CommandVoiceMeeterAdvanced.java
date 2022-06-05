@@ -2,6 +2,7 @@ package com.getpcpanel.commands.command;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.getpcpanel.MainFX;
 import com.getpcpanel.voicemeeter.Voicemeeter;
 
 import lombok.Getter;
@@ -21,8 +22,9 @@ public class CommandVoiceMeeterAdvanced extends CommandVoiceMeeter implements Di
 
     @Override
     public void execute(int level) {
-        if (Voicemeeter.login()) {
-            Voicemeeter.controlLevel(fullParam, ct, level);
+        var voiceMeeter = MainFX.getBean(Voicemeeter.class);
+        if (voiceMeeter.login()) {
+            voiceMeeter.controlLevel(fullParam, ct, level);
         }
     }
 }

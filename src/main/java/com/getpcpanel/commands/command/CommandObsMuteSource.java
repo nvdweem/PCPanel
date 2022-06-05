@@ -2,6 +2,7 @@ package com.getpcpanel.commands.command;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.getpcpanel.MainFX;
 import com.getpcpanel.obs.OBS;
 
 import lombok.Getter;
@@ -25,11 +26,12 @@ public class CommandObsMuteSource extends CommandObs implements ButtonAction {
 
     @Override
     public void execute() {
-        if (OBS.isConnected()) {
+        var obs = MainFX.getBean(OBS.class);
+        if (obs.isConnected()) {
             switch (type) {
-                case toggle -> OBS.toggleSourceMute(source);
-                case mute -> OBS.setSourceMute(source, true);
-                case unmute -> OBS.setSourceMute(source, false);
+                case toggle -> obs.toggleSourceMute(source);
+                case mute -> obs.setSourceMute(source, true);
+                case unmute -> obs.setSourceMute(source, false);
             }
         }
     }

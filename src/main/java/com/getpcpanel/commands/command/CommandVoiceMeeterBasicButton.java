@@ -2,6 +2,7 @@ package com.getpcpanel.commands.command;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.getpcpanel.MainFX;
 import com.getpcpanel.voicemeeter.Voicemeeter;
 
 import lombok.Getter;
@@ -23,8 +24,9 @@ public class CommandVoiceMeeterBasicButton extends CommandVoiceMeeter implements
 
     @Override
     public void execute() {
-        if (Voicemeeter.login()) {
-            Voicemeeter.controlButton(ct, index, bt);
+        var voiceMeeter = MainFX.getBean(Voicemeeter.class);
+        if (voiceMeeter.login()) {
+            voiceMeeter.controlButton(ct, index, bt);
         }
     }
 }

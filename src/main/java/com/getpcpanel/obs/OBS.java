@@ -4,23 +4,26 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import org.springframework.stereotype.Service;
+
 import com.getpcpanel.obs.remote.OBSRemoteController;
 import com.getpcpanel.obs.remote.objects.Source;
-import com.getpcpanel.profile.Save;
+import com.getpcpanel.profile.SaveService;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
+@Service
+@RequiredArgsConstructor
 public final class OBS {
-    public static volatile OBSRemoteController controller;
+    public volatile OBSRemoteController controller;
     public static final Object OBSMutex = new Object();
     private static final long WAIT_TIME = 1000L;
+    private final SaveService save;
 
-    private OBS() {
-    }
-
-    public static List<String> getSourcesWithAudio() {
+    public List<String> getSourcesWithAudio() {
         var sourcesWithAudio = new ArrayList<String>();
         var typesWithAudio = new HashSet<String>();
         try {
@@ -40,7 +43,7 @@ public final class OBS {
         return sourcesWithAudio;
     }
 
-    public static List<String> getScenes() {
+    public List<String> getScenes() {
         List<String> scenes = new ArrayList<>();
         try {
             controller.getScenes(response -> {
@@ -60,7 +63,7 @@ public final class OBS {
         return scenes;
     }
 
-    public static void setSourceVolume(String sourceName, int vol) {
+    public void setSourceVolume(String sourceName, int vol) {
         if (controller == null)
             return;
         var waiter = new Object();
@@ -79,7 +82,7 @@ public final class OBS {
         }
     }
 
-    public static void toggleSourceMute(String sourceName) {
+    public void toggleSourceMute(String sourceName) {
         var waiter = new Object();
         try {
             controller.toggleMute(sourceName, c -> {
@@ -95,7 +98,7 @@ public final class OBS {
         }
     }
 
-    public static void setSourceMute(String sourceName, boolean mute) {
+    public void setSourceMute(String sourceName, boolean mute) {
         var waiter = new Object();
         try {
             controller.setMute(sourceName, mute, c -> {
@@ -111,7 +114,7 @@ public final class OBS {
         }
     }
 
-    public static void setCurrentScene(String sceneName) {
+    public void setCurrentScene(String sceneName) {
         var waiter = new Object();
         try {
             controller.setCurrentScene(sceneName, c -> {
@@ -127,7 +130,7 @@ public final class OBS {
         }
     }
 
-    public static boolean isConnected() {
-        return Save.get().isObsEnabled() && controller != null && controller.isConnected();
+    public boolean isConnected() {
+        return save.get().isObsEnabled() && controller != null && controller.isConnected();
     }
 }

@@ -5,12 +5,11 @@ import java.net.URL;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
-import com.getpcpanel.Main;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.profile.LightingConfig;
 import com.getpcpanel.profile.LightingConfig.LightingMode;
-import com.getpcpanel.profile.Save;
+import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SingleKnobLightingConfig.SINGLE_KNOB_MODE;
 import com.getpcpanel.ui.colorpicker.ColorDialog;
 import com.getpcpanel.ui.colorpicker.HueSlider;
@@ -19,7 +18,6 @@ import com.getpcpanel.util.Util;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Side;
 import javafx.scene.Node;
@@ -38,10 +36,17 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
+@RequiredArgsConstructor
 public class MiniLightingDialog extends Application implements Initializable {
+    private final SaveService saveService;
+    private final DeviceScanner deviceScanner;
+    private final FxHelper fxHelper;
+    private final Device device;
+
     private Stage stage;
     @FXML private TabPane mainPane;
     @FXML private TabPane knobsTabbedPane;
@@ -68,19 +73,12 @@ public class MiniLightingDialog extends Application implements Initializable {
     private final ColorDialog[] knobStaticCDs = new ColorDialog[NUM_KNOBS];
     private final ColorDialog[] knobVolumeGradientCD1 = new ColorDialog[NUM_KNOBS];
     private final ColorDialog[] knobVolumeGradientCD2 = new ColorDialog[NUM_KNOBS];
-    private final Device device;
-    private final LightingConfig ogConfig;
     private boolean pressedOk;
-
-    public MiniLightingDialog(Device device) {
-        this.device = device;
-        ogConfig = device.getLightingConfig();
-    }
 
     @Override
     public void start(Stage stage) {
         this.stage = stage;
-        var loader = new FXMLLoader(getClass().getResource("/assets/MiniLightingDialog.fxml"));
+        var loader = fxHelper.getLoader(getClass().getResource("/assets/MiniLightingDialog.fxml"));
         loader.setController(this);
         Pane mainPane = null;
         try {
@@ -93,14 +91,14 @@ public class MiniLightingDialog extends Application implements Initializable {
         stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/assets/256x256.png")).toExternalForm()));
         stage.setOnHiding(e -> {
             if (!pressedOk)
-                if (DeviceScanner.getConnectedDevice(device.getSerialNumber()) == null) {
-                    Save.getDeviceSave(device.getSerialNumber()).setLightingConfig(ogConfig);
+                if (deviceScanner.getConnectedDevice(device.getSerialNumber()) == null) {
+                    saveService.get().getDeviceSave(device.getSerialNumber()).setLightingConfig(device.getLightingConfig());
                 } else {
-                    device.setLighting(ogConfig, true);
+                    device.setLighting(device.getLightingConfig(), true);
                 }
         });
         stage.initModality(Modality.APPLICATION_MODAL);
-        stage.initOwner(Main.stage);
+        stage.initOwner(HomePage.stage);
         stage.setScene(scene);
         stage.sizeToScene();
         stage.setTitle("Lighting Dialog");
@@ -116,7 +114,7 @@ public class MiniLightingDialog extends Application implements Initializable {
     private void ok(ActionEvent event) {
         log.debug("{} {}", stage.getWidth(), stage.getHeight());
         pressedOk = true;
-        Save.saveFile();
+        saveService.save();
         stage.close();
     }
 

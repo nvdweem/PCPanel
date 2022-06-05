@@ -1,37 +1,37 @@
 package com.getpcpanel.util;
 
-import java.awt.Desktop;
-import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+
+import javax.annotation.PostConstruct;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
 
-import com.getpcpanel.Main;
-
-import javafx.application.Platform;
-import javafx.scene.control.Label;
-import javafx.scene.layout.Pane;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-public final class VersionChecker extends Thread {
-    private final Pane versionTarget;
+@Service
+@RequiredArgsConstructor
+public class VersionChecker extends Thread {
+    private final ApplicationEventPublisher eventPublisher;
+    @Value("${application.versioncheck}") private String versionCheck;
+    @Value("${application.releasespage}") private String releasesPage;
+    @Value("${application.version}") private String version;
 
-    public static void init(Pane versionLabel) {
-        new VersionChecker(versionLabel).start();
-    }
-
-    private VersionChecker(Pane versionLabel) {
-        versionTarget = versionLabel;
+    @PostConstruct
+    public void init() {
+        start();
     }
 
     @Override
     public void run() {
-        try (var stream = new URI(Main.applicationProperties.getProperty("application.versioncheck")).toURL().openStream()) {
+        try (var stream = new URI(versionCheck).toURL().openStream()) {
             updateVersionlabel(IOUtils.readLines(stream, Charset.defaultCharset()).get(0));
         } catch (Exception e) {
             log.error("Unable to check version", e);
@@ -39,24 +39,13 @@ public final class VersionChecker extends Thread {
     }
 
     private void updateVersionlabel(String latestVersion) {
-        if (isVersionNewer(Main.VERSION, latestVersion)) {
-            var label = new Label("New version available: " + latestVersion);
-            label.setStyle("-fx-text-fill: #ff8888; -fx-font-weight: bold;");
-            label.setOnMouseClicked(e -> {
-                try {
-                    if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-                        Desktop.getDesktop().browse(new URI(Main.applicationProperties.getProperty("application.releasespage")));
-                    }
-                } catch (URISyntaxException | IOException ex) {
-                    log.error("Unable to open browser", ex);
-                }
-            });
-            Platform.runLater(() -> versionTarget.getChildren().add(label));
+        if (isVersionNewer(version, latestVersion)) {
+            eventPublisher.publishEvent(new NewVersionAvailableEvent(latestVersion, releasesPage));
         }
     }
 
-    static boolean isVersionNewer(String current, String latest) {
-        if (Main.UNKNOWN_VERSION.equals(current))
+    boolean isVersionNewer(String current, String latest) {
+        if (current.contains("@"))
             return false;
 
         var currentSnapshot = current.split("-");
@@ -75,5 +64,8 @@ public final class VersionChecker extends Thread {
             return currentSnapshot.length == 2;
         }
         return currentParts.length < latestParts.length;
+    }
+
+    public record NewVersionAvailableEvent(String version, String url) {
     }
 }

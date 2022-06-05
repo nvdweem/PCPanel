@@ -3,7 +3,7 @@ package com.getpcpanel.ui;
 import java.util.Objects;
 
 import com.getpcpanel.device.Device;
-import com.getpcpanel.profile.Save;
+import com.getpcpanel.profile.SaveService;
 
 import javafx.geometry.Pos;
 import javafx.scene.control.ContentDisplay;
@@ -12,14 +12,21 @@ import javafx.scene.control.ListView;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.VBox;
+import javafx.util.Callback;
 
 public class DeviceCell extends ListCell<Device> {
+    private final SaveService saveService;
     private final ImageView imageView = new ImageView();
     private final LimitedTextField textField = new LimitedTextField(15);
     private final VBox vbox = new VBox(imageView);
     private final ListView<Device> listView;
 
-    public DeviceCell(ListView<Device> listView) {
+    public static Callback<ListView<Device>, ListCell<Device>> buildFactory(SaveService saveService) {
+        return cell -> new DeviceCell(saveService, cell);
+    }
+
+    public DeviceCell(SaveService saveService, ListView<Device> listView) {
+        this.saveService = saveService;
         this.listView = listView;
         setContentDisplay(ContentDisplay.BOTTOM);
         vbox.getStylesheets().addAll(Objects.requireNonNull(getClass().getResource("/assets/1.css"), "Unable to find 1.css").toExternalForm());
@@ -77,6 +84,6 @@ public class DeviceCell extends ListCell<Device> {
         listView.getSelectionModel().select(device);
         setText(newValue);
         device.setDisplayName(newValue);
-        Save.saveFile();
+        saveService.save();
     }
 }

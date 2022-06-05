@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -14,12 +17,18 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import lombok.RequiredArgsConstructor;
 import one.util.streamex.StreamEx;
 
+@Component
+@RequiredArgsConstructor
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class PickProcessesController {
     public enum PickType {
         file, soundSource, process
     }
+
+    private final FxHelper fxHelper;
 
     @FXML private VBox pickRows;
     private PickType pickType;
@@ -94,7 +103,7 @@ public class PickProcessesController {
     }
 
     private void showAppFinder(boolean sound, TextField textField) {
-        var afd = new AppFinderDialog(null, sound);
+        var afd = fxHelper.buildAppFinderDialog(null, sound);
         var afdStage = new Stage();
         afd.start(afdStage, true);
 

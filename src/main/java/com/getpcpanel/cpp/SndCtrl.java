@@ -10,49 +10,56 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.PostConstruct;
+
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
 
 import com.getpcpanel.util.ApplicationFocusListener;
-import com.getpcpanel.util.Util;
+import com.getpcpanel.util.ExtractUtil;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
+@Service
 @SuppressWarnings("ALL") // Methods are called from JNI
-public enum SndCtrl {
-    instance;
+@RequiredArgsConstructor
+public class SndCtrl {
+    private final ExtractUtil extractUtil;
 
-    static {
+    @PostConstruct
+    public void init() {
         try {
             System.loadLibrary("SndCtrl");
             log.warn("Debugging? Loading SndCtrl from the path.");
         } catch (Throwable e) {
-            System.load(Util.extractAndDeleteOnExit("SndCtrl.dll").toString());
+            System.load(extractUtil.extractAndDeleteOnExit("SndCtrl.dll").toString());
         }
-        SndCtrlNative.instance.start(instance);
+        SndCtrlNative.instance.start(this);
     }
 
     private Map<DefaultFor, String> defaults = new HashMap<>();
     private Map<String, AudioDevice> devices = new HashMap<>();
 
-    public static Collection<AudioDevice> getDevices() {
-        return Collections.unmodifiableCollection(instance.devices.values());
+    public Collection<AudioDevice> getDevices() {
+        return Collections.unmodifiableCollection(devices.values());
     }
 
-    public static AudioDevice getDevice(String id) {
-        return instance.devices.get(id);
+    public AudioDevice getDevice(String id) {
+        return devices.get(id);
     }
 
-    public static void setDeviceVolume(String deviceId, float volume) {
+    public void setDeviceVolume(String deviceId, float volume) {
         var deviceOrDefault = defaultDeviceOnEmpty(deviceId);
         log.trace("Set device volume to {} for {}", volume, deviceOrDefault);
         SndCtrlNative.instance.setDeviceVolume(deviceOrDefault, volume);
     }
 
-    public static void muteDevice(String deviceId, MuteType mute) {
+    public void muteDevice(String deviceId, MuteType mute) {
         var deviceOrDefault = defaultDeviceOnEmpty(deviceId);
-        var device = instance.devices.get(deviceOrDefault);
+        var device = devices.get(deviceOrDefault);
         if (device == null) {
             log.warn("No device found for {}", deviceOrDefault);
             return;
@@ -62,55 +69,55 @@ public enum SndCtrl {
         SndCtrlNative.instance.muteDevice(deviceOrDefault, mute.convert(device.muted()));
     }
 
-    public static void setDefaultDevice(String deviceId) {
+    public void setDefaultDevice(String deviceId) {
         log.trace("Set default device to {}", deviceId);
         SndCtrlNative.instance.setDefaultDevice(deviceId, DataFlow.dfAll.ordinal(), Role.roleMultimedia.ordinal());
     }
 
-    public static void setProcessVolume(String fileName, String device, float volume) {
+    public void setProcessVolume(String fileName, String device, float volume) {
         var deviceId = defaultDeviceOnEmpty(device);
-        StreamEx.ofValues(instance.devices)
+        StreamEx.ofValues(devices)
                 .filter(d -> device.equals("*") || deviceId.equals(d.id()))
                 .flatCollection(d -> d.getSessions().values())
                 .filter(s -> (fileName.equals(AudioSession.SYSTEM) && s.pid() == 0) || (s.executable() != null && StringUtils.equals(fileName, s.executable().getName())))
                 .forEach(s -> setProcessVolume(s, volume));
     }
 
-    public static void setProcessVolume(AudioSession session, float volume) {
+    public void setProcessVolume(AudioSession session, float volume) {
         log.trace("Setting volume to {} for {}", volume, session);
         SndCtrlNative.instance.setProcessVolume(session.device().id(), session.pid(), volume);
     }
 
-    public static void setFocusVolume(float volume) {
+    public void setFocusVolume(float volume) {
         SndCtrlNative.instance.setFocusVolume(volume);
     }
 
-    public static void muteProcesses(Set<String> fileName, MuteType mute) {
-        StreamEx.ofValues(instance.devices).flatCollection(d -> d.getSessions().values())
+    public void muteProcesses(Set<String> fileName, MuteType mute) {
+        StreamEx.ofValues(devices).flatCollection(d -> d.getSessions().values())
                 .filter(s -> s.executable() != null && fileName.contains(s.executable().getName()))
                 .forEach(s -> muteProcess(s, mute));
     }
 
-    public static void muteProcess(AudioSession session, MuteType muted) {
+    public void muteProcess(AudioSession session, MuteType muted) {
         log.trace("Muting session {}", session);
         SndCtrlNative.instance.muteSession(session.device().id(), session.pid(), muted.convert(session.muted()));
     }
 
-    public static String getFocusApplication() {
+    public String getFocusApplication() {
         return SndCtrlNative.instance.getFocusApplication();
     }
 
-    public static List<File> getRunningApplications() {
+    public List<File> getRunningApplications() {
         var running = new HashSet<String>();
         var arr = SndCtrlNative.instance.getAllRunningProcesses();
         return StreamEx.of(arr).map(StringUtils::trimToNull).nonNull().map(File::new).sorted(Comparator.comparing(File::getName)).toImmutableList();
     }
 
-    private static String defaultDeviceOnEmpty(String deviceId) {
+    private String defaultDeviceOnEmpty(String deviceId) {
         if (StringUtils.isNotBlank(deviceId) && !StringUtils.equals("default", deviceId)) {
             return deviceId;
         }
-        return instance.defaults.get(new DefaultFor(DataFlow.dfRender.ordinal(), Role.roleMultimedia.ordinal()));
+        return defaults.get(new DefaultFor(DataFlow.dfRender.ordinal(), Role.roleMultimedia.ordinal()));
     }
 
     private AudioDevice deviceAdded(String name, String id, float volume, boolean muted, int dataFlow) {

@@ -25,7 +25,7 @@ to
 
 Probably the same, for the run configuration the important part is:
 
-`--module-path=&quot;${JAVAFX_HOME}\lib&quot; --add-modules=javafx.controls,javafx.fxml --add-exports javafx.controls/com.sun.javafx.scene.control.skin.resources=ALL-UNNAMED --add-exports javafx.base/com.sun.javafx.event=ALL-UNNAMED`
+`--module-path="${JAVAFX_HOME}\lib" --add-modules=javafx.controls,javafx.fxml --add-exports javafx.controls/com.sun.javafx.scene.control.skin.resources=ALL-UNNAMED --add-exports javafx.base/com.sun.javafx.event=ALL-UNNAMED`
 
 Adding the `skipfilecheck` command line argument ensures that you can debug while having the installed version running at the same time
 (otherwise starting in the IDE will open the installed version).

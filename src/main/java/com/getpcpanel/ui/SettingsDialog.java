@@ -1,20 +1,22 @@
 package com.getpcpanel.ui;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
-import com.getpcpanel.Main;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
 import com.getpcpanel.obs.OBSListener;
 import com.getpcpanel.obs.remote.OBSRemoteController;
-import com.getpcpanel.profile.Save;
+import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.util.FileUtil;
 
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.CheckBox;
@@ -25,13 +27,22 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
+@Component
+@RequiredArgsConstructor
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class SettingsDialog extends Application implements Initializable {
+    private final SaveService saveService;
+    private final OBSListener obsListener;
+    private final FileUtil fileUtil;
+    private final FxHelper fxHelper;
+    private final Stage parentStage;
+
     private Stage stage;
     private Pane pane;
-    private final Stage parentStage;
     @FXML private CheckBox obsEnable;
     @FXML private Pane obsControls;
     @FXML private TextField obsAddress;
@@ -43,14 +54,10 @@ public class SettingsDialog extends Application implements Initializable {
     @FXML private Pane vmControls;
     @FXML private TextField vmPath;
 
-    public SettingsDialog(Stage parentStage) {
-        this.parentStage = parentStage;
-    }
-
     @Override
     public void start(Stage stage) {
         this.stage = stage;
-        var loader = new FXMLLoader(getClass().getResource("/assets/SettingsDialog.fxml"));
+        var loader = fxHelper.getLoader(getClass().getResource("/assets/SettingsDialog.fxml"));
         loader.setController(this);
         try {
             pane = loader.load();
@@ -97,15 +104,15 @@ public class SettingsDialog extends Application implements Initializable {
 
     @FXML
     private void ok(ActionEvent event) {
-        var save = Save.get();
+        var save = saveService.get();
         save.setObsEnabled(obsEnable.isSelected());
         save.setObsAddress(obsAddress.getText());
         save.setObsPort(obsPort.getText());
         save.setObsPassword(obsPassword.getText());
         save.setVoicemeeterEnabled(vmEnable.isSelected());
         save.setVoicemeeterPath(vmPath.getText());
-        Save.saveFile();
-        OBSListener.check();
+        saveService.save();
+        obsListener.check();
         stage.close();
     }
 
@@ -117,14 +124,14 @@ public class SettingsDialog extends Application implements Initializable {
     @FXML
     private void openLogsFolder(ActionEvent event) {
         try {
-            Runtime.getRuntime().exec("cmd /c \"start %s\"".formatted(new File(Main.FILES_ROOT, "logs").getAbsolutePath()));
+            Runtime.getRuntime().exec("cmd /c \"start %s\"".formatted(fileUtil.getFile("logs").getAbsolutePath()));
         } catch (IOException e) {
             log.error("Unable to open logs folder", e);
         }
     }
 
     private void initFields() {
-        var save = Save.get();
+        var save = saveService.get();
         obsEnable.setSelected(save.isObsEnabled());
         obsAddress.setText(save.getObsAddress());
         obsPort.setText(save.getObsPort());

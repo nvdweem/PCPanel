@@ -1,11 +1,11 @@
 // run with command
 // cscript add-change.js
 var installer = WScript.CreateObject("WindowsInstaller.Installer");
-var database = installer.OpenDatabase("${app.name}-${project.version}.msi", 1);
+var database = installer.OpenDatabase("@app.name@-@project.version@.msi", 1);
 var sql
 var view
 
-sql = "SELECT File, Component_ FROM File WHERE FileName='${app.name}.exe'";
+sql = "SELECT File, Component_ FROM File WHERE FileName='@app.name@.exe'";
 view = database.OpenView(sql);
 view.Execute();
 var viewRow = view.Fetch();

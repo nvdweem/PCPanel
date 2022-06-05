@@ -4,12 +4,11 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-import com.getpcpanel.Main;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.profile.LightingConfig;
 import com.getpcpanel.profile.LightingConfig.LightingMode;
-import com.getpcpanel.profile.Save;
+import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SingleKnobLightingConfig.SINGLE_KNOB_MODE;
 import com.getpcpanel.profile.SingleLogoLightingConfig.SINGLE_LOGO_MODE;
 import com.getpcpanel.profile.SingleSliderLabelLightingConfig.SINGLE_SLIDER_LABEL_MODE;
@@ -21,7 +20,6 @@ import com.getpcpanel.util.Util;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Side;
 import javafx.scene.Node;
@@ -44,6 +42,10 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class ProLightingDialog extends Application implements Initializable {
+    private final SaveService saveService;
+    private final DeviceScanner deviceScanner;
+    private final FxHelper fxHelper;
+
     private Stage stage;
     @FXML private TabPane mainPane;
     @FXML private TabPane knobsTabbedPane;
@@ -92,7 +94,10 @@ public class ProLightingDialog extends Application implements Initializable {
     private final LightingConfig ogConfig;
     private boolean pressedOk;
 
-    public ProLightingDialog(Device device) {
+    public ProLightingDialog(SaveService saveService, DeviceScanner deviceScanner, FxHelper fxHelper, Device device) {
+        this.saveService = saveService;
+        this.deviceScanner = deviceScanner;
+        this.fxHelper = fxHelper;
         this.device = device;
         ogConfig = device.getLightingConfig();
     }
@@ -100,7 +105,7 @@ public class ProLightingDialog extends Application implements Initializable {
     @Override
     public void start(Stage stage) {
         this.stage = stage;
-        var loader = new FXMLLoader(getClass().getResource("/assets/ProLightingDialog.fxml"));
+        var loader = fxHelper.getLoader(getClass().getResource("/assets/ProLightingDialog.fxml"));
         loader.setController(this);
         Pane mainPane = null;
         try {
@@ -113,14 +118,14 @@ public class ProLightingDialog extends Application implements Initializable {
         stage.getIcons().add(new Image(getClass().getResource("/assets/256x256.png").toExternalForm()));
         stage.setOnHiding(e -> {
             if (!pressedOk)
-                if (DeviceScanner.getConnectedDevice(device.getSerialNumber()) == null) {
-                    Save.getDeviceSave(device.getSerialNumber()).setLightingConfig(ogConfig);
+                if (deviceScanner.getConnectedDevice(device.getSerialNumber()) == null) {
+                    saveService.get().getDeviceSave(device.getSerialNumber()).setLightingConfig(ogConfig);
                 } else {
                     device.setLighting(ogConfig, true);
                 }
         });
         stage.initModality(Modality.APPLICATION_MODAL);
-        stage.initOwner(Main.stage);
+        stage.initOwner(HomePage.stage);
         stage.setScene(scene);
         stage.sizeToScene();
         stage.setTitle("Lighting Dialog");
@@ -136,7 +141,7 @@ public class ProLightingDialog extends Application implements Initializable {
     private void ok(ActionEvent event) {
         log.debug("{} {}", stage.getWidth(), stage.getHeight());
         pressedOk = true;
-        Save.saveFile();
+        saveService.save();
         stage.close();
     }
 

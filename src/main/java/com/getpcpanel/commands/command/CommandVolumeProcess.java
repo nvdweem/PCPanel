@@ -4,7 +4,6 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.getpcpanel.cpp.SndCtrl;
 
 import lombok.Getter;
 import lombok.ToString;
@@ -23,6 +22,7 @@ public class CommandVolumeProcess extends CommandVolume implements DialAction {
 
     @Override
     public void execute(int volume) {
-        processName.forEach(process -> SndCtrl.setProcessVolume(process, device, volume / 100f));
+        var snd = getSndCtrl();
+        processName.forEach(process -> snd.setProcessVolume(process, device, volume / 100f));
     }
 }

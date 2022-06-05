@@ -1,6 +1,6 @@
 package com.getpcpanel.util;
 
-import static com.getpcpanel.Main.FILES_ROOT;
+import static com.getpcpanel.util.FileUtil.FILES_ROOT;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,8 +12,11 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.getpcpanel.Main;
+import org.springframework.context.ApplicationEventPublisher;
 
+import com.getpcpanel.ui.HomePage;
+
+import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -23,6 +26,7 @@ public class FileChecker extends Thread {
     private static final AtomicBoolean started = new AtomicBoolean(false);
     @SuppressWarnings("FieldCanBeLocal") // If this field is local then the lock will be released.
     private RandomAccessFile randomFile;
+    @Setter private ApplicationEventPublisher eventPublisher;
 
     public static void createAndStart() {
         if (started.getAndSet(true)) {
@@ -109,7 +113,9 @@ public class FileChecker extends Thread {
                             log.trace("Unable to delete {}", file);
                         }
                         log.debug("Showing window because another process was started");
-                        Main.reopen();
+                        if (eventPublisher != null) {
+                            eventPublisher.publishEvent(new HomePage.ShowMainEvent());
+                        }
                     }
                 }
             } catch (Exception e) {

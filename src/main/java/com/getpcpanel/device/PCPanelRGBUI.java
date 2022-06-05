@@ -3,18 +3,18 @@ package com.getpcpanel.device;
 import java.io.IOException;
 import java.util.Objects;
 
-import com.getpcpanel.Main;
 import com.getpcpanel.hid.InputInterpreter;
+import com.getpcpanel.hid.OutputInterpreter;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.LightingConfig;
 import com.getpcpanel.profile.LightingConfig.LightingMode;
-import com.getpcpanel.ui.BasicMacro;
-import com.getpcpanel.ui.RGBLightingDialog;
+import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.ui.FxHelper;
+import com.getpcpanel.ui.HomePage;
 import com.getpcpanel.util.Util;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContentDisplay;
@@ -32,6 +32,8 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class PCPanelRGBUI extends Device {
+    private final InputInterpreter inputInterpreter;
+
     private static final int KNOB_COUNT = 4;
     @FXML private Pane lightPanes;
     @FXML private Pane panelPane;
@@ -41,9 +43,10 @@ public class PCPanelRGBUI extends Device {
     private static final Image previewImage = new Image(Objects.requireNonNull(PCPanelRGBUI.class.getResource("/assets/PCPanelRGB/preview.png")).toExternalForm());
     private Stage childDialogStage;
 
-    public PCPanelRGBUI(String serialNum, DeviceSave deviceSave) {
-        super(serialNum, deviceSave);
-        var loader = new FXMLLoader(getClass().getResource("/assets/PCPanelRGB/PCPanelRGB.fxml"));
+    public PCPanelRGBUI(FxHelper fxHelper, InputInterpreter inputInterpreter, SaveService saveService, OutputInterpreter outputInterpreter, DeviceSave deviceSave, String serialNum) {
+        super(fxHelper, saveService, outputInterpreter, serialNum, deviceSave);
+        this.inputInterpreter = inputInterpreter;
+        var loader = getFxHelper().getLoader(getClass().getResource("/assets/PCPanelRGB/PCPanelRGB.fxml"));
         loader.setController(this);
         try {
             Pane pane = loader.load();
@@ -85,7 +88,7 @@ public class PCPanelRGBUI extends Device {
         lightingButton.setMinHeight(100.0D);
         lightingButton.setOnAction(e -> {
             childDialogStage = new Stage();
-            new RGBLightingDialog(this).start(childDialogStage);
+            getFxHelper().buildRGBLightingDialog(this).start(childDialogStage);
         });
     }
 
@@ -95,7 +98,7 @@ public class PCPanelRGBUI extends Device {
         var xDelta = 107.3D;
         var buttonSize = 80;
         for (var i = 0; i < KNOB_COUNT; i++) {
-            var loader = new FXMLLoader(getClass().getResource("/assets/PCPanelRGB/knob.fxml"));
+            var loader = getFxHelper().getLoader(getClass().getResource("/assets/PCPanelRGB/knob.fxml"));
             Node nx = loader.load();
             knobs[i] = new Button("", nx);
             knobs[i].setId("dial_button");
@@ -106,8 +109,8 @@ public class PCPanelRGBUI extends Device {
             knobs[i].setLayoutY(yPos);
             var knob = i;
             knobs[i].setOnAction(e -> {
-                Main.showHint(false);
-                var bm = new BasicMacro(this, knob);
+                HomePage.showHint(false);
+                var bm = getFxHelper().buildBasicMacro(this, knob);
                 try {
                     childDialogStage = new Stage();
                     bm.start(childDialogStage);
@@ -118,12 +121,12 @@ public class PCPanelRGBUI extends Device {
             knobs[i].setOnMouseClicked(c -> {
                 if (c.getButton() == MouseButton.MIDDLE) {
                     try {
-                        InputInterpreter.onButtonPress(getSerialNumber(), knob, true);
+                        inputInterpreter.onButtonPress(getSerialNumber(), knob, true);
                     } catch (IOException e1) {
                         log.error("Unable to handle button press", e1);
                     }
                     try {
-                        InputInterpreter.onButtonPress(getSerialNumber(), knob, false);
+                        inputInterpreter.onButtonPress(getSerialNumber(), knob, false);
                     } catch (IOException e1) {
                         log.error("Unable to handle button release", e1);
                     }

@@ -30,7 +30,7 @@ public final class KeyMacro {
             for (var i = 0; i < ar.length - 1; i++) {
                 var result = modifierToKeyEvent(ar[i]);
                 if (result == 0) {
-                    log.error("bad key modifier: {}", ar[i]);
+                    log.error("bad serialNum modifier: {}", ar[i]);
                 } else {
                     robot.keyPress(result);
                 }
@@ -41,7 +41,7 @@ public final class KeyMacro {
             for (var j = 0; j < ar.length - 1; j++) {
                 var result = modifierToKeyEvent(ar[j]);
                 if (result == 0) {
-                    log.error("bad key modifier: {}", ar[j]);
+                    log.error("bad serialNum modifier: {}", ar[j]);
                 } else {
                     robot.keyRelease(result);
                 }

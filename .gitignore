@@ -18,3 +18,4 @@ target/
 
 # Application files
 /SndCtrl.dll
+/src/main/resources/application-default.properties

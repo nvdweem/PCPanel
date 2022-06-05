@@ -17,7 +17,6 @@ import com.getpcpanel.cpp.SndCtrl;
 import javafx.application.Application;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -30,25 +29,25 @@ import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import me.marnic.jiconextract2.JIconExtract;
 import one.util.streamex.StreamEx;
 
 @Log4j2
+@RequiredArgsConstructor
 class AppFinderDialog extends Application implements Initializable {
+    private final SndCtrl sndCtrl;
+    private final FxHelper fxHelper;
+    private final Stage parentStage;
+    private final boolean volumeApps;
+
     private Stage stage;
     @FXML private FlowPane flowPane;
     @FXML private ScrollPane scroll;
     private ScrollPane pane;
     private String processName;
-    private final Stage parentStage;
-    private final boolean volumeApps;
     private static final int ICON_SIZE = 90;
-
-    public AppFinderDialog(Stage parentStage, boolean volumeApps) {
-        this.parentStage = parentStage;
-        this.volumeApps = volumeApps;
-    }
 
     @Override
     public void start(Stage stage) {
@@ -57,7 +56,7 @@ class AppFinderDialog extends Application implements Initializable {
 
     public void start(Stage stage, boolean andWait) {
         this.stage = stage;
-        var loader = new FXMLLoader(getClass().getResource("/assets/AppFinderDialog.fxml"));
+        var loader = fxHelper.getLoader(getClass().getResource("/assets/AppFinderDialog.fxml"));
         loader.setController(this);
         try {
             pane = loader.load();
@@ -121,12 +120,12 @@ class AppFinderDialog extends Application implements Initializable {
 
     private List<AudioSession> getProgs() {
         if (volumeApps) {
-            return StreamEx.of(SndCtrl.getDevices()).flatCollection(ad -> ad.getSessions().values())
+            return StreamEx.of(sndCtrl.getDevices()).flatCollection(ad -> ad.getSessions().values())
                            .distinct(AudioSession::pid)
                            .sorted(Comparator.nullsLast(Comparator.comparing(AudioSession::title).thenComparing(AudioSession::executable)))
                            .toImmutableList();
         } else {
-            return StreamEx.of(SndCtrl.getRunningApplications()).map(f -> new AudioSession(null, 1, f, f.getName(), null, 0, false)).toList();
+            return StreamEx.of(sndCtrl.getRunningApplications()).map(f -> new AudioSession(null, 1, f, f.getName(), null, 0, false)).toList();
         }
     }
 

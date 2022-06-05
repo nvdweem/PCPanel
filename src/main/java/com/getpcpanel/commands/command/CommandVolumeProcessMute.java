@@ -4,7 +4,6 @@ import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.cpp.MuteType;
-import com.getpcpanel.cpp.SndCtrl;
 
 import lombok.Getter;
 import lombok.ToString;
@@ -22,6 +21,6 @@ public class CommandVolumeProcessMute extends CommandVolume implements ButtonAct
 
     @Override
     public void execute() {
-        SndCtrl.muteProcesses(processName, muteType);
+        getSndCtrl().muteProcesses(processName, muteType);
     }
 }

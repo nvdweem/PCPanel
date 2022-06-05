@@ -3,28 +3,31 @@ package com.getpcpanel.voicemeeter;
 import java.io.File;
 import java.util.Set;
 
-import com.getpcpanel.profile.Save;
+import org.springframework.stereotype.Service;
+
+import com.getpcpanel.profile.SaveService;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
+@Service
+@RequiredArgsConstructor
 public final class VoicemeeterAPI {
-    private static VoicemeeterInstance instance;
-    public static final String DEFAULT_VM_WINDOWS_64BIT_PATH = "VoicemeeterRemote64.dll";
-    public static final String DEFAULT_VM_WINDOWS_32BIT_PATH = "VoicemeeterRemote.dll";
+    private final SaveService saveService;
+    private VoicemeeterInstance instance;
+    public final String DEFAULT_VM_WINDOWS_64BIT_PATH = "VoicemeeterRemote64.dll";
+    public final String DEFAULT_VM_WINDOWS_32BIT_PATH = "VoicemeeterRemote.dll";
 
-    private VoicemeeterAPI() {
-    }
-
-    public static void init() {
+    public void init() {
         init(true);
     }
 
-    public static void init(boolean is64bit) {
-        var dllPath = new File(Save.get().getVoicemeeterPath(), is64bit ? DEFAULT_VM_WINDOWS_64BIT_PATH : DEFAULT_VM_WINDOWS_32BIT_PATH);
+    public void init(boolean is64bit) {
+        var dllPath = new File(saveService.get().getVoicemeeterPath(), is64bit ? DEFAULT_VM_WINDOWS_64BIT_PATH : DEFAULT_VM_WINDOWS_32BIT_PATH);
         try {
             System.load(dllPath.getAbsolutePath());
             instance = Native.loadLibrary("VoicemeeterRemote" + (is64bit ? "64" : ""), VoicemeeterInstance.class);
@@ -33,108 +36,108 @@ public final class VoicemeeterAPI {
         }
     }
 
-    public static void init(VoicemeeterInstance voicemeeterInstance) {
+    public void init(VoicemeeterInstance voicemeeterInstance) {
         instance = voicemeeterInstance;
     }
 
-    public static void login() throws VoicemeeterException {
+    public void login() throws VoicemeeterException {
         ensureNoError(instance.VBVMR_Login(), 0, 1);
     }
 
-    public static void logout() {
+    public void logout() {
         ensureNoError(instance.VBVMR_Logout(), 0);
     }
 
-    public static void runVoicemeeter(int type) {
+    public void runVoicemeeter(int type) {
         ensureNoError(instance.VBVMR_RunVoicemeeter(type), 0);
     }
 
-    public static int getVoicemeeterType() {
+    public int getVoicemeeterType() {
         var type = getPointer(4);
         ensureNoError(instance.VBVMR_GetVoicemeeterType(type), 0);
         return type.getInt(0L);
     }
 
-    public static int getVoicemeeterVersion() {
+    public int getVoicemeeterVersion() {
         var version = getPointer(4);
         ensureNoError(instance.VBVMR_GetVoicemeeterVersion(version), 0);
         return version.getInt(0L);
     }
 
-    public static boolean areParametersDirty() {
+    public boolean areParametersDirty() {
         return ensureNoError(instance.VBVMR_IsParametersDirty(), 0, 1) == 1;
     }
 
-    public static float getParameterFloat(String parameterName) {
+    public float getParameterFloat(String parameterName) {
         var paramName = getStringPointer(parameterName);
         var paramValue = getPointer(4);
         ensureNoError(instance.VBVMR_GetParameterFloat(paramName, paramValue), 0);
         return paramValue.getFloat(0L);
     }
 
-    public static String getParameterStringA(String parameterName) {
+    public String getParameterStringA(String parameterName) {
         var paramName = getStringPointer(parameterName);
         var paramValue = getPointer(8);
         ensureNoError(instance.VBVMR_GetParameterStringA(paramName, paramValue), 0);
         return paramValue.getString(0L);
     }
 
-    public static String getParameterStringW(String parameterName) {
+    public String getParameterStringW(String parameterName) {
         var paramName = getStringPointer(parameterName);
         var paramValue = getPointer(8);
         ensureNoError(instance.VBVMR_GetParameterStringW(paramName, paramValue), 0);
         return paramValue.getString(0L);
     }
 
-    public static float getLevel(int type, int channel) {
+    public float getLevel(int type, int channel) {
         var levelValue = getPointer(4);
         ensureNoError(instance.VBVMR_GetLevel(type, channel, levelValue), 0);
         return levelValue.getFloat(0L);
     }
 
-    public static byte[] getMidiMessage(int size) {
+    public byte[] getMidiMessage(int size) {
         var midiMessage = getPointer(size);
         ensureGte(instance.VBVMR_GetMidiMessage(midiMessage, size), 0);
         return midiMessage.getByteArray(0L, size);
     }
 
-    public static void setParameterFloat(String parameterName, float value) {
+    public void setParameterFloat(String parameterName, float value) {
         var paramName = getStringPointer(parameterName);
         ensureNoError(instance.VBVMR_SetParameterFloat(paramName, value), 0);
     }
 
-    public static void setParameterStringA(String parameterName, String value) {
+    public void setParameterStringA(String parameterName, String value) {
         var paramName = getStringPointer(parameterName);
         var paramValue = getStringPointer(value);
         ensureNoError(instance.VBVMR_SetParameterStringA(paramName, paramValue), 0);
     }
 
-    public static void setParameterStringW(String parameterName, String value) {
+    public void setParameterStringW(String parameterName, String value) {
         var paramName = getStringPointer(parameterName);
         var paramValue = getStringPointer(value);
         ensureNoError(instance.VBVMR_SetParameterStringW(paramName, paramValue), 0);
     }
 
-    public static void setParameters(String script) {
+    public void setParameters(String script) {
         var stringPointer = getStringPointer(script);
         var val = ensureGte(instance.VBVMR_SetParameters(stringPointer), 0);
         if (val > 0)
             throw new VoicemeeterException("Script error on line " + val);
     }
 
-    public static void setParametersW(String script) {
+    public void setParametersW(String script) {
         var stringPointer = getStringPointer(script);
         ensureNoError(instance.VBVMR_SetParametersW(stringPointer), 0);
     }
 
-    private static int ensureGte(Integer code, Integer expected) {
+    private int ensureGte(Integer code, Integer expected) {
         if (code < expected) {
             return ensureNoError(code);
         }
         return code;
     }
 
-    private static int ensureNoError(Integer code, Integer... expected) {
+    private int ensureNoError(Integer code, Integer... expected) {
         if (code == null) {
             throw new VoicemeeterException("Unexpected function return value. Function returned null");
         }
@@ -155,13 +158,13 @@ public final class VoicemeeterAPI {
         };
     }
 
-    public static int getNumberOfAudioDevices(boolean areInputDevices) {
+    public int getNumberOfAudioDevices(boolean areInputDevices) {
         if (areInputDevices)
             return instance.VBVMR_Input_GetDeviceNumber();
         return instance.VBVMR_Output_GetDeviceNumber();
     }
 
-    public static DeviceDescription getAudioDeviceDescriptionA(int index, boolean isInputDevice) {
+    public DeviceDescription getAudioDeviceDescriptionA(int index, boolean isInputDevice) {
         var type = getPointer(4);
         var name = getPointer(4);
         var hardwareId = getPointer(4);
@@ -181,7 +184,7 @@ public final class VoicemeeterAPI {
         return desc;
     }
 
-    public static DeviceDescription getOutputDeviceDescriptionW(int index, boolean isInputDevice) {
+    public DeviceDescription getOutputDeviceDescriptionW(int index, boolean isInputDevice) {
         var type = getPointer(4);
         var name = getPointer(4);
         var hardwareId = getPointer(4);
@@ -201,7 +204,7 @@ public final class VoicemeeterAPI {
         return desc;
     }
 
-    private static class DeviceDescription {
+    private class DeviceDescription {
         private int type;
         private String name;
         private String hardwareId;
@@ -234,14 +237,14 @@ public final class VoicemeeterAPI {
         }
     }
 
-    private static Pointer getStringPointer(String str) {
+    private Pointer getStringPointer(String str) {
         var size = str.getBytes().length + 1;
         var m = new Memory(size);
         m.setString(0L, str);
         return m;
     }
 
-    private static Pointer getPointer(int size) {
+    private Pointer getPointer(int size) {
         return new Memory(size);
     }
 }

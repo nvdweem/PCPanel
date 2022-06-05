@@ -2,6 +2,7 @@ package com.getpcpanel.commands.command;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.getpcpanel.MainFX;
 import com.getpcpanel.obs.OBS;
 
 import lombok.Getter;
@@ -19,8 +20,9 @@ public class CommandObsSetSourceVolume extends CommandObs implements DialAction 
 
     @Override
     public void execute(int volume) {
-        if (OBS.isConnected()) {
-            OBS.setSourceVolume(sourceName, volume);
+        var obs = MainFX.getBean(OBS.class);
+        if (obs.isConnected()) {
+            obs.setSourceVolume(sourceName, volume);
         }
     }
 }

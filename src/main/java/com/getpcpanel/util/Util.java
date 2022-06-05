@@ -1,19 +1,14 @@
 package com.getpcpanel.util;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-
-import com.getpcpanel.Main;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -110,25 +105,5 @@ public final class Util {
 
     public static void fill(Object[] ar, Object... objs) {
         System.arraycopy(objs, 0, ar, 0, objs.length);
-    }
-
-    public static File extractAndDeleteOnExit(String file) {
-        var name = FilenameUtils.getBaseName(file);
-        var ext = FilenameUtils.getExtension(file);
-
-        var extracted = new File(System.getProperty("java.io.tmpdir"), String.join(".", name, Main.VERSION, ext));
-        if (extracted.exists() && !extracted.delete()) {
-            log.info("{} already exists, not updating", extracted);
-            return extracted;
-        }
-
-        try {
-            var resource = Util.class.getResource("/" + file);
-            FileUtils.copyURLToFile(Objects.requireNonNull(resource), extracted);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        extracted.deleteOnExit();
-        return extracted;
     }
 }

@@ -1,22 +1,22 @@
 --type msi
---name ${app.name}
---vendor ${windows.vendor}
---icon "${project.basedir}/app-icon.ico"
---dest "${project.build.directory}"
---main-jar ${project.build.finalName}.jar
---main-class ${main-class}
---input "${project.build.directory}/dependency"
---app-version ${app.version}
---runtime-image "${project.build.directory}/jvm-image"
---temp "${project.build.directory}/installer-work"
---win-upgrade-uuid ${windows.upgrade.uuid}
---description "${project.description}"
---copyright "(C) ${windows.vendor}"
---java-options "--add-exports javafx.controls/com.sun.javafx.scene.control.skin.resources=${module.name}"
---java-options "--add-exports javafx.base/com.sun.javafx.event=${module.name}"
+--name @app.name@
+--vendor @windows.vendor@
+--icon "@project.basedir@/app-icon.ico"
+--dest "@project.build.directory@"
+--main-jar @project.build.finalName@.jar
+--main-class @main-class@
+--input "@project.build.directory@/dependency"
+--app-version @app.version@
+--runtime-image "@project.build.directory@/jvm-image"
+--temp "@project.build.directory@/installer-work"
+--win-upgrade-uuid @windows.upgrade.uuid@
+--description "@project.description@"
+--copyright "(C) @windows.vendor@"
+--java-options "--add-exports javafx.controls/com.sun.javafx.scene.control.skin.resources=@module.name@"
+--java-options "--add-exports javafx.base/com.sun.javafx.event=@module.name@"
 --about-url "https://github.com/nvdweem/PCPanel"
 --win-menu
---win-menu-group ${windows.vendor}
+--win-menu-group @windows.vendor@
 --win-dir-chooser
 --win-per-user-install
 --win-shortcut-prompt

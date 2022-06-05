@@ -43,7 +43,7 @@ import com.getpcpanel.obs.OBS;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.KnobSetting;
 import com.getpcpanel.profile.Profile;
-import com.getpcpanel.profile.Save;
+import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.util.Util;
 import com.getpcpanel.voicemeeter.Voicemeeter;
 import com.getpcpanel.voicemeeter.Voicemeeter.ButtonControlMode;
@@ -56,7 +56,6 @@ import javafx.application.Application;
 import javafx.collections.ListChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -80,6 +79,12 @@ import one.util.streamex.StreamEx;
 
 @Log4j2
 public class BasicMacro extends Application implements Initializable {
+    private final FxHelper fxHelper;
+    private final SaveService saveService;
+    private final OBS obs;
+    private final Voicemeeter voiceMeeter;
+    private final SndCtrl sndCtrl;
+
     @FXML private Pane topPane;
     @FXML private TabPane mainTabPane;
     @FXML private TabPane buttonTabPane;
@@ -155,18 +160,24 @@ public class BasicMacro extends Application implements Initializable {
     private String name;
     private String analogType;
 
-    public BasicMacro(Device device, int knob, boolean hasButton, String name, String analogType) {
-        this(device, knob, hasButton);
+    public BasicMacro(FxHelper fxHelper, SaveService saveService, OBS obs, Voicemeeter voiceMeeter, SndCtrl sndCtrl, Device device, int knob, boolean hasButton, String name, String analogType) {
+        this(fxHelper, saveService, obs, voiceMeeter, sndCtrl, device, knob, hasButton);
         this.name = name;
         this.analogType = analogType;
     }
 
-    public BasicMacro(Device device, int knob) {
-        this(device, knob, true);
+    public BasicMacro(FxHelper fxHelper, SaveService saveService, OBS obs, Voicemeeter voiceMeeter, SndCtrl sndCtrl, Device device, int knob) {
+        this(fxHelper, saveService, obs, voiceMeeter, sndCtrl, device, knob, true);
     }
 
-    public BasicMacro(Device device, int knob, boolean hasButton) {
-        deviceSave = Save.getDeviceSave(device.getSerialNumber());
+    public BasicMacro(FxHelper fxHelper, SaveService saveService, OBS obs, Voicemeeter voiceMeeter, SndCtrl sndCtrl, Device device, int knob, boolean hasButton) {
+        this.fxHelper = fxHelper;
+        this.saveService = saveService;
+        this.obs = obs;
+        this.voiceMeeter = voiceMeeter;
+        this.sndCtrl = sndCtrl;
+
+        deviceSave = saveService.get().getDeviceSave(device.getSerialNumber());
         if (hasButton)
             buttonData = deviceSave.getButtonData(knob);
         volData = deviceSave.getDialData(knob);
@@ -178,7 +189,7 @@ public class BasicMacro extends Application implements Initializable {
     @Override
     public void start(Stage basicmacro) throws Exception {
         stage = basicmacro;
-        var loader = new FXMLLoader(getClass().getResource("/assets/BasicMacro.fxml"));
+        var loader = fxHelper.getLoader(getClass().getResource("/assets/BasicMacro.fxml"));
         loader.setController(this);
         Pane mainPane = loader.load();
         var scene = new Scene(mainPane);
@@ -231,7 +242,7 @@ public class BasicMacro extends Application implements Initializable {
         TextField processTextField;
         var button = (Button) event.getSource();
         var id = button.getId();
-        var afd = new AppFinderDialog(stage, !"findAppEndProcess".equals(id));
+        var afd = fxHelper.buildAppFinderDialog(stage, !"findAppEndProcess".equals(id));
         var afdStage = new Stage();
         afd.start(afdStage);
         var processNameResult = afd.getProcessName();
@@ -265,7 +276,7 @@ public class BasicMacro extends Application implements Initializable {
             log.debug(volData);
             log.debug("-----------------");
         }
-        Save.saveFile();
+        saveService.save();
         stage.close();
     }
 
@@ -380,9 +391,9 @@ public class BasicMacro extends Application implements Initializable {
             mainTabPane.getTabs().remove(0);
         Util.adjustTabs(dialTabPane, 120, 30);
         Util.adjustTabs(buttonTabPane, 120, 30);
-        if (OBS.isConnected()) {
-            var sourcesWithAudio = OBS.getSourcesWithAudio();
-            var scenes = OBS.getScenes();
+        if (obs.isConnected()) {
+            var sourcesWithAudio = obs.getSourcesWithAudio();
+            var scenes = obs.getScenes();
             obsAudioSources.getItems().addAll(sourcesWithAudio);
             obsSourceToMute.getItems().addAll(sourcesWithAudio);
             obsSetScene.getItems().addAll(scenes);
@@ -403,7 +414,7 @@ public class BasicMacro extends Application implements Initializable {
         }
         voicemeeterDialType.getItems().addAll(DialControlMode.values());
         voicemeeterButtonType.getItems().addAll(ButtonControlMode.values());
-        if (Voicemeeter.login()) {
+        if (voiceMeeter.login()) {
             voicemeeterBasicButtonIO.getItems().addAll(ControlType.values());
             voicemeeterBasicDialIO.getItems().addAll(ControlType.values());
             voicemeeterBasicButtonIO.valueProperty().addListener((o, oldVal, newVal) -> {
@@ -411,14 +422,14 @@ public class BasicMacro extends Application implements Initializable {
                     Util.clearAndSetNull(voicemeeterBasicButtonIndex);
                     return;
                 }
-                Util.changeItemsTo(voicemeeterBasicButtonIndex, Util.numToList(Voicemeeter.getNum(newVal)), true);
+                Util.changeItemsTo(voicemeeterBasicButtonIndex, Util.numToList(voiceMeeter.getNum(newVal)), true);
             });
             voicemeeterBasicDialIO.valueProperty().addListener((o, oldVal, newVal) -> {
                 if (newVal == null) {
                     Util.clearAndSetNull(voicemeeterBasicDialIndex);
                     return;
                 }
-                Util.changeItemsTo(voicemeeterBasicDialIndex, Util.numToList(Voicemeeter.getNum(newVal)), true);
+                Util.changeItemsTo(voicemeeterBasicDialIndex, Util.numToList(voiceMeeter.getNum(newVal)), true);
             });
             voicemeeterBasicButtonIndex.valueProperty().addListener((o, oldVal, newVal) -> {
                 if (newVal == null) {
@@ -426,7 +437,7 @@ public class BasicMacro extends Application implements Initializable {
                     return;
                 }
                 Util.changeItemsTo(voicemeeterBasicButton,
-                        Voicemeeter.getButtonTypes(voicemeeterBasicButtonIO.getValue(), voicemeeterBasicButtonIndex.getValue() - 1));
+                        voiceMeeter.getButtonTypes(voicemeeterBasicButtonIO.getValue(), voicemeeterBasicButtonIndex.getValue() - 1));
             });
             voicemeeterBasicDialIndex.valueProperty().addListener((o, oldVal, newVal) -> {
                 if (newVal == null) {
@@ -434,7 +445,7 @@ public class BasicMacro extends Application implements Initializable {
                     return;
                 }
                 Util.changeItemsTo(voicemeeterBasicDial,
-                        Voicemeeter.getDialTypes(voicemeeterBasicDialIO.getValue(), voicemeeterBasicDialIndex.getValue() - 1));
+                        voiceMeeter.getDialTypes(voicemeeterBasicDialIO.getValue(), voicemeeterBasicDialIndex.getValue() - 1));
             });
             voicemeeterBasicButtonIO.getSelectionModel().selectFirst();
             voicemeeterBasicDialIO.getSelectionModel().selectFirst();
@@ -463,7 +474,7 @@ public class BasicMacro extends Application implements Initializable {
         }
         var curProfile = deviceSave.getCurrentProfileName();
         profileDropdown.getItems().addAll(deviceSave.getProfiles().stream().filter(c -> !c.getName().equals(curProfile)).toList());
-        allSoundDevices = SndCtrl.getDevices();
+        allSoundDevices = sndCtrl.getDevices();
         var outputDevices = allSoundDevices.stream().filter(AudioDevice::isOutput).toList();
         volumedevice.getItems().addAll(allSoundDevices);
         muteSoundDevice.getItems().addAll(allSoundDevices);

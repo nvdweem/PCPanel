@@ -16,6 +16,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class DeviceSave {
+    @JsonIgnore private Save parent;
     private String displayName;
     private List<Profile> profiles;
     private String currentProfile;
@@ -30,12 +31,12 @@ public class DeviceSave {
         lightingConfig = LightingConfig.defaultLightingConfig(dt);
     }
 
-    private static String generateDefaultDisplayName() {
+    private String generateDefaultDisplayName() {
         var i = 1;
         while (true) {
             var name = "pcpanel" + i;
             i++;
-            if (!Save.doesDeviceDisplayNameExist(name))
+            if (!parent.doesDeviceDisplayNameExist(name))
                 return name;
         }
     }

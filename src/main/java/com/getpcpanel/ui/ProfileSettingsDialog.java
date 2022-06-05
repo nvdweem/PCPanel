@@ -4,34 +4,32 @@ import java.util.Objects;
 
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.Profile;
-import com.getpcpanel.profile.Save;
+import com.getpcpanel.profile.SaveService;
 
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import lombok.RequiredArgsConstructor;
 import one.util.streamex.StreamEx;
 
+@RequiredArgsConstructor
 public class ProfileSettingsDialog extends Application {
+    private final SaveService saveService;
+    private final FxHelper fxHelper;
+    private final DeviceSave deviceSave;
+    private final Profile profile;
     private Stage stage;
     @FXML private TextField profileName;
     @FXML private CheckBox mainProfile;
     @FXML private CheckBox focusBackOnLost;
     @FXML private PickProcessesController focusOnListListController;
-    private final DeviceSave deviceSave;
-    private final Profile profile;
-
-    public ProfileSettingsDialog(DeviceSave deviceSave, Profile profile) {
-        this.deviceSave = deviceSave;
-        this.profile = profile;
-    }
 
     public static void main(String[] args) {
         launch(args);
@@ -41,7 +39,7 @@ public class ProfileSettingsDialog extends Application {
     public void start(Stage stage) throws Exception {
         this.stage = stage;
 
-        var loader = new FXMLLoader(getClass().getResource("/assets/ProfileSettingsDialog.fxml"));
+        var loader = fxHelper.getLoader(getClass().getResource("/assets/ProfileSettingsDialog.fxml"));
         loader.setController(this);
         Pane pane = loader.load();
         pane.setId("pane");
@@ -79,7 +77,7 @@ public class ProfileSettingsDialog extends Application {
         profile.getActivateApplications().clear();
         profile.setActivateApplications(focusOnListListController.getSelection());
 
-        Save.saveFile();
+        saveService.save();
         stage.close();
     }
 

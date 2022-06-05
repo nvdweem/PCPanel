@@ -7,12 +7,11 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.stream.IntStream;
 
-import com.getpcpanel.Main;
 import com.getpcpanel.device.PCPanelRGBUI;
 import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.profile.LightingConfig;
 import com.getpcpanel.profile.LightingConfig.LightingMode;
-import com.getpcpanel.profile.Save;
+import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.ui.colorpicker.ColorDialog;
 import com.getpcpanel.ui.colorpicker.HueSlider;
 import com.getpcpanel.util.Util;
@@ -20,7 +19,6 @@ import com.getpcpanel.util.Util;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.CheckBox;
@@ -38,6 +36,10 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class RGBLightingDialog extends Application implements Initializable {
+    private final SaveService saveService;
+    private final DeviceScanner deviceScanner;
+    private final FxHelper fxHelper;
+
     private Stage stage;
     @FXML private TabPane knobsTabbedPane;
     @FXML private TabPane allKnobsTabbedPane;
@@ -64,7 +66,10 @@ public class RGBLightingDialog extends Application implements Initializable {
     private final LightingConfig ogConfig;
     private boolean pressedOk;
 
-    public RGBLightingDialog(PCPanelRGBUI device) {
+    public RGBLightingDialog(SaveService saveService, DeviceScanner deviceScanner, FxHelper fxHelper, PCPanelRGBUI device) {
+        this.saveService = saveService;
+        this.deviceScanner = deviceScanner;
+        this.fxHelper = fxHelper;
         this.device = device;
         ogConfig = device.getLightingConfig();
     }
@@ -72,7 +77,7 @@ public class RGBLightingDialog extends Application implements Initializable {
     @Override
     public void start(Stage stage) {
         this.stage = stage;
-        var loader = new FXMLLoader(getClass().getResource("/assets/LightingDialog.fxml"));
+        var loader = fxHelper.getLoader(getClass().getResource("/assets/LightingDialog.fxml"));
         loader.setController(this);
         Pane mainPane = null;
         try {
@@ -85,14 +90,14 @@ public class RGBLightingDialog extends Application implements Initializable {
         stage.getIcons().add(new Image(getClass().getResource("/assets/256x256.png").toExternalForm()));
         stage.setOnHiding(e -> {
             if (!pressedOk)
-                if (DeviceScanner.getConnectedDevice(device.getSerialNumber()) == null) {
-                    Save.getDeviceSave(device.getSerialNumber()).setLightingConfig(ogConfig);
+                if (deviceScanner.getConnectedDevice(device.getSerialNumber()) == null) {
+                    saveService.get().getDeviceSave(device.getSerialNumber()).setLightingConfig(ogConfig);
                 } else {
                     device.setLighting(ogConfig, true);
                 }
         });
         stage.initModality(Modality.APPLICATION_MODAL);
-        stage.initOwner(Main.stage);
+        stage.initOwner(HomePage.stage);
         stage.setScene(scene);
         stage.sizeToScene();
         stage.setTitle("Lighting Dialog");
@@ -108,7 +113,7 @@ public class RGBLightingDialog extends Application implements Initializable {
     private void ok(ActionEvent event) {
         log.debug("{} {}", stage.getWidth(), stage.getHeight());
         pressedOk = true;
-        Save.saveFile();
+        saveService.save();
         stage.close();
     }
 

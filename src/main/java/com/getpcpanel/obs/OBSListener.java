@@ -1,21 +1,34 @@
 package com.getpcpanel.obs;
 
-import com.getpcpanel.obs.remote.OBSRemoteController;
-import com.getpcpanel.profile.Save;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 
+import org.springframework.stereotype.Service;
+
+import com.getpcpanel.obs.remote.OBSRemoteController;
+import com.getpcpanel.profile.SaveService;
+
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public class OBSListener implements Runnable {
+@Service
+@RequiredArgsConstructor
+public class OBSListener extends Thread {
     private static final long SLEEP_DURATION = 1000L;
-    private static volatile boolean check;
-    private static volatile boolean running = true;
+    private final SaveService saveService;
+    private final OBS obs;
+    private volatile boolean check;
+    private volatile boolean running = true;
 
-    public static void start() {
-        new Thread(new OBSListener(), "OBS Listener Thread").start();
+    @PostConstruct
+    public void init() {
+        setName("OBS Listener Thread");
+        start();
     }
 
-    public static void stop() {
+    @PreDestroy
+    public void doStop() {
         running = false;
     }
 
@@ -24,22 +37,22 @@ public class OBSListener implements Runnable {
         while (running) {
             sleep();
             synchronized (OBS.OBSMutex) {
-                var save = Save.get();
+                var save = saveService.get();
                 if (!save.isObsEnabled()) {
-                    if (OBS.controller != null && OBS.controller.isConnected()) {
+                    if (obs.controller != null && obs.controller.isConnected()) {
                         log.info("OBS Disconnected");
-                        OBS.controller.disconnect();
-                        OBS.controller = null;
+                        obs.controller.disconnect();
+                        obs.controller = null;
                     }
                     continue;
                 }
-                if (OBS.controller == null) {
-                    OBS.controller = new OBSRemoteController(save.getObsAddress(), save.getObsPort(), save.getObsPassword());
+                if (obs.controller == null) {
+                    obs.controller = new OBSRemoteController(save.getObsAddress(), save.getObsPort(), save.getObsPassword());
                 } else if (check) {
-                    OBS.controller.disconnect();
-                    OBS.controller = new OBSRemoteController(save.getObsAddress(), save.getObsPort(), save.getObsPassword());
-                } else if (!OBS.controller.isConnected()) {
-                    OBS.controller = new OBSRemoteController(save.getObsAddress(), save.getObsPort(), save.getObsPassword());
+                    obs.controller.disconnect();
+                    obs.controller = new OBSRemoteController(save.getObsAddress(), save.getObsPort(), save.getObsPassword());
+                } else if (!obs.controller.isConnected()) {
+                    obs.controller = new OBSRemoteController(save.getObsAddress(), save.getObsPort(), save.getObsPassword());
                 }
                 check = false;
             }
@@ -54,7 +67,7 @@ public class OBSListener implements Runnable {
         }
     }
 
-    public static void check() {
+    public void check() {
         check = true;
     }
 }

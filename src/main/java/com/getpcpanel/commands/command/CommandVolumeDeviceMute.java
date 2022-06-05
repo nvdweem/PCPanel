@@ -3,7 +3,6 @@ package com.getpcpanel.commands.command;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.cpp.MuteType;
-import com.getpcpanel.cpp.SndCtrl;
 
 import lombok.Getter;
 import lombok.ToString;
@@ -22,6 +21,6 @@ public class CommandVolumeDeviceMute extends CommandVolume implements ButtonActi
 
     @Override
     public void execute() {
-        SndCtrl.muteDevice(deviceId, muteType);
+        getSndCtrl().muteDevice(deviceId, muteType);
     }
 }

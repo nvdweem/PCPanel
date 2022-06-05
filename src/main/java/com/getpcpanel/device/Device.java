@@ -8,9 +8,9 @@ import com.getpcpanel.hid.OutputInterpreter;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.LightingConfig;
 import com.getpcpanel.profile.Profile;
-import com.getpcpanel.profile.Save;
+import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.ui.FxHelper;
 import com.getpcpanel.ui.LimitedTextField;
-import com.getpcpanel.ui.ProfileSettingsDialog;
 import com.getpcpanel.util.ApplicationFocusListener;
 
 import javafx.application.Platform;
@@ -33,19 +33,27 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.SVGPath;
 import javafx.stage.Stage;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
 public abstract class Device {
     private static final Image lightingImage = new Image(Objects.requireNonNull(PCPanelProUI.class.getResource("/assets/lighting.png")).toExternalForm());
+    @Getter(AccessLevel.PROTECTED) private final FxHelper fxHelper;
+    private final SaveService saveService;
+    private final OutputInterpreter outputInterpreter;
     private final ApplicationFocusListener.FocusListenerRemover removeFocusListener;
     private HBox profileMenu;
     private ComboBox<Profile> profiles;
     protected String serialNumber;
     protected DeviceSave save;
 
-    protected Device(String serialNum, DeviceSave deviceSave) {
+    protected Device(FxHelper fxHelper, SaveService saveService, OutputInterpreter outputInterpreter, String serialNum, DeviceSave deviceSave) {
+        this.fxHelper = fxHelper;
+        this.saveService = saveService;
+        this.outputInterpreter = outputInterpreter;
         serialNumber = serialNum;
         save = deviceSave;
         initProfileMenu();
@@ -87,7 +95,7 @@ public abstract class Device {
             p.setName(newName);
             buttonCell.setText(newName);
             profiles.getItems().set(profiles.getItems().indexOf(p), p);
-            Save.saveFile();
+            saveService.save();
         });
         textfield.focusedProperty().addListener((arg, oldVal, newVal) -> {
             if (!newVal) {
@@ -139,7 +147,7 @@ public abstract class Device {
         if (!success)
             return;
         setLighting(save.getLightingConfig(), true);
-        Save.saveFile();
+        saveService.save();
     }
 
     private void focusChanged(String from, String to) {
@@ -224,7 +232,7 @@ public abstract class Device {
             try {
                 var stage = new Stage();
                 var selection = profiles.getSelectionModel().getSelectedItem();
-                new ProfileSettingsDialog(save, selection).start(stage);
+                fxHelper.buildProfileSettingsDialog(save, selection).start(stage);
                 stage.setOnHidden(e -> Platform.runLater(() -> {
                     profiles.getButtonCell().setText(selection.getName());
                     if (profiles.getSelectionModel().getSelectedItem().equals(selection)) {
@@ -269,13 +277,13 @@ public abstract class Device {
         if (config == null) {
             config = LightingConfig.defaultLightingConfig(getDeviceType());
             save.setLightingConfig(config);
-            Save.saveFile();
+            saveService.save();
         }
         try {
             showLightingConfigToUI(config);
             save.setLightingConfig(config);
             try {
-                OutputInterpreter.sendLightingConfig(getSerialNumber(), getDeviceType(), config, priority);
+                outputInterpreter.sendLightingConfig(getSerialNumber(), getDeviceType(), config, priority);
             } catch (Exception e) {
                 log.error("Unable to send lighting config", e);
             }

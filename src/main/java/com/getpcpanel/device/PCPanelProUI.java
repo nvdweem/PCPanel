@@ -3,17 +3,18 @@ package com.getpcpanel.device;
 import java.io.IOException;
 import java.util.Objects;
 
-import com.getpcpanel.Main;
 import com.getpcpanel.hid.InputInterpreter;
+import com.getpcpanel.hid.OutputInterpreter;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.LightingConfig;
 import com.getpcpanel.profile.LightingConfig.LightingMode;
+import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SingleKnobLightingConfig.SINGLE_KNOB_MODE;
 import com.getpcpanel.profile.SingleLogoLightingConfig.SINGLE_LOGO_MODE;
 import com.getpcpanel.profile.SingleSliderLabelLightingConfig.SINGLE_SLIDER_LABEL_MODE;
 import com.getpcpanel.profile.SingleSliderLightingConfig.SINGLE_SLIDER_MODE;
-import com.getpcpanel.ui.BasicMacro;
-import com.getpcpanel.ui.ProLightingDialog;
+import com.getpcpanel.ui.FxHelper;
+import com.getpcpanel.ui.HomePage;
 import com.getpcpanel.util.Util;
 
 import javafx.application.Platform;
@@ -36,6 +37,8 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class PCPanelProUI extends Device {
+    private final InputInterpreter inputInterpreter;
+
     public static final int KNOB_COUNT = 5;
     public static final int SLIDER_COUNT = 4;
     private static final int LEDS_PER_SLIDER = 5;
@@ -71,9 +74,10 @@ public class PCPanelProUI extends Device {
     private final int[] analogValue = new int[9];
     private final Pane[] sliderHolders = new Pane[4];
 
-    public PCPanelProUI(String serialNum, DeviceSave deviceSave) {
-        super(serialNum, deviceSave);
-        var loader = new FXMLLoader(getClass().getResource("/assets/PCPanelPro/PCPanelPro.fxml"));
+    public PCPanelProUI(FxHelper fxHelper, InputInterpreter inputInterpreter, SaveService saveService, OutputInterpreter outputInterpreter, String serialNum, DeviceSave deviceSave) {
+        super(fxHelper, saveService, outputInterpreter, serialNum, deviceSave);
+        this.inputInterpreter = inputInterpreter;
+        var loader = getFxHelper().getLoader(getClass().getResource("/assets/PCPanelPro/PCPanelPro.fxml"));
         loader.setController(this);
         try {
             Pane pane = loader.load();
@@ -127,7 +131,7 @@ public class PCPanelProUI extends Device {
         lightingButton.setMinHeight(100.0D);
         lightingButton.setOnAction(e -> {
             childDialogStage = new Stage();
-            new ProLightingDialog(this).start(childDialogStage);
+            getFxHelper().buildProLightingDialog(this).start(childDialogStage);
         });
     }
 
@@ -140,9 +144,9 @@ public class PCPanelProUI extends Device {
         for (var i = 0; i < 9; i++) {
             FXMLLoader loader;
             if (i < 5) {
-                loader = new FXMLLoader(getClass().getResource("/assets/PCPanelPro/knob.fxml"));
+                loader = getFxHelper().getLoader(getClass().getResource("/assets/PCPanelPro/knob.fxml"));
             } else {
-                loader = new FXMLLoader(getClass().getResource("/assets/PCPanelPro/slider.fxml"));
+                loader = getFxHelper().getLoader(getClass().getResource("/assets/PCPanelPro/slider.fxml"));
             }
             Node nx = loader.load();
             knobs[i] = new Button("", nx);
@@ -164,10 +168,10 @@ public class PCPanelProUI extends Device {
             }
             var knob = i;
             knobs[i].setOnAction(e -> {
-                Main.showHint(false);
+                HomePage.showHint(false);
                 var name = (knob < 5) ? ("Knob " + (knob + 1)) : ("Slider " + (knob - 5 + 1));
                 var analogType = (knob < 5) ? "Knob" : "Slider";
-                var bm = new BasicMacro(this, knob, knob < 5, name, analogType);
+                var bm = getFxHelper().buildBasicMacro(this, knob, knob < 5, name, analogType);
                 try {
                     childDialogStage = new Stage();
                     bm.start(childDialogStage);
@@ -178,12 +182,12 @@ public class PCPanelProUI extends Device {
             knobs[i].setOnMouseClicked(c -> {
                 if (c.getButton() == MouseButton.MIDDLE) {
                     try {
-                        InputInterpreter.onButtonPress(getSerialNumber(), knob, true);
+                        inputInterpreter.onButtonPress(getSerialNumber(), knob, true);
                     } catch (IOException e1) {
                         log.error("Unable to handle button press", e1);
                     }
                     try {
-                        InputInterpreter.onButtonPress(getSerialNumber(), knob, false);
+                        inputInterpreter.onButtonPress(getSerialNumber(), knob, false);
                     } catch (IOException e1) {
                         log.error("Unable to handle button release", e1);
                     }

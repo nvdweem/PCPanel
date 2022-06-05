@@ -16,9 +16,10 @@ public class DeviceCommunicationHandler extends Thread {
 
     private static final byte INPUT_CODE_BUTTON_CHANGE = 2;
 
-    public String key;
-
-    public HidDevice device;
+    private final DeviceScanner deviceScanner;
+    private final InputInterpreter inputInterpreter;
+    private final String key;
+    private final HidDevice device;
 
     private static final int READ_TIMEOUT_MILLIS = 100;
 
@@ -28,8 +29,10 @@ public class DeviceCommunicationHandler extends Thread {
 
     private final AtomicReference<byte[][]> mostRecentRGBRequest = new AtomicReference<>();
 
-    public DeviceCommunicationHandler(String key, HidDevice device) {
+    public DeviceCommunicationHandler(DeviceScanner deviceScanner, InputInterpreter inputInterpreter, String key, HidDevice device) {
+        this.inputInterpreter = inputInterpreter;
         setName("HIDHandler");
+        this.deviceScanner = deviceScanner;
         this.key = key;
         this.device = device;
     }
@@ -52,7 +55,7 @@ public class DeviceCommunicationHandler extends Thread {
 
     @Override
     public void run() {
-        while (DeviceScanner.getConnectedDevice(key) == this) {
+        while (deviceScanner.getConnectedDevice(key) == this) {
             var moreData = true;
             while (moreData) {
                 var data = new byte[PACKET_LENGTH];
@@ -60,7 +63,7 @@ public class DeviceCommunicationHandler extends Thread {
                 switch (val) {
                     case -1 -> {
                         log.error("DCH ERR: {}", device.getLastErrorMessage());
-                        DeviceScanner.deviceRemoved(key, device);
+                        deviceScanner.deviceRemoved(key, device);
                         return;
                     }
                     case 0 -> {
@@ -100,7 +103,7 @@ public class DeviceCommunicationHandler extends Thread {
             var knob = data[1] & 0xFF;
             var value = data[2] & 0xFF;
             try {
-                InputInterpreter.onKnobRotate(key, knob, value);
+                inputInterpreter.onKnobRotate(key, knob, value);
             } catch (Exception ex) {
                 log.error("Unable to handle knob rotate", ex);
             }
@@ -108,7 +111,7 @@ public class DeviceCommunicationHandler extends Thread {
             var knob = data[1] & 0xFF;
             var value = data[2] & 0xFF;
             try {
-                InputInterpreter.onButtonPress(key, knob, value == 1);
+                inputInterpreter.onButtonPress(key, knob, value == 1);
             } catch (Exception ex) {
                 log.error("Unable to handle button press", ex);
             }

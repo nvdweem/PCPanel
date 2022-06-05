@@ -2,7 +2,6 @@ package com.getpcpanel.commands.command;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.getpcpanel.cpp.SndCtrl;
 
 import lombok.Getter;
 import lombok.ToString;
@@ -19,6 +18,6 @@ public class CommandVolumeDefaultDevice extends CommandVolume implements ButtonA
 
     @Override
     public void execute() {
-        SndCtrl.setDefaultDevice(deviceId);
+        getSndCtrl().setDefaultDevice(deviceId);
     }
 }

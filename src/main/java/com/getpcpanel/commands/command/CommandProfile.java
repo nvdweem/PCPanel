@@ -2,7 +2,7 @@ package com.getpcpanel.commands.command;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.getpcpanel.Main;
+import com.getpcpanel.ui.HomePage;
 
 import javafx.application.Platform;
 import lombok.Getter;
@@ -19,6 +19,6 @@ public class CommandProfile extends Command implements DeviceAction {
 
     @Override
     public void execute(String serialNum) {
-        Platform.runLater(() -> Main.devices.get(serialNum).setProfile(profile));
+        Platform.runLater(() -> HomePage.devices.get(serialNum).setProfile(profile));
     }
 }
