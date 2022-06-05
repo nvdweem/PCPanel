@@ -4,7 +4,7 @@
 --icon "@project.basedir@/app-icon.ico"
 --dest "@project.build.directory@"
 --main-jar @project.build.finalName@.jar
---main-class @main-class@
+--main-class @start-class@
 --input "@project.build.directory@/dependency"
 --app-version @app.version@
 --runtime-image "@project.build.directory@/jvm-image"

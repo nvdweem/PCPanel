@@ -12,7 +12,7 @@
 
     <groupId>com.getpcpanel</groupId>
     <artifactId>pcpanel</artifactId>
-    <version>1.2-SNAPSHOT</version>
+    <version>1.2</version>
 
     <description>PCPanel controller software</description>
 
@@ -21,7 +21,6 @@
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
 
-        <main-class>com.getpcpanel.Main</main-class>
         <start-class>com.getpcpanel.Main</start-class>
 
         <app.name>PCPanel</app.name>
@@ -35,7 +34,6 @@
         <javafx.version>18.0.1</javafx.version>
         <jna.version>5.11.0</jna.version>
         <asm.version>9.3</asm.version>
-        <lombok.version>1.18.24</lombok.version>
 
         <module.name>ALL-UNNAMED</module.name>
     </properties>
@@ -46,6 +44,28 @@
             <artifactId>spring-boot-starter</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.mail</groupId>
+            <artifactId>javax.mail-api</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna</artifactId>
             <version>${jna.version}</version>
@@ -55,7 +75,6 @@
             <artifactId>jna-platform</artifactId>
             <version>${jna.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
@@ -71,81 +90,42 @@
             <artifactId>javafx-fxml</artifactId>
             <version>${javafx.version}</version>
         </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.13.3</version>
-        </dependency>
         <!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>2.11.0</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.12.0</version>
-        </dependency>
-
-        <!-- https://mvnrepository.com/artifact/org.hid4java/hid4java -->
         <dependency>
             <groupId>org.hid4java</groupId>
             <artifactId>hid4java</artifactId>
             <version>0.7.0</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.java-websocket/Java-WebSocket -->
         <dependency>
             <groupId>org.java-websocket</groupId>
             <artifactId>Java-WebSocket</artifactId>
             <version>1.5.3</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-core</artifactId>
-            <version>2.17.2</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/one.util/streamex -->
-        <dependency>
             <groupId>one.util</groupId>
             <artifactId>streamex</artifactId>
             <version>0.8.1</version>
         </dependency>
-
         <dependency>
             <groupId>org.ow2.asm</groupId>
             <artifactId>asm</artifactId>
             <version>${asm.version}</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.ow2.asm/asm-commons -->
         <dependency>
             <groupId>org.ow2.asm</groupId>
             <artifactId>asm-commons</artifactId>
             <version>9.3</version>
         </dependency>
-
         <dependency>
             <groupId>org.ow2.asm</groupId>
             <artifactId>asm-util</artifactId>
             <version>9.3</version>
         </dependency>
-
-        <!-- https://mvnrepository.com/artifact/javax.mail/javax.mail-api -->
-        <dependency>
-            <groupId>javax.mail</groupId>
-            <artifactId>javax.mail-api</artifactId>
-            <version>1.6.2</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/javax.activation/activation -->
         <dependency>
             <groupId>javax.activation</groupId>
             <artifactId>activation</artifactId>
@@ -155,21 +135,17 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.8.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-params</artifactId>
-            <version>5.8.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
 
     <build>
         <extensions>
-            <!-- Used to inject the OS and architecture values in a consistent manner -->
-            <!-- https://github.com/trustin/os-maven-plugin -->
             <extension>
                 <groupId>kr.motd.maven</groupId>
                 <artifactId>os-maven-plugin</artifactId>
@@ -178,8 +154,6 @@
         </extensions>
         <resources>
             <resource>
-                <!-- Here we are processing the platform-specific jpackage command files, adding in Maven
-                 properties for configuration. -->
                 <directory>${project.basedir}/src/packaging</directory>
                 <filtering>true</filtering>
                 <targetPath>${project.build.directory}/packaging</targetPath>
@@ -191,7 +165,6 @@
                     <include>application.properties</include>
                 </includes>
             </resource>
-            <!-- Add the default resource path back in - by overriding above it disables the default -->
             <resource>
                 <directory>${project.basedir}/src/main/resources</directory>
                 <excludes>
@@ -217,24 +190,18 @@
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
                     <execution>
-                        <!-- This copies all the jar files declared by the Maven build into a single directory.
-                        This makes it easy to assemble the final installer package -->
                         <id>copy-dependencies</id>
                         <phase>package</phase>
                         <goals>
                             <goal>copy-dependencies</goal>
                         </goals>
                         <configuration>
-                            <!-- The JavaFX libraries are bundled into the custom JVM, so we don't want to duplicate
-                            them in the bundled app and installer. This command skips all of the JavaFX by groupId. -->
                             <excludeGroupIds>org.openjfx</excludeGroupIds>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
             <plugin>
-                <!-- Put the application jar generated by the project into the dependency folder - the default folder
-                for the maven-dependency-plugin output. -->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <configuration>
@@ -242,12 +209,11 @@
                 </configuration>
             </plugin>
             <plugin>
-                <!-- Plugin to make working with JavaFX nicer. See https://github.com/openjfx/javafx-maven-plugin -->
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <configuration>
-                    <mainClass>${main-class}</mainClass>
+                    <mainClass>${start-class}</mainClass>
                     <options>
                         <option>--add-exports javafx.controls/com.sun.javafx.scene.control.skin.resources=${module.name}</option>
                         <option>--add-exports javafx.base/com.sun.javafx.event=${module.name}</option>
@@ -256,7 +222,6 @@
                 </configuration>
             </plugin>
             <plugin>
-                <!-- https://github.com/wiverson/jtoolprovider-plugin -->
                 <groupId>io.github.wiverson</groupId>
                 <artifactId>jtoolprovider-plugin</artifactId>
                 <version>1.0.34</version>
@@ -285,13 +250,6 @@
                             </args>
                         </configuration>
                     </execution>
-                    <!-- The command that actually generates the installer. The options for each platform
-                    are found the /src/packaging directory. These files are copied into the target directory by
-                    the Maven resources plugin, which does the filtering to replace the original values with
-                    the actual Maven properties.
-
-                    https://github.com/wiverson/jtoolprovider-plugin/blob/main/java-tool-doc.md
-                    -->
                     <execution>
                         <id>jpackage</id>
                         <phase>install</phase>
@@ -337,7 +295,6 @@
                         <arg>--add-exports=javafx.controls/com.sun.javafx.scene.control.skin.resources=${module.name}</arg>
                         <arg>--add-exports=javafx.base/com.sun.javafx.event=${module.name}</arg>
                     </compilerArgs>
-
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
@@ -352,63 +309,22 @@
             <plugins>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-clean-plugin</artifactId>
-                    <version>3.1.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.8.1</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-dependency-plugin</artifactId>
-                    <version>3.2.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-install-plugin</artifactId>
-                    <version>3.0.0-M1</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.2.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-project-info-reports-plugin</artifactId>
                     <version>3.1.2</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-resources-plugin</artifactId>
-                    <version>3.2.0</version>
-                </plugin>
-
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-site-plugin</artifactId>
                     <version>3.9.1</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.0.0-M5</version>
                 </plugin>
             </plugins>
         </pluginManagement>
     </build>
     <reporting>
         <plugins>
-            <!-- http://mojo.codehaus.org/versions-maven-plugin/version-rules.html -->
-            <!-- This plugin is a utility to find outdated dependencies in your project. Just run mvn site and
-            the resulting HTML reports in target/site will let you know what plugins and dependencies are out of date.
-             -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>versions-maven-plugin</artifactId>
-                <version>2.8.1</version>
                 <reportSets>
                     <reportSet>
                         <reports>
