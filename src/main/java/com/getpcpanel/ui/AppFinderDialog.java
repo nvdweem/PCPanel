@@ -82,9 +82,9 @@ class AppFinderDialog extends Application implements Initializable {
         return processName;
     }
 
-    private static BufferedImage resize(BufferedImage img, int newW, int newH) {
-        var tmp = img.getScaledInstance(newW, newH, 4);
-        var dimg = new BufferedImage(newW, newH, 2);
+    private static BufferedImage resize(BufferedImage img) {
+        var tmp = img.getScaledInstance(ICON_SIZE, ICON_SIZE, 4);
+        var dimg = new BufferedImage(ICON_SIZE, ICON_SIZE, 2);
         var g2d = dimg.createGraphics();
         g2d.drawImage(tmp, 0, 0, null);
         g2d.dispose();
@@ -104,13 +104,13 @@ class AppFinderDialog extends Application implements Initializable {
     }
 
     private static BufferedImage getDefaultImage() throws IOException {
-        return resize(ImageIO.read(Objects.requireNonNull(AppFinderDialog.class.getResourceAsStream("/assets/DefaultExeIcon.ico"))), ICON_SIZE, ICON_SIZE);
+        return resize(ImageIO.read(Objects.requireNonNull(AppFinderDialog.class.getResourceAsStream("/assets/DefaultExeIcon.ico"))));
     }
 
     private ImageView getImage(AudioSession session) throws Exception {
         BufferedImage bi;
         if (session.pid() == 0) {
-            bi = resize(ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/assets/systemsounds.ico"))), ICON_SIZE, ICON_SIZE);
+            bi = resize(ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/assets/systemsounds.ico"))));
         } else {
             bi = toBufferedImage(session.executable());
         }
@@ -125,7 +125,7 @@ class AppFinderDialog extends Application implements Initializable {
                            .sorted(Comparator.nullsLast(Comparator.comparing(AudioSession::title).thenComparing(AudioSession::executable)))
                            .toImmutableList();
         } else {
-            return StreamEx.of(sndCtrl.getRunningApplications()).map(f -> new AudioSession(null, 1, f, f.getName(), null, 0, false)).toList();
+            return StreamEx.of(sndCtrl.getRunningApplications()).map(f -> new AudioSession(null, null, 1, f, f.getName(), null, 0, false)).toList();
         }
     }
 

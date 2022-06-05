@@ -9,6 +9,7 @@
 - Added version checker. If a new version is released the UI will show that with a link to the download page.
 - More than 2 processes can be selected for volume control
 - More than 1 process can be selected for muting
+- If a controlled application starts, the volume will be set immediately
 
 **Fixes:**
 

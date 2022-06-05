@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.hid4java.HidDevice;
+import org.springframework.context.ApplicationEventPublisher;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -16,8 +17,8 @@ public class DeviceCommunicationHandler extends Thread {
 
     private static final byte INPUT_CODE_BUTTON_CHANGE = 2;
 
+    private final ApplicationEventPublisher eventPublisher;
     private final DeviceScanner deviceScanner;
-    private final InputInterpreter inputInterpreter;
     private final String key;
     private final HidDevice device;
 
@@ -29,9 +30,9 @@ public class DeviceCommunicationHandler extends Thread {
 
     private final AtomicReference<byte[][]> mostRecentRGBRequest = new AtomicReference<>();
 
-    public DeviceCommunicationHandler(DeviceScanner deviceScanner, InputInterpreter inputInterpreter, String key, HidDevice device) {
-        this.inputInterpreter = inputInterpreter;
+    public DeviceCommunicationHandler(DeviceScanner deviceScanner, ApplicationEventPublisher eventPublisher, String key, HidDevice device) {
         setName("HIDHandler");
+        this.eventPublisher = eventPublisher;
         this.deviceScanner = deviceScanner;
         this.key = key;
         this.device = device;
@@ -103,7 +104,7 @@ public class DeviceCommunicationHandler extends Thread {
             var knob = data[1] & 0xFF;
             var value = data[2] & 0xFF;
             try {
-                inputInterpreter.onKnobRotate(key, knob, value);
+                eventPublisher.publishEvent(new KnobRotateEvent(key, knob, value));
             } catch (Exception ex) {
                 log.error("Unable to handle knob rotate", ex);
             }
@@ -111,7 +112,7 @@ public class DeviceCommunicationHandler extends Thread {
             var knob = data[1] & 0xFF;
             var value = data[2] & 0xFF;
             try {
-                inputInterpreter.onButtonPress(key, knob, value == 1);
+                eventPublisher.publishEvent(new ButtonPressEvent(key, knob, value == 1));
             } catch (Exception ex) {
                 log.error("Unable to handle button press", ex);
             }
@@ -122,5 +123,11 @@ public class DeviceCommunicationHandler extends Thread {
 
     public Queue<byte[]> getPriorityQueue() {
         return priorityQueue;
+    }
+
+    public record KnobRotateEvent(String serialNum, int knob, int value) {
+    }
+
+    public record ButtonPressEvent(String serialNum, int button, boolean pressed) {
     }
 }

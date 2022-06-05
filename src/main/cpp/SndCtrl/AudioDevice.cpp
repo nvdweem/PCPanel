@@ -67,8 +67,9 @@ void AudioDevice::SessionRemoved(int pid) {
 void AudioDevice::SessionAdded(CComPtr<IAudioSessionControl> session) {
     auto ptr = make_unique<AudioSession>(session);
     auto pid = ptr->GetPid();
-    ptr->Init(jni, *this);
+    auto raw = ptr.get();
     sessions.insert({pid, std::move(ptr)});
+    raw->Init(jni, *this);
 }
 
 CComPtr<IAudioSessionManager2> AudioDevice::Activate(IMMDevice& device) {

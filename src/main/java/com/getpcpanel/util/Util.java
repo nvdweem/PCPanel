@@ -98,6 +98,10 @@ public final class Util {
         return 3 * x + 30;
     }
 
+    public static int rotationToAnalogValue(int x) {
+        return (x - 30) / 3;
+    }
+
     public static void fill(Object[] ar, Object... objs) {
         System.arraycopy(objs, 0, ar, 0, objs.length);
     }

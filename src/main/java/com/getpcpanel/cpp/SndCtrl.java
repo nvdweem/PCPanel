@@ -114,15 +114,19 @@ public class SndCtrl {
         return StreamEx.of(arr).map(StringUtils::trimToNull).nonNull().map(File::new).sorted(Comparator.comparing(File::getName)).toImmutableList();
     }
 
-    private String defaultDeviceOnEmpty(String deviceId) {
+    public String defaultDeviceOnEmpty(String deviceId) {
         if (StringUtils.isNotBlank(deviceId) && !StringUtils.equals("default", deviceId)) {
             return deviceId;
         }
+        return defaultPlayer();
+    }
+
+    public String defaultPlayer() {
         return defaults.get(new DefaultFor(DataFlow.dfRender.ordinal(), Role.roleMultimedia.ordinal()));
     }
 
     private AudioDevice deviceAdded(String name, String id, float volume, boolean muted, int dataFlow) {
-        var result = new AudioDevice(name, id).volume(volume).muted(muted).dataflow(DataFlow.from(dataFlow));
+        var result = new AudioDevice(eventPublisher, name, id).volume(volume).muted(muted).dataflow(DataFlow.from(dataFlow));
         devices.put(id, result);
         log.trace("Device added: {}", result);
 

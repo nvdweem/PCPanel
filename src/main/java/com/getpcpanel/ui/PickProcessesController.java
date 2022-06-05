@@ -33,6 +33,10 @@ public class PickProcessesController {
     @FXML private VBox pickRows;
     private PickType pickType;
 
+    public void initialize() {
+        ensureLastEmpty();
+    }
+
     public List<String> getSelection() {
         return StreamEx.of(pickRows.getChildren()).select(Pane.class).map(pane -> pane.getChildren().get(0)).select(TextField.class).map(TextField::getText).filter(StringUtils::isNotBlank).toList();
     }
@@ -41,6 +45,7 @@ public class PickProcessesController {
         pickType = type;
         StreamEx.of(volData).map(StringUtils::trimToNull).nonNull().map(this::createProcessRow).forEach(pickRows.getChildren()::add);
         pickRows.getChildren().add(createProcessRow(""));
+        removeEmptyIfNotLast();
         ensureLastEmpty();
     }
 

@@ -301,6 +301,8 @@ public abstract class Device {
 
     public abstract void setKnobRotation(int paramInt1, int paramInt2);
 
+    public abstract int getKnobRotation(int knob);
+
     public abstract void setButtonPressed(int paramInt, boolean paramBoolean);
 
     public abstract void closeDialogs();

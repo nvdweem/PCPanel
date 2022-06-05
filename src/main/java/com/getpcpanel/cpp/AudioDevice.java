@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationEventPublisher;
 
 import lombok.AccessLevel;
 import lombok.Data;
@@ -18,6 +19,7 @@ import lombok.extern.log4j.Log4j2;
 @Setter(AccessLevel.PACKAGE)
 @SuppressWarnings("unused") // Methods called from JNI
 public class AudioDevice implements Serializable {
+    private final ApplicationEventPublisher eventPublisher;
     private final String name;
     private final String id;
     private float volume;
@@ -26,7 +28,8 @@ public class AudioDevice implements Serializable {
 
     private transient Map<Integer, AudioSession> sessions = new HashMap<>();
 
-    public AudioDevice(String name, String id) {
+    public AudioDevice(ApplicationEventPublisher eventPublisher, String name, String id) {
+        this.eventPublisher = eventPublisher;
         this.name = name;
         this.id = id;
     }
@@ -41,19 +44,21 @@ public class AudioDevice implements Serializable {
     }
 
     private AudioSession addSession(int pid, String name, String title, String icon, float volume, boolean muted) {
-        var result = new AudioSession(this, pid, new File(name), title, icon, volume, muted);
+        var result = new AudioSession(this, eventPublisher, pid, new File(name), title, icon, volume, muted);
         if (StringUtils.isBlank(result.title())) {
             log.debug("Not adding {}, no title known", result);
         } else {
             sessions.put(pid, result);
             log.trace("Session added: {}", result);
         }
+        eventPublisher.publishEvent(new AudioSessionEvent(result, AudioSessionEvent.Type.ADDED));
         return result;
     }
 
     private void removeSession(int pid) {
         var sess = sessions.remove(pid);
         log.trace("Session removed: {} ({})", pid, sess == null ? "not found" : sess);
+        eventPublisher.publishEvent(new AudioSessionEvent(sess, AudioSessionEvent.Type.REMOVED));
     }
 
     public boolean isOutput() {

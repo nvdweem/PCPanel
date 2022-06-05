@@ -3,6 +3,7 @@ package com.getpcpanel.device;
 import java.io.IOException;
 import java.util.Objects;
 
+import com.getpcpanel.hid.DeviceCommunicationHandler;
 import com.getpcpanel.hid.InputInterpreter;
 import com.getpcpanel.hid.OutputInterpreter;
 import com.getpcpanel.profile.DeviceSave;
@@ -116,6 +117,11 @@ public class PCPanelProUI extends Device {
         }
     }
 
+    @Override
+    public int getKnobRotation(int knob) {
+        return analogValue[knob];
+    }
+
     private void initLabel() {
         label = new Label("PCPANEL PRO");
         var f = Font.loadFont(getClass().getResourceAsStream("/assets/apex-mk2.regular.otf"), 50.0D);
@@ -182,12 +188,12 @@ public class PCPanelProUI extends Device {
             knobs[i].setOnMouseClicked(c -> {
                 if (c.getButton() == MouseButton.MIDDLE) {
                     try {
-                        inputInterpreter.onButtonPress(getSerialNumber(), knob, true);
+                        inputInterpreter.onButtonPress(new DeviceCommunicationHandler.ButtonPressEvent(getSerialNumber(), knob, true));
                     } catch (IOException e1) {
                         log.error("Unable to handle button press", e1);
                     }
                     try {
-                        inputInterpreter.onButtonPress(getSerialNumber(), knob, false);
+                        inputInterpreter.onButtonPress(new DeviceCommunicationHandler.ButtonPressEvent(getSerialNumber(), knob, false));
                     } catch (IOException e1) {
                         log.error("Unable to handle button release", e1);
                     }

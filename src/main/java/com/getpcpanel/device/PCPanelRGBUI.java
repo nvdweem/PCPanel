@@ -3,6 +3,7 @@ package com.getpcpanel.device;
 import java.io.IOException;
 import java.util.Objects;
 
+import com.getpcpanel.hid.DeviceCommunicationHandler;
 import com.getpcpanel.hid.InputInterpreter;
 import com.getpcpanel.hid.OutputInterpreter;
 import com.getpcpanel.profile.DeviceSave;
@@ -73,6 +74,12 @@ public class PCPanelRGBUI extends Device {
         ((Region) knobs[knob].getGraphic()).getChildrenUnmodifiable().get(3).setRotate(Util.analogValueToRotation(val));
     }
 
+    @Override
+    public int getKnobRotation(int knob) {
+        //noinspection NumericCastThatLosesPrecision
+        return Util.rotationToAnalogValue((int) ((Region) knobs[knob].getGraphic()).getChildrenUnmodifiable().get(3).getRotate());
+    }
+
     private void initLabel() {
         label = new Label("PCPANEL RGB");
         var f = Font.loadFont(getClass().getResourceAsStream("/assets/apex-mk2.regular.otf"), 50.0D);
@@ -121,12 +128,12 @@ public class PCPanelRGBUI extends Device {
             knobs[i].setOnMouseClicked(c -> {
                 if (c.getButton() == MouseButton.MIDDLE) {
                     try {
-                        inputInterpreter.onButtonPress(getSerialNumber(), knob, true);
+                        inputInterpreter.onButtonPress(new DeviceCommunicationHandler.ButtonPressEvent(getSerialNumber(), knob, true));
                     } catch (IOException e1) {
                         log.error("Unable to handle button press", e1);
                     }
                     try {
-                        inputInterpreter.onButtonPress(getSerialNumber(), knob, false);
+                        inputInterpreter.onButtonPress(new DeviceCommunicationHandler.ButtonPressEvent(getSerialNumber(), knob, false));
                     } catch (IOException e1) {
                         log.error("Unable to handle button release", e1);
                     }

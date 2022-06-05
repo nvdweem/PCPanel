@@ -3,6 +3,7 @@ package com.getpcpanel.hid;
 import java.io.IOException;
 
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.getpcpanel.commands.PCPanelControlEvent;
@@ -21,26 +22,30 @@ public final class InputInterpreter {
     private final DeviceHolder devices;
     private final ApplicationEventPublisher eventPublisher;
 
-    public void onKnobRotate(String serialNum, int knob, int value) {
-        var device = devices.getDevice(serialNum);
+    @EventListener
+    public void onKnobRotate(DeviceCommunicationHandler.KnobRotateEvent event) {
+        var value = event.value();
+
+        var device = devices.getDevice(event.serialNum());
         if (device == null)
             return;
         if (device.getDeviceType() != DeviceType.PCPANEL_RGB)
             value = Util.map(value, 0, 255, 0, 100);
-        device.setKnobRotation(knob, value);
-        var settings = save.get().getDeviceSave(serialNum).getKnobSettings(knob);
+        device.setKnobRotation(event.knob(), value);
+        var settings = save.get().getDeviceSave(event.serialNum()).getKnobSettings(event.knob());
         if (settings != null) {
             if (settings.isLogarithmic())
                 value = log(value);
             value = Util.map(value, 0, 100, settings.getMinTrim(), settings.getMaxTrim());
         }
-        doDialAction(serialNum, knob, value);
+        doDialAction(event.serialNum(), event.knob(), value);
     }
 
-    public void onButtonPress(String serialNum, int knob, boolean pressed) throws IOException {
-        devices.getDevice(serialNum).setButtonPressed(knob, pressed);
-        if (pressed)
-            doClickAction(serialNum, knob);
+    @EventListener
+    public void onButtonPress(DeviceCommunicationHandler.ButtonPressEvent event) throws IOException {
+        devices.getDevice(event.serialNum()).setButtonPressed(event.button(), event.pressed());
+        if (event.pressed())
+            doClickAction(event.serialNum(), event.button());
     }
 
     private void doDialAction(String serialNum, int knob, int v) {
