@@ -4,12 +4,15 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
 import javax.imageio.ImageIO;
+
+import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.cpp.AudioSession;
 import com.getpcpanel.cpp.SndCtrl;
@@ -22,8 +25,10 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
@@ -37,17 +42,17 @@ import one.util.streamex.StreamEx;
 @Log4j2
 @RequiredArgsConstructor
 class AppFinderDialog extends Application implements Initializable {
+    private static final int ICON_SIZE = 90;
     private final SndCtrl sndCtrl;
     private final FxHelper fxHelper;
     private final Stage parentStage;
     private final boolean volumeApps;
-
     private Stage stage;
     @FXML private FlowPane flowPane;
     @FXML private ScrollPane scroll;
-    private ScrollPane pane;
+    @FXML private TextField filterField;
+    private final List<ButtonTitleExe> allProgs = new ArrayList<>();
     private String processName;
-    private static final int ICON_SIZE = 90;
 
     @Override
     public void start(Stage stage) {
@@ -58,6 +63,8 @@ class AppFinderDialog extends Application implements Initializable {
         this.stage = stage;
         var loader = fxHelper.getLoader(getClass().getResource("/assets/AppFinderDialog.fxml"));
         loader.setController(this);
+
+        ScrollPane pane = null;
         try {
             pane = loader.load();
         } catch (IOException e) {
@@ -122,7 +129,7 @@ class AppFinderDialog extends Application implements Initializable {
         if (volumeApps) {
             return StreamEx.of(sndCtrl.getDevices()).flatCollection(ad -> ad.getSessions().values())
                            .distinct(AudioSession::pid)
-                           .sorted(Comparator.nullsLast(Comparator.comparing(AudioSession::title).thenComparing(AudioSession::executable)))
+                           .sorted(Comparator.nullsLast(Comparator.comparing(AudioSession::title).thenComparing(as -> as.executable().getName())))
                            .toImmutableList();
         } else {
             return StreamEx.of(sndCtrl.getRunningApplications()).map(f -> new AudioSession(null, null, 1, f, f.getName(), null, 0, false)).toList();
@@ -158,10 +165,24 @@ class AppFinderDialog extends Application implements Initializable {
                     processName = app.pid() == 0 ? AudioSession.SYSTEM : app.executable().getName();
                     stage.close();
                 });
-                flowPane.getChildren().add(button);
+                allProgs.add(new ButtonTitleExe(button, app.title(), app.executable().getName()));
             }
+            StreamEx.of(allProgs).map(ButtonTitleExe::button).toListAndThen(flowPane.getChildren()::addAll);
         } catch (Exception e) {
             log.error("Unable to add app-buttons", e);
+        }
+    }
+
+    @FXML
+    private void onFilterChanged(KeyEvent event) {
+        var filter = filterField.getText();
+        flowPane.getChildren().clear();
+        StreamEx.of(allProgs).filter(b -> b.matches(filter)).map(ButtonTitleExe::button).toListAndThen(flowPane.getChildren()::addAll);
+    }
+
+    private record ButtonTitleExe(Button button, String title, String exe) {
+        boolean matches(String filter) {
+            return StringUtils.containsIgnoreCase(title, filter) || StringUtils.containsIgnoreCase(exe, filter);
         }
     }
 }

@@ -1,18 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.VBox?>
-<ScrollPane fx:id="scroll" hbarPolicy="NEVER" prefHeight="467.0" prefViewportHeight="446.0" prefViewportWidth="893.0" prefWidth="929.0" xmlns="http://javafx.com/javafx/8"
-            xmlns:fx="http://javafx.com/fxml/1">
+<ScrollPane fx:id="scroll" fitToWidth="true" hbarPolicy="NEVER" prefHeight="467.0" prefViewportHeight="446.0" prefViewportWidth="893.0" prefWidth="880.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
     <content>
-        <FlowPane fx:id="flowPane" hgap="20.0" prefHeight="200.0" prefWidth="200.0" vgap="20.0" VBox.vgrow="ALWAYS">
-            <VBox.margin>
-                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
-            </VBox.margin>
-        </FlowPane>
+        <VBox>
+            <TextField fx:id="filterField" onKeyReleased="#onFilterChanged" prefHeight="32.0" promptText="Search" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"/>
+            <FlowPane fx:id="flowPane" hgap="20.0" prefHeight="200.0" prefWidth="200.0" vgap="20.0" VBox.vgrow="ALWAYS">
+                <VBox.margin>
+                    <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
+                </VBox.margin>
+            </FlowPane>
+        </VBox>
     </content>
     <padding>
         <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>

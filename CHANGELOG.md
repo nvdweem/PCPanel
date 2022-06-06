@@ -9,6 +9,7 @@
     - Middle click already triggered the click action (I did not know that)
 - It's now possible to configure a 'Mute override' color which will show a different color when the controlled device is muted
 - Volume change actions now have an option to unmute the device/process
+- The App Finder dialogs have a filter field
 
 **Fix:**
 
