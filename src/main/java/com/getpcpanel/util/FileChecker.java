@@ -1,7 +1,5 @@
 package com.getpcpanel.util;
 
-import static com.getpcpanel.util.FileUtil.FILES_ROOT;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -21,6 +19,7 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class FileChecker extends Thread {
+    public static final File FILES_ROOT = new File(System.getProperty("user.home"), ".pcpanel"); // This is not a bean so don't configure the root, just pick the default
     private static final File REOPEN_FILE = new File(FILES_ROOT, "reopen.txt");
     private static final File LOCK_FILE = new File(FILES_ROOT, "lock.txt");
     private static final AtomicBoolean started = new AtomicBoolean(false);

@@ -24,7 +24,7 @@ public class Save {
     }
 
     public void createSaveForNewDevice(String serialNum, DeviceType dt) {
-        devices.put(serialNum, new DeviceSave(dt));
+        devices.put(serialNum, new DeviceSave(dt).generateDefaultDisplayName(this));
     }
 
     public boolean doesDeviceDisplayNameExist(String displayName) {

@@ -1,9 +1,12 @@
 package com.getpcpanel.profile;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 
 import javax.annotation.PostConstruct;
+import javax.swing.JOptionPane;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.context.ApplicationEventPublisher;
@@ -34,6 +37,9 @@ public class SaveService {
     public void load() {
         var saveFile = fileUtil.getFile(saveFileName);
         if (!saveFile.exists()) {
+            tryMigrate(saveFile);
+        }
+        if (!saveFile.exists()) {
             log.info("No save file found, creating new one");
             save = new Save();
             eventPublisher.publishEvent(new SaveEvent(save, true));
@@ -47,6 +53,21 @@ public class SaveService {
         } catch (Exception e) {
             log.error("Unable to read file", e);
             save = new Save();
+        }
+    }
+
+    private void tryMigrate(File saveFile) {
+        var oldFile = new File(System.getenv("LOCALAPPDATA"), "PCPanel Software/save.json");
+        if (oldFile.exists()) {
+            var result = JOptionPane.showConfirmDialog(null, "No save file found, would you like to migrate from original PCPanel software?", "Migrate", JOptionPane.YES_NO_OPTION);
+            if (result == JOptionPane.YES_OPTION) {
+                try {
+                    Files.copy(oldFile.toPath(), saveFile.toPath());
+                } catch (IOException e) {
+                    log.error("Unable to copy old save file", e);
+                }
+                log.info("Migrated old save file to new one");
+            }
         }
     }
 
