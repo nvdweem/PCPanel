@@ -130,12 +130,14 @@ public class SndCtrl {
         devices.put(id, result);
         log.trace("Device added: {}", result);
 
+        eventPublisher.publishEvent(new AudioDeviceEvent(result, EventType.ADDED));
         return result;
     }
 
     private void deviceRemoved(String id) {
         log.trace("Device removed: {}", id);
-        devices.remove(id);
+        var removed = devices.remove(id);
+        eventPublisher.publishEvent(new AudioDeviceEvent(removed, EventType.REMOVED));
     }
 
     private void setDefaultDevice(String id, int dataFlow, int role) {

@@ -5,11 +5,11 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.getpcpanel.commands.command.CommandVolumeProcess;
 import com.getpcpanel.cpp.AudioSessionEvent;
+import com.getpcpanel.cpp.EventType;
 import com.getpcpanel.cpp.SndCtrl;
 import com.getpcpanel.hid.DeviceCommunicationHandler;
 import com.getpcpanel.hid.DeviceHolder;
@@ -33,10 +33,9 @@ public class SetNewSessionVolumeService {
     private final SndCtrl sndCtrl;
     private final SaveService saveService;
 
-    @Async
     @EventListener
     public void onNewAudioSession(AudioSessionEvent event) {
-        if (event.eventType() != AudioSessionEvent.Type.ADDED) {
+        if (event.eventType() != EventType.ADDED) {
             return;
         }
         record DeviceAndDial(String id, int dial) {

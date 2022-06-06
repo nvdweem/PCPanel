@@ -40,6 +40,7 @@ public class AudioDevice implements Serializable {
 
     private void setState(float volume, boolean muted) {
         volume(volume).muted(muted);
+        eventPublisher.publishEvent(new AudioDeviceEvent(this, EventType.CHANGED));
         log.trace("State changed: {}", this);
     }
 
@@ -51,14 +52,14 @@ public class AudioDevice implements Serializable {
             sessions.put(pid, result);
             log.trace("Session added: {}", result);
         }
-        eventPublisher.publishEvent(new AudioSessionEvent(result, AudioSessionEvent.Type.ADDED));
+        eventPublisher.publishEvent(new AudioSessionEvent(result, EventType.ADDED));
         return result;
     }
 
     private void removeSession(int pid) {
         var sess = sessions.remove(pid);
         log.trace("Session removed: {} ({})", pid, sess == null ? "not found" : sess);
-        eventPublisher.publishEvent(new AudioSessionEvent(sess, AudioSessionEvent.Type.REMOVED));
+        eventPublisher.publishEvent(new AudioSessionEvent(sess, EventType.REMOVED));
     }
 
     public boolean isOutput() {

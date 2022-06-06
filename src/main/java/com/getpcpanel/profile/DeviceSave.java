@@ -23,7 +23,6 @@ public class DeviceSave {
     @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Command> buttonData = new HashMap<>();
     @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Command> dialData = new HashMap<>();
     @JsonDeserialize(using = KnobSettingMapDeserializer.class) private Map<Integer, KnobSetting> knobSettings = new HashMap<>();
-
     private LightingConfig lightingConfig;
 
     public DeviceSave(DeviceType dt) {
@@ -85,7 +84,7 @@ public class DeviceSave {
         buttonData = profile.getButtonData();
         dialData = profile.getDialData();
         knobSettings = profile.getKnobSettings();
-        lightingConfig = profile.getLightingConfig();
+        setLightingConfig(profile.getLightingConfig());
         return true;
     }
 
@@ -93,6 +92,11 @@ public class DeviceSave {
         if (name == null)
             return null;
         return getProfiles().stream().filter(p -> p.getName().equals(name)).findFirst().orElse(null);
+    }
+
+    public DeviceSave setLightingConfig(LightingConfig lightingConfig) {
+        this.lightingConfig = lightingConfig.deepCopy();
+        return this;
     }
 
     @JsonIgnore

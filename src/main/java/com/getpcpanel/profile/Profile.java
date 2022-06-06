@@ -31,6 +31,11 @@ public class Profile {
     protected Profile() {
     }
 
+    public Profile setLightingConfig(LightingConfig lightingConfig) {
+        this.lightingConfig = lightingConfig.deepCopy();
+        return this;
+    }
+
     public String toString() {
         return name;
     }

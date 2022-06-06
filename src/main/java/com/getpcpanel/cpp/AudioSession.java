@@ -84,7 +84,7 @@ public class AudioSession {
 
     private void triggerChange() {
         if (eventPublisher != null) {
-            eventPublisher.publishEvent(new AudioSessionEvent(this, AudioSessionEvent.Type.CHANGED));
+            eventPublisher.publishEvent(new AudioSessionEvent(this, EventType.CHANGED));
         }
     }
 }

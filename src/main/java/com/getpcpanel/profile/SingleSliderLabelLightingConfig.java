@@ -1,13 +1,17 @@
 package com.getpcpanel.profile;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.getpcpanel.util.Util;
 
 import javafx.scene.paint.Color;
+import lombok.Data;
 
+@Data
 public class SingleSliderLabelLightingConfig {
     private SINGLE_SLIDER_LABEL_MODE mode;
 
     private String color;
+    private String muteOverrideColor;
 
     public SingleSliderLabelLightingConfig() {
         mode = SINGLE_SLIDER_LABEL_MODE.NONE;
@@ -17,24 +21,14 @@ public class SingleSliderLabelLightingConfig {
         NONE, STATIC
     }
 
-    public SINGLE_SLIDER_LABEL_MODE getMode() {
-        return mode;
-    }
-
-    public void setMode(SINGLE_SLIDER_LABEL_MODE mode) {
-        this.mode = mode;
-    }
-
-    public String getColor() {
-        return color;
-    }
-
-    public void setColor(String color) {
-        this.color = color;
-    }
-
-    public void setColor(Color color) {
+    @JsonIgnore
+    public void setColorFromColor(Color color) {
         this.color = Util.formatHexString(color);
+    }
+
+    @JsonIgnore
+    public void setMuteOverrideColorFromColor(Color color) {
+        muteOverrideColor = Util.formatHexString(color);
     }
 
     public void set(SingleSliderLabelLightingConfig c) {

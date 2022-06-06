@@ -1,10 +1,16 @@
 package com.getpcpanel.profile;
 
+import java.util.Arrays;
+
 import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.util.Util;
 
 import javafx.scene.paint.Color;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
+@AllArgsConstructor
+@Builder(toBuilder = true)
 public class LightingConfig {
     private LightingMode lightingMode;
     private String[] individualColors;
@@ -27,6 +33,14 @@ public class LightingConfig {
     private SingleSliderLabelLightingConfig[] sliderLabelConfigs;
     private SingleSliderLightingConfig[] sliderConfigs;
     private SingleLogoLightingConfig logoConfig;
+
+    public LightingConfig deepCopy() {
+        return toBuilder()
+                .knobConfigs(Arrays.copyOf(knobConfigs, knobConfigs.length))
+                .sliderLabelConfigs(Arrays.copyOf(sliderLabelConfigs, sliderLabelConfigs.length))
+                .sliderConfigs(Arrays.copyOf(sliderConfigs, sliderConfigs.length))
+                .build();
+    }
 
     public enum LightingMode {
         ALL_COLOR, ALL_RAINBOW, ALL_WAVE, ALL_BREATH, SINGLE_COLOR, CUSTOM

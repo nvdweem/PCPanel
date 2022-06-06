@@ -3,6 +3,7 @@ package com.getpcpanel.ui;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -41,6 +42,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import lombok.extern.log4j.Log4j2;
+import one.util.streamex.StreamEx;
 
 @Log4j2
 public class ProLightingDialog extends Application implements Initializable {
@@ -79,8 +81,12 @@ public class ProLightingDialog extends Application implements Initializable {
     private final ColorDialog[] knobStaticCDs = new ColorDialog[NUM_KNOBS];
     private final ColorDialog[] knobVolumeGradientCD1 = new ColorDialog[NUM_KNOBS];
     private final ColorDialog[] knobVolumeGradientCD2 = new ColorDialog[NUM_KNOBS];
-    private final CheckBox[] muteOverrideCheckboxes = new CheckBox[NUM_KNOBS];
-    private final ColorDialog[] muteOverrideColors = new ColorDialog[NUM_KNOBS];
+    private final CheckBox[] muteOverrideCheckboxesKnobs = new CheckBox[NUM_KNOBS];
+    private final ColorDialog[] muteOverrideColorsKnobs = new ColorDialog[NUM_KNOBS];
+    private final CheckBox[] muteOverrideCheckboxesSliders = new CheckBox[NUM_SLIDERS];
+    private final ColorDialog[] muteOverrideColorsSliders = new ColorDialog[NUM_SLIDERS];
+    private final CheckBox[] muteOverrideCheckboxesSliderLabels = new CheckBox[NUM_SLIDERS];
+    private final ColorDialog[] muteOverrideColorsSliderLabels = new ColorDialog[NUM_SLIDERS];
     private final ColorDialog[] sliderStaticCDs = new ColorDialog[NUM_SLIDERS];
     private final ColorDialog[] sliderStaticGradientTopCD = new ColorDialog[NUM_SLIDERS];
     private final ColorDialog[] sliderStaticGradientBottomCD = new ColorDialog[NUM_SLIDERS];
@@ -163,13 +169,14 @@ public class ProLightingDialog extends Application implements Initializable {
         fullBodyTabbedPane.getSelectionModel().select(0);
     }
 
-    private TabPane tabWithMuteOverride(int button, TabPane tab) {
+    private TabPane tabWithMuteOverride(OverrideTargetType ott, int button, TabPane tab) {
+        var target = getOverrideTarget(ott);
         var vBox = new VBox();
-        muteOverrideColors[button] = new ColorDialog();
-        muteOverrideCheckboxes[button] = new CheckBox("Override color when button's mute action is active");
+        target.cd()[button] = new ColorDialog();
+        target.cb()[button] = new CheckBox("Override color when button's mute action is active");
         vBox.getChildren().addAll(
-                muteOverrideCheckboxes[button],
-                muteOverrideColors[button]
+                target.cb()[button],
+                target.cd()[button]
         );
         var muteTab = new Tab("Mute override", vBox);
         var originalTab = new Tab("Color", tab);
@@ -177,6 +184,41 @@ public class ProLightingDialog extends Application implements Initializable {
         var result = new TabPane(originalTab, muteTab);
         result.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
         return result;
+    }
+
+    protected record OverrideTarget(CheckBox[] cb, ColorDialog[] cd) {
+    }
+
+    protected enum OverrideTargetType {
+        KNOB, SLIDER, SLIDER_LABEL
+    }
+
+    private CheckBox[] allOverrideCheckboxes() {
+        return StreamEx.of(OverrideTargetType.values()).flatMap(t -> StreamEx.of(getOverrideTarget(t).cb())).toArray(CheckBox[]::new);
+    }
+
+    private ColorDialog[] allOverrideColors() {
+        return StreamEx.of(OverrideTargetType.values()).flatMap(t -> StreamEx.of(getOverrideTarget(t).cd())).toArray(ColorDialog[]::new);
+    }
+
+    public OverrideTarget getOverrideTarget(OverrideTargetType ott) {
+        return switch (ott) {
+            case KNOB -> new OverrideTarget(muteOverrideCheckboxesKnobs, muteOverrideColorsKnobs);
+            case SLIDER -> new OverrideTarget(muteOverrideCheckboxesSliders, muteOverrideColorsSliders);
+            case SLIDER_LABEL -> new OverrideTarget(muteOverrideCheckboxesSliderLabels, muteOverrideColorsSliderLabels);
+        };
+    }
+
+    private void setOverride(OverrideTargetType type, int typeIndex, String muteOverrideColor) {
+        var target = getOverrideTarget(type);
+        target.cb()[typeIndex].setSelected(StringUtils.isNotBlank(muteOverrideColor));
+        target.cd()[typeIndex].setCustomColor(Color.web(StringUtils.defaultIfBlank(muteOverrideColor, "black")));
+    }
+
+    private void setOverrideSetting(OverrideTargetType type, int typeIdx, Consumer<Color> colorSetter) {
+        var target = getOverrideTarget(type);
+        var overrideColor = target.cb()[typeIdx].isSelected() ? target.cd()[typeIdx].getCustomColor() : null;
+        colorSetter.accept(overrideColor);
     }
 
     @Override
@@ -198,7 +240,7 @@ public class ProLightingDialog extends Application implements Initializable {
             Util.adjustTabs(singleKnobTabPane, 140, 30);
             singleKnobTabPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
             singleKnobTabPane.setSide(Side.LEFT);
-            tab.setContent(tabWithMuteOverride(i, singleKnobTabPane));
+            tab.setContent(tabWithMuteOverride(OverrideTargetType.KNOB, i, singleKnobTabPane));
             knobsTabbedPane.getTabs().add(tab);
         }
         for (i = 0; i < NUM_SLIDERS; i++) {
@@ -220,7 +262,7 @@ public class ProLightingDialog extends Application implements Initializable {
             Util.adjustTabs(singleSliderTabPane, 140, 30);
             singleSliderTabPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
             singleSliderTabPane.setSide(Side.LEFT);
-            tab.setContent(singleSliderTabPane);
+            tab.setContent(tabWithMuteOverride(OverrideTargetType.SLIDER, i, singleSliderTabPane));
             slidersTabbedPane.getTabs().add(tab);
         }
         for (i = 0; i < NUM_SLIDERS; i++) {
@@ -232,7 +274,7 @@ public class ProLightingDialog extends Application implements Initializable {
             Util.adjustTabs(singleSliderLabelTabPane, 140, 30);
             singleSliderLabelTabPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
             singleSliderLabelTabPane.setSide(Side.LEFT);
-            tab.setContent(singleSliderLabelTabPane);
+            tab.setContent(tabWithMuteOverride(OverrideTargetType.SLIDER_LABEL, i, singleSliderLabelTabPane));
             sliderLabelsTabbedPane.getTabs().add(tab);
         }
         Util.adjustTabs(fullBodyTabbedPane, 120, 30);
@@ -342,8 +384,8 @@ public class ProLightingDialog extends Application implements Initializable {
                     knobSingleTabPane[i].getSelectionModel().select(1);
                     knobVolumeGradientCD1[i].setCustomColor(Color.web(knobConfig.getColor1()));
                     knobVolumeGradientCD2[i].setCustomColor(Color.web(knobConfig.getColor2()));
-                    muteOverrideColors[i].setCustomColor(Color.web(StringUtils.defaultIfBlank(knobConfig.getMuteOverrideColor(), "black")));
                 }
+                setOverride(OverrideTargetType.KNOB, i, knobConfig.getMuteOverrideColor());
             }
             for (i = 0; i < NUM_SLIDERS; i++) {
                 var sliderLabelConfig = sliderLabelConfigs[i];
@@ -351,6 +393,7 @@ public class ProLightingDialog extends Application implements Initializable {
                     sliderLabelSingleTabPane[i].getSelectionModel().select(0);
                     sliderLabelStaticCDs[i].setCustomColor(Color.web(sliderLabelConfig.getColor()));
                 }
+                setOverride(OverrideTargetType.SLIDER_LABEL, i, sliderLabelConfig.getMuteOverrideColor());
             }
             for (i = 0; i < NUM_SLIDERS; i++) {
                 var sliderConfig = sliderConfigs[i];
@@ -366,6 +409,7 @@ public class ProLightingDialog extends Application implements Initializable {
                     sliderVolumeGradientCD1[i].setCustomColor(Color.web(sliderConfig.getColor1()));
                     sliderVolumeGradientCD2[i].setCustomColor(Color.web(sliderConfig.getColor2()));
                 }
+                setOverride(OverrideTargetType.SLIDER, i, sliderConfig.getMuteOverrideColor());
             }
             if (logoConfig.getMode() == SINGLE_LOGO_MODE.STATIC) {
                 logoTabPane.getSelectionModel().select(0);
@@ -415,11 +459,11 @@ public class ProLightingDialog extends Application implements Initializable {
     }
 
     private void initListeners(Slider[] allSliders, CheckBox[] allCheckBoxes) {
-        addListener(knobStaticCDs, knobVolumeGradientCD1, muteOverrideColors, knobVolumeGradientCD2,
+        addListener(knobStaticCDs, knobVolumeGradientCD1, allOverrideColors(), knobVolumeGradientCD2,
                 sliderStaticCDs, sliderStaticGradientBottomCD, sliderStaticGradientTopCD, sliderVolumeGradientCD1, sliderVolumeGradientCD2,
                 sliderLabelStaticCDs);
         addListener(knobSingleTabPane, sliderLabelSingleTabPane, sliderSingleTabPane);
-        addListener(muteOverrideCheckboxes);
+        addListener(allOverrideCheckboxes());
         logoStaticColor.customColorProperty().addListener((a, b, c) -> updateColors());
         allKnobColor.customColorProperty().addListener((observable, oldValue, newValue) -> {
             for (var cd : knobStaticCDs) {
@@ -488,29 +532,30 @@ public class ProLightingDialog extends Application implements Initializable {
                     config.getKnobConfigs()[knob].setColor1FromColor(knobVolumeGradientCD1[knob].getCustomColor());
                     config.getKnobConfigs()[knob].setColor2FromColor(knobVolumeGradientCD2[knob].getCustomColor());
                 }
-                var overrideColor = muteOverrideCheckboxes[knob].isSelected() ? muteOverrideColors[knob].getCustomColor() : null;
-                config.getKnobConfigs()[knob].setMuteOverrideColorFromColor(overrideColor);
+                setOverrideSetting(OverrideTargetType.KNOB, knob, config.getKnobConfigs()[knob]::setMuteOverrideColorFromColor);
             }
             int slider;
             for (slider = 0; slider < NUM_SLIDERS; slider++) {
                 if (sliderLabelSingleTabPane[slider].getSelectionModel().getSelectedIndex() == 0) {
                     config.getSliderLabelConfigs()[slider].setMode(SINGLE_SLIDER_LABEL_MODE.STATIC);
-                    config.getSliderLabelConfigs()[slider].setColor(sliderLabelStaticCDs[slider].getCustomColor());
+                    config.getSliderLabelConfigs()[slider].setColorFromColor(sliderLabelStaticCDs[slider].getCustomColor());
                 }
+                setOverrideSetting(OverrideTargetType.SLIDER_LABEL, slider, config.getSliderLabelConfigs()[slider]::setMuteOverrideColorFromColor);
             }
             for (slider = 0; slider < NUM_SLIDERS; slider++) {
                 if (sliderSingleTabPane[slider].getSelectionModel().getSelectedIndex() == 0) {
                     config.getSliderConfigs()[slider].setMode(SINGLE_SLIDER_MODE.STATIC);
-                    config.getSliderConfigs()[slider].setColor1(sliderStaticCDs[slider].getCustomColor());
+                    config.getSliderConfigs()[slider].setColor1FromColor(sliderStaticCDs[slider].getCustomColor());
                 } else if (sliderSingleTabPane[slider].getSelectionModel().getSelectedIndex() == 1) {
                     config.getSliderConfigs()[slider].setMode(SINGLE_SLIDER_MODE.STATIC_GRADIENT);
-                    config.getSliderConfigs()[slider].setColor1(sliderStaticGradientBottomCD[slider].getCustomColor());
-                    config.getSliderConfigs()[slider].setColor2(sliderStaticGradientTopCD[slider].getCustomColor());
+                    config.getSliderConfigs()[slider].setColor1FromColor(sliderStaticGradientBottomCD[slider].getCustomColor());
+                    config.getSliderConfigs()[slider].setColor2FromColor(sliderStaticGradientTopCD[slider].getCustomColor());
                 } else if (sliderSingleTabPane[slider].getSelectionModel().getSelectedIndex() == 2) {
                     config.getSliderConfigs()[slider].setMode(SINGLE_SLIDER_MODE.VOLUME_GRADIENT);
-                    config.getSliderConfigs()[slider].setColor1(sliderVolumeGradientCD1[slider].getCustomColor());
-                    config.getSliderConfigs()[slider].setColor2(sliderVolumeGradientCD2[slider].getCustomColor());
+                    config.getSliderConfigs()[slider].setColor1FromColor(sliderVolumeGradientCD1[slider].getCustomColor());
+                    config.getSliderConfigs()[slider].setColor2FromColor(sliderVolumeGradientCD2[slider].getCustomColor());
                 }
+                setOverrideSetting(OverrideTargetType.SLIDER, slider, config.getSliderConfigs()[slider]::setMuteOverrideColorFromColor);
             }
             if (logoTabPane.getSelectionModel().getSelectedIndex() == 0) {
                 config.getLogoConfig().setMode(SINGLE_LOGO_MODE.STATIC);
