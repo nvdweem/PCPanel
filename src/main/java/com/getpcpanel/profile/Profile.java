@@ -22,6 +22,7 @@ public class Profile {
     private LightingConfig lightingConfig;
     private boolean focusBackOnLost;
     private List<String> activateApplications = new ArrayList<>();
+    private String activationShortcut;
 
     public Profile(String name, DeviceType dt) {
         this.name = name;

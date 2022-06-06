@@ -15,58 +15,81 @@
 <?import javafx.scene.layout.VBox?>
 <VBox prefHeight="524.0" prefWidth="946.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
     <children>
-        <TitledPane animated="false" text="Profile settings">
-            <content>
-                <VBox>
-                    <children>
-                        <GridPane>
-                            <columnConstraints>
-                                <ColumnConstraints hgrow="NEVER" maxWidth="457.0" minWidth="10.0" prefWidth="147.0"/>
-                                <ColumnConstraints hgrow="NEVER" maxWidth="810.0" minWidth="10.0" prefWidth="777.0"/>
-                            </columnConstraints>
-                            <rowConstraints>
-                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-                            </rowConstraints>
-                            <children>
-                                <Label text="Name"/>
-                                <TextField fx:id="profileName" promptText="Profile name" GridPane.columnIndex="1"/>
-                            </children>
-                        </GridPane>
-                        <CheckBox fx:id="mainProfile" mnemonicParsing="false" text="Main profile">
-                            <padding>
-                                <Insets top="10.0"/>
-                            </padding>
-                            <tooltip>
-                                <Tooltip text="The main profile will be loaded on startup"/>
-                            </tooltip>
-                        </CheckBox>
-                    </children>
-                </VBox>
-            </content>
-        </TitledPane>
         <ScrollPane fitToHeight="true" fitToWidth="true" prefWidth="200.0">
             <content>
-                <TitledPane text="Automatic switching">
-                    <content>
-                        <VBox prefWidth="50.0">
-                            <children>
-                                <Label text="Applications that will automatically enable the profile"/>
-                                <fx:include fx:id="focusOnListList" source="PickProcesses.fxml"/>
-                                <CheckBox fx:id="focusBackOnLost" mnemonicParsing="false" text="Back to main profile on focus lost">
-                                    <VBox.margin>
-                                        <Insets/>
-                                    </VBox.margin>
-                                    <padding>
-                                        <Insets top="10.0"/>
-                                    </padding>
-                                </CheckBox>
-                            </children>
-                        </VBox>
-                    </content>
-                    <padding>
-                        <Insets top="10.0"/>
-                    </padding>
-                </TitledPane>
+                <VBox>
+                    <TitledPane animated="false" text="Profile settings">
+                        <content>
+                            <VBox>
+                                <children>
+                                    <GridPane>
+                                        <columnConstraints>
+                                            <ColumnConstraints hgrow="NEVER" maxWidth="457.0" minWidth="10.0" prefWidth="147.0"/>
+                                            <ColumnConstraints hgrow="NEVER" maxWidth="810.0" minWidth="10.0" prefWidth="777.0"/>
+                                        </columnConstraints>
+                                        <rowConstraints>
+                                            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                                        </rowConstraints>
+                                        <children>
+                                            <Label text="Name"/>
+                                            <TextField fx:id="profileName" promptText="Profile name" GridPane.columnIndex="1"/>
+                                        </children>
+                                    </GridPane>
+                                    <CheckBox fx:id="mainProfile" mnemonicParsing="false" text="Main profile">
+                                        <padding>
+                                            <Insets top="10.0"/>
+                                        </padding>
+                                        <tooltip>
+                                            <Tooltip text="The main profile will be loaded on startup"/>
+                                        </tooltip>
+                                    </CheckBox>
+                                </children>
+                            </VBox>
+                        </content>
+                    </TitledPane>
+                    <TitledPane text="Automatic switching">
+                        <content>
+                            <VBox prefWidth="50.0">
+                                <children>
+                                    <Label text="Applications that will automatically enable the profile"/>
+                                    <fx:include fx:id="focusOnListList" source="PickProcesses.fxml"/>
+                                    <CheckBox fx:id="focusBackOnLost" mnemonicParsing="false" text="Back to main profile on focus lost">
+                                        <VBox.margin>
+                                            <Insets/>
+                                        </VBox.margin>
+                                        <padding>
+                                            <Insets top="10.0"/>
+                                        </padding>
+                                    </CheckBox>
+                                </children>
+                            </VBox>
+                        </content>
+                        <padding>
+                            <Insets top="10.0"/>
+                        </padding>
+                    </TitledPane>
+                    <TitledPane text="Shortcut switching">
+                        <content>
+                            <VBox prefWidth="50.0">
+                                <children>
+                                    <Label text="Activation shortcut"/>
+
+                                    <HBox>
+                                        <TextField fx:id="activationFld" HBox.hgrow="ALWAYS">
+                                            <HBox.margin>
+                                                <Insets right="10.0"/>
+                                            </HBox.margin>
+                                        </TextField>
+                                        <Button onAction="#clearActivationShortcut" text="X"/>
+                                    </HBox>
+                                </children>
+                            </VBox>
+                        </content>
+                        <padding>
+                            <Insets top="10.0"/>
+                        </padding>
+                    </TitledPane>
+                </VBox>
             </content>
         </ScrollPane>
         <HBox alignment="BOTTOM_RIGHT" spacing="15.0" VBox.vgrow="ALWAYS">

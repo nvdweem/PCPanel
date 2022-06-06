@@ -18,6 +18,7 @@ import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.util.FileUtil;
+import com.getpcpanel.util.ShortcutHook;
 import com.getpcpanel.voicemeeter.Voicemeeter;
 
 import javafx.fxml.FXMLLoader;
@@ -38,6 +39,7 @@ public class FxHelper {
     private final Voicemeeter voicemeeter;
     private final FileUtil fileUtil;
     private final SndCtrl sndCtrl;
+    private final ShortcutHook shortcutHook;
 
     public FXMLLoader getLoader(URL location) {
         var loader = new FXMLLoader(location);
@@ -46,7 +48,7 @@ public class FxHelper {
     }
 
     public ProfileSettingsDialog buildProfileSettingsDialog(DeviceSave deviceSave, Profile profile) {
-        return new ProfileSettingsDialog(saveService, this, deviceSave, profile);
+        return new ProfileSettingsDialog(saveService, this, shortcutHook, deviceSave, profile);
     }
 
     public SettingsDialog buildSettingsDialog(Stage parentStage) {

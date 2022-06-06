@@ -2,9 +2,13 @@ package com.getpcpanel.ui;
 
 import java.util.Objects;
 
+import org.apache.commons.lang3.StringUtils;
+import org.jnativehook.keyboard.NativeKeyEvent;
+
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.util.ShortcutHook;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -17,12 +21,15 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
+@Log4j2
 @RequiredArgsConstructor
 public class ProfileSettingsDialog extends Application {
     private final SaveService saveService;
     private final FxHelper fxHelper;
+    private final ShortcutHook shortcutHook;
     private final DeviceSave deviceSave;
     private final Profile profile;
     private Stage stage;
@@ -30,6 +37,7 @@ public class ProfileSettingsDialog extends Application {
     @FXML private CheckBox mainProfile;
     @FXML private CheckBox focusBackOnLost;
     @FXML private PickProcessesController focusOnListListController;
+    @FXML private TextField activationFld;
 
     @Override
     public void start(Stage stage) throws Exception {
@@ -39,7 +47,7 @@ public class ProfileSettingsDialog extends Application {
         loader.setController(this);
         Pane pane = loader.load();
         pane.setId("pane");
-        var scene = new Scene(pane, 800.0D, 300.0D);
+        var scene = new Scene(pane, 800.0D, 400.0D);
         initWindow();
         scene.getStylesheets().addAll(Objects.requireNonNull(getClass().getResource("/assets/1.css")).toExternalForm());
         stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/assets/256x256.png")).toExternalForm()));
@@ -59,6 +67,21 @@ public class ProfileSettingsDialog extends Application {
 
         focusBackOnLost.setSelected(profile.isFocusBackOnLost());
         focusOnListListController.setPickType(PickProcessesController.PickType.process).setSelection(profile.getActivateApplications());
+
+        activationFld.focusedProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue) {
+                shortcutHook.setOverrideListener(this::registerShortcut);
+            } else {
+                shortcutHook.setOverrideListener(null);
+            }
+        });
+        activationFld.setText(StringUtils.defaultString(profile.getActivationShortcut()));
+    }
+
+    private void registerShortcut(NativeKeyEvent event) {
+        if (shortcutHook.canBeShortcut(event)) {
+            activationFld.setText(shortcutHook.toKeyString(event));
+        }
     }
 
     @FXML
@@ -72,9 +95,15 @@ public class ProfileSettingsDialog extends Application {
         profile.setFocusBackOnLost(focusBackOnLost.isSelected());
         profile.getActivateApplications().clear();
         profile.setActivateApplications(focusOnListListController.getSelection());
+        profile.setActivationShortcut(StringUtils.trimToNull(activationFld.getText()));
 
         saveService.save();
         stage.close();
+    }
+
+    @FXML
+    private void clearActivationShortcut(ActionEvent event) {
+        activationFld.setText("");
     }
 
     @FXML
