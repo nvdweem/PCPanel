@@ -36,9 +36,9 @@ public class LightingConfig {
 
     public LightingConfig deepCopy() {
         return toBuilder()
-                .knobConfigs(Arrays.copyOf(knobConfigs, knobConfigs.length))
-                .sliderLabelConfigs(Arrays.copyOf(sliderLabelConfigs, sliderLabelConfigs.length))
-                .sliderConfigs(Arrays.copyOf(sliderConfigs, sliderConfigs.length))
+                .knobConfigs(knobConfigs == null ? null : Arrays.copyOf(knobConfigs, knobConfigs.length))
+                .sliderLabelConfigs(sliderLabelConfigs == null ? null : Arrays.copyOf(sliderLabelConfigs, sliderLabelConfigs.length))
+                .sliderConfigs(sliderConfigs == null ? null : Arrays.copyOf(sliderConfigs, sliderConfigs.length))
                 .build();
     }
 
