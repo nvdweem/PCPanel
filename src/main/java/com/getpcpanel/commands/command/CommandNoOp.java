@@ -14,10 +14,11 @@ public final class CommandNoOp extends Command implements ButtonAction, DialActi
     }
 
     @Override
-    public void execute(int value) {
+    public void execute(boolean initial, int value) {
     }
 
     @Override
+    @SuppressWarnings("RedundantMethodOverride") // Comes from interface so we need to pick which parent
     public Runnable toRunnable() {
         return ButtonAction.super.toRunnable();
     }

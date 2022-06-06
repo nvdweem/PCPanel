@@ -21,7 +21,7 @@ public class CommandVoiceMeeterAdvanced extends CommandVoiceMeeter implements Di
     }
 
     @Override
-    public void execute(int level) {
+    public void execute(boolean initial, int level) {
         var voiceMeeter = MainFX.getBean(Voicemeeter.class);
         if (voiceMeeter.login()) {
             voiceMeeter.controlLevel(fullParam, ct, level);

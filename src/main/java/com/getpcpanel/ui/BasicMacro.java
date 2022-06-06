@@ -18,6 +18,7 @@ import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandEndProgram;
 import com.getpcpanel.commands.command.CommandKeystroke;
 import com.getpcpanel.commands.command.CommandMedia;
+import com.getpcpanel.commands.command.CommandNoOp;
 import com.getpcpanel.commands.command.CommandObsMuteSource;
 import com.getpcpanel.commands.command.CommandObsSetScene;
 import com.getpcpanel.commands.command.CommandObsSetSourceVolume;
@@ -127,10 +128,12 @@ public class BasicMacro extends Application implements Initializable {
     @FXML private ChoiceBox<Profile> profileDropdown;
     @FXML private PickProcessesController appVolumeController;
     @FXML private PickProcessesController appMuteController;
+    @FXML private CheckBox cb_app_unmute;
     @FXML private RadioButton rdio_app_output_specific;
     @FXML private RadioButton rdio_app_output_default;
     @FXML private RadioButton rdio_app_output_all;
     @FXML private ChoiceBox<AudioDevice> app_vol_output_device;
+    @FXML private CheckBox cb_device_unmute;
     @FXML private RadioButton rdio_device_default;
     @FXML private RadioButton rdio_device_specific;
     @FXML private ChoiceBox<AudioDevice> volumedevice;
@@ -287,11 +290,11 @@ public class BasicMacro extends Application implements Initializable {
                         rdio_app_output_all.isSelected() ? "*" :
                                 rdio_app_output_specific.isSelected() ? Optional.ofNullable(app_vol_output_device.getSelectionModel().getSelectedItem()).map(AudioDevice::id).orElse("") :
                                         "";
-                yield new CommandVolumeProcess(appVolumeController.getSelection(), device);
+                yield new CommandVolumeProcess(appVolumeController.getSelection(), device, cb_app_unmute.isSelected());
             }
             case "dialCommandVolumeFocus" -> new CommandVolumeFocus();
             case "dialCommandVolumeDevice" -> new CommandVolumeDevice(
-                    rdio_device_specific.isSelected() && volumedevice.getSelectionModel().getSelectedItem() != null ? volumedevice.getSelectionModel().getSelectedItem().id() : "");
+                    rdio_device_specific.isSelected() && volumedevice.getSelectionModel().getSelectedItem() != null ? volumedevice.getSelectionModel().getSelectedItem().id() : "", cb_device_unmute.isSelected());
             case "dialCommandObs" -> new CommandObsSetSourceVolume(obsAudioSources.getSelectionModel().getSelectedItem());
             case "dialCommandVoiceMeeter" -> {
                 if (voicemeeterTabPaneDial.getSelectionModel().getSelectedIndex() == 0) {
@@ -385,6 +388,9 @@ public class BasicMacro extends Application implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        appMuteController.setPickType(PickProcessesController.PickType.soundSource);
+        appVolumeController.setPickType(PickProcessesController.PickType.soundSource);
+
         if (analogType != null)
             mainTabPane.getTabs().get(1).setText(analogType);
         if (!hasButton)
@@ -613,6 +619,8 @@ public class BasicMacro extends Application implements Initializable {
     private HashMap<Class<? extends Command>, Consumer<?>> getButtonInitializer() {
         var buttonInitializers = new HashMap<Class<? extends Command>, Consumer<?>>(); // Blegh
 
+        buttonInitializers.put(CommandNoOp.class, (CommandNoOp command) -> {
+        });
         buttonInitializers.put(CommandKeystroke.class, (CommandKeystroke command) -> keystrokeField.setText(command.getKeystroke()));
         buttonInitializers.put(CommandShortcut.class, cmd -> shortcutField.setText(((CommandShortcut) cmd).getShortcut()));
         buttonInitializers.put(CommandMedia.class, cmd -> mediagroup.getToggles().get(switch (((CommandMedia) cmd).getButton()) {
@@ -640,7 +648,7 @@ public class BasicMacro extends Application implements Initializable {
             soundDeviceSource.getItems().removeAll(devices);
         });
         buttonInitializers.put(CommandVolumeProcessMute.class, (CommandVolumeProcessMute cmd) -> {
-            appMuteController.setSelection(PickProcessesController.PickType.soundSource, cmd.getProcessName());
+            appMuteController.setSelection(cmd.getProcessName());
             switch (cmd.getMuteType()) {
                 case unmute -> rdio_mute_unmute.setSelected(true);
                 case mute -> rdio_mute_mute.setSelected(true);
@@ -692,8 +700,11 @@ public class BasicMacro extends Application implements Initializable {
     private HashMap<Class<? extends Command>, Consumer<?>> getDialInitializer() {
         var dialInitializers = new HashMap<Class<? extends Command>, Consumer<?>>(); // Blegh
 
+        dialInitializers.put(CommandNoOp.class, (CommandNoOp command) -> {
+        });
         dialInitializers.put(CommandVolumeProcess.class, (CommandVolumeProcess cmd) -> {
-            appVolumeController.setSelection(PickProcessesController.PickType.soundSource, cmd.getProcessName());
+            appVolumeController.setSelection(cmd.getProcessName());
+            cb_app_unmute.setSelected(cmd.isUnMuteOnVolumeChange());
 
             if (StringUtils.equals(cmd.getDevice(), "*")) {
                 rdio_app_output_all.setSelected(true);
@@ -711,6 +722,7 @@ public class BasicMacro extends Application implements Initializable {
             } else {
                 rdio_device_default.setSelected(true);
             }
+            cb_device_unmute.setSelected(cmd.isUnMuteOnVolumeChange());
         });
         dialInitializers.put(CommandObsSetSourceVolume.class, (CommandObsSetSourceVolume cmd) -> obsAudioSources.getSelectionModel().select(cmd.getSourceName()));
         dialInitializers.put(CommandVoiceMeeterBasic.class, (CommandVoiceMeeterBasic cmd) -> {

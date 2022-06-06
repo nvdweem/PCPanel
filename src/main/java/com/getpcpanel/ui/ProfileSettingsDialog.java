@@ -58,7 +58,7 @@ public class ProfileSettingsDialog extends Application {
         mainProfile.setSelected(profile.isMainProfile());
 
         focusBackOnLost.setSelected(profile.isFocusBackOnLost());
-        focusOnListListController.setSelection(PickProcessesController.PickType.process, profile.getActivateApplications());
+        focusOnListListController.setPickType(PickProcessesController.PickType.process).setSelection(profile.getActivateApplications());
     }
 
     @FXML

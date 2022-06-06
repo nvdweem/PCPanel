@@ -19,7 +19,7 @@ public class CommandObsSetSourceVolume extends CommandObs implements DialAction 
     }
 
     @Override
-    public void execute(int volume) {
+    public void execute(boolean initial, int volume) {
         var obs = MainFX.getBean(OBS.class);
         if (obs.isConnected()) {
             obs.setSourceVolume(sourceName, volume);

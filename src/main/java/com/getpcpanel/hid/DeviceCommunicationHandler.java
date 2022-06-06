@@ -25,6 +25,8 @@ public class DeviceCommunicationHandler extends Thread {
     private static final int READ_TIMEOUT_MILLIS = 100;
 
     private static final int PACKET_LENGTH = 64;
+    private static final int FIRST_NON_INITIAL_READS = 20; // Could have been 9 (dials/sliders of the pro) but take 20 to be safe
+    private int readUntilNotInitial = FIRST_NON_INITIAL_READS;
 
     private final ConcurrentLinkedQueue<byte[]> priorityQueue = new ConcurrentLinkedQueue<>();
 
@@ -61,6 +63,10 @@ public class DeviceCommunicationHandler extends Thread {
             while (moreData) {
                 var data = new byte[PACKET_LENGTH];
                 var val = device.read(data, READ_TIMEOUT_MILLIS);
+                if (readUntilNotInitial != 0) {
+                    readUntilNotInitial--;
+                }
+
                 switch (val) {
                     case -1 -> {
                         log.error("DCH ERR: {}", device.getLastErrorMessage());
@@ -72,7 +78,7 @@ public class DeviceCommunicationHandler extends Thread {
                         continue;
                     }
                 }
-                interpretInputData(data);
+                interpretInputData(readUntilNotInitial != 0, data);
             }
             if (!priorityQueue.isEmpty()) {
                 sendMessageReal(priorityQueue.remove());
@@ -99,12 +105,12 @@ public class DeviceCommunicationHandler extends Thread {
         }
     }
 
-    private void interpretInputData(byte[] data) {
+    private void interpretInputData(boolean initial, byte[] data) {
         if (data[0] == INPUT_CODE_KNOB_CHANGE) {
             var knob = data[1] & 0xFF;
             var value = data[2] & 0xFF;
             try {
-                eventPublisher.publishEvent(new KnobRotateEvent(key, knob, value));
+                eventPublisher.publishEvent(new KnobRotateEvent(key, knob, value, initial));
             } catch (Exception ex) {
                 log.error("Unable to handle knob rotate", ex);
             }
@@ -125,7 +131,7 @@ public class DeviceCommunicationHandler extends Thread {
         return priorityQueue;
     }
 
-    public record KnobRotateEvent(String serialNum, int knob, int value) {
+    public record KnobRotateEvent(String serialNum, int knob, int value, boolean initial) {
     }
 
     public record ButtonPressEvent(String serialNum, int button, boolean pressed) {

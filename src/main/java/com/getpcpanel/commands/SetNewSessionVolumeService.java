@@ -51,7 +51,7 @@ public class SetNewSessionVolumeService {
                        var device = devices.getDevice(idAndDial.id);
                        if (device != null) {
                            var current = Util.map(device.getKnobRotation(idAndDial.dial), 0, 100, 0, 255);
-                           eventPublisher.publishEvent(new DeviceCommunicationHandler.KnobRotateEvent(idAndDial.id, idAndDial.dial, current));
+                           eventPublisher.publishEvent(new DeviceCommunicationHandler.KnobRotateEvent(idAndDial.id, idAndDial.dial, current, false));
                        }
                    });
     }

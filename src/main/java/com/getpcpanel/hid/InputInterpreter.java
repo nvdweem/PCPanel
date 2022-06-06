@@ -38,7 +38,7 @@ public final class InputInterpreter {
                 value = log(value);
             value = Util.map(value, 0, 100, settings.getMinTrim(), settings.getMaxTrim());
         }
-        doDialAction(event.serialNum(), event.knob(), value);
+        doDialAction(event.serialNum(), event.initial(), event.knob(), value);
     }
 
     @EventListener
@@ -48,18 +48,18 @@ public final class InputInterpreter {
             doClickAction(event.serialNum(), event.button());
     }
 
-    private void doDialAction(String serialNum, int knob, int v) {
+    private void doDialAction(String serialNum, boolean initial, int knob, int v) {
         var data = save.get().getDeviceSave(serialNum).getDialData(knob);
         if (data == null)
             return;
-        eventPublisher.publishEvent(new PCPanelControlEvent(serialNum, knob, data.toRunnable(serialNum, v)));
+        eventPublisher.publishEvent(new PCPanelControlEvent(serialNum, knob, data.toRunnable(initial, serialNum, v)));
     }
 
     private void doClickAction(String serialNum, int knob) {
         var data = save.get().getDeviceSave(serialNum).getButtonData(knob);
         if (data == null)
             return;
-        eventPublisher.publishEvent(new PCPanelControlEvent(serialNum, knob, data.toRunnable(serialNum, null)));
+        eventPublisher.publishEvent(new PCPanelControlEvent(serialNum, knob, data.toRunnable(false, serialNum, null)));
     }
 
     @SuppressWarnings("NumericCastThatLosesPrecision")

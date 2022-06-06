@@ -29,10 +29,10 @@ public final class CommandConverter {
             case "app_volume" -> {
                 var device = data[3];
                 var apps = StreamEx.of(data[1], data[2]).map(StringUtils::trimToNull).nonNull().toList();
-                yield new CommandVolumeProcess(apps, device);
+                yield new CommandVolumeProcess(apps, device, false);
             }
             case "focus_volume" -> new CommandVolumeFocus();
-            case "device_volume" -> new CommandVolumeDevice(data[1]);
+            case "device_volume" -> new CommandVolumeDevice(data[1], false);
             case "obs_dial" -> new CommandObsSetSourceVolume(data[2]);
             case "voicemeeter_dial" -> {
                 if ("basic".equals(data[1])) {

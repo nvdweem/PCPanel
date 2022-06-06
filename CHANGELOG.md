@@ -8,6 +8,7 @@
 - Right clicking a knob or slider opens the lighting dialog
     - Middle click already triggered the click action (I did not know that)
 - It's now possible to configure a 'Mute override' color which will show a different color when the controlled device is muted
+- Volume change actions now have an option to unmute the device/process
 
 **Fix:**
 
