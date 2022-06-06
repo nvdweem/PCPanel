@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import com.getpcpanel.obs.remote.OBSRemoteController;
 import com.getpcpanel.obs.remote.objects.Source;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.util.Util;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -68,7 +69,7 @@ public final class OBS {
             return;
         var waiter = new Object();
         try {
-            var decimal = vol / 100.0D;
+            var decimal = (double) Util.map(vol, 0, 100, -100, 26);
             controller.setVolume(sourceName, decimal, c -> {
                 synchronized (waiter) {
                     waiter.notify();

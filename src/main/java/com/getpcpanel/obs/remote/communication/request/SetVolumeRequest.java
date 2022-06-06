@@ -10,6 +10,7 @@ public class SetVolumeRequest extends BaseRequest {
     private final String source;
 
     private final double volume;
+    private final boolean useDecibel = true;
 
     public SetVolumeRequest(OBSCommunicator com, String source, double volume) {
         super(com, RequestType.SetVolume);
@@ -17,4 +18,3 @@ public class SetVolumeRequest extends BaseRequest {
         this.volume = volume;
     }
 }
-

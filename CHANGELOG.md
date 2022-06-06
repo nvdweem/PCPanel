@@ -13,6 +13,7 @@
 **Fix:**
 
 - Its possible to configure an alternative profile folder for development purposes
+- Controlling OBS volume is now done with [db's instead of mul](https://github.com/obsproject/obs-websocket/blob/4.x-compat/docs/generated/protocol.md#setvolume), this gives the slider a better range
 
 ## [1.2]
 
