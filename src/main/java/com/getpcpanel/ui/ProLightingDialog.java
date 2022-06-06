@@ -3,9 +3,6 @@ package com.getpcpanel.ui;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
-import java.util.function.Consumer;
-
-import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.device.Device;
 import com.getpcpanel.hid.DeviceScanner;
@@ -41,11 +38,11 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
-import one.util.streamex.StreamEx;
 
 @Log4j2
-public class ProLightingDialog extends Application implements Initializable {
+public class ProLightingDialog extends Application implements Initializable, ILightingDialogMuteOverrideHelper {
     private final SaveService saveService;
     private final DeviceScanner deviceScanner;
     private final FxHelper fxHelper;
@@ -81,12 +78,12 @@ public class ProLightingDialog extends Application implements Initializable {
     private final ColorDialog[] knobStaticCDs = new ColorDialog[NUM_KNOBS];
     private final ColorDialog[] knobVolumeGradientCD1 = new ColorDialog[NUM_KNOBS];
     private final ColorDialog[] knobVolumeGradientCD2 = new ColorDialog[NUM_KNOBS];
-    private final CheckBox[] muteOverrideCheckboxesKnobs = new CheckBox[NUM_KNOBS];
-    private final ColorDialog[] muteOverrideColorsKnobs = new ColorDialog[NUM_KNOBS];
-    private final CheckBox[] muteOverrideCheckboxesSliders = new CheckBox[NUM_SLIDERS];
-    private final ColorDialog[] muteOverrideColorsSliders = new ColorDialog[NUM_SLIDERS];
-    private final CheckBox[] muteOverrideCheckboxesSliderLabels = new CheckBox[NUM_SLIDERS];
-    private final ColorDialog[] muteOverrideColorsSliderLabels = new ColorDialog[NUM_SLIDERS];
+    @Getter private final CheckBox[] muteOverrideCheckboxesKnobs = new CheckBox[NUM_KNOBS];
+    @Getter private final ColorDialog[] muteOverrideColorsKnobs = new ColorDialog[NUM_KNOBS];
+    @Getter private final CheckBox[] muteOverrideCheckboxesSliders = new CheckBox[NUM_SLIDERS];
+    @Getter private final ColorDialog[] muteOverrideColorsSliders = new ColorDialog[NUM_SLIDERS];
+    @Getter private final CheckBox[] muteOverrideCheckboxesSliderLabels = new CheckBox[NUM_SLIDERS];
+    @Getter private final ColorDialog[] muteOverrideColorsSliderLabels = new ColorDialog[NUM_SLIDERS];
     private final ColorDialog[] sliderStaticCDs = new ColorDialog[NUM_SLIDERS];
     private final ColorDialog[] sliderStaticGradientTopCD = new ColorDialog[NUM_SLIDERS];
     private final ColorDialog[] sliderStaticGradientBottomCD = new ColorDialog[NUM_SLIDERS];
@@ -167,58 +164,6 @@ public class ProLightingDialog extends Application implements Initializable {
         allKnobColor.setCustomColor(Color.BLACK);
         mainPane.getSelectionModel().select(0);
         fullBodyTabbedPane.getSelectionModel().select(0);
-    }
-
-    private TabPane tabWithMuteOverride(OverrideTargetType ott, int button, TabPane tab) {
-        var target = getOverrideTarget(ott);
-        var vBox = new VBox();
-        target.cd()[button] = new ColorDialog();
-        target.cb()[button] = new CheckBox("Override color when button's mute action is active");
-        vBox.getChildren().addAll(
-                target.cb()[button],
-                target.cd()[button]
-        );
-        var muteTab = new Tab("Mute override", vBox);
-        var originalTab = new Tab("Color", tab);
-
-        var result = new TabPane(originalTab, muteTab);
-        result.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
-        return result;
-    }
-
-    protected record OverrideTarget(CheckBox[] cb, ColorDialog[] cd) {
-    }
-
-    protected enum OverrideTargetType {
-        KNOB, SLIDER, SLIDER_LABEL
-    }
-
-    private CheckBox[] allOverrideCheckboxes() {
-        return StreamEx.of(OverrideTargetType.values()).flatMap(t -> StreamEx.of(getOverrideTarget(t).cb())).toArray(CheckBox[]::new);
-    }
-
-    private ColorDialog[] allOverrideColors() {
-        return StreamEx.of(OverrideTargetType.values()).flatMap(t -> StreamEx.of(getOverrideTarget(t).cd())).toArray(ColorDialog[]::new);
-    }
-
-    public OverrideTarget getOverrideTarget(OverrideTargetType ott) {
-        return switch (ott) {
-            case KNOB -> new OverrideTarget(muteOverrideCheckboxesKnobs, muteOverrideColorsKnobs);
-            case SLIDER -> new OverrideTarget(muteOverrideCheckboxesSliders, muteOverrideColorsSliders);
-            case SLIDER_LABEL -> new OverrideTarget(muteOverrideCheckboxesSliderLabels, muteOverrideColorsSliderLabels);
-        };
-    }
-
-    private void setOverride(OverrideTargetType type, int typeIndex, String muteOverrideColor) {
-        var target = getOverrideTarget(type);
-        target.cb()[typeIndex].setSelected(StringUtils.isNotBlank(muteOverrideColor));
-        target.cd()[typeIndex].setCustomColor(Color.web(StringUtils.defaultIfBlank(muteOverrideColor, "black")));
-    }
-
-    private void setOverrideSetting(OverrideTargetType type, int typeIdx, Consumer<Color> colorSetter) {
-        var target = getOverrideTarget(type);
-        var overrideColor = target.cb()[typeIdx].isSelected() ? target.cd()[typeIdx].getCustomColor() : null;
-        colorSetter.accept(overrideColor);
     }
 
     @Override

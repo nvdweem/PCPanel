@@ -7,6 +7,7 @@
 - When there is no saved profile but there is one from the original software, ask to migrate on startup
 - Right clicking a knob or slider opens the lighting dialog
     - Middle click already triggered the click action (I did not know that)
+- It's now possible to configure a 'Mute override' color which will show a different color when the controlled device is muted
 
 **Fix:**
 

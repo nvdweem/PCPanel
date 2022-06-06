@@ -36,12 +36,13 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @RequiredArgsConstructor
-public class MiniLightingDialog extends Application implements Initializable {
+public class MiniLightingDialog extends Application implements Initializable, ILightingDialogMuteOverrideHelper {
     private final SaveService saveService;
     private final DeviceScanner deviceScanner;
     private final FxHelper fxHelper;
@@ -73,6 +74,9 @@ public class MiniLightingDialog extends Application implements Initializable {
     private final ColorDialog[] knobStaticCDs = new ColorDialog[NUM_KNOBS];
     private final ColorDialog[] knobVolumeGradientCD1 = new ColorDialog[NUM_KNOBS];
     private final ColorDialog[] knobVolumeGradientCD2 = new ColorDialog[NUM_KNOBS];
+    @Getter private final CheckBox[] muteOverrideCheckboxesKnobs = new CheckBox[NUM_KNOBS];
+    @Getter private final ColorDialog[] muteOverrideColorsKnobs = new ColorDialog[NUM_KNOBS];
+
     private boolean pressedOk;
     private Integer selectOnLoad;
 
@@ -151,7 +155,7 @@ public class MiniLightingDialog extends Application implements Initializable {
             Util.adjustTabs(singleKnobTabPane, 140, 30);
             singleKnobTabPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
             singleKnobTabPane.setSide(Side.LEFT);
-            tab.setContent(singleKnobTabPane);
+            tab.setContent(tabWithMuteOverride(OverrideTargetType.KNOB, i, singleKnobTabPane));
             knobsTabbedPane.getTabs().add(tab);
         }
         Util.adjustTabs(fullBodyTabbedPane, 120, 30);
@@ -232,6 +236,7 @@ public class MiniLightingDialog extends Application implements Initializable {
                     knobVolumeGradientCD1[i].setCustomColor(Color.web(knobConfig.getColor1()));
                     knobVolumeGradientCD2[i].setCustomColor(Color.web(knobConfig.getColor2()));
                 }
+                setOverride(OverrideTargetType.KNOB, i, knobConfig.getMuteOverrideColor());
             }
         }
         updateApplyToAllButton();
@@ -251,8 +256,16 @@ public class MiniLightingDialog extends Application implements Initializable {
         }
     }
 
+    private void addListener(CheckBox[]... checkss) {
+        for (var checks : checkss) {
+            for (var check : checks) {
+                check.setOnAction(a -> updateColors());
+            }
+        }
+    }
+
     private void initListeners(Slider[] allSliders, CheckBox[] allCheckBoxes) {
-        addListener(knobStaticCDs, knobVolumeGradientCD1, knobVolumeGradientCD2);
+        addListener(knobStaticCDs, knobVolumeGradientCD1, allOverrideColors(), knobVolumeGradientCD2);
         addListener(knobSingleTabPane);
         allKnobColor.customColorProperty().addListener((observable, oldValue, newValue) -> {
             for (var cd : knobStaticCDs) {
@@ -261,6 +274,7 @@ public class MiniLightingDialog extends Application implements Initializable {
             updateColors();
         });
         addListener(fullBodyTabbedPane);
+        addListener(allOverrideCheckboxes());
         for (var slider : allSliders) {
             slider.valueProperty().addListener((observable, oldValue, newValue) -> updateColors());
         }
@@ -321,6 +335,7 @@ public class MiniLightingDialog extends Application implements Initializable {
                     config.getKnobConfigs()[knob].setColor1FromColor(knobVolumeGradientCD1[knob].getCustomColor());
                     config.getKnobConfigs()[knob].setColor2FromColor(knobVolumeGradientCD2[knob].getCustomColor());
                 }
+                setOverrideSetting(OverrideTargetType.KNOB, knob, config.getKnobConfigs()[knob]::setMuteOverrideColorFromColor);
             }
             device.setLighting(config, false);
         }
