@@ -14,7 +14,7 @@ import com.getpcpanel.commands.command.CommandVolumeProcess;
 import com.getpcpanel.cpp.AudioDeviceEvent;
 import com.getpcpanel.cpp.AudioSessionEvent;
 import com.getpcpanel.cpp.EventType;
-import com.getpcpanel.cpp.SndCtrl;
+import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.profile.DeviceSave;
@@ -34,16 +34,16 @@ import lombok.extern.log4j.Log4j2;
 @RequiredArgsConstructor
 public class SetMuteOverrideService {
     private final DeviceHolder devices;
-    private final SndCtrl sndCtrl;
+    private final ISndCtrl sndCtrl;
     private final SaveService saveService;
 
     @EventListener(DeviceScanner.DeviceConnectedEvent.class)
     public void triggerAll() {
         for (var device : sndCtrl.getDevices()) {
-            for (var sess : device.sessions().values()) {
-                onAudioSession(new AudioSessionEvent(sess, EventType.CHANGED));
-            }
             onAudioDevice(new AudioDeviceEvent(device, EventType.CHANGED));
+        }
+        for (var sess : sndCtrl.getAllSessions()) {
+            onAudioSession(new AudioSessionEvent(sess, EventType.CHANGED));
         }
     }
 

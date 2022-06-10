@@ -6,12 +6,13 @@ import org.springframework.stereotype.Service;
 
 import com.getpcpanel.Json;
 import com.getpcpanel.MainFX;
-import com.getpcpanel.cpp.SndCtrl;
+import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.device.PCPanelMiniUI;
 import com.getpcpanel.device.PCPanelProUI;
 import com.getpcpanel.device.PCPanelRGBUI;
 import com.getpcpanel.hid.DeviceScanner;
+import com.getpcpanel.iconextract.IIconService;
 import com.getpcpanel.obs.OBS;
 import com.getpcpanel.obs.OBSListener;
 import com.getpcpanel.profile.DeviceSave;
@@ -38,8 +39,9 @@ public class FxHelper {
     private final OBS obs;
     private final Voicemeeter voicemeeter;
     private final FileUtil fileUtil;
-    private final SndCtrl sndCtrl;
+    private final ISndCtrl sndCtrl;
     private final ShortcutHook shortcutHook;
+    private final IIconService iconService;
 
     public FXMLLoader getLoader(URL location) {
         var loader = new FXMLLoader(location);
@@ -76,6 +78,6 @@ public class FxHelper {
     }
 
     public AppFinderDialog buildAppFinderDialog(Stage parentStage, boolean volumeApps) {
-        return new AppFinderDialog(sndCtrl, this, parentStage, volumeApps);
+        return new AppFinderDialog(sndCtrl, this, iconService, parentStage, volumeApps);
     }
 }

@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import com.getpcpanel.commands.command.CommandVolumeProcess;
 import com.getpcpanel.cpp.AudioSessionEvent;
 import com.getpcpanel.cpp.EventType;
-import com.getpcpanel.cpp.SndCtrl;
+import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.hid.DeviceCommunicationHandler;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.profile.DeviceSave;
@@ -30,7 +30,7 @@ import one.util.streamex.EntryStream;
 public class SetNewSessionVolumeService {
     private final ApplicationEventPublisher eventPublisher;
     private final DeviceHolder devices;
-    private final SndCtrl sndCtrl;
+    private final ISndCtrl sndCtrl;
     private final SaveService saveService;
 
     @EventListener

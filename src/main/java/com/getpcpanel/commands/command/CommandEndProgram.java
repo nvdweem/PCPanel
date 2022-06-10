@@ -7,7 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.MainFX;
-import com.getpcpanel.cpp.SndCtrl;
+import com.getpcpanel.cpp.ISndCtrl;
 
 import lombok.Getter;
 import lombok.ToString;
@@ -29,7 +29,7 @@ public class CommandEndProgram extends Command implements ButtonAction {
 
     @Override
     public void execute() {
-        var toKill = specific ? name : StringUtils.substringAfterLast(MainFX.getBean(SndCtrl.class).getFocusApplication(), "\\");
+        var toKill = specific ? name : StringUtils.substringAfterLast(MainFX.getBean(ISndCtrl.class).getFocusApplication(), "\\");
         try {
             rt.exec("cmd.exe /c taskkill /IM " + toKill + " /F");
         } catch (IOException e) {

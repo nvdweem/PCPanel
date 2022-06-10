@@ -37,8 +37,8 @@ import com.getpcpanel.commands.command.CommandVolumeFocus;
 import com.getpcpanel.commands.command.CommandVolumeProcess;
 import com.getpcpanel.commands.command.CommandVolumeProcessMute;
 import com.getpcpanel.cpp.AudioDevice;
+import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.cpp.MuteType;
-import com.getpcpanel.cpp.SndCtrl;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.obs.OBS;
 import com.getpcpanel.profile.DeviceSave;
@@ -84,7 +84,7 @@ public class BasicMacro extends Application implements Initializable {
     private final SaveService saveService;
     private final OBS obs;
     private final Voicemeeter voiceMeeter;
-    private final SndCtrl sndCtrl;
+    private final ISndCtrl sndCtrl;
 
     @FXML private Pane topPane;
     @FXML private TabPane mainTabPane;
@@ -163,17 +163,17 @@ public class BasicMacro extends Application implements Initializable {
     private String name;
     private String analogType;
 
-    public BasicMacro(FxHelper fxHelper, SaveService saveService, OBS obs, Voicemeeter voiceMeeter, SndCtrl sndCtrl, Device device, int knob, boolean hasButton, String name, String analogType) {
+    public BasicMacro(FxHelper fxHelper, SaveService saveService, OBS obs, Voicemeeter voiceMeeter, ISndCtrl sndCtrl, Device device, int knob, boolean hasButton, String name, String analogType) {
         this(fxHelper, saveService, obs, voiceMeeter, sndCtrl, device, knob, hasButton);
         this.name = name;
         this.analogType = analogType;
     }
 
-    public BasicMacro(FxHelper fxHelper, SaveService saveService, OBS obs, Voicemeeter voiceMeeter, SndCtrl sndCtrl, Device device, int knob) {
+    public BasicMacro(FxHelper fxHelper, SaveService saveService, OBS obs, Voicemeeter voiceMeeter, ISndCtrl sndCtrl, Device device, int knob) {
         this(fxHelper, saveService, obs, voiceMeeter, sndCtrl, device, knob, true);
     }
 
-    public BasicMacro(FxHelper fxHelper, SaveService saveService, OBS obs, Voicemeeter voiceMeeter, SndCtrl sndCtrl, Device device, int knob, boolean hasButton) {
+    public BasicMacro(FxHelper fxHelper, SaveService saveService, OBS obs, Voicemeeter voiceMeeter, ISndCtrl sndCtrl, Device device, int knob, boolean hasButton) {
         this.fxHelper = fxHelper;
         this.saveService = saveService;
         this.obs = obs;

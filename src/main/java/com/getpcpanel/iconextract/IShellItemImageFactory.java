@@ -1,4 +1,4 @@
-package me.marnic.jiconextract2;
+package com.getpcpanel.iconextract;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.COM.Unknown;

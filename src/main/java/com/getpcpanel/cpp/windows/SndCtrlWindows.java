@@ -1,4 +1,4 @@
-package com.getpcpanel.cpp;
+package com.getpcpanel.cpp.windows;
 
 import java.io.File;
 import java.util.Collection;
@@ -16,6 +16,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+import com.getpcpanel.cpp.AudioDevice;
+import com.getpcpanel.cpp.AudioDeviceEvent;
+import com.getpcpanel.cpp.AudioSession;
+import com.getpcpanel.cpp.DataFlow;
+import com.getpcpanel.cpp.EventType;
+import com.getpcpanel.cpp.ISndCtrl;
+import com.getpcpanel.cpp.MuteType;
+import com.getpcpanel.cpp.Role;
+import com.getpcpanel.spring.ConditionalOnWindows;
 import com.getpcpanel.util.ExtractUtil;
 
 import lombok.RequiredArgsConstructor;
@@ -24,21 +33,38 @@ import one.util.streamex.StreamEx;
 
 @Log4j2
 @Service
+@ConditionalOnWindows
 @SuppressWarnings("ALL") // Methods are called from JNI
 @RequiredArgsConstructor
-public class SndCtrl {
+public class SndCtrlWindows implements ISndCtrl {
     private final ExtractUtil extractUtil;
     private final ApplicationEventPublisher eventPublisher;
 
     @PostConstruct
     public void init() {
+        loadLibrary();
+        SndCtrlNative.instance.start(this);
+    }
+
+    private void loadLibrary() {
         try {
             System.loadLibrary("SndCtrl");
             log.warn("Debugging? Loading SndCtrl from the path.");
         } catch (Throwable e) {
-            System.load(extractUtil.extractAndDeleteOnExit("SndCtrl.dll").toString());
+            try {
+                System.load(extractUtil.extractAndDeleteOnExit("SndCtrl.dll").toString());
+            } catch (Throwable ex) {
+                log.error("Unable to load sndctrl, volume options will be disabled", ex);
+            }
         }
-        SndCtrlNative.instance.start(this);
+    }
+
+    private void loadLinux() {
+        try {
+            System.load(extractUtil.extractAndDeleteOnExit("libsndctrl.so").toString());
+        } catch (Throwable ex) {
+            log.error("Unable to load sndctrl, volume options will be disabled", ex);
+        }
     }
 
     private Map<DefaultFor, String> defaults = new HashMap<>();
@@ -46,6 +72,11 @@ public class SndCtrl {
 
     public Collection<AudioDevice> getDevices() {
         return Collections.unmodifiableCollection(devices.values());
+    }
+
+    @Override
+    public Collection<AudioSession> getAllSessions() {
+        return StreamEx.of(getDevices()).flatCollection(ad -> ad.getSessions().values()).distinct(AudioSession::pid).toSet();
     }
 
     public AudioDevice getDevice(String id) {
@@ -126,7 +157,7 @@ public class SndCtrl {
     }
 
     private AudioDevice deviceAdded(String name, String id, float volume, boolean muted, int dataFlow) {
-        var result = new AudioDevice(eventPublisher, name, id).volume(volume).muted(muted).dataflow(DataFlow.from(dataFlow));
+        var result = new WindowsAudioDevice(eventPublisher, name, id).volume(volume).muted(muted).dataflow(DataFlow.from(dataFlow));
         devices.put(id, result);
         log.trace("Device added: {}", result);
 

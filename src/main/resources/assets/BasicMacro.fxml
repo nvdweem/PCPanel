@@ -305,7 +305,7 @@
                                         <Insets left="8.0" right="8.0" top="8.0"/>
                                     </padding>
                                     <children>
-                                        <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="Enter a proccess to control volume"/>
+                                        <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="Enter a process to control volume"/>
                                         <fx:include fx:id="appVolume" source="PickProcesses.fxml"/>
                                         <CheckBox fx:id="cb_app_unmute" mnemonicParsing="false" text="Unmute on volume change"/>
 

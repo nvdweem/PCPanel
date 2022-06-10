@@ -1,12 +1,10 @@
-package me.marnic.jiconextract2;
+package com.getpcpanel.iconextract;
 
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.WString;
-import com.sun.jna.platform.win32.Guid;
 import com.sun.jna.platform.win32.Guid.REFIID;
 import com.sun.jna.platform.win32.Shell32;
-import com.sun.jna.platform.win32.WinNT;
 import com.sun.jna.platform.win32.WinNT.HRESULT;
 import com.sun.jna.ptr.PointerByReference;
 

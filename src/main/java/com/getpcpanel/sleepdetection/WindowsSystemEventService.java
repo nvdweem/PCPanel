@@ -5,6 +5,7 @@ import javax.annotation.PostConstruct;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+import com.getpcpanel.spring.ConditionalOnWindows;
 import com.sun.jna.WString;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.User32;
@@ -26,6 +27,7 @@ import lombok.extern.log4j.Log4j2;
  */
 @Log4j2
 @Service
+@ConditionalOnWindows
 @RequiredArgsConstructor
 public class WindowsSystemEventService implements WindowProc {
     private static final int WM_POWERBROADCAST = 536;

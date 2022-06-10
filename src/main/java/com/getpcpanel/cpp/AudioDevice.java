@@ -16,7 +16,7 @@ import lombok.extern.log4j.Log4j2;
 
 @Data
 @Log4j2
-@Setter(AccessLevel.PACKAGE)
+@Setter(AccessLevel.PROTECTED)
 @SuppressWarnings("unused") // Methods called from JNI
 public class AudioDevice implements Serializable {
     private final ApplicationEventPublisher eventPublisher;

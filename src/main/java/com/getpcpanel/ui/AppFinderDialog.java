@@ -15,7 +15,8 @@ import javax.imageio.ImageIO;
 import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.cpp.AudioSession;
-import com.getpcpanel.cpp.SndCtrl;
+import com.getpcpanel.cpp.ISndCtrl;
+import com.getpcpanel.iconextract.IIconService;
 
 import javafx.application.Application;
 import javafx.embed.swing.SwingFXUtils;
@@ -36,15 +37,15 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import me.marnic.jiconextract2.JIconExtract;
 import one.util.streamex.StreamEx;
 
 @Log4j2
 @RequiredArgsConstructor
 class AppFinderDialog extends Application implements Initializable {
     private static final int ICON_SIZE = 90;
-    private final SndCtrl sndCtrl;
+    private final ISndCtrl sndCtrl;
     private final FxHelper fxHelper;
+    private final IIconService iconService;
     private final Stage parentStage;
     private final boolean volumeApps;
     private Stage stage;
@@ -98,10 +99,10 @@ class AppFinderDialog extends Application implements Initializable {
         return dimg;
     }
 
-    private static BufferedImage toBufferedImage(File f) throws IOException {
+    private BufferedImage toBufferedImage(File f) throws IOException {
         BufferedImage bi;
         try {
-            bi = JIconExtract.getIconForFile(ICON_SIZE, ICON_SIZE, f);
+            bi = iconService.getIconForFile(ICON_SIZE, ICON_SIZE, f);
         } catch (Exception e) {
             return getDefaultImage();
         }
@@ -127,8 +128,7 @@ class AppFinderDialog extends Application implements Initializable {
 
     private List<AudioSession> getProgs() {
         if (volumeApps) {
-            return StreamEx.of(sndCtrl.getDevices()).flatCollection(ad -> ad.getSessions().values())
-                           .distinct(AudioSession::pid)
+            return StreamEx.of(sndCtrl.getAllSessions())
                            .sorted(Comparator.nullsLast(Comparator.comparing(AudioSession::title).thenComparing(as -> as.executable().getName())))
                            .toImmutableList();
         } else {

@@ -6,6 +6,29 @@ This repository is based on the decompiled source code of the original app. The 
 have been replaced with custom native implementations. The source code for those parts are either Java-JNA implementations or in the
 `src/main/cpp` directory.
 
+# Running on Linux
+
+The application runs on Linux but doesn't do very much yet. There is some volume controlling available if `pactl` and `pacmd` are on the path.
+The linux support that is currently there is mostly there to be worked on more in the future.
+
+## Setting up for Linux
+
+Allowing the software to access the PCPanel device:
+
+```sudoedit /etc/udev/rules.d/70-pcpanel.rules```
+
+Set content to:
+
+```
+SUBSYSTEM=="usb", ATTRS{idVendor}=="04D8", ATTRS{idProduct}=="eb52", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="a3c4", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="a3c5", TAG+="uaccess"
+```
+
+Then run `sudo udevadm control --reload-rules`
+
+I then had to restart to get it to work.
+
 # Migration
 
 When replacing the original PCPanel software with this version it's possible to keep all settings. To do that you will need to manually copy

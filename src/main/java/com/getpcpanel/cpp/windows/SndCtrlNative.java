@@ -1,4 +1,4 @@
-package com.getpcpanel.cpp;
+package com.getpcpanel.cpp.windows;
 
 enum SndCtrlNative {
     instance;

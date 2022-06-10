@@ -3,7 +3,7 @@ package com.getpcpanel.profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import com.getpcpanel.cpp.WindowFocusChangedEvent;
+import com.getpcpanel.cpp.windows.WindowFocusChangedEvent;
 import com.getpcpanel.hid.DeviceHolder;
 
 import lombok.RequiredArgsConstructor;
