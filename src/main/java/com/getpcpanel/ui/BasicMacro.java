@@ -407,7 +407,7 @@ public class BasicMacro extends Application implements Initializable {
             if (volData instanceof CommandObsSetSourceVolume ssv) {
                 obsAudioSources.getItems().add(ssv.getSourceName());
             } else {
-                removeTabById(dialTabPane, "obs_dial");
+                removeTabById(dialTabPane, "dialCommandObs");
             }
 
             if (buttonData instanceof CommandObsMuteSource ms) {
@@ -415,7 +415,7 @@ public class BasicMacro extends Application implements Initializable {
             } else if (buttonData instanceof CommandObsSetScene ss) {
                 obsSetScene.getItems().add(ss.getScene());
             } else {
-                removeTabById(buttonTabPane, "obs_button");
+                removeTabById(buttonTabPane, "btnCommandObs");
             }
         }
         voicemeeterDialType.getItems().addAll(DialControlMode.values());
@@ -465,7 +465,7 @@ public class BasicMacro extends Application implements Initializable {
                     voicemeeterBasicDial.getItems().add(vmb.getDt());
                 }
             } else {
-                removeTabById(dialTabPane, "voicemeeter_dial");
+                removeTabById(dialTabPane, "dialCommandVoiceMeeter");
             }
 
             if (buttonData instanceof CommandVoiceMeeter) {
@@ -475,7 +475,7 @@ public class BasicMacro extends Application implements Initializable {
                     voicemeeterBasicButton.getItems().add(vmb.getBt());
                 }
             } else {
-                removeTabById(buttonTabPane, "voicemeeter_button");
+                removeTabById(buttonTabPane, "btnCommandVoiceMeeter");
             }
         }
         var curProfile = deviceSave.getCurrentProfileName();
