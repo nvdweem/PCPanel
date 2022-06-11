@@ -11,11 +11,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
+import com.getpcpanel.spring.ConditionalOnLinux;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @Component
+@ConditionalOnLinux
 @RequiredArgsConstructor
 public class PulseAudioEventListener extends Thread {
     private final ApplicationEventPublisher eventPublisher;

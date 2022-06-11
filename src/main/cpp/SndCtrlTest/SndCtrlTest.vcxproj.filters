@@ -24,9 +24,6 @@
     <ClCompile Include="..\SndCtrl\AudioSession.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\SndCtrl\com_getpcpanel_cpp_SndCtrlNative.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\SndCtrl\dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -48,15 +45,15 @@
     <ClCompile Include="..\SndCtrl\FocusListener.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\SndCtrl\com_getpcpanel_cpp_windows_SndCtrlNative.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\SndCtrl\AudioDevice.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\SndCtrl\AudioSession.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SndCtrl\com_getpcpanel_cpp_SndCtrlNative.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\SndCtrl\framework.h">
@@ -78,6 +75,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\SndCtrl\FocusListener.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SndCtrl\com_getpcpanel_cpp_windows_SndCtrlNative.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

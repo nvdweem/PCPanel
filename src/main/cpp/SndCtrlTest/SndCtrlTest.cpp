@@ -4,7 +4,7 @@
 #include <iostream>
 #include "..\SndCtrl\pch.h"
 #include "..\SndCtrl\sndctrl.h"
-#include "..\SndCtrl\com_getpcpanel_cpp_SndCtrlNative.h"
+#include "..\SndCtrl\com_getpcpanel_cpp_windows_SndCtrlNative.h"
 
 int main()
 {

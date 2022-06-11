@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "com_getpcpanel_cpp_SndCtrlNative.h"
+#include "com_getpcpanel_cpp_windows_SndCtrlNative.h"
 #include "JniCaller.h"
 #include "SndCtrl.h"
 #include "helpers.h"
@@ -28,7 +28,7 @@ std::wstring str(JNIEnv* env, jstring string)
  * Method:    start
  * Signature: (Ljava/lang/Object;)V
  */
-JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_start(JNIEnv* env, jclass, jobject obj) {
+JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_windows_SndCtrlNative_start(JNIEnv* env, jclass, jobject obj) {
     //cout << "Java_com_getpcpanel_cpp_SndCtrlNative_start" << endl;
     pSndCtrl = make_unique<SndCtrl>(env, obj);
 }
@@ -38,7 +38,7 @@ JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_start(JNIEnv* env, 
  * Method:    setDeviceVolume
  * Signature: (Ljava/lang/String;F)V
  */
-JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_setDeviceVolume(JNIEnv* env, jobject, jstring jDeviceId, jfloat volume) {
+JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_windows_SndCtrlNative_setDeviceVolume(JNIEnv* env, jobject, jstring jDeviceId, jfloat volume) {
     //cout << "Java_com_getpcpanel_cpp_SndCtrlNative_setDeviceVolume" << endl;
     auto deviceId = str(env, jDeviceId);
     pSndCtrl->SetDeviceVolume(deviceId, volume);
@@ -49,7 +49,7 @@ JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_setDeviceVolume(JNI
  * Method:    setProcessVolume
  * Signature: (Ljava/lang/String;IF)V
  */
-JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_setProcessVolume(JNIEnv* env, jobject, jstring jDeviceId, jint pid, jfloat volume) {
+JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_windows_SndCtrlNative_setProcessVolume(JNIEnv* env, jobject, jstring jDeviceId, jint pid, jfloat volume) {
     //cout << "Java_com_getpcpanel_cpp_SndCtrlNative_setProcessVolume" << endl;
     auto deviceId = str(env, jDeviceId);
     pSndCtrl->SetProcessVolume(deviceId, pid, volume);
@@ -60,7 +60,7 @@ JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_setProcessVolume(JN
  * Method:    setFocusVolume
  * Signature: (F)V
  */
-JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_setFocusVolume(JNIEnv*, jobject, jfloat volume) {
+JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_windows_SndCtrlNative_setFocusVolume(JNIEnv*, jobject, jfloat volume) {
     //cout << "Java_com_getpcpanel_cpp_SndCtrlNative_setFocusVolume" << endl;
     pSndCtrl->SetFocusVolume(volume);
 }
@@ -70,7 +70,7 @@ JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_setFocusVolume(JNIE
  * Method:    setDefaultDevice
  * Signature: (Ljava/lang/String;)V
  */
-JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_setDefaultDevice(JNIEnv* env, jobject, jstring jDevice, jint dataFlow, jint role) {
+JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_windows_SndCtrlNative_setDefaultDevice(JNIEnv* env, jobject, jstring jDevice, jint dataFlow, jint role) {
     //cout << "Java_com_getpcpanel_cpp_SndCtrlNative_setDefaultDevice" << endl;
     auto device = str(env, jDevice);
     pSndCtrl->UpdateDefaultDevice(device, (EDataFlow) dataFlow, (ERole) role);
@@ -81,7 +81,7 @@ JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_setDefaultDevice(JN
  * Method:    muteDevice
  * Signature: (Ljava/lang/String;)V
  */
-JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_muteDevice(JNIEnv* env, jobject, jstring jDevice, jboolean muted) {
+JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_windows_SndCtrlNative_muteDevice(JNIEnv* env, jobject, jstring jDevice, jboolean muted) {
     //cout << "Java_com_getpcpanel_cpp_SndCtrlNative_muteDevice" << endl;
     auto device = str(env, jDevice);
     pSndCtrl->MuteDevice(device, muted);
@@ -92,7 +92,7 @@ JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_muteDevice(JNIEnv* 
  * Method:    muteSession
  * Signature: (Ljava/lang/String;I)V
  */
-JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_muteSession(JNIEnv* env, jobject, jstring jDevice, jint pid, jboolean muted) {
+JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_windows_SndCtrlNative_muteSession(JNIEnv* env, jobject, jstring jDevice, jint pid, jboolean muted) {
     //cout << "Java_com_getpcpanel_cpp_SndCtrlNative_muteSession" << endl;
     auto device = str(env, jDevice);
     pSndCtrl->MuteProcess(device, pid, muted);
@@ -103,7 +103,7 @@ JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_muteSession(JNIEnv*
  * Method:    getFocusApplication
  * Signature: ()Ljava/lang/String;
  */
-JNIEXPORT jstring JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_getFocusApplication(JNIEnv* env, jobject) {
+JNIEXPORT jstring JNICALL Java_com_getpcpanel_cpp_windows_SndCtrlNative_getFocusApplication(JNIEnv* env, jobject) {
     //cout << "Java_com_getpcpanel_cpp_SndCtrlNative_getFocusApplication" << endl;
     auto pid = GetFocusProcessId();
     auto name = GetProcessName(pid);
@@ -115,7 +115,7 @@ JNIEXPORT jstring JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_getFocusApplicat
  * Method:    getAllRunningProcesses
  * Signature: ()[Ljava/lang/String;
  */
-JNIEXPORT jobjectArray JNICALL Java_com_getpcpanel_cpp_SndCtrlNative_getAllRunningProcesses(JNIEnv* env, jobject) {
+JNIEXPORT jobjectArray JNICALL Java_com_getpcpanel_cpp_windows_SndCtrlNative_getAllRunningProcesses(JNIEnv* env, jobject) {
     DWORD aProcesses[1024], cbNeeded;
 
     if (!EnumProcesses(aProcesses, sizeof(aProcesses), &cbNeeded))
