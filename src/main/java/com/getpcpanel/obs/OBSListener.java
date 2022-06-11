@@ -26,6 +26,7 @@ public class OBSListener extends Thread {
     @PostConstruct
     public void init() {
         setName("OBS Listener Thread");
+        setDaemon(true);
         start();
     }
 

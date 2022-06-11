@@ -34,6 +34,7 @@ import one.util.streamex.StreamEx;
 @RequiredArgsConstructor
 public class SndCtrlLinux implements ISndCtrl {
     private final PulseAudioWrapper cmd;
+    private final ProcessHelper processHelper;
     private final ApplicationEventPublisher eventPublisher;
     @GuardedBy("devices") private final Map<String, LinuxAudioDevice> devices = new HashMap<>();
     @GuardedBy("sessions") private final Map<Integer, LinuxAudioSession> sessions = new HashMap<>();
@@ -83,8 +84,7 @@ public class SndCtrlLinux implements ISndCtrl {
 
     @Override
     public void setDeviceVolume(String deviceId, float volume) {
-        //noinspection NumericCastThatLosesPrecision
-        cmd.setDeviceVolume(deviceIdx(deviceId), (int) (volume * 100));
+        cmd.setDeviceVolume(deviceIdx(deviceId), volume);
     }
 
     @Override
@@ -111,13 +111,16 @@ public class SndCtrlLinux implements ISndCtrl {
                            .filter(s -> StringUtils.equals(fileName, s.executable().getName()))
                            .toSet();
         }
-        //noinspection NumericCastThatLosesPrecision
-        todo.forEach(s -> cmd.setSessionVolume(s.index(), (int) (volume * 100)));
+        todo.forEach(s -> cmd.setSessionVolume(s.index(), volume));
     }
 
     @Override
     public void setFocusVolume(float volume) {
-        log.info("Setting focus volume is not supported yet :(");
+        var process = processHelper.getActiveProcess();
+        if (process == null) {
+            return;
+        }
+        setProcessVolume(process, null, volume);
     }
 
     @Override

@@ -31,11 +31,12 @@ public class PulseAudioWrapper {
         return execAndParse("sinks");
     }
 
-    public void setDeviceVolume(int idx, int volume) {
+    public void setDeviceVolume(int idx, float volume) {
         if (idx == NO_OP_IDX) {
             return;
         }
-        pactl("set-sink-volume", idxOrDefaultDevice(idx), volume + "%");
+        //noinspection NumericCastThatLosesPrecision
+        pactl("set-sink-volume", idxOrDefaultDevice(idx), (int) (volume * 100) + "%");
     }
 
     public void muteDevice(int idx, MuteType type) {
@@ -53,8 +54,9 @@ public class PulseAudioWrapper {
         return execAndParse("sink-inputs");
     }
 
-    public void setSessionVolume(int index, int volume) {
-        pactl("set-sink-input-volume", String.valueOf(index), volume + "%");
+    public void setSessionVolume(int index, float volume) {
+        //noinspection NumericCastThatLosesPrecision
+        pactl("set-sink-input-volume", String.valueOf(index), (int) (volume * 100) + "%");
     }
 
     public void muteSession(int index, MuteType mute) {

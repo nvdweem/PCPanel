@@ -37,6 +37,7 @@ public final class CommandDispatcher {
 
         private HandlerThread() {
             super("Command Handler Thread");
+            setDaemon(true);
         }
 
         public void doStop() {

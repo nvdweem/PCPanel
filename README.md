@@ -13,6 +13,8 @@ The linux support that is currently there is mostly there to be worked on more i
 
 ## Setting up for Linux
 
+### Allow access to the device
+
 Allowing the software to access the PCPanel device:
 
 ```sudoedit /etc/udev/rules.d/70-pcpanel.rules```
@@ -28,6 +30,14 @@ SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="a3c5", TAG+="uacce
 Then run `sudo udevadm control --reload-rules`
 
 I then had to restart to get it to work.
+
+### Ensure dependencies
+
+`pactl` and `pacmd` should already be available from the terminal. If not, install whatever is needed for those.
+
+```
+sudo apt install xdotool
+```
 
 # Migration
 

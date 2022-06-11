@@ -27,6 +27,7 @@ public class PulseAudioEventListener extends Thread {
     @PostConstruct
     public void init() {
         setName("PulseAudio change listener");
+        setDaemon(true);
         start();
     }
 
@@ -43,6 +44,7 @@ public class PulseAudioEventListener extends Thread {
                 var reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
                 String line;
+                //noinspection NestedAssignment
                 while ((line = reader.readLine()) != null) {
                     checkTrigger(line);
                 }

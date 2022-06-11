@@ -34,6 +34,7 @@ public class DeviceCommunicationHandler extends Thread {
 
     public DeviceCommunicationHandler(DeviceScanner deviceScanner, ApplicationEventPublisher eventPublisher, String key, HidDevice device) {
         setName("HIDHandler");
+        setDaemon(true);
         this.eventPublisher = eventPublisher;
         this.deviceScanner = deviceScanner;
         this.key = key;

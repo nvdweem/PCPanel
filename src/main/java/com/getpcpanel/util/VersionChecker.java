@@ -26,6 +26,7 @@ public class VersionChecker extends Thread {
 
     @PostConstruct
     public void init() {
+        setDaemon(true);
         start();
     }
 

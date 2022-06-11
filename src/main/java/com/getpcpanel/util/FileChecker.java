@@ -19,7 +19,7 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class FileChecker extends Thread {
-    public static final File FILES_ROOT = new File(System.getProperty("user.home"), ".pcpanel"); // This is not a bean so don't configure the root, just pick the default
+    @SuppressWarnings("AccessOfSystemProperties") public static final File FILES_ROOT = new File(System.getProperty("user.home"), ".pcpanel"); // This is not a bean so don't configure the root, just pick the default
     private static final File REOPEN_FILE = new File(FILES_ROOT, "reopen.txt");
     private static final File LOCK_FILE = new File(FILES_ROOT, "lock.txt");
     private static final AtomicBoolean started = new AtomicBoolean(false);
@@ -48,6 +48,7 @@ public class FileChecker extends Thread {
 
     public FileChecker() {
         super("File Checker Thread");
+        setDaemon(true);
         if (!REOPEN_FILE.delete()) {
             log.trace("Unable to delete {}", REOPEN_FILE);
         }
