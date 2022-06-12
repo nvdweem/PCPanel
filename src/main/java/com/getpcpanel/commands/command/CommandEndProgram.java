@@ -1,13 +1,9 @@
 package com.getpcpanel.commands.command;
 
-import java.io.IOException;
-
-import org.apache.commons.lang3.StringUtils;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.MainFX;
-import com.getpcpanel.cpp.ISndCtrl;
+import com.getpcpanel.util.IPlatformCommand;
 
 import lombok.Getter;
 import lombok.ToString;
@@ -29,11 +25,6 @@ public class CommandEndProgram extends Command implements ButtonAction {
 
     @Override
     public void execute() {
-        var toKill = specific ? name : StringUtils.substringAfterLast(MainFX.getBean(ISndCtrl.class).getFocusApplication(), "\\");
-        try {
-            rt.exec("cmd.exe /c taskkill /IM " + toKill + " /F");
-        } catch (IOException e) {
-            log.error("Unable to end '{}'", toKill, e);
-        }
+        MainFX.getBean(IPlatformCommand.class).kill(specific ? name : IPlatformCommand.FOCUS);
     }
 }

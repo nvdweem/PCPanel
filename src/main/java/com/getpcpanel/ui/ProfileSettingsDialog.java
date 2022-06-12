@@ -3,6 +3,7 @@ package com.getpcpanel.ui;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.jnativehook.keyboard.NativeKeyEvent;
 
 import com.getpcpanel.profile.DeviceSave;
@@ -17,8 +18,10 @@ import javafx.fxml.FXML;
 import javafx.scene.Scene;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TitledPane;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -38,6 +41,7 @@ public class ProfileSettingsDialog extends Application {
     @FXML private CheckBox focusBackOnLost;
     @FXML private PickProcessesController focusOnListListController;
     @FXML private TextField activationFld;
+    @FXML private TitledPane automaticSwitchingPane;
 
     @Override
     public void start(Stage stage) throws Exception {
@@ -55,8 +59,11 @@ public class ProfileSettingsDialog extends Application {
         ResizeHelper.addResizeListener(stage, 200.0D, 200.0D);
         Platform.setImplicitExit(false);
         stage.sizeToScene();
-
         stage.setTitle("Profile: " + profile.getName());
+
+        if (!SystemUtils.IS_OS_WINDOWS) {
+            ((VBox) automaticSwitchingPane.getParent()).getChildren().remove(automaticSwitchingPane);
+        }
 
         stage.show();
     }

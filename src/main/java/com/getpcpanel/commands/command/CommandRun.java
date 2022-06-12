@@ -1,9 +1,9 @@
 package com.getpcpanel.commands.command;
 
-import java.util.concurrent.TimeUnit;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.getpcpanel.MainFX;
+import com.getpcpanel.util.IPlatformCommand;
 
 import lombok.Getter;
 import lombok.ToString;
@@ -13,7 +13,6 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @ToString(callSuper = true)
 public class CommandRun extends Command implements ButtonAction {
-    private static final Runtime rt = Runtime.getRuntime();
     private final String command;
 
     @JsonCreator
@@ -23,11 +22,6 @@ public class CommandRun extends Command implements ButtonAction {
 
     @Override
     public void execute() {
-        try {
-            var p = rt.exec(command);
-            p.waitFor(1L, TimeUnit.SECONDS);
-        } catch (Exception e) {
-            log.error("Unable to wait for '{}' to load", command, e);
-        }
+        MainFX.getBean(IPlatformCommand.class).exec(command);
     }
 }

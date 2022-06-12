@@ -5,6 +5,7 @@ import java.net.URL;
 import java.util.Objects;
 import java.util.ResourceBundle;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -14,6 +15,7 @@ import com.getpcpanel.obs.OBSListener;
 import com.getpcpanel.obs.remote.OBSRemoteController;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.util.FileUtil;
+import com.getpcpanel.util.IPlatformCommand;
 
 import javafx.application.Application;
 import javafx.event.ActionEvent;
@@ -23,6 +25,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tab;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
@@ -41,6 +44,7 @@ public class SettingsDialog extends Application implements Initializable {
     private final OBSListener obsListener;
     private final FileUtil fileUtil;
     private final FxHelper fxHelper;
+    private final IPlatformCommand platformCommand;
     private final Stage parentStage;
 
     private Stage stage;
@@ -55,6 +59,7 @@ public class SettingsDialog extends Application implements Initializable {
     @FXML private CheckBox vmEnable;
     @FXML private Pane vmControls;
     @FXML private TextField vmPath;
+    @FXML private Tab voicemeeterTab;
 
     @Override
     public void start(Stage stage) {
@@ -75,6 +80,11 @@ public class SettingsDialog extends Application implements Initializable {
         stage.setTitle("Settings");
         stage.initModality(Modality.WINDOW_MODAL);
         stage.initOwner(parentStage);
+
+        if (!SystemUtils.IS_OS_WINDOWS) {
+            voicemeeterTab.getTabPane().getTabs().remove(voicemeeterTab);
+        }
+
         stage.showAndWait();
     }
 
@@ -125,11 +135,8 @@ public class SettingsDialog extends Application implements Initializable {
 
     @FXML
     private void openLogsFolder(ActionEvent event) {
-        try {
-            Runtime.getRuntime().exec("cmd /c \"start %s\"".formatted(fileUtil.getFile("logs").getAbsolutePath()));
-        } catch (IOException e) {
-            log.error("Unable to open logs folder", e);
-        }
+        var logFolder = fileUtil.getFile("logs");
+        platformCommand.exec(logFolder.getAbsolutePath());
     }
 
     private void initFields() {

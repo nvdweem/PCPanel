@@ -47,7 +47,7 @@
                             </VBox>
                         </content>
                     </TitledPane>
-                    <TitledPane text="Automatic switching">
+                    <TitledPane fx:id="automaticSwitchingPane" text="Automatic switching">
                         <content>
                             <VBox prefWidth="50.0">
                                 <children>

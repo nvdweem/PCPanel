@@ -24,7 +24,6 @@ public final class UIHelper {
     }
 
     private static Optional<File> pickFile(String title, TextField target) {
-
         var stage = (Stage) target.getScene().getWindow();
         var fileChooser = new FileChooser();
         fileChooser.setTitle(title);

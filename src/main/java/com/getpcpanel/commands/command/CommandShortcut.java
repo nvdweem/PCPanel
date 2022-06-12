@@ -1,11 +1,9 @@
 package com.getpcpanel.commands.command;
 
-import java.io.File;
-import java.io.IOException;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.getpcpanel.util.Util;
+import com.getpcpanel.MainFX;
+import com.getpcpanel.util.IPlatformCommand;
 
 import lombok.Getter;
 import lombok.ToString;
@@ -25,15 +23,6 @@ public class CommandShortcut extends Command implements ButtonAction {
 
     @Override
     public void execute() {
-        var file = new File(shortcut);
-        try {
-            if (file.isFile() && Util.isFileExecutable(file)) {
-                rt.exec("cmd.exe /c \"" + file.getName() + "\"", null, file.getParentFile());
-            } else {
-                rt.exec("cmd.exe /c \"" + shortcut + "\"");
-            }
-        } catch (IOException e) {
-            log.error("Unable to run {}", shortcut, e);
-        }
+        MainFX.getBean(IPlatformCommand.class).exec(shortcut);
     }
 }

@@ -1,5 +1,7 @@
 package com.getpcpanel.ui;
 
+import static com.getpcpanel.MainFX.getBean;
+
 import java.net.URL;
 
 import org.springframework.stereotype.Service;
@@ -19,6 +21,7 @@ import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.util.FileUtil;
+import com.getpcpanel.util.IPlatformCommand;
 import com.getpcpanel.util.ShortcutHook;
 import com.getpcpanel.voicemeeter.Voicemeeter;
 
@@ -32,17 +35,6 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class FxHelper {
-    private final SaveService saveService;
-    private final Json json;
-    private final DeviceScanner deviceScanner;
-    private final OBSListener obsListener;
-    private final OBS obs;
-    private final Voicemeeter voicemeeter;
-    private final FileUtil fileUtil;
-    private final ISndCtrl sndCtrl;
-    private final ShortcutHook shortcutHook;
-    private final IIconService iconService;
-
     public FXMLLoader getLoader(URL location) {
         var loader = new FXMLLoader(location);
         loader.setControllerFactory(MainFX::getBean);
@@ -50,34 +42,34 @@ public class FxHelper {
     }
 
     public ProfileSettingsDialog buildProfileSettingsDialog(DeviceSave deviceSave, Profile profile) {
-        return new ProfileSettingsDialog(saveService, this, shortcutHook, deviceSave, profile);
+        return new ProfileSettingsDialog(getBean(SaveService.class), this, getBean(ShortcutHook.class), deviceSave, profile);
     }
 
     public SettingsDialog buildSettingsDialog(Stage parentStage) {
-        return new SettingsDialog(saveService, json, obsListener, fileUtil, this, parentStage);
+        return new SettingsDialog(getBean(SaveService.class), getBean(Json.class), getBean(OBSListener.class), getBean(FileUtil.class), this, getBean(IPlatformCommand.class), parentStage);
     }
 
     public RGBLightingDialog buildRGBLightingDialog(PCPanelRGBUI device) {
-        return new RGBLightingDialog(saveService, deviceScanner, this, device);
+        return new RGBLightingDialog(getBean(SaveService.class), getBean(DeviceScanner.class), this, device);
     }
 
     public ProLightingDialog buildProLightingDialog(PCPanelProUI device) {
-        return new ProLightingDialog(saveService, deviceScanner, this, device);
+        return new ProLightingDialog(getBean(SaveService.class), getBean(DeviceScanner.class), this, device);
     }
 
     public MiniLightingDialog buildMiniLightingDialog(PCPanelMiniUI device) {
-        return new MiniLightingDialog(saveService, deviceScanner, this, device);
+        return new MiniLightingDialog(getBean(SaveService.class), getBean(DeviceScanner.class), this, device);
     }
 
     public BasicMacro buildBasicMacro(Device device, int knob, boolean hasButton, String name, String analogType) {
-        return new BasicMacro(this, saveService, obs, voicemeeter, sndCtrl, device, knob, hasButton, name, analogType);
+        return new BasicMacro(this, getBean(SaveService.class), getBean(OBS.class), getBean(Voicemeeter.class), getBean(ISndCtrl.class), device, knob, hasButton, name, analogType);
     }
 
     public BasicMacro buildBasicMacro(Device device, int knob) {
-        return new BasicMacro(this, saveService, obs, voicemeeter, sndCtrl, device, knob);
+        return new BasicMacro(this, getBean(SaveService.class), getBean(OBS.class), getBean(Voicemeeter.class), getBean(ISndCtrl.class), device, knob);
     }
 
     public AppFinderDialog buildAppFinderDialog(Stage parentStage, boolean volumeApps) {
-        return new AppFinderDialog(sndCtrl, this, iconService, parentStage, volumeApps);
+        return new AppFinderDialog(getBean(ISndCtrl.class), this, getBean(IIconService.class), parentStage, volumeApps);
     }
 }
