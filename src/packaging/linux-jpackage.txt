@@ -1,0 +1,16 @@
+--name @app.name@
+--icon "@project.basedir@/app-icon.png"
+--dest "@project.build.directory@"
+--main-jar @project.build.finalName@.jar
+--main-class @start-class@
+--input "@project.build.directory@/dependency"
+--app-version @project.version@
+--runtime-image "@project.build.directory@/jvm-image"
+--temp "@project.build.directory@/installer-work"
+--java-options "--add-exports javafx.controls/com.sun.javafx.scene.control.skin.resources=@module.name@"
+--java-options "--add-exports javafx.base/com.sun.javafx.event=@module.name@"
+--about-url "https://github.com/nvdweem/PCPanel"
+--linux-menu-group PCPanel
+--linux-package-deps pulseaudio-utils
+--linux-package-deps xdotool
+--linux-shortcut

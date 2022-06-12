@@ -6,38 +6,43 @@ This repository is based on the decompiled source code of the original app. The 
 have been replaced with custom native implementations. The source code for those parts are either Java-JNA implementations or in the
 `src/main/cpp` directory.
 
-# Running on Linux
+# Installation
 
-The application runs on Linux but doesn't do very much yet. There is some volume controlling available if `pactl` and `pacmd` are on the path.
-The linux support that is currently there is mostly there to be worked on more in the future.
+## Windows
 
-## Setting up for Linux
+Just doubleclick the msi installer and you should be good to go. The installer will run the application after the installation
+is complete and will add the application to start automatically on Windows startup.
 
-### Allow access to the device
+## Linux
 
-Allowing the software to access the PCPanel device:
+Linux might need a few more steps to get everything working.
 
-```sudoedit /etc/udev/rules.d/70-pcpanel.rules```
+1. Download the deb file and install with your package manager or via terminal:
+   ```shell
+   dpkg -i pcpanel_[version].deb
+   apt-get -f install   # This is only needed if not-installed dependencies were found
+   ```
+2. Allow the software to access the device:
+   ```shell
+   sudoedit /etc/udev/rules.d/70-pcpanel.rules
+   ```
+3. Add the following lines:
+   ```properties
+   SUBSYSTEM=="usb", ATTRS{idVendor}=="04D8", ATTRS{idProduct}=="eb52", TAG+="uaccess"
+   SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="a3c4", TAG+="uaccess"
+   SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="a3c5", TAG+="uaccess"
+   ```
+4. Then run
+   ```shell
+   sudo udevadm control --reload-rules
+   ```
+5. (Optional) Make the software startup automatically
 
-Set content to:
+I then had to restart to get it to work, logging out and in might work as well.
 
-```
-SUBSYSTEM=="usb", ATTRS{idVendor}=="04D8", ATTRS{idProduct}=="eb52", TAG+="uaccess"
-SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="a3c4", TAG+="uaccess"
-SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="a3c5", TAG+="uaccess"
-```
-
-Then run `sudo udevadm control --reload-rules`
-
-I then had to restart to get it to work.
-
-### Ensure dependencies
-
-`pactl` and `pacmd` should already be available from the terminal. If not, install whatever is needed for those.
-
-```
-sudo apt install xdotool
-```
+The software depends on some PulseAudio commands from `pulseaudio-utils` for volume control
+and `xdotool` to get the currently active window for focus volume. These packages should be
+installed automatically, but you can also install them manually if they are not.
 
 # Migration
 
@@ -63,18 +68,19 @@ Probably the same, for the run configuration the important part is:
 Adding the `skipfilecheck` command line argument ensures that you can debug while having the installed version running at the same time
 (otherwise starting in the IDE will open the installed version).
 
-# Installation
+# Build installer
 
 1. Install [OpenJDK Java 17](https://adoptium.net/?variant=openjdk17) or
    [Oracle Java 17](https://www.oracle.com/java/technologies/javase-downloads.html).
     - Verify by opening a fresh Terminal/Command Prompt and typing `java --version`.
-1. Install [Apache Maven 3.6.3](http://maven.apache.org/install.html) or later and make sure it's on your path.
+2. Install [Apache Maven 3.6.3](http://maven.apache.org/install.html) or later and make sure it's on your path.
     - Verify this by opening a fresh Terminal/Command Prompt and typing `mvn --version`.
-1. install [Wix 3 binaries](https://github.com/wixtoolset/wix3/releases/).
+3. install [Wix 3 binaries](https://github.com/wixtoolset/wix3/releases/).
+    - Windows only, not needed for Linux
     - Installing Wix via the installer should be sufficient for jpackage to find it.
-1. Final step: run `mvn clean install`
+5. Final step: run `mvn clean install`
 
-# Native code
+# Native code (Windows only)
 
 There is a visual studio solution in the `src/main/cpp` directory. The solution seems to have a single setting that has a hardcoded path
 which is the JNI include directory.

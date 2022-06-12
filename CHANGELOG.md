@@ -13,9 +13,8 @@
 - An option was added to assign a shortcut to profiles to switch between them
 - **Initial Linux compatibility**
     - A lot of options probably won't work correctly yet
-    - The UI seems a bit buggy on Ubuntu 22.04 (blacking out)
+    - The UI seems a bit buggy on Ubuntu 22.04 (flashing/blacking out)
     - But volume controlling seems to work mostly for processes, devices and focus volume
-    - No nice build yet though
 
 **Fix:**
 
