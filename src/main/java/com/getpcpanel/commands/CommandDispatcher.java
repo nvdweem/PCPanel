@@ -57,7 +57,12 @@ public final class CommandDispatcher {
                     if (cmd == null)
                         continue;
                     map.remove(entry.getKey());
-                    cmd.run();
+
+                    try {
+                        cmd.run();
+                    } catch (Throwable t) {
+                        log.error("Error running command", t);
+                    }
                     foundAnyOnPrevSweep = true;
                 }
             }
