@@ -2,6 +2,10 @@
 
 <!-- Releasenotes without version are included in releases -->
 
+Nothing yet
+
+## [1.3]
+
 **New:**
 
 - When there is no saved profile but there is one from the original software, ask to migrate on startup
