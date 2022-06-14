@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+
+import com.getpcpanel.spring.Prototype;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -22,8 +22,8 @@ import lombok.Setter;
 import one.util.streamex.StreamEx;
 
 @Component
+@Prototype
 @RequiredArgsConstructor
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 public class PickProcessesController {
     public enum PickType {
         file, soundSource, process

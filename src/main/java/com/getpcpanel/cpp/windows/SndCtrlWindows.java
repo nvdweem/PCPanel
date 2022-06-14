@@ -168,7 +168,9 @@ public class SndCtrlWindows implements ISndCtrl {
     private void deviceRemoved(String id) {
         log.trace("Device removed: {}", id);
         var removed = devices.remove(id);
-        eventPublisher.publishEvent(new AudioDeviceEvent(removed, EventType.REMOVED));
+        if (removed != null) {
+            eventPublisher.publishEvent(new AudioDeviceEvent(removed, EventType.REMOVED));
+        }
     }
 
     private void setDefaultDevice(String id, int dataFlow, int role) {

@@ -1,17 +1,17 @@
 package com.getpcpanel.ui;
 
-import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ResourceBundle;
 import java.util.stream.IntStream;
+
+import org.springframework.stereotype.Component;
 
 import com.getpcpanel.device.PCPanelRGBUI;
 import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.profile.LightingConfig;
 import com.getpcpanel.profile.LightingConfig.LightingMode;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.colorpicker.ColorDialog;
 import com.getpcpanel.ui.colorpicker.HueSlider;
 import com.getpcpanel.util.Util;
@@ -19,7 +19,6 @@ import com.getpcpanel.util.Util;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Slider;
@@ -32,13 +31,16 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public class RGBLightingDialog extends Application implements Initializable {
+@Component
+@Prototype
+@RequiredArgsConstructor
+public class RGBLightingDialog extends Application implements UIInitializer {
     private final SaveService saveService;
     private final DeviceScanner deviceScanner;
-    private final FxHelper fxHelper;
 
     private Stage stage;
     @FXML private TabPane knobsTabbedPane;
@@ -62,35 +64,24 @@ public class RGBLightingDialog extends Application implements Initializable {
     private ColorDialog allKnobColor;
     private final List<ColorDialog> cds = new ArrayList<>();
     private final List<CheckBox> volumeFollowingCheckBoxes = new ArrayList<>();
-    private final PCPanelRGBUI device;
-    private final LightingConfig ogConfig;
+    private PCPanelRGBUI device;
+    private LightingConfig ogConfig;
     private boolean pressedOk;
     private Integer selectOnLoad;
+    private Pane mainPane;
 
-    public RGBLightingDialog select(int idx) {
-        selectOnLoad = idx;
-        return this;
-    }
-
-    public RGBLightingDialog(SaveService saveService, DeviceScanner deviceScanner, FxHelper fxHelper, PCPanelRGBUI device) {
-        this.saveService = saveService;
-        this.deviceScanner = deviceScanner;
-        this.fxHelper = fxHelper;
-        this.device = device;
+    @Override
+    public <T> void initUI(Pane pane, T... args) {
+        device = getUIArg(PCPanelRGBUI.class, args, 0);
         ogConfig = device.getLightingConfig();
+        mainPane = pane;
+
+        postInit();
     }
 
     @Override
     public void start(Stage stage) {
         this.stage = stage;
-        var loader = fxHelper.getLoader(getClass().getResource("/assets/LightingDialog.fxml"));
-        loader.setController(this);
-        Pane mainPane = null;
-        try {
-            mainPane = loader.load();
-        } catch (IOException e) {
-            log.error("Unable to load loader", e);
-        }
         var scene = new Scene(mainPane);
         scene.getStylesheets().add(getClass().getResource("/assets/dark_theme.css").toExternalForm());
         stage.getIcons().add(new Image(getClass().getResource("/assets/256x256.png").toExternalForm()));
@@ -108,6 +99,11 @@ public class RGBLightingDialog extends Application implements Initializable {
         stage.sizeToScene();
         stage.setTitle("Lighting Dialog");
         stage.show();
+    }
+
+    public RGBLightingDialog select(int idx) {
+        selectOnLoad = idx;
+        return this;
     }
 
     @FXML
@@ -131,8 +127,7 @@ public class RGBLightingDialog extends Application implements Initializable {
         allKnobsTabbedPane.getSelectionModel().select(0);
     }
 
-    @Override
-    public void initialize(URL location, ResourceBundle resources) {
+    private void postInit() {
         for (var i = 0; i < device.getKnobCount(); i++) {
             var knob = i + 1;
             var tab = new Tab("Knob " + knob);

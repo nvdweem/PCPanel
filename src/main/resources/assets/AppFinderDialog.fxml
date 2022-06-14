@@ -5,7 +5,8 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.VBox?>
-<ScrollPane fx:id="scroll" fitToWidth="true" hbarPolicy="NEVER" prefHeight="467.0" prefViewportHeight="446.0" prefViewportWidth="893.0" prefWidth="880.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+<ScrollPane fx:id="scroll" fitToWidth="true" hbarPolicy="NEVER" prefHeight="467.0" prefViewportHeight="446.0" prefViewportWidth="893.0" prefWidth="880.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.getpcpanel.ui.AppFinderDialog">
     <content>
         <VBox>
             <TextField fx:id="filterField" onKeyReleased="#onFilterChanged" prefHeight="32.0" promptText="Search" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"/>

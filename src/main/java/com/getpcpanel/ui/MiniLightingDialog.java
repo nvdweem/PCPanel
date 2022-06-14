@@ -1,9 +1,8 @@
 package com.getpcpanel.ui;
 
-import java.io.IOException;
-import java.net.URL;
 import java.util.Objects;
-import java.util.ResourceBundle;
+
+import org.springframework.stereotype.Component;
 
 import com.getpcpanel.device.Device;
 import com.getpcpanel.hid.DeviceScanner;
@@ -11,6 +10,7 @@ import com.getpcpanel.profile.LightingConfig;
 import com.getpcpanel.profile.LightingConfig.LightingMode;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SingleKnobLightingConfig.SINGLE_KNOB_MODE;
+import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.colorpicker.ColorDialog;
 import com.getpcpanel.ui.colorpicker.HueSlider;
 import com.getpcpanel.util.Util;
@@ -18,7 +18,6 @@ import com.getpcpanel.util.Util;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -41,12 +40,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
+@Component
+@Prototype
 @RequiredArgsConstructor
-public class MiniLightingDialog extends Application implements Initializable, ILightingDialogMuteOverrideHelper {
+public class MiniLightingDialog extends Application implements UIInitializer, ILightingDialogMuteOverrideHelper {
     private final SaveService saveService;
     private final DeviceScanner deviceScanner;
-    private final FxHelper fxHelper;
-    private final Device device;
+    private Device device;
 
     private Stage stage;
     @FXML private TabPane mainPane;
@@ -79,24 +79,19 @@ public class MiniLightingDialog extends Application implements Initializable, IL
 
     private boolean pressedOk;
     private Integer selectOnLoad;
+    private Pane mainPanel;
 
-    public MiniLightingDialog select(int idx) {
-        selectOnLoad = idx;
-        return this;
+    @Override
+    public <T> void initUI(Pane pane, T... args) {
+        mainPanel = pane;
+        device = getUIArg(Device.class, args, 0);
+        postInit();
     }
 
     @Override
     public void start(Stage stage) {
         this.stage = stage;
-        var loader = fxHelper.getLoader(getClass().getResource("/assets/MiniLightingDialog.fxml"));
-        loader.setController(this);
-        Pane mainPane = null;
-        try {
-            mainPane = loader.load();
-        } catch (IOException e) {
-            log.error("Unable to load main page", e);
-        }
-        var scene = new Scene(Objects.requireNonNull(mainPane));
+        var scene = new Scene(Objects.requireNonNull(mainPanel));
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/assets/dark_theme.css")).toExternalForm());
         stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/assets/256x256.png")).toExternalForm()));
         stage.setOnHiding(e -> {
@@ -113,6 +108,11 @@ public class MiniLightingDialog extends Application implements Initializable, IL
         stage.sizeToScene();
         stage.setTitle("Lighting Dialog");
         stage.show();
+    }
+
+    public MiniLightingDialog select(int idx) {
+        selectOnLoad = idx;
+        return this;
     }
 
     @FXML
@@ -136,8 +136,7 @@ public class MiniLightingDialog extends Application implements Initializable, IL
         fullBodyTabbedPane.getSelectionModel().select(0);
     }
 
-    @Override
-    public void initialize(URL location, ResourceBundle resources) {
+    private void postInit() {
         for (var i = 0; i < NUM_KNOBS; i++) {
             var knob = i + 1;
             var tab = new Tab("Knob " + knob);

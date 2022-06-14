@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
-<VBox prefHeight="593.0" prefWidth="890.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+<VBox prefHeight="593.0" prefWidth="890.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.BasicMacro">
     <TabPane fx:id="mainTabPane" layoutX="70.0" layoutY="72.0" prefHeight="523.0" prefWidth="723.0" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
         <Tab fx:id="buttonpane" closable="false" text="Button">
             <TabPane fx:id="buttonTabPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="209.0" prefWidth="376.0" rotateGraphic="true" side="LEFT" tabClosingPolicy="UNAVAILABLE">

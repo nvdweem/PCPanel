@@ -1,26 +1,21 @@
 package com.getpcpanel.ui;
 
-import java.io.IOException;
-import java.net.URL;
 import java.util.Objects;
-import java.util.ResourceBundle;
 
 import org.apache.commons.lang3.SystemUtils;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import com.getpcpanel.Json;
 import com.getpcpanel.obs.OBSListener;
 import com.getpcpanel.obs.remote.OBSRemoteController;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.util.FileUtil;
 import com.getpcpanel.util.IPlatformCommand;
 
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Hyperlink;
@@ -36,16 +31,15 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @Component
+@Prototype
 @RequiredArgsConstructor
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-public class SettingsDialog extends Application implements Initializable {
+public class SettingsDialog extends Application implements UIInitializer {
     private final SaveService saveService;
     private final Json json;
     private final OBSListener obsListener;
     private final FileUtil fileUtil;
-    private final FxHelper fxHelper;
     private final IPlatformCommand platformCommand;
-    private final Stage parentStage;
+    private Stage parentStage;
 
     private Stage stage;
     private Pane pane;
@@ -62,15 +56,15 @@ public class SettingsDialog extends Application implements Initializable {
     @FXML private Tab voicemeeterTab;
 
     @Override
+    public <T> void initUI(Pane pane, T... args) {
+        parentStage = getUIArg(Stage.class, args, 0);
+        this.pane = pane;
+        postInit();
+    }
+
+    @Override
     public void start(Stage stage) {
         this.stage = stage;
-        var loader = fxHelper.getLoader(getClass().getResource("/assets/SettingsDialog.fxml"));
-        loader.setController(this);
-        try {
-            pane = loader.load();
-        } catch (IOException e) {
-            log.error("Unable to load loader", e);
-        }
         var scene = new Scene(pane);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/assets/dark_theme.css"), "Unable to find dark_theme.css").toExternalForm());
         stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/assets/256x256.png")).toExternalForm()));
@@ -151,8 +145,7 @@ public class SettingsDialog extends Application implements Initializable {
         onVMEnablePressed(null);
     }
 
-    @Override
-    public void initialize(URL location, ResourceBundle resources) {
+    private void postInit() {
         obsLink.setOnAction(c -> getHostServices().showDocument(obsLink.getText()));
         initFields();
     }

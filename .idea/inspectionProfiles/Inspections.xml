@@ -210,6 +210,7 @@
       <option name="m_ignorePrivateMethods" value="false" />
     </inspection_tool>
     <inspection_tool class="ReuseOfLocalVariable" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+    <inspection_tool class="SafeVarargsDetector" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SamePackageImport" enabled="true" level="WARNING" enabled_by_default="true" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES" />
     <inspection_tool class="SetReplaceableByEnumSet" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="SimpleDateFormatWithoutLocale" enabled="true" level="WARNING" enabled_by_default="true" />

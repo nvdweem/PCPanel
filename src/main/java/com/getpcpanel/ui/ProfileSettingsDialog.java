@@ -5,14 +5,15 @@ import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.jnativehook.keyboard.NativeKeyEvent;
+import org.springframework.stereotype.Component;
 
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.util.ShortcutHook;
 
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
@@ -28,13 +29,15 @@ import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
+@Component
+@Prototype
 @RequiredArgsConstructor
-public class ProfileSettingsDialog extends Application {
+public class ProfileSettingsDialog extends Application implements UIInitializer {
     private final SaveService saveService;
-    private final FxHelper fxHelper;
     private final ShortcutHook shortcutHook;
-    private final DeviceSave deviceSave;
-    private final Profile profile;
+    private Pane mainPane;
+    private DeviceSave deviceSave;
+    private Profile profile;
     private Stage stage;
     @FXML private TextField profileName;
     @FXML private CheckBox mainProfile;
@@ -44,20 +47,24 @@ public class ProfileSettingsDialog extends Application {
     @FXML private TitledPane automaticSwitchingPane;
 
     @Override
+    public <T> void initUI(Pane pane, T... args) {
+        deviceSave = getUIArg(DeviceSave.class, args, 0);
+        profile = getUIArg(Profile.class, args, 1);
+
+        mainPane = pane;
+        mainPane.setId("pane");
+    }
+
+    @Override
     public void start(Stage stage) throws Exception {
         this.stage = stage;
-
-        var loader = fxHelper.getLoader(getClass().getResource("/assets/ProfileSettingsDialog.fxml"));
-        loader.setController(this);
-        Pane pane = loader.load();
-        pane.setId("pane");
-        var scene = new Scene(pane, 800.0D, 400.0D);
-        initWindow();
+        var scene = new Scene(mainPane, 800.0D, 400.0D);
         scene.getStylesheets().addAll(Objects.requireNonNull(getClass().getResource("/assets/1.css")).toExternalForm());
         stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/assets/256x256.png")).toExternalForm()));
         stage.setScene(scene);
+
+        initWindow();
         ResizeHelper.addResizeListener(stage, 200.0D, 200.0D);
-        Platform.setImplicitExit(false);
         stage.sizeToScene();
         stage.setTitle("Profile: " + profile.getName());
 

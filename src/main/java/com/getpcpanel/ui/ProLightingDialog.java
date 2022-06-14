@@ -1,8 +1,6 @@
 package com.getpcpanel.ui;
 
-import java.io.IOException;
-import java.net.URL;
-import java.util.ResourceBundle;
+import org.springframework.stereotype.Component;
 
 import com.getpcpanel.device.Device;
 import com.getpcpanel.hid.DeviceScanner;
@@ -13,6 +11,7 @@ import com.getpcpanel.profile.SingleKnobLightingConfig.SINGLE_KNOB_MODE;
 import com.getpcpanel.profile.SingleLogoLightingConfig.SINGLE_LOGO_MODE;
 import com.getpcpanel.profile.SingleSliderLabelLightingConfig.SINGLE_SLIDER_LABEL_MODE;
 import com.getpcpanel.profile.SingleSliderLightingConfig.SINGLE_SLIDER_MODE;
+import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.colorpicker.ColorDialog;
 import com.getpcpanel.ui.colorpicker.HueSlider;
 import com.getpcpanel.util.Util;
@@ -20,7 +19,6 @@ import com.getpcpanel.util.Util;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -39,13 +37,16 @@ import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public class ProLightingDialog extends Application implements Initializable, ILightingDialogMuteOverrideHelper {
+@Component
+@Prototype
+@RequiredArgsConstructor
+public class ProLightingDialog extends Application implements UIInitializer, ILightingDialogMuteOverrideHelper {
     private final SaveService saveService;
     private final DeviceScanner deviceScanner;
-    private final FxHelper fxHelper;
 
     private Stage stage;
     @FXML private TabPane mainPane;
@@ -97,17 +98,18 @@ public class ProLightingDialog extends Application implements Initializable, ILi
     @FXML private VBox logoBreathBox;
     @FXML private Slider logoBreathBrightness;
     @FXML private Slider logoBreathSpeed;
-    private final Device device;
-    private final LightingConfig ogConfig;
+    private Device device;
+    private LightingConfig ogConfig;
     private boolean pressedOk;
     private Integer selectOnLoad;
+    private Pane mainPanel;
 
-    public ProLightingDialog(SaveService saveService, DeviceScanner deviceScanner, FxHelper fxHelper, Device device) {
-        this.saveService = saveService;
-        this.deviceScanner = deviceScanner;
-        this.fxHelper = fxHelper;
-        this.device = device;
+    @Override
+    public <T> void initUI(Pane pane, T... args) {
+        device = getUIArg(Device.class, args, 0);
         ogConfig = device.getLightingConfig();
+        mainPanel = pane;
+        postInit();
     }
 
     public ProLightingDialog select(int button) {
@@ -118,15 +120,7 @@ public class ProLightingDialog extends Application implements Initializable, ILi
     @Override
     public void start(Stage stage) {
         this.stage = stage;
-        var loader = fxHelper.getLoader(getClass().getResource("/assets/ProLightingDialog.fxml"));
-        loader.setController(this);
-        Pane mainPane = null;
-        try {
-            mainPane = loader.load();
-        } catch (IOException e) {
-            log.error("Unable to load loader", e);
-        }
-        var scene = new Scene(mainPane);
+        var scene = new Scene(mainPanel);
         scene.getStylesheets().add(getClass().getResource("/assets/dark_theme.css").toExternalForm());
         stage.getIcons().add(new Image(getClass().getResource("/assets/256x256.png").toExternalForm()));
         stage.setOnHiding(e -> {
@@ -166,8 +160,7 @@ public class ProLightingDialog extends Application implements Initializable, ILi
         fullBodyTabbedPane.getSelectionModel().select(0);
     }
 
-    @Override
-    public void initialize(URL location, ResourceBundle resources) {
+    private void postInit() {
         int i;
         for (i = 0; i < NUM_KNOBS; i++) {
             var knob = i + 1;

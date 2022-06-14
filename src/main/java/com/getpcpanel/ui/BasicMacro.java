@@ -2,17 +2,16 @@ package com.getpcpanel.ui;
 
 import static com.getpcpanel.commands.command.CommandNoOp.NOOP;
 
-import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.ResourceBundle;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.springframework.stereotype.Component;
 
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandEndProgram;
@@ -45,6 +44,7 @@ import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.KnobSetting;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.util.Util;
 import com.getpcpanel.voicemeeter.Voicemeeter;
 import com.getpcpanel.voicemeeter.Voicemeeter.ButtonControlMode;
@@ -57,7 +57,6 @@ import javafx.application.Application;
 import javafx.collections.ListChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -75,11 +74,15 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.Pane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-public class BasicMacro extends Application implements Initializable {
+@Component
+@Prototype
+@RequiredArgsConstructor
+public class BasicMacro extends Application implements UIInitializer {
     private final FxHelper fxHelper;
     private final SaveService saveService;
     private final OBS obs;
@@ -151,50 +154,40 @@ public class BasicMacro extends Application implements Initializable {
     private Stage stage;
     private Command buttonData;
     private Command volData;
-    private final int dialNum;
-    private final KnobSetting knobSetting;
+    private int dialNum;
+    private KnobSetting knobSetting;
     private Collection<AudioDevice> allSoundDevices;
     private boolean k_alt;
     private boolean k_shift;
     private boolean k_win;
     private boolean k_ctrl;
-    private final DeviceSave deviceSave;
-    private final boolean hasButton;
+    private DeviceSave deviceSave;
+    private boolean hasButton;
     private String name;
     private String analogType;
+    private Pane mainPane;
 
-    public BasicMacro(FxHelper fxHelper, SaveService saveService, OBS obs, Voicemeeter voiceMeeter, ISndCtrl sndCtrl, Device device, int knob, boolean hasButton, String name, String analogType) {
-        this(fxHelper, saveService, obs, voiceMeeter, sndCtrl, device, knob, hasButton);
-        this.name = name;
-        this.analogType = analogType;
-    }
+    @Override
+    public <T> void initUI(Pane pane, T... args) {
+        mainPane = pane;
 
-    public BasicMacro(FxHelper fxHelper, SaveService saveService, OBS obs, Voicemeeter voiceMeeter, ISndCtrl sndCtrl, Device device, int knob) {
-        this(fxHelper, saveService, obs, voiceMeeter, sndCtrl, device, knob, true);
-    }
-
-    public BasicMacro(FxHelper fxHelper, SaveService saveService, OBS obs, Voicemeeter voiceMeeter, ISndCtrl sndCtrl, Device device, int knob, boolean hasButton) {
-        this.fxHelper = fxHelper;
-        this.saveService = saveService;
-        this.obs = obs;
-        this.voiceMeeter = voiceMeeter;
-        this.sndCtrl = sndCtrl;
+        var device = getUIArg(Device.class, args, 0);
+        dialNum = getUIArg(Integer.class, args, 1);
+        hasButton = getUIArg(Boolean.class, args, 2, true);
+        name = getUIArg(String.class, args, 3);
+        analogType = getUIArg(String.class, args, 4);
 
         deviceSave = saveService.get().getDeviceSave(device.getSerialNumber());
         if (hasButton)
-            buttonData = deviceSave.getButtonData(knob);
-        volData = deviceSave.getDialData(knob);
-        knobSetting = deviceSave.getKnobSettings(knob);
-        dialNum = knob;
-        this.hasButton = hasButton;
+            buttonData = deviceSave.getButtonData(dialNum);
+        volData = deviceSave.getDialData(dialNum);
+        knobSetting = deviceSave.getKnobSettings(dialNum);
+        postInit();
     }
 
     @Override
     public void start(Stage basicmacro) throws Exception {
         stage = basicmacro;
-        var loader = fxHelper.getLoader(getClass().getResource("/assets/BasicMacro.fxml"));
-        loader.setController(this);
-        Pane mainPane = loader.load();
         var scene = new Scene(mainPane);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/assets/dark_theme.css")).toExternalForm());
         basicmacro.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/assets/256x256.png")).toExternalForm()));
@@ -386,8 +379,7 @@ public class BasicMacro extends Application implements Initializable {
         stage.close();
     }
 
-    @Override
-    public void initialize(URL location, ResourceBundle resources) {
+    private void postInit() {
         appMuteController.setPickType(PickProcessesController.PickType.soundSource);
         appVolumeController.setPickType(PickProcessesController.PickType.soundSource);
 
@@ -599,7 +591,7 @@ public class BasicMacro extends Application implements Initializable {
         selectTabById(buttonTabPane, "btn" + buttonData.getClass().getSimpleName());
         selectTabById(buttonTabPane, "btn" + buttonData.getClass().getSuperclass().getSimpleName());
 
-        //noinspection unchecked
+        //noinspection unchecked,rawtypes
         ((Consumer) getButtonInitializer().getOrDefault(buttonData.getClass(), x -> log.error("No initializer for {}", x))).accept(buttonData); // Yuck :(
     }
 
@@ -609,7 +601,7 @@ public class BasicMacro extends Application implements Initializable {
         selectTabById(dialTabPane, "dial" + volData.getClass().getSimpleName());
         selectTabById(dialTabPane, "dial" + volData.getClass().getSuperclass().getSimpleName());
 
-        //noinspection unchecked
+        //noinspection unchecked,rawtypes
         ((Consumer) getDialInitializer().getOrDefault(volData.getClass(), x -> log.error("No initializer for {}", x))).accept(volData); // Yuck :(
     }
 
@@ -715,6 +707,7 @@ public class BasicMacro extends Application implements Initializable {
                 rdio_app_output_default.setSelected(true);
             }
         });
+        dialInitializers.put(CommandVolumeFocus.class, (CommandVolumeFocus cmd) -> log.trace("Focus volume does not have anything to setup"));
         dialInitializers.put(CommandVolumeDevice.class, (CommandVolumeDevice cmd) -> {
             if (StringUtils.isNotBlank(cmd.getDeviceId())) {
                 rdio_device_specific.setSelected(true);

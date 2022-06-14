@@ -13,7 +13,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
-<VBox prefHeight="524.0" prefWidth="946.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+<VBox prefHeight="524.0" prefWidth="946.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.ProfileSettingsDialog">
     <children>
         <ScrollPane fitToHeight="true" fitToWidth="true" prefWidth="200.0">
             <content>

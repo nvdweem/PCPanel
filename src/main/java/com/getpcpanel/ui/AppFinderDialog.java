@@ -3,25 +3,24 @@ package com.getpcpanel.ui;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.ResourceBundle;
 
 import javax.imageio.ImageIO;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Component;
 
 import com.getpcpanel.cpp.AudioSession;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.iconextract.IIconService;
+import com.getpcpanel.spring.Prototype;
 
 import javafx.application.Application;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContentDisplay;
@@ -31,6 +30,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Modality;
@@ -40,20 +40,31 @@ import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
+@Component
+@Prototype
 @RequiredArgsConstructor
-class AppFinderDialog extends Application implements Initializable {
+public class AppFinderDialog extends Application implements UIInitializer {
     private static final int ICON_SIZE = 90;
     private final ISndCtrl sndCtrl;
-    private final FxHelper fxHelper;
     private final IIconService iconService;
-    private final Stage parentStage;
-    private final boolean volumeApps;
+    private Stage parentStage;
+    private boolean volumeApps;
     private Stage stage;
     @FXML private FlowPane flowPane;
     @FXML private ScrollPane scroll;
     @FXML private TextField filterField;
     private final List<ButtonTitleExe> allProgs = new ArrayList<>();
     private String processName;
+    private Pane mainPane;
+
+    @Override
+    public <T> void initUI(Pane pane, T... args) {
+        mainPane = pane;
+        parentStage = getUIArg(Stage.class, args, 0);
+        volumeApps = getUIArg(Boolean.class, args, 1, false);
+
+        postInit();
+    }
 
     @Override
     public void start(Stage stage) {
@@ -62,16 +73,7 @@ class AppFinderDialog extends Application implements Initializable {
 
     public void start(Stage stage, boolean andWait) {
         this.stage = stage;
-        var loader = fxHelper.getLoader(getClass().getResource("/assets/AppFinderDialog.fxml"));
-        loader.setController(this);
-
-        ScrollPane pane = null;
-        try {
-            pane = loader.load();
-        } catch (IOException e) {
-            log.error("Unable to load loader", e);
-        }
-        var scene = new Scene(pane);
+        var scene = new Scene(mainPane);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/assets/dark_theme.css")).toExternalForm());
         stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/assets/256x256.png")).toExternalForm()));
         stage.setScene(scene);
@@ -136,8 +138,7 @@ class AppFinderDialog extends Application implements Initializable {
         }
     }
 
-    @Override
-    public void initialize(URL location, ResourceBundle resources) {
+    private void postInit() {
         scroll.viewportBoundsProperty().addListener((ov, oldBounds, bounds) -> {
             flowPane.setPrefWidth(bounds.getWidth());
             flowPane.setPrefHeight(bounds.getHeight());
