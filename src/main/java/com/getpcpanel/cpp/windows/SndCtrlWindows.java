@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.concurrent.GuardedBy;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
@@ -34,16 +35,18 @@ import one.util.streamex.StreamEx;
 @Log4j2
 @Service
 @ConditionalOnWindows
-@SuppressWarnings("ALL") // Methods are called from JNI
 @RequiredArgsConstructor
+@SuppressWarnings("unused") // Methods are called from JNI
 public class SndCtrlWindows implements ISndCtrl {
     private final ExtractUtil extractUtil;
     private final ApplicationEventPublisher eventPublisher;
+    @GuardedBy("defaults") private final Map<DefaultFor, String> defaults = new HashMap<>();
+    @GuardedBy("devices") private final Map<String, AudioDevice> devices = new HashMap<>();
 
     @PostConstruct
     public void init() {
         loadLibrary();
-        SndCtrlNative.instance.start(this);
+        SndCtrlNative.start(this);
     }
 
     private void loadLibrary() {
@@ -67,31 +70,41 @@ public class SndCtrlWindows implements ISndCtrl {
         }
     }
 
-    private Map<DefaultFor, String> defaults = new HashMap<>();
-    private Map<String, AudioDevice> devices = new HashMap<>();
-
+    @Override
     public Collection<AudioDevice> getDevices() {
-        return Collections.unmodifiableCollection(devices.values());
+        synchronized (devices) {
+            return Collections.unmodifiableCollection(devices.values());
+        }
     }
 
     @Override
     public Collection<AudioSession> getAllSessions() {
-        return StreamEx.of(getDevices()).flatCollection(ad -> ad.getSessions().values()).distinct(AudioSession::pid).toSet();
+        synchronized (devices) {
+            return StreamEx.ofValues(devices).flatCollection(ad -> ad.getSessions().values()).distinct(AudioSession::pid).toSet();
+        }
     }
 
+    @Override
     public AudioDevice getDevice(String id) {
-        return devices.get(id);
+        synchronized (devices) {
+            return devices.get(id);
+        }
     }
 
+    @Override
     public void setDeviceVolume(String deviceId, float volume) {
         var deviceOrDefault = defaultDeviceOnEmpty(deviceId);
         log.trace("Set device volume to {} for {}", volume, deviceOrDefault);
         SndCtrlNative.instance.setDeviceVolume(deviceOrDefault, volume);
     }
 
+    @Override
     public void muteDevice(String deviceId, MuteType mute) {
         var deviceOrDefault = defaultDeviceOnEmpty(deviceId);
-        var device = devices.get(deviceOrDefault);
+        AudioDevice device;
+        synchronized (devices) {
+            device = devices.get(deviceOrDefault);
+        }
         if (device == null) {
             log.warn("No device found for {}", deviceOrDefault);
             return;
@@ -101,18 +114,31 @@ public class SndCtrlWindows implements ISndCtrl {
         SndCtrlNative.instance.muteDevice(deviceOrDefault, mute.convert(device.muted()));
     }
 
+    @Override
     public void setDefaultDevice(String deviceId) {
         log.trace("Set default device to {}", deviceId);
         SndCtrlNative.instance.setDefaultDevice(deviceId, DataFlow.dfAll.ordinal(), Role.roleMultimedia.ordinal());
     }
 
+    public void setDefaultDevice(String deviceName, DataFlow flow, Role role) {
+        if (StringUtils.isBlank(deviceName)) {
+            return;
+        }
+        synchronized (devices) {
+            StreamEx.ofValues(devices).findFirst(d -> d.dataflow() == flow && StringUtils.containsIgnoreCase(d.name(), deviceName)).ifPresent(d -> SndCtrlNative.instance.setDefaultDevice(d.id(), flow.ordinal(), role.ordinal()));
+        }
+    }
+
+    @Override
     public void setProcessVolume(String fileName, String device, float volume) {
-        var deviceId = defaultDeviceOnEmpty(device);
-        StreamEx.ofValues(devices)
-                .filter(d -> device.equals("*") || deviceId.equals(d.id()))
-                .flatCollection(d -> d.getSessions().values())
-                .filter(s -> (fileName.equals(AudioSession.SYSTEM) && s.pid() == 0) || (s.executable() != null && StringUtils.equals(fileName, s.executable().getName())))
-                .forEach(s -> setProcessVolume(s, volume));
+        synchronized (devices) {
+            var deviceId = defaultDeviceOnEmpty(device);
+            StreamEx.ofValues(devices)
+                    .filter(d -> "*".equals(device) || deviceId.equals(d.id()))
+                    .flatCollection(d -> d.getSessions().values())
+                    .filter(s -> (fileName.equals(AudioSession.SYSTEM) && s.pid() == 0) || (s.executable() != null && StringUtils.equals(fileName, s.executable().getName())))
+                    .forEach(s -> setProcessVolume(s, volume));
+        }
     }
 
     public void setProcessVolume(AudioSession session, float volume) {
@@ -120,14 +146,18 @@ public class SndCtrlWindows implements ISndCtrl {
         SndCtrlNative.instance.setProcessVolume(session.device().id(), session.pid(), volume);
     }
 
+    @Override
     public void setFocusVolume(float volume) {
         SndCtrlNative.instance.setFocusVolume(volume);
     }
 
+    @Override
     public void muteProcesses(Set<String> fileName, MuteType mute) {
-        StreamEx.ofValues(devices).flatCollection(d -> d.getSessions().values())
-                .filter(s -> s.executable() != null && fileName.contains(s.executable().getName()))
-                .forEach(s -> muteProcess(s, mute));
+        synchronized (devices) {
+            StreamEx.ofValues(devices).flatCollection(d -> d.getSessions().values())
+                    .filter(s -> s.executable() != null && fileName.contains(s.executable().getName()))
+                    .forEach(s -> muteProcess(s, mute));
+        }
     }
 
     public void muteProcess(AudioSession session, MuteType muted) {
@@ -135,16 +165,19 @@ public class SndCtrlWindows implements ISndCtrl {
         SndCtrlNative.instance.muteSession(session.device().id(), session.pid(), muted.convert(session.muted()));
     }
 
+    @Override
     public String getFocusApplication() {
         return SndCtrlNative.instance.getFocusApplication();
     }
 
+    @Override
     public List<File> getRunningApplications() {
         var running = new HashSet<String>();
         var arr = SndCtrlNative.instance.getAllRunningProcesses();
         return StreamEx.of(arr).map(StringUtils::trimToNull).nonNull().map(File::new).sorted(Comparator.comparing(File::getName)).toImmutableList();
     }
 
+    @Override
     public String defaultDeviceOnEmpty(String deviceId) {
         if (StringUtils.isNotBlank(deviceId) && !StringUtils.equals("default", deviceId)) {
             return deviceId;
@@ -152,13 +185,18 @@ public class SndCtrlWindows implements ISndCtrl {
         return defaultPlayer();
     }
 
+    @Override
     public String defaultPlayer() {
-        return defaults.get(new DefaultFor(DataFlow.dfRender.ordinal(), Role.roleMultimedia.ordinal()));
+        synchronized (defaults) {
+            return defaults.get(new DefaultFor(DataFlow.dfRender.ordinal(), Role.roleMultimedia.ordinal()));
+        }
     }
 
     private AudioDevice deviceAdded(String name, String id, float volume, boolean muted, int dataFlow) {
         var result = new WindowsAudioDevice(eventPublisher, name, id).volume(volume).muted(muted).dataflow(DataFlow.from(dataFlow));
-        devices.put(id, result);
+        synchronized (devices) {
+            devices.put(id, result);
+        }
         log.trace("Device added: {}", result);
 
         eventPublisher.publishEvent(new AudioDeviceEvent(result, EventType.ADDED));
@@ -167,14 +205,19 @@ public class SndCtrlWindows implements ISndCtrl {
 
     private void deviceRemoved(String id) {
         log.trace("Device removed: {}", id);
-        var removed = devices.remove(id);
+        AudioDevice removed;
+        synchronized (devices) {
+            removed = devices.remove(id);
+        }
         if (removed != null) {
             eventPublisher.publishEvent(new AudioDeviceEvent(removed, EventType.REMOVED));
         }
     }
 
     private void setDefaultDevice(String id, int dataFlow, int role) {
-        defaults.put(new DefaultFor(dataFlow, role), id);
+        synchronized (defaults) {
+            defaults.put(new DefaultFor(dataFlow, role), id);
+        }
         log.trace("Default changed: {}: {}", new DefaultFor(dataFlow, role), id);
     }
 

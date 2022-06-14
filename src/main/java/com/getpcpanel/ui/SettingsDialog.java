@@ -2,13 +2,13 @@ package com.getpcpanel.ui;
 
 import java.util.Objects;
 
-import org.apache.commons.lang3.SystemUtils;
 import org.springframework.stereotype.Component;
 
 import com.getpcpanel.Json;
 import com.getpcpanel.obs.OBSListener;
 import com.getpcpanel.obs.remote.OBSRemoteController;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.spring.OsHelper;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.util.FileUtil;
 import com.getpcpanel.util.IPlatformCommand;
@@ -39,6 +39,7 @@ public class SettingsDialog extends Application implements UIInitializer {
     private final OBSListener obsListener;
     private final FileUtil fileUtil;
     private final IPlatformCommand platformCommand;
+    private final OsHelper osHelper;
     private Stage parentStage;
 
     private Stage stage;
@@ -75,7 +76,7 @@ public class SettingsDialog extends Application implements UIInitializer {
         stage.initModality(Modality.WINDOW_MODAL);
         stage.initOwner(parentStage);
 
-        if (!SystemUtils.IS_OS_WINDOWS) {
+        if (osHelper.notWindows()) {
             voicemeeterTab.getTabPane().getTabs().remove(voicemeeterTab);
         }
 

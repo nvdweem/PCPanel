@@ -3,13 +3,13 @@ package com.getpcpanel.ui;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
 import org.jnativehook.keyboard.NativeKeyEvent;
 import org.springframework.stereotype.Component;
 
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.spring.OsHelper;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.util.ShortcutHook;
 
@@ -35,6 +35,7 @@ import one.util.streamex.StreamEx;
 public class ProfileSettingsDialog extends Application implements UIInitializer {
     private final SaveService saveService;
     private final ShortcutHook shortcutHook;
+    private final OsHelper osHelper;
     private Pane mainPane;
     private DeviceSave deviceSave;
     private Profile profile;
@@ -68,7 +69,7 @@ public class ProfileSettingsDialog extends Application implements UIInitializer 
         stage.sizeToScene();
         stage.setTitle("Profile: " + profile.getName());
 
-        if (!SystemUtils.IS_OS_WINDOWS) {
+        if (osHelper.notWindows()) {
             ((VBox) automaticSwitchingPane.getParent()).getChildren().remove(automaticSwitchingPane);
         }
 

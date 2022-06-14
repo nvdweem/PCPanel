@@ -66,6 +66,10 @@ public class AudioDevice implements Serializable {
         return dataflow.output();
     }
 
+    public boolean isInput() {
+        return dataflow.input();
+    }
+
     public String toString() {
         return name;
     }

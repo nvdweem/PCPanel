@@ -2,7 +2,9 @@
 
 <!-- Releasenotes without version are included in releases -->
 
-Nothing yet
+**New:**
+
+- Added button action to set the default device based on the (partial) name. This might be helpful if Windows reconnects devices with different id's.
 
 ## [1.3]
 

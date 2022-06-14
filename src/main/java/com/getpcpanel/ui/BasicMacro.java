@@ -29,6 +29,7 @@ import com.getpcpanel.commands.command.CommandVoiceMeeterAdvancedButton;
 import com.getpcpanel.commands.command.CommandVoiceMeeterBasic;
 import com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton;
 import com.getpcpanel.commands.command.CommandVolumeDefaultDevice;
+import com.getpcpanel.commands.command.CommandVolumeDefaultDeviceAdvanced;
 import com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggle;
 import com.getpcpanel.commands.command.CommandVolumeDevice;
 import com.getpcpanel.commands.command.CommandVolumeDeviceMute;
@@ -44,6 +45,7 @@ import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.KnobSetting;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.spring.OsHelper;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.util.Util;
 import com.getpcpanel.voicemeeter.Voicemeeter;
@@ -63,6 +65,7 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListView;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.Tab;
@@ -88,6 +91,7 @@ public class BasicMacro extends Application implements UIInitializer {
     private final OBS obs;
     private final Voicemeeter voiceMeeter;
     private final ISndCtrl sndCtrl;
+    private final OsHelper osHelper;
 
     @FXML private Pane topPane;
     @FXML private TabPane mainTabPane;
@@ -104,6 +108,10 @@ public class BasicMacro extends Application implements UIInitializer {
     @FXML private ChoiceBox<AudioDevice> sounddevices;
     @FXML private ListView<AudioDevice> soundDeviceSource;
     @FXML private ListView<AudioDevice> soundDevices2;
+    @FXML private ComboBox<String> advMedPb;
+    @FXML private ComboBox<String> advMedRec;
+    @FXML private ComboBox<String> advComPb;
+    @FXML private ComboBox<String> advComRec;
     @FXML private RadioButton rdio_mute_toggle;
     @FXML private RadioButton rdio_mute_mute;
     @FXML private RadioButton rdio_mute_unmute;
@@ -320,6 +328,7 @@ public class BasicMacro extends Application implements UIInitializer {
                 var device = rdio_muteDevice_Default.isSelected() || muteSoundDevice.getValue() == null ? "" : muteSoundDevice.getValue().id();
                 yield new CommandVolumeDeviceMute(device, rdio_muteDevice_unmute.isSelected() ? MuteType.unmute : rdio_muteDevice_mute.isSelected() ? MuteType.mute : MuteType.toggle);
             }
+            case "btnCommandVolumeDefaultDeviceAdvanced" -> new CommandVolumeDefaultDeviceAdvanced(advMedPb.getValue(), advMedRec.getValue(), advComPb.getValue(), advComRec.getValue());
             case "btnCommandObs" -> {
                 if (obs_rdio_SetScene.isSelected()) {
                     yield new CommandObsSetScene(obsSetScene.getSelectionModel().getSelectedItem());
@@ -383,12 +392,15 @@ public class BasicMacro extends Application implements UIInitializer {
         appMuteController.setPickType(PickProcessesController.PickType.soundSource);
         appVolumeController.setPickType(PickProcessesController.PickType.soundSource);
 
+        var toRemove = StreamEx.of(buttonTabPane.getTabs()).remove(osHelper::isSupported).toSet();
+        buttonTabPane.getTabs().removeAll(toRemove);
+
         if (analogType != null)
             mainTabPane.getTabs().get(1).setText(analogType);
         if (!hasButton)
             mainTabPane.getTabs().remove(0);
-        Util.adjustTabs(dialTabPane, 120, 30);
-        Util.adjustTabs(buttonTabPane, 120, 30);
+        Util.adjustTabs(dialTabPane, 150, 30);
+        Util.adjustTabs(buttonTabPane, 150, 30);
         if (obs.isConnected()) {
             var sourcesWithAudio = obs.getSourcesWithAudio();
             var scenes = obs.getScenes();
@@ -474,10 +486,15 @@ public class BasicMacro extends Application implements UIInitializer {
         profileDropdown.getItems().addAll(deviceSave.getProfiles().stream().filter(c -> !c.getName().equals(curProfile)).toList());
         allSoundDevices = sndCtrl.getDevices();
         var outputDevices = allSoundDevices.stream().filter(AudioDevice::isOutput).toList();
+        var inputDevices = allSoundDevices.stream().filter(AudioDevice::isInput).toList();
         volumedevice.getItems().addAll(allSoundDevices);
         muteSoundDevice.getItems().addAll(allSoundDevices);
         sounddevices.getItems().addAll(allSoundDevices);
         soundDeviceSource.getItems().addAll(allSoundDevices);
+        advMedPb.getItems().addAll(StreamEx.of(outputDevices).map(Object::toString).toList());
+        advMedRec.getItems().addAll(StreamEx.of(inputDevices).map(Object::toString).toList());
+        advComPb.getItems().addAll(StreamEx.of(outputDevices).map(Object::toString).toList());
+        advComRec.getItems().addAll(StreamEx.of(inputDevices).map(Object::toString).toList());
         soundDeviceSource.setCellFactory(new SoundDeviceExportFactory(soundDeviceSource));
         soundDevices2.getItems().addListener((ListChangeListener<AudioDevice>) change -> {
             if (soundDeviceSource.getItems().stream().anyMatch(c -> soundDevices2.getItems().contains(c)))
@@ -659,6 +676,12 @@ public class BasicMacro extends Application implements UIInitializer {
                 case mute -> rdio_muteDevice_mute.setSelected(true);
                 case toggle -> rdio_muteDevice_toggle.setSelected(true);
             }
+        });
+        buttonInitializers.put(CommandVolumeDefaultDeviceAdvanced.class, (CommandVolumeDefaultDeviceAdvanced cmd) -> {
+            advMedPb.setValue(cmd.getMediaPb());
+            advMedRec.setValue(cmd.getMediaRec());
+            advComPb.setValue(cmd.getCommunicationPb());
+            advComRec.setValue(cmd.getCommunicationRec());
         });
         buttonInitializers.put(CommandObsSetScene.class, (CommandObsSetScene cmd) -> {
             obs_rdio_SetScene.setSelected(true);
