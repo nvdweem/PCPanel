@@ -13,8 +13,8 @@ import lombok.Builder;
 @Builder(toBuilder = true)
 public class LightingConfig {
     private LightingMode lightingMode;
-    private String[] individualColors;
-    private boolean[] volumeBrightnessTrackingEnabled;
+    private String[] individualColors = {};
+    private boolean[] volumeBrightnessTrackingEnabled = {};
     private String allColor;
     private byte rainbowPhaseShift;
     private byte rainbowBrightness;
@@ -29,9 +29,9 @@ public class LightingConfig {
     private byte breathHue;
     private byte breathBrightness;
     private byte breathSpeed;
-    private SingleKnobLightingConfig[] knobConfigs;
-    private SingleSliderLabelLightingConfig[] sliderLabelConfigs;
-    private SingleSliderLightingConfig[] sliderConfigs;
+    private SingleKnobLightingConfig[] knobConfigs = {};
+    private SingleSliderLabelLightingConfig[] sliderLabelConfigs = {};
+    private SingleSliderLightingConfig[] sliderConfigs = {};
     private SingleLogoLightingConfig logoConfig;
 
     public LightingConfig deepCopy() {

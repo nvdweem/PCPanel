@@ -66,7 +66,7 @@ public class SetMuteOverrideService {
             var deviceSave = idDeviceSave.getValue();
 
             var mayBeChanged = false;
-            for (var dlc : getAllDeviceLightingCapable(deviceSave)) {
+            for (var dlc : tryGetAllDeviceLightingCapable(deviceSave)) {
                 if (isApplicable.test(dlc.cmd)) {
                     if (isMuted) {
                         dlc.toMuteColor.run();
@@ -79,6 +79,15 @@ public class SetMuteOverrideService {
             if (mayBeChanged) {
                 devices.getDevice(idDeviceSave.getKey()).setLighting(deviceSave.getLightingConfig(), true);
             }
+        }
+    }
+
+    private List<DeviceLightingCapable> tryGetAllDeviceLightingCapable(DeviceSave deviceSave) {
+        try {
+            return getAllDeviceLightingCapable(deviceSave);
+        } catch (Exception e) {
+            log.error("Unable to get device lighting capable", e);
+            return List.of();
         }
     }
 

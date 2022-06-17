@@ -74,6 +74,10 @@ public class PCPanelMiniUI extends Device {
     }
 
     private void rotateKnob(int knob, int val) {
+        if (knob >= analogValue.length) {
+            log.error("Getting knob {} value ({}), but the amount of knobs is less: {}", knob, val, analogValue.length);
+            return;
+        }
         analogValue[knob] = val;
         if (getLightingConfig().getLightingMode() == LightingMode.CUSTOM)
             showLightingConfigToUI(getLightingConfig());
