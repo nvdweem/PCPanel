@@ -101,7 +101,6 @@ public class ProLightingDialog extends Application implements UIInitializer, ILi
     private Device device;
     private LightingConfig ogConfig;
     private boolean pressedOk;
-    private Integer selectOnLoad;
     private Pane mainPanel;
 
     @Override
@@ -113,7 +112,15 @@ public class ProLightingDialog extends Application implements UIInitializer, ILi
     }
 
     public ProLightingDialog select(int button) {
-        selectOnLoad = button;
+        if (button > 4) {
+            button -= 5;
+            mainPane.getSelectionModel().select(2);
+            slidersTabbedPane.getSelectionModel().select(button);
+        } else {
+            mainPane.getSelectionModel().select(1);
+            knobsTabbedPane.getSelectionModel().select(button);
+        }
+
         return this;
     }
 
@@ -261,20 +268,6 @@ public class ProLightingDialog extends Application implements UIInitializer, ILi
         });
         initFields();
         initListeners(allSliders, allCheckBoxes);
-        doSelectOnLoad();
-    }
-
-    private void doSelectOnLoad() {
-        if (selectOnLoad != null) {
-            if (selectOnLoad > 4) {
-                selectOnLoad -= 5;
-                mainPane.getSelectionModel().select(2);
-                slidersTabbedPane.getSelectionModel().select(selectOnLoad);
-            } else {
-                mainPane.getSelectionModel().select(1);
-                knobsTabbedPane.getSelectionModel().select(selectOnLoad);
-            }
-        }
     }
 
     private void initFields() {

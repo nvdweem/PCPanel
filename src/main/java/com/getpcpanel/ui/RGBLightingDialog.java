@@ -67,7 +67,6 @@ public class RGBLightingDialog extends Application implements UIInitializer {
     private PCPanelRGBUI device;
     private LightingConfig ogConfig;
     private boolean pressedOk;
-    private Integer selectOnLoad;
     private Pane mainPane;
 
     @Override
@@ -102,7 +101,7 @@ public class RGBLightingDialog extends Application implements UIInitializer {
     }
 
     public RGBLightingDialog select(int idx) {
-        selectOnLoad = idx;
+        knobsTabbedPane.getSelectionModel().select(idx + 1);
         return this;
     }
 
@@ -153,13 +152,6 @@ public class RGBLightingDialog extends Application implements UIInitializer {
         breathbox.getChildren().add(1, breathHue);
         initFields();
         initListeners(allSliders, allCheckBoxes);
-        doSelectOnLoad();
-    }
-
-    private void doSelectOnLoad() {
-        if (selectOnLoad != null) {
-            knobsTabbedPane.getSelectionModel().select(selectOnLoad + 1);
-        }
     }
 
     private void initFields() {

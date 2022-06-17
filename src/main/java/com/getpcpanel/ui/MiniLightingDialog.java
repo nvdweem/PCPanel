@@ -78,7 +78,6 @@ public class MiniLightingDialog extends Application implements UIInitializer, IL
     @Getter private final ColorDialog[] muteOverrideColorsKnobs = new ColorDialog[NUM_KNOBS];
 
     private boolean pressedOk;
-    private Integer selectOnLoad;
     private Pane mainPanel;
 
     @Override
@@ -111,7 +110,8 @@ public class MiniLightingDialog extends Application implements UIInitializer, IL
     }
 
     public MiniLightingDialog select(int idx) {
-        selectOnLoad = idx;
+        mainPane.getSelectionModel().select(1);
+        knobsTabbedPane.getSelectionModel().select(idx);
         return this;
     }
 
@@ -182,14 +182,6 @@ public class MiniLightingDialog extends Application implements UIInitializer, IL
         });
         initFields();
         initListeners(allSliders, allCheckBoxes);
-        doSelectOnLoad();
-    }
-
-    private void doSelectOnLoad() {
-        if (selectOnLoad != null) {
-            mainPane.getSelectionModel().select(1);
-            knobsTabbedPane.getSelectionModel().select(selectOnLoad);
-        }
     }
 
     private void initFields() {

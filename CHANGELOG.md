@@ -6,6 +6,11 @@
 
 - Added button action to set the default device based on the (partial) name. This might be helpful if Windows reconnects devices with different id's.
 
+**Fixes:**
+
+- When connecting a mini or rgb for the first time, an NPE would occur which would prevent the software from finding the device.
+- The right-click link to open lighting options was broken, should actually work now.
+
 ## [1.3]
 
 **New:**
@@ -22,7 +27,7 @@
     - The UI seems a bit buggy on Ubuntu 22.04 (flashing/blacking out)
     - But volume controlling seems to work mostly for processes, devices and focus volume
 
-**Fix:**
+**Fixes:**
 
 - Its possible to configure an alternative profile folder for development purposes
 - Controlling OBS volume is now done with [db's instead of mul](https://github.com/obsproject/obs-websocket/blob/4.x-compat/docs/generated/protocol.md#setvolume), this gives the slider a better range
