@@ -10,6 +10,8 @@
 
 - When connecting a mini or rgb for the first time, an NPE would occur which would prevent the software from finding the device.
 - The right-click link to open lighting options was broken, should actually work now.
+- Fix the process picker, it gave a ClassCastException
+- Allow setting system sounds when the process does not have pid 0
 
 ## [1.3]
 

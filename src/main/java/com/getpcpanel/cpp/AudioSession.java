@@ -28,10 +28,12 @@ public class AudioSession {
         this.eventPublisher = eventPublisher;
         this.pid = pid;
         this.executable = executable;
-        this.title = pid == 0 ? SYSTEM : StringUtils.firstNonBlank(title, executable.getName());
         this.icon = icon;
         this.volume = volume;
         this.muted = muted;
+
+        // Uses pid and icon, so do this late
+        this.title = isSystemSounds() ? SYSTEM : StringUtils.firstNonBlank(title, executable.getName());
     }
 
     public AudioSession name(String title) {
@@ -80,6 +82,10 @@ public class AudioSession {
         this.muted = muted;
         triggerChange();
         return this;
+    }
+
+    public boolean isSystemSounds() {
+        return pid == 0 || StringUtils.containsIgnoreCase(icon, "AudioSrv.Dll");
     }
 
     private void triggerChange() {

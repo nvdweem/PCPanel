@@ -115,7 +115,7 @@ public class AppFinderDialog extends Application implements UIInitializer {
 
     private ImageView getImage(AudioSession session) throws Exception {
         BufferedImage bi;
-        if (session.pid() == 0) {
+        if (session.isSystemSounds()) {
             bi = resize(ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/assets/systemsounds.ico"))));
         } else {
             bi = toBufferedImage(session.executable());
@@ -159,7 +159,7 @@ public class AppFinderDialog extends Application implements UIInitializer {
                 button.setTextAlignment(TextAlignment.CENTER);
                 button.setContentDisplay(ContentDisplay.TOP);
                 button.setOnAction(a -> {
-                    processName = app.pid() == 0 ? AudioSession.SYSTEM : app.executable().getName();
+                    processName = app.isSystemSounds() ? AudioSession.SYSTEM : app.executable().getName();
                     stage.close();
                 });
                 allProgs.add(new ButtonTitleExe(button, app.title(), app.executable().getName()));
