@@ -36,7 +36,7 @@ public class ProfileSettingsDialog extends Application implements UIInitializer 
     private final SaveService saveService;
     private final ShortcutHook shortcutHook;
     private final OsHelper osHelper;
-    private Pane mainPane;
+    @FXML private Pane root;
     private DeviceSave deviceSave;
     private Profile profile;
     private Stage stage;
@@ -48,18 +48,16 @@ public class ProfileSettingsDialog extends Application implements UIInitializer 
     @FXML private TitledPane automaticSwitchingPane;
 
     @Override
-    public <T> void initUI(Pane pane, T... args) {
+    public <T> void initUI(T... args) {
         deviceSave = getUIArg(DeviceSave.class, args, 0);
         profile = getUIArg(Profile.class, args, 1);
-
-        mainPane = pane;
-        mainPane.setId("pane");
+        root.setId("pane");
     }
 
     @Override
     public void start(Stage stage) throws Exception {
         this.stage = stage;
-        var scene = new Scene(mainPane, 800.0D, 400.0D);
+        var scene = new Scene(root, 800.0D, 400.0D);
         scene.getStylesheets().addAll(Objects.requireNonNull(getClass().getResource("/assets/1.css")).toExternalForm());
         stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/assets/256x256.png")).toExternalForm()));
         stage.setScene(scene);

@@ -30,7 +30,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.Pane;
 import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Modality;
@@ -55,14 +54,11 @@ public class AppFinderDialog extends Application implements UIInitializer {
     @FXML private TextField filterField;
     private final List<ButtonTitleExe> allProgs = new ArrayList<>();
     private String processName;
-    private Pane mainPane;
 
     @Override
-    public <T> void initUI(Pane pane, T... args) {
-        mainPane = pane;
+    public <T> void initUI(T... args) {
         parentStage = getUIArg(Stage.class, args, 0);
         volumeApps = getUIArg(Boolean.class, args, 1, false);
-
         postInit();
     }
 
@@ -73,7 +69,7 @@ public class AppFinderDialog extends Application implements UIInitializer {
 
     public void start(Stage stage, boolean andWait) {
         this.stage = stage;
-        var scene = new Scene(mainPane);
+        var scene = new Scene(scroll);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/assets/dark_theme.css")).toExternalForm());
         stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/assets/256x256.png")).toExternalForm()));
         stage.setScene(scene);

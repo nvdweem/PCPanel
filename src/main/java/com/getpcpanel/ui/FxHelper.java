@@ -14,7 +14,7 @@ import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.Profile;
 
 import javafx.fxml.FXMLLoader;
-import javafx.scene.layout.Pane;
+import javafx.scene.Node;
 import javafx.stage.Stage;
 import lombok.RequiredArgsConstructor;
 
@@ -33,10 +33,10 @@ public class FxHelper {
     public <T> T open(Class<T> dialogClass, Object... initializer) {
         var loader = getLoader(getClass().getResource("/assets/%s.fxml".formatted(dialogClass.getSimpleName())));
         try {
-            Pane pane = loader.load();
+            Node pane = loader.load();
             var controller = loader.<T>getController();
             if (controller instanceof UIInitializer init) {
-                init.initUI(pane, initializer);
+                init.initUI(initializer);
             }
             return controller;
         } catch (IOException e) {

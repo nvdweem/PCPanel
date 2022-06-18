@@ -1,9 +1,7 @@
 package com.getpcpanel.ui;
 
-import javafx.scene.layout.Pane;
-
 public interface UIInitializer {
-    default <T> void initUI(Pane pane, T... args) {
+    default <T> void initUI(T... args) {
     }
 
     default <T, R> R getUIArg(Class<R> expected, T[] args, int idx) {

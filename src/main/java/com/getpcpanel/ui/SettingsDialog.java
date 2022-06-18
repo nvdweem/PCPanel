@@ -43,7 +43,7 @@ public class SettingsDialog extends Application implements UIInitializer {
     private Stage parentStage;
 
     private Stage stage;
-    private Pane pane;
+    @FXML private Pane root;
     @FXML private CheckBox obsEnable;
     @FXML private Pane obsControls;
     @FXML private TextField obsAddress;
@@ -57,16 +57,15 @@ public class SettingsDialog extends Application implements UIInitializer {
     @FXML private Tab voicemeeterTab;
 
     @Override
-    public <T> void initUI(Pane pane, T... args) {
+    public <T> void initUI(T... args) {
         parentStage = getUIArg(Stage.class, args, 0);
-        this.pane = pane;
         postInit();
     }
 
     @Override
     public void start(Stage stage) {
         this.stage = stage;
-        var scene = new Scene(pane);
+        var scene = new Scene(root);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/assets/dark_theme.css"), "Unable to find dark_theme.css").toExternalForm());
         stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/assets/256x256.png")).toExternalForm()));
         stage.setScene(scene);

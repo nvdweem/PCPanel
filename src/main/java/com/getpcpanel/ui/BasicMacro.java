@@ -173,12 +173,10 @@ public class BasicMacro extends Application implements UIInitializer {
     private boolean hasButton;
     private String name;
     private String analogType;
-    private Pane mainPane;
+    @FXML private Pane root;
 
     @Override
-    public <T> void initUI(Pane pane, T... args) {
-        mainPane = pane;
-
+    public <T> void initUI(T... args) {
         var device = getUIArg(Device.class, args, 0);
         dialNum = getUIArg(Integer.class, args, 1);
         hasButton = getUIArg(Boolean.class, args, 2, true);
@@ -196,7 +194,7 @@ public class BasicMacro extends Application implements UIInitializer {
     @Override
     public void start(Stage basicmacro) throws Exception {
         stage = basicmacro;
-        var scene = new Scene(mainPane);
+        var scene = new Scene(root);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/assets/dark_theme.css")).toExternalForm());
         basicmacro.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/assets/256x256.png")).toExternalForm()));
         basicmacro.initModality(Modality.APPLICATION_MODAL);

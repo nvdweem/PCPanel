@@ -78,11 +78,10 @@ public class MiniLightingDialog extends Application implements UIInitializer, IL
     @Getter private final ColorDialog[] muteOverrideColorsKnobs = new ColorDialog[NUM_KNOBS];
 
     private boolean pressedOk;
-    private Pane mainPanel;
+    @FXML private Pane root;
 
     @Override
-    public <T> void initUI(Pane pane, T... args) {
-        mainPanel = pane;
+    public <T> void initUI(T... args) {
         device = getUIArg(Device.class, args, 0);
         postInit();
     }
@@ -90,7 +89,7 @@ public class MiniLightingDialog extends Application implements UIInitializer, IL
     @Override
     public void start(Stage stage) {
         this.stage = stage;
-        var scene = new Scene(Objects.requireNonNull(mainPanel));
+        var scene = new Scene(Objects.requireNonNull(root));
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/assets/dark_theme.css")).toExternalForm());
         stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/assets/256x256.png")).toExternalForm()));
         stage.setOnHiding(e -> {

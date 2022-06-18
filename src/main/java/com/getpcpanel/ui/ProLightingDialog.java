@@ -101,13 +101,12 @@ public class ProLightingDialog extends Application implements UIInitializer, ILi
     private Device device;
     private LightingConfig ogConfig;
     private boolean pressedOk;
-    private Pane mainPanel;
+    @FXML private Pane root;
 
     @Override
-    public <T> void initUI(Pane pane, T... args) {
+    public <T> void initUI(T... args) {
         device = getUIArg(Device.class, args, 0);
         ogConfig = device.getLightingConfig();
-        mainPanel = pane;
         postInit();
     }
 
@@ -127,7 +126,7 @@ public class ProLightingDialog extends Application implements UIInitializer, ILi
     @Override
     public void start(Stage stage) {
         this.stage = stage;
-        var scene = new Scene(mainPanel);
+        var scene = new Scene(root);
         scene.getStylesheets().add(getClass().getResource("/assets/dark_theme.css").toExternalForm());
         stage.getIcons().add(new Image(getClass().getResource("/assets/256x256.png").toExternalForm()));
         stage.setOnHiding(e -> {
