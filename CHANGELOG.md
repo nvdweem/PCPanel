@@ -12,6 +12,7 @@
 - The right-click link to open lighting options was broken, should actually work now.
 - Fix the process picker, it gave a ClassCastException
 - Allow setting system sounds when the process does not have pid 0
+- It's possible to drag audio devices into the Selected Devices list in the Toggle Device button option again (fix for #2)
 
 ## [1.3]
 
