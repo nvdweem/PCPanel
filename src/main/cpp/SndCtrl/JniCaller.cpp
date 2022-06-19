@@ -18,7 +18,18 @@ jstring JThread::jstr(const WCHAR* str) {
 }
 
 void JThread::jstr(jstring str) {
-    pEnv->DeleteLocalRef(str);
+    DoneWith(str);
+}
+
+void JThread::DoneWith(jobject obj) {
+    pEnv->DeleteLocalRef(obj);
+}
+
+void JniCaller::CheckException(JThread& env) const {
+    if (env->ExceptionCheck()) {
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    }
 }
 #else
 jstring JThread::jstr(const char* str) {
@@ -30,4 +41,6 @@ jstring JThread::jstr(const WCHAR* str) {
 }
 
 void JThread::jstr(jstring str) {}
+
+void JThread::DoneWith(jobject obj) {}
 #endif

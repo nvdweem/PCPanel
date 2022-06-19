@@ -68,11 +68,16 @@ void SndCtrl::DeviceAdded(CComPtr<IMMDevice> cpDevice) {
 
     JThread thread;
     if (*thread) {
+        auto nameStr = thread.jstr(nameAndId.name.get());
+        auto idStr = thread.jstr(nameAndId.id.get());
         auto jObj = pJni->CallObject(thread, "deviceAdded", "(Ljava/lang/String;Ljava/lang/String;FZI)Lcom/getpcpanel/cpp/AudioDevice;",
-            thread.jstr(nameAndId.name.get()), thread.jstr(nameAndId.id.get()), volume, muted, getDataFlow(*cpDevice)
+            nameStr, idStr, volume, muted, getDataFlow(*cpDevice)
         );
         NOTNULL(jObj);
         devices.insert({ deviceId, make_unique<AudioDevice>(deviceId, cpDevice, jObj)});
+        thread.DoneWith(nameStr);
+        thread.DoneWith(idStr);
+        thread.DoneWith(jObj);
     }
 }
 
@@ -81,9 +86,11 @@ void SndCtrl::DeviceRemoved(wstring deviceId) {
         devices.erase(deviceId);
         JThread thread;
         if (*thread) {
+            auto deviceIdStr = thread.jstr(deviceId.c_str());
             pJni->CallVoid(thread, "deviceRemoved", "(Ljava/lang/String;)V",
-                thread.jstr(deviceId.c_str())
+                deviceIdStr
             );
+            thread.jstr(deviceIdStr);
         }
     });
     detacher.detach();
@@ -148,9 +155,11 @@ void SndCtrl::UpdateDefaultDevice(wstring id, EDataFlow dataFlow, ERole role) {
 void SndCtrl::SetDefaultDevice(wstring id, EDataFlow dataFlow, ERole role) {
     JThread thread;
     if (*thread) {
+        auto idStr = thread.jstr(id.c_str());
         pJni->CallVoid(thread, "setDefaultDevice", "(Ljava/lang/String;II)V",
-            thread.jstr(id.c_str()), dataFlow, role
+            idStr, dataFlow, role
         );
+        thread.jstr(idStr);
     }
 }
 

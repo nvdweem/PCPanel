@@ -10,7 +10,9 @@ shared_ptr<JniCaller> pJni;
 
 VOID CALLBACK WinEventProcCallback(HWINEVENTHOOK hWinEventHook, DWORD dwEvent, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime) {
     auto name = GetProcessName(GetFocusProcessId());
-    pJni->CallVoid(*pJThread, "focusChanged", "(Ljava/lang/String;)V", pJThread->jstr(name.c_str()));
+    auto nameStr = pJThread->jstr(name.c_str());
+    pJni->CallVoid(*pJThread, "focusChanged", "(Ljava/lang/String;)V", nameStr);
+    pJThread->jstr(nameStr);
 }
 
 FocusListener::FocusListener(shared_ptr<JniCaller>& pJniCaller) {

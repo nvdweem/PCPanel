@@ -8,8 +8,7 @@
 #include <set>
 #include <windows.h>
 
-std::wstring str(JNIEnv* env, jstring string)
-{
+std::wstring str(JNIEnv* env, jstring string) {
     std::wstring value;
     if (string == NULL) {
         return value; // empty string
@@ -141,6 +140,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_getpcpanel_cpp_windows_SndCtrlNative_get
     for (auto entry : seen) {
         auto str = thread.jstr(entry.c_str());
         env->SetObjectArrayElement(ret, idx++, str);
+        thread.jstr(str);
     }
 
     return ret;

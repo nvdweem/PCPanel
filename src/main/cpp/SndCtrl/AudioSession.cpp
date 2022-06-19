@@ -45,12 +45,19 @@ void AudioSession::Init(JniCaller& audioDevice, AudioSessionListenerCB& callback
     auto nameCopy = pname;
     JThread thread;
     if (*thread) {
+        auto nameStr = thread.jstr(name.c_str());
+        auto pNameStr = thread.jstr(pname.c_str());
+        auto iconStr = thread.jstr(icon);
         auto jObj = audioDevice.CallObject(thread, "addSession", "(ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;FZ)Lcom/getpcpanel/cpp/AudioSession;",
-            pid, thread.jstr(name.c_str()), thread.jstr(pname.c_str()), thread.jstr(icon), level, muted
+            pid, nameStr, pNameStr, iconStr, level, muted
         );
+        thread.jstr(nameStr);
+        thread.jstr(pNameStr);
+        thread.jstr(iconStr);
         NOTNULL(jObj);
 
         cpListener.Set(new AudioSessionListener(cpSession, pid, callback, jObj));
+        thread.DoneWith(jObj);
     }
 }
 
