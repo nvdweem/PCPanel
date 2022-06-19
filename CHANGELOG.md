@@ -5,6 +5,7 @@
 **New:**
 
 - Added button action to set the default device based on the (partial) name. This might be helpful if Windows reconnects devices with different id's.
+- The 'Toggle device' action only works for all output or all input devices, not a combination of both
 
 **Fixes:**
 

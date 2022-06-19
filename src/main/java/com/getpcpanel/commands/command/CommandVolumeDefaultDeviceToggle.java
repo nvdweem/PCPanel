@@ -31,7 +31,7 @@ public class CommandVolumeDefaultDeviceToggle extends CommandVolume implements B
     public void execute() {
         var firstDevice = firstAudioDevice(); // To determine the type (input/output)
         var currentDevice = currentAudioDevice(firstDevice.map(AudioDevice::dataflow).map(df -> df == DataFlow.dfRender).orElse(true));
-        currentIdx = (currentDevice.map(AudioDevice::id).map(devices::indexOf).orElse(currentIdx) + 1) % devices.size();
+        currentIdx = (currentDevice.map(AudioDevice::id).map(devices::indexOf).filter(idx -> idx != -1).orElse(currentIdx) + 1) % devices.size();
 
         var nextDeviceId = devices.get(currentIdx);
         getSndCtrl().setDefaultDevice(nextDeviceId);
