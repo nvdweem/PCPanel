@@ -1,6 +1,7 @@
 package com.getpcpanel.ui;
 
 import com.getpcpanel.cpp.AudioDevice;
+import com.getpcpanel.cpp.DataFlow;
 
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -9,9 +10,11 @@ import javafx.scene.input.DataFormat;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 import javafx.util.Callback;
+import lombok.Setter;
 
 public class SoundDeviceExportFactory implements Callback<ListView<AudioDevice>, ListCell<AudioDevice>> {
     private static final DataFormat JAVA_FORMAT = SoundDeviceImportFactory.JAVA_FORMAT;
+    @Setter private DataFlow enabledFlavor;
 
     public SoundDeviceExportFactory(ListView<AudioDevice> listView) {
         setupListView(listView);
@@ -25,9 +28,11 @@ public class SoundDeviceExportFactory implements Callback<ListView<AudioDevice>,
                 super.updateItem(item, empty);
                 if (item == null) {
                     setText("");
+                    setDisable(false);
                     return;
                 }
                 setText(item.toString());
+                setDisable(enabledFlavor != null && enabledFlavor != item.dataflow());
             }
         };
         cell.setOnDragDetected(event -> dragDetected(event, cell));

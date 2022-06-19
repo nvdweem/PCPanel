@@ -62,6 +62,9 @@
     -fx-text-fill: white;
 }
 
+.list-cell:disabled {
+    -fx-text-fill: gray;
+}
 
 .list-cell:focused {
     -fx-background-color: #004f8b;

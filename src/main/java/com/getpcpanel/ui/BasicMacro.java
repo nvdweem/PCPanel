@@ -489,19 +489,11 @@ public class BasicMacro extends Application implements UIInitializer {
         muteSoundDevice.getItems().addAll(allSoundDevices);
         sounddevices.getItems().addAll(allSoundDevices);
         soundDeviceSource.getItems().addAll(allSoundDevices);
+        initDeviceToggleEvents();
         advMedPb.getItems().addAll(StreamEx.of(outputDevices).map(Object::toString).toList());
         advMedRec.getItems().addAll(StreamEx.of(inputDevices).map(Object::toString).toList());
         advComPb.getItems().addAll(StreamEx.of(outputDevices).map(Object::toString).toList());
         advComRec.getItems().addAll(StreamEx.of(inputDevices).map(Object::toString).toList());
-        soundDeviceSource.setCellFactory(new SoundDeviceExportFactory(soundDeviceSource));
-        soundDevices2.getItems().addListener((ListChangeListener<AudioDevice>) change -> {
-            if (soundDeviceSource.getItems().stream().anyMatch(c -> soundDevices2.getItems().contains(c)))
-                soundDeviceSource.getItems().removeAll(soundDevices2.getItems());
-        });
-        soundDeviceSource.getItems().addListener((ListChangeListener<AudioDevice>) change -> {
-            if (soundDevices2.getItems().stream().anyMatch(c -> soundDeviceSource.getItems().contains(c)))
-                soundDevices2.getItems().removeAll(soundDeviceSource.getItems());
-        });
         soundDevices2.setCellFactory(new SoundDeviceImportFactory(soundDevices2));
         app_vol_output_device.getItems().addAll(outputDevices);
         keystrokeField.setOnKeyPressed(event -> {
@@ -569,6 +561,32 @@ public class BasicMacro extends Application implements UIInitializer {
             log.error("Unable to init fields", e);
         }
         onRadioButton(null);
+    }
+
+    private void initDeviceToggleEvents() {
+        var sourceRenderer = new SoundDeviceExportFactory(soundDeviceSource);
+        disableDeviceToggleOtherTypes(sourceRenderer);
+        soundDeviceSource.setCellFactory(sourceRenderer);
+        soundDevices2.getItems().addListener((ListChangeListener<AudioDevice>) change -> {
+            if (soundDeviceSource.getItems().stream().anyMatch(c -> soundDevices2.getItems().contains(c)))
+                soundDeviceSource.getItems().removeAll(soundDevices2.getItems());
+            disableDeviceToggleOtherTypes(sourceRenderer);
+        });
+        soundDeviceSource.getItems().addListener((ListChangeListener<AudioDevice>) change -> {
+            if (soundDevices2.getItems().stream().anyMatch(c -> soundDeviceSource.getItems().contains(c)))
+                soundDevices2.getItems().removeAll(soundDeviceSource.getItems());
+            disableDeviceToggleOtherTypes(sourceRenderer);
+        });
+    }
+
+    private void disableDeviceToggleOtherTypes(SoundDeviceExportFactory sourceRenderer) {
+        if (!soundDevices2.getItems().isEmpty()) {
+            var df = soundDevices2.getItems().get(0).dataflow();
+            sourceRenderer.setEnabledFlavor(df);
+        } else {
+            sourceRenderer.setEnabledFlavor(null);
+        }
+        soundDeviceSource.refresh();
     }
 
     private void trimMinMax(String oldValue, String newValue, TextField trimMin) {
