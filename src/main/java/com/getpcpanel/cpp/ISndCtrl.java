@@ -3,9 +3,12 @@ package com.getpcpanel.cpp;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface ISndCtrl {
+    Map<String, AudioDevice> getDevicesMap();
+
     Collection<AudioDevice> getDevices();
 
     Collection<AudioSession> getAllSessions();
@@ -31,4 +34,6 @@ public interface ISndCtrl {
     String defaultDeviceOnEmpty(String deviceId);
 
     String defaultPlayer();
+
+    String defaultRecorder();
 }

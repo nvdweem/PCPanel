@@ -71,6 +71,13 @@ public class SndCtrlWindows implements ISndCtrl {
     }
 
     @Override
+    public Map<String, AudioDevice> getDevicesMap() {
+        synchronized (devices) {
+            return new HashMap<>(devices);
+        }
+    }
+
+    @Override
     public Collection<AudioDevice> getDevices() {
         synchronized (devices) {
             return Collections.unmodifiableCollection(devices.values());
@@ -189,6 +196,13 @@ public class SndCtrlWindows implements ISndCtrl {
     public String defaultPlayer() {
         synchronized (defaults) {
             return defaults.get(new DefaultFor(DataFlow.dfRender.ordinal(), Role.roleMultimedia.ordinal()));
+        }
+    }
+
+    @Override
+    public String defaultRecorder() {
+        synchronized (defaults) {
+            return defaults.get(new DefaultFor(DataFlow.dfCapture.ordinal(), Role.roleMultimedia.ordinal()));
         }
     }
 

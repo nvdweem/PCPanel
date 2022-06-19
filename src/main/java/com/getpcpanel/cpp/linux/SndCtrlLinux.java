@@ -62,6 +62,13 @@ public class SndCtrlLinux implements ISndCtrl {
     }
 
     @Override
+    public Map<String, AudioDevice> getDevicesMap() {
+        synchronized (devices) {
+            return new HashMap<>(devices);
+        }
+    }
+
+    @Override
     public Collection<AudioDevice> getDevices() {
         synchronized (devices) {
             return StreamEx.ofValues(devices).select(AudioDevice.class).toSet();
@@ -153,11 +160,18 @@ public class SndCtrlLinux implements ISndCtrl {
 
     @Override
     public String defaultPlayer() {
+        synchronized (devices) {
+            return StreamEx.ofValues(devices).findFirst(LinuxAudioDevice::isDefault).map(AudioDevice::id).orElse(null);
+        }
+    }
+
+    @Override
+    public String defaultRecorder() {
         return null;
     }
 
     private Set<LinuxAudioDevice> getDevicesFromCmd() {
-        return StreamEx.of(cmd.getDevices()).map(pa -> new LinuxAudioDevice(eventPublisher, pa.index(), pa.properties().get("device.product.name"), pa.metas().get("name"))).toSet();
+        return StreamEx.of(cmd.getDevices()).map(pa -> new LinuxAudioDevice(eventPublisher, pa.index(), pa.properties().get("device.product.name"), pa.metas().get("name"), pa.isDefault())).toSet();
     }
 
     private Set<LinuxAudioSession> getSessionsFromCmd() {
