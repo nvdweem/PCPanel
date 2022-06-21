@@ -51,7 +51,7 @@ public final class CommandConverter {
                 yield new CommandKeystroke(data[1]);
             }
             case "shortcut" -> new CommandShortcut(data[1]);
-            case "media" -> CommandMedia.VolumeButton.tryValueOf(data[1]).map(CommandMedia::new).map(Command.class::cast).orElse(NOOP);
+            case "media" -> CommandMedia.VolumeButton.tryValueOf(data[1]).map(v -> new CommandMedia(v, false)).map(Command.class::cast).orElse(NOOP);
             case "end_program" -> new CommandEndProgram(StringUtils.equals("specific", data[1]), data[2]);
             case "sound_device" -> new CommandVolumeDefaultDevice(data[1]);
             case "toggle_device" -> new CommandVolumeDefaultDeviceToggle(List.of(data[1].split("\\|")));

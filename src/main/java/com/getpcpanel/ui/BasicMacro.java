@@ -101,6 +101,7 @@ public class BasicMacro extends Application implements UIInitializer {
     @FXML private TextField shortcutField;
     @FXML private Button scFileButton;
     @FXML private ToggleGroup mediagroup;
+    @FXML public CheckBox cmdMediaSpotify;
     @FXML private TextField endProcessField;
     @FXML private RadioButton rdioEndFocusedProgram;
     @FXML private RadioButton rdioEndSpecificProgram;
@@ -316,7 +317,7 @@ public class BasicMacro extends Application implements UIInitializer {
         return switch (buttonType) {
             case "btnCommandKeystroke" -> new CommandKeystroke(keystrokeField.getText());
             case "btnCommandShortcut" -> new CommandShortcut(shortcutField.getText());
-            case "btnCommandMedia" -> new CommandMedia(CommandMedia.VolumeButton.valueOf(((RadioButton) mediagroup.getSelectedToggle()).getId()));
+            case "btnCommandMedia" -> new CommandMedia(CommandMedia.VolumeButton.valueOf(((RadioButton) mediagroup.getSelectedToggle()).getId()), cmdMediaSpotify.isSelected());
             case "btnCommandEndProgram" -> new CommandEndProgram(rdioEndSpecificProgram.isSelected(), endProcessField.getText());
             case "btnCommandVolumeDefaultDevice" -> sounddevices.getValue() == null ? NOOP : new CommandVolumeDefaultDevice(sounddevices.getValue().id());
             case "btnCommandVolumeDefaultDeviceToggle" -> new CommandVolumeDefaultDeviceToggle(soundDevices2.getItems().stream().map(AudioDevice::id).toList());
@@ -648,15 +649,17 @@ public class BasicMacro extends Application implements UIInitializer {
         });
         buttonInitializers.put(CommandKeystroke.class, (CommandKeystroke command) -> keystrokeField.setText(command.getKeystroke()));
         buttonInitializers.put(CommandShortcut.class, cmd -> shortcutField.setText(((CommandShortcut) cmd).getShortcut()));
-        buttonInitializers.put(CommandMedia.class, cmd -> mediagroup.getToggles().get(switch (((CommandMedia) cmd).getButton()) {
-                    case playPause -> 0;
-                    case stop -> 1;
-                    case prev -> 2;
-                    case next -> 3;
-                    case mute -> 4;
-                }
-        ).setSelected(true));
-
+        buttonInitializers.put(CommandMedia.class, (CommandMedia cmd) -> {
+            mediagroup.getToggles().get(switch (cmd.getButton()) {
+                        case playPause -> 0;
+                        case stop -> 1;
+                        case prev -> 2;
+                        case next -> 3;
+                        case mute -> 4;
+                    }
+            ).setSelected(true);
+            cmdMediaSpotify.setSelected(cmd.isSpotify());
+        });
         buttonInitializers.put(CommandEndProgram.class, cmd -> {
             var endProgram = (CommandEndProgram) cmd;
             if (endProgram.isSpecific()) {

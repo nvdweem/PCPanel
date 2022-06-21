@@ -3,7 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<VBox fx:id="root" prefHeight="593.0" prefWidth="890.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.BasicMacro">
+<VBox fx:id="root" prefHeight="593.0" prefWidth="890.0" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.BasicMacro">
     <TabPane fx:id="mainTabPane" layoutX="70.0" layoutY="72.0" prefHeight="523.0" prefWidth="723.0" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
         <Tab fx:id="buttonpane" closable="false" text="Button">
             <TabPane fx:id="buttonTabPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="209.0" prefWidth="376.0" rotateGraphic="true" side="LEFT" tabClosingPolicy="UNAVAILABLE">
@@ -31,7 +31,7 @@
                         </HBox>
                     </VBox>
                 </Tab>
-                <Tab fx:id="btnCommandMedia" text="Music Control">
+                <Tab fx:id="btnCommandMedia" styleClass="only-windows" text="Music Control">
                     <VBox spacing="15.0">
                         <padding>
                             <Insets left="8.0" top="8.0"/>
@@ -46,6 +46,16 @@
                         <RadioButton fx:id="prev" mnemonicParsing="false" text="Previous Track" toggleGroup="$mediagroup"/>
                         <RadioButton fx:id="next" mnemonicParsing="false" text="Next Track" toggleGroup="$mediagroup"/>
                         <RadioButton fx:id="mute" mnemonicParsing="false" text="Mute" toggleGroup="$mediagroup"/>
+                        <Label text="Check this box to ensure that only Spotify is controlled. If this is not checked then any application that is playing sounds might be controlled." wrapText="true">
+                            <VBox.margin>
+                                <Insets top="20.0"/>
+                            </VBox.margin>
+                        </Label>
+                        <CheckBox fx:id="cmdMediaSpotify" mnemonicParsing="false" text="Target Spotify">
+                            <VBox.margin>
+                                <Insets top="-10.0"/>
+                            </VBox.margin>
+                        </CheckBox>
                     </VBox>
                 </Tab>
                 <Tab fx:id="btnCommandEndProgram" text="End Program">
@@ -89,7 +99,7 @@
                         </VBox>
                     </content>
                 </Tab>
-                <Tab fx:id="btnCommandVolumeDefaultDeviceAdvanced" text="Sound Device advanced" styleClass="only-windows">
+                <Tab fx:id="btnCommandVolumeDefaultDeviceAdvanced" styleClass="only-windows" text="Sound Device advanced">
                     <content>
                         <VBox spacing="15.0">
                             <padding>
@@ -98,7 +108,7 @@
                             <children>
                                 <Label prefHeight="25.0" text="Select or give a name of a device. The first match containing will be selected. Leave empty to not change the device" wrapText="true"/>
                                 <HBox>
-                                    <Label prefHeight="25.0" prefWidth="230" minWidth="230" maxWidth="230" text="Default media playback device">
+                                    <Label maxWidth="230" minWidth="230" prefHeight="25.0" prefWidth="230" text="Default media playback device">
                                         <padding>
                                             <Insets right="10.0"/>
                                         </padding>
@@ -106,7 +116,7 @@
                                     <ComboBox fx:id="advMedPb" editable="true" prefHeight="25.0" prefWidth="8000" HBox.hgrow="ALWAYS"/>
                                 </HBox>
                                 <HBox>
-                                    <Label prefHeight="25.0" prefWidth="230" minWidth="230" maxWidth="230" text="Default media recording device">
+                                    <Label maxWidth="230" minWidth="230" prefHeight="25.0" prefWidth="230" text="Default media recording device">
                                         <padding>
                                             <Insets right="10.0"/>
                                         </padding>
@@ -114,7 +124,7 @@
                                     <ComboBox fx:id="advMedRec" editable="true" prefHeight="25.0" prefWidth="8000" HBox.hgrow="ALWAYS"/>
                                 </HBox>
                                 <HBox>
-                                    <Label prefHeight="25.0" prefWidth="230" minWidth="230" maxWidth="230" text="Default communication playback device">
+                                    <Label maxWidth="230" minWidth="230" prefHeight="25.0" prefWidth="230" text="Default communication playback device">
                                         <padding>
                                             <Insets right="10.0"/>
                                         </padding>
@@ -122,7 +132,7 @@
                                     <ComboBox fx:id="advComPb" editable="true" prefHeight="25.0" prefWidth="8000" HBox.hgrow="ALWAYS"/>
                                 </HBox>
                                 <HBox>
-                                    <Label prefHeight="25.0" prefWidth="230" minWidth="230" maxWidth="230" text="Default communication recording device">
+                                    <Label maxWidth="230" minWidth="230" prefHeight="25.0" prefWidth="230" text="Default communication recording device">
                                         <padding>
                                             <Insets right="10.0"/>
                                         </padding>

@@ -6,6 +6,7 @@
 
 - Added button action to set the default device based on the (partial) name. This might be helpful if Windows reconnects devices with different id's.
 - The 'Toggle device' action only works for all output or all input devices, not a combination of both
+- Allow controlling only Spotify with the media keys instead of any application that is playing sound (fix for #3)
 
 **Fixes:**
 
