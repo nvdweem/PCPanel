@@ -71,14 +71,6 @@ JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_windows_SndCtrlNative_muteSession
 JNIEXPORT jstring JNICALL Java_com_getpcpanel_cpp_windows_SndCtrlNative_getFocusApplication
   (JNIEnv *, jobject);
 
-/*
- * Class:     com_getpcpanel_cpp_windows_SndCtrlNative
- * Method:    getAllRunningProcesses
- * Signature: ()[Ljava/lang/String;
- */
-JNIEXPORT jobjectArray JNICALL Java_com_getpcpanel_cpp_windows_SndCtrlNative_getAllRunningProcesses
-  (JNIEnv *, jobject);
-
 #ifdef __cplusplus
 }
 #endif

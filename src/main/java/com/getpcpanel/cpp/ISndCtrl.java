@@ -37,6 +37,6 @@ public interface ISndCtrl {
 
     String defaultRecorder();
 
-    record RunningApplication(int pid, File file) {
+    record RunningApplication(int pid, File file, String name) {
     }
 }

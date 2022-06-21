@@ -1,11 +1,8 @@
 package com.getpcpanel.cpp.windows;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,7 +11,6 @@ import javax.annotation.PostConstruct;
 import javax.annotation.concurrent.GuardedBy;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
@@ -42,7 +38,7 @@ public class SndCtrlWindows implements ISndCtrl {
     private final ExtractUtil extractUtil;
     private final ApplicationEventPublisher eventPublisher;
     @GuardedBy("defaults") private final Map<DefaultFor, String> defaults = new HashMap<>();
-    @GuardedBy("devices") private final Map<String, AudioDevice> devices = new HashMap<>();
+    @GuardedBy("devices") private final Map<String, WindowsAudioDevice> devices = new HashMap<>();
 
     @PostConstruct
     public void init() {
@@ -88,7 +84,7 @@ public class SndCtrlWindows implements ISndCtrl {
     @Override
     public Collection<AudioSession> getAllSessions() {
         synchronized (devices) {
-            return StreamEx.ofValues(devices).flatCollection(ad -> ad.getSessions().values()).distinct(AudioSession::pid).toSet();
+            return StreamEx.ofValues(devices).flatCollection(ad -> ad.getSessions().values()).distinct(AudioSession::pid).select(AudioSession.class).toSet();
         }
     }
 
@@ -180,15 +176,7 @@ public class SndCtrlWindows implements ISndCtrl {
 
     @Override
     public List<RunningApplication> getRunningApplications() {
-        var running = new HashSet<String>();
-        var arr = SndCtrlNative.instance.getAllRunningProcesses();
-        return StreamEx.of(arr)
-                       .map(StringUtils::trimToNull)
-                       .nonNull()
-                       .map(pn -> pn.split("\\|", 2))
-                       .map(pns -> new RunningApplication(NumberUtils.toInt(pns[0], 0), new File(pns[1])))
-                       .sorted(Comparator.comparing(f -> f.file().getName()))
-                       .toImmutableList();
+        return ProcessHelper.getRunningApplications();
     }
 
     @Override

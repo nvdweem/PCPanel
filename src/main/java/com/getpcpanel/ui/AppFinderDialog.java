@@ -131,7 +131,7 @@ public class AppFinderDialog extends Application implements UIInitializer {
                            .toImmutableList();
         } else {
             return StreamEx.of(sndCtrl.getRunningApplications())
-                           .map(f -> new AudioSession(null, null, 1, f.file(), f.file().getName(), null, 0, false))
+                           .map(f -> new AudioSession(null, null, 1, f.file(), f.name(), null, 0, false))
                            .distinct(AudioSession::executable)
                            .toList();
         }
