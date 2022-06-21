@@ -147,9 +147,9 @@ public class SndCtrlLinux implements ISndCtrl {
     }
 
     @Override
-    public List<File> getRunningApplications() {
+    public List<RunningApplication> getRunningApplications() {
         synchronized (sessions) {
-            return StreamEx.ofValues(sessions).map(AudioSession::executable).toList();
+            return StreamEx.ofValues(sessions).map(AudioSession::executable).map(f -> new RunningApplication(0, f)).toList();
         }
     }
 

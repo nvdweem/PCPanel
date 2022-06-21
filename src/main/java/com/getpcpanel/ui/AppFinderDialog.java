@@ -130,7 +130,10 @@ public class AppFinderDialog extends Application implements UIInitializer {
                            .sorted(Comparator.nullsLast(Comparator.comparing(AudioSession::title).thenComparing(as -> as.executable().getName())))
                            .toImmutableList();
         } else {
-            return StreamEx.of(sndCtrl.getRunningApplications()).map(f -> new AudioSession(null, null, 1, f, f.getName(), null, 0, false)).toList();
+            return StreamEx.of(sndCtrl.getRunningApplications())
+                           .map(f -> new AudioSession(null, null, 1, f.file(), f.file().getName(), null, 0, false))
+                           .distinct(AudioSession::executable)
+                           .toList();
         }
     }
 

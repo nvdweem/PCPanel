@@ -7,6 +7,7 @@
 #include <psapi.h>
 #include <set>
 #include <windows.h>
+#include <string>
 
 std::wstring str(JNIEnv* env, jstring string) {
     std::wstring value;
@@ -130,7 +131,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_getpcpanel_cpp_windows_SndCtrlNative_get
             if (szProcessName.empty() || seen.find(szProcessName) != seen.end()) {
                 continue;
             }
-            seen.insert(szProcessName);
+            seen.insert(to_wstring(pid) + L"|" + szProcessName);
         }
     }
 

@@ -29,11 +29,14 @@ public interface ISndCtrl {
 
     String getFocusApplication();
 
-    List<File> getRunningApplications();
+    List<RunningApplication> getRunningApplications();
 
     String defaultDeviceOnEmpty(String deviceId);
 
     String defaultPlayer();
 
     String defaultRecorder();
+
+    record RunningApplication(int pid, File file) {
+    }
 }

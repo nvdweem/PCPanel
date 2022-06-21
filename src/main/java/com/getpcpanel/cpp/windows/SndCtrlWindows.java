@@ -14,6 +14,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.concurrent.GuardedBy;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
@@ -178,10 +179,16 @@ public class SndCtrlWindows implements ISndCtrl {
     }
 
     @Override
-    public List<File> getRunningApplications() {
+    public List<RunningApplication> getRunningApplications() {
         var running = new HashSet<String>();
         var arr = SndCtrlNative.instance.getAllRunningProcesses();
-        return StreamEx.of(arr).map(StringUtils::trimToNull).nonNull().map(File::new).sorted(Comparator.comparing(File::getName)).toImmutableList();
+        return StreamEx.of(arr)
+                       .map(StringUtils::trimToNull)
+                       .nonNull()
+                       .map(pn -> pn.split("\\|", 2))
+                       .map(pns -> new RunningApplication(NumberUtils.toInt(pns[0], 0), new File(pns[1])))
+                       .sorted(Comparator.comparing(f -> f.file().getName()))
+                       .toImmutableList();
     }
 
     @Override

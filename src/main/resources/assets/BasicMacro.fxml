@@ -46,13 +46,12 @@
                         <RadioButton fx:id="prev" mnemonicParsing="false" text="Previous Track" toggleGroup="$mediagroup"/>
                         <RadioButton fx:id="next" mnemonicParsing="false" text="Next Track" toggleGroup="$mediagroup"/>
                         <RadioButton fx:id="mute" mnemonicParsing="false" text="Mute" toggleGroup="$mediagroup"/>
-                        <Label text="Check this box when the other method doesn't work. The alternative method should be able to control Spotify and any Chromium window even when other applications (like screensavers) are swallowing the media key event."
-                               wrapText="true">
+                        <Label text="Check this box to ensure that only Spotify is controlled. If this is not checked then any application that is playing sounds might be controlled." wrapText="true">
                             <VBox.margin>
                                 <Insets top="20.0"/>
                             </VBox.margin>
                         </Label>
-                        <CheckBox fx:id="cmdMediaAlternative" mnemonicParsing="false" text="Alternative method">
+                        <CheckBox fx:id="cmdMediaSpotify" mnemonicParsing="false" text="Target Spotify">
                             <VBox.margin>
                                 <Insets top="-10.0"/>
                             </VBox.margin>
