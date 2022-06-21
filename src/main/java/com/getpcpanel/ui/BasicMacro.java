@@ -101,7 +101,7 @@ public class BasicMacro extends Application implements UIInitializer {
     @FXML private TextField shortcutField;
     @FXML private Button scFileButton;
     @FXML private ToggleGroup mediagroup;
-    @FXML public CheckBox cmdMediaSpotify;
+    @FXML public CheckBox cmdMediaAlternative;
     @FXML private TextField endProcessField;
     @FXML private RadioButton rdioEndFocusedProgram;
     @FXML private RadioButton rdioEndSpecificProgram;
@@ -317,7 +317,7 @@ public class BasicMacro extends Application implements UIInitializer {
         return switch (buttonType) {
             case "btnCommandKeystroke" -> new CommandKeystroke(keystrokeField.getText());
             case "btnCommandShortcut" -> new CommandShortcut(shortcutField.getText());
-            case "btnCommandMedia" -> new CommandMedia(CommandMedia.VolumeButton.valueOf(((RadioButton) mediagroup.getSelectedToggle()).getId()), cmdMediaSpotify.isSelected());
+            case "btnCommandMedia" -> new CommandMedia(CommandMedia.VolumeButton.valueOf(((RadioButton) mediagroup.getSelectedToggle()).getId()), cmdMediaAlternative.isSelected());
             case "btnCommandEndProgram" -> new CommandEndProgram(rdioEndSpecificProgram.isSelected(), endProcessField.getText());
             case "btnCommandVolumeDefaultDevice" -> sounddevices.getValue() == null ? NOOP : new CommandVolumeDefaultDevice(sounddevices.getValue().id());
             case "btnCommandVolumeDefaultDeviceToggle" -> new CommandVolumeDefaultDeviceToggle(soundDevices2.getItems().stream().map(AudioDevice::id).toList());
@@ -658,7 +658,7 @@ public class BasicMacro extends Application implements UIInitializer {
                         case mute -> 4;
                     }
             ).setSelected(true);
-            cmdMediaSpotify.setSelected(cmd.isSpotify());
+            cmdMediaAlternative.setSelected(cmd.isAlternative());
         });
         buttonInitializers.put(CommandEndProgram.class, cmd -> {
             var endProgram = (CommandEndProgram) cmd;

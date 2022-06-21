@@ -20,10 +20,9 @@ import lombok.ToString;
 @ToString(callSuper = true)
 public class CommandMedia extends Command implements ButtonAction {
     private static final int WM_APPCOMMAND = 0x0319;
-    public static final String SPOTIFY_HANDLE = "Chrome_WidgetWin_0";
-
+    public static final String ALTERNATIVE_HANDLE = "Chrome_WidgetWin_0";
     private final VolumeButton button;
-    private final boolean spotify;
+    private final boolean alternative;
 
     @RequiredArgsConstructor
     public enum VolumeButton {
@@ -34,7 +33,7 @@ public class CommandMedia extends Command implements ButtonAction {
         playPause(0xB3, 0xE0000);
 
         private final int key;
-        private final int spotify;
+        private final int alternative;
 
         public static Optional<VolumeButton> tryValueOf(String name) {
             try {
@@ -46,14 +45,14 @@ public class CommandMedia extends Command implements ButtonAction {
     }
 
     @JsonCreator
-    public CommandMedia(@JsonProperty("button") VolumeButton button, @JsonProperty("spotify") boolean spotify) {
+    public CommandMedia(@JsonProperty("button") VolumeButton button, @JsonProperty("alternative") boolean alternative) {
         this.button = button;
-        this.spotify = spotify;
+        this.alternative = alternative;
     }
 
     @Override
     public void execute() {
-        if (spotify) {
+        if (alternative) {
             executeSpotify();
         } else {
             executeGlobalMedia();
@@ -76,7 +75,7 @@ public class CommandMedia extends Command implements ButtonAction {
     }
 
     private void executeSpotify() {
-        var window = User32.INSTANCE.FindWindow(SPOTIFY_HANDLE, null);
-        User32.INSTANCE.SendMessage(window, WM_APPCOMMAND, new WinDef.WPARAM(0), new WinDef.LPARAM(button.spotify));
+        var window = User32.INSTANCE.FindWindow(ALTERNATIVE_HANDLE, null);
+        User32.INSTANCE.SendMessage(window, WM_APPCOMMAND, new WinDef.WPARAM(0), new WinDef.LPARAM(button.alternative));
     }
 }
