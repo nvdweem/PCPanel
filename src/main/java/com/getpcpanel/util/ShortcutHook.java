@@ -8,17 +8,17 @@ import java.util.function.Function;
 import javax.annotation.PostConstruct;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jnativehook.GlobalScreen;
-import org.jnativehook.NativeHookException;
-import org.jnativehook.NativeInputEvent;
-import org.jnativehook.keyboard.NativeKeyEvent;
-import org.jnativehook.keyboard.NativeKeyListener;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
+import com.github.kwhat.jnativehook.GlobalScreen;
+import com.github.kwhat.jnativehook.NativeHookException;
+import com.github.kwhat.jnativehook.NativeInputEvent;
+import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
+import com.github.kwhat.jnativehook.keyboard.NativeKeyListener;
 
 import javafx.application.Platform;
 import lombok.RequiredArgsConstructor;

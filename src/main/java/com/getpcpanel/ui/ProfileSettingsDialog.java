@@ -3,7 +3,6 @@ package com.getpcpanel.ui;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jnativehook.keyboard.NativeKeyEvent;
 import org.springframework.stereotype.Component;
 
 import com.getpcpanel.profile.DeviceSave;
@@ -12,6 +11,7 @@ import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.spring.OsHelper;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.util.ShortcutHook;
+import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 
 import javafx.application.Application;
 import javafx.event.ActionEvent;
