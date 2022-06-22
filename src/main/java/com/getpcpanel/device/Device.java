@@ -148,7 +148,7 @@ public abstract class Device {
     }
 
     public void focusChanged(String from, String to) {
-        if (switchForApplication(to))
+        if (!StringUtils.equals(from, to) && switchForApplication(to))
             return;
 
         switchAwayFromApplication(from);
