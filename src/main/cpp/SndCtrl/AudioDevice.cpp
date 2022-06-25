@@ -33,7 +33,9 @@ void AudioDevice::Mute(bool muted) {
 bool AudioDevice::SetProcessVolume(int pid, float volume) {
     auto entry = sessions.find(pid);
     if (entry != sessions.end()) {
-        entry->second->SetVolume(volume);
+        for (auto& sess : entry->second) {
+            sess->SetVolume(volume);
+        }
         return true;
     }
     return false;
@@ -42,7 +44,9 @@ bool AudioDevice::SetProcessVolume(int pid, float volume) {
 bool AudioDevice::MuteProcess(int pid, bool muted) {
     auto entry = sessions.find(pid);
     if (entry != sessions.end()) {
-        entry->second->Mute(muted);
+        for (auto& sess : entry->second) {
+            sess->Mute(muted);
+        }
         return true;
     }
     return false;
@@ -59,16 +63,27 @@ void AudioDevice::SetDefault(EDataFlow dataFlow, ERole role) {
     }
 }
 
-void AudioDevice::SessionRemoved(int pid) {
+void AudioDevice::SessionRemoved(AudioSession& session) {
     JThread thread;
+    auto pid = session.GetPid();
     jni.CallVoid(thread, "removeSession", "(I)V", pid);
+
+    auto entry = sessions.find(pid);
+    if (entry == sessions.end()) {
+        auto& list = entry->second;
+        list.remove_if([&session](auto& pU) {return pU.get() == &session; });
+        if (list.empty()) {
+            sessions.erase(pid);
+        }
+    }
 }
 
 void AudioDevice::SessionAdded(CComPtr<IAudioSessionControl> session) {
     auto ptr = make_unique<AudioSession>(session);
     auto pid = ptr->GetPid();
     auto raw = ptr.get();
-    sessions.insert({pid, std::move(ptr)});
+    auto& target = sessions[pid];
+    target.push_back(std::move(ptr));
     raw->Init(jni, *this);
 }
 

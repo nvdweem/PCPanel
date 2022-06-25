@@ -138,8 +138,10 @@ void SndCtrl::SetFocusVolume(float volume) {
     auto name = GetProcessName(pid);
     for (auto& dEntry : devices) {
         for (auto& sEntry : dEntry.second->GetSessions()) {
-            if (sEntry.second->GetName() == name) {
-                sEntry.second->SetVolume(volume);
+            for (auto& ssEntry : sEntry.second) {
+                if (ssEntry->GetName() == name) {
+                    ssEntry->SetVolume(volume);
+                }
             }
         }
     }

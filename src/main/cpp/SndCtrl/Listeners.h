@@ -5,6 +5,7 @@
 
 EDataFlow getDataFlow(IMMDevice& device);
 
+class AudioSession;
 class AudioSessionListener;
 class DeviceVolumeListener;
 class SessionListener;
@@ -239,7 +240,7 @@ public:
 
 class AudioSessionListenerCB {
 public:
-    virtual void SessionRemoved(int pid) = 0;
+    virtual void SessionRemoved(AudioSession& session) = 0;
 };
 
 class AudioSessionListener : public Listener, public IAudioSessionEvents {
@@ -247,11 +248,11 @@ private:
     JniCaller jni;
     AudioSessionListenerCB& callback;
     CComPtr<IAudioSessionControl> sessionControl;
-    int pid;
+    AudioSession& session;
 
 public:
-    AudioSessionListener(CComPtr<IAudioSessionControl> sessionControl, int pid, AudioSessionListenerCB& callback, jobject obj)
-        : sessionControl(sessionControl), pid(pid), callback(callback), jni(JniCaller::Create(obj)) {
+    AudioSessionListener(CComPtr<IAudioSessionControl> sessionControl, AudioSession& session, AudioSessionListenerCB& callback, jobject obj)
+        : sessionControl(sessionControl), session(session), callback(callback), jni(JniCaller::Create(obj)) {
     }
     virtual void Start() {
         NOTNULL(sessionControl);
@@ -293,7 +294,7 @@ public:
     }
     virtual HRESULT STDMETHODCALLTYPE OnStateChanged(AudioSessionState NewState) {
         if (NewState == AudioSessionStateExpired) {
-            callback.SessionRemoved(pid);
+            callback.SessionRemoved(session);
         }
         return S_OK;
     }

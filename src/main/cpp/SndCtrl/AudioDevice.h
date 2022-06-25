@@ -13,7 +13,7 @@ private:
     CComPtr<IAudioEndpointVolume> cpVolume;
 
     wstring id;
-    unordered_map<int, unique_ptr<AudioSession>> sessions;
+    unordered_map<int, list<unique_ptr<AudioSession>>> sessions;
 
     StoppingHandle<DeviceVolumeListener> cpDeviceVolumeListener;
     StoppingHandle<SessionListener> cpSessionListener;
@@ -33,11 +33,11 @@ public:
     bool MuteProcess(int pid, bool muted);
     void SetDefault(EDataFlow dataFlow, ERole role);
 
-    const unordered_map<int, unique_ptr<AudioSession>>& GetSessions() const {
+    const unordered_map<int, list<unique_ptr<AudioSession>>>& GetSessions() const {
         return sessions;
     }
 
-    virtual void SessionRemoved(int pid) override;
+    virtual void SessionRemoved(AudioSession& session) override;
 private:
     void SessionAdded(CComPtr<IAudioSessionControl> cpSession);
 
