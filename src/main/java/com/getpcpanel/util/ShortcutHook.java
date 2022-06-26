@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.event.EventListener;
@@ -46,6 +47,16 @@ public class ShortcutHook implements NativeKeyListener {
         }
 
         updateShortcuts();
+    }
+
+    @PreDestroy
+    public void destroy() {
+        GlobalScreen.removeNativeKeyListener(this);
+        try {
+            GlobalScreen.unregisterNativeHook();
+        } catch (NativeHookException e) {
+            log.error("Unable to unregister hook");
+        }
     }
 
     public boolean canBeShortcut(NativeKeyEvent event) {
