@@ -12,7 +12,7 @@
 
     <groupId>com.getpcpanel</groupId>
     <artifactId>pcpanel</artifactId>
-    <version>1.4</version>
+    <version>1.5-SNAPSHOT</version>
 
     <description>PCPanel controller software</description>
 
