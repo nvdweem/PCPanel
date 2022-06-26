@@ -263,6 +263,10 @@ public abstract class Device {
     }
 
     public void setLighting(LightingConfig config, boolean priority) {
+        Platform.runLater(() -> doSetLighting(config, priority));
+    }
+
+    private void doSetLighting(LightingConfig config, boolean priority) {
         if (config == null) {
             config = LightingConfig.defaultLightingConfig(getDeviceType());
             save.setLightingConfig(config);
