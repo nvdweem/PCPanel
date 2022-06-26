@@ -48,8 +48,9 @@ void AudioSession::Init(JniCaller& audioDevice, AudioSessionListenerCB& callback
         auto nameStr = thread.jstr(name.c_str());
         auto pNameStr = thread.jstr(pname.c_str());
         auto iconStr = thread.jstr(icon);
-        auto jObj = audioDevice.CallObject(thread, "addSession", "(ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;FZ)Lcom/getpcpanel/cpp/AudioSession;",
-            pid, nameStr, pNameStr, iconStr, level, muted
+        jlong pointer = reinterpret_cast<std::uintptr_t>(this);
+        auto jObj = audioDevice.CallObject(thread, "addSession", "(JILjava/lang/String;Ljava/lang/String;Ljava/lang/String;FZ)Lcom/getpcpanel/cpp/AudioSession;",
+            pointer, pid, nameStr, pNameStr, iconStr, level, muted
         );
         thread.jstr(nameStr);
         thread.jstr(pNameStr);

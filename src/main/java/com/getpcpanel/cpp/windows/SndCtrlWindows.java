@@ -145,7 +145,7 @@ public class SndCtrlWindows implements ISndCtrl {
         }
     }
 
-    public void setProcessVolume(AudioSession session, float volume) {
+    public void setProcessVolume(WindowsAudioSession session, float volume) {
         log.trace("Setting volume to {} for {}", volume, session);
         SndCtrlNative.instance.setProcessVolume(session.device().id(), session.pid(), volume);
     }
@@ -164,7 +164,7 @@ public class SndCtrlWindows implements ISndCtrl {
         }
     }
 
-    public void muteProcess(AudioSession session, MuteType muted) {
+    public void muteProcess(WindowsAudioSession session, MuteType muted) {
         log.trace("Muting session {}", session);
         SndCtrlNative.instance.muteSession(session.device().id(), session.pid(), muted.convert(session.muted()));
     }

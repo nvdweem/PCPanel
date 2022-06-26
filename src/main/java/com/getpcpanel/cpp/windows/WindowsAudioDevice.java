@@ -1,7 +1,6 @@
 package com.getpcpanel.cpp.windows;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,18 +18,20 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @SuppressWarnings("unused") // Methods called from JNI
 public class WindowsAudioDevice extends AudioDevice {
-    private final transient Map<Integer, WindowsAudioSession> sessions = new HashMap<>();
+    private final transient Map<Integer, WindowsAudioSession> sessions = new HashMap<>(); // pid -> pointer_addr -> session
 
     public WindowsAudioDevice(ApplicationEventPublisher eventPublisher, String name, String id) {
         super(eventPublisher, name, id);
     }
 
     public Map<Integer, WindowsAudioSession> getSessions() {
-        return Collections.unmodifiableMap(sessions);
+        return sessions;
     }
 
-    private AudioSession addSession(int pid, String name, String title, String icon, float volume, boolean muted) {
-        var result = new WindowsAudioSession(this, eventPublisher, pid, new File(name), title, icon, volume, muted);
+    public AudioSession addSession(long pointer, int pid, String name, String title, String icon, float volume, boolean muted) {
+        var result = sessions.computeIfAbsent(pid, p -> new WindowsAudioSession(this, eventPublisher, pid, new File(name), title, icon, volume, muted));
+        result.pointers().add(pointer);
+
         if (StringUtils.isBlank(result.title())) {
             log.debug("Not adding {}, no title known", result);
         } else {
@@ -41,10 +42,18 @@ public class WindowsAudioDevice extends AudioDevice {
         return result;
     }
 
-    private void removeSession(int pid) {
-        var sess = sessions.remove(pid);
-        log.trace("Session removed: {} ({})", pid, sess == null ? "not found" : sess);
-        eventPublisher.publishEvent(new AudioSessionEvent(sess, EventType.REMOVED));
+    public void removeSession(long pointer, int pid) {
+        var session = sessions.get(pid);
+        if (session == null) {
+            log.debug("Unknown session was removed: {} ({})", pid, pointer);
+            return;
+        }
+        log.trace("Session removed: {} ({}: {})", pid, pointer, session);
+        session.pointers().remove(pointer);
+        if (session.pointers().isEmpty()) {
+            sessions.remove(pid);
+            eventPublisher.publishEvent(new AudioSessionEvent(session, EventType.REMOVED));
+        }
     }
 
     @Override

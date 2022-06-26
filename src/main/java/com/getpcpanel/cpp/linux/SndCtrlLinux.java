@@ -178,7 +178,7 @@ public class SndCtrlLinux implements ISndCtrl {
         return StreamEx.of(cmd.getSessions())
                        .filter(pa -> StringUtils.isNotBlank(pa.properties().get("application.process.id")))
                        .map(pa ->
-                               new LinuxAudioSession(null, eventPublisher,
+                               new LinuxAudioSession(eventPublisher,
                                        pa.index(),
                                        NumberUtils.toInt(pa.properties().get("application.process.id"), -1),
                                        new File(pa.properties().get("application.process.binary")),

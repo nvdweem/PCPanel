@@ -11,6 +11,7 @@ import com.getpcpanel.commands.command.CommandVolumeProcess;
 import com.getpcpanel.cpp.AudioSessionEvent;
 import com.getpcpanel.cpp.EventType;
 import com.getpcpanel.cpp.ISndCtrl;
+import com.getpcpanel.cpp.windows.WindowsAudioSession;
 import com.getpcpanel.hid.DeviceCommunicationHandler;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.profile.DeviceSave;
@@ -61,8 +62,12 @@ public class SetNewSessionVolumeService {
         if (!c.getProcessName().contains(session.executable().getName())) {
             return false;
         }
-        var device = session.device();
-        return StringUtils.equals("*", c.getDevice())
-                || (StringUtils.isBlank(c.getDevice()) && StringUtils.equals(sndCtrl.defaultDeviceOnEmpty(c.getDevice()), device.id()));
+
+        if (session instanceof WindowsAudioSession wis) {
+            var device = wis.device();
+            return StringUtils.equals("*", c.getDevice())
+                    || (StringUtils.isBlank(c.getDevice()) && StringUtils.equals(sndCtrl.defaultDeviceOnEmpty(c.getDevice()), device.id()));
+        }
+        return true;
     }
 }

@@ -66,7 +66,8 @@ void AudioDevice::SetDefault(EDataFlow dataFlow, ERole role) {
 void AudioDevice::SessionRemoved(AudioSession& session) {
     JThread thread;
     auto pid = session.GetPid();
-    jni.CallVoid(thread, "removeSession", "(I)V", pid);
+    jlong pointer = reinterpret_cast<std::uintptr_t>(&session);
+    jni.CallVoid(thread, "removeSession", "(JI)V", pointer, pid);
 
     auto entry = sessions.find(pid);
     if (entry == sessions.end()) {
@@ -74,6 +75,7 @@ void AudioDevice::SessionRemoved(AudioSession& session) {
         list.remove_if([&session](auto& pU) {return pU.get() == &session; });
         if (list.empty()) {
             sessions.erase(pid);
+            cout << "Clear session " << pid << endl;
         }
     }
 }

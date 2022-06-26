@@ -14,7 +14,6 @@ import lombok.extern.log4j.Log4j2;
 @SuppressWarnings("unused") // Methods called from JNI
 public class AudioSession {
     public static final String SYSTEM = "System Sounds";
-    @ToString.Exclude private AudioDevice device;
     @ToString.Exclude private final ApplicationEventPublisher eventPublisher;
     private int pid;
     private File executable;
@@ -23,8 +22,7 @@ public class AudioSession {
     private float volume;
     private boolean muted;
 
-    public AudioSession(AudioDevice device, ApplicationEventPublisher eventPublisher, int pid, File executable, String title, String icon, float volume, boolean muted) {
-        this.device = device;
+    public AudioSession(ApplicationEventPublisher eventPublisher, int pid, File executable, String title, String icon, float volume, boolean muted) {
         this.eventPublisher = eventPublisher;
         this.pid = pid;
         this.executable = executable;
@@ -38,24 +36,6 @@ public class AudioSession {
 
     public AudioSession name(String title) {
         this.title = title;
-        triggerChange();
-        return this;
-    }
-
-    private AudioSession device(AudioDevice device) {
-        this.device = device;
-        triggerChange();
-        return this;
-    }
-
-    private AudioSession pid(int pid) {
-        this.pid = pid;
-        triggerChange();
-        return this;
-    }
-
-    private AudioSession executable(File executable) {
-        this.executable = executable;
         triggerChange();
         return this;
     }
