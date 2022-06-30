@@ -2,6 +2,7 @@ package com.getpcpanel.ui;
 
 import java.util.Objects;
 
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.stereotype.Component;
 
 import com.getpcpanel.Json;
@@ -55,6 +56,7 @@ public class SettingsDialog extends Application implements UIInitializer {
     @FXML private Pane vmControls;
     @FXML private TextField vmPath;
     @FXML private Tab voicemeeterTab;
+    @FXML public TextField txtPreventSliderTwitch;
 
     @Override
     public <T> void initUI(T... args) {
@@ -117,6 +119,8 @@ public class SettingsDialog extends Application implements UIInitializer {
         save.setObsPassword(obsPassword.getText());
         save.setVoicemeeterEnabled(vmEnable.isSelected());
         save.setVoicemeeterPath(vmPath.getText());
+        var delay = NumberUtils.toInt(txtPreventSliderTwitch.getText(), 0);
+        save.setPreventSliderTwitchDelay(delay == 0 ? null : delay);
         saveService.save();
         obsListener.check();
         stage.close();
@@ -143,6 +147,7 @@ public class SettingsDialog extends Application implements UIInitializer {
         vmEnable.setSelected(save.isVoicemeeterEnabled());
         vmPath.setText(save.getVoicemeeterPath());
         onVMEnablePressed(null);
+        txtPreventSliderTwitch.setText(save.getPreventSliderTwitchDelay() == null ? "" : save.getPreventSliderTwitchDelay().toString());
     }
 
     private void postInit() {

@@ -18,6 +18,7 @@ public class Save {
     private String obsPassword;
     private boolean voicemeeterEnabled;
     private String voicemeeterPath = "C:\\Program Files (x86)\\VB\\Voicemeeter";
+    private Integer preventSliderTwitchDelay;
 
     public DeviceSave getDeviceSave(String serialNum) {
         return devices.get(serialNum);

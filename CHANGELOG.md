@@ -2,7 +2,9 @@
 
 <!-- Releasenotes without version are included in releases -->
 
-Nothing yet
+**New:**
+
+- Added a feature that might fix twitching sliders on faulty hardware (#6)
 
 ## [1.4]
 
