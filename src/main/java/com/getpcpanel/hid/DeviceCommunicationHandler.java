@@ -21,6 +21,7 @@ import org.springframework.context.ApplicationEventPublisher;
 
 import com.getpcpanel.profile.SaveService;
 
+import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -43,6 +44,7 @@ public class DeviceCommunicationHandler extends Thread {
     private final ConcurrentLinkedQueue<byte[]> priorityQueue = new ConcurrentLinkedQueue<>();
     private final AtomicReference<byte[][]> mostRecentRGBRequest = new AtomicReference<>();
     private final KnobDebouncer debouncer = new KnobDebouncer();
+    private final RollingAverageSetter rollingAverageSetter = new RollingAverageSetter();
 
     public DeviceCommunicationHandler(DeviceScanner deviceScanner, ApplicationEventPublisher eventPublisher, SaveService saveService, String key, HidDevice device) {
         setName("HIDHandler");
@@ -72,6 +74,7 @@ public class DeviceCommunicationHandler extends Thread {
 
     @Override
     public void run() {
+        //noinspection ObjectEquality
         while (deviceScanner.getConnectedDevice(key) == this) {
             var moreData = true;
             while (moreData) {
@@ -92,9 +95,6 @@ public class DeviceCommunicationHandler extends Thread {
                         continue;
                     }
                 }
-                if (log.isDebugEnabled()) {
-                    log.debug("< {}", Arrays.toString(data));
-                }
                 interpretInputData(readUntilNotInitial != 0, data);
             }
             if (!priorityQueue.isEmpty()) {
@@ -108,6 +108,7 @@ public class DeviceCommunicationHandler extends Thread {
             }
         }
         debouncer.shutdown();
+        rollingAverageSetter.shutdown();
     }
 
     private void sendMessageReal(byte[] info) {
@@ -138,7 +139,7 @@ public class DeviceCommunicationHandler extends Thread {
             var knob = data[1] & 0xFF;
             var value = data[2] & 0xFF;
             try {
-                eventPublisher.publishEvent(new ButtonPressEvent(key, knob, value == 1));
+                triggerEvent(new ButtonPressEvent(key, knob, value == 1));
             } catch (Exception ex) {
                 log.error("Unable to handle button press", ex);
             }
@@ -147,12 +148,20 @@ public class DeviceCommunicationHandler extends Thread {
         }
     }
 
+    private void triggerEvent(Object o) {
+        log.debug("< {}", o);
+        eventPublisher.publishEvent(o);
+    }
+
     private void triggerOrDebounce(KnobRotateEvent event) {
         var delay = saveService.get().getPreventSliderTwitchDelay();
-        if (delay == null || delay == 0) {
-            eventPublisher.publishEvent(event);
-        } else {
+        var rolling = saveService.get().getSliderRollingAverage();
+        if (delay != null && delay != 0) {
             debouncer.debounce(event, delay);
+        } else if (rolling != null && rolling != 0) {
+            rollingAverageSetter.setKnob(event, rolling);
+        } else {
+            triggerEvent(event);
         }
     }
 
@@ -175,7 +184,7 @@ public class DeviceCommunicationHandler extends Thread {
             prev.add(event);
             if (prev.size() == 1) {
                 // Initial event, just send
-                eventPublisher.publishEvent(event);
+                triggerEvent(event);
                 delayedMap.put(event.knob(), Pair.of(new ArrayDeque<>(List.of(event)), null));
             } else if (prev.size() == 2) {
                 // Any first event after initial or after debounce, delay this
@@ -185,7 +194,7 @@ public class DeviceCommunicationHandler extends Thread {
                 // Second actual event after debounce, see if we are twitching
                 var prevEvent = prev.removeFirst();
                 if (prevEvent.value() != event.value()) { // We are not twitching
-                    eventPublisher.publishEvent(prevEvent); // Trigger the previous
+                    triggerEvent(prevEvent); // Trigger the previous
                     schedule(prev, event, delay); // Delay the current
                     log.trace("Trigger and go: {}", prev);
                 } else {
@@ -211,7 +220,7 @@ public class DeviceCommunicationHandler extends Thread {
         private void schedule(Deque<KnobRotateEvent> prevs, KnobRotateEvent event, long delay) {
             delayedMap.put(event.knob, Pair.of(prevs, scheduler.schedule(() -> {
                 try {
-                    eventPublisher.publishEvent(event);
+                    triggerEvent(event);
                 } finally {
                     delayedMap.put(event.knob(), Pair.of(new ArrayDeque<>(List.of(event)), null));
                 }
@@ -220,6 +229,105 @@ public class DeviceCommunicationHandler extends Thread {
 
         public void shutdown() {
             scheduler.shutdownNow();
+        }
+    }
+
+    @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
+    private class RollingAverageSetter extends Thread {
+        private final Map<Integer, Deque<Pair<Long, Integer>>> targets = new ConcurrentHashMap<>();
+        @Setter private Integer rollWindowMs;
+        private boolean running = true;
+
+        public RollingAverageSetter() {
+            start();
+        }
+
+        public void setKnob(KnobRotateEvent knob, Integer rollWindowMs) {
+            this.rollWindowMs = rollWindowMs;
+            var target = targets.computeIfAbsent(knob.knob(), k -> new ArrayDeque<>());
+            synchronized (target) {
+                if (knob.initial()) {
+                    triggerEvent(knob);
+                    target.clear();
+                }
+                target.add(Pair.of(System.currentTimeMillis(), knob.value()));
+            }
+        }
+
+        @Override
+        public void run() {
+            while (running) {
+                synchronized (targets) {
+                    targets.forEach(this::handleRoll);
+                }
+
+                try {
+                    //noinspection BusyWait
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    log.error("Unable to sleep, stopping rolling average setter", e);
+                    return;
+                }
+            }
+        }
+
+        private void handleRoll(Integer knob, Deque<Pair<Long, Integer>> timeToValue) {
+            synchronized (timeToValue) {
+                if (timeToValue.size() <= 1) {
+                    return;
+                }
+                removeAllPassedButLast(timeToValue);
+                var send = calcRolling(timeToValue);
+                triggerEvent(new KnobRotateEvent(key, knob, send, false));
+            }
+        }
+
+        private Integer calcRolling(Deque<Pair<Long, Integer>> timeToValue) {
+            if (timeToValue.size() == 1) {
+                return timeToValue.getFirst().getRight();
+            }
+
+            var count = 0L;
+            var sum = 0d;
+            var now = System.currentTimeMillis();
+            var prevStamp = now - rollWindowMs;
+            Integer prevValue = null;
+            for (var entry : timeToValue) {
+                if (prevValue != null) {
+                    var weight = entry.getLeft() - prevStamp;
+                    count += weight;
+                    sum += weight * prevValue;
+
+                    prevStamp = entry.getLeft();
+                }
+
+                prevValue = entry.getRight();
+            }
+
+            if (prevValue != null) {
+                var weight = now - prevStamp;
+                count += weight;
+                sum += weight * prevValue;
+            }
+
+            //noinspection NumericCastThatLosesPrecision
+            return (int) (sum / count);
+        }
+
+        private void removeAllPassedButLast(Deque<Pair<Long, Integer>> timeToValue) {
+            var now = System.currentTimeMillis();
+            while (timeToValue.size() > 1) {
+                var first = timeToValue.removeFirst();
+                var second = timeToValue.getFirst();
+                if (second.getLeft() >= now - rollWindowMs) {
+                    timeToValue.addFirst(first);
+                    return;
+                }
+            }
+        }
+
+        public void shutdown() {
+            running = false;
         }
     }
 }

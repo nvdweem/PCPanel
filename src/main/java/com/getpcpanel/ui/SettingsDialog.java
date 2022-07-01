@@ -57,6 +57,7 @@ public class SettingsDialog extends Application implements UIInitializer {
     @FXML private TextField vmPath;
     @FXML private Tab voicemeeterTab;
     @FXML public TextField txtPreventSliderTwitch;
+    @FXML public TextField txtSliderRollingAverage;
 
     @Override
     public <T> void initUI(T... args) {
@@ -119,8 +120,8 @@ public class SettingsDialog extends Application implements UIInitializer {
         save.setObsPassword(obsPassword.getText());
         save.setVoicemeeterEnabled(vmEnable.isSelected());
         save.setVoicemeeterPath(vmPath.getText());
-        var delay = NumberUtils.toInt(txtPreventSliderTwitch.getText(), 0);
-        save.setPreventSliderTwitchDelay(delay == 0 ? null : delay);
+        save.setPreventSliderTwitchDelay(NumberUtils.toInt(txtPreventSliderTwitch.getText(), 0));
+        save.setSliderRollingAverage(NumberUtils.toInt(txtSliderRollingAverage.getText(), 0));
         saveService.save();
         obsListener.check();
         stage.close();
@@ -148,6 +149,7 @@ public class SettingsDialog extends Application implements UIInitializer {
         vmPath.setText(save.getVoicemeeterPath());
         onVMEnablePressed(null);
         txtPreventSliderTwitch.setText(save.getPreventSliderTwitchDelay() == null ? "" : save.getPreventSliderTwitchDelay().toString());
+        txtSliderRollingAverage.setText(save.getSliderRollingAverage() == null ? "" : save.getSliderRollingAverage().toString());
     }
 
     private void postInit() {

@@ -70,9 +70,14 @@
                     <Insets bottom="8.0" left="8.0" right="8.0" top="8.0"/>
                 </padding>
                 <VBox spacing="10.0">
+                    <Label prefWidth="300.0" text="Setting the twitch delay will disable the rolling average."/>
                     <HBox alignment="CENTER_LEFT">
                         <Label prefWidth="300.0" text="Prevent twitching slider if the slider returns after x ms"/>
                         <TextField fx:id="txtPreventSliderTwitch" promptText="ms"/>
+                    </HBox>
+                    <HBox alignment="CENTER_LEFT">
+                        <Label prefWidth="300.0" text="Slider value rolling average over x ms"/>
+                        <TextField fx:id="txtSliderRollingAverage" promptText="ms"/>
                     </HBox>
                 </VBox>
             </VBox>
