@@ -92,6 +92,9 @@ public class DeviceCommunicationHandler extends Thread {
                         continue;
                     }
                 }
+                if (log.isDebugEnabled()) {
+                    log.debug("< {}", Arrays.toString(data));
+                }
                 interpretInputData(readUntilNotInitial != 0, data);
             }
             if (!priorityQueue.isEmpty()) {
@@ -114,7 +117,9 @@ public class DeviceCommunicationHandler extends Thread {
         System.arraycopy(info, 0, message, 0, info.length);
         var val = device.write(message, PACKET_LENGTH, (byte) 0);
         if (val >= 0) {
-            log.trace("> [{}]", val);
+            if (log.isTraceEnabled()) {
+                log.trace("> {}: {}", val, Arrays.toString(info));
+            }
         } else {
             log.error("{} {}     {}", device.getLastErrorMessage(), val, Arrays.toString(info), new Exception().fillInStackTrace());
         }
@@ -175,14 +180,14 @@ public class DeviceCommunicationHandler extends Thread {
             } else if (prev.size() == 2) {
                 // Any first event after initial or after debounce, delay this
                 schedule(prev, event, delay);
-                log.debug("Initial: {}", prev);
+                log.trace("Initial: {}", prev);
             } else if (prev.size() == 3) {
                 // Second actual event after debounce, see if we are twitching
                 var prevEvent = prev.removeFirst();
                 if (prevEvent.value() != event.value()) { // We are not twitching
                     eventPublisher.publishEvent(prevEvent); // Trigger the previous
                     schedule(prev, event, delay); // Delay the current
-                    log.debug("Trigger and go: {}", prev);
+                    log.trace("Trigger and go: {}", prev);
                 } else {
                     prev.removeFirst(); // Remove the twitch
                     delayedMap.put(event.knob(), Pair.of(prev, null));
