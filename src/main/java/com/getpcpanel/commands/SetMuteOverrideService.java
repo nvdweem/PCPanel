@@ -18,6 +18,7 @@ import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.profile.DeviceSave;
+import com.getpcpanel.profile.LightingConfig;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SingleKnobLightingConfig;
 import com.getpcpanel.profile.SingleSliderLabelLightingConfig;
@@ -64,6 +65,9 @@ public class SetMuteOverrideService {
     public void handleEvent(Predicate<Command> isApplicable, boolean isMuted) {
         for (var idDeviceSave : saveService.get().getDevices().entrySet()) {
             var deviceSave = idDeviceSave.getValue();
+            if (deviceSave.getLightingConfig().getLightingMode() != LightingConfig.LightingMode.CUSTOM) {
+                continue;
+            }
 
             var mayBeChanged = false;
             for (var dlc : tryGetAllDeviceLightingCapable(deviceSave)) {

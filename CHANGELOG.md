@@ -6,6 +6,10 @@
 
 - Added a feature that might fix twitching sliders on faulty hardware (#6)
 
+**Fixes:**
+
+- An error would be logged when the mute override service triggered while a device did not use custom colors
+
 ## [1.4]
 
 **New:**
