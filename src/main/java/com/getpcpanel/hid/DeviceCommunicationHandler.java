@@ -155,9 +155,9 @@ public class DeviceCommunicationHandler extends Thread {
         var prevSentValue = targetDeviceMap.get(o.knob());
         var currentSendValue = o.value();
         if (prevSentValue != null && currentSendValue == prevSentValue) {
-            log.trace("Prevent setting same value");
+            log.trace("Prevent setting same value for {}", o);
         } else if (prevSentValue != null && delta != null && prevSentValue - delta <= currentSendValue && currentSendValue <= prevSentValue + delta) {
-            log.trace("Prevent setting value within delta");
+            log.trace("Prevent setting value within delta for {}", o);
         } else {
             targetDeviceMap.put(o.knob(), currentSendValue);
             log.debug("< {}", o);
