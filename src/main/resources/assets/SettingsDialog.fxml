@@ -64,7 +64,7 @@
                 <Button layoutX="30.0" layoutY="28.0" mnemonicParsing="false" onAction="#openLogsFolder" text="Open Logs Folder"/>
             </VBox>
         </Tab>
-        <Tab text="Experimental">
+        <Tab text="Faulty hardware workarounds">
             <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0">
                 <padding>
                     <Insets bottom="8.0" left="8.0" right="8.0" top="8.0"/>
@@ -80,9 +80,10 @@
                         <TextField fx:id="txtSliderRollingAverage" promptText="ms"/>
                     </HBox>
                     <HBox alignment="CENTER_LEFT">
-                        <Label prefWidth="300.0" text="Only send values that have changed more than:"/>
+                        <Label prefWidth="300.0" text="Only send values that have changed more than"/>
                         <TextField fx:id="txtOnlyIfDelta"/>
                     </HBox>
+                    <CheckBox fx:id="cbFixOnlySliders" mnemonicParsing="false" text="Only apply these fixes to sliders"/>
                 </VBox>
             </VBox>
         </Tab>
@@ -92,6 +93,6 @@
             <Insets bottom="10.0" right="10.0"/>
         </padding>
         <Button mnemonicParsing="false" onAction="#ok" prefHeight="25.0" prefWidth="66.0" text="Ok"/>
-        <Button fx:id="cancelButton" layoutX="661.0" layoutY="872.0" mnemonicParsing="false" onAction="#closeButtonAction" prefHeight="25.0" prefWidth="73.0" text="Cancel"/>
+        <Button layoutX="661.0" layoutY="872.0" mnemonicParsing="false" onAction="#closeButtonAction" prefHeight="25.0" prefWidth="73.0" text="Cancel"/>
     </HBox>
 </VBox>

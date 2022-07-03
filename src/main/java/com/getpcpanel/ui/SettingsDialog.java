@@ -2,6 +2,8 @@ package com.getpcpanel.ui;
 
 import java.util.Objects;
 
+import javax.annotation.Nullable;
+
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.stereotype.Component;
 
@@ -59,6 +61,7 @@ public class SettingsDialog extends Application implements UIInitializer {
     @FXML public TextField txtPreventSliderTwitch;
     @FXML public TextField txtSliderRollingAverage;
     @FXML public TextField txtOnlyIfDelta;
+    @FXML public CheckBox cbFixOnlySliders;
 
     @Override
     public <T> void initUI(T... args) {
@@ -87,12 +90,12 @@ public class SettingsDialog extends Application implements UIInitializer {
     }
 
     @FXML
-    private void onOBSEnablePressed(ActionEvent ignored) {
+    private void onOBSEnablePressed(@Nullable ActionEvent ignored) {
         obsControls.setDisable(!obsEnable.isSelected());
     }
 
     @FXML
-    private void onVMEnablePressed(ActionEvent ignored) {
+    private void onVMEnablePressed(@Nullable ActionEvent ignored) {
         vmControls.setDisable(!vmEnable.isSelected());
     }
 
@@ -124,6 +127,7 @@ public class SettingsDialog extends Application implements UIInitializer {
         save.setPreventSliderTwitchDelay(NumberUtils.toInt(txtPreventSliderTwitch.getText(), 0));
         save.setSliderRollingAverage(NumberUtils.toInt(txtSliderRollingAverage.getText(), 0));
         save.setSendOnlyIfDelta(NumberUtils.toInt(txtOnlyIfDelta.getText(), 0));
+        save.setWorkaroundsOnlySliders(cbFixOnlySliders.isSelected());
         saveService.save();
         obsListener.check();
         stage.close();
@@ -153,6 +157,7 @@ public class SettingsDialog extends Application implements UIInitializer {
         txtPreventSliderTwitch.setText(save.getPreventSliderTwitchDelay() == null ? "" : save.getPreventSliderTwitchDelay().toString());
         txtSliderRollingAverage.setText(save.getSliderRollingAverage() == null ? "" : save.getSliderRollingAverage().toString());
         txtOnlyIfDelta.setText(save.getSendOnlyIfDelta() == null ? "" : save.getSendOnlyIfDelta().toString());
+        cbFixOnlySliders.setSelected(save.isWorkaroundsOnlySliders());
     }
 
     private void postInit() {

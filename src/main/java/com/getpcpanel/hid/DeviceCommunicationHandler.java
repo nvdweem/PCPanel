@@ -19,6 +19,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.hid4java.HidDevice;
 import org.springframework.context.ApplicationEventPublisher;
 
+import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.profile.SaveService;
 
 import lombok.Setter;
@@ -39,15 +40,16 @@ public class DeviceCommunicationHandler extends Thread {
 
     private static final int PACKET_LENGTH = 64;
     private static final int FIRST_NON_INITIAL_READS = 20; // Could have been 9 (dials/sliders of the pro) but take 20 to be safe
+    private final DeviceType deviceType;
     private int readUntilNotInitial = FIRST_NON_INITIAL_READS;
 
     private final ConcurrentLinkedQueue<byte[]> priorityQueue = new ConcurrentLinkedQueue<>();
     private final AtomicReference<byte[][]> mostRecentRGBRequest = new AtomicReference<>();
     private final KnobDebouncer debouncer = new KnobDebouncer();
     private final RollingAverageSetter rollingAverageSetter = new RollingAverageSetter();
-    private final Map<String, Map<Integer, Integer>> prevSent = new ConcurrentHashMap<>();
+    private final Map<Integer, Integer> prevSent = new ConcurrentHashMap<>();
 
-    public DeviceCommunicationHandler(DeviceScanner deviceScanner, ApplicationEventPublisher eventPublisher, SaveService saveService, String key, HidDevice device) {
+    public DeviceCommunicationHandler(DeviceScanner deviceScanner, ApplicationEventPublisher eventPublisher, SaveService saveService, String key, HidDevice device, DeviceType deviceType) {
         setName("HIDHandler");
         setDaemon(true);
         this.eventPublisher = eventPublisher;
@@ -55,6 +57,7 @@ public class DeviceCommunicationHandler extends Thread {
         this.saveService = saveService;
         this.key = key;
         this.device = device;
+        this.deviceType = deviceType;
     }
 
     public void addToPriorityQueue(byte[]... datas) {
@@ -151,18 +154,21 @@ public class DeviceCommunicationHandler extends Thread {
 
     private void triggerEvent(KnobRotateEvent o) {
         var delta = saveService.get().getSendOnlyIfDelta();
-        var targetDeviceMap = prevSent.computeIfAbsent(o.serialNum(), k -> new ConcurrentHashMap<>());
-        var prevSentValue = targetDeviceMap.get(o.knob());
+        var prevSentValue = prevSent.get(o.knob());
         var currentSendValue = o.value();
         if (prevSentValue != null && currentSendValue == prevSentValue) {
             log.trace("Prevent setting same value for {}", o);
-        } else if (prevSentValue != null && delta != null && prevSentValue - delta <= currentSendValue && currentSendValue <= prevSentValue + delta) {
+        } else if (applyWorkaround(o.knob()) && prevSentValue != null && delta != null && prevSentValue - delta <= currentSendValue && currentSendValue <= prevSentValue + delta) {
             log.trace("Prevent setting value within delta for {}", o);
         } else {
-            targetDeviceMap.put(o.knob(), currentSendValue);
+            prevSent.put(o.knob(), currentSendValue);
             log.debug("< {}", o);
             eventPublisher.publishEvent(o);
         }
+    }
+
+    private boolean applyWorkaround(int knob) {
+        return !saveService.get().isWorkaroundsOnlySliders() || knob >= deviceType.getButtonCount();
     }
 
     private void triggerEvent(ButtonPressEvent o) {
@@ -171,12 +177,16 @@ public class DeviceCommunicationHandler extends Thread {
     }
 
     private void triggerOrDebounce(KnobRotateEvent event) {
-        var delay = saveService.get().getPreventSliderTwitchDelay();
-        var rolling = saveService.get().getSliderRollingAverage();
-        if (delay != null && delay != 0) {
-            debouncer.debounce(event, delay);
-        } else if (rolling != null && rolling != 0) {
-            rollingAverageSetter.setKnob(event, rolling);
+        if (applyWorkaround(event.knob())) {
+            var delay = saveService.get().getPreventSliderTwitchDelay();
+            var rolling = saveService.get().getSliderRollingAverage();
+            if (delay != null && delay != 0) {
+                debouncer.debounce(event, delay);
+            } else if (rolling != null && rolling != 0) {
+                rollingAverageSetter.setKnob(event, rolling);
+            } else {
+                triggerEvent(event);
+            }
         } else {
             triggerEvent(event);
         }

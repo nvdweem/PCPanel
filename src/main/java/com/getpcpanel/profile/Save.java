@@ -3,6 +3,8 @@ package com.getpcpanel.profile;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.annotation.Nullable;
+
 import com.getpcpanel.device.DeviceType;
 
 import lombok.Data;
@@ -18,9 +20,10 @@ public class Save {
     private String obsPassword;
     private boolean voicemeeterEnabled;
     private String voicemeeterPath = "C:\\Program Files (x86)\\VB\\Voicemeeter";
-    private Integer preventSliderTwitchDelay;
-    private Integer sliderRollingAverage;
-    private Integer sendOnlyIfDelta;
+    @Nullable private Integer preventSliderTwitchDelay;
+    @Nullable private Integer sliderRollingAverage;
+    @Nullable private Integer sendOnlyIfDelta;
+    private boolean workaroundsOnlySliders;
 
     public DeviceSave getDeviceSave(String serialNum) {
         return devices.get(serialNum);
@@ -36,13 +39,15 @@ public class Save {
         return devices.values().stream().anyMatch(device -> displayName.equals(device.getDisplayName()));
     }
 
-    public Save setPreventSliderTwitchDelay(Integer preventSliderTwitchDelay) {
+    public void setPreventSliderTwitchDelay(Integer preventSliderTwitchDelay) {
         this.preventSliderTwitchDelay = preventSliderTwitchDelay == null || preventSliderTwitchDelay == 0 ? null : preventSliderTwitchDelay;
-        return this;
     }
 
-    public Save setSliderRollingAverage(Integer sliderRollingAverage) {
+    public void setSliderRollingAverage(Integer sliderRollingAverage) {
         this.sliderRollingAverage = sliderRollingAverage == null || sliderRollingAverage == 0 ? null : sliderRollingAverage;
-        return this;
+    }
+
+    public void setSendOnlyIfDelta(Integer sendOnlyIfDelta) {
+        this.sendOnlyIfDelta = sendOnlyIfDelta == null || sendOnlyIfDelta == 0 ? null : sendOnlyIfDelta;
     }
 }

@@ -4,6 +4,7 @@ import org.hid4java.HidDevice;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.profile.SaveService;
 
 import lombok.RequiredArgsConstructor;
@@ -17,7 +18,7 @@ public class DeviceCommunicationHandlerFactory {
     private final DeviceScanner deviceScanner;
     private final SaveService saveService;
 
-    public DeviceCommunicationHandler build(String key, HidDevice device) {
-        return new DeviceCommunicationHandler(deviceScanner, eventPublisher, saveService, key, device);
+    public DeviceCommunicationHandler build(String key, HidDevice device, DeviceType deviceType) {
+        return new DeviceCommunicationHandler(deviceScanner, eventPublisher, saveService, key, device, deviceType);
     }
 }

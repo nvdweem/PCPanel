@@ -61,7 +61,7 @@ public class DeviceScanner implements HidServicesListener {
                 log.error("Unable to open device, it won't be possible to use the panel");
             }
         }
-        var deviceHandler = deviceCommunicationHandlerFactory.build(key, device);
+        var deviceHandler = deviceCommunicationHandlerFactory.build(key, device, deviceType);
         CONNECTED_DEVICE_MAP.put(key, deviceHandler);
         deviceHandler.start();
         eventPublisher.publishEvent(new DeviceConnectedEvent(key, deviceType));
