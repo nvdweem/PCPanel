@@ -79,6 +79,10 @@
                         <Label prefWidth="300.0" text="Slider value rolling average over x ms"/>
                         <TextField fx:id="txtSliderRollingAverage" promptText="ms"/>
                     </HBox>
+                    <HBox alignment="CENTER_LEFT">
+                        <Label prefWidth="300.0" text="Only send values that have changed more than:"/>
+                        <TextField fx:id="txtOnlyIfDelta"/>
+                    </HBox>
                 </VBox>
             </VBox>
         </Tab>

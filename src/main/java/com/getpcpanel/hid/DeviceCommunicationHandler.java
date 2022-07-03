@@ -45,6 +45,7 @@ public class DeviceCommunicationHandler extends Thread {
     private final AtomicReference<byte[][]> mostRecentRGBRequest = new AtomicReference<>();
     private final KnobDebouncer debouncer = new KnobDebouncer();
     private final RollingAverageSetter rollingAverageSetter = new RollingAverageSetter();
+    private final Map<String, Map<Integer, Integer>> prevSent = new ConcurrentHashMap<>();
 
     public DeviceCommunicationHandler(DeviceScanner deviceScanner, ApplicationEventPublisher eventPublisher, SaveService saveService, String key, HidDevice device) {
         setName("HIDHandler");
@@ -148,7 +149,23 @@ public class DeviceCommunicationHandler extends Thread {
         }
     }
 
-    private void triggerEvent(Object o) {
+    private void triggerEvent(KnobRotateEvent o) {
+        var delta = saveService.get().getSendOnlyIfDelta();
+        var targetDeviceMap = prevSent.computeIfAbsent(o.serialNum(), k -> new ConcurrentHashMap<>());
+        var prevSentValue = targetDeviceMap.get(o.knob());
+        var currentSendValue = o.value();
+        if (prevSentValue != null && currentSendValue == prevSentValue) {
+            log.trace("Prevent setting same value");
+        } else if (prevSentValue != null && delta != null && prevSentValue - delta <= currentSendValue && currentSendValue <= prevSentValue + delta) {
+            log.trace("Prevent setting value within delta");
+        } else {
+            targetDeviceMap.put(o.knob(), currentSendValue);
+            log.debug("< {}", o);
+            eventPublisher.publishEvent(o);
+        }
+    }
+
+    private void triggerEvent(ButtonPressEvent o) {
         log.debug("< {}", o);
         eventPublisher.publishEvent(o);
     }

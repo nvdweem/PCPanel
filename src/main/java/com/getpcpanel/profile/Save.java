@@ -20,6 +20,7 @@ public class Save {
     private String voicemeeterPath = "C:\\Program Files (x86)\\VB\\Voicemeeter";
     private Integer preventSliderTwitchDelay;
     private Integer sliderRollingAverage;
+    private Integer sendOnlyIfDelta;
 
     public DeviceSave getDeviceSave(String serialNum) {
         return devices.get(serialNum);

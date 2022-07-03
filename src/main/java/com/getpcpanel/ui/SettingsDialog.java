@@ -58,6 +58,7 @@ public class SettingsDialog extends Application implements UIInitializer {
     @FXML private Tab voicemeeterTab;
     @FXML public TextField txtPreventSliderTwitch;
     @FXML public TextField txtSliderRollingAverage;
+    @FXML public TextField txtOnlyIfDelta;
 
     @Override
     public <T> void initUI(T... args) {
@@ -122,6 +123,7 @@ public class SettingsDialog extends Application implements UIInitializer {
         save.setVoicemeeterPath(vmPath.getText());
         save.setPreventSliderTwitchDelay(NumberUtils.toInt(txtPreventSliderTwitch.getText(), 0));
         save.setSliderRollingAverage(NumberUtils.toInt(txtSliderRollingAverage.getText(), 0));
+        save.setSendOnlyIfDelta(NumberUtils.toInt(txtOnlyIfDelta.getText(), 0));
         saveService.save();
         obsListener.check();
         stage.close();
@@ -150,6 +152,7 @@ public class SettingsDialog extends Application implements UIInitializer {
         onVMEnablePressed(null);
         txtPreventSliderTwitch.setText(save.getPreventSliderTwitchDelay() == null ? "" : save.getPreventSliderTwitchDelay().toString());
         txtSliderRollingAverage.setText(save.getSliderRollingAverage() == null ? "" : save.getSliderRollingAverage().toString());
+        txtOnlyIfDelta.setText(save.getSendOnlyIfDelta() == null ? "" : save.getSendOnlyIfDelta().toString());
     }
 
     private void postInit() {
