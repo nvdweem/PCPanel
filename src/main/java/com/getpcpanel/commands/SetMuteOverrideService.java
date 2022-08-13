@@ -26,6 +26,7 @@ import com.getpcpanel.profile.SingleSliderLightingConfig;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import one.util.streamex.StreamEx;
 
 /**
  * Triggers a color change when the device or application that is controlled by the dial/slider is muted/unmuted.
@@ -50,8 +51,9 @@ public class SetMuteOverrideService {
 
     @EventListener
     public void onAudioSession(AudioSessionEvent event) {
+        var lcName = StringUtils.lowerCase(event.session().executable().getName().toLowerCase());
         handleEvent(
-                cmd -> cmd instanceof CommandVolumeProcess vd && vd.getProcessName().contains(event.session().executable().getName()),
+                cmd -> cmd instanceof CommandVolumeProcess vd && StreamEx.of(vd.getProcessName()).map(String::toLowerCase).findFirst(n -> n.contains(lcName)).isPresent(),
                 event.session().muted());
     }
 

@@ -140,7 +140,7 @@ public class SndCtrlWindows implements ISndCtrl {
             StreamEx.ofValues(devices)
                     .filter(d -> "*".equals(device) || deviceId.equals(d.id()))
                     .flatCollection(d -> d.getSessions().values())
-                    .filter(s -> (fileName.equals(AudioSession.SYSTEM) && s.isSystemSounds()) || (s.executable() != null && StringUtils.equals(fileName, s.executable().getName())))
+                    .filter(s -> (StringUtils.equalsIgnoreCase(fileName, AudioSession.SYSTEM) && s.isSystemSounds()) || (s.executable() != null && StringUtils.equalsIgnoreCase(fileName, s.executable().getName())))
                     .forEach(s -> setProcessVolume(s, volume));
         }
     }
@@ -157,9 +157,10 @@ public class SndCtrlWindows implements ISndCtrl {
 
     @Override
     public void muteProcesses(Set<String> fileName, MuteType mute) {
+        var lcFileNames = StreamEx.of(fileName).map(String::toLowerCase).toImmutableSet();
         synchronized (devices) {
             StreamEx.ofValues(devices).flatCollection(d -> d.getSessions().values())
-                    .filter(s -> s.executable() != null && fileName.contains(s.executable().getName()))
+                    .filter(s -> s.executable() != null && lcFileNames.contains(s.executable().getName().toLowerCase()))
                     .forEach(s -> muteProcess(s, mute));
         }
     }
