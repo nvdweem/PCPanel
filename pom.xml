@@ -31,7 +31,7 @@
         <windows.vendor>PCPanel</windows.vendor>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <javafx.version>18.0.1</javafx.version>
+        <javafx.version>18.0.2</javafx.version>
         <jna.version>5.11.0</jna.version>
         <asm.version>9.3</asm.version>
 
