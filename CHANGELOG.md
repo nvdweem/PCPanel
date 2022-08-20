@@ -9,6 +9,7 @@
 **Fixes:**
 
 - An error would be logged when the mute override service triggered while a device did not use custom colors
+- The application names are now case-insensitive
 
 ## [1.4]
 
