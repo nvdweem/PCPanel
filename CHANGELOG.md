@@ -10,6 +10,7 @@
 
 - An error would be logged when the mute override service triggered while a device did not use custom colors
 - The application names are now case-insensitive
+- Profile switching using a shortcut is disabled on Linux, it crashed the VM on certain distros
 
 ## [1.4]
 

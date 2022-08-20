@@ -1,6 +1,7 @@
 package com.getpcpanel.ui;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
@@ -19,7 +20,6 @@ import javafx.fxml.FXML;
 import javafx.scene.Scene;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
-import javafx.scene.control.TitledPane;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
@@ -34,7 +34,7 @@ import one.util.streamex.StreamEx;
 @RequiredArgsConstructor
 public class ProfileSettingsDialog extends Application implements UIInitializer {
     private final SaveService saveService;
-    private final ShortcutHook shortcutHook;
+    private final Optional<ShortcutHook> shortcutHook;
     private final OsHelper osHelper;
     @FXML private Pane root;
     private DeviceSave deviceSave;
@@ -45,7 +45,7 @@ public class ProfileSettingsDialog extends Application implements UIInitializer 
     @FXML private CheckBox focusBackOnLost;
     @FXML private PickProcessesController focusOnListListController;
     @FXML private TextField activationFld;
-    @FXML private TitledPane automaticSwitchingPane;
+    @FXML public VBox osSpecificHolder;
 
     @Override
     public <T> void initUI(T... args) {
@@ -67,9 +67,8 @@ public class ProfileSettingsDialog extends Application implements UIInitializer 
         stage.sizeToScene();
         stage.setTitle("Profile: " + profile.getName());
 
-        if (osHelper.notWindows()) {
-            ((VBox) automaticSwitchingPane.getParent()).getChildren().remove(automaticSwitchingPane);
-        }
+        var toRemove = StreamEx.of(osSpecificHolder.getChildren()).remove(osHelper::isSupported).toSet();
+        osSpecificHolder.getChildren().removeAll(toRemove);
 
         stage.show();
     }
@@ -81,20 +80,23 @@ public class ProfileSettingsDialog extends Application implements UIInitializer 
         focusBackOnLost.setSelected(profile.isFocusBackOnLost());
         focusOnListListController.setPickType(PickProcessesController.PickType.process).setSelection(profile.getActivateApplications());
 
-        activationFld.focusedProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue) {
-                shortcutHook.setOverrideListener(this::registerShortcut);
-            } else {
-                shortcutHook.setOverrideListener(null);
-            }
-        });
+        activationFld.focusedProperty().addListener((observable, oldValue, newValue) -> shortcutHook.ifPresent(hook -> {
+                    if (newValue) {
+                        hook.setOverrideListener(this::registerShortcut);
+                    } else {
+                        hook.setOverrideListener(null);
+                    }
+                }
+        ));
         activationFld.setText(StringUtils.defaultString(profile.getActivationShortcut()));
     }
 
     private void registerShortcut(NativeKeyEvent event) {
-        if (shortcutHook.canBeShortcut(event)) {
-            activationFld.setText(shortcutHook.toKeyString(event));
-        }
+        shortcutHook.ifPresent(hook -> {
+            if (hook.canBeShortcut(event)) {
+                activationFld.setText(hook.toKeyString(event));
+            }
+        });
     }
 
     @FXML

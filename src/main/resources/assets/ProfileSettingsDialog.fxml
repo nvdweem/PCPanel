@@ -17,7 +17,7 @@
     <children>
         <ScrollPane fitToHeight="true" fitToWidth="true" prefWidth="200.0">
             <content>
-                <VBox>
+                <VBox fx:id="osSpecificHolder">
                     <TitledPane animated="false" text="Profile settings">
                         <content>
                             <VBox>
@@ -47,7 +47,7 @@
                             </VBox>
                         </content>
                     </TitledPane>
-                    <TitledPane fx:id="automaticSwitchingPane" text="Automatic switching">
+                    <TitledPane styleClass="only-windows" text="Automatic switching">
                         <content>
                             <VBox prefWidth="50.0">
                                 <children>
@@ -68,7 +68,7 @@
                             <Insets top="10.0"/>
                         </padding>
                     </TitledPane>
-                    <TitledPane text="Shortcut switching">
+                    <TitledPane styleClass="only-windows" text="Shortcut switching">
                         <content>
                             <VBox prefWidth="50.0">
                                 <children>

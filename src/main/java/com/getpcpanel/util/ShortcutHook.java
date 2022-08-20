@@ -8,6 +8,8 @@ import java.util.function.Function;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
+import com.getpcpanel.spring.ConditionalOnWindows;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -29,6 +31,7 @@ import one.util.streamex.EntryStream;
 
 @Log4j2
 @Service
+@ConditionalOnWindows
 @RequiredArgsConstructor
 public class ShortcutHook implements NativeKeyListener {
     public static final Set<Integer> modifiers = Set.of(NativeKeyEvent.VC_SHIFT, NativeKeyEvent.VC_CONTROL, NativeKeyEvent.VC_META, NativeKeyEvent.VC_ALT);

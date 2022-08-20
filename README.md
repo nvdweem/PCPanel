@@ -10,7 +10,7 @@ have been replaced with custom native implementations. The source code for those
 
 ## Windows
 
-Just doubleclick the msi installer and you should be good to go. The installer will run the application after the installation
+Just double-click the msi installer and you should be good to go. The installer will run the application after the installation
 is complete and will add the application to start automatically on Windows startup.
 
 ## Linux
@@ -36,7 +36,8 @@ Linux might need a few more steps to get everything working.
    ```shell
    sudo udevadm control --reload-rules
    ```
-5. (Optional) Make the software startup automatically
+5. It seems that the first run of the software needs to be done as root (`sudo /opt/pcpanel/bin/PCPanel`). This might be needed whenever the software gets updated.
+6. (Optional) Make the software startup automatically. When making the application startup automatically you can add the `quiet` parameter to not show the main window on startup.
 
 I then had to restart to get it to work, logging out and in might work as well.
 
