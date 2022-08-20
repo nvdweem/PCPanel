@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
+import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.concurrent.GuardedBy;
 
@@ -111,11 +112,11 @@ public class SndCtrlLinux implements ISndCtrl {
     }
 
     @Override
-    public void setProcessVolume(String fileName, String device, float volume) {
+    public void setProcessVolume(String fileName, @Nullable String device, float volume) {
         Set<LinuxAudioSession> todo;
         synchronized (sessions) {
             todo = StreamEx.ofValues(sessions)
-                           .filter(s -> StringUtils.equals(fileName, s.executable().getName()))
+                           .filter(s -> StringUtils.equalsIgnoreCase(fileName, s.executable().getName()))
                            .toSet();
         }
         todo.forEach(s -> cmd.setSessionVolume(s.index(), volume));
@@ -132,17 +133,18 @@ public class SndCtrlLinux implements ISndCtrl {
 
     @Override
     public void muteProcesses(Set<String> fileName, MuteType mute) {
+        var lcFileNames = StreamEx.of(fileName).map(String::toLowerCase).toImmutableSet();
         Set<LinuxAudioSession> todo;
         synchronized (sessions) {
             todo = StreamEx.ofValues(sessions)
-                           .filter(s -> fileName.contains(s.executable().getName()))
+                           .filter(s -> lcFileNames.contains(s.executable().getName().toLowerCase()))
                            .toSet();
         }
         todo.forEach(s -> cmd.muteSession(s.index(), mute));
     }
 
     @Override
-    public String getFocusApplication() {
+    public @Nullable String getFocusApplication() {
         return null;
     }
 
@@ -154,19 +156,19 @@ public class SndCtrlLinux implements ISndCtrl {
     }
 
     @Override
-    public String defaultDeviceOnEmpty(String deviceId) {
+    public @Nullable String defaultDeviceOnEmpty(String deviceId) {
         return null;
     }
 
     @Override
-    public String defaultPlayer() {
+    public @Nullable String defaultPlayer() {
         synchronized (devices) {
             return StreamEx.ofValues(devices).findFirst(LinuxAudioDevice::isDefault).map(AudioDevice::id).orElse(null);
         }
     }
 
     @Override
-    public String defaultRecorder() {
+    public @Nullable String defaultRecorder() {
         return null;
     }
 
