@@ -5,6 +5,7 @@
 **New:**
 
 - Added a feature that might fix twitching sliders on faulty hardware (#6)
+- [Linux] Allow controlling input volume
 
 **Fixes:**
 
