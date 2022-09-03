@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import one.util.streamex.StreamEx;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -28,30 +30,33 @@ public class PulseAudioWrapper {
     public static final int DEFAULT_DEVICE = -2;
 
     public List<PulseAudioTarget> getDevices() {
-        return execAndParse("sinks");
+        return StreamEx.of(execAndParse(InOutput.output)).append(execAndParse(InOutput.input)).toList();
     }
 
-    public void setDeviceVolume(int idx, float volume) {
+    public void setDeviceVolume(boolean output, int idx, float volume) {
         if (idx == NO_OP_IDX) {
             return;
         }
+        var target = output ? "set-sink-volume" : "set-source-volume";
         //noinspection NumericCastThatLosesPrecision
-        pactl("set-sink-volume", idxOrDefaultDevice(idx), (int) (volume * 100) + "%");
+        pactl(target, idxOrDefaultDevice(idx), (int) (volume * 100) + "%");
     }
 
-    public void muteDevice(int idx, MuteType type) {
+    public void muteDevice(boolean output, int idx, MuteType type) {
         if (idx == NO_OP_IDX) {
             return;
         }
-        pactl("set-sink-mute", idxOrDefaultDevice(idx), muteTypeToMute(type));
+        var target = output ? "set-sink-mute" : "set-source-mute";
+        pactl(target, idxOrDefaultDevice(idx), muteTypeToMute(type));
     }
 
-    public void setDefaultDevice(int index) {
-        pactl("set-default-sink", String.valueOf(index));
+    public void setDefaultDevice(boolean output, int index) {
+        var target = output ? "set-default-sink" : "set-default-source";
+        pactl(target, String.valueOf(index));
     }
 
     public List<PulseAudioTarget> getSessions() {
-        return execAndParse("sink-inputs");
+        return execAndParse(InOutput.session);
     }
 
     public void setSessionVolume(int index, float volume) {
@@ -63,9 +68,9 @@ public class PulseAudioWrapper {
         pactl("set-sink-input-mute", String.valueOf(index), muteTypeToMute(mute));
     }
 
-    public List<PulseAudioTarget> execAndParse(String type) {
+    public List<PulseAudioTarget> execAndParse(InOutput type) {
         var ret = new ArrayList<PulseAudioTarget>();
-        var cmdOutput = runAndRead(new ProcessBuilder("pacmd", "list-" + type));
+        var cmdOutput = runAndRead(new ProcessBuilder("pacmd", "list-" + type.pulseType));
 
         PulseAudioTarget.PulseAudioTargetBuilder paTarget = null;
         var readingProperties = false;
@@ -101,14 +106,14 @@ public class PulseAudioWrapper {
             }
         }
         if (paTarget != null) {
-            ret.add(paTarget.build());
+            ret.add(paTarget.type(type).build());
         }
 
         return ret;
     }
 
     @SneakyThrows
-    private void pactl(String... cmd) {
+    private synchronized void pactl(String... cmd) {
         var fullCmd = new String[cmd.length + 1];
         fullCmd[0] = "pactl";
         System.arraycopy(cmd, 0, fullCmd, 1, cmd.length);
@@ -132,10 +137,17 @@ public class PulseAudioWrapper {
     }
 
     @Builder
-    record PulseAudioTarget(int index, boolean isDefault, @Singular Map<String, String> metas, @Singular Map<String, String> properties) {
+    record PulseAudioTarget(int index, boolean isDefault, @Singular Map<String, String> metas, @Singular Map<String, String> properties, InOutput type) {
         static int parseIndex(String line) {
             return NumberUtils.toInt(StringUtils.trimToEmpty(line.split(":")[1]), -1);
         }
+    }
+
+    @RequiredArgsConstructor
+    enum InOutput {
+        input("sources"), output("sinks"), session("sink-inputs");
+
+        private final String pulseType;
     }
 
     private String muteTypeToMute(MuteType type) {

@@ -34,6 +34,7 @@ import one.util.streamex.StreamEx;
 @ConditionalOnLinux
 @RequiredArgsConstructor
 public class SndCtrlLinux implements ISndCtrl {
+    public static final String INPUT_PREFIX = "in_";
     private final PulseAudioWrapper cmd;
     private final ProcessHelper processHelper;
     private final ApplicationEventPublisher eventPublisher;
@@ -92,12 +93,12 @@ public class SndCtrlLinux implements ISndCtrl {
 
     @Override
     public void setDeviceVolume(String deviceId, float volume) {
-        cmd.setDeviceVolume(deviceIdx(deviceId), volume);
+        cmd.setDeviceVolume(isOutput(deviceId), deviceIdx(deviceId), volume);
     }
 
     @Override
     public void muteDevice(String deviceId, MuteType mute) {
-        cmd.muteDevice(deviceIdx(deviceId), mute);
+        cmd.muteDevice(isOutput(deviceId), deviceIdx(deviceId), mute);
     }
 
     @Override
@@ -108,7 +109,7 @@ public class SndCtrlLinux implements ISndCtrl {
         }
         if (device == null)
             return;
-        cmd.setDefaultDevice(device.index());
+        cmd.setDefaultDevice(isOutput(deviceId), device.index());
     }
 
     @Override
@@ -163,7 +164,7 @@ public class SndCtrlLinux implements ISndCtrl {
     @Override
     public @Nullable String defaultPlayer() {
         synchronized (devices) {
-            return StreamEx.ofValues(devices).findFirst(LinuxAudioDevice::isDefault).map(AudioDevice::id).orElse(null);
+            return StreamEx.ofValues(devices).findFirst(LinuxAudioDevice::isDefaultOutput).map(AudioDevice::id).orElse(null);
         }
     }
 
@@ -173,7 +174,12 @@ public class SndCtrlLinux implements ISndCtrl {
     }
 
     private Set<LinuxAudioDevice> getDevicesFromCmd() {
-        return StreamEx.of(cmd.getDevices()).map(pa -> new LinuxAudioDevice(eventPublisher, pa.index(), pa.properties().get("device.product.name"), pa.metas().get("name"), pa.isDefault())).toSet();
+        return StreamEx.of(cmd.getDevices()).map(this::toDevice).toSet();
+    }
+
+    private LinuxAudioDevice toDevice(PulseAudioWrapper.PulseAudioTarget pa) {
+        var isOutput = pa.type() == PulseAudioWrapper.InOutput.output;
+        return new LinuxAudioDevice(eventPublisher, pa.index(), pa.properties().get("device.product.name"), (isOutput ? "" : INPUT_PREFIX) + pa.metas().get("name"), pa.isDefault(), isOutput);
     }
 
     private Set<LinuxAudioSession> getSessionsFromCmd() {
@@ -197,5 +203,9 @@ public class SndCtrlLinux implements ISndCtrl {
         synchronized (devices) {
             return Optional.ofNullable(devices.get(deviceId)).map(LinuxAudioDevice::index).orElse(PulseAudioWrapper.NO_OP_IDX);
         }
+    }
+
+    private static boolean isOutput(String deviceId) {
+        return !StringUtils.startsWith(deviceId, INPUT_PREFIX);
     }
 }
