@@ -1,9 +1,12 @@
 package com.getpcpanel.ui;
 
+import java.util.Collection;
 import java.util.Objects;
 
 import org.springframework.stereotype.Component;
 
+import com.getpcpanel.cpp.AudioDevice;
+import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.profile.LightingConfig;
@@ -23,6 +26,7 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.control.Tab;
@@ -46,6 +50,7 @@ import lombok.extern.log4j.Log4j2;
 public class MiniLightingDialog extends Application implements UIInitializer, ILightingDialogMuteOverrideHelper {
     private final SaveService saveService;
     private final DeviceScanner deviceScanner;
+    private final ISndCtrl sndCtrl;
     private Device device;
 
     private Stage stage;
@@ -75,6 +80,7 @@ public class MiniLightingDialog extends Application implements UIInitializer, IL
     private final ColorDialog[] knobVolumeGradientCD1 = new ColorDialog[NUM_KNOBS];
     private final ColorDialog[] knobVolumeGradientCD2 = new ColorDialog[NUM_KNOBS];
     @Getter private final CheckBox[] muteOverrideCheckboxesKnobs = new CheckBox[NUM_KNOBS];
+    @SuppressWarnings("unchecked") @Getter private final ComboBox<String>[] muteOverrideComboBoxesKnobs = new ComboBox[NUM_KNOBS];
     @Getter private final ColorDialog[] muteOverrideColorsKnobs = new ColorDialog[NUM_KNOBS];
 
     private boolean pressedOk;
@@ -226,7 +232,7 @@ public class MiniLightingDialog extends Application implements UIInitializer, IL
                     knobVolumeGradientCD1[i].setCustomColor(Color.web(knobConfig.getColor1()));
                     knobVolumeGradientCD2[i].setCustomColor(Color.web(knobConfig.getColor2()));
                 }
-                setOverride(OverrideTargetType.KNOB, i, knobConfig.getMuteOverrideColor());
+                setOverride(OverrideTargetType.KNOB, i, knobConfig.getMuteOverrideDeviceOrFollow(), knobConfig.getMuteOverrideColor());
             }
         }
         updateApplyToAllButton();
@@ -254,6 +260,14 @@ public class MiniLightingDialog extends Application implements UIInitializer, IL
         }
     }
 
+    private void addListener(ComboBox<?>[]... boxes) {
+        for (var checks : boxes) {
+            for (var check : checks) {
+                check.setOnAction(a -> updateColors());
+            }
+        }
+    }
+
     private void initListeners(Slider[] allSliders, CheckBox[] allCheckBoxes) {
         addListener(knobStaticCDs, knobVolumeGradientCD1, allOverrideColors(), knobVolumeGradientCD2);
         addListener(knobSingleTabPane);
@@ -265,6 +279,7 @@ public class MiniLightingDialog extends Application implements UIInitializer, IL
         });
         addListener(fullBodyTabbedPane);
         addListener(allOverrideCheckboxes());
+        addListener(allOverrideComboBoxes());
         for (var slider : allSliders) {
             slider.valueProperty().addListener((observable, oldValue, newValue) -> updateColors());
         }
@@ -317,15 +332,16 @@ public class MiniLightingDialog extends Application implements UIInitializer, IL
             var config = new LightingConfig(NUM_KNOBS, 0);
             config.setLightingMode(LightingMode.CUSTOM);
             for (var knob = 0; knob < NUM_KNOBS; knob++) {
+                var knobConfig = config.getKnobConfigs()[knob];
                 if (knobSingleTabPane[knob].getSelectionModel().getSelectedIndex() == 0) {
-                    config.getKnobConfigs()[knob].setMode(SINGLE_KNOB_MODE.STATIC);
-                    config.getKnobConfigs()[knob].setColor1FromColor(knobStaticCDs[knob].getCustomColor());
+                    knobConfig.setMode(SINGLE_KNOB_MODE.STATIC);
+                    knobConfig.setColor1FromColor(knobStaticCDs[knob].getCustomColor());
                 } else if (knobSingleTabPane[knob].getSelectionModel().getSelectedIndex() == 1) {
-                    config.getKnobConfigs()[knob].setMode(SINGLE_KNOB_MODE.VOLUME_GRADIENT);
-                    config.getKnobConfigs()[knob].setColor1FromColor(knobVolumeGradientCD1[knob].getCustomColor());
-                    config.getKnobConfigs()[knob].setColor2FromColor(knobVolumeGradientCD2[knob].getCustomColor());
+                    knobConfig.setMode(SINGLE_KNOB_MODE.VOLUME_GRADIENT);
+                    knobConfig.setColor1FromColor(knobVolumeGradientCD1[knob].getCustomColor());
+                    knobConfig.setColor2FromColor(knobVolumeGradientCD2[knob].getCustomColor());
                 }
-                setOverrideSetting(OverrideTargetType.KNOB, knob, config.getKnobConfigs()[knob]::setMuteOverrideColorFromColor);
+                setOverrideSetting(OverrideTargetType.KNOB, knob, knobConfig::setMuteOverrideDeviceOrFollow, knobConfig::setMuteOverrideColorFromColor);
             }
             device.setLighting(config, false);
         }
@@ -340,5 +356,10 @@ public class MiniLightingDialog extends Application implements UIInitializer, IL
         gp.addColumn(0, l1, l2);
         gp.addColumn(1, obj1, obj2);
         return gp;
+    }
+
+    @Override
+    public Collection<AudioDevice> getDevices() {
+        return sndCtrl.getDevices();
     }
 }

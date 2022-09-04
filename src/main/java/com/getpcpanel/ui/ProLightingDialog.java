@@ -1,7 +1,11 @@
 package com.getpcpanel.ui;
 
+import java.util.Collection;
+
 import org.springframework.stereotype.Component;
 
+import com.getpcpanel.cpp.AudioDevice;
+import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.profile.LightingConfig;
@@ -24,6 +28,7 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.control.Tab;
@@ -47,6 +52,7 @@ import lombok.extern.log4j.Log4j2;
 public class ProLightingDialog extends Application implements UIInitializer, ILightingDialogMuteOverrideHelper {
     private final SaveService saveService;
     private final DeviceScanner deviceScanner;
+    private final ISndCtrl sndCtrl;
 
     private Stage stage;
     @FXML private TabPane mainPane;
@@ -80,10 +86,13 @@ public class ProLightingDialog extends Application implements UIInitializer, ILi
     private final ColorDialog[] knobVolumeGradientCD1 = new ColorDialog[NUM_KNOBS];
     private final ColorDialog[] knobVolumeGradientCD2 = new ColorDialog[NUM_KNOBS];
     @Getter private final CheckBox[] muteOverrideCheckboxesKnobs = new CheckBox[NUM_KNOBS];
+    @SuppressWarnings("unchecked") @Getter private final ComboBox<String>[] muteOverrideComboBoxesKnobs = new ComboBox[NUM_KNOBS];
     @Getter private final ColorDialog[] muteOverrideColorsKnobs = new ColorDialog[NUM_KNOBS];
     @Getter private final CheckBox[] muteOverrideCheckboxesSliders = new CheckBox[NUM_SLIDERS];
+    @SuppressWarnings("unchecked") @Getter private final ComboBox<String>[] muteOverrideComboBoxesSliders = new ComboBox[NUM_SLIDERS];
     @Getter private final ColorDialog[] muteOverrideColorsSliders = new ColorDialog[NUM_SLIDERS];
     @Getter private final CheckBox[] muteOverrideCheckboxesSliderLabels = new CheckBox[NUM_SLIDERS];
+    @SuppressWarnings("unchecked") @Getter private final ComboBox<String>[] muteOverrideComboBoxesSliderLabels = new ComboBox[NUM_SLIDERS];
     @Getter private final ColorDialog[] muteOverrideColorsSliderLabels = new ColorDialog[NUM_SLIDERS];
     private final ColorDialog[] sliderStaticCDs = new ColorDialog[NUM_SLIDERS];
     private final ColorDialog[] sliderStaticGradientTopCD = new ColorDialog[NUM_SLIDERS];
@@ -315,7 +324,7 @@ public class ProLightingDialog extends Application implements UIInitializer, ILi
                     knobVolumeGradientCD1[i].setCustomColor(Color.web(knobConfig.getColor1()));
                     knobVolumeGradientCD2[i].setCustomColor(Color.web(knobConfig.getColor2()));
                 }
-                setOverride(OverrideTargetType.KNOB, i, knobConfig.getMuteOverrideColor());
+                setOverride(OverrideTargetType.KNOB, i, knobConfig.getMuteOverrideDeviceOrFollow(), knobConfig.getMuteOverrideColor());
             }
             for (i = 0; i < NUM_SLIDERS; i++) {
                 var sliderLabelConfig = sliderLabelConfigs[i];
@@ -323,7 +332,7 @@ public class ProLightingDialog extends Application implements UIInitializer, ILi
                     sliderLabelSingleTabPane[i].getSelectionModel().select(0);
                     sliderLabelStaticCDs[i].setCustomColor(Color.web(sliderLabelConfig.getColor()));
                 }
-                setOverride(OverrideTargetType.SLIDER_LABEL, i, sliderLabelConfig.getMuteOverrideColor());
+                setOverride(OverrideTargetType.SLIDER_LABEL, i, sliderLabelConfig.getMuteOverrideDeviceOrFollow(), sliderLabelConfig.getMuteOverrideColor());
             }
             for (i = 0; i < NUM_SLIDERS; i++) {
                 var sliderConfig = sliderConfigs[i];
@@ -339,7 +348,7 @@ public class ProLightingDialog extends Application implements UIInitializer, ILi
                     sliderVolumeGradientCD1[i].setCustomColor(Color.web(sliderConfig.getColor1()));
                     sliderVolumeGradientCD2[i].setCustomColor(Color.web(sliderConfig.getColor2()));
                 }
-                setOverride(OverrideTargetType.SLIDER, i, sliderConfig.getMuteOverrideColor());
+                setOverride(OverrideTargetType.SLIDER, i, sliderConfig.getMuteOverrideDeviceOrFollow(), sliderConfig.getMuteOverrideColor());
             }
             if (logoConfig.getMode() == SINGLE_LOGO_MODE.STATIC) {
                 logoTabPane.getSelectionModel().select(0);
@@ -388,12 +397,21 @@ public class ProLightingDialog extends Application implements UIInitializer, ILi
         }
     }
 
+    private void addListener(ComboBox<?>[]... boxess) {
+        for (var boxes : boxess) {
+            for (var box : boxes) {
+                box.setOnAction(a -> updateColors());
+            }
+        }
+    }
+
     private void initListeners(Slider[] allSliders, CheckBox[] allCheckBoxes) {
         addListener(knobStaticCDs, knobVolumeGradientCD1, allOverrideColors(), knobVolumeGradientCD2,
                 sliderStaticCDs, sliderStaticGradientBottomCD, sliderStaticGradientTopCD, sliderVolumeGradientCD1, sliderVolumeGradientCD2,
                 sliderLabelStaticCDs);
         addListener(knobSingleTabPane, sliderLabelSingleTabPane, sliderSingleTabPane);
         addListener(allOverrideCheckboxes());
+        addListener(allOverrideComboBoxes());
         logoStaticColor.customColorProperty().addListener((a, b, c) -> updateColors());
         allKnobColor.customColorProperty().addListener((observable, oldValue, newValue) -> {
             for (var cd : knobStaticCDs) {
@@ -454,23 +472,25 @@ public class ProLightingDialog extends Application implements UIInitializer, ILi
             var config = new LightingConfig(NUM_KNOBS, NUM_SLIDERS);
             config.setLightingMode(LightingMode.CUSTOM);
             for (var knob = 0; knob < NUM_KNOBS; knob++) {
+                var knobConfig = config.getKnobConfigs()[knob];
                 if (knobSingleTabPane[knob].getSelectionModel().getSelectedIndex() == 0) {
-                    config.getKnobConfigs()[knob].setMode(SINGLE_KNOB_MODE.STATIC);
-                    config.getKnobConfigs()[knob].setColor1FromColor(knobStaticCDs[knob].getCustomColor());
+                    knobConfig.setMode(SINGLE_KNOB_MODE.STATIC);
+                    knobConfig.setColor1FromColor(knobStaticCDs[knob].getCustomColor());
                 } else if (knobSingleTabPane[knob].getSelectionModel().getSelectedIndex() == 1) {
-                    config.getKnobConfigs()[knob].setMode(SINGLE_KNOB_MODE.VOLUME_GRADIENT);
-                    config.getKnobConfigs()[knob].setColor1FromColor(knobVolumeGradientCD1[knob].getCustomColor());
-                    config.getKnobConfigs()[knob].setColor2FromColor(knobVolumeGradientCD2[knob].getCustomColor());
+                    knobConfig.setMode(SINGLE_KNOB_MODE.VOLUME_GRADIENT);
+                    knobConfig.setColor1FromColor(knobVolumeGradientCD1[knob].getCustomColor());
+                    knobConfig.setColor2FromColor(knobVolumeGradientCD2[knob].getCustomColor());
                 }
-                setOverrideSetting(OverrideTargetType.KNOB, knob, config.getKnobConfigs()[knob]::setMuteOverrideColorFromColor);
+                setOverrideSetting(OverrideTargetType.KNOB, knob, knobConfig::setMuteOverrideDeviceOrFollow, knobConfig::setMuteOverrideColorFromColor);
             }
             int slider;
             for (slider = 0; slider < NUM_SLIDERS; slider++) {
+                var sliderLabelConfig = config.getSliderLabelConfigs()[slider];
                 if (sliderLabelSingleTabPane[slider].getSelectionModel().getSelectedIndex() == 0) {
-                    config.getSliderLabelConfigs()[slider].setMode(SINGLE_SLIDER_LABEL_MODE.STATIC);
-                    config.getSliderLabelConfigs()[slider].setColorFromColor(sliderLabelStaticCDs[slider].getCustomColor());
+                    sliderLabelConfig.setMode(SINGLE_SLIDER_LABEL_MODE.STATIC);
+                    sliderLabelConfig.setColorFromColor(sliderLabelStaticCDs[slider].getCustomColor());
                 }
-                setOverrideSetting(OverrideTargetType.SLIDER_LABEL, slider, config.getSliderLabelConfigs()[slider]::setMuteOverrideColorFromColor);
+                setOverrideSetting(OverrideTargetType.SLIDER_LABEL, slider, sliderLabelConfig::setMuteOverrideDeviceOrFollow, sliderLabelConfig::setMuteOverrideColorFromColor);
             }
             for (slider = 0; slider < NUM_SLIDERS; slider++) {
                 if (sliderSingleTabPane[slider].getSelectionModel().getSelectedIndex() == 0) {
@@ -485,7 +505,8 @@ public class ProLightingDialog extends Application implements UIInitializer, ILi
                     config.getSliderConfigs()[slider].setColor1FromColor(sliderVolumeGradientCD1[slider].getCustomColor());
                     config.getSliderConfigs()[slider].setColor2FromColor(sliderVolumeGradientCD2[slider].getCustomColor());
                 }
-                setOverrideSetting(OverrideTargetType.SLIDER, slider, config.getSliderConfigs()[slider]::setMuteOverrideColorFromColor);
+                var sliderConfig = config.getSliderConfigs()[slider];
+                setOverrideSetting(OverrideTargetType.SLIDER, slider, sliderConfig::setMuteOverrideDeviceOrFollow, sliderConfig::setMuteOverrideColorFromColor);
             }
             if (logoTabPane.getSelectionModel().getSelectedIndex() == 0) {
                 config.getLogoConfig().setMode(SINGLE_LOGO_MODE.STATIC);
@@ -513,5 +534,10 @@ public class ProLightingDialog extends Application implements UIInitializer, ILi
         gp.addColumn(0, l1, l2);
         gp.addColumn(1, obj1, obj2);
         return gp;
+    }
+
+    @Override
+    public Collection<AudioDevice> getDevices() {
+        return sndCtrl.getDevices();
     }
 }

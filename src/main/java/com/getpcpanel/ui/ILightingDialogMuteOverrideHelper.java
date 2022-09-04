@@ -1,39 +1,50 @@
 package com.getpcpanel.ui;
 
+import java.util.Collection;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.getpcpanel.cpp.AudioDevice;
 import com.getpcpanel.ui.colorpicker.ColorDialog;
 
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TabPane.TabClosingPolicy;
+import javafx.scene.control.Tooltip;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import one.util.streamex.StreamEx;
 
 public interface ILightingDialogMuteOverrideHelper {
-    record OverrideTarget(CheckBox[] cb, ColorDialog[] cd) {
+    String FOLLOW_PROCESS = "Follow what is controlled by this knob/slider";
+
+    record OverrideTarget(CheckBox[] cb, ComboBox<String>[] deviceProcess, ColorDialog[] cd) {
     }
 
     enum OverrideTargetType {
         KNOB, SLIDER, SLIDER_LABEL
     }
 
-    default CheckBox[] getMuteOverrideCheckboxesKnobs() {
-        return new CheckBox[0];
-    }
+    CheckBox[] getMuteOverrideCheckboxesKnobs();
 
-    default ColorDialog[] getMuteOverrideColorsKnobs() {
-        return new ColorDialog[0];
-    }
+    ComboBox<String>[] getMuteOverrideComboBoxesKnobs();
+
+    ColorDialog[] getMuteOverrideColorsKnobs();
 
     default CheckBox[] getMuteOverrideCheckboxesSliders() {
         return new CheckBox[0];
+    }
+
+    default ComboBox<String>[] getMuteOverrideComboBoxesSliders() {
+        //noinspection unchecked
+        return new ComboBox[0];
     }
 
     default ColorDialog[] getMuteOverrideColorsSliders() {
@@ -44,34 +55,61 @@ public interface ILightingDialogMuteOverrideHelper {
         return new CheckBox[0];
     }
 
+    default ComboBox<String>[] getMuteOverrideComboBoxesSliderLabels() {
+        //noinspection unchecked
+        return new ComboBox[0];
+    }
+
     default ColorDialog[] getMuteOverrideColorsSliderLabels() {
         return new ColorDialog[0];
     }
 
+    Collection<AudioDevice> getDevices();
+
+    @SuppressWarnings("NestedAssignment")
     default TabPane tabWithMuteOverride(ProLightingDialog.OverrideTargetType ott, int button, TabPane tab) {
         var target = getOverrideTarget(ott);
         var vBox = new VBox();
-        target.cd()[button] = new ColorDialog();
-        target.cb()[button] = new CheckBox("Enable mute override");
+        var cd = target.cd()[button] = new ColorDialog();
+        var deviceProcess = target.deviceProcess()[button] = new ComboBox<>();
+        var cb = target.cb()[button] = new CheckBox("Enable mute override");
         var label = new Label(
                 "Mute override looks at the action on the dial/slider, not the button. If a dial controls the volume of a device or process, "
                         + "the mute override will set the color when that device or process is muted. If the button action triggers mute but the slider/dial "
                         + "does not control that device/process, mute override will do nothing.");
         var insets = new Insets(15, 15, 0, 15);
         label.setPadding(insets);
-        target.cb()[button].setPadding(insets);
+        cb.setPadding(insets);
         label.setWrapText(true);
         vBox.getChildren().addAll(
                 label,
-                target.cb()[button],
-                target.cd()[button]
+                cb,
+                setDeviceProcessOptions(deviceProcess, insets),
+                cd
         );
+
         var muteTab = new Tab("Mute override", vBox);
         var originalTab = new Tab("Color", tab);
 
         var result = new TabPane(originalTab, muteTab);
         result.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
         return result;
+    }
+
+    private HBox setDeviceProcessOptions(ComboBox<String> deviceProcess, Insets insets) {
+        deviceProcess.setEditable(true);
+        deviceProcess.setTooltip(new Tooltip("Can be a partial device name"));
+        StreamEx.of(getDevices()).map(AudioDevice::name).sorted().prepend(FOLLOW_PROCESS).forEach(deviceProcess.getItems()::add);
+        deviceProcess.setPrefWidth(20000);
+        var label = new Label("Follow: ");
+        label.setMinWidth(100);
+
+        var deviceProcessBox = new HBox();
+        deviceProcessBox.setPadding(insets);
+        deviceProcessBox.setAlignment(Pos.CENTER);
+        deviceProcessBox.getChildren().add(label);
+        deviceProcessBox.getChildren().add(deviceProcess);
+        return deviceProcessBox;
     }
 
     default CheckBox[] allOverrideCheckboxes() {
@@ -82,23 +120,33 @@ public interface ILightingDialogMuteOverrideHelper {
         return StreamEx.of(OverrideTargetType.values()).flatMap(t -> StreamEx.of(getOverrideTarget(t).cd())).toArray(ColorDialog[]::new);
     }
 
+    default ComboBox<?>[] allOverrideComboBoxes() {
+        return StreamEx.of(OverrideTargetType.values()).flatMap(t -> StreamEx.of(getOverrideTarget(t).deviceProcess())).toArray(ComboBox[]::new);
+    }
+
     default OverrideTarget getOverrideTarget(OverrideTargetType ott) {
         return switch (ott) {
-            case KNOB -> new OverrideTarget(getMuteOverrideCheckboxesKnobs(), getMuteOverrideColorsKnobs());
-            case SLIDER -> new OverrideTarget(getMuteOverrideCheckboxesSliders(), getMuteOverrideColorsSliders());
-            case SLIDER_LABEL -> new OverrideTarget(getMuteOverrideCheckboxesSliderLabels(), getMuteOverrideColorsSliderLabels());
+            case KNOB -> new OverrideTarget(getMuteOverrideCheckboxesKnobs(), getMuteOverrideComboBoxesKnobs(), getMuteOverrideColorsKnobs());
+            case SLIDER -> new OverrideTarget(getMuteOverrideCheckboxesSliders(), getMuteOverrideComboBoxesSliders(), getMuteOverrideColorsSliders());
+            case SLIDER_LABEL -> new OverrideTarget(getMuteOverrideCheckboxesSliderLabels(), getMuteOverrideComboBoxesSliderLabels(), getMuteOverrideColorsSliderLabels());
         };
     }
 
-    default void setOverride(OverrideTargetType type, int typeIndex, String muteOverrideColor) {
+    default void setOverride(OverrideTargetType type, int typeIndex, String deviceOrFollow, String muteOverrideColor) {
         var target = getOverrideTarget(type);
         target.cb()[typeIndex].setSelected(StringUtils.isNotBlank(muteOverrideColor));
+        target.deviceProcess()[typeIndex].setValue(deviceOrFollow);
         target.cd()[typeIndex].setCustomColor(Color.web(StringUtils.defaultIfBlank(muteOverrideColor, "black")));
     }
 
-    default void setOverrideSetting(OverrideTargetType type, int typeIdx, Consumer<Color> colorSetter) {
+    default void setOverrideSetting(OverrideTargetType type, int typeIdx, Consumer<String> deviceFollowSetter, Consumer<Color> colorSetter) {
         var target = getOverrideTarget(type);
-        var overrideColor = target.cb()[typeIdx].isSelected() ? target.cd()[typeIdx].getCustomColor() : null;
-        colorSetter.accept(overrideColor);
+        if (target.cb()[typeIdx].isSelected()) {
+            deviceFollowSetter.accept(target.deviceProcess()[typeIdx].getValue());
+            colorSetter.accept(target.cd()[typeIdx].getCustomColor());
+        } else {
+            deviceFollowSetter.accept(null);
+            colorSetter.accept(null);
+        }
     }
 }

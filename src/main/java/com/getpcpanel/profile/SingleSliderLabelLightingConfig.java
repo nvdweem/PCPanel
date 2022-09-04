@@ -11,6 +11,7 @@ public class SingleSliderLabelLightingConfig {
     private SINGLE_SLIDER_LABEL_MODE mode;
 
     private String color;
+    private String muteOverrideDeviceOrFollow;
     private String muteOverrideColor;
 
     public SingleSliderLabelLightingConfig() {

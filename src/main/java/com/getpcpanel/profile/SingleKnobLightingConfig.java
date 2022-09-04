@@ -1,5 +1,7 @@
 package com.getpcpanel.profile;
 
+import javax.annotation.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.getpcpanel.util.Util;
 
@@ -11,7 +13,8 @@ public class SingleKnobLightingConfig {
     private SINGLE_KNOB_MODE mode;
     private String color1;
     private String color2;
-    private String muteOverrideColor;
+    @Nullable private String muteOverrideDeviceOrFollow;
+    @Nullable private String muteOverrideColor;
 
     public SingleKnobLightingConfig() {
         mode = SINGLE_KNOB_MODE.NONE;

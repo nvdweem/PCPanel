@@ -5,7 +5,8 @@
 **New:**
 
 - Added a feature that might fix twitching sliders on faulty hardware (#6)
-- [Linux] Allow controlling input volume
+- [Linux] Allow controlling input volume (#10)
+- Allow configuring what the mute override color follows
 
 **Fixes:**
 

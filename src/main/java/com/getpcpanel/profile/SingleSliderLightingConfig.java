@@ -11,6 +11,7 @@ public class SingleSliderLightingConfig {
     private SINGLE_SLIDER_MODE mode;
     private String color1;
     private String color2;
+    private String muteOverrideDeviceOrFollow;
     private String muteOverrideColor;
 
     public SingleSliderLightingConfig() {
