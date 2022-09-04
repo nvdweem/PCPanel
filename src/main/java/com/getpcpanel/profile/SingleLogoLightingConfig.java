@@ -25,5 +25,12 @@ public class SingleLogoLightingConfig {
         this.color = Util.formatHexString(color);
         return this;
     }
+
+    /**
+     * Used by Jackson
+     */
+    public void setColor(String color) {
+        this.color = color;
+    }
 }
 
