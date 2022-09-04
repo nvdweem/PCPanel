@@ -7,6 +7,7 @@
 - Added a feature that might fix twitching sliders on faulty hardware (#6)
 - [Linux] Allow controlling input volume (#10)
 - Allow configuring what the mute override color follows
+- OBS 28 support. Don't use this version of the software if you are still using OBS 27 or lower
 
 **Fixes:**
 
