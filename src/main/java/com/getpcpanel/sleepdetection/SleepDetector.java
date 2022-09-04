@@ -63,7 +63,7 @@ public final class SleepDetector {
     private void waitUntilEmptyPrioQueue(Device device) {
         var handler = deviceScanner.getConnectedDevice(device.getSerialNumber());
         for (var i = 0; i < 20; i++) {
-            if (handler.getPriorityQueue().isEmpty())
+            if (handler.getQueue().isEmpty())
                 break;
             try {
                 Thread.sleep(100L);

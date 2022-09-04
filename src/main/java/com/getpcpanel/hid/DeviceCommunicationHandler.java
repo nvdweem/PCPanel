@@ -7,13 +7,13 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.hid4java.HidDevice;
@@ -26,7 +26,7 @@ import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public class DeviceCommunicationHandler extends Thread {
+public class DeviceCommunicationHandler {
     private static final byte INPUT_CODE_KNOB_CHANGE = 1;
     private static final byte INPUT_CODE_BUTTON_CHANGE = 2;
 
@@ -36,22 +36,19 @@ public class DeviceCommunicationHandler extends Thread {
     private final String key;
     private final HidDevice device;
 
-    private static final int READ_TIMEOUT_MILLIS = 100;
+    private static final int COM_TIMEOUT_MILLIS = 100;
 
     private static final int PACKET_LENGTH = 64;
     private static final int FIRST_NON_INITIAL_READS = 20; // Could have been 9 (dials/sliders of the pro) but take 20 to be safe
     private final DeviceType deviceType;
     private int readUntilNotInitial = FIRST_NON_INITIAL_READS;
 
-    private final ConcurrentLinkedQueue<byte[]> priorityQueue = new ConcurrentLinkedQueue<>();
-    private final AtomicReference<byte[][]> mostRecentRGBRequest = new AtomicReference<>();
+    private final BlockingQueue<byte[]> queue = new LinkedBlockingQueue<>();
     private final KnobDebouncer debouncer = new KnobDebouncer();
     private final RollingAverageSetter rollingAverageSetter = new RollingAverageSetter();
     private final Map<Integer, Integer> prevSent = new ConcurrentHashMap<>();
 
     public DeviceCommunicationHandler(DeviceScanner deviceScanner, ApplicationEventPublisher eventPublisher, SaveService saveService, String key, HidDevice device, DeviceType deviceType) {
-        setName("HIDHandler");
-        setDaemon(true);
         this.eventPublisher = eventPublisher;
         this.deviceScanner = deviceScanner;
         this.saveService = saveService;
@@ -60,30 +57,25 @@ public class DeviceCommunicationHandler extends Thread {
         this.deviceType = deviceType;
     }
 
-    public void addToPriorityQueue(byte[]... datas) {
-        Collections.addAll(priorityQueue, datas);
+    public void start() {
+        var reader = new Thread(this::reader, "HIDReader " + device.getSerialNumber());
+        var writer = new Thread(this::writer, "HIDWriter " + device.getSerialNumber());
+        reader.setDaemon(true);
+        writer.setDaemon(true);
+        reader.start();
+        writer.start();
     }
 
-    public void publishRGBUpdate(byte[]... data) {
-        mostRecentRGBRequest.set(data);
+    public void sendMessage(byte[]... data) {
+        Collections.addAll(queue, data);
     }
 
-    public void sendMessage(boolean priority, byte[]... data) {
-        if (priority) {
-            addToPriorityQueue(data);
-        } else {
-            publishRGBUpdate(data);
-        }
-    }
-
-    @Override
-    public void run() {
-        //noinspection ObjectEquality
-        while (deviceScanner.getConnectedDevice(key) == this) {
+    public void reader() {
+        while (isConnected()) {
             var moreData = true;
             while (moreData) {
                 var data = new byte[PACKET_LENGTH];
-                var val = device.read(data, READ_TIMEOUT_MILLIS);
+                var val = device.read(data, COM_TIMEOUT_MILLIS);
                 if (readUntilNotInitial != 0) {
                     readUntilNotInitial--;
                 }
@@ -101,18 +93,27 @@ public class DeviceCommunicationHandler extends Thread {
                 }
                 interpretInputData(readUntilNotInitial != 0, data);
             }
-            if (!priorityQueue.isEmpty()) {
-                sendMessageReal(priorityQueue.remove());
-                continue;
-            }
-            if (mostRecentRGBRequest.get() != null) {
-                for (var data : mostRecentRGBRequest.getAndSet(null)) {
-                    sendMessageReal(data);
+        }
+    }
+
+    private void writer() {
+        while (isConnected()) {
+            try {
+                var toSend = queue.poll(COM_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+                if (toSend != null) {
+                    sendMessageReal(toSend);
                 }
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
         }
         debouncer.shutdown();
         rollingAverageSetter.shutdown();
+    }
+
+    private boolean isConnected() {
+        //noinspection ObjectEquality
+        return deviceScanner.getConnectedDevice(key) == this;
     }
 
     private void sendMessageReal(byte[] info) {
@@ -192,8 +193,8 @@ public class DeviceCommunicationHandler extends Thread {
         }
     }
 
-    public Queue<byte[]> getPriorityQueue() {
-        return priorityQueue;
+    public Queue<byte[]> getQueue() {
+        return queue;
     }
 
     public record KnobRotateEvent(String serialNum, int knob, int value, boolean initial) {
