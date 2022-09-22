@@ -183,7 +183,7 @@ public final class OBS {
         }
         var waiter = new Object();
         try {
-            var decimal = (float) Util.map(vol, 0, 100, -100, 26);
+            var decimal = (float) Util.map(vol, 0, 100, -97, 0);
             controller.setInputVolumeRequest(sourceName, decimal, null, x -> {
                 synchronized (waiter) {
                     waiter.notify();
