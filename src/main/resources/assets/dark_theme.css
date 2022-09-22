@@ -1,5 +1,4 @@
 .root {
-    -fx-font-family: Roboto;
     -fx-base: #25262A;
     -fx-accent: #e7eff7;
     -fx-default-button: #7f878f;
@@ -25,13 +24,7 @@
 }
 
 
-@font-face {
-    font-family: 'Roboto Medium';
-    src: url('Roboto-Medium.ttf');
-}
-
 .text-input {
-    -fx-font-family: 'Roboto Medium';
     -fx-font-size: 15;
     -fx-text-inner-color: white;
     fx-prompt-text-fill: white, 60%;

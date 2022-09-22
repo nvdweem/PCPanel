@@ -15,6 +15,7 @@
 - The application names are now case-insensitive for volume changing or muting
 - Profile switching using a shortcut is disabled on Linux, it crashed the VM on certain distros
 - OBS volume range is now from -97 (-inf db) to 0 instead of -100 to 26
+- Removed Roboto font, hoping to fix [this issue](https://www.reddit.com/r/PCPanel/comments/xh0dy4/)
 
 ## [1.4]
 

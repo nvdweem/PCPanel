@@ -55,7 +55,7 @@
             <VBox fx:id="hintHolder" alignment="CENTER" prefHeight="200.0" prefWidth="100.0" GridPane.rowIndex="2">
                 <Label fx:id="hintLabel" opacity="0.74" text="Click a Knob on Screen to get Started" textFill="WHITE">
                     <font>
-                        <Font name="Roboto Bold" size="25.0"/>
+                        <Font size="25.0"/>
                     </font>
                 </Label>
             </VBox>
@@ -66,7 +66,7 @@
             </VBox.margin>
             <Label fx:id="versionLabel" opacity="0.5" prefHeight="22.0" prefWidth="336.0" text="PCPanel Editor 1.0.0" textFill="WHITE" HBox.hgrow="ALWAYS">
                 <font>
-                    <Font name="Roboto Bold" size="16.0"/>
+                    <Font size="16.0"/>
                 </font>
             </Label>
             <HBox fx:id="lightingButtonHolder" alignment="BOTTOM_RIGHT" HBox.hgrow="ALWAYS"/>

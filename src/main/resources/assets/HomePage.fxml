@@ -44,7 +44,7 @@
         <VBox fx:id="hintHolder" alignment="CENTER" maxHeight="-Infinity" prefHeight="50.0">
             <Label fx:id="hintLabel" opacity="0.74" text="Click a Knob on Screen to get Started" textFill="WHITE">
                 <font>
-                    <Font name="Roboto Bold" size="25.0"/>
+                    <Font size="25.0"/>
                 </font>
             </Label>
         </VBox>
@@ -53,13 +53,11 @@
                 <Insets bottom="5.0" left="5.0" right="5.0"/>
             </VBox.margin>
             <VBox fx:id="labelTarget" alignment="BOTTOM_LEFT" prefHeight="200.0" prefWidth="336.0">
-                <children>
-                    <Label fx:id="versionLabel" opacity="0.5" prefHeight="22.0" prefWidth="336.0" text="PCPanel Editor 1.0.0" textFill="WHITE">
-                        <font>
-                            <Font name="Roboto Bold" size="16.0"/>
-                        </font>
-                    </Label>
-                </children>
+                <Label fx:id="versionLabel" opacity="0.5" prefHeight="22.0" prefWidth="336.0" text="PCPanel Editor 1.0.0" textFill="WHITE">
+                    <font>
+                        <Font size="16.0"/>
+                    </font>
+                </Label>
             </VBox>
             <HBox alignment="BOTTOM_RIGHT" HBox.hgrow="ALWAYS">
                 <HBox fx:id="profileHolder" alignment="BOTTOM_RIGHT" prefHeight="100.0" prefWidth="300.0">

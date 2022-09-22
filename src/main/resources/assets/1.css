@@ -1,5 +1,4 @@
 .root {
-    -fx-font-family: Roboto;
     -fx-base: #25262A;
     -fx-accent: #e7eff7;
     -fx-default-button: #7f878f;
@@ -15,7 +14,6 @@
             -fx-mid-text-color 60%
     );
     -fx-focused-mark-color: -fx-focused-text-base-color;
-
 }
 
 .text-input:focused {
@@ -36,19 +34,8 @@
     -fx-effect: dropshadow(three-pass-box, black, 30, 0.5, 0, 0);
 }
 
-@font-face {
-    font-family: 'Apex Mk2 Regular';
-    src: url('apex-mk2.regular.otf');
-}
-
-@font-face {
-    font-family: 'Roboto Medium';
-    src: url('Roboto-Medium.ttf');
-}
-
 .list-cell {
     -fx-font-size: 20.0;
-    -fx-font-family: 'Roboto Medium';
     -fx-graphic-text-gap: 5.0;
     -fx-text-fill: white;
 }
@@ -97,7 +84,6 @@
 }
 
 #versionLabel {
-    -fx-font-family: 'Roboto Medium';
     -fx-font-size: 16;
 }
 
