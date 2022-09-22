@@ -18,7 +18,6 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
 import javafx.scene.control.CheckBox;
-import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TextField;
@@ -48,7 +47,6 @@ public class SettingsDialog extends Application implements UIInitializer {
     @FXML private TextField obsPort;
     @FXML private TextField obsPassword;
     @FXML private Label obsTestResult;
-    @FXML private Hyperlink obsLink;
     @FXML private CheckBox vmEnable;
     @FXML private Pane vmControls;
     @FXML private TextField vmPath;
@@ -157,7 +155,6 @@ public class SettingsDialog extends Application implements UIInitializer {
     }
 
     private void postInit() {
-        obsLink.setOnAction(c -> getHostServices().showDocument(obsLink.getText()));
         initFields();
     }
 }

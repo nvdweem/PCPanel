@@ -16,7 +16,7 @@ public class Save {
     private Map<String, DeviceSave> devices = new ConcurrentHashMap<>();
     private boolean obsEnabled;
     private String obsAddress = "localhost";
-    private String obsPort = "4444";
+    private String obsPort = "4455";
     private String obsPassword;
     private boolean voicemeeterEnabled;
     private String voicemeeterPath = "C:\\Program Files (x86)\\VB\\Voicemeeter";
