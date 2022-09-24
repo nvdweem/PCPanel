@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<HBox alignment="CENTER" prefHeight="56.0" prefWidth="264.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1">
+    <ImageView fx:id="icon" fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true">
+        <HBox.margin>
+            <Insets right="10.0"/>
+        </HBox.margin>
+    </ImageView>
+    <ProgressBar fx:id="volume" prefWidth="200.0" progress="0.0"/>
+</HBox>

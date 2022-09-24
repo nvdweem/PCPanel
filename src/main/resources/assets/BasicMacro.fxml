@@ -3,7 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<VBox fx:id="root" prefHeight="593.0" prefWidth="890.0" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.BasicMacro">
+<VBox fx:id="root" prefHeight="593.0" prefWidth="890.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.BasicMacro">
     <TabPane fx:id="mainTabPane" layoutX="70.0" layoutY="72.0" prefHeight="523.0" prefWidth="723.0" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
         <Tab fx:id="buttonpane" closable="false" text="Button">
             <TabPane fx:id="buttonTabPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="209.0" prefWidth="376.0" rotateGraphic="true" side="LEFT" tabClosingPolicy="UNAVAILABLE">
@@ -526,6 +526,22 @@
                                     </HBox.margin>
                                 </Label>
                                 <TextField fx:id="trimMax" prefWidth="100.0" text="100"/>
+                            </children>
+                        </HBox>
+                        <Separator prefWidth="200.0"/>
+                        <HBox alignment="CENTER_LEFT">
+                            <children>
+                                <Label prefHeight="21.0" prefWidth="93.0" text="Overlay icon">
+                                    <HBox.margin>
+                                        <Insets/>
+                                    </HBox.margin>
+                                </Label>
+                                <TextField fx:id="iconFld" prefWidth="100.0" HBox.hgrow="ALWAYS">
+                                    <HBox.margin>
+                                        <Insets right="10.0"/>
+                                    </HBox.margin>
+                                </TextField>
+                                <Button fx:id="iconFileButton" mnemonicParsing="false" onAction="#iconFile" prefHeight="25.0" prefWidth="34.0" text="..."/>
                             </children>
                         </HBox>
                         <Separator prefWidth="200.0"/>

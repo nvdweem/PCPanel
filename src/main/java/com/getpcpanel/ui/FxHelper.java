@@ -3,6 +3,8 @@ package com.getpcpanel.ui;
 import java.io.IOException;
 import java.net.URL;
 
+import javax.annotation.Nullable;
+
 import org.springframework.stereotype.Service;
 
 import com.getpcpanel.MainFX;
@@ -24,7 +26,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class FxHelper {
-    public FXMLLoader getLoader(URL location) {
+    public FXMLLoader getLoader(@Nullable URL location) {
         var loader = new FXMLLoader(location);
         loader.setControllerFactory(MainFX::getBean);
         return loader;

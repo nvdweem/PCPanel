@@ -11,6 +11,14 @@
 <?import javafx.scene.layout.VBox?>
 <VBox fx:id="root" prefHeight="441.0" prefWidth="700.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.SettingsDialog">
     <TabPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="700.0" tabClosingPolicy="UNAVAILABLE">
+        <Tab text="Settings">
+            <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0">
+                <padding>
+                    <Insets bottom="8.0" left="8.0" right="8.0" top="8.0"/>
+                </padding>
+                <CheckBox fx:id="overlay" mnemonicParsing="false" text="Use overlay"/>
+            </VBox>
+        </Tab>
         <Tab text="OBS">
             <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0">
                 <padding>

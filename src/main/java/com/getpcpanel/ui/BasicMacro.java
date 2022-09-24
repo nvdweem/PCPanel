@@ -158,6 +158,7 @@ public class BasicMacro extends Application implements UIInitializer {
     @FXML private ChoiceBox<DialControlMode> voicemeeterDialType;
     @FXML private TextField trimMin;
     @FXML private TextField trimMax;
+    @FXML private TextField iconFld;
     @FXML private TextField buttonDebounceTime;
     @FXML private CheckBox logarithmic;
     private Stage stage;
@@ -268,6 +269,7 @@ public class BasicMacro extends Application implements UIInitializer {
         volData = determineVolCommand(dialType);
         knobSetting.setMinTrim(NumberUtils.toInt(trimMin.getText(), 0));
         knobSetting.setMaxTrim(NumberUtils.toInt(trimMax.getText(), 100));
+        knobSetting.setOverlayIcon(iconFld.getText());
         knobSetting.setButtonDebounce(NumberUtils.toInt(buttonDebounceTime.getText(), 50));
         knobSetting.setLogarithmic(logarithmic.isSelected());
         if (hasButton)
@@ -364,6 +366,11 @@ public class BasicMacro extends Application implements UIInitializer {
     @FXML
     private void scFile(ActionEvent event) {
         UIHelper.showFilePicker("Pick file", shortcutField);
+    }
+
+    @FXML
+    public void iconFile(ActionEvent event) {
+        UIHelper.showFilePicker("Pick file", iconFld);
     }
 
     @FXML
@@ -614,6 +621,7 @@ public class BasicMacro extends Application implements UIInitializer {
         if (knobSetting != null) {
             trimMin.setText(String.valueOf(knobSetting.getMinTrim()));
             trimMax.setText(String.valueOf(knobSetting.getMaxTrim()));
+            iconFld.setText(StringUtils.defaultString(knobSetting.getOverlayIcon(), ""));
             buttonDebounceTime.setText(String.valueOf(knobSetting.getButtonDebounce()));
             logarithmic.setSelected(knobSetting.isLogarithmic());
         }
