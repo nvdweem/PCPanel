@@ -8,8 +8,6 @@ import java.util.function.Function;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
-import com.getpcpanel.spring.ConditionalOnWindows;
-
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -17,6 +15,7 @@ import org.springframework.stereotype.Service;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.spring.ConditionalOnWindows;
 import com.github.kwhat.jnativehook.GlobalScreen;
 import com.github.kwhat.jnativehook.NativeHookException;
 import com.github.kwhat.jnativehook.NativeInputEvent;
@@ -45,7 +44,7 @@ public class ShortcutHook implements NativeKeyListener {
         try {
             GlobalScreen.registerNativeHook();
             GlobalScreen.addNativeKeyListener(this);
-        } catch (NativeHookException ex) {
+        } catch (NativeHookException | UnsatisfiedLinkError ex) {
             log.error("Unable to register global hook, shortcuts will not work", ex);
         }
 
