@@ -512,6 +512,7 @@
                         <Label text="Dial Settings"/>
                         <Separator prefWidth="200.0"/>
                         <CheckBox fx:id="logarithmic" mnemonicParsing="false" text="Logarithmic Scaling"/>
+                        <Separator prefWidth="200.0"/>
                         <HBox alignment="CENTER_LEFT">
                             <children>
                                 <Label prefHeight="21.0" prefWidth="93.0" text="Trim Min"/>

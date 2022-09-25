@@ -15,6 +15,7 @@ import lombok.extern.log4j.Log4j2;
 public class Save {
     private Map<String, DeviceSave> devices = new ConcurrentHashMap<>();
     private boolean overlayEnabled;
+    private boolean mainUIIcons;
     private boolean obsEnabled;
     private String obsAddress = "localhost";
     private String obsPort = "4455";

@@ -3,6 +3,7 @@ package com.getpcpanel.device;
 import java.io.IOException;
 import java.util.Objects;
 
+import com.getpcpanel.commands.IconService;
 import com.getpcpanel.hid.DeviceCommunicationHandler;
 import com.getpcpanel.hid.InputInterpreter;
 import com.getpcpanel.hid.OutputInterpreter;
@@ -26,6 +27,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
@@ -49,6 +51,7 @@ public class PCPanelProUI extends Device {
     private Label label;
     private Button lightingButton;
     private final Button[] knobs = new Button[9];
+    private final ImageView[] images = new ImageView[9];
     private static final Image previewImage = new Image(Objects.requireNonNull(PCPanelProUI.class.getResource("/assets/PCPanelPro/Pro_Cutout.png")).toExternalForm());
     private Stage childDialogStage;
     @FXML private Pane sliderHolder1;
@@ -75,8 +78,8 @@ public class PCPanelProUI extends Device {
     private final int[] analogValue = new int[9];
     private final Pane[] sliderHolders = new Pane[4];
 
-    public PCPanelProUI(FxHelper fxHelper, InputInterpreter inputInterpreter, SaveService saveService, OutputInterpreter outputInterpreter, String serialNum, DeviceSave deviceSave) {
-        super(fxHelper, saveService, outputInterpreter, serialNum, deviceSave);
+    public PCPanelProUI(FxHelper fxHelper, InputInterpreter inputInterpreter, SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, String serialNum, DeviceSave deviceSave) {
+        super(fxHelper, saveService, outputInterpreter, iconService, serialNum, deviceSave);
         this.inputInterpreter = inputInterpreter;
         var loader = getFxHelper().getLoader(getClass().getResource("/assets/PCPanelPro/PCPanelPro.fxml"));
         loader.setController(this);
@@ -93,6 +96,7 @@ public class PCPanelProUI extends Device {
         } catch (IOException e) {
             log.error("Unable to init ui", e);
         }
+        postInit();
     }
 
     @Override
@@ -114,6 +118,7 @@ public class PCPanelProUI extends Device {
         } else {
             var x = Util.map(val, 0.0D, 100.0D, sliderHolders[knob - 5].getPrefHeight(), 0.0D) - 40.0D;
             knobs[knob].setLayoutY(x);
+            images[knob].setLayoutY(x);
         }
     }
 
@@ -155,6 +160,7 @@ public class PCPanelProUI extends Device {
                 loader = getFxHelper().getLoader(getClass().getResource("/assets/PCPanelPro/slider.fxml"));
             }
             Node nx = loader.load();
+            images[i] = buildKnobImageView();
             knobs[i] = new Button("", nx);
             knobs[i].setId("dial_button");
             knobs[i].setContentDisplay(ContentDisplay.CENTER);
@@ -165,12 +171,21 @@ public class PCPanelProUI extends Device {
                 knobs[i].setLayoutY(yPos);
                 knobs[i].setScaleX(1.2D);
                 knobs[i].setScaleY(1.2D);
+
+                images[i].setLayoutX(xPos + 5);
+                images[i].setLayoutY(yPos + 5);
+                images[i].setFitWidth(71);
+                images[i].setFitHeight(71);
             } else {
                 knobs[i].setMinSize(buttonSize, buttonSize);
                 knobs[i].setMaxSize(buttonSize, buttonSize);
                 knobs[i].setLayoutX(-26.0D);
                 knobs[i].setScaleX(0.4D);
                 knobs[i].setScaleY(0.4D);
+
+                images[i].setLayoutX(-11.0D);
+                images[i].setFitWidth(50);
+                images[i].setFitHeight(50);
             }
             var knob = i;
             knobs[i].setOnAction(e -> {
@@ -204,8 +219,10 @@ public class PCPanelProUI extends Device {
             });
             if (i < 5) {
                 panelPane.getChildren().add(knobs[i]);
+                panelPane.getChildren().add(images[i]);
             } else {
                 sliderHolders[i - 5].getChildren().add(knobs[i]);
+                sliderHolders[i - 5].getChildren().add(images[i]);
             }
             xPos += xDelta;
             if (i == 1) {
@@ -354,5 +371,10 @@ public class PCPanelProUI extends Device {
 
     private static Color createFill(LightingConfig config, int totalRows, int row) {
         return Color.hsb((360 * (totalRows - row - 1) * (0xFF & config.getRainbowPhaseShift())) / 255.0D * totalRows, 1.0D, (0xFF & config.getRainbowBrightness()) / 255.0D);
+    }
+
+    @Override
+    protected ImageView[] getKnobImages() {
+        return images;
     }
 }

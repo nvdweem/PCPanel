@@ -3,6 +3,7 @@ package com.getpcpanel.device;
 import java.io.IOException;
 import java.util.Objects;
 
+import com.getpcpanel.commands.IconService;
 import com.getpcpanel.hid.DeviceCommunicationHandler;
 import com.getpcpanel.hid.InputInterpreter;
 import com.getpcpanel.hid.OutputInterpreter;
@@ -21,6 +22,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
@@ -41,11 +43,12 @@ public class PCPanelRGBUI extends Device {
     private Label label;
     private Button lightingButton;
     private final Button[] knobs = new Button[KNOB_COUNT];
+    private final ImageView[] images = new ImageView[KNOB_COUNT];
     private static final Image previewImage = new Image(Objects.requireNonNull(PCPanelRGBUI.class.getResource("/assets/PCPanelRGB/preview.png")).toExternalForm());
     private Stage childDialogStage;
 
-    public PCPanelRGBUI(FxHelper fxHelper, InputInterpreter inputInterpreter, SaveService saveService, OutputInterpreter outputInterpreter, DeviceSave deviceSave, String serialNum) {
-        super(fxHelper, saveService, outputInterpreter, serialNum, deviceSave);
+    public PCPanelRGBUI(FxHelper fxHelper, InputInterpreter inputInterpreter, SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, DeviceSave deviceSave, String serialNum) {
+        super(fxHelper, saveService, outputInterpreter, iconService, serialNum, deviceSave);
         this.inputInterpreter = inputInterpreter;
         var loader = getFxHelper().getLoader(getClass().getResource("/assets/PCPanelRGB/PCPanelRGB.fxml"));
         loader.setController(this);
@@ -58,6 +61,7 @@ public class PCPanelRGBUI extends Device {
         } catch (IOException e) {
             log.error("Unable to init ui", e);
         }
+        postInit();
     }
 
     @Override
@@ -107,6 +111,7 @@ public class PCPanelRGBUI extends Device {
         for (var i = 0; i < KNOB_COUNT; i++) {
             var loader = getFxHelper().getLoader(getClass().getResource("/assets/PCPanelRGB/knob.fxml"));
             Node nx = loader.load();
+            images[i] = buildKnobImageView();
             knobs[i] = new Button("", nx);
             knobs[i].setId("dial_button");
             knobs[i].setContentDisplay(ContentDisplay.CENTER);
@@ -114,6 +119,12 @@ public class PCPanelRGBUI extends Device {
             knobs[i].setMaxSize(buttonSize, buttonSize);
             knobs[i].setLayoutX(xPos);
             knobs[i].setLayoutY(yPos);
+
+            images[i].setLayoutX(xPos + 10);
+            images[i].setLayoutY(yPos + 10);
+            images[i].setFitWidth(buttonSize - 20);
+            images[i].setFitHeight(buttonSize - 20);
+
             var knob = i;
             knobs[i].setOnAction(e -> {
                 HomePage.showHint(false);
@@ -143,6 +154,7 @@ public class PCPanelRGBUI extends Device {
                 }
             });
             panelPane.getChildren().add(knobs[i]);
+            panelPane.getChildren().add(images[i]);
             xPos += xDelta;
         }
     }
@@ -221,5 +233,10 @@ public class PCPanelRGBUI extends Device {
             for (var i = 0; i < getKnobCount(); i++)
                 setKnobUIColor(i, Color.hsb(360.0D * (0xFF & config.getBreathHue()) / 255.0D, 1.0D, (0xFF & config.getBreathBrightness()) / 255.0D));
         }
+    }
+
+    @Override
+    protected ImageView[] getKnobImages() {
+        return images;
     }
 }

@@ -12,12 +12,17 @@ import org.springframework.scheduling.annotation.Scheduled;
 @EnableCaching
 public class CachingConfig {
     @Bean
-    public CacheManager commandImageCacheManager() {
-        return new ConcurrentMapCacheManager("command-image");
+    public CacheManager cacheManager() {
+        return new ConcurrentMapCacheManager("icon", "command-icon");
     }
 
-    @CacheEvict(allEntries = true, cacheNames = "command-image")
+    @CacheEvict(allEntries = true, cacheNames = "icon")
+    @Scheduled(fixedDelay = 300_000)
+    public void iconEvict() {
+    }
+
+    @CacheEvict(allEntries = true, cacheNames = "command-icon")
     @Scheduled(fixedDelay = 1_000)
-    public void cacheEvict() {
+    public void commandIconEvict() {
     }
 }

@@ -12,6 +12,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 
+import com.getpcpanel.cpp.windows.WindowFocusChangedEvent;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.device.DeviceFactory;
 import com.getpcpanel.device.DeviceType;
@@ -68,5 +69,15 @@ public class DeviceHolder {
         if (device != null) {
             Platform.runLater(device::disconnected);
         }
+    }
+
+    @EventListener(WindowFocusChangedEvent.class)
+    public void focusApplicationChanged() {
+        devices.values().forEach(Device::focusApplicationChanged);
+    }
+
+    @EventListener(SaveService.SaveEvent.class)
+    public void saveChanged() {
+        devices.values().forEach(Device::saveChanged);
     }
 }

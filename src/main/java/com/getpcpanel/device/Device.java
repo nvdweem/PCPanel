@@ -4,6 +4,8 @@ import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.getpcpanel.commands.IconService;
+import com.getpcpanel.commands.command.CommandVolumeFocus;
 import com.getpcpanel.hid.OutputInterpreter;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.LightingConfig;
@@ -43,18 +45,24 @@ public abstract class Device {
     @Getter(AccessLevel.PROTECTED) private final FxHelper fxHelper;
     private final SaveService saveService;
     private final OutputInterpreter outputInterpreter;
+    private final IconService iconService;
     @Getter private HBox profileMenu;
     private ComboBox<Profile> profiles;
     @Getter protected String serialNumber;
     protected DeviceSave save;
 
-    protected Device(FxHelper fxHelper, SaveService saveService, OutputInterpreter outputInterpreter, String serialNum, DeviceSave deviceSave) {
+    protected Device(FxHelper fxHelper, SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, String serialNum, DeviceSave deviceSave) {
         this.fxHelper = fxHelper;
         this.saveService = saveService;
         this.outputInterpreter = outputInterpreter;
+        this.iconService = iconService;
         serialNumber = serialNum;
         save = deviceSave;
         initProfileMenu();
+    }
+
+    protected void postInit() {
+        updateAllImages();
     }
 
     private void initProfileMenu() {
@@ -292,6 +300,52 @@ public abstract class Device {
         lightingImageView.setPreserveRatio(true);
         return lightingImageView;
     }
+
+    public void focusApplicationChanged() {
+        var images = getKnobImages();
+        for (var i = 0; i < images.length; i++) {
+            if (save.getDialData(i) instanceof CommandVolumeFocus) {
+                determineAndSetImage(i);
+            }
+        }
+    }
+
+    public void saveChanged() {
+        updateAllImages();
+    }
+
+    protected void updateAllImages() {
+        for (var i = 0; i < getKnobImages().length; i++) {
+            determineAndSetImage(i);
+        }
+    }
+
+    private void determineAndSetImage(int dial) {
+        var images = getKnobImages();
+        if (!isShowIcons()) {
+            images[dial].setImage(null);
+            return;
+        }
+
+        var cmd = save.getDialData(dial);
+        var settings = save.getKnobSettings(dial);
+
+        var image = iconService.getImageFrom(cmd, settings);
+        images[dial].setImage(iconService.isDefault(image) ? null : image);
+    }
+
+    protected ImageView buildKnobImageView() {
+        var result = new ImageView();
+        result.setOpacity(.4);
+        result.setMouseTransparent(true);
+        return result;
+    }
+
+    private boolean isShowIcons() {
+        return saveService.get().isMainUIIcons();
+    }
+
+    protected abstract ImageView[] getKnobImages();
 
     public abstract Pane getDevicePane();
 

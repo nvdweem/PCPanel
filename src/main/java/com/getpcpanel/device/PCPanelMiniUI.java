@@ -3,6 +3,7 @@ package com.getpcpanel.device;
 import java.io.IOException;
 import java.util.Objects;
 
+import com.getpcpanel.commands.IconService;
 import com.getpcpanel.hid.DeviceCommunicationHandler;
 import com.getpcpanel.hid.InputInterpreter;
 import com.getpcpanel.hid.OutputInterpreter;
@@ -22,6 +23,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
@@ -44,11 +46,12 @@ public class PCPanelMiniUI extends Device {
     private Button lightingButton;
     private final Button[] knobs = new Button[KNOB_COUNT];
     private final int[] analogValue = new int[KNOB_COUNT];
+    private final ImageView[] images = new ImageView[KNOB_COUNT];
     private static final Image previewImage = new Image(Objects.requireNonNull(PCPanelMiniUI.class.getResource("/assets/PCPanelMini/preview.png")).toExternalForm());
     private Stage childDialogStage;
 
-    public PCPanelMiniUI(FxHelper fxHelper, InputInterpreter inputInterpreter, SaveService saveService, OutputInterpreter outputInterpreter, String serialNum, DeviceSave deviceSave) {
-        super(fxHelper, saveService, outputInterpreter, serialNum, deviceSave);
+    public PCPanelMiniUI(FxHelper fxHelper, InputInterpreter inputInterpreter, SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, String serialNum, DeviceSave deviceSave) {
+        super(fxHelper, saveService, outputInterpreter, iconService, serialNum, deviceSave);
         this.inputInterpreter = inputInterpreter;
         var loader = getFxHelper().getLoader(getClass().getResource("/assets/PCPanelMini/PCPanelMini.fxml"));
         loader.setController(this);
@@ -61,6 +64,7 @@ public class PCPanelMiniUI extends Device {
         } catch (IOException e) {
             log.error("Unable to initialize ui", e);
         }
+        postInit();
     }
 
     @Override
@@ -116,6 +120,7 @@ public class PCPanelMiniUI extends Device {
         for (var i = 0; i < KNOB_COUNT; i++) {
             var loader = getFxHelper().getLoader(getClass().getResource("/assets/PCPanelMini/knob.fxml"));
             Node nx = loader.load();
+            images[i] = buildKnobImageView();
             knobs[i] = new Button("", nx);
             knobs[i].setId("dial_button");
             knobs[i].setContentDisplay(ContentDisplay.CENTER);
@@ -125,6 +130,12 @@ public class PCPanelMiniUI extends Device {
             knobs[i].setLayoutY(yPos);
             knobs[i].setScaleX(1.2D);
             knobs[i].setScaleY(1.2D);
+
+            images[i].setLayoutX(xPos + 5);
+            images[i].setLayoutY(yPos + 5);
+            images[i].setFitWidth(70);
+            images[i].setFitHeight(70);
+
             var knob = i;
             knobs[i].setOnAction(e -> {
                 HomePage.showHint(false);
@@ -154,6 +165,7 @@ public class PCPanelMiniUI extends Device {
                 }
             });
             panelPane.getChildren().add(knobs[i]);
+            panelPane.getChildren().add(images[i]);
             xPos += xDelta;
         }
     }
@@ -244,5 +256,10 @@ public class PCPanelMiniUI extends Device {
                 }
             }
         }
+    }
+
+    @Override
+    protected ImageView[] getKnobImages() {
+        return images;
     }
 }

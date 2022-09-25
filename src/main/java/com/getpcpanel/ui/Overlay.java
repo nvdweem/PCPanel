@@ -76,6 +76,6 @@ public class Overlay extends Popup {
         var save = this.save.get().getDeviceSave(event.serialNum());
         var data = save.getDialData(event.knob());
         var setting = save.getKnobSettings(event.knob());
-        icon.setImage(iconService.getImageFrom(data, setting == null ? null : setting.getOverlayIcon()));
+        icon.setImage(iconService.getImageFrom(data, setting));
     }
 }
