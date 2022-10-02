@@ -45,11 +45,14 @@ public final class OBS {
 
     @PostConstruct
     public void init() {
-        var thread = new Thread(this::buildAndConnectObsController, "OBS Connection Starter");
+        startConnection(this::buildAndConnectObsController);
+        Runtime.getRuntime().addShutdownHook(new Thread(this::applicationEnding, "OBS Shutdown hook"));
+    }
+
+    private void startConnection(Runnable run) {
+        var thread = new Thread(run, "OBS Connection Starter");
         thread.setDaemon(true);
         thread.start();
-
-        Runtime.getRuntime().addShutdownHook(new Thread(this::applicationEnding, "OBS Shutdown hook"));
     }
 
     private void applicationEnding() {
@@ -148,7 +151,7 @@ public final class OBS {
 
     private void onError(ReasonThrowable reasonThrowable) {
         if (reasonThrowable.getThrowable() instanceof ConnectException || reasonThrowable.getThrowable() instanceof TimeoutException) {
-            tryReconnect();
+            startConnection(this::tryReconnect);
         } else {
             log.error("Unknown OBS error", reasonThrowable.getThrowable());
         }
