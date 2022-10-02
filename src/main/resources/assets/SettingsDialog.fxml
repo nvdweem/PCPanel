@@ -40,10 +40,12 @@
                         <Label prefWidth="100.0" text="Password"/>
                         <TextField fx:id="obsPassword" promptText="leave blank if no password"/>
                     </HBox>
-                    <HBox alignment="CENTER_LEFT" spacing="10.0" visible="false">
-                        <Button mnemonicParsing="false" onAction="#obsTest" text="Test Connection"/>
-                        <Label fx:id="obsTestResult"/>
-                    </HBox>
+                    <Button fx:id="testBtn" mnemonicParsing="false" onAction="#doTest" text="Test">
+                        <VBox.margin>
+                            <Insets left="100.0"/>
+                        </VBox.margin>
+                    </Button>
+                    <Label fx:id="obsTestResult"/>
                 </VBox>
             </VBox>
         </Tab>

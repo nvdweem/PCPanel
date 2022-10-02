@@ -7,6 +7,7 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.stereotype.Component;
 
+import com.getpcpanel.obs.OBS;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.spring.OsHelper;
 import com.getpcpanel.spring.Prototype;
@@ -14,9 +15,11 @@ import com.getpcpanel.util.FileUtil;
 import com.getpcpanel.util.IPlatformCommand;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
@@ -37,6 +40,7 @@ public class SettingsDialog extends Application implements UIInitializer {
     private final FileUtil fileUtil;
     private final IPlatformCommand platformCommand;
     private final OsHelper osHelper;
+    private final OBS obs;
     private Stage parentStage;
 
     private Stage stage;
@@ -48,6 +52,7 @@ public class SettingsDialog extends Application implements UIInitializer {
     @FXML private TextField obsAddress;
     @FXML private TextField obsPort;
     @FXML private TextField obsPassword;
+    @FXML private Button testBtn;
     @FXML private Label obsTestResult;
     @FXML private CheckBox vmEnable;
     @FXML private Pane vmControls;
@@ -92,19 +97,6 @@ public class SettingsDialog extends Application implements UIInitializer {
     @FXML
     private void onVMEnablePressed(@Nullable ActionEvent ignored) {
         vmControls.setDisable(!vmEnable.isSelected());
-    }
-
-    @FXML
-    private void obsTest(ActionEvent event) {
-        obsTestResult.setText("The test button is not available currently, sorry ;)");
-
-        // var controller = new OBSRemoteController(json, obsAddress.getText(), obsPort.getText(), obsPassword.getText());
-        // if (controller.isFailed()) {
-        //     obsTestResult.setText("result: connection failed");
-        // } else {
-        //     obsTestResult.setText("result: success");
-        // }
-        // controller.disconnect();
     }
 
     @FXML
@@ -162,5 +154,28 @@ public class SettingsDialog extends Application implements UIInitializer {
 
     private void postInit() {
         initFields();
+    }
+
+    public void doTest(ActionEvent ignored) {
+        obsTestResult.setText("Testing...");
+        testBtn.setDisable(true);
+        new Thread(() -> {
+            var port = NumberUtils.toInt(obsPort.getText(), -1);
+            String result;
+            if (port == -1) {
+                result = "Invalid port";
+            } else {
+                var message = obs.test(obsAddress.getText(), port, obsPassword.getText(), 2_500L);
+                if (message == null) {
+                    result = "Success";
+                } else {
+                    result = "Failed: " + message;
+                }
+            }
+            Platform.runLater(() -> {
+                testBtn.setDisable(false);
+                obsTestResult.setText(result);
+            });
+        }).start();
     }
 }

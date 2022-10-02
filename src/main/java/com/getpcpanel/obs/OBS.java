@@ -4,7 +4,10 @@ import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
@@ -18,6 +21,8 @@ import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.util.Util;
 
 import io.obswebsocket.community.client.OBSRemoteController;
+import io.obswebsocket.community.client.OBSRemoteControllerBuilder;
+import io.obswebsocket.community.client.WebSocketCloseCode;
 import io.obswebsocket.community.client.listener.lifecycle.ReasonThrowable;
 import io.obswebsocket.community.client.model.Input;
 import io.obswebsocket.community.client.model.Scene;
@@ -30,6 +35,8 @@ import one.util.streamex.StreamEx;
 @RequiredArgsConstructor
 public final class OBS {
     private static final long WAIT_TIME = 1000L;
+    private static int activeIdx;
+
     private final SaveService save;
     private List<Object> previousSettings = List.of();
     private boolean connected;
@@ -49,41 +56,94 @@ public final class OBS {
         shuttingDown = true;
         if (controller != null) {
             controller.disconnect();
+            controller.stop();
             controller = null;
         }
     }
 
     private void buildAndConnectObsController() {
+        if (settingsStillSame() && controller != null)
+            return;
         var port = NumberUtils.toInt(save.get().getObsPort(), -1);
         var address = save.get().getObsAddress();
         var password = StringUtils.trimToNull(save.get().getObsPassword());
-        if (settingsStillSame() && controller != null)
-            return;
 
         if (controller != null) {
             controller.disconnect();
+            controller.stop();
             controller = null;
         }
 
         if (port != -1 && StringUtils.isNotBlank(address)) {
-            controller = OBSRemoteController.builder()
-                                            .autoConnect(false)
-                                            .host(address)
-                                            .port(port)
-                                            .password(password)
-                                            .lifecycle()
-                                            .withControllerDefaultLogging(false)
-                                            .withCommunicatorDefaultLogging(false)
-                                            .onReady(this::connected)
-                                            .onDisconnect(this::tryReconnect)
-                                            .onControllerError(this::onError)
-                                            .and()
-                                            .build();
+            activeIdx++;
+            var currentIdx = activeIdx;
+            controller = buildController(address, port, password).lifecycle()
+                                                                 .onReady(this::connected)
+                                                                 .onDisconnect(() -> {
+                                                                     if (currentIdx == activeIdx) {
+                                                                         tryReconnect();
+                                                                     }
+                                                                 })
+                                                                 .onControllerError(e -> {
+                                                                     if (currentIdx == activeIdx) {
+                                                                         onError(e);
+                                                                     }
+                                                                 })
+                                                                 .and().build();
             controller.connect();
         } else {
             controller = null;
             connected = false;
         }
+    }
+
+    @Nullable
+    public String test(String address, int port, String password, long timeout) {
+        var latch = new CountDownLatch(1);
+        var result = new String[1];
+        Consumer<String> doResult = str -> {
+            result[0] = str;
+            latch.countDown();
+        };
+
+        var controller = buildController(address, port, password).lifecycle()
+                                                                 .onReady(() -> doResult.accept(null))
+                                                                 .onDisconnect(latch::countDown)
+                                                                 .onControllerError(e -> doResult.accept(e.getReason()))
+                                                                 .onCommunicatorError(e -> doResult.accept(e.getReason()))
+                                                                 .onClose(e -> {
+                                                                     if (e == WebSocketCloseCode.UnsupportedRpcVersion)
+                                                                         doResult.accept("Invalid password or unsupported RPC version");
+                                                                     else
+                                                                         doResult.accept(e.name());
+                                                                 })
+                                                                 .and().build();
+        controller.connect();
+
+        try {
+            var waitSuccess = latch.await(timeout, TimeUnit.MILLISECONDS);
+            var message = waitSuccess && result[0] == null ? null : result[0];
+            controller.disconnect();
+            controller.stop();
+            return message;
+        } catch (InterruptedException e) {
+            log.warn("Unable to wait for the latch");
+        }
+        return null;
+    }
+
+    private OBSRemoteControllerBuilder buildController(String address, int port, String password) {
+        var builder = OBSRemoteController.builder()
+                                         .autoConnect(false)
+                                         .host(address)
+                                         .port(port)
+                                         .password(password)
+                                         .lifecycle()
+                                         .withControllerDefaultLogging(false)
+                                         .withCommunicatorDefaultLogging(false)
+                                         .and();
+        builder.getWebSocketClient().setStopTimeout(500L);
+        return builder;
     }
 
     private void onError(ReasonThrowable reasonThrowable) {
@@ -131,14 +191,15 @@ public final class OBS {
 
     @EventListener(SaveService.SaveEvent.class)
     public void saveUpdated() {
-        if (!settingsStillSame()) {
-            buildAndConnectObsController();
-        }
+        buildAndConnectObsController();
     }
 
     public List<String> getSourcesWithAudio() {
+        if (!isConnected()) {
+            return List.of();
+        }
         var sourcesWithAudio = new ArrayList<String>();
-        controller.getInputListRequest("", e -> {
+        controller.getInputListRequest(null, e -> {
             synchronized (sourcesWithAudio) {
                 StreamEx.of(e.getMessageData().getResponseData().getInputs()).map(Input::getInputName).into(sourcesWithAudio);
                 sourcesWithAudio.notify();
