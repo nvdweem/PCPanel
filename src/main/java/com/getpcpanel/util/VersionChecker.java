@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+import com.getpcpanel.profile.SaveService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
@@ -20,6 +22,7 @@ import one.util.streamex.StreamEx;
 @RequiredArgsConstructor
 public class VersionChecker extends Thread {
     private final ApplicationEventPublisher eventPublisher;
+    private final SaveService save;
     @Value("${application.versioncheck}") private String versionCheck;
     @Value("${application.releasespage}") private String releasesPage;
     @Value("${application.version}") private String version;
@@ -27,7 +30,9 @@ public class VersionChecker extends Thread {
     @PostConstruct
     public void init() {
         setDaemon(true);
-        start();
+        if (save.get().isStartupVersionCheck()) {
+            start();
+        }
     }
 
     @Override

@@ -47,6 +47,7 @@ public class SettingsDialog extends Application implements UIInitializer {
     @FXML private Pane root;
     @FXML public CheckBox overlay;
     @FXML public CheckBox mainUiIcons;
+    @FXML private CheckBox startupVersionCheck;
     @FXML private CheckBox obsEnable;
     @FXML private Pane obsControls;
     @FXML private TextField obsAddress;
@@ -109,6 +110,7 @@ public class SettingsDialog extends Application implements UIInitializer {
         var save = saveService.get();
         save.setOverlayEnabled(overlay.isSelected());
         save.setMainUIIcons(mainUiIcons.isSelected());
+        save.setStartupVersionCheck(startupVersionCheck.isSelected());
         save.setObsEnabled(obsEnable.isSelected());
         save.setObsAddress(obsAddress.getText());
         save.setObsPort(obsPort.getText());
@@ -138,6 +140,7 @@ public class SettingsDialog extends Application implements UIInitializer {
         var save = saveService.get();
         overlay.setSelected(save.isOverlayEnabled());
         mainUiIcons.setSelected(save.isMainUIIcons());
+        startupVersionCheck.setSelected(save.isStartupVersionCheck());
         obsEnable.setSelected(save.isObsEnabled());
         obsAddress.setText(save.getObsAddress());
         obsPort.setText(save.getObsPort());

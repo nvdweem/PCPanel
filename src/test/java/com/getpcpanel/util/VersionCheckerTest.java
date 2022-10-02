@@ -12,7 +12,7 @@ class VersionCheckerTest {
 
     @BeforeEach
     void setUp() {
-        sut = new VersionChecker(null);
+        sut = new VersionChecker(null, null);
     }
 
     @ParameterizedTest

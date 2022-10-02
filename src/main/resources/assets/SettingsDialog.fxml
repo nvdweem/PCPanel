@@ -18,6 +18,7 @@
                 </padding>
                 <CheckBox fx:id="overlay" mnemonicParsing="false" text="Use overlay"/>
                 <CheckBox fx:id="mainUiIcons" mnemonicParsing="false" text="Show icons in main UI"/>
+                <CheckBox fx:id="startupVersionCheck" mnemonicParsing="false" text="Startup version check"/>
             </VBox>
         </Tab>
         <Tab text="OBS">

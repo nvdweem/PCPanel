@@ -16,6 +16,7 @@ public class Save {
     private Map<String, DeviceSave> devices = new ConcurrentHashMap<>();
     private boolean overlayEnabled;
     private boolean mainUIIcons;
+    private boolean startupVersionCheck = true;
     private boolean obsEnabled;
     private String obsAddress = "localhost";
     private String obsPort = "4455";
