@@ -45,10 +45,6 @@
             <version>2.7.4</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.logging.log4j</groupId>
-            <artifactId>log4j-core</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
         </dependency>
@@ -141,6 +137,12 @@
             <groupId>com.github.nvdweem</groupId>
             <artifactId>obs-websocket-java</artifactId>
             <version>5.x.x~protocol_update-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>slf4j-simple</artifactId>
+                    <groupId>org.slf4j</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.eclipse.jetty.websocket</groupId>
