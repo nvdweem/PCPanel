@@ -8,7 +8,7 @@
 - [Linux] Allow controlling input volume (#10)
 - Allow configuring what the mute override color follows
 - OBS 28 support. Don't use this version of the software if you are still using OBS 27 or lower
-- An option was added to show an overlay when volume is changed and to show icons of the controlled applications in the main ui.
+- [Windows] An option was added to show an overlay when volume is changed and to show icons of the controlled applications in the main ui. From [request](https://www.reddit.com/r/PCPanel/comments/xf14ol)
 
 **Fixes:**
 
