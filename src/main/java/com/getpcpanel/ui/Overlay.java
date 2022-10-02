@@ -5,6 +5,8 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
 
+import com.getpcpanel.spring.ConditionalOnWindows;
+
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +26,7 @@ import javafx.stage.StageStyle;
 import lombok.RequiredArgsConstructor;
 
 @Component
+@ConditionalOnWindows
 @RequiredArgsConstructor
 public class Overlay extends Popup {
     private final FxHelper fxHelper;
