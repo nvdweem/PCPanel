@@ -10,7 +10,7 @@ have been replaced with custom native implementations. The source code for those
 
 ## Windows
 
-Just double-click the msi installer and you should be good to go. The installer will run the application after the installation
+Just double-click the msi installer, and you should be good to go. The installer will run the application after the installation
 is complete and will add the application to start automatically on Windows startup.
 
 ## Linux
@@ -47,8 +47,8 @@ installed automatically, but you can also install them manually if they are not.
 
 # Migration
 
-When replacing the original PCPanel software with this version it's possible to keep all settings. To do that you will need to manually copy
-the settings file:
+The first startup will check for the profile from the original software and ask to migrate. If this doesn't work, or you want to migrate manually again later, you will need to 
+manually copy the settings file:
 `%localappdata%\PCPanel Software\save.json`
 to
 `%userprofile%\.pcpanel\profiles.json`
@@ -56,9 +56,11 @@ to
 # Running in IntelliJ
 
 1. Import the project
-1. Install [JavaFX](https://download2.gluonhq.com/openjfx/18.0.1/openjfx-18.0.1_windows-x64_bin-sdk.zip)
+1. Install JavaFX [Windows](https://download2.gluonhq.com/openjfx/18.0.2/openjfx-18.0.2_windows-x64_bin-sdk.zip), [Linux](https://download2.gluonhq.com/openjfx/18.0.2/openjfx-18.0.2_linux-x64_bin-sdk.zip)
 1. Setup the `JAVAFX_HOME` environment variable to the `javafx-sdk-x.y.z` directory
 1. Use the `PCPanel` run configuration
+
+For Linux you will also need to do the steps from the Installation step.
 
 # Other IDE's
 
