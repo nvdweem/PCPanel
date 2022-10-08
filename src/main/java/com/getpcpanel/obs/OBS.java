@@ -22,7 +22,6 @@ import com.getpcpanel.util.Util;
 
 import io.obswebsocket.community.client.OBSRemoteController;
 import io.obswebsocket.community.client.OBSRemoteControllerBuilder;
-import io.obswebsocket.community.client.WebSocketCloseCode;
 import io.obswebsocket.community.client.listener.lifecycle.ReasonThrowable;
 import io.obswebsocket.community.client.model.Input;
 import io.obswebsocket.community.client.model.Scene;
@@ -114,12 +113,7 @@ public final class OBS {
                                                                  .onDisconnect(latch::countDown)
                                                                  .onControllerError(e -> doResult.accept(e.getReason()))
                                                                  .onCommunicatorError(e -> doResult.accept(e.getReason()))
-                                                                 .onClose(e -> {
-                                                                     if (e == WebSocketCloseCode.UnsupportedRpcVersion)
-                                                                         doResult.accept("Invalid password or unsupported RPC version");
-                                                                     else
-                                                                         doResult.accept(e.name());
-                                                                 })
+                                                                 .onClose(e -> doResult.accept(e.name()))
                                                                  .and().build();
         controller.connect();
 
