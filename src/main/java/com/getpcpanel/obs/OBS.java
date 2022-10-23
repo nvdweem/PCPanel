@@ -1,9 +1,9 @@
 package com.getpcpanel.obs;
 
 import java.net.ConnectException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -192,121 +192,64 @@ public final class OBS {
     }
 
     public List<String> getSourcesWithAudio() {
-        if (!isConnected()) {
+        if (!isConnected() || controller == null) {
             return List.of();
         }
-        var sourcesWithAudio = new ArrayList<String>();
-        controller.getInputListRequest(null, e -> {
-            synchronized (sourcesWithAudio) {
-                StreamEx.of(e.getMessageData().getResponseData().getInputs()).map(Input::getInputName).into(sourcesWithAudio);
-                sourcesWithAudio.notify();
-            }
-        });
-        synchronized (sourcesWithAudio) {
-            try {
-                sourcesWithAudio.wait(WAIT_TIME);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        return sourcesWithAudio;
+        return Optional.ofNullable(controller.getInputList(null, WAIT_TIME))
+                       .map(e -> StreamEx.of(e.getInputs()).map(Input::getInputName).toList())
+                       .orElse(List.of());
     }
 
     public List<String> getScenes() {
-        if (!isConnected()) {
+        if (!isConnected() || controller == null) {
             return List.of();
         }
 
-        var scenes = new ArrayList<String>();
-        controller.getSceneList(ss -> {
-            synchronized (scenes) {
-                StreamEx.of(ss.getMessageData().getResponseData().getScenes()).map(Scene::getSceneName).into(scenes);
-                scenes.notify();
-            }
-        });
-        synchronized (scenes) {
-            try {
-                scenes.wait(WAIT_TIME);
-            } catch (InterruptedException e) {
-                log.error("Unable to get scenes", e);
-            }
-        }
-        return scenes;
+        return Optional.ofNullable(controller.getSceneList(WAIT_TIME))
+                       .map(ss -> StreamEx.of(ss.getScenes()).map(Scene::getSceneName).toList())
+                       .orElse(List.of());
     }
 
     public void setSourceVolume(String sourceName, int vol) {
-        if (!isConnected()) {
+        if (!isConnected() || controller == null) {
             return;
         }
-        var waiter = new Object();
         try {
             var decimal = (float) Util.map(vol, 0, 100, -97, 0);
-            controller.setInputVolumeRequest(sourceName, decimal, null, x -> {
-                synchronized (waiter) {
-                    waiter.notify();
-                }
-            });
-            synchronized (waiter) {
-                waiter.wait(WAIT_TIME);
-            }
+            controller.setInputVolume(sourceName, null, decimal, WAIT_TIME);
         } catch (Exception e) {
             log.error("Unable to get source volume", e);
         }
     }
 
     public void toggleSourceMute(String sourceName) {
-        if (!isConnected()) {
+        if (!isConnected() || controller == null) {
             return;
         }
-        var waiter = new Object();
         try {
-            controller.toggleInputMuteRequest(sourceName, c -> {
-                synchronized (waiter) {
-                    waiter.notify();
-                }
-            });
-            synchronized (waiter) {
-                waiter.wait(WAIT_TIME);
-            }
+            controller.toggleInputMute(sourceName, WAIT_TIME);
         } catch (Exception e) {
             log.error("Unable to toggle source mute {}", sourceName, e);
         }
     }
 
     public void setSourceMute(String sourceName, boolean mute) {
-        if (!isConnected()) {
+        if (!isConnected() || controller == null) {
             return;
         }
-        var waiter = new Object();
         try {
-            controller.setInputMuteRequest(sourceName, mute, c -> {
-                synchronized (waiter) {
-                    waiter.notify();
-                }
-            });
-            synchronized (waiter) {
-                waiter.wait(WAIT_TIME);
-            }
+            controller.setInputMute(sourceName, mute, WAIT_TIME);
         } catch (Exception e) {
             log.error("Unable to set source mute {} {}", sourceName, mute, e);
         }
     }
 
     public void setCurrentScene(String sceneName) {
-        if (!isConnected()) {
+        if (!isConnected() || controller == null) {
             return;
         }
-        var waiter = new Object();
         try {
-            controller.setCurrentProgramSceneRequest(sceneName, c -> {
-                synchronized (waiter) {
-                    waiter.notify();
-                }
-            });
-            synchronized (waiter) {
-                waiter.wait(WAIT_TIME);
-            }
+            controller.setCurrentProgramScene(sceneName, WAIT_TIME);
         } catch (Exception e) {
             log.error("Unable to set current scene to {}", sceneName, e);
         }
