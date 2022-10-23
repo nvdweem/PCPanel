@@ -6,6 +6,14 @@ This repository is based on the decompiled source code of the original app. The 
 have been replaced with custom native implementations. The source code for those parts are either Java-JNA implementations or in the
 `src/main/cpp` directory.
 
+# Download
+
+The installer can be found by clicking the latest release on the right side of the page. When development is ongoing there will
+also be a 'snapshot' release which can be found by opening the [releases](https://github.com/nvdweem/PCPanel/releases) page.
+
+Once on the release page there will be a changelog and a list of assets. The Windows installer is ths msi, the Linux installer is the .deb file.
+The 'Source code' artifact is probably not needed for anybody.
+
 # Installation
 
 ## Windows
@@ -47,7 +55,7 @@ installed automatically, but you can also install them manually if they are not.
 
 # Migration
 
-The first startup will check for the profile from the original software and ask to migrate. If this doesn't work, or you want to migrate manually again later, you will need to 
+The first startup will check for the profile from the original software and ask to migrate. If this doesn't work, or you want to migrate manually again later, you will need to
 manually copy the settings file:
 `%localappdata%\PCPanel Software\save.json`
 to
