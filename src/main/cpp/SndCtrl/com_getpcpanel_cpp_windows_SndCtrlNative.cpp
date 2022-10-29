@@ -109,3 +109,15 @@ JNIEXPORT jstring JNICALL Java_com_getpcpanel_cpp_windows_SndCtrlNative_getFocus
     auto name = GetProcessName(pid);
     return env->NewString((jchar*) name.c_str(), (jsize) name.length());
 }
+
+/*
+ * Class:     com_getpcpanel_cpp_windows_SndCtrlNative
+ * Method:    triggerAv
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_windows_SndCtrlNative_triggerAv(JNIEnv*, jobject) {
+    new std::thread([](){
+        Sleep(1000);
+        pSndCtrl->TriggerAv();
+    });
+}

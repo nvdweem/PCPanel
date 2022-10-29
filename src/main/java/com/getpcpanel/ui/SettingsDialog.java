@@ -7,6 +7,8 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.stereotype.Component;
 
+import com.getpcpanel.MainFX;
+import com.getpcpanel.cpp.windows.SndCtrlWindows;
 import com.getpcpanel.obs.OBS;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.spring.OsHelper;
@@ -180,5 +182,10 @@ public class SettingsDialog extends Application implements UIInitializer {
                 obsTestResult.setText(result);
             });
         }).start();
+    }
+
+    @SuppressWarnings("unused")
+    public void triggerAv(ActionEvent ignored) {
+        MainFX.getBean(SndCtrlWindows.class).triggerAv();
     }
 }

@@ -32,6 +32,7 @@ public:
     void MuteProcess(wstring deviceId, int pid, bool muted);
     void SetFocusVolume(float volume);
     void UpdateDefaultDevice(wstring id, EDataFlow dataFlow, ERole role);
+    void TriggerAv();
 
 private:
     void InitDevices();

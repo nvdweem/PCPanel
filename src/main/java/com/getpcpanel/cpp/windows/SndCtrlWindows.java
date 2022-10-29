@@ -60,14 +60,6 @@ public class SndCtrlWindows implements ISndCtrl {
         }
     }
 
-    private void loadLinux() {
-        try {
-            System.load(extractUtil.extractAndDeleteOnExit("libsndctrl.so").toString());
-        } catch (Throwable ex) {
-            log.error("Unable to load sndctrl, volume options will be disabled", ex);
-        }
-    }
-
     @Override
     public Map<String, AudioDevice> getDevicesMap() {
         synchronized (devices) {
@@ -241,6 +233,10 @@ public class SndCtrlWindows implements ISndCtrl {
         synchronized (defaults) {
             return new HashMap<>(defaults);
         }
+    }
+
+    public void triggerAv() {
+        SndCtrlNative.instance.triggerAv();
     }
 
     @RequiredArgsConstructor

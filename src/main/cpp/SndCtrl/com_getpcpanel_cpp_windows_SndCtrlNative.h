@@ -71,6 +71,14 @@ JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_windows_SndCtrlNative_muteSession
 JNIEXPORT jstring JNICALL Java_com_getpcpanel_cpp_windows_SndCtrlNative_getFocusApplication
   (JNIEnv *, jobject);
 
+/*
+ * Class:     com_getpcpanel_cpp_windows_SndCtrlNative
+ * Method:    triggerAv
+ * Signature: ()V
+ */
+JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_windows_SndCtrlNative_triggerAv
+(JNIEnv*, jobject);
+
 #ifdef __cplusplus
 }
 #endif

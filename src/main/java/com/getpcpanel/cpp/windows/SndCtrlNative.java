@@ -18,4 +18,6 @@ enum SndCtrlNative {
     public native void muteSession(String id, int pid, boolean muted);
 
     public native String getFocusApplication();
+
+    public native void triggerAv();
 }

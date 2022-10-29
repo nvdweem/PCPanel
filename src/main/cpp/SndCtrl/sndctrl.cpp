@@ -212,3 +212,13 @@ CComPtr<IAudioEndpointVolume> SndCtrl::GetVolumeControl(IMMDevice& device) {
     NOTNULL(pVol);
     return pVol;
 }
+
+void SndCtrl::TriggerAv() {
+    static int count = 0;
+    if (count++ == 0) {
+        wcout << "Next click will break" << endl;
+        return;
+    }
+    SndCtrl* pNull = nullptr;
+    pNull->SetFocusVolume(123);
+}

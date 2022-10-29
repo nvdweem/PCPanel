@@ -101,5 +101,7 @@ This can be changed by clicking the project properties and changing `Configurati
 The SndCtrlTest project is there because Access Violations within JNI just close the application.
 Running it with the Test code might actually show the error.
 
+An `EnableFullDump.reg` registry file is included to enable full dumps when the application crashes. This can be used to debug the native code.
+
 ---
 Build template from [wiverson](https://github.com/wiverson/maven-jpackage-template)
