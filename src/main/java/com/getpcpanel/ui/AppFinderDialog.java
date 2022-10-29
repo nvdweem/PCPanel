@@ -127,7 +127,9 @@ public class AppFinderDialog extends Application implements UIInitializer {
     private List<AudioSession> getProgs() {
         if (volumeApps) {
             return StreamEx.of(sndCtrl.getAllSessions())
-                           .sorted(Comparator.nullsLast(Comparator.comparing(AudioSession::title).thenComparing(as -> as.executable().getName())))
+                           .remove(as -> StringUtils.isBlank(as.title()) && (as.executable() == null || StringUtils.isBlank(as.executable().toString())))
+                           .sorted(Comparator.comparing((AudioSession as) -> StringUtils.defaultString(as.title(), "zzz"))
+                                             .thenComparing(as -> as.executable() == null ? "zzz" : as.executable().getName()))
                            .toImmutableList();
         } else {
             return StreamEx.of(sndCtrl.getRunningApplications())
