@@ -400,6 +400,7 @@ public class BasicMacro extends Application implements UIInitializer {
         appMuteController.setPickType(PickProcessesController.PickType.soundSource);
         appVolumeController.setPickType(PickProcessesController.PickType.soundSource);
         defaultDeviceToggleAdvancedController.setAllowRemove(true);
+        defaultDeviceAdvancedController.add();
 
         var toRemove = StreamEx.of(buttonTabPane.getTabs()).remove(osHelper::isSupported).toSet();
         buttonTabPane.getTabs().removeAll(toRemove);
@@ -703,7 +704,7 @@ public class BasicMacro extends Application implements UIInitializer {
                 case toggle -> rdio_muteDevice_toggle.setSelected(true);
             }
         });
-        buttonInitializers.put(CommandVolumeDefaultDeviceAdvanced.class, (CommandVolumeDefaultDeviceAdvanced cmd) -> defaultDeviceAdvancedController.add(cmd.getMediaPb(), cmd.getMediaRec(), cmd.getCommunicationPb(), cmd.getCommunicationRec()));
+        buttonInitializers.put(CommandVolumeDefaultDeviceAdvanced.class, (CommandVolumeDefaultDeviceAdvanced cmd) -> defaultDeviceAdvancedController.set(cmd.getMediaPb(), cmd.getMediaRec(), cmd.getCommunicationPb(), cmd.getCommunicationRec()));
         buttonInitializers.put(CommandObsSetScene.class, (CommandObsSetScene cmd) -> {
             obs_rdio_SetScene.setSelected(true);
             obsSetScene.getSelectionModel().select(cmd.getScene());

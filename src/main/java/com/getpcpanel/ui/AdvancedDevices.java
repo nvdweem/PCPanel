@@ -28,6 +28,11 @@ public class AdvancedDevices {
         add("", "", "", "");
     }
 
+    public void set(String mediaPlayback, String mediaRecord, String communicationPlayback, String communicationRecord) {
+        controllers.clear();
+        add(mediaPlayback, mediaRecord, communicationPlayback, communicationRecord);
+    }
+
     public void add(DeviceSet entry) {
         add(entry.mediaPlayback(), entry.mediaRecord(), entry.communicationPlayback(), entry.communicationRecord());
     }

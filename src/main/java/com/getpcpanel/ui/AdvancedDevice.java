@@ -28,7 +28,7 @@ public class AdvancedDevice {
     @FXML private Button remove;
 
     public void initialize() {
-        var allSoundDevices = sndCtrl.getDevices().stream().filter(AudioDevice::isOutput).toList();
+        var allSoundDevices = sndCtrl.getDevices().stream().toList();
         var outputDevices = allSoundDevices.stream().filter(AudioDevice::isOutput).toList();
         var inputDevices = allSoundDevices.stream().filter(AudioDevice::isInput).toList();
 

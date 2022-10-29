@@ -2,7 +2,9 @@
 
 <!-- Releasenotes without version are included in releases -->
 
-Nothing yet
+**New:**
+
+- [Windows] There is now also an advanced toggle that allows changing the media/communication devices through toggles
 
 ## [1.5]
 
