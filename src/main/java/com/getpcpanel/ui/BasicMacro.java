@@ -31,6 +31,7 @@ import com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton;
 import com.getpcpanel.commands.command.CommandVolumeDefaultDevice;
 import com.getpcpanel.commands.command.CommandVolumeDefaultDeviceAdvanced;
 import com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggle;
+import com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggleAdvanced;
 import com.getpcpanel.commands.command.CommandVolumeDevice;
 import com.getpcpanel.commands.command.CommandVolumeDeviceMute;
 import com.getpcpanel.commands.command.CommandVolumeFocus;
@@ -92,6 +93,7 @@ public class BasicMacro extends Application implements UIInitializer {
     private final ISndCtrl sndCtrl;
     private final OsHelper osHelper;
     @FXML private AdvancedDevices defaultDeviceAdvancedController;
+    @FXML private AdvancedDevices defaultDeviceToggleAdvancedController;
 
     @FXML private Pane topPane;
     @FXML private TabPane mainTabPane;
@@ -319,6 +321,7 @@ public class BasicMacro extends Application implements UIInitializer {
             case "btnCommandEndProgram" -> new CommandEndProgram(rdioEndSpecificProgram.isSelected(), endProcessField.getText());
             case "btnCommandVolumeDefaultDevice" -> sounddevices.getValue() == null ? NOOP : new CommandVolumeDefaultDevice(sounddevices.getValue().id());
             case "btnCommandVolumeDefaultDeviceToggle" -> new CommandVolumeDefaultDeviceToggle(soundDevices2.getItems().stream().map(AudioDevice::id).toList());
+            case "btnCommandVolumeDefaultDeviceToggleAdvanced" -> new CommandVolumeDefaultDeviceToggleAdvanced(defaultDeviceToggleAdvancedController.getEntries());
             case "btnCommandVolumeProcessMute" -> new CommandVolumeProcessMute(new HashSet<>(appMuteController.getSelection()),
                     rdio_mute_unmute.isSelected() ? MuteType.unmute : rdio_mute_mute.isSelected() ? MuteType.mute : MuteType.toggle);
             case "btnCommandVolumeDeviceMute" -> {
@@ -396,6 +399,7 @@ public class BasicMacro extends Application implements UIInitializer {
     private void postInit() {
         appMuteController.setPickType(PickProcessesController.PickType.soundSource);
         appVolumeController.setPickType(PickProcessesController.PickType.soundSource);
+        defaultDeviceToggleAdvancedController.setAllowRemove(true);
 
         var toRemove = StreamEx.of(buttonTabPane.getTabs()).remove(osHelper::isSupported).toSet();
         buttonTabPane.getTabs().removeAll(toRemove);
@@ -677,6 +681,7 @@ public class BasicMacro extends Application implements UIInitializer {
             soundDevices2.getItems().addAll(devices);
             soundDeviceSource.getItems().removeAll(devices);
         });
+        buttonInitializers.put(CommandVolumeDefaultDeviceToggleAdvanced.class, (CommandVolumeDefaultDeviceToggleAdvanced cmd) -> cmd.getDevices().forEach(defaultDeviceToggleAdvancedController::add));
         buttonInitializers.put(CommandVolumeProcessMute.class, (CommandVolumeProcessMute cmd) -> {
             appMuteController.setSelection(cmd.getProcessName());
             switch (cmd.getMuteType()) {
@@ -770,5 +775,9 @@ public class BasicMacro extends Application implements UIInitializer {
         });
 
         return dialInitializers;
+    }
+
+    public void addDefaultDeviceToggleAdvanced(ActionEvent ignored) {
+        defaultDeviceToggleAdvancedController.add();
     }
 }

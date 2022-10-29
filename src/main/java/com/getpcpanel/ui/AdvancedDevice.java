@@ -2,11 +2,13 @@ package com.getpcpanel.ui;
 
 import org.springframework.stereotype.Component;
 
+import com.getpcpanel.commands.DeviceSet;
 import com.getpcpanel.cpp.AudioDevice;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.spring.Prototype;
 
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.layout.VBox;
 import lombok.Getter;
@@ -23,6 +25,7 @@ public class AdvancedDevice {
     @FXML private ComboBox<String> communicationPlayback;
     @FXML private ComboBox<String> communicationRecord;
     @Getter @FXML private VBox root;
+    @FXML private Button remove;
 
     public void initialize() {
         var allSoundDevices = sndCtrl.getDevices().stream().filter(AudioDevice::isOutput).toList();
@@ -42,13 +45,12 @@ public class AdvancedDevice {
         this.communicationRecord.setValue(communicationRecord);
     }
 
-    public Entry getEntry() {
-        return new Entry(mediaPlayback.getValue(), mediaRecord.getValue(), communicationPlayback.getValue(), communicationRecord.getValue());
+    public void removeCallback(Runnable callback) {
+        remove.setOnAction(e -> callback.run());
+        remove.setVisible(true);
     }
 
-    public record Entry(String mediaPlayback,
-                        String mediaRecord,
-                        String communicationPlayback,
-                        String communicationRecord) {
+    public DeviceSet getEntry() {
+        return new DeviceSet(mediaPlayback.getValue(), mediaRecord.getValue(), communicationPlayback.getValue(), communicationRecord.getValue());
     }
 }

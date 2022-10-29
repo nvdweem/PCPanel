@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.annotation.concurrent.GuardedBy;
 
@@ -191,14 +192,14 @@ public class SndCtrlWindows implements ISndCtrl {
     @Override
     public String defaultPlayer() {
         synchronized (defaults) {
-            return defaults.get(new DefaultFor(DataFlow.dfRender.ordinal(), Role.roleMultimedia.ordinal()));
+            return defaults.get(DefaultFor.mediaPlayback);
         }
     }
 
     @Override
     public String defaultRecorder() {
         synchronized (defaults) {
-            return defaults.get(new DefaultFor(DataFlow.dfCapture.ordinal(), Role.roleMultimedia.ordinal()));
+            return defaults.get(DefaultFor.mediaRecord);
         }
     }
 
@@ -226,9 +227,9 @@ public class SndCtrlWindows implements ISndCtrl {
 
     private void setDefaultDevice(String id, int dataFlow, int role) {
         synchronized (defaults) {
-            defaults.put(new DefaultFor(dataFlow, role), id);
+            defaults.put(DefaultFor.of(dataFlow, role), id);
         }
-        log.trace("Default changed: {}: {}", new DefaultFor(dataFlow, role), id);
+        log.trace("Default changed: {}: {}", DefaultFor.of(dataFlow, role), id);
     }
 
     private void focusChanged(String to) {
@@ -236,6 +237,28 @@ public class SndCtrlWindows implements ISndCtrl {
         eventPublisher.publishEvent(new WindowFocusChangedEvent(to));
     }
 
-    record DefaultFor(int dataFlow, int role) {
+    public Map<DefaultFor, String> getDefaults() {
+        synchronized (defaults) {
+            return new HashMap<>(defaults);
+        }
+    }
+
+    @RequiredArgsConstructor
+    public enum DefaultFor {
+        mediaPlayback(DataFlow.dfRender.ordinal(), Role.roleMultimedia.ordinal()),
+        mediaRecord(DataFlow.dfCapture.ordinal(), Role.roleMultimedia.ordinal()),
+        communicationPlayback(DataFlow.dfRender.ordinal(), Role.roleCommunications.ordinal()),
+        communicationRecord(DataFlow.dfCapture.ordinal(), Role.roleCommunications.ordinal());
+
+        public static @Nullable DefaultFor of(DataFlow dataFlow, Role role) {
+            return of(dataFlow.ordinal(), role.ordinal());
+        }
+
+        public static @Nullable DefaultFor of(int dataFlow, int role) {
+            return StreamEx.of(values()).findFirst(d -> d.dataFlow == dataFlow && d.role == role).orElse(null);
+        }
+
+        private final int dataFlow;
+        private final int role;
     }
 }

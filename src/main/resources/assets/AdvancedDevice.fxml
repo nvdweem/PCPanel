@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-<VBox fx:id="root" prefHeight="593.0" prefWidth="890.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.getpcpanel.ui.AdvancedDevice">
+<VBox fx:id="root" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.AdvancedDevice">
     <HBox>
         <Label maxWidth="230" minWidth="230" prefHeight="25.0" prefWidth="230" text="Media playback device">
             <padding>
@@ -38,5 +38,8 @@
             </padding>
         </Label>
         <ComboBox fx:id="communicationRecord" editable="true" prefHeight="25.0" prefWidth="8000" HBox.hgrow="ALWAYS"/>
+    </HBox>
+    <HBox alignment="TOP_RIGHT">
+        <Button fx:id="remove" text="Remove" visible="false"/>
     </HBox>
 </VBox>

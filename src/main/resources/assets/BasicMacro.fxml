@@ -138,6 +138,16 @@
                         </VBox>
                     </content>
                 </Tab>
+                <Tab fx:id="btnCommandVolumeDefaultDeviceToggleAdvanced" styleClass="only-windows" text="Toggle Device Advanced">
+                    <content>
+                        <ScrollPane fitToWidth="true">
+                            <VBox fillWidth="true">
+                                <fx:include fx:id="defaultDeviceToggleAdvanced" source="AdvancedDevices.fxml"></fx:include>
+                                <Button mnemonicParsing="false" onAction="#addDefaultDeviceToggleAdvanced" prefHeight="25.0" prefWidth="73.0" text="Add"/>
+                            </VBox>
+                        </ScrollPane>
+                    </content>
+                </Tab>
                 <Tab fx:id="btnCommandVolumeProcessMute" text="Mute App">
                     <content>
                         <VBox spacing="15.0">
