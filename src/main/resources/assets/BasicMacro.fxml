@@ -103,7 +103,7 @@
                         </VBox>
                     </content>
                 </Tab>
-                <Tab fx:id="btnCommandVolumeDefaultDeviceAdvanced" styleClass="only-windows" text="Sound Device advanced">
+                <Tab fx:id="btnCommandVolumeDefaultDeviceAdvanced" styleClass="only-windows" text="Sound Device Advanced">
                     <content>
                         <fx:include fx:id="defaultDeviceAdvanced" source="AdvancedDevices.fxml"></fx:include>
                     </content>
