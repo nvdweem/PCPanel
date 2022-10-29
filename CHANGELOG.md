@@ -6,6 +6,10 @@
 
 - [Windows] There is now also an advanced toggle that allows changing the media/communication devices through toggles
 
+**Fixes:**:
+
+- If it wasn't possible to get the executable for a path, the AppFinder dialog would not show any results
+
 ## [1.5]
 
 **New:**
