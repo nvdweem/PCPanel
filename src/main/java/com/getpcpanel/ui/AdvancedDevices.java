@@ -30,6 +30,8 @@ public class AdvancedDevices {
 
     public void set(String mediaPlayback, String mediaRecord, String communicationPlayback, String communicationRecord) {
         controllers.clear();
+        target.getChildren().clear();
+
         add(mediaPlayback, mediaRecord, communicationPlayback, communicationRecord);
     }
 
