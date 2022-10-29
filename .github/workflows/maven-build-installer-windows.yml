@@ -20,10 +20,7 @@ jobs:
           tag: wix3112rtm
           file: wix311-binaries.zip
       - name: Decompress Wix
-        uses: DuckSoft/extract-7z-action@v1.0
-        with:
-          pathSource: wix311-binaries.zip
-          pathTarget: ./target/wix
+        run: 7z x wix311-binaries.zip "-o./target/wix"
       - name: Add Wix to Path
         run: echo "$HOME/target/wix" >> $GITHUB_PATH
       - uses: actions/checkout@v3
@@ -71,7 +68,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Extract Maven project version
-        run: echo ::set-output name=version::$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)
+        run: echo "version=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)" >> $GITHUB_OUTPUT
         id: project
 
       # Remove old pre-releases
@@ -95,7 +92,7 @@ jobs:
         run: |
           gh release create latest-windows \
             --prerelease \
-            --title "v${{steps.project.outputs.version}} Pre-Release" \
+            --title "v${{ steps.project.outputs.version }} Pre-Release" \
             --notes "$(sed '/##/Q' CHANGELOG.md)"
 
       # Only now download the artifacts so that there is a delay between creating the pre-release and adding the artifacts
