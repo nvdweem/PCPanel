@@ -2,7 +2,11 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
 <VBox fx:id="root" prefHeight="593.0" prefWidth="890.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.BasicMacro">
     <TabPane fx:id="mainTabPane" layoutX="70.0" layoutY="72.0" prefHeight="523.0" prefWidth="723.0" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
         <Tab fx:id="buttonpane" closable="false" text="Button">
@@ -101,46 +105,7 @@
                 </Tab>
                 <Tab fx:id="btnCommandVolumeDefaultDeviceAdvanced" styleClass="only-windows" text="Sound Device advanced">
                     <content>
-                        <VBox spacing="15.0">
-                            <padding>
-                                <Insets left="8.0" right="8.0" top="8.0"/>
-                            </padding>
-                            <children>
-                                <Label prefHeight="25.0" text="Select or give a name of a device. The first match containing will be selected. Leave empty to not change the device" wrapText="true"/>
-                                <HBox>
-                                    <Label maxWidth="230" minWidth="230" prefHeight="25.0" prefWidth="230" text="Default media playback device">
-                                        <padding>
-                                            <Insets right="10.0"/>
-                                        </padding>
-                                    </Label>
-                                    <ComboBox fx:id="advMedPb" editable="true" prefHeight="25.0" prefWidth="8000" HBox.hgrow="ALWAYS"/>
-                                </HBox>
-                                <HBox>
-                                    <Label maxWidth="230" minWidth="230" prefHeight="25.0" prefWidth="230" text="Default media recording device">
-                                        <padding>
-                                            <Insets right="10.0"/>
-                                        </padding>
-                                    </Label>
-                                    <ComboBox fx:id="advMedRec" editable="true" prefHeight="25.0" prefWidth="8000" HBox.hgrow="ALWAYS"/>
-                                </HBox>
-                                <HBox>
-                                    <Label maxWidth="230" minWidth="230" prefHeight="25.0" prefWidth="230" text="Default communication playback device">
-                                        <padding>
-                                            <Insets right="10.0"/>
-                                        </padding>
-                                    </Label>
-                                    <ComboBox fx:id="advComPb" editable="true" prefHeight="25.0" prefWidth="8000" HBox.hgrow="ALWAYS"/>
-                                </HBox>
-                                <HBox>
-                                    <Label maxWidth="230" minWidth="230" prefHeight="25.0" prefWidth="230" text="Default communication recording device">
-                                        <padding>
-                                            <Insets right="10.0"/>
-                                        </padding>
-                                    </Label>
-                                    <ComboBox fx:id="advComRec" editable="true" prefHeight="25.0" prefWidth="8000" HBox.hgrow="ALWAYS"/>
-                                </HBox>
-                            </children>
-                        </VBox>
+                        <fx:include fx:id="defaultDeviceAdvanced" source="AdvancedDevices.fxml"></fx:include>
                     </content>
                 </Tab>
                 <Tab fx:id="btnCommandVolumeDefaultDeviceToggle" text="Toggle Device">

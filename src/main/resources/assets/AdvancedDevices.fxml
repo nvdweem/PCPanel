@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+<VBox fx:id="root" prefHeight="593.0" prefWidth="890.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.getpcpanel.ui.AdvancedDevices" spacing="15.0">
+    <VBox spacing="15.0">
+        <padding>
+            <Insets left="8.0" right="8.0" top="8.0"/>
+        </padding>
+        <children>
+            <Label prefHeight="25.0" text="Select or give a name of a device. The first match containing will be selected. Leave empty to not change the device" wrapText="true"/>
+            <VBox fx:id="target" spacing="15.0"/>
+        </children>
+    </VBox>
+</VBox>

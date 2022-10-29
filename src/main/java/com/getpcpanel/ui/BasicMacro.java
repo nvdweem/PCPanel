@@ -65,7 +65,6 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListView;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.Tab;
@@ -92,6 +91,7 @@ public class BasicMacro extends Application implements UIInitializer {
     private final Voicemeeter voiceMeeter;
     private final ISndCtrl sndCtrl;
     private final OsHelper osHelper;
+    @FXML private AdvancedDevices defaultDeviceAdvancedController;
 
     @FXML private Pane topPane;
     @FXML private TabPane mainTabPane;
@@ -109,10 +109,6 @@ public class BasicMacro extends Application implements UIInitializer {
     @FXML private ChoiceBox<AudioDevice> sounddevices;
     @FXML private ListView<AudioDevice> soundDeviceSource;
     @FXML private ListView<AudioDevice> soundDevices2;
-    @FXML private ComboBox<String> advMedPb;
-    @FXML private ComboBox<String> advMedRec;
-    @FXML private ComboBox<String> advComPb;
-    @FXML private ComboBox<String> advComRec;
     @FXML private RadioButton rdio_mute_toggle;
     @FXML private RadioButton rdio_mute_mute;
     @FXML private RadioButton rdio_mute_unmute;
@@ -329,7 +325,10 @@ public class BasicMacro extends Application implements UIInitializer {
                 var device = rdio_muteDevice_Default.isSelected() || muteSoundDevice.getValue() == null ? "" : muteSoundDevice.getValue().id();
                 yield new CommandVolumeDeviceMute(device, rdio_muteDevice_unmute.isSelected() ? MuteType.unmute : rdio_muteDevice_mute.isSelected() ? MuteType.mute : MuteType.toggle);
             }
-            case "btnCommandVolumeDefaultDeviceAdvanced" -> new CommandVolumeDefaultDeviceAdvanced(advMedPb.getValue(), advMedRec.getValue(), advComPb.getValue(), advComRec.getValue());
+            case "btnCommandVolumeDefaultDeviceAdvanced" -> {
+                var entry = defaultDeviceAdvancedController.getEntries().get(0);
+                yield new CommandVolumeDefaultDeviceAdvanced(entry.mediaPlayback(), entry.mediaRecord(), entry.communicationPlayback(), entry.communicationRecord());
+            }
             case "btnCommandObs" -> {
                 if (obs_rdio_SetScene.isSelected()) {
                     yield new CommandObsSetScene(obsSetScene.getSelectionModel().getSelectedItem());
@@ -492,16 +491,11 @@ public class BasicMacro extends Application implements UIInitializer {
         profileDropdown.getItems().addAll(deviceSave.getProfiles().stream().filter(c -> !c.getName().equals(curProfile)).toList());
         allSoundDevices = sndCtrl.getDevices();
         var outputDevices = allSoundDevices.stream().filter(AudioDevice::isOutput).toList();
-        var inputDevices = allSoundDevices.stream().filter(AudioDevice::isInput).toList();
         volumedevice.getItems().addAll(allSoundDevices);
         muteSoundDevice.getItems().addAll(allSoundDevices);
         sounddevices.getItems().addAll(allSoundDevices);
         soundDeviceSource.getItems().addAll(allSoundDevices);
         initDeviceToggleEvents();
-        advMedPb.getItems().addAll(StreamEx.of(outputDevices).map(Object::toString).toList());
-        advMedRec.getItems().addAll(StreamEx.of(inputDevices).map(Object::toString).toList());
-        advComPb.getItems().addAll(StreamEx.of(outputDevices).map(Object::toString).toList());
-        advComRec.getItems().addAll(StreamEx.of(inputDevices).map(Object::toString).toList());
         soundDevices2.setCellFactory(new SoundDeviceImportFactory(soundDevices2));
         app_vol_output_device.getItems().addAll(outputDevices);
         keystrokeField.setOnKeyPressed(event -> {
@@ -704,12 +698,7 @@ public class BasicMacro extends Application implements UIInitializer {
                 case toggle -> rdio_muteDevice_toggle.setSelected(true);
             }
         });
-        buttonInitializers.put(CommandVolumeDefaultDeviceAdvanced.class, (CommandVolumeDefaultDeviceAdvanced cmd) -> {
-            advMedPb.setValue(cmd.getMediaPb());
-            advMedRec.setValue(cmd.getMediaRec());
-            advComPb.setValue(cmd.getCommunicationPb());
-            advComRec.setValue(cmd.getCommunicationRec());
-        });
+        buttonInitializers.put(CommandVolumeDefaultDeviceAdvanced.class, (CommandVolumeDefaultDeviceAdvanced cmd) -> defaultDeviceAdvancedController.add(cmd.getMediaPb(), cmd.getMediaRec(), cmd.getCommunicationPb(), cmd.getCommunicationRec()));
         buttonInitializers.put(CommandObsSetScene.class, (CommandObsSetScene cmd) -> {
             obs_rdio_SetScene.setSelected(true);
             obsSetScene.getSelectionModel().select(cmd.getScene());
