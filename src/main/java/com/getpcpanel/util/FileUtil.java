@@ -18,6 +18,7 @@ public class FileUtil {
 
     @PostConstruct
     void ensureRoot() {
+        log.info("Using root: {}", root);
         if (!root.exists() && !root.mkdirs()) {
             log.error("Unable to create file root: {}", root);
         }
