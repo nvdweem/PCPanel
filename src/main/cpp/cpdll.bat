@@ -1,3 +1,4 @@
 @echo off
 copy SndCtrl\x64\Release\SndCtrl.dll ..\resources
-del ..\resources\SndCtrl.pdb
+del ..\..\..\SndCtrl.pdb
+copy SndCtrl\x64\Release\SndCtrl.pdb ..\..\..\

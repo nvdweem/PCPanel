@@ -132,7 +132,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NO_JNI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Program Files\Java\jdk-17.0.3.1\include\;C:\Program Files\Java\jdk-17.0.3.1\include\win32</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\dev\java\jbr-17.0.4-x64-b469\include\;C:\dev\java\jbr-17.0.4-x64-b469\include\win32</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
