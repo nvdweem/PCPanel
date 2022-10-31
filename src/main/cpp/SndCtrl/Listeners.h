@@ -137,8 +137,13 @@ public:
     }
 
     virtual HRESULT STDMETHODCALLTYPE OnDefaultDeviceChanged(EDataFlow flow, ERole role, LPCWSTR pwstrDefaultDeviceId) {
-        wstring tempStr(pwstrDefaultDeviceId);
-        ctrl.SetDefaultDevice(tempStr, flow, role);
+        if (pwstrDefaultDeviceId == nullptr) {
+            wstring empty;
+            ctrl.SetDefaultDevice(empty, flow, role);
+        } else {
+            wstring tempStr(pwstrDefaultDeviceId);
+            ctrl.SetDefaultDevice(tempStr, flow, role);
+        }
         return S_OK;
     }
     virtual HRESULT STDMETHODCALLTYPE OnPropertyValueChanged(LPCWSTR pwstrDeviceId, const PROPERTYKEY key) { return S_OK; }
