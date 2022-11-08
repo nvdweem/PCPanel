@@ -9,6 +9,7 @@
 **Fixes:**:
 
 - If it wasn't possible to get the executable for a path, the AppFinder dialog would not show any results
+- [Windows] Some additional checks are being done in the c++ parts so that the application should crash less (or hopefully not at all anymore)
 
 ## [1.5]
 

@@ -7,7 +7,6 @@
 CComPtr<IAudioSessionControl2> GetSession2(IAudioSessionControl& control) {
     CComPtr<IAudioSessionControl2> cpSessionControl2 = NULL;
     control.QueryInterface(__uuidof(IAudioSessionControl2), (void**)&cpSessionControl2);
-    NOTNULL(cpSessionControl2);
     return cpSessionControl2;
 }
 
@@ -24,6 +23,7 @@ AudioSession::AudioSession(CComPtr<IAudioSessionControl> session) :
     pid(0),
     name() {
     auto cpSession2 = GetSession2(*session);
+    NULLRETURN(cpSession2)
     pid = GetProcessId(*cpSession2);
     if (pid > 0) {
         name = GetProcessName(pid);
@@ -31,15 +31,19 @@ AudioSession::AudioSession(CComPtr<IAudioSessionControl> session) :
 }
 
 void AudioSession::Init(JniCaller& audioDevice, AudioSessionListenerCB& callback) {
+    NULLRETURN(cpSession)
+
     LPWSTR icon = NULL;
     cpSession->GetIconPath(&icon);
     co_ptr<WCHAR> pIcon(icon);
 
-    BOOL muted;
+    BOOL muted = false;
     CComQIPtr<ISimpleAudioVolume> cc(cpSession);
     float level = 0;
-    cc->GetMasterVolume(&level);
-    cc->GetMute(&muted);
+    if (cc) {
+        cc->GetMasterVolume(&level);
+        cc->GetMute(&muted);
+    }
 
     auto pname = GetProductName();
     auto nameCopy = pname;
@@ -55,7 +59,6 @@ void AudioSession::Init(JniCaller& audioDevice, AudioSessionListenerCB& callback
         thread.jstr(nameStr);
         thread.jstr(pNameStr);
         thread.jstr(iconStr);
-        NOTNULL(jObj);
 
         cpListener.Set(new AudioSessionListener(cpSession, *this, callback, jObj));
         thread.DoneWith(jObj);
@@ -63,10 +66,12 @@ void AudioSession::Init(JniCaller& audioDevice, AudioSessionListenerCB& callback
 }
 
 void AudioSession::SetVolume(float volume) {
+    NULLRETURN(cpVolumeControl)
     cpVolumeControl->SetMasterVolume(volume, nullptr);
 }
 
 void AudioSession::Mute(bool muted) {
+    NULLRETURN(cpVolumeControl)
     cpVolumeControl->SetMute(muted, nullptr);
 }
 

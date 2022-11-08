@@ -22,7 +22,7 @@ public:
     AudioDevice(const AudioDevice&) = delete;
 
     virtual void OnNewSession(IAudioSessionControl* cpSess) {
-        NOTNULL(cpSess);
+        NULLRETURN(cpSess);
         SessionAdded(cpSess);
     };
 
@@ -49,7 +49,6 @@ private:
     CComPtr<IAudioEndpointVolume> GetVolumeControl(IMMDevice& device) {
         CComPtr<IAudioEndpointVolume> cpVol;
         device.Activate(__uuidof(IAudioEndpointVolume), CLSCTX_ALL, NULL, (void**)&cpVol);
-        NOTNULL(cpVol);
         return cpVol;
     }
 };

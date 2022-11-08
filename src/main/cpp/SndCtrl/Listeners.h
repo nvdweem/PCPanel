@@ -14,7 +14,6 @@ class SndCtrl;
 struct CoRelease {
     void operator()(LPVOID itm) {
         if (itm != NULL) {
-            NOTNULL(itm);
             CoTaskMemFree(itm);
         }
     }
@@ -108,12 +107,12 @@ public:
     }
 
     virtual void Start() {
-        NOTNULL(cpEnumerator);
+        NULLRETURN(cpEnumerator)
         cpEnumerator->RegisterEndpointNotificationCallback(this);
     }
 
     virtual void Stop() {
-        NOTNULL(cpEnumerator);
+        NULLRETURN(cpEnumerator);
         cpEnumerator->UnregisterEndpointNotificationCallback(this);
     }
 
@@ -175,11 +174,11 @@ public:
     DeviceVolumeListener(CComPtr<IAudioEndpointVolume> pVolume, JniCaller& jni) : pVolume(pVolume), jni(jni) {
     }
     virtual void Start() {
-        NOTNULL(pVolume);
+        NULLRETURN(pVolume);
         pVolume->RegisterControlChangeNotify(this);
     }
     virtual void Stop() {
-        NOTNULL(pVolume);
+        NULLRETURN(pVolume);
         pVolume->UnregisterControlChangeNotify(this);
     }
 
@@ -218,9 +217,11 @@ public:
         : cb(cb), sessionManager(sessionManager) {
     }
     virtual void Start() {
+        NULLRETURN(sessionManager)
         sessionManager->RegisterSessionNotification(this);
     }
     virtual void Stop() {
+        NULLRETURN(sessionManager)
         sessionManager->UnregisterSessionNotification(this);
     }
 
@@ -260,11 +261,11 @@ public:
         : sessionControl(sessionControl), session(session), callback(callback), jni(JniCaller::Create(obj)) {
     }
     virtual void Start() {
-        NOTNULL(sessionControl);
+        NULLRETURN(sessionControl);
         sessionControl->RegisterAudioSessionNotification(this);
     }
     virtual void Stop() {
-        NOTNULL(sessionControl);
+        NULLRETURN(sessionControl);
         sessionControl->UnregisterAudioSessionNotification(this);
     }
 

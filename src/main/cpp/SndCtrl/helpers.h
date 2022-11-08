@@ -6,11 +6,8 @@ wstring GetProcessName(DWORD procId);
 
 #undef DEBUG
 
-#ifdef DEBUG
-#define NOTNULL(x) notNull(x, __LINE__, __FILE__)
-#else
-#define NOTNULL(x) x
-#endif // DEBUG
+#define NULLRETURN(x) if (!x) return;
+#define NULLCONTINUE(x) if (!x) continue;
 
 template<class T> T* notNull(T* t, int line, const char* file) {
     cout << t << ": " << file << " (" << line << ")" << endl;

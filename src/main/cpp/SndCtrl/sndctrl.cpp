@@ -20,21 +20,23 @@ SndCtrl::SndCtrl(JNIEnv* env, jobject obj) :
     if (FAILED(CoCreateInstance(CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, IID_IMMDeviceEnumerator, (void**)&cpEnumeratorL))) {
         cerr << "Unable to create device enumerator, more will fail later :(" << endl;
     }
-    cpEnumerator = NOTNULL(cpEnumeratorL);
+
+    cpEnumerator = cpEnumeratorL;
 
     cpDeviceListener.Set(new DeviceListener(*this, cpEnumerator));
     InitDevices();
 
-    pFocusListener = make_unique<FocusListener>(NOTNULL(pJni));
+    pFocusListener = make_unique<FocusListener>(pJni);
 }
 
 void SndCtrl::InitDevices() {
     auto cpDevices = EnumAudioEndpoints(*cpEnumerator);
-    NOTNULL(cpDevices);
+    NULLRETURN(cpDevices);
     auto count = GetCount(*cpDevices);
     for (UINT idx = 0; idx < count; idx++) {
         auto cpDevice = DeviceFromCollection(*cpDevices, idx);
-        DeviceAdded(NOTNULL(cpDevice));
+        NULLCONTINUE(cpDevice);
+        DeviceAdded(cpDevice);
     }
 
     for (int dataflow = eRender; dataflow < eAll; dataflow++) {
@@ -73,7 +75,7 @@ void SndCtrl::DeviceAdded(CComPtr<IMMDevice> cpDevice) {
         auto jObj = pJni->CallObject(thread, "deviceAdded", "(Ljava/lang/String;Ljava/lang/String;FZI)Lcom/getpcpanel/cpp/AudioDevice;",
             nameStr, idStr, volume, muted, getDataFlow(*cpDevice)
         );
-        NOTNULL(jObj);
+        NULLRETURN(jObj);
         devices.insert({ deviceId, make_unique<AudioDevice>(deviceId, cpDevice, jObj)});
         thread.DoneWith(nameStr);
         thread.DoneWith(idStr);
@@ -168,7 +170,6 @@ void SndCtrl::SetDefaultDevice(wstring id, EDataFlow dataFlow, ERole role) {
 CComPtr<IMMDeviceCollection> SndCtrl::EnumAudioEndpoints(IMMDeviceEnumerator& enumerator) {
     CComPtr<IMMDeviceCollection> cpDeviceCol;
     enumerator.EnumAudioEndpoints(eAll, DEVICE_STATE_ACTIVE, &cpDeviceCol);
-    NOTNULL(cpDeviceCol);
     return cpDeviceCol;
 }
 
@@ -181,7 +182,6 @@ UINT SndCtrl::GetCount(IMMDeviceCollection& collection) {
 CComPtr<IMMDevice> SndCtrl::DeviceFromCollection(IMMDeviceCollection& collection, UINT idx) {
     CComPtr<IMMDevice> pDevice;
     collection.Item(idx, &pDevice);
-    NOTNULL(pDevice);
     return pDevice;
 }
 
@@ -209,7 +209,6 @@ SDeviceNameId SndCtrl::DeviceNameId(IMMDevice& device) {
 CComPtr<IAudioEndpointVolume> SndCtrl::GetVolumeControl(IMMDevice& device) {
     CComPtr<IAudioEndpointVolume> pVol;
     device.Activate(__uuidof(IAudioEndpointVolume), CLSCTX_ALL, NULL, (void**)&pVol);
-    NOTNULL(pVol);
     return pVol;
 }
 
