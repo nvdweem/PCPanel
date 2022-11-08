@@ -32,10 +32,10 @@ public class AdvancedDevice {
         var outputDevices = allSoundDevices.stream().filter(AudioDevice::isOutput).toList();
         var inputDevices = allSoundDevices.stream().filter(AudioDevice::isInput).toList();
 
-        mediaPlayback.getItems().addAll(StreamEx.of(outputDevices).map(Object::toString).toList());
-        mediaRecord.getItems().addAll(StreamEx.of(inputDevices).map(Object::toString).toList());
-        communicationPlayback.getItems().addAll(StreamEx.of(outputDevices).map(Object::toString).toList());
-        communicationRecord.getItems().addAll(StreamEx.of(inputDevices).map(Object::toString).toList());
+        mediaPlayback.getItems().addAll(StreamEx.of(outputDevices).map(Object::toString).prepend("").toList());
+        mediaRecord.getItems().addAll(StreamEx.of(inputDevices).map(Object::toString).prepend("").toList());
+        communicationPlayback.getItems().addAll(StreamEx.of(outputDevices).map(Object::toString).prepend("").toList());
+        communicationRecord.getItems().addAll(StreamEx.of(inputDevices).map(Object::toString).prepend("").toList());
     }
 
     public void set(String mediaPlayback, String mediaRecord, String communicationPlayback, String communicationRecord) {
