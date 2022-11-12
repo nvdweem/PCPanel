@@ -15,6 +15,7 @@ import javax.annotation.PostConstruct;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.getpcpanel.profile.SaveService;
@@ -34,7 +35,7 @@ import one.util.streamex.StreamEx;
 @RequiredArgsConstructor
 public final class OBS {
     private static final long WAIT_TIME = 1000L;
-    private static int activeIdx;
+    private static final ObsIdHelper OBS_ID_HELPER = new ObsIdHelper();
 
     private final SaveService save;
     private List<Object> previousSettings = List.of();
@@ -44,14 +45,23 @@ public final class OBS {
 
     @PostConstruct
     public void init() {
-        startConnection(this::buildAndConnectObsController);
         Runtime.getRuntime().addShutdownHook(new Thread(this::applicationEnding, "OBS Shutdown hook"));
     }
 
-    private void startConnection(Runnable run) {
-        var thread = new Thread(run, "OBS Connection Starter");
-        thread.setDaemon(true);
-        thread.start();
+    @Scheduled(fixedRate = 2_500L)
+    public void connect() {
+        if (!connected && !shuttingDown) {
+            tryReconnect();
+        }
+    }
+
+    private void tryReconnect() {
+        if (controller != null) {
+            log.debug("Reconnecting to OBS");
+            controller.connect();
+        } else {
+            buildAndConnectObsController();
+        }
     }
 
     private void applicationEnding() {
@@ -66,9 +76,10 @@ public final class OBS {
     private void buildAndConnectObsController() {
         if (settingsStillSame() && controller != null)
             return;
-        var port = NumberUtils.toInt(save.get().getObsPort(), -1);
-        var address = save.get().getObsAddress();
-        var password = StringUtils.trimToNull(save.get().getObsPassword());
+        var save = this.save.get();
+        var port = NumberUtils.toInt(save.getObsPort(), -1);
+        var address = save.getObsAddress();
+        var password = StringUtils.trimToNull(save.getObsPassword());
 
         if (controller != null) {
             controller.disconnect();
@@ -76,21 +87,12 @@ public final class OBS {
             controller = null;
         }
 
-        if (port != -1 && StringUtils.isNotBlank(address)) {
-            activeIdx++;
-            var currentIdx = activeIdx;
+        if (save.isObsEnabled() && port != -1 && StringUtils.isNotBlank(address)) {
+            var currentIdx = OBS_ID_HELPER.incAndGet();
             controller = buildController(address, port, password).lifecycle()
                                                                  .onReady(this::connected)
-                                                                 .onDisconnect(() -> {
-                                                                     if (currentIdx == activeIdx) {
-                                                                         tryReconnect();
-                                                                     }
-                                                                 })
-                                                                 .onControllerError(e -> {
-                                                                     if (currentIdx == activeIdx) {
-                                                                         onError(e);
-                                                                     }
-                                                                 })
+                                                                 .onDisconnect(() -> OBS_ID_HELPER.runIfIdEq(currentIdx, () -> connected = false))
+                                                                 .onControllerError(e -> OBS_ID_HELPER.runIfIdEq(currentIdx, () -> onError(e)))
                                                                  .and().build();
             controller.connect();
         } else {
@@ -144,29 +146,10 @@ public final class OBS {
     }
 
     private void onError(ReasonThrowable reasonThrowable) {
-        if (reasonThrowable.getThrowable() instanceof ConnectException || reasonThrowable.getThrowable() instanceof TimeoutException) {
-            startConnection(this::tryReconnect);
-        } else {
+        if (!(reasonThrowable.getThrowable() instanceof ConnectException) && !(reasonThrowable.getThrowable() instanceof TimeoutException)) {
             log.error("Unknown OBS error", reasonThrowable.getThrowable());
         }
-    }
-
-    private void tryReconnect() {
-        if (shuttingDown) {
-            return;
-        }
         connected = false;
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            log.warn("Unable to sleep");
-        }
-        if (controller != null) {
-            log.debug("Reconnecting to OBS");
-            controller.connect();
-        } else {
-            buildAndConnectObsController();
-        }
     }
 
     private boolean settingsStillSame() {
@@ -257,5 +240,20 @@ public final class OBS {
 
     public boolean isConnected() {
         return save.get().isObsEnabled() && controller != null && connected;
+    }
+
+    static class ObsIdHelper {
+        private int activeIdx;
+
+        private int incAndGet() {
+            activeIdx++;
+            return activeIdx;
+        }
+
+        private void runIfIdEq(int id, Runnable toRun) {
+            if (activeIdx == id) {
+                toRun.run();
+            }
+        }
     }
 }
