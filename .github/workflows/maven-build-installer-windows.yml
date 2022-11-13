@@ -54,7 +54,9 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: linux-installer
-          path: ./target/*.deb
+          path: |
+            ./target/*.deb
+            ./target/*.jar
 
   preRelease:
     name: Pre-release
