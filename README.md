@@ -23,35 +23,7 @@ is complete and will add the application to start automatically on Windows start
 
 ## Linux
 
-Linux might need a few more steps to get everything working.
-
-1. Download the deb file and install with your package manager or via terminal:
-   ```shell
-   dpkg -i pcpanel_[version].deb
-   apt-get -f install   # This is only needed if not-installed dependencies were found
-   ```
-2. Allow the software to access the device:
-   ```shell
-   sudoedit /etc/udev/rules.d/70-pcpanel.rules
-   ```
-3. Add the following lines:
-   ```properties
-   SUBSYSTEM=="usb", ATTRS{idVendor}=="04D8", ATTRS{idProduct}=="eb52", TAG+="uaccess"
-   SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="a3c4", TAG+="uaccess"
-   SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="a3c5", TAG+="uaccess"
-   ```
-4. Then run
-   ```shell
-   sudo udevadm control --reload-rules
-   ```
-5. It seems that the first run of the software needs to be done as root (`sudo /opt/pcpanel/bin/PCPanel`). This might be needed whenever the software gets updated.
-6. (Optional) Make the software startup automatically. When making the application startup automatically you can add the `quiet` parameter to not show the main window on startup.
-
-I then had to restart to get it to work, logging out and in might work as well.
-
-The software depends on some PulseAudio commands from `pulseaudio-utils` for volume control
-and `xdotool` to get the currently active window for focus volume. These packages should be
-installed automatically, but you can also install them manually if they are not.
+See [Linux instructions](linux.md).
 
 # Migration
 
