@@ -174,12 +174,16 @@ public class SndCtrlLinux implements ISndCtrl {
     }
 
     private Set<LinuxAudioDevice> getDevicesFromCmd() {
-        return StreamEx.of(cmd.getDevices()).map(this::toDevice).toSet();
+        return StreamEx.of(cmd.getDevices()).mapPartial(this::toDevice).toSet();
     }
 
-    private LinuxAudioDevice toDevice(PulseAudioWrapper.PulseAudioTarget pa) {
+    private Optional<LinuxAudioDevice> toDevice(PulseAudioWrapper.PulseAudioTarget pa) {
         var isOutput = pa.type() == PulseAudioWrapper.InOutput.output;
-        return new LinuxAudioDevice(eventPublisher, pa.index(), pa.properties().get("device.product.name"), (isOutput ? "" : INPUT_PREFIX) + pa.metas().get("name"), pa.isDefault(), isOutput);
+        var name = pa.metas().get("Name");
+        if (StringUtils.isBlank(name)) {
+            return Optional.empty();
+        }
+        return Optional.of(new LinuxAudioDevice(eventPublisher, pa.index(), pa.metas().get("Description"), (isOutput ? "" : INPUT_PREFIX) + pa.metas().get("Name"), pa.isDefault(), isOutput));
     }
 
     private Set<LinuxAudioSession> getSessionsFromCmd() {

@@ -4,8 +4,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import one.util.streamex.StreamEx;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -20,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Singular;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
+import one.util.streamex.StreamEx;
 
 @Log4j2
 @Service
@@ -28,6 +28,7 @@ import lombok.extern.log4j.Log4j2;
 public class PulseAudioWrapper {
     public static final int NO_OP_IDX = -1;
     public static final int DEFAULT_DEVICE = -2;
+    private static final Pattern pactlFirstLine = Pattern.compile("(.*) #(\\d+)");
 
     public List<PulseAudioTarget> getDevices() {
         return StreamEx.of(execAndParse(InOutput.output)).append(execAndParse(InOutput.input)).toList();
@@ -70,22 +71,18 @@ public class PulseAudioWrapper {
 
     public List<PulseAudioTarget> execAndParse(InOutput type) {
         var ret = new ArrayList<PulseAudioTarget>();
-        var cmdOutput = runAndRead(new ProcessBuilder("pacmd", "list-" + type.pulseType));
+        var cmdOutput = runAndRead(new ProcessBuilder("pactl", "list", type.pulseType));
 
         PulseAudioTarget.PulseAudioTargetBuilder paTarget = null;
         var readingProperties = false;
         for (var fullLine : cmdOutput) {
             var line = StringUtils.trimToEmpty(fullLine);
-            if (StringUtils.startsWithIgnoreCase(line, "index:")) {
+
+            var firstLineMatcher = pactlFirstLine.matcher(line);
+            if (firstLineMatcher.find()) {
                 if (paTarget != null)
                     ret.add(paTarget.build());
-                paTarget = PulseAudioTarget.builder().index(PulseAudioTarget.parseIndex(line));
-                readingProperties = false;
-                continue;
-            } else if (StringUtils.startsWithIgnoreCase(line, "* index:")) {
-                if (paTarget != null)
-                    ret.add(paTarget.build());
-                paTarget = PulseAudioTarget.builder().index(PulseAudioTarget.parseIndex(line)).isDefault(true);
+                paTarget = PulseAudioTarget.builder().index(NumberUtils.toInt(firstLineMatcher.group(2), -1)).type(type);
                 readingProperties = false;
                 continue;
             }
@@ -96,13 +93,15 @@ public class PulseAudioWrapper {
                 var parts = line.split("=");
                 paTarget.property(StringUtils.trimToEmpty(parts[0]), StringUtils.strip(StringUtils.trimToEmpty(parts[1]), "\""));
             } else if (!readingProperties && line.contains(":")) {
-                if (StringUtils.equals(line, "properties:")) {
+                if (StringUtils.equals(line, "Properties:")) {
                     readingProperties = true;
                     continue;
                 }
 
                 var parts = line.split(":");
-                paTarget.meta(StringUtils.trimToEmpty(parts[0]), StringUtils.trimToEmpty(parts[1]));
+                if (parts.length > 1) {
+                    paTarget.meta(StringUtils.trimToEmpty(parts[0]), StringUtils.trimToEmpty(parts[1]));
+                }
             }
         }
         if (paTarget != null) {
@@ -138,9 +137,6 @@ public class PulseAudioWrapper {
 
     @Builder
     record PulseAudioTarget(int index, boolean isDefault, @Singular Map<String, String> metas, @Singular Map<String, String> properties, InOutput type) {
-        static int parseIndex(String line) {
-            return NumberUtils.toInt(StringUtils.trimToEmpty(line.split(":")[1]), -1);
-        }
     }
 
     @RequiredArgsConstructor
