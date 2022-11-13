@@ -10,6 +10,7 @@
 
 - If it wasn't possible to get the executable for a path, the AppFinder dialog would not show any results
 - [Windows] Some additional checks are being done in the c++ parts so that the application should crash less (or hopefully not at all anymore)
+- [Linux] The application doesn't use `pacmd` anymore, only `pactl` to also be compatible with PipeWire
 
 ## [1.5]
 
@@ -18,7 +19,7 @@
 - Added a feature that might fix twitching sliders on faulty hardware (#6)
 - [Linux] Allow controlling input volume (#10)
 - Allow configuring what the mute override color follows
-- OBS 28 support. Don't use this version of the software if you are still using OBS 27 or lower
+- OBS Websocket 5 (OBS 28) support. Don't use this version of the software if you are still using OBS 27 or lower without the Websocket 5 plugin.
 - [Windows] An option was added to show an overlay when volume is changed and to show icons of the controlled applications in the main ui. From [request](https://www.reddit.com/r/PCPanel/comments/xf14ol)
 
 **Fixes:**
