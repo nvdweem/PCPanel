@@ -51,43 +51,36 @@ public final class OBS {
     @Scheduled(fixedRate = 2_500L)
     public void connect() {
         if (!connected && !shuttingDown) {
-            tryReconnect();
-        }
-    }
-
-    private void tryReconnect() {
-        if (controller != null) {
-            log.debug("Reconnecting to OBS");
-            controller.connect();
-        } else {
             buildAndConnectObsController();
         }
     }
 
     private void applicationEnding() {
         shuttingDown = true;
-        if (controller != null) {
-            controller.disconnect();
-            controller.stop();
-            controller = null;
-        }
+        disconnectController();
     }
 
     private void buildAndConnectObsController() {
-        if (settingsStillSame() && controller != null)
-            return;
         var save = this.save.get();
+        if (!save.isObsEnabled() || connected || shuttingDown) {
+            log.trace("Obs is disabled({})/already connected({})/we are shutting down({})", save.isObsEnabled(), connected, shuttingDown);
+            disconnectController();
+            return;
+        }
+
+        connected = true;
+        log.debug("Connecting to OBS");
+        if (settingsStillSame() && controller != null) {
+            controller.connect();
+            return;
+        }
+
+        disconnectController();
         var port = NumberUtils.toInt(save.getObsPort(), -1);
         var address = save.getObsAddress();
         var password = StringUtils.trimToNull(save.getObsPassword());
 
-        if (controller != null) {
-            controller.disconnect();
-            controller.stop();
-            controller = null;
-        }
-
-        if (save.isObsEnabled() && port != -1 && StringUtils.isNotBlank(address)) {
+        if (port != -1 && StringUtils.isNotBlank(address)) {
             var currentIdx = OBS_ID_HELPER.incAndGet();
             controller = buildController(address, port, password).lifecycle()
                                                                  .onReady(this::connected)
@@ -96,8 +89,15 @@ public final class OBS {
                                                                  .and().build();
             controller.connect();
         } else {
-            controller = null;
             connected = false;
+        }
+    }
+
+    private void disconnectController() {
+        if (controller != null) {
+            controller.disconnect();
+            controller.stop();
+            controller = null;
         }
     }
 
