@@ -68,9 +68,19 @@ public final class OBS {
             return;
         }
 
-        connected = true;
+        try {
+            doBuildAndConnectObsController();
+        } catch (Exception e) {
+            connected = false;
+            log.debug("Connecting failed", e);
+        }
+    }
+
+    private void doBuildAndConnectObsController() {
+        var save = this.save.get();
         log.debug("Connecting to OBS");
         if (settingsStillSame() && controller != null) {
+            connected = true;
             controller.connect();
             return;
         }
@@ -87,6 +97,7 @@ public final class OBS {
                                                                  .onDisconnect(() -> OBS_ID_HELPER.runIfIdEq(currentIdx, () -> connected = false))
                                                                  .onControllerError(e -> OBS_ID_HELPER.runIfIdEq(currentIdx, () -> onError(e)))
                                                                  .and().build();
+            connected = true;
             controller.connect();
         } else {
             connected = false;
@@ -94,6 +105,7 @@ public final class OBS {
     }
 
     private void disconnectController() {
+        connected = false;
         if (controller != null) {
             controller.disconnect();
             controller.stop();
