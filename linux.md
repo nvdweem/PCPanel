@@ -1,5 +1,7 @@
 # Linux installation
 
+Note: The software is not actively being developed for Linux, but attempts are being made to stay/become more Linux compatible. If there are any issues please report them via an issue.
+
 ## Preparation
 
 Linux might need a few more steps to get everything working.
@@ -26,6 +28,8 @@ I then had to restart to get it to work, logging out and in might work as well.
 The software depends on some PulseAudio commands (`pactl`) from `pulseaudio-utils` for volume control
 and `xdotool` to get the currently active window for focus volume. These packages should be
 installed automatically, but you can also install them manually if they are not.
+
+Mentioned in the issues: If you are using GNOME u need a tray extension otherwise the app will not launch.
 
 ## Install
 
