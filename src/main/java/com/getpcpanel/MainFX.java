@@ -37,4 +37,8 @@ public class MainFX extends Application {
     public static <T> T getBean(Class<T> clazz) {
         return context.getBean(clazz);
     }
+
+    public static ConfigurableApplicationContext getContext() {
+        return context;
+    }
 }

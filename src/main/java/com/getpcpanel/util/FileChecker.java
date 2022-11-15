@@ -10,11 +10,9 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.springframework.context.ApplicationEventPublisher;
-
+import com.getpcpanel.MainFX;
 import com.getpcpanel.ui.HomePage;
 
-import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -25,7 +23,6 @@ public class FileChecker extends Thread {
     private static final AtomicBoolean started = new AtomicBoolean(false);
     @SuppressWarnings("FieldCanBeLocal") // If this field is local then the lock will be released.
     private RandomAccessFile randomFile;
-    @Setter private ApplicationEventPublisher eventPublisher;
 
     public static void createAndStart() {
         if (started.getAndSet(true)) {
@@ -113,6 +110,7 @@ public class FileChecker extends Thread {
                             log.trace("Unable to delete {}", file);
                         }
                         log.debug("Showing window because another process was started");
+                        var eventPublisher = MainFX.getContext();
                         if (eventPublisher != null) {
                             eventPublisher.publishEvent(new HomePage.ShowMainEvent());
                         }
