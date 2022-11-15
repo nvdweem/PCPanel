@@ -29,8 +29,9 @@ public final class TrayService {
     public void init() {
         var popup = new PopupMenu();
         TrayIcon trayIcon;
-        var tray = SystemTray.getSystemTray();
+        SystemTray tray;
         try {
+            tray = SystemTray.getSystemTray();
             var trayIconImage = ImageIO.read(Objects.requireNonNull(TrayService.class.getResource("/assets/32x32.png")));
             var trayIconWidth = new TrayIcon(trayIconImage).getSize().width;
             trayIcon = new TrayIcon(trayIconImage.getScaledInstance(trayIconWidth, -1, 4));

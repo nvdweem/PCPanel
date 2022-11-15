@@ -12,6 +12,7 @@
 - When the connection to OBS fails with an error, the reconnect attempts will still be done
 - [Windows] Some additional checks are being done in the c++ parts so that the application should crash less (or hopefully not at all anymore)
 - [Linux] The application doesn't use `pacmd` anymore, only `pactl` to also be compatible with PipeWire
+- [Linux] The application can start when no tray extensions are available
 
 ## [1.5]
 

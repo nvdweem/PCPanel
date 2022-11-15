@@ -29,7 +29,8 @@ The software depends on some PulseAudio commands (`pactl`) from `pulseaudio-util
 and `xdotool` to get the currently active window for focus volume. These packages should be
 installed automatically, but you can also install them manually if they are not.
 
-Mentioned in the issues: If you are using GNOME u need a tray extension otherwise the app will not launch.
+If there are no tray extensions available, the application will still hide when closed. To show
+the main window, just run the application again.
 
 ## Install
 
