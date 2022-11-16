@@ -1,10 +1,12 @@
 package com.getpcpanel.obs;
 
 import java.net.ConnectException;
+import java.net.SocketTimeoutException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
@@ -158,8 +160,16 @@ public final class OBS {
     }
 
     private void onError(ReasonThrowable reasonThrowable) {
-        if (!(reasonThrowable.getThrowable() instanceof ConnectException) && !(reasonThrowable.getThrowable() instanceof TimeoutException)) {
-            log.error("Unknown OBS error", reasonThrowable.getThrowable());
+        var exception = reasonThrowable.getThrowable();
+        if (exception instanceof ExecutionException exEx) {
+            exception = exEx.getCause();
+        }
+
+        if (exception instanceof SocketTimeoutException || exception instanceof TimeoutException || exception instanceof ConnectException) {
+            log.debug("Timeout/connect exception occurred", exception);
+        } else {
+            log.warn("Unknown OBS error, stack is logged in debug");
+            log.debug("Unknown OBS error", exception);
         }
         connected = false;
     }
