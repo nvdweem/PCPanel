@@ -111,4 +111,6 @@ jobs:
       - name: Upload Release Asset
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release upload latest-windows target/*
+        run: |
+          gh release upload latest-windows target/*
+          gh release edit latest-windows --draft=false
