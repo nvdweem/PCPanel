@@ -11,19 +11,23 @@ import java.util.Objects;
 import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import com.getpcpanel.ui.HomePage;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @Service
 @RequiredArgsConstructor
+@ConditionalOnProperty(value = "disable.tray", havingValue = "false", matchIfMissing = true)
 public final class TrayService {
     private final ApplicationEventPublisher eventPublisher;
+    @Getter private boolean trayDisabled;
 
     @PostConstruct
     public void init() {
@@ -35,8 +39,10 @@ public final class TrayService {
             var trayIconImage = ImageIO.read(Objects.requireNonNull(TrayService.class.getResource("/assets/32x32.png")));
             var trayIconWidth = new TrayIcon(trayIconImage).getSize().width;
             trayIcon = new TrayIcon(trayIconImage.getScaledInstance(trayIconWidth, -1, 4));
+            trayDisabled = false;
         } catch (Exception e1) {
             log.error("Unable to initialize tray icon", e1);
+            trayDisabled = true;
             return;
         }
         var exitItem = new MenuItem("Exit");

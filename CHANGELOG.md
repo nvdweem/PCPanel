@@ -13,6 +13,7 @@
 - [Windows] Some additional checks are being done in the c++ parts so that the application should crash less (or hopefully not at all anymore)
 - [Linux] The application doesn't use `pacmd` anymore, only `pactl` to also be compatible with PipeWire
 - [Linux] The application can start when no tray extensions are available
+- [Linux] It's possible to disable the tray icon by adding `-Ddisable.tray` as a command line parameter
 - Starting the application again (when skipfilecheck is not specified) will show the main window
 
 ## [1.5]

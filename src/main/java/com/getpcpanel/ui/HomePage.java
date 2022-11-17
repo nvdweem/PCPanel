@@ -1,5 +1,7 @@
 package com.getpcpanel.ui;
 
+import java.util.Optional;
+
 import javax.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -10,6 +12,7 @@ import com.getpcpanel.device.Device;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.util.TrayService;
 import com.getpcpanel.util.VersionChecker;
 
 import javafx.application.Application;
@@ -20,12 +23,14 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.image.Image;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.stage.WindowEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
@@ -39,6 +44,7 @@ public class HomePage extends Application {
     private final SaveService saveService;
     private final DeviceScanner deviceScanner;
     private final DeviceHolder devices;
+    private final Optional<TrayService> trayService;
 
     @Value("${application.version}") private String version;
 
@@ -96,6 +102,11 @@ public class HomePage extends Application {
         stage.setTitle(TITLE_FORMAT.formatted(version));
 
         deviceScanner.init();
+
+        if (trayService.map(TrayService::isTrayDisabled).orElse(true)) {
+            ((HBox) close.getParent()).getChildren().remove(close);
+            stage.getScene().getWindow().addEventFilter(WindowEvent.WINDOW_CLOSE_REQUEST, e -> System.exit(0));
+        }
     }
 
     public static void showHint(boolean show) {
