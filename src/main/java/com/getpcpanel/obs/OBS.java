@@ -50,7 +50,7 @@ public final class OBS {
         Runtime.getRuntime().addShutdownHook(new Thread(this::applicationEnding, "OBS Shutdown hook"));
     }
 
-    @Scheduled(fixedRate = 2_500L)
+    @Scheduled(fixedRateString = "${pcpanel.obs.rate:2500}")
     public void connect() {
         if (!connected && !shuttingDown) {
             buildAndConnectObsController();
@@ -88,6 +88,7 @@ public final class OBS {
         }
 
         disconnectController();
+        connected = true;
         var port = NumberUtils.toInt(save.getObsPort(), -1);
         var address = save.getObsAddress();
         var password = StringUtils.trimToNull(save.getObsPassword());
@@ -99,7 +100,6 @@ public final class OBS {
                                                                  .onDisconnect(() -> OBS_ID_HELPER.runIfIdEq(currentIdx, () -> connected = false))
                                                                  .onControllerError(e -> OBS_ID_HELPER.runIfIdEq(currentIdx, () -> onError(e)))
                                                                  .and().build();
-            connected = true;
             controller.connect();
         } else {
             connected = false;
