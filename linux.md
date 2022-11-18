@@ -64,5 +64,4 @@ java --module-path="[path-to-javafx]/lib" \
 
 In certain cases there will be a 'JavaEmbeddedFrame' when the application is running. This is caused by the tray icon.
 It is possible to disable the tray icon and removing the JavaEmbeddedFrame by adding `-Ddisable.tray` to the command line.
-If the tray is disabled, or the tray cannot be created, the application will not have a close button to close the window.
-Closing the window manually will also shut down the application.
+If the tray is disabled, the close button will still only hide the application. Starting the application again will show the main window.
