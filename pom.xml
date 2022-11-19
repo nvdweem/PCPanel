@@ -12,11 +12,16 @@
 
     <groupId>com.getpcpanel</groupId>
     <artifactId>pcpanel</artifactId>
-    <version>1.6-SNAPSHOT</version>
+    <version>${project.baseversion}${project.snapshot}</version>
 
     <description>PCPanel controller software</description>
 
     <properties>
+        <project.baseversion>1.6</project.baseversion>
+        <project.snapshot>-SNAPSHOT</project.snapshot>
+        <!--suppress UnresolvedMavenProperty -->
+        <gihub.build>${env.GITHUB_RUN_NUMBER}</gihub.build>
+
         <java.version>17</java.version>
         <jetty.version>9.4.49.v20220914</jetty.version> <!-- Required by OBS Websocket -->
         <maven.compiler.source>${java.version}</maven.compiler.source>
@@ -26,7 +31,7 @@
 
         <app.name>PCPanel</app.name>
         <maven.build.timestamp.format>yy.ww.WWkkmm</maven.build.timestamp.format>
-        <app.version>${maven.build.timestamp}</app.version>
+        <app.version>${project.baseversion}.${gihub.build}</app.version>
         <jvm.modules>javafx.controls,javafx.fxml,javafx.swing,java.desktop,java.management,java.logging,jdk.crypto.cryptoki</jvm.modules>
         <windows.upgrade.uuid>9421bff0-3840-414c-8563-407fbcd1d04d</windows.upgrade.uuid>
         <windows.vendor>PCPanel</windows.vendor>

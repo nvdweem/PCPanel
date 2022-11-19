@@ -1,5 +1,6 @@
 package com.getpcpanel.ui;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -40,6 +41,7 @@ public class HomePage extends Application {
     private final DeviceHolder devices;
 
     @Value("${application.version}") private String version;
+    @Value("${application.build}") private String build;
 
     @FXML private Pane deviceHolder;
     @FXML private Pane titleHolder;
@@ -95,6 +97,10 @@ public class HomePage extends Application {
         stage.setTitle(TITLE_FORMAT.formatted(version));
 
         deviceScanner.init();
+    }
+
+    private String buildVersion() {
+        return version + (StringUtils.containsIgnoreCase(version, "snapshot") ? " (" + build + ")" : "");
     }
 
     public static void showHint(boolean show) {
@@ -184,7 +190,7 @@ public class HomePage extends Application {
         icon.setId("icon");
         min.setGraphic(icon);
         deviceListToggle.setOnAction(e -> setConnectedDeviceListVisible(!isConnectedDeviceListVisisble()));
-        versionLabel.setText(TITLE_FORMAT.formatted(version));
+        versionLabel.setText(TITLE_FORMAT.formatted(buildVersion()));
     }
 
     @EventListener

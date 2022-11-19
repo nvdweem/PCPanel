@@ -91,10 +91,11 @@ jobs:
       - name: Create Pre-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
         run: |
           gh release create latest-windows \
             --prerelease \
-            --title "v${{ steps.project.outputs.version }} Pre-Release" \
+            --title "v${{ steps.project.outputs.version }} Pre-Release (${{ env.GITHUB_RUN_NUMBER }})" \
             --notes "$(sed '/##/Q' CHANGELOG.md)"
 
       # Only now download the artifacts so that there is a delay between creating the pre-release and adding the artifacts
