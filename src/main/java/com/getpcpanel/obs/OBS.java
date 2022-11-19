@@ -12,7 +12,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -28,6 +27,7 @@ import io.obswebsocket.community.client.OBSRemoteControllerBuilder;
 import io.obswebsocket.community.client.listener.lifecycle.ReasonThrowable;
 import io.obswebsocket.community.client.model.Input;
 import io.obswebsocket.community.client.model.Scene;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
@@ -146,17 +146,15 @@ public final class OBS {
     }
 
     private OBSRemoteControllerBuilder buildController(String address, int port, String password) {
-        var builder = OBSRemoteController.builder()
-                                         .autoConnect(false)
-                                         .host(address)
-                                         .port(port)
-                                         .password(password)
-                                         .lifecycle()
-                                         .withControllerDefaultLogging(false)
-                                         .withCommunicatorDefaultLogging(false)
-                                         .and();
-        builder.getWebSocketClient().setStopTimeout(500L);
-        return builder;
+        return OBSRemoteController.builder()
+                                  .autoConnect(false)
+                                  .host(address)
+                                  .port(port)
+                                  .password(password)
+                                  .lifecycle()
+                                  .withControllerDefaultLogging(false)
+                                  .withCommunicatorDefaultLogging(false)
+                                  .and();
     }
 
     private void onError(ReasonThrowable reasonThrowable) {

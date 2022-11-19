@@ -1,7 +1,5 @@
 package com.getpcpanel.sleepdetection;
 
-import javax.annotation.PostConstruct;
-
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
@@ -11,6 +9,7 @@ import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.hid.OutputInterpreter;
 import com.getpcpanel.profile.LightingConfig;
 
+import jakarta.annotation.PostConstruct;
 import javafx.application.Platform;
 import javafx.scene.paint.Color;
 import lombok.RequiredArgsConstructor;

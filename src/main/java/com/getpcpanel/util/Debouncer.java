@@ -7,9 +7,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import javax.annotation.PreDestroy;
-
 import org.springframework.stereotype.Service;
+
+import jakarta.annotation.PreDestroy;
 
 /**
  * <a href="https://stackoverflow.com/a/38296055">From stackoverflow</a>

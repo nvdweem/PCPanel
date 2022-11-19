@@ -1,7 +1,5 @@
 package com.getpcpanel.ui;
 
-import javax.annotation.PostConstruct;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -12,6 +10,7 @@ import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.util.VersionChecker;
 
+import jakarta.annotation.PostConstruct;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXML;

@@ -5,9 +5,6 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -22,6 +19,8 @@ import com.github.kwhat.jnativehook.NativeInputEvent;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyListener;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import javafx.application.Platform;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;

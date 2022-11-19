@@ -3,18 +3,16 @@ package com.getpcpanel.ui;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import javax.annotation.PostConstruct;
-
-import com.getpcpanel.spring.ConditionalOnWindows;
-
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import com.getpcpanel.commands.IconService;
 import com.getpcpanel.hid.DeviceCommunicationHandler;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.spring.ConditionalOnWindows;
 import com.getpcpanel.util.Debouncer;
 
+import jakarta.annotation.PostConstruct;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.ProgressBar;

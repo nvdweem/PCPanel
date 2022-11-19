@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 
-import javax.annotation.PostConstruct;
 import javax.swing.JOptionPane;
 
 import org.apache.commons.io.FileUtils;
@@ -15,6 +14,7 @@ import org.springframework.stereotype.Service;
 import com.getpcpanel.Json;
 import com.getpcpanel.util.FileUtil;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;

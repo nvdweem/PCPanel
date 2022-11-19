@@ -8,7 +8,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.Objects;
 
-import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -17,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import com.getpcpanel.ui.HomePage;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
