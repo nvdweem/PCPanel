@@ -25,11 +25,11 @@ public class CommandVolumeProcess extends CommandVolume implements DialAction {
     }
 
     @Override
-    public void execute(boolean initial, int volume) {
+    public void execute(DialActionParameters context) {
         var snd = getSndCtrl();
-        if (!initial && unMuteOnVolumeChange) {
+        if (!context.initial() && unMuteOnVolumeChange) {
             snd.muteProcesses(new HashSet<>(processName), MuteType.unmute);
         }
-        processName.forEach(process -> snd.setProcessVolume(process, device, volume / 100f));
+        processName.forEach(process -> snd.setProcessVolume(process, device, context.dial() / 100f));
     }
 }

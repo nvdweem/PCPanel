@@ -14,7 +14,7 @@ public final class CommandNoOp extends Command implements ButtonAction, DialActi
     }
 
     @Override
-    public void execute(boolean initial, int value) {
+    public void execute(DialActionParameters context) {
     }
 
     @Override

@@ -1,9 +1,12 @@
 package com.getpcpanel.commands.command;
 
 public interface DeviceAction {
-    void execute(String device);
+    void execute(DeviceActionParameters context);
 
-    default Runnable toRunnable(String device) {
-        return () -> execute(device);
+    default Runnable toRunnable(DeviceActionParameters context) {
+        return () -> execute(context);
+    }
+
+    record DeviceActionParameters(String device) {
     }
 }

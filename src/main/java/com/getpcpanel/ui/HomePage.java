@@ -1,7 +1,5 @@
 package com.getpcpanel.ui;
 
-import java.util.concurrent.TimeUnit;
-
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
@@ -11,7 +9,6 @@ import com.getpcpanel.device.Device;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.util.Debouncer;
 import com.getpcpanel.util.VersionChecker;
 
 import jakarta.annotation.PostConstruct;
@@ -43,7 +40,6 @@ public class HomePage extends Application {
     private final SaveService saveService;
     private final DeviceScanner deviceScanner;
     private final DeviceHolder devices;
-    private final Debouncer debouncer;
 
     @Value("${application.version}") private String version;
     @Value("${application.build}") private String build;
@@ -112,8 +108,8 @@ public class HomePage extends Application {
             var serialNumber = device.getSerialNumber();
             var cfg = saveService.get().getDeviceSave(serialNumber).getLightingConfig();
             cfg.setGlobalBrightness(newValue.byteValue());
-            debouncer.debounce(cfg, saveService::save, 1, TimeUnit.SECONDS);
             device.setLighting(device.getLightingConfig(), true);
+            saveService.debouncedSave();
         });
     }
 
@@ -222,12 +218,14 @@ public class HomePage extends Application {
 
     @EventListener
     public void onSaveEvent(SaveService.SaveEvent event) {
-        showHint(event.isNew());
+        Platform.runLater(() -> {
+            showHint(event.isNew());
 
-        var selectedDevice = connectedDeviceList.getSelectionModel().getSelectedItem();
-        if (selectedDevice != null) {
-            globalBrightness.setValue(selectedDevice.getLightingConfig().getGlobalBrightness());
-        }
+            var selectedDevice = connectedDeviceList.getSelectionModel().getSelectedItem();
+            if (selectedDevice != null) {
+                globalBrightness.setValue(selectedDevice.getLightingConfig().getGlobalBrightness());
+            }
+        });
     }
 
     public record ShowMainEvent() {

@@ -14,6 +14,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.stereotype.Component;
 
 import com.getpcpanel.commands.command.Command;
+import com.getpcpanel.commands.command.CommandBrightness;
 import com.getpcpanel.commands.command.CommandEndProgram;
 import com.getpcpanel.commands.command.CommandKeystroke;
 import com.getpcpanel.commands.command.CommandMedia;
@@ -309,6 +310,7 @@ public class BasicMacro extends Application implements UIInitializer {
                 }
                 yield NOOP;
             }
+            case "dialCommandBrightness" -> new CommandBrightness();
             default -> NOOP;
         };
     }

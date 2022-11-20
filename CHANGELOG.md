@@ -5,6 +5,7 @@
 **New:**
 
 - [Windows] There is now also an advanced toggle that allows changing the media/communication devices through toggles
+- There is now a slider for device brightness. This will apply to all device options. It's also possible to adjust the device brightness via a knob/slider.
 
 **Fixes:**:
 

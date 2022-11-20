@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.JOptionPane;
 
@@ -12,6 +13,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import com.getpcpanel.Json;
+import com.getpcpanel.util.Debouncer;
 import com.getpcpanel.util.FileUtil;
 
 import jakarta.annotation.PostConstruct;
@@ -27,6 +29,7 @@ public class SaveService {
     private final ApplicationEventPublisher eventPublisher;
     private final FileUtil fileUtil;
     private final Json json;
+    private final Debouncer debouncer;
     private Save save;
 
     public Save get() {
@@ -87,6 +90,10 @@ public class SaveService {
         }
 
         eventPublisher.publishEvent(new SaveEvent(save, false));
+    }
+
+    public void debouncedSave() {
+        debouncer.debounce(this, this::save, 1, TimeUnit.SECONDS);
     }
 
     public record SaveEvent(Save save, boolean isNew) {

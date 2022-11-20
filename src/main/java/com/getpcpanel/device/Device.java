@@ -41,7 +41,7 @@ import one.util.streamex.StreamEx;
 
 @Log4j2
 public abstract class Device {
-    private static final Image lightingImage = new Image(Objects.requireNonNull(PCPanelProUI.class.getResource("/assets/lighting.png")).toExternalForm());
+    public static final Image lightingImage = new Image(Objects.requireNonNull(PCPanelProUI.class.getResource("/assets/lighting.png")).toExternalForm());
     @Getter(AccessLevel.PROTECTED) private final FxHelper fxHelper;
     private final SaveService saveService;
     private final OutputInterpreter outputInterpreter;

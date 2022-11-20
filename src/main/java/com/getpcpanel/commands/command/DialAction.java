@@ -1,9 +1,12 @@
 package com.getpcpanel.commands.command;
 
 public interface DialAction {
-    void execute(boolean initial, int value);
+    void execute(DialActionParameters context);
 
-    default Runnable toRunnable(boolean initial, int dial) {
-        return () -> execute(initial, dial);
+    default Runnable toRunnable(DialActionParameters context) {
+        return () -> execute(context);
+    }
+
+    record DialActionParameters(String device, boolean initial, int dial) {
     }
 }

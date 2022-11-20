@@ -407,6 +407,18 @@
                                 </VBox>
                             </content>
                         </Tab>
+                        <Tab fx:id="dialCommandBrightness" text="Device Brightness">
+                            <content>
+                                <VBox spacing="15.0">
+                                    <padding>
+                                        <Insets left="8.0" top="8.0"/>
+                                    </padding>
+                                    <children>
+                                        <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="Control the device brightness. No further configuration."/>
+                                    </children>
+                                </VBox>
+                            </content>
+                        </Tab>
                         <Tab fx:id="dialCommandObs" text="OBS">
                             <content>
                                 <VBox spacing="15.0">

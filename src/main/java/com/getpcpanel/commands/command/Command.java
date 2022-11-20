@@ -15,10 +15,10 @@ public abstract class Command {
             return ba.toRunnable();
         }
         if (this instanceof DeviceAction da) {
-            return da.toRunnable(deviceId);
+            return da.toRunnable(new DeviceAction.DeviceActionParameters(deviceId));
         }
         if (vol != null && this instanceof DialAction da) {
-            return da.toRunnable(initial, vol);
+            return da.toRunnable(new DialAction.DialActionParameters(deviceId, initial, vol));
         }
         log.error("Unable to convert {} to Runnable ({}, {})", this, deviceId, vol);
         return () -> {

@@ -15,12 +15,14 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.getpcpanel.commands.command.Command;
+import com.getpcpanel.commands.command.CommandBrightness;
 import com.getpcpanel.commands.command.CommandObs;
 import com.getpcpanel.commands.command.CommandVoiceMeeter;
 import com.getpcpanel.commands.command.CommandVolumeDevice;
 import com.getpcpanel.commands.command.CommandVolumeFocus;
 import com.getpcpanel.commands.command.CommandVolumeProcess;
 import com.getpcpanel.cpp.ISndCtrl;
+import com.getpcpanel.device.Device;
 import com.getpcpanel.iconextract.IIconService;
 import com.getpcpanel.profile.KnobSetting;
 
@@ -50,6 +52,7 @@ public class IconService {
         imageHandlers.put(CommandObs.class, IconService::getObsIcon);
         imageHandlers.put(CommandVoiceMeeter.class, IconService::getVoiceMeeterIcon);
         imageHandlers.put(CommandVolumeDevice.class, IconService::getDeviceIcon);
+        imageHandlers.put(CommandBrightness.class, IconService::getBrightnessIcon);
     }
 
     @Cacheable("command-icon")
@@ -142,5 +145,9 @@ public class IconService {
             imageHandlers.put((Class<? extends Command>) icon, (BiFunction<IconService, ? extends Command, Image>) handler);
             return handler;
         }
+    }
+
+    private Image getBrightnessIcon(Command command) {
+        return Device.lightingImage;
     }
 }

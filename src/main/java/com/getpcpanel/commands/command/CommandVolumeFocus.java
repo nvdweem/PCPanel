@@ -7,7 +7,7 @@ import lombok.ToString;
 @ToString(callSuper = true)
 public class CommandVolumeFocus extends CommandVolume implements DialAction {
     @Override
-    public void execute(boolean initial, int volume) {
-        getSndCtrl().setFocusVolume(volume / 100f);
+    public void execute(DialActionParameters context) {
+        getSndCtrl().setFocusVolume(context.dial() / 100f);
     }
 }

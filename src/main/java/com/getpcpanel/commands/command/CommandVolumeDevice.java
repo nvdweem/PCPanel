@@ -20,10 +20,10 @@ public class CommandVolumeDevice extends CommandVolume implements DialAction {
     }
 
     @Override
-    public void execute(boolean initial, int volume) {
-        if (!initial && unMuteOnVolumeChange) {
+    public void execute(DialActionParameters context) {
+        if (!context.initial() && unMuteOnVolumeChange) {
             getSndCtrl().muteDevice(deviceId, MuteType.unmute);
         }
-        getSndCtrl().setDeviceVolume(deviceId, volume / 100f);
+        getSndCtrl().setDeviceVolume(deviceId, context.dial() / 100f);
     }
 }

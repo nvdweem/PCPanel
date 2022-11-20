@@ -19,7 +19,7 @@ public class CommandProfile extends Command implements DeviceAction {
     }
 
     @Override
-    public void execute(String serialNum) {
-        Platform.runLater(() -> MainFX.getBean(DeviceHolder.class).getDevice(serialNum).setProfile(profile));
+    public void execute(DeviceActionParameters context) {
+        Platform.runLater(() -> MainFX.getBean(DeviceHolder.class).getDevice(context.device()).setProfile(profile));
     }
 }
