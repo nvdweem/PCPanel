@@ -8,6 +8,8 @@ import com.getpcpanel.util.Util;
 import javafx.scene.paint.Color;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
 
 @AllArgsConstructor
 @Builder(toBuilder = true)
@@ -33,6 +35,7 @@ public class LightingConfig {
     private SingleSliderLabelLightingConfig[] sliderLabelConfigs = {};
     private SingleSliderLightingConfig[] sliderConfigs = {};
     private SingleLogoLightingConfig logoConfig;
+    @Getter @Setter private int globalBrightness = 100;
 
     public LightingConfig deepCopy() {
         return toBuilder()

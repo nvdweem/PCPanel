@@ -11,10 +11,6 @@ public final class ResizeHelper {
     private ResizeHelper() {
     }
 
-    public static void addResizeListener(Stage stage) {
-        addResizeListener(stage, 1.0D, 1.0D, Double.MAX_VALUE, Double.MAX_VALUE);
-    }
-
     public static void addResizeListener(Stage stage, double minWidth, double minHeight) {
         addResizeListener(stage, minWidth, minHeight, Double.MAX_VALUE, Double.MAX_VALUE);
     }
@@ -31,8 +27,9 @@ public final class ResizeHelper {
         resizeListener.setMaxWidth(maxWidth);
         resizeListener.setMaxHeight(maxHeight);
         var children = stage.getScene().getRoot().getChildrenUnmodifiable();
-        for (var child : children)
+        for (var child : children) {
             addListenerDeeply(child, resizeListener);
+        }
     }
 
     private static void addListenerDeeply(Node node, EventHandler<MouseEvent> listener) {
@@ -43,34 +40,27 @@ public final class ResizeHelper {
         node.addEventHandler(MouseEvent.MOUSE_EXITED_TARGET, listener);
         if (node instanceof Parent parent) {
             var children = parent.getChildrenUnmodifiable();
-            for (var child : children)
-                addListenerDeeply(child, listener);
+            for (var child : children) {
+                if (!child.getStyleClass().contains("no-resize")) {
+                    addListenerDeeply(child, listener);
+                }
+            }
         }
     }
 
     static class ResizeListener implements EventHandler<MouseEvent> {
+        private static final int BORDER = 4;
         private final Stage stage;
 
         private Cursor cursorEvent = Cursor.DEFAULT;
-
         private boolean resizing = true;
-
-        private final int border = 4;
-
         private double startX;
-
         private double startY;
-
         private double screenOffsetX;
-
         private double screenOffsetY;
-
         private double minWidth;
-
         private double maxWidth;
-
         private double minHeight;
-
         private double maxHeight;
 
         public ResizeListener(Stage stage) {
@@ -102,21 +92,21 @@ public final class ResizeHelper {
             var sceneWidth = scene.getWidth();
             var sceneHeight = scene.getHeight();
             if (MouseEvent.MOUSE_MOVED.equals(mouseEventType)) {
-                if (mouseEventX < border && mouseEventY < border) {
+                if (mouseEventX < BORDER && mouseEventY < BORDER) {
                     cursorEvent = Cursor.NW_RESIZE;
-                } else if (mouseEventX < border && mouseEventY > sceneHeight - border) {
+                } else if (mouseEventX < BORDER && mouseEventY > sceneHeight - BORDER) {
                     cursorEvent = Cursor.SW_RESIZE;
-                } else if (mouseEventX > sceneWidth - border && mouseEventY < border) {
+                } else if (mouseEventX > sceneWidth - BORDER && mouseEventY < BORDER) {
                     cursorEvent = Cursor.NE_RESIZE;
-                } else if (mouseEventX > sceneWidth - border && mouseEventY > sceneHeight - border) {
+                } else if (mouseEventX > sceneWidth - BORDER && mouseEventY > sceneHeight - BORDER) {
                     cursorEvent = Cursor.SE_RESIZE;
-                } else if (mouseEventX < border) {
+                } else if (mouseEventX < BORDER) {
                     cursorEvent = Cursor.W_RESIZE;
-                } else if (mouseEventX > sceneWidth - border) {
+                } else if (mouseEventX > sceneWidth - BORDER) {
                     cursorEvent = Cursor.E_RESIZE;
-                } else if (mouseEventY < border) {
+                } else if (mouseEventY < BORDER) {
                     cursorEvent = Cursor.N_RESIZE;
-                } else if (mouseEventY > sceneHeight - border) {
+                } else if (mouseEventY > sceneHeight - BORDER) {
                     cursorEvent = Cursor.S_RESIZE;
                 } else {
                     cursorEvent = Cursor.DEFAULT;
@@ -131,7 +121,7 @@ public final class ResizeHelper {
                     !Cursor.DEFAULT.equals(cursorEvent)) {
                 resizing = true;
                 if (!Cursor.W_RESIZE.equals(cursorEvent) && !Cursor.E_RESIZE.equals(cursorEvent)) {
-                    var minHeight = (stage.getMinHeight() > (border * 2)) ? stage.getMinHeight() : (border * 2);
+                    var minHeight = (stage.getMinHeight() > (BORDER * 2)) ? stage.getMinHeight() : (BORDER * 2);
                     if (Cursor.NW_RESIZE.equals(cursorEvent) || Cursor.N_RESIZE.equals(cursorEvent) ||
                             Cursor.NE_RESIZE.equals(cursorEvent)) {
                         if (stage.getHeight() > minHeight || mouseEventY < 0.0D) {
@@ -143,7 +133,7 @@ public final class ResizeHelper {
                     }
                 }
                 if (!Cursor.N_RESIZE.equals(cursorEvent) && !Cursor.S_RESIZE.equals(cursorEvent)) {
-                    var minWidth = (stage.getMinWidth() > (border * 2)) ? stage.getMinWidth() : (border * 2);
+                    var minWidth = (stage.getMinWidth() > (BORDER * 2)) ? stage.getMinWidth() : (BORDER * 2);
                     if (Cursor.NW_RESIZE.equals(cursorEvent) || Cursor.W_RESIZE.equals(cursorEvent) ||
                             Cursor.SW_RESIZE.equals(cursorEvent)) {
                         if (stage.getWidth() > minWidth || mouseEventX < 0.0D) {

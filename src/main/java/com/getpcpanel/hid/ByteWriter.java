@@ -6,15 +6,17 @@ import javafx.scene.paint.Color;
 
 class ByteWriter {
     private final byte[] buff;
+    private final int brightnessMultiplier;
     private int pos;
     private int marked;
 
-    public ByteWriter() {
-        this(64);
+    public ByteWriter(int brightness) {
+        this(brightness, 64);
     }
 
-    public ByteWriter(int length) {
+    public ByteWriter(int brightness, int length) {
         buff = new byte[length];
+        brightnessMultiplier = brightness;
     }
 
     public ByteWriter append(Number... bytes) {
@@ -28,9 +30,18 @@ class ByteWriter {
         return skip(bytes.length);
     }
 
+    public ByteWriter appendBrightness(byte nr) {
+        return append(applyBrightness(nr));
+    }
+
     @SuppressWarnings("NumericCastThatLosesPrecision")
     public ByteWriter append(Color c) {
-        return append((byte) (c.getRed() * 255), (byte) (c.getGreen() * 255), (byte) (c.getBlue() * 255));
+        return append(applyBrightness((byte) (c.getRed() * 255)), applyBrightness((byte) (c.getGreen() * 255)), applyBrightness((byte) (c.getBlue() * 255)));
+    }
+
+    private byte applyBrightness(byte nr) {
+        //noinspection NumericCastThatLosesPrecision
+        return (byte) (brightnessMultiplier / 100f * (nr & 0xff));
     }
 
     public ByteWriter skip(int len) {

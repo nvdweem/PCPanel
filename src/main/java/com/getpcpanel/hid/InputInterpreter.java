@@ -1,5 +1,7 @@
 package com.getpcpanel.hid;
 
+import static com.getpcpanel.util.Util.map;
+
 import java.io.IOException;
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -9,7 +11,6 @@ import org.springframework.stereotype.Service;
 import com.getpcpanel.commands.PCPanelControlEvent;
 import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.util.Util;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -30,13 +31,13 @@ public final class InputInterpreter {
         if (device == null)
             return;
         if (device.getDeviceType() != DeviceType.PCPANEL_RGB)
-            value = Util.map(value, 0, 255, 0, 100);
+            value = map(value, 0, 255, 0, 100);
         device.setKnobRotation(event.knob(), value);
         var settings = save.get().getDeviceSave(event.serialNum()).getKnobSettings(event.knob());
         if (settings != null) {
             if (settings.isLogarithmic())
                 value = log(value);
-            value = Util.map(value, 0, 100, settings.getMinTrim(), settings.getMaxTrim());
+            value = map(value, 0, 100, settings.getMinTrim(), settings.getMaxTrim());
         }
         doDialAction(event.serialNum(), event.initial(), event.knob(), value);
     }

@@ -1,5 +1,7 @@
 package com.getpcpanel.ui;
 
+import java.util.concurrent.TimeUnit;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
@@ -9,6 +11,7 @@ import com.getpcpanel.device.Device;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.util.Debouncer;
 import com.getpcpanel.util.VersionChecker;
 
 import jakarta.annotation.PostConstruct;
@@ -19,6 +22,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.control.Slider;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
@@ -39,6 +43,7 @@ public class HomePage extends Application {
     private final SaveService saveService;
     private final DeviceScanner deviceScanner;
     private final DeviceHolder devices;
+    private final Debouncer debouncer;
 
     @Value("${application.version}") private String version;
     @Value("${application.build}") private String build;
@@ -57,6 +62,7 @@ public class HomePage extends Application {
     @FXML private Label noDevicesLabel;
     @FXML private Label hintLabel;
     @FXML private ListView<Device> connectedDeviceList;
+    @FXML private Slider globalBrightness;
     public static Stage stage;
     private Pane pane;
     private static HomePage window;
@@ -95,8 +101,20 @@ public class HomePage extends Application {
         stage.initStyle(StageStyle.UNDECORATED);
         stage.sizeToScene();
         stage.setTitle(TITLE_FORMAT.formatted(version));
+        addBrightnessListener();
 
         deviceScanner.init();
+    }
+
+    private void addBrightnessListener() {
+        globalBrightness.valueProperty().addListener((observable, oldValue, newValue) -> {
+            var device = connectedDeviceList.getSelectionModel().getSelectedItem();
+            var serialNumber = device.getSerialNumber();
+            var cfg = saveService.get().getDeviceSave(serialNumber).getLightingConfig();
+            cfg.setGlobalBrightness(newValue.byteValue());
+            debouncer.debounce(cfg, saveService::save, 1, TimeUnit.SECONDS);
+            device.setLighting(device.getLightingConfig(), true);
+        });
     }
 
     private String buildVersion() {
@@ -168,6 +186,7 @@ public class HomePage extends Application {
                 titleHolder.getChildren().add(newValue.getLabel());
                 lightingButtonHolder.getChildren().add(newValue.getLightingButton());
                 profileHolder.getChildren().add(newValue.getProfileMenu());
+                globalBrightness.setValue(newValue.getLightingConfig().getGlobalBrightness());
             }
         });
         connectedDeviceList.setCellFactory(DeviceCell.buildFactory(saveService));
@@ -204,6 +223,11 @@ public class HomePage extends Application {
     @EventListener
     public void onSaveEvent(SaveService.SaveEvent event) {
         showHint(event.isNew());
+
+        var selectedDevice = connectedDeviceList.getSelectionModel().getSelectedItem();
+        if (selectedDevice != null) {
+            globalBrightness.setValue(selectedDevice.getLightingConfig().getGlobalBrightness());
+        }
     }
 
     public record ShowMainEvent() {

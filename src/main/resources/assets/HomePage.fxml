@@ -4,10 +4,11 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Slider?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
-<HBox prefHeight="524.0" prefWidth="946.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+<HBox prefHeight="524.0" prefWidth="946.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1">
     <ListView fx:id="connectedDeviceList" minWidth="-Infinity" prefWidth="230.0"/>
     <VBox prefHeight="524.0" prefWidth="340.0" HBox.hgrow="ALWAYS">
         <VBox alignment="TOP_CENTER" maxHeight="-Infinity" prefHeight="100.0">
@@ -48,6 +49,14 @@
                 </font>
             </Label>
         </VBox>
+        <HBox alignment="CENTER" prefHeight="100.0" prefWidth="719.0">
+            <!--suppress JavaFxUnresolvedStyleClassReference -->
+            <Slider fx:id="globalBrightness" blockIncrement="1.0" minWidth="250.0" scaleX="2.0" scaleY="2.0" styleClass="no-resize" value="100.0">
+                <HBox.margin>
+                    <Insets/>
+                </HBox.margin>
+            </Slider>
+        </HBox>
         <HBox alignment="BOTTOM_LEFT" prefHeight="100.0" prefWidth="719.0">
             <VBox.margin>
                 <Insets bottom="5.0" left="5.0" right="5.0"/>

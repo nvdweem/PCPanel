@@ -51,12 +51,12 @@ public final class OutputInterpreter {
         handler.sendMessage(OUTPUT_CODE_INIT);
     }
 
-    public void sendFullLEDData(String deviceSerialNumber, String[] colors, boolean[] volumeTrack, boolean priority) {
+    public void sendFullLEDData(String deviceSerialNumber, int brightness, String[] colors, boolean[] volumeTrack, boolean priority) {
         var handler = deviceScanner.getConnectedDevice(deviceSerialNumber);
         if (handler == null)
             throw new IllegalArgumentException("invalid device");
 
-        var data = new ByteWriter(2 + 4 * colors.length + colors.length).append(2, 0);
+        var data = new ByteWriter(brightness, 2 + 4 * colors.length + colors.length).append(2, 0);
         for (var color : colors) {
             data.append(OUTPUT_CODE_RGB_RGB).append(Color.valueOf(color));
         }
@@ -90,7 +90,7 @@ public final class OutputInterpreter {
             case ALL_WAVE -> writeAllWave(handler, PREFIX_MINI, config);
             case ALL_BREATH -> writeAllBreath(handler, PREFIX_MINI, config);
             case CUSTOM -> {
-                var knobData = buildKnobData(PREFIX_MINI, config.getKnobConfigs());
+                var knobData = buildKnobData(PREFIX_MINI, config.getGlobalBrightness(), config.getKnobConfigs());
                 handler.sendMessage(new byte[][] { knobData });
             }
         }
@@ -105,10 +105,10 @@ public final class OutputInterpreter {
             case ALL_WAVE -> writeAllWave(handler, PREFIX_PRO, config);
             case ALL_BREATH -> writeAllBreath(handler, PREFIX_PRO, config);
             case CUSTOM -> {
-                var knobData = buildKnobData(PREFIX_PRO, config.getKnobConfigs());
-                var sliderLabelData = buildSliderLabelData(config.getSliderLabelConfigs());
-                var sliderData = buildSliderData(config.getSliderConfigs());
-                var logoData = buildLogoData(config.getLogoConfig());
+                var knobData = buildKnobData(PREFIX_PRO, config.getGlobalBrightness(), config.getKnobConfigs());
+                var sliderLabelData = buildSliderLabelData(config.getGlobalBrightness(), config.getSliderLabelConfigs());
+                var sliderData = buildSliderData(config.getGlobalBrightness(), config.getSliderConfigs());
+                var logoData = buildLogoData(config.getGlobalBrightness(), config.getLogoConfig());
                 handler.sendMessage(knobData, sliderLabelData, sliderData, logoData);
             }
         }
@@ -116,45 +116,45 @@ public final class OutputInterpreter {
 
     private void writeAllColor(DeviceCommunicationHandler handler, byte prefix, byte secondPrefix, LightingConfig config) {
         var c1 = Color.valueOf(config.getAllColor());
-        var data = new ByteWriter().append(prefix, MODE_LIGHT_ANIMATION, secondPrefix).append(c1).get();
+        var data = new ByteWriter(config.getGlobalBrightness()).append(prefix, MODE_LIGHT_ANIMATION, secondPrefix).append(c1).get();
         handler.sendMessage(new byte[][] { data });
     }
 
     private void writeAllRainbow(DeviceCommunicationHandler handler, byte prefix, LightingConfig config) {
-        var data = new ByteWriter().append(prefix, MODE_LIGHT_ANIMATION, (config.getRainbowVertical() == 1) ? ANIMATION_RAINBOW_VERTICAL : ANIMATION_RAINBOW_HORIZONTAL)
-                                   .append(config.getRainbowPhaseShift(),
-                                           -1,
-                                           config.getRainbowBrightness(),
-                                           config.getRainbowSpeed(),
-                                           config.getRainbowReverse())
-                                   .get();
+        var data = new ByteWriter(config.getGlobalBrightness()).append(prefix, MODE_LIGHT_ANIMATION, (config.getRainbowVertical() == 1) ? ANIMATION_RAINBOW_VERTICAL : ANIMATION_RAINBOW_HORIZONTAL)
+                                                               .append(config.getRainbowPhaseShift(),
+                                                                       -1)
+                                                               .appendBrightness(config.getRainbowBrightness())
+                                                               .append(config.getRainbowSpeed(),
+                                                                       config.getRainbowReverse())
+                                                               .get();
         handler.sendMessage(new byte[][] { data });
     }
 
     private void writeAllWave(DeviceCommunicationHandler handler, byte prefix, LightingConfig config) {
-        var data = new ByteWriter()
+        var data = new ByteWriter(config.getGlobalBrightness())
                 .append(prefix, MODE_LIGHT_ANIMATION, ANIMATION_WAVE)
                 .append(config.getWaveHue(),
-                        -1,
-                        config.getWaveBrightness(),
-                        config.getWaveSpeed(),
+                        -1)
+                .appendBrightness(config.getWaveBrightness())
+                .append(config.getWaveSpeed(),
                         config.getWaveReverse(),
                         config.getWaveBounce());
         handler.sendMessage(new byte[][] { data.get() });
     }
 
     private void writeAllBreath(DeviceCommunicationHandler handler, byte prefix, LightingConfig config) {
-        var data = new ByteWriter()
+        var data = new ByteWriter(config.getGlobalBrightness())
                 .append(prefix, MODE_LIGHT_ANIMATION, ANIMATION_BREATH)
                 .append(config.getBreathHue(),
-                        -1,
-                        config.getBreathBrightness(),
-                        config.getBreathSpeed());
+                        -1)
+                .appendBrightness(config.getBreathBrightness())
+                .append(config.getBreathSpeed());
         handler.sendMessage(new byte[][] { data.get() });
     }
 
-    private byte[] buildKnobData(byte prefix, SingleKnobLightingConfig[] knobConfigs) {
-        var knobData = new ByteWriter().append(prefix, CUSTOM_KNOB);
+    private byte[] buildKnobData(byte prefix, int brightness, SingleKnobLightingConfig[] knobConfigs) {
+        var knobData = new ByteWriter(brightness).append(prefix, CUSTOM_KNOB);
         for (var knobConfig : knobConfigs) {
             knobData.mark();
             var ignored = switch (knobConfig.getMode()) {
@@ -177,8 +177,8 @@ public final class OutputInterpreter {
         return knobData.get();
     }
 
-    private byte[] buildSliderLabelData(SingleSliderLabelLightingConfig[] sliderLabelConfigs) {
-        var sliderLabelData = new ByteWriter().append(PREFIX_PRO, CUSTOM_SLIDER_LABEL);
+    private byte[] buildSliderLabelData(int brightness, SingleSliderLabelLightingConfig[] sliderLabelConfigs) {
+        var sliderLabelData = new ByteWriter(brightness).append(PREFIX_PRO, CUSTOM_SLIDER_LABEL);
         for (var sliderLabelConfig : sliderLabelConfigs) {
             var ignored = switch (sliderLabelConfig.getMode()) {
                 case NONE -> sliderLabelData;
@@ -194,8 +194,8 @@ public final class OutputInterpreter {
         return sliderLabelData.get();
     }
 
-    private byte[] buildSliderData(SingleSliderLightingConfig[] sliderConfigs) {
-        var sliderData = new ByteWriter().append(PREFIX_PRO, CUSTOM_SLIDER);
+    private byte[] buildSliderData(int brightness, SingleSliderLightingConfig[] sliderConfigs) {
+        var sliderData = new ByteWriter(brightness).append(PREFIX_PRO, CUSTOM_SLIDER);
         for (var sliderConfig : sliderConfigs) {
             sliderData.mark();
             var ignored = switch (sliderConfig.getMode()) {
@@ -218,8 +218,8 @@ public final class OutputInterpreter {
         return sliderData.get();
     }
 
-    private byte[] buildLogoData(SingleLogoLightingConfig logoConfig) {
-        var logoData = new ByteWriter().append(PREFIX_PRO, CUSTOM_LOGO);
+    private byte[] buildLogoData(int brightness, SingleLogoLightingConfig logoConfig) {
+        var logoData = new ByteWriter(brightness).append(PREFIX_PRO, CUSTOM_LOGO);
         var ignored = switch (logoConfig.getMode()) {
             case NONE -> logoConfig;
             case STATIC -> {
@@ -227,14 +227,14 @@ public final class OutputInterpreter {
                 yield logoData.append(COLOR_STATIC).append(c1);
             }
             case RAINBOW -> logoData.append(LOGO_RAINBOW)
-                                    .append(-1,
-                                            logoConfig.getBrightness(),
-                                            logoConfig.getSpeed());
+                                    .append(-1)
+                                    .appendBrightness(logoConfig.getBrightness())
+                                    .append(logoConfig.getSpeed());
             case BREATH -> logoData.append(LOGO_BREATH)
                                    .append(logoConfig.getHue(),
-                                           -1,
-                                           logoConfig.getBrightness(),
-                                           logoConfig.getSpeed());
+                                           -1)
+                                   .appendBrightness(logoConfig.getBrightness())
+                                   .append(logoConfig.getSpeed());
         };
         return logoData.get();
     }
@@ -247,8 +247,8 @@ public final class OutputInterpreter {
         }
 
         switch (mode) {
-            case ALL_COLOR -> sendRGBAll(serialNumber, Color.valueOf(config.getAllColor()), config.getVolumeBrightnessTrackingEnabled(), priority);
-            case SINGLE_COLOR -> sendFullLEDData(serialNumber, config.getIndividualColors(), config.getVolumeBrightnessTrackingEnabled(), priority);
+            case ALL_COLOR -> sendRGBAll(serialNumber, config.getGlobalBrightness(), Color.valueOf(config.getAllColor()), config.getVolumeBrightnessTrackingEnabled(), priority);
+            case SINGLE_COLOR -> sendFullLEDData(serialNumber, config.getGlobalBrightness(), config.getIndividualColors(), config.getVolumeBrightnessTrackingEnabled(), priority);
             case ALL_RAINBOW -> sendRainbow(serialNumber, config.getRainbowPhaseShift(), (byte) -1, config.getRainbowBrightness(), config.getRainbowSpeed(), config.getRainbowReverse(), priority);
             case ALL_WAVE -> sendWave(serialNumber, config.getWaveHue(), (byte) -1, config.getWaveBrightness(), config.getWaveSpeed(), config.getWaveReverse(), config.getWaveBounce(), priority);
             case ALL_BREATH -> sendBreath(serialNumber, config.getBreathHue(), (byte) -1, config.getBreathBrightness(), config.getBreathSpeed(), priority);
@@ -293,19 +293,19 @@ public final class OutputInterpreter {
     }
 
     @SuppressWarnings("NumericCastThatLosesPrecision")
-    public void sendRGBAll(String deviceSerialNumber, Color color, boolean[] bs, boolean priority) {
-        sendRGBAll(deviceSerialNumber, (int) (color.getRed() * MAX_BYTE), (int) (color.getGreen() * MAX_BYTE), (int) (color.getBlue() * MAX_BYTE), bs, priority);
+    public void sendRGBAll(String deviceSerialNumber, int brightness, Color color, boolean[] bs, boolean priority) {
+        sendRGBAll(deviceSerialNumber, brightness, (int) (color.getRed() * MAX_BYTE), (int) (color.getGreen() * MAX_BYTE), (int) (color.getBlue() * MAX_BYTE), bs, priority);
     }
 
-    public void sendRGBAll(String deviceSerialNumber, int red, int green, int blue, boolean[] volumeTrack, boolean priority) {
+    public void sendRGBAll(String deviceSerialNumber, int brightness, int red, int green, int blue, boolean[] volumeTrack, boolean priority) {
         var handler = deviceScanner.getConnectedDevice(deviceSerialNumber);
         if (handler == null)
             throw new IllegalArgumentException("invalid device");
         if (!isIntByteSize(red, green, blue))
             throw new IllegalArgumentException("ints must be byte size");
-        var data = new ByteWriter(6 + volumeTrack.length)
+        var data = new ByteWriter(brightness, 6 + volumeTrack.length)
                 .append(OUTPUT_CODE_RGB, OUTPUT_CODE_RGB_RGB, 0)
-                .append(red, green, blue);
+                .append(Color.rgb(red, green, blue));
         for (var b : volumeTrack)
             data.append(b ? 1 : 0);
         if (priority) {
