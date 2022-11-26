@@ -15,6 +15,8 @@
 - [Linux] The application doesn't use `pacmd` anymore, only `pactl` to also be compatible with PipeWire
 - [Linux] The application can start when no tray extensions are available
 - [Linux] It's possible to disable the tray icon by adding `-Ddisable.tray` as a command line parameter
+- [Linux] All audio streams for a process will be changed when a process is controlled
+- [Linux] Processes without a PID or Executable can be controlled
 - Starting the application again (when skipfilecheck is not specified) will show the main window
 
 ## [1.5]
