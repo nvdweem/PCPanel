@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
@@ -39,7 +40,7 @@ public class SndCtrlLinux implements ISndCtrl {
     private final ProcessHelper processHelper;
     private final ApplicationEventPublisher eventPublisher;
     @GuardedBy("devices") private final Map<String, LinuxAudioDevice> devices = new HashMap<>();
-    @GuardedBy("sessions") private final Map<Integer, LinuxAudioSession> sessions = new HashMap<>();
+    @GuardedBy("sessions") private final Map<Integer, Set<LinuxAudioSession>> sessions = new HashMap<>();
 
     @PostConstruct
     public void init() {
@@ -59,7 +60,7 @@ public class SndCtrlLinux implements ISndCtrl {
     public void initSessions() {
         synchronized (sessions) {
             sessions.clear();
-            StreamEx.of(getSessionsFromCmd()).mapToEntry(AudioSession::pid, Function.identity()).into(sessions);
+            sessions.putAll(getSessionsFromCmd());
         }
     }
 
@@ -116,9 +117,8 @@ public class SndCtrlLinux implements ISndCtrl {
     public void setProcessVolume(String fileName, @Nullable String device, float volume) {
         Set<LinuxAudioSession> todo;
         synchronized (sessions) {
-            todo = StreamEx.ofValues(sessions)
-                           .filter(s -> StringUtils.equalsIgnoreCase(fileName, s.executable().getName()))
-                           .toSet();
+            todo = allSessions().filter(s -> StringUtils.equalsIgnoreCase(fileName, s.executable().getName()))
+                                .toSet();
         }
         todo.forEach(s -> cmd.setSessionVolume(s.index(), volume));
     }
@@ -137,9 +137,8 @@ public class SndCtrlLinux implements ISndCtrl {
         var lcFileNames = StreamEx.of(fileName).map(String::toLowerCase).toImmutableSet();
         Set<LinuxAudioSession> todo;
         synchronized (sessions) {
-            todo = StreamEx.ofValues(sessions)
-                           .filter(s -> lcFileNames.contains(s.executable().getName().toLowerCase()))
-                           .toSet();
+            todo = allSessions().filter(s -> lcFileNames.contains(s.executable().getName().toLowerCase()))
+                                .toSet();
         }
         todo.forEach(s -> cmd.muteSession(s.index(), mute));
     }
@@ -152,7 +151,7 @@ public class SndCtrlLinux implements ISndCtrl {
     @Override
     public List<RunningApplication> getRunningApplications() {
         synchronized (sessions) {
-            return StreamEx.ofValues(sessions).map(AudioSession::executable).map(f -> new RunningApplication(0, f, f.getName())).toList();
+            return allSessions().map(AudioSession::executable).map(f -> new RunningApplication(0, f, f.getName())).toList();
         }
     }
 
@@ -186,7 +185,7 @@ public class SndCtrlLinux implements ISndCtrl {
         return Optional.of(new LinuxAudioDevice(eventPublisher, pa.index(), pa.metas().get("Description"), (isOutput ? "" : INPUT_PREFIX) + pa.metas().get("Name"), pa.isDefault(), isOutput));
     }
 
-    private Set<LinuxAudioSession> getSessionsFromCmd() {
+    private Map<Integer, Set<LinuxAudioSession>> getSessionsFromCmd() {
         return StreamEx.of(cmd.getSessions())
                        .filter(pa -> StringUtils.isNotBlank(pa.properties().get("application.process.id")))
                        .map(pa ->
@@ -196,8 +195,7 @@ public class SndCtrlLinux implements ISndCtrl {
                                        new File(pa.properties().get("application.process.binary")),
                                        pa.properties().get("application.name"),
                                        "", 0, false))
-                       .distinct(AudioSession::pid)
-                       .toSet();
+                       .groupingBy(AudioSession::pid, Collectors.toSet());
     }
 
     private int deviceIdx(String deviceId) {
@@ -211,5 +209,9 @@ public class SndCtrlLinux implements ISndCtrl {
 
     private static boolean isOutput(String deviceId) {
         return !StringUtils.startsWith(deviceId, INPUT_PREFIX);
+    }
+
+    private StreamEx<LinuxAudioSession> allSessions() {
+        return StreamEx.ofValues(sessions).flatCollection(Function.identity());
     }
 }

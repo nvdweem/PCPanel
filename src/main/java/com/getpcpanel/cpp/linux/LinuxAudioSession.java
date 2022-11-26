@@ -6,9 +6,11 @@ import org.springframework.context.ApplicationEventPublisher;
 
 import com.getpcpanel.cpp.AudioSession;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 @Getter
+@EqualsAndHashCode(callSuper = true)
 public class LinuxAudioSession extends AudioSession {
     private final int index;
 

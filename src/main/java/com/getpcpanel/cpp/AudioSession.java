@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
 
@@ -14,13 +15,13 @@ import lombok.extern.log4j.Log4j2;
 @SuppressWarnings("unused") // Methods called from JNI
 public class AudioSession {
     public static final String SYSTEM = "System Sounds";
-    @ToString.Exclude private final ApplicationEventPublisher eventPublisher;
+    @EqualsAndHashCode.Exclude @ToString.Exclude private final ApplicationEventPublisher eventPublisher;
     private int pid;
     private File executable;
-    private String title;
-    private String icon;
-    private float volume;
-    private boolean muted;
+    @EqualsAndHashCode.Exclude private String title;
+    @EqualsAndHashCode.Exclude private String icon;
+    @EqualsAndHashCode.Exclude private float volume;
+    @EqualsAndHashCode.Exclude private boolean muted;
 
     public AudioSession(ApplicationEventPublisher eventPublisher, int pid, File executable, String title, String icon, float volume, boolean muted) {
         this.eventPublisher = eventPublisher;
