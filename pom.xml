@@ -20,7 +20,7 @@
         <project.baseversion>1.6</project.baseversion>
         <project.snapshot>-SNAPSHOT</project.snapshot>
         <!--suppress UnresolvedMavenProperty -->
-        <gihub.build>${env.GITHUB_RUN_NUMBER}</gihub.build>
+        <github.build>${env.GITHUB_RUN_NUMBER}</github.build>
 
         <java.version>17</java.version>
         <jetty.version>9.4.49.v20220914</jetty.version> <!-- Required by OBS Websocket -->
@@ -31,7 +31,7 @@
 
         <app.name>PCPanel</app.name>
         <maven.build.timestamp.format>yy.ww.WWkkmm</maven.build.timestamp.format>
-        <app.version>${project.baseversion}.${gihub.build}</app.version>
+        <app.version>${project.baseversion}.${github.build}</app.version>
         <jvm.modules>javafx.controls,javafx.fxml,javafx.swing,java.desktop,java.management,java.logging,jdk.crypto.cryptoki</jvm.modules>
         <windows.upgrade.uuid>9421bff0-3840-414c-8563-407fbcd1d04d</windows.upgrade.uuid>
         <windows.vendor>PCPanel</windows.vendor>
@@ -337,6 +337,17 @@
         </plugins>
     </reporting>
     <profiles>
+        <profile>
+            <id>not-github-build</id>
+            <activation>
+                <property>
+                    <name>!env.GITHUB_RUN_NUMBER</name>
+                </property>
+            </activation>
+            <properties>
+                <github.build>-1</github.build>
+            </properties>
+        </profile>
         <profile>
             <id>windows-active</id>
             <activation>
