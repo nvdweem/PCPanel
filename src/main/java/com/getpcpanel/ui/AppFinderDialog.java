@@ -164,7 +164,7 @@ public class AppFinderDialog extends Application implements UIInitializer {
                 button.setTextAlignment(TextAlignment.CENTER);
                 button.setContentDisplay(ContentDisplay.TOP);
                 button.setOnAction(a -> {
-                    processName = app.isSystemSounds() ? AudioSession.SYSTEM : app.executable().getName();
+                    processName = app.isSystemSounds() ? AudioSession.SYSTEM : StringUtils.firstNonBlank(app.executable().getName(), app.title());
                     stage.close();
                 });
                 allProgs.add(new ButtonTitleExe(button, app.title(), app.executable().getName()));

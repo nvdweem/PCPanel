@@ -3,12 +3,12 @@ package com.getpcpanel.cpp.linux;
 import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
@@ -40,7 +40,7 @@ public class SndCtrlLinux implements ISndCtrl {
     private final ProcessHelper processHelper;
     private final ApplicationEventPublisher eventPublisher;
     @GuardedBy("devices") private final Map<String, LinuxAudioDevice> devices = new HashMap<>();
-    @GuardedBy("sessions") private final Map<Integer, Set<LinuxAudioSession>> sessions = new HashMap<>();
+    @GuardedBy("sessions") private final Set<LinuxAudioSession> sessions = new HashSet<>();
 
     @PostConstruct
     public void init() {
@@ -60,7 +60,7 @@ public class SndCtrlLinux implements ISndCtrl {
     public void initSessions() {
         synchronized (sessions) {
             sessions.clear();
-            sessions.putAll(getSessionsFromCmd());
+            sessions.addAll(getSessionsFromCmd());
         }
     }
 
@@ -81,7 +81,7 @@ public class SndCtrlLinux implements ISndCtrl {
     @Override
     public Collection<AudioSession> getAllSessions() {
         synchronized (sessions) {
-            return StreamEx.ofValues(sessions).select(AudioSession.class).toSet();
+            return allSessions().select(AudioSession.class).toSet();
         }
     }
 
@@ -117,7 +117,7 @@ public class SndCtrlLinux implements ISndCtrl {
     public void setProcessVolume(String fileName, @Nullable String device, float volume) {
         Set<LinuxAudioSession> todo;
         synchronized (sessions) {
-            todo = allSessions().filter(s -> StringUtils.equalsIgnoreCase(fileName, s.executable().getName()))
+            todo = allSessions().filter(s -> StringUtils.equalsAnyIgnoreCase(fileName, s.executable().getName(), s.title()))
                                 .toSet();
         }
         todo.forEach(s -> cmd.setSessionVolume(s.index(), volume));
@@ -137,7 +137,7 @@ public class SndCtrlLinux implements ISndCtrl {
         var lcFileNames = StreamEx.of(fileName).map(String::toLowerCase).toImmutableSet();
         Set<LinuxAudioSession> todo;
         synchronized (sessions) {
-            todo = allSessions().filter(s -> lcFileNames.contains(s.executable().getName().toLowerCase()))
+            todo = allSessions().filter(s -> lcFileNames.contains(StringUtils.lowerCase(s.executable().getName())) || lcFileNames.contains(StringUtils.lowerCase(s.title())))
                                 .toSet();
         }
         todo.forEach(s -> cmd.muteSession(s.index(), mute));
@@ -185,17 +185,16 @@ public class SndCtrlLinux implements ISndCtrl {
         return Optional.of(new LinuxAudioDevice(eventPublisher, pa.index(), pa.metas().get("Description"), (isOutput ? "" : INPUT_PREFIX) + pa.metas().get("Name"), pa.isDefault(), isOutput));
     }
 
-    private Map<Integer, Set<LinuxAudioSession>> getSessionsFromCmd() {
+    private Set<LinuxAudioSession> getSessionsFromCmd() {
         return StreamEx.of(cmd.getSessions())
-                       .filter(pa -> StringUtils.isNotBlank(pa.properties().get("application.process.id")))
                        .map(pa ->
                                new LinuxAudioSession(eventPublisher,
                                        pa.index(),
                                        NumberUtils.toInt(pa.properties().get("application.process.id"), -1),
-                                       new File(pa.properties().get("application.process.binary")),
+                                       new File(pa.properties().getOrDefault("application.process.binary", "/")),
                                        pa.properties().get("application.name"),
                                        "", 0, false))
-                       .groupingBy(AudioSession::pid, Collectors.toSet());
+                       .toSet();
     }
 
     private int deviceIdx(String deviceId) {
@@ -212,6 +211,6 @@ public class SndCtrlLinux implements ISndCtrl {
     }
 
     private StreamEx<LinuxAudioSession> allSessions() {
-        return StreamEx.ofValues(sessions).flatCollection(Function.identity());
+        return StreamEx.of(sessions).distinct();
     }
 }
