@@ -105,6 +105,9 @@ public class HomePage extends Application {
     private void addBrightnessListener() {
         globalBrightness.valueProperty().addListener((observable, oldValue, newValue) -> {
             var device = connectedDeviceList.getSelectionModel().getSelectedItem();
+            if (device == null) {
+                return;
+            }
             var serialNumber = device.getSerialNumber();
             var cfg = saveService.get().getDeviceSave(serialNumber).getLightingConfig();
             cfg.setGlobalBrightness(newValue.byteValue());
