@@ -76,7 +76,7 @@ public final class OBS {
 
     private void buildAndConnectObsController() {
         var save = this.save.get();
-        if (!save.isObsEnabled() || connected || shuttingDown) {
+        if (!save.isObsEnabled() || (connected && !settingsStillSame(false)) || shuttingDown) {
             log.trace("Obs is disabled({})/already connected({})/we are shutting down({})", save.isObsEnabled(), connected, shuttingDown);
             disconnectController();
             return;
@@ -94,7 +94,10 @@ public final class OBS {
     private void doBuildAndConnectObsController() {
         var save = this.save.get();
         log.debug("Connecting to OBS");
-        if (settingsStillSame() && controller != null) {
+        if (settingsStillSame(true) && controller != null) {
+            if (connected) {
+                return;
+            }
             connected = true;
             controller.connect();
             return;
@@ -197,7 +200,7 @@ public final class OBS {
         connected = false;
     }
 
-    private boolean settingsStillSame() {
+    private boolean settingsStillSame(boolean updatePrevious) {
         var port = NumberUtils.toInt(save.get().getObsPort(), -1);
         var address = save.get().getObsAddress();
         var password = StringUtils.trimToNull(save.get().getObsPassword());
@@ -205,7 +208,9 @@ public final class OBS {
         if (settings.equals(previousSettings)) {
             return true;
         }
-        previousSettings = settings;
+        if (updatePrevious) {
+            previousSettings = settings;
+        }
         return false;
     }
 
