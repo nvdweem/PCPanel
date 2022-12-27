@@ -2,19 +2,24 @@ package com.getpcpanel.obs;
 
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -25,6 +30,12 @@ import com.getpcpanel.util.Util;
 import io.obswebsocket.community.client.OBSRemoteController;
 import io.obswebsocket.community.client.OBSRemoteControllerBuilder;
 import io.obswebsocket.community.client.listener.lifecycle.ReasonThrowable;
+import io.obswebsocket.community.client.message.event.inputs.InputMuteStateChangedEvent;
+import io.obswebsocket.community.client.message.request.RequestBatch;
+import io.obswebsocket.community.client.message.request.inputs.GetInputMuteRequest;
+import io.obswebsocket.community.client.message.response.RequestBatchResponse;
+import io.obswebsocket.community.client.message.response.RequestResponse;
+import io.obswebsocket.community.client.message.response.inputs.GetInputMuteResponse;
 import io.obswebsocket.community.client.model.Input;
 import io.obswebsocket.community.client.model.Scene;
 import jakarta.annotation.PostConstruct;
@@ -36,10 +47,11 @@ import one.util.streamex.StreamEx;
 @Service
 @RequiredArgsConstructor
 public final class OBS {
-    private static final long WAIT_TIME = 1000L;
+    private static final long WAIT_TIME_MS = 1000L;
     private static final ObsIdHelper OBS_ID_HELPER = new ObsIdHelper();
 
     private final SaveService save;
+    private final ApplicationEventPublisher eventPublisher;
     private List<Object> previousSettings = List.of();
     private boolean connected;
     private boolean shuttingDown;
@@ -73,6 +85,7 @@ public final class OBS {
         try {
             doBuildAndConnectObsController();
         } catch (Exception e) {
+            doConnected(false);
             connected = false;
             log.debug("Connecting failed", e);
         }
@@ -97,16 +110,27 @@ public final class OBS {
             var currentIdx = OBS_ID_HELPER.incAndGet();
             controller = buildController(address, port, password).lifecycle()
                                                                  .onReady(this::connected)
-                                                                 .onDisconnect(() -> OBS_ID_HELPER.runIfIdEq(currentIdx, () -> connected = false))
+                                                                 .onDisconnect(() -> OBS_ID_HELPER.runIfIdEq(currentIdx, () -> {
+                                                                     doConnected(false);
+                                                                     connected = false;
+                                                                 }))
                                                                  .onControllerError(e -> OBS_ID_HELPER.runIfIdEq(currentIdx, () -> onError(e)))
-                                                                 .and().build();
+                                                                 .and()
+                                                                 .registerEventListener(InputMuteStateChangedEvent.class, this::onMuteChanged)
+                                                                 .build();
             controller.connect();
         } else {
+            doConnected(false);
             connected = false;
         }
     }
 
+    private void onMuteChanged(InputMuteStateChangedEvent t) {
+        eventPublisher.publishEvent(new OBSMuteEvent(t.getMessageData().getEventData().getInputName(), t.getMessageData().getEventData().getInputMuted()));
+    }
+
     private void disconnectController() {
+        doConnected(false);
         connected = false;
         if (controller != null) {
             controller.disconnect();
@@ -169,6 +193,7 @@ public final class OBS {
             log.warn("Unknown OBS error, stack is logged in debug");
             log.debug("Unknown OBS error", exception);
         }
+        doConnected(false);
         connected = false;
     }
 
@@ -186,6 +211,7 @@ public final class OBS {
 
     private void connected() {
         log.info("Connected to OBS");
+        doConnected(true);
         connected = true;
     }
 
@@ -195,12 +221,16 @@ public final class OBS {
     }
 
     public List<String> getSourcesWithAudio() {
+        var nameToMute = getSourcesWithMuteState();
+        return new ArrayList<>(nameToMute.keySet());
+    }
+
+    public Map<String, Boolean> getSourcesWithMuteState() {
         if (!isConnected() || controller == null) {
-            return List.of();
+            return Map.of();
         }
-        return Optional.ofNullable(controller.getInputList(null, WAIT_TIME))
-                       .map(e -> StreamEx.of(e.getInputs()).map(Input::getInputName).toList())
-                       .orElse(List.of());
+        var sources = controller.getInputList(null, WAIT_TIME_MS).getInputs();
+        return getNameToMuteState(sources);
     }
 
     public List<String> getScenes() {
@@ -208,7 +238,7 @@ public final class OBS {
             return List.of();
         }
 
-        return Optional.ofNullable(controller.getSceneList(WAIT_TIME))
+        return Optional.ofNullable(controller.getSceneList(WAIT_TIME_MS))
                        .map(ss -> StreamEx.of(ss.getScenes()).map(Scene::getSceneName).toList())
                        .orElse(List.of());
     }
@@ -219,7 +249,7 @@ public final class OBS {
         }
         try {
             var decimal = (float) Util.map(vol, 0, 100, -97, 0);
-            controller.setInputVolume(sourceName, null, decimal, WAIT_TIME);
+            controller.setInputVolume(sourceName, null, decimal, WAIT_TIME_MS);
         } catch (Exception e) {
             log.error("Unable to get source volume", e);
         }
@@ -230,7 +260,7 @@ public final class OBS {
             return;
         }
         try {
-            controller.toggleInputMute(sourceName, WAIT_TIME);
+            controller.toggleInputMute(sourceName, WAIT_TIME_MS);
         } catch (Exception e) {
             log.error("Unable to toggle source mute {}", sourceName, e);
         }
@@ -241,7 +271,7 @@ public final class OBS {
             return;
         }
         try {
-            controller.setInputMute(sourceName, mute, WAIT_TIME);
+            controller.setInputMute(sourceName, mute, WAIT_TIME_MS);
         } catch (Exception e) {
             log.error("Unable to set source mute {} {}", sourceName, mute, e);
         }
@@ -252,7 +282,7 @@ public final class OBS {
             return;
         }
         try {
-            controller.setCurrentProgramScene(sceneName, WAIT_TIME);
+            controller.setCurrentProgramScene(sceneName, WAIT_TIME_MS);
         } catch (Exception e) {
             log.error("Unable to set current scene to {}", sceneName, e);
         }
@@ -260,6 +290,50 @@ public final class OBS {
 
     public boolean isConnected() {
         return save.get().isObsEnabled() && controller != null && connected;
+    }
+
+    private void doConnected(boolean connected) {
+        new Thread(() -> {
+            eventPublisher.publishEvent(new OBSConnectEvent(connected));
+            if (connected) {
+                getSourcesWithMuteState();
+            }
+        }).start();
+    }
+
+    private Map<String, Boolean> getNameToMuteState(List<Input> sources) {
+        if (controller == null) {
+            return Map.of();
+        }
+        record RequestAndName(GetInputMuteRequest request, String name) {
+        }
+
+        var muteRequests = StreamEx.of(sources)
+                                   .map(source -> {
+                                       var req = GetInputMuteRequest.builder().inputName(source.getInputName()).build();
+                                       return new RequestAndName(req, source.getInputName());
+                                   })
+                                   .mapToEntry(rn -> rn.request.getRequestId(), Function.identity())
+                                   .toMap();
+
+        var latch = new ArrayBlockingQueue<RequestBatchResponse>(1);
+        controller.sendRequestBatch(RequestBatch.builder().requests(StreamEx.ofValues(muteRequests).map(RequestAndName::request).toList()).build(), latch::offer);
+
+        try {
+            var result = latch.poll(WAIT_TIME_MS, TimeUnit.MILLISECONDS);
+            if (result == null) {
+                return Map.of();
+            }
+            return StreamEx.of(result.getData().getResults())
+                           .mapToEntry(rs -> muteRequests.get(rs.getRequestId()), RequestResponse.Data::getResponseData)
+                           .nonNullKeys().mapKeys(rn -> rn.name)
+                           .nonNullValues()
+                           .selectValues(GetInputMuteResponse.SpecificData.class)
+                           .mapValues(GetInputMuteResponse.SpecificData::getInputMuted)
+                           .toMap();
+        } catch (InterruptedException e) {
+            return Map.of();
+        }
     }
 
     static class ObsIdHelper {

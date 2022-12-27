@@ -9,6 +9,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.getpcpanel.commands.command.Command;
+import com.getpcpanel.commands.command.CommandObsSetSourceVolume;
 import com.getpcpanel.commands.command.CommandVolumeDevice;
 import com.getpcpanel.commands.command.CommandVolumeProcess;
 import com.getpcpanel.cpp.AudioDeviceEvent;
@@ -17,6 +18,9 @@ import com.getpcpanel.cpp.EventType;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.hid.DeviceScanner;
+import com.getpcpanel.obs.OBS;
+import com.getpcpanel.obs.OBSConnectEvent;
+import com.getpcpanel.obs.OBSMuteEvent;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.LightingConfig;
 import com.getpcpanel.profile.SaveService;
@@ -27,6 +31,7 @@ import com.getpcpanel.ui.ILightingDialogMuteOverrideHelper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 
 /**
@@ -39,6 +44,7 @@ public class SetMuteOverrideService {
     private final DeviceHolder devices;
     private final ISndCtrl sndCtrl;
     private final SaveService saveService;
+    private final OBS obs;
 
     @EventListener(DeviceScanner.DeviceConnectedEvent.class)
     public void triggerAll() {
@@ -48,6 +54,24 @@ public class SetMuteOverrideService {
         for (var sess : sndCtrl.getAllSessions()) {
             onAudioSession(new AudioSessionEvent(sess, EventType.CHANGED));
         }
+        updateObs(new OBSConnectEvent(obs.isConnected()));
+    }
+
+    @EventListener(OBSConnectEvent.class)
+    public void updateObs(OBSConnectEvent event) {
+        if (!event.connected()) {
+            return;
+        }
+
+        EntryStream.of(obs.getSourcesWithMuteState()).mapKeyValue(OBSMuteEvent::new).forEach(this::onObsSource);
+    }
+
+    @EventListener
+    public void onObsSource(OBSMuteEvent event) {
+        var lcName = event.input();
+        handleEvent(
+                dlc -> isFollow(dlc) && dlc.cmd instanceof CommandObsSetSourceVolume ms && StreamEx.of(ms.getSourceName()).findFirst(n -> n.contains(lcName)).isPresent(),
+                event.muted());
     }
 
     @EventListener
@@ -92,7 +116,11 @@ public class SetMuteOverrideService {
                 }
             }
             if (mayBeChanged) {
-                devices.getDevice(idDeviceSave.getKey()).setLighting(deviceSave.getLightingConfig(), true);
+                var device = devices.getDevice(idDeviceSave.getKey());
+                if (device == null) {
+                    return;
+                }
+                device.setLighting(deviceSave.getLightingConfig(), true);
             }
         }
     }
