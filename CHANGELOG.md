@@ -6,6 +6,8 @@
 
 - [Windows] There is now also an advanced toggle that allows changing the media/communication devices through toggles
 - There is now a slider for device brightness. This will apply to all device options. It's also possible to adjust the device brightness via a knob/slider.
+- #22 - Mute override colors also work when controlling OBS input volume
+- Button action to toggle focus mute ([from request](https://www.reddit.com/r/PCPanel/comments/zyh3sr/toggle_muteunmute_focused_application/))
 
 **Fixes:**:
 
@@ -18,6 +20,7 @@
 - [Linux] All audio streams for a process will be changed when a process is controlled
 - [Linux] Processes without a PID or Executable can be controlled
 - Starting the application again (when skipfilecheck is not specified) will show the main window
+- #24 - Controlling Discord via focus volume would also change the microphone volume
 
 ## [1.5]
 
