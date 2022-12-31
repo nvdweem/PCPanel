@@ -10,6 +10,7 @@ class AudioDevice : public SessionListenerCB, public AudioSessionListenerCB
 private:
     JniCaller jni;
     CComPtr<IMMDevice> cpDevice;
+    EDataFlow dataFlow;
     CComPtr<IAudioEndpointVolume> cpVolume;
 
     wstring id;
@@ -18,7 +19,7 @@ private:
     StoppingHandle<DeviceVolumeListener> cpDeviceVolumeListener;
     StoppingHandle<SessionListener> cpSessionListener;
 public:
-    AudioDevice(wstring id, CComPtr<IMMDevice> cpDevice, jobject obj);
+    AudioDevice(wstring id, CComPtr<IMMDevice> cpDevice, EDataFlow dataFlow, jobject obj);
     AudioDevice(const AudioDevice&) = delete;
 
     virtual void OnNewSession(IAudioSessionControl* cpSess) {
@@ -35,6 +36,10 @@ public:
 
     const unordered_map<int, list<unique_ptr<AudioSession>>>& GetSessions() const {
         return sessions;
+    }
+
+    boolean IsOutput() {
+        return dataFlow == eRender || dataFlow == eAll;
     }
 
     virtual void SessionRemoved(AudioSession& session) override;

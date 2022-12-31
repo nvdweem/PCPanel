@@ -2,9 +2,10 @@
 #include "AudioDevice.h"
 #include "policyconfig.h"
 
-AudioDevice::AudioDevice(wstring id, CComPtr<IMMDevice> cpDevice, jobject obj) :
+AudioDevice::AudioDevice(wstring id, CComPtr<IMMDevice> cpDevice, EDataFlow dataFlow, jobject obj) :
     id(id),
     cpDevice(cpDevice),
+    dataFlow(dataFlow),
     jni(JniCaller::Create(obj)),
     cpVolume(GetVolumeControl(*cpDevice)),
     cpDeviceVolumeListener(new DeviceVolumeListener(cpVolume, jni)),

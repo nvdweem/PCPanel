@@ -72,11 +72,12 @@ void SndCtrl::DeviceAdded(CComPtr<IMMDevice> cpDevice) {
     if (*thread) {
         auto nameStr = thread.jstr(nameAndId.name.get());
         auto idStr = thread.jstr(nameAndId.id.get());
+        auto dataFlow = getDataFlow(*cpDevice);
         auto jObj = pJni->CallObject(thread, "deviceAdded", "(Ljava/lang/String;Ljava/lang/String;FZI)Lcom/getpcpanel/cpp/AudioDevice;",
-            nameStr, idStr, volume, muted, getDataFlow(*cpDevice)
+            nameStr, idStr, volume, muted, dataFlow
         );
         NULLRETURN(jObj);
-        devices.insert({ deviceId, make_unique<AudioDevice>(deviceId, cpDevice, jObj)});
+        devices.insert({ deviceId, make_unique<AudioDevice>(deviceId, cpDevice, dataFlow, jObj)});
         thread.DoneWith(nameStr);
         thread.DoneWith(idStr);
         thread.DoneWith(jObj);
@@ -139,6 +140,9 @@ void SndCtrl::SetFocusVolume(float volume) {
     // Not found by pid, find by name
     auto name = GetProcessName(pid);
     for (auto& dEntry : devices) {
+        if (!dEntry.second->IsOutput()) {
+            continue;
+        }
         for (auto& sEntry : dEntry.second->GetSessions()) {
             for (auto& ssEntry : sEntry.second) {
                 if (ssEntry->GetName() == name) {
