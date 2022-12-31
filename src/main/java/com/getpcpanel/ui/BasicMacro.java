@@ -36,6 +36,7 @@ import com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggleAdvanced;
 import com.getpcpanel.commands.command.CommandVolumeDevice;
 import com.getpcpanel.commands.command.CommandVolumeDeviceMute;
 import com.getpcpanel.commands.command.CommandVolumeFocus;
+import com.getpcpanel.commands.command.CommandVolumeFocusMute;
 import com.getpcpanel.commands.command.CommandVolumeProcess;
 import com.getpcpanel.commands.command.CommandVolumeProcessMute;
 import com.getpcpanel.cpp.AudioDevice;
@@ -115,6 +116,9 @@ public class BasicMacro extends Application implements UIInitializer {
     @FXML private RadioButton rdio_mute_toggle;
     @FXML private RadioButton rdio_mute_mute;
     @FXML private RadioButton rdio_mute_unmute;
+    @FXML private RadioButton rdio_focus_mute_toggle;
+    @FXML private RadioButton rdio_focus_mute_mute;
+    @FXML private RadioButton rdio_focus_mute_unmute;
     @FXML private ChoiceBox<AudioDevice> muteSoundDevice;
     @FXML private RadioButton rdio_muteDevice_toggle;
     @FXML private RadioButton rdio_muteDevice_mute;
@@ -326,6 +330,7 @@ public class BasicMacro extends Application implements UIInitializer {
             case "btnCommandVolumeDefaultDeviceToggleAdvanced" -> new CommandVolumeDefaultDeviceToggleAdvanced(defaultDeviceToggleAdvancedController.getEntries());
             case "btnCommandVolumeProcessMute" -> new CommandVolumeProcessMute(new HashSet<>(appMuteController.getSelection()),
                     rdio_mute_unmute.isSelected() ? MuteType.unmute : rdio_mute_mute.isSelected() ? MuteType.mute : MuteType.toggle);
+            case "btnCommandVolumeFocusMute" -> new CommandVolumeFocusMute(rdio_mute_unmute.isSelected() ? MuteType.unmute : rdio_mute_mute.isSelected() ? MuteType.mute : MuteType.toggle);
             case "btnCommandVolumeDeviceMute" -> {
                 var device = rdio_muteDevice_Default.isSelected() || muteSoundDevice.getValue() == null ? "" : muteSoundDevice.getValue().id();
                 yield new CommandVolumeDeviceMute(device, rdio_muteDevice_unmute.isSelected() ? MuteType.unmute : rdio_muteDevice_mute.isSelected() ? MuteType.mute : MuteType.toggle);
@@ -691,6 +696,13 @@ public class BasicMacro extends Application implements UIInitializer {
                 case unmute -> rdio_mute_unmute.setSelected(true);
                 case mute -> rdio_mute_mute.setSelected(true);
                 case toggle -> rdio_mute_toggle.setSelected(true);
+            }
+        });
+        buttonInitializers.put(CommandVolumeFocusMute.class, (CommandVolumeFocusMute cmd) -> {
+            switch (cmd.getMuteType()) {
+                case unmute -> rdio_focus_mute_unmute.setSelected(true);
+                case mute -> rdio_focus_mute_mute.setSelected(true);
+                case toggle -> rdio_focus_mute_toggle.setSelected(true);
             }
         });
         buttonInitializers.put(CommandVolumeDeviceMute.class, (CommandVolumeDeviceMute cmd) -> {

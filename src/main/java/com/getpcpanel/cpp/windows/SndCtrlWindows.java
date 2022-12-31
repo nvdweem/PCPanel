@@ -153,7 +153,7 @@ public class SndCtrlWindows implements ISndCtrl {
         var lcFileNames = StreamEx.of(fileName).map(String::toLowerCase).toImmutableSet();
         synchronized (devices) {
             StreamEx.ofValues(devices).flatCollection(d -> d.getSessions().values())
-                    .filter(s -> s.executable() != null && lcFileNames.contains(s.executable().getName().toLowerCase()))
+                    .filter(s -> s.executable() != null && (lcFileNames.contains(s.executable().getName().toLowerCase()) || lcFileNames.contains(s.executable().getAbsolutePath().toLowerCase())))
                     .forEach(s -> muteProcess(s, mute));
         }
     }

@@ -2,11 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
-<?import javafx.scene.layout.ColumnConstraints?>
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.RowConstraints?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.*?>
 <VBox fx:id="root" prefHeight="593.0" prefWidth="890.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.BasicMacro">
     <TabPane fx:id="mainTabPane" layoutX="70.0" layoutY="72.0" prefHeight="523.0" prefWidth="723.0" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
         <Tab fx:id="buttonpane" closable="false" text="Button">
@@ -165,6 +161,27 @@
                                 </RadioButton>
                                 <RadioButton fx:id="rdio_mute_mute" mnemonicParsing="false" text="Mute" toggleGroup="$xxx"/>
                                 <RadioButton fx:id="rdio_mute_unmute" mnemonicParsing="false" text="Unmute" toggleGroup="$xxx"/>
+                            </children>
+                        </VBox>
+                    </content>
+                </Tab>
+                <Tab fx:id="btnCommandVolumeFocusMute" text="Focus Mute">
+                    <content>
+                        <VBox spacing="15.0">
+                            <padding>
+                                <Insets left="8.0" top="8.0"/>
+                            </padding>
+                            <children>
+                                <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="Control currently focused Application"/>
+                                <Label maxWidth="1.7976931348623157E308" prefHeight="76.0" text="The button will control the mute state of the application that is in focus at the time." wrapText="true"/>
+
+                                <RadioButton fx:id="rdio_focus_mute_toggle" mnemonicParsing="false" selected="true" text="Toggle Mute/Unmute">
+                                    <toggleGroup>
+                                        <ToggleGroup fx:id="focusMuteToggle"/>
+                                    </toggleGroup>
+                                </RadioButton>
+                                <RadioButton fx:id="rdio_focus_mute_mute" mnemonicParsing="false" text="Mute" toggleGroup="$focusMuteToggle"/>
+                                <RadioButton fx:id="rdio_focus_mute_unmute" mnemonicParsing="false" text="Unmute" toggleGroup="$focusMuteToggle"/>
                             </children>
                         </VBox>
                     </content>
