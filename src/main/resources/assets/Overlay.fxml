@@ -1,14 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.HBox?>
-<HBox alignment="CENTER" prefHeight="56.0" prefWidth="264.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1">
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.text.Font?>
+<HBox fx:id="panel" alignment="CENTER" prefHeight="56.0" prefWidth="264.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1">
     <ImageView fx:id="icon" fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true">
         <HBox.margin>
             <Insets right="10.0"/>
         </HBox.margin>
     </ImageView>
-    <ProgressBar fx:id="volume" prefWidth="200.0" progress="0.0"/>
+    <StackPane prefHeight="150.0" prefWidth="200.0">
+        <ProgressBar fx:id="volume" prefWidth="200.0" progress="0.0"/>
+        <Label fx:id="text" text="Test" StackPane.alignment="CENTER_LEFT" prefWidth="300.0">
+            <font>
+                <Font size="14.0"/>
+            </font>
+        </Label>
+    </StackPane>
 </HBox>

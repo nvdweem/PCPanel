@@ -7,6 +7,10 @@ public interface DialAction {
         return () -> execute(context);
     }
 
+    default boolean hasOverlay() {
+        return true;
+    }
+
     record DialActionParameters(String device, boolean initial, int dial) {
     }
 }

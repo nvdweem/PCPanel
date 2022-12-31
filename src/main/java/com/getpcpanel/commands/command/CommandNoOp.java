@@ -22,4 +22,9 @@ public final class CommandNoOp extends Command implements ButtonAction, DialActi
     public Runnable toRunnable() {
         return ButtonAction.super.toRunnable();
     }
+
+    @Override
+    public boolean hasOverlay() {
+        return false;
+    }
 }

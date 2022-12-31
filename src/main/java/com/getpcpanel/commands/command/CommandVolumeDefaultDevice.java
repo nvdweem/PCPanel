@@ -1,5 +1,7 @@
 package com.getpcpanel.commands.command;
 
+import javax.annotation.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -19,5 +21,14 @@ public class CommandVolumeDefaultDevice extends CommandVolume implements ButtonA
     @Override
     public void execute() {
         getSndCtrl().setDefaultDevice(deviceId);
+    }
+
+    @Override
+    public @Nullable String getOverlayText() {
+        var targetDevice = getSndCtrl().getDevicesMap().get(deviceId);
+        if (targetDevice != null) {
+            return targetDevice.name();
+        }
+        return null;
     }
 }

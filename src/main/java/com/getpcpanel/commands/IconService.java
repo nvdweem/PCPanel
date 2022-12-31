@@ -18,6 +18,8 @@ import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandBrightness;
 import com.getpcpanel.commands.command.CommandObs;
 import com.getpcpanel.commands.command.CommandVoiceMeeter;
+import com.getpcpanel.commands.command.CommandVolumeDefaultDevice;
+import com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggle;
 import com.getpcpanel.commands.command.CommandVolumeDevice;
 import com.getpcpanel.commands.command.CommandVolumeFocus;
 import com.getpcpanel.commands.command.CommandVolumeProcess;
@@ -47,12 +49,18 @@ public class IconService {
     @PostConstruct
     public void init() {
         imageHandlers.put(Command.class, (a, b) -> DEFAULT);
+
+        // Dials
         imageHandlers.put(CommandVolumeProcess.class, IconService::getRunningProcessIcon);
         imageHandlers.put(CommandVolumeFocus.class, IconService::getFocusProcessIcon);
         imageHandlers.put(CommandObs.class, IconService::getObsIcon);
         imageHandlers.put(CommandVoiceMeeter.class, IconService::getVoiceMeeterIcon);
         imageHandlers.put(CommandVolumeDevice.class, IconService::getDeviceIcon);
         imageHandlers.put(CommandBrightness.class, IconService::getBrightnessIcon);
+
+        // Buttons
+        imageHandlers.put(CommandVolumeDefaultDevice.class, IconService::getDeviceIcon);
+        imageHandlers.put(CommandVolumeDefaultDeviceToggle.class, IconService::getDeviceIcon);
     }
 
     @Cacheable("command-icon")
@@ -65,7 +73,10 @@ public class IconService {
             try {
                 var iconStr = override.getOverlayIcon();
                 if (StringUtils.endsWithAny(iconStr, "exe", "dll") && new File(iconStr).exists()) {
-                    return iconService.getIconImageForFile(32, 32, new File(iconStr));
+                    var result = iconService.getIconImageForFile(32, 32, new File(iconStr));
+                    if (result != null) {
+                        return result;
+                    }
                 }
                 if (StringUtils.isNotBlank(iconStr)) {
                     return new Image(override.getOverlayIcon());
@@ -109,7 +120,7 @@ public class IconService {
         return image;
     }
 
-    private Image getDeviceIcon(CommandVolumeDevice command) {
+    private Image getDeviceIcon(Command command) {
         return DEVICE;
     }
 

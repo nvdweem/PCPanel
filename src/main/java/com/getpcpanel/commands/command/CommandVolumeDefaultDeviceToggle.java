@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import javax.annotation.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.cpp.AudioDevice;
@@ -35,6 +37,15 @@ public class CommandVolumeDefaultDeviceToggle extends CommandVolume implements B
 
         var nextDeviceId = devices.get(currentIdx);
         getSndCtrl().setDefaultDevice(nextDeviceId);
+    }
+
+    @Override
+    public @Nullable String getOverlayText() {
+        var targetDevice = getSndCtrl().getDevicesMap().get(devices.get(currentIdx));
+        if (targetDevice != null) {
+            return targetDevice.name();
+        }
+        return null;
     }
 
     private Optional<AudioDevice> firstAudioDevice() {

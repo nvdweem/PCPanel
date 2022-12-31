@@ -8,6 +8,7 @@
 - There is now a slider for device brightness. This will apply to all device options. It's also possible to adjust the device brightness via a knob/slider.
 - #22 - Mute override colors also work when controlling OBS input volume
 - Button action to toggle focus mute ([from request](https://www.reddit.com/r/PCPanel/comments/zyh3sr/toggle_muteunmute_focused_application/))
+- Some button actions (the non-advanced default device toggles) now also show overlay hints ([from request](https://www.reddit.com/r/PCPanel/comments/zhun8a/feature_suggestion_add_a_little_indicatoroverlay/))
 
 **Fixes:**:
 
