@@ -25,23 +25,23 @@ public class AdvancedDevices {
     @Setter private boolean allowRemove;
 
     public void add() {
-        add("", "", "", "");
+        add("", "", "", "", "");
     }
 
-    public void set(String mediaPlayback, String mediaRecord, String communicationPlayback, String communicationRecord) {
+    public void set(String name, String mediaPlayback, String mediaRecord, String communicationPlayback, String communicationRecord) {
         controllers.clear();
         target.getChildren().clear();
 
-        add(mediaPlayback, mediaRecord, communicationPlayback, communicationRecord);
+        add(name, mediaPlayback, mediaRecord, communicationPlayback, communicationRecord);
     }
 
     public void add(DeviceSet entry) {
-        add(entry.mediaPlayback(), entry.mediaRecord(), entry.communicationPlayback(), entry.communicationRecord());
+        add(entry.name(), entry.mediaPlayback(), entry.mediaRecord(), entry.communicationPlayback(), entry.communicationRecord());
     }
 
-    public void add(String mediaPlayback, String mediaRecord, String communicationPlayback, String communicationRecord) {
+    public void add(String name, String mediaPlayback, String mediaRecord, String communicationPlayback, String communicationRecord) {
         var device = loader.open(AdvancedDevice.class);
-        device.set(mediaPlayback, mediaRecord, communicationPlayback, communicationRecord);
+        device.set(name, mediaPlayback, mediaRecord, communicationPlayback, communicationRecord);
         if (allowRemove) {
             device.removeCallback(() -> {
                 target.getChildren().remove(device.getRoot());

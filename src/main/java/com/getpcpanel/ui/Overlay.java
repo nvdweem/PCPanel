@@ -3,6 +3,7 @@ package com.getpcpanel.ui;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.springframework.context.event.EventListener;
@@ -23,6 +24,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
@@ -74,35 +76,33 @@ public class Overlay extends Popup {
         if (event.initial()) {
             return;
         }
-        showDebounced(() -> {
-            var command = determineIconImage(event);
+        showDebounced(() -> determineIconImage(event), command -> {
             setVisible(volume);
             volume.setProgress(event.value() / 255f);
-            return command;
+            return true;
         });
     }
 
     @EventListener
     public void buttonPressEvent(DeviceCommunicationHandler.ButtonPressEvent event) {
-        showDebounced(() -> {
-            var command = determineIconImage(event);
+        showDebounced(() -> determineIconImage(event), command -> {
             setVisible(text);
-
             if (command instanceof ButtonAction ba) {
                 text.setText(ba.getOverlayText());
-                return command;
+                return true;
             }
-            return null;
+            return false;
         });
     }
 
-    private void showDebounced(Supplier<Command> setup) {
+    private void showDebounced(Supplier<CommandAndIcon> pre, Predicate<Command> pred) {
         if (!save.get().isOverlayEnabled()) {
             return;
         }
         Platform.runLater(() -> {
-            var command = setup.get();
-            if (hasOverlay(command)) {
+            var cai = pre.get();
+            if (hasOverlay(cai.command) && pred.test(cai.command)) {
+                icon.setImage(cai.icon);
                 show(stage);
             }
         });
@@ -114,19 +114,17 @@ public class Overlay extends Popup {
                 || command instanceof ButtonAction ba && ba.hasOverlay();
     }
 
-    private Command determineIconImage(DeviceCommunicationHandler.KnobRotateEvent event) {
+    private CommandAndIcon determineIconImage(DeviceCommunicationHandler.KnobRotateEvent event) {
         var save = this.save.get().getDeviceSave(event.serialNum());
         var data = save.getDialData(event.knob());
         var setting = save.getKnobSettings(event.knob());
-        icon.setImage(iconService.getImageFrom(data, setting));
-        return data;
+        return new CommandAndIcon(data, iconService.getImageFrom(data, setting));
     }
 
-    private Command determineIconImage(DeviceCommunicationHandler.ButtonPressEvent event) {
+    private CommandAndIcon determineIconImage(DeviceCommunicationHandler.ButtonPressEvent event) {
         var save = this.save.get().getDeviceSave(event.serialNum());
         var data = save.getButtonData(event.button());
-        icon.setImage(iconService.getImageFrom(data, null));
-        return data;
+        return new CommandAndIcon(data, iconService.getImageFrom(data, null));
     }
 
     @SuppressWarnings("ObjectEquality")
@@ -137,5 +135,8 @@ public class Overlay extends Popup {
         } else {
             panel.setStyle(null);
         }
+    }
+
+    private record CommandAndIcon(Command command, Image icon) {
     }
 }

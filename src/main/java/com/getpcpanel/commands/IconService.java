@@ -19,7 +19,9 @@ import com.getpcpanel.commands.command.CommandBrightness;
 import com.getpcpanel.commands.command.CommandObs;
 import com.getpcpanel.commands.command.CommandVoiceMeeter;
 import com.getpcpanel.commands.command.CommandVolumeDefaultDevice;
+import com.getpcpanel.commands.command.CommandVolumeDefaultDeviceAdvanced;
 import com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggle;
+import com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggleAdvanced;
 import com.getpcpanel.commands.command.CommandVolumeDevice;
 import com.getpcpanel.commands.command.CommandVolumeFocus;
 import com.getpcpanel.commands.command.CommandVolumeProcess;
@@ -59,6 +61,8 @@ public class IconService {
         imageHandlers.put(CommandBrightness.class, IconService::getBrightnessIcon);
 
         // Buttons
+        imageHandlers.put(CommandVolumeDefaultDeviceAdvanced.class, IconService::getDeviceIcon);
+        imageHandlers.put(CommandVolumeDefaultDeviceToggleAdvanced.class, IconService::getDeviceIcon);
         imageHandlers.put(CommandVolumeDefaultDevice.class, IconService::getDeviceIcon);
         imageHandlers.put(CommandVolumeDefaultDeviceToggle.class, IconService::getDeviceIcon);
     }

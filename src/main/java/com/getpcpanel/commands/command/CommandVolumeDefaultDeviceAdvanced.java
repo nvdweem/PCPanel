@@ -1,5 +1,7 @@
 package com.getpcpanel.commands.command;
 
+import javax.annotation.Nullable;
+
 import com.getpcpanel.MainFX;
 import com.getpcpanel.cpp.DataFlow;
 import com.getpcpanel.cpp.Role;
@@ -17,6 +19,7 @@ import lombok.extern.jackson.Jacksonized;
 @AllArgsConstructor
 @ToString(callSuper = true)
 public class CommandVolumeDefaultDeviceAdvanced extends CommandVolume implements ButtonAction {
+    private final String name;
     private final String mediaPb;
     private final String mediaRec;
     private final String communicationPb;
@@ -29,5 +32,11 @@ public class CommandVolumeDefaultDeviceAdvanced extends CommandVolume implements
         windowsSndCtrl.setDefaultDevice(mediaRec, DataFlow.dfCapture, Role.roleMultimedia);
         windowsSndCtrl.setDefaultDevice(communicationPb, DataFlow.dfRender, Role.roleCommunications);
         windowsSndCtrl.setDefaultDevice(communicationRec, DataFlow.dfCapture, Role.roleCommunications);
+    }
+
+    @Nullable
+    @Override
+    public String getOverlayText() {
+        return name;
     }
 }

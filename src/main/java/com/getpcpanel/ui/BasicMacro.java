@@ -337,7 +337,7 @@ public class BasicMacro extends Application implements UIInitializer {
             }
             case "btnCommandVolumeDefaultDeviceAdvanced" -> {
                 var entry = defaultDeviceAdvancedController.getEntries().get(0);
-                yield new CommandVolumeDefaultDeviceAdvanced(entry.mediaPlayback(), entry.mediaRecord(), entry.communicationPlayback(), entry.communicationRecord());
+                yield new CommandVolumeDefaultDeviceAdvanced(entry.name(), entry.mediaPlayback(), entry.mediaRecord(), entry.communicationPlayback(), entry.communicationRecord());
             }
             case "btnCommandObs" -> {
                 if (obs_rdio_SetScene.isSelected()) {
@@ -718,7 +718,8 @@ public class BasicMacro extends Application implements UIInitializer {
                 case toggle -> rdio_muteDevice_toggle.setSelected(true);
             }
         });
-        buttonInitializers.put(CommandVolumeDefaultDeviceAdvanced.class, (CommandVolumeDefaultDeviceAdvanced cmd) -> defaultDeviceAdvancedController.set(cmd.getMediaPb(), cmd.getMediaRec(), cmd.getCommunicationPb(), cmd.getCommunicationRec()));
+        buttonInitializers.put(CommandVolumeDefaultDeviceAdvanced.class,
+                (CommandVolumeDefaultDeviceAdvanced cmd) -> defaultDeviceAdvancedController.set(cmd.getName(), cmd.getMediaPb(), cmd.getMediaRec(), cmd.getCommunicationPb(), cmd.getCommunicationRec()));
         buttonInitializers.put(CommandObsSetScene.class, (CommandObsSetScene cmd) -> {
             obs_rdio_SetScene.setSelected(true);
             obsSetScene.getSelectionModel().select(cmd.getScene());

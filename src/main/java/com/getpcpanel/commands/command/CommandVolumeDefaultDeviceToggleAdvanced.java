@@ -79,4 +79,13 @@ public class CommandVolumeDefaultDeviceToggleAdvanced extends CommandVolume impl
     private SndCtrlWindows getWinSndCtrl() {
         return (SndCtrlWindows) getSndCtrl();
     }
+
+    @Nullable
+    @Override
+    public String getOverlayText() {
+        if (currentIdx == -1) {
+            return null;
+        }
+        return devices.get(currentIdx % devices.size()).name();
+    }
 }

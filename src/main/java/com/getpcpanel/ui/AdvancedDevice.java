@@ -10,6 +10,7 @@ import com.getpcpanel.spring.Prototype;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import one.util.streamex.StreamEx;
 @RequiredArgsConstructor
 public class AdvancedDevice {
     private final ISndCtrl sndCtrl;
+    @FXML private TextField name;
     @FXML private ComboBox<String> mediaPlayback;
     @FXML private ComboBox<String> mediaRecord;
     @FXML private ComboBox<String> communicationPlayback;
@@ -38,7 +40,8 @@ public class AdvancedDevice {
         communicationRecord.getItems().addAll(StreamEx.of(inputDevices).map(Object::toString).prepend("").toList());
     }
 
-    public void set(String mediaPlayback, String mediaRecord, String communicationPlayback, String communicationRecord) {
+    public void set(String name, String mediaPlayback, String mediaRecord, String communicationPlayback, String communicationRecord) {
+        this.name.setText(name);
         this.mediaPlayback.setValue(mediaPlayback);
         this.mediaRecord.setValue(mediaRecord);
         this.communicationPlayback.setValue(communicationPlayback);
@@ -51,6 +54,6 @@ public class AdvancedDevice {
     }
 
     public DeviceSet getEntry() {
-        return new DeviceSet(mediaPlayback.getValue(), mediaRecord.getValue(), communicationPlayback.getValue(), communicationRecord.getValue());
+        return new DeviceSet(name.getText(), mediaPlayback.getValue(), mediaRecord.getValue(), communicationPlayback.getValue(), communicationRecord.getValue());
     }
 }
