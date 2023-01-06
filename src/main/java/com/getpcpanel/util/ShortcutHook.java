@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +32,7 @@ import one.util.streamex.EntryStream;
 @Service
 @ConditionalOnWindows
 @RequiredArgsConstructor
+@ConditionalOnProperty(matchIfMissing = true, value = "pcpanel.shortcut-hook", havingValue = "true")
 public class ShortcutHook implements NativeKeyListener {
     public static final Set<Integer> modifiers = Set.of(NativeKeyEvent.VC_SHIFT, NativeKeyEvent.VC_CONTROL, NativeKeyEvent.VC_META, NativeKeyEvent.VC_ALT);
     private final SaveService saveService;
