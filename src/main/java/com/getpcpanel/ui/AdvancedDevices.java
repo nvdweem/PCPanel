@@ -23,6 +23,7 @@ public class AdvancedDevices {
     @FXML private VBox target;
     private final List<AdvancedDevice> controllers = new ArrayList<>();
     @Setter private boolean allowRemove;
+    private boolean onlyMedia;
 
     public void add() {
         add("", "", "", "", "");
@@ -50,10 +51,16 @@ public class AdvancedDevices {
         }
 
         target.getChildren().add(device.getRoot());
+        device.setOnlyMedia(onlyMedia);
         controllers.add(device);
     }
 
     public List<DeviceSet> getEntries() {
         return StreamEx.of(controllers).map(AdvancedDevice::getEntry).toList();
+    }
+
+    public void setOnlyMedia(boolean onlyMedia) {
+        this.onlyMedia = onlyMedia;
+        controllers.forEach(c -> c.setOnlyMedia(onlyMedia));
     }
 }

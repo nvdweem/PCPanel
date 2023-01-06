@@ -11,6 +11,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,8 @@ public class AdvancedDevice {
     @FXML private ComboBox<String> communicationRecord;
     @Getter @FXML private VBox root;
     @FXML private Button remove;
+    @FXML public HBox communicationPlaybackBox;
+    @FXML public HBox communicationRecordBox;
 
     public void initialize() {
         var allSoundDevices = sndCtrl.getDevices().stream().toList();
@@ -55,5 +58,12 @@ public class AdvancedDevice {
 
     public DeviceSet getEntry() {
         return new DeviceSet(name.getText(), mediaPlayback.getValue(), mediaRecord.getValue(), communicationPlayback.getValue(), communicationRecord.getValue());
+    }
+
+    public void setOnlyMedia(boolean onlyMedia) {
+        communicationPlaybackBox.setVisible(!onlyMedia);
+        communicationPlaybackBox.setManaged(!onlyMedia);
+        communicationRecordBox.setVisible(!onlyMedia);
+        communicationRecordBox.setManaged(!onlyMedia);
     }
 }

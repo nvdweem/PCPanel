@@ -104,6 +104,30 @@
                         <fx:include fx:id="defaultDeviceAdvanced" source="AdvancedDevices.fxml"></fx:include>
                     </content>
                 </Tab>
+                <Tab fx:id="btnCommandVolumeApplicationDeviceToggle" styleClass="only-windows" text="Application Sound Device">
+                    <content>
+                        <ScrollPane fitToWidth="true">
+                            <VBox spacing="15.0">
+                                <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="Select a program to toggle"/>
+                                <HBox alignment="CENTER_LEFT" spacing="5.0">
+                                    <children>
+                                        <RadioButton fx:id="rdioApplicationDeviceSpecific" mnemonicParsing="false" onAction="#onRadioButton" selected="true" text="Specific Program">
+                                            <toggleGroup>
+                                                <ToggleGroup fx:id="volumeApplicationDeviceGroup"/>
+                                            </toggleGroup>
+                                        </RadioButton>
+                                        <fx:include fx:id="applicationDeviceProcesses" source="PickProcesses.fxml"/>
+                                    </children>
+                                </HBox>
+                                <RadioButton fx:id="rdioApplicationDeviceFocus" mnemonicParsing="false" onAction="#onRadioButton" text="Focused Program" toggleGroup="$volumeApplicationDeviceGroup"/>
+
+                                <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="Toggle devices"/>
+                                <fx:include fx:id="applicationDeviceDevices" source="AdvancedDevices.fxml"></fx:include>
+                                <Button mnemonicParsing="false" onAction="#addApplicationDevice" prefHeight="25.0" prefWidth="73.0" text="Add"/>
+                            </VBox>
+                        </ScrollPane>
+                    </content>
+                </Tab>
                 <Tab fx:id="btnCommandVolumeDefaultDeviceToggle" text="Toggle Device">
                     <content>
                         <VBox spacing="15.0">

@@ -48,6 +48,9 @@
     <ClInclude Include="com_getpcpanel_cpp_windows_SndCtrlNative.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="audiopolicyconfigfactory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">

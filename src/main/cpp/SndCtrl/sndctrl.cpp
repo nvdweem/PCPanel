@@ -2,13 +2,18 @@
 #include "sndctrl.h"
 #include "JniCaller.h"
 #include "helpers.h"
+#include "roapi.h"
+#include "winstring.h"
 
 unique_ptr<SndCtrl> pSndCtrl;
+wstring SndCtrl::MMDEVAPI_DEVICE_PREFIX = L"\\\\?\\SWD#MMDEVAPI#";
+wstring SndCtrl::MMDEVAPI_RENDER_POSTFIX = L"#{e6327cad-dcec-4949-ae8a-991e976a79d2}";
+wstring SndCtrl::MMDEVAPI_CAPTURE_POSTFIX = L"#{2eef81be-33fa-4800-9670-1cd474972c3f}";
 
 SndCtrl::SndCtrl(JNIEnv* env, jobject obj) :
     pJni(new JniCaller(env, obj)),
-    cpDeviceListener(nullptr) {
-
+    cpDeviceListener(nullptr),
+    pPolicyConfigFactory(nullptr) {
     if (CoInitialize(nullptr) != S_OK) {
         cerr << "Unable to CoInitialize" << endl;
     }
@@ -27,6 +32,7 @@ SndCtrl::SndCtrl(JNIEnv* env, jobject obj) :
     InitDevices();
 
     pFocusListener = make_unique<FocusListener>(pJni);
+    BuildAudioPolicyConfigFactory();
 }
 
 void SndCtrl::InitDevices() {
@@ -224,4 +230,50 @@ void SndCtrl::TriggerAv() {
     }
     SndCtrl* pNull = nullptr;
     pNull->SetFocusVolume(123);
+}
+
+void SndCtrl::BuildAudioPolicyConfigFactory() {
+    static const WCHAR* className = L"Windows.Media.Internal.AudioPolicyConfig";
+    const UINT32 clen = wcslen(className);
+
+    HSTRING hClassName = NULL;
+    HSTRING_HEADER header;
+    HRESULT hr = WindowsCreateStringReference(className, clen, &header, &hClassName);
+    if (FAILED(hr)) {
+        WindowsDeleteString(hClassName);
+        return;
+    }
+
+    hr = RoGetActivationFactory(hClassName, __uuidof(IAudioPolicyConfigFactory), (void**)&pPolicyConfigFactory);
+    WindowsDeleteString(hClassName);
+}
+
+bool SndCtrl::SetPersistedDefaultAudioEndpoint(int pid, EDataFlow flow, wstring deviceId) {
+    if (pPolicyConfigFactory == nullptr) {
+        return false;
+    }
+    HSTRING hDeviceId = nullptr;
+
+    if (!deviceId.empty()) {
+        wstring fullDeviceId(MMDEVAPI_DEVICE_PREFIX + deviceId + (flow == eRender ? MMDEVAPI_RENDER_POSTFIX : MMDEVAPI_CAPTURE_POSTFIX));
+        auto hr = WindowsCreateString(fullDeviceId.c_str(), fullDeviceId.length(), &hDeviceId);
+        if (FAILED(hr)) {
+            return false;
+        }
+    }
+
+    auto hrCo = pPolicyConfigFactory->SetPersistedDefaultAudioEndpoint(pid, flow, eConsole, hDeviceId);
+    auto hrMM = pPolicyConfigFactory->SetPersistedDefaultAudioEndpoint(pid, flow, eMultimedia, hDeviceId);
+    return SUCCEEDED(hrCo) && SUCCEEDED(hrMM);
+}
+
+wstring SndCtrl::GetPersistedDefaultAudioEndpoint(int pid, EDataFlow flow) {
+    if (pPolicyConfigFactory == nullptr) {
+        return wstring();
+    }
+    HSTRING hDeviceId = nullptr;
+    auto hrMM = pPolicyConfigFactory->GetPersistedDefaultAudioEndpoint(pid, flow, eMultimedia | eConsole, &hDeviceId);
+
+    UINT32 len;
+    return WindowsGetStringRawBuffer(hDeviceId, &len);
 }

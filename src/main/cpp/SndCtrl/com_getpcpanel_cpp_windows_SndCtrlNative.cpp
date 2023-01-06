@@ -112,6 +112,26 @@ JNIEXPORT jstring JNICALL Java_com_getpcpanel_cpp_windows_SndCtrlNative_getFocus
 
 /*
  * Class:     com_getpcpanel_cpp_windows_SndCtrlNative
+ * Method:    setPersistedDefaultAudioEndpoint
+ * Signature: (IILjava/lang/String;)Z
+ */
+JNIEXPORT jboolean JNICALL Java_com_getpcpanel_cpp_windows_SndCtrlNative_setPersistedDefaultAudioEndpoint(JNIEnv* env, jobject, jint pid, jint flow, jstring jDeviceId) {
+    auto device = str(env, jDeviceId);
+    return pSndCtrl->SetPersistedDefaultAudioEndpoint(pid, (EDataFlow) flow, device);
+}
+
+/*
+ * Class:     com_getpcpanel_cpp_windows_SndCtrlNative
+ * Method:    getPersistedDefaultAudioEndpoint
+ * Signature: (II)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_com_getpcpanel_cpp_windows_SndCtrlNative_getPersistedDefaultAudioEndpoint(JNIEnv* env, jobject, jint pid, jint flow) {
+    auto result = pSndCtrl->GetPersistedDefaultAudioEndpoint(pid, (EDataFlow) flow);
+    return env->NewString((jchar*) result.c_str(), (jsize)result.length());
+}
+
+/*
+ * Class:     com_getpcpanel_cpp_windows_SndCtrlNative
  * Method:    triggerAv
  * Signature: ()V
  */

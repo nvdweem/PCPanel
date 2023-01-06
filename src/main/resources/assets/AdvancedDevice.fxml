@@ -32,7 +32,7 @@
         </Label>
         <ComboBox fx:id="mediaRecord" editable="true" prefHeight="25.0" prefWidth="8000" HBox.hgrow="ALWAYS"/>
     </HBox>
-    <HBox>
+    <HBox fx:id="communicationPlaybackBox">
         <Label maxWidth="230" minWidth="230" prefHeight="25.0" prefWidth="230" text="Communication playback device">
             <padding>
                 <Insets right="10.0"/>
@@ -40,7 +40,7 @@
         </Label>
         <ComboBox fx:id="communicationPlayback" editable="true" prefHeight="25.0" prefWidth="8000" HBox.hgrow="ALWAYS"/>
     </HBox>
-    <HBox>
+    <HBox fx:id="communicationRecordBox">
         <Label maxWidth="230" minWidth="230" prefHeight="25.0" prefWidth="230" text="Communication recording device">
             <padding>
                 <Insets right="10.0"/>

@@ -5,6 +5,7 @@ import static com.getpcpanel.commands.command.CommandNoOp.NOOP;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -29,6 +30,7 @@ import com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced;
 import com.getpcpanel.commands.command.CommandVoiceMeeterAdvancedButton;
 import com.getpcpanel.commands.command.CommandVoiceMeeterBasic;
 import com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton;
+import com.getpcpanel.commands.command.CommandVolumeApplicationDeviceToggle;
 import com.getpcpanel.commands.command.CommandVolumeDefaultDevice;
 import com.getpcpanel.commands.command.CommandVolumeDefaultDeviceAdvanced;
 import com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggle;
@@ -119,6 +121,12 @@ public class BasicMacro extends Application implements UIInitializer {
     @FXML private RadioButton rdio_focus_mute_toggle;
     @FXML private RadioButton rdio_focus_mute_mute;
     @FXML private RadioButton rdio_focus_mute_unmute;
+
+    @FXML private RadioButton rdioApplicationDeviceSpecific;
+    @FXML private RadioButton rdioApplicationDeviceFocus;
+    @FXML private PickProcessesController applicationDeviceProcessesController;
+    @FXML private AdvancedDevices applicationDeviceDevicesController;
+
     @FXML private ChoiceBox<AudioDevice> muteSoundDevice;
     @FXML private RadioButton rdio_muteDevice_toggle;
     @FXML private RadioButton rdio_muteDevice_mute;
@@ -339,6 +347,11 @@ public class BasicMacro extends Application implements UIInitializer {
                 var entry = defaultDeviceAdvancedController.getEntries().get(0);
                 yield new CommandVolumeDefaultDeviceAdvanced(entry.name(), entry.mediaPlayback(), entry.mediaRecord(), entry.communicationPlayback(), entry.communicationRecord());
             }
+            case "btnCommandVolumeApplicationDeviceToggle" -> {
+                var followFocus = rdioApplicationDeviceFocus.isSelected();
+                var processes = followFocus ? List.<String>of() : applicationDeviceProcessesController.getSelection();
+                yield new CommandVolumeApplicationDeviceToggle(processes, followFocus, applicationDeviceDevicesController.getEntries());
+            }
             case "btnCommandObs" -> {
                 if (obs_rdio_SetScene.isSelected()) {
                     yield new CommandObsSetScene(obsSetScene.getSelectionModel().getSelectedItem());
@@ -408,6 +421,10 @@ public class BasicMacro extends Application implements UIInitializer {
         appVolumeController.setPickType(PickProcessesController.PickType.soundSource);
         defaultDeviceToggleAdvancedController.setAllowRemove(true);
         defaultDeviceAdvancedController.add();
+
+        applicationDeviceProcessesController.setPickType(PickProcessesController.PickType.soundSource);
+        applicationDeviceDevicesController.setAllowRemove(true);
+        applicationDeviceDevicesController.setOnlyMedia(true);
 
         var toRemove = StreamEx.of(buttonTabPane.getTabs()).remove(osHelper::isSupported).toSet();
         buttonTabPane.getTabs().removeAll(toRemove);
@@ -690,6 +707,12 @@ public class BasicMacro extends Application implements UIInitializer {
             soundDeviceSource.getItems().removeAll(devices);
         });
         buttonInitializers.put(CommandVolumeDefaultDeviceToggleAdvanced.class, (CommandVolumeDefaultDeviceToggleAdvanced cmd) -> cmd.getDevices().forEach(defaultDeviceToggleAdvancedController::add));
+        buttonInitializers.put(CommandVolumeApplicationDeviceToggle.class, (CommandVolumeApplicationDeviceToggle cmd) -> {
+            rdioApplicationDeviceSpecific.setSelected(!cmd.isFollowFocus());
+            rdioApplicationDeviceFocus.setSelected(cmd.isFollowFocus());
+            applicationDeviceProcessesController.setSelection(cmd.getProcesses());
+            cmd.getDevices().forEach(applicationDeviceDevicesController::add);
+        });
         buttonInitializers.put(CommandVolumeProcessMute.class, (CommandVolumeProcessMute cmd) -> {
             appMuteController.setSelection(cmd.getProcessName());
             switch (cmd.getMuteType()) {
@@ -795,5 +818,9 @@ public class BasicMacro extends Application implements UIInitializer {
 
     public void addDefaultDeviceToggleAdvanced(ActionEvent ignored) {
         defaultDeviceToggleAdvancedController.add();
+    }
+
+    public void addApplicationDevice(ActionEvent ignored) {
+        applicationDeviceDevicesController.add();
     }
 }

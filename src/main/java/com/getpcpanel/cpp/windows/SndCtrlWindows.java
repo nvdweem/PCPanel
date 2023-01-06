@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 
@@ -232,6 +233,19 @@ public class SndCtrlWindows implements ISndCtrl {
     public Map<DefaultFor, String> getDefaults() {
         synchronized (defaults) {
             return new HashMap<>(defaults);
+        }
+    }
+
+    public boolean setDeviceForProcess(int pid, @Nonnull DataFlow flow, @Nullable String deviceId) {
+        return SndCtrlNative.instance.setPersistedDefaultAudioEndpoint(pid, flow.ordinal(), deviceId);
+    }
+
+    public Set<Integer> getPidsFor(String process) {
+        synchronized (devices) {
+            return StreamEx.ofValues(devices).flatCollection(d -> d.getSessions().values())
+                           .filter(s -> s.executable() != null && StringUtils.containsIgnoreCase(s.executable().getAbsolutePath(), process))
+                           .map(AudioSession::pid)
+                           .toImmutableSet();
         }
     }
 

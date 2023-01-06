@@ -1,5 +1,10 @@
 package com.getpcpanel.cpp.windows;
 
+import javax.annotation.Nullable;
+
+/**
+ * Generate headers using: javac.exe -h . SndCtrlNative.java
+ */
 enum SndCtrlNative {
     instance;
 
@@ -18,6 +23,10 @@ enum SndCtrlNative {
     public native void muteSession(String id, int pid, boolean muted);
 
     public native String getFocusApplication();
+
+    public native boolean setPersistedDefaultAudioEndpoint(int pid, int dataFlow, @Nullable String deviceId);
+
+    public native String getPersistedDefaultAudioEndpoint(int pid, int dataFlow);
 
     public native void triggerAv();
 }

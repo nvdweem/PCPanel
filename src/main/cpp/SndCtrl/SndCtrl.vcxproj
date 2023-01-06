@@ -124,13 +124,13 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>C:\Program Files\Java\jdk-17.0.3.1\include\;C:\Program Files\Java\jdk-17.0.3.1\include\win32</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\dev\java\jbr-17.0.4-x64-b469\include;C:\dev\java\jbr-17.0.4-x64-b469\include\win32</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>version.lib;RuntimeObject.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -143,7 +143,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>C:\dev\java\jbr-17.0.4-x64-b469\include\;C:\dev\java\jbr-17.0.4-x64-b469\include\win32</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\dev\java\jbr-17.0.4-x64-b469\include;C:\dev\java\jbr-17.0.4-x64-b469\include\win32</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -151,11 +151,12 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>version.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>version.lib;RuntimeObject.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AudioDevice.h" />
+    <ClInclude Include="audiopolicyconfigfactory.h" />
     <ClInclude Include="AudioSession.h" />
     <ClInclude Include="com_getpcpanel_cpp_windows_SndCtrlNative.h" />
     <ClInclude Include="FocusListener.h" />
