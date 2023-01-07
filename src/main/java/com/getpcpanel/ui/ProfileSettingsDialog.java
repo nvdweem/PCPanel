@@ -1,13 +1,17 @@
 package com.getpcpanel.ui;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.stereotype.Component;
 
+import com.getpcpanel.osc.OSCService;
 import com.getpcpanel.profile.DeviceSave;
+import com.getpcpanel.profile.OSCBinding;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.spring.OsHelper;
@@ -16,12 +20,15 @@ import com.getpcpanel.util.ShortcutHook;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 
 import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.collections.transformation.FilteredList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
@@ -42,6 +49,7 @@ public class ProfileSettingsDialog extends Application implements UIInitializer 
     private final SaveService saveService;
     private final Optional<ShortcutHook> shortcutHook;
     private final OsHelper osHelper;
+    private final OSCService oscService;
     @FXML private Pane root;
     private DeviceSave deviceSave;
     private Profile profile;
@@ -53,6 +61,7 @@ public class ProfileSettingsDialog extends Application implements UIInitializer 
     @FXML private TextField activationFld;
     @FXML public VBox osSpecificHolder;
     @FXML public VBox oscBindings;
+    private List<String> sortedAddresses;
 
     @Override
     public <T> void initUI(T... args) {
@@ -126,40 +135,71 @@ public class ProfileSettingsDialog extends Application implements UIInitializer 
     }
 
     private void initOsc() {
-        var source = profile.getOscBindings();
+        sortedAddresses = StreamEx.of(oscService.getAddresses()).sorted().prepend("").toList();
+        var source = profile.getOscBinding();
         var knobCount = deviceSave.getLightingConfig().getKnobConfigs().length;
         var sliderCount = deviceSave.getLightingConfig().getSliderConfigs().length;
 
         for (var i = 0; i < knobCount; i++) {
-            addOscRow("Knob " + (i + 1), source.getOrDefault(i * 2, ""));
-            addOscRow("Button " + (i + 1), source.getOrDefault(i * 2 + 1, ""));
+            addOscRow("Knob " + (i + 1), source.getOrDefault(i * 2, OSCBinding.EMPTY), false);
+            addOscRow("Button " + (i + 1), source.getOrDefault(i * 2 + 1, OSCBinding.EMPTY), true);
         }
 
         for (var i = 0; i < sliderCount; i++) {
-            addOscRow("Slider " + (i + 1), source.getOrDefault(knobCount + i, ""));
+            addOscRow("Slider " + (i + 1), source.getOrDefault(knobCount + i, OSCBinding.EMPTY), false);
         }
     }
 
-    private void addOscRow(String controlName, String controlValue) {
+    private void addOscRow(String controlName, OSCBinding controlValue, boolean button) {
         var label = new Label(controlName);
         label.setPrefWidth(100);
-        var field = new TextField(controlValue);
-        field.setPrefWidth(200);
         HBox.setMargin(label, new Insets(0, 10, 0, 0));
 
-        var target = new HBox(label, field);
+        var address = buildComboBox();
+        address.setValue(controlValue.address());
+        var target = new HBox(label, address);
         target.setAlignment(Pos.CENTER_LEFT);
+
+        if (button) {
+            // TODO: Add when supporting toggle
+            // var toggle = new CheckBox("Toggle");
+            // toggle.setSelected(controlValue.toggle());
+            // target.getChildren().addAll(toggle);
+        } else {
+            var min = new TextField(String.valueOf(controlValue.min()));
+            var max = new TextField(String.valueOf(controlValue.max()));
+            min.setPromptText("Min value");
+            max.setPromptText("Max value");
+            target.getChildren().addAll(min, max);
+        }
 
         oscBindings.getChildren().add(target);
     }
 
+    private ComboBox<String> buildComboBox() {
+        var field = new ComboBox<>(new FilteredList<>(FXCollections.observableArrayList(sortedAddresses), p -> true));
+        field.setPrefHeight(25);
+        field.setPrefWidth(200);
+        field.setEditable(true);
+        return field;
+    }
+
     private void saveOsc() {
-        var target = new HashMap<Integer, String>();
+        var target = new HashMap<Integer, OSCBinding>();
         EntryStream.of(oscBindings.getChildren())
                    .selectValues(HBox.class)
-                   .mapValues(row -> ((TextField) row.getChildren().get(1)).getText())
+                   .mapValues(this::toBinding)
                    .forKeyValue(target::put);
-        profile.setOscBindings(target);
+        profile.setOscBinding(target);
+    }
+
+    private OSCBinding toBinding(HBox row) {
+        var address = ((ComboBox<String>) row.getChildren().get(1)).getValue();
+        var min = NumberUtils.toFloat(row.getChildren().size() > 2 && row.getChildren().get(2) instanceof TextField minField ? minField.getText() : "0", 0);
+        var max = NumberUtils.toFloat(row.getChildren().size() > 3 && row.getChildren().get(3) instanceof TextField maxField ? maxField.getText() : "1", 1);
+        var toggle = row.getChildren().size() > 2 && row.getChildren().get(2) instanceof CheckBox cb && cb.isSelected();
+
+        return new OSCBinding(address, min, max, toggle);
     }
 
     @FXML

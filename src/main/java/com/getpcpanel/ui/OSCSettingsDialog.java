@@ -25,6 +25,7 @@ import one.util.streamex.StreamEx;
 @RequiredArgsConstructor
 public class OSCSettingsDialog {
     @FXML public VBox connectHostPorts;
+    @FXML public TextField port;
 
     public void addConnectHostPort(MouseEvent ignored) {
         add("localhost", 8000);
@@ -57,10 +58,17 @@ public class OSCSettingsDialog {
                        .toList();
     }
 
-    public void setConnections(List<OSCConnectionInfo> oscConnections) {
-        if (oscConnections == null) {
-            return;
+    public void setConnections(Integer port, List<OSCConnectionInfo> oscConnections) {
+        if (port != null) {
+            this.port.setText(String.valueOf(port));
         }
-        oscConnections.forEach(c -> add(c.host(), c.port()));
+        if (oscConnections != null) {
+            oscConnections.forEach(c -> add(c.host(), c.port()));
+        }
+    }
+
+    public Integer getListenPort() {
+        var thePort = NumberUtils.toInt(port.getText(), -1);
+        return thePort == -1 ? null : thePort;
     }
 }
