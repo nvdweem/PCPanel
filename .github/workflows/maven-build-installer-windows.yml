@@ -19,6 +19,7 @@ jobs:
           repo: wix3
           tag: wix3112rtm
           file: wix311-binaries.zip
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Decompress Wix
         run: 7z x wix311-binaries.zip "-o./target/wix"
       - name: Add Wix to Path
