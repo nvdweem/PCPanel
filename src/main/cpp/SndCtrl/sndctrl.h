@@ -40,6 +40,9 @@ public:
     void UpdateDefaultDevice(wstring id, EDataFlow dataFlow, ERole role);
     void TriggerAv();
 
+    bool HasAudioPolicyConfigFactory() {
+        return pPolicyConfigFactory != nullptr;
+    }
     bool SetPersistedDefaultAudioEndpoint(int pid, EDataFlow flow, wstring deviceId);
     wstring GetPersistedDefaultAudioEndpoint(int pid, EDataFlow flow);
 private:

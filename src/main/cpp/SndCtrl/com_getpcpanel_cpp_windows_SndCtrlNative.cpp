@@ -132,6 +132,15 @@ JNIEXPORT jstring JNICALL Java_com_getpcpanel_cpp_windows_SndCtrlNative_getPersi
 
 /*
  * Class:     com_getpcpanel_cpp_windows_SndCtrlNative
+ * Method:    hasAudioPolicyConfigFactory
+ * Signature: ()Z
+ */
+JNIEXPORT jboolean JNICALL Java_com_getpcpanel_cpp_windows_SndCtrlNative_hasAudioPolicyConfigFactory(JNIEnv*, jobject) {
+    return pSndCtrl->HasAudioPolicyConfigFactory();
+}
+
+/*
+ * Class:     com_getpcpanel_cpp_windows_SndCtrlNative
  * Method:    triggerAv
  * Signature: ()V
  */

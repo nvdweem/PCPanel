@@ -46,6 +46,12 @@ public class SndCtrlWindows implements ISndCtrl {
     public void init() {
         loadLibrary();
         SndCtrlNative.start(this);
+
+        if (SndCtrlNative.instance.hasAudioPolicyConfigFactory()) {
+            log.info("AudioPolicyConfigFactory is available");
+        } else {
+            log.warn("AudioPolicyConfigFactory is not available");
+        }
     }
 
     private void loadLibrary() {

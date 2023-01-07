@@ -245,6 +245,14 @@ void SndCtrl::BuildAudioPolicyConfigFactory() {
     }
 
     hr = RoGetActivationFactory(hClassName, __uuidof(IAudioPolicyConfigFactory), (void**)&pPolicyConfigFactory);
+    if (hr == E_NOINTERFACE) {
+        hr = RoGetActivationFactory(hClassName, __uuidof(IAudioPolicyConfigFactoryLegacy), (void**)&pPolicyConfigFactory);
+    }
+    if (SUCCEEDED(hr)) {
+        cout << "IAudioPolicyConfigFactory constructed successfully" << endl;
+    } else {
+        cerr << "Unable to retrieve IAudioPolicyConfigFactory" << endl;
+    }
     WindowsDeleteString(hClassName);
 }
 

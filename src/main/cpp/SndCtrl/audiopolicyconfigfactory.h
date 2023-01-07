@@ -5,6 +5,7 @@
 // https://github.com/File-New-Project/EarTrumpet/blob/master/EarTrumpet/Interop/MMDeviceAPI/IAudioPolicyConfigFactoryVariantFor21H2.cs
 
 interface DECLSPEC_UUID("ab3d4648-e242-459f-b02f-541c70306324") IAudioPolicyConfigFactory;
+interface DECLSPEC_UUID("2a59116d-6c4f-45e0-a74f-707e3fef9258") IAudioPolicyConfigFactoryLegacy;
 interface IAudioPolicyConfigFactory
 {
 public:

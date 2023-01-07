@@ -28,5 +28,7 @@ enum SndCtrlNative {
 
     public native String getPersistedDefaultAudioEndpoint(int pid, int dataFlow);
 
+    public native boolean hasAudioPolicyConfigFactory();
+
     public native void triggerAv();
 }
