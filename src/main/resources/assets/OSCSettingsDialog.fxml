@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+<VBox fx:id="root" prefHeight="441.0" prefWidth="700.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.OSCSettingsDialog">
+    <Label text="OpenSoundControl (OSC) is a data transport specification for realtime message communication among applications and hardware.
+The profile settings allow configuring how the controls are being sent to the software." wrapText="true">
+        <VBox.margin>
+            <Insets/>
+        </VBox.margin>
+        <padding>
+            <Insets bottom="20.0"/>
+        </padding>
+    </Label>
+
+    <VBox>
+        <Label text="Hosts/Port to send messages to">
+            <VBox.margin>
+                <Insets bottom="20.0"/>
+            </VBox.margin>
+        </Label>
+        <VBox fx:id="connectHostPorts" layoutX="37.0"/>
+        <Button onMouseClicked="#addConnectHostPort" text="Add"/>
+    </VBox>
+</VBox>

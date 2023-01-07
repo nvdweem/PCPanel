@@ -10,6 +10,7 @@
 - Button action to toggle focus mute ([from request](https://www.reddit.com/r/PCPanel/comments/zyh3sr/toggle_muteunmute_focused_application/))
 - Some button actions (the default device toggles) now also show overlay hints ([from request](https://www.reddit.com/r/PCPanel/comments/zhun8a/feature_suggestion_add_a_little_indicatoroverlay/))
 - #26 - Allow switching default device for a process (specific or follow focus)
+- #27 - Initial support for OSC (Open Sound Control) protocol
 
 **Fixes:**:
 

@@ -1,5 +1,6 @@
 package com.getpcpanel.profile;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -27,6 +28,7 @@ public class Save {
     @Nullable private Integer sliderRollingAverage;
     @Nullable private Integer sendOnlyIfDelta;
     private boolean workaroundsOnlySliders;
+    private List<OSCConnectionInfo> oscConnections;
 
     public DeviceSave getDeviceSave(String serialNum) {
         return devices.get(serialNum);

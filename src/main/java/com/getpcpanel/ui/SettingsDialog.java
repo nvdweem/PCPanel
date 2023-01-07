@@ -65,6 +65,7 @@ public class SettingsDialog extends Application implements UIInitializer {
     @FXML public TextField txtSliderRollingAverage;
     @FXML public TextField txtOnlyIfDelta;
     @FXML public CheckBox cbFixOnlySliders;
+    @FXML private OSCSettingsDialog oscSettingsController;
 
     @Override
     public <T> void initUI(T... args) {
@@ -123,6 +124,7 @@ public class SettingsDialog extends Application implements UIInitializer {
         save.setSliderRollingAverage(NumberUtils.toInt(txtSliderRollingAverage.getText(), 0));
         save.setSendOnlyIfDelta(NumberUtils.toInt(txtOnlyIfDelta.getText(), 0));
         save.setWorkaroundsOnlySliders(cbFixOnlySliders.isSelected());
+        save.setOscConnections(oscSettingsController.getConnections());
         saveService.save();
         stage.close();
     }
@@ -155,6 +157,7 @@ public class SettingsDialog extends Application implements UIInitializer {
         txtSliderRollingAverage.setText(save.getSliderRollingAverage() == null ? "" : save.getSliderRollingAverage().toString());
         txtOnlyIfDelta.setText(save.getSendOnlyIfDelta() == null ? "" : save.getSendOnlyIfDelta().toString());
         cbFixOnlySliders.setSelected(save.isWorkaroundsOnlySliders());
+        oscSettingsController.setConnections(save.getOscConnections());
     }
 
     private void postInit() {

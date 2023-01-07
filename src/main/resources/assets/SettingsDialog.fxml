@@ -50,6 +50,9 @@
                 </VBox>
             </VBox>
         </Tab>
+        <Tab text="OSC">
+            <fx:include fx:id="oscSettings" source="OSCSettingsDialog.fxml"/>
+        </Tab>
         <Tab fx:id="voicemeeterTab" text="Voicemeeter">
             <VBox prefHeight="200.0" prefWidth="100.0" spacing="10.0">
                 <padding>

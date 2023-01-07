@@ -1,5 +1,6 @@
 package com.getpcpanel.ui;
 
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -17,15 +18,20 @@ import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 
 @Log4j2
@@ -46,6 +52,7 @@ public class ProfileSettingsDialog extends Application implements UIInitializer 
     @FXML private PickProcessesController focusOnListListController;
     @FXML private TextField activationFld;
     @FXML public VBox osSpecificHolder;
+    @FXML public VBox oscBindings;
 
     @Override
     public <T> void initUI(T... args) {
@@ -89,6 +96,7 @@ public class ProfileSettingsDialog extends Application implements UIInitializer 
                 }
         ));
         activationFld.setText(StringUtils.defaultString(profile.getActivationShortcut()));
+        initOsc();
     }
 
     private void registerShortcut(NativeKeyEvent event) {
@@ -111,9 +119,47 @@ public class ProfileSettingsDialog extends Application implements UIInitializer 
         profile.getActivateApplications().clear();
         profile.setActivateApplications(focusOnListListController.getSelection());
         profile.setActivationShortcut(StringUtils.trimToNull(activationFld.getText()));
+        saveOsc();
 
         saveService.save();
         stage.close();
+    }
+
+    private void initOsc() {
+        var source = profile.getOscBindings();
+        var knobCount = deviceSave.getLightingConfig().getKnobConfigs().length;
+        var sliderCount = deviceSave.getLightingConfig().getSliderConfigs().length;
+
+        for (var i = 0; i < knobCount; i++) {
+            addOscRow("Knob " + (i + 1), source.getOrDefault(i * 2, ""));
+            addOscRow("Button " + (i + 1), source.getOrDefault(i * 2 + 1, ""));
+        }
+
+        for (var i = 0; i < sliderCount; i++) {
+            addOscRow("Slider " + (i + 1), source.getOrDefault(knobCount + i, ""));
+        }
+    }
+
+    private void addOscRow(String controlName, String controlValue) {
+        var label = new Label(controlName);
+        label.setPrefWidth(100);
+        var field = new TextField(controlValue);
+        field.setPrefWidth(200);
+        HBox.setMargin(label, new Insets(0, 10, 0, 0));
+
+        var target = new HBox(label, field);
+        target.setAlignment(Pos.CENTER_LEFT);
+
+        oscBindings.getChildren().add(target);
+    }
+
+    private void saveOsc() {
+        var target = new HashMap<Integer, String>();
+        EntryStream.of(oscBindings.getChildren())
+                   .selectValues(HBox.class)
+                   .mapValues(row -> ((TextField) row.getChildren().get(1)).getText())
+                   .forKeyValue(target::put);
+        profile.setOscBindings(target);
     }
 
     @FXML

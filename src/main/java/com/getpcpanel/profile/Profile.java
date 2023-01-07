@@ -23,6 +23,7 @@ public class Profile {
     private boolean focusBackOnLost;
     private List<String> activateApplications = new ArrayList<>();
     private String activationShortcut;
+    private Map<Integer, String> oscBindings = new HashMap<>(); // Button/dial to OSC address
 
     public Profile(String name, DeviceType dt) {
         this.name = name;
