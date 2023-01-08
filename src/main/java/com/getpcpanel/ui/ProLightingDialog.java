@@ -147,7 +147,7 @@ public class ProLightingDialog extends Application implements UIInitializer, ILi
             if (!pressedOk) {
                 device.setLighting(device.getSavedLightingConfig(), true);
             }
-            eventPublisher.publishEvent(LightingChangedEvent.INSTANCE);
+            eventPublisher.publishEvent(LightningChangedToDefaultEvent.INSTANCE);
         });
         stage.initModality(Modality.APPLICATION_MODAL);
         stage.initOwner(HomePage.stage);

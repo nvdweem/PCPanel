@@ -1,5 +1,6 @@
 package com.getpcpanel.device;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 
@@ -21,16 +22,17 @@ public class DeviceFactory {
     private final SaveService saveService;
     private final OutputInterpreter outputInterpreter;
     private final IconService iconService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public PCPanelRGBUI buildRgb(String serialNum, DeviceSave deviceSave) {
-        return new PCPanelRGBUI(fxHelper, inputInterpreter, saveService, outputInterpreter, iconService, deviceSave, serialNum);
+        return new PCPanelRGBUI(fxHelper, inputInterpreter, saveService, outputInterpreter, iconService, eventPublisher, deviceSave, serialNum);
     }
 
     public PCPanelMiniUI buildMini(String serialNum, DeviceSave deviceSave) {
-        return new PCPanelMiniUI(fxHelper, inputInterpreter, saveService, outputInterpreter, iconService, serialNum, deviceSave);
+        return new PCPanelMiniUI(fxHelper, inputInterpreter, saveService, outputInterpreter, iconService, eventPublisher, serialNum, deviceSave);
     }
 
     public PCPanelProUI buildPro(String serialNum, DeviceSave deviceSave) {
-        return new PCPanelProUI(fxHelper, inputInterpreter, saveService, outputInterpreter, iconService, serialNum, deviceSave);
+        return new PCPanelProUI(fxHelper, inputInterpreter, saveService, outputInterpreter, iconService, eventPublisher, serialNum, deviceSave);
     }
 }

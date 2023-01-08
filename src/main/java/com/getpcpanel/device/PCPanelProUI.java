@@ -3,6 +3,8 @@ package com.getpcpanel.device;
 import java.io.IOException;
 import java.util.Objects;
 
+import org.springframework.context.ApplicationEventPublisher;
+
 import com.getpcpanel.commands.IconService;
 import com.getpcpanel.hid.DeviceCommunicationHandler;
 import com.getpcpanel.hid.InputInterpreter;
@@ -78,8 +80,8 @@ public class PCPanelProUI extends Device {
     private final int[] analogValue = new int[9];
     private final Pane[] sliderHolders = new Pane[4];
 
-    public PCPanelProUI(FxHelper fxHelper, InputInterpreter inputInterpreter, SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, String serialNum, DeviceSave deviceSave) {
-        super(fxHelper, saveService, outputInterpreter, iconService, serialNum, deviceSave);
+    public PCPanelProUI(FxHelper fxHelper, InputInterpreter inputInterpreter, SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, ApplicationEventPublisher eventPublisher, String serialNum, DeviceSave deviceSave) {
+        super(fxHelper, saveService, outputInterpreter, iconService, eventPublisher, serialNum, deviceSave);
         this.inputInterpreter = inputInterpreter;
         var loader = getFxHelper().getLoader(getClass().getResource("/assets/PCPanelPro/PCPanelPro.fxml"));
         loader.setController(this);

@@ -91,7 +91,7 @@ public class RGBLightingDialog extends Application implements UIInitializer {
             if (!pressedOk) {
                 device.setLighting(device.getSavedLightingConfig(), true);
             }
-            eventPublisher.publishEvent(LightingChangedEvent.INSTANCE);
+            eventPublisher.publishEvent(LightningChangedToDefaultEvent.INSTANCE);
         });
         stage.initModality(Modality.APPLICATION_MODAL);
         stage.initOwner(HomePage.stage);

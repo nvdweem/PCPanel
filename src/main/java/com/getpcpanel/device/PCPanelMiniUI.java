@@ -3,6 +3,8 @@ package com.getpcpanel.device;
 import java.io.IOException;
 import java.util.Objects;
 
+import org.springframework.context.ApplicationEventPublisher;
+
 import com.getpcpanel.commands.IconService;
 import com.getpcpanel.hid.DeviceCommunicationHandler;
 import com.getpcpanel.hid.InputInterpreter;
@@ -50,8 +52,8 @@ public class PCPanelMiniUI extends Device {
     private static final Image previewImage = new Image(Objects.requireNonNull(PCPanelMiniUI.class.getResource("/assets/PCPanelMini/preview.png")).toExternalForm());
     private Stage childDialogStage;
 
-    public PCPanelMiniUI(FxHelper fxHelper, InputInterpreter inputInterpreter, SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, String serialNum, DeviceSave deviceSave) {
-        super(fxHelper, saveService, outputInterpreter, iconService, serialNum, deviceSave);
+    public PCPanelMiniUI(FxHelper fxHelper, InputInterpreter inputInterpreter, SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, ApplicationEventPublisher eventPublisher, String serialNum, DeviceSave deviceSave) {
+        super(fxHelper, saveService, outputInterpreter, iconService, eventPublisher, serialNum, deviceSave);
         this.inputInterpreter = inputInterpreter;
         var loader = getFxHelper().getLoader(getClass().getResource("/assets/PCPanelMini/PCPanelMini.fxml"));
         loader.setController(this);

@@ -3,6 +3,7 @@ package com.getpcpanel.device;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationEventPublisher;
 
 import com.getpcpanel.commands.IconService;
 import com.getpcpanel.commands.command.CommandVolumeFocus;
@@ -12,6 +13,7 @@ import com.getpcpanel.profile.LightingConfig;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.ui.FxHelper;
+import com.getpcpanel.ui.LightningChangedToDefaultEvent;
 import com.getpcpanel.ui.LimitedTextField;
 
 import javafx.application.Platform;
@@ -46,17 +48,19 @@ public abstract class Device {
     private final SaveService saveService;
     private final OutputInterpreter outputInterpreter;
     private final IconService iconService;
+    private final ApplicationEventPublisher eventPublisher;
     @Getter private HBox profileMenu;
     private ComboBox<Profile> profiles;
     @Getter protected String serialNumber;
     protected DeviceSave save;
     private LightingConfig lightingConfig;
 
-    protected Device(FxHelper fxHelper, SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, String serialNum, DeviceSave deviceSave) {
+    protected Device(FxHelper fxHelper, SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, ApplicationEventPublisher eventPublisher, String serialNum, DeviceSave deviceSave) {
         this.fxHelper = fxHelper;
         this.saveService = saveService;
         this.outputInterpreter = outputInterpreter;
         this.iconService = iconService;
+        this.eventPublisher = eventPublisher;
         serialNumber = serialNum;
         save = deviceSave;
         initProfileMenu();
@@ -154,6 +158,7 @@ public abstract class Device {
             return;
         setLighting(profile.get().getLightingConfig(), true);
         saveService.save();
+        eventPublisher.publishEvent(LightningChangedToDefaultEvent.INSTANCE);
     }
 
     public void focusChanged(String from, String to) {
@@ -284,12 +289,12 @@ public abstract class Device {
     }
 
     public void setLighting(LightingConfig config, boolean priority) {
-        Platform.runLater(() -> doSetLighting(config, priority));
+        doSetLighting(config, priority);
     }
 
     public void setSavedLighting(LightingConfig config) {
         currentProfile().setLightingConfig(config);
-        Platform.runLater(() -> doSetLighting(config, true));
+        doSetLighting(config, true);
     }
 
     private void doSetLighting(LightingConfig config, boolean priority) {
@@ -300,7 +305,8 @@ public abstract class Device {
             saveService.save();
         }
         try {
-            showLightingConfigToUI(config);
+            var finalConfig = config;
+            Platform.runLater(() -> showLightingConfigToUI(finalConfig));
             try {
                 outputInterpreter.sendLightingConfig(getSerialNumber(), getDeviceType(), config, priority);
             } catch (Exception e) {
