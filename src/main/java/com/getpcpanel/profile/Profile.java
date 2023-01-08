@@ -33,12 +33,35 @@ public class Profile {
     protected Profile() {
     }
 
-    public Profile setLightingConfig(LightingConfig lightingConfig) {
+    public LightingConfig getLightingConfig() {
+        return lightingConfig.deepCopy();
+    }
+
+    public void setLightingConfig(LightingConfig lightingConfig) {
         this.lightingConfig = lightingConfig.deepCopy();
-        return this;
     }
 
     public String toString() {
         return name;
+    }
+
+    public KnobSetting getKnobSettings(int knob) {
+        return knobSettings.computeIfAbsent(knob, k -> new KnobSetting());
+    }
+
+    public Command getButtonData(int button) {
+        return buttonData.get(button);
+    }
+
+    public void setButtonData(int button, Command data) {
+        buttonData.put(button, data);
+    }
+
+    public Command getDialData(int dial) {
+        return dialData.get(dial);
+    }
+
+    public void setDialData(int dial, Command data) {
+        dialData.put(dial, data);
     }
 }

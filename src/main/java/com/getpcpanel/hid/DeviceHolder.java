@@ -80,4 +80,8 @@ public class DeviceHolder {
     public void saveChanged() {
         devices.values().forEach(Device::saveChanged);
     }
+
+    public Collection<Device> all() {
+        return devices.values();
+    }
 }

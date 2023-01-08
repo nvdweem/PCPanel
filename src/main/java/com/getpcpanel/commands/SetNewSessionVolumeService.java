@@ -12,15 +12,15 @@ import com.getpcpanel.cpp.AudioSessionEvent;
 import com.getpcpanel.cpp.EventType;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.cpp.windows.WindowsAudioSession;
+import com.getpcpanel.device.Device;
 import com.getpcpanel.hid.DeviceCommunicationHandler;
 import com.getpcpanel.hid.DeviceHolder;
-import com.getpcpanel.profile.DeviceSave;
-import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.util.Util;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.EntryStream;
+import one.util.streamex.StreamEx;
 
 /**
  * Triggers a volume change when a new audio session is started and that session is controlled by the panel.
@@ -32,7 +32,6 @@ public class SetNewSessionVolumeService {
     private final ApplicationEventPublisher eventPublisher;
     private final DeviceHolder devices;
     private final ISndCtrl sndCtrl;
-    private final SaveService saveService;
 
     @EventListener
     public void onNewAudioSession(AudioSessionEvent event) {
@@ -42,19 +41,20 @@ public class SetNewSessionVolumeService {
         record DeviceAndDial(String id, int dial) {
         }
 
-        EntryStream.of(saveService.get().getDevices())
-                   .mapValues(DeviceSave::getCurrentProfile)
-                   .flatMapKeyValue((id, profile) -> EntryStream.of(profile.getDialData()).mapKeys(d -> new DeviceAndDial(id, d)))
-                   .mapToEntry(Map.Entry::getKey, Map.Entry::getValue)
-                   .selectValues(CommandVolumeProcess.class)
-                   .filterValues(c -> isProcessAndDevice(event, c))
-                   .forKeyValue((idAndDial, cmd) -> {
-                       var device = devices.getDevice(idAndDial.id);
-                       if (device != null) {
-                           var current = Util.map(device.getKnobRotation(idAndDial.dial), 0, 100, 0, 255);
-                           eventPublisher.publishEvent(new DeviceCommunicationHandler.KnobRotateEvent(idAndDial.id, idAndDial.dial, current, false));
-                       }
-                   });
+        StreamEx.of(devices.all())
+                .mapToEntry(Device::getSerialNumber).invert()
+                .mapValues(Device::currentProfile)
+                .flatMapKeyValue((id, profile) -> EntryStream.of(profile.getDialData()).mapKeys(d -> new DeviceAndDial(id, d)))
+                .mapToEntry(Map.Entry::getKey, Map.Entry::getValue)
+                .selectValues(CommandVolumeProcess.class)
+                .filterValues(c -> isProcessAndDevice(event, c))
+                .forKeyValue((idAndDial, cmd) -> {
+                    var device = devices.getDevice(idAndDial.id);
+                    if (device != null) {
+                        var current = Util.map(device.getKnobRotation(idAndDial.dial), 0, 100, 0, 255);
+                        eventPublisher.publishEvent(new DeviceCommunicationHandler.KnobRotateEvent(idAndDial.id, idAndDial.dial, current, false));
+                    }
+                });
     }
 
     private boolean isProcessAndDevice(AudioSessionEvent event, CommandVolumeProcess c) {

@@ -1,5 +1,7 @@
 package com.getpcpanel.commands.command;
 
+import javax.annotation.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.MainFX;
@@ -14,7 +16,7 @@ public class CommandProfile extends Command implements DeviceAction {
     @Getter private final String profile;
 
     @JsonCreator
-    public CommandProfile(@JsonProperty("profile") String profile) {
+    public CommandProfile(@Nullable @JsonProperty("profile") String profile) {
         this.profile = profile;
     }
 

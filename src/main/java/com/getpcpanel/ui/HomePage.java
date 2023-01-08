@@ -109,10 +109,18 @@ public class HomePage extends Application {
                 return;
             }
             var serialNumber = device.getSerialNumber();
-            var cfg = saveService.get().getDeviceSave(serialNumber).getLightingConfig();
+
+            // Set saved brightness
+            var profile = saveService.getProfile(serialNumber);
+            var cfg = profile.getLightingConfig();
             cfg.setGlobalBrightness(newValue.byteValue());
-            device.setLighting(device.getLightingConfig(), true);
+            profile.setLightingConfig(cfg);
             saveService.debouncedSave();
+
+            // Set current brightness
+            var light = device.getLightingConfig();
+            light.setGlobalBrightness(newValue.byteValue());
+            device.setLighting(light, false);
         });
     }
 

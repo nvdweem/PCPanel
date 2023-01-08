@@ -50,6 +50,7 @@ public abstract class Device {
     private ComboBox<Profile> profiles;
     @Getter protected String serialNumber;
     protected DeviceSave save;
+    private LightingConfig lightingConfig;
 
     protected Device(FxHelper fxHelper, SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, String serialNum, DeviceSave deviceSave) {
         this.fxHelper = fxHelper;
@@ -70,7 +71,7 @@ public abstract class Device {
         profileMenu.setAlignment(Pos.CENTER_RIGHT);
         profiles = new ComboBox<>(FXCollections.observableArrayList(save.getProfiles()));
         profiles.setPrefWidth(400.0D);
-        profiles.getSelectionModel().select(save.getCurrentProfile());
+        profiles.getSelectionModel().select(currentProfile());
         var textfield = new LimitedTextField(10);
         profiles.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue == null)
@@ -93,7 +94,7 @@ public abstract class Device {
             var oldName = p.getName();
             var newName = textfield.getText();
             buttonCell.setGraphic(null);
-            if (save.getProfile(newName) != null) {
+            if (save.getProfile(newName).isPresent()) {
                 buttonCell.setText(oldName);
                 return;
             }
@@ -148,10 +149,10 @@ public abstract class Device {
     }
 
     private void updateCurrentProfileName(String name) {
-        var success = save.setCurrentProfile(name);
-        if (!success)
+        var profile = save.setCurrentProfile(name);
+        if (profile.isEmpty())
             return;
-        setLighting(save.getLightingConfig(), true);
+        setLighting(profile.get().getLightingConfig(), true);
         saveService.save();
     }
 
@@ -177,10 +178,11 @@ public abstract class Device {
 
     private void switchAwayFromApplication(String from) {
         var mainProfile = StreamEx.of(save.getProfiles()).findFirst(Profile::isMainProfile);
-        if (!profiles.getSelectionModel().getSelectedItem().isFocusBackOnLost() || mainProfile.isEmpty()) {
+        var item = profiles.getSelectionModel().getSelectedItem();
+        if (item == null || !item.isFocusBackOnLost() || mainProfile.isEmpty()) {
             return;
         }
-        if (StreamEx.of(profiles.getSelectionModel().getSelectedItem().getActivateApplications()).anyMatch(a -> StringUtils.equalsIgnoreCase(a, from))) {
+        if (StreamEx.of(item.getActivateApplications()).anyMatch(a -> StringUtils.equalsIgnoreCase(a, from))) {
             Platform.runLater(() -> profiles.getSelectionModel().select(mainProfile.get()));
         }
     }
@@ -199,7 +201,7 @@ public abstract class Device {
             String newName;
             for (var i = 1; ; i++) {
                 newName = "profile " + i;
-                if (save.getProfile(newName) == null)
+                if (save.getProfile(newName).isEmpty())
                     break;
             }
             var newProfile = new Profile(newName, getDeviceType());
@@ -253,9 +255,7 @@ public abstract class Device {
     }
 
     public void setProfile(String name) {
-        var p = save.getProfile(name);
-        if (p != null)
-            profiles.setValue(p);
+        save.getProfile(name).ifPresent(profiles::setValue);
     }
 
     public String getDisplayName() {
@@ -270,14 +270,17 @@ public abstract class Device {
      * This will have muted colors for mute-override-controls
      */
     public LightingConfig getLightingConfig() {
-        return save.getLightingConfig();
+        if (lightingConfig == null) {
+            lightingConfig = currentProfile().getLightingConfig();
+        }
+        return lightingConfig;
     }
 
     /**
      * Will have the original colors, even when mute-override is active.
      */
     public LightingConfig getSavedLightingConfig() {
-        return save.getCurrentProfile().getLightingConfig();
+        return currentProfile().getLightingConfig();
     }
 
     public void setLighting(LightingConfig config, boolean priority) {
@@ -285,14 +288,15 @@ public abstract class Device {
     }
 
     public void setSavedLighting(LightingConfig config) {
-        save.setLightingConfig(config);
+        currentProfile().setLightingConfig(config);
         Platform.runLater(() -> doSetLighting(config, true));
     }
 
     private void doSetLighting(LightingConfig config, boolean priority) {
+        lightingConfig = config;
+
         if (config == null) {
             config = LightingConfig.defaultLightingConfig(getDeviceType());
-            save.setLightingConfig(config);
             saveService.save();
         }
         try {
@@ -318,7 +322,7 @@ public abstract class Device {
     public void focusApplicationChanged() {
         var images = getKnobImages();
         for (var i = 0; i < images.length; i++) {
-            if (save.getDialData(i) instanceof CommandVolumeFocus) {
+            if (currentProfile().getDialData(i) instanceof CommandVolumeFocus) {
                 determineAndSetImage(i);
             }
         }
@@ -341,8 +345,8 @@ public abstract class Device {
             return;
         }
 
-        var cmd = save.getDialData(dial);
-        var settings = save.getKnobSettings(dial);
+        var cmd = currentProfile().getDialData(dial);
+        var settings = currentProfile().getKnobSettings(dial);
 
         var image = iconService.getImageFrom(cmd, settings);
         images[dial].setImage(iconService.isDefault(image) ? null : image);
@@ -383,5 +387,9 @@ public abstract class Device {
 
     public void disconnected() {
         closeDialogs();
+    }
+
+    public Profile currentProfile() {
+        return save.ensureCurrentProfile(getDeviceType());
     }
 }

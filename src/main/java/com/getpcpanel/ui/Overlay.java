@@ -115,15 +115,15 @@ public class Overlay extends Popup {
     }
 
     private CommandAndIcon determineIconImage(DeviceCommunicationHandler.KnobRotateEvent event) {
-        var save = this.save.get().getDeviceSave(event.serialNum());
-        var data = save.getDialData(event.knob());
-        var setting = save.getKnobSettings(event.knob());
+        var profile = save.getProfile(event.serialNum());
+        var data = profile.getDialData(event.knob());
+        var setting = profile.getKnobSettings(event.knob());
         return new CommandAndIcon(data, iconService.getImageFrom(data, setting));
     }
 
     private CommandAndIcon determineIconImage(DeviceCommunicationHandler.ButtonPressEvent event) {
-        var save = this.save.get().getDeviceSave(event.serialNum());
-        var data = save.getButtonData(event.button());
+        var profile = save.getProfile(event.serialNum());
+        var data = profile.getButtonData(event.button());
         return new CommandAndIcon(data, iconService.getImageFrom(data, null));
     }
 

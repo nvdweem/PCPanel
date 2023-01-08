@@ -9,15 +9,19 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.JOptionPane;
 
 import org.apache.commons.io.FileUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.getpcpanel.Json;
+import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.util.Debouncer;
 import com.getpcpanel.util.FileUtil;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
@@ -30,6 +34,8 @@ public class SaveService {
     private final FileUtil fileUtil;
     private final Json json;
     private final Debouncer debouncer;
+    @Autowired @Lazy @Setter private DeviceHolder devices;
+
     private Save save;
 
     public Save get() {
@@ -76,13 +82,6 @@ public class SaveService {
 
     public void save() {
         var saveFile = fileUtil.getFile(saveFileName);
-        for (var ds : save.getDevices().values()) {
-            var p = ds.getCurrentProfile();
-            p.setButtonData(ds.getButtonData());
-            p.setDialData(ds.getDialData());
-            p.setLightingConfig(ds.getLightingConfig());
-            p.setKnobSettings(ds.getKnobSettings());
-        }
         try {
             FileUtils.writeStringToFile(saveFile, json.writePretty(save), Charset.defaultCharset());
         } catch (IOException e) {
@@ -94,6 +93,14 @@ public class SaveService {
 
     public void debouncedSave() {
         debouncer.debounce(this, this::save, 1, TimeUnit.SECONDS);
+    }
+
+    public Profile getProfile(String serialNum) {
+        var device = devices.getDevice(serialNum);
+        if (device == null) {
+            return null;
+        }
+        return get().getDeviceSave(serialNum).ensureCurrentProfile(device.getDeviceType());
     }
 
     public record SaveEvent(Save save, boolean isNew) {

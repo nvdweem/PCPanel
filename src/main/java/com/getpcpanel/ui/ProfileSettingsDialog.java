@@ -137,8 +137,9 @@ public class ProfileSettingsDialog extends Application implements UIInitializer 
     private void initOsc() {
         sortedAddresses = StreamEx.of(oscService.getAddresses()).sorted().prepend("").toList();
         var source = profile.getOscBinding();
-        var knobCount = deviceSave.getLightingConfig().getKnobConfigs().length;
-        var sliderCount = deviceSave.getLightingConfig().getSliderConfigs().length;
+        var config = profile.getLightingConfig();
+        var knobCount = config.getKnobConfigs().length;
+        var sliderCount = config.getSliderConfigs().length;
 
         for (var i = 0; i < knobCount; i++) {
             addOscRow("Knob " + (i + 1), source.getOrDefault(i * 2, OSCBinding.EMPTY), false);

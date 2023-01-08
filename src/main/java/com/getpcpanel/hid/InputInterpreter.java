@@ -33,7 +33,7 @@ public final class InputInterpreter {
         if (device.getDeviceType() != DeviceType.PCPANEL_RGB)
             value = map(value, 0, 255, 0, 100);
         device.setKnobRotation(event.knob(), value);
-        var settings = save.get().getDeviceSave(event.serialNum()).getKnobSettings(event.knob());
+        var settings = save.getProfile(event.serialNum()).getKnobSettings(event.knob());
         if (settings != null) {
             if (settings.isLogarithmic())
                 value = log(value);
@@ -50,14 +50,14 @@ public final class InputInterpreter {
     }
 
     private void doDialAction(String serialNum, boolean initial, int knob, int v) {
-        var data = save.get().getDeviceSave(serialNum).getDialData(knob);
+        var data = save.getProfile(serialNum).getDialData(knob);
         if (data == null)
             return;
         eventPublisher.publishEvent(new PCPanelControlEvent(serialNum, knob, data.toRunnable(initial, serialNum, v)));
     }
 
     private void doClickAction(String serialNum, int knob) {
-        var data = save.get().getDeviceSave(serialNum).getButtonData(knob);
+        var data = save.getProfile(serialNum).getButtonData(knob);
         if (data == null)
             return;
         eventPublisher.publishEvent(new PCPanelControlEvent(serialNum, knob, data.toRunnable(false, serialNum, null)));

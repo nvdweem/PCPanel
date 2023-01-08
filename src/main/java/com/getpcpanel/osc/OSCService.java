@@ -108,11 +108,11 @@ public class OSCService {
         if (dial.initial() || CollectionUtils.isEmpty(ports)) {
             return;
         }
-        var save = saveService.get().getDeviceSave(dial.serialNum());
-        var knobLength = save.getLightingConfig().getKnobConfigs().length;
+
+        var profile = saveService.getProfile(dial.serialNum());
+        var knobLength = profile.getLightingConfig().getKnobConfigs().length;
         var idx = dial.knob() < knobLength ? dial.knob() * 2 : dial.knob() + knobLength;
 
-        var profile = save.getCurrentProfile();
         var target = profile.getOscBinding().get(idx);
         if (target != null) {
             send(target, "/pcpanel/" + profile.getName() + "/knob" + dial.knob(), dial.value() / 255f);
@@ -124,10 +124,9 @@ public class OSCService {
         if (CollectionUtils.isEmpty(ports)) {
             return;
         }
-        var save = saveService.get().getDeviceSave(button.serialNum());
         var idx = button.button() * 2 + 1;
 
-        var profile = save.getCurrentProfile();
+        var profile = saveService.getProfile(button.serialNum());
         var target = profile.getOscBinding().get(idx);
         if (target != null) {
             send(target, "/pcpanel/" + profile.getName() + "/button" + button.button(), button.pressed() ? 1f : 0f);

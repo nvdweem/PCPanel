@@ -9,6 +9,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -90,12 +94,17 @@ import one.util.streamex.StreamEx;
 @Prototype
 @RequiredArgsConstructor
 public class BasicMacro extends Application implements UIInitializer {
+    private static final Pattern NUMBER_PATTERN = Pattern.compile("\\d*");
+    private static final Pattern NOT_NUMBER_PATTERN = Pattern.compile("[^\\d]");
     private final FxHelper fxHelper;
     private final SaveService saveService;
     private final OBS obs;
     private final Voicemeeter voiceMeeter;
     private final ISndCtrl sndCtrl;
     private final OsHelper osHelper;
+    private Profile profile;
+    private DeviceSave deviceSave;
+
     @FXML private AdvancedDevices defaultDeviceAdvancedController;
     @FXML private AdvancedDevices defaultDeviceToggleAdvancedController;
 
@@ -182,7 +191,6 @@ public class BasicMacro extends Application implements UIInitializer {
     private boolean k_shift;
     private boolean k_win;
     private boolean k_ctrl;
-    private DeviceSave deviceSave;
     private boolean hasButton;
     private String name;
     private String analogType;
@@ -197,10 +205,11 @@ public class BasicMacro extends Application implements UIInitializer {
         analogType = getUIArg(String.class, args, 4);
 
         deviceSave = saveService.get().getDeviceSave(device.getSerialNumber());
+        profile = deviceSave.ensureCurrentProfile(device.getDeviceType());
         if (hasButton)
-            buttonData = deviceSave.getButtonData(dialNum);
-        volData = deviceSave.getDialData(dialNum);
-        knobSetting = deviceSave.getKnobSettings(dialNum);
+            buttonData = profile.getButtonData(dialNum);
+        volData = profile.getDialData(dialNum);
+        knobSetting = profile.getKnobSettings(dialNum);
         postInit();
     }
 
@@ -227,9 +236,9 @@ public class BasicMacro extends Application implements UIInitializer {
         k_ctrl = false;
     }
 
-    private String getSelectedTabId(TabPane tabPane) {
+    private @Nonnull String getSelectedTabId(TabPane tabPane) {
         var tab = tabPane.getSelectionModel().getSelectedItem();
-        return (tab == null) ? null : tab.getId();
+        return (tab == null) ? "" : tab.getId();
     }
 
     private void selectTabById(TabPane tabPane, String name) {
@@ -244,12 +253,8 @@ public class BasicMacro extends Application implements UIInitializer {
             tabPane.getTabs().remove(tab);
     }
 
-    private Tab getTabById(TabPane tabPane, String name) {
-        for (var tab : tabPane.getTabs()) {
-            if (tab.getId().equals(name))
-                return tab;
-        }
-        return null;
+    private @Nullable Tab getTabById(TabPane tabPane, String name) {
+        return StreamEx.of(tabPane.getTabs()).findFirst(tab -> tab.getId().equals(name)).orElse(null);
     }
 
     @FXML
@@ -284,8 +289,8 @@ public class BasicMacro extends Application implements UIInitializer {
         knobSetting.setButtonDebounce(NumberUtils.toInt(buttonDebounceTime.getText(), 50));
         knobSetting.setLogarithmic(logarithmic.isSelected());
         if (hasButton)
-            deviceSave.setButtonData(dialNum, buttonData);
-        deviceSave.setDialData(dialNum, volData);
+            profile.setButtonData(dialNum, buttonData);
+        profile.setDialData(dialNum, volData);
         if (log.isDebugEnabled()) {
             log.debug("-----------------");
             log.debug(buttonData);
@@ -396,7 +401,7 @@ public class BasicMacro extends Application implements UIInitializer {
     }
 
     @FXML
-    private void onRadioButton(ActionEvent event) {
+    private void onRadioButton(@Nullable ActionEvent event) {
         volumedevice.setDisable(!rdio_device_specific.isSelected());
         app_vol_output_device.setDisable(!rdio_app_output_specific.isSelected());
         if (rdioEndSpecificProgram.isSelected()) {
@@ -516,8 +521,8 @@ public class BasicMacro extends Application implements UIInitializer {
                 removeTabById(buttonTabPane, "btnCommandVoiceMeeter");
             }
         }
-        var curProfile = deviceSave.getCurrentProfileName();
-        profileDropdown.getItems().addAll(deviceSave.getProfiles().stream().filter(c -> !c.getName().equals(curProfile)).toList());
+        var curProfile = profile.getName();
+        StreamEx.of(deviceSave.getProfiles()).removeBy(Profile::getName, curProfile).toListAndThen(profileDropdown.getItems()::addAll);
         allSoundDevices = sndCtrl.getDevices();
         var outputDevices = allSoundDevices.stream().filter(AudioDevice::isOutput).toList();
         volumedevice.getItems().addAll(allSoundDevices);
@@ -574,8 +579,8 @@ public class BasicMacro extends Application implements UIInitializer {
         trimMin.textProperty().addListener((observable, oldValue, newValue) -> trimMinMax(oldValue, newValue, trimMin));
         trimMax.textProperty().addListener((observable, oldValue, newValue) -> trimMinMax(oldValue, newValue, trimMax));
         buttonDebounceTime.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue.matches("\\d*") || newValue.contains("-") || StringUtils.isBlank(newValue)) {
-                buttonDebounceTime.setText(newValue.replace("-", "").replaceAll("[^\\d]", ""));
+            if (!NUMBER_PATTERN.matcher(newValue).matches() || newValue.contains("-") || StringUtils.isBlank(newValue)) {
+                buttonDebounceTime.setText(NOT_NUMBER_PATTERN.matcher(newValue.replace("-", "")).replaceAll(""));
             } else {
                 var num = Integer.parseInt(newValue);
                 if (num < 0 || num > 10000) {
@@ -621,8 +626,8 @@ public class BasicMacro extends Application implements UIInitializer {
     }
 
     private void trimMinMax(String oldValue, String newValue, TextField trimMin) {
-        if (!newValue.matches("\\d*") || newValue.contains("-") || StringUtils.isBlank(newValue)) {
-            trimMin.setText(newValue.replace("-", "").replaceAll("[^\\d]", ""));
+        if (!NUMBER_PATTERN.matcher(newValue).matches() || newValue.contains("-") || StringUtils.isBlank(newValue)) {
+            trimMin.setText(NOT_NUMBER_PATTERN.matcher(newValue.replace("-", "")).replaceAll(""));
         } else {
             var num = Integer.parseInt(newValue);
             if (num < 0 || num > 100) {
@@ -633,8 +638,8 @@ public class BasicMacro extends Application implements UIInitializer {
         }
     }
 
-    private AudioDevice getSoundDeviceById(String id) {
-        return allSoundDevices.stream().filter(sd -> sd.id().equals(id)).findFirst().orElse(null);
+    private @Nullable AudioDevice getSoundDeviceById(String id) {
+        return StreamEx.of(allSoundDevices).findFirst(sd -> sd.id().equals(id)).orElse(null);
     }
 
     private void initFields() {
@@ -767,7 +772,7 @@ public class BasicMacro extends Application implements UIInitializer {
             voicemeeterButtonParameter.setText(cmd.getFullParam());
             voicemeeterButtonType.setValue(cmd.getBt());
         });
-        buttonInitializers.put(CommandProfile.class, (CommandProfile cmd) -> profileDropdown.setValue(deviceSave.getProfile(cmd.getProfile())));
+        buttonInitializers.put(CommandProfile.class, (CommandProfile cmd) -> deviceSave.getProfile(cmd.getProfile()).ifPresent(profile -> profileDropdown.setValue(profile)));
 
         return buttonInitializers;
     }

@@ -23,8 +23,8 @@ import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.obs.OBS;
 import com.getpcpanel.obs.OBSConnectEvent;
 import com.getpcpanel.obs.OBSMuteEvent;
-import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.LightingConfig;
+import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SingleKnobLightingConfig;
 import com.getpcpanel.profile.SingleSliderLabelLightingConfig;
@@ -121,13 +121,16 @@ public class SetMuteOverrideService {
 
     public void handleEvent(Predicate<DeviceLightingCapable> isApplicable, boolean isMuted) {
         for (var idDeviceSave : saveService.get().getDevices().entrySet()) {
+            var device = devices.getDevice(idDeviceSave.getKey());
             var deviceSave = idDeviceSave.getValue();
-            if (deviceSave.getLightingConfig().getLightingMode() != LightingConfig.LightingMode.CUSTOM) {
+            var profile = deviceSave.ensureCurrentProfile(device.getDeviceType());
+            var mayBeChangedLC = device.getLightingConfig();
+            if (mayBeChangedLC.getLightingMode() != LightingConfig.LightingMode.CUSTOM) {
                 continue;
             }
 
             var mayBeChanged = false;
-            for (var dlc : tryGetAllDeviceLightingCapable(deviceSave)) {
+            for (var dlc : tryGetAllDeviceLightingCapable(mayBeChangedLC, profile)) {
                 if (isApplicable.test(dlc)) {
                     if (isMuted) {
                         dlc.toMuteColor.run();
@@ -138,31 +141,25 @@ public class SetMuteOverrideService {
                 }
             }
             if (mayBeChanged) {
-                var device = devices.getDevice(idDeviceSave.getKey());
-                if (device == null) {
-                    return;
-                }
-                device.setLighting(deviceSave.getLightingConfig(), true);
+                device.setLighting(mayBeChangedLC, true);
             }
         }
     }
 
-    private List<DeviceLightingCapable> tryGetAllDeviceLightingCapable(DeviceSave deviceSave) {
+    private List<DeviceLightingCapable> tryGetAllDeviceLightingCapable(LightingConfig mayBeChangedLC, Profile profile) {
         try {
-            return getAllDeviceLightingCapable(deviceSave);
+            return getAllDeviceLightingCapable(mayBeChangedLC, profile);
         } catch (Exception e) {
             log.error("Unable to get device lighting capable", e);
             return List.of();
         }
     }
 
-    private List<DeviceLightingCapable> getAllDeviceLightingCapable(DeviceSave deviceSave) {
+    private List<DeviceLightingCapable> getAllDeviceLightingCapable(LightingConfig mayBeChangedLC, Profile profile) {
         var result = new ArrayList<DeviceLightingCapable>();
 
-        var profile = deviceSave.getCurrentProfile();
-        var tLightConfig = deviceSave.getLightingConfig();
         var oLightConfig = profile.getLightingConfig();
-        var knobLength = deviceSave.getLightingConfig().getKnobConfigs().length;
+        var knobLength = mayBeChangedLC.getKnobConfigs().length;
         for (var idxCommand : profile.getDialData().entrySet()) {
             var idx = idxCommand.getKey();
             var command = idxCommand.getValue();
@@ -171,11 +168,11 @@ public class SetMuteOverrideService {
                 var deviceOrFollow = oLightConfig.getKnobConfigs()[idx].getMuteOverrideDeviceOrFollow();
                 var muteOverrideColor = oLightConfig.getKnobConfigs()[idx].getMuteOverrideColor();
                 if (StringUtils.isNoneBlank(deviceOrFollow, muteOverrideColor)) {
-                    Runnable toOriginal = () -> tLightConfig.getKnobConfigs()[idx] = oLightConfig.getKnobConfigs()[idx];
-                    Runnable toMute = () -> tLightConfig.getKnobConfigs()[idx] = new SingleKnobLightingConfig().setMode(SingleKnobLightingConfig.SINGLE_KNOB_MODE.STATIC)
-                                                                                                               .setColor1(muteOverrideColor)
-                                                                                                               .setMuteOverrideDeviceOrFollow(deviceOrFollow)
-                                                                                                               .setMuteOverrideColor(muteOverrideColor);
+                    Runnable toOriginal = () -> mayBeChangedLC.getKnobConfigs()[idx] = oLightConfig.getKnobConfigs()[idx];
+                    Runnable toMute = () -> mayBeChangedLC.getKnobConfigs()[idx] = new SingleKnobLightingConfig().setMode(SingleKnobLightingConfig.SINGLE_KNOB_MODE.STATIC)
+                                                                                                                 .setColor1(muteOverrideColor)
+                                                                                                                 .setMuteOverrideDeviceOrFollow(deviceOrFollow)
+                                                                                                                 .setMuteOverrideColor(muteOverrideColor);
                     result.add(new DeviceLightingCapable(deviceOrFollow, command, toOriginal, toMute));
                 }
             } else { // It's a slider with label
@@ -183,22 +180,22 @@ public class SetMuteOverrideService {
                 var sliderDeviceOrFollow = oLightConfig.getSliderConfigs()[slider].getMuteOverrideDeviceOrFollow();
                 var sliderOverride = oLightConfig.getSliderConfigs()[slider].getMuteOverrideColor();
                 if (StringUtils.isNoneBlank(sliderDeviceOrFollow, sliderOverride)) {
-                    Runnable toOriginal = () -> tLightConfig.getSliderConfigs()[slider] = oLightConfig.getSliderConfigs()[slider];
-                    Runnable toMute = () -> tLightConfig.getSliderConfigs()[slider] = new SingleSliderLightingConfig().setMode(SingleSliderLightingConfig.SINGLE_SLIDER_MODE.STATIC)
-                                                                                                                      .setColor1(sliderOverride)
-                                                                                                                      .setMuteOverrideDeviceOrFollow(sliderDeviceOrFollow)
-                                                                                                                      .setMuteOverrideColor(sliderOverride);
+                    Runnable toOriginal = () -> mayBeChangedLC.getSliderConfigs()[slider] = oLightConfig.getSliderConfigs()[slider];
+                    Runnable toMute = () -> mayBeChangedLC.getSliderConfigs()[slider] = new SingleSliderLightingConfig().setMode(SingleSliderLightingConfig.SINGLE_SLIDER_MODE.STATIC)
+                                                                                                                        .setColor1(sliderOverride)
+                                                                                                                        .setMuteOverrideDeviceOrFollow(sliderDeviceOrFollow)
+                                                                                                                        .setMuteOverrideColor(sliderOverride);
                     result.add(new DeviceLightingCapable(sliderDeviceOrFollow, command, toOriginal, toMute)); // Slider
                 }
 
                 var labelDeviceOrFollow = oLightConfig.getSliderLabelConfigs()[slider].getMuteOverrideDeviceOrFollow();
                 var labelOverride = oLightConfig.getSliderLabelConfigs()[slider].getMuteOverrideColor();
                 if (StringUtils.isNoneBlank(labelDeviceOrFollow, labelOverride)) {
-                    Runnable toOriginal = () -> tLightConfig.getSliderLabelConfigs()[slider] = oLightConfig.getSliderLabelConfigs()[slider];
-                    Runnable toMute = () -> tLightConfig.getSliderLabelConfigs()[slider] = new SingleSliderLabelLightingConfig().setMode(SingleSliderLabelLightingConfig.SINGLE_SLIDER_LABEL_MODE.STATIC)
-                                                                                                                                .setColor(labelOverride)
-                                                                                                                                .setMuteOverrideDeviceOrFollow(labelDeviceOrFollow)
-                                                                                                                                .setMuteOverrideColor(labelOverride);
+                    Runnable toOriginal = () -> mayBeChangedLC.getSliderLabelConfigs()[slider] = oLightConfig.getSliderLabelConfigs()[slider];
+                    Runnable toMute = () -> mayBeChangedLC.getSliderLabelConfigs()[slider] = new SingleSliderLabelLightingConfig().setMode(SingleSliderLabelLightingConfig.SINGLE_SLIDER_LABEL_MODE.STATIC)
+                                                                                                                                  .setColor(labelOverride)
+                                                                                                                                  .setMuteOverrideDeviceOrFollow(labelDeviceOrFollow)
+                                                                                                                                  .setMuteOverrideColor(labelOverride);
                     result.add(new DeviceLightingCapable(labelDeviceOrFollow, command, toOriginal, toMute)); // Slider label
                 }
             }
