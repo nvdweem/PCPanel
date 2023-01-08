@@ -3,12 +3,12 @@ package com.getpcpanel.ui;
 import java.util.Collection;
 import java.util.Objects;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import com.getpcpanel.cpp.AudioDevice;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.device.Device;
-import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.profile.LightingConfig;
 import com.getpcpanel.profile.LightingConfig.LightingMode;
 import com.getpcpanel.profile.SaveService;
@@ -49,7 +49,7 @@ import lombok.extern.log4j.Log4j2;
 @RequiredArgsConstructor
 public class MiniLightingDialog extends Application implements UIInitializer, ILightingDialogMuteOverrideHelper {
     private final SaveService saveService;
-    private final DeviceScanner deviceScanner;
+    private final ApplicationEventPublisher eventPublisher;
     private final ISndCtrl sndCtrl;
     private Device device;
 
@@ -85,11 +85,18 @@ public class MiniLightingDialog extends Application implements UIInitializer, IL
 
     private boolean pressedOk;
     @FXML private Pane root;
+    private LightingConfig lightingConfig;
 
     @Override
     public <T> void initUI(T... args) {
         device = getUIArg(Device.class, args, 0);
+        lightingConfig = device.getSavedLightingConfig().deepCopy();
+        setDeviceLighting();
         postInit();
+    }
+
+    private void setDeviceLighting() {
+        device.setLighting(lightingConfig.deepCopy(), true);
     }
 
     @Override
@@ -99,12 +106,10 @@ public class MiniLightingDialog extends Application implements UIInitializer, IL
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/assets/dark_theme.css")).toExternalForm());
         stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/assets/256x256.png")).toExternalForm()));
         stage.setOnHiding(e -> {
-            if (!pressedOk)
-                if (deviceScanner.getConnectedDevice(device.getSerialNumber()) == null) {
-                    saveService.get().getDeviceSave(device.getSerialNumber()).setLightingConfig(device.getLightingConfig());
-                } else {
-                    device.setLighting(device.getLightingConfig(), true);
-                }
+            if (!pressedOk) {
+                device.setLighting(device.getSavedLightingConfig(), true);
+            }
+            eventPublisher.publishEvent(LightingChangedEvent.INSTANCE);
         });
         stage.initModality(Modality.APPLICATION_MODAL);
         stage.initOwner(HomePage.stage);
@@ -129,6 +134,7 @@ public class MiniLightingDialog extends Application implements UIInitializer, IL
     private void ok(ActionEvent event) {
         log.debug("{} {}", stage.getWidth(), stage.getHeight());
         pressedOk = true;
+        device.setSavedLighting(lightingConfig);
         saveService.save();
         stage.close();
     }
@@ -175,12 +181,11 @@ public class MiniLightingDialog extends Application implements UIInitializer, IL
         breathHue = new HueSlider();
         breathbox.getChildren().add(1, breathHue);
         applyToAllButton.setOnAction(e -> {
-            var config = device.getLightingConfig();
             if (mainPane.getSelectionModel().getSelectedIndex() == 1) {
                 var knobIndex = knobsTabbedPane.getSelectionModel().getSelectedIndex();
-                for (var i = 0; i < config.getKnobConfigs().length; i++) {
+                for (var i = 0; i < lightingConfig.getKnobConfigs().length; i++) {
                     if (i != knobIndex)
-                        config.getKnobConfigs()[i].set(config.getKnobConfigs()[knobIndex]);
+                        lightingConfig.getKnobConfigs()[i].set(lightingConfig.getKnobConfigs()[knobIndex]);
                 }
             }
             initFields();
@@ -190,38 +195,37 @@ public class MiniLightingDialog extends Application implements UIInitializer, IL
     }
 
     private void initFields() {
-        var config = device.getLightingConfig();
-        var mode = config.getLightingMode();
+        var mode = lightingConfig.getLightingMode();
         if (mode == LightingMode.ALL_COLOR) {
             mainPane.getSelectionModel().select(0);
             fullBodyTabbedPane.getSelectionModel().select(0);
-            allKnobColor.setCustomColor(Color.web(config.getAllColor()));
+            allKnobColor.setCustomColor(Color.web(lightingConfig.getAllColor()));
         } else if (mode == LightingMode.ALL_RAINBOW) {
             mainPane.getSelectionModel().select(0);
             fullBodyTabbedPane.getSelectionModel().select(1);
-            rainbowPhaseShift.setValue(config.getRainbowPhaseShift() & 0xFF);
-            rainbowBrightness.setValue(config.getRainbowBrightness() & 0xFF);
-            rainbowSpeed.setValue(config.getRainbowSpeed() & 0xFF);
-            rainbowReverse.setSelected(config.getRainbowReverse() == 1);
-            rainbowVertical.setSelected(config.getRainbowVertical() == 1);
+            rainbowPhaseShift.setValue(lightingConfig.getRainbowPhaseShift() & 0xFF);
+            rainbowBrightness.setValue(lightingConfig.getRainbowBrightness() & 0xFF);
+            rainbowSpeed.setValue(lightingConfig.getRainbowSpeed() & 0xFF);
+            rainbowReverse.setSelected(lightingConfig.getRainbowReverse() == 1);
+            rainbowVertical.setSelected(lightingConfig.getRainbowVertical() == 1);
         } else if (mode == LightingMode.ALL_WAVE) {
             mainPane.getSelectionModel().select(0);
             fullBodyTabbedPane.getSelectionModel().select(2);
-            waveHue.setHue(config.getWaveHue() & 0xFF);
-            waveBrightness.setValue(config.getWaveBrightness() & 0xFF);
-            waveSpeed.setValue(config.getWaveSpeed() & 0xFF);
-            waveReverse.setSelected(config.getWaveReverse() == 1);
-            waveBounce.setSelected(config.getWaveBounce() == 1);
+            waveHue.setHue(lightingConfig.getWaveHue() & 0xFF);
+            waveBrightness.setValue(lightingConfig.getWaveBrightness() & 0xFF);
+            waveSpeed.setValue(lightingConfig.getWaveSpeed() & 0xFF);
+            waveReverse.setSelected(lightingConfig.getWaveReverse() == 1);
+            waveBounce.setSelected(lightingConfig.getWaveBounce() == 1);
         } else if (mode == LightingMode.ALL_BREATH) {
             mainPane.getSelectionModel().select(0);
             fullBodyTabbedPane.getSelectionModel().select(3);
-            breathHue.setHue(config.getBreathHue() & 0xFF);
-            breathBrightness.setValue(config.getBreathBrightness() & 0xFF);
-            breathSpeed.setValue(config.getBreathSpeed() & 0xFF);
+            breathHue.setHue(lightingConfig.getBreathHue() & 0xFF);
+            breathBrightness.setValue(lightingConfig.getBreathBrightness() & 0xFF);
+            breathSpeed.setValue(lightingConfig.getBreathSpeed() & 0xFF);
         } else if (mode == LightingMode.CUSTOM) {
             if (mainPane.getSelectionModel().getSelectedIndex() == 0)
                 mainPane.getSelectionModel().select(1);
-            var knobConfigs = config.getKnobConfigs();
+            var knobConfigs = lightingConfig.getKnobConfigs();
             for (var i = 0; i < NUM_KNOBS; i++) {
                 var knobConfig = knobConfigs[i];
                 if (knobConfig.getMode() == SINGLE_KNOB_MODE.STATIC) {
@@ -314,25 +318,25 @@ public class MiniLightingDialog extends Application implements UIInitializer, IL
     private void updateColors() {
         if (mainPane.getSelectionModel().getSelectedIndex() == 0) {
             if (fullBodyTabbedPane.getSelectionModel().getSelectedIndex() == 0) {
-                var config = LightingConfig.createAllColor(allKnobColor.getCustomColor());
-                device.setLighting(config, false);
+                lightingConfig = LightingConfig.createAllColor(allKnobColor.getCustomColor());
+                setDeviceLighting();
             } else if (fullBodyTabbedPane.getSelectionModel().getSelectedIndex() == 1) {
-                var config = LightingConfig.createRainbowAnimation((byte) (int) rainbowPhaseShift.getValue(), (byte) (int) rainbowBrightness.getValue(),
+                lightingConfig = LightingConfig.createRainbowAnimation((byte) (int) rainbowPhaseShift.getValue(), (byte) (int) rainbowBrightness.getValue(),
                         (byte) (int) rainbowSpeed.getValue(), rainbowReverse.isSelected(), rainbowVertical.isSelected());
-                device.setLighting(config, false);
+                setDeviceLighting();
             } else if (fullBodyTabbedPane.getSelectionModel().getSelectedIndex() == 2) {
-                var config = LightingConfig.createWaveAnimation((byte) waveHue.getHue(), (byte) (int) waveBrightness.getValue(), (byte) (int) waveSpeed.getValue(),
+                lightingConfig = LightingConfig.createWaveAnimation((byte) waveHue.getHue(), (byte) (int) waveBrightness.getValue(), (byte) (int) waveSpeed.getValue(),
                         waveReverse.isSelected(), waveBounce.isSelected());
-                device.setLighting(config, false);
+                setDeviceLighting();
             } else if (fullBodyTabbedPane.getSelectionModel().getSelectedIndex() == 3) {
-                var config = LightingConfig.createBreathAnimation((byte) breathHue.getHue(), (byte) (int) breathBrightness.getValue(), (byte) (int) breathSpeed.getValue());
-                device.setLighting(config, false);
+                lightingConfig = LightingConfig.createBreathAnimation((byte) breathHue.getHue(), (byte) (int) breathBrightness.getValue(), (byte) (int) breathSpeed.getValue());
+                setDeviceLighting();
             }
         } else {
-            var config = new LightingConfig(NUM_KNOBS, 0);
-            config.setLightingMode(LightingMode.CUSTOM);
+            lightingConfig = new LightingConfig(NUM_KNOBS, 0);
+            lightingConfig.setLightingMode(LightingMode.CUSTOM);
             for (var knob = 0; knob < NUM_KNOBS; knob++) {
-                var knobConfig = config.getKnobConfigs()[knob];
+                var knobConfig = lightingConfig.getKnobConfigs()[knob];
                 if (knobSingleTabPane[knob].getSelectionModel().getSelectedIndex() == 0) {
                     knobConfig.setMode(SINGLE_KNOB_MODE.STATIC);
                     knobConfig.setColor1FromColor(knobStaticCDs[knob].getCustomColor());
@@ -343,7 +347,7 @@ public class MiniLightingDialog extends Application implements UIInitializer, IL
                 }
                 setOverrideSetting(OverrideTargetType.KNOB, knob, knobConfig::setMuteOverrideDeviceOrFollow, knobConfig::setMuteOverrideColorFromColor);
             }
-            device.setLighting(config, false);
+            setDeviceLighting();
         }
     }
 

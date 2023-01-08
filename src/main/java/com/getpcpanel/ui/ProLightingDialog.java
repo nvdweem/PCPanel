@@ -2,12 +2,12 @@ package com.getpcpanel.ui;
 
 import java.util.Collection;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import com.getpcpanel.cpp.AudioDevice;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.device.Device;
-import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.profile.LightingConfig;
 import com.getpcpanel.profile.LightingConfig.LightingMode;
 import com.getpcpanel.profile.SaveService;
@@ -51,7 +51,7 @@ import lombok.extern.log4j.Log4j2;
 @RequiredArgsConstructor
 public class ProLightingDialog extends Application implements UIInitializer, ILightingDialogMuteOverrideHelper {
     private final SaveService saveService;
-    private final DeviceScanner deviceScanner;
+    private final ApplicationEventPublisher eventPublisher;
     private final ISndCtrl sndCtrl;
 
     private Stage stage;
@@ -108,15 +108,20 @@ public class ProLightingDialog extends Application implements UIInitializer, ILi
     @FXML private Slider logoBreathBrightness;
     @FXML private Slider logoBreathSpeed;
     private Device device;
-    private LightingConfig ogConfig;
+    private LightingConfig lightingConfig;
     private boolean pressedOk;
     @FXML private Pane root;
 
     @Override
     public <T> void initUI(T... args) {
         device = getUIArg(Device.class, args, 0);
-        ogConfig = device.getLightingConfig();
+        lightingConfig = device.getSavedLightingConfig().deepCopy();
+        setDeviceLighting();
         postInit();
+    }
+
+    private void setDeviceLighting() {
+        device.setLighting(lightingConfig.deepCopy(), true);
     }
 
     public ProLightingDialog select(int button) {
@@ -139,12 +144,10 @@ public class ProLightingDialog extends Application implements UIInitializer, ILi
         scene.getStylesheets().add(getClass().getResource("/assets/dark_theme.css").toExternalForm());
         stage.getIcons().add(new Image(getClass().getResource("/assets/256x256.png").toExternalForm()));
         stage.setOnHiding(e -> {
-            if (!pressedOk)
-                if (deviceScanner.getConnectedDevice(device.getSerialNumber()) == null) {
-                    saveService.get().getDeviceSave(device.getSerialNumber()).setLightingConfig(ogConfig);
-                } else {
-                    device.setLighting(ogConfig, true);
-                }
+            if (!pressedOk) {
+                device.setLighting(device.getSavedLightingConfig(), true);
+            }
+            eventPublisher.publishEvent(LightingChangedEvent.INSTANCE);
         });
         stage.initModality(Modality.APPLICATION_MODAL);
         stage.initOwner(HomePage.stage);
@@ -163,6 +166,7 @@ public class ProLightingDialog extends Application implements UIInitializer, ILi
     private void ok(ActionEvent event) {
         log.debug("{} {}", stage.getWidth(), stage.getHeight());
         pressedOk = true;
+        device.setSavedLighting(lightingConfig);
         saveService.save();
         stage.close();
     }
@@ -252,24 +256,23 @@ public class ProLightingDialog extends Application implements UIInitializer, ILi
         logoBreathHue = new HueSlider();
         logoBreathBox.getChildren().add(1, logoBreathHue);
         applyToAllButton.setOnAction(e -> {
-            var config = device.getLightingConfig();
             if (mainPane.getSelectionModel().getSelectedIndex() == 1) {
                 var knobIndex = knobsTabbedPane.getSelectionModel().getSelectedIndex();
-                for (var idx = 0; idx < config.getKnobConfigs().length; idx++) {
+                for (var idx = 0; idx < lightingConfig.getKnobConfigs().length; idx++) {
                     if (idx != knobIndex)
-                        config.getKnobConfigs()[idx].set(config.getKnobConfigs()[knobIndex]);
+                        lightingConfig.getKnobConfigs()[idx].set(lightingConfig.getKnobConfigs()[knobIndex]);
                 }
             } else if (mainPane.getSelectionModel().getSelectedIndex() == 2) {
                 var index = slidersTabbedPane.getSelectionModel().getSelectedIndex();
-                for (var idx = 0; idx < config.getSliderConfigs().length; idx++) {
+                for (var idx = 0; idx < lightingConfig.getSliderConfigs().length; idx++) {
                     if (idx != index)
-                        config.getSliderConfigs()[idx].set(config.getSliderConfigs()[index]);
+                        lightingConfig.getSliderConfigs()[idx].set(lightingConfig.getSliderConfigs()[index]);
                 }
             } else if (mainPane.getSelectionModel().getSelectedIndex() == 3) {
                 var index = sliderLabelsTabbedPane.getSelectionModel().getSelectedIndex();
-                for (var idx = 0; idx < config.getSliderLabelConfigs().length; idx++) {
+                for (var idx = 0; idx < lightingConfig.getSliderLabelConfigs().length; idx++) {
                     if (idx != index)
-                        config.getSliderLabelConfigs()[idx].set(config.getSliderLabelConfigs()[index]);
+                        lightingConfig.getSliderLabelConfigs()[idx].set(lightingConfig.getSliderLabelConfigs()[index]);
                 }
             }
             initFields();
@@ -279,40 +282,39 @@ public class ProLightingDialog extends Application implements UIInitializer, ILi
     }
 
     private void initFields() {
-        var config = device.getLightingConfig();
-        var mode = config.getLightingMode();
+        var mode = lightingConfig.getLightingMode();
         if (mode == LightingMode.ALL_COLOR) {
             mainPane.getSelectionModel().select(0);
             fullBodyTabbedPane.getSelectionModel().select(0);
-            allKnobColor.setCustomColor(Color.web(config.getAllColor()));
+            allKnobColor.setCustomColor(Color.web(lightingConfig.getAllColor()));
         } else if (mode == LightingMode.ALL_RAINBOW) {
             mainPane.getSelectionModel().select(0);
             fullBodyTabbedPane.getSelectionModel().select(1);
-            rainbowPhaseShift.setValue(config.getRainbowPhaseShift() & 0xFF);
-            rainbowBrightness.setValue(config.getRainbowBrightness() & 0xFF);
-            rainbowSpeed.setValue(config.getRainbowSpeed() & 0xFF);
-            rainbowReverse.setSelected(config.getRainbowReverse() == 1);
+            rainbowPhaseShift.setValue(lightingConfig.getRainbowPhaseShift() & 0xFF);
+            rainbowBrightness.setValue(lightingConfig.getRainbowBrightness() & 0xFF);
+            rainbowSpeed.setValue(lightingConfig.getRainbowSpeed() & 0xFF);
+            rainbowReverse.setSelected(lightingConfig.getRainbowReverse() == 1);
         } else if (mode == LightingMode.ALL_WAVE) {
             mainPane.getSelectionModel().select(0);
             fullBodyTabbedPane.getSelectionModel().select(2);
-            waveHue.setHue(config.getWaveHue() & 0xFF);
-            waveBrightness.setValue(config.getWaveBrightness() & 0xFF);
-            waveSpeed.setValue(config.getWaveSpeed() & 0xFF);
-            waveReverse.setSelected(config.getWaveReverse() == 1);
-            waveBounce.setSelected(config.getWaveBounce() == 1);
+            waveHue.setHue(lightingConfig.getWaveHue() & 0xFF);
+            waveBrightness.setValue(lightingConfig.getWaveBrightness() & 0xFF);
+            waveSpeed.setValue(lightingConfig.getWaveSpeed() & 0xFF);
+            waveReverse.setSelected(lightingConfig.getWaveReverse() == 1);
+            waveBounce.setSelected(lightingConfig.getWaveBounce() == 1);
         } else if (mode == LightingMode.ALL_BREATH) {
             mainPane.getSelectionModel().select(0);
             fullBodyTabbedPane.getSelectionModel().select(3);
-            breathHue.setHue(config.getBreathHue() & 0xFF);
-            breathBrightness.setValue(config.getBreathBrightness() & 0xFF);
-            breathSpeed.setValue(config.getBreathSpeed() & 0xFF);
+            breathHue.setHue(lightingConfig.getBreathHue() & 0xFF);
+            breathBrightness.setValue(lightingConfig.getBreathBrightness() & 0xFF);
+            breathSpeed.setValue(lightingConfig.getBreathSpeed() & 0xFF);
         } else if (mode == LightingMode.CUSTOM) {
             if (mainPane.getSelectionModel().getSelectedIndex() == 0)
                 mainPane.getSelectionModel().select(1);
-            var knobConfigs = config.getKnobConfigs();
-            var sliderLabelConfigs = config.getSliderLabelConfigs();
-            var sliderConfigs = config.getSliderConfigs();
-            var logoConfig = config.getLogoConfig();
+            var knobConfigs = lightingConfig.getKnobConfigs();
+            var sliderLabelConfigs = lightingConfig.getSliderLabelConfigs();
+            var sliderConfigs = lightingConfig.getSliderConfigs();
+            var logoConfig = lightingConfig.getLogoConfig();
             int i;
             for (i = 0; i < NUM_KNOBS; i++) {
                 var knobConfig = knobConfigs[i];
@@ -454,25 +456,25 @@ public class ProLightingDialog extends Application implements UIInitializer, ILi
     private void updateColors() {
         if (mainPane.getSelectionModel().getSelectedIndex() == 0) {
             if (fullBodyTabbedPane.getSelectionModel().getSelectedIndex() == 0) {
-                var config = LightingConfig.createAllColor(allKnobColor.getCustomColor());
-                device.setLighting(config, false);
+                lightingConfig = LightingConfig.createAllColor(allKnobColor.getCustomColor());
+                setDeviceLighting();
             } else if (fullBodyTabbedPane.getSelectionModel().getSelectedIndex() == 1) {
-                var config = LightingConfig.createRainbowAnimation((byte) (int) rainbowPhaseShift.getValue(), (byte) (int) rainbowBrightness.getValue(),
+                lightingConfig = LightingConfig.createRainbowAnimation((byte) (int) rainbowPhaseShift.getValue(), (byte) (int) rainbowBrightness.getValue(),
                         (byte) (int) rainbowSpeed.getValue(), rainbowReverse.isSelected());
-                device.setLighting(config, false);
+                setDeviceLighting();
             } else if (fullBodyTabbedPane.getSelectionModel().getSelectedIndex() == 2) {
-                var config = LightingConfig.createWaveAnimation((byte) waveHue.getHue(), (byte) (int) waveBrightness.getValue(), (byte) (int) waveSpeed.getValue(),
+                lightingConfig = LightingConfig.createWaveAnimation((byte) waveHue.getHue(), (byte) (int) waveBrightness.getValue(), (byte) (int) waveSpeed.getValue(),
                         waveReverse.isSelected(), waveBounce.isSelected());
-                device.setLighting(config, false);
+                setDeviceLighting();
             } else if (fullBodyTabbedPane.getSelectionModel().getSelectedIndex() == 3) {
-                var config = LightingConfig.createBreathAnimation((byte) breathHue.getHue(), (byte) (int) breathBrightness.getValue(), (byte) (int) breathSpeed.getValue());
-                device.setLighting(config, false);
+                lightingConfig = LightingConfig.createBreathAnimation((byte) breathHue.getHue(), (byte) (int) breathBrightness.getValue(), (byte) (int) breathSpeed.getValue());
+                setDeviceLighting();
             }
         } else {
-            var config = new LightingConfig(NUM_KNOBS, NUM_SLIDERS);
-            config.setLightingMode(LightingMode.CUSTOM);
+            lightingConfig = new LightingConfig(NUM_KNOBS, NUM_SLIDERS);
+            lightingConfig.setLightingMode(LightingMode.CUSTOM);
             for (var knob = 0; knob < NUM_KNOBS; knob++) {
-                var knobConfig = config.getKnobConfigs()[knob];
+                var knobConfig = lightingConfig.getKnobConfigs()[knob];
                 if (knobSingleTabPane[knob].getSelectionModel().getSelectedIndex() == 0) {
                     knobConfig.setMode(SINGLE_KNOB_MODE.STATIC);
                     knobConfig.setColor1FromColor(knobStaticCDs[knob].getCustomColor());
@@ -485,7 +487,7 @@ public class ProLightingDialog extends Application implements UIInitializer, ILi
             }
             int slider;
             for (slider = 0; slider < NUM_SLIDERS; slider++) {
-                var sliderLabelConfig = config.getSliderLabelConfigs()[slider];
+                var sliderLabelConfig = lightingConfig.getSliderLabelConfigs()[slider];
                 if (sliderLabelSingleTabPane[slider].getSelectionModel().getSelectedIndex() == 0) {
                     sliderLabelConfig.setMode(SINGLE_SLIDER_LABEL_MODE.STATIC);
                     sliderLabelConfig.setColorFromColor(sliderLabelStaticCDs[slider].getCustomColor());
@@ -494,34 +496,34 @@ public class ProLightingDialog extends Application implements UIInitializer, ILi
             }
             for (slider = 0; slider < NUM_SLIDERS; slider++) {
                 if (sliderSingleTabPane[slider].getSelectionModel().getSelectedIndex() == 0) {
-                    config.getSliderConfigs()[slider].setMode(SINGLE_SLIDER_MODE.STATIC);
-                    config.getSliderConfigs()[slider].setColor1FromColor(sliderStaticCDs[slider].getCustomColor());
+                    lightingConfig.getSliderConfigs()[slider].setMode(SINGLE_SLIDER_MODE.STATIC);
+                    lightingConfig.getSliderConfigs()[slider].setColor1FromColor(sliderStaticCDs[slider].getCustomColor());
                 } else if (sliderSingleTabPane[slider].getSelectionModel().getSelectedIndex() == 1) {
-                    config.getSliderConfigs()[slider].setMode(SINGLE_SLIDER_MODE.STATIC_GRADIENT);
-                    config.getSliderConfigs()[slider].setColor1FromColor(sliderStaticGradientBottomCD[slider].getCustomColor());
-                    config.getSliderConfigs()[slider].setColor2FromColor(sliderStaticGradientTopCD[slider].getCustomColor());
+                    lightingConfig.getSliderConfigs()[slider].setMode(SINGLE_SLIDER_MODE.STATIC_GRADIENT);
+                    lightingConfig.getSliderConfigs()[slider].setColor1FromColor(sliderStaticGradientBottomCD[slider].getCustomColor());
+                    lightingConfig.getSliderConfigs()[slider].setColor2FromColor(sliderStaticGradientTopCD[slider].getCustomColor());
                 } else if (sliderSingleTabPane[slider].getSelectionModel().getSelectedIndex() == 2) {
-                    config.getSliderConfigs()[slider].setMode(SINGLE_SLIDER_MODE.VOLUME_GRADIENT);
-                    config.getSliderConfigs()[slider].setColor1FromColor(sliderVolumeGradientCD1[slider].getCustomColor());
-                    config.getSliderConfigs()[slider].setColor2FromColor(sliderVolumeGradientCD2[slider].getCustomColor());
+                    lightingConfig.getSliderConfigs()[slider].setMode(SINGLE_SLIDER_MODE.VOLUME_GRADIENT);
+                    lightingConfig.getSliderConfigs()[slider].setColor1FromColor(sliderVolumeGradientCD1[slider].getCustomColor());
+                    lightingConfig.getSliderConfigs()[slider].setColor2FromColor(sliderVolumeGradientCD2[slider].getCustomColor());
                 }
-                var sliderConfig = config.getSliderConfigs()[slider];
+                var sliderConfig = lightingConfig.getSliderConfigs()[slider];
                 setOverrideSetting(OverrideTargetType.SLIDER, slider, sliderConfig::setMuteOverrideDeviceOrFollow, sliderConfig::setMuteOverrideColorFromColor);
             }
             if (logoTabPane.getSelectionModel().getSelectedIndex() == 0) {
-                config.getLogoConfig().setMode(SINGLE_LOGO_MODE.STATIC);
-                config.getLogoConfig().setColor(logoStaticColor.getCustomColor());
+                lightingConfig.getLogoConfig().setMode(SINGLE_LOGO_MODE.STATIC);
+                lightingConfig.getLogoConfig().setColor(logoStaticColor.getCustomColor());
             } else if (logoTabPane.getSelectionModel().getSelectedIndex() == 1) {
-                config.getLogoConfig().setMode(SINGLE_LOGO_MODE.RAINBOW);
-                config.getLogoConfig().setBrightness((byte) (int) logoRainbowBrightness.getValue());
-                config.getLogoConfig().setSpeed((byte) (int) logoRainbowSpeed.getValue());
+                lightingConfig.getLogoConfig().setMode(SINGLE_LOGO_MODE.RAINBOW);
+                lightingConfig.getLogoConfig().setBrightness((byte) (int) logoRainbowBrightness.getValue());
+                lightingConfig.getLogoConfig().setSpeed((byte) (int) logoRainbowSpeed.getValue());
             } else if (logoTabPane.getSelectionModel().getSelectedIndex() == 2) {
-                config.getLogoConfig().setMode(SINGLE_LOGO_MODE.BREATH);
-                config.getLogoConfig().setBrightness((byte) (int) logoBreathBrightness.getValue());
-                config.getLogoConfig().setSpeed((byte) (int) logoBreathSpeed.getValue());
-                config.getLogoConfig().setHue((byte) logoBreathHue.getHue());
+                lightingConfig.getLogoConfig().setMode(SINGLE_LOGO_MODE.BREATH);
+                lightingConfig.getLogoConfig().setBrightness((byte) (int) logoBreathBrightness.getValue());
+                lightingConfig.getLogoConfig().setSpeed((byte) (int) logoBreathSpeed.getValue());
+                lightingConfig.getLogoConfig().setHue((byte) logoBreathHue.getHue());
             }
-            device.setLighting(config, false);
+            setDeviceLighting();
         }
     }
 

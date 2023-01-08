@@ -30,6 +30,7 @@ import com.getpcpanel.profile.SingleKnobLightingConfig;
 import com.getpcpanel.profile.SingleSliderLabelLightingConfig;
 import com.getpcpanel.profile.SingleSliderLightingConfig;
 import com.getpcpanel.ui.ILightingDialogMuteOverrideHelper;
+import com.getpcpanel.ui.LightingChangedEvent;
 import com.getpcpanel.voicemeeter.VoiceMeeterMuteEvent;
 
 import lombok.RequiredArgsConstructor;
@@ -49,7 +50,7 @@ public class SetMuteOverrideService {
     private final SaveService saveService;
     private final OBS obs;
 
-    @EventListener(DeviceScanner.DeviceConnectedEvent.class)
+    @EventListener({ DeviceScanner.DeviceConnectedEvent.class, LightingChangedEvent.class })
     public void triggerAll() {
         for (var device : sndCtrl.getDevices()) {
             onAudioDevice(new AudioDeviceEvent(device, EventType.CHANGED));

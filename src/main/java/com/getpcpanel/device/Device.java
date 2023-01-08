@@ -266,12 +266,27 @@ public abstract class Device {
         save.setDisplayName(name);
     }
 
+    /**
+     * This will have muted colors for mute-override-controls
+     */
     public LightingConfig getLightingConfig() {
         return save.getLightingConfig();
     }
 
+    /**
+     * Will have the original colors, even when mute-override is active.
+     */
+    public LightingConfig getSavedLightingConfig() {
+        return save.getCurrentProfile().getLightingConfig();
+    }
+
     public void setLighting(LightingConfig config, boolean priority) {
         Platform.runLater(() -> doSetLighting(config, priority));
+    }
+
+    public void setSavedLighting(LightingConfig config) {
+        save.setLightingConfig(config);
+        Platform.runLater(() -> doSetLighting(config, true));
     }
 
     private void doSetLighting(LightingConfig config, boolean priority) {
@@ -282,7 +297,6 @@ public abstract class Device {
         }
         try {
             showLightingConfigToUI(config);
-            save.setLightingConfig(config);
             try {
                 outputInterpreter.sendLightingConfig(getSerialNumber(), getDeviceType(), config, priority);
             } catch (Exception e) {

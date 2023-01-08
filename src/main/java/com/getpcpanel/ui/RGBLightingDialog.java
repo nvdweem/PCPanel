@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import com.getpcpanel.device.PCPanelRGBUI;
-import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.profile.LightingConfig;
 import com.getpcpanel.profile.LightingConfig.LightingMode;
 import com.getpcpanel.profile.SaveService;
@@ -40,7 +40,7 @@ import lombok.extern.log4j.Log4j2;
 @RequiredArgsConstructor
 public class RGBLightingDialog extends Application implements UIInitializer {
     private final SaveService saveService;
-    private final DeviceScanner deviceScanner;
+    private final ApplicationEventPublisher eventPublisher;
 
     private Stage stage;
     @FXML private TabPane knobsTabbedPane;
@@ -65,15 +65,20 @@ public class RGBLightingDialog extends Application implements UIInitializer {
     private final List<ColorDialog> cds = new ArrayList<>();
     private final List<CheckBox> volumeFollowingCheckBoxes = new ArrayList<>();
     private PCPanelRGBUI device;
-    private LightingConfig ogConfig;
     private boolean pressedOk;
     @FXML private Pane root;
+    private LightingConfig lightingConfig;
 
     @Override
     public <T> void initUI(T... args) {
         device = getUIArg(PCPanelRGBUI.class, args, 0);
-        ogConfig = device.getLightingConfig();
+        lightingConfig = device.getSavedLightingConfig().deepCopy();
+        setDeviceLighting();
         postInit();
+    }
+
+    private void setDeviceLighting() {
+        device.setLighting(lightingConfig.deepCopy(), true);
     }
 
     @Override
@@ -83,12 +88,10 @@ public class RGBLightingDialog extends Application implements UIInitializer {
         scene.getStylesheets().add(getClass().getResource("/assets/dark_theme.css").toExternalForm());
         stage.getIcons().add(new Image(getClass().getResource("/assets/256x256.png").toExternalForm()));
         stage.setOnHiding(e -> {
-            if (!pressedOk)
-                if (deviceScanner.getConnectedDevice(device.getSerialNumber()) == null) {
-                    saveService.get().getDeviceSave(device.getSerialNumber()).setLightingConfig(ogConfig);
-                } else {
-                    device.setLighting(ogConfig, true);
-                }
+            if (!pressedOk) {
+                device.setLighting(device.getSavedLightingConfig(), true);
+            }
+            eventPublisher.publishEvent(LightingChangedEvent.INSTANCE);
         });
         stage.initModality(Modality.APPLICATION_MODAL);
         stage.initOwner(HomePage.stage);
@@ -112,6 +115,7 @@ public class RGBLightingDialog extends Application implements UIInitializer {
     private void ok(ActionEvent event) {
         log.debug("{} {}", stage.getWidth(), stage.getHeight());
         pressedOk = true;
+        device.setSavedLighting(lightingConfig);
         saveService.save();
         stage.close();
     }
@@ -153,45 +157,44 @@ public class RGBLightingDialog extends Application implements UIInitializer {
     }
 
     private void initFields() {
-        var config = device.getLightingConfig();
-        var mode = config.getLightingMode();
+        var mode = lightingConfig.getLightingMode();
         setFollowingControlsVisible(false);
         if (mode == LightingMode.ALL_COLOR) {
             setFollowingControlsVisible(true);
-            setVolumeTrackingData(config.getVolumeBrightnessTrackingEnabled());
+            setVolumeTrackingData(lightingConfig.getVolumeBrightnessTrackingEnabled());
             knobsTabbedPane.getSelectionModel().select(0);
             allKnobsTabbedPane.getSelectionModel().select(0);
-            var color = Color.valueOf(config.getAllColor());
+            var color = Color.valueOf(lightingConfig.getAllColor());
             allKnobColor.setCustomColor(color);
             for (var cd : cds)
                 cd.setCustomColor(color);
         } else if (mode == LightingMode.SINGLE_COLOR) {
             setFollowingControlsVisible(true);
-            setVolumeTrackingData(config.getVolumeBrightnessTrackingEnabled());
+            setVolumeTrackingData(lightingConfig.getVolumeBrightnessTrackingEnabled());
             knobsTabbedPane.getSelectionModel().select(1);
             for (var i = 0; i < device.getKnobCount(); i++)
-                cds.get(i).setCustomColor(Color.valueOf(config.getIndividualColors()[i]));
+                cds.get(i).setCustomColor(Color.valueOf(lightingConfig.getIndividualColors()[i]));
         } else if (mode == LightingMode.ALL_RAINBOW) {
             knobsTabbedPane.getSelectionModel().select(0);
             allKnobsTabbedPane.getSelectionModel().select(1);
-            rainbowPhaseShift.setValue(config.getRainbowPhaseShift() & 0xFF);
-            rainbowBrightness.setValue(config.getRainbowBrightness() & 0xFF);
-            rainbowSpeed.setValue(config.getRainbowSpeed() & 0xFF);
-            rainbowReverse.setSelected(config.getRainbowReverse() == 1);
+            rainbowPhaseShift.setValue(lightingConfig.getRainbowPhaseShift() & 0xFF);
+            rainbowBrightness.setValue(lightingConfig.getRainbowBrightness() & 0xFF);
+            rainbowSpeed.setValue(lightingConfig.getRainbowSpeed() & 0xFF);
+            rainbowReverse.setSelected(lightingConfig.getRainbowReverse() == 1);
         } else if (mode == LightingMode.ALL_WAVE) {
             knobsTabbedPane.getSelectionModel().select(0);
             allKnobsTabbedPane.getSelectionModel().select(2);
-            waveHue.setHue(config.getWaveHue() & 0xFF);
-            waveBrightness.setValue(config.getWaveBrightness() & 0xFF);
-            waveSpeed.setValue(config.getWaveSpeed() & 0xFF);
-            waveReverse.setSelected(config.getWaveReverse() == 1);
-            waveBounce.setSelected(config.getWaveBounce() == 1);
+            waveHue.setHue(lightingConfig.getWaveHue() & 0xFF);
+            waveBrightness.setValue(lightingConfig.getWaveBrightness() & 0xFF);
+            waveSpeed.setValue(lightingConfig.getWaveSpeed() & 0xFF);
+            waveReverse.setSelected(lightingConfig.getWaveReverse() == 1);
+            waveBounce.setSelected(lightingConfig.getWaveBounce() == 1);
         } else if (mode == LightingMode.ALL_BREATH) {
             knobsTabbedPane.getSelectionModel().select(0);
             allKnobsTabbedPane.getSelectionModel().select(3);
-            breathHue.setHue(config.getBreathHue() & 0xFF);
-            breathBrightness.setValue(config.getBreathBrightness() & 0xFF);
-            breathSpeed.setValue(config.getBreathSpeed() & 0xFF);
+            breathHue.setHue(lightingConfig.getBreathHue() & 0xFF);
+            breathBrightness.setValue(lightingConfig.getBreathBrightness() & 0xFF);
+            breathSpeed.setValue(lightingConfig.getBreathSpeed() & 0xFF);
         } else {
             log.error("unexpected mode in lightingdialog");
         }
@@ -225,25 +228,25 @@ public class RGBLightingDialog extends Application implements UIInitializer {
         if (knobsTabbedPane.getSelectionModel().getSelectedIndex() == 0) {
             if (allKnobsTabbedPane.getSelectionModel().getSelectedIndex() == 0) {
                 setFollowingControlsVisible(true);
-                var config = LightingConfig.createAllColor(allKnobColor.getCustomColor(), getVolumeTrackingData());
-                device.setLighting(config, false);
+                lightingConfig = LightingConfig.createAllColor(allKnobColor.getCustomColor(), getVolumeTrackingData());
+                setDeviceLighting();
             } else if (allKnobsTabbedPane.getSelectionModel().getSelectedIndex() == 1) {
-                var config = LightingConfig.createRainbowAnimation((byte) (int) rainbowPhaseShift.getValue(), (byte) (int) rainbowBrightness.getValue(),
+                lightingConfig = LightingConfig.createRainbowAnimation((byte) (int) rainbowPhaseShift.getValue(), (byte) (int) rainbowBrightness.getValue(),
                         (byte) (int) rainbowSpeed.getValue(), rainbowReverse.isSelected());
-                device.setLighting(config, false);
+                setDeviceLighting();
             } else if (allKnobsTabbedPane.getSelectionModel().getSelectedIndex() == 2) {
-                var config = LightingConfig.createWaveAnimation((byte) waveHue.getHue(), (byte) (int) waveBrightness.getValue(), (byte) (int) waveSpeed.getValue(),
+                lightingConfig = LightingConfig.createWaveAnimation((byte) waveHue.getHue(), (byte) (int) waveBrightness.getValue(), (byte) (int) waveSpeed.getValue(),
                         waveReverse.isSelected(), waveBounce.isSelected());
-                device.setLighting(config, false);
+                setDeviceLighting();
             } else if (allKnobsTabbedPane.getSelectionModel().getSelectedIndex() == 3) {
-                var config = LightingConfig.createBreathAnimation((byte) breathHue.getHue(), (byte) (int) breathBrightness.getValue(), (byte) (int) breathSpeed.getValue());
-                device.setLighting(config, false);
+                lightingConfig = LightingConfig.createBreathAnimation((byte) breathHue.getHue(), (byte) (int) breathBrightness.getValue(), (byte) (int) breathSpeed.getValue());
+                setDeviceLighting();
             }
         } else {
             setFollowingControlsVisible(true);
             var colors = IntStream.range(0, device.getKnobCount()).mapToObj(i -> cds.get(i).getCustomColor()).toArray(Color[]::new);
-            var config = LightingConfig.createSingleColor(colors, getVolumeTrackingData());
-            device.setLighting(config, false);
+            lightingConfig = LightingConfig.createSingleColor(colors, getVolumeTrackingData());
+            setDeviceLighting();
         }
     }
 
