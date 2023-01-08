@@ -61,7 +61,6 @@ void AudioSession::Init(JniCaller& audioDevice, AudioSessionListenerCB& callback
         thread.jstr(iconStr);
 
         cpListener.Set(new AudioSessionListener(cpSession, *this, callback, jObj));
-        thread.DoneWith(jObj);
     }
 }
 

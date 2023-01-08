@@ -273,7 +273,7 @@ public:
         JThread env;
         if (*env) {
             auto dnStr = env.jstr(NewDisplayName);
-            jni.CallObjectFreeResult(env, "name", "(Ljava/lang/String;)Lcom/getpcpanel/cpp/AudioSession;", dnStr);
+            jni.CallObject(env, "name", "(Ljava/lang/String;)Lcom/getpcpanel/cpp/AudioSession;", dnStr);
             env.jstr(dnStr);
         }
         return S_OK; 
@@ -282,7 +282,7 @@ public:
         JThread env;
         if (*env) {
             auto iconStr = env.jstr(NewIconPath);
-            jni.CallObjectFreeResult(env, "icon", "(Ljava/lang/String;)Lcom/getpcpanel/cpp/AudioSession;", iconStr);
+            jni.CallObject(env, "icon", "(Ljava/lang/String;)Lcom/getpcpanel/cpp/AudioSession;", iconStr);
             env.jstr(iconStr);
         }
         return S_OK;
@@ -293,8 +293,8 @@ public:
     virtual HRESULT STDMETHODCALLTYPE OnSimpleVolumeChanged(float NewVolume, BOOL NewMute, LPCGUID EventContext) {
         JThread env;
         if (*env) {
-            jni.CallObjectFreeResult(env, "volume", "(F)Lcom/getpcpanel/cpp/AudioSession;", NewVolume);
-            jni.CallObjectFreeResult(env, "muted", "(Z)Lcom/getpcpanel/cpp/AudioSession;", NewMute);
+            jni.CallObject(env, "volume", "(F)Lcom/getpcpanel/cpp/AudioSession;", NewVolume);
+            jni.CallObject(env, "muted", "(Z)Lcom/getpcpanel/cpp/AudioSession;", NewMute);
         }
         return S_OK;
     }

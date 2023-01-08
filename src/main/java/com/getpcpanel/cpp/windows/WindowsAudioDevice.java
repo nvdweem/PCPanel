@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 
 import com.getpcpanel.cpp.AudioDevice;
@@ -31,13 +30,6 @@ public class WindowsAudioDevice extends AudioDevice {
     public AudioSession addSession(long pointer, int pid, String name, String title, String icon, float volume, boolean muted) {
         var result = sessions.computeIfAbsent(pid, p -> new WindowsAudioSession(this, eventPublisher, pid, new File(name), title, icon, volume, muted));
         result.pointers().add(pointer);
-
-        if (StringUtils.isBlank(result.title())) {
-            log.debug("Not adding {}, no title known", result);
-        } else {
-            sessions.put(pid, result);
-            log.trace("Session added: {}", result);
-        }
         eventPublisher.publishEvent(new AudioSessionEvent(result, EventType.ADDED));
         return result;
     }
