@@ -2,6 +2,7 @@ package com.getpcpanel.cpp.linux;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -16,7 +17,6 @@ import com.getpcpanel.spring.ConditionalOnLinux;
 
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
-import lombok.Singular;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
@@ -74,15 +74,21 @@ public class PulseAudioWrapper {
         var cmdOutput = runAndRead(new ProcessBuilder("pactl", "list", type.pulseType));
 
         PulseAudioTarget.PulseAudioTargetBuilder paTarget = null;
+        var properties = new HashMap<String, String>();
+        var metas = new HashMap<String, String>();
+
         var readingProperties = false;
         for (var fullLine : cmdOutput) {
             var line = StringUtils.trimToEmpty(fullLine);
 
             var firstLineMatcher = pactlFirstLine.matcher(line);
             if (firstLineMatcher.find()) {
-                if (paTarget != null)
-                    ret.add(paTarget.build());
+                if (paTarget != null) {
+                    ret.add(paTarget.properties(properties).metas(metas).build());
+                }
                 paTarget = PulseAudioTarget.builder().index(NumberUtils.toInt(firstLineMatcher.group(2), -1)).type(type);
+                properties = new HashMap<>();
+                metas = new HashMap<>();
                 readingProperties = false;
                 continue;
             }
@@ -91,7 +97,7 @@ public class PulseAudioWrapper {
 
             if (readingProperties && line.contains("=")) {
                 var parts = line.split("=");
-                paTarget.property(StringUtils.trimToEmpty(parts[0]), StringUtils.strip(StringUtils.trimToEmpty(parts[1]), "\""));
+                properties.put(StringUtils.trimToEmpty(parts[0]), StringUtils.strip(StringUtils.trimToEmpty(parts[1]), "\""));
             } else if (!readingProperties && line.contains(":")) {
                 if (StringUtils.equals(line, "Properties:")) {
                     readingProperties = true;
@@ -100,12 +106,12 @@ public class PulseAudioWrapper {
 
                 var parts = line.split(":");
                 if (parts.length > 1) {
-                    paTarget.meta(StringUtils.trimToEmpty(parts[0]), StringUtils.trimToEmpty(parts[1]));
+                    metas.put(StringUtils.trimToEmpty(parts[0]), StringUtils.trimToEmpty(parts[1]));
                 }
             }
         }
         if (paTarget != null) {
-            ret.add(paTarget.type(type).build());
+            ret.add(paTarget.properties(properties).metas(metas).type(type).build());
         }
 
         return ret;
@@ -136,7 +142,7 @@ public class PulseAudioWrapper {
     }
 
     @Builder
-    record PulseAudioTarget(int index, boolean isDefault, @Singular Map<String, String> metas, @Singular Map<String, String> properties, InOutput type) {
+    record PulseAudioTarget(int index, boolean isDefault, Map<String, String> metas, Map<String, String> properties, InOutput type) {
     }
 
     @RequiredArgsConstructor

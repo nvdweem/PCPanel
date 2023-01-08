@@ -59,6 +59,7 @@ public:
         return JniCaller(env, obj);
     }
 
+private:
     JniCaller(JThread& env, jobject obj) {
 #ifndef NO_JNI
         if (*env) {
@@ -66,6 +67,7 @@ public:
         }
 #endif
     }
+public:
     JniCaller(JNIEnv* env, jobject obj) {
 #ifndef NO_JNI
         this->obj = env->NewGlobalRef(obj);

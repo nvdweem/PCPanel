@@ -15,12 +15,13 @@ import lombok.extern.log4j.Log4j2;
 @Service
 public class ExtractUtil {
     @Value("${application.version}") private String version;
+    @Value("${application.build}") private String build;
 
     public File extractAndDeleteOnExit(String file) {
         var name = FilenameUtils.getBaseName(file);
         var ext = FilenameUtils.getExtension(file);
 
-        var extracted = new File(System.getProperty("java.io.tmpdir"), String.join(".", name, version, ext));
+        var extracted = new File(System.getProperty("java.io.tmpdir"), String.join(".", name, version, build, ext));
         if (extracted.exists() && !extracted.delete()) {
             log.info("{} already exists, not updating", extracted);
             return extracted;
