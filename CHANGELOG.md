@@ -11,6 +11,7 @@
 - Some button actions (the default device toggles) now also show overlay hints ([from request](https://www.reddit.com/r/PCPanel/comments/zhun8a/feature_suggestion_add_a_little_indicatoroverlay/))
 - #26 - Allow switching default device for a process (specific or follow focus)
 - #27 - Initial support for OSC (Open Sound Control) protocol
+- #29 - VoiceMeeter mute state support
 
 **Fixes:**:
 
@@ -24,6 +25,8 @@
 - [Linux] Processes without a PID or Executable can be controlled
 - Starting the application again (when skipfilecheck is not specified) will show the main window
 - #24 - Controlling Discord via focus volume would also change the microphone volume
+- The mute color should not overwrite the color configuration anymore
+- The application should start with the profile that was last used (unless a Main profile is specified)
 
 ## [1.5]
 
