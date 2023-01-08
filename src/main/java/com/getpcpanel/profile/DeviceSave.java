@@ -16,7 +16,7 @@ import one.util.streamex.StreamEx;
 public class DeviceSave {
     private String displayName;
     private List<Profile> profiles = new ArrayList<>();
-    private String currentProfile;
+    private String currentProfileName;
 
     public DeviceSave(Save parent, DeviceType dt) {
         var i = 1;
@@ -36,7 +36,7 @@ public class DeviceSave {
         var profile = getProfile(p);
         if (profile.isEmpty())
             return Optional.empty();
-        currentProfile = p;
+        currentProfileName = p;
         return profile;
     }
 
@@ -49,18 +49,24 @@ public class DeviceSave {
 
     @JsonIgnore
     private Optional<Profile> getCurrentProfile() {
-        var p = getProfile(currentProfile);
+        var p = getProfile(currentProfileName);
         if (!profiles.isEmpty() && p.isEmpty()) {
             return Optional.of(getProfiles().get(0));
         }
         return p;
     }
 
+    @SuppressWarnings("unused") // Used by Jackson when deserializing
+    public void setCurrentProfileName(String currentProfileName) {
+        this.currentProfileName = currentProfileName;
+        setCurrentProfile(currentProfileName);
+    }
+
     public Profile ensureCurrentProfile(DeviceType dt) {
         return getCurrentProfile().orElseGet(() -> {
             var profile = new Profile("profile1", dt);
             profiles.add(profile);
-            currentProfile = profile.getName();
+            currentProfileName = profile.getName();
             return profile;
         });
     }
