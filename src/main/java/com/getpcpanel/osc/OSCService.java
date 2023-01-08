@@ -146,7 +146,7 @@ public class OSCService {
     }
 
     private float determineValue(@Nonnull OSCBinding target, float val) {
-        return (float) Util.map(val, 0, 1, target.min(), target.max());
+        return Util.map(val, 0, 1, target.min(), target.max());
     }
 
     private static @Nonnull OSCMessage buildMessage(OSCBinding target, String defaultTarget, float val) {

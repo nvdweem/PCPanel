@@ -6,6 +6,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import javax.annotation.Nullable;
+
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -49,7 +51,7 @@ public final class Util {
         }
     }
 
-    public static String formatHexString(Color c) {
+    public static @Nullable String formatHexString(Color c) {
         if (c != null)
             return String.format(null, "#%02x%02x%02x", new Object[] { Math.round(c.getRed() * 255.0D),
                     Math.round(c.getGreen() * 255.0D),
@@ -91,6 +93,10 @@ public final class Util {
     }
 
     public static double map(double x, double in_min, double in_max, double out_min, double out_max) {
+        return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+    }
+
+    public static float map(float x, float in_min, float in_max, float out_min, float out_max) {
         return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
     }
 

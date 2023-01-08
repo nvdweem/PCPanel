@@ -1,12 +1,19 @@
 package com.getpcpanel.voicemeeter;
 
+import static com.getpcpanel.util.Util.map;
+
 import java.util.Arrays;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.getpcpanel.profile.SaveService;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
@@ -16,20 +23,20 @@ import lombok.extern.log4j.Log4j2;
 public final class Voicemeeter {
     private final SaveService save;
     private final VoicemeeterAPI api;
+    private final ApplicationEventPublisher eventPublisher;
+
     private int version = -1;
     private volatile boolean hasFinishedConnection;
     private volatile boolean hasLoggedIn;
     private final VoicemeeterVersion[] versions = { VoicemeeterVersion.VOICEMEETER, VoicemeeterVersion.BANANA, VoicemeeterVersion.POTATO };
 
+    @Getter
+    @RequiredArgsConstructor
     public enum ControlType {
         STRIP("Input"),
         BUS("Output");
 
         private final String dn;
-
-        ControlType(String dn) {
-            this.dn = dn;
-        }
 
         public String toString() {
             return dn;
@@ -70,6 +77,7 @@ public final class Voicemeeter {
         }
     }
 
+    @RequiredArgsConstructor
     public enum ButtonType {
         MONO("Mono", "mono"),
         MUTE("Mute", "Mute"),
@@ -90,21 +98,11 @@ public final class Voicemeeter {
         REPEAT("mode.Repeat", "Repeat"),
         COMPOSITE("mode.Composite", "Composite");
 
-        private final String param;
-
+        @Getter private final String parameterName;
         private final String dn;
-
-        ButtonType(String param, String dn) {
-            this.param = param;
-            this.dn = dn;
-        }
 
         public String toString() {
             return dn;
-        }
-
-        public String getParameterName() {
-            return param;
         }
     }
 
@@ -162,7 +160,7 @@ public final class Voicemeeter {
                 api.login();
                 hasLoggedIn = true;
             }
-            api.areParametersDirty();
+            checkParamsDirty();
             version = api.getVoicemeeterType();
             hasFinishedConnection = true;
             return true;
@@ -191,38 +189,39 @@ public final class Voicemeeter {
         return versions[version - 1].getBusDials().length;
     }
 
-    public VoicemeeterVersion getVersion() {
+    public boolean getMuteState(ControlType ct, int idx) {
+        var paramName = makeParameterString(ct, idx, ButtonType.MUTE.getParameterName());
+        return api.getParameterFloat(paramName) > 0;
+    }
+
+    public @Nullable VoicemeeterVersion getVersion() {
         if (version < 1 || version > 3)
             return null;
         return versions[version - 1];
     }
 
     public List<ButtonType> getButtonTypes(ControlType ct, int index) {
-        if (ct == ControlType.STRIP) {
-            if (index >= getNumStrips())
-                index = 0;
-            return Arrays.asList(getVersion().getStripButtons()[index]);
+        var version = getVersion();
+        if (version == null || ct == null) {
+            throw new IllegalArgumentException("Invalid input control type (" + ct + ") or version");
         }
-        if (ct == ControlType.BUS) {
-            if (index >= getNumBuses())
-                index = 0;
-            return Arrays.asList(getVersion().getBusButtons()[index]);
-        }
-        throw new IllegalArgumentException("invalid control type");
+
+        return switch (ct) {
+            case STRIP -> Arrays.asList(getVersion().getStripButtons()[index >= getNumStrips() ? 0 : index]);
+            case BUS -> Arrays.asList(getVersion().getBusButtons()[index >= getNumBuses() ? 0 : index]);
+        };
     }
 
     public List<DialType> getDialTypes(ControlType ct, int index) {
-        if (ct == ControlType.STRIP) {
-            if (index >= getNumStrips())
-                index = 0;
-            return Arrays.asList(getVersion().getStripDials()[index]);
+        var version = getVersion();
+        if (version == null) {
+            throw new IllegalArgumentException("invalid version or control type (" + ct + ")");
         }
-        if (ct == ControlType.BUS) {
-            if (index >= getNumBuses())
-                index = 0;
-            return Arrays.asList(getVersion().getBusDials()[index]);
-        }
-        throw new IllegalArgumentException("invalid control type");
+
+        return switch (ct) {
+            case STRIP -> Arrays.asList(getVersion().getStripDials()[index >= getNumStrips() ? 0 : index]);
+            case BUS -> Arrays.asList(getVersion().getBusDials()[index >= getNumBuses() ? 0 : index]);
+        };
     }
 
     public void controlButton(ControlType ct, int index, ButtonType bt) {
@@ -231,14 +230,27 @@ public final class Voicemeeter {
 
     public void controlButton(String fullParam, ButtonControlMode bt) {
         if (bt == ButtonControlMode.TOGGLE) {
-            api.areParametersDirty();
-            var status = api.getParameterFloat(fullParam) == 1.0F;
+            checkParamsDirty();
+            var status = api.getParameterFloat(fullParam) > 0F;
             api.setParameterFloat(fullParam, status ? 0.0F : 1.0F);
-            api.areParametersDirty();
+            checkParamsDirty();
         } else if (bt == ButtonControlMode.ENABLE) {
             api.setParameterFloat(fullParam, 1.0F);
         } else if (bt == ButtonControlMode.DISABLE) {
             api.setParameterFloat(fullParam, 0.0F);
+        }
+    }
+
+    @Scheduled(fixedRate = 1_000)
+    void checkParamsDirtyScheduled() {
+        if (login()) {
+            checkParamsDirty();
+        }
+    }
+
+    private void checkParamsDirty() {
+        if (api.areParametersDirty()) {
+            eventPublisher.publishEvent(new VoiceMeeterDirtyEvent());
         }
     }
 
@@ -266,10 +278,6 @@ public final class Voicemeeter {
         if (ct == DialControlMode.NEG_INF_TO_ZERO)
             return (level == 0) ? Float.NEGATIVE_INFINITY : map(level, 0.0F, 100.0F, -60.0F, 0.0F);
         throw new IllegalArgumentException("Invalid conversiontype in voicemeeter");
-    }
-
-    private float map(float x, float in_min, float in_max, float out_min, float out_max) {
-        return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
     }
 }
 

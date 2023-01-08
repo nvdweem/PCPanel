@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandObsSetSourceVolume;
+import com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced;
+import com.getpcpanel.commands.command.CommandVoiceMeeterBasic;
 import com.getpcpanel.commands.command.CommandVolumeDevice;
 import com.getpcpanel.commands.command.CommandVolumeProcess;
 import com.getpcpanel.cpp.AudioDeviceEvent;
@@ -28,6 +30,7 @@ import com.getpcpanel.profile.SingleKnobLightingConfig;
 import com.getpcpanel.profile.SingleSliderLabelLightingConfig;
 import com.getpcpanel.profile.SingleSliderLightingConfig;
 import com.getpcpanel.ui.ILightingDialogMuteOverrideHelper;
+import com.getpcpanel.voicemeeter.VoiceMeeterMuteEvent;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -71,6 +74,24 @@ public class SetMuteOverrideService {
         var lcName = event.input();
         handleEvent(
                 dlc -> isFollow(dlc) && dlc.cmd instanceof CommandObsSetSourceVolume ms && StreamEx.of(ms.getSourceName()).findFirst(n -> n.contains(lcName)).isPresent(),
+                event.muted());
+    }
+
+    @EventListener
+    public void onVoiceMeeterSource(VoiceMeeterMuteEvent event) {
+        var type = event.ct();
+        var idx = event.idx();
+        handleEvent(
+                dlc -> {
+                    if (isFollow(dlc)) {
+                        if (dlc.cmd instanceof CommandVoiceMeeterBasic vmBasic) {
+                            return vmBasic.getCt() == type && vmBasic.getIndex() == idx;
+                        } else if (dlc.cmd instanceof CommandVoiceMeeterAdvanced vmAdv) {
+                            return StringUtils.startsWithIgnoreCase(vmAdv.getFullParam(), type.name() + "[" + idx + "]");
+                        }
+                    }
+                    return false;
+                },
                 event.muted());
     }
 
