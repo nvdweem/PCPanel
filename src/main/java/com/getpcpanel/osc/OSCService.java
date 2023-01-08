@@ -12,6 +12,7 @@ import javax.annotation.Nonnull;
 
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import com.getpcpanel.hid.DeviceCommunicationHandler;
 import com.getpcpanel.profile.OSCBinding;
@@ -104,7 +105,7 @@ public class OSCService {
 
     @EventListener
     public void dialAction(DeviceCommunicationHandler.KnobRotateEvent dial) {
-        if (dial.initial()) {
+        if (dial.initial() || CollectionUtils.isEmpty(ports)) {
             return;
         }
         var save = saveService.get().getDeviceSave(dial.serialNum());
@@ -113,20 +114,27 @@ public class OSCService {
 
         var profile = save.getCurrentProfile();
         var target = profile.getOscBinding().get(idx);
-        send(target, "/pcpanel/" + profile.getName() + "/knob" + dial.knob(), dial.value() / 255f);
+        if (target != null) {
+            send(target, "/pcpanel/" + profile.getName() + "/knob" + dial.knob(), dial.value() / 255f);
+        }
     }
 
     @EventListener
     public void dialAction(DeviceCommunicationHandler.ButtonPressEvent button) {
+        if (CollectionUtils.isEmpty(ports)) {
+            return;
+        }
         var save = saveService.get().getDeviceSave(button.serialNum());
         var idx = button.button() * 2 + 1;
 
         var profile = save.getCurrentProfile();
         var target = profile.getOscBinding().get(idx);
-        send(target, "/pcpanel/" + profile.getName() + "/button" + button.button(), button.pressed() ? 1f : 0f);
+        if (target != null) {
+            send(target, "/pcpanel/" + profile.getName() + "/button" + button.button(), button.pressed() ? 1f : 0f);
+        }
     }
 
-    private void send(OSCBinding target, String defaultTarget, float val) {
+    private void send(@Nonnull OSCBinding target, String defaultTarget, float val) {
         var message = buildMessage(target, defaultTarget, determineValue(target, val));
         ports.forEach(port -> {
             try {
@@ -137,7 +145,7 @@ public class OSCService {
         });
     }
 
-    private float determineValue(OSCBinding target, float val) {
+    private float determineValue(@Nonnull OSCBinding target, float val) {
         return (float) Util.map(val, 0, 1, target.min(), target.max());
     }
 
