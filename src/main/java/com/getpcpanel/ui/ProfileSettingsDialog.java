@@ -147,7 +147,7 @@ public class ProfileSettingsDialog extends Application implements UIInitializer 
         }
 
         for (var i = 0; i < sliderCount; i++) {
-            addOscRow("Slider " + (i + 1), source.getOrDefault(knobCount + i, OSCBinding.EMPTY), false);
+            addOscRow("Slider " + (i + 1), source.getOrDefault((knobCount * 2) + i, OSCBinding.EMPTY), false);
         }
     }
 
