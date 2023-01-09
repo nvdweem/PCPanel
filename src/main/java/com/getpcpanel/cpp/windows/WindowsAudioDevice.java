@@ -28,6 +28,7 @@ public class WindowsAudioDevice extends AudioDevice {
     }
 
     public AudioSession addSession(long pointer, int pid, String name, String title, String icon, float volume, boolean muted) {
+        log.debug("Add device session: {} {} {} {} {} {} {}", pointer, pid, name, title, icon, volume, muted);
         var result = sessions.computeIfAbsent(pid, p -> new WindowsAudioSession(this, eventPublisher, pid, new File(name), title, icon, volume, muted));
         result.pointers().add(pointer);
         eventPublisher.publishEvent(new AudioSessionEvent(result, EventType.ADDED));
@@ -40,9 +41,10 @@ public class WindowsAudioDevice extends AudioDevice {
             log.debug("Unknown session was removed: {} ({})", pid, pointer);
             return;
         }
-        log.trace("Session removed: {} ({}: {})", pid, pointer, session);
+        log.trace("Session pointer removed: {} ({}: {})", pid, pointer, session);
         session.pointers().remove(pointer);
         if (session.pointers().isEmpty()) {
+            log.debug("Session removed: {} ({})", pid, pointer);
             sessions.remove(pid);
             eventPublisher.publishEvent(new AudioSessionEvent(session, EventType.REMOVED));
         }

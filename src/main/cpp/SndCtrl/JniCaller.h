@@ -60,9 +60,9 @@ public:
     }
 
 private:
-    JniCaller(JThread& env, jobject obj) {
+    JniCaller(JThread& env, jobject obj): obj(nullptr) {
 #ifndef NO_JNI
-        if (*env) {
+        if (*env && obj) {
             this->obj = env->NewGlobalRef(obj);
         }
 #endif
@@ -84,7 +84,7 @@ public:
 
 #ifndef NO_JNI
     void CallVoid(JThread& env, const char* name, const char* sig, ...) {
-        if (*env) {
+        if (*env && obj) {
             auto method = GetMethod(env, name, sig);
             va_list args;
             va_start(args, sig);
@@ -95,7 +95,7 @@ public:
     }
 
     jobject CallObjectMethodV(JThread& env, const char* name, const char* sig, va_list args) {
-        if (*env) {
+        if (*env && obj) {
             auto method = GetMethod(env, name, sig);
             auto result = env->CallObjectMethodV(obj, method, args);
             CheckException(env);
@@ -122,7 +122,7 @@ public:
     }
 
     float CallFloat(JThread& env, const char* name, const char* sig, ...) {
-        if (*env) {
+        if (*env && obj) {
             auto method = GetMethod(env, name, sig);
             va_list args;
             va_start(args, sig);
@@ -134,7 +134,7 @@ public:
         return 0;
     }
     jboolean CallBoolean(JThread& env, const char* name, const char* sig, ...) {
-        if (*env) {
+        if (*env && obj) {
             auto method = GetMethod(env, name, sig);
             va_list args;
             va_start(args, sig);
