@@ -48,7 +48,7 @@ Download the deb file and install with your package manager or via terminal:
 If there is no option to install the .deb file then it might be needed to run the software manually.
 For that, download the jar file and run it with
 
-1. Download/install Java (at least 17) and [JavaFX 18](https://download2.gluonhq.com/openjfx/18.0.2/openjfx-18.0.2_linux-x64_bin-sdk.zip)
+1. Download/install Java (at least 19) and [JavaFX 18](https://download2.gluonhq.com/openjfx/18.0.2/openjfx-18.0.2_linux-x64_bin-sdk.zip)
 2. Unpack JavaFX to a location
 3. Run the application:
 
