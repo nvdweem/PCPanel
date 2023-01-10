@@ -39,7 +39,7 @@ import lombok.extern.log4j.Log4j2;
 @Service
 @RequiredArgsConstructor
 public class IconService {
-    private static final Image DEFAULT = new Image(Objects.requireNonNull(IconService.class.getResource("/assets/32x32.png")).toExternalForm());
+    public static final Image DEFAULT = new Image(Objects.requireNonNull(IconService.class.getResource("/assets/32x32.png")).toExternalForm());
     private static final Image OBS = new Image(Objects.requireNonNull(IconService.class.getResource("/assets/obs.png")).toExternalForm());
     private static final Image VOICEMEETER = new Image(Objects.requireNonNull(IconService.class.getResource("/assets/voicemeeter.png")).toExternalForm());
     private static final Image DEVICE = new Image(Objects.requireNonNull(IconService.class.getResource("/assets/device.png")).toExternalForm());

@@ -25,42 +25,37 @@ public final class InputInterpreter {
 
     @EventListener
     public void onKnobRotate(DeviceCommunicationHandler.KnobRotateEvent event) {
-        var value = event.value();
-
-        var device = devices.getDevice(event.serialNum());
-        if (device == null)
-            return;
-        if (device.getDeviceType() != DeviceType.PCPANEL_RGB)
-            value = map(value, 0, 255, 0, 100);
-        device.setKnobRotation(event.knob(), value);
-        var settings = save.getProfile(event.serialNum()).getKnobSettings(event.knob());
-        if (settings != null) {
-            if (settings.isLogarithmic())
-                value = log(value);
-            value = map(value, 0, 100, settings.getMinTrim(), settings.getMaxTrim());
-        }
-        doDialAction(event.serialNum(), event.initial(), event.knob(), value);
+        devices.getDevice(event.serialNum()).ifPresent(device -> {
+            var value = event.value();
+            if (device.getDeviceType() != DeviceType.PCPANEL_RGB)
+                value = map(value, 0, 255, 0, 100);
+            device.setKnobRotation(event.knob(), value);
+            var settings = save.getProfile(event.serialNum()).map(p -> p.getKnobSettings(event.knob())).orElse(null);
+            if (settings != null) {
+                if (settings.isLogarithmic())
+                    value = log(value);
+                value = map(value, 0, 100, settings.getMinTrim(), settings.getMaxTrim());
+            }
+            doDialAction(event.serialNum(), event.initial(), event.knob(), value);
+        });
     }
 
     @EventListener
     public void onButtonPress(DeviceCommunicationHandler.ButtonPressEvent event) throws IOException {
-        devices.getDevice(event.serialNum()).setButtonPressed(event.button(), event.pressed());
+        devices.getDevice(event.serialNum()).ifPresent(device -> device.setButtonPressed(event.button(), event.pressed()));
         if (event.pressed())
             doClickAction(event.serialNum(), event.button());
     }
 
     private void doDialAction(String serialNum, boolean initial, int knob, int v) {
-        var data = save.getProfile(serialNum).getDialData(knob);
-        if (data == null)
-            return;
-        eventPublisher.publishEvent(new PCPanelControlEvent(serialNum, knob, data.toRunnable(initial, serialNum, v)));
+        save.getProfile(serialNum).map(p -> p.getDialData(knob)).ifPresent(data -> eventPublisher.publishEvent(new PCPanelControlEvent(serialNum, knob, data.toRunnable(initial, serialNum, v))));
     }
 
     private void doClickAction(String serialNum, int knob) {
-        var data = save.getProfile(serialNum).getButtonData(knob);
-        if (data == null)
-            return;
-        eventPublisher.publishEvent(new PCPanelControlEvent(serialNum, knob, data.toRunnable(false, serialNum, null)));
+        save.getProfile(serialNum).ifPresent(profile -> {
+            var data = profile.getButtonData(knob);
+            eventPublisher.publishEvent(new PCPanelControlEvent(serialNum, knob, data.toRunnable(false, serialNum, null)));
+        });
     }
 
     @SuppressWarnings("NumericCastThatLosesPrecision")

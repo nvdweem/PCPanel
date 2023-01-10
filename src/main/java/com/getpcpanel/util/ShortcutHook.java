@@ -40,6 +40,7 @@ public class ShortcutHook implements NativeKeyListener {
     @Setter private Consumer<NativeKeyEvent> overrideListener;
     private Map<String, DeviceProfile> shortcuts;
 
+    @SuppressWarnings("ErrorNotRethrown")
     @PostConstruct
     public void init() {
         try {
@@ -100,7 +101,7 @@ public class ShortcutHook implements NativeKeyListener {
         if (canBeShortcut(nativeKeyEvent)) {
             var profile = shortcuts.get(toKeyString(nativeKeyEvent));
             if (profile != null) {
-                Platform.runLater(() -> deviceHolder.getDevice(profile.deviceId()).setProfile(profile.profile.getName()));
+                Platform.runLater(() -> deviceHolder.getDevice(profile.deviceId()).ifPresent(device -> device.setProfile(profile.profile.getName())));
             }
         }
     }

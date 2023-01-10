@@ -1,5 +1,7 @@
 package com.getpcpanel.ui;
 
+import java.util.Objects;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
@@ -28,6 +30,7 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
@@ -36,6 +39,8 @@ import one.util.streamex.StreamEx;
 @RequiredArgsConstructor
 public class HomePage extends Application {
     private static final String TITLE_FORMAT = "PCPanel Controller %s";
+    @SuppressWarnings("StaticNonFinalField") @Setter private static HomePage window;
+    @SuppressWarnings("StaticNonFinalField") @Setter public static Stage stage;
     private final FxHelper fxHelper;
     private final SaveService saveService;
     private final DeviceScanner deviceScanner;
@@ -59,9 +64,7 @@ public class HomePage extends Application {
     @FXML private Label hintLabel;
     @FXML private ListView<Device> connectedDeviceList;
     @FXML private Slider globalBrightness;
-    public static Stage stage;
     private Pane pane;
-    private static HomePage window;
 
     @Override
     @PostConstruct
@@ -70,7 +73,7 @@ public class HomePage extends Application {
             log.error("Error 2 windows");
             return;
         }
-        window = this;
+        setWindow(this);
     }
 
     public void start(Stage stage, boolean quiet) throws Exception {
@@ -81,7 +84,7 @@ public class HomePage extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        HomePage.stage = stage;
+        setStage(stage);
         var loader = fxHelper.getLoader(getClass().getResource("/assets/HomePage.fxml"));
         loader.setController(this);
         pane = loader.load();
@@ -89,8 +92,8 @@ public class HomePage extends Application {
         var scene = new Scene(pane, 1000.0D, 870.0D);
         showHint(false);
         initWindow();
-        scene.getStylesheets().addAll(getClass().getResource("/assets/1.css").toExternalForm());
-        stage.getIcons().add(new Image(getClass().getResource("/assets/256x256.png").toExternalForm()));
+        scene.getStylesheets().addAll(Objects.requireNonNull(getClass().getResource("/assets/1.css")).toExternalForm());
+        stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/assets/256x256.png")).toExternalForm()));
         stage.setScene(scene);
         ResizeHelper.addResizeListener(stage, 200.0D, 200.0D);
         Platform.setImplicitExit(false);
@@ -111,11 +114,12 @@ public class HomePage extends Application {
             var serialNumber = device.getSerialNumber();
 
             // Set saved brightness
-            var profile = saveService.getProfile(serialNumber);
-            var cfg = profile.getLightingConfig();
-            cfg.setGlobalBrightness(newValue.byteValue());
-            profile.setLightingConfig(cfg);
-            saveService.debouncedSave();
+            saveService.getProfile(serialNumber).ifPresent(profile -> {
+                var cfg = profile.getLightingConfig();
+                cfg.setGlobalBrightness(newValue.byteValue());
+                profile.setLightingConfig(cfg);
+                saveService.debouncedSave();
+            });
 
             // Set current brightness
             var light = device.getLightingConfig();
@@ -147,7 +151,7 @@ public class HomePage extends Application {
 
     @EventListener
     public void onDeviceConnected(DeviceScanner.DeviceConnectedEvent event) {
-        Platform.runLater(() -> addDeviceToUI(devices.getDevice(event.serialNum())));
+        Platform.runLater(() -> devices.getDevice(event.serialNum()).ifPresent(this::addDeviceToUI));
     }
 
     @EventListener

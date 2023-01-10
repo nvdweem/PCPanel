@@ -4,6 +4,7 @@ import static org.springframework.core.Ordered.HIGHEST_PRECEDENCE;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,8 +31,8 @@ public class DeviceHolder {
     @Autowired @Lazy @Setter private DeviceFactory deviceFactory;
     private final OutputInterpreter outputInterpreter;
 
-    public Device getDevice(String key) {
-        return devices.get(key);
+    public Optional<Device> getDevice(String key) {
+        return Optional.ofNullable(devices.get(key));
     }
 
     public int size() {

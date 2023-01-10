@@ -109,14 +109,15 @@ public class OSCService {
             return;
         }
 
-        var profile = saveService.getProfile(dial.serialNum());
-        var knobLength = profile.getLightingConfig().getKnobConfigs().length;
-        var idx = dial.knob() < knobLength ? dial.knob() * 2 : dial.knob() + knobLength;
+        saveService.getProfile(dial.serialNum()).ifPresent(profile -> {
+            var knobLength = profile.getLightingConfig().getKnobConfigs().length;
+            var idx = dial.knob() < knobLength ? dial.knob() * 2 : dial.knob() + knobLength;
 
-        var target = profile.getOscBinding().get(idx);
-        if (target != null) {
-            send(target, "/pcpanel/" + profile.getName() + "/knob" + dial.knob(), dial.value() / 255f);
-        }
+            var target = profile.getOscBinding().get(idx);
+            if (target != null) {
+                send(target, "/pcpanel/" + profile.getName() + "/knob" + dial.knob(), dial.value() / 255f);
+            }
+        });
     }
 
     @EventListener
@@ -126,11 +127,12 @@ public class OSCService {
         }
         var idx = button.button() * 2 + 1;
 
-        var profile = saveService.getProfile(button.serialNum());
-        var target = profile.getOscBinding().get(idx);
-        if (target != null) {
-            send(target, "/pcpanel/" + profile.getName() + "/button" + button.button(), button.pressed() ? 1f : 0f);
-        }
+        saveService.getProfile(button.serialNum()).ifPresent(profile -> {
+            var target = profile.getOscBinding().get(idx);
+            if (target != null) {
+                send(target, "/pcpanel/" + profile.getName() + "/button" + button.button(), button.pressed() ? 1f : 0f);
+            }
+        });
     }
 
     private void send(@Nonnull OSCBinding target, String defaultTarget, float val) {

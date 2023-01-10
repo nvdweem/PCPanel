@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import javax.swing.JOptionPane;
@@ -66,7 +67,7 @@ public class SaveService {
     }
 
     private void tryMigrate(File saveFile) {
-        var oldFile = new File(System.getenv("LOCALAPPDATA"), "PCPanel Software/save.json");
+        @SuppressWarnings("CallToSystemGetenv") var oldFile = new File(System.getenv("LOCALAPPDATA"), "PCPanel Software/save.json");
         if (oldFile.exists()) {
             var result = JOptionPane.showConfirmDialog(null, "No save file found, would you like to migrate from original PCPanel software?", "Migrate", JOptionPane.YES_NO_OPTION);
             if (result == JOptionPane.YES_OPTION) {
@@ -95,12 +96,8 @@ public class SaveService {
         debouncer.debounce(this, this::save, 1, TimeUnit.SECONDS);
     }
 
-    public Profile getProfile(String serialNum) {
-        var device = devices.getDevice(serialNum);
-        if (device == null) {
-            return null;
-        }
-        return get().getDeviceSave(serialNum).ensureCurrentProfile(device.getDeviceType());
+    public Optional<Profile> getProfile(String serialNum) {
+        return devices.getDevice(serialNum).map(device -> get().getDeviceSave(serialNum).ensureCurrentProfile(device.getDeviceType()));
     }
 
     public record SaveEvent(Save save, boolean isNew) {

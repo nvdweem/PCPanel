@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import javax.annotation.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.getpcpanel.device.DeviceType;
 
@@ -40,7 +42,7 @@ public class DeviceSave {
         return profile;
     }
 
-    public Optional<Profile> getProfile(String name) {
+    public Optional<Profile> getProfile(@Nullable String name) {
         if (name == null) {
             return Optional.empty();
         }

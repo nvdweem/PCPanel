@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
+import javax.annotation.Nullable;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -121,7 +123,12 @@ public class SetMuteOverrideService {
 
     public void handleEvent(Predicate<DeviceLightingCapable> isApplicable, boolean isMuted) {
         for (var idDeviceSave : saveService.get().getDevices().entrySet()) {
-            var device = devices.getDevice(idDeviceSave.getKey());
+            var deviceOpt = devices.getDevice(idDeviceSave.getKey());
+            if (deviceOpt.isEmpty()) {
+                log.debug("Device {} not connected", idDeviceSave.getKey());
+                continue;
+            }
+            var device = deviceOpt.get();
             var deviceSave = idDeviceSave.getValue();
             var profile = deviceSave.ensureCurrentProfile(device.getDeviceType());
             var mayBeChangedLC = device.getLightingConfig();
@@ -192,7 +199,8 @@ public class SetMuteOverrideService {
                 var labelOverride = oLightConfig.getSliderLabelConfigs()[slider].getMuteOverrideColor();
                 if (StringUtils.isNoneBlank(labelDeviceOrFollow, labelOverride)) {
                     Runnable toOriginal = () -> mayBeChangedLC.getSliderLabelConfigs()[slider] = oLightConfig.getSliderLabelConfigs()[slider];
-                    Runnable toMute = () -> mayBeChangedLC.getSliderLabelConfigs()[slider] = new SingleSliderLabelLightingConfig().setMode(SingleSliderLabelLightingConfig.SINGLE_SLIDER_LABEL_MODE.STATIC)
+                    Runnable toMute = () -> mayBeChangedLC.getSliderLabelConfigs()[slider] = new SingleSliderLabelLightingConfig().setMode(
+                                                                                                                                          SingleSliderLabelLightingConfig.SINGLE_SLIDER_LABEL_MODE.STATIC)
                                                                                                                                   .setColor(labelOverride)
                                                                                                                                   .setMuteOverrideDeviceOrFollow(labelDeviceOrFollow)
                                                                                                                                   .setMuteOverrideColor(labelOverride);
@@ -204,6 +212,6 @@ public class SetMuteOverrideService {
         return result;
     }
 
-    record DeviceLightingCapable(String deviceOrFollow, Command cmd, Runnable toOriginal, Runnable toMuteColor) {
+    record DeviceLightingCapable(@Nullable String deviceOrFollow, Command cmd, Runnable toOriginal, Runnable toMuteColor) {
     }
 }

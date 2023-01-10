@@ -2,6 +2,8 @@ package com.getpcpanel.device;
 
 import java.util.Objects;
 
+import javax.annotation.Nullable;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 
@@ -55,7 +57,8 @@ public abstract class Device {
     protected DeviceSave save;
     private LightingConfig lightingConfig;
 
-    protected Device(FxHelper fxHelper, SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, ApplicationEventPublisher eventPublisher, String serialNum, DeviceSave deviceSave) {
+    protected Device(FxHelper fxHelper, SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, ApplicationEventPublisher eventPublisher, String serialNum,
+            DeviceSave deviceSave) {
         this.fxHelper = fxHelper;
         this.saveService = saveService;
         this.outputInterpreter = outputInterpreter;
@@ -204,6 +207,7 @@ public abstract class Device {
         addButton.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         addButton.setOnAction(c -> {
             String newName;
+            //noinspection ForLoopWithMissingComponent
             for (var i = 1; ; i++) {
                 newName = "profile " + i;
                 if (save.getProfile(newName).isEmpty())
@@ -259,7 +263,7 @@ public abstract class Device {
         return settingsButton;
     }
 
-    public void setProfile(String name) {
+    public void setProfile(@Nullable String name) {
         save.getProfile(name).ifPresent(profiles::setValue);
     }
 
@@ -307,6 +311,7 @@ public abstract class Device {
         try {
             var finalConfig = config;
             Platform.runLater(() -> showLightingConfigToUI(finalConfig));
+            //noinspection NestedTryStatement
             try {
                 outputInterpreter.sendLightingConfig(getSerialNumber(), getDeviceType(), config, priority);
             } catch (Exception e) {

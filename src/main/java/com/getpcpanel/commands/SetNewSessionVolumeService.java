@@ -48,13 +48,11 @@ public class SetNewSessionVolumeService {
                 .mapToEntry(Map.Entry::getKey, Map.Entry::getValue)
                 .selectValues(CommandVolumeProcess.class)
                 .filterValues(c -> isProcessAndDevice(event, c))
-                .forKeyValue((idAndDial, cmd) -> {
-                    var device = devices.getDevice(idAndDial.id);
-                    if (device != null) {
-                        var current = Util.map(device.getKnobRotation(idAndDial.dial), 0, 100, 0, 255);
-                        eventPublisher.publishEvent(new DeviceCommunicationHandler.KnobRotateEvent(idAndDial.id, idAndDial.dial, current, false));
-                    }
-                });
+                .forKeyValue((idAndDial, cmd) ->
+                        devices.getDevice(idAndDial.id).ifPresent(device -> {
+                            var current = Util.map(device.getKnobRotation(idAndDial.dial), 0, 100, 0, 255);
+                            eventPublisher.publishEvent(new DeviceCommunicationHandler.KnobRotateEvent(idAndDial.id, idAndDial.dial, current, false));
+                        }));
     }
 
     private boolean isProcessAndDevice(AudioSessionEvent event, CommandVolumeProcess c) {

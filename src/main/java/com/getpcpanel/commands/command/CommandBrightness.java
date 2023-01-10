@@ -14,11 +14,12 @@ import lombok.extern.log4j.Log4j2;
 public class CommandBrightness extends Command implements DialAction {
     @Override
     public void execute(DialActionParameters context) {
-        var device = MainFX.getBean(DeviceHolder.class).getDevice(context.device());
-        var lightingConfig = device.getLightingConfig();
-        lightingConfig.setGlobalBrightness(context.dial());
-        device.setLighting(lightingConfig, false);
+        MainFX.getBean(DeviceHolder.class).getDevice(context.device()).ifPresent(device -> {
+            var lightingConfig = device.getLightingConfig();
+            lightingConfig.setGlobalBrightness(context.dial());
+            device.setLighting(lightingConfig, false);
 
-        MainFX.getBean(SaveService.class).debouncedSave();
+            MainFX.getBean(SaveService.class).debouncedSave();
+        });
     }
 }

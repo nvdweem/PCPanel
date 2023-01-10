@@ -26,14 +26,14 @@ import lombok.extern.log4j.Log4j2;
 @Service
 @RequiredArgsConstructor
 public class DeviceScanner implements HidServicesListener {
-    private final ConcurrentHashMap<String, DeviceCommunicationHandler> CONNECTED_DEVICE_MAP = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, DeviceCommunicationHandler> connectedDeviceMap = new ConcurrentHashMap<>();
     private final ApplicationEventPublisher eventPublisher;
     @Autowired @Lazy @Setter private DeviceCommunicationHandlerFactory deviceCommunicationHandlerFactory;
 
     private HidServices hidServices;
 
     public DeviceCommunicationHandler getConnectedDevice(String key) {
-        return CONNECTED_DEVICE_MAP.get(key);
+        return connectedDeviceMap.get(key);
     }
 
     // Not @PostConstruct because the HomePage must have loaded before
@@ -62,7 +62,7 @@ public class DeviceScanner implements HidServicesListener {
             }
         }
         var deviceHandler = deviceCommunicationHandlerFactory.build(key, device, deviceType);
-        CONNECTED_DEVICE_MAP.put(key, deviceHandler);
+        connectedDeviceMap.put(key, deviceHandler);
         deviceHandler.start();
         eventPublisher.publishEvent(new DeviceConnectedEvent(key, deviceType));
     }
@@ -70,7 +70,7 @@ public class DeviceScanner implements HidServicesListener {
     public void deviceRemoved(String key, HidDevice device) {
         if (key == null || device == null)
             throw new IllegalArgumentException("serialNum or device cannot be null serialNum: " + key + " device: " + device);
-        if (CONNECTED_DEVICE_MAP.remove(key) != null)
+        if (connectedDeviceMap.remove(key) != null)
             eventPublisher.publishEvent(new DeviceDisconnectedEvent(key));
     }
 

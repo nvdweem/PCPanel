@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import com.getpcpanel.commands.IconService;
 import com.getpcpanel.commands.command.ButtonAction;
 import com.getpcpanel.commands.command.Command;
+import com.getpcpanel.commands.command.CommandNoOp;
 import com.getpcpanel.commands.command.DialAction;
 import com.getpcpanel.hid.DeviceCommunicationHandler;
 import com.getpcpanel.profile.SaveService;
@@ -115,16 +116,18 @@ public class Overlay extends Popup {
     }
 
     private CommandAndIcon determineIconImage(DeviceCommunicationHandler.KnobRotateEvent event) {
-        var profile = save.getProfile(event.serialNum());
-        var data = profile.getDialData(event.knob());
-        var setting = profile.getKnobSettings(event.knob());
-        return new CommandAndIcon(data, iconService.getImageFrom(data, setting));
+        return save.getProfile(event.serialNum()).map(profile -> {
+            var data = profile.getDialData(event.knob());
+            var setting = profile.getKnobSettings(event.knob());
+            return new CommandAndIcon(data, iconService.getImageFrom(data, setting));
+        }).orElse(CommandAndIcon.DEFAULT);
     }
 
     private CommandAndIcon determineIconImage(DeviceCommunicationHandler.ButtonPressEvent event) {
-        var profile = save.getProfile(event.serialNum());
-        var data = profile.getButtonData(event.button());
-        return new CommandAndIcon(data, iconService.getImageFrom(data, null));
+        return save.getProfile(event.serialNum()).map(profile -> {
+            var data = profile.getButtonData(event.button());
+            return new CommandAndIcon(data, iconService.getImageFrom(data, null));
+        }).orElse(CommandAndIcon.DEFAULT);
     }
 
     @SuppressWarnings("ObjectEquality")
@@ -138,5 +141,6 @@ public class Overlay extends Popup {
     }
 
     private record CommandAndIcon(Command command, Image icon) {
+        static final CommandAndIcon DEFAULT = new CommandAndIcon(CommandNoOp.NOOP, IconService.DEFAULT);
     }
 }
