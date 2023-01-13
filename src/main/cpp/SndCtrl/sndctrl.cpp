@@ -137,7 +137,9 @@ void SndCtrl::SetFocusVolume(float volume) {
     auto pid = GetFocusProcessId();
     bool found = false;
     for (auto& entry : devices) {
-        found = entry.second->SetProcessVolume(pid, volume) || found;
+        if (entry.second->IsOutput()) {
+            found = entry.second->SetProcessVolume(pid, volume) || found;
+        }
     }
     if (found) {
         return; // Volume was set, we are done.
