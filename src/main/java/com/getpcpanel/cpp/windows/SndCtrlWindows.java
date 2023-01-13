@@ -138,7 +138,7 @@ public class SndCtrlWindows implements ISndCtrl {
         synchronized (devices) {
             var deviceId = defaultDeviceOnEmpty(device);
             StreamEx.ofValues(devices)
-                    .filter(d -> "*".equals(device) || deviceId.equals(d.id()))
+                    .filter(d -> ("*".equals(device) && d.dataflow() == DataFlow.dfRender) || deviceId.equals(d.id()))
                     .flatCollection(d -> d.getSessions().values())
                     .filter(s -> (StringUtils.equalsIgnoreCase(fileName, AudioSession.SYSTEM) && s.isSystemSounds()) || (s.executable() != null && StringUtils.equalsIgnoreCase(fileName, s.executable().getName())))
                     .forEach(s -> setProcessVolume(s, volume));
