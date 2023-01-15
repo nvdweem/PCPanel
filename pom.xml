@@ -17,6 +17,7 @@
     <description>PCPanel controller software</description>
 
     <properties>
+        <spring.boot.version>3.0.1</spring.boot.version>
         <project.baseversion>1.6</project.baseversion>
         <project.snapshot>-SNAPSHOT</project.snapshot>
         <!--suppress UnresolvedMavenProperty -->
@@ -48,7 +49,7 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
-            <version>3.0.1</version>
+            <version>${spring.boot.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -265,9 +266,6 @@
                         <configuration>
                             <toolName>jlink</toolName>
                             <removeDirectories>${project.build.directory}/jvm-image/</removeDirectories>
-                            <modulePath>
-                                ${project.basedir}/javafx-${os.detected.classifier}/javafx-jmods-${javafx.version}/
-                            </modulePath>
                             <addModules>${jvm.modules}</addModules>
                             <output>${project.build.directory}/jvm-image</output>
                             <args>

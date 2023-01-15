@@ -31,7 +31,8 @@ jobs:
         uses: actions/setup-java@v3
         with:
           java-version: ${{ env.JAVA_VERSION }}
-          distribution: 'temurin'
+          distribution: 'liberica'
+          java-package: jdk+fx
           cache: 'maven'
       - name: Build with Maven
         run: mvn -B clean install --file pom.xml
@@ -49,7 +50,8 @@ jobs:
         uses: actions/setup-java@v3
         with:
           java-version: ${{ env.JAVA_VERSION }}
-          distribution: 'temurin'
+          distribution: 'liberica'
+          java-package: jdk+fx
           cache: 'maven'
       - name: Build with Maven
         run: mvn -B clean install --file pom.xml
