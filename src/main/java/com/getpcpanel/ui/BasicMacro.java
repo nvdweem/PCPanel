@@ -817,6 +817,8 @@ public class BasicMacro extends Application implements UIInitializer {
             voicemeeterDialParameter.setText(cmd.getFullParam());
             voicemeeterDialType.setValue(cmd.getCt());
         });
+        dialInitializers.put(CommandBrightness.class, (CommandBrightness cmd) -> {
+        });
 
         return dialInitializers;
     }
