@@ -1,12 +1,17 @@
 package com.getpcpanel.ui;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.getpcpanel.MainFX;
 import com.getpcpanel.cpp.AudioDevice;
 import com.getpcpanel.ui.colorpicker.ColorDialog;
+import com.getpcpanel.voicemeeter.Voicemeeter;
+import com.getpcpanel.voicemeeter.Voicemeeter.ButtonType;
+import com.getpcpanel.voicemeeter.Voicemeeter.ControlType;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -20,6 +25,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 
 public interface ILightingDialogMuteOverrideHelper {
@@ -99,7 +105,11 @@ public interface ILightingDialogMuteOverrideHelper {
     private HBox setDeviceProcessOptions(ComboBox<String> deviceProcess, Insets insets) {
         deviceProcess.setEditable(true);
         deviceProcess.setTooltip(new Tooltip("Can be a partial device name"));
-        StreamEx.of(getDevices()).map(AudioDevice::name).sorted().prepend(FOLLOW_PROCESS).forEach(deviceProcess.getItems()::add);
+
+        StreamEx.of(FOLLOW_PROCESS).append(devices())
+                .append(voiceMeeterOptions())
+                .forEach(deviceProcess.getItems()::add);
+
         deviceProcess.setPrefWidth(20000);
         var label = new Label("Follow: ");
         label.setMinWidth(100);
@@ -110,6 +120,21 @@ public interface ILightingDialogMuteOverrideHelper {
         deviceProcessBox.getChildren().add(label);
         deviceProcessBox.getChildren().add(deviceProcess);
         return deviceProcessBox;
+    }
+
+    default StreamEx<String> devices() {
+        return StreamEx.of(getDevices()).map(AudioDevice::name).sorted();
+    }
+
+    default StreamEx<String> voiceMeeterOptions() {
+        var voiceMeeter = MainFX.getBean(Voicemeeter.class);
+        var version = voiceMeeter.getVersion();
+        if (!voiceMeeter.login() || version == null) {
+            return StreamEx.of();
+        }
+
+        return EntryStream.of(Collections.nCopies(voiceMeeter.getNumStrips(), ControlType.STRIP)).append(EntryStream.of(Collections.nCopies(voiceMeeter.getNumBuses(), ControlType.BUS)))
+                          .flatMapKeyValue((idx, ct) -> StreamEx.of(ButtonType.stateButtonsFor(ct, version)).map(sb -> "VoiceMeeter: " + ct.getDn() + " " + (idx + 1) + ", " + sb));
     }
 
     default CheckBox[] allOverrideCheckboxes() {

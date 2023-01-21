@@ -4,9 +4,13 @@ import static com.getpcpanel.util.Util.map;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -16,6 +20,7 @@ import com.getpcpanel.profile.SaveService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import one.util.streamex.StreamEx;
 
 @Log4j2
 @Service
@@ -40,6 +45,14 @@ public final class Voicemeeter {
 
         public String toString() {
             return dn;
+        }
+
+        public static @Nullable ControlType fromDn(@Nonnull String in) {
+            return switch (in.toLowerCase()) {
+                case "input" -> STRIP;
+                case "output" -> BUS;
+                default -> null;
+            };
         }
     }
 
@@ -98,11 +111,26 @@ public final class Voicemeeter {
         REPEAT("mode.Repeat", "Repeat"),
         COMPOSITE("mode.Composite", "Composite");
 
+        private static final Map<VoicemeeterVersion, List<ButtonType>> stateButtons = Map.of(
+                VoicemeeterVersion.VOICEMEETER, List.of(MUTE, A1, B1),
+                VoicemeeterVersion.BANANA, List.of(MUTE, A1, A2, A3, B1, B2),
+                VoicemeeterVersion.POTATO, List.of(MUTE, A1, A2, A3, A4, A5, B1, B2, B3)
+        );
+        private static final List<ButtonType> muteList = List.of(MUTE);
+
         @Getter private final String parameterName;
         private final String dn;
 
         public String toString() {
             return dn;
+        }
+
+        public static List<ButtonType> stateButtonsFor(ControlType type, VoicemeeterVersion version) {
+            return type == ControlType.BUS ? muteList : stateButtons.get(version);
+        }
+
+        public static @Nullable ButtonType fromName(String name) {
+            return StreamEx.of(values()).findFirst(value -> StringUtils.equalsIgnoreCase(value.getParameterName(), name)).orElse(null);
         }
     }
 
@@ -150,22 +178,42 @@ public final class Voicemeeter {
     }
 
     public boolean login() {
-        if (!save.get().isVoicemeeterEnabled())
-            return false;
-        if (hasFinishedConnection)
-            return true;
-        try {
-            if (!hasLoggedIn) {
-                api.init(true);
-                api.login();
-                hasLoggedIn = true;
+        return disconnectIfDisconnectError(() -> {
+            if (!save.get().isVoicemeeterEnabled())
+                return false;
+            if (hasFinishedConnection)
+                return true;
+            try {
+                if (!hasLoggedIn) {
+                    api.init(true);
+                    api.login();
+                    hasLoggedIn = true;
+                }
+                checkParamsDirty();
+                version = api.getVoicemeeterType();
+                hasFinishedConnection = true;
+                return true;
+            } catch (Exception e) {
+                return false;
             }
-            checkParamsDirty();
-            version = api.getVoicemeeterType();
-            hasFinishedConnection = true;
-            return true;
-        } catch (Exception e) {
-            return false;
+        });
+    }
+
+    private void disconnectIfDisconnectError(Runnable r) {
+        disconnectIfDisconnectError(() -> {
+            r.run();
+            return null;
+        });
+    }
+
+    private <T> T disconnectIfDisconnectError(Supplier<T> r) {
+        try {
+            return r.get();
+        } catch (VoicemeeterException vme) {
+            if (vme.isDisconnected()) {
+                hasFinishedConnection = false;
+            }
+            throw vme;
         }
     }
 
@@ -189,9 +237,13 @@ public final class Voicemeeter {
         return versions[version - 1].getBusDials().length;
     }
 
-    public boolean getMuteState(ControlType ct, int idx) {
-        var paramName = makeParameterString(ct, idx, ButtonType.MUTE.getParameterName());
-        return api.getParameterFloat(paramName) > 0;
+    public boolean getButtonState(ControlType ct, int idx, @Nonnull ButtonType type) {
+        var paramName = makeParameterString(ct, idx, type.getParameterName());
+        try {
+            return disconnectIfDisconnectError(() -> api.getParameterFloat(paramName) > 0);
+        } catch (VoicemeeterException e) {
+            return false;
+        }
     }
 
     public @Nullable VoicemeeterVersion getVersion() {
@@ -225,33 +277,39 @@ public final class Voicemeeter {
     }
 
     public void controlButton(ControlType ct, int index, ButtonType bt) {
-        controlButton(makeParameterString(ct, index, bt.getParameterName()), ButtonControlMode.TOGGLE);
+        disconnectIfDisconnectError(() -> controlButton(makeParameterString(ct, index, bt.getParameterName()), ButtonControlMode.TOGGLE));
     }
 
     public void controlButton(String fullParam, ButtonControlMode bt) {
-        if (bt == ButtonControlMode.TOGGLE) {
-            checkParamsDirty();
-            var status = api.getParameterFloat(fullParam) > 0F;
-            api.setParameterFloat(fullParam, status ? 0.0F : 1.0F);
-            checkParamsDirty();
-        } else if (bt == ButtonControlMode.ENABLE) {
-            api.setParameterFloat(fullParam, 1.0F);
-        } else if (bt == ButtonControlMode.DISABLE) {
-            api.setParameterFloat(fullParam, 0.0F);
-        }
+        disconnectIfDisconnectError(() -> {
+            if (bt == ButtonControlMode.TOGGLE) {
+                checkParamsDirty();
+                var status = api.getParameterFloat(fullParam) > 0F;
+                api.setParameterFloat(fullParam, status ? 0.0F : 1.0F);
+                checkParamsDirty();
+            } else if (bt == ButtonControlMode.ENABLE) {
+                api.setParameterFloat(fullParam, 1.0F);
+            } else if (bt == ButtonControlMode.DISABLE) {
+                api.setParameterFloat(fullParam, 0.0F);
+            }
+        });
     }
 
     @Scheduled(fixedRate = 1_000)
     void checkParamsDirtyScheduled() {
-        if (login()) {
-            checkParamsDirty();
-        }
+        disconnectIfDisconnectError(() -> {
+            if (login()) {
+                checkParamsDirty();
+            }
+        });
     }
 
     private void checkParamsDirty() {
-        if (api.areParametersDirty()) {
-            eventPublisher.publishEvent(new VoiceMeeterDirtyEvent());
-        }
+        disconnectIfDisconnectError(() -> {
+            if (api.areParametersDirty()) {
+                eventPublisher.publishEvent(new VoiceMeeterDirtyEvent());
+            }
+        });
     }
 
     public void controlLevel(ControlType ct, int index, DialType dt, int level) {
@@ -259,7 +317,7 @@ public final class Voicemeeter {
     }
 
     public void controlLevel(String fullParam, DialControlMode ct, int level) {
-        api.setParameterFloat(fullParam, convertLevel(ct, level));
+        disconnectIfDisconnectError(() -> api.setParameterFloat(fullParam, convertLevel(ct, level)));
     }
 
     public String makeParameterString(ControlType ct, int index, String parameter) {

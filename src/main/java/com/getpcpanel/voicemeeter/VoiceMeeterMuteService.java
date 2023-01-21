@@ -10,6 +10,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.getpcpanel.ui.LightningChangedToDefaultEvent;
+import com.getpcpanel.voicemeeter.Voicemeeter.ButtonType;
 import com.getpcpanel.voicemeeter.Voicemeeter.ControlType;
 
 import lombok.RequiredArgsConstructor;
@@ -19,11 +20,11 @@ import lombok.RequiredArgsConstructor;
 public class VoiceMeeterMuteService {
     private final Voicemeeter voiceMeeter;
     private final ApplicationEventPublisher eventPublisher;
-    private final Map<ControlType, Map<Integer, Boolean>> muteMap = new EnumMap<>(ControlType.class);
+    private final Map<ControlType, Map<Integer, Map<ButtonType, Boolean>>> toggleMap = new EnumMap<>(ControlType.class);
 
     @EventListener(LightningChangedToDefaultEvent.class)
     public void resetMuteStates() {
-        muteMap.clear();
+        toggleMap.clear();
         if (voiceMeeter.login()) {
             updateMuteState();
         }
@@ -36,14 +37,22 @@ public class VoiceMeeterMuteService {
     }
 
     private void updateMuteStateFor(ControlType type) {
-        for (var idx = 0; idx < voiceMeeter.getNum(type); idx++) {
-            var target = muteMap.computeIfAbsent(type, ignored -> new HashMap<>());
-            var current = target.get(idx);
-            var newState = voiceMeeter.getMuteState(type, idx);
+        var version = voiceMeeter.getVersion();
+        if (version == null) {
+            return;
+        }
 
-            if (!Objects.equals(current, newState)) {
-                target.put(idx, newState);
-                eventPublisher.publishEvent(new VoiceMeeterMuteEvent(type, idx, newState));
+        for (var idx = 0; idx < voiceMeeter.getNum(type); idx++) {
+            var target = toggleMap.computeIfAbsent(type, ignored -> new HashMap<>());
+            var currentStates = target.computeIfAbsent(idx, ignored -> new EnumMap<>(ButtonType.class));
+
+            for (var button : ButtonType.stateButtonsFor(type, version)) {
+                var current = currentStates.get(button);
+                var newState = voiceMeeter.getButtonState(type, idx, button);
+                if (!Objects.equals(current, newState)) {
+                    currentStates.put(button, newState);
+                    eventPublisher.publishEvent(new VoiceMeeterMuteEvent(type, idx, button, newState));
+                }
             }
         }
     }

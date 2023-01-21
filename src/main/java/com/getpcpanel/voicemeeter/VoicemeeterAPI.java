@@ -65,7 +65,11 @@ public final class VoicemeeterAPI {
     }
 
     public boolean areParametersDirty() {
-        return ensureNoError(instance.VBVMR_IsParametersDirty(), 0, 1) == 1;
+        try {
+            return ensureNoError(instance.VBVMR_IsParametersDirty(), 0, 1) == 1;
+        } catch (VoicemeeterException e) {
+            return false;
+        }
     }
 
     public float getParameterFloat(String parameterName) {
@@ -142,8 +146,8 @@ public final class VoicemeeterAPI {
             throw new VoicemeeterException("Unexpected function return value. Function returned null");
         }
         return switch (code) {
-            case -1 -> throw new VoicemeeterException("Unable to get the Voicemeeter client");
-            case -2 -> throw new VoicemeeterException("Unable to get the Voicemeeter server");
+            case -1 -> throw new VoicemeeterException("Unable to get the Voicemeeter client", true);
+            case -2 -> throw new VoicemeeterException("Unable to get the Voicemeeter server", true);
             case -3 -> throw new VoicemeeterException("Not available");
             case -5 -> throw new VoicemeeterException("Structure mismatch");
             default -> {

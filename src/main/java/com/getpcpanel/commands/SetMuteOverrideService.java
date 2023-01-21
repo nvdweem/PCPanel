@@ -3,10 +3,12 @@ package com.getpcpanel.commands;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
@@ -34,6 +36,8 @@ import com.getpcpanel.profile.SingleSliderLightingConfig;
 import com.getpcpanel.ui.ILightingDialogMuteOverrideHelper;
 import com.getpcpanel.ui.LightningChangedToDefaultEvent;
 import com.getpcpanel.voicemeeter.VoiceMeeterMuteEvent;
+import com.getpcpanel.voicemeeter.Voicemeeter.ButtonType;
+import com.getpcpanel.voicemeeter.Voicemeeter.ControlType;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -47,6 +51,7 @@ import one.util.streamex.StreamEx;
 @Service
 @RequiredArgsConstructor
 public class SetMuteOverrideService {
+    private static final Pattern voiceMeeterPattern = Pattern.compile("VoiceMeeter: (Input|Output) (\\d+), (.*)"); // 1: In/Out, 2: Idx, 3: ButtonType
     private final DeviceHolder devices;
     private final ISndCtrl sndCtrl;
     private final SaveService saveService;
@@ -84,6 +89,7 @@ public class SetMuteOverrideService {
     public void onVoiceMeeterSource(VoiceMeeterMuteEvent event) {
         var type = event.ct();
         var idx = event.idx();
+        var button = event.button();
         handleEvent(
                 dlc -> {
                     if (isFollow(dlc)) {
@@ -92,10 +98,19 @@ public class SetMuteOverrideService {
                         } else if (dlc.cmd instanceof CommandVoiceMeeterAdvanced vmAdv) {
                             return StringUtils.startsWithIgnoreCase(vmAdv.getFullParam(), type.name() + "[" + idx + "]");
                         }
+                    } else if (StringUtils.isNotBlank(dlc.deviceOrFollow)) {
+                        var matcher = voiceMeeterPattern.matcher(dlc.deviceOrFollow);
+                        if (!matcher.matches()) {
+                            return false;
+                        }
+                        var inOut = ControlType.fromDn(matcher.group(1));
+                        var gIdx = NumberUtils.toInt(matcher.group(2), -1) - 1;
+                        var bType = ButtonType.fromName(matcher.group(3));
+                        return inOut == type && idx == gIdx && bType == button;
                     }
                     return false;
                 },
-                event.muted());
+                event.state());
     }
 
     @EventListener
