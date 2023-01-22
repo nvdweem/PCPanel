@@ -3,6 +3,7 @@ package com.getpcpanel.voicemeeter;
 import static com.getpcpanel.util.Util.map;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -111,11 +112,7 @@ public final class Voicemeeter {
         REPEAT("mode.Repeat", "Repeat"),
         COMPOSITE("mode.Composite", "Composite");
 
-        private static final Map<VoicemeeterVersion, List<ButtonType>> stateButtons = Map.of(
-                VoicemeeterVersion.VOICEMEETER, List.of(MUTE, A1, B1),
-                VoicemeeterVersion.BANANA, List.of(MUTE, A1, A2, A3, B1, B2),
-                VoicemeeterVersion.POTATO, List.of(MUTE, A1, A2, A3, A4, A5, B1, B2, B3)
-        );
+        private static final Map<VoicemeeterVersion, List<ButtonType>> stateButtons = new HashMap<>();
         private static final List<ButtonType> muteList = List.of(MUTE);
 
         @Getter private final String parameterName;
@@ -125,8 +122,19 @@ public final class Voicemeeter {
             return dn;
         }
 
+        private static Map<VoicemeeterVersion, List<ButtonType>> getStateButtons() {
+            if (stateButtons.isEmpty()) {
+                stateButtons.putAll(Map.of(
+                        VoicemeeterVersion.VOICEMEETER, List.of(MUTE, A1, B1),
+                        VoicemeeterVersion.BANANA, List.of(MUTE, A1, A2, A3, B1, B2),
+                        VoicemeeterVersion.POTATO, List.of(MUTE, A1, A2, A3, A4, A5, B1, B2, B3)
+                ));
+            }
+            return stateButtons;
+        }
+
         public static List<ButtonType> stateButtonsFor(ControlType type, VoicemeeterVersion version) {
-            return type == ControlType.BUS ? muteList : stateButtons.get(version);
+            return type == ControlType.BUS ? muteList : getStateButtons().get(version);
         }
 
         public static @Nullable ButtonType fromName(String name) {
