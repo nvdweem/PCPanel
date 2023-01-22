@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.paint.LinearGradient?>
+<?import javafx.scene.paint.Stop?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.shape.Rectangle?>
+<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="60.0" prefWidth="60.0" style="-fx-background-color: transparent;"
+      xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+    <Circle layoutX="34.0" layoutY="36.0" opacity="0.58" radius="30.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" visible="false"/>
+    <Circle layoutX="30.0" layoutY="30.0" radius="30.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0">
+        <fill>
+            <LinearGradient endX="0.5002773925104023" startX="0.5055016181229773">
+                <stops>
+                    <Stop color="#3b3b3b"/>
+                    <Stop color="#61656b" offset="0.007662835249042146"/>
+                    <Stop color="#acb4c1" offset="1.0"/>
+                </stops>
+            </LinearGradient>
+        </fill>
+    </Circle>
+    <Circle centerX="30.0" centerY="30.0" radius="23.0" stroke="#a7aeb7" strokeType="INSIDE" strokeWidth="0.5">
+        <fill>
+            <LinearGradient endX="0.4603328710124827" startX="0.5188626907073509">
+                <stops>
+                    <Stop color="#acb4c1"/>
+                    <Stop color="#61656b" offset="1.0"/>
+                </stops>
+            </LinearGradient>
+        </fill>
+    </Circle>
+    <Pane fx:id="rotationPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="60.0" prefWidth="60.0">
+        <Rectangle fill="#3c3f42" height="10.0" layoutX="28.0" layoutY="42.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" width="4.0"/>
+        <Circle fill="#3c3f42" layoutX="30.0" layoutY="42.0" radius="2.0" stroke="#2b2b2b" strokeType="INSIDE" strokeWidth="0.0"/>
+    </Pane>
+</Pane>

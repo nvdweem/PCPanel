@@ -380,7 +380,11 @@ public abstract class Device {
 
     public abstract Node getLabel();
 
-    public abstract Button getLightingButton();
+    public boolean hasLighting() {
+        return true;
+    }
+
+    public abstract @Nullable Button getLightingButton();
 
     public abstract Image getPreviewImage();
 

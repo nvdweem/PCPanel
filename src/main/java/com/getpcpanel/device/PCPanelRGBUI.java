@@ -3,6 +3,8 @@ package com.getpcpanel.device;
 import java.io.IOException;
 import java.util.Objects;
 
+import javax.annotation.Nullable;
+
 import org.springframework.context.ApplicationEventPublisher;
 
 import com.getpcpanel.commands.IconService;
@@ -207,7 +209,7 @@ public class PCPanelRGBUI extends Device {
     }
 
     @Override
-    public Button getLightingButton() {
+    public @Nullable Button getLightingButton() {
         return lightingButton;
     }
 

@@ -13,9 +13,7 @@ import com.getpcpanel.hid.InputInterpreter;
 import com.getpcpanel.hid.OutputInterpreter;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.LightingConfig;
-import com.getpcpanel.profile.LightingConfig.LightingMode;
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.profile.SingleKnobLightingConfig.SINGLE_KNOB_MODE;
 import com.getpcpanel.ui.FxHelper;
 import com.getpcpanel.ui.HomePage;
 import com.getpcpanel.util.Util;
@@ -31,40 +29,36 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
-import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
-import javafx.scene.shape.Shape;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public class PCPanelMiniUI extends Device {
+public class PCPanelMapleUI extends Device {
     private final InputInterpreter inputInterpreter;
 
     public static final int KNOB_COUNT = 4;
-    private static final double MAX_ANALOG_VALUE = 100;
     @FXML private Pane lightPanes;
     @FXML private Pane panelPane;
     private Label label;
-    private Button lightingButton;
     private final Button[] knobs = new Button[KNOB_COUNT];
     private final int[] analogValue = new int[KNOB_COUNT];
     private final ImageView[] images = new ImageView[KNOB_COUNT];
-    private static final Image previewImage = new Image(Objects.requireNonNull(PCPanelMiniUI.class.getResource("/assets/PCPanelMini/preview.png")).toExternalForm());
+    private static final Image previewImage = new Image(Objects.requireNonNull(PCPanelMapleUI.class.getResource("/assets/PCPanelMaple/preview.png")).toExternalForm());
     private Stage childDialogStage;
 
-    public PCPanelMiniUI(FxHelper fxHelper, InputInterpreter inputInterpreter, SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, ApplicationEventPublisher eventPublisher, String serialNum, DeviceSave deviceSave) {
+    public PCPanelMapleUI(FxHelper fxHelper, InputInterpreter inputInterpreter, SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, ApplicationEventPublisher eventPublisher, String serialNum,
+            DeviceSave deviceSave) {
         super(fxHelper, saveService, outputInterpreter, iconService, eventPublisher, serialNum, deviceSave);
         this.inputInterpreter = inputInterpreter;
-        var loader = getFxHelper().getLoader(getClass().getResource("/assets/PCPanelMini/PCPanelMini.fxml"));
+        var loader = getFxHelper().getLoader(getClass().getResource("/assets/PCPanelMaple/PCPanelMaple.fxml"));
         loader.setController(this);
         try {
             Pane pane = loader.load();
             initButtons();
             initLabel();
-            initLightingButton();
-            pane.getStylesheets().addAll(Objects.requireNonNull(getClass().getResource("/assets/PCPanelMini/PCPanelMini.css")).toExternalForm());
+            pane.getStylesheets().addAll(Objects.requireNonNull(getClass().getResource("/assets/PCPanelMaple/PCPanelMaple.css")).toExternalForm());
         } catch (IOException e) {
             log.error("Unable to initialize ui", e);
         }
@@ -87,8 +81,6 @@ public class PCPanelMiniUI extends Device {
             return;
         }
         analogValue[knob] = val;
-        if (getLightingConfig().getLightingMode() == LightingMode.CUSTOM)
-            showLightingConfigToUI(getLightingConfig());
         ((Region) knobs[knob].getGraphic()).getChildrenUnmodifiable().get(3).setRotate(Util.analogValueToRotation(val));
     }
 
@@ -98,22 +90,11 @@ public class PCPanelMiniUI extends Device {
     }
 
     private void initLabel() {
-        label = new Label("PCPANEL MINI");
+        label = new Label("PCPANEL Maple");
         var f = Font.loadFont(getClass().getResourceAsStream("/assets/apex-mk2.regular.otf"), 50.0D);
         label.setFont(f);
         label.setUnderline(true);
         label.setTextFill(Paint.valueOf("white"));
-    }
-
-    private void initLightingButton() {
-        lightingButton = new Button("Lighting", getLightingImage());
-        lightingButton.setStyle("-fx-background-color: transparent;");
-        lightingButton.setContentDisplay(ContentDisplay.TOP);
-        lightingButton.setMinHeight(100.0D);
-        lightingButton.setOnAction(e -> {
-            childDialogStage = new Stage();
-            getFxHelper().buildMiniLightingDialog(this).start(childDialogStage);
-        });
     }
 
     private void initButtons() throws IOException {
@@ -122,7 +103,7 @@ public class PCPanelMiniUI extends Device {
         var xDelta = 115.0D;
         var buttonSize = 80;
         for (var i = 0; i < KNOB_COUNT; i++) {
-            var loader = getFxHelper().getLoader(getClass().getResource("/assets/PCPanelMini/knob.fxml"));
+            var loader = getFxHelper().getLoader(getClass().getResource("/assets/PCPanelMaple/knob.fxml"));
             Node nx = loader.load();
             images[i] = buildKnobImageView();
             knobs[i] = new Button("", nx);
@@ -151,7 +132,6 @@ public class PCPanelMiniUI extends Device {
                     log.error("Unable to init button", ex);
                 }
             });
-            var idx = i;
             knobs[i].setOnMouseClicked(c -> {
                 if (c.getButton() == MouseButton.MIDDLE) {
                     try {
@@ -164,8 +144,6 @@ public class PCPanelMiniUI extends Device {
                     } catch (IOException e1) {
                         log.error("Unable to handle button up", e1);
                     }
-                } else if (c.getButton() == MouseButton.SECONDARY) {
-                    getFxHelper().buildMiniLightingDialog(this).select(idx).start(new Stage());
                 }
             });
             panelPane.getChildren().add(knobs[i]);
@@ -183,10 +161,6 @@ public class PCPanelMiniUI extends Device {
         return previewImage;
     }
 
-    private int getKnobCount() {
-        return KNOB_COUNT;
-    }
-
     @Override
     public void setKnobRotation(int knob, int value) {
         Platform.runLater(() -> rotateKnob(knob, value));
@@ -197,22 +171,6 @@ public class PCPanelMiniUI extends Device {
         Platform.runLater(() -> knobs[knob].setOpacity(pressed ? 0.5D : 1.0D));
     }
 
-    private void setKnobUIColorHex(int knob, String color) {
-        var lightPane = (Shape) lightPanes.getChildren().get(knob);
-        lightPane.setFill(Paint.valueOf(color));
-    }
-
-    private void setKnobUIColor(int knob, Paint color) {
-        var lightPane = (Shape) lightPanes.getChildren().get(knob);
-        lightPane.setFill(color);
-    }
-
-    private void setAllKnobUIColor(Paint color) {
-        for (var i = 0; i < getKnobCount(); i++) {
-            setKnobUIColor(i, color);
-        }
-    }
-
     @Override
     public void closeDialogs() {
         if (childDialogStage != null && childDialogStage.isShowing())
@@ -220,46 +178,23 @@ public class PCPanelMiniUI extends Device {
     }
 
     @Override
+    public boolean hasLighting() {
+        return false;
+    }
+
+    @Override
     public @Nullable Button getLightingButton() {
-        return lightingButton;
+        return null;
     }
 
     @Override
     public DeviceType getDeviceType() {
-        return DeviceType.PCPANEL_MINI;
+        return DeviceType.PCPANEL_MAPLE;
     }
 
     @Override
     public void showLightingConfigToUI(LightingConfig config) {
-        var mode = config.getLightingMode();
-        if (mode == LightingMode.ALL_COLOR) {
-            setAllKnobUIColor(Color.valueOf(config.getAllColor()));
-        } else if (mode == LightingMode.SINGLE_COLOR) {
-            for (var i = 0; i < getKnobCount(); i++)
-                setKnobUIColorHex(i, config.getIndividualColors()[i]);
-        } else if (mode == LightingMode.ALL_RAINBOW) {
-            for (var i = 0; i < getKnobCount(); i++)
-                setKnobUIColor(i,
-                        Color.hsb((360 * (getKnobCount() - i - 1) * (0xFF & config.getRainbowPhaseShift())) / 255.0D * getKnobCount(), 1.0D, (0xFF & config.getRainbowBrightness()) / 255.0D));
-        } else if (mode == LightingMode.ALL_WAVE) {
-            for (var i = 0; i < getKnobCount(); i++)
-                setKnobUIColor(i, Color.hsb(360.0D * (0xFF & config.getWaveHue()) / 255.0D, 1.0D, (0xFF & config.getWaveBrightness()) / 255.0D));
-        } else if (mode == LightingMode.ALL_BREATH) {
-            for (var i = 0; i < getKnobCount(); i++)
-                setKnobUIColor(i, Color.hsb(360.0D * (0xFF & config.getBreathHue()) / 255.0D, 1.0D, (0xFF & config.getBreathBrightness()) / 255.0D));
-        } else {
-            var knobConfigs = config.getKnobConfigs();
-            for (var i = 0; i < KNOB_COUNT; i++) {
-                var knobConfig = knobConfigs[i];
-                if (knobConfig.getMode() == SINGLE_KNOB_MODE.STATIC) {
-                    setKnobUIColorHex(i, knobConfig.getColor1());
-                } else if (knobConfig.getMode() == SINGLE_KNOB_MODE.VOLUME_GRADIENT) {
-                    var c1 = Color.web(knobConfig.getColor1());
-                    var c2 = Color.web(knobConfig.getColor2());
-                    setKnobUIColor(i, c1.interpolate(c2, analogValue[i] / MAX_ANALOG_VALUE));
-                }
-            }
-        }
+        // No lighting config available for Maple
     }
 
     @Override

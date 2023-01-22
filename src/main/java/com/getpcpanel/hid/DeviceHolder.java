@@ -50,7 +50,9 @@ public class DeviceHolder {
         var save = saveService.get();
         if (!save.getDevices().containsKey(event.serialNum()))
             save.createSaveForNewDevice(event.serialNum(), event.deviceType());
-        if (event.deviceType() == DeviceType.PCPANEL_RGB) {
+        if (event.deviceType() == DeviceType.PCPANEL_MAPLE) {
+            device = deviceFactory.buildMaple(event.serialNum(), save.getDeviceSave(event.serialNum()));
+        } else if (event.deviceType() == DeviceType.PCPANEL_RGB) {
             device = deviceFactory.buildRgb(event.serialNum(), save.getDeviceSave(event.serialNum()));
         } else if (event.deviceType() == DeviceType.PCPANEL_MINI) {
             device = deviceFactory.buildMini(event.serialNum(), save.getDeviceSave(event.serialNum()));

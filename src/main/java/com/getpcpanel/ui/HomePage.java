@@ -195,9 +195,14 @@ public class HomePage extends Application {
             } else {
                 deviceHolder.getChildren().add(newValue.getDevicePane());
                 titleHolder.getChildren().add(newValue.getLabel());
-                lightingButtonHolder.getChildren().add(newValue.getLightingButton());
+                if (newValue.hasLighting()) {
+                    lightingButtonHolder.getChildren().add(newValue.getLightingButton());
+                    globalBrightness.setVisible(true);
+                    globalBrightness.setValue(newValue.getLightingConfig().getGlobalBrightness());
+                } else {
+                    globalBrightness.setVisible(false);
+                }
                 profileHolder.getChildren().add(newValue.getProfileMenu());
-                globalBrightness.setValue(newValue.getLightingConfig().getGlobalBrightness());
             }
         });
         connectedDeviceList.setCellFactory(DeviceCell.buildFactory(saveService));

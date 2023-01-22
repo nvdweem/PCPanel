@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public enum DeviceType {
+    PCPANEL_MAPLE(-1, -1, 4, 4),
     PCPANEL_RGB(1240, 60242, 4, 4),
     PCPANEL_MINI(1155, 41924, 4, 4),
     PCPANEL_PRO(1155, 41925, 9, 5);

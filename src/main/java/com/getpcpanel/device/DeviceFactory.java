@@ -24,6 +24,10 @@ public class DeviceFactory {
     private final IconService iconService;
     private final ApplicationEventPublisher eventPublisher;
 
+    public PCPanelMapleUI buildMaple(String serialNum, DeviceSave deviceSave) {
+        return new PCPanelMapleUI(fxHelper, inputInterpreter, saveService, outputInterpreter, iconService, eventPublisher, serialNum, deviceSave);
+    }
+
     public PCPanelRGBUI buildRgb(String serialNum, DeviceSave deviceSave) {
         return new PCPanelRGBUI(fxHelper, inputInterpreter, saveService, outputInterpreter, iconService, eventPublisher, deviceSave, serialNum);
     }
