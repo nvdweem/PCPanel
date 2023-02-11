@@ -17,8 +17,11 @@ import com.getpcpanel.profile.Profile;
 
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.stage.Stage;
 import lombok.RequiredArgsConstructor;
+import one.util.streamex.StreamEx;
 
 /**
  * Factory for creating FX dialogs
@@ -76,5 +79,21 @@ public class FxHelper {
 
     public AppFinderDialog buildAppFinderDialog(Stage parentStage, boolean volumeApps) {
         return open(AppFinderDialog.class, parentStage, volumeApps);
+    }
+
+    public void removeTabById(TabPane tabPane, String name) {
+        var tab = getTabById(tabPane, name);
+        if (tab != null)
+            tabPane.getTabs().remove(tab);
+    }
+
+    public @Nullable Tab getTabById(TabPane tabPane, String name) {
+        return StreamEx.of(tabPane.getTabs()).findFirst(tab -> tab.getId().equals(name)).orElse(null);
+    }
+
+    public void selectTabById(TabPane tabPane, String name) {
+        var tab = getTabById(tabPane, name);
+        if (tab != null)
+            tabPane.getSelectionModel().select(tab);
     }
 }
