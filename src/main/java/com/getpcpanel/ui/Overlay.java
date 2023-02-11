@@ -10,15 +10,16 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import com.getpcpanel.commands.IconService;
+import com.getpcpanel.commands.PCPanelControlEvent;
 import com.getpcpanel.commands.command.ButtonAction;
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandNoOp;
 import com.getpcpanel.commands.command.DialAction;
-import com.getpcpanel.hid.DeviceCommunicationHandler;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.spring.ConditionalOnWindows;
 import com.getpcpanel.util.Debouncer;
 
+import jakarta.annotation.Nonnull;
 import jakarta.annotation.PostConstruct;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -73,26 +74,23 @@ public class Overlay extends Popup {
     }
 
     @EventListener
-    public void onKnobRotate(DeviceCommunicationHandler.KnobRotateEvent event) {
+    public void handleControl(PCPanelControlEvent event) {
         if (event.initial()) {
             return;
         }
         showDebounced(() -> determineIconImage(event), command -> {
-            setVisible(volume);
-            volume.setProgress(event.value() / 255f);
-            return true;
-        });
-    }
-
-    @EventListener
-    public void buttonPressEvent(DeviceCommunicationHandler.ButtonPressEvent event) {
-        showDebounced(() -> determineIconImage(event), command -> {
-            setVisible(text);
-            if (command instanceof ButtonAction ba) {
-                text.setText(ba.getOverlayText());
+            if (event.value() != null) {
+                setVisible(volume);
+                volume.setProgress(event.value() / 255f);
                 return true;
+            } else {
+                setVisible(text);
+                if (command instanceof ButtonAction ba) {
+                    text.setText(ba.getOverlayText());
+                    return true;
+                }
+                return false;
             }
-            return false;
         });
     }
 
@@ -115,18 +113,11 @@ public class Overlay extends Popup {
                 || command instanceof ButtonAction ba && ba.hasOverlay();
     }
 
-    private CommandAndIcon determineIconImage(DeviceCommunicationHandler.KnobRotateEvent event) {
+    private @Nonnull CommandAndIcon determineIconImage(PCPanelControlEvent event) {
         return save.getProfile(event.serialNum()).map(profile -> {
             var data = profile.getDialData(event.knob());
-            var setting = profile.getKnobSettings(event.knob());
+            var setting = event.value() == null ? null : profile.getKnobSettings(event.knob());
             return new CommandAndIcon(data, iconService.getImageFrom(data, setting));
-        }).orElse(CommandAndIcon.DEFAULT);
-    }
-
-    private CommandAndIcon determineIconImage(DeviceCommunicationHandler.ButtonPressEvent event) {
-        return save.getProfile(event.serialNum()).map(profile -> {
-            var data = profile.getButtonData(event.button());
-            return new CommandAndIcon(data, iconService.getImageFrom(data, null));
         }).orElse(CommandAndIcon.DEFAULT);
     }
 

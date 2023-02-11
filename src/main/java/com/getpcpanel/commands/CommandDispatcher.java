@@ -26,7 +26,7 @@ public final class CommandDispatcher {
 
     @EventListener
     public void onCommand(PCPanelControlEvent event) {
-        map.put(event.serialNum() + event.knob(), event.cmd());
+        map.put(event.serialNum() + event.knob(), event.buildRunnable());
         handler.doNotify();
     }
 
