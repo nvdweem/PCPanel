@@ -2,6 +2,7 @@ package com.getpcpanel.hid;
 
 import static com.getpcpanel.commands.command.CommandNoOp.isNoOp;
 import static com.getpcpanel.util.Util.map;
+import static java.util.Objects.requireNonNullElse;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -70,11 +71,11 @@ public final class InputInterpreter {
     }
 
     private void determineClick(@Nonnull Profile profile, ClickId clickId, long timeDiff) {
-        var fiveHundred = 500; // TODO: Get from settings
+        var debounceTime = requireNonNullElse(save.get().getDblClickInterval(), 500L);
         var click = profile.getButtonData(clickId.button());
         var dblClick = profile.getDblButtonData(clickId.button());
         var hasDblClick = !isNoOp(dblClick);
-        var shouldDblClick = hasDblClick && timeDiff < fiveHundred;
+        var shouldDblClick = hasDblClick && timeDiff < debounceTime;
 
         if (shouldDblClick) {
             debouncer.prevent(clickId);
@@ -86,8 +87,8 @@ public final class InputInterpreter {
         lastClicks.put(clickId, System.currentTimeMillis());
         if (!isNoOp(click)) {
             var event = new PCPanelControlEvent(clickId.serialNum(), clickId.button(), click, false, null, null);
-            if (hasDblClick) {
-                debouncer.debounce(clickId, () -> eventPublisher.publishEvent(event), fiveHundred, TimeUnit.MILLISECONDS);
+            if (hasDblClick && save.get().isPreventClickWhenDblClick()) {
+                debouncer.debounce(clickId, () -> eventPublisher.publishEvent(event), debounceTime, TimeUnit.MILLISECONDS);
             } else {
                 eventPublisher.publishEvent(event);
             }

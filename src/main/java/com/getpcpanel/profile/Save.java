@@ -18,6 +18,8 @@ public class Save {
     private boolean overlayEnabled;
     private boolean mainUIIcons;
     private boolean startupVersionCheck = true;
+    private Long dblClickInterval = 500L;
+    private boolean preventClickWhenDblClick = true;
     private boolean obsEnabled;
     private String obsAddress = "localhost";
     private String obsPort = "4455";

@@ -50,6 +50,8 @@ public class SettingsDialog extends Application implements UIInitializer {
     @FXML public CheckBox overlay;
     @FXML public CheckBox mainUiIcons;
     @FXML private CheckBox startupVersionCheck;
+    @FXML public TextField dblClickInterval;
+    @FXML private CheckBox preventClickWhenDblClick;
     @FXML private CheckBox obsEnable;
     @FXML private Pane obsControls;
     @FXML private TextField obsAddress;
@@ -114,6 +116,8 @@ public class SettingsDialog extends Application implements UIInitializer {
         save.setOverlayEnabled(overlay.isSelected());
         save.setMainUIIcons(mainUiIcons.isSelected());
         save.setStartupVersionCheck(startupVersionCheck.isSelected());
+        save.setDblClickInterval(NumberUtils.toLong(dblClickInterval.getText(), 500));
+        save.setPreventClickWhenDblClick(preventClickWhenDblClick.isSelected());
         save.setObsEnabled(obsEnable.isSelected());
         save.setObsAddress(obsAddress.getText());
         save.setObsPort(obsPort.getText());
@@ -146,6 +150,8 @@ public class SettingsDialog extends Application implements UIInitializer {
         overlay.setSelected(save.isOverlayEnabled());
         mainUiIcons.setSelected(save.isMainUIIcons());
         startupVersionCheck.setSelected(save.isStartupVersionCheck());
+        dblClickInterval.setText(save.getDblClickInterval() == null ? "500" : save.getDblClickInterval().toString());
+        preventClickWhenDblClick.setSelected(save.isPreventClickWhenDblClick());
         obsEnable.setSelected(save.isObsEnabled());
         obsAddress.setText(save.getObsAddress());
         obsPort.setText(save.getObsPort());
