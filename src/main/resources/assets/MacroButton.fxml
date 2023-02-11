@@ -9,6 +9,14 @@
 <?import javafx.scene.layout.VBox?>
 <TabPane fx:id="root" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="209.0" prefWidth="376.0" rotateGraphic="true" side="LEFT" tabClosingPolicy="UNAVAILABLE"
          xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.MacroButtonController">
+    <Tab fx:id="btnCommandNoop" text="No action">
+        <VBox spacing="15.0">
+            <padding>
+                <Insets left="8.0" top="8.0"/>
+            </padding>
+            <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="No action will be performed"/>
+        </VBox>
+    </Tab>
     <Tab fx:id="btnCommandKeystroke" text="Keystroke">
         <VBox layoutX="181.0" layoutY="200.0" spacing="15.0">
             <padding>

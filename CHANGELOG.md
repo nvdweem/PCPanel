@@ -4,7 +4,7 @@
 
 **New:**
 
-- Nothing yet
+- #38 - Add double click action to buttons
 
 **Fixes:**:
 
@@ -46,7 +46,8 @@
 - [Linux] Allow controlling input volume (#10)
 - Allow configuring what the mute override color follows
 - OBS Websocket 5 (OBS 28) support. Don't use this version of the software if you are still using OBS 27 or lower without the Websocket 5 plugin.
-- [Windows] An option was added to show an overlay when volume is changed and to show icons of the controlled applications in the main ui. From [request](https://www.reddit.com/r/PCPanel/comments/xf14ol)
+- [Windows] An option was added to show an overlay when volume is changed and to show icons of the controlled applications in the main ui.
+  From [request](https://www.reddit.com/r/PCPanel/comments/xf14ol)
 
 **Fixes:**
 
