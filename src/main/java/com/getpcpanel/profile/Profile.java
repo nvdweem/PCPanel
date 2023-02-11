@@ -17,6 +17,7 @@ public class Profile {
     private String name;
     @JsonProperty("isMainProfile") private boolean isMainProfile;
     @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Command> buttonData = new HashMap<>();
+    @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Command> dblButtonData = new HashMap<>();
     @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Command> dialData = new HashMap<>();
     @JsonDeserialize(using = KnobSettingMapDeserializer.class) private Map<Integer, KnobSetting> knobSettings = new HashMap<>();
     private LightingConfig lightingConfig;
@@ -53,8 +54,16 @@ public class Profile {
         return buttonData.get(button);
     }
 
+    public Command getDblButtonData(int button) {
+        return dblButtonData.get(button);
+    }
+
     public void setButtonData(int button, Command data) {
         buttonData.put(button, data);
+    }
+
+    public void setDblButtonData(int button, Command data) {
+        dblButtonData.put(button, data);
     }
 
     public Command getDialData(int dial) {

@@ -58,6 +58,7 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
@@ -78,6 +79,7 @@ public class MacroButtonController {
     private Command buttonData;
     private DeviceSave deviceSave;
     private Profile profile;
+    @FXML @Getter private TabPane root;
 
     @FXML private AdvancedDevices applicationDeviceDevicesController;
     @FXML private AdvancedDevices defaultDeviceAdvancedController;
@@ -118,7 +120,6 @@ public class MacroButtonController {
     @FXML private RadioButton rdio_mute_mute;
     @FXML private RadioButton rdio_mute_toggle;
     @FXML private RadioButton rdio_mute_unmute;
-    @FXML private TabPane buttonTabPane;
     @FXML private TabPane voicemeeterTabPaneButton;
     @FXML private TextField endProcessField;
     @FXML private TextField keystrokeField;
@@ -132,17 +133,11 @@ public class MacroButtonController {
     private boolean k_win;
     private boolean k_ctrl;
 
-    public TabPane getRoot() {
-        return buttonTabPane;
-    }
-
-    public void initController(Stage stage, boolean hasButton, DeviceSave deviceSave, Profile profile, int dialNum) {
+    public void initController(Stage stage, DeviceSave deviceSave, Profile profile, Command buttonData) {
         this.stage = stage;
         this.profile = profile;
         this.deviceSave = deviceSave;
-        if (hasButton) {
-            buttonData = profile.getButtonData(dialNum);
-        }
+        this.buttonData = buttonData;
 
         postInit();
     }
@@ -155,9 +150,9 @@ public class MacroButtonController {
         applicationDeviceDevicesController.setAllowRemove(true);
         applicationDeviceDevicesController.setOnlyMedia(true);
 
-        var toRemove = StreamEx.of(buttonTabPane.getTabs()).remove(osHelper::isSupported).toSet();
-        buttonTabPane.getTabs().removeAll(toRemove);
-        Util.adjustTabs(buttonTabPane, 150, 30);
+        var toRemove = StreamEx.of(root.getTabs()).remove(osHelper::isSupported).toSet();
+        root.getTabs().removeAll(toRemove);
+        Util.adjustTabs(root, 150, 30);
 
         if (obs.isConnected()) {
             var sourcesWithAudio = obs.getSourcesWithAudio();
@@ -170,7 +165,7 @@ public class MacroButtonController {
             } else if (buttonData instanceof CommandObsSetScene ss) {
                 obsSetScene.getItems().add(ss.getScene());
             } else {
-                fxHelper.removeTabById(buttonTabPane, "btnCommandObs");
+                fxHelper.removeTabById(root, "btnCommandObs");
             }
         }
         voicemeeterButtonType.getItems().addAll(Voicemeeter.ButtonControlMode.values());
@@ -201,7 +196,7 @@ public class MacroButtonController {
                     voicemeeterBasicButton.getItems().add(vmb.getBt());
                 }
             } else {
-                fxHelper.removeTabById(buttonTabPane, "btnCommandVoiceMeeter");
+                fxHelper.removeTabById(root, "btnCommandVoiceMeeter");
             }
         }
         var curProfile = profile.getName();
@@ -268,15 +263,15 @@ public class MacroButtonController {
     private void initButtonFields() {
         if (buttonData == null || buttonData.equals(NOOP))
             return;
-        fxHelper.selectTabById(buttonTabPane, "btn" + buttonData.getClass().getSimpleName());
-        fxHelper.selectTabById(buttonTabPane, "btn" + buttonData.getClass().getSuperclass().getSimpleName());
+        fxHelper.selectTabById(root, "btn" + buttonData.getClass().getSimpleName());
+        fxHelper.selectTabById(root, "btn" + buttonData.getClass().getSuperclass().getSimpleName());
 
         //noinspection unchecked,rawtypes
         ((Consumer) getButtonInitializer().getOrDefault(buttonData.getClass(), x -> log.error("No initializer for {}", x))).accept(buttonData); // Yuck :(
     }
 
-    public Command determineButtonCommand(String buttonType) {
-        return switch (buttonType) {
+    public Command determineButtonCommand() {
+        return switch (fxHelper.getSelectedTabId(root)) {
             case "btnCommandKeystroke" -> new CommandKeystroke(keystrokeField.getText());
             case "btnCommandShortcut" -> new CommandShortcut(shortcutField.getText());
             case "btnCommandMedia" -> new CommandMedia(CommandMedia.VolumeButton.valueOf(((RadioButton) mediagroup.getSelectedToggle()).getId()), cmdMediaSpotify.isSelected());
@@ -387,9 +382,7 @@ public class MacroButtonController {
         var sourceRenderer = new SoundDeviceExportFactory(soundDeviceSource);
         disableDeviceToggleOtherTypes(sourceRenderer);
         soundDeviceSource.setCellFactory(sourceRenderer);
-        soundDeviceSource.getItems().addListener((ListChangeListener<AudioDevice>) change -> {
-            disableDeviceToggleOtherTypes(sourceRenderer);
-        });
+        soundDeviceSource.getItems().addListener((ListChangeListener<AudioDevice>) change -> disableDeviceToggleOtherTypes(sourceRenderer));
     }
 
     private void disableDeviceToggleOtherTypes(SoundDeviceExportFactory sourceRenderer) {
@@ -474,7 +467,8 @@ public class MacroButtonController {
             }
         });
         buttonInitializers.put(CommandVolumeDefaultDeviceAdvanced.class,
-                (CommandVolumeDefaultDeviceAdvanced cmd) -> defaultDeviceAdvancedController.set(cmd.getName(), cmd.getMediaPb(), cmd.getMediaRec(), cmd.getCommunicationPb(), cmd.getCommunicationRec()));
+                (CommandVolumeDefaultDeviceAdvanced cmd) -> defaultDeviceAdvancedController.set(cmd.getName(), cmd.getMediaPb(), cmd.getMediaRec(), cmd.getCommunicationPb(),
+                        cmd.getCommunicationRec()));
         buttonInitializers.put(CommandObsSetScene.class, (CommandObsSetScene cmd) -> {
             obs_rdio_SetScene.setSelected(true);
             obsSetScene.getSelectionModel().select(cmd.getScene());

@@ -16,7 +16,6 @@ import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.Profile;
 
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.stage.Stage;
@@ -38,7 +37,7 @@ public class FxHelper {
     public <T> T open(Class<T> dialogClass, Object... initializer) {
         var loader = getLoader(getClass().getResource("/assets/%s.fxml".formatted(dialogClass.getSimpleName())));
         try {
-            Node pane = loader.load();
+            loader.load();
             var controller = loader.<T>getController();
             if (controller instanceof UIInitializer init) {
                 init.initUI(initializer);
@@ -95,5 +94,10 @@ public class FxHelper {
         var tab = getTabById(tabPane, name);
         if (tab != null)
             tabPane.getSelectionModel().select(tab);
+    }
+
+    public String getSelectedTabId(TabPane tabPane) {
+        var tab = tabPane.getSelectionModel().getSelectedItem();
+        return (tab == null) ? "" : tab.getId();
     }
 }

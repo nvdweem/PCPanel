@@ -9,7 +9,6 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
@@ -67,6 +66,7 @@ import one.util.streamex.StreamEx;
 public class BasicMacro extends Application implements UIInitializer {
     private static final Pattern NUMBER_PATTERN = Pattern.compile("\\d*");
     private static final Pattern NOT_NUMBER_PATTERN = Pattern.compile("[^\\d]");
+    public static final String MUST_SELECT_A_CONTROL_TYPE_MESSAGE = "Must Select a Control Type";
     private final SaveService saveService;
     private final OBS obs;
     private final Voicemeeter voiceMeeter;
@@ -76,6 +76,7 @@ public class BasicMacro extends Application implements UIInitializer {
 
     @FXML private Pane root;
     @FXML private MacroButtonController singleClickPanelController;
+    @FXML private MacroButtonController doubleClickPanelController;
 
     @FXML private Pane topPane;
     @FXML private TabPane mainTabPane;
@@ -111,23 +112,34 @@ public class BasicMacro extends Application implements UIInitializer {
     private int dialNum;
     private KnobSetting knobSetting;
     private Collection<AudioDevice> allSoundDevices;
-    private boolean hasButton;
     private String name;
-    private String analogType;
 
     @Override
     public <T> void initUI(T... args) {
         var device = getUIArg(Device.class, args, 0);
         dialNum = getUIArg(Integer.class, args, 1);
-        hasButton = getUIArg(Boolean.class, args, 2, true);
+        var hasButton = getUIArg(Boolean.class, args, 2, true);
         name = getUIArg(String.class, args, 3);
-        analogType = getUIArg(String.class, args, 4);
+        var analogType = getUIArg(String.class, args, 4);
 
         var deviceSave = saveService.get().getDeviceSave(device.getSerialNumber());
         profile = deviceSave.ensureCurrentProfile(device.getDeviceType());
-        singleClickPanelController.initController(stage, hasButton, deviceSave, profile, dialNum);
         volData = profile.getDialData(dialNum);
         knobSetting = profile.getKnobSettings(dialNum);
+
+        // Do this before possibly removing the first 2 tabs
+        if (analogType != null) {
+            mainTabPane.getTabs().get(2).setText(analogType);
+        }
+
+        if (hasButton) {
+            singleClickPanelController.initController(stage, deviceSave, profile, profile.getButtonData(dialNum));
+            doubleClickPanelController.initController(stage, deviceSave, profile, profile.getDblButtonData(dialNum));
+        } else {
+            mainTabPane.getTabs().remove(0);
+            mainTabPane.getTabs().remove(0);
+        }
+
         postInit();
     }
 
@@ -145,28 +157,24 @@ public class BasicMacro extends Application implements UIInitializer {
         basicmacro.show();
     }
 
-    private @Nonnull String getSelectedTabId(TabPane tabPane) {
-        var tab = tabPane.getSelectionModel().getSelectedItem();
-        return (tab == null) ? "" : tab.getId();
-    }
-
     @FXML
     private void ok(ActionEvent event) {
-        var buttonType = getSelectedTabId(singleClickPanelController.getRoot());
-        var dialType = getSelectedTabId(dialTabPane);
-        var buttonData = singleClickPanelController.determineButtonCommand(buttonType);
+        var dialType = fxHelper.getSelectedTabId(dialTabPane);
+        var buttonData = singleClickPanelController.determineButtonCommand();
+        var dblButtonData = doubleClickPanelController.determineButtonCommand();
         volData = determineVolCommand(dialType);
         knobSetting.setMinTrim(NumberUtils.toInt(trimMin.getText(), 0));
         knobSetting.setMaxTrim(NumberUtils.toInt(trimMax.getText(), 100));
         knobSetting.setOverlayIcon(iconFld.getText());
         knobSetting.setButtonDebounce(NumberUtils.toInt(buttonDebounceTime.getText(), 50));
         knobSetting.setLogarithmic(logarithmic.isSelected());
-        if (hasButton)
-            profile.setButtonData(dialNum, buttonData);
+        profile.setButtonData(dialNum, buttonData);
+        profile.setDblButtonData(dialNum, dblButtonData);
         profile.setDialData(dialNum, volData);
         if (log.isDebugEnabled()) {
             log.debug("-----------------");
             log.debug(buttonData);
+            log.debug(dblButtonData);
             log.debug(volData);
             log.debug("-----------------");
         }
@@ -185,7 +193,8 @@ public class BasicMacro extends Application implements UIInitializer {
             }
             case "dialCommandVolumeFocus" -> new CommandVolumeFocus();
             case "dialCommandVolumeDevice" -> new CommandVolumeDevice(
-                    rdio_device_specific.isSelected() && volumedevice.getSelectionModel().getSelectedItem() != null ? volumedevice.getSelectionModel().getSelectedItem().id() : "", cb_device_unmute.isSelected());
+                    rdio_device_specific.isSelected() && volumedevice.getSelectionModel().getSelectedItem() != null ? volumedevice.getSelectionModel().getSelectedItem().id() : "",
+                    cb_device_unmute.isSelected());
             case "dialCommandObs" -> new CommandObsSetSourceVolume(obsAudioSources.getSelectionModel().getSelectedItem());
             case "dialCommandVoiceMeeter" -> {
                 if (voicemeeterTabPaneDial.getSelectionModel().getSelectedIndex() == 0) {
@@ -193,7 +202,7 @@ public class BasicMacro extends Application implements UIInitializer {
                 }
                 if (voicemeeterTabPaneDial.getSelectionModel().getSelectedIndex() == 1) {
                     if (voicemeeterDialType.getValue() == null) {
-                        showError("Must Select a Control Type");
+                        showControlTypeError();
                         yield NOOP;
                     }
                     yield new CommandVoiceMeeterAdvanced(voicemeeterDialParameter.getText(), voicemeeterDialType.getValue());
@@ -205,8 +214,8 @@ public class BasicMacro extends Application implements UIInitializer {
         };
     }
 
-    private void showError(String error) {
-        var a = new Alert(AlertType.ERROR, error);
+    private void showControlTypeError() {
+        var a = new Alert(AlertType.ERROR, MUST_SELECT_A_CONTROL_TYPE_MESSAGE);
         a.initOwner(stage);
         a.show();
     }
@@ -224,10 +233,6 @@ public class BasicMacro extends Application implements UIInitializer {
     private void postInit() {
         appVolumeController.setPickType(PickProcessesController.PickType.soundSource);
 
-        if (analogType != null)
-            mainTabPane.getTabs().get(1).setText(analogType);
-        if (!hasButton)
-            mainTabPane.getTabs().remove(0);
         Util.adjustTabs(dialTabPane, 150, 30);
         if (obs.isConnected()) {
             var sourcesWithAudio = obs.getSourcesWithAudio();

@@ -234,7 +234,11 @@ public final class OBS {
         if (!isConnected() || controller == null) {
             return Map.of();
         }
-        var sources = controller.getInputList(null, WAIT_TIME_MS).getInputs();
+        var result = controller.getInputList(null, WAIT_TIME_MS);
+        if (result == null) {
+            return Map.of();
+        }
+        var sources = result.getInputs();
         return getNameToMuteState(sources);
     }
 

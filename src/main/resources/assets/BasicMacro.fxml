@@ -18,13 +18,17 @@
 <?import javafx.scene.layout.VBox?>
 <VBox fx:id="root" prefHeight="630.0" prefWidth="890.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.BasicMacro">
     <TabPane fx:id="mainTabPane" layoutX="70.0" layoutY="72.0" prefHeight="523.0" prefWidth="723.0" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
-        <Tab fx:id="buttonpane" closable="false" text="Button">
+        <Tab closable="false" text="Click">
             <fx:include fx:id="singleClickPanel" source="MacroButton.fxml"/>
+        </Tab>
+        <Tab closable="false" text="Dbl click">
+            <fx:include fx:id="doubleClickPanel" source="MacroButton.fxml"/>
         </Tab>
 
         <Tab fx:id="dialpane" closable="false" text="Dial">
             <content>
-                <TabPane fx:id="dialTabPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="209.0" prefWidth="376.0" rotateGraphic="true" side="LEFT" tabClosingPolicy="UNAVAILABLE">
+                <TabPane fx:id="dialTabPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="209.0" prefWidth="376.0" rotateGraphic="true" side="LEFT"
+                         tabClosingPolicy="UNAVAILABLE">
                     <tabs>
                         <Tab fx:id="dialCommandVolumeProcess" text="App Volume">
                             <content>
@@ -54,10 +58,12 @@
                                                         <ToggleGroup fx:id="app_volume_output_group"/>
                                                     </toggleGroup>
                                                 </RadioButton>
-                                                <RadioButton fx:id="rdio_app_output_all" mnemonicParsing="false" onAction="#onRadioButton" text="All Output Devices" toggleGroup="$app_volume_output_group" GridPane.rowIndex="1"/>
+                                                <RadioButton fx:id="rdio_app_output_all" mnemonicParsing="false" onAction="#onRadioButton" text="All Output Devices"
+                                                             toggleGroup="$app_volume_output_group" GridPane.rowIndex="1"/>
                                                 <HBox alignment="CENTER_LEFT" spacing="10.0" GridPane.rowIndex="2">
                                                     <children>
-                                                        <RadioButton fx:id="rdio_app_output_specific" mnemonicParsing="false" onAction="#onRadioButton" text="Specific Device" toggleGroup="$app_volume_output_group"/>
+                                                        <RadioButton fx:id="rdio_app_output_specific" mnemonicParsing="false" onAction="#onRadioButton" text="Specific Device"
+                                                                     toggleGroup="$app_volume_output_group"/>
 
                                                         <ChoiceBox fx:id="app_vol_output_device" prefHeight="31.0" prefWidth="504.0"/>
                                                     </children>
@@ -78,7 +84,8 @@
 
                                         <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="Control currently focused Application"/>
 
-                                        <Label maxWidth="1.7976931348623157E308" prefHeight="76.0" text="The dial will control the volume of the application that is in focus at the time.  No further configuration is required." wrapText="true"/>
+                                        <Label maxWidth="1.7976931348623157E308" prefHeight="76.0"
+                                               text="The dial will control the volume of the application that is in focus at the time.  No further configuration is required." wrapText="true"/>
                                     </children>
                                 </VBox>
                             </content>
@@ -98,7 +105,8 @@
                                         </RadioButton>
                                         <HBox alignment="CENTER_LEFT" spacing="10.0">
                                             <children>
-                                                <RadioButton fx:id="rdio_device_specific" layoutX="5.0" layoutY="80.0" mnemonicParsing="false" onAction="#onRadioButton" text="Specific Device" toggleGroup="$devicesoundgroup"/>
+                                                <RadioButton fx:id="rdio_device_specific" layoutX="5.0" layoutY="80.0" mnemonicParsing="false" onAction="#onRadioButton" text="Specific Device"
+                                                             toggleGroup="$devicesoundgroup"/>
 
                                                 <ChoiceBox fx:id="volumedevice" prefHeight="31.0" prefWidth="514.0"/>
                                             </children>
