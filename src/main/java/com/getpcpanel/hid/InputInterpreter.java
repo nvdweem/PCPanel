@@ -1,10 +1,12 @@
 package com.getpcpanel.hid;
 
+import static com.getpcpanel.commands.command.CommandNoOp.isNoOp;
 import static com.getpcpanel.util.Util.map;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
 
@@ -13,10 +15,10 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.getpcpanel.commands.PCPanelControlEvent;
-import com.getpcpanel.commands.command.CommandNoOp;
 import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.util.Debouncer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -28,6 +30,7 @@ public final class InputInterpreter {
     private final SaveService save;
     private final DeviceHolder devices;
     private final ApplicationEventPublisher eventPublisher;
+    private final Debouncer debouncer;
     private final Map<ClickId, Long> lastClicks = new HashMap<>();
 
     @EventListener
@@ -61,22 +64,33 @@ public final class InputInterpreter {
     private void doClickAction(String serialNum, int knob) {
         save.getProfile(serialNum).ifPresent(profile -> {
             var clickId = new ClickId(serialNum, knob);
-            var lastClick = lastClicks.getOrDefault(clickId, 0L);
-            var timeDiff = System.currentTimeMillis() - lastClick;
-
-            determineClick(profile, serialNum, knob, timeDiff);
-            lastClicks.put(clickId, System.currentTimeMillis());
+            var timeDiff = System.currentTimeMillis() - lastClicks.getOrDefault(clickId, 0L);
+            determineClick(profile, clickId, timeDiff);
         });
     }
 
-    private void determineClick(@Nonnull Profile profile, String serialNum, int knob, long timeDiff) {
-        var dblClick = profile.getDblButtonData(knob);
-        var shouldDblClick = dblClick != null && timeDiff < 500;
-        var data = shouldDblClick ? dblClick : profile.getButtonData(knob);
+    private void determineClick(@Nonnull Profile profile, ClickId clickId, long timeDiff) {
+        var fiveHundred = 500; // TODO: Get from settings
+        var click = profile.getButtonData(clickId.button());
+        var dblClick = profile.getDblButtonData(clickId.button());
+        var hasDblClick = !isNoOp(dblClick);
+        var shouldDblClick = hasDblClick && timeDiff < fiveHundred;
 
-        //noinspection ObjectEquality
-        if (data != null && data != CommandNoOp.NOOP) {
-            eventPublisher.publishEvent(new PCPanelControlEvent(serialNum, knob, data, false, null, null));
+        if (shouldDblClick) {
+            debouncer.prevent(clickId);
+            eventPublisher.publishEvent(new PCPanelControlEvent(clickId.serialNum(), clickId.button(), dblClick, false, null, null));
+            lastClicks.remove(clickId);
+            return;
+        }
+
+        lastClicks.put(clickId, System.currentTimeMillis());
+        if (!isNoOp(click)) {
+            var event = new PCPanelControlEvent(clickId.serialNum(), clickId.button(), click, false, null, null);
+            if (hasDblClick) {
+                debouncer.debounce(clickId, () -> eventPublisher.publishEvent(event), fiveHundred, TimeUnit.MILLISECONDS);
+            } else {
+                eventPublisher.publishEvent(event);
+            }
         }
     }
 

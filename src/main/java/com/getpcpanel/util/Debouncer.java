@@ -36,6 +36,13 @@ public class Debouncer {
         }
     }
 
+    public void prevent(Object key) {
+        var prev = delayedMap.remove(key);
+        if (prev != null) {
+            prev.cancel(true);
+        }
+    }
+
     @PreDestroy
     public void shutdown() {
         scheduler.shutdownNow();
