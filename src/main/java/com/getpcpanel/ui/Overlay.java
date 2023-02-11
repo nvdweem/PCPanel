@@ -115,7 +115,7 @@ public class Overlay extends Popup {
 
     private @Nonnull CommandAndIcon determineIconImage(PCPanelControlEvent event) {
         return save.getProfile(event.serialNum()).map(profile -> {
-            var data = profile.getDialData(event.knob());
+            var data = event.cmd();
             var setting = event.value() == null ? null : profile.getKnobSettings(event.knob());
             return new CommandAndIcon(data, iconService.getImageFrom(data, setting));
         }).orElse(CommandAndIcon.DEFAULT);
