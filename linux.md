@@ -1,6 +1,10 @@
 # Linux installation
 
-Note: The software is not actively being developed for Linux, but attempts are being made to stay/become more Linux compatible. If there are any issues please report them via an issue.
+Note: The software is not actively being developed for Linux, but attempts are being made to
+stay/become more Linux compatible. If there are any issues please report them via an issue.
+
+Due to there being a lot of Linux distributions there are bound to be features that won't work.
+There are also some features that are not possible (anymore) on Linux like the focus volume on Wayland.
 
 ## Preparation
 

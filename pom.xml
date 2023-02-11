@@ -18,8 +18,8 @@
 
     <properties>
         <spring.boot.version>3.0.2</spring.boot.version>
-        <project.baseversion>1.6</project.baseversion>
-        <project.snapshot></project.snapshot>
+        <project.baseversion>1.7</project.baseversion>
+        <project.snapshot>-SNAPSHOT</project.snapshot>
         <!--suppress UnresolvedMavenProperty -->
         <github.build>${env.GITHUB_RUN_NUMBER}</github.build>
 
@@ -39,7 +39,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <javafx.version>18.0.2</javafx.version>
-        <jna.version>5.12.1</jna.version>
+        <jna.version>5.13.0</jna.version>
         <asm.version>9.4</asm.version>
 
         <module.name>ALL-UNNAMED</module.name>
