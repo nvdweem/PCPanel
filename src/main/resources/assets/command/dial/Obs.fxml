@@ -1,0 +1,15 @@
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.layout.VBox?>
+<Tab fx:id="root" text="OBS" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
+     fx:controller="com.getpcpanel.ui.command.dial.ObsController">
+    <VBox spacing="15.0">
+        <padding>
+            <Insets left="8.0" top="8.0"/>
+        </padding>
+        <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" prefWidth="205.0" text="Select an OBS Audio Source to Control"/>
+        <ChoiceBox fx:id="obsAudioSources" prefHeight="31.0" prefWidth="299.0"/>
+    </VBox>
+</Tab>

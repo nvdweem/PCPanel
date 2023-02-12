@@ -1,0 +1,32 @@
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<Tab text="Device Volume" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
+     fx:controller="com.getpcpanel.ui.command.dial.VolumeDeviceController">
+    <VBox spacing="15.0">
+        <padding>
+            <Insets left="8.0" top="8.0"/>
+        </padding>
+
+        <Label maxWidth="1.7976931348623157E308" prefHeight="28.0" text="Control the System Volume"/>
+        <CheckBox fx:id="cb_device_unmute" mnemonicParsing="false" text="Unmute on volume change"/>
+
+        <RadioButton fx:id="rdio_device_default" layoutX="5.0" layoutY="55.0" mnemonicParsing="false" onAction="#onRadioButton" selected="true" text="Default Device">
+            <toggleGroup>
+                <ToggleGroup fx:id="devicesoundgroup"/>
+            </toggleGroup>
+        </RadioButton>
+        <HBox alignment="CENTER_LEFT" spacing="10.0">
+            <RadioButton fx:id="rdio_device_specific" layoutX="5.0" layoutY="80.0" mnemonicParsing="false" onAction="#onRadioButton" text="Specific Device"
+                         toggleGroup="$devicesoundgroup"/>
+
+            <ChoiceBox fx:id="volumedevice" prefHeight="31.0" prefWidth="514.0"/>
+        </HBox>
+    </VBox>
+</Tab>

@@ -3,18 +3,12 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.CheckBox?>
-<?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.RadioButton?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.control.ToggleGroup?>
-<?import javafx.scene.layout.ColumnConstraints?>
-<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 <VBox fx:id="root" prefHeight="670.0" prefWidth="890.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.BasicMacro">
     <TabPane fx:id="mainTabPane" layoutX="70.0" layoutY="72.0" prefHeight="523.0" prefWidth="723.0" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
@@ -30,172 +24,12 @@
                 <TabPane fx:id="dialTabPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="209.0" prefWidth="376.0" rotateGraphic="true" side="LEFT"
                          tabClosingPolicy="UNAVAILABLE">
                     <tabs>
-                        <Tab fx:id="dialCommandVolumeProcess" text="App Volume">
-                            <content>
-                                <VBox layoutX="-77.0" layoutY="-61.0" spacing="15.0">
-                                    <padding>
-                                        <Insets left="8.0" right="8.0" top="8.0"/>
-                                    </padding>
-                                    <children>
-                                        <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="Enter a process to control volume"/>
-                                        <fx:include fx:id="appVolume" source="PickProcesses.fxml"/>
-                                        <CheckBox fx:id="cb_app_unmute" mnemonicParsing="false" text="Unmute on volume change"/>
-
-                                        <Label prefHeight="25.0" prefWidth="305.0" text="Sound Device to control the application on"/>
-                                        <GridPane vgap="5.0">
-                                            <columnConstraints>
-                                                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
-                                            </columnConstraints>
-                                            <rowConstraints>
-                                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-                                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-                                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-                                            </rowConstraints>
-                                            <children>
-
-                                                <RadioButton fx:id="rdio_app_output_default" mnemonicParsing="false" onAction="#onRadioButton" selected="true" text="Default Device">
-                                                    <toggleGroup>
-                                                        <ToggleGroup fx:id="app_volume_output_group"/>
-                                                    </toggleGroup>
-                                                </RadioButton>
-                                                <RadioButton fx:id="rdio_app_output_all" mnemonicParsing="false" onAction="#onRadioButton" text="All Output Devices"
-                                                             toggleGroup="$app_volume_output_group" GridPane.rowIndex="1"/>
-                                                <HBox alignment="CENTER_LEFT" spacing="10.0" GridPane.rowIndex="2">
-                                                    <children>
-                                                        <RadioButton fx:id="rdio_app_output_specific" mnemonicParsing="false" onAction="#onRadioButton" text="Specific Device"
-                                                                     toggleGroup="$app_volume_output_group"/>
-
-                                                        <ChoiceBox fx:id="app_vol_output_device" prefHeight="31.0" prefWidth="504.0"/>
-                                                    </children>
-                                                </HBox>
-                                            </children>
-                                        </GridPane>
-                                    </children>
-                                </VBox>
-                            </content>
-                        </Tab>
-                        <Tab fx:id="dialCommandVolumeFocus" text="Focus Volume">
-                            <content>
-                                <VBox spacing="15.0">
-                                    <padding>
-                                        <Insets left="8.0" top="8.0"/>
-                                    </padding>
-                                    <children>
-
-                                        <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="Control currently focused Application"/>
-
-                                        <Label maxWidth="1.7976931348623157E308" prefHeight="76.0"
-                                               text="The dial will control the volume of the application that is in focus at the time.  No further configuration is required." wrapText="true"/>
-                                    </children>
-                                </VBox>
-                            </content>
-                        </Tab>
-                        <Tab fx:id="dialCommandVolumeDevice" text="Device Volume">
-                            <content>
-                                <VBox spacing="15.0">
-                                    <children>
-
-                                        <Label maxWidth="1.7976931348623157E308" prefHeight="28.0" text="Control the System Volume"/>
-                                        <CheckBox fx:id="cb_device_unmute" mnemonicParsing="false" text="Unmute on volume change"/>
-
-                                        <RadioButton fx:id="rdio_device_default" layoutX="5.0" layoutY="55.0" mnemonicParsing="false" onAction="#onRadioButton" selected="true" text="Default Device">
-                                            <toggleGroup>
-                                                <ToggleGroup fx:id="devicesoundgroup"/>
-                                            </toggleGroup>
-                                        </RadioButton>
-                                        <HBox alignment="CENTER_LEFT" spacing="10.0">
-                                            <children>
-                                                <RadioButton fx:id="rdio_device_specific" layoutX="5.0" layoutY="80.0" mnemonicParsing="false" onAction="#onRadioButton" text="Specific Device"
-                                                             toggleGroup="$devicesoundgroup"/>
-
-                                                <ChoiceBox fx:id="volumedevice" prefHeight="31.0" prefWidth="514.0"/>
-                                            </children>
-                                        </HBox>
-                                    </children>
-                                    <padding>
-                                        <Insets left="8.0" top="8.0"/>
-                                    </padding>
-                                </VBox>
-                            </content>
-                        </Tab>
-                        <Tab fx:id="dialCommandBrightness" text="Device Brightness">
-                            <content>
-                                <VBox spacing="15.0">
-                                    <padding>
-                                        <Insets left="8.0" top="8.0"/>
-                                    </padding>
-                                    <children>
-                                        <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="Control the device brightness. No further configuration."/>
-                                    </children>
-                                </VBox>
-                            </content>
-                        </Tab>
-                        <Tab fx:id="dialCommandObs" text="OBS">
-                            <content>
-                                <VBox spacing="15.0">
-                                    <padding>
-                                        <Insets left="8.0" top="8.0"/>
-                                    </padding>
-                                    <children>
-                                        <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" prefWidth="205.0" text="Select an OBS Audio Source to Control"/>
-                                        <ChoiceBox fx:id="obsAudioSources" prefHeight="31.0" prefWidth="299.0"/>
-                                    </children>
-                                </VBox>
-                            </content>
-                        </Tab>
-                        <Tab fx:id="dialCommandVoiceMeeter" text="Voicemeeter">
-                            <content>
-                                <TabPane fx:id="voicemeeterTabPaneDial" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
-                                    <tabs>
-                                        <Tab text="Basic">
-                                            <content>
-                                                <VBox spacing="15.0">
-                                                    <children>
-                                                        <GridPane alignment="CENTER_LEFT" vgap="10.0">
-                                                            <children>
-                                                                <Label text="Input/Output"/>
-                                                                <Label text="Index" GridPane.rowIndex="1"/>
-                                                                <ChoiceBox fx:id="voicemeeterBasicDialIO" prefWidth="150.0" GridPane.columnIndex="1"/>
-                                                                <ChoiceBox fx:id="voicemeeterBasicDialIndex" prefHeight="31.0" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-                                                                <Label text="Dial" GridPane.rowIndex="2"/>
-                                                                <ChoiceBox fx:id="voicemeeterBasicDial" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
-                                                            </children>
-                                                            <columnConstraints>
-                                                                <ColumnConstraints hgrow="SOMETIMES" maxWidth="411.0" minWidth="10.0" prefWidth="173.0"/>
-                                                                <ColumnConstraints hgrow="SOMETIMES" maxWidth="703.0" minWidth="10.0" prefWidth="658.0"/>
-                                                            </columnConstraints>
-                                                            <rowConstraints>
-                                                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-                                                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-                                                                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-                                                            </rowConstraints>
-                                                        </GridPane>
-                                                    </children>
-                                                    <padding>
-                                                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
-                                                    </padding>
-                                                </VBox>
-                                            </content>
-                                        </Tab>
-                                        <Tab text="Advanced">
-                                            <content>
-                                                <VBox prefHeight="200.0" prefWidth="100.0" spacing="8.0">
-                                                    <padding>
-                                                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
-                                                    </padding>
-                                                    <children>
-                                                        <Label prefHeight="21.0" prefWidth="164.0" text="Parameter"/>
-                                                        <TextField fx:id="voicemeeterDialParameter" promptText="Strip[0].Gain"/>
-                                                        <Label prefHeight="21.0" prefWidth="164.0" text="Control Mode"/>
-                                                        <ChoiceBox fx:id="voicemeeterDialType" prefHeight="31.0" prefWidth="331.0"/>
-                                                    </children>
-                                                </VBox>
-                                            </content>
-                                        </Tab>
-                                    </tabs>
-                                </TabPane>
-                            </content>
-                        </Tab>
+                        <fx:include fx:id="dialCommandVolumeProcess" source="command/dial/VolumeProcess.fxml"/>
+                        <fx:include fx:id="dialCommandVolumeFocus" source="command/dial/VolumeFocus.fxml"/>
+                        <fx:include fx:id="dialCommandVolumeDevice" source="command/dial/VolumeDevice.fxml"/>
+                        <fx:include fx:id="dialCommandBrightness" source="command/dial/Brightness.fxml"/>
+                        <fx:include fx:id="dialCommandObs" source="command/dial/Obs.fxml"/>
+                        <fx:include fx:id="dialCommandVoiceMeeter" source="command/dial/VoiceMeeter.fxml"/>
                     </tabs>
                 </TabPane>
             </content>
