@@ -9,8 +9,8 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 <Tab fx:id="root" text="Voicemeeter" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
-     fx:controller="com.getpcpanel.ui.command.dial.DialVoiceMeeterController">
-    <TabPane fx:id="voicemeeterTabPaneDial" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
+     fx:controller="com.getpcpanel.ui.command.button.BtnVoiceMeeterController">
+    <TabPane fx:id="voicemeeterTabPaneButton" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
         <Tab text="Basic">
             <VBox spacing="15.0">
                 <padding>
@@ -28,10 +28,10 @@
                     </rowConstraints>
                     <Label text="Input/Output"/>
                     <Label text="Index" GridPane.rowIndex="1"/>
-                    <ChoiceBox fx:id="voicemeeterBasicDialIO" prefWidth="150.0" GridPane.columnIndex="1"/>
-                    <ChoiceBox fx:id="voicemeeterBasicDialIndex" prefHeight="31.0" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-                    <Label text="Dial" GridPane.rowIndex="2"/>
-                    <ChoiceBox fx:id="voicemeeterBasicDial" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                    <ChoiceBox fx:id="voicemeeterBasicButtonIO" prefWidth="150.0" GridPane.columnIndex="1"/>
+                    <ChoiceBox fx:id="voicemeeterBasicButtonIndex" prefHeight="31.0" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                    <Label text="Button" GridPane.rowIndex="2"/>
+                    <ChoiceBox fx:id="voicemeeterBasicButton" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
                 </GridPane>
             </VBox>
         </Tab>
@@ -41,9 +41,9 @@
                     <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
                 </padding>
                 <Label prefHeight="21.0" prefWidth="164.0" text="Parameter"/>
-                <TextField fx:id="voicemeeterDialParameter" promptText="Strip[0].Gain"/>
+                <TextField fx:id="voicemeeterButtonParameter" promptText="Strip[0].Mute"/>
                 <Label prefHeight="21.0" prefWidth="164.0" text="Control Mode"/>
-                <ChoiceBox fx:id="voicemeeterDialType" prefHeight="31.0" prefWidth="331.0"/>
+                <ChoiceBox fx:id="voicemeeterButtonType" prefHeight="31.0" prefWidth="331.0"/>
             </VBox>
         </Tab>
     </TabPane>

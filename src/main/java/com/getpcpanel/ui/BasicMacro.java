@@ -22,15 +22,15 @@ import com.getpcpanel.commands.command.CommandVolumeFocus;
 import com.getpcpanel.commands.command.CommandVolumeProcess;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.profile.KnobSetting;
-import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.spring.Prototype;
-import com.getpcpanel.ui.command.dial.BrightnessController;
-import com.getpcpanel.ui.command.dial.ObsController;
-import com.getpcpanel.ui.command.dial.VoiceMeeterController;
-import com.getpcpanel.ui.command.dial.VolumeDeviceController;
-import com.getpcpanel.ui.command.dial.VolumeFocusController;
-import com.getpcpanel.ui.command.dial.VolumeProcessController;
+import com.getpcpanel.ui.command.CommandContext;
+import com.getpcpanel.ui.command.dial.DialBrightnessController;
+import com.getpcpanel.ui.command.dial.DialObsController;
+import com.getpcpanel.ui.command.dial.DialVoiceMeeterController;
+import com.getpcpanel.ui.command.dial.DialVolumeDeviceController;
+import com.getpcpanel.ui.command.dial.DialVolumeFocusController;
+import com.getpcpanel.ui.command.dial.DialVolumeProcessController;
 import com.getpcpanel.util.Util;
 
 import javafx.application.Application;
@@ -57,19 +57,19 @@ public class BasicMacro extends Application implements UIInitializer {
     private static final Pattern NOT_NUMBER_PATTERN = Pattern.compile("[^\\d]");
     private final SaveService saveService;
     private final FxHelper fxHelper;
-    private Profile profile;
+    private CommandContext context;
 
     @FXML private Pane root;
     @FXML private MacroButtonController singleClickPanelController;
     @FXML private MacroButtonController doubleClickPanelController;
 
     // Dials
-    @FXML private VolumeProcessController dialCommandVolumeProcessController;
-    @FXML private VolumeFocusController dialCommandVolumeFocusController;
-    @FXML private VolumeDeviceController dialCommandVolumeDeviceController;
-    @FXML private BrightnessController dialCommandBrightnessController;
-    @FXML private ObsController dialCommandObsController;
-    @FXML private VoiceMeeterController dialCommandVoiceMeeterController;
+    @FXML private DialVolumeProcessController dialCommandVolumeProcessController;
+    @FXML private DialVolumeFocusController dialCommandVolumeFocusController;
+    @FXML private DialVolumeDeviceController dialCommandVolumeDeviceController;
+    @FXML private DialBrightnessController dialCommandBrightnessController;
+    @FXML private DialObsController dialCommandObsController;
+    @FXML private DialVoiceMeeterController dialCommandVoiceMeeterController;
 
     @FXML private Pane topPane;
     @FXML private TabPane mainTabPane;
@@ -96,7 +96,7 @@ public class BasicMacro extends Application implements UIInitializer {
         var analogType = getUIArg(String.class, args, 4);
 
         var deviceSave = saveService.get().getDeviceSave(device.getSerialNumber());
-        profile = deviceSave.ensureCurrentProfile(device.getDeviceType());
+        var profile = deviceSave.ensureCurrentProfile(device.getDeviceType());
         volData = profile.getDialData(dialNum);
         knobSetting = profile.getKnobSettings(dialNum);
 
@@ -105,9 +105,10 @@ public class BasicMacro extends Application implements UIInitializer {
             mainTabPane.getTabs().get(2).setText(analogType);
         }
 
+        context = new CommandContext(stage, deviceSave, profile);
         if (hasButton) {
-            singleClickPanelController.initController(stage, deviceSave, profile, profile.getButtonData(dialNum));
-            doubleClickPanelController.initController(stage, deviceSave, profile, profile.getDblButtonData(dialNum));
+            singleClickPanelController.initController(context, profile.getButtonData(dialNum));
+            doubleClickPanelController.initController(context, profile.getDblButtonData(dialNum));
         } else {
             mainTabPane.getTabs().remove(0);
             mainTabPane.getTabs().remove(0);
@@ -141,6 +142,8 @@ public class BasicMacro extends Application implements UIInitializer {
         knobSetting.setOverlayIcon(iconFld.getText());
         knobSetting.setButtonDebounce(NumberUtils.toInt(buttonDebounceTime.getText(), 50));
         knobSetting.setLogarithmic(logarithmic.isSelected());
+
+        var profile = context.profile();
         profile.setButtonData(dialNum, buttonData);
         profile.setDblButtonData(dialNum, dblButtonData);
         profile.setDialData(dialNum, volData);
@@ -193,19 +196,20 @@ public class BasicMacro extends Application implements UIInitializer {
                 buttonDebounceTime.setText(String.valueOf(num));
             }
         });
+
+        // Init controllers
+        dialCommandVolumeProcessController.postInit(context, volData);
+        dialCommandVolumeFocusController.postInit(context, volData);
+        dialCommandVolumeDeviceController.postInit(context, volData);
+        dialCommandBrightnessController.postInit(context, volData);
+        dialCommandObsController.postInit(context, volData);
+        dialCommandVoiceMeeterController.postInit(context, volData);
+
         try {
             initFields();
         } catch (Exception e) {
             log.error("Unable to init fields", e);
         }
-
-        // Init controllers
-        dialCommandVolumeProcessController.postInit(stage, volData);
-        dialCommandVolumeFocusController.postInit(stage, volData);
-        dialCommandVolumeDeviceController.postInit(stage, volData);
-        dialCommandBrightnessController.postInit(stage, volData);
-        dialCommandObsController.postInit(stage, volData);
-        dialCommandVoiceMeeterController.postInit(stage, volData);
     }
 
     private void trimMinMax(String oldValue, String newValue, TextField trimMin) {

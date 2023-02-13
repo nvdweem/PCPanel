@@ -8,7 +8,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <Tab text="Device Volume" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
-     fx:controller="com.getpcpanel.ui.command.dial.VolumeDeviceController">
+     fx:controller="com.getpcpanel.ui.command.dial.DialVolumeDeviceController">
     <VBox spacing="15.0">
         <padding>
             <Insets left="8.0" top="8.0"/>

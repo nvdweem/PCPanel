@@ -1,0 +1,24 @@
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.VBox?>
+<Tab text="Mute App" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
+     fx:controller="com.getpcpanel.ui.command.button.BtnVolumeProcessMuteController">
+    <VBox spacing="15.0">
+        <padding>
+            <Insets left="8.0" right="8.0" top="8.0"/>
+        </padding>
+        <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="Enter an application to mute"/>
+        <fx:include fx:id="appMute" source="../../PickProcesses.fxml"/>
+
+        <RadioButton fx:id="rdio_mute_toggle" mnemonicParsing="false" selected="true" text="Toggle Mute/Unmute">
+            <toggleGroup>
+                <ToggleGroup fx:id="xxx"/>
+            </toggleGroup>
+        </RadioButton>
+        <RadioButton fx:id="rdio_mute_mute" mnemonicParsing="false" text="Mute" toggleGroup="$xxx"/>
+        <RadioButton fx:id="rdio_mute_unmute" mnemonicParsing="false" text="Unmute" toggleGroup="$xxx"/>
+    </VBox>
+</Tab>

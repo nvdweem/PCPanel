@@ -59,8 +59,8 @@ public class ProfileSettingsDialog extends Application implements UIInitializer 
     @FXML private CheckBox focusBackOnLost;
     @FXML private PickProcessesController focusOnListListController;
     @FXML private TextField activationFld;
-    @FXML public VBox osSpecificHolder;
-    @FXML public VBox oscBindings;
+    @FXML private VBox osSpecificHolder;
+    @FXML private VBox oscBindings;
     private List<String> sortedAddresses;
 
     @Override

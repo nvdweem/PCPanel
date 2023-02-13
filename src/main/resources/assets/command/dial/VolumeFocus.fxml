@@ -3,7 +3,7 @@
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.layout.VBox?>
 <Tab text="Focus Volume" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
-     fx:controller="com.getpcpanel.ui.command.dial.VolumeFocusController">
+     fx:controller="com.getpcpanel.ui.command.dial.DialVolumeFocusController">
     <VBox spacing="15.0">
         <padding>
             <Insets left="8.0" top="8.0"/>

@@ -14,6 +14,7 @@ import com.getpcpanel.cpp.AudioDevice;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.PickProcessesController;
+import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.CommandController;
 
 import javafx.event.ActionEvent;
@@ -21,7 +22,6 @@ import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.RadioButton;
-import javafx.stage.Stage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
@@ -30,19 +30,19 @@ import one.util.streamex.StreamEx;
 @Component
 @Prototype
 @RequiredArgsConstructor
-public class VolumeProcessController implements CommandController<CommandVolumeProcess> {
+public class DialVolumeProcessController implements CommandController<CommandVolumeProcess> {
     private final ISndCtrl sndCtrl;
     private Collection<AudioDevice> allSoundDevices;
 
-    @FXML private PickProcessesController appVolumeController;
     @FXML private CheckBox cb_app_unmute;
+    @FXML private ChoiceBox<AudioDevice> app_vol_output_device;
+    @FXML private PickProcessesController appVolumeController;
+    @FXML private RadioButton rdio_app_output_all;
     @FXML private RadioButton rdio_app_output_default;
     @FXML private RadioButton rdio_app_output_specific;
-    @FXML private RadioButton rdio_app_output_all;
-    @FXML private ChoiceBox<AudioDevice> app_vol_output_device;
 
     @Override
-    public void postInit(Stage stage, Command cmd) {
+    public void postInit(CommandContext context, Command cmd) {
         appVolumeController.setPickType(PickProcessesController.PickType.soundSource);
 
         allSoundDevices = sndCtrl.getDevices();
@@ -63,6 +63,7 @@ public class VolumeProcessController implements CommandController<CommandVolumeP
         } else {
             rdio_app_output_default.setSelected(true);
         }
+        onRadioButton(null);
     }
 
     @Override

@@ -6,12 +6,12 @@ import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandObsSetSourceVolume;
 import com.getpcpanel.obs.OBS;
 import com.getpcpanel.spring.Prototype;
+import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.CommandController;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Tab;
-import javafx.stage.Stage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
@@ -19,14 +19,14 @@ import lombok.extern.log4j.Log4j2;
 @Component
 @Prototype
 @RequiredArgsConstructor
-public class ObsController implements CommandController<CommandObsSetSourceVolume> {
+public class DialObsController implements CommandController<CommandObsSetSourceVolume> {
     private final OBS obs;
 
-    @FXML public Tab root;
+    @FXML private Tab root;
     @FXML private ChoiceBox<String> obsAudioSources;
 
     @Override
-    public void postInit(Stage stage, Command cmd) {
+    public void postInit(CommandContext context, Command cmd) {
         if (obs.isConnected()) {
             var sourcesWithAudio = obs.getSourcesWithAudio();
             obsAudioSources.getItems().addAll(sourcesWithAudio);

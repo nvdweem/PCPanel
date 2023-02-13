@@ -29,8 +29,8 @@ public class AdvancedDevice {
     @FXML private ComboBox<String> communicationRecord;
     @Getter @FXML private VBox root;
     @FXML private Button remove;
-    @FXML public HBox communicationPlaybackBox;
-    @FXML public HBox communicationRecordBox;
+    @FXML private HBox communicationPlaybackBox;
+    @FXML private HBox communicationRecordBox;
 
     public void initialize() {
         var allSoundDevices = sndCtrl.getDevices().stream().toList();

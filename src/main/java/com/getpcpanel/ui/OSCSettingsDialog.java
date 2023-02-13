@@ -24,8 +24,8 @@ import one.util.streamex.StreamEx;
 @Prototype
 @RequiredArgsConstructor
 public class OSCSettingsDialog {
-    @FXML public VBox connectHostPorts;
-    @FXML public TextField port;
+    @FXML private VBox connectHostPorts;
+    @FXML private TextField port;
 
     public void addConnectHostPort(MouseEvent ignored) {
         add("localhost", 8000);

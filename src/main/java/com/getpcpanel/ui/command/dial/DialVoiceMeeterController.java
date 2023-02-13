@@ -9,6 +9,7 @@ import com.getpcpanel.commands.command.CommandVoiceMeeter;
 import com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced;
 import com.getpcpanel.commands.command.CommandVoiceMeeterBasic;
 import com.getpcpanel.spring.Prototype;
+import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.CommandController;
 import com.getpcpanel.util.Util;
 import com.getpcpanel.voicemeeter.Voicemeeter;
@@ -27,23 +28,23 @@ import lombok.extern.log4j.Log4j2;
 @Component
 @Prototype
 @RequiredArgsConstructor
-public class VoiceMeeterController implements CommandController<CommandVoiceMeeter> {
+public class DialVoiceMeeterController implements CommandController<CommandVoiceMeeter> {
     public static final String MUST_SELECT_A_CONTROL_TYPE_MESSAGE = "Must Select a Control Type";
 
     private final Voicemeeter voiceMeeter;
     private Stage stage;
-    @FXML public Tab root;
+    @FXML private Tab root;
 
-    @FXML private TabPane voicemeeterTabPaneDial;
-    @FXML private ChoiceBox<Voicemeeter.ControlType> voicemeeterBasicDialIO;
     @FXML private ChoiceBox<Integer> voicemeeterBasicDialIndex;
-    @FXML private ChoiceBox<Voicemeeter.DialType> voicemeeterBasicDial;
-    @FXML private TextField voicemeeterDialParameter;
+    @FXML private ChoiceBox<Voicemeeter.ControlType> voicemeeterBasicDialIO;
     @FXML private ChoiceBox<Voicemeeter.DialControlMode> voicemeeterDialType;
+    @FXML private ChoiceBox<Voicemeeter.DialType> voicemeeterBasicDial;
+    @FXML private TabPane voicemeeterTabPaneDial;
+    @FXML private TextField voicemeeterDialParameter;
 
     @Override
-    public void postInit(Stage stage, Command volData) {
-        this.stage = stage;
+    public void postInit(CommandContext context, Command cmd) {
+        stage = context.stage();
         voicemeeterDialType.getItems().addAll(Voicemeeter.DialControlMode.values());
         if (voiceMeeter.login()) {
             voicemeeterBasicDialIO.getItems().addAll(Voicemeeter.ControlType.values());
@@ -65,8 +66,8 @@ public class VoiceMeeterController implements CommandController<CommandVoiceMeet
             voicemeeterBasicDialIO.getSelectionModel().selectFirst();
             voicemeeterBasicDialIndex.getSelectionModel().selectFirst();
         } else {
-            if (volData instanceof CommandVoiceMeeter) {
-                if (volData instanceof CommandVoiceMeeterBasic vmb) {
+            if (cmd instanceof CommandVoiceMeeter) {
+                if (cmd instanceof CommandVoiceMeeterBasic vmb) {
                     voicemeeterBasicDialIO.getItems().add(vmb.getCt());
                     voicemeeterBasicDialIndex.getItems().add(vmb.getIndex() + 1);
                     voicemeeterBasicDial.getItems().add(vmb.getDt());

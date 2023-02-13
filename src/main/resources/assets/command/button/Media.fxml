@@ -1,0 +1,35 @@
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.VBox?>
+<Tab text="Music Control" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
+     fx:controller="com.getpcpanel.ui.command.button.BtnMediaController">
+    <VBox spacing="15.0">
+        <padding>
+            <Insets left="8.0" top="8.0"/>
+        </padding>
+        <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="Select a control"/>
+        <RadioButton fx:id="playPause" mnemonicParsing="false" selected="true" text="Play/Pause">
+            <toggleGroup>
+                <ToggleGroup fx:id="mediagroup"/>
+            </toggleGroup>
+        </RadioButton>
+        <RadioButton fx:id="stop" mnemonicParsing="false" text="Stop" toggleGroup="$mediagroup"/>
+        <RadioButton fx:id="prev" mnemonicParsing="false" text="Previous Track" toggleGroup="$mediagroup"/>
+        <RadioButton fx:id="next" mnemonicParsing="false" text="Next Track" toggleGroup="$mediagroup"/>
+        <RadioButton fx:id="mute" mnemonicParsing="false" text="Mute" toggleGroup="$mediagroup"/>
+        <Label text="Check this box to ensure that only Spotify is controlled. If this is not checked then any application that is playing sounds might be controlled." wrapText="true">
+            <VBox.margin>
+                <Insets top="20.0"/>
+            </VBox.margin>
+        </Label>
+        <CheckBox fx:id="cmdMediaSpotify" mnemonicParsing="false" text="Target Spotify">
+            <VBox.margin>
+                <Insets top="-10.0"/>
+            </VBox.margin>
+        </CheckBox>
+    </VBox>
+</Tab>

@@ -11,7 +11,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 <Tab text="App Volume" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
-     fx:controller="com.getpcpanel.ui.command.dial.VolumeProcessController">
+     fx:controller="com.getpcpanel.ui.command.dial.DialVolumeProcessController">
     <VBox layoutX="-77.0" layoutY="-61.0" spacing="15.0">
         <padding>
             <Insets left="8.0" right="8.0" top="8.0"/>

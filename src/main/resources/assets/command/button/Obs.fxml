@@ -1,0 +1,50 @@
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<Tab fx:id="root" text="OBS" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
+     fx:controller="com.getpcpanel.ui.command.button.BtnObsController">
+    <VBox prefHeight="200.0" prefWidth="100.0" spacing="5.0">
+        <padding>
+            <Insets bottom="8.0" left="8.0" right="8.0" top="8.0"/>
+        </padding>
+        <RadioButton fx:id="obs_rdio_SetScene" mnemonicParsing="false" onAction="#onRadioButton" selected="true" text="Set Scene">
+            <toggleGroup>
+                <ToggleGroup fx:id="obsButtonMainGroup"/>
+            </toggleGroup>
+        </RadioButton>
+        <VBox>
+            <VBox.margin>
+                <Insets left="20.0"/>
+            </VBox.margin>
+            <HBox fx:id="obsPaneSetScene" alignment="CENTER_LEFT" spacing="10.0">
+                <Label prefHeight="21.0" prefWidth="73.0" text="Scene:"/>
+                <ChoiceBox fx:id="obsSetScene" prefHeight="31.0" prefWidth="345.0"/>
+            </HBox>
+        </VBox>
+        <RadioButton fx:id="obs_rdio_MuteSource" mnemonicParsing="false" onAction="#onRadioButton" text="Mute Source" toggleGroup="$obsButtonMainGroup"/>
+        <VBox fx:id="obsPaneMuteSource" spacing="5.0">
+            <VBox.margin>
+                <Insets left="20.0"/>
+            </VBox.margin>
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+                <VBox.margin>
+                    <Insets bottom="5.0"/>
+                </VBox.margin>
+                <Label prefHeight="21.0" prefWidth="73.0" text="Source:"/>
+                <ChoiceBox fx:id="obsSourceToMute" prefHeight="31.0" prefWidth="345.0"/>
+            </HBox>
+            <RadioButton fx:id="obsMuteToggle" mnemonicParsing="false" selected="true" text="Toggle Mute/Unmute">
+                <toggleGroup>
+                    <ToggleGroup fx:id="obsMute"/>
+                </toggleGroup>
+            </RadioButton>
+            <RadioButton fx:id="obsMuteMute" mnemonicParsing="false" text="Mute" toggleGroup="$obsMute"/>
+            <RadioButton fx:id="obsMuteUnmute" mnemonicParsing="false" text="Unmute" toggleGroup="$obsMute"/>
+        </VBox>
+    </VBox>
+</Tab>

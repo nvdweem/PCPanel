@@ -47,10 +47,10 @@ public class SettingsDialog extends Application implements UIInitializer {
 
     private Stage stage;
     @FXML private Pane root;
-    @FXML public CheckBox overlay;
-    @FXML public CheckBox mainUiIcons;
+    @FXML private CheckBox overlay;
+    @FXML private CheckBox mainUiIcons;
     @FXML private CheckBox startupVersionCheck;
-    @FXML public TextField dblClickInterval;
+    @FXML private TextField dblClickInterval;
     @FXML private CheckBox preventClickWhenDblClick;
     @FXML private CheckBox obsEnable;
     @FXML private Pane obsControls;
@@ -63,10 +63,10 @@ public class SettingsDialog extends Application implements UIInitializer {
     @FXML private Pane vmControls;
     @FXML private TextField vmPath;
     @FXML private Tab voicemeeterTab;
-    @FXML public TextField txtPreventSliderTwitch;
-    @FXML public TextField txtSliderRollingAverage;
-    @FXML public TextField txtOnlyIfDelta;
-    @FXML public CheckBox cbFixOnlySliders;
+    @FXML private TextField txtPreventSliderTwitch;
+    @FXML private TextField txtSliderRollingAverage;
+    @FXML private TextField txtOnlyIfDelta;
+    @FXML private CheckBox cbFixOnlySliders;
     @FXML private OSCSettingsDialog oscSettingsController;
 
     @Override
