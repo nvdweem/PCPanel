@@ -37,7 +37,7 @@ public class SaveService {
     private final Json json;
     private final Debouncer debouncer;
     @Autowired @Lazy @Setter private DeviceHolder devices;
-    private static String oldVersionEncountered;
+    @SuppressWarnings("StaticNonFinalField") private static String oldVersionEncountered;
 
     private Save save;
 

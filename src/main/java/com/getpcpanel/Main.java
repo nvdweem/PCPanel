@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import com.getpcpanel.hid.HidDebug;
 import com.getpcpanel.util.FileChecker;
 
 import javafx.application.Application;
@@ -18,6 +19,11 @@ public class Main {
         var argSet = Set.of(args);
         if (!argSet.contains("skipfilecheck")) {
             FileChecker.createAndStart();
+        }
+
+        if (argSet.contains("hiddebug")) {
+            HidDebug.execute();
+            return;
         }
 
         Application.launch(MainFX.class, args);

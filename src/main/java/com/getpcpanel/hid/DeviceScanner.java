@@ -45,7 +45,7 @@ public class DeviceScanner implements HidServicesListener {
         log.info("Enumerating attached devices...");
     }
 
-    private HidServicesSpecification buildSpecification() {
+    static HidServicesSpecification buildSpecification() {
         var hidServicesSpecification = new HidServicesSpecification();
         hidServicesSpecification.setAutoShutdown(false);
         hidServicesSpecification.setAutoStart(false);
