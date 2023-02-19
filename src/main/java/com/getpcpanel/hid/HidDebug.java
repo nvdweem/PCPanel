@@ -1,43 +1,57 @@
 package com.getpcpanel.hid;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
+
 import org.hid4java.HidManager;
 import org.hid4java.HidServicesListener;
 import org.hid4java.event.HidServicesEvent;
 
 import lombok.SneakyThrows;
-import lombok.extern.log4j.Log4j2;
 
-@Log4j2
-public final class HidDebug {
-    private HidDebug() {
+public class HidDebug {
+    private final PrintWriter writer;
+
+    @SneakyThrows
+    public HidDebug() {
+        var outputFile = new File(System.getenv("USERPROFILE") + "/.pcpanel/hid-debug.txt");
+        outputFile.getParentFile().mkdirs();
+        writer = new PrintWriter(new FileOutputStream(outputFile));
     }
 
     @SneakyThrows
-    public static void execute() {
+    public void execute() {
         var hidServices = HidManager.getHidServices(DeviceScanner.buildSpecification());
         hidServices.addHidServicesListener(buildListener());
-        log.info("Starting HID Debug");
+        write("Starting HID Debug");
         hidServices.start();
-        log.info("HID Debug started");
+        write("HID Debug started");
 
-        log.info("Waiting 10 seconds...");
+        write("Waiting 10 seconds...");
         Thread.sleep(10_000);
-        log.info("Waited 10 seconds, stopping");
+        write("Waited 10 seconds, stopping");
+        writer.close();
     }
 
-    private static HidServicesListener buildListener() {
+    private HidServicesListener buildListener() {
         return new HidServicesListener() {
             @Override public void hidDeviceAttached(HidServicesEvent event) {
-                log.info("Device attached: {}", event);
+                write("Device attached: " + event);
             }
 
             @Override public void hidDeviceDetached(HidServicesEvent event) {
-                log.info("Device detached: {}", event);
+                write("Device detached: " + event);
             }
 
             @Override public void hidFailure(HidServicesEvent event) {
-                log.info("Hid failure: {}", event);
+                write("Hid failure: " + event);
             }
         };
+    }
+
+    private void write(String line) {
+        writer.println(line);
+        writer.flush();
     }
 }

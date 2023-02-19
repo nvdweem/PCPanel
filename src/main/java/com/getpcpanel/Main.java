@@ -22,7 +22,7 @@ public class Main {
         }
 
         if (argSet.contains("hiddebug")) {
-            HidDebug.execute();
+            new HidDebug().execute();
             return;
         }
 
