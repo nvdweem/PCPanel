@@ -1,13 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.RadioButton?>
-<?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-<Tab text="Music Control" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
-     fx:controller="com.getpcpanel.ui.command.button.BtnMediaController">
-    <VBox spacing="15.0">
+<HBox xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.command.button.BtnMediaController">
+    <VBox spacing="15.0" HBox.hgrow="ALWAYS">
         <padding>
             <Insets left="8.0" top="8.0"/>
         </padding>
@@ -32,4 +33,4 @@
             </VBox.margin>
         </CheckBox>
     </VBox>
-</Tab>
+</HBox>

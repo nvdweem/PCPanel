@@ -1,14 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.RadioButton?>
-<?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-<Tab fx:id="root" text="OBS" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
-     fx:controller="com.getpcpanel.ui.command.button.BtnObsController">
-    <VBox prefHeight="200.0" prefWidth="100.0" spacing="5.0">
+<HBox fx:id="root" prefHeight="200.0" prefWidth="404.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.command.button.BtnObsController">
+    <VBox prefHeight="200.0" prefWidth="100.0" spacing="5.0" HBox.hgrow="ALWAYS">
         <padding>
             <Insets bottom="8.0" left="8.0" right="8.0" top="8.0"/>
         </padding>
@@ -47,4 +47,4 @@
             <RadioButton fx:id="obsMuteUnmute" mnemonicParsing="false" text="Unmute" toggleGroup="$obsMute"/>
         </VBox>
     </VBox>
-</Tab>
+</HBox>

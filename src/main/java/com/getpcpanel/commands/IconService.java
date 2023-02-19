@@ -34,6 +34,7 @@ import jakarta.annotation.PostConstruct;
 import javafx.scene.image.Image;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import one.util.streamex.StreamEx;
 
 @Log4j2
 @Service
@@ -68,8 +69,8 @@ public class IconService {
     }
 
     @Cacheable("command-icon")
-    public @Nonnull Image getImageFrom(@Nullable Command command, @Nullable KnobSetting override) {
-        if (command == null) {
+    public @Nonnull Image getImageFrom(@Nullable Commands commands, @Nullable KnobSetting override) {
+        if (!Commands.hasCommands(commands)) {
             return DEFAULT;
         }
 
@@ -90,7 +91,10 @@ public class IconService {
             }
         }
 
-        return imageHandlers.handle(command);
+        return StreamEx.of(commands.commands())
+                       .map(imageHandlers::handle)
+                       .findFirst(result -> result != null && result != DEFAULT)
+                       .orElse(DEFAULT);
     }
 
     public boolean isDefault(Image img) {

@@ -1,5 +1,7 @@
 package com.getpcpanel.ui.command.button;
 
+import static com.getpcpanel.ui.command.Cmd.Type.button;
+
 import org.springframework.stereotype.Component;
 
 import com.getpcpanel.commands.command.Command;
@@ -7,6 +9,7 @@ import com.getpcpanel.commands.command.CommandProfile;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.spring.Prototype;
+import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.CommandController;
 
@@ -20,13 +23,14 @@ import one.util.streamex.StreamEx;
 @Component
 @Prototype
 @RequiredArgsConstructor
+@Cmd(name = "Profile", type = button, fxml = "Profile", cmds = CommandProfile.class)
 public class BtnProfileController implements CommandController<CommandProfile> {
     private DeviceSave deviceSave;
 
     @FXML private ChoiceBox<Profile> profileDropdown;
 
     @Override
-    public void postInit(CommandContext context, Command cmd) {
+    public void postInit(CommandContext context) {
         deviceSave = context.deviceSave();
 
         var curProfile = context.profile().getName();

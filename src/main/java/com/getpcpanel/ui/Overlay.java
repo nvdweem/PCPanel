@@ -9,11 +9,10 @@ import java.util.function.Supplier;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.IconService;
 import com.getpcpanel.commands.PCPanelControlEvent;
 import com.getpcpanel.commands.command.ButtonAction;
-import com.getpcpanel.commands.command.Command;
-import com.getpcpanel.commands.command.CommandNoOp;
 import com.getpcpanel.commands.command.DialAction;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.spring.ConditionalOnWindows;
@@ -34,6 +33,7 @@ import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import lombok.RequiredArgsConstructor;
+import one.util.streamex.StreamEx;
 
 @Component
 @ConditionalOnWindows
@@ -85,8 +85,10 @@ public class Overlay extends Popup {
                 return true;
             } else {
                 setVisible(text);
-                if (command instanceof ButtonAction ba) {
-                    text.setText(ba.getOverlayText());
+
+                var firstButtonAction = StreamEx.of(command).select(ButtonAction.class).findFirst();
+                if (firstButtonAction.isPresent()) {
+                    text.setText(firstButtonAction.get().getOverlayText());
                     return true;
                 }
                 return false;
@@ -94,7 +96,7 @@ public class Overlay extends Popup {
         });
     }
 
-    private void showDebounced(Supplier<CommandAndIcon> pre, Predicate<Command> pred) {
+    private void showDebounced(Supplier<CommandAndIcon> pre, Predicate<Commands> pred) {
         if (!save.get().isOverlayEnabled()) {
             return;
         }
@@ -108,9 +110,10 @@ public class Overlay extends Popup {
         debouncer.debounce(this, () -> Platform.runLater(this::hide), 2, TimeUnit.SECONDS);
     }
 
-    private boolean hasOverlay(Command command) {
-        return command instanceof DialAction da && da.hasOverlay()
-                || command instanceof ButtonAction ba && ba.hasOverlay();
+    private boolean hasOverlay(Commands commands) {
+        return Commands.hasCommands(commands) &&
+                StreamEx.of(commands.commands()).anyMatch(command -> command instanceof DialAction da && da.hasOverlay()
+                        || command instanceof ButtonAction ba && ba.hasOverlay());
     }
 
     private @Nonnull CommandAndIcon determineIconImage(PCPanelControlEvent event) {
@@ -131,7 +134,7 @@ public class Overlay extends Popup {
         }
     }
 
-    private record CommandAndIcon(Command command, Image icon) {
-        static final CommandAndIcon DEFAULT = new CommandAndIcon(CommandNoOp.NOOP, IconService.DEFAULT);
+    private record CommandAndIcon(Commands command, Image icon) {
+        static final CommandAndIcon DEFAULT = new CommandAndIcon(Commands.EMPTY, IconService.DEFAULT);
     }
 }

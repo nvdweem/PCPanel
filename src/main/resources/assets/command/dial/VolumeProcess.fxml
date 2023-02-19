@@ -1,18 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.RadioButton?>
-<?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
-<Tab text="App Volume" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
-     fx:controller="com.getpcpanel.ui.command.dial.DialVolumeProcessController">
-    <VBox layoutX="-77.0" layoutY="-61.0" spacing="15.0">
+<HBox prefHeight="235.0" prefWidth="814.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.command.dial.DialVolumeProcessController">
+    <VBox layoutX="-77.0" layoutY="-61.0" spacing="15.0" HBox.hgrow="ALWAYS">
         <padding>
             <Insets left="8.0" right="8.0" top="8.0"/>
         </padding>
@@ -35,14 +35,12 @@
                     <ToggleGroup fx:id="app_volume_output_group"/>
                 </toggleGroup>
             </RadioButton>
-            <RadioButton fx:id="rdio_app_output_all" mnemonicParsing="false" onAction="#onRadioButton" text="All Output Devices"
-                         toggleGroup="$app_volume_output_group" GridPane.rowIndex="1"/>
+            <RadioButton fx:id="rdio_app_output_all" mnemonicParsing="false" onAction="#onRadioButton" text="All Output Devices" toggleGroup="$app_volume_output_group" GridPane.rowIndex="1"/>
             <HBox alignment="CENTER_LEFT" spacing="10.0" GridPane.rowIndex="2">
-                <RadioButton fx:id="rdio_app_output_specific" mnemonicParsing="false" onAction="#onRadioButton" text="Specific Device"
-                             toggleGroup="$app_volume_output_group"/>
+                <RadioButton fx:id="rdio_app_output_specific" mnemonicParsing="false" onAction="#onRadioButton" prefWidth="130.0" text="Specific Device" toggleGroup="$app_volume_output_group"/>
 
-                <ChoiceBox fx:id="app_vol_output_device" prefHeight="31.0" prefWidth="504.0"/>
+                <ChoiceBox fx:id="app_vol_output_device" prefHeight="31.0" prefWidth="300.0" HBox.hgrow="ALWAYS"/>
             </HBox>
         </GridPane>
     </VBox>
-</Tab>
+</HBox>

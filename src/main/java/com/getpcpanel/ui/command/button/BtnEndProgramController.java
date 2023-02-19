@@ -1,5 +1,7 @@
 package com.getpcpanel.ui.command.button;
 
+import static com.getpcpanel.ui.command.Cmd.Type.button;
+
 import javax.annotation.Nullable;
 
 import org.springframework.stereotype.Component;
@@ -8,6 +10,7 @@ import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandEndProgram;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.FxHelper;
+import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.CommandController;
 
@@ -24,6 +27,7 @@ import lombok.extern.log4j.Log4j2;
 @Component
 @Prototype
 @RequiredArgsConstructor
+@Cmd(name = "End Program", type = button, fxml = "EndProgram", cmds = CommandEndProgram.class)
 public class BtnEndProgramController implements CommandController<CommandEndProgram> {
     private final FxHelper fxHelper;
     private Stage stage;
@@ -34,7 +38,7 @@ public class BtnEndProgramController implements CommandController<CommandEndProg
     @FXML private TextField endProcessField;
 
     @Override
-    public void postInit(CommandContext context, Command cmd) {
+    public void postInit(CommandContext context) {
         stage = context.stage();
     }
 

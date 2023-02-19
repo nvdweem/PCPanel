@@ -1,5 +1,6 @@
-<?import javafx.scene.control.Tab?>
-<Tab text="Sound Device Advanced" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
-     fx:controller="com.getpcpanel.ui.command.button.BtnDefaultDeviceAdvancedController">
-    <fx:include fx:id="defaultDeviceAdvanced" source="../../AdvancedDevices.fxml"/>
-</Tab>
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.HBox?>
+<HBox xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.command.button.BtnDefaultDeviceAdvancedController">
+    <fx:include fx:id="defaultDeviceAdvanced" source="../../AdvancedDevices.fxml" HBox.hgrow="ALWAYS"/>
+</HBox>

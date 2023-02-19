@@ -1,5 +1,7 @@
 package com.getpcpanel.ui.command.button;
 
+import static com.getpcpanel.ui.command.Cmd.Type.button;
+
 import java.util.Collection;
 
 import javax.annotation.Nullable;
@@ -13,6 +15,7 @@ import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.SoundDeviceExportFactory;
 import com.getpcpanel.ui.SoundDeviceImportFactory;
+import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.CommandController;
 
@@ -27,6 +30,7 @@ import one.util.streamex.StreamEx;
 @Component
 @Prototype
 @RequiredArgsConstructor
+@Cmd(name = "Toggle Device", type = button, fxml = "DefaultDeviceToggle", cmds = CommandVolumeDefaultDeviceToggle.class)
 public class BtnDefaultDeviceToggleController implements CommandController<CommandVolumeDefaultDeviceToggle> {
     private final ISndCtrl sndCtrl;
     private Collection<AudioDevice> allSoundDevices;
@@ -34,7 +38,7 @@ public class BtnDefaultDeviceToggleController implements CommandController<Comma
     @FXML private ListView<AudioDevice> soundDeviceSource;
 
     @Override
-    public void postInit(CommandContext context, Command cmd) {
+    public void postInit(CommandContext context) {
         allSoundDevices = sndCtrl.getDevices();
         soundDeviceSource.getItems().addAll(allSoundDevices);
         initDeviceToggleEvents();

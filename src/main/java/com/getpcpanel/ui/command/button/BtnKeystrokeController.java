@@ -1,10 +1,13 @@
 package com.getpcpanel.ui.command.button;
 
+import static com.getpcpanel.ui.command.Cmd.Type.button;
+
 import org.springframework.stereotype.Component;
 
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandKeystroke;
 import com.getpcpanel.spring.Prototype;
+import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.CommandController;
 
@@ -19,6 +22,7 @@ import lombok.extern.log4j.Log4j2;
 @Component
 @Prototype
 @RequiredArgsConstructor
+@Cmd(name = "Keystroke", type = button, fxml = "Keystroke", cmds = CommandKeystroke.class)
 public class BtnKeystrokeController implements CommandController<CommandKeystroke> {
     @FXML private TextField keystrokeField;
     private boolean k_alt;
@@ -27,7 +31,7 @@ public class BtnKeystrokeController implements CommandController<CommandKeystrok
     private boolean k_win;
 
     @Override
-    public void postInit(CommandContext context, Command cmd) {
+    public void postInit(CommandContext context) {
         keystrokeField.setOnKeyPressed(event -> {
             var code = event.getCode();
             if (code == KeyCode.ALT) {

@@ -6,10 +6,6 @@ import lombok.ToString;
 public final class CommandNoOp extends Command implements ButtonAction, DialAction {
     public static final CommandNoOp NOOP = new CommandNoOp();
 
-    public static boolean isNoOp(Command cmd) {
-        return cmd == null || cmd instanceof CommandNoOp;
-    }
-
     @Override
     public void execute() {
     }

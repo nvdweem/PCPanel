@@ -1,6 +1,7 @@
 package com.getpcpanel.ui.command.button;
 
 import static com.getpcpanel.commands.command.CommandNoOp.NOOP;
+import static com.getpcpanel.ui.command.Cmd.Type.button;
 
 import javax.annotation.Nullable;
 
@@ -12,6 +13,7 @@ import com.getpcpanel.commands.command.CommandObsMuteSource;
 import com.getpcpanel.commands.command.CommandObsSetScene;
 import com.getpcpanel.obs.OBS;
 import com.getpcpanel.spring.Prototype;
+import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.CommandController;
 
@@ -19,7 +21,6 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.RadioButton;
-import javafx.scene.control.Tab;
 import javafx.scene.layout.Pane;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -28,9 +29,9 @@ import lombok.extern.log4j.Log4j2;
 @Component
 @Prototype
 @RequiredArgsConstructor
+@Cmd(name = "OBS", type = button, fxml = "Obs", cmds = { CommandObsSetScene.class, CommandObsMuteSource.class })
 public class BtnObsController implements CommandController<CommandObs> {
     private final OBS obs;
-    @FXML private Tab root;
 
     @FXML private ChoiceBox<String> obsSetScene;
     @FXML private ChoiceBox<String> obsSourceToMute;
@@ -43,25 +44,23 @@ public class BtnObsController implements CommandController<CommandObs> {
     @FXML private RadioButton obs_rdio_SetScene;
 
     @Override
-    public void postInit(CommandContext context, Command cmd) {
+    public void postInit(CommandContext context) {
         if (obs.isConnected()) {
             var sourcesWithAudio = obs.getSourcesWithAudio();
             var scenes = obs.getScenes();
             obsSourceToMute.getItems().addAll(sourcesWithAudio);
             obsSetScene.getItems().addAll(scenes);
-        } else {
-            if (cmd instanceof CommandObsMuteSource ms) {
-                obsSourceToMute.getItems().add(ms.getSource());
-            } else if (cmd instanceof CommandObsSetScene ss) {
-                obsSetScene.getItems().add(ss.getScene());
-            } else {
-                root.getTabPane().getTabs().remove(root);
-            }
         }
     }
 
     @Override
     public void initFromCommand(CommandObs cmd) {
+        if (cmd instanceof CommandObsMuteSource ms) {
+            obsSourceToMute.getItems().add(ms.getSource());
+        } else if (cmd instanceof CommandObsSetScene ss) {
+            obsSetScene.getItems().add(ss.getScene());
+        }
+
         if (cmd instanceof CommandObsSetScene ss) {
             obs_rdio_SetScene.setSelected(true);
             obsSetScene.getSelectionModel().select(ss.getScene());

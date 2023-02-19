@@ -1,6 +1,7 @@
 package com.getpcpanel.ui.command.button;
 
 import static com.getpcpanel.commands.command.CommandNoOp.NOOP;
+import static com.getpcpanel.ui.command.Cmd.Type.button;
 
 import org.springframework.stereotype.Component;
 
@@ -9,6 +10,7 @@ import com.getpcpanel.commands.command.CommandVoiceMeeter;
 import com.getpcpanel.commands.command.CommandVoiceMeeterAdvancedButton;
 import com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton;
 import com.getpcpanel.spring.Prototype;
+import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.CommandController;
 import com.getpcpanel.util.Util;
@@ -16,7 +18,6 @@ import com.getpcpanel.voicemeeter.Voicemeeter;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import lombok.RequiredArgsConstructor;
@@ -26,9 +27,9 @@ import lombok.extern.log4j.Log4j2;
 @Component
 @Prototype
 @RequiredArgsConstructor
+@Cmd(name = "Voicemeeter", type = button, fxml = "VoiceMeeter", cmds = { CommandVoiceMeeterBasicButton.class, CommandVoiceMeeterAdvancedButton.class })
 public class BtnVoiceMeeterController implements CommandController<CommandVoiceMeeter> {
     private final Voicemeeter voiceMeeter;
-    @FXML private Tab root;
 
     @FXML private ChoiceBox<Integer> voicemeeterBasicButtonIndex;
     @FXML private ChoiceBox<Voicemeeter.ButtonControlMode> voicemeeterButtonType;
@@ -38,7 +39,7 @@ public class BtnVoiceMeeterController implements CommandController<CommandVoiceM
     @FXML private TextField voicemeeterButtonParameter;
 
     @Override
-    public void postInit(CommandContext context, Command cmd) {
+    public void postInit(CommandContext context) {
         voicemeeterButtonType.getItems().addAll(Voicemeeter.ButtonControlMode.values());
         if (voiceMeeter.login()) {
             voicemeeterBasicButtonIO.getItems().addAll(Voicemeeter.ControlType.values());
@@ -60,21 +61,19 @@ public class BtnVoiceMeeterController implements CommandController<CommandVoiceM
             voicemeeterBasicButtonIO.getSelectionModel().selectFirst();
             voicemeeterBasicButtonIndex.getSelectionModel().selectFirst();
         } else {
-            if (cmd instanceof CommandVoiceMeeter) {
-                if (cmd instanceof CommandVoiceMeeterBasicButton vmb) {
-                    voicemeeterBasicButtonIO.getItems().add(vmb.getCt());
-                    voicemeeterBasicButtonIndex.getItems().add(vmb.getIndex() + 1);
-                    voicemeeterBasicButton.getItems().add(vmb.getBt());
-                }
-            } else {
-                root.getTabPane().getTabs().remove(root);
-            }
+
         }
     }
 
     @Override
     public void initFromCommand(CommandVoiceMeeter cmd) {
         if (cmd instanceof CommandVoiceMeeterBasicButton basic) {
+            if (!voiceMeeter.login()) {
+                voicemeeterBasicButtonIO.getItems().add(basic.getCt());
+                voicemeeterBasicButtonIndex.getItems().add(basic.getIndex() + 1);
+                voicemeeterBasicButton.getItems().add(basic.getBt());
+            }
+
             voicemeeterTabPaneButton.getSelectionModel().select(0);
             voicemeeterBasicButtonIO.setValue(basic.getCt());
             voicemeeterBasicButtonIndex.setValue(basic.getIndex() + 1);
@@ -84,7 +83,6 @@ public class BtnVoiceMeeterController implements CommandController<CommandVoiceM
             voicemeeterButtonParameter.setText(advanced.getFullParam());
             voicemeeterButtonType.setValue(advanced.getBt());
         }
-
     }
 
     @Override

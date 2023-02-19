@@ -7,7 +7,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.getpcpanel.commands.command.Command;
+import com.getpcpanel.commands.Commands;
 import com.getpcpanel.device.DeviceType;
 
 import lombok.Data;
@@ -16,9 +16,9 @@ import lombok.Data;
 public class Profile {
     private String name;
     @JsonProperty("isMainProfile") private boolean isMainProfile;
-    @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Command> buttonData = new HashMap<>();
-    @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Command> dblButtonData = new HashMap<>();
-    @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Command> dialData = new HashMap<>();
+    @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Commands> buttonData = new HashMap<>();
+    @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Commands> dblButtonData = new HashMap<>();
+    @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Commands> dialData = new HashMap<>();
     @JsonDeserialize(using = KnobSettingMapDeserializer.class) private Map<Integer, KnobSetting> knobSettings = new HashMap<>();
     private LightingConfig lightingConfig;
     private boolean focusBackOnLost;
@@ -50,27 +50,27 @@ public class Profile {
         return knobSettings.computeIfAbsent(knob, k -> new KnobSetting());
     }
 
-    public Command getButtonData(int button) {
-        return buttonData.get(button);
+    public Commands getButtonData(int button) {
+        return buttonData.getOrDefault(button, Commands.EMPTY);
     }
 
-    public Command getDblButtonData(int button) {
+    public Commands getDblButtonData(int button) {
         return dblButtonData.get(button);
     }
 
-    public void setButtonData(int button, Command data) {
+    public void setButtonData(int button, Commands data) {
         buttonData.put(button, data);
     }
 
-    public void setDblButtonData(int button, Command data) {
+    public void setDblButtonData(int button, Commands data) {
         dblButtonData.put(button, data);
     }
 
-    public Command getDialData(int dial) {
+    public Commands getDialData(int dial) {
         return dialData.get(dial);
     }
 
-    public void setDialData(int dial, Command data) {
+    public void setDialData(int dial, Commands data) {
         dialData.put(dial, data);
     }
 }

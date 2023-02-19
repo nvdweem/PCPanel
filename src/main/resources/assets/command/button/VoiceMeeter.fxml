@@ -1,3 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.Label?>
@@ -6,11 +8,11 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
-<Tab fx:id="root" text="Voicemeeter" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
-     fx:controller="com.getpcpanel.ui.command.button.BtnVoiceMeeterController">
-    <TabPane fx:id="voicemeeterTabPaneButton" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
+<HBox prefHeight="200.0" prefWidth="478.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.command.button.BtnVoiceMeeterController">
+    <TabPane fx:id="voicemeeterTabPaneButton" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" HBox.hgrow="ALWAYS">
         <Tab text="Basic">
             <VBox spacing="15.0">
                 <padding>
@@ -18,8 +20,8 @@
                 </padding>
                 <GridPane alignment="CENTER_LEFT" vgap="10.0">
                     <columnConstraints>
-                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="411.0" minWidth="10.0" prefWidth="173.0"/>
-                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="703.0" minWidth="10.0" prefWidth="658.0"/>
+                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="411.0" minWidth="100.0" prefWidth="173.0"/>
+                        <ColumnConstraints hgrow="ALWAYS" maxWidth="1.7976931348623157E308" minWidth="10.0" prefWidth="658.0"/>
                     </columnConstraints>
                     <rowConstraints>
                         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
@@ -28,10 +30,10 @@
                     </rowConstraints>
                     <Label text="Input/Output"/>
                     <Label text="Index" GridPane.rowIndex="1"/>
-                    <ChoiceBox fx:id="voicemeeterBasicButtonIO" prefWidth="150.0" GridPane.columnIndex="1"/>
-                    <ChoiceBox fx:id="voicemeeterBasicButtonIndex" prefHeight="31.0" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                    <ChoiceBox fx:id="voicemeeterBasicButtonIO" prefWidth="150.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
+                    <ChoiceBox fx:id="voicemeeterBasicButtonIndex" prefHeight="31.0" prefWidth="150.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1"/>
                     <Label text="Button" GridPane.rowIndex="2"/>
-                    <ChoiceBox fx:id="voicemeeterBasicButton" prefWidth="150.0" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                    <ChoiceBox fx:id="voicemeeterBasicButton" prefWidth="150.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2"/>
                 </GridPane>
             </VBox>
         </Tab>
@@ -47,4 +49,4 @@
             </VBox>
         </Tab>
     </TabPane>
-</Tab>
+</HBox>

@@ -1,15 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.RadioButton?>
-<?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-<Tab text="Device Volume" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
-     fx:controller="com.getpcpanel.ui.command.dial.DialVolumeDeviceController">
-    <VBox spacing="15.0">
+<HBox prefHeight="146.0" prefWidth="553.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.command.dial.DialVolumeDeviceController">
+    <VBox spacing="15.0" HBox.hgrow="ALWAYS">
         <padding>
             <Insets left="8.0" top="8.0"/>
         </padding>
@@ -23,10 +23,9 @@
             </toggleGroup>
         </RadioButton>
         <HBox alignment="CENTER_LEFT" spacing="10.0">
-            <RadioButton fx:id="rdio_device_specific" layoutX="5.0" layoutY="80.0" mnemonicParsing="false" onAction="#onRadioButton" text="Specific Device"
-                         toggleGroup="$devicesoundgroup"/>
+            <RadioButton fx:id="rdio_device_specific" layoutX="5.0" layoutY="80.0" minWidth="120.0" mnemonicParsing="false" onAction="#onRadioButton" text="Specific Device" toggleGroup="$devicesoundgroup"/>
 
             <ChoiceBox fx:id="volumedevice" prefHeight="31.0" prefWidth="514.0"/>
         </HBox>
     </VBox>
-</Tab>
+</HBox>

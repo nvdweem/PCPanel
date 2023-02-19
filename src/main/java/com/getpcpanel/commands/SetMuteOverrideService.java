@@ -12,8 +12,8 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandObsSetSourceVolume;
+import com.getpcpanel.commands.command.CommandVoiceMeeter;
 import com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced;
 import com.getpcpanel.commands.command.CommandVoiceMeeterBasic;
 import com.getpcpanel.commands.command.CommandVolumeDevice;
@@ -81,7 +81,8 @@ public class SetMuteOverrideService {
     public void onObsSource(OBSMuteEvent event) {
         var lcName = event.input();
         handleEvent(
-                dlc -> isFollow(dlc) && dlc.cmd instanceof CommandObsSetSourceVolume ms && StreamEx.of(ms.getSourceName()).findFirst(n -> n.contains(lcName)).isPresent(),
+                dlc -> isFollow(dlc) &&
+                        dlc.cmd.getCommand(CommandObsSetSourceVolume.class).flatMap(ms -> StreamEx.of(ms.getSourceName()).findFirst(n -> n.contains(lcName))).isPresent(),
                 event.muted());
     }
 
@@ -93,9 +94,10 @@ public class SetMuteOverrideService {
         handleEvent(
                 dlc -> {
                     if (isFollow(dlc)) {
-                        if (dlc.cmd instanceof CommandVoiceMeeterBasic vmBasic) {
+                        var voiceMeeterCmd = dlc.cmd.getCommand(CommandVoiceMeeter.class).orElse(null);
+                        if (voiceMeeterCmd instanceof CommandVoiceMeeterBasic vmBasic) {
                             return vmBasic.getCt() == type && vmBasic.getIndex() == idx;
-                        } else if (dlc.cmd instanceof CommandVoiceMeeterAdvanced vmAdv) {
+                        } else if (voiceMeeterCmd instanceof CommandVoiceMeeterAdvanced vmAdv) {
                             return StringUtils.startsWithIgnoreCase(vmAdv.getFullParam(), type.name() + "[" + idx + "]");
                         }
                     } else if (StringUtils.isNotBlank(dlc.deviceOrFollow)) {
@@ -117,14 +119,16 @@ public class SetMuteOverrideService {
     public void onAudioSession(AudioSessionEvent event) {
         var lcName = StringUtils.lowerCase(event.session().executable().getName().toLowerCase());
         handleEvent(
-                dlc -> isFollow(dlc) && dlc.cmd instanceof CommandVolumeProcess vd && StreamEx.of(vd.getProcessName()).map(String::toLowerCase).findFirst(n -> n.contains(lcName)).isPresent(),
+                dlc -> isFollow(dlc) &&
+                        dlc.cmd.getCommand(CommandVolumeProcess.class).flatMap(vd -> StreamEx.of(vd.getProcessName()).map(String::toLowerCase).findFirst(n -> n.contains(lcName))).isPresent(),
                 event.session().muted());
     }
 
     @EventListener
     public void onAudioDevice(AudioDeviceEvent event) {
         handleEvent(
-                dlc -> isDevice(event, dlc) || (isFollow(dlc) && dlc.cmd instanceof CommandVolumeDevice vd && sndCtrl.defaultDeviceOnEmpty(vd.getDeviceId()).equals(event.device().id())),
+                dlc -> isDevice(event, dlc) || (isFollow(dlc) &&
+                        dlc.cmd.getCommand(CommandVolumeDevice.class).filter(vd -> sndCtrl.defaultDeviceOnEmpty(vd.getDeviceId()).equals(event.device().id())).isPresent()),
                 event.device().muted());
     }
 
@@ -227,6 +231,6 @@ public class SetMuteOverrideService {
         return result;
     }
 
-    record DeviceLightingCapable(@Nullable String deviceOrFollow, Command cmd, Runnable toOriginal, Runnable toMuteColor) {
+    record DeviceLightingCapable(@Nullable String deviceOrFollow, Commands cmd, Runnable toOriginal, Runnable toMuteColor) {
     }
 }

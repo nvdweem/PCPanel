@@ -80,7 +80,7 @@ public class CommandVolumeApplicationDeviceToggle extends CommandVolume implemen
     @Nullable
     @Override
     public String getOverlayText() {
-        if (currentIdx == -1) {
+        if (currentIdx == -1 && !devices.isEmpty()) {
             return null;
         }
         return devices.get(currentIdx % devices.size()).name();

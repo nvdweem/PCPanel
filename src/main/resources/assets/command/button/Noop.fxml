@@ -1,13 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.Tab?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-<Tab text="No action" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
-     fx:controller="com.getpcpanel.ui.command.button.BtnNoopController">
-    <VBox spacing="15.0">
+<HBox xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.command.button.BtnNoopController">
+    <VBox spacing="15.0" HBox.hgrow="ALWAYS">
         <padding>
             <Insets left="8.0" top="8.0"/>
         </padding>
         <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="No action will be performed"/>
     </VBox>
-</Tab>
+</HBox>

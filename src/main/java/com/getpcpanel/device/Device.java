@@ -333,9 +333,8 @@ public abstract class Device {
     public void focusApplicationChanged() {
         var images = getKnobImages();
         for (var i = 0; i < images.length; i++) {
-            if (currentProfile().getDialData(i) instanceof CommandVolumeFocus) {
-                determineAndSetImage(i);
-            }
+            var idx = i;
+            currentProfile().getDialData(i).getCommand(CommandVolumeFocus.class).ifPresent(c -> determineAndSetImage(idx));
         }
     }
 

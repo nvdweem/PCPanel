@@ -1,6 +1,6 @@
 package com.getpcpanel.hid;
 
-import static com.getpcpanel.commands.command.CommandNoOp.isNoOp;
+import static com.getpcpanel.commands.Commands.hasCommands;
 import static com.getpcpanel.util.Util.map;
 import static java.util.Objects.requireNonNullElse;
 
@@ -74,7 +74,7 @@ public final class InputInterpreter {
         var debounceTime = requireNonNullElse(save.get().getDblClickInterval(), 500L);
         var click = profile.getButtonData(clickId.button());
         var dblClick = profile.getDblButtonData(clickId.button());
-        var hasDblClick = !isNoOp(dblClick);
+        var hasDblClick = hasCommands(dblClick);
         var shouldDblClick = hasDblClick && timeDiff < debounceTime;
 
         if (shouldDblClick) {
@@ -85,7 +85,7 @@ public final class InputInterpreter {
         }
 
         lastClicks.put(clickId, System.currentTimeMillis());
-        if (!isNoOp(click)) {
+        if (hasCommands(click)) {
             var event = new PCPanelControlEvent(clickId.serialNum(), clickId.button(), click, false, null, null);
             if (hasDblClick && save.get().isPreventClickWhenDblClick()) {
                 debouncer.debounce(clickId, () -> eventPublisher.publishEvent(event), debounceTime, TimeUnit.MILLISECONDS);

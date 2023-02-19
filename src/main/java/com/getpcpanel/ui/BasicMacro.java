@@ -1,37 +1,19 @@
 package com.getpcpanel.ui;
 
-import static com.getpcpanel.commands.command.CommandNoOp.NOOP;
-
-import java.util.HashMap;
 import java.util.Objects;
-import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.stereotype.Component;
 
-import com.getpcpanel.commands.command.Command;
-import com.getpcpanel.commands.command.CommandBrightness;
-import com.getpcpanel.commands.command.CommandNoOp;
-import com.getpcpanel.commands.command.CommandObsSetSourceVolume;
-import com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced;
-import com.getpcpanel.commands.command.CommandVoiceMeeterBasic;
-import com.getpcpanel.commands.command.CommandVolumeDevice;
-import com.getpcpanel.commands.command.CommandVolumeFocus;
-import com.getpcpanel.commands.command.CommandVolumeProcess;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.profile.KnobSetting;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.spring.Prototype;
+import com.getpcpanel.ui.command.ButtonController;
+import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
-import com.getpcpanel.ui.command.dial.DialBrightnessController;
-import com.getpcpanel.ui.command.dial.DialObsController;
-import com.getpcpanel.ui.command.dial.DialVoiceMeeterController;
-import com.getpcpanel.ui.command.dial.DialVolumeDeviceController;
-import com.getpcpanel.ui.command.dial.DialVolumeFocusController;
-import com.getpcpanel.ui.command.dial.DialVolumeProcessController;
-import com.getpcpanel.util.Util;
 
 import javafx.application.Application;
 import javafx.event.ActionEvent;
@@ -56,24 +38,15 @@ public class BasicMacro extends Application implements UIInitializer {
     private static final Pattern NUMBER_PATTERN = Pattern.compile("\\d*");
     private static final Pattern NOT_NUMBER_PATTERN = Pattern.compile("[^\\d]");
     private final SaveService saveService;
-    private final FxHelper fxHelper;
     private CommandContext context;
 
     @FXML private Pane root;
-    @FXML private MacroButtonController singleClickPanelController;
-    @FXML private MacroButtonController doubleClickPanelController;
-
-    // Dials
-    @FXML private DialVolumeProcessController dialCommandVolumeProcessController;
-    @FXML private DialVolumeFocusController dialCommandVolumeFocusController;
-    @FXML private DialVolumeDeviceController dialCommandVolumeDeviceController;
-    @FXML private DialBrightnessController dialCommandBrightnessController;
-    @FXML private DialObsController dialCommandObsController;
-    @FXML private DialVoiceMeeterController dialCommandVoiceMeeterController;
+    @FXML private ButtonController singleClickPanelController;
+    @FXML private ButtonController doubleClickPanelController;
+    @FXML private ButtonController dialPanelController;
 
     @FXML private Pane topPane;
     @FXML private TabPane mainTabPane;
-    @FXML private TabPane dialTabPane;
     @FXML private Button scFileButton;
 
     @FXML private TextField trimMin;
@@ -82,7 +55,6 @@ public class BasicMacro extends Application implements UIInitializer {
     @FXML private TextField buttonDebounceTime;
     @FXML private CheckBox logarithmic;
     private Stage stage;
-    private Command volData;
     private int dialNum;
     private KnobSetting knobSetting;
     private String name;
@@ -97,18 +69,18 @@ public class BasicMacro extends Application implements UIInitializer {
 
         var deviceSave = saveService.get().getDeviceSave(device.getSerialNumber());
         var profile = deviceSave.ensureCurrentProfile(device.getDeviceType());
-        volData = profile.getDialData(dialNum);
         knobSetting = profile.getKnobSettings(dialNum);
 
         // Do this before possibly removing the first 2 tabs
         if (analogType != null) {
             mainTabPane.getTabs().get(2).setText(analogType);
         }
+        dialPanelController.initController(Cmd.Type.dial, context, profile.getDialData(dialNum));
 
         context = new CommandContext(stage, deviceSave, profile);
         if (hasButton) {
-            singleClickPanelController.initController(context, profile.getButtonData(dialNum));
-            doubleClickPanelController.initController(context, profile.getDblButtonData(dialNum));
+            singleClickPanelController.initController(Cmd.Type.button, context, profile.getButtonData(dialNum));
+            doubleClickPanelController.initController(Cmd.Type.button, context, profile.getDblButtonData(dialNum));
         } else {
             mainTabPane.getTabs().remove(0);
             mainTabPane.getTabs().remove(0);
@@ -124,7 +96,6 @@ public class BasicMacro extends Application implements UIInitializer {
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/assets/dark_theme.css")).toExternalForm());
         basicmacro.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/assets/256x256.png")).toExternalForm()));
         basicmacro.initModality(Modality.APPLICATION_MODAL);
-        // basicmacro.initOwner((Window)Window.stage);
         basicmacro.setScene(scene);
         basicmacro.sizeToScene();
         basicmacro.setTitle(Objects.requireNonNullElseGet(name, () -> "Knob " + (dialNum + 1)));
@@ -133,10 +104,9 @@ public class BasicMacro extends Application implements UIInitializer {
 
     @FXML
     private void ok(ActionEvent event) {
-        var dialType = fxHelper.getSelectedTabId(dialTabPane);
         var buttonData = singleClickPanelController.determineButtonCommand();
         var dblButtonData = doubleClickPanelController.determineButtonCommand();
-        volData = determineVolCommand(dialType);
+        var volData = dialPanelController.determineButtonCommand();
         knobSetting.setMinTrim(NumberUtils.toInt(trimMin.getText(), 0));
         knobSetting.setMaxTrim(NumberUtils.toInt(trimMax.getText(), 100));
         knobSetting.setOverlayIcon(iconFld.getText());
@@ -158,18 +128,6 @@ public class BasicMacro extends Application implements UIInitializer {
         stage.close();
     }
 
-    private Command determineVolCommand(String dialType) {
-        return switch (dialType) {
-            case "dialCommandVolumeProcess" -> dialCommandVolumeProcessController.buildCommand();
-            case "dialCommandVolumeFocus" -> dialCommandVolumeFocusController.buildCommand();
-            case "dialCommandVolumeDevice" -> dialCommandVolumeDeviceController.buildCommand();
-            case "dialCommandObs" -> dialCommandObsController.buildCommand();
-            case "dialCommandVoiceMeeter" -> dialCommandVoiceMeeterController.buildCommand();
-            case "dialCommandBrightness" -> dialCommandBrightnessController.buildCommand();
-            default -> NOOP;
-        };
-    }
-
     @FXML
     public void iconFile(ActionEvent event) {
         UIHelper.showFilePicker("Pick file", iconFld);
@@ -181,7 +139,6 @@ public class BasicMacro extends Application implements UIInitializer {
     }
 
     private void postInit() {
-        Util.adjustTabs(dialTabPane, 150, 30);
         trimMin.textProperty().addListener((observable, oldValue, newValue) -> trimMinMax(oldValue, newValue, trimMin));
         trimMax.textProperty().addListener((observable, oldValue, newValue) -> trimMinMax(oldValue, newValue, trimMax));
         buttonDebounceTime.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -196,14 +153,6 @@ public class BasicMacro extends Application implements UIInitializer {
                 buttonDebounceTime.setText(String.valueOf(num));
             }
         });
-
-        // Init controllers
-        dialCommandVolumeProcessController.postInit(context, volData);
-        dialCommandVolumeFocusController.postInit(context, volData);
-        dialCommandVolumeDeviceController.postInit(context, volData);
-        dialCommandBrightnessController.postInit(context, volData);
-        dialCommandObsController.postInit(context, volData);
-        dialCommandVoiceMeeterController.postInit(context, volData);
 
         try {
             initFields();
@@ -226,8 +175,6 @@ public class BasicMacro extends Application implements UIInitializer {
     }
 
     private void initFields() {
-        initDialFields();
-
         if (knobSetting != null) {
             trimMin.setText(String.valueOf(knobSetting.getMinTrim()));
             trimMax.setText(String.valueOf(knobSetting.getMaxTrim()));
@@ -235,29 +182,5 @@ public class BasicMacro extends Application implements UIInitializer {
             buttonDebounceTime.setText(String.valueOf(knobSetting.getButtonDebounce()));
             logarithmic.setSelected(knobSetting.isLogarithmic());
         }
-    }
-
-    private void initDialFields() {
-        if (volData == null || volData.equals(NOOP))
-            return;
-        fxHelper.selectTabById(dialTabPane, "dial" + volData.getClass().getSimpleName());
-        fxHelper.selectTabById(dialTabPane, "dial" + volData.getClass().getSuperclass().getSimpleName());
-
-        //noinspection unchecked,rawtypes
-        ((Consumer) getDialInitializer().getOrDefault(volData.getClass(), x -> log.error("No initializer for {}", x))).accept(volData); // Yuck :(
-    }
-
-    private HashMap<Class<? extends Command>, Consumer<?>> getDialInitializer() {
-        var dialInitializers = new HashMap<Class<? extends Command>, Consumer<?>>(); // Blegh
-        dialInitializers.put(CommandNoOp.class, (CommandNoOp command) -> {
-        });
-        dialInitializers.put(CommandVolumeProcess.class, (CommandVolumeProcess cmd) -> dialCommandVolumeProcessController.initFromCommand(cmd));
-        dialInitializers.put(CommandVolumeFocus.class, (CommandVolumeFocus cmd) -> dialCommandVolumeFocusController.initFromCommand(cmd));
-        dialInitializers.put(CommandVolumeDevice.class, (CommandVolumeDevice cmd) -> dialCommandVolumeDeviceController.initFromCommand(cmd));
-        dialInitializers.put(CommandBrightness.class, (CommandBrightness cmd) -> dialCommandBrightnessController.initFromCommand(cmd));
-        dialInitializers.put(CommandObsSetSourceVolume.class, (CommandObsSetSourceVolume cmd) -> dialCommandObsController.initFromCommand(cmd));
-        dialInitializers.put(CommandVoiceMeeterBasic.class, (CommandVoiceMeeterBasic cmd) -> dialCommandVoiceMeeterController.initFromCommand(cmd));
-        dialInitializers.put(CommandVoiceMeeterAdvanced.class, (CommandVoiceMeeterAdvanced cmd) -> dialCommandVoiceMeeterController.initFromCommand(cmd));
-        return dialInitializers;
     }
 }

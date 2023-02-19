@@ -1,5 +1,7 @@
 package com.getpcpanel.ui.command.button;
 
+import static com.getpcpanel.ui.command.Cmd.Type.button;
+
 import java.util.List;
 
 import org.springframework.stereotype.Component;
@@ -9,6 +11,7 @@ import com.getpcpanel.commands.command.CommandVolumeApplicationDeviceToggle;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.AdvancedDevices;
 import com.getpcpanel.ui.PickProcessesController;
+import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.CommandController;
 
@@ -22,6 +25,7 @@ import lombok.extern.log4j.Log4j2;
 @Component
 @Prototype
 @RequiredArgsConstructor
+@Cmd(name = "Application Sound Device", type = button, fxml = "ApplicationDeviceToggle", cmds = CommandVolumeApplicationDeviceToggle.class)
 public class BtnApplicationDeviceToggleController implements CommandController<CommandVolumeApplicationDeviceToggle> {
     @FXML private AdvancedDevices applicationDeviceDevicesController;
     @FXML private PickProcessesController applicationDeviceProcessesController;
@@ -29,7 +33,7 @@ public class BtnApplicationDeviceToggleController implements CommandController<C
     @FXML private RadioButton rdioApplicationDeviceSpecific;
 
     @Override
-    public void postInit(CommandContext context, Command cmd) {
+    public void postInit(CommandContext context) {
         applicationDeviceProcessesController.setPickType(PickProcessesController.PickType.soundSource);
         applicationDeviceDevicesController.setAllowRemove(true);
         applicationDeviceDevicesController.setOnlyMedia(true);

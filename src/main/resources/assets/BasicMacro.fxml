@@ -13,89 +13,62 @@
 <VBox fx:id="root" prefHeight="670.0" prefWidth="890.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.BasicMacro">
     <TabPane fx:id="mainTabPane" layoutX="70.0" layoutY="72.0" prefHeight="523.0" prefWidth="723.0" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
         <Tab closable="false" text="Click">
-            <fx:include fx:id="singleClickPanel" source="MacroButton.fxml"/>
+            <fx:include fx:id="singleClickPanel" source="command/Button.fxml"/>
         </Tab>
         <Tab closable="false" text="Dbl click">
-            <fx:include fx:id="doubleClickPanel" source="MacroButton.fxml"/>
+            <fx:include fx:id="doubleClickPanel" source="command/Button.fxml"/>
         </Tab>
-
         <Tab fx:id="dialpane" closable="false" text="Dial">
-            <content>
-                <TabPane fx:id="dialTabPane" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="209.0" prefWidth="376.0" rotateGraphic="true" side="LEFT"
-                         tabClosingPolicy="UNAVAILABLE">
-                    <tabs>
-                        <fx:include fx:id="dialCommandVolumeProcess" source="command/dial/VolumeProcess.fxml"/>
-                        <fx:include fx:id="dialCommandVolumeFocus" source="command/dial/VolumeFocus.fxml"/>
-                        <fx:include fx:id="dialCommandVolumeDevice" source="command/dial/VolumeDevice.fxml"/>
-                        <fx:include fx:id="dialCommandBrightness" source="command/dial/Brightness.fxml"/>
-                        <fx:include fx:id="dialCommandObs" source="command/dial/Obs.fxml"/>
-                        <fx:include fx:id="dialCommandVoiceMeeter" source="command/dial/VoiceMeeter.fxml"/>
-                    </tabs>
-                </TabPane>
-            </content>
+            <fx:include fx:id="dialPanel" source="command/Button.fxml"/>
         </Tab>
         <Tab text="Settings">
-            <content>
-                <VBox layoutX="226.0" layoutY="50.0" prefHeight="200.0" prefWidth="100.0" spacing="10.0">
-                    <padding>
-                        <Insets bottom="12.0" left="12.0" right="12.0" top="12.0"/>
-                    </padding>
-                    <children>
-                        <Label text="Dial Settings"/>
-                        <Separator prefWidth="200.0"/>
-                        <CheckBox fx:id="logarithmic" mnemonicParsing="false" text="Logarithmic Scaling"/>
-                        <Separator prefWidth="200.0"/>
-                        <HBox alignment="CENTER_LEFT">
-                            <children>
-                                <Label prefHeight="21.0" prefWidth="93.0" text="Trim Min"/>
-                                <TextField fx:id="trimMin" prefWidth="100.0" text="0"/>
-                            </children>
-                        </HBox>
-                        <HBox alignment="CENTER_LEFT">
-                            <children>
-                                <Label prefHeight="21.0" prefWidth="93.0" text="Trim Max">
-                                    <HBox.margin>
-                                        <Insets/>
-                                    </HBox.margin>
-                                </Label>
-                                <TextField fx:id="trimMax" prefWidth="100.0" text="100"/>
-                            </children>
-                        </HBox>
-                        <Separator prefWidth="200.0"/>
-                        <HBox alignment="CENTER_LEFT">
-                            <children>
-                                <Label prefHeight="21.0" prefWidth="93.0" text="Overlay icon">
-                                    <HBox.margin>
-                                        <Insets/>
-                                    </HBox.margin>
-                                </Label>
-                                <TextField fx:id="iconFld" prefWidth="100.0" HBox.hgrow="ALWAYS">
-                                    <HBox.margin>
-                                        <Insets right="10.0"/>
-                                    </HBox.margin>
-                                </TextField>
-                                <Button fx:id="iconFileButton" mnemonicParsing="false" onAction="#iconFile" prefHeight="25.0" prefWidth="34.0" text="..."/>
-                            </children>
-                        </HBox>
-                        <Separator prefWidth="200.0"/>
-                        <HBox alignment="CENTER_LEFT" visible="false">
-                            <children>
-                                <Label prefHeight="21.0" prefWidth="99.0" text="Debounce"/>
-                                <TextField fx:id="buttonDebounceTime"/>
-                            </children>
-                        </HBox>
-                    </children>
-                </VBox>
-            </content>
+            <VBox layoutX="226.0" layoutY="50.0" prefHeight="200.0" prefWidth="100.0" spacing="10.0">
+                <padding>
+                    <Insets bottom="12.0" left="12.0" right="12.0" top="12.0"/>
+                </padding>
+                <Label text="Dial Settings"/>
+                <Separator prefWidth="200.0"/>
+                <CheckBox fx:id="logarithmic" mnemonicParsing="false" text="Logarithmic Scaling"/>
+                <Separator prefWidth="200.0"/>
+                <HBox alignment="CENTER_LEFT">
+                    <Label prefHeight="21.0" prefWidth="93.0" text="Trim Min"/>
+                    <TextField fx:id="trimMin" prefWidth="100.0" text="0"/>
+                </HBox>
+                <HBox alignment="CENTER_LEFT">
+                    <Label prefHeight="21.0" prefWidth="93.0" text="Trim Max">
+                        <HBox.margin>
+                            <Insets/>
+                        </HBox.margin>
+                    </Label>
+                    <TextField fx:id="trimMax" prefWidth="100.0" text="100"/>
+                </HBox>
+                <Separator prefWidth="200.0"/>
+                <HBox alignment="CENTER_LEFT">
+                    <Label prefHeight="21.0" prefWidth="93.0" text="Overlay icon">
+                        <HBox.margin>
+                            <Insets/>
+                        </HBox.margin>
+                    </Label>
+                    <TextField fx:id="iconFld" prefWidth="100.0" HBox.hgrow="ALWAYS">
+                        <HBox.margin>
+                            <Insets right="10.0"/>
+                        </HBox.margin>
+                    </TextField>
+                    <Button fx:id="iconFileButton" mnemonicParsing="false" onAction="#iconFile" prefHeight="25.0" prefWidth="34.0" text="..."/>
+                </HBox>
+                <Separator prefWidth="200.0"/>
+                <HBox alignment="CENTER_LEFT" visible="false">
+                    <Label prefHeight="21.0" prefWidth="99.0" text="Debounce"/>
+                    <TextField fx:id="buttonDebounceTime"/>
+                </HBox>
+            </VBox>
         </Tab>
     </TabPane>
     <HBox alignment="CENTER_RIGHT" spacing="15.0">
-        <children>
-            <Button mnemonicParsing="false" onAction="#ok" prefHeight="25.0" prefWidth="66.0" text="Ok"/>
-            <Button fx:id="cancelButton" layoutX="661.0" layoutY="872.0" mnemonicParsing="false" onAction="#closeButtonAction" prefHeight="25.0" prefWidth="73.0" text="Cancel"/>
-        </children>
         <VBox.margin>
             <Insets bottom="10.0" right="10.0"/>
         </VBox.margin>
+        <Button mnemonicParsing="false" onAction="#ok" prefHeight="25.0" prefWidth="66.0" text="Ok"/>
+        <Button fx:id="cancelButton" layoutX="661.0" layoutY="872.0" mnemonicParsing="false" onAction="#closeButtonAction" prefHeight="25.0" prefWidth="73.0" text="Cancel"/>
     </HBox>
 </VBox>

@@ -1,20 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
-<?import javafx.scene.control.Tab?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
-<Tab text="Toggle Device" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
-     fx:controller="com.getpcpanel.ui.command.button.BtnDefaultDeviceToggleController">
-    <VBox spacing="15.0">
+<HBox prefHeight="399.0" prefWidth="940.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.command.button.BtnDefaultDeviceToggleController">
+    <VBox spacing="15.0" HBox.hgrow="ALWAYS">
         <padding>
             <Insets bottom="8.0" left="8.0" right="8.0" top="8.0"/>
         </padding>
         <Label prefHeight="71.0" prefWidth="660.0"
-               text="Select multiple sound devices to toggle in between.&#10;Drag sound devices from the left list to the right list.&#10;Everytime you click, the default sound device will be rotated between the list."
-               wrapText="true"/>
+               text="Select multiple sound devices to toggle in between.&#10;Drag sound devices from the left list to the right list.&#10;Everytime you click, the default sound device will be rotated between the list." wrapText="true"/>
         <GridPane hgap="10.0" prefHeight="297.0" prefWidth="676.0" vgap="5.0" VBox.vgrow="ALWAYS">
             <columnConstraints>
                 <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
@@ -30,4 +30,4 @@
             <ListView fx:id="soundDevices2" prefHeight="150.0" prefWidth="164.0" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
         </GridPane>
     </VBox>
-</Tab>
+</HBox>

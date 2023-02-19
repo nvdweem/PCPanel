@@ -1,11 +1,14 @@
 package com.getpcpanel.ui.command.button;
 
+import static com.getpcpanel.ui.command.Cmd.Type.button;
+
 import org.springframework.stereotype.Component;
 
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandShortcut;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.UIHelper;
+import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.CommandController;
 
@@ -19,11 +22,12 @@ import lombok.extern.log4j.Log4j2;
 @Component
 @Prototype
 @RequiredArgsConstructor
+@Cmd(name = "Shortcut", type = button, fxml = "Shortcut", cmds = CommandShortcut.class)
 public class BtnShortcutController implements CommandController<CommandShortcut> {
     @FXML private TextField shortcutField;
 
     @Override
-    public void postInit(CommandContext context, Command cmd) {
+    public void postInit(CommandContext context) {
     }
 
     @Override

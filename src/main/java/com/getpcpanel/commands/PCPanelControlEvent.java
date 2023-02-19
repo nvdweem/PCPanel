@@ -2,10 +2,12 @@ package com.getpcpanel.commands;
 
 import javax.annotation.Nullable;
 
-import com.getpcpanel.commands.command.Command;
+import one.util.streamex.StreamEx;
 
-public record PCPanelControlEvent(String serialNum, int knob, Command cmd, boolean initial, @Nullable Integer value, @Nullable Integer vol) {
+public record PCPanelControlEvent(String serialNum, int knob, Commands cmd, boolean initial, @Nullable Integer value, @Nullable Integer vol) {
     public Runnable buildRunnable() {
-        return cmd.toRunnable(initial, serialNum, vol);
+        return () -> {
+            StreamEx.of(cmd.commands()).map(c -> c.toRunnable(initial, serialNum, vol)).forEach(Runnable::run);
+        };
     }
 }

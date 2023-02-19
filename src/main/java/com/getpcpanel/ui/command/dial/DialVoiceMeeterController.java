@@ -1,6 +1,7 @@
 package com.getpcpanel.ui.command.dial;
 
 import static com.getpcpanel.commands.command.CommandNoOp.NOOP;
+import static com.getpcpanel.ui.command.Cmd.Type.dial;
 
 import org.springframework.stereotype.Component;
 
@@ -9,6 +10,7 @@ import com.getpcpanel.commands.command.CommandVoiceMeeter;
 import com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced;
 import com.getpcpanel.commands.command.CommandVoiceMeeterBasic;
 import com.getpcpanel.spring.Prototype;
+import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.CommandController;
 import com.getpcpanel.util.Util;
@@ -17,7 +19,6 @@ import com.getpcpanel.voicemeeter.Voicemeeter;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
@@ -28,13 +29,12 @@ import lombok.extern.log4j.Log4j2;
 @Component
 @Prototype
 @RequiredArgsConstructor
+@Cmd(name = "Voicemeeter", type = dial, fxml = "VoiceMeeter", cmds = { CommandVoiceMeeterBasic.class, CommandVoiceMeeterAdvanced.class })
 public class DialVoiceMeeterController implements CommandController<CommandVoiceMeeter> {
     public static final String MUST_SELECT_A_CONTROL_TYPE_MESSAGE = "Must Select a Control Type";
 
     private final Voicemeeter voiceMeeter;
     private Stage stage;
-    @FXML private Tab root;
-
     @FXML private ChoiceBox<Integer> voicemeeterBasicDialIndex;
     @FXML private ChoiceBox<Voicemeeter.ControlType> voicemeeterBasicDialIO;
     @FXML private ChoiceBox<Voicemeeter.DialControlMode> voicemeeterDialType;
@@ -43,7 +43,7 @@ public class DialVoiceMeeterController implements CommandController<CommandVoice
     @FXML private TextField voicemeeterDialParameter;
 
     @Override
-    public void postInit(CommandContext context, Command cmd) {
+    public void postInit(CommandContext context) {
         stage = context.stage();
         voicemeeterDialType.getItems().addAll(Voicemeeter.DialControlMode.values());
         if (voiceMeeter.login()) {
@@ -65,22 +65,17 @@ public class DialVoiceMeeterController implements CommandController<CommandVoice
             });
             voicemeeterBasicDialIO.getSelectionModel().selectFirst();
             voicemeeterBasicDialIndex.getSelectionModel().selectFirst();
-        } else {
-            if (cmd instanceof CommandVoiceMeeter) {
-                if (cmd instanceof CommandVoiceMeeterBasic vmb) {
-                    voicemeeterBasicDialIO.getItems().add(vmb.getCt());
-                    voicemeeterBasicDialIndex.getItems().add(vmb.getIndex() + 1);
-                    voicemeeterBasicDial.getItems().add(vmb.getDt());
-                }
-            } else {
-                root.getTabPane().getTabs().remove(root);
-            }
         }
     }
 
     @Override
     public void initFromCommand(CommandVoiceMeeter cmd) {
         if (cmd instanceof CommandVoiceMeeterBasic cmdBasic) {
+            if (!voiceMeeter.login()) {
+                voicemeeterBasicDialIO.getItems().add(cmdBasic.getCt());
+                voicemeeterBasicDialIndex.getItems().add(cmdBasic.getIndex() + 1);
+                voicemeeterBasicDial.getItems().add(cmdBasic.getDt());
+            }
             voicemeeterTabPaneDial.getSelectionModel().select(0);
             voicemeeterBasicDialIO.setValue(cmdBasic.getCt());
             voicemeeterBasicDialIndex.setValue(cmdBasic.getIndex() + 1);

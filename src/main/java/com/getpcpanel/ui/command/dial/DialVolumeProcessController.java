@@ -1,5 +1,7 @@
 package com.getpcpanel.ui.command.dial;
 
+import static com.getpcpanel.ui.command.Cmd.Type.dial;
+
 import java.util.Collection;
 import java.util.Optional;
 
@@ -14,6 +16,7 @@ import com.getpcpanel.cpp.AudioDevice;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.PickProcessesController;
+import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.CommandController;
 
@@ -30,6 +33,7 @@ import one.util.streamex.StreamEx;
 @Component
 @Prototype
 @RequiredArgsConstructor
+@Cmd(name = "App Volume", type = dial, fxml = "VolumeProcess", cmds = CommandVolumeProcess.class)
 public class DialVolumeProcessController implements CommandController<CommandVolumeProcess> {
     private final ISndCtrl sndCtrl;
     private Collection<AudioDevice> allSoundDevices;
@@ -42,7 +46,7 @@ public class DialVolumeProcessController implements CommandController<CommandVol
     @FXML private RadioButton rdio_app_output_specific;
 
     @Override
-    public void postInit(CommandContext context, Command cmd) {
+    public void postInit(CommandContext context) {
         appVolumeController.setPickType(PickProcessesController.PickType.soundSource);
 
         allSoundDevices = sndCtrl.getDevices();

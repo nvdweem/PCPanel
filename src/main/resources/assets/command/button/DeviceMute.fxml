@@ -1,14 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.RadioButton?>
-<?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-<Tab text="Mute Device" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
-     fx:controller="com.getpcpanel.ui.command.button.BtnDeviceMuteController">
-    <VBox spacing="15.0">
+<HBox xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.command.button.BtnDeviceMuteController">
+    <VBox spacing="15.0" HBox.hgrow="ALWAYS">
         <padding>
             <Insets left="8.0" right="8.0" top="8.0"/>
         </padding>
@@ -19,7 +19,7 @@
             </toggleGroup>
         </RadioButton>
         <HBox alignment="CENTER_LEFT" spacing="10.0">
-            <RadioButton fx:id="rdio_muteDevice_Specific" mnemonicParsing="false" onAction="#onRadioButton" text="Specific Device" toggleGroup="$muteDeviceGroup"/>
+            <RadioButton fx:id="rdio_muteDevice_Specific" minWidth="110.0" mnemonicParsing="false" onAction="#onRadioButton" text="Specific Device" toggleGroup="$muteDeviceGroup"/>
             <ChoiceBox fx:id="muteSoundDevice" prefHeight="31.0" prefWidth="524.0" HBox.hgrow="ALWAYS"/>
         </HBox>
         <Label text="Mute Mode"/>
@@ -31,4 +31,4 @@
         <RadioButton fx:id="rdio_muteDevice_mute" mnemonicParsing="false" text="Mute" toggleGroup="$deviceMuteGroup"/>
         <RadioButton fx:id="rdio_muteDevice_unmute" mnemonicParsing="false" text="Unmute" toggleGroup="$deviceMuteGroup"/>
     </VBox>
-</Tab>
+</HBox>

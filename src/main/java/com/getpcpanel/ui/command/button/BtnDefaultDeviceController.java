@@ -1,6 +1,7 @@
 package com.getpcpanel.ui.command.button;
 
 import static com.getpcpanel.commands.command.CommandNoOp.NOOP;
+import static com.getpcpanel.ui.command.Cmd.Type.button;
 
 import java.util.Collection;
 
@@ -13,6 +14,7 @@ import com.getpcpanel.commands.command.CommandVolumeDefaultDevice;
 import com.getpcpanel.cpp.AudioDevice;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.spring.Prototype;
+import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.CommandController;
 
@@ -26,6 +28,7 @@ import one.util.streamex.StreamEx;
 @Component
 @Prototype
 @RequiredArgsConstructor
+@Cmd(name = "Sound Device", type = button, fxml = "DefaultDevice", cmds = CommandVolumeDefaultDevice.class)
 public class BtnDefaultDeviceController implements CommandController<CommandVolumeDefaultDevice> {
     private final ISndCtrl sndCtrl;
     private Collection<AudioDevice> allSoundDevices;
@@ -33,7 +36,7 @@ public class BtnDefaultDeviceController implements CommandController<CommandVolu
     @FXML private ChoiceBox<AudioDevice> sounddevices;
 
     @Override
-    public void postInit(CommandContext context, Command cmd) {
+    public void postInit(CommandContext context) {
         allSoundDevices = sndCtrl.getDevices();
         sounddevices.getItems().addAll(allSoundDevices);
     }

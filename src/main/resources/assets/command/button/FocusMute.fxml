@@ -1,12 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.RadioButton?>
-<?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-<Tab text="Focus Mute" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
-     fx:controller="com.getpcpanel.ui.command.button.BtnFocusMuteController">
-    <VBox spacing="15.0">
+<HBox xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.command.button.BtnFocusMuteController">
+    <VBox spacing="15.0" HBox.hgrow="ALWAYS">
         <padding>
             <Insets left="8.0" top="8.0"/>
         </padding>
@@ -21,4 +22,4 @@
         <RadioButton fx:id="rdio_focus_mute_mute" mnemonicParsing="false" text="Mute" toggleGroup="$focusMuteToggle"/>
         <RadioButton fx:id="rdio_focus_mute_unmute" mnemonicParsing="false" text="Unmute" toggleGroup="$focusMuteToggle"/>
     </VBox>
-</Tab>
+</HBox>
