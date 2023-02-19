@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.JOptionPane;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
@@ -36,6 +37,7 @@ public class SaveService {
     private final Json json;
     private final Debouncer debouncer;
     @Autowired @Lazy @Setter private DeviceHolder devices;
+    private static String oldVersionEncountered;
 
     private Save save;
 
@@ -58,12 +60,36 @@ public class SaveService {
 
         try {
             save = json.read(FileUtils.readFileToString(saveFile, Charset.defaultCharset()), Save.class);
+            handleOldVersionEncountered();
             StreamEx.ofValues(save.getDevices()).forEach(d -> StreamEx.of(d.getProfiles()).findFirst(Profile::isMainProfile).ifPresent(p -> d.setCurrentProfile(p.getName())));
             eventPublisher.publishEvent(new SaveEvent(save, false));
         } catch (Exception e) {
             log.error("Unable to read file", e);
             save = new Save();
         }
+    }
+
+    private void handleOldVersionEncountered() {
+        if (StringUtils.isBlank(oldVersionEncountered)) {
+            return;
+        }
+        backup();
+        save();
+    }
+
+    private void backup() {
+        try {
+            FileUtils.copyFile(fileUtil.getFile(saveFileName), fileUtil.getFile(saveFileName + "." + oldVersionEncountered + ".bak"));
+        } catch (IOException e) {
+            log.error("Unable to backup profile", e);
+        }
+    }
+
+    /**
+     * Gets called when an older version of a profile is read.
+     */
+    public static void encounterOldVersion(String version) {
+        oldVersionEncountered = version.replace('.', '_');
     }
 
     private void tryMigrate(File saveFile) {

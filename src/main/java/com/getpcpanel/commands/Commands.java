@@ -18,6 +18,13 @@ public record Commands(@Nonnull List<Command> commands) {
         commands = StreamEx.of(commands).remove(CommandNoOp.class::isInstance).toImmutableList();
     }
 
+    public static @Nonnull List<Command> cmds(@Nullable Commands buttonData) {
+        if (buttonData != null) {
+            return buttonData.commands();
+        }
+        return List.of();
+    }
+
     public <T extends Command> Optional<T> getCommand(Class<T> cmd) {
         return StreamEx.of(commands).select(cmd).findFirst();
     }

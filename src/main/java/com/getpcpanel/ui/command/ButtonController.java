@@ -1,6 +1,7 @@
 package com.getpcpanel.ui.command;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.springframework.stereotype.Component;
 
@@ -46,9 +47,9 @@ public class ButtonController {
     @FXML private Accordion commands;
     @FXML private Button addButton;
 
-    public void initController(Cmd.Type cmdType, CommandContext context, @Nonnull Commands buttonData) {
+    public void initController(Cmd.Type cmdType, CommandContext context, @Nullable Commands buttonData) {
         this.context = context;
-        buttonData.commands().forEach(this::add);
+        Commands.cmds(buttonData).forEach(this::add);
 
         commands.expandedPaneProperty().addListener((property, oldPane, newPane) -> {
             if (oldPane != null) {

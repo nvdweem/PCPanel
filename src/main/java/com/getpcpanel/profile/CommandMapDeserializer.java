@@ -19,10 +19,14 @@ import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandConverter;
 
+import lombok.RequiredArgsConstructor;
 import one.util.streamex.EntryStream;
 import one.util.streamex.IntStreamEx;
 
+@RequiredArgsConstructor
 public class CommandMapDeserializer extends JsonDeserializer<Map<Integer, Commands>> {
+    private final ObjectMapper mapper = new ObjectMapper();
+
     @Override
     public Map<Integer, Commands> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         if (p.currentToken() == JsonToken.START_ARRAY) {
@@ -33,12 +37,13 @@ public class CommandMapDeserializer extends JsonDeserializer<Map<Integer, Comman
         try {
             var newType = new TypeReference<Map<Integer, Commands>>() {
             };
-            return ctxt.readTreeAsValue(tree, new ObjectMapper().constructType(newType));
+            return ctxt.readTreeAsValue(tree, mapper.constructType(newType));
         } catch (Exception e) {
             // Read old format
             var oldType = new TypeReference<Map<Integer, Command>>() {
             };
-            var result = ctxt.<Map<Integer, Command>>readTreeAsValue(tree, new ObjectMapper().constructType(oldType));
+            var result = ctxt.<Map<Integer, Command>>readTreeAsValue(tree, mapper.constructType(oldType));
+            SaveService.encounterOldVersion("1.6");
             return convertMapToMapWithCommands(result);
         }
     }

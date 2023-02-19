@@ -2,9 +2,9 @@ package com.getpcpanel;
 
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 
@@ -13,12 +13,9 @@ import lombok.extern.log4j.Log4j2;
  */
 @Log4j2
 @Service
+@RequiredArgsConstructor
 public final class Json {
-    private final ObjectMapper mapper = buildObjectMapper();
-
-    private ObjectMapper buildObjectMapper() {
-        return new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    }
+    private final ObjectMapper mapper;
 
     @SneakyThrows
     public String write(Object o) {
