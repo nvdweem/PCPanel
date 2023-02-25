@@ -46,6 +46,7 @@ public class SetNewSessionVolumeService {
                 .mapValues(Device::currentProfile)
                 .flatMapKeyValue((id, profile) -> EntryStream.of(profile.getDialData()).mapKeys(d -> new DeviceAndDial(id, d)))
                 .mapToEntry(Map.Entry::getKey, Map.Entry::getValue)
+                .flatMapValues(d -> Commands.cmds(d).stream())
                 .selectValues(CommandVolumeProcess.class)
                 .filterValues(c -> isProcessAndDevice(event, c))
                 .forKeyValue((idAndDial, cmd) ->
