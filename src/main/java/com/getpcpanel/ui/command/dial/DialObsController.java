@@ -11,6 +11,7 @@ import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.CommandController;
+import com.getpcpanel.ui.command.ObsEnabled;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.ChoiceBox;
@@ -21,7 +22,7 @@ import lombok.extern.log4j.Log4j2;
 @Component
 @Prototype
 @RequiredArgsConstructor
-@Cmd(name = "OBS", type = dial, fxml = "Obs", cmds = CommandObsSetSourceVolume.class)
+@Cmd(name = "OBS", type = dial, fxml = "Obs", cmds = CommandObsSetSourceVolume.class, enabled = ObsEnabled.class)
 public class DialObsController implements CommandController<CommandObsSetSourceVolume> {
     private final OBS obs;
 

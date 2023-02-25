@@ -15,6 +15,7 @@ import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.stereotype.Service;
 
 import com.getpcpanel.commands.command.Command;
+import com.getpcpanel.spring.OsHelper;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.Cmd.Type;
 
@@ -29,6 +30,7 @@ import lombok.extern.log4j.Log4j2;
 public class MacroControllerService {
     private static final Map<Type, List<ControllerInfo>> typeToControllers = new EnumMap<>(Type.class);
     private static final Map<Class<? extends Command>, ControllerInfo> commandToController = new HashMap<>();
+    private final OsHelper osHelper;
 
     @SneakyThrows
     @PostConstruct
@@ -40,6 +42,10 @@ public class MacroControllerService {
         for (var bd : beanDefs) {
             var controllerClass = Class.forName(bd.getBeanClassName());
             var cmd = controllerClass.getAnnotation(Cmd.class);
+
+            if (!osHelper.isOs(cmd.os())) {
+                continue;
+            }
 
             var info = new ControllerInfo(controllerClass, cmd);
             typeToControllers.computeIfAbsent(cmd.type(), t -> new ArrayList<>()).add(info);

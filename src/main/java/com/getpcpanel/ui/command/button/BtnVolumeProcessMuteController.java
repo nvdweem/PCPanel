@@ -1,5 +1,6 @@
 package com.getpcpanel.ui.command.button;
 
+import static com.getpcpanel.spring.OsHelper.WINDOWS;
 import static com.getpcpanel.ui.command.Cmd.Type.button;
 
 import java.util.HashSet;
@@ -24,7 +25,7 @@ import lombok.extern.log4j.Log4j2;
 @Component
 @Prototype
 @RequiredArgsConstructor
-@Cmd(name = "Mute App", type = button, fxml = "VolumeProcessMute", cmds = CommandVolumeProcessMute.class)
+@Cmd(name = "Mute App", type = button, fxml = "VolumeProcessMute", cmds = CommandVolumeProcessMute.class, os = WINDOWS)
 public class BtnVolumeProcessMuteController implements CommandController<CommandVolumeProcessMute> {
     @FXML private PickProcessesController appMuteController;
     @FXML private RadioButton rdio_mute_mute;

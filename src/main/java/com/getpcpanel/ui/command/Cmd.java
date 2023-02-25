@@ -15,7 +15,17 @@ public @interface Cmd {
 
     Class<? extends Command>[] cmds();
 
+    String os() default "*";
+
+    Class<? extends CmdEnabled> enabled() default CmdEnabled.class;
+
     enum Type {
         button, dial
+    }
+
+    class CmdEnabled {
+        public boolean isEnabled() {
+            return true;
+        }
     }
 }

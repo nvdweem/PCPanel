@@ -1,5 +1,6 @@
 package com.getpcpanel.ui.command.button;
 
+import static com.getpcpanel.spring.OsHelper.WINDOWS;
 import static com.getpcpanel.ui.command.Cmd.Type.button;
 
 import org.springframework.stereotype.Component;
@@ -20,7 +21,7 @@ import lombok.extern.log4j.Log4j2;
 @Component
 @Prototype
 @RequiredArgsConstructor
-@Cmd(name = "Default Device Advanced", type = button, fxml = "DefaultDeviceAdvanced", cmds = CommandVolumeDefaultDeviceAdvanced.class)
+@Cmd(name = "Default Device Advanced", type = button, fxml = "DefaultDeviceAdvanced", cmds = CommandVolumeDefaultDeviceAdvanced.class, os = WINDOWS)
 public class BtnDefaultDeviceAdvancedController implements CommandController<CommandVolumeDefaultDeviceAdvanced> {
     @FXML private AdvancedDevices defaultDeviceAdvancedController;
 

@@ -13,6 +13,7 @@ import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.CommandController;
+import com.getpcpanel.ui.command.VoiceMeeterEnabled;
 import com.getpcpanel.util.Util;
 import com.getpcpanel.voicemeeter.Voicemeeter;
 
@@ -27,7 +28,7 @@ import lombok.extern.log4j.Log4j2;
 @Component
 @Prototype
 @RequiredArgsConstructor
-@Cmd(name = "Voicemeeter", type = button, fxml = "VoiceMeeter", cmds = { CommandVoiceMeeterBasicButton.class, CommandVoiceMeeterAdvancedButton.class })
+@Cmd(name = "Voicemeeter", type = button, fxml = "VoiceMeeter", cmds = { CommandVoiceMeeterBasicButton.class, CommandVoiceMeeterAdvancedButton.class }, enabled = VoiceMeeterEnabled.class)
 public class BtnVoiceMeeterController implements CommandController<CommandVoiceMeeter> {
     private final Voicemeeter voiceMeeter;
 
@@ -60,8 +61,6 @@ public class BtnVoiceMeeterController implements CommandController<CommandVoiceM
             });
             voicemeeterBasicButtonIO.getSelectionModel().selectFirst();
             voicemeeterBasicButtonIndex.getSelectionModel().selectFirst();
-        } else {
-
         }
     }
 

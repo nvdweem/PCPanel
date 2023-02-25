@@ -4,6 +4,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.springframework.stereotype.Component;
+import org.springframework.util.ReflectionUtils;
 
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.command.Command;
@@ -69,6 +70,10 @@ public class ButtonController {
         }
 
         macroControllerService.getControllersForType(cmdType).forEach(ctrlr -> {
+            if (!isEnabled(ctrlr)) {
+                return;
+            }
+
             var menuItem = new MenuItem(ctrlr.cmd().name());
             menuItem.setOnAction(ignored -> {
                 add(ctrlr);
@@ -79,8 +84,17 @@ public class ButtonController {
         addButton.setContextMenu(addMenu);
     }
 
+    @SneakyThrows
+    private static boolean isEnabled(@Nonnull ControllerInfo ctrlr) {
+        return ReflectionUtils.accessibleConstructor(ctrlr.cmd().enabled()).newInstance().isEnabled();
+    }
+
     private void add(Command cmd) {
         var controllerInfo = macroControllerService.getControllerForCommand(cmd.getClass());
+        if (controllerInfo == null) {
+            log.warn("Dial/button with {} found, but that command is not supported", cmd);
+            return;
+        }
         var controller = add(controllerInfo);
         controller.initFromCommand(cmd);
     }
