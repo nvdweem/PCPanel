@@ -1,7 +1,5 @@
 package com.getpcpanel.commands;
 
-import java.util.Map;
-
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
@@ -12,48 +10,29 @@ import com.getpcpanel.cpp.AudioSessionEvent;
 import com.getpcpanel.cpp.EventType;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.cpp.windows.WindowsAudioSession;
-import com.getpcpanel.device.Device;
-import com.getpcpanel.hid.DeviceCommunicationHandler;
 import com.getpcpanel.hid.DeviceHolder;
-import com.getpcpanel.util.Util;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import one.util.streamex.EntryStream;
-import one.util.streamex.StreamEx;
 
 /**
  * Triggers a volume change when a new audio session is started and that session is controlled by the panel.
  */
 @Log4j2
 @Service
-@RequiredArgsConstructor
-public class SetNewSessionVolumeService {
-    private final ApplicationEventPublisher eventPublisher;
-    private final DeviceHolder devices;
+public class SetNewSessionVolumeService extends AbstractNewXVolumeService {
     private final ISndCtrl sndCtrl;
+
+    public SetNewSessionVolumeService(DeviceHolder devices, ApplicationEventPublisher eventPublisher, @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection") ISndCtrl sndCtrl) {
+        super(devices, eventPublisher);
+        this.sndCtrl = sndCtrl;
+    }
 
     @EventListener
     public void onNewAudioSession(AudioSessionEvent event) {
         if (event.eventType() != EventType.ADDED) {
             return;
         }
-        record DeviceAndDial(String id, int dial) {
-        }
-
-        StreamEx.of(devices.all())
-                .mapToEntry(Device::getSerialNumber).invert()
-                .mapValues(Device::currentProfile)
-                .flatMapKeyValue((id, profile) -> EntryStream.of(profile.getDialData()).mapKeys(d -> new DeviceAndDial(id, d)))
-                .mapToEntry(Map.Entry::getKey, Map.Entry::getValue)
-                .flatMapValues(d -> Commands.cmds(d).stream())
-                .selectValues(CommandVolumeProcess.class)
-                .filterValues(c -> isProcessAndDevice(event, c))
-                .forKeyValue((idAndDial, cmd) ->
-                        devices.getDevice(idAndDial.id).ifPresent(device -> {
-                            var current = Util.map(device.getKnobRotation(idAndDial.dial), 0, 100, 0, 255);
-                            eventPublisher.publishEvent(new DeviceCommunicationHandler.KnobRotateEvent(idAndDial.id, idAndDial.dial, current, false));
-                        }));
+        triggerCommandsOf(CommandVolumeProcess.class, s -> s.filterValues(c -> isProcessAndDevice(event, c)));
     }
 
     private boolean isProcessAndDevice(AudioSessionEvent event, CommandVolumeProcess c) {

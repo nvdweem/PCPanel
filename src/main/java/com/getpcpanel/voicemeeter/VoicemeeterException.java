@@ -2,7 +2,7 @@ package com.getpcpanel.voicemeeter;
 
 import lombok.Getter;
 
-public class VoicemeeterException extends RuntimeException {
+public class VoicemeeterException extends Exception {
     @Getter private final boolean disconnected;
 
     public VoicemeeterException(String message) {

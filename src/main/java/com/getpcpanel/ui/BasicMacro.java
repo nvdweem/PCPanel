@@ -78,9 +78,9 @@ public class BasicMacro extends Application implements UIInitializer<BasicMacro.
         if (analogType != null) {
             mainTabPane.getTabs().get(2).setText(analogType);
         }
+        context = new CommandContext(stage, deviceSave, profile);
         dialPanelController.initController(Cmd.Type.dial, context, profile.getDialData(dialNum));
 
-        context = new CommandContext(stage, deviceSave, profile);
         if (hasButton) {
             singleClickPanelController.initController(Cmd.Type.button, context, profile.getButtonData(dialNum));
             doubleClickPanelController.initController(Cmd.Type.button, context, profile.getDblButtonData(dialNum));

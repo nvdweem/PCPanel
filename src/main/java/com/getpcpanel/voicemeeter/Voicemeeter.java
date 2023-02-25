@@ -6,12 +6,12 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Contract;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -112,6 +112,7 @@ public final class Voicemeeter {
         REPEAT("mode.Repeat", "Repeat"),
         COMPOSITE("mode.Composite", "Composite");
 
+        @SuppressWarnings("MapReplaceableByEnumMap")
         private static final Map<VoicemeeterVersion, List<ButtonType>> stateButtons = new HashMap<>();
         private static final List<ButtonType> muteList = List.of(MUTE);
 
@@ -189,8 +190,10 @@ public final class Voicemeeter {
         return disconnectIfDisconnectError(() -> {
             if (!save.get().isVoicemeeterEnabled())
                 return false;
-            if (hasFinishedConnection)
+            if (hasFinishedConnection) {
+                checkParamsDirty();
                 return true;
+            }
             try {
                 if (!hasLoggedIn) {
                     api.init(true);
@@ -200,28 +203,30 @@ public final class Voicemeeter {
                 checkParamsDirty();
                 version = api.getVoicemeeterType();
                 hasFinishedConnection = true;
+                eventPublisher.publishEvent(new VoiceMeeterConnectedEvent());
                 return true;
             } catch (Exception e) {
                 return false;
             }
-        });
+        }, false);
     }
 
-    private void disconnectIfDisconnectError(Runnable r) {
+    private void disconnectIfDisconnectError(VoiceMeeterExceptionThrowingRunnable r) {
         disconnectIfDisconnectError(() -> {
             r.run();
             return null;
-        });
+        }, null);
     }
 
-    private <T> T disconnectIfDisconnectError(Supplier<T> r) {
+    @Contract("_, !null -> !null")
+    private <T> @Nullable T disconnectIfDisconnectError(VoiceMeeterExceptionThrowingSupplier<T> r, @Nullable T defaultValue) {
         try {
             return r.get();
         } catch (VoicemeeterException vme) {
             if (vme.isDisconnected()) {
                 hasFinishedConnection = false;
             }
-            throw vme;
+            return defaultValue;
         }
     }
 
@@ -247,11 +252,7 @@ public final class Voicemeeter {
 
     public boolean getButtonState(ControlType ct, int idx, @Nonnull ButtonType type) {
         var paramName = makeParameterString(ct, idx, type.getParameterName());
-        try {
-            return disconnectIfDisconnectError(() -> api.getParameterFloat(paramName) > 0);
-        } catch (VoicemeeterException e) {
-            return false;
-        }
+        return disconnectIfDisconnectError(() -> api.getParameterFloat(paramName) > 0, false);
     }
 
     public @Nullable VoicemeeterVersion getVersion() {
@@ -344,6 +345,14 @@ public final class Voicemeeter {
         if (ct == DialControlMode.NEG_INF_TO_ZERO)
             return (level == 0) ? Float.NEGATIVE_INFINITY : map(level, 0.0F, 100.0F, -60.0F, 0.0F);
         throw new IllegalArgumentException("Invalid conversiontype in voicemeeter");
+    }
+
+    private interface VoiceMeeterExceptionThrowingSupplier<T> {
+        T get() throws VoicemeeterException;
+    }
+
+    private interface VoiceMeeterExceptionThrowingRunnable {
+        void run() throws VoicemeeterException;
     }
 }
 
