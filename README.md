@@ -1,8 +1,14 @@
-# PCPanel Software
+# Third party PCPanel Software
 
-Controller software for the [PCPanel](https://getpcpanel.com) devices.
+Third party/community managed controller software for the [PCPanel](https://getpcpanel.com) devices.
 
-Development focus is mainly targeted at Windows but Linux is supported.
+**This software is not affiliated with PCPanel Software**, the original software can be found [here](https://www.getpcpanel.com/download).
+This project aims to add features and fix bugs that are requested by the community. The version numbering is disconnected from the original
+software, this project started counting at version 1.0 which was essentially a branch of the official 2.2.1 release.
+
+To see all changes since the original software, see the [changelog](CHANGELOG.md).
+
+Development focus is mainly targeted at Windows but some effort is put into making the software run on Linux.
 
 # Download
 

@@ -10,7 +10,7 @@ A backup will be made when converting. If you want to downgrade to a previous ve
 - #38 - Add double click action to buttons
 - It is now possible to add more than one action to a button or slider
 
-**Fixes:**:
+**Fixes:**
 
 - Nothing yet
 
@@ -27,7 +27,7 @@ A backup will be made when converting. If you want to downgrade to a previous ve
 - #27 - Initial support for OSC (Open Sound Control) protocol
 - #29 - VoiceMeeter mute state support
 
-**Fixes:**:
+**Fixes:**
 
 - If it wasn't possible to get the executable for a path, the AppFinder dialog would not show any results
 - When the connection to OBS fails with an error, the reconnect attempts will still be done
