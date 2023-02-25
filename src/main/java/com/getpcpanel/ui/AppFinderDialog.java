@@ -8,6 +8,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
+import javax.annotation.Nonnull;
 import javax.imageio.ImageIO;
 
 import org.apache.commons.lang3.StringUtils;
@@ -42,7 +43,7 @@ import one.util.streamex.StreamEx;
 @Component
 @Prototype
 @RequiredArgsConstructor
-public class AppFinderDialog extends Application implements UIInitializer {
+public class AppFinderDialog extends Application implements UIInitializer<AppFinderDialog.AppFinderParams> {
     private static final int ICON_SIZE = 90;
     private final ISndCtrl sndCtrl;
     private final IIconService iconService;
@@ -56,9 +57,9 @@ public class AppFinderDialog extends Application implements UIInitializer {
     private String processName;
 
     @Override
-    public <T> void initUI(T... args) {
-        parentStage = getUIArg(Stage.class, args, 0);
-        volumeApps = getUIArg(Boolean.class, args, 1, false);
+    public void initUI(@Nonnull AppFinderParams args) {
+        parentStage = args.parentStage();
+        volumeApps = args.volumeApps;
         postInit();
     }
 
@@ -186,5 +187,8 @@ public class AppFinderDialog extends Application implements UIInitializer {
         boolean matches(String filter) {
             return StringUtils.containsIgnoreCase(title, filter) || StringUtils.containsIgnoreCase(exe, filter);
         }
+    }
+
+    record AppFinderParams(Stage parentStage, boolean volumeApps) {
     }
 }

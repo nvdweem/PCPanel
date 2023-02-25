@@ -20,7 +20,7 @@ import one.util.streamex.StreamEx;
 @Component
 @Prototype
 @RequiredArgsConstructor
-public class AdvancedDevice {
+public class AdvancedDevice implements UIInitializer<Void> {
     private final ISndCtrl sndCtrl;
     @FXML private TextField name;
     @FXML private ComboBox<String> mediaPlayback;

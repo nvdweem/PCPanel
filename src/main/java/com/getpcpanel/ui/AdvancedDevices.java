@@ -41,7 +41,7 @@ public class AdvancedDevices {
     }
 
     public void add(String name, String mediaPlayback, String mediaRecord, String communicationPlayback, String communicationRecord) {
-        var device = loader.open(AdvancedDevice.class);
+        var device = loader.open(AdvancedDevice.class, null);
         device.set(name, mediaPlayback, mediaRecord, communicationPlayback, communicationRecord);
         if (allowRemove) {
             device.removeCallback(() -> {

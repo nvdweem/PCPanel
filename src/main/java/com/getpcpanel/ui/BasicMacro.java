@@ -3,6 +3,9 @@ package com.getpcpanel.ui;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.stereotype.Component;
@@ -34,9 +37,9 @@ import lombok.extern.log4j.Log4j2;
 @Component
 @Prototype
 @RequiredArgsConstructor
-public class BasicMacro extends Application implements UIInitializer {
+public class BasicMacro extends Application implements UIInitializer<BasicMacro.MacroArgs> {
     private static final Pattern NUMBER_PATTERN = Pattern.compile("\\d*");
-    private static final Pattern NOT_NUMBER_PATTERN = Pattern.compile("[^\\d]");
+    private static final Pattern NOT_NUMBER_PATTERN = Pattern.compile("\\D");
     private final SaveService saveService;
     private CommandContext context;
 
@@ -57,15 +60,15 @@ public class BasicMacro extends Application implements UIInitializer {
     private Stage stage;
     private int dialNum;
     private KnobSetting knobSetting;
-    private String name;
+    @Nullable private String name;
 
     @Override
-    public <T> void initUI(T... args) {
-        var device = getUIArg(Device.class, args, 0);
-        dialNum = getUIArg(Integer.class, args, 1);
-        var hasButton = getUIArg(Boolean.class, args, 2, true);
-        name = getUIArg(String.class, args, 3);
-        var analogType = getUIArg(String.class, args, 4);
+    public void initUI(@Nonnull MacroArgs args) {
+        var device = args.device();
+        dialNum = args.dialNum();
+        var hasButton = args.hasButton();
+        name = args.name();
+        var analogType = args.analogType();
 
         var deviceSave = saveService.get().getDeviceSave(device.getSerialNumber());
         var profile = deviceSave.ensureCurrentProfile(device.getDeviceType());
@@ -182,5 +185,8 @@ public class BasicMacro extends Application implements UIInitializer {
             buttonDebounceTime.setText(String.valueOf(knobSetting.getButtonDebounce()));
             logarithmic.setSelected(knobSetting.isLogarithmic());
         }
+    }
+
+    public record MacroArgs(Device device, Integer dialNum, boolean hasButton, @Nullable String name, @Nullable String analogType) {
     }
 }

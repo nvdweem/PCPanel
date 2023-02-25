@@ -2,6 +2,7 @@ package com.getpcpanel.ui;
 
 import java.util.Objects;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.math.NumberUtils;
@@ -13,6 +14,7 @@ import com.getpcpanel.obs.OBS;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.spring.OsHelper;
 import com.getpcpanel.spring.Prototype;
+import com.getpcpanel.ui.UIInitializer.SingleParamInitializer;
 import com.getpcpanel.util.FileUtil;
 import com.getpcpanel.util.IPlatformCommand;
 
@@ -37,7 +39,7 @@ import lombok.extern.log4j.Log4j2;
 @Component
 @Prototype
 @RequiredArgsConstructor
-public class SettingsDialog extends Application implements UIInitializer {
+public class SettingsDialog extends Application implements UIInitializer<SingleParamInitializer<Stage>> {
     private final SaveService saveService;
     private final FileUtil fileUtil;
     private final IPlatformCommand platformCommand;
@@ -70,8 +72,8 @@ public class SettingsDialog extends Application implements UIInitializer {
     @FXML private OSCSettingsDialog oscSettingsController;
 
     @Override
-    public <T> void initUI(T... args) {
-        parentStage = getUIArg(Stage.class, args, 0);
+    public void initUI(@Nonnull SingleParamInitializer<Stage> args) {
+        parentStage = args.param();
         postInit();
     }
 

@@ -2,6 +2,8 @@ package com.getpcpanel.cpp;
 
 import java.io.File;
 
+import javax.annotation.Nullable;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 
@@ -15,15 +17,15 @@ import lombok.extern.log4j.Log4j2;
 @SuppressWarnings("unused") // Methods called from JNI
 public class AudioSession {
     public static final String SYSTEM = "System Sounds";
-    @EqualsAndHashCode.Exclude @ToString.Exclude private final ApplicationEventPublisher eventPublisher;
+    @EqualsAndHashCode.Exclude @ToString.Exclude @Nullable private final ApplicationEventPublisher eventPublisher;
     private int pid;
     private File executable;
     @EqualsAndHashCode.Exclude private String title;
-    @EqualsAndHashCode.Exclude private String icon;
+    @EqualsAndHashCode.Exclude @Nullable private String icon;
     @EqualsAndHashCode.Exclude private float volume;
     @EqualsAndHashCode.Exclude private boolean muted;
 
-    public AudioSession(ApplicationEventPublisher eventPublisher, int pid, File executable, String title, String icon, float volume, boolean muted) {
+    public AudioSession(@Nullable ApplicationEventPublisher eventPublisher, int pid, File executable, String title, @Nullable String icon, float volume, boolean muted) {
         this.eventPublisher = eventPublisher;
         this.pid = pid;
         this.executable = executable;

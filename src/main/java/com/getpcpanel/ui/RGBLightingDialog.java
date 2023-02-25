@@ -2,7 +2,10 @@ package com.getpcpanel.ui;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.IntStream;
+
+import javax.annotation.Nonnull;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
@@ -12,6 +15,7 @@ import com.getpcpanel.profile.LightingConfig;
 import com.getpcpanel.profile.LightingConfig.LightingMode;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.spring.Prototype;
+import com.getpcpanel.ui.UIInitializer.SingleParamInitializer;
 import com.getpcpanel.ui.colorpicker.ColorDialog;
 import com.getpcpanel.ui.colorpicker.HueSlider;
 import com.getpcpanel.util.Util;
@@ -38,7 +42,7 @@ import lombok.extern.log4j.Log4j2;
 @Component
 @Prototype
 @RequiredArgsConstructor
-public class RGBLightingDialog extends Application implements UIInitializer {
+public class RGBLightingDialog extends Application implements UIInitializer<SingleParamInitializer<PCPanelRGBUI>> {
     private final SaveService saveService;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -70,8 +74,8 @@ public class RGBLightingDialog extends Application implements UIInitializer {
     private LightingConfig lightingConfig;
 
     @Override
-    public <T> void initUI(T... args) {
-        device = getUIArg(PCPanelRGBUI.class, args, 0);
+    public void initUI(@Nonnull SingleParamInitializer<PCPanelRGBUI> args) {
+        device = args.param();
         lightingConfig = device.getSavedLightingConfig().deepCopy();
         setDeviceLighting();
         postInit();
@@ -85,8 +89,8 @@ public class RGBLightingDialog extends Application implements UIInitializer {
     public void start(Stage stage) {
         this.stage = stage;
         var scene = new Scene(root);
-        scene.getStylesheets().add(getClass().getResource("/assets/dark_theme.css").toExternalForm());
-        stage.getIcons().add(new Image(getClass().getResource("/assets/256x256.png").toExternalForm()));
+        scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/assets/dark_theme.css")).toExternalForm());
+        stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/assets/256x256.png")).toExternalForm()));
         stage.setOnHiding(e -> {
             if (!pressedOk) {
                 device.setLighting(device.getSavedLightingConfig(), true);

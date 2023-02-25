@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import javax.annotation.Nonnull;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.stereotype.Component;
@@ -45,7 +47,7 @@ import one.util.streamex.StreamEx;
 @Component
 @Prototype
 @RequiredArgsConstructor
-public class ProfileSettingsDialog extends Application implements UIInitializer {
+public class ProfileSettingsDialog extends Application implements UIInitializer<ProfileSettingsDialog.ProfileSettingsArgs> {
     private final SaveService saveService;
     private final Optional<ShortcutHook> shortcutHook;
     private final OsHelper osHelper;
@@ -64,9 +66,9 @@ public class ProfileSettingsDialog extends Application implements UIInitializer 
     private List<String> sortedAddresses;
 
     @Override
-    public <T> void initUI(T... args) {
-        deviceSave = getUIArg(DeviceSave.class, args, 0);
-        profile = getUIArg(Profile.class, args, 1);
+    public void initUI(@Nonnull ProfileSettingsArgs args) {
+        deviceSave = args.deviceSave();
+        profile = args.profile();
         root.setId("pane");
     }
 
@@ -195,7 +197,7 @@ public class ProfileSettingsDialog extends Application implements UIInitializer 
     }
 
     private OSCBinding toBinding(HBox row) {
-        var address = ((ComboBox<String>) row.getChildren().get(1)).getValue();
+        @SuppressWarnings("unchecked") var address = ((ComboBox<String>) row.getChildren().get(1)).getValue();
         var min = NumberUtils.toFloat(row.getChildren().size() > 2 && row.getChildren().get(2) instanceof TextField minField ? minField.getText() : "0", 0);
         var max = NumberUtils.toFloat(row.getChildren().size() > 3 && row.getChildren().get(3) instanceof TextField maxField ? maxField.getText() : "1", 1);
         var toggle = row.getChildren().size() > 2 && row.getChildren().get(2) instanceof CheckBox cb && cb.isSelected();
@@ -211,5 +213,8 @@ public class ProfileSettingsDialog extends Application implements UIInitializer 
     @FXML
     private void closeButtonAction(ActionEvent event) {
         stage.close();
+    }
+
+    public record ProfileSettingsArgs(DeviceSave deviceSave, Profile profile) {
     }
 }

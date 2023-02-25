@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Consumer;
 
+import javax.annotation.Nullable;
+
 import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.MainFX;
@@ -157,7 +159,7 @@ public interface ILightingDialogMuteOverrideHelper {
         };
     }
 
-    default void setOverride(OverrideTargetType type, int typeIndex, String deviceOrFollow, String muteOverrideColor) {
+    default void setOverride(OverrideTargetType type, int typeIndex, @Nullable String deviceOrFollow, @Nullable String muteOverrideColor) {
         var target = getOverrideTarget(type);
         target.cb()[typeIndex].setSelected(StringUtils.isNotBlank(muteOverrideColor));
         target.deviceProcess()[typeIndex].setValue(deviceOrFollow);

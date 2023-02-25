@@ -1,6 +1,9 @@
 package com.getpcpanel.ui;
 
 import java.util.Collection;
+import java.util.Objects;
+
+import javax.annotation.Nonnull;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
@@ -16,6 +19,7 @@ import com.getpcpanel.profile.SingleLogoLightingConfig.SINGLE_LOGO_MODE;
 import com.getpcpanel.profile.SingleSliderLabelLightingConfig.SINGLE_SLIDER_LABEL_MODE;
 import com.getpcpanel.profile.SingleSliderLightingConfig.SINGLE_SLIDER_MODE;
 import com.getpcpanel.spring.Prototype;
+import com.getpcpanel.ui.UIInitializer.SingleParamInitializer;
 import com.getpcpanel.ui.colorpicker.ColorDialog;
 import com.getpcpanel.ui.colorpicker.HueSlider;
 import com.getpcpanel.util.Util;
@@ -49,7 +53,7 @@ import lombok.extern.log4j.Log4j2;
 @Component
 @Prototype
 @RequiredArgsConstructor
-public class ProLightingDialog extends Application implements UIInitializer, ILightingDialogMuteOverrideHelper {
+public class ProLightingDialog extends Application implements UIInitializer<SingleParamInitializer<Device>>, ILightingDialogMuteOverrideHelper {
     private final SaveService saveService;
     private final ApplicationEventPublisher eventPublisher;
     private final ISndCtrl sndCtrl;
@@ -113,8 +117,8 @@ public class ProLightingDialog extends Application implements UIInitializer, ILi
     @FXML private Pane root;
 
     @Override
-    public <T> void initUI(T... args) {
-        device = getUIArg(Device.class, args, 0);
+    public void initUI(@Nonnull SingleParamInitializer<Device> args) {
+        device = args.param();
         lightingConfig = device.getSavedLightingConfig().deepCopy();
         setDeviceLighting();
         postInit();
@@ -141,8 +145,8 @@ public class ProLightingDialog extends Application implements UIInitializer, ILi
     public void start(Stage stage) {
         this.stage = stage;
         var scene = new Scene(root);
-        scene.getStylesheets().add(getClass().getResource("/assets/dark_theme.css").toExternalForm());
-        stage.getIcons().add(new Image(getClass().getResource("/assets/256x256.png").toExternalForm()));
+        scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/assets/dark_theme.css")).toExternalForm());
+        stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/assets/256x256.png")).toExternalForm()));
         stage.setOnHiding(e -> {
             if (!pressedOk) {
                 device.setLighting(device.getSavedLightingConfig(), true);
