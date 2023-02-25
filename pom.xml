@@ -17,7 +17,7 @@
     <description>PCPanel controller software</description>
 
     <properties>
-        <spring.boot.version>3.0.2</spring.boot.version>
+        <spring.boot.version>3.0.3</spring.boot.version>
         <project.baseversion>1.7</project.baseversion>
         <project.snapshot>-SNAPSHOT</project.snapshot>
         <!--suppress UnresolvedMavenProperty -->
