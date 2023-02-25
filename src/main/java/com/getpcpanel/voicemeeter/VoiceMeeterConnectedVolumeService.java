@@ -1,15 +1,15 @@
-package com.getpcpanel.commands;
+package com.getpcpanel.voicemeeter;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
+import com.getpcpanel.commands.AbstractNewXVolumeService;
 import com.getpcpanel.commands.command.CommandVoiceMeeter;
 import com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced;
 import com.getpcpanel.commands.command.CommandVoiceMeeterBasic;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.spring.ConditionalOnWindows;
-import com.getpcpanel.voicemeeter.VoiceMeeterConnectedEvent;
 
 @Service
 @ConditionalOnWindows
