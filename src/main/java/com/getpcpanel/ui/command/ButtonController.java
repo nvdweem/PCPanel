@@ -16,14 +16,17 @@ import com.getpcpanel.ui.MacroControllerService.ControllerInfo;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TitledPane;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import lombok.Getter;
@@ -73,7 +76,6 @@ public class ButtonController {
             });
             addMenu.getItems().add(menuItem);
         });
-
         addButton.setContextMenu(addMenu);
     }
 
@@ -91,10 +93,24 @@ public class ButtonController {
         controller.postInit(context);
         HBox.setHgrow(loaded, Priority.ALWAYS);
 
-        var pane = new TitledPane(info.cmd().name(), loaded);
+        var pane = new TitledPane(null, loaded);
+        addCloseButton(pane, info.cmd().name());
         pane.setUserData(controller);
         commands.getPanes().add(pane);
         return controller;
+    }
+
+    private void addCloseButton(@Nonnull TitledPane pane, String title) {
+        var borderPane = new BorderPane();
+        var titleOfTitledPane = new Label(title);
+        var buttonClose = new Button("X");
+        borderPane.setLeft(titleOfTitledPane);
+        BorderPane.setAlignment(titleOfTitledPane, Pos.CENTER_LEFT);
+        borderPane.setRight(buttonClose);
+        borderPane.prefWidthProperty().bind(commands.widthProperty().subtract(40));
+        pane.setGraphic(borderPane);
+
+        buttonClose.setOnAction(event -> commands.getPanes().remove(pane));
     }
 
     public Commands determineButtonCommand() {
