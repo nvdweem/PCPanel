@@ -9,10 +9,18 @@ A backup will be made when converting. If you want to downgrade to a previous ve
 
 - #38 - Add double click action to buttons
 - It is now possible to add more than one action to a button or slider
+- #41 - Dial/Slider values are applied when VoiceMeeter starts
+- Dial/Slider values are applied when OBS starts
 
 **Fixes:**
 
 - Nothing yet
+
+**Fixes within the snapshot:**
+(not relevant when not upgrading from a previous snapshot)
+
+- Commands can be removed again
+- Commands that are not supported or not enabled are not shown
 
 ## [1.6]
 
