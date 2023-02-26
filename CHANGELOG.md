@@ -15,7 +15,7 @@ A backup will be made when converting. If you want to downgrade to a previous ve
 
 **Fixes:**
 
-- Nothing yet
+- Pressing escape when a dialog is open will close the dialog
 
 **Fixes within the snapshot:**
 (not relevant when not upgrading from a previous snapshot)

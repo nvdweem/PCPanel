@@ -91,6 +91,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
     @Override
     public void start(Stage stage) {
         this.stage = stage;
+        UIHelper.closeOnEscape(stage);
         var scene = new Scene(root);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/assets/dark_theme.css"), "Unable to find dark_theme.css").toExternalForm());
         stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/assets/256x256.png")).toExternalForm()));

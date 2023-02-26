@@ -70,6 +70,7 @@ public class AppFinderDialog extends Application implements UIInitializer<AppFin
 
     public void start(Stage stage, boolean andWait) {
         this.stage = stage;
+        UIHelper.closeOnEscape(stage);
         var scene = new Scene(scroll);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/assets/dark_theme.css")).toExternalForm());
         stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/assets/256x256.png")).toExternalForm()));

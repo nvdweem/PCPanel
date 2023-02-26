@@ -75,6 +75,7 @@ public class ProfileSettingsDialog extends Application implements UIInitializer<
     @Override
     public void start(Stage stage) throws Exception {
         this.stage = stage;
+        UIHelper.closeOnEscape(stage);
         var scene = new Scene(root, 800.0D, 400.0D);
         scene.getStylesheets().addAll(Objects.requireNonNull(getClass().getResource("/assets/1.css")).toExternalForm());
         stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/assets/256x256.png")).toExternalForm()));

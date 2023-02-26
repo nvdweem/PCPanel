@@ -95,6 +95,7 @@ public class BasicMacro extends Application implements UIInitializer<BasicMacro.
     @Override
     public void start(Stage basicmacro) throws Exception {
         stage = basicmacro;
+        UIHelper.closeOnEscape(stage);
         var scene = new Scene(root);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/assets/dark_theme.css")).toExternalForm());
         basicmacro.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/assets/256x256.png")).toExternalForm()));

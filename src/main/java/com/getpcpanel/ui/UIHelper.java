@@ -1,15 +1,26 @@
 package com.getpcpanel.ui;
 
+import static javafx.scene.input.KeyEvent.KEY_PRESSED;
+
 import java.io.File;
 import java.util.Optional;
 
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 public final class UIHelper {
 
     private UIHelper() {
+    }
+
+    public static void closeOnEscape(Stage stage) {
+        stage.addEventHandler(KEY_PRESSED, t -> {
+            if (t.getCode() == KeyCode.ESCAPE) {
+                stage.close();
+            }
+        });
     }
 
     public static void showFolderPicker(String title, TextField target) {
