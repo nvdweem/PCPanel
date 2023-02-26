@@ -22,13 +22,14 @@ import jakarta.annotation.Nonnull;
 import jakarta.annotation.PostConstruct;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.scene.control.Control;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -45,7 +46,10 @@ public class Overlay extends Popup {
     private final Debouncer debouncer;
 
     @FXML private Pane panel;
+    @FXML private HBox volumePanel;
+    @FXML private HBox textPanel;
     @FXML private ProgressBar volume;
+    @FXML private Label volumeText;
     @FXML private Label text;
     @FXML private ImageView icon;
     private Stage stage;
@@ -67,10 +71,17 @@ public class Overlay extends Popup {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        panel.setStyle("-fx-background-color: rgba(0, 0, 0, 0);");
+        updateColor();
         getContent().addAll(panel);
         setX(10);
         setY(10);
+    }
+
+    @EventListener(SaveService.SaveEvent.class)
+    public void updateColor() {
+        panel.setStyle("-fx-background-color: " + save.get().getOverlayBackgroundColor() + ";");
+        volumeText.setTextFill(Color.web(save.get().getOverlayTextColor()));
+        text.setTextFill(Color.web(save.get().getOverlayTextColor()));
     }
 
     @EventListener
@@ -80,13 +91,21 @@ public class Overlay extends Popup {
         }
         showDebounced(() -> determineIconImage(event), command -> {
             if (event.value() != null) {
-                setVisible(volume);
+                setVisible(volumePanel);
                 volume.setProgress(event.value() / 255f);
+
+                if (save.get().isOverlayShowNumber()) {
+                    volumeText.setText(String.valueOf(Math.round(event.value() / 2.55f)));
+                    volumeText.setVisible(true);
+                    volumeText.setManaged(true);
+                } else {
+                    volumeText.setVisible(false);
+                    volumeText.setManaged(false);
+                }
                 return true;
             } else {
-                setVisible(text);
-
-                var firstButtonAction = StreamEx.of(command).select(ButtonAction.class).findFirst();
+                setVisible(textPanel);
+                var firstButtonAction = StreamEx.of(Commands.cmds(command)).select(ButtonAction.class).findFirst();
                 if (firstButtonAction.isPresent()) {
                     text.setText(firstButtonAction.get().getOverlayText());
                     return true;
@@ -125,13 +144,8 @@ public class Overlay extends Popup {
     }
 
     @SuppressWarnings("ObjectEquality")
-    private void setVisible(Control param) {
-        List.of(volume, text).forEach(node -> node.setVisible(node == param));
-        if (param == text) {
-            panel.setStyle("-fx-background-color: rgba(255, 255, 255, 0.5);");
-        } else {
-            panel.setStyle(null);
-        }
+    private void setVisible(Node param) {
+        List.of(volumePanel, textPanel).forEach(node -> node.setVisible(node == param));
     }
 
     private record CommandAndIcon(Commands command, Image icon) {

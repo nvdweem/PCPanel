@@ -13,12 +13,27 @@
             <Insets right="10.0"/>
         </HBox.margin>
     </ImageView>
-    <StackPane prefHeight="150.0" prefWidth="200.0">
-        <ProgressBar fx:id="volume" prefWidth="200.0" progress="0.0"/>
-        <Label fx:id="text" text="Test" StackPane.alignment="CENTER_LEFT" prefWidth="300.0">
-            <font>
-                <Font size="14.0"/>
-            </font>
-        </Label>
+    <StackPane alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
+        <HBox fx:id="volumePanel" alignment="CENTER_LEFT" StackPane.alignment="CENTER_LEFT">
+            <ProgressBar fx:id="volume" maxWidth="1000.0" progress="0.0" HBox.hgrow="ALWAYS"/>
+            <Label fx:id="volumeText" alignment="CENTER" prefHeight="17.0" prefWidth="30.0" style="-fx-background-color: transparent;" text="100" textAlignment="CENTER">
+                <HBox.margin>
+                    <Insets left="10.0"/>
+                </HBox.margin>
+                <font>
+                    <Font size="14.0"/>
+                </font>
+            </Label>
+        </HBox>
+        <HBox fx:id="textPanel" alignment="CENTER_LEFT" StackPane.alignment="CENTER_LEFT">
+            <Label fx:id="text" prefWidth="300.0" text="Text" textAlignment="CENTER" HBox.hgrow="ALWAYS" StackPane.alignment="CENTER_LEFT">
+                <font>
+                    <Font size="14.0"/>
+                </font>
+            </Label>
+        </HBox>
     </StackPane>
+    <padding>
+        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
+    </padding>
 </HBox>

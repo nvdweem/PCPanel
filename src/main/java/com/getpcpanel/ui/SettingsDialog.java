@@ -1,5 +1,8 @@
 package com.getpcpanel.ui;
 
+import static com.getpcpanel.profile.Save.DEFAULT_OVERLAY_BG_COLOR;
+import static com.getpcpanel.profile.Save.DEFAULT_OVERLAY_TEXT_COLOR;
+
 import java.util.Objects;
 
 import javax.annotation.Nonnull;
@@ -11,6 +14,7 @@ import org.springframework.stereotype.Component;
 import com.getpcpanel.MainFX;
 import com.getpcpanel.cpp.windows.SndCtrlWindows;
 import com.getpcpanel.obs.OBS;
+import com.getpcpanel.profile.Save;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.spring.OsHelper;
 import com.getpcpanel.spring.Prototype;
@@ -20,16 +24,19 @@ import com.getpcpanel.util.IPlatformCommand;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import lombok.RequiredArgsConstructor;
@@ -49,9 +56,13 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
 
     private Stage stage;
     @FXML private Pane root;
-    @FXML private CheckBox overlay;
     @FXML private CheckBox mainUiIcons;
     @FXML private CheckBox startupVersionCheck;
+    @FXML private CheckBox overlay;
+    @FXML private CheckBox overlayShowNumber;
+    @FXML private ColorPicker overlayTextColor;
+    @FXML private ColorPicker overlayBackgroundColor;
+    @FXML private Label overlayBGTransparency;
     @FXML private TextField dblClickInterval;
     @FXML private CheckBox preventClickWhenDblClick;
     @FXML private CheckBox obsEnable;
@@ -115,9 +126,12 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
     @FXML
     private void ok(ActionEvent event) {
         var save = saveService.get();
-        save.setOverlayEnabled(overlay.isSelected());
         save.setMainUIIcons(mainUiIcons.isSelected());
         save.setStartupVersionCheck(startupVersionCheck.isSelected());
+        save.setOverlayEnabled(overlay.isSelected());
+        save.setOverlayShowNumber(overlayShowNumber.isSelected());
+        save.setOverlayBackgroundColor(toWebColor(overlayBackgroundColor.getValue()));
+        save.setOverlayTextColor(toWebColor(overlayTextColor.getValue()));
         save.setDblClickInterval(NumberUtils.toLong(dblClickInterval.getText(), 500));
         save.setPreventClickWhenDblClick(preventClickWhenDblClick.isSelected());
         save.setObsEnabled(obsEnable.isSelected());
@@ -136,6 +150,15 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
         stage.close();
     }
 
+    private String toWebColor(@Nonnull Color value) {
+        return "rgba(%s, %s, %s, %s)".formatted(
+                Math.round(value.getRed() * 255),
+                Math.round(value.getGreen() * 255),
+                Math.round(value.getBlue() * 255),
+                Math.round(value.getOpacity() * 100) / 100f
+        );
+    }
+
     @FXML
     private void closeButtonAction(ActionEvent event) {
         stage.close();
@@ -149,9 +172,10 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
 
     private void initFields() {
         var save = saveService.get();
-        overlay.setSelected(save.isOverlayEnabled());
         mainUiIcons.setSelected(save.isMainUIIcons());
         startupVersionCheck.setSelected(save.isStartupVersionCheck());
+        overlay.setSelected(save.isOverlayEnabled());
+        overlayShowNumber.setSelected(save.isOverlayShowNumber());
         dblClickInterval.setText(save.getDblClickInterval() == null ? "500" : save.getDblClickInterval().toString());
         preventClickWhenDblClick.setSelected(save.isPreventClickWhenDblClick());
         obsEnable.setSelected(save.isObsEnabled());
@@ -167,6 +191,24 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
         txtOnlyIfDelta.setText(save.getSendOnlyIfDelta() == null ? "" : save.getSendOnlyIfDelta().toString());
         cbFixOnlySliders.setSelected(save.isWorkaroundsOnlySliders());
         oscSettingsController.setConnections(save.getOscListenPort(), save.getOscConnections());
+
+        initOverlayColors(save);
+    }
+
+    private void initOverlayColors(Save save) {
+        try {
+            overlayBackgroundColor.setValue(Color.web(save.getOverlayBackgroundColor()));
+        } catch (IllegalArgumentException e) {
+            overlayBackgroundColor.setValue(Color.web(DEFAULT_OVERLAY_BG_COLOR));
+        }
+        try {
+            overlayTextColor.setValue(Color.web(save.getOverlayTextColor()));
+        } catch (IllegalArgumentException e) {
+            overlayTextColor.setValue(Color.web(DEFAULT_OVERLAY_TEXT_COLOR));
+        }
+
+        var colorOpacityBinding = Bindings.createObjectBinding(() -> Math.round(overlayBackgroundColor.getValue().getOpacity() * 100) + "%", overlayBackgroundColor.valueProperty());
+        overlayBGTransparency.textProperty().bind(colorOpacityBinding);
     }
 
     private void postInit() {

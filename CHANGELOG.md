@@ -11,6 +11,7 @@ A backup will be made when converting. If you want to downgrade to a previous ve
 - It is now possible to add more than one action to a button or slider
 - #41 - Dial/Slider values are applied when VoiceMeeter starts
 - Dial/Slider values are applied when OBS starts
+- #39 - Allow showing the actual volume number (0-100, linear) and additional color settings in overlay
 
 **Fixes:**
 

@@ -14,8 +14,9 @@ import lombok.extern.log4j.Log4j2;
 @Data
 @Log4j2
 public class Save {
+    public static final String DEFAULT_OVERLAY_BG_COLOR = "rgba(255, 255, 255, 0.5)";
+    public static final String DEFAULT_OVERLAY_TEXT_COLOR = "rgba(0, 0, 0, 1)";
     private Map<String, DeviceSave> devices = new ConcurrentHashMap<>();
-    private boolean overlayEnabled;
     private boolean mainUIIcons;
     private boolean startupVersionCheck = true;
     private Long dblClickInterval = 500L;
@@ -32,6 +33,12 @@ public class Save {
     private boolean workaroundsOnlySliders;
     private Integer oscListenPort;
     private List<OSCConnectionInfo> oscConnections;
+
+    // Overlay
+    private boolean overlayEnabled;
+    private boolean overlayShowNumber;
+    private String overlayBackgroundColor = DEFAULT_OVERLAY_BG_COLOR;
+    private String overlayTextColor = DEFAULT_OVERLAY_TEXT_COLOR;
 
     public DeviceSave getDeviceSave(String serialNum) {
         return devices.get(serialNum);
