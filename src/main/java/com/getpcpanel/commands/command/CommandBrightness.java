@@ -1,5 +1,7 @@
 package com.getpcpanel.commands.command;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.MainFX;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.profile.SaveService;
@@ -12,6 +14,14 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @ToString(callSuper = true)
 public class CommandBrightness extends Command implements DialAction {
+    private final boolean invert;
+
+    @JsonCreator
+    public CommandBrightness(
+            @JsonProperty("isInvert") boolean invert) {
+        this.invert = invert;
+    }
+
     @Override
     public void execute(DialActionParameters context) {
         MainFX.getBean(DeviceHolder.class).getDevice(context.device()).ifPresent(device -> {

@@ -1,7 +1,6 @@
 package com.getpcpanel.ui.command.button;
 
 import static com.getpcpanel.commands.command.CommandNoOp.NOOP;
-import static com.getpcpanel.ui.command.Cmd.Type.button;
 
 import org.springframework.stereotype.Component;
 
@@ -10,9 +9,9 @@ import com.getpcpanel.commands.command.CommandVoiceMeeter;
 import com.getpcpanel.commands.command.CommandVoiceMeeterAdvancedButton;
 import com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton;
 import com.getpcpanel.spring.Prototype;
+import com.getpcpanel.ui.command.ButtonCommandController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
-import com.getpcpanel.ui.command.CommandController;
 import com.getpcpanel.ui.command.VoiceMeeterEnabled;
 import com.getpcpanel.util.Util;
 import com.getpcpanel.voicemeeter.Voicemeeter;
@@ -28,8 +27,8 @@ import lombok.extern.log4j.Log4j2;
 @Component
 @Prototype
 @RequiredArgsConstructor
-@Cmd(name = "Voicemeeter", type = button, fxml = "VoiceMeeter", cmds = { CommandVoiceMeeterBasicButton.class, CommandVoiceMeeterAdvancedButton.class }, enabled = VoiceMeeterEnabled.class)
-public class BtnVoiceMeeterController implements CommandController<CommandVoiceMeeter> {
+@Cmd(name = "Voicemeeter", fxml = "VoiceMeeter", cmds = { CommandVoiceMeeterBasicButton.class, CommandVoiceMeeterAdvancedButton.class }, enabled = VoiceMeeterEnabled.class)
+public class BtnVoiceMeeterController implements ButtonCommandController<CommandVoiceMeeter> {
     private final Voicemeeter voiceMeeter;
 
     @FXML private ChoiceBox<Integer> voicemeeterBasicButtonIndex;

@@ -1,7 +1,5 @@
 package com.getpcpanel.ui.command.button;
 
-import static com.getpcpanel.ui.command.Cmd.Type.button;
-
 import java.util.Collection;
 
 import javax.annotation.Nullable;
@@ -15,9 +13,9 @@ import com.getpcpanel.cpp.AudioDevice;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.spring.Prototype;
+import com.getpcpanel.ui.command.ButtonCommandController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
-import com.getpcpanel.ui.command.CommandController;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -31,8 +29,8 @@ import one.util.streamex.StreamEx;
 @Component
 @Prototype
 @RequiredArgsConstructor
-@Cmd(name = "Mute Device", type = button, fxml = "DeviceMute", cmds = CommandVolumeDeviceMute.class)
-public class BtnDeviceMuteController implements CommandController<CommandVolumeDeviceMute> {
+@Cmd(name = "Mute Device", fxml = "DeviceMute", cmds = CommandVolumeDeviceMute.class)
+public class BtnDeviceMuteController implements ButtonCommandController<CommandVolumeDeviceMute> {
     private final ISndCtrl sndCtrl;
     private Collection<AudioDevice> allSoundDevices;
     @FXML private ChoiceBox<AudioDevice> muteSoundDevice;

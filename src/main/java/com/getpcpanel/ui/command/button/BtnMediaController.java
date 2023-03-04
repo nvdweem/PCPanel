@@ -1,16 +1,15 @@
 package com.getpcpanel.ui.command.button;
 
 import static com.getpcpanel.spring.OsHelper.WINDOWS;
-import static com.getpcpanel.ui.command.Cmd.Type.button;
 
 import org.springframework.stereotype.Component;
 
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandMedia;
 import com.getpcpanel.spring.Prototype;
+import com.getpcpanel.ui.command.ButtonCommandController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
-import com.getpcpanel.ui.command.CommandController;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
@@ -23,8 +22,8 @@ import lombok.extern.log4j.Log4j2;
 @Component
 @Prototype
 @RequiredArgsConstructor
-@Cmd(name = "Music Control", type = button, fxml = "Media", cmds = CommandMedia.class, os = WINDOWS)
-public class BtnMediaController implements CommandController<CommandMedia> {
+@Cmd(name = "Music Control", fxml = "Media", cmds = CommandMedia.class, os = WINDOWS)
+public class BtnMediaController implements ButtonCommandController<CommandMedia> {
     @FXML private ToggleGroup mediagroup;
     @FXML private CheckBox cmdMediaSpotify;
 

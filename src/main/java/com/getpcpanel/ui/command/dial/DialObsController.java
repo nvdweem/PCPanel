@@ -1,7 +1,5 @@
 package com.getpcpanel.ui.command.dial;
 
-import static com.getpcpanel.ui.command.Cmd.Type.dial;
-
 import org.springframework.stereotype.Component;
 
 import com.getpcpanel.commands.command.Command;
@@ -10,7 +8,7 @@ import com.getpcpanel.obs.OBS;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
-import com.getpcpanel.ui.command.CommandController;
+import com.getpcpanel.ui.command.DialCommandController;
 import com.getpcpanel.ui.command.ObsEnabled;
 
 import javafx.fxml.FXML;
@@ -22,8 +20,8 @@ import lombok.extern.log4j.Log4j2;
 @Component
 @Prototype
 @RequiredArgsConstructor
-@Cmd(name = "OBS", type = dial, fxml = "Obs", cmds = CommandObsSetSourceVolume.class, enabled = ObsEnabled.class)
-public class DialObsController implements CommandController<CommandObsSetSourceVolume> {
+@Cmd(name = "OBS", fxml = "Obs", cmds = CommandObsSetSourceVolume.class, enabled = ObsEnabled.class)
+public class DialObsController implements DialCommandController<CommandObsSetSourceVolume> {
     private final OBS obs;
 
     @FXML private ChoiceBox<String> obsAudioSources;
@@ -45,7 +43,7 @@ public class DialObsController implements CommandController<CommandObsSetSourceV
     }
 
     @Override
-    public Command buildCommand() {
-        return new CommandObsSetSourceVolume(obsAudioSources.getSelectionModel().getSelectedItem());
+    public Command buildCommand(boolean invert) {
+        return new CommandObsSetSourceVolume(obsAudioSources.getSelectionModel().getSelectedItem(), invert);
     }
 }

@@ -12,10 +12,14 @@ import lombok.ToString;
 @ToString(callSuper = true)
 public class CommandObsSetSourceVolume extends CommandObs implements DialAction {
     private final String sourceName;
+    private final boolean invert;
 
     @JsonCreator
-    public CommandObsSetSourceVolume(@JsonProperty("sourceName") String sourceName) {
+    public CommandObsSetSourceVolume(
+            @JsonProperty("sourceName") String sourceName,
+            @JsonProperty("isInvert") boolean invert) {
         this.sourceName = sourceName;
+        this.invert = invert;
     }
 
     @Override

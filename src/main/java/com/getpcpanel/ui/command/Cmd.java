@@ -9,8 +9,6 @@ import com.getpcpanel.commands.command.Command;
 public @interface Cmd {
     String name();
 
-    Type type();
-
     String fxml();
 
     Class<? extends Command>[] cmds();

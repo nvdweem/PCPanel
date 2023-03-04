@@ -14,12 +14,18 @@ public class CommandVoiceMeeterBasic extends CommandVoiceMeeter implements DialA
     private final Voicemeeter.ControlType ct;
     private final int index;
     private final Voicemeeter.DialType dt;
+    private final boolean invert;
 
     @JsonCreator
-    public CommandVoiceMeeterBasic(@JsonProperty("ct") Voicemeeter.ControlType ct, @JsonProperty("index") int index, @JsonProperty("dt") Voicemeeter.DialType dt) {
+    public CommandVoiceMeeterBasic(
+            @JsonProperty("ct") Voicemeeter.ControlType ct,
+            @JsonProperty("index") int index,
+            @JsonProperty("dt") Voicemeeter.DialType dt,
+            @JsonProperty("isInvert") boolean invert) {
         this.ct = ct;
         this.index = index;
         this.dt = dt;
+        this.invert = invert;
     }
 
     @Override

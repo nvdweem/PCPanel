@@ -16,12 +16,18 @@ public class CommandVolumeProcess extends CommandVolume implements DialAction {
     private final List<String> processName;
     private final String device;
     private final boolean unMuteOnVolumeChange;
+    private final boolean invert;
 
     @JsonCreator
-    public CommandVolumeProcess(@JsonProperty("processName") List<String> processName, @JsonProperty("device") String device, @JsonProperty("isUnMuteOnVolumeChange") boolean unMuteOnVolumeChange) {
+    public CommandVolumeProcess(
+            @JsonProperty("processName") List<String> processName,
+            @JsonProperty("device") String device,
+            @JsonProperty("isUnMuteOnVolumeChange") boolean unMuteOnVolumeChange,
+            @JsonProperty("isInvert") boolean invert) {
         this.processName = processName;
         this.device = device;
         this.unMuteOnVolumeChange = unMuteOnVolumeChange;
+        this.invert = invert;
     }
 
     @Override

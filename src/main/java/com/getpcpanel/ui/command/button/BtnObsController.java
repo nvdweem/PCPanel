@@ -1,7 +1,6 @@
 package com.getpcpanel.ui.command.button;
 
 import static com.getpcpanel.commands.command.CommandNoOp.NOOP;
-import static com.getpcpanel.ui.command.Cmd.Type.button;
 
 import javax.annotation.Nullable;
 
@@ -13,9 +12,9 @@ import com.getpcpanel.commands.command.CommandObsMuteSource;
 import com.getpcpanel.commands.command.CommandObsSetScene;
 import com.getpcpanel.obs.OBS;
 import com.getpcpanel.spring.Prototype;
+import com.getpcpanel.ui.command.ButtonCommandController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
-import com.getpcpanel.ui.command.CommandController;
 import com.getpcpanel.ui.command.ObsEnabled;
 
 import javafx.event.ActionEvent;
@@ -30,8 +29,8 @@ import lombok.extern.log4j.Log4j2;
 @Component
 @Prototype
 @RequiredArgsConstructor
-@Cmd(name = "OBS", type = button, fxml = "Obs", cmds = { CommandObsSetScene.class, CommandObsMuteSource.class }, enabled = ObsEnabled.class)
-public class BtnObsController implements CommandController<CommandObs> {
+@Cmd(name = "OBS", fxml = "Obs", cmds = { CommandObsSetScene.class, CommandObsMuteSource.class }, enabled = ObsEnabled.class)
+public class BtnObsController implements ButtonCommandController<CommandObs> {
     private final OBS obs;
 
     @FXML private ChoiceBox<String> obsSetScene;

@@ -1,7 +1,6 @@
 package com.getpcpanel.ui.command.dial;
 
 import static com.getpcpanel.commands.command.CommandNoOp.NOOP;
-import static com.getpcpanel.ui.command.Cmd.Type.dial;
 
 import org.springframework.stereotype.Component;
 
@@ -12,7 +11,7 @@ import com.getpcpanel.commands.command.CommandVoiceMeeterBasic;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
-import com.getpcpanel.ui.command.CommandController;
+import com.getpcpanel.ui.command.DialCommandController;
 import com.getpcpanel.ui.command.VoiceMeeterEnabled;
 import com.getpcpanel.util.Util;
 import com.getpcpanel.voicemeeter.Voicemeeter;
@@ -30,8 +29,8 @@ import lombok.extern.log4j.Log4j2;
 @Component
 @Prototype
 @RequiredArgsConstructor
-@Cmd(name = "Voicemeeter", type = dial, fxml = "VoiceMeeter", cmds = { CommandVoiceMeeterBasic.class, CommandVoiceMeeterAdvanced.class }, enabled = VoiceMeeterEnabled.class)
-public class DialVoiceMeeterController implements CommandController<CommandVoiceMeeter> {
+@Cmd(name = "Voicemeeter", fxml = "VoiceMeeter", cmds = { CommandVoiceMeeterBasic.class, CommandVoiceMeeterAdvanced.class }, enabled = VoiceMeeterEnabled.class)
+public class DialVoiceMeeterController implements DialCommandController<CommandVoiceMeeter> {
     public static final String MUST_SELECT_A_CONTROL_TYPE_MESSAGE = "Must Select a Control Type";
 
     private final Voicemeeter voiceMeeter;
@@ -89,16 +88,16 @@ public class DialVoiceMeeterController implements CommandController<CommandVoice
     }
 
     @Override
-    public Command buildCommand() {
+    public Command buildCommand(boolean invert) {
         if (voicemeeterTabPaneDial.getSelectionModel().getSelectedIndex() == 0) {
-            return new CommandVoiceMeeterBasic(voicemeeterBasicDialIO.getValue(), voicemeeterBasicDialIndex.getValue() - 1, voicemeeterBasicDial.getValue());
+            return new CommandVoiceMeeterBasic(voicemeeterBasicDialIO.getValue(), voicemeeterBasicDialIndex.getValue() - 1, voicemeeterBasicDial.getValue(), invert);
         }
         if (voicemeeterTabPaneDial.getSelectionModel().getSelectedIndex() == 1) {
             if (voicemeeterDialType.getValue() == null) {
                 showControlTypeError();
                 return NOOP;
             }
-            return new CommandVoiceMeeterAdvanced(voicemeeterDialParameter.getText(), voicemeeterDialType.getValue());
+            return new CommandVoiceMeeterAdvanced(voicemeeterDialParameter.getText(), voicemeeterDialType.getValue(), invert);
         }
         return NOOP;
     }

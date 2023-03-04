@@ -6,6 +6,4 @@ public interface CommandController<T extends Command> {
     void postInit(CommandContext context);
 
     void initFromCommand(T cmd);
-
-    Command buildCommand();
 }

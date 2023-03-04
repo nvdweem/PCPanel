@@ -1,7 +1,5 @@
 package com.getpcpanel.ui.command.dial;
 
-import static com.getpcpanel.ui.command.Cmd.Type.dial;
-
 import java.util.Collection;
 
 import javax.annotation.Nullable;
@@ -16,7 +14,7 @@ import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
-import com.getpcpanel.ui.command.CommandController;
+import com.getpcpanel.ui.command.DialCommandController;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -31,8 +29,8 @@ import one.util.streamex.StreamEx;
 @Component
 @Prototype
 @RequiredArgsConstructor
-@Cmd(name = "Device Volume", type = dial, fxml = "VolumeDevice", cmds = CommandVolumeDevice.class)
-public class DialVolumeDeviceController implements CommandController<CommandVolumeDevice> {
+@Cmd(name = "Device Volume", fxml = "VolumeDevice", cmds = CommandVolumeDevice.class)
+public class DialVolumeDeviceController implements DialCommandController<CommandVolumeDevice> {
     private final ISndCtrl sndCtrl;
     private Collection<AudioDevice> allSoundDevices;
     @FXML private CheckBox cb_device_unmute;
@@ -59,10 +57,10 @@ public class DialVolumeDeviceController implements CommandController<CommandVolu
     }
 
     @Override
-    public Command buildCommand() {
+    public Command buildCommand(boolean invert) {
         return new CommandVolumeDevice(
                 rdio_device_specific.isSelected() && volumedevice.getSelectionModel().getSelectedItem() != null ? volumedevice.getSelectionModel().getSelectedItem().id() : "",
-                cb_device_unmute.isSelected());
+                cb_device_unmute.isSelected(), invert);
     }
 
     @FXML

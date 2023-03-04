@@ -23,4 +23,9 @@ public final class CommandNoOp extends Command implements ButtonAction, DialActi
     public boolean hasOverlay() {
         return false;
     }
+
+    @Override
+    public boolean isInvert() {
+        return false;
+    }
 }

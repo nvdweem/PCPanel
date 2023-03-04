@@ -12,11 +12,16 @@ import lombok.ToString;
 public class CommandVolumeDevice extends CommandVolume implements DialAction {
     private final String deviceId;
     private final boolean unMuteOnVolumeChange;
+    private final boolean invert;
 
     @JsonCreator
-    public CommandVolumeDevice(@JsonProperty("deviceId") String deviceId, @JsonProperty("isUnMuteOnVolumeChange") boolean unMuteOnVolumeChange) {
+    public CommandVolumeDevice(
+            @JsonProperty("deviceId") String deviceId,
+            @JsonProperty("isUnMuteOnVolumeChange") boolean unMuteOnVolumeChange,
+            @JsonProperty("isInvert") boolean invert) {
         this.deviceId = deviceId;
         this.unMuteOnVolumeChange = unMuteOnVolumeChange;
+        this.invert = invert;
     }
 
     @Override

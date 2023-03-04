@@ -13,11 +13,16 @@ import lombok.ToString;
 public class CommandVoiceMeeterAdvanced extends CommandVoiceMeeter implements DialAction {
     private final String fullParam;
     private final Voicemeeter.DialControlMode ct;
+    private final boolean invert;
 
     @JsonCreator
-    public CommandVoiceMeeterAdvanced(@JsonProperty("fullParam") String fullParam, @JsonProperty("ct") Voicemeeter.DialControlMode ct) {
+    public CommandVoiceMeeterAdvanced(
+            @JsonProperty("fullParam") String fullParam,
+            @JsonProperty("ct") Voicemeeter.DialControlMode ct,
+            @JsonProperty("isInvert") boolean invert) {
         this.fullParam = fullParam;
         this.ct = ct;
+        this.invert = invert;
     }
 
     @Override

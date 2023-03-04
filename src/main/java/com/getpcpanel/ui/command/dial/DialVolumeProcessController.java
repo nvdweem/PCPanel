@@ -1,7 +1,5 @@
 package com.getpcpanel.ui.command.dial;
 
-import static com.getpcpanel.ui.command.Cmd.Type.dial;
-
 import java.util.Collection;
 import java.util.Optional;
 
@@ -18,7 +16,7 @@ import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.PickProcessesController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
-import com.getpcpanel.ui.command.CommandController;
+import com.getpcpanel.ui.command.DialCommandController;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -33,8 +31,8 @@ import one.util.streamex.StreamEx;
 @Component
 @Prototype
 @RequiredArgsConstructor
-@Cmd(name = "App Volume", type = dial, fxml = "VolumeProcess", cmds = CommandVolumeProcess.class)
-public class DialVolumeProcessController implements CommandController<CommandVolumeProcess> {
+@Cmd(name = "App Volume", fxml = "VolumeProcess", cmds = CommandVolumeProcess.class)
+public class DialVolumeProcessController implements DialCommandController<CommandVolumeProcess> {
     private final ISndCtrl sndCtrl;
     private Collection<AudioDevice> allSoundDevices;
 
@@ -71,12 +69,12 @@ public class DialVolumeProcessController implements CommandController<CommandVol
     }
 
     @Override
-    public Command buildCommand() {
+    public Command buildCommand(boolean invert) {
         var device =
                 rdio_app_output_all.isSelected() ? "*" :
                         rdio_app_output_specific.isSelected() ? Optional.ofNullable(app_vol_output_device.getSelectionModel().getSelectedItem()).map(AudioDevice::id).orElse("") :
                                 "";
-        return new CommandVolumeProcess(appVolumeController.getSelection(), device, cb_app_unmute.isSelected());
+        return new CommandVolumeProcess(appVolumeController.getSelection(), device, cb_app_unmute.isSelected(), invert);
     }
 
     private @Nullable AudioDevice getSoundDeviceById(String id) {

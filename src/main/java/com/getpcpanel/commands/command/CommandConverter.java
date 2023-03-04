@@ -29,17 +29,17 @@ public final class CommandConverter {
             case "app_volume" -> {
                 var device = data[3];
                 var apps = StreamEx.of(data[1], data[2]).map(StringUtils::trimToNull).nonNull().toList();
-                yield new CommandVolumeProcess(apps, device, false);
+                yield new CommandVolumeProcess(apps, device, false, false);
             }
-            case "focus_volume" -> new CommandVolumeFocus();
-            case "device_volume" -> new CommandVolumeDevice(data[1], false);
-            case "obs_dial" -> new CommandObsSetSourceVolume(data[2]);
+            case "focus_volume" -> new CommandVolumeFocus(false);
+            case "device_volume" -> new CommandVolumeDevice(data[1], false, false);
+            case "obs_dial" -> new CommandObsSetSourceVolume(data[2], false);
             case "voicemeeter_dial" -> {
                 if ("basic".equals(data[1])) {
-                    yield new CommandVoiceMeeterBasic(Voicemeeter.ControlType.valueOf(data[2]), NumberUtils.toInt(data[3], 1), Voicemeeter.DialType.valueOf(data[4]));
+                    yield new CommandVoiceMeeterBasic(Voicemeeter.ControlType.valueOf(data[2]), NumberUtils.toInt(data[3], 1), Voicemeeter.DialType.valueOf(data[4]), false);
                 } else if ("advanced".equals(data[1])) {
                     var dt = Voicemeeter.DialControlMode.valueOf(data[3]);
-                    yield new CommandVoiceMeeterAdvanced(data[2], dt);
+                    yield new CommandVoiceMeeterAdvanced(data[2], dt, false);
                 }
                 yield NOOP;
             }

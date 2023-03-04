@@ -18,6 +18,7 @@ import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.spring.OsHelper;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.Cmd.Type;
+import com.getpcpanel.ui.command.DialCommandController;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -48,7 +49,8 @@ public class MacroControllerService {
             }
 
             var info = new ControllerInfo(controllerClass, cmd);
-            typeToControllers.computeIfAbsent(cmd.type(), t -> new ArrayList<>()).add(info);
+            var type = getTypeForController(controllerClass);
+            typeToControllers.computeIfAbsent(type, t -> new ArrayList<>()).add(info);
             for (var command : cmd.cmds()) {
                 commandToController.put(command, info);
             }
@@ -67,9 +69,13 @@ public class MacroControllerService {
         return typeToControllers.get(type);
     }
 
+    private static Type getTypeForController(Class<?> controllerClass) {
+        return DialCommandController.class.isAssignableFrom(controllerClass) ? Type.dial : Type.button;
+    }
+
     public record ControllerInfo(Class<?> controllerClass, Cmd cmd) {
         public URL getFxml() {
-            return requireNonNull(getClass().getResource("/assets/command/%s/%s.fxml".formatted(cmd.type().name(), cmd.fxml())));
+            return requireNonNull(getClass().getResource("/assets/command/%s/%s.fxml".formatted(getTypeForController(controllerClass).name(), cmd.fxml())));
         }
     }
 }
