@@ -1,4 +1,4 @@
-package com.getpcpanel.util;
+package com.getpcpanel.util.version;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -12,7 +12,7 @@ class VersionCheckerTest {
 
     @BeforeEach
     void setUp() {
-        sut = new VersionChecker(null, null);
+        sut = new VersionChecker(null, null, null, null, -1, true);
     }
 
     @ParameterizedTest

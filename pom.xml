@@ -22,6 +22,8 @@
         <project.snapshot>-SNAPSHOT</project.snapshot>
         <!--suppress UnresolvedMavenProperty -->
         <github.build>${env.GITHUB_RUN_NUMBER}</github.build>
+        <!--suppress UnresolvedMavenProperty -->
+        <github.repo>${env.GITHUB_REPOSITORY}</github.repo>
 
         <java.version>17</java.version>
         <jetty.version>9.4.49.v20220914</jetty.version> <!-- Required by OBS Websocket -->
@@ -54,6 +56,10 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-json</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -368,7 +374,8 @@
                 </property>
             </activation>
             <properties>
-                <github.build>-1</github.build>
+                <github.build>9999</github.build>
+                <github.repo>nvdweem/PCPanel</github.repo>
             </properties>
         </profile>
         <profile>

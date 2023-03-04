@@ -11,7 +11,7 @@ import com.getpcpanel.device.Device;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.util.VersionChecker;
+import com.getpcpanel.util.version.VersionChecker.NewVersionAvailableEvent;
 
 import jakarta.annotation.PostConstruct;
 import javafx.application.Application;
@@ -224,10 +224,10 @@ public class HomePage extends Application {
     }
 
     @EventListener
-    public void newVersionAvailable(VersionChecker.NewVersionAvailableEvent event) {
-        var label = new Label("New version available: " + event.version());
+    public void newVersionAvailable(NewVersionAvailableEvent event) {
+        var label = new Label("New version available: " + event.version().versionDisplay());
         label.setStyle("-fx-text-fill: #ff8888; -fx-font-weight: bold;");
-        label.setOnMouseClicked(e -> getHostServices().showDocument(event.url()));
+        label.setOnMouseClicked(e -> getHostServices().showDocument(event.version().html_url()));
         Platform.runLater(() -> labelTarget.getChildren().add(label));
     }
 
