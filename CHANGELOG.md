@@ -12,10 +12,13 @@ A backup will be made when converting. If you want to downgrade to a previous ve
 - #41 - Dial/Slider values are applied when VoiceMeeter starts
 - Dial/Slider values are applied when OBS starts
 - #39 - Allow showing the actual volume number (0-100, linear) and additional color settings in overlay
+- Dials/sliders can be inverted (combined with multiple commands, this will make it possible to cross-fade, but volume levels aren't useful for that yet)
+- The overlay allows showing the actual value (this differs from the slider state when using logarithmic scaling)
 
 **Fixes:**
 
 - Pressing escape when a dialog is open will close the dialog
+- Version check is done using the GitHub version api and will notify when a new snapshot is available
 
 **Fixes within the snapshot:**
 (not relevant when not upgrading from a previous snapshot)
