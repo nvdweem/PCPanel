@@ -5,9 +5,8 @@ import static com.getpcpanel.util.version.Version.SNAPSHOT_POSTFIX;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.client.RestTemplate;
 
 import com.getpcpanel.profile.SaveService;
 
@@ -22,7 +21,7 @@ import one.util.streamex.StreamEx;
 public class VersionChecker extends Thread {
     private final ApplicationEventPublisher eventPublisher;
     private final SaveService save;
-    private final WebClient webClient = WebClient.create();
+    private final RestTemplate webClient;
     @Value("https://api.github.com/repos/${application.github.user-and-repo}/releases?per_page=2") private final String versionCheck;
     @Value("${application.version}") private final String version;
     @Value("${application.build}") private final int build;
@@ -38,12 +37,16 @@ public class VersionChecker extends Thread {
 
     @Override
     public void run() {
-        webClient.method(HttpMethod.GET).uri(versionCheck)
-                 .retrieve()
-                 .bodyToMono(Version[].class)
-                 .map(this::getVersionOfCorrectType)
-                 .filter(this::versionIsNewer)
-                 .subscribe(this::updateVersionlabel);
+        var response = webClient.getForEntity(versionCheck, Version[].class);
+        if (response.getBody() == null) {
+            log.error("Unable to get latest version from GitHub");
+            return;
+        }
+
+        var correctVersion = getVersionOfCorrectType(response.getBody());
+        if (versionIsNewer(correctVersion)) {
+            updateVersionlabel(correctVersion);
+        }
     }
 
     private Version getVersionOfCorrectType(Version[] versions) {
