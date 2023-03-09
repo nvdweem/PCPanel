@@ -90,12 +90,13 @@ public class Overlay extends Popup {
             return;
         }
         showDebounced(() -> determineIconImage(event), command -> {
-            if (event.value() != null) {
+            if (event.vol() != null) {
+                var value = event.vol().getValue();
                 setVisible(volumePanel);
-                volume.setProgress(event.value() / 255f);
+                volume.setProgress(value / 255f);
 
                 if (save.get().isOverlayShowNumber()) {
-                    volumeText.setText(String.valueOf(Math.round(event.value() / 2.55f)));
+                    volumeText.setText(String.valueOf(Math.round(value / 2.55f)));
                     volumeText.setVisible(true);
                     volumeText.setManaged(true);
                 } else {
@@ -138,7 +139,7 @@ public class Overlay extends Popup {
     private @Nonnull CommandAndIcon determineIconImage(PCPanelControlEvent event) {
         return save.getProfile(event.serialNum()).map(profile -> {
             var data = event.cmd();
-            var setting = event.value() == null ? null : profile.getKnobSettings(event.knob());
+            var setting = event.vol() == null ? null : profile.getKnobSettings(event.knob());
             return new CommandAndIcon(data, iconService.getImageFrom(data, setting));
         }).orElse(CommandAndIcon.DEFAULT);
     }

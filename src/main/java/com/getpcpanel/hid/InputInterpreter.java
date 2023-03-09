@@ -43,7 +43,7 @@ public final class InputInterpreter {
             }
             device.setKnobRotation(event.knob(), value);
             var settings = save.getProfile(event.serialNum()).map(p -> p.getKnobSettings(event.knob())).orElse(null);
-            doDialAction(event.serialNum(), event.initial(), event.knob(), event.value(), new DialValueCalculator(settings, value));
+            doDialAction(event.serialNum(), event.initial(), event.knob(), new DialValueCalculator(settings, value));
         });
     }
 
@@ -54,8 +54,8 @@ public final class InputInterpreter {
             doClickAction(event.serialNum(), event.button());
     }
 
-    private void doDialAction(String serialNum, boolean initial, int knob, int vRaw, DialValueCalculator v) {
-        save.getProfile(serialNum).map(p -> p.getDialData(knob)).ifPresent(data -> eventPublisher.publishEvent(new PCPanelControlEvent(serialNum, knob, data, initial, vRaw, v)));
+    private void doDialAction(String serialNum, boolean initial, int knob, DialValueCalculator v) {
+        save.getProfile(serialNum).map(p -> p.getDialData(knob)).ifPresent(data -> eventPublisher.publishEvent(new PCPanelControlEvent(serialNum, knob, data, initial, v)));
     }
 
     private void doClickAction(String serialNum, int knob) {
@@ -75,14 +75,14 @@ public final class InputInterpreter {
 
         if (shouldDblClick) {
             debouncer.prevent(clickId);
-            eventPublisher.publishEvent(new PCPanelControlEvent(clickId.serialNum(), clickId.button(), dblClick, false, null, null));
+            eventPublisher.publishEvent(new PCPanelControlEvent(clickId.serialNum(), clickId.button(), dblClick, false, null));
             lastClicks.remove(clickId);
             return;
         }
 
         lastClicks.put(clickId, System.currentTimeMillis());
         if (hasCommands(click)) {
-            var event = new PCPanelControlEvent(clickId.serialNum(), clickId.button(), click, false, null, null);
+            var event = new PCPanelControlEvent(clickId.serialNum(), clickId.button(), click, false, null);
             if (hasDblClick && save.get().isPreventClickWhenDblClick()) {
                 debouncer.debounce(clickId, () -> eventPublisher.publishEvent(event), debounceTime, TimeUnit.MILLISECONDS);
             } else {
