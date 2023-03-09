@@ -32,7 +32,7 @@ public class CommandVoiceMeeterBasic extends CommandVoiceMeeter implements DialA
     public void execute(DialActionParameters context) {
         var voiceMeeter = MainFX.getBean(Voicemeeter.class);
         if (voiceMeeter.login()) {
-            voiceMeeter.controlLevel(ct, index, dt, context.dial());
+            voiceMeeter.controlLevel(ct, index, dt, context.dial().calcValue(invert));
         }
     }
 }

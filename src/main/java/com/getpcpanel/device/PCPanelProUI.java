@@ -118,7 +118,7 @@ public class PCPanelProUI extends Device {
         if (knob < 5) {
             ((Region) knobs[knob].getGraphic()).getChildrenUnmodifiable().get(3).setRotate(Util.analogValueToRotation(val));
         } else {
-            var x = Util.map(val, 0.0D, 100.0D, sliderHolders[knob - 5].getPrefHeight(), 0.0D) - 40.0D;
+            var x = Util.map(val, 0.0D, 255.0D, sliderHolders[knob - 5].getPrefHeight(), 0.0D) - 40.0D;
             knobs[knob].setLayoutY(x);
             images[knob].setLayoutY(x);
         }

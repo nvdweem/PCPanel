@@ -21,6 +21,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import lombok.extern.log4j.Log4j2;
 
+@SuppressWarnings("ALL")
 @Log4j2
 public final class Util {
     private static final Set<String> executables = Set.of("bat", "bin", "cmd", "com", "cpl", "exe", "gadget", "inf1", "ins", "inx", "isu", "job", "jse", "lnk", "msc", "msi", "msp", "mst", "paf",
@@ -100,12 +101,12 @@ public final class Util {
         return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
     }
 
-    public static int analogValueToRotation(int x) {
-        return 3 * x + 30;
+    public static double analogValueToRotation(int x) {
+        return 3 * (x / 2.55f) + 30;
     }
 
-    public static int rotationToAnalogValue(int x) {
-        return (x - 30) / 3;
+    public static int rotationToAnalogValue(double x) {
+        return (int) (((x - 30) / 3) * 2.55f);
     }
 
     public static void fill(Object[] ar, Object... objs) {

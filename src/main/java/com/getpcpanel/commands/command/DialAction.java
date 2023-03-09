@@ -1,10 +1,12 @@
 package com.getpcpanel.commands.command;
 
+import com.getpcpanel.hid.DialValueCalculator;
+
 public interface DialAction {
     void execute(DialActionParameters context);
 
     default Runnable toRunnable(DialActionParameters context) {
-        return () -> execute(invertIfNeeded(context));
+        return () -> execute(context);
     }
 
     default boolean hasOverlay() {
@@ -13,10 +15,6 @@ public interface DialAction {
 
     boolean isInvert();
 
-    private DialActionParameters invertIfNeeded(DialActionParameters params) {
-        return isInvert() ? new DialActionParameters(params.device(), params.initial(), 100 - params.dial()) : params;
-    }
-
-    record DialActionParameters(String device, boolean initial, int dial) {
+    record DialActionParameters(String device, boolean initial, DialValueCalculator dial) {
     }
 }

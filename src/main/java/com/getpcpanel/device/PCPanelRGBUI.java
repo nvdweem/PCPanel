@@ -82,8 +82,7 @@ public class PCPanelRGBUI extends Device {
 
     @Override
     public int getKnobRotation(int knob) {
-        //noinspection NumericCastThatLosesPrecision
-        return Util.rotationToAnalogValue((int) ((Region) knobs[knob].getGraphic()).getChildrenUnmodifiable().get(3).getRotate());
+        return Util.rotationToAnalogValue(((Region) knobs[knob].getGraphic()).getChildrenUnmodifiable().get(3).getRotate());
     }
 
     private void initLabel() {

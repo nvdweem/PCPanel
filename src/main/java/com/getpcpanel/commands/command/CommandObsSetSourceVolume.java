@@ -26,7 +26,7 @@ public class CommandObsSetSourceVolume extends CommandObs implements DialAction 
     public void execute(DialActionParameters context) {
         var obs = MainFX.getBean(OBS.class);
         if (obs.isConnected()) {
-            obs.setSourceVolume(sourceName, context.dial());
+            obs.setSourceVolume(sourceName, context.dial().calcValue(invert));
         }
     }
 }

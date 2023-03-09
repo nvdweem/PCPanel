@@ -26,7 +26,7 @@ public class CommandBrightness extends Command implements DialAction {
     public void execute(DialActionParameters context) {
         MainFX.getBean(DeviceHolder.class).getDevice(context.device()).ifPresent(device -> {
             var lightingConfig = device.getLightingConfig();
-            lightingConfig.setGlobalBrightness(context.dial());
+            lightingConfig.setGlobalBrightness(context.dial().calcValue(invert));
             device.setLighting(lightingConfig, false);
 
             MainFX.getBean(SaveService.class).debouncedSave();

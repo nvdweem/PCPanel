@@ -10,7 +10,6 @@ import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.hid.DeviceCommunicationHandler;
 import com.getpcpanel.hid.DeviceHolder;
-import com.getpcpanel.util.Util;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -37,7 +36,7 @@ public abstract class AbstractNewXVolumeService {
                 .selectValues(clazz)
                 .chain(chain)
                 .forKeyValue((idAndDial, cmd) -> devices.getDevice(idAndDial.id()).ifPresent(device -> {
-                    var current = Util.map(device.getKnobRotation(idAndDial.dial()), 0, 100, 0, 255);
+                    var current = device.getKnobRotation(idAndDial.dial());
                     eventPublisher.publishEvent(new DeviceCommunicationHandler.KnobRotateEvent(idAndDial.id(), idAndDial.dial(), current, false));
                 }));
     }
