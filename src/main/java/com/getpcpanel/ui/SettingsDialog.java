@@ -59,6 +59,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
     @FXML private CheckBox mainUiIcons;
     @FXML private CheckBox startupVersionCheck;
     @FXML private CheckBox overlay;
+    @FXML private CheckBox overlayUseLog;
     @FXML private CheckBox overlayShowNumber;
     @FXML private ColorPicker overlayTextColor;
     @FXML private ColorPicker overlayBackgroundColor;
@@ -130,6 +131,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
         save.setMainUIIcons(mainUiIcons.isSelected());
         save.setStartupVersionCheck(startupVersionCheck.isSelected());
         save.setOverlayEnabled(overlay.isSelected());
+        save.setOverlayUseLog(overlayUseLog.isSelected());
         save.setOverlayShowNumber(overlayShowNumber.isSelected());
         save.setOverlayBackgroundColor(toWebColor(overlayBackgroundColor.getValue()));
         save.setOverlayTextColor(toWebColor(overlayTextColor.getValue()));
@@ -176,6 +178,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
         mainUiIcons.setSelected(save.isMainUIIcons());
         startupVersionCheck.setSelected(save.isStartupVersionCheck());
         overlay.setSelected(save.isOverlayEnabled());
+        overlayUseLog.setSelected(save.isOverlayUseLog());
         overlayShowNumber.setSelected(save.isOverlayShowNumber());
         dblClickInterval.setText(save.getDblClickInterval() == null ? "500" : save.getDblClickInterval().toString());
         preventClickWhenDblClick.setSelected(save.isPreventClickWhenDblClick());

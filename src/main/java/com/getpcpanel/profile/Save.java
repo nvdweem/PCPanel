@@ -36,6 +36,7 @@ public class Save {
 
     // Overlay
     private boolean overlayEnabled;
+    private boolean overlayUseLog;
     private boolean overlayShowNumber;
     private String overlayBackgroundColor = DEFAULT_OVERLAY_BG_COLOR;
     private String overlayTextColor = DEFAULT_OVERLAY_TEXT_COLOR;
