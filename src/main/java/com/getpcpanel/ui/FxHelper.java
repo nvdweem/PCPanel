@@ -75,7 +75,7 @@ public class FxHelper {
     }
 
     public BasicMacro buildBasicMacro(Device device, int knob) {
-        return open(BasicMacro.class, new MacroArgs(device, knob, false, null, null));
+        return open(BasicMacro.class, new MacroArgs(device, knob, true, null, null));
     }
 
     public AppFinderDialog buildAppFinderDialog(Stage parentStage, boolean volumeApps) {
