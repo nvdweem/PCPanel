@@ -3,6 +3,8 @@ package com.getpcpanel.cpp.linux;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
+import javax.annotation.Nullable;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -38,7 +40,7 @@ public class LinuxProcessHelper {
         return -1;
     }
 
-    public String getActiveProcess() {
+    public @Nullable String getActiveProcess() {
         try {
             var pid = getActiveProcessPid();
             if (pid == -1)
@@ -50,7 +52,7 @@ public class LinuxProcessHelper {
         return null;
     }
 
-    private String lineFrom(String... cmd) throws IOException {
+    private @Nullable String lineFrom(String... cmd) throws IOException {
         var lines = IOUtils.readLines(processHelper.builder(cmd).start().getInputStream(), Charset.defaultCharset());
         if (lines.isEmpty()) {
             return null;

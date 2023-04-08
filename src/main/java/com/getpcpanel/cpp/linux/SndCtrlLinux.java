@@ -211,6 +211,9 @@ public class SndCtrlLinux implements ISndCtrl {
     }
 
     private StreamEx<LinuxAudioSession> allSessions() {
-        return StreamEx.of(sessions).distinct();
+        synchronized (sessions) {
+            var sessionsCopy = new HashSet<>(sessions);
+            return StreamEx.of(sessionsCopy).distinct();
+        }
     }
 }
