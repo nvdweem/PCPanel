@@ -1,12 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Accordion?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <VBox prefHeight="500.0" prefWidth="500.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.command.ButtonController">
     <Accordion fx:id="commands" VBox.vgrow="ALWAYS">
         <panes>
         </panes>
     </Accordion>
-    <Button fx:id="addButton" mnemonicParsing="false" onAction="#showActionsMenu" text="Add action"/>
+
+    <HBox>
+        <Button fx:id="addButton" mnemonicParsing="false" onAction="#showActionsMenu" text="Add action">
+            <HBox.margin>
+                <Insets right="12.0"/>
+            </HBox.margin>
+        </Button>
+        <ChoiceBox fx:id="commandsType" visible="false"/>
+        <VBox.margin>
+            <Insets/>
+        </VBox.margin>
+        <padding>
+            <Insets top="10.0"/>
+        </padding>
+    </HBox>
 </VBox>

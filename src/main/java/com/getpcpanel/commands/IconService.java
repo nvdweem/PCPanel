@@ -91,7 +91,7 @@ public class IconService {
             }
         }
 
-        return StreamEx.of(commands.commands())
+        return StreamEx.of(commands.getCommands())
                        .map(imageHandlers::handle)
                        .findFirst(result -> result != null && result != DEFAULT)
                        .orElse(DEFAULT);

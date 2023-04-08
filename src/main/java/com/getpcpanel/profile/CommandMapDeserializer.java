@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.ValueNode;
 import com.getpcpanel.commands.Commands;
+import com.getpcpanel.commands.CommandsType;
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandConverter;
 
@@ -49,7 +50,7 @@ public class CommandMapDeserializer extends JsonDeserializer<Map<Integer, Comman
     }
 
     private @Nonnull Map<Integer, Commands> convertMapToMapWithCommands(@Nonnull Map<Integer, Command> result) {
-        return EntryStream.of(result).mapValues(cmd -> new Commands(List.of(cmd))).toMap();
+        return EntryStream.of(result).mapValues(cmd -> new Commands(List.of(cmd), CommandsType.allAtOnce)).toMap();
     }
 
     private @Nonnull Map<Integer, Commands> readOldFormat(@Nonnull JsonParser p) throws IOException {
@@ -60,7 +61,7 @@ public class CommandMapDeserializer extends JsonDeserializer<Map<Integer, Comman
                    .mapValues(tn -> IntStreamEx.range(tn.size()).mapToObj(tn::get).select(ValueNode.class).map(ValueNode::asText).toArray(String[]::new))
                    .mapValues(CommandConverter::convert)
                    .nonNullValues()
-                   .mapValues(cmd -> new Commands(List.of(cmd)))
+                   .mapValues(cmd -> new Commands(List.of(cmd), CommandsType.allAtOnce))
                    .into(result);
         return result;
     }

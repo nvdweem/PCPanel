@@ -132,7 +132,7 @@ public class Overlay extends Popup {
 
     private boolean hasOverlay(Commands commands) {
         return Commands.hasCommands(commands) &&
-                StreamEx.of(commands.commands()).anyMatch(command -> command instanceof DialAction da && da.hasOverlay()
+                StreamEx.of(commands.getCommands()).anyMatch(command -> command instanceof DialAction da && da.hasOverlay()
                         || command instanceof ButtonAction ba && ba.hasOverlay());
     }
 

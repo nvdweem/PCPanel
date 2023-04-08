@@ -9,6 +9,8 @@ A backup will be made when converting. If you want to downgrade to a previous ve
 
 - #38 - Add double click action to buttons
 - It is now possible to add more than one action to a button or slider
+    - There is also an option to run them all at once when a button is pressed, or sequentially
+    - Dials currently only support all at once
 - #41 - Dial/Slider values are applied when VoiceMeeter starts
 - Dial/Slider values are applied when OBS starts
 - #39 - Allow showing the actual volume number (0-100, linear) and additional color settings in overlay

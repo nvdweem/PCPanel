@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.ReflectionUtils;
 
 import com.getpcpanel.commands.Commands;
+import com.getpcpanel.commands.CommandsType;
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandNoOp;
 import com.getpcpanel.commands.command.DialAction;
@@ -16,6 +17,7 @@ import com.getpcpanel.ui.MacroControllerService;
 import com.getpcpanel.ui.MacroControllerService.ControllerInfo;
 
 import javafx.application.Platform;
+import javafx.collections.ListChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -25,6 +27,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Accordion;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
@@ -54,6 +57,7 @@ public class ButtonController {
 
     @FXML private Accordion commands;
     @FXML private Button addButton;
+    @FXML private ChoiceBox<CommandsType> commandsType;
 
     public void initController(Cmd.Type cmdType, CommandContext context, @Nullable Commands buttonData) {
         this.cmdType = cmdType;
@@ -87,6 +91,22 @@ public class ButtonController {
             addMenu.getItems().add(menuItem);
         });
         addButton.setContextMenu(addMenu);
+
+        commandsType.getItems().addAll(CommandsType.values());
+        //noinspection DataFlowIssue => Not actually nullable
+        commandsType.getSelectionModel().select(buttonData.getType());
+
+        if (cmdType == Cmd.Type.button) {
+            commands.getPanes().addListener(this::determineCommandsTypeVisible);
+            determineCommandsTypeVisible(null);
+        }
+    }
+
+    private void determineCommandsTypeVisible(@Nullable ListChangeListener.Change<?> change) {
+        commandsType.setVisible(commands.getPanes().size() > 1);
+        if (!commandsType.isVisible()) {
+            commandsType.getSelectionModel().selectFirst();
+        }
     }
 
     @SneakyThrows
@@ -156,7 +176,7 @@ public class ButtonController {
         }
 
         var cmds = userdata.select(Command.class).remove(CommandNoOp.class::isInstance).toList();
-        return new Commands(cmds);
+        return new Commands(cmds, commandsType.getValue());
     }
 
     public void showActionsMenu(ActionEvent ignored) {
