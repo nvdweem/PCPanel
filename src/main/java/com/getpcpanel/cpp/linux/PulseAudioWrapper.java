@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.spring.ConditionalOnLinux;
+import com.getpcpanel.util.ProcessHelper;
 
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ public class PulseAudioWrapper {
     public static final int NO_OP_IDX = -1;
     public static final int DEFAULT_DEVICE = -2;
     private static final Pattern pactlFirstLine = Pattern.compile("(.*) #(\\d+)");
+    private final ProcessHelper processHelper;
 
     public List<PulseAudioTarget> getDevices() {
         return StreamEx.of(execAndParse(InOutput.output)).append(execAndParse(InOutput.input)).toList();
@@ -71,7 +73,7 @@ public class PulseAudioWrapper {
 
     public List<PulseAudioTarget> execAndParse(InOutput type) {
         var ret = new ArrayList<PulseAudioTarget>();
-        var cmdOutput = runAndRead(new ProcessBuilder("pactl", "list", type.pulseType));
+        var cmdOutput = runAndRead(processHelper.builder("pactl", "list", type.pulseType));
 
         PulseAudioTarget.PulseAudioTargetBuilder paTarget = null;
         var properties = new HashMap<String, String>();
@@ -123,7 +125,7 @@ public class PulseAudioWrapper {
         fullCmd[0] = "pactl";
         System.arraycopy(cmd, 0, fullCmd, 1, cmd.length);
         log.debug("Executing: {}", String.join(" ", fullCmd));
-        var process = new ProcessBuilder(fullCmd).start();
+        var process = processHelper.builder(fullCmd).start();
 
         if (log.isTraceEnabled()) {
             var lines = IOUtils.readLines(process.getInputStream(), Charset.defaultCharset());

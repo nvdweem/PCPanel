@@ -37,7 +37,7 @@ import one.util.streamex.StreamEx;
 public class SndCtrlLinux implements ISndCtrl {
     public static final String INPUT_PREFIX = "in_";
     private final PulseAudioWrapper cmd;
-    private final ProcessHelper processHelper;
+    private final LinuxProcessHelper processHelper;
     private final ApplicationEventPublisher eventPublisher;
     @GuardedBy("devices") private final Map<String, LinuxAudioDevice> devices = new HashMap<>();
     @GuardedBy("sessions") private final Set<LinuxAudioSession> sessions = new HashSet<>();

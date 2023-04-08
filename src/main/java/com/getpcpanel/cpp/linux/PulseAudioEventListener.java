@@ -9,6 +9,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 import com.getpcpanel.spring.ConditionalOnLinux;
+import com.getpcpanel.util.ProcessHelper;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -21,6 +22,7 @@ import lombok.extern.log4j.Log4j2;
 @RequiredArgsConstructor
 public class PulseAudioEventListener extends Thread {
     private final ApplicationEventPublisher eventPublisher;
+    private final ProcessHelper processHelper;
     private boolean running = true;
 
     @PostConstruct
@@ -39,7 +41,7 @@ public class PulseAudioEventListener extends Thread {
     public void run() {
         while (running) {
             try {
-                var process = new ProcessBuilder("pactl", "subscribe").start();
+                var process = processHelper.builder("pactl", "subscribe").start();
                 var reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
                 String line;

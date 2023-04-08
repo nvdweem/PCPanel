@@ -6,7 +6,7 @@ import java.io.IOException;
 import org.springframework.stereotype.Service;
 
 import com.getpcpanel.cpp.ISndCtrl;
-import com.getpcpanel.cpp.linux.ProcessHelper;
+import com.getpcpanel.cpp.linux.LinuxProcessHelper;
 import com.getpcpanel.spring.ConditionalOnLinux;
 import com.getpcpanel.spring.ConditionalOnWindows;
 
@@ -26,14 +26,14 @@ public abstract class IPlatformCommand {
     @ConditionalOnLinux
     @RequiredArgsConstructor
     public static class LinuxPlatformCommand extends IPlatformCommand {
-        private final ProcessHelper processHelper;
+        private final LinuxProcessHelper processHelper;
 
         @Override
         public void exec(String shortcut) {
             try {
                 var file = new File(shortcut);
                 if (file.isDirectory()) {
-                    new ProcessBuilder("gio", "open", shortcut).start();
+                    processHelper.builder("gio", "open", shortcut).start();
                 } else {
                     rt.exec(shortcut);
                 }
@@ -46,9 +46,9 @@ public abstract class IPlatformCommand {
         public void kill(String process) {
             try {
                 if (FOCUS.equals(process)) {
-                    new ProcessBuilder("kill", String.valueOf(processHelper.getActiveProcessPid())).start();
+                    processHelper.builder("kill", String.valueOf(processHelper.getActiveProcessPid())).start();
                 } else {
-                    new ProcessBuilder("pkill", process).start();
+                    processHelper.builder("pkill", process).start();
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);

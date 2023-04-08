@@ -19,6 +19,7 @@ A backup will be made when converting. If you want to downgrade to a previous ve
 
 - Pressing escape when a dialog is open will close the dialog
 - Version check is done using the GitHub version api and will notify when a new snapshot is available
+- [Linux] #44 - pactl commands are run in English so that their output can be parsed correctly
 
 **Fixes within the snapshot:**
 (not relevant when not upgrading from a previous snapshot)
