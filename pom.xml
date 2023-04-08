@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.0.4</version>
+        <version>3.0.5</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
@@ -41,7 +41,7 @@
 
         <javafx.version>18.0.2</javafx.version>
         <jna.version>5.13.0</jna.version>
-        <asm.version>9.4</asm.version>
+        <asm.version>9.5</asm.version>
 
         <module.name>ALL-UNNAMED</module.name>
     </properties>
@@ -168,7 +168,7 @@
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
-            <version>24.0.0</version>
+            <version>24.0.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.xmlgraphics</groupId>

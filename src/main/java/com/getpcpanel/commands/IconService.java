@@ -91,6 +91,7 @@ public class IconService {
             }
         }
 
+        //noinspection ObjectEquality
         return StreamEx.of(commands.getCommands())
                        .map(imageHandlers::handle)
                        .findFirst(result -> result != null && result != DEFAULT)

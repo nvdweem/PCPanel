@@ -1,17 +1,13 @@
 package com.getpcpanel.util;
 
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-import org.apache.batik.transcoder.TranscoderOutput;
-import org.apache.batik.transcoder.image.ImageTranscoder;
 import org.apache.commons.io.IOUtils;
 
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
 import lombok.extern.log4j.Log4j2;
@@ -67,31 +63,4 @@ public abstract class Images {
             throw new RuntimeException(e);
         }
     }
-
-    public static ImageView asImageView(Image image, int size) {
-        var imageView = new ImageView(image);
-        imageView.setFitWidth(size);
-        imageView.setFitHeight(size);
-        imageView.setPreserveRatio(true);
-        return imageView;
-    }
-
-    private static class BufferedImageTranscoder extends ImageTranscoder {
-        private BufferedImage img;
-
-        @Override
-        public BufferedImage createImage(int width, int height) {
-            return new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        }
-
-        @Override
-        public void writeImage(BufferedImage img, TranscoderOutput to) {
-            this.img = img;
-        }
-
-        public BufferedImage getBufferedImage() {
-            return img;
-        }
-    }
-
 }
