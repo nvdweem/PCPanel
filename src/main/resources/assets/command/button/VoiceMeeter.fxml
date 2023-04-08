@@ -46,6 +46,8 @@
                 <TextField fx:id="voicemeeterButtonParameter" promptText="Strip[0].Mute"/>
                 <Label prefHeight="21.0" prefWidth="164.0" text="Control Mode"/>
                 <ChoiceBox fx:id="voicemeeterButtonType" prefHeight="31.0" prefWidth="331.0"/>
+                <Label fx:id="voicemeeterStringValueLabel" prefHeight="21.0" prefWidth="164.0" text="String value" visible="false"/>
+                <TextField fx:id="voicemeeterStringValue" prefHeight="31.0" prefWidth="331.0" visible="false"/>
             </VBox>
         </Tab>
     </TabPane>

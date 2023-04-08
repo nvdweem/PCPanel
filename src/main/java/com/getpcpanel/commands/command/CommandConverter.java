@@ -70,7 +70,7 @@ public final class CommandConverter {
                     yield new CommandVoiceMeeterBasicButton(Voicemeeter.ControlType.valueOf(data[2]), NumberUtils.toInt(data[3], 1), Voicemeeter.ButtonType.valueOf(data[4]));
                 } else if ("advanced".equals(data[1])) {
                     var bt = Voicemeeter.ButtonControlMode.valueOf(data[3]);
-                    yield new CommandVoiceMeeterAdvancedButton(data[2], bt);
+                    yield new CommandVoiceMeeterAdvancedButton(data[2], bt, null);
                 }
                 yield NOOP;
             }

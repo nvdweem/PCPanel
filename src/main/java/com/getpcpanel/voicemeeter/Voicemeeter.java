@@ -78,7 +78,8 @@ public final class Voicemeeter {
     public enum ButtonControlMode {
         ENABLE("Enable"),
         DISABLE("Disable"),
-        TOGGLE("Toggle");
+        TOGGLE("Toggle"),
+        STRING("String");
 
         private final String dn;
 
@@ -285,22 +286,38 @@ public final class Voicemeeter {
         };
     }
 
-    public void controlButton(ControlType ct, int index, ButtonType bt) {
-        disconnectIfDisconnectError(() -> controlButton(makeParameterString(ct, index, bt.getParameterName()), ButtonControlMode.TOGGLE));
+    public void controlButton(ControlType ct, int index, ButtonType bt, @Nullable String stringValue) {
+        disconnectIfDisconnectError(() -> controlButton(makeParameterString(ct, index, bt.getParameterName()), ButtonControlMode.TOGGLE, stringValue));
     }
 
-    public void controlButton(String fullParam, ButtonControlMode bt) {
+    public void controlButton(String fullParam, ButtonControlMode bt, @Nullable String stringValue) {
+        if (bt == null) {
+            log.warn("VoiceMeeter button action with empty button control mode");
+            return;
+        }
         disconnectIfDisconnectError(() -> {
-            if (bt == ButtonControlMode.TOGGLE) {
-                checkParamsDirty();
-                var status = api.getParameterFloat(fullParam) > 0F;
-                api.setParameterFloat(fullParam, status ? 0.0F : 1.0F);
-                checkParamsDirty();
-            } else if (bt == ButtonControlMode.ENABLE) {
-                api.setParameterFloat(fullParam, 1.0F);
-            } else if (bt == ButtonControlMode.DISABLE) {
-                api.setParameterFloat(fullParam, 0.0F);
-            }
+            // Ignored switch result to force exhaustive switch
+            var ignored = switch (bt) {
+                case TOGGLE -> {
+                    checkParamsDirty();
+                    var status = api.getParameterFloat(fullParam) > 0F;
+                    api.setParameterFloat(fullParam, status ? 0.0F : 1.0F);
+                    checkParamsDirty();
+                    yield 0;
+                }
+                case ENABLE -> {
+                    api.setParameterFloat(fullParam, 1.0F);
+                    yield 0;
+                }
+                case DISABLE -> {
+                    api.setParameterFloat(fullParam, 0.0F);
+                    yield 0;
+                }
+                case STRING -> {
+                    api.setParameterStringA(fullParam, StringUtils.defaultString(stringValue));
+                    yield 0;
+                }
+            };
         });
     }
 

@@ -18,6 +18,7 @@ import com.getpcpanel.voicemeeter.Voicemeeter;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,8 @@ public class BtnVoiceMeeterController implements ButtonCommandController<Command
     @FXML private ChoiceBox<Voicemeeter.ControlType> voicemeeterBasicButtonIO;
     @FXML private TabPane voicemeeterTabPaneButton;
     @FXML private TextField voicemeeterButtonParameter;
+    @FXML private Label voicemeeterStringValueLabel;
+    @FXML private TextField voicemeeterStringValue;
 
     @Override
     public void postInit(CommandContext context) {
@@ -61,6 +64,15 @@ public class BtnVoiceMeeterController implements ButtonCommandController<Command
             voicemeeterBasicButtonIO.getSelectionModel().selectFirst();
             voicemeeterBasicButtonIndex.getSelectionModel().selectFirst();
         }
+
+        voicemeeterButtonType.valueProperty().addListener((o, oldVal, newVal) -> {
+            var isString = newVal == Voicemeeter.ButtonControlMode.STRING;
+            voicemeeterStringValueLabel.setVisible(isString);
+            voicemeeterStringValue.setVisible(isString);
+            if (!isString) {
+                voicemeeterStringValue.setText("");
+            }
+        });
     }
 
     @Override
@@ -80,6 +92,9 @@ public class BtnVoiceMeeterController implements ButtonCommandController<Command
             voicemeeterTabPaneButton.getSelectionModel().select(1);
             voicemeeterButtonParameter.setText(advanced.getFullParam());
             voicemeeterButtonType.setValue(advanced.getBt());
+            if (advanced.getBt() == Voicemeeter.ButtonControlMode.STRING) {
+                voicemeeterStringValue.setText(advanced.getStringValue());
+            }
         }
     }
 
@@ -91,7 +106,7 @@ public class BtnVoiceMeeterController implements ButtonCommandController<Command
             if (voicemeeterButtonType.getValue() == null) {
                 return NOOP;
             }
-            return new CommandVoiceMeeterAdvancedButton(voicemeeterButtonParameter.getText(), voicemeeterButtonType.getValue());
+            return new CommandVoiceMeeterAdvancedButton(voicemeeterButtonParameter.getText(), voicemeeterButtonType.getValue(), voicemeeterStringValue.getText());
         }
         return NOOP;
     }

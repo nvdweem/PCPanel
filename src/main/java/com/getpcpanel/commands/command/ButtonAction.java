@@ -4,6 +4,8 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 public interface ButtonAction {
     void execute();
 
@@ -15,6 +17,7 @@ public interface ButtonAction {
         return StringUtils.isNotBlank(getOverlayText());
     }
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     default @Nullable String getOverlayText() {
         return null;
     }

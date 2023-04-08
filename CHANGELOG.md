@@ -14,6 +14,7 @@ A backup will be made when converting. If you want to downgrade to a previous ve
 - #39 - Allow showing the actual volume number (0-100, linear) and additional color settings in overlay
 - Dials/sliders can be inverted (combined with multiple commands, this will make it possible to cross-fade, but volume levels aren't useful for that yet)
 - The overlay allows showing the actual value (this differs from the slider state when using logarithmic scaling)
+- #45 - Voicemeeter string values are now supported for advanced button actions
 
 **Fixes:**
 

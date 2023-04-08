@@ -26,7 +26,7 @@ public class CommandVoiceMeeterBasicButton extends CommandVoiceMeeter implements
     public void execute() {
         var voiceMeeter = MainFX.getBean(Voicemeeter.class);
         if (voiceMeeter.login()) {
-            voiceMeeter.controlButton(ct, index, bt);
+            voiceMeeter.controlButton(ct, index, bt, null);
         }
     }
 }
