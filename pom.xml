@@ -170,6 +170,11 @@
             <artifactId>annotations</artifactId>
             <version>24.0.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.xmlgraphics</groupId>
+            <artifactId>batik-transcoder</artifactId>
+            <version>1.16</version>
+        </dependency>
 
         <dependency>
             <groupId>org.junit.jupiter</groupId>

@@ -1,7 +1,5 @@
 package com.getpcpanel.device;
 
-import java.util.Objects;
-
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
@@ -17,6 +15,7 @@ import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.ui.FxHelper;
 import com.getpcpanel.ui.LightningChangedToDefaultEvent;
 import com.getpcpanel.ui.LimitedTextField;
+import com.getpcpanel.util.Images;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -45,7 +44,6 @@ import one.util.streamex.StreamEx;
 
 @Log4j2
 public abstract class Device {
-    public static final Image lightingImage = new Image(Objects.requireNonNull(PCPanelProUI.class.getResource("/assets/lighting.png")).toExternalForm());
     @Getter(AccessLevel.PROTECTED) private final FxHelper fxHelper;
     private final SaveService saveService;
     private final OutputInterpreter outputInterpreter;
@@ -323,11 +321,8 @@ public abstract class Device {
         }
     }
 
-    protected ImageView getLightingImage() {
-        var lightingImageView = new ImageView(lightingImage);
-        lightingImageView.setFitWidth(40);
-        lightingImageView.setPreserveRatio(true);
-        return lightingImageView;
+    protected SVGPath getLightingImage() {
+        return Images.light();
     }
 
     public void focusApplicationChanged() {

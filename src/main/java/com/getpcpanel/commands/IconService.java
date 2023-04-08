@@ -26,9 +26,9 @@ import com.getpcpanel.commands.command.CommandVolumeDevice;
 import com.getpcpanel.commands.command.CommandVolumeFocus;
 import com.getpcpanel.commands.command.CommandVolumeProcess;
 import com.getpcpanel.cpp.ISndCtrl;
-import com.getpcpanel.device.Device;
 import com.getpcpanel.iconextract.IIconService;
 import com.getpcpanel.profile.KnobSetting;
+import com.getpcpanel.util.Images;
 
 import jakarta.annotation.PostConstruct;
 import javafx.scene.image.Image;
@@ -167,6 +167,6 @@ public class IconService {
     }
 
     private Image getBrightnessIcon(Command command) {
-        return Device.lightingImage;
+        return Images.lighting;
     }
 }

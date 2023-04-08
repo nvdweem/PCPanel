@@ -15,8 +15,8 @@ import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.FxHelper;
 import com.getpcpanel.ui.MacroControllerService;
 import com.getpcpanel.ui.MacroControllerService.ControllerInfo;
+import com.getpcpanel.util.Images;
 
-import javafx.application.Platform;
 import javafx.collections.ListChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -36,6 +36,7 @@ import javafx.scene.control.TitledPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.shape.SVGPath;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -63,15 +64,6 @@ public class ButtonController {
         this.cmdType = cmdType;
         this.context = context;
         Commands.cmds(buttonData).forEach(this::add);
-
-        commands.expandedPaneProperty().addListener((property, oldPane, newPane) -> {
-            if (oldPane != null) {
-                oldPane.setCollapsible(true);
-            }
-            if (newPane != null) {
-                Platform.runLater(() -> newPane.setCollapsible(false));
-            }
-        });
 
         var panes = commands.getPanes();
         if (!panes.isEmpty()) {
@@ -132,7 +124,7 @@ public class ButtonController {
         HBox.setHgrow(loaded, Priority.ALWAYS);
 
         var pane = new TitledPane(null, loaded);
-        var invertBox = addCloseButtonAndInvert(pane, info.cmd().name(), cmd);
+        var invertBox = addPanelOptions(pane, info.cmd().name(), cmd);
         pane.setUserData(new PanelData(controller, invertBox));
         commands.getPanes().add(pane);
 
@@ -141,26 +133,76 @@ public class ButtonController {
         }
     }
 
-    private CheckBox addCloseButtonAndInvert(@Nonnull TitledPane pane, String title, @Nullable Command cmd) {
+    private CheckBox addPanelOptions(@Nonnull TitledPane pane, String title, @Nullable Command cmd) {
         var borderPane = new BorderPane();
         var titleOfTitledPane = new Label(title);
-        var buttonClose = new Button("X");
+        var buttonDelete = deleteButton(pane);
+        var buttonUp = moveButton(pane, Images.chevronUp(), -1);
+        var buttonDown = moveButton(pane, Images.chevronDown(), 1);
+        var buttonCopy = copyButton(pane);
+
         var invertCheck = new CheckBox("Invert");
         HBox.setMargin(invertCheck, new Insets(3, 20, 0, 0));
-        var topRight = cmdType == Cmd.Type.dial ? new HBox(invertCheck, buttonClose) : buttonClose;
-        if (cmd instanceof DialAction) {
-            invertCheck.setSelected(((DialAction) cmd).isInvert());
+        var hbox = new HBox(buttonCopy, buttonUp, buttonDown, buttonDelete);
+        if (cmdType == Cmd.Type.dial) {
+            hbox.getChildren().add(0, invertCheck);
+            if (cmd instanceof DialAction) {
+                invertCheck.setSelected(((DialAction) cmd).isInvert());
+            }
         }
 
         borderPane.setLeft(titleOfTitledPane);
         BorderPane.setAlignment(titleOfTitledPane, Pos.CENTER_LEFT);
-        borderPane.setRight(topRight);
+        borderPane.setRight(hbox);
         borderPane.prefWidthProperty().bind(commands.widthProperty().subtract(40));
         pane.setGraphic(borderPane);
 
-        buttonClose.setOnAction(event -> commands.getPanes().remove(pane));
-
         return invertCheck;
+    }
+
+    private Button deleteButton(@Nonnull TitledPane pane) {
+        var buttonDelete = createButton(Images.delete());
+        buttonDelete.setOnAction(event -> commands.getPanes().remove(pane));
+        return buttonDelete;
+    }
+
+    private Button moveButton(@Nonnull TitledPane pane, SVGPath image, int idxChange) {
+        var buttonMove = createButton(image);
+        commands.getPanes().addListener((ListChangeListener.Change<?> c) -> showHideButton(buttonMove, commands.getPanes().size() > 1));
+        buttonMove.setOnAction(event -> {
+            var idx = commands.getPanes().indexOf(pane);
+            commands.getPanes().remove(pane);
+
+            var newIdx = Math.max(0, Math.min(commands.getPanes().size(), idx + idxChange));
+            commands.getPanes().add(newIdx, pane);
+        });
+        return buttonMove;
+    }
+
+    private Button copyButton(TitledPane pane) {
+        var buttonCopy = createButton(Images.copy());
+        buttonCopy.setOnAction(event -> {
+            var data = (PanelData) pane.getUserData();
+            if (data.controller instanceof DialCommandController<?> dc) {
+                add(dc.buildCommand(data.invertBox.isSelected()));
+            } else if (data.controller instanceof ButtonCommandController<?> bc) {
+                add(bc.buildCommand());
+            }
+            commands.setExpandedPane(commands.getPanes().get(commands.getPanes().size() - 1));
+
+        });
+        return buttonCopy;
+    }
+
+    private Button createButton(SVGPath image) {
+        var result = new Button("", image);
+        result.setStyle("-fx-background-color: transparent;");
+        return result;
+    }
+
+    private void showHideButton(Button btn, boolean visible) {
+        btn.setVisible(visible);
+        btn.setManaged(visible);
     }
 
     public Commands determineButtonCommand() {
