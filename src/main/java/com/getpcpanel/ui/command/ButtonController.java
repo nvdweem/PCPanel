@@ -85,8 +85,9 @@ public class ButtonController {
         addButton.setContextMenu(addMenu);
 
         commandsType.getItems().addAll(CommandsType.values());
-        //noinspection DataFlowIssue => Not actually nullable
-        commandsType.getSelectionModel().select(buttonData.getType());
+        if (buttonData != null) {
+            commandsType.getSelectionModel().select(buttonData.getType());
+        }
 
         if (cmdType == Cmd.Type.button) {
             commands.getPanes().addListener(this::determineCommandsTypeVisible);

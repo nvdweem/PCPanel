@@ -20,4 +20,3 @@
 --win-dir-chooser
 --win-per-user-install
 --win-shortcut-prompt
---win-console
