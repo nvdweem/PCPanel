@@ -23,4 +23,9 @@ public class CommandKeystroke extends Command implements ButtonAction {
     public void execute() {
         KeyMacro.executeKeyStroke(keystroke);
     }
+
+    @Override
+    public String buildLabel() {
+        return keystroke;
+    }
 }

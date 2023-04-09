@@ -25,4 +25,9 @@ public class CommandObsSetScene extends CommandObs implements ButtonAction {
             obs.setCurrentScene(scene);
         }
     }
+
+    @Override
+    public String buildLabel() {
+        return "Set scene: " + scene;
+    }
 }

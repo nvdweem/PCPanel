@@ -8,12 +8,13 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <HBox prefHeight="234.0" prefWidth="730.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.command.button.BtnApplicationDeviceToggleController">
-    <ScrollPane fitToWidth="true" HBox.hgrow="ALWAYS">
+    <ScrollPane fitToWidth="true" minHeight="-Infinity" HBox.hgrow="ALWAYS">
         <VBox spacing="15.0">
             <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="Select a program to toggle"/>
             <HBox alignment="CENTER_LEFT" spacing="5.0">
                 <RadioButton fx:id="rdioApplicationDeviceSpecific" mnemonicParsing="false" selected="true" text="Specific Program">
                     <toggleGroup>
+                        <!--suppress JavaFxUnresolvedFxIdReference -->
                         <ToggleGroup fx:id="volumeApplicationDeviceGroup"/>
                     </toggleGroup>
                 </RadioButton>

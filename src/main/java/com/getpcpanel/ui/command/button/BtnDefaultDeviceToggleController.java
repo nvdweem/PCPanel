@@ -17,6 +17,7 @@ import com.getpcpanel.ui.command.ButtonCommandController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 
+import javafx.beans.Observable;
 import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.scene.control.ListView;
@@ -29,7 +30,7 @@ import one.util.streamex.StreamEx;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Toggle Device", fxml = "DefaultDeviceToggle", cmds = CommandVolumeDefaultDeviceToggle.class)
-public class BtnDefaultDeviceToggleController implements ButtonCommandController<CommandVolumeDefaultDeviceToggle> {
+public class BtnDefaultDeviceToggleController extends ButtonCommandController<CommandVolumeDefaultDeviceToggle> {
     private final ISndCtrl sndCtrl;
     private Collection<AudioDevice> allSoundDevices;
     @FXML private ListView<AudioDevice> soundDevices2;
@@ -48,11 +49,17 @@ public class BtnDefaultDeviceToggleController implements ButtonCommandController
         var devices = StreamEx.of(cmd.getDevices()).map(this::getSoundDeviceById).toList();
         soundDevices2.getItems().addAll(devices);
         soundDeviceSource.getItems().removeAll(devices);
+        super.initFromCommand(cmd);
     }
 
     @Override
     public Command buildCommand() {
         return new CommandVolumeDefaultDeviceToggle(soundDevices2.getItems().stream().map(AudioDevice::id).toList());
+    }
+
+    @Override
+    protected Observable[] determineDependencies() {
+        return new Observable[] { soundDeviceSource.getChildrenUnmodifiable() };
     }
 
     private void initDeviceToggleEvents() {

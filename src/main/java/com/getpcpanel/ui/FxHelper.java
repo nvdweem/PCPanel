@@ -78,7 +78,7 @@ public class FxHelper {
         return open(BasicMacro.class, new MacroArgs(device, knob, true, null, null));
     }
 
-    public AppFinderDialog buildAppFinderDialog(Stage parentStage, boolean volumeApps) {
+    public AppFinderDialog buildAppFinderDialog(@Nullable Stage parentStage, boolean volumeApps) {
         return open(AppFinderDialog.class, new AppFinderParams(parentStage, volumeApps));
     }
 }

@@ -15,6 +15,7 @@ import com.getpcpanel.ui.command.ButtonCommandController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 
+import javafx.beans.Observable;
 import javafx.fxml.FXML;
 import javafx.scene.control.RadioButton;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +26,7 @@ import lombok.extern.log4j.Log4j2;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Mute App", fxml = "VolumeProcessMute", cmds = CommandVolumeProcessMute.class, os = WINDOWS)
-public class BtnVolumeProcessMuteController implements ButtonCommandController<CommandVolumeProcessMute> {
+public class BtnVolumeProcessMuteController extends ButtonCommandController<CommandVolumeProcessMute> {
     @FXML private PickProcessesController appMuteController;
     @FXML private RadioButton rdio_mute_mute;
     @FXML private RadioButton rdio_mute_toggle;
@@ -44,11 +45,17 @@ public class BtnVolumeProcessMuteController implements ButtonCommandController<C
             case mute -> rdio_mute_mute.setSelected(true);
             case toggle -> rdio_mute_toggle.setSelected(true);
         }
+        super.initFromCommand(cmd);
     }
 
     @Override
     public Command buildCommand() {
         return new CommandVolumeProcessMute(new HashSet<>(appMuteController.getSelection()),
                 rdio_mute_unmute.isSelected() ? MuteType.unmute : rdio_mute_mute.isSelected() ? MuteType.mute : MuteType.toggle);
+    }
+
+    @Override
+    protected Observable[] determineDependencies() {
+        return new Observable[] { rdio_mute_mute.selectedProperty(), rdio_mute_unmute.selectedProperty(), rdio_mute_toggle.selectedProperty(), appMuteController.getObservable() };
     }
 }

@@ -17,6 +17,7 @@ import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.ObsEnabled;
 
+import javafx.beans.Observable;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ChoiceBox;
@@ -30,7 +31,7 @@ import lombok.extern.log4j.Log4j2;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "OBS", fxml = "Obs", cmds = { CommandObsSetScene.class, CommandObsMuteSource.class }, enabled = ObsEnabled.class)
-public class BtnObsController implements ButtonCommandController<CommandObs> {
+public class BtnObsController extends ButtonCommandController<CommandObs> {
     private final OBS obs;
 
     @FXML private ChoiceBox<String> obsSetScene;
@@ -74,6 +75,7 @@ public class BtnObsController implements ButtonCommandController<CommandObs> {
             }
         }
         onRadioButton(null);
+        super.initFromCommand(cmd);
     }
 
     @Override
@@ -87,6 +89,13 @@ public class BtnObsController implements ButtonCommandController<CommandObs> {
             log.error("ERROR INVALID RADIO BUTTON IN BUTTON OBS");
             return NOOP;
         }
+    }
+
+    @Override
+    protected Observable[] determineDependencies() {
+        return new Observable[] { obsSetScene.getSelectionModel().selectedItemProperty(),
+                obsSourceToMute.getSelectionModel().selectedItemProperty(),
+                obsMuteMute.selectedProperty(), obsMuteToggle.selectedProperty(), obsMuteUnmute.selectedProperty(), obs_rdio_MuteSource.selectedProperty(), obs_rdio_SetScene.selectedProperty() };
     }
 
     @FXML

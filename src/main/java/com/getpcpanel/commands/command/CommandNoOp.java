@@ -28,4 +28,9 @@ public final class CommandNoOp extends Command implements ButtonAction, DialActi
     public boolean isInvert() {
         return false;
     }
+
+    @Override
+    public String buildLabel() {
+        return "Invalid";
+    }
 }

@@ -11,10 +11,10 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
-<HBox prefHeight="200.0" prefWidth="478.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.command.button.BtnVoiceMeeterController">
-    <TabPane fx:id="voicemeeterTabPaneButton" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" HBox.hgrow="ALWAYS">
+<HBox minHeight="-Infinity" prefHeight="250.0" prefWidth="478.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.command.button.BtnVoiceMeeterController">
+    <TabPane fx:id="voicemeeterTabPaneButton" prefHeight="250.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" HBox.hgrow="ALWAYS">
         <Tab text="Basic">
-            <VBox spacing="15.0">
+            <VBox minHeight="-Infinity" spacing="15.0">
                 <padding>
                     <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
                 </padding>
@@ -38,7 +38,7 @@
             </VBox>
         </Tab>
         <Tab text="Advanced">
-            <VBox prefHeight="200.0" prefWidth="100.0" spacing="8.0">
+            <VBox minHeight="-Infinity" prefHeight="250.0" prefWidth="100.0" spacing="8.0">
                 <padding>
                     <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
                 </padding>

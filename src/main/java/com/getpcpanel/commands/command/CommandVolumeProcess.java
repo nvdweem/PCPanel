@@ -38,4 +38,9 @@ public class CommandVolumeProcess extends CommandVolume implements DialAction {
         }
         processName.forEach(process -> snd.setProcessVolume(process, device, context.dial().calcValue(invert, 0, 1)));
     }
+
+    @Override
+    public String buildLabel() {
+        return processName + (unMuteOnVolumeChange ? "(unmute)" : "");
+    }
 }

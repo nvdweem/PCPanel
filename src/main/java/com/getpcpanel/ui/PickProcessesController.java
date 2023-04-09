@@ -8,7 +8,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import com.getpcpanel.spring.Prototype;
+import com.getpcpanel.util.Images;
 
+import javafx.beans.Observable;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.SimpleLongProperty;
+import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
@@ -30,6 +35,7 @@ public class PickProcessesController {
     }
 
     private final FxHelper fxHelper;
+    @Setter private boolean single;
 
     @FXML private VBox pickRows;
     @Setter private PickType pickType;
@@ -44,9 +50,26 @@ public class PickProcessesController {
 
     public void setSelection(Collection<String> volData) {
         StreamEx.of(volData).map(StringUtils::trimToNull).nonNull().map(this::createProcessRow).forEach(pickRows.getChildren()::add);
-        pickRows.getChildren().add(createProcessRow(""));
         removeEmptyIfNotLast();
-        ensureLastEmpty();
+
+        if (!single) {
+            pickRows.getChildren().add(createProcessRow(""));
+            ensureLastEmpty();
+        }
+    }
+
+    public void setDisable(boolean disable) {
+        StreamEx.of(pickRows.getChildren()).select(Pane.class).flatCollection(Pane::getChildren).forEach(ctrl -> ctrl.setDisable(disable));
+    }
+
+    public Observable getObservable() {
+        var binding = new SimpleLongProperty();
+        pickRows.getChildren().addListener((ListChangeListener.Change<?> c) -> {
+            binding.unbind();
+            var values = StreamEx.of(pickRows.getChildren()).select(Pane.class).map(pane -> pane.getChildren().get(0)).select(TextField.class).map(TextField::textProperty).toArray(Observable[]::new);
+            binding.bind(Bindings.createLongBinding(System::currentTimeMillis, values));
+        });
+        return binding;
     }
 
     private void removeEmptyIfNotLast() {
@@ -59,6 +82,9 @@ public class PickProcessesController {
     }
 
     private void ensureLastEmpty() {
+        if (single)
+            return;
+
         if (pickRows.getChildren().isEmpty()) {
             pickRows.getChildren().add(createProcessRow(""));
         } else {
@@ -76,7 +102,7 @@ public class PickProcessesController {
         textField.setPromptText("Process");
         textField.setText(value);
 
-        var button = new Button("...");
+        var button = new Button("", Images.magnify());
         button.setPrefSize(34, 31);
         button.setOnAction(e -> {
             switch (pickType) {
@@ -86,7 +112,7 @@ public class PickProcessesController {
             }
             ensureLastEmpty();
         });
-        var clear = new Button("X");
+        var clear = new Button("", Images.delete());
         clear.setPrefSize(34, 31);
         clear.setOnAction(e -> {
             textField.setText("");

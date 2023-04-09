@@ -9,6 +9,7 @@ import com.getpcpanel.ui.command.ButtonCommandController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 
+import javafx.beans.Observable;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
@@ -21,7 +22,7 @@ import lombok.extern.log4j.Log4j2;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Keystroke", fxml = "Keystroke", cmds = CommandKeystroke.class)
-public class BtnKeystrokeController implements ButtonCommandController<CommandKeystroke> {
+public class BtnKeystrokeController extends ButtonCommandController<CommandKeystroke> {
     @FXML private TextField keystrokeField;
     private boolean k_alt;
     private boolean k_ctrl;
@@ -79,11 +80,17 @@ public class BtnKeystrokeController implements ButtonCommandController<CommandKe
     @Override
     public void initFromCommand(CommandKeystroke cmd) {
         keystrokeField.setText(cmd.getKeystroke());
+        super.initFromCommand(cmd);
     }
 
     @Override
     public Command buildCommand() {
         return new CommandKeystroke(keystrokeField.getText());
+    }
+
+    @Override
+    protected Observable[] determineDependencies() {
+        return new Observable[] { keystrokeField.textProperty() };
     }
 
     @FXML

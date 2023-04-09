@@ -17,6 +17,7 @@ import com.getpcpanel.ui.command.ButtonCommandController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 
+import javafx.beans.Observable;
 import javafx.fxml.FXML;
 import javafx.scene.control.ChoiceBox;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,7 @@ import one.util.streamex.StreamEx;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Sound Device", fxml = "DefaultDevice", cmds = CommandVolumeDefaultDevice.class)
-public class BtnDefaultDeviceController implements ButtonCommandController<CommandVolumeDefaultDevice> {
+public class BtnDefaultDeviceController extends ButtonCommandController<CommandVolumeDefaultDevice> {
     private final ISndCtrl sndCtrl;
     private Collection<AudioDevice> allSoundDevices;
 
@@ -43,11 +44,17 @@ public class BtnDefaultDeviceController implements ButtonCommandController<Comma
     @Override
     public void initFromCommand(CommandVolumeDefaultDevice cmd) {
         sounddevices.setValue(getSoundDeviceById(cmd.getDeviceId()));
+        super.initFromCommand(cmd);
     }
 
     @Override
     public Command buildCommand() {
         return sounddevices.getValue() == null ? NOOP : new CommandVolumeDefaultDevice(sounddevices.getValue().id());
+    }
+
+    @Override
+    protected Observable[] determineDependencies() {
+        return new Observable[] { sounddevices.valueProperty() };
     }
 
     private @Nullable AudioDevice getSoundDeviceById(String id) {

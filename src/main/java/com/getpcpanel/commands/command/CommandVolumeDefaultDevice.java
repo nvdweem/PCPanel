@@ -31,4 +31,9 @@ public class CommandVolumeDefaultDevice extends CommandVolume implements ButtonA
         }
         return null;
     }
+
+    @Override
+    public String buildLabel() {
+        return "";
+    }
 }

@@ -4,9 +4,9 @@
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-<HBox prefHeight="75.0" prefWidth="821.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.command.button.BtnDeviceToggleAdvancedController">
-    <ScrollPane fitToWidth="true" HBox.hgrow="ALWAYS">
-        <VBox>
+<HBox minHeight="-Infinity" prefHeight="300.0" prefWidth="821.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.command.button.BtnDeviceToggleAdvancedController">
+    <ScrollPane fitToWidth="true" minHeight="300.0" HBox.hgrow="ALWAYS">
+        <VBox minHeight="300.0">
             <fx:include fx:id="defaultDeviceToggleAdvanced" source="../../AdvancedDevices.fxml"/>
             <Button mnemonicParsing="false" onAction="#addDefaultDeviceToggleAdvanced" prefHeight="25.0" prefWidth="73.0" text="Add"/>
         </VBox>

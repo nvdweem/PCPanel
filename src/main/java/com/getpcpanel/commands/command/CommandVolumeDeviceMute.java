@@ -23,4 +23,9 @@ public class CommandVolumeDeviceMute extends CommandVolume implements ButtonActi
     public void execute() {
         getSndCtrl().muteDevice(deviceId, muteType);
     }
+
+    @Override
+    public String buildLabel() {
+        return String.valueOf(muteType);
+    }
 }

@@ -12,6 +12,7 @@ import com.getpcpanel.ui.command.ButtonCommandController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 
+import javafx.beans.Observable;
 import javafx.fxml.FXML;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -21,7 +22,7 @@ import lombok.extern.log4j.Log4j2;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Default Device Advanced", fxml = "DefaultDeviceAdvanced", cmds = CommandVolumeDefaultDeviceAdvanced.class, os = WINDOWS)
-public class BtnDefaultDeviceAdvancedController implements ButtonCommandController<CommandVolumeDefaultDeviceAdvanced> {
+public class BtnDefaultDeviceAdvancedController extends ButtonCommandController<CommandVolumeDefaultDeviceAdvanced> {
     @FXML private AdvancedDevices defaultDeviceAdvancedController;
 
     @Override
@@ -32,11 +33,17 @@ public class BtnDefaultDeviceAdvancedController implements ButtonCommandControll
     @Override
     public void initFromCommand(CommandVolumeDefaultDeviceAdvanced cmd) {
         defaultDeviceAdvancedController.set(cmd.getName(), cmd.getMediaPb(), cmd.getMediaRec(), cmd.getCommunicationPb(), cmd.getCommunicationRec());
+        super.initFromCommand(cmd);
     }
 
     @Override
     public Command buildCommand() {
         var entry = defaultDeviceAdvancedController.getEntries().get(0);
         return new CommandVolumeDefaultDeviceAdvanced(entry.name(), entry.mediaPlayback(), entry.mediaRecord(), entry.communicationPlayback(), entry.communicationRecord());
+    }
+
+    @Override
+    protected Observable[] determineDependencies() {
+        return new Observable[0];
     }
 }

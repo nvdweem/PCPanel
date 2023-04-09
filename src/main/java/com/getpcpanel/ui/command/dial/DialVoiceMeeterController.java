@@ -16,12 +16,11 @@ import com.getpcpanel.ui.command.VoiceMeeterEnabled;
 import com.getpcpanel.util.Util;
 import com.getpcpanel.voicemeeter.Voicemeeter;
 
+import javafx.beans.Observable;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
-import javafx.stage.Stage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
@@ -30,11 +29,8 @@ import lombok.extern.log4j.Log4j2;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Voicemeeter", fxml = "VoiceMeeter", cmds = { CommandVoiceMeeterBasic.class, CommandVoiceMeeterAdvanced.class }, enabled = VoiceMeeterEnabled.class)
-public class DialVoiceMeeterController implements DialCommandController<CommandVoiceMeeter> {
-    public static final String MUST_SELECT_A_CONTROL_TYPE_MESSAGE = "Must Select a Control Type";
-
+public class DialVoiceMeeterController extends DialCommandController<CommandVoiceMeeter> {
     private final Voicemeeter voiceMeeter;
-    private Stage stage;
     @FXML private ChoiceBox<Integer> voicemeeterBasicDialIndex;
     @FXML private ChoiceBox<Voicemeeter.ControlType> voicemeeterBasicDialIO;
     @FXML private ChoiceBox<Voicemeeter.DialControlMode> voicemeeterDialType;
@@ -44,7 +40,6 @@ public class DialVoiceMeeterController implements DialCommandController<CommandV
 
     @Override
     public void postInit(CommandContext context) {
-        stage = context.stage();
         voicemeeterDialType.getItems().addAll(Voicemeeter.DialControlMode.values());
         if (voiceMeeter.login()) {
             voicemeeterBasicDialIO.getItems().addAll(Voicemeeter.ControlType.values());
@@ -85,6 +80,7 @@ public class DialVoiceMeeterController implements DialCommandController<CommandV
             voicemeeterDialParameter.setText(cmdAdvanced.getFullParam());
             voicemeeterDialType.setValue(cmdAdvanced.getCt());
         }
+        super.initFromCommand(cmd);
     }
 
     @Override
@@ -93,18 +89,20 @@ public class DialVoiceMeeterController implements DialCommandController<CommandV
             return new CommandVoiceMeeterBasic(voicemeeterBasicDialIO.getValue(), voicemeeterBasicDialIndex.getValue() - 1, voicemeeterBasicDial.getValue(), invert);
         }
         if (voicemeeterTabPaneDial.getSelectionModel().getSelectedIndex() == 1) {
-            if (voicemeeterDialType.getValue() == null) {
-                showControlTypeError();
-                return NOOP;
-            }
             return new CommandVoiceMeeterAdvanced(voicemeeterDialParameter.getText(), voicemeeterDialType.getValue(), invert);
         }
         return NOOP;
     }
 
-    private void showControlTypeError() {
-        var a = new Alert(Alert.AlertType.ERROR, MUST_SELECT_A_CONTROL_TYPE_MESSAGE);
-        a.initOwner(stage);
-        a.show();
+    @Override
+    protected Observable[] determineDependencies() {
+        return new Observable[] {
+                voicemeeterTabPaneDial.getSelectionModel().selectedIndexProperty(),
+                voicemeeterBasicDialIndex.valueProperty(),
+                voicemeeterBasicDialIO.valueProperty(),
+                voicemeeterDialType.valueProperty(),
+                voicemeeterBasicDial.valueProperty(),
+                voicemeeterDialParameter.textProperty()
+        };
     }
 }

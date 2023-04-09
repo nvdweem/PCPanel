@@ -16,6 +16,7 @@ import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.DialCommandController;
 
+import javafx.beans.Observable;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
@@ -30,7 +31,7 @@ import one.util.streamex.StreamEx;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Device Volume", fxml = "VolumeDevice", cmds = CommandVolumeDevice.class)
-public class DialVolumeDeviceController implements DialCommandController<CommandVolumeDevice> {
+public class DialVolumeDeviceController extends DialCommandController<CommandVolumeDevice> {
     private final ISndCtrl sndCtrl;
     private Collection<AudioDevice> allSoundDevices;
     @FXML private CheckBox cb_device_unmute;
@@ -54,6 +55,7 @@ public class DialVolumeDeviceController implements DialCommandController<Command
         }
         cb_device_unmute.setSelected(cmd.isUnMuteOnVolumeChange());
         onRadioButton(null);
+        super.initFromCommand(cmd);
     }
 
     @Override
@@ -61,6 +63,16 @@ public class DialVolumeDeviceController implements DialCommandController<Command
         return new CommandVolumeDevice(
                 rdio_device_specific.isSelected() && volumedevice.getSelectionModel().getSelectedItem() != null ? volumedevice.getSelectionModel().getSelectedItem().id() : "",
                 cb_device_unmute.isSelected(), invert);
+    }
+
+    @Override
+    protected Observable[] determineDependencies() {
+        return new Observable[] {
+                cb_device_unmute.selectedProperty(),
+                volumedevice.valueProperty(),
+                rdio_device_default.selectedProperty(),
+                rdio_device_specific.selectedProperty()
+        };
     }
 
     @FXML

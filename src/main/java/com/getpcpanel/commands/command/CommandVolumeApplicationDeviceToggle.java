@@ -46,6 +46,11 @@ public class CommandVolumeApplicationDeviceToggle extends CommandVolume implemen
         setDevices(devices.get(currentIdx % devices.size()));
     }
 
+    @Override
+    public String buildLabel() {
+        return (followFocus ? "Focus process" : processes.size() + " processes") + ", " + devices.size() + " devices";
+    }
+
     private void setDevices(DeviceSet deviceSet) {
         var sndCtrl = getWinSndCtrl();
 

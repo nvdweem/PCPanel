@@ -23,4 +23,9 @@ public class CommandVolumeProcessMute extends CommandVolume implements ButtonAct
     public void execute() {
         getSndCtrl().muteProcesses(processName, muteType);
     }
+
+    @Override
+    public String buildLabel() {
+        return muteType + " - " + processName;
+    }
 }

@@ -3,8 +3,8 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.VBox?>
-<VBox xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.AdvancedDevices" spacing="15.0">
-    <VBox spacing="15.0">
+<VBox spacing="15.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.AdvancedDevices">
+    <VBox minHeight="-Infinity" spacing="15.0">
         <padding>
             <Insets left="8.0" right="8.0" top="8.0"/>
         </padding>

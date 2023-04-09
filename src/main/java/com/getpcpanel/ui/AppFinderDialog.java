@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Objects;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 
 import org.apache.commons.lang3.StringUtils;
@@ -47,7 +48,7 @@ public class AppFinderDialog extends Application implements UIInitializer<AppFin
     private static final int ICON_SIZE = 90;
     private final ISndCtrl sndCtrl;
     private final IIconService iconService;
-    private Stage parentStage;
+    @Nullable private Stage parentStage;
     private boolean volumeApps;
     private Stage stage;
     @FXML private FlowPane flowPane;
@@ -190,6 +191,6 @@ public class AppFinderDialog extends Application implements UIInitializer<AppFin
         }
     }
 
-    record AppFinderParams(Stage parentStage, boolean volumeApps) {
+    record AppFinderParams(@Nullable Stage parentStage, boolean volumeApps) {
     }
 }

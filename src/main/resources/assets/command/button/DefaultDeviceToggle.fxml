@@ -9,7 +9,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 <HBox prefHeight="399.0" prefWidth="940.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.command.button.BtnDefaultDeviceToggleController">
-    <VBox spacing="15.0" HBox.hgrow="ALWAYS">
+    <VBox minHeight="-Infinity" spacing="15.0" HBox.hgrow="ALWAYS">
         <padding>
             <Insets bottom="8.0" left="8.0" right="8.0" top="8.0"/>
         </padding>
@@ -26,8 +26,8 @@
             </rowConstraints>
             <Label prefHeight="25.0" prefWidth="153.0" text="Available Devices"/>
             <Label prefHeight="25.0" prefWidth="153.0" text="Selected Devices" GridPane.columnIndex="1"/>
-            <ListView fx:id="soundDeviceSource" prefHeight="150.0" prefWidth="164.0" GridPane.rowIndex="1"/>
-            <ListView fx:id="soundDevices2" prefHeight="150.0" prefWidth="164.0" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+            <ListView fx:id="soundDeviceSource" minHeight="150.0" prefHeight="150.0" prefWidth="164.0" GridPane.rowIndex="1"/>
+            <ListView fx:id="soundDevices2" minHeight="150.0" prefHeight="150.0" prefWidth="164.0" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
         </GridPane>
     </VBox>
 </HBox>

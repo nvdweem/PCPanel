@@ -15,6 +15,7 @@ import com.getpcpanel.ui.command.ButtonCommandController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 
+import javafx.beans.Observable;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.RadioButton;
@@ -26,7 +27,7 @@ import lombok.extern.log4j.Log4j2;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Application Sound Device", fxml = "ApplicationDeviceToggle", cmds = CommandVolumeApplicationDeviceToggle.class, os = WINDOWS)
-public class BtnApplicationDeviceToggleController implements ButtonCommandController<CommandVolumeApplicationDeviceToggle> {
+public class BtnApplicationDeviceToggleController extends ButtonCommandController<CommandVolumeApplicationDeviceToggle> {
     @FXML private AdvancedDevices applicationDeviceDevicesController;
     @FXML private PickProcessesController applicationDeviceProcessesController;
     @FXML private RadioButton rdioApplicationDeviceFocus;
@@ -45,6 +46,7 @@ public class BtnApplicationDeviceToggleController implements ButtonCommandContro
         rdioApplicationDeviceFocus.setSelected(cmd.isFollowFocus());
         applicationDeviceProcessesController.setSelection(cmd.getProcesses());
         cmd.getDevices().forEach(applicationDeviceDevicesController::add);
+        super.initFromCommand(cmd);
     }
 
     @Override
@@ -52,6 +54,14 @@ public class BtnApplicationDeviceToggleController implements ButtonCommandContro
         var followFocus = rdioApplicationDeviceFocus.isSelected();
         var processes = followFocus ? List.<String>of() : applicationDeviceProcessesController.getSelection();
         return new CommandVolumeApplicationDeviceToggle(processes, followFocus, applicationDeviceDevicesController.getEntries());
+    }
+
+    @Override
+    protected Observable[] determineDependencies() {
+        return new Observable[] {
+                applicationDeviceProcessesController.getObservable(),
+                rdioApplicationDeviceFocus.selectedProperty(), rdioApplicationDeviceSpecific.selectedProperty()
+        };
     }
 
     public void addApplicationDevice(ActionEvent ignored) {

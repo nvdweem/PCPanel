@@ -21,4 +21,9 @@ public class CommandVolumeFocusMute extends CommandVolume implements ButtonActio
     public void execute() {
         getSndCtrl().muteProcesses(Set.of(getSndCtrl().getFocusApplication()), muteType);
     }
+
+    @Override
+    public String buildLabel() {
+        return String.valueOf(muteType);
+    }
 }

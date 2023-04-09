@@ -32,4 +32,9 @@ public class CommandBrightness extends Command implements DialAction {
             MainFX.getBean(SaveService.class).debouncedSave();
         });
     }
+
+    @Override
+    public String buildLabel() {
+        return "";
+    }
 }

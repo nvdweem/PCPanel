@@ -65,6 +65,11 @@ public class CommandMedia extends Command implements ButtonAction {
         }
     }
 
+    @Override
+    public String buildLabel() {
+        return button + (spotify ? " (Spotify)" : "");
+    }
+
     private void executeGlobalMedia() {
         var input = new WinUser.INPUT();
         input.type = new WinDef.DWORD(WinUser.INPUT.INPUT_KEYBOARD);

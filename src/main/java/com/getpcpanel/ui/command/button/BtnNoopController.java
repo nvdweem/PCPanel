@@ -9,6 +9,7 @@ import com.getpcpanel.ui.command.ButtonCommandController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 
+import javafx.beans.Observable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
@@ -17,17 +18,18 @@ import lombok.extern.log4j.Log4j2;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "No action", fxml = "Noop", cmds = CommandNoOp.class)
-public class BtnNoopController implements ButtonCommandController<CommandNoOp> {
+public class BtnNoopController extends ButtonCommandController<CommandNoOp> {
     @Override
     public void postInit(CommandContext context) {
     }
 
     @Override
-    public void initFromCommand(CommandNoOp cmd) {
+    public Command buildCommand() {
+        return CommandNoOp.NOOP;
     }
 
     @Override
-    public Command buildCommand() {
-        return CommandNoOp.NOOP;
+    protected Observable[] determineDependencies() {
+        return new Observable[0];
     }
 }

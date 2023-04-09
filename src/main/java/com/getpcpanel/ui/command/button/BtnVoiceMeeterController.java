@@ -16,6 +16,7 @@ import com.getpcpanel.ui.command.VoiceMeeterEnabled;
 import com.getpcpanel.util.Util;
 import com.getpcpanel.voicemeeter.Voicemeeter;
 
+import javafx.beans.Observable;
 import javafx.fxml.FXML;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
@@ -29,7 +30,7 @@ import lombok.extern.log4j.Log4j2;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Voicemeeter", fxml = "VoiceMeeter", cmds = { CommandVoiceMeeterBasicButton.class, CommandVoiceMeeterAdvancedButton.class }, enabled = VoiceMeeterEnabled.class)
-public class BtnVoiceMeeterController implements ButtonCommandController<CommandVoiceMeeter> {
+public class BtnVoiceMeeterController extends ButtonCommandController<CommandVoiceMeeter> {
     private final Voicemeeter voiceMeeter;
 
     @FXML private ChoiceBox<Integer> voicemeeterBasicButtonIndex;
@@ -96,6 +97,7 @@ public class BtnVoiceMeeterController implements ButtonCommandController<Command
                 voicemeeterStringValue.setText(advanced.getStringValue());
             }
         }
+        super.initFromCommand(cmd);
     }
 
     @Override
@@ -109,5 +111,12 @@ public class BtnVoiceMeeterController implements ButtonCommandController<Command
             return new CommandVoiceMeeterAdvancedButton(voicemeeterButtonParameter.getText(), voicemeeterButtonType.getValue(), voicemeeterStringValue.getText());
         }
         return NOOP;
+    }
+
+    @Override
+    protected Observable[] determineDependencies() {
+        return new Observable[] { voicemeeterTabPaneButton.getSelectionModel().selectedIndexProperty(),
+                voicemeeterBasicButtonIO.valueProperty(), voicemeeterBasicButtonIndex.valueProperty(), voicemeeterBasicButton.valueProperty(),
+                voicemeeterButtonParameter.textProperty(), voicemeeterButtonType.valueProperty(), voicemeeterStringValue.textProperty() };
     }
 }

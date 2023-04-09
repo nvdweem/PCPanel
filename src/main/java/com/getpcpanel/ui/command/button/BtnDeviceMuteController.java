@@ -17,6 +17,7 @@ import com.getpcpanel.ui.command.ButtonCommandController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 
+import javafx.beans.Observable;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ChoiceBox;
@@ -30,7 +31,7 @@ import one.util.streamex.StreamEx;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Mute Device", fxml = "DeviceMute", cmds = CommandVolumeDeviceMute.class)
-public class BtnDeviceMuteController implements ButtonCommandController<CommandVolumeDeviceMute> {
+public class BtnDeviceMuteController extends ButtonCommandController<CommandVolumeDeviceMute> {
     private final ISndCtrl sndCtrl;
     private Collection<AudioDevice> allSoundDevices;
     @FXML private ChoiceBox<AudioDevice> muteSoundDevice;
@@ -60,12 +61,25 @@ public class BtnDeviceMuteController implements ButtonCommandController<CommandV
             case toggle -> rdio_muteDevice_toggle.setSelected(true);
         }
         onRadioButton(null);
+        super.initFromCommand(cmd);
     }
 
     @Override
     public Command buildCommand() {
         var device = rdio_muteDevice_Default.isSelected() || muteSoundDevice.getValue() == null ? "" : muteSoundDevice.getValue().id();
         return new CommandVolumeDeviceMute(device, rdio_muteDevice_unmute.isSelected() ? MuteType.unmute : rdio_muteDevice_mute.isSelected() ? MuteType.mute : MuteType.toggle);
+    }
+
+    @Override
+    protected Observable[] determineDependencies() {
+        return new Observable[] {
+                muteSoundDevice.valueProperty(),
+                rdio_muteDevice_Default.selectedProperty(),
+                rdio_muteDevice_Specific.selectedProperty(),
+                rdio_muteDevice_mute.selectedProperty(),
+                rdio_muteDevice_toggle.selectedProperty(),
+                rdio_muteDevice_unmute.selectedProperty()
+        };
     }
 
     private @Nullable AudioDevice getSoundDeviceById(String id) {

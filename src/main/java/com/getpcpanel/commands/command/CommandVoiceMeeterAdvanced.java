@@ -27,9 +27,17 @@ public class CommandVoiceMeeterAdvanced extends CommandVoiceMeeter implements Di
 
     @Override
     public void execute(DialActionParameters context) {
+        if (ct == null) {
+            return;
+        }
         var voiceMeeter = MainFX.getBean(Voicemeeter.class);
         if (voiceMeeter.login()) {
             voiceMeeter.controlLevel(fullParam, ct, context.dial().calcValue(invert));
         }
+    }
+
+    @Override
+    public String buildLabel() {
+        return "Advanced " + fullParam + " - " + ct;
     }
 }

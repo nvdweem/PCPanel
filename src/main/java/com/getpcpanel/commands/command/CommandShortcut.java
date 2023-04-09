@@ -25,4 +25,9 @@ public class CommandShortcut extends Command implements ButtonAction {
     public void execute() {
         MainFX.getBean(IPlatformCommand.class).exec(shortcut);
     }
+
+    @Override
+    public String buildLabel() {
+        return shortcut;
+    }
 }

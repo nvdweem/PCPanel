@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.EntryStream;
+import one.util.streamex.StreamEx;
 
 @Getter
 @Log4j2
@@ -42,6 +43,11 @@ public class CommandVolumeDefaultDeviceToggleAdvanced extends CommandVolume impl
         determineIndex();
         currentIdx++;
         setDevices(devices.get(currentIdx % devices.size()));
+    }
+
+    @Override
+    public String buildLabel() {
+        return StreamEx.of(devices).map(DeviceSet::name).remove(StringUtils::isBlank).joining(", ");
     }
 
     private void determineIndex() {

@@ -11,6 +11,7 @@ import com.getpcpanel.ui.command.ButtonCommandController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 
+import javafx.beans.Observable;
 import javafx.fxml.FXML;
 import javafx.scene.control.ChoiceBox;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,7 @@ import one.util.streamex.StreamEx;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Profile", fxml = "Profile", cmds = CommandProfile.class)
-public class BtnProfileController implements ButtonCommandController<CommandProfile> {
+public class BtnProfileController extends ButtonCommandController<CommandProfile> {
     private DeviceSave deviceSave;
 
     @FXML private ChoiceBox<Profile> profileDropdown;
@@ -38,10 +39,16 @@ public class BtnProfileController implements ButtonCommandController<CommandProf
     @Override
     public void initFromCommand(CommandProfile cmd) {
         deviceSave.getProfile(cmd.getProfile()).ifPresent(profile -> profileDropdown.setValue(profile));
+        super.initFromCommand(cmd);
     }
 
     @Override
     public Command buildCommand() {
         return new CommandProfile(profileDropdown.getValue() == null ? null : profileDropdown.getValue().getName());
+    }
+
+    @Override
+    protected Observable[] determineDependencies() {
+        return new Observable[] { profileDropdown.valueProperty() };
     }
 }

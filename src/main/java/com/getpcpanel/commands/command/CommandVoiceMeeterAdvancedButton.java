@@ -2,6 +2,8 @@ package com.getpcpanel.commands.command;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.MainFX;
@@ -33,5 +35,10 @@ public class CommandVoiceMeeterAdvancedButton extends CommandVoiceMeeter impleme
         if (voiceMeeter.login()) {
             voiceMeeter.controlButton(fullParam, bt, stringValue);
         }
+    }
+
+    @Override
+    public String buildLabel() {
+        return "Advanced " + StringUtils.removeEnd(fullParam + " - " + bt + " - " + stringValue, " - ");
     }
 }

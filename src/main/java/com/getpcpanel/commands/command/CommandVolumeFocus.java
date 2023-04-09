@@ -20,4 +20,9 @@ public class CommandVolumeFocus extends CommandVolume implements DialAction {
     public void execute(DialActionParameters context) {
         getSndCtrl().setFocusVolume(context.dial().calcValue(invert, 0, 1));
     }
+
+    @Override
+    public String buildLabel() {
+        return "";
+    }
 }

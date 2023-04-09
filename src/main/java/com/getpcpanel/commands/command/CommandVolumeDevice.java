@@ -31,4 +31,9 @@ public class CommandVolumeDevice extends CommandVolume implements DialAction {
         }
         getSndCtrl().setDeviceVolume(deviceId, context.dial().calcValue(invert, 0, 1));
     }
+
+    @Override
+    public String buildLabel() {
+        return ("".equals(deviceId) ? "Default" : "Specific") + (unMuteOnVolumeChange ? " (unmute)" : "");
+    }
 }

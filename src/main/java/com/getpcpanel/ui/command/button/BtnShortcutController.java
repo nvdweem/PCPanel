@@ -10,6 +10,7 @@ import com.getpcpanel.ui.command.ButtonCommandController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 
+import javafx.beans.Observable;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
@@ -21,7 +22,7 @@ import lombok.extern.log4j.Log4j2;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Shortcut", fxml = "Shortcut", cmds = CommandShortcut.class)
-public class BtnShortcutController implements ButtonCommandController<CommandShortcut> {
+public class BtnShortcutController extends ButtonCommandController<CommandShortcut> {
     @FXML private TextField shortcutField;
 
     @Override
@@ -31,11 +32,17 @@ public class BtnShortcutController implements ButtonCommandController<CommandSho
     @Override
     public void initFromCommand(CommandShortcut cmd) {
         shortcutField.setText(cmd.getShortcut());
+        super.initFromCommand(cmd);
     }
 
     @Override
     public Command buildCommand() {
         return new CommandShortcut(shortcutField.getText());
+    }
+
+    @Override
+    protected Observable[] determineDependencies() {
+        return new Observable[] { shortcutField.textProperty() };
     }
 
     @FXML

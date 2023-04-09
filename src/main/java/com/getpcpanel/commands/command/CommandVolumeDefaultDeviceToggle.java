@@ -41,11 +41,18 @@ public class CommandVolumeDefaultDeviceToggle extends CommandVolume implements B
 
     @Override
     public @Nullable String getOverlayText() {
-        var targetDevice = getSndCtrl().getDevicesMap().get(devices.get(currentIdx));
-        if (targetDevice != null) {
-            return targetDevice.name();
+        if (!devices.isEmpty()) {
+            var targetDevice = getSndCtrl().getDevicesMap().get(devices.get(currentIdx));
+            if (targetDevice != null) {
+                return targetDevice.name();
+            }
         }
         return null;
+    }
+
+    @Override
+    public String buildLabel() {
+        return String.valueOf(devices.size());
     }
 
     private Optional<AudioDevice> firstAudioDevice() {

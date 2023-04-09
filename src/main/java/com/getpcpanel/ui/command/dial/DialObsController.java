@@ -11,6 +11,7 @@ import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.DialCommandController;
 import com.getpcpanel.ui.command.ObsEnabled;
 
+import javafx.beans.Observable;
 import javafx.fxml.FXML;
 import javafx.scene.control.ChoiceBox;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,7 @@ import lombok.extern.log4j.Log4j2;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "OBS", fxml = "Obs", cmds = CommandObsSetSourceVolume.class, enabled = ObsEnabled.class)
-public class DialObsController implements DialCommandController<CommandObsSetSourceVolume> {
+public class DialObsController extends DialCommandController<CommandObsSetSourceVolume> {
     private final OBS obs;
 
     @FXML private ChoiceBox<String> obsAudioSources;
@@ -40,10 +41,18 @@ public class DialObsController implements DialCommandController<CommandObsSetSou
             obsAudioSources.getItems().add(cmd.getSourceName());
         }
         obsAudioSources.getSelectionModel().select(cmd.getSourceName());
+        super.initFromCommand(cmd);
     }
 
     @Override
     public Command buildCommand(boolean invert) {
         return new CommandObsSetSourceVolume(obsAudioSources.getSelectionModel().getSelectedItem(), invert);
+    }
+
+    @Override
+    protected Observable[] determineDependencies() {
+        return new Observable[] {
+                obsAudioSources.valueProperty()
+        };
     }
 }

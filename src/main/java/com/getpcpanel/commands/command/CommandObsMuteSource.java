@@ -35,4 +35,9 @@ public class CommandObsMuteSource extends CommandObs implements ButtonAction {
             }
         }
     }
+
+    @Override
+    public String buildLabel() {
+        return "Mute source: " + source + " (" + type + ")";
+    }
 }

@@ -18,6 +18,7 @@ import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.DialCommandController;
 
+import javafx.beans.Observable;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
@@ -32,7 +33,7 @@ import one.util.streamex.StreamEx;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "App Volume", fxml = "VolumeProcess", cmds = CommandVolumeProcess.class)
-public class DialVolumeProcessController implements DialCommandController<CommandVolumeProcess> {
+public class DialVolumeProcessController extends DialCommandController<CommandVolumeProcess> {
     private final ISndCtrl sndCtrl;
     private Collection<AudioDevice> allSoundDevices;
 
@@ -66,6 +67,7 @@ public class DialVolumeProcessController implements DialCommandController<Comman
             rdio_app_output_default.setSelected(true);
         }
         onRadioButton(null);
+        super.initFromCommand(cmd);
     }
 
     @Override
@@ -75,6 +77,18 @@ public class DialVolumeProcessController implements DialCommandController<Comman
                         rdio_app_output_specific.isSelected() ? Optional.ofNullable(app_vol_output_device.getSelectionModel().getSelectedItem()).map(AudioDevice::id).orElse("") :
                                 "";
         return new CommandVolumeProcess(appVolumeController.getSelection(), device, cb_app_unmute.isSelected(), invert);
+    }
+
+    @Override
+    protected Observable[] determineDependencies() {
+        return new Observable[] {
+                cb_app_unmute.selectedProperty(),
+                app_vol_output_device.valueProperty(),
+                appVolumeController.getObservable(),
+                rdio_app_output_all.selectedProperty(),
+                rdio_app_output_default.selectedProperty(),
+                rdio_app_output_specific.selectedProperty()
+        };
     }
 
     private @Nullable AudioDevice getSoundDeviceById(String id) {

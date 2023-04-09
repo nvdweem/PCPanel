@@ -9,6 +9,7 @@ import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.DialCommandController;
 
+import javafx.beans.Observable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
@@ -17,17 +18,19 @@ import lombok.extern.log4j.Log4j2;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Focus Volume", fxml = "VolumeFocus", cmds = CommandVolumeFocus.class)
-public class DialVolumeFocusController implements DialCommandController<CommandVolumeFocus> {
+public class DialVolumeFocusController extends DialCommandController<CommandVolumeFocus> {
+
     @Override
     public void postInit(CommandContext context) {
     }
 
     @Override
-    public void initFromCommand(CommandVolumeFocus cmd) {
+    public Command buildCommand(boolean invert) {
+        return new CommandVolumeFocus(invert);
     }
 
     @Override
-    public Command buildCommand(boolean invert) {
-        return new CommandVolumeFocus(invert);
+    protected Observable[] determineDependencies() {
+        return new Observable[0];
     }
 }

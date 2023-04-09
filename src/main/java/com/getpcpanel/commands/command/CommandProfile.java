@@ -2,6 +2,8 @@ package com.getpcpanel.commands.command;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.MainFX;
@@ -23,5 +25,10 @@ public class CommandProfile extends Command implements DeviceAction {
     @Override
     public void execute(DeviceActionParameters context) {
         Platform.runLater(() -> MainFX.getBean(DeviceHolder.class).getDevice(context.device()).ifPresent(device -> device.setProfile(profile)));
+    }
+
+    @Override
+    public String buildLabel() {
+        return StringUtils.defaultString(profile);
     }
 }

@@ -35,4 +35,9 @@ public class CommandVoiceMeeterBasic extends CommandVoiceMeeter implements DialA
             voiceMeeter.controlLevel(ct, index, dt, context.dial().calcValue(invert));
         }
     }
+
+    @Override
+    public String buildLabel() {
+        return "Basic - " + ct + " - " + index + " - " + dt;
+    }
 }

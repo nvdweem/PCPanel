@@ -11,6 +11,7 @@ import com.getpcpanel.ui.command.ButtonCommandController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 
+import javafx.beans.Observable;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.RadioButton;
@@ -23,7 +24,7 @@ import lombok.extern.log4j.Log4j2;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Music Control", fxml = "Media", cmds = CommandMedia.class, os = WINDOWS)
-public class BtnMediaController implements ButtonCommandController<CommandMedia> {
+public class BtnMediaController extends ButtonCommandController<CommandMedia> {
     @FXML private ToggleGroup mediagroup;
     @FXML private CheckBox cmdMediaSpotify;
 
@@ -42,10 +43,16 @@ public class BtnMediaController implements ButtonCommandController<CommandMedia>
                 }
         ).setSelected(true);
         cmdMediaSpotify.setSelected(cmd.isSpotify());
+        super.initFromCommand(cmd);
     }
 
     @Override
     public Command buildCommand() {
         return new CommandMedia(CommandMedia.VolumeButton.valueOf(((RadioButton) mediagroup.getSelectedToggle()).getId()), cmdMediaSpotify.isSelected());
+    }
+
+    @Override
+    protected Observable[] determineDependencies() {
+        return new Observable[] { mediagroup.selectedToggleProperty(), cmdMediaSpotify.selectedProperty() };
     }
 }

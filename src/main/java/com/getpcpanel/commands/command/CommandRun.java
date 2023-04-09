@@ -24,4 +24,9 @@ public class CommandRun extends Command implements ButtonAction {
     public void execute() {
         MainFX.getBean(IPlatformCommand.class).exec(command);
     }
+
+    @Override
+    public String buildLabel() {
+        return command;
+    }
 }

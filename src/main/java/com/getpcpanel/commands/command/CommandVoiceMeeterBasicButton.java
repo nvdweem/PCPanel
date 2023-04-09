@@ -29,4 +29,9 @@ public class CommandVoiceMeeterBasicButton extends CommandVoiceMeeter implements
             voiceMeeter.controlButton(ct, index, bt, null);
         }
     }
+
+    @Override
+    public String buildLabel() {
+        return "Basic " + ct + " - " + index + " - " + (bt == null ? "-" : bt.getParameterName());
+    }
 }

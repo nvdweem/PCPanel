@@ -29,4 +29,9 @@ public class CommandObsSetSourceVolume extends CommandObs implements DialAction 
             obs.setSourceVolume(sourceName, context.dial().calcValue(invert));
         }
     }
+
+    @Override
+    public String buildLabel() {
+        return "Source volume: " + sourceName;
+    }
 }

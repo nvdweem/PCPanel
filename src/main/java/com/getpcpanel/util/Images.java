@@ -18,6 +18,7 @@ public abstract class Images {
     public static final Image lighting = new Image(Objects.requireNonNull(Images.class.getResource("/assets/lighting.png")).toExternalForm());
 
     private static final SVGPath delete = svg("/assets/icons/close-circle-outline.svg");
+    private static final SVGPath magnify = svg("/assets/icons/magnify.svg");
     private static final SVGPath chevronDown = svg("/assets/icons/chevron-down.svg");
     private static final SVGPath chevronUp = svg("/assets/icons/chevron-up.svg");
     private static final SVGPath copy = svg("/assets/icons/content-copy.svg");
@@ -25,6 +26,10 @@ public abstract class Images {
 
     public static SVGPath delete() {
         return clone(delete);
+    }
+
+    public static SVGPath magnify() {
+        return clone(magnify);
     }
 
     public static SVGPath chevronDown() {

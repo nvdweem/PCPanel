@@ -9,6 +9,7 @@ import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.DialCommandController;
 
+import javafx.beans.Observable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
@@ -17,17 +18,19 @@ import lombok.extern.log4j.Log4j2;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Device Brightness", fxml = "Brightness", cmds = CommandBrightness.class)
-public class DialBrightnessController implements DialCommandController<CommandBrightness> {
+public class DialBrightnessController extends DialCommandController<CommandBrightness> {
+
     @Override
     public void postInit(CommandContext context) {
     }
 
     @Override
-    public void initFromCommand(CommandBrightness cmd) {
+    public Command buildCommand(boolean invert) {
+        return new CommandBrightness(invert);
     }
 
     @Override
-    public Command buildCommand(boolean invert) {
-        return new CommandBrightness(invert);
+    protected Observable[] determineDependencies() {
+        return new Observable[0];
     }
 }

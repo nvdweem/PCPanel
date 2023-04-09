@@ -39,4 +39,9 @@ public class CommandVolumeDefaultDeviceAdvanced extends CommandVolume implements
     public String getOverlayText() {
         return name;
     }
+
+    @Override
+    public String buildLabel() {
+        return name;
+    }
 }

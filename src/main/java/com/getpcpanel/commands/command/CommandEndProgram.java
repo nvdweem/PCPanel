@@ -27,4 +27,9 @@ public class CommandEndProgram extends Command implements ButtonAction {
     public void execute() {
         MainFX.getBean(IPlatformCommand.class).kill(specific ? name : IPlatformCommand.FOCUS);
     }
+
+    @Override
+    public String buildLabel() {
+        return specific ? name : "Focus";
+    }
 }

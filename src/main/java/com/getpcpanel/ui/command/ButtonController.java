@@ -3,6 +3,7 @@ package com.getpcpanel.ui.command;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ReflectionUtils;
 
@@ -17,6 +18,9 @@ import com.getpcpanel.ui.MacroControllerService;
 import com.getpcpanel.ui.MacroControllerService.ControllerInfo;
 import com.getpcpanel.util.Images;
 
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.StringProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -125,7 +129,7 @@ public class ButtonController {
         HBox.setHgrow(loaded, Priority.ALWAYS);
 
         var pane = new TitledPane(null, loaded);
-        var invertBox = addPanelOptions(pane, info.cmd().name(), cmd);
+        var invertBox = addPanelOptions(controller, pane, info.cmd().name(), cmd);
         pane.setUserData(new PanelData(controller, invertBox));
         commands.getPanes().add(pane);
 
@@ -134,9 +138,14 @@ public class ButtonController {
         }
     }
 
-    private CheckBox addPanelOptions(@Nonnull TitledPane pane, String title, @Nullable Command cmd) {
-        var borderPane = new BorderPane();
+    private CheckBox addPanelOptions(CommandController<Command> controller, @Nonnull TitledPane pane, String title, @Nullable Command cmd) {
+        // Labels
         var titleOfTitledPane = new Label(title);
+        var additionalLabel = buildAdditionalLabel(controller, pane);
+        var labelsBox = new HBox(titleOfTitledPane, additionalLabel);
+        labelsBox.setAlignment(Pos.CENTER_LEFT);
+
+        // Buttons
         var buttonDelete = deleteButton(pane);
         var buttonUp = moveButton(pane, Images.chevronUp(), -1);
         var buttonDown = moveButton(pane, Images.chevronDown(), 1);
@@ -152,13 +161,32 @@ public class ButtonController {
             }
         }
 
-        borderPane.setLeft(titleOfTitledPane);
+        var borderPane = new BorderPane();
+        borderPane.setLeft(labelsBox);
         BorderPane.setAlignment(titleOfTitledPane, Pos.CENTER_LEFT);
         borderPane.setRight(hbox);
         borderPane.prefWidthProperty().bind(commands.widthProperty().subtract(40));
         pane.setGraphic(borderPane);
 
         return invertCheck;
+    }
+
+    private @Nonnull Label buildAdditionalLabel(@Nonnull CommandController<Command> controller, @Nonnull TitledPane pane) {
+        var additionalLabel = new Label();
+        additionalLabel.setStyle("-fx-text-fill: #999;");
+        additionalLabel.textProperty().bind(appendSemiColonBinding(controller.additionalLabelText()));
+
+        // Hide when not needed
+        var showProperty = Bindings.notEqual(pane, commands.expandedPaneProperty());
+        additionalLabel.visibleProperty().bind(showProperty);
+        additionalLabel.managedProperty().bind(showProperty);
+        return additionalLabel;
+    }
+
+    private ObservableValue<String> appendSemiColonBinding(StringProperty stringProperty) {
+        // TODO: Make this a map call when using JavaFX 19
+        // stringProperty.map(v -> StringUtils.isBlank(v) ? "" : ": " + v);
+        return Bindings.createStringBinding(() -> StringUtils.isBlank(stringProperty.get()) ? "" : ": " + stringProperty.get(), stringProperty);
     }
 
     private Button deleteButton(@Nonnull TitledPane pane) {
