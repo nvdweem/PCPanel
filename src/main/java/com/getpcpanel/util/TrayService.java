@@ -40,6 +40,10 @@ public final class TrayService {
             var trayIconWidth = new TrayIcon(trayIconImage).getSize().width;
             trayIcon = new TrayIcon(trayIconImage.getScaledInstance(trayIconWidth, -1, 4));
             trayDisabled = false;
+        } catch (UnsupportedOperationException e) {
+            log.warn("Tray icon is not supported");
+            trayDisabled = true;
+            return;
         } catch (Exception e1) {
             log.error("Unable to initialize tray icon", e1);
             trayDisabled = true;
