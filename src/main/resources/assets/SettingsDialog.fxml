@@ -122,13 +122,21 @@
                 </VBox>
             </VBox>
         </Tab>
-        <Tab text="Logs">
-            <VBox layoutX="30.0" layoutY="28.0">
+        <Tab text="Debug">
+            <VBox fx:id="debug" layoutX="30.0" layoutY="28.0">
                 <padding>
                     <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
                 </padding>
                 <Button layoutX="30.0" layoutY="28.0" mnemonicParsing="false" onAction="#openLogsFolder" text="Open Logs Folder"/>
-                <Button layoutX="30.0" layoutY="28.0" mnemonicParsing="false" onAction="#triggerAv" text="Trigger AV (for debugging)"/>
+                <Button layoutX="30.0" layoutY="28.0" mnemonicParsing="false" onAction="#triggerAv" styleClass="only-windows" text="Trigger AV (for debugging)"/>
+                <HBox alignment="CENTER_LEFT" styleClass="only-linux">
+                    <Button layoutX="30.0" layoutY="28.0" mnemonicParsing="false" onAction="#copyAudioOutput" text="Copy (Linux) audio output"/>
+                    <Label fx:id="copied" text="Useful when submitting an issue, check the output for personal data">
+                        <padding>
+                            <Insets left="10.0"/>
+                        </padding>
+                    </Label>
+                </HBox>
             </VBox>
         </Tab>
         <Tab text="Faulty hardware workarounds">

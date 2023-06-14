@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import javax.annotation.Nonnull;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -141,6 +143,17 @@ public class PulseAudioWrapper {
 
     private String idxOrDefaultDevice(int idx) {
         return idx == DEFAULT_DEVICE ? "@DEFAULT_SINK@" : String.valueOf(idx);
+    }
+
+    @Nonnull
+    List<String> getDebugOutput() {
+        return StreamEx.of(InOutput.values())
+                       .map(t -> new String[] { "pactl", "list", t.pulseType })
+                       .mapToEntry(cmd -> runAndRead(processHelper.builder(cmd)))
+                       .mapKeys(cmd -> String.join(" ", cmd))
+                       .mapValues(lines -> String.join("\n", lines))
+                       .mapKeyValue((cmd, lns) -> cmd + ":\n" + lns)
+                       .toList();
     }
 
     @Builder

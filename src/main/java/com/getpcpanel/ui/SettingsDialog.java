@@ -12,6 +12,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.stereotype.Component;
 
 import com.getpcpanel.MainFX;
+import com.getpcpanel.cpp.linux.SndCtrlLinuxDebug;
 import com.getpcpanel.cpp.windows.SndCtrlWindows;
 import com.getpcpanel.obs.OBS;
 import com.getpcpanel.profile.Save;
@@ -36,6 +37,7 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -82,6 +84,8 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
     @FXML private TextField txtOnlyIfDelta;
     @FXML private CheckBox cbFixOnlySliders;
     @FXML private OSCSettingsDialog oscSettingsController;
+    @FXML private VBox debug;
+    @FXML private Label copied;
 
     @Override
     public void initUI(@Nonnull SingleParamInitializer<Stage> args) {
@@ -217,6 +221,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
 
     private void postInit() {
         initFields();
+        osHelper.hideUnsupportedChildren(debug.getChildrenUnmodifiable());
     }
 
     public void doTest(ActionEvent ignored) {
@@ -245,5 +250,11 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
     @SuppressWarnings("unused")
     public void triggerAv(ActionEvent ignored) {
         MainFX.getBean(SndCtrlWindows.class).triggerAv();
+    }
+
+    public void copyAudioOutput(ActionEvent ignored) {
+        copied.setText("Preparing output");
+        MainFX.getBean(SndCtrlLinuxDebug.class).copyDebugOutput();
+        copied.setText("Output was copied to your clipboard");
     }
 }
