@@ -329,7 +329,10 @@ public abstract class Device {
         var images = getKnobImages();
         for (var i = 0; i < images.length; i++) {
             var idx = i;
-            currentProfile().getDialData(i).getCommand(CommandVolumeFocus.class).ifPresent(c -> determineAndSetImage(idx));
+            var dialData = currentProfile().getDialData(i);
+            if (dialData != null) {
+                dialData.getCommand(CommandVolumeFocus.class).ifPresent(c -> determineAndSetImage(idx));
+            }
         }
     }
 
