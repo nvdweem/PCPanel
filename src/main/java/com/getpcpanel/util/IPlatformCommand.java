@@ -80,12 +80,16 @@ public abstract class IPlatformCommand {
 
         @Override
         public void kill(String process) {
-            var toKill = FOCUS.equals(process) ? sndCtrl.getFocusApplication() : process;
+            var toKill = stripFile(FOCUS.equals(process) ? sndCtrl.getFocusApplication() : process);
             try {
                 rt.exec("cmd.exe /c taskkill /IM " + toKill + " /F");
             } catch (IOException e) {
                 log.error("Unable to end '{}'", toKill, e);
             }
+        }
+
+        private String stripFile(String file) {
+            return new File(file).getName();
         }
     }
 }
