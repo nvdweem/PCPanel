@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -61,6 +62,7 @@ public final class Voicemeeter {
         NEG_12_TO_12("-12 to 12"),
         ZERO_TO_10("0 to 12"),
         NEG_40_TO_12("-40 to 12"),
+        NEG_60_TO_12("-60 to 12"),
         NEG_INF_TO_12("-Inf to 12"),
         NEG_INF_TO_ZERO("-Inf to 0");
 
@@ -145,7 +147,7 @@ public final class Voicemeeter {
     }
 
     public enum DialType {
-        GAIN("Gain", "Gain", DialControlMode.NEG_INF_TO_12),
+        GAIN("Gain", "Gain", DialControlMode.NEG_60_TO_12),
         AUDIBILITY("Audibility", "Audibility", DialControlMode.ZERO_TO_10),
         COMP("Comp", "Comp", DialControlMode.ZERO_TO_10),
         GATE("Gate", "Gate", DialControlMode.ZERO_TO_10),
@@ -350,18 +352,16 @@ public final class Voicemeeter {
         return ct.name() + "[" + index + "]." + parameter;
     }
 
-    private float convertLevel(DialControlMode ct, int level) {
-        if (ct == DialControlMode.NEG_12_TO_12)
-            return map(level, 0.0F, 100.0F, -12.0F, 12.0F);
-        if (ct == DialControlMode.ZERO_TO_10)
-            return map(level, 0.0F, 100.0F, 0.0F, 10.0F);
-        if (ct == DialControlMode.NEG_40_TO_12)
-            return map(level, 0.0F, 100.0F, -40.0F, 12.0F);
-        if (ct == DialControlMode.NEG_INF_TO_12)
-            return (level == 0) ? Float.NEGATIVE_INFINITY : map(level, 0.0F, 100.0F, -60.0F, 12.0F);
-        if (ct == DialControlMode.NEG_INF_TO_ZERO)
-            return (level == 0) ? Float.NEGATIVE_INFINITY : map(level, 0.0F, 100.0F, -60.0F, 0.0F);
-        throw new IllegalArgumentException("Invalid conversiontype in voicemeeter");
+    private float convertLevel(@Nonnull DialControlMode ct, int level) {
+        Objects.requireNonNull(ct);
+        return switch (ct) {
+            case NEG_12_TO_12 -> map(level, 0.0F, 100.0F, -12.0F, 12.0F);
+            case ZERO_TO_10 -> map(level, 0.0F, 100.0F, 0.0F, 10.0F);
+            case NEG_40_TO_12 -> map(level, 0.0F, 100.0F, -40.0F, 12.0F);
+            case NEG_60_TO_12 -> map(level, 0.0F, 100.0F, -60.0F, 12.0F);
+            case NEG_INF_TO_12 -> (level == 0) ? Float.NEGATIVE_INFINITY : map(level, 0.0F, 100.0F, -60.0F, 12.0F);
+            case NEG_INF_TO_ZERO -> (level == 0) ? Float.NEGATIVE_INFINITY : map(level, 0.0F, 100.0F, -60.0F, 0.0F);
+        };
     }
 
     private interface VoiceMeeterExceptionThrowingSupplier<T> {
