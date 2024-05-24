@@ -65,6 +65,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
     @FXML private CheckBox overlayShowNumber;
     @FXML private ColorPicker overlayTextColor;
     @FXML private ColorPicker overlayBackgroundColor;
+    @FXML public TextField overlayCornerRounding;
     @FXML private Label overlayBGTransparency;
     @FXML private TextField dblClickInterval;
     @FXML private CheckBox preventClickWhenDblClick;
@@ -139,6 +140,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
         save.setOverlayShowNumber(overlayShowNumber.isSelected());
         save.setOverlayBackgroundColor(toWebColor(overlayBackgroundColor.getValue()));
         save.setOverlayTextColor(toWebColor(overlayTextColor.getValue()));
+        save.setOverlayCornerRounding(NumberUtils.toInt(overlayCornerRounding.getText(), 0));
         save.setDblClickInterval(NumberUtils.toLong(dblClickInterval.getText(), 500));
         save.setPreventClickWhenDblClick(preventClickWhenDblClick.isSelected());
         save.setObsEnabled(obsEnable.isSelected());
@@ -184,6 +186,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
         overlay.setSelected(save.isOverlayEnabled());
         overlayUseLog.setSelected(save.isOverlayUseLog());
         overlayShowNumber.setSelected(save.isOverlayShowNumber());
+        overlayCornerRounding.setText("" + save.getOverlayCornerRounding());
         dblClickInterval.setText(save.getDblClickInterval() == null ? "500" : save.getDblClickInterval().toString());
         preventClickWhenDblClick.setSelected(save.isPreventClickWhenDblClick());
         obsEnable.setSelected(save.isObsEnabled());

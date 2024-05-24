@@ -40,6 +40,7 @@ public class Save {
     private boolean overlayShowNumber;
     private String overlayBackgroundColor = DEFAULT_OVERLAY_BG_COLOR;
     private String overlayTextColor = DEFAULT_OVERLAY_TEXT_COLOR;
+    @Nullable private Integer overlayCornerRounding = 0;
 
     public DeviceSave getDeviceSave(String serialNum) {
         return devices.get(serialNum);
@@ -65,5 +66,9 @@ public class Save {
 
     public void setSendOnlyIfDelta(Integer sendOnlyIfDelta) {
         this.sendOnlyIfDelta = sendOnlyIfDelta == null || sendOnlyIfDelta == 0 ? null : sendOnlyIfDelta;
+    }
+
+    public int getOverlayCornerRounding() {
+        return overlayCornerRounding == null ? 0 : overlayCornerRounding;
     }
 }

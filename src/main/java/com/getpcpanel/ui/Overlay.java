@@ -14,6 +14,7 @@ import com.getpcpanel.commands.IconService;
 import com.getpcpanel.commands.PCPanelControlEvent;
 import com.getpcpanel.commands.command.ButtonAction;
 import com.getpcpanel.commands.command.DialAction;
+import com.getpcpanel.profile.Save;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.spring.ConditionalOnWindows;
 import com.getpcpanel.util.Debouncer;
@@ -71,17 +72,21 @@ public class Overlay extends Popup {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        updateColor();
+        updateStyle();
         getContent().addAll(panel);
         setX(10);
         setY(10);
     }
 
     @EventListener(SaveService.SaveEvent.class)
-    public void updateColor() {
-        panel.setStyle("-fx-background-color: " + save.get().getOverlayBackgroundColor() + ";");
-        volumeText.setTextFill(Color.web(save.get().getOverlayTextColor()));
-        text.setTextFill(Color.web(save.get().getOverlayTextColor()));
+    public void updateStyle() {
+        var save = this.save.get();
+        var style = "-fx-background-color: " + save.getOverlayBackgroundColor() + ";";
+        if (save.getOverlayCornerRounding() > 0)
+            style += "-fx-background-radius: "+save.getOverlayCornerRounding()+"px;";
+        panel.setStyle(style);
+        volumeText.setTextFill(Color.web(save.getOverlayTextColor()));
+        text.setTextFill(Color.web(save.getOverlayTextColor()));
     }
 
     @EventListener
