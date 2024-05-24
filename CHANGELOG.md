@@ -16,6 +16,7 @@ A backup will be made when converting. If you want to downgrade to a previous ve
 - #39 - Allow showing the actual volume number (0-100, linear) and additional color settings in overlay
 - Dials/sliders can be inverted (combined with multiple commands, this will make it possible to cross-fade, but volume levels aren't useful for that yet)
 - The overlay allows showing the actual value (this differs from the slider state when using logarithmic scaling)
+- #59 - Additional overlay options (colors, rounding, size and position)
 - #45 - Voicemeeter string values are now supported for advanced button actions
 
 **Fixes:**
@@ -24,6 +25,7 @@ A backup will be made when converting. If you want to downgrade to a previous ve
 - Version check is done using the GitHub version api and will notify when a new snapshot is available
 - [Linux] #44 - pactl commands are run in English so that their output can be parsed correctly
 - [Windows] #57 - The end focussed task command works again
+- #58 - VoiceMeeter lowest value is now 60 instead of -inf making it behave better
 
 **Fixes within the snapshot:**
 (not relevant when not upgrading from a previous snapshot)
