@@ -15,7 +15,7 @@
     </ImageView>
     <StackPane alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
         <HBox fx:id="volumePanel" alignment="CENTER_LEFT" StackPane.alignment="CENTER_LEFT">
-            <ProgressBar fx:id="volume" maxWidth="1000.0" progress="0.0" HBox.hgrow="ALWAYS"/>
+            <ProgressBar fx:id="volume" maxWidth="1000.0" progress="0.0" HBox.hgrow="ALWAYS" />
             <Label fx:id="volumeText" alignment="CENTER" prefHeight="17.0" prefWidth="30.0" style="-fx-background-color: transparent;" text="100" textAlignment="CENTER">
                 <HBox.margin>
                     <Insets left="10.0"/>

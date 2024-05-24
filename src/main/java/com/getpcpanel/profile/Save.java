@@ -17,6 +17,11 @@ import lombok.extern.log4j.Log4j2;
 public class Save {
     public static final String DEFAULT_OVERLAY_BG_COLOR = "rgba(255, 255, 255, 0.5)";
     public static final String DEFAULT_OVERLAY_TEXT_COLOR = "rgba(0, 0, 0, 1)";
+    public static final String DEFAULT_OVERLAY_BAR_COLOR = "rgb(0, 148, 197)";
+    public static final String DEFAULT_OVERLAY_BAR_BACKGROUND_COLOR = "rgb(249, 249, 249)";
+    public static final int DEFAULT_OVERLAY_BAR_HEIGHT = 18;
+    public static final int DEFAULT_OVERLAY_PADDING = 10;
+    private static final OverlayPosition DEFAULT_OVERLAY_POSITION = OverlayPosition.topLeft;
     private Map<String, DeviceSave> devices = new ConcurrentHashMap<>();
     private boolean mainUIIcons;
     private boolean startupVersionCheck = true;
@@ -41,9 +46,13 @@ public class Save {
     private boolean overlayShowNumber;
     private String overlayBackgroundColor = DEFAULT_OVERLAY_BG_COLOR;
     private String overlayTextColor = DEFAULT_OVERLAY_TEXT_COLOR;
-    @Nullable private Integer overlayCornerRounding = 0;
-    @Nullable private OverlayPosition overlayPosition = OverlayPosition.topLeft;
-    @Nullable private Integer overlayPadding = 10;
+    private String overlayBarColor = DEFAULT_OVERLAY_BAR_COLOR;
+    private String overlayBarBackgroundColor = DEFAULT_OVERLAY_BAR_BACKGROUND_COLOR;
+    @Nullable private Integer overlayWindowCornerRounding = 0;
+    @Nullable private Integer overlayBarHeight = DEFAULT_OVERLAY_BAR_HEIGHT;
+    @Nullable private Integer overlayBarCornerRounding = 0;
+    @Nullable private OverlayPosition overlayPosition = DEFAULT_OVERLAY_POSITION;
+    @Nullable private Integer overlayPadding = DEFAULT_OVERLAY_PADDING;
 
     public DeviceSave getDeviceSave(String serialNum) {
         return devices.get(serialNum);
@@ -71,15 +80,23 @@ public class Save {
         this.sendOnlyIfDelta = sendOnlyIfDelta == null || sendOnlyIfDelta == 0 ? null : sendOnlyIfDelta;
     }
 
-    public int getOverlayCornerRounding() {
-        return overlayCornerRounding == null ? 0 : overlayCornerRounding;
+    public int getOverlayWindowCornerRounding() {
+        return overlayWindowCornerRounding == null ? 0 : overlayWindowCornerRounding;
+    }
+
+    public int getOverlayBarCornerRounding() {
+        return overlayBarCornerRounding == null ? 0 : overlayBarCornerRounding;
     }
 
     public OverlayPosition getOverlayPosition() {
-        return overlayPosition == null ? OverlayPosition.topLeft : overlayPosition;
+        return overlayPosition == null ? DEFAULT_OVERLAY_POSITION : overlayPosition;
     }
 
     public int getOverlayPadding() {
-        return overlayPadding == null ? 10 : overlayPadding;
+        return overlayPadding == null ? DEFAULT_OVERLAY_PADDING : overlayPadding;
+    }
+
+    public int getOverlayBarHeight() {
+        return overlayBarHeight == null ? DEFAULT_OVERLAY_BAR_HEIGHT : overlayBarHeight;
     }
 }

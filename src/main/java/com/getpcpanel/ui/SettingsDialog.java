@@ -1,6 +1,10 @@
 package com.getpcpanel.ui;
 
+import static com.getpcpanel.profile.Save.DEFAULT_OVERLAY_BAR_BACKGROUND_COLOR;
+import static com.getpcpanel.profile.Save.DEFAULT_OVERLAY_BAR_COLOR;
+import static com.getpcpanel.profile.Save.DEFAULT_OVERLAY_BAR_HEIGHT;
 import static com.getpcpanel.profile.Save.DEFAULT_OVERLAY_BG_COLOR;
+import static com.getpcpanel.profile.Save.DEFAULT_OVERLAY_PADDING;
 import static com.getpcpanel.profile.Save.DEFAULT_OVERLAY_TEXT_COLOR;
 
 import java.util.Objects;
@@ -66,7 +70,11 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
     @FXML private CheckBox overlayShowNumber;
     @FXML private ColorPicker overlayTextColor;
     @FXML private ColorPicker overlayBackgroundColor;
-    @FXML public TextField overlayCornerRounding;
+    @FXML private ColorPicker overlayBarColor;
+    @FXML private ColorPicker overlayBarBackgroundColor;
+    @FXML private TextField overlayWindowCornerRounding;
+    @FXML private TextField overlayBarHeight;
+    @FXML private TextField overlayBarCornerRounding;
     @FXML private Label overlayBGTransparency;
     @FXML private TextField dblClickInterval;
     @FXML private CheckBox preventClickWhenDblClick;
@@ -151,8 +159,12 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
         save.setOverlayUseLog(overlayUseLog.isSelected());
         save.setOverlayShowNumber(overlayShowNumber.isSelected());
         save.setOverlayBackgroundColor(toWebColor(overlayBackgroundColor.getValue()));
+        save.setOverlayBarColor(toWebColor(overlayBarColor.getValue()));
+        save.setOverlayBarBackgroundColor(toWebColor(overlayBarBackgroundColor.getValue()));
         save.setOverlayTextColor(toWebColor(overlayTextColor.getValue()));
-        save.setOverlayCornerRounding(NumberUtils.toInt(overlayCornerRounding.getText(), 0));
+        save.setOverlayWindowCornerRounding(NumberUtils.toInt(overlayWindowCornerRounding.getText(), 0));
+        save.setOverlayBarHeight(NumberUtils.toInt(overlayBarHeight.getText(), 0));
+        save.setOverlayBarCornerRounding(NumberUtils.toInt(overlayBarCornerRounding.getText(), 0));
         save.setOverlayPadding(NumberUtils.toInt(overlayPadding.getText(), 0));
         save.setOverlayPosition(getOverlayPosition());
         save.setDblClickInterval(NumberUtils.toLong(dblClickInterval.getText(), 500));
@@ -200,7 +212,9 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
         overlay.setSelected(save.isOverlayEnabled());
         overlayUseLog.setSelected(save.isOverlayUseLog());
         overlayShowNumber.setSelected(save.isOverlayShowNumber());
-        overlayCornerRounding.setText("" + save.getOverlayCornerRounding());
+        overlayWindowCornerRounding.setText("" + save.getOverlayWindowCornerRounding());
+        overlayBarHeight.setText("" + save.getOverlayBarHeight());
+        overlayBarCornerRounding.setText("" + save.getOverlayBarCornerRounding());
         initOverlayPosition(save);
         overlayPadding.setText("" + save.getOverlayPadding());
         dblClickInterval.setText(save.getDblClickInterval() == null ? "500" : save.getDblClickInterval().toString());
@@ -259,6 +273,16 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
         } catch (IllegalArgumentException e) {
             overlayTextColor.setValue(Color.web(DEFAULT_OVERLAY_TEXT_COLOR));
         }
+        try {
+            overlayBarColor.setValue(Color.web(save.getOverlayBarColor()));
+        } catch (IllegalArgumentException e) {
+            overlayBarColor.setValue(Color.web(DEFAULT_OVERLAY_BAR_COLOR));
+        }
+        try {
+            overlayBarBackgroundColor.setValue(Color.web(save.getOverlayBarBackgroundColor()));
+        } catch (IllegalArgumentException e) {
+            overlayBarBackgroundColor.setValue(Color.web(DEFAULT_OVERLAY_BAR_BACKGROUND_COLOR));
+        }
 
         var colorOpacityBinding = Bindings.createObjectBinding(() -> Math.round(overlayBackgroundColor.getValue().getOpacity() * 100) + "%", overlayBackgroundColor.valueProperty());
         overlayBGTransparency.textProperty().bind(colorOpacityBinding);
@@ -301,5 +325,19 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
         copied.setText("Preparing output");
         MainFX.getBean(SndCtrlLinuxDebug.class).copyDebugOutput();
         copied.setText("Output was copied to your clipboard");
+    }
+
+    public void resetOverlayToDefault(ActionEvent actionEvent) {
+        overlayUseLog.setSelected(false);
+        overlayShowNumber.setSelected(false);
+        btnTL.setSelected(true);
+        overlayWindowCornerRounding.setText("0");
+        overlayBarHeight.setText(DEFAULT_OVERLAY_BAR_HEIGHT + "");
+        overlayBarCornerRounding.setText("0");
+        overlayPadding.setText(DEFAULT_OVERLAY_PADDING + "");
+        overlayBackgroundColor.setValue(Color.web(DEFAULT_OVERLAY_BG_COLOR));
+        overlayTextColor.setValue(Color.web(DEFAULT_OVERLAY_TEXT_COLOR));
+        overlayBarColor.setValue(Color.web(DEFAULT_OVERLAY_BAR_COLOR));
+        overlayBarBackgroundColor.setValue(Color.web(DEFAULT_OVERLAY_BAR_BACKGROUND_COLOR));
     }
 }

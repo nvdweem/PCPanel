@@ -15,7 +15,6 @@ import com.getpcpanel.commands.IconService;
 import com.getpcpanel.commands.PCPanelControlEvent;
 import com.getpcpanel.commands.command.ButtonAction;
 import com.getpcpanel.commands.command.DialAction;
-import com.getpcpanel.profile.Save;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.spring.ConditionalOnWindows;
 import com.getpcpanel.util.Debouncer;
@@ -66,6 +65,7 @@ public class Overlay extends Popup {
         stage.setOpacity(0);
         helperStage.show();
         var loader = fxHelper.getLoader(getClass().getResource("/assets/Overlay.fxml"));
+
         loader.setController(this);
         HBox panel;
         try {
@@ -106,11 +106,23 @@ public class Overlay extends Popup {
     public void updateStyle() {
         var save = this.save.get();
         var style = "-fx-background-color: " + save.getOverlayBackgroundColor() + ";";
-        if (save.getOverlayCornerRounding() > 0)
-            style += "-fx-background-radius: " + save.getOverlayCornerRounding() + "px;";
+        if (save.getOverlayWindowCornerRounding() > 0)
+            style += "-fx-background-radius: " + save.getOverlayWindowCornerRounding() + "px;";
         panel.setStyle(style);
         volumeText.setTextFill(Color.web(save.getOverlayTextColor()));
         text.setTextFill(Color.web(save.getOverlayTextColor()));
+    }
+
+    private void initAfterShow() {
+        determinePosition();
+        var save = this.save.get();
+        if (save.getOverlayBarCornerRounding() > 0) {
+            var barStyle = "-fx-background-radius: " + save.getOverlayBarCornerRounding() + "px;";
+            volume.setStyle(barStyle);
+            volume.lookup(".track").setStyle(barStyle + "-fx-background-color: " + save.getOverlayBarBackgroundColor() + ";");
+            volume.lookup(".bar").setStyle(barStyle + "-fx-background-color: " + save.getOverlayBarColor() + ";");
+        }
+        volume.setPrefHeight(save.getOverlayBarHeight());
     }
 
     @EventListener
@@ -154,6 +166,7 @@ public class Overlay extends Popup {
             if (hasOverlay(cai.command) && pred.test(cai.command)) {
                 icon.setImage(cai.icon);
                 show(stage);
+                initAfterShow();
             }
         });
         debouncer.debounce(this, () -> Platform.runLater(this::hide), 2, TimeUnit.SECONDS);
