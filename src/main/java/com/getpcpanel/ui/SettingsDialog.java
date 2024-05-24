@@ -35,6 +35,7 @@ import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
@@ -87,6 +88,16 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
     @FXML private OSCSettingsDialog oscSettingsController;
     @FXML private VBox debug;
     @FXML private Label copied;
+    @FXML private ToggleButton btnTL;
+    @FXML private ToggleButton btnTM;
+    @FXML private ToggleButton btnTR;
+    @FXML private ToggleButton btnML;
+    @FXML private ToggleButton btnMM;
+    @FXML private ToggleButton btnMR;
+    @FXML private ToggleButton btnBL;
+    @FXML private ToggleButton btnBM;
+    @FXML private ToggleButton btnBR;
+    @FXML public TextField overlayPadding;
 
     @Override
     public void initUI(@Nonnull SingleParamInitializer<Stage> args) {
@@ -100,6 +111,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
         UIHelper.closeOnEscape(stage);
         var scene = new Scene(root);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/assets/dark_theme.css"), "Unable to find dark_theme.css").toExternalForm());
+        scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/assets/1.css"), "Unable to find 1.css").toExternalForm());
         stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("/assets/256x256.png")).toExternalForm()));
         stage.setScene(scene);
         stage.setResizable(false);
@@ -141,6 +153,8 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
         save.setOverlayBackgroundColor(toWebColor(overlayBackgroundColor.getValue()));
         save.setOverlayTextColor(toWebColor(overlayTextColor.getValue()));
         save.setOverlayCornerRounding(NumberUtils.toInt(overlayCornerRounding.getText(), 0));
+        save.setOverlayPadding(NumberUtils.toInt(overlayPadding.getText(), 0));
+        save.setOverlayPosition(getOverlayPosition());
         save.setDblClickInterval(NumberUtils.toLong(dblClickInterval.getText(), 500));
         save.setPreventClickWhenDblClick(preventClickWhenDblClick.isSelected());
         save.setObsEnabled(obsEnable.isSelected());
@@ -187,6 +201,8 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
         overlayUseLog.setSelected(save.isOverlayUseLog());
         overlayShowNumber.setSelected(save.isOverlayShowNumber());
         overlayCornerRounding.setText("" + save.getOverlayCornerRounding());
+        initOverlayPosition(save);
+        overlayPadding.setText("" + save.getOverlayPadding());
         dblClickInterval.setText(save.getDblClickInterval() == null ? "500" : save.getDblClickInterval().toString());
         preventClickWhenDblClick.setSelected(save.isPreventClickWhenDblClick());
         obsEnable.setSelected(save.isObsEnabled());
@@ -204,6 +220,32 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
         oscSettingsController.setConnections(save.getOscListenPort(), save.getOscConnections());
 
         initOverlayColors(save);
+    }
+
+    private void initOverlayPosition(Save save) {
+        var position = save.getOverlayPosition();
+        btnTL.setSelected(position == OverlayPosition.topLeft);
+        btnTM.setSelected(position == OverlayPosition.topMiddle);
+        btnTR.setSelected(position == OverlayPosition.topRight);
+        btnML.setSelected(position == OverlayPosition.middleLeft);
+        btnMM.setSelected(position == OverlayPosition.middleMiddle);
+        btnMR.setSelected(position == OverlayPosition.middleRight);
+        btnBL.setSelected(position == OverlayPosition.bottomLeft);
+        btnBM.setSelected(position == OverlayPosition.bottomMiddle);
+        btnBR.setSelected(position == OverlayPosition.bottomRight);
+    }
+
+    private OverlayPosition getOverlayPosition() {
+        if (btnTL.isSelected()) return OverlayPosition.topLeft;
+        if (btnTM.isSelected()) return OverlayPosition.topMiddle;
+        if (btnTR.isSelected()) return OverlayPosition.topRight;
+        if (btnML.isSelected()) return OverlayPosition.middleLeft;
+        if (btnMM.isSelected()) return OverlayPosition.middleMiddle;
+        if (btnMR.isSelected()) return OverlayPosition.middleRight;
+        if (btnBL.isSelected()) return OverlayPosition.bottomLeft;
+        if (btnBM.isSelected()) return OverlayPosition.bottomMiddle;
+        if (btnBR.isSelected()) return OverlayPosition.bottomRight;
+        return OverlayPosition.topLeft;
     }
 
     private void initOverlayColors(Save save) {

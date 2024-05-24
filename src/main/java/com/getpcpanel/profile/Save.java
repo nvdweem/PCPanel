@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
 import com.getpcpanel.device.DeviceType;
+import com.getpcpanel.ui.OverlayPosition;
 
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
@@ -41,6 +42,8 @@ public class Save {
     private String overlayBackgroundColor = DEFAULT_OVERLAY_BG_COLOR;
     private String overlayTextColor = DEFAULT_OVERLAY_TEXT_COLOR;
     @Nullable private Integer overlayCornerRounding = 0;
+    @Nullable private OverlayPosition overlayPosition = OverlayPosition.topLeft;
+    @Nullable private Integer overlayPadding = 10;
 
     public DeviceSave getDeviceSave(String serialNum) {
         return devices.get(serialNum);
@@ -70,5 +73,13 @@ public class Save {
 
     public int getOverlayCornerRounding() {
         return overlayCornerRounding == null ? 0 : overlayCornerRounding;
+    }
+
+    public OverlayPosition getOverlayPosition() {
+        return overlayPosition == null ? OverlayPosition.topLeft : overlayPosition;
+    }
+
+    public int getOverlayPadding() {
+        return overlayPadding == null ? 10 : overlayPadding;
     }
 }

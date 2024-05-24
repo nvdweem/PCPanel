@@ -1,17 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.CheckBox?>
-<?import javafx.scene.control.ColorPicker?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.Tab?>
-<?import javafx.scene.control.TabPane?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.control.TitledPane?>
-<?import javafx.scene.control.Tooltip?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
 <VBox fx:id="root" prefWidth="700.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.SettingsDialog">
     <TabPane maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="700.0" tabClosingPolicy="UNAVAILABLE">
         <Tab text="Settings">
@@ -56,7 +48,41 @@
                         </HBox>
                         <HBox alignment="CENTER_LEFT">
                             <Label prefWidth="150" text="Corner rounding"/>
-                            <TextField fx:id="overlayCornerRounding" promptText="0" prefWidth="75" alignment="BASELINE_RIGHT"/>
+                            <TextField fx:id="overlayCornerRounding" alignment="BASELINE_RIGHT" prefWidth="75" promptText="0"/>
+                            <Label text="px"/>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT">
+                            <Label alignment="TOP_LEFT" maxHeight="1.7976931348623157E308" prefWidth="150" text="Overlay position"/>
+
+                            <fx:define>
+                                <ToggleGroup fx:id="tgrp" />
+                            </fx:define>
+                            <GridPane gridLinesVisible="true" prefHeight="100.0" prefWidth="100.0">
+                                <ToggleButton fx:id="btnTL" toggleGroup="$tgrp" layoutX="14.0" layoutY="22.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" GridPane.columnIndex="0" GridPane.hgrow="ALWAYS" GridPane.rowIndex="0"
+                                        GridPane.vgrow="ALWAYS"/>
+                                <ToggleButton fx:id="btnTM" toggleGroup="$tgrp" layoutX="14.0" layoutY="22.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                                <ToggleButton fx:id="btnTR" toggleGroup="$tgrp" layoutX="14.0" layoutY="22.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+                                <ToggleButton fx:id="btnML" toggleGroup="$tgrp" layoutX="14.0" layoutY="22.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                                <ToggleButton fx:id="btnMM" toggleGroup="$tgrp" layoutX="14.0" layoutY="22.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                                <ToggleButton fx:id="btnMR" toggleGroup="$tgrp" layoutX="14.0" layoutY="22.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+                                <ToggleButton fx:id="btnBL" toggleGroup="$tgrp" layoutX="14.0" layoutY="22.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                                <ToggleButton fx:id="btnBM" toggleGroup="$tgrp" layoutX="14.0" layoutY="22.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                                <ToggleButton fx:id="btnBR" toggleGroup="$tgrp" layoutX="14.0" layoutY="22.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" GridPane.columnIndex="2" GridPane.rowIndex="2"/>
+                                <columnConstraints>
+                                    <ColumnConstraints halignment="CENTER" hgrow="ALWAYS"/>
+                                    <ColumnConstraints halignment="CENTER" hgrow="ALWAYS"/>
+                                    <ColumnConstraints halignment="CENTER" hgrow="ALWAYS"/>
+                                </columnConstraints>
+                                <rowConstraints>
+                                    <RowConstraints valignment="CENTER" vgrow="ALWAYS"/>
+                                    <RowConstraints vgrow="ALWAYS"/>
+                                    <RowConstraints vgrow="ALWAYS"/>
+                                </rowConstraints>
+                            </GridPane>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT">
+                            <Label prefWidth="150" text="Overlay padding"/>
+                            <TextField fx:id="overlayPadding" alignment="BASELINE_RIGHT" prefWidth="75" promptText="0"/>
                             <Label text="px"/>
                         </HBox>
                     </VBox>

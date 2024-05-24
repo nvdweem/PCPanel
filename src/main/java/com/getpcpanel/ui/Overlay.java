@@ -1,5 +1,6 @@
 package com.getpcpanel.ui;
 
+import java.awt.Toolkit;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -72,10 +73,33 @@ public class Overlay extends Popup {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        updateStyle();
         getContent().addAll(panel);
-        setX(10);
-        setY(10);
+        updateSaveValues();
+    }
+
+    @EventListener(SaveService.SaveEvent.class)
+    public void updateSaveValues() {
+        updateStyle();
+        determinePosition();
+    }
+
+    private void determinePosition() {
+        var window = Toolkit.getDefaultToolkit().getScreenSize();
+        var x = window.getWidth();
+        var y = window.getHeight();
+        var width = getWidth();
+        var height = getHeight();
+
+        switch (save.get().getOverlayPosition()) {
+            case topLeft, topMiddle, topRight -> setY(save.get().getOverlayPadding());
+            case middleLeft, middleMiddle, middleRight -> setY(y / 2 - height / 2);
+            case bottomLeft, bottomMiddle, bottomRight -> setY(y - getHeight() - save.get().getOverlayPadding());
+        }
+        switch (save.get().getOverlayPosition()) {
+            case topLeft, middleLeft, bottomLeft -> setX(save.get().getOverlayPadding());
+            case topMiddle, middleMiddle, bottomMiddle -> setX(x / 2 - width / 2);
+            case topRight, middleRight, bottomRight -> setX(x - width - save.get().getOverlayPadding());
+        }
     }
 
     @EventListener(SaveService.SaveEvent.class)
@@ -83,7 +107,7 @@ public class Overlay extends Popup {
         var save = this.save.get();
         var style = "-fx-background-color: " + save.getOverlayBackgroundColor() + ";";
         if (save.getOverlayCornerRounding() > 0)
-            style += "-fx-background-radius: "+save.getOverlayCornerRounding()+"px;";
+            style += "-fx-background-radius: " + save.getOverlayCornerRounding() + "px;";
         panel.setStyle(style);
         volumeText.setTextFill(Color.web(save.getOverlayTextColor()));
         text.setTextFill(Color.web(save.getOverlayTextColor()));
