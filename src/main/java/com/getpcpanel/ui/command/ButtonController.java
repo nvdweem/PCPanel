@@ -4,6 +4,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ReflectionUtils;
 
@@ -12,10 +13,14 @@ import com.getpcpanel.commands.CommandsType;
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandNoOp;
 import com.getpcpanel.commands.command.DialAction;
+import com.getpcpanel.commands.command.DialAction.DialCommandParams;
+import com.getpcpanel.hid.DialValueCalculator;
+import com.getpcpanel.profile.KnobSetting;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.FxHelper;
 import com.getpcpanel.ui.MacroControllerService;
 import com.getpcpanel.ui.MacroControllerService.ControllerInfo;
+import com.getpcpanel.ui.graphviewer.GraphViewer;
 import com.getpcpanel.util.Images;
 
 import javafx.beans.binding.Bindings;
@@ -36,13 +41,16 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TabPane;
+import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.shape.SVGPath;
+import javafx.stage.Stage;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
@@ -63,6 +71,7 @@ public class ButtonController {
     @FXML private Accordion commands;
     @FXML private Button addButton;
     @FXML private ChoiceBox<CommandsType> commandsType;
+    @Setter private Stage stage;
 
     public void initController(Cmd.Type cmdType, CommandContext context, @Nullable Commands buttonData) {
         this.cmdType = cmdType;
@@ -129,8 +138,8 @@ public class ButtonController {
         HBox.setHgrow(loaded, Priority.ALWAYS);
 
         var pane = new TitledPane(null, loaded);
-        var invertBox = addPanelOptions(controller, pane, info.cmd().name(), cmd);
-        pane.setUserData(new PanelData(controller, invertBox));
+        var panelData = addPanelOptions(controller, pane, info.cmd().name(), cmd);
+        pane.setUserData(panelData);
         commands.getPanes().add(pane);
 
         if (cmd != null) {
@@ -138,7 +147,7 @@ public class ButtonController {
         }
     }
 
-    private CheckBox addPanelOptions(CommandController<Command> controller, @Nonnull TitledPane pane, String title, @Nullable Command cmd) {
+    private PanelData addPanelOptions(CommandController<Command> controller, @Nonnull TitledPane pane, String title, @Nullable Command cmd) {
         // Labels
         var titleOfTitledPane = new Label(title);
         var additionalLabel = buildAdditionalLabel(controller, pane);
@@ -151,14 +160,12 @@ public class ButtonController {
         var buttonDown = moveButton(pane, Images.chevronDown(), 1);
         var buttonCopy = copyButton(pane);
 
-        var invertCheck = new CheckBox("Invert");
-        HBox.setMargin(invertCheck, new Insets(3, 20, 0, 0));
         var hbox = new HBox(buttonCopy, buttonUp, buttonDown, buttonDelete);
-        if (cmdType == Cmd.Type.dial) {
-            hbox.getChildren().add(0, invertCheck);
-            if (cmd instanceof DialAction) {
-                invertCheck.setSelected(((DialAction) cmd).isInvert());
-            }
+        var result = new PanelData(controller, cmd instanceof DialAction da ? da.getDialParams() : null);
+
+        if (cmd instanceof DialAction da) {
+            var invertCheck = addInvertCheck(result, hbox, da);
+            addGraphViewer(result, controller, cmd, hbox, invertCheck);
         }
 
         var borderPane = new BorderPane();
@@ -168,7 +175,69 @@ public class ButtonController {
         borderPane.prefWidthProperty().bind(commands.widthProperty().subtract(40));
         pane.setGraphic(borderPane);
 
+        return result;
+    }
+
+    private CheckBox addInvertCheck(PanelData result, HBox target, DialAction da) {
+        var invertCheck = new CheckBox("Invert");
+        HBox.setMargin(invertCheck, new Insets(3, 20, 0, 0));
+
+        invertCheck.setSelected(da.isInvert());
+        invertCheck.selectedProperty().addListener((obs, old, newValue) -> result.setParams(result.params.withInvert(newValue)));
+
+        target.getChildren().add(0, invertCheck);
         return invertCheck;
+    }
+
+    private void addGraphViewer(PanelData panelData, CommandController<Command> controller, @Nonnull Command cmd, HBox hbox, CheckBox invertCheck) {
+        if (!(cmd instanceof DialAction) || !(controller instanceof DialCommandController<?> dc)) {
+            return;
+        }
+
+        var graphViewer = new GraphViewer(new DialValueCalculator(new KnobSetting()), cmd);
+        graphViewer.setPrefSize(75, 28);
+
+        var graphBox = new HBox(graphViewer);
+        HBox.setMargin(graphBox, new Insets(0, 10, 0, 0));
+        hbox.getChildren().add(0, graphBox);
+        graphViewer.setOnAction(event -> {
+            var newParams = DialCutoffOptions.show(new DialCutoffOptions.DialCutoffOptionsParams(stage, panelData.params));
+            newParams.ifPresent(params -> {
+                panelData.setParams(params);
+                invertCheck.setSelected(params.invert());
+                graphViewer.setCmd(dc.buildCommand(params));
+                graphViewer.redraw();
+            });
+        });
+
+        invertCheck.selectedProperty().addListener((obs, old, newValue) -> {
+            graphViewer.setCmd(dc.buildCommand(panelData.params));
+            graphViewer.redraw();
+        });
+
+        panelData.setGraph(graphViewer);
+    }
+
+    public void setupGraphRenderer(TextField trimMin, TextField trimMax, CheckBox logarithmic) {
+        trimMin.textProperty().addListener((obs, old, newValue) -> doUpdateGraphRenderer(trimMin.getText(), trimMax.getText(), logarithmic.isSelected()));
+        trimMax.textProperty().addListener((obs, old, newValue) -> doUpdateGraphRenderer(trimMin.getText(), trimMax.getText(), logarithmic.isSelected()));
+        logarithmic.selectedProperty().addListener((obs, old, newValue) -> doUpdateGraphRenderer(trimMin.getText(), trimMax.getText(), logarithmic.isSelected()));
+    }
+
+    private void doUpdateGraphRenderer(String trimMinStr, String trimMaxStr, boolean logarithmic) {
+        var trimMin = NumberUtils.toInt(trimMinStr, 0);
+        var trimMax = NumberUtils.toInt(trimMaxStr, 100);
+
+        var knobSettings = new KnobSetting().setMinTrim(trimMin).setMaxTrim(trimMax).setLogarithmic(logarithmic);
+        StreamEx.of(commands.getPanes())
+                .map(Node::getUserData)
+                .select(PanelData.class)
+                .map(PanelData::getGraph)
+                .nonNull()
+                .forEach(graph -> {
+                    graph.setCalculator(new DialValueCalculator(knobSettings));
+                    graph.redraw();
+                });
     }
 
     private @Nonnull Label buildAdditionalLabel(@Nonnull CommandController<Command> controller, @Nonnull TitledPane pane) {
@@ -213,7 +282,7 @@ public class ButtonController {
         buttonCopy.setOnAction(event -> {
             var data = (PanelData) pane.getUserData();
             if (data.controller instanceof DialCommandController<?> dc) {
-                add(dc.buildCommand(data.invertBox.isSelected()));
+                add(dc.buildCommand(data.params));
             } else if (data.controller instanceof ButtonCommandController<?> bc) {
                 add(bc.buildCommand());
             }
@@ -239,11 +308,11 @@ public class ButtonController {
 
         if (cmdType == Cmd.Type.dial) {
             userdata = userdata.select(PanelData.class)
-                               .mapToEntry(PanelData::controller, PanelData::invertBox)
+                               .mapToEntry(PanelData::getController, PanelData::getParams)
                                .selectKeys(DialCommandController.class)
-                               .mapKeyValue((dcc, invertBox) -> dcc.buildCommand(invertBox.isSelected()));
+                               .mapKeyValue(DialCommandController::buildCommand);
         } else {
-            userdata = userdata.select(PanelData.class).map(PanelData::controller).select(ButtonCommandController.class).map(ButtonCommandController::buildCommand);
+            userdata = userdata.select(PanelData.class).map(PanelData::getController).select(ButtonCommandController.class).map(ButtonCommandController::buildCommand);
         }
 
         var cmds = userdata.select(Command.class).remove(CommandNoOp.class::isInstance).toList();
@@ -254,6 +323,16 @@ public class ButtonController {
         addMenu.show(addButton, Side.TOP, 0, 0);
     }
 
-    private record PanelData(CommandController<?> controller, CheckBox invertBox) {
+    @Getter
+    private static class PanelData {
+        private final CommandController<?> controller;
+
+        @Setter private GraphViewer graph;
+        @Setter private DialCommandParams params;
+
+        public PanelData(CommandController<?> controller, @Nullable DialCommandParams params) {
+            this.controller = controller;
+            this.params = params == null ? DialCommandParams.DEFAULT : params;
+        }
     }
 }

@@ -25,8 +25,8 @@ public final class CommandNoOp extends Command implements ButtonAction, DialActi
     }
 
     @Override
-    public boolean isInvert() {
-        return false;
+    public DialCommandParams getDialParams() {
+        return DialCommandParams.DEFAULT;
     }
 
     @Override

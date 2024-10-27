@@ -2,11 +2,11 @@ package com.getpcpanel.commands;
 
 import javax.annotation.Nullable;
 
-import com.getpcpanel.hid.DialValueCalculator;
+import com.getpcpanel.hid.DialValue;
 
 import one.util.streamex.StreamEx;
 
-public record PCPanelControlEvent(String serialNum, int knob, Commands cmd, boolean initial, @Nullable DialValueCalculator vol) {
+public record PCPanelControlEvent(String serialNum, int knob, Commands cmd, boolean initial, @Nullable DialValue vol) {
     public Runnable buildRunnable() {
         return switch (cmd.getType()) {
             case allAtOnce -> () -> StreamEx.of(cmd.getCommands()).map(c -> c.toRunnable(initial, serialNum, vol)).forEach(Runnable::run);

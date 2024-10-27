@@ -8,6 +8,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
+import com.getpcpanel.commands.command.DialAction.DialCommandParams;
 import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.voicemeeter.Voicemeeter;
 
@@ -29,17 +30,17 @@ public final class CommandConverter {
             case "app_volume" -> {
                 var device = data[3];
                 var apps = StreamEx.of(data[1], data[2]).map(StringUtils::trimToNull).nonNull().toList();
-                yield new CommandVolumeProcess(apps, device, false, false);
+                yield new CommandVolumeProcess(apps, device, false, DialCommandParams.DEFAULT);
             }
-            case "focus_volume" -> new CommandVolumeFocus(false);
-            case "device_volume" -> new CommandVolumeDevice(data[1], false, false);
-            case "obs_dial" -> new CommandObsSetSourceVolume(data[2], false);
+            case "focus_volume" -> new CommandVolumeFocus(DialCommandParams.DEFAULT);
+            case "device_volume" -> new CommandVolumeDevice(data[1], false, DialCommandParams.DEFAULT);
+            case "obs_dial" -> new CommandObsSetSourceVolume(data[2], DialCommandParams.DEFAULT);
             case "voicemeeter_dial" -> {
                 if ("basic".equals(data[1])) {
-                    yield new CommandVoiceMeeterBasic(Voicemeeter.ControlType.valueOf(data[2]), NumberUtils.toInt(data[3], 1), Voicemeeter.DialType.valueOf(data[4]), false);
+                    yield new CommandVoiceMeeterBasic(Voicemeeter.ControlType.valueOf(data[2]), NumberUtils.toInt(data[3], 1), Voicemeeter.DialType.valueOf(data[4]), DialCommandParams.DEFAULT);
                 } else if ("advanced".equals(data[1])) {
                     var dt = Voicemeeter.DialControlMode.valueOf(data[3]);
-                    yield new CommandVoiceMeeterAdvanced(data[2], dt, false);
+                    yield new CommandVoiceMeeterAdvanced(data[2], dt, DialCommandParams.DEFAULT);
                 }
                 yield NOOP;
             }

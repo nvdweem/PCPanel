@@ -14,25 +14,25 @@ public class CommandVoiceMeeterBasic extends CommandVoiceMeeter implements DialA
     private final Voicemeeter.ControlType ct;
     private final int index;
     private final Voicemeeter.DialType dt;
-    private final boolean invert;
+    private final DialCommandParams dialParams;
 
     @JsonCreator
     public CommandVoiceMeeterBasic(
             @JsonProperty("ct") Voicemeeter.ControlType ct,
             @JsonProperty("index") int index,
             @JsonProperty("dt") Voicemeeter.DialType dt,
-            @JsonProperty("isInvert") boolean invert) {
+            @JsonProperty("dialParams") DialCommandParams dialParams) {
         this.ct = ct;
         this.index = index;
         this.dt = dt;
-        this.invert = invert;
+        this.dialParams = dialParams;
     }
 
     @Override
     public void execute(DialActionParameters context) {
         var voiceMeeter = MainFX.getBean(Voicemeeter.class);
         if (voiceMeeter.login()) {
-            voiceMeeter.controlLevel(ct, index, dt, context.dial().calcValue(invert));
+            voiceMeeter.controlLevel(ct, index, dt, context.dial().getValue(this));
         }
     }
 

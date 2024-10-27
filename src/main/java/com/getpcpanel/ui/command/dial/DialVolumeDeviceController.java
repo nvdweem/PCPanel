@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandVolumeDevice;
+import com.getpcpanel.commands.command.DialAction.DialCommandParams;
 import com.getpcpanel.cpp.AudioDevice;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.spring.Prototype;
@@ -59,10 +60,10 @@ public class DialVolumeDeviceController extends DialCommandController<CommandVol
     }
 
     @Override
-    public Command buildCommand(boolean invert) {
+    public Command buildCommand(DialCommandParams params) {
         return new CommandVolumeDevice(
                 rdio_device_specific.isSelected() && volumedevice.getSelectionModel().getSelectedItem() != null ? volumedevice.getSelectionModel().getSelectedItem().id() : "",
-                cb_device_unmute.isSelected(), invert);
+                cb_device_unmute.isSelected(), params);
     }
 
     @Override

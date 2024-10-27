@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandBrightness;
+import com.getpcpanel.commands.command.DialAction.DialCommandParams;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
@@ -25,8 +26,8 @@ public class DialBrightnessController extends DialCommandController<CommandBrigh
     }
 
     @Override
-    public Command buildCommand(boolean invert) {
-        return new CommandBrightness(invert);
+    public Command buildCommand(DialCommandParams params) {
+        return new CommandBrightness(params);
     }
 
     @Override

@@ -46,6 +46,7 @@ public class ShortcutHook implements NativeKeyListener {
         try {
             GlobalScreen.registerNativeHook();
             GlobalScreen.addNativeKeyListener(this);
+            log.info("Keyboard hook enabled");
         } catch (NativeHookException | UnsatisfiedLinkError ex) {
             log.error("Unable to register global hook, shortcuts will not work", ex);
         }

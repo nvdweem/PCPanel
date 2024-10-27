@@ -14,19 +14,18 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @ToString(callSuper = true)
 public class CommandBrightness extends Command implements DialAction {
-    private final boolean invert;
+    private final DialCommandParams dialParams;
 
     @JsonCreator
-    public CommandBrightness(
-            @JsonProperty("isInvert") boolean invert) {
-        this.invert = invert;
+    public CommandBrightness(@JsonProperty("dialParams") DialCommandParams dialParams) {
+        this.dialParams = dialParams;
     }
 
     @Override
     public void execute(DialActionParameters context) {
         MainFX.getBean(DeviceHolder.class).getDevice(context.device()).ifPresent(device -> {
             var lightingConfig = device.getLightingConfig();
-            lightingConfig.setGlobalBrightness(context.dial().calcValue(invert));
+            lightingConfig.setGlobalBrightness(context.dial().getValue(this));
             device.setLighting(lightingConfig, false);
 
             MainFX.getBean(SaveService.class).debouncedSave();

@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandObsSetSourceVolume;
+import com.getpcpanel.commands.command.DialAction.DialCommandParams;
 import com.getpcpanel.obs.OBS;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.command.Cmd;
@@ -45,8 +46,8 @@ public class DialObsController extends DialCommandController<CommandObsSetSource
     }
 
     @Override
-    public Command buildCommand(boolean invert) {
-        return new CommandObsSetSourceVolume(obsAudioSources.getSelectionModel().getSelectedItem(), invert);
+    public Command buildCommand(DialCommandParams params) {
+        return new CommandObsSetSourceVolume(obsAudioSources.getSelectionModel().getSelectedItem(), params);
     }
 
     @Override

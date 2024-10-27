@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandVolumeFocus;
+import com.getpcpanel.commands.command.DialAction.DialCommandParams;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
@@ -24,9 +25,10 @@ public class DialVolumeFocusController extends DialCommandController<CommandVolu
     public void postInit(CommandContext context) {
     }
 
+
     @Override
-    public Command buildCommand(boolean invert) {
-        return new CommandVolumeFocus(invert);
+    public Command buildCommand(DialCommandParams params) {
+        return new CommandVolumeFocus(params);
     }
 
     @Override

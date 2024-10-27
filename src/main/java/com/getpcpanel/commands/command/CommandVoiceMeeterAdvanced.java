@@ -13,16 +13,16 @@ import lombok.ToString;
 public class CommandVoiceMeeterAdvanced extends CommandVoiceMeeter implements DialAction {
     private final String fullParam;
     private final Voicemeeter.DialControlMode ct;
-    private final boolean invert;
 
+    private final DialCommandParams dialParams;
     @JsonCreator
     public CommandVoiceMeeterAdvanced(
             @JsonProperty("fullParam") String fullParam,
             @JsonProperty("ct") Voicemeeter.DialControlMode ct,
-            @JsonProperty("isInvert") boolean invert) {
+            @JsonProperty("dialParams") DialCommandParams dialParams) {
         this.fullParam = fullParam;
         this.ct = ct;
-        this.invert = invert;
+        this.dialParams = dialParams;
     }
 
     @Override
@@ -32,7 +32,7 @@ public class CommandVoiceMeeterAdvanced extends CommandVoiceMeeter implements Di
         }
         var voiceMeeter = MainFX.getBean(Voicemeeter.class);
         if (voiceMeeter.login()) {
-            voiceMeeter.controlLevel(fullParam, ct, context.dial().calcValue(invert));
+            voiceMeeter.controlLevel(fullParam, ct, context.dial().getValue(this));
         }
     }
 

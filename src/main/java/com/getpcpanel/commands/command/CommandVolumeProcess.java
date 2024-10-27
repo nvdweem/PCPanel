@@ -16,18 +16,18 @@ public class CommandVolumeProcess extends CommandVolume implements DialAction {
     private final List<String> processName;
     private final String device;
     private final boolean unMuteOnVolumeChange;
-    private final boolean invert;
+    private final DialCommandParams dialParams;
 
     @JsonCreator
     public CommandVolumeProcess(
             @JsonProperty("processName") List<String> processName,
             @JsonProperty("device") String device,
             @JsonProperty("isUnMuteOnVolumeChange") boolean unMuteOnVolumeChange,
-            @JsonProperty("isInvert") boolean invert) {
+            @JsonProperty("dialParams") DialCommandParams dialParams) {
         this.processName = processName;
         this.device = device;
         this.unMuteOnVolumeChange = unMuteOnVolumeChange;
-        this.invert = invert;
+        this.dialParams = dialParams;
     }
 
     @Override
@@ -36,7 +36,7 @@ public class CommandVolumeProcess extends CommandVolume implements DialAction {
         if (!context.initial() && unMuteOnVolumeChange) {
             snd.muteProcesses(new HashSet<>(processName), MuteType.unmute);
         }
-        processName.forEach(process -> snd.setProcessVolume(process, device, context.dial().calcValue(invert, 0, 1)));
+        processName.forEach(process -> snd.setProcessVolume(process, device, context.dial().getValue(this, 0, 1)));
     }
 
     @Override

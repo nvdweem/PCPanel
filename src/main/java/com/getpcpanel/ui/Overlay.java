@@ -132,7 +132,7 @@ public class Overlay extends Popup {
         }
         showDebounced(() -> determineIconImage(event), command -> {
             if (event.vol() != null) {
-                var value = save.get().isOverlayUseLog() ? event.vol().calcValue(false, 0, 255) : event.vol().getValue();
+                var value = save.get().isOverlayUseLog() ? event.vol().getValue(null, 0, 255) : event.vol().value();
                 setVisible(volumePanel);
                 volume.setProgress(value / 255f);
 

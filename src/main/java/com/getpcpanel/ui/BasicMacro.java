@@ -80,6 +80,7 @@ public class BasicMacro extends Application implements UIInitializer<BasicMacro.
         }
         context = new CommandContext(stage, deviceSave, profile);
         dialPanelController.initController(Cmd.Type.dial, context, profile.getDialData(dialNum));
+        dialPanelController.setupGraphRenderer(trimMin, trimMax, logarithmic);
 
         if (hasButton) {
             singleClickPanelController.initController(Cmd.Type.button, context, profile.getButtonData(dialNum));
@@ -95,6 +96,7 @@ public class BasicMacro extends Application implements UIInitializer<BasicMacro.
     @Override
     public void start(Stage basicmacro) throws Exception {
         stage = basicmacro;
+        dialPanelController.setStage(stage);
         UIHelper.closeOnEscape(stage);
         var scene = new Scene(root);
         scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/assets/dark_theme.css")).toExternalForm());

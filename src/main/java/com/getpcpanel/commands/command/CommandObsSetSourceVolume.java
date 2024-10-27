@@ -12,21 +12,21 @@ import lombok.ToString;
 @ToString(callSuper = true)
 public class CommandObsSetSourceVolume extends CommandObs implements DialAction {
     private final String sourceName;
-    private final boolean invert;
+    private final DialCommandParams dialParams;
 
     @JsonCreator
     public CommandObsSetSourceVolume(
             @JsonProperty("sourceName") String sourceName,
-            @JsonProperty("isInvert") boolean invert) {
+            @JsonProperty("dialParams") DialCommandParams dialParams) {
         this.sourceName = sourceName;
-        this.invert = invert;
+        this.dialParams = dialParams;
     }
 
     @Override
     public void execute(DialActionParameters context) {
         var obs = MainFX.getBean(OBS.class);
         if (obs.isConnected()) {
-            obs.setSourceVolume(sourceName, context.dial().calcValue(invert));
+            obs.setSourceVolume(sourceName, context.dial().getValue(this));
         }
     }
 

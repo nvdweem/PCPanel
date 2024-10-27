@@ -18,6 +18,7 @@ A backup will be made when converting. If you want to downgrade to a previous ve
 - The overlay allows showing the actual value (this differs from the slider state when using logarithmic scaling)
 - #59 - Additional overlay options (colors, rounding, size and position)
 - #45 - Voicemeeter string values are now supported for advanced button actions
+- #67 - It's now possible to add a 'dead-zone' (move-start/end) to the dials and sliders which allows better control of multiple items at the same time
 
 **Fixes:**
 

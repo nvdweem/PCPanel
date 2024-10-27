@@ -8,6 +8,7 @@ import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandVoiceMeeter;
 import com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced;
 import com.getpcpanel.commands.command.CommandVoiceMeeterBasic;
+import com.getpcpanel.commands.command.DialAction.DialCommandParams;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
@@ -84,12 +85,12 @@ public class DialVoiceMeeterController extends DialCommandController<CommandVoic
     }
 
     @Override
-    public Command buildCommand(boolean invert) {
+    public Command buildCommand(DialCommandParams params) {
         if (voicemeeterTabPaneDial.getSelectionModel().getSelectedIndex() == 0) {
-            return new CommandVoiceMeeterBasic(voicemeeterBasicDialIO.getValue(), voicemeeterBasicDialIndex.getValue() - 1, voicemeeterBasicDial.getValue(), invert);
+            return new CommandVoiceMeeterBasic(voicemeeterBasicDialIO.getValue(), voicemeeterBasicDialIndex.getValue() - 1, voicemeeterBasicDial.getValue(), params);
         }
         if (voicemeeterTabPaneDial.getSelectionModel().getSelectedIndex() == 1) {
-            return new CommandVoiceMeeterAdvanced(voicemeeterDialParameter.getText(), voicemeeterDialType.getValue(), invert);
+            return new CommandVoiceMeeterAdvanced(voicemeeterDialParameter.getText(), voicemeeterDialType.getValue(), params);
         }
         return NOOP;
     }

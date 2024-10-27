@@ -43,7 +43,7 @@ public final class InputInterpreter {
             }
             device.setKnobRotation(event.knob(), value);
             var settings = save.getProfile(event.serialNum()).map(p -> p.getKnobSettings(event.knob())).orElse(null);
-            doDialAction(event.serialNum(), event.initial(), event.knob(), new DialValueCalculator(settings, value));
+            doDialAction(event.serialNum(), event.initial(), event.knob(), new DialValue(settings, value));
         });
     }
 
@@ -54,7 +54,7 @@ public final class InputInterpreter {
             doClickAction(event.serialNum(), event.button());
     }
 
-    private void doDialAction(String serialNum, boolean initial, int knob, DialValueCalculator v) {
+    private void doDialAction(String serialNum, boolean initial, int knob, DialValue v) {
         save.getProfile(serialNum).map(p -> p.getDialData(knob)).ifPresent(data -> eventPublisher.publishEvent(new PCPanelControlEvent(serialNum, knob, data, initial, v)));
     }
 
