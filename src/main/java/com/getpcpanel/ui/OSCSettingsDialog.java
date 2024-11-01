@@ -6,6 +6,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.stereotype.Component;
 
 import com.getpcpanel.profile.OSCConnectionInfo;
+import com.getpcpanel.profile.Save;
 import com.getpcpanel.spring.Prototype;
 
 import javafx.fxml.FXML;
@@ -58,7 +59,7 @@ public class OSCSettingsDialog {
                        .toList();
     }
 
-    public void setConnections(Integer port, List<OSCConnectionInfo> oscConnections) {
+    private void setConnections(Integer port, List<OSCConnectionInfo> oscConnections) {
         if (port != null) {
             this.port.setText(String.valueOf(port));
         }
@@ -70,5 +71,14 @@ public class OSCSettingsDialog {
     public Integer getListenPort() {
         var thePort = NumberUtils.toInt(port.getText(), -1);
         return thePort == -1 ? null : thePort;
+    }
+
+    public void save(Save save) {
+        save.setOscListenPort(getListenPort());
+        save.setOscConnections(getConnections());
+    }
+
+    public void populate(Save save) {
+        setConnections(save.getOscListenPort(), save.getOscConnections());
     }
 }

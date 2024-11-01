@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
@@ -30,6 +31,7 @@ public class DeviceHolder {
     private final SaveService saveService;
     @Autowired @Lazy @Setter private DeviceFactory deviceFactory;
     private final OutputInterpreter outputInterpreter;
+    private final ApplicationEventPublisher eventPublisher;
 
     public Optional<Device> getDevice(String key) {
         return Optional.ofNullable(devices.get(key));
@@ -61,6 +63,7 @@ public class DeviceHolder {
         }
         devices.put(event.serialNum(), device);
         outputInterpreter.sendInit(event.serialNum());
+        eventPublisher.publishEvent(new DeviceFullyConnectedEvent(device));
     }
 
     @Order
@@ -84,5 +87,8 @@ public class DeviceHolder {
 
     public Collection<Device> all() {
         return devices.values();
+    }
+
+    public record DeviceFullyConnectedEvent(Device device) {
     }
 }

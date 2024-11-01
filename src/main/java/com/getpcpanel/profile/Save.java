@@ -39,6 +39,7 @@ public class Save {
     private boolean workaroundsOnlySliders;
     private Integer oscListenPort;
     private List<OSCConnectionInfo> oscConnections;
+    private MqttSettings mqtt;
 
     // Overlay
     private boolean overlayEnabled;

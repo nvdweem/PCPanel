@@ -28,6 +28,7 @@ import com.illposed.osc.OSCPacketListener;
 import com.illposed.osc.transport.OSCPortIn;
 import com.illposed.osc.transport.OSCPortOut;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -44,6 +45,7 @@ public class OSCService {
     private List<OSCConnectionInfo> prevOscConnections;
     @Getter private final Set<String> addresses = new HashSet<>();
 
+    @PostConstruct
     @EventListener(SaveService.SaveEvent.class)
     public void saveChanged() {
         log.trace("Save changed, restarting OSC");

@@ -94,6 +94,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
     @FXML private TextField txtOnlyIfDelta;
     @FXML private CheckBox cbFixOnlySliders;
     @FXML private OSCSettingsDialog oscSettingsController;
+    @FXML private MqttSettingsDialog mqttSettingsController;
     @FXML private VBox debug;
     @FXML private Label copied;
     @FXML private ToggleButton btnTL;
@@ -179,8 +180,8 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
         save.setSliderRollingAverage(NumberUtils.toInt(txtSliderRollingAverage.getText(), 0));
         save.setSendOnlyIfDelta(NumberUtils.toInt(txtOnlyIfDelta.getText(), 0));
         save.setWorkaroundsOnlySliders(cbFixOnlySliders.isSelected());
-        save.setOscListenPort(oscSettingsController.getListenPort());
-        save.setOscConnections(oscSettingsController.getConnections());
+        oscSettingsController.save(save);
+        mqttSettingsController.save(save);
         saveService.save();
         stage.close();
     }
@@ -231,8 +232,9 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
         txtSliderRollingAverage.setText(save.getSliderRollingAverage() == null ? "" : save.getSliderRollingAverage().toString());
         txtOnlyIfDelta.setText(save.getSendOnlyIfDelta() == null ? "" : save.getSendOnlyIfDelta().toString());
         cbFixOnlySliders.setSelected(save.isWorkaroundsOnlySliders());
-        oscSettingsController.setConnections(save.getOscListenPort(), save.getOscConnections());
 
+        oscSettingsController.populate(save);
+        mqttSettingsController.populate(save);
         initOverlayColors(save);
     }
 
