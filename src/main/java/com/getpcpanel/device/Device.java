@@ -13,7 +13,7 @@ import com.getpcpanel.profile.LightingConfig;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.ui.FxHelper;
-import com.getpcpanel.ui.LightningChangedToDefaultEvent;
+import com.getpcpanel.ui.LightingChangedToDefaultEvent;
 import com.getpcpanel.ui.LimitedTextField;
 import com.getpcpanel.util.Images;
 
@@ -159,7 +159,7 @@ public abstract class Device {
             return;
         setLighting(profile.get().getLightingConfig(), true);
         saveService.save();
-        eventPublisher.publishEvent(LightningChangedToDefaultEvent.INSTANCE);
+        eventPublisher.publishEvent(LightingChangedToDefaultEvent.INSTANCE);
     }
 
     public void focusChanged(String from, String to) {

@@ -1,11 +1,14 @@
 package com.getpcpanel.mqtt.osc;
 
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+import org.apache.logging.log4j.util.TriConsumer;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
@@ -50,21 +53,21 @@ public class MqttService {
 
         log.trace("Save changed, starting mqtt");
         connect(mqttSettings);
-        sendInitial();
+        initialize();
         setup();
         connectedSettings = mqttSettings;
     }
 
     @EventListener
     public void deviceConnected(DeviceFullyConnectedEvent event) {
-        sendInitial(event.device());
+        initialize(event.device());
     }
 
-    private void sendInitial() {
-        deviceHolder.all().forEach(this::sendInitial);
+    private void initialize() {
+        deviceHolder.all().forEach(this::initialize);
     }
 
-    private void sendInitial(Device device) {
+    private void initialize(Device device) {
         var lighting = device.getLightingConfig();
         if (lighting.getLightingMode() != LightingConfig.LightingMode.CUSTOM) {
             log.debug("Only custom lighting will be written to mqtt");
@@ -72,26 +75,61 @@ public class MqttService {
         }
 
         writeLighting(device, lighting);
+        buildSubscriptions(device, lighting);
+    }
+
+    private void buildSubscriptions(Device device, LightingConfig lighting) {
+        var mqttSettings = saveService.get().getMqtt();
+        var topic = StringUtils.joinWith("/", mqttSettings.baseTopic(), device.getSerialNumber(), "lighting");
+        Runnable andThen = () -> device.setLighting(device.getLightingConfig(), true);
+
+        subscribeTo(StringUtils.joinWith("/", topic, "brightness"), payload -> lighting.setGlobalBrightness(NumberUtils.toInt(payload, 100)), andThen);
+        subscribeTo(lighting.getKnobConfigs(), topic, "knob", (idx, payload, knob) -> knob.setColor1(payload), andThen);
+        subscribeTo(lighting.getSliderConfigs(), topic, "slider", (idx, payload, knob) -> knob.setColor1(payload), andThen);
+        subscribeTo(lighting.getSliderLabelConfigs(), topic, "label", (idx, payload, knob) -> knob.setColor(payload), andThen);
+        if (lighting.getLogoConfig() != null) {
+            subscribeTo(StringUtils.joinWith("/", topic, "logo"), payload -> lighting.getLogoConfig().setColor(payload), andThen);
+        }
+    }
+
+    private <T> void subscribeTo(T[] items, String baseTopic, String subTopic, TriConsumer<Integer, String, T> consumer, Runnable andThen) {
+        EntryStream.of(items).forKeyValue((idx, knob) -> {
+            var topic = StringUtils.joinWith("/", baseTopic, subTopic + idx);
+            subscribeTo(topic, payload -> consumer.accept(idx, payload, knob), andThen);
+        });
+    }
+
+    private void subscribeTo(String topic, Consumer<String> consumer, Runnable andThen) {
+        mqttClient.toAsync().subscribeWith()
+                  .topicFilter(topic)
+                  .callback(publish -> {
+                      consumer.accept(new String(publish.getPayloadAsBytes()));
+                      andThen.run();
+                  })
+                  .send();
     }
 
     private void writeLighting(Device device, LightingConfig lighting) {
         var mqttSettings = saveService.get().getMqtt();
         var topic = StringUtils.joinWith("/", mqttSettings.baseTopic(), device.getSerialNumber(), "lighting");
 
-        sendColors(lighting.getKnobConfigs(), topic, "knob", SingleKnobLightingConfig::getColor1, lighting.getGlobalBrightness());
-        sendColors(lighting.getSliderConfigs(), topic, "slider", SingleSliderLightingConfig::getColor1, lighting.getGlobalBrightness());
-        sendColors(lighting.getSliderLabelConfigs(), topic, "label", SingleSliderLabelLightingConfig::getColor, lighting.getGlobalBrightness());
-        sendMqtt(StringUtils.joinWith("/", topic, "logo"), toColorString(lighting.getLogoConfig().getColor(), lighting.getGlobalBrightness()));
+        sendMqtt(StringUtils.joinWith("/", topic, "brightness"), String.valueOf(lighting.getGlobalBrightness()).getBytes());
+        sendColors(lighting.getKnobConfigs(), topic, "knob", SingleKnobLightingConfig::getColor1);
+        sendColors(lighting.getSliderConfigs(), topic, "slider", SingleSliderLightingConfig::getColor1);
+        sendColors(lighting.getSliderLabelConfigs(), topic, "label", SingleSliderLabelLightingConfig::getColor);
+        if (lighting.getLogoConfig() != null) {
+            sendMqtt(StringUtils.joinWith("/", topic, "logo"), toColorString(lighting.getLogoConfig().getColor()));
+        }
     }
 
-    private <T> void sendColors(T[] items, String baseTopic, String topic, Function<T, String> colorMapper, int brightness) {
+    private <T> void sendColors(T[] items, String baseTopic, String topic, Function<T, String> colorMapper) {
         EntryStream.of(items).forKeyValue((idx, knob) -> {
             var sliderTopic = StringUtils.joinWith("/", baseTopic, topic + idx);
-            sendMqtt(sliderTopic, toColorString(colorMapper.apply(knob), brightness));
+            sendMqtt(sliderTopic, toColorString(colorMapper.apply(knob)));
         });
     }
 
-    private byte[] toColorString(String color, int globalBrightness) {
+    private byte[] toColorString(String color) {
         return (color == null ? "000000" : color).getBytes();
     }
 

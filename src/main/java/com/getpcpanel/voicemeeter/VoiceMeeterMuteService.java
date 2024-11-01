@@ -9,7 +9,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import com.getpcpanel.ui.LightningChangedToDefaultEvent;
+import com.getpcpanel.ui.LightingChangedToDefaultEvent;
 import com.getpcpanel.voicemeeter.Voicemeeter.ButtonType;
 import com.getpcpanel.voicemeeter.Voicemeeter.ControlType;
 
@@ -22,7 +22,7 @@ public class VoiceMeeterMuteService {
     private final ApplicationEventPublisher eventPublisher;
     private final Map<ControlType, Map<Integer, Map<ButtonType, Boolean>>> toggleMap = new EnumMap<>(ControlType.class);
 
-    @EventListener(LightningChangedToDefaultEvent.class)
+    @EventListener(LightingChangedToDefaultEvent.class)
     public void resetMuteStates() {
         toggleMap.clear();
         if (voiceMeeter.login()) {
