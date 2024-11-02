@@ -28,6 +28,7 @@ import com.getpcpanel.profile.SingleKnobLightingConfig;
 import com.getpcpanel.profile.SingleSliderLabelLightingConfig;
 import com.getpcpanel.profile.SingleSliderLightingConfig;
 
+import javafx.scene.paint.Color;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.EntryStream;
@@ -63,8 +64,15 @@ public class MqttDeviceService {
         deviceHolder.all().forEach(this::initialize);
     }
 
+    public void clear() {
+        deviceHolder.all().forEach(this::clear);
+    }
+
     @EventListener
     public void deviceConnected(DeviceFullyConnectedEvent event) {
+        if (!mqtt.isConnected()) {
+            return;
+        }
         initialize(event.device());
     }
 
@@ -103,23 +111,38 @@ public class MqttDeviceService {
         }
     }
 
+    private void clear(Device device) {
+        var baseTopic = mqttTopicHelper.baseTopicFilter();
+        mqtt.removeAll(baseTopic);
+        mqttHomeAssistantHelper.clearAll(saveService.get().getMqtt());
+    }
+
     private void buildSubscriptions(Device device, LightingConfig lighting) {
         var topicHelper = mqttTopicHelper.device(device.getSerialNumber());
         Runnable andThen = () -> device.setLighting(lighting, true);
 
         subscribeTo(topicHelper.valueTopic(brightness, 0), payload -> lighting.setGlobalBrightness(NumberUtils.toInt(payload, 100)), andThen);
-        subscribeTo(lighting.getKnobConfigs(), topicHelper, knob, (idx, payload, knob) -> knob.setColor1(payload), andThen);
-        subscribeTo(lighting.getSliderConfigs(), topicHelper, slider, (idx, payload, knob) -> knob.setColor1(payload), andThen);
-        subscribeTo(lighting.getSliderLabelConfigs(), topicHelper, label, (idx, payload, knob) -> knob.setColor(payload), andThen);
+        subscribeToColor(lighting.getKnobConfigs(), topicHelper, knob, (idx, payload, knob) -> knob.setColor1(payload), andThen);
+        subscribeToColor(lighting.getSliderConfigs(), topicHelper, slider, (idx, payload, knob) -> knob.setColor1(payload), andThen);
+        subscribeToColor(lighting.getSliderLabelConfigs(), topicHelper, label, (idx, payload, knob) -> knob.setColor(payload), andThen);
         if (lighting.getLogoConfig() != null) {
-            subscribeTo(topicHelper.lightTopic(logo, 0), payload -> lighting.getLogoConfig().setColor(payload), andThen);
+            subscribeTo(topicHelper.lightTopic(logo, 0), payload -> ifValidColor(payload, () -> lighting.getLogoConfig().setColor(payload)), andThen);
         }
     }
 
-    private <T> void subscribeTo(T[] items, DeviceMqttTopicHelper topicHelper, ColorType type, TriConsumer<Integer, String, T> consumer, Runnable andThen) {
+    private void ifValidColor(String color, Runnable toRun) {
+        try {
+            Color.valueOf(color);
+            toRun.run();
+        } catch (Exception e) {
+            log.debug("Invalid color: {}", color);
+        }
+    }
+
+    private <T> void subscribeToColor(T[] items, DeviceMqttTopicHelper topicHelper, ColorType type, TriConsumer<Integer, String, T> consumer, Runnable andThen) {
         EntryStream.of(items).forKeyValue((idx, knob) -> {
             var topic = topicHelper.lightTopic(type, idx);
-            subscribeTo(topic, payload -> consumer.accept(idx, payload, knob), andThen);
+            subscribeTo(topic, payload -> ifValidColor(payload, () -> consumer.accept(idx, payload, knob)), andThen);
         });
     }
 

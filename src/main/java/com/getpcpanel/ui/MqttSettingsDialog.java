@@ -5,10 +5,12 @@ import javax.annotation.Nonnull;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.stereotype.Component;
 
+import com.getpcpanel.mqtt.MqttDeviceService;
 import com.getpcpanel.profile.MqttSettings;
 import com.getpcpanel.profile.Save;
 import com.getpcpanel.spring.Prototype;
 
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
@@ -18,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 @Prototype
 @RequiredArgsConstructor
 public class MqttSettingsDialog {
+    private final MqttDeviceService mqttDeviceService;
     @FXML private CheckBox enabled;
     @FXML private TextField host;
     @FXML private TextField port;
@@ -60,5 +63,9 @@ public class MqttSettingsDialog {
         baseTopic.setText(settings.baseTopic());
         enableHomeAssistantDiscovery.setSelected(settings.homeAssistantDiscovery());
         homeAssistantBaseTopic.setText(settings.homeAssistantBaseTopic());
+    }
+
+    public void clearCurrentTopics(ActionEvent actionEvent) {
+        mqttDeviceService.clear();
     }
 }

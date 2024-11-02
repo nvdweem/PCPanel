@@ -22,6 +22,11 @@ public class MqttHomeAssistantHelper {
     private final MqttService mqttService;
     @Value("${application.version}") private String version;
 
+    public void clearAll(MqttSettings settings) {
+        var topic = StringUtils.joinWith("/", settings.homeAssistantBaseTopic(), "+", "pcpanel", "#");
+        mqttService.removeAll(topic);
+    }
+
     public void discover(MqttSettings settings, Device device) {
         var haDevice = new HomeAssistantDevice(
                 version,
@@ -57,7 +62,7 @@ public class MqttHomeAssistantHelper {
     }
 
     private void addControlLightConfig(MqttSettings settings, Device device, HomeAssistantDevice haDevice, int i, MqttTopicHelper.ColorType type, int idx) {
-        var controlConfigTopic = configTopicFor(settings, device, "light", "control", i);
+        var controlConfigTopic = lightTopicFor(settings, device, "control_" + i);
         var controlValueTopic = topicHelper.lightTopic(device.getSerialNumber(), type, idx);
 
         var config = new HomeAssistantLightConfig(
@@ -159,7 +164,7 @@ public class MqttHomeAssistantHelper {
         return StringUtils.joinWith("/",
                 settings.homeAssistantBaseTopic(),
                 domain,
-                device.getSerialNumber().toLowerCase(),
+                "pcpanel",
                 device.getSerialNumber().toLowerCase() + "_" + type + "_" + idx,
                 "config"
         );
@@ -169,8 +174,8 @@ public class MqttHomeAssistantHelper {
         return StringUtils.joinWith("/",
                 settings.homeAssistantBaseTopic(),
                 "light",
+                "pcpanel",
                 device.getSerialNumber().toLowerCase() + "_" + name,
-                "light",
                 "config"
         );
     }

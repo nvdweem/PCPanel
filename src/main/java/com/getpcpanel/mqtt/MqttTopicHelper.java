@@ -19,6 +19,11 @@ class MqttTopicHelper {
         return new DeviceMqttTopicHelper(deviceSerial);
     }
 
+    public String baseTopicFilter() {
+        var mqttSettings = getSettings();
+        return StringUtils.joinWith("/", mqttSettings.baseTopic(), "#");
+    }
+
     public String valueTopic(String deviceSerial, ValueType type, int index) {
         var mqttSettings = getSettings();
         return StringUtils.joinWith("/", mqttSettings.baseTopic(), deviceSerial, "values", type.name() + index);

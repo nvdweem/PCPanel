@@ -1,11 +1,14 @@
 package com.getpcpanel.mqtt;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
@@ -18,7 +21,9 @@ import com.getpcpanel.profile.MqttSettings;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.util.Debouncer;
 import com.hivemq.client.mqtt.MqttClient;
+import com.hivemq.client.mqtt.MqttGlobalPublishFilter;
 import com.hivemq.client.mqtt.mqtt5.Mqtt5Client;
+import com.hivemq.client.mqtt.mqtt5.message.publish.Mqtt5Publish;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -70,6 +75,49 @@ public class MqttService {
         debouncer.debounce(new TopicKey(topic), send, 250, TimeUnit.MILLISECONDS);
     }
 
+    public void remove(String topic) {
+        log.debug("Clear topic: {}", topic);
+        mqttClient.toAsync().publishWith()
+                  .topic(topic)
+                  .payload((byte[]) null)
+                  .retain(true)
+                  .send();
+    }
+
+    public void removeAll(String topic) {
+        log.debug("Clear all topics: {}", topic);
+        var client = mqttClient.toBlocking();
+        var toRemove = new ArrayList<String>();
+
+        try (var publishes = client.publishes(MqttGlobalPublishFilter.SUBSCRIBED)) {
+            client.subscribeWith().topicFilter(topic).send();
+            Optional<Mqtt5Publish> entry;
+
+            do {
+                try {
+                    entry = publishes.receive(100, TimeUnit.MILLISECONDS);
+                    entry.ifPresent(mqtt5Publish -> toRemove.add(mqtt5Publish.getTopic().toString()));
+                } catch (InterruptedException e) {
+                    log.error("Failed to receive publish", e);
+                    break;
+                }
+            } while (entry.isPresent());
+
+            client.unsubscribeWith().topicFilter(topic).send();
+        }
+
+        var topicRegex = topicToRegex(topic);
+        toRemove.stream().filter(t -> topicRegex.matcher(t).matches()).forEach(this::remove);
+    }
+
+    private Pattern topicToRegex(String topic) {
+        return Pattern.compile(
+                topic.replace("/", "\\/")
+                     .replace("#", ".*")
+                     .replace("+", "[^/]+")
+        );
+    }
+
     @PostConstruct
     @EventListener(SaveService.SaveEvent.class)
     public void saveChanged() {
@@ -77,6 +125,7 @@ public class MqttService {
         if (mqttSettings == null || !mqttSettings.enabled()) {
             disconnect();
             eventPublisher.publishEvent(new MqttStatusEvent(false));
+            connectedSettings = MqttSettings.DEFAULT;
             return;
         }
         if (mqttSettings.equals(connectedSettings)) {
@@ -90,13 +139,16 @@ public class MqttService {
     }
 
     private void connect(MqttSettings mqttSettings) {
-        mqttClient = MqttClient.builder()
-                               .identifier(UUID.randomUUID().toString())
-                               .serverHost(mqttSettings.host())
-                               .serverPort(mqttSettings.port())
-                               .useMqttVersion5()
-                               .simpleAuth().username(mqttSettings.username()).password(mqttSettings.password().getBytes()).applySimpleAuth()
-                               .build();
+        var builder = MqttClient.builder()
+                                .identifier(UUID.randomUUID().toString())
+                                .serverHost(mqttSettings.host())
+                                .serverPort(mqttSettings.port())
+                                .useMqttVersion5()
+                                .simpleAuth().username(mqttSettings.username()).password(mqttSettings.password().getBytes()).applySimpleAuth();
+        if (mqttSettings.secure()) {
+            builder = builder.sslWithDefaultConfig();
+        }
+        mqttClient = builder.build();
         mqttClient.toBlocking().connect();
         log.info("Connected to MQTT server");
     }
