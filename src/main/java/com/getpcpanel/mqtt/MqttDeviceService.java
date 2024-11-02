@@ -160,7 +160,7 @@ public class MqttDeviceService {
         sendColors(lighting.getKnobConfigs(), mqttHelper, knob, SingleKnobLightingConfig::getColor1);
         sendColors(lighting.getSliderConfigs(), mqttHelper, slider, SingleSliderLightingConfig::getColor1);
         sendColors(lighting.getSliderLabelConfigs(), mqttHelper, label, SingleSliderLabelLightingConfig::getColor);
-        if (lighting.getLogoConfig() != null) {
+        if (device.getDeviceType().isHasLogoLed() && lighting.getLogoConfig() != null) {
             mqtt.send(mqttHelper.lightTopic(logo, 0), toColorString(lighting.getLogoConfig().getColor()), false);
         }
     }

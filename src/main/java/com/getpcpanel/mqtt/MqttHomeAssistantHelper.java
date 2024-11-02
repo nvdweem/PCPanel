@@ -132,6 +132,10 @@ public class MqttHomeAssistantHelper {
     }
 
     private void addLogoLight(MqttSettings settings, Device device, HomeAssistantDevice haDevice) {
+        if (!device.getDeviceType().isHasLogoLed()) {
+            return;
+        }
+
         var configTopic = lightTopicFor(settings, device, "logo");
         var valueTopic = topicHelper.lightTopic(device.getSerialNumber(), MqttTopicHelper.ColorType.logo, 0);
 
