@@ -26,6 +26,7 @@ public class MqttSettingsDialog {
     @FXML private CheckBox secure;
     @FXML private TextField baseTopic;
     @FXML private CheckBox enableHomeAssistantDiscovery;
+    @FXML private TextField homeAssistantBaseTopic;
 
     public void save(Save save) {
         save.setMqtt(new MqttSettings(
@@ -36,7 +37,8 @@ public class MqttSettingsDialog {
                 password.getText(),
                 secure.isSelected(),
                 baseTopic.getText(),
-                enableHomeAssistantDiscovery.isSelected()
+                enableHomeAssistantDiscovery.isSelected(),
+                homeAssistantBaseTopic.getText()
         ));
     }
 
@@ -44,7 +46,7 @@ public class MqttSettingsDialog {
         if (save.getMqtt() != null) {
             populate(save.getMqtt());
         } else {
-            populate(new MqttSettings(false, "", 1883, "", "", false, "buttonplus", true));
+            populate(MqttSettings.DEFAULT);
         }
     }
 

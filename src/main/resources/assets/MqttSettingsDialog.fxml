@@ -65,6 +65,9 @@
             <TextField fx:id="baseTopic" prefHeight="25.0" prefWidth="331.0" promptText="pcpanel" GridPane.columnIndex="1" GridPane.rowIndex="6"/>
 
             <CheckBox fx:id="enableHomeAssistantDiscovery" mnemonicParsing="false" text="Enable Home Assistant discovery" GridPane.columnSpan="2" GridPane.rowIndex="7"/>
+
+            <Label text="Home Assistant base topic" GridPane.rowIndex="8"/>
+            <TextField fx:id="homeAssistantBaseTopic" prefHeight="25.0" prefWidth="331.0" promptText="homeassistant" GridPane.columnIndex="1" GridPane.rowIndex="8"/>
         </children>
     </GridPane>
 
