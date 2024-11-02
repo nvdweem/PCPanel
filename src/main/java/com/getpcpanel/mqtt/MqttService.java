@@ -39,20 +39,20 @@ public class MqttService {
         return mqttClient != null && mqttClient.getState().isConnected();
     }
 
-    public void send(String topic, Object payload) {
+    public void send(String topic, Object payload, boolean immediate) {
         if (Objects.requireNonNull(payload) instanceof String s) {
-            send(topic, s.getBytes());
+            send(topic, s.getBytes(), immediate);
         } else {
             try {
-                send(topic, objectMapper.writeValueAsBytes(payload));
+                send(topic, objectMapper.writeValueAsBytes(payload), immediate);
             } catch (Exception e) {
                 log.error("Failed to serialize payload", e);
             }
         }
     }
 
-    public void send(String topic, byte[] payload) {
-        debouncer.debounce(new TopicKey(topic), () -> {
+    public void send(String topic, byte[] payload, boolean immediate) {
+        Runnable send = () -> {
             if (log.isDebugEnabled()) {
                 log.debug("Sending to {}: {}", topic, new String(payload));
             }
@@ -61,7 +61,13 @@ public class MqttService {
                       .payload(payload)
                       .retain(true)
                       .send();
-        }, 250, TimeUnit.MILLISECONDS);
+        };
+
+        if (immediate) {
+            send.run();
+            return;
+        }
+        debouncer.debounce(new TopicKey(topic), send, 250, TimeUnit.MILLISECONDS);
     }
 
     @PostConstruct

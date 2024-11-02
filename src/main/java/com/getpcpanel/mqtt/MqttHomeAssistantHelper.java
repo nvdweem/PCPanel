@@ -67,7 +67,7 @@ public class MqttHomeAssistantHelper {
                 controlValueTopic,
                 "mdi:lightbulb"
         );
-        mqttService.send(controlConfigTopic, config);
+        mqttService.send(controlConfigTopic, config, false);
     }
 
     private void addSliderLabelLightConfig(MqttSettings settings, Device device, HomeAssistantDevice haDevice, int i, int idx, MqttTopicHelper.ColorType type) {
@@ -81,7 +81,7 @@ public class MqttHomeAssistantHelper {
                 labelValueTopic,
                 "mdi:lightbulb"
         );
-        mqttService.send(labelConfigTopic, labelConfig);
+        mqttService.send(labelConfigTopic, labelConfig, false);
     }
 
     private void addAnalogValueConfigs(MqttSettings settings, Device device, HomeAssistantDevice haDevice) {
@@ -102,7 +102,7 @@ public class MqttHomeAssistantHelper {
                     "analog_" + i,
                     device.getSerialNumber() + "_analog_" + i,
                     true);
-            mqttService.send(configTopic, config);
+            mqttService.send(configTopic, config, false);
         }
     }
 
@@ -123,7 +123,7 @@ public class MqttHomeAssistantHelper {
                 "brightness",
                 device.getSerialNumber() + "_brightness",
                 true);
-        mqttService.send(configTopic, config);
+        mqttService.send(configTopic, config, false);
     }
 
     private void addLogoLight(MqttSettings settings, Device device, HomeAssistantDevice haDevice) {
@@ -137,7 +137,7 @@ public class MqttHomeAssistantHelper {
                 valueTopic,
                 "mdi:lightbulb"
         );
-        mqttService.send(configTopic, config);
+        mqttService.send(configTopic, config, false);
     }
 
     private void addButtons(MqttSettings settings, Device device, HomeAssistantDevice haDevice) {
@@ -151,7 +151,7 @@ public class MqttHomeAssistantHelper {
                     "Button " + (i + 1),
                     device.getSerialNumber() + "_button_" + i
             );
-            mqttService.send(configTopic, config);
+            mqttService.send(configTopic, config, false);
         }
     }
 

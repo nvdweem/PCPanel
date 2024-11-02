@@ -76,15 +76,15 @@ public class MqttDeviceService {
 
         saveService.getProfile(dial.serialNum()).ifPresent(profile -> {
             var topic = mqttTopicHelper.valueTopic(dial.serialNum(), analog, dial.knob());
-            mqtt.send(topic, String.valueOf(dial.value()));
+            mqtt.send(topic, String.valueOf(dial.value()), false);
         });
     }
 
     @EventListener
-    public void dialAction(DeviceCommunicationHandler.ButtonPressEvent btn) {
+    public void buttonPress(DeviceCommunicationHandler.ButtonPressEvent btn) {
         saveService.getProfile(btn.serialNum()).ifPresent(profile -> {
             var topic = mqttTopicHelper.actionTopic(btn.serialNum(), button, btn.button());
-            mqtt.send(topic, btn.pressed() ? "click" : "release");
+            mqtt.send(topic, btn.pressed() ? "click" : "release", true);
         });
     }
 
@@ -133,19 +133,19 @@ public class MqttDeviceService {
     private void writeLighting(Device device, LightingConfig lighting) {
         var mqttHelper = mqttTopicHelper.device(device.getSerialNumber());
 
-        mqtt.send(mqttHelper.valueTopic(brightness, 0), String.valueOf(lighting.getGlobalBrightness()));
+        mqtt.send(mqttHelper.valueTopic(brightness, 0), String.valueOf(lighting.getGlobalBrightness()), false);
         sendColors(lighting.getKnobConfigs(), mqttHelper, knob, SingleKnobLightingConfig::getColor1);
         sendColors(lighting.getSliderConfigs(), mqttHelper, slider, SingleSliderLightingConfig::getColor1);
         sendColors(lighting.getSliderLabelConfigs(), mqttHelper, label, SingleSliderLabelLightingConfig::getColor);
         if (lighting.getLogoConfig() != null) {
-            mqtt.send(mqttHelper.lightTopic(logo, 0), toColorString(lighting.getLogoConfig().getColor()));
+            mqtt.send(mqttHelper.lightTopic(logo, 0), toColorString(lighting.getLogoConfig().getColor()), false);
         }
     }
 
     private <T> void sendColors(T[] items, DeviceMqttTopicHelper mqttHelper, ColorType colorType, Function<T, String> colorMapper) {
         EntryStream.of(items).forKeyValue((idx, knob) -> {
             var sliderTopic = mqttHelper.lightTopic(colorType, idx);
-            mqtt.send(sliderTopic, toColorString(colorMapper.apply(knob)));
+            mqtt.send(sliderTopic, toColorString(colorMapper.apply(knob)), false);
         });
     }
 
