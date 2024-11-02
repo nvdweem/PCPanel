@@ -59,5 +59,6 @@ public class MqttSettingsDialog {
         secure.setSelected(settings.secure());
         baseTopic.setText(settings.baseTopic());
         enableHomeAssistantDiscovery.setSelected(settings.homeAssistantDiscovery());
+        homeAssistantBaseTopic.setText(settings.homeAssistantBaseTopic());
     }
 }
