@@ -3,6 +3,7 @@ package com.getpcpanel.mqtt;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.getpcpanel.profile.MqttSettings;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.util.Debouncer;
 import com.hivemq.client.mqtt.MqttClient;
 import com.hivemq.client.mqtt.mqtt5.Mqtt5Client;
 
@@ -29,6 +31,7 @@ public class MqttService {
     private final SaveService saveService;
     private final ApplicationEventPublisher eventPublisher;
     private final ObjectMapper objectMapper;
+    private final Debouncer debouncer;
     private MqttSettings connectedSettings;
     @Nullable private Mqtt5Client mqttClient;
 
@@ -49,14 +52,16 @@ public class MqttService {
     }
 
     public void send(String topic, byte[] payload) {
-        if (log.isDebugEnabled()) {
-            log.debug("Sending to {}: {}", topic, new String(payload));
-        }
-        mqttClient.toAsync().publishWith()
-                  .topic(topic)
-                  .payload(payload)
-                  .retain(true)
-                  .send();
+        debouncer.debounce(new TopicKey(topic), () -> {
+            if (log.isDebugEnabled()) {
+                log.debug("Sending to {}: {}", topic, new String(payload));
+            }
+            mqttClient.toAsync().publishWith()
+                      .topic(topic)
+                      .payload(payload)
+                      .retain(true)
+                      .send();
+        }, 250, TimeUnit.MILLISECONDS);
     }
 
     @PostConstruct
@@ -117,5 +122,8 @@ public class MqttService {
                   .topicFilter(topic)
                   .callback(publish -> consumer.accept(converter.apply(publish.getPayloadAsBytes())))
                   .send();
+    }
+
+    private record TopicKey(String topic) {
     }
 }
