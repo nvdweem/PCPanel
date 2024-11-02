@@ -19,6 +19,8 @@ A backup will be made when converting. If you want to downgrade to a previous ve
 - #59 - Additional overlay options (colors, rounding, size and position)
 - #45 - Voicemeeter string values are now supported for advanced button actions
 - #67 - It's now possible to add a 'dead-zone' (move-start/end) to the dials and sliders which allows better control of multiple items at the same time
+- #69 - It's now possible to connect to mqtt. This is a two-way connection for the led's
+- #69 - The mqtt option also allows Home Assistant auto-discovery
 
 **Fixes:**
 
