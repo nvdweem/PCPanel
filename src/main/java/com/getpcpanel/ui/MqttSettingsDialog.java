@@ -14,6 +14,8 @@ import com.getpcpanel.spring.Prototype;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
 import lombok.RequiredArgsConstructor;
@@ -70,6 +72,8 @@ public class MqttSettingsDialog {
     }
 
     public void clearCurrentTopics(ActionEvent actionEvent) {
-        mqttDeviceService.clear();
+        if (!mqttDeviceService.clear()) {
+            new Alert(Alert.AlertType.WARNING, "You must be connected to clear the mqtt broker", ButtonType.OK).show();
+        }
     }
 }

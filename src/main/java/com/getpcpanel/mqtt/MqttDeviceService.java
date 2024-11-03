@@ -79,8 +79,12 @@ public class MqttDeviceService implements IOverrideColorProviderProvider {
         deviceHolder.all().forEach(this::initialize);
     }
 
-    public void clear() {
-        deviceHolder.all().forEach(this::clear);
+    public boolean clear() {
+        if (mqtt.isConnected()) {
+            deviceHolder.all().forEach(this::clear);
+            return true;
+        }
+        return false;
     }
 
     @EventListener
