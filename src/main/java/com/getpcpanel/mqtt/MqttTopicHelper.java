@@ -57,7 +57,7 @@ class MqttTopicHelper {
     }
 
     enum ColorType {
-        knob,
+        dial,
         slider,
         label,
         logo,

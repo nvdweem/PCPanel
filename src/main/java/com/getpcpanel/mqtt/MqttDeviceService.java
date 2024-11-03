@@ -1,7 +1,7 @@
 package com.getpcpanel.mqtt;
 
 import static com.getpcpanel.mqtt.MqttTopicHelper.ActionType.button;
-import static com.getpcpanel.mqtt.MqttTopicHelper.ColorType.knob;
+import static com.getpcpanel.mqtt.MqttTopicHelper.ColorType.dial;
 import static com.getpcpanel.mqtt.MqttTopicHelper.ColorType.label;
 import static com.getpcpanel.mqtt.MqttTopicHelper.ColorType.logo;
 import static com.getpcpanel.mqtt.MqttTopicHelper.ColorType.slider;
@@ -144,7 +144,7 @@ public class MqttDeviceService implements IOverrideColorProviderProvider {
                 colorOverrideHolder.setLogoOverride(device.getSerialNumber(), new SingleLogoLightingConfig().setMode(SINGLE_LOGO_MODE.STATIC).setColor(payload));
 
         subscribeTo(topicHelper.valueTopic(brightness, 0), payload -> lighting.setGlobalBrightness(NumberUtils.toInt(payload, 100)), andThen);
-        subscribeToColor(lighting.getKnobConfigs(), topicHelper, knob, knobOverride, andThen);
+        subscribeToColor(lighting.getKnobConfigs(), topicHelper, dial, knobOverride, andThen);
         subscribeToColor(lighting.getSliderConfigs(), topicHelper, slider, sliderOverride, andThen);
         subscribeToColor(lighting.getSliderLabelConfigs(), topicHelper, label, sliderLabelOverride, andThen);
         if (lighting.getLogoConfig() != null) {
@@ -181,7 +181,7 @@ public class MqttDeviceService implements IOverrideColorProviderProvider {
         var mqttHelper = mqttTopicHelper.device(device.getSerialNumber());
 
         mqtt.send(mqttHelper.valueTopic(brightness, 0), String.valueOf(lighting.getGlobalBrightness()), false);
-        sendColors(lighting.getKnobConfigs(), mqttHelper, knob, SingleKnobLightingConfig::getColor1);
+        sendColors(lighting.getKnobConfigs(), mqttHelper, dial, SingleKnobLightingConfig::getColor1);
         sendColors(lighting.getSliderConfigs(), mqttHelper, slider, SingleSliderLightingConfig::getColor1);
         sendColors(lighting.getSliderLabelConfigs(), mqttHelper, label, SingleSliderLabelLightingConfig::getColor);
         if (device.getDeviceType().isHasLogoLed() && lighting.getLogoConfig() != null) {

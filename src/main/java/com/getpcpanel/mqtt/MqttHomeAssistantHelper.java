@@ -46,7 +46,7 @@ public class MqttHomeAssistantHelper {
     private void addControlLights(MqttSettings settings, Device device, HomeAssistantDevice haDevice, @Nullable HomeAssistantAvailability availability) {
         for (var i = 0; i < device.getDeviceType().getAnalogCount(); i++) {
             var buttonCount = device.getDeviceType().getButtonCount();
-            var type = i < buttonCount ? MqttTopicHelper.ColorType.knob : MqttTopicHelper.ColorType.slider;
+            var type = i < buttonCount ? MqttTopicHelper.ColorType.dial : MqttTopicHelper.ColorType.slider;
             var idx = i < buttonCount ? i : i - buttonCount;
 
             addControlLightConfig(settings, device, haDevice, availability, i, type, idx);
@@ -182,7 +182,7 @@ public class MqttHomeAssistantHelper {
     private String determineAnalogName(Device device, int i) {
         var buttonCount = device.getDeviceType().getButtonCount();
         if (i < buttonCount) {
-            return "Button " + (i + 1);
+            return "Dial " + (i + 1);
         }
         return "Slider " + (i - buttonCount + 1);
     }
