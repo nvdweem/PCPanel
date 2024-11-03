@@ -20,6 +20,7 @@ import com.getpcpanel.profile.SingleSliderLightingConfig.SINGLE_SLIDER_MODE;
 import com.getpcpanel.ui.FxHelper;
 import com.getpcpanel.ui.HomePage;
 import com.getpcpanel.util.Util;
+import com.getpcpanel.util.coloroverride.OverrideColorService;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -43,6 +44,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class PCPanelProUI extends Device {
     private final InputInterpreter inputInterpreter;
+    private final OverrideColorService overrideColorService;
 
     public static final int KNOB_COUNT = 5;
     public static final int SLIDER_COUNT = 4;
@@ -80,9 +82,11 @@ public class PCPanelProUI extends Device {
     private final int[] analogValue = new int[9];
     private final Pane[] sliderHolders = new Pane[4];
 
-    public PCPanelProUI(FxHelper fxHelper, InputInterpreter inputInterpreter, SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, ApplicationEventPublisher eventPublisher, String serialNum, DeviceSave deviceSave) {
+    public PCPanelProUI(FxHelper fxHelper, InputInterpreter inputInterpreter, SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, ApplicationEventPublisher eventPublisher, OverrideColorService overrideColorService,
+            String serialNum, DeviceSave deviceSave) {
         super(fxHelper, saveService, outputInterpreter, iconService, eventPublisher, serialNum, deviceSave);
         this.inputInterpreter = inputInterpreter;
+        this.overrideColorService = overrideColorService;
         var loader = getFxHelper().getLoader(getClass().getResource("/assets/PCPanelPro/PCPanelPro.fxml"));
         loader.setController(this);
         try {
@@ -316,9 +320,8 @@ public class PCPanelProUI extends Device {
             var knobConfigs = config.getKnobConfigs();
             var sliderLabelConfigs = config.getSliderLabelConfigs();
             var sliderConfigs = config.getSliderConfigs();
-            var logoConfig = config.getLogoConfig();
             for (var i = 0; i < KNOB_COUNT; i++) {
-                var knobConfig = knobConfigs[i];
+                var knobConfig = overrideColorService.getDialOverride(serialNumber, i).orElse(knobConfigs[i]);
                 if (knobConfig.getMode() == SINGLE_KNOB_MODE.STATIC) {
                     knobColors[i].setFill(Paint.valueOf(knobConfig.getColor1()));
                 } else if (knobConfig.getMode() == SINGLE_KNOB_MODE.VOLUME_GRADIENT) {
@@ -328,12 +331,12 @@ public class PCPanelProUI extends Device {
                 }
             }
             for (var i = 0; i < SLIDER_COUNT; i++) {
-                var sliderLabelConfig = sliderLabelConfigs[i];
+                var sliderLabelConfig = overrideColorService.getSliderLabelOverride(serialNumber, i).orElse(sliderLabelConfigs[i]);
                 if (sliderLabelConfig.getMode() == SINGLE_SLIDER_LABEL_MODE.STATIC)
                     sliderLabels[i].setFill(Paint.valueOf(sliderLabelConfig.getColor()));
             }
             for (var i = 0; i < SLIDER_COUNT; i++) {
-                var sliderConfig = sliderConfigs[i];
+                var sliderConfig = overrideColorService.getSliderOverride(serialNumber, i).orElse(sliderConfigs[i]);
                 if (sliderConfig.getMode() == SINGLE_SLIDER_MODE.STATIC) {
                     for (var n : sliderLightPanes[i].getChildren())
                         ((SVGPath) n).setFill(Paint.valueOf(sliderConfig.getColor1()));
@@ -361,6 +364,8 @@ public class PCPanelProUI extends Device {
                     }
                 }
             }
+
+            var logoConfig = overrideColorService.getLogoOverride(serialNumber).orElse(config.getLogoConfig());
             if (logoConfig.getMode() == SINGLE_LOGO_MODE.STATIC) {
                 logoLight.setFill(Paint.valueOf(logoConfig.getColor()));
             } else if (logoConfig.getMode() == SINGLE_LOGO_MODE.RAINBOW) {

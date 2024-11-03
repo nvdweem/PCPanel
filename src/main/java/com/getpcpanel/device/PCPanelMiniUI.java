@@ -13,10 +13,12 @@ import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.LightingConfig;
 import com.getpcpanel.profile.LightingConfig.LightingMode;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.profile.SingleKnobLightingConfig;
 import com.getpcpanel.profile.SingleKnobLightingConfig.SINGLE_KNOB_MODE;
 import com.getpcpanel.ui.FxHelper;
 import com.getpcpanel.ui.HomePage;
 import com.getpcpanel.util.Util;
+import com.getpcpanel.util.coloroverride.OverrideColorService;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -39,6 +41,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class PCPanelMiniUI extends Device {
     private final InputInterpreter inputInterpreter;
+    private final OverrideColorService overrideColorService;
 
     public static final int KNOB_COUNT = 4;
     private static final double MAX_ANALOG_VALUE = 100;
@@ -52,9 +55,11 @@ public class PCPanelMiniUI extends Device {
     private static final Image previewImage = new Image(Objects.requireNonNull(PCPanelMiniUI.class.getResource("/assets/PCPanelMini/preview.png")).toExternalForm());
     private Stage childDialogStage;
 
-    public PCPanelMiniUI(FxHelper fxHelper, InputInterpreter inputInterpreter, SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, ApplicationEventPublisher eventPublisher, String serialNum, DeviceSave deviceSave) {
+    public PCPanelMiniUI(FxHelper fxHelper, InputInterpreter inputInterpreter, SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, ApplicationEventPublisher eventPublisher, OverrideColorService overrideColorService,
+            String serialNum, DeviceSave deviceSave) {
         super(fxHelper, saveService, outputInterpreter, iconService, eventPublisher, serialNum, deviceSave);
         this.inputInterpreter = inputInterpreter;
+        this.overrideColorService = overrideColorService;
         var loader = getFxHelper().getLoader(getClass().getResource("/assets/PCPanelMini/PCPanelMini.fxml"));
         loader.setController(this);
         try {
@@ -233,8 +238,10 @@ public class PCPanelMiniUI extends Device {
         if (mode == LightingMode.ALL_COLOR) {
             setAllKnobUIColor(Color.valueOf(config.getAllColor()));
         } else if (mode == LightingMode.SINGLE_COLOR) {
-            for (var i = 0; i < getKnobCount(); i++)
-                setKnobUIColorHex(i, config.getIndividualColors()[i]);
+            for (var i = 0; i < getKnobCount(); i++) {
+                var color = overrideColorService.getDialOverride(serialNumber, i).map(SingleKnobLightingConfig::getColor1).orElse(config.getIndividualColors()[i]);
+                setKnobUIColorHex(i, color);
+            }
         } else if (mode == LightingMode.ALL_RAINBOW) {
             for (var i = 0; i < getKnobCount(); i++)
                 setKnobUIColor(i,
@@ -248,7 +255,7 @@ public class PCPanelMiniUI extends Device {
         } else {
             var knobConfigs = config.getKnobConfigs();
             for (var i = 0; i < KNOB_COUNT; i++) {
-                var knobConfig = knobConfigs[i];
+                var knobConfig = overrideColorService.getDialOverride(serialNumber, i).orElse(knobConfigs[i]);
                 if (knobConfig.getMode() == SINGLE_KNOB_MODE.STATIC) {
                     setKnobUIColorHex(i, knobConfig.getColor1());
                 } else if (knobConfig.getMode() == SINGLE_KNOB_MODE.VOLUME_GRADIENT) {

@@ -13,9 +13,11 @@ import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.LightingConfig;
 import com.getpcpanel.profile.LightingConfig.LightingMode;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.profile.SingleKnobLightingConfig;
 import com.getpcpanel.ui.FxHelper;
 import com.getpcpanel.ui.HomePage;
 import com.getpcpanel.util.Util;
+import com.getpcpanel.util.coloroverride.OverrideColorService;
 
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -38,6 +40,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class PCPanelRGBUI extends Device {
     private final InputInterpreter inputInterpreter;
+    private final OverrideColorService overrideColorService;
 
     private static final int KNOB_COUNT = 4;
     @FXML private Pane lightPanes;
@@ -49,9 +52,11 @@ public class PCPanelRGBUI extends Device {
     private static final Image previewImage = new Image(Objects.requireNonNull(PCPanelRGBUI.class.getResource("/assets/PCPanelRGB/preview.png")).toExternalForm());
     private Stage childDialogStage;
 
-    public PCPanelRGBUI(FxHelper fxHelper, InputInterpreter inputInterpreter, SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, ApplicationEventPublisher eventPublisher, DeviceSave deviceSave, String serialNum) {
+    public PCPanelRGBUI(FxHelper fxHelper, InputInterpreter inputInterpreter, SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, ApplicationEventPublisher eventPublisher, OverrideColorService overrideColorService,
+            DeviceSave deviceSave, String serialNum) {
         super(fxHelper, saveService, outputInterpreter, iconService, eventPublisher, serialNum, deviceSave);
         this.inputInterpreter = inputInterpreter;
+        this.overrideColorService = overrideColorService;
         var loader = getFxHelper().getLoader(getClass().getResource("/assets/PCPanelRGB/PCPanelRGB.fxml"));
         loader.setController(this);
         try {
@@ -221,8 +226,10 @@ public class PCPanelRGBUI extends Device {
         if (mode == LightingMode.ALL_COLOR) {
             setAllKnobUIColor(Color.valueOf(config.getAllColor()));
         } else if (mode == LightingMode.SINGLE_COLOR) {
-            for (var i = 0; i < getKnobCount(); i++)
-                setKnobUIColorHex(i, config.getIndividualColors()[i]);
+            for (var i = 0; i < getKnobCount(); i++) {
+                var color = overrideColorService.getDialOverride(serialNumber, i).map(SingleKnobLightingConfig::getColor1).orElse(config.getIndividualColors()[i]);
+                setKnobUIColorHex(i, color);
+            }
         } else if (mode == LightingMode.ALL_RAINBOW) {
             for (var i = 0; i < getKnobCount(); i++)
                 setKnobUIColor(i,

@@ -29,8 +29,9 @@ public class SingleLogoLightingConfig {
     /**
      * Used by Jackson
      */
-    public void setColor(String color) {
+    public SingleLogoLightingConfig setColor(String color) {
         this.color = color;
+        return this;
     }
 }
 

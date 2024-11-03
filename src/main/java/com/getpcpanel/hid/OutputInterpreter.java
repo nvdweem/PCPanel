@@ -10,6 +10,7 @@ import com.getpcpanel.profile.SingleKnobLightingConfig;
 import com.getpcpanel.profile.SingleLogoLightingConfig;
 import com.getpcpanel.profile.SingleSliderLabelLightingConfig;
 import com.getpcpanel.profile.SingleSliderLightingConfig;
+import com.getpcpanel.util.coloroverride.OverrideColorService;
 
 import javafx.scene.paint.Color;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import lombok.extern.log4j.Log4j2;
 @RequiredArgsConstructor
 public final class OutputInterpreter {
     private final DeviceScanner deviceScanner;
+    private final OverrideColorService overrideColorService;
 
     private static final byte[] OUTPUT_CODE_INIT = { 1 };
     private static final byte ANIMATION_RAINBOW_HORIZONTAL = 1;
@@ -58,7 +60,8 @@ public final class OutputInterpreter {
 
         var data = new ByteWriter(brightness, 2 + 4 * colors.length + colors.length).append(2, 0);
         for (var color : colors) {
-            data.append(OUTPUT_CODE_RGB_RGB).append(Color.valueOf(color));
+            var toSend = overrideColorService.getDialOverride(deviceSerialNumber, 0).map(SingleKnobLightingConfig::getColor1).orElse(color);
+            data.append(OUTPUT_CODE_RGB_RGB).append(Color.valueOf(toSend));
         }
         for (var b : volumeTrack) {
             data.append(b ? 1 : 0);
@@ -90,7 +93,7 @@ public final class OutputInterpreter {
             case ALL_WAVE -> writeAllWave(handler, PREFIX_MINI, config);
             case ALL_BREATH -> writeAllBreath(handler, PREFIX_MINI, config);
             case CUSTOM -> {
-                var knobData = buildKnobData(PREFIX_MINI, config.getGlobalBrightness(), config.getKnobConfigs());
+                var knobData = buildKnobData(serialNumber, PREFIX_MINI, config.getGlobalBrightness(), config.getKnobConfigs());
                 handler.sendMessage(new byte[][] { knobData });
             }
         }
@@ -105,10 +108,10 @@ public final class OutputInterpreter {
             case ALL_WAVE -> writeAllWave(handler, PREFIX_PRO, config);
             case ALL_BREATH -> writeAllBreath(handler, PREFIX_PRO, config);
             case CUSTOM -> {
-                var knobData = buildKnobData(PREFIX_PRO, config.getGlobalBrightness(), config.getKnobConfigs());
-                var sliderLabelData = buildSliderLabelData(config.getGlobalBrightness(), config.getSliderLabelConfigs());
-                var sliderData = buildSliderData(config.getGlobalBrightness(), config.getSliderConfigs());
-                var logoData = buildLogoData(config.getGlobalBrightness(), config.getLogoConfig());
+                var knobData = buildKnobData(serialNumber, PREFIX_PRO, config.getGlobalBrightness(), config.getKnobConfigs());
+                var sliderLabelData = buildSliderLabelData(serialNumber, config.getGlobalBrightness(), config.getSliderLabelConfigs());
+                var sliderData = buildSliderData(serialNumber, config.getGlobalBrightness(), config.getSliderConfigs());
+                var logoData = buildLogoData(serialNumber, config.getGlobalBrightness(), config.getLogoConfig());
                 handler.sendMessage(knobData, sliderLabelData, sliderData, logoData);
             }
         }
@@ -153,9 +156,12 @@ public final class OutputInterpreter {
         handler.sendMessage(new byte[][] { data.get() });
     }
 
-    private byte[] buildKnobData(byte prefix, int brightness, SingleKnobLightingConfig[] knobConfigs) {
+    private byte[] buildKnobData(String deviceSerial, byte prefix, int brightness, SingleKnobLightingConfig[] knobConfigs) {
         var knobData = new ByteWriter(brightness).append(prefix, CUSTOM_KNOB);
-        for (var knobConfig : knobConfigs) {
+
+        for (var i = 0; i < knobConfigs.length; i++) {
+            var knobConfig = overrideColorService.getDialOverride(deviceSerial, i).orElse(knobConfigs[i]);
+
             knobData.mark();
             var ignored = switch (knobConfig.getMode()) {
                 case NONE -> knobData;
@@ -177,9 +183,11 @@ public final class OutputInterpreter {
         return knobData.get();
     }
 
-    private byte[] buildSliderLabelData(int brightness, SingleSliderLabelLightingConfig[] sliderLabelConfigs) {
+    private byte[] buildSliderLabelData(String deviceSerial, int brightness, SingleSliderLabelLightingConfig[] sliderLabelConfigs) {
         var sliderLabelData = new ByteWriter(brightness).append(PREFIX_PRO, CUSTOM_SLIDER_LABEL);
-        for (var sliderLabelConfig : sliderLabelConfigs) {
+
+        for (var i = 0; i < sliderLabelConfigs.length; i++) {
+            var sliderLabelConfig = overrideColorService.getSliderLabelOverride(deviceSerial, i).orElse(sliderLabelConfigs[i]);
             var ignored = switch (sliderLabelConfig.getMode()) {
                 case NONE -> sliderLabelData;
                 case STATIC -> {
@@ -194,9 +202,11 @@ public final class OutputInterpreter {
         return sliderLabelData.get();
     }
 
-    private byte[] buildSliderData(int brightness, SingleSliderLightingConfig[] sliderConfigs) {
+    private byte[] buildSliderData(String deviceSerial, int brightness, SingleSliderLightingConfig[] sliderConfigs) {
         var sliderData = new ByteWriter(brightness).append(PREFIX_PRO, CUSTOM_SLIDER);
-        for (var sliderConfig : sliderConfigs) {
+
+        for (var i = 0; i < sliderConfigs.length; i++) {
+            var sliderConfig = overrideColorService.getSliderOverride(deviceSerial, i).orElse(sliderConfigs[i]);
             sliderData.mark();
             var ignored = switch (sliderConfig.getMode()) {
                 case NONE -> sliderData;
@@ -218,7 +228,8 @@ public final class OutputInterpreter {
         return sliderData.get();
     }
 
-    private byte[] buildLogoData(int brightness, SingleLogoLightingConfig logoConfig) {
+    private byte[] buildLogoData(String deviceSerial, int brightness, SingleLogoLightingConfig config) {
+        var logoConfig = overrideColorService.getLogoOverride(deviceSerial).orElse(config);
         var logoData = new ByteWriter(brightness).append(PREFIX_PRO, CUSTOM_LOGO);
         var ignored = switch (logoConfig.getMode()) {
             case NONE -> logoConfig;
