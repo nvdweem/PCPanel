@@ -65,7 +65,7 @@ public class MqttHomeAssistantHelper {
                 StringUtils.capitalize(type.name()) + " " + (idx + 1) + " Light",
                 device.getSerialNumber() + "_" + type.name() + "_" + idx,
                 controlValueTopic,
-                "mdi:lightbulb"
+                determineAnalogIcon(device, i)
         );
         mqttService.send(controlConfigTopic, config, false);
     }
@@ -79,7 +79,7 @@ public class MqttHomeAssistantHelper {
                 StringUtils.capitalize(type.name()) + " " + (idx + 1) + " Label Light",
                 device.getSerialNumber() + "_label_" + idx,
                 labelValueTopic,
-                "mdi:lightbulb"
+                "mdi:label-variant"
         );
         mqttService.send(labelConfigTopic, labelConfig, false);
     }
@@ -131,7 +131,7 @@ public class MqttHomeAssistantHelper {
                 "Logo Light",
                 device.getSerialNumber() + "_logo",
                 valueTopic,
-                "mdi:lightbulb"
+                "mdi:information-variant-circle"
         );
         mqttService.send(configTopic, config, false);
     }
@@ -234,6 +234,7 @@ public class MqttHomeAssistantHelper {
             String red_template,
             String green_template,
             String blue_template,
+            String brightness_template,
             String state_template,
             String state_topic,
             List<String> supported_color_modes,
@@ -247,6 +248,7 @@ public class MqttHomeAssistantHelper {
                     "{{value[1:3] | int(0, 16)}}",
                     "{{value[3:5] | int(0, 16)}}",
                     "{{value[5:7] | int(0, 16)}}",
+                    "255",
                     "{{ 'on' if value != '#000000' else 'off' }}",
                     command_topic,
                     List.of("rgb"),
@@ -275,7 +277,7 @@ public class MqttHomeAssistantHelper {
         HomeAssistantButtonConfig(HomeAssistantDevice device, @Nullable HomeAssistantAvailability availability, String command_topic, String name, String object_id) {
             this(device, availability, command_topic, name, object_id, object_id,
                     "click",
-                    "mdi:toggle-switch",
+                    "mdi:knob",
                     "release",
                     "click");
         }
@@ -289,7 +291,8 @@ public class MqttHomeAssistantHelper {
                 "PCPanel Holdings, LLC",
                 device.getDeviceType().getNiceName(),
                 device.getSerialNumber(),
-                device.getSerialNumber()
+                device.getSerialNumber(),
+                "Office"
         );
     }
 
@@ -311,7 +314,8 @@ public class MqttHomeAssistantHelper {
             String manufacturer,
             String model,
             String name,
-            String serial_number
+            String serial_number,
+            String suggested_area
     ) {
     }
 
