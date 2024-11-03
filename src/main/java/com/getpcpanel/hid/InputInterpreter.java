@@ -74,7 +74,8 @@ public final class InputInterpreter {
         var shouldDblClick = hasDblClick && timeDiff < debounceTime;
 
         if (shouldDblClick) {
-            debouncer.prevent(clickId);
+            debouncer.debounce(clickId, () -> {
+            }, debounceTime, TimeUnit.MILLISECONDS);
             eventPublisher.publishEvent(new PCPanelControlEvent(clickId.serialNum(), clickId.button(), dblClick, false, null));
             lastClicks.remove(clickId);
             return;

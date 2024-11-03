@@ -72,7 +72,7 @@ public class MqttService {
             send.run();
             return;
         }
-        debouncer.debounce(new TopicKey(topic), send, 250, TimeUnit.MILLISECONDS);
+        debouncer.rateLimit(new TopicKey(topic), send, 250, TimeUnit.MILLISECONDS);
     }
 
     public void remove(String topic) {
