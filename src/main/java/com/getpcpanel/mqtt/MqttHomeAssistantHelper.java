@@ -278,7 +278,7 @@ public class MqttHomeAssistantHelper {
     }
 
     record HomeAssistantDevice(
-            String hw_version,
+            String sw_version,
             List<String> identifiers,
             String manufacturer,
             String model,
