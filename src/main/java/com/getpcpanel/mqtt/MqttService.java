@@ -144,6 +144,7 @@ public class MqttService {
                                 .serverHost(mqttSettings.host())
                                 .serverPort(mqttSettings.port())
                                 .useMqttVersion5()
+                                .automaticReconnectWithDefaultConfig()
                                 .simpleAuth().username(mqttSettings.username()).password(mqttSettings.password().getBytes()).applySimpleAuth();
         if (mqttSettings.secure()) {
             builder = builder.sslWithDefaultConfig();
