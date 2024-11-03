@@ -1,5 +1,6 @@
 package com.getpcpanel.mqtt;
 
+import static com.getpcpanel.mqtt.MqttService.ORDER_OF_SAVE;
 import static com.getpcpanel.mqtt.MqttTopicHelper.ActionType.button;
 import static com.getpcpanel.mqtt.MqttTopicHelper.ColorType.dial;
 import static com.getpcpanel.mqtt.MqttTopicHelper.ColorType.label;
@@ -56,6 +57,7 @@ public class MqttDeviceService implements IOverrideColorProviderProvider {
     private final MqttTopicHelper mqttTopicHelper;
     private final ColorOverrideHolder colorOverrideHolder = new MqttColorOverrideHolder();
 
+    @Order(ORDER_OF_SAVE + 1) // Ensure we are disconnected if the setting is turned off
     @EventListener(SaveService.SaveEvent.class)
     public void saveChanged() {
         if (mqtt.isConnected()) {

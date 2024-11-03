@@ -14,6 +14,7 @@ import javax.annotation.Nullable;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,6 +34,7 @@ import lombok.extern.log4j.Log4j2;
 @Service
 @RequiredArgsConstructor
 public class MqttService {
+    static final int ORDER_OF_SAVE = 0;
     private final SaveService saveService;
     private final ApplicationEventPublisher eventPublisher;
     private final ObjectMapper objectMapper;
@@ -119,6 +121,7 @@ public class MqttService {
         );
     }
 
+    @Order(ORDER_OF_SAVE)
     @PostConstruct
     @EventListener(SaveService.SaveEvent.class)
     public void saveChanged() {
@@ -147,7 +150,7 @@ public class MqttService {
                                 .serverPort(mqttSettings.port())
                                 .useMqttVersion5()
                                 .automaticReconnectWithDefaultConfig()
-                                .willPublish().topic(availabilityTopic).payload("offline".getBytes()).applyWillPublish()
+                                .willPublish().topic(availabilityTopic).payload((byte[]) null).retain(true).applyWillPublish()
                                 .simpleAuth().username(mqttSettings.username()).password(mqttSettings.password().getBytes()).applySimpleAuth();
         if (mqttSettings.secure()) {
             builder = builder.sslWithDefaultConfig();
