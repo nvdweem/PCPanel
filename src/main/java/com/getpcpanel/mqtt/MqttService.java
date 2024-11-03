@@ -37,6 +37,7 @@ public class MqttService {
     private final ApplicationEventPublisher eventPublisher;
     private final ObjectMapper objectMapper;
     private final Debouncer debouncer;
+    private final MqttTopicHelper topicHelper;
     private MqttSettings connectedSettings;
     @Nullable private Mqtt5Client mqttClient;
 
@@ -139,18 +140,21 @@ public class MqttService {
     }
 
     private void connect(MqttSettings mqttSettings) {
+        var availabilityTopic = topicHelper.availabilityTopic();
         var builder = MqttClient.builder()
                                 .identifier(UUID.randomUUID().toString())
                                 .serverHost(mqttSettings.host())
                                 .serverPort(mqttSettings.port())
                                 .useMqttVersion5()
                                 .automaticReconnectWithDefaultConfig()
+                                .willPublish().topic(availabilityTopic).payload("offline".getBytes()).applyWillPublish()
                                 .simpleAuth().username(mqttSettings.username()).password(mqttSettings.password().getBytes()).applySimpleAuth();
         if (mqttSettings.secure()) {
             builder = builder.sslWithDefaultConfig();
         }
         mqttClient = builder.build();
         mqttClient.toBlocking().connect();
+        send(availabilityTopic, "online".getBytes(), true);
         log.info("Connected to MQTT server");
     }
 

@@ -1,6 +1,5 @@
 package com.getpcpanel.mqtt;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import com.getpcpanel.profile.MqttSettings;
@@ -8,6 +7,7 @@ import com.getpcpanel.profile.SaveService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import one.util.streamex.StreamEx;
 
 @Log4j2
 @Service
@@ -19,24 +19,28 @@ class MqttTopicHelper {
         return new DeviceMqttTopicHelper(deviceSerial);
     }
 
+    public String availabilityTopic() {
+        return baseJoining("available");
+    }
+
     public String baseTopicFilter() {
-        var mqttSettings = getSettings();
-        return StringUtils.joinWith("/", mqttSettings.baseTopic(), "#");
+        return baseJoining("#");
     }
 
     public String valueTopic(String deviceSerial, ValueType type, int index) {
-        var mqttSettings = getSettings();
-        return StringUtils.joinWith("/", mqttSettings.baseTopic(), deviceSerial, "values", type.name() + index);
+        return baseJoining(deviceSerial, "values", type.name() + index);
     }
 
     public String actionTopic(String deviceSerial, ActionType type, int index) {
-        var mqttSettings = getSettings();
-        return StringUtils.joinWith("/", mqttSettings.baseTopic(), deviceSerial, "actions", type.name() + index);
+        return baseJoining(deviceSerial, "actions", type.name() + index);
     }
 
     public String lightTopic(String deviceSerial, ColorType type, int index) {
-        var mqttSettings = getSettings();
-        return StringUtils.joinWith("/", mqttSettings.baseTopic(), deviceSerial, "lighting", type.name(), index);
+        return baseJoining(deviceSerial, "lighting", type.name(), index);
+    }
+
+    private String baseJoining(Object... parts) {
+        return StreamEx.of(parts).prepend(getSettings().baseTopic()).joining("/");
     }
 
     private MqttSettings getSettings() {

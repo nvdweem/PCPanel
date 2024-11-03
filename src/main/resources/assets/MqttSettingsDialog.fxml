@@ -4,79 +4,98 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
-<VBox fx:id="root" prefHeight="441.0" prefWidth="700.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.MqttSettingsDialog">
-    <Label text="MQTT is an OASIS standard messaging protocol for the Internet of Things (IoT). It is designed as an extremely lightweight publish/subscribe messaging transport that is ideal for connecting remote devices with a small code footprint and minimal network bandwidth. MQTT today is used in a wide variety of industries, such as automotive, manufacturing, telecommunications, oil and gas, etc."
-           wrapText="true">
-        <VBox.margin>
-            <Insets/>
-        </VBox.margin>
+<ScrollPane fx:id="root" hbarPolicy="NEVER" prefHeight="441.0" prefWidth="700.0" styleClass="edge-to-edge" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.MqttSettingsDialog">
+    <VBox>
+        <Label minHeight="90.0" prefWidth="680.0"
+               text="MQTT is an OASIS standard messaging protocol for the Internet of Things (IoT). It is designed as an extremely lightweight publish/subscribe messaging transport that is ideal for connecting remote devices with a small code footprint and minimal network bandwidth. MQTT today is used in a wide variety of industries, such as automotive, manufacturing, telecommunications, oil and gas, etc."
+               wrapText="true">
+            <VBox.margin>
+                <Insets/>
+            </VBox.margin>
+            <padding>
+                <Insets bottom="20.0"/>
+            </padding>
+        </Label>
+
+        <HBox alignment="CENTER_LEFT">
+            <VBox.margin>
+                <Insets bottom="10.0"/>
+            </VBox.margin>
+        </HBox>
+
+        <HBox alignment="CENTER_LEFT">
+            <VBox.margin>
+                <Insets bottom="10.0"/>
+            </VBox.margin>
+        </HBox>
+
+        <GridPane prefWidth="680.0" vgap="5">
+            <columnConstraints>
+                <ColumnConstraints hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="10.0" prefWidth="150.0"/>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+            </columnConstraints>
+            <rowConstraints>
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                <RowConstraints/>
+                <RowConstraints/>
+                <RowConstraints/>
+                <RowConstraints/>
+                <RowConstraints/>
+                <RowConstraints/>
+            </rowConstraints>
+            <children>
+                <CheckBox fx:id="enabled" mnemonicParsing="false" text="Enabled" GridPane.columnSpan="2" GridPane.rowIndex="0"/>
+
+                <Label text="Host" GridPane.rowIndex="1"/>
+                <TextField fx:id="host" prefHeight="25.0" prefWidth="331.0" promptText="hostname or ip-address" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+
+                <Label text="Port" GridPane.rowIndex="2"/>
+                <TextField fx:id="port" prefHeight="25.0" prefWidth="331.0" promptText="mqtt port (1883)" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+
+                <Label text="Username" GridPane.rowIndex="3"/>
+                <TextField fx:id="username" prefHeight="25.0" prefWidth="331.0" promptText="username" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+
+                <Label text="Password" GridPane.rowIndex="4"/>
+                <TextField fx:id="password" prefHeight="25.0" prefWidth="331.0" promptText="password" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+
+                <CheckBox fx:id="secure" mnemonicParsing="false" text="Secure" GridPane.columnSpan="2" GridPane.rowIndex="5"/>
+
+                <Label text="Base topic" GridPane.rowIndex="6"/>
+                <TextField fx:id="baseTopic" prefHeight="25.0" prefWidth="331.0" promptText="pcpanel" GridPane.columnIndex="1" GridPane.rowIndex="6"/>
+
+                <CheckBox fx:id="enableHomeAssistantDiscovery" mnemonicParsing="false" text="Enable Home Assistant discovery" GridPane.columnSpan="2" GridPane.rowIndex="7">
+                    <GridPane.margin>
+                        <Insets top="20.0"/>
+                    </GridPane.margin>
+                </CheckBox>
+
+                <Label text="Home Assistant base topic" GridPane.rowIndex="8"/>
+                <TextField fx:id="homeAssistantBaseTopic" prefHeight="25.0" prefWidth="331.0" promptText="homeassistant" GridPane.columnIndex="1" GridPane.rowIndex="8"/>
+
+                <CheckBox fx:id="homeAssistantAvailability" mnemonicParsing="false" text="Use availability" GridPane.columnSpan="2" GridPane.rowIndex="9"/>
+            </children>
+        </GridPane>
+        <Button mnemonicParsing="false" onAction="#clearCurrentTopics" text="Clear all topics">
+            <VBox.margin>
+                <Insets top="10.0"/>
+            </VBox.margin>
+        </Button>
+
         <padding>
-            <Insets bottom="20.0"/>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
         </padding>
-    </Label>
-
-    <HBox alignment="CENTER_LEFT">
-        <VBox.margin>
-            <Insets bottom="10.0"/>
-        </VBox.margin>
-    </HBox>
-
-    <HBox alignment="CENTER_LEFT">
-        <VBox.margin>
-            <Insets bottom="10.0"/>
-        </VBox.margin>
-    </HBox>
-    <GridPane prefWidth="680.0" vgap="5">
-        <columnConstraints>
-            <ColumnConstraints hgrow="SOMETIMES" maxWidth="-Infinity" minWidth="10.0" prefWidth="150.0"/>
-            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
-        </columnConstraints>
-        <rowConstraints>
-            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-            <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-            <RowConstraints/>
-            <RowConstraints/>
-            <RowConstraints/>
-            <RowConstraints/>
-            <RowConstraints/>
-        </rowConstraints>
-        <children>
-            <CheckBox fx:id="enabled" mnemonicParsing="false" text="Enabled" GridPane.columnSpan="2" GridPane.rowIndex="0"/>
-
-            <Label text="Host" GridPane.rowIndex="1"/>
-            <TextField fx:id="host" prefHeight="25.0" prefWidth="331.0" promptText="host:port" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-
-            <Label text="Port" GridPane.rowIndex="2"/>
-            <TextField fx:id="port" prefHeight="25.0" prefWidth="331.0" promptText="host:port" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
-
-            <Label text="Username" GridPane.rowIndex="3"/>
-            <TextField fx:id="username" prefHeight="25.0" prefWidth="331.0" promptText="username" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
-
-            <Label text="Password" GridPane.rowIndex="4"/>
-            <TextField fx:id="password" prefHeight="25.0" prefWidth="331.0" promptText="password" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
-
-            <CheckBox fx:id="secure" mnemonicParsing="false" text="Secure" GridPane.columnSpan="2" GridPane.rowIndex="5"/>
-
-            <Label text="Base topic" GridPane.rowIndex="6"/>
-            <TextField fx:id="baseTopic" prefHeight="25.0" prefWidth="331.0" promptText="pcpanel" GridPane.columnIndex="1" GridPane.rowIndex="6"/>
-
-            <CheckBox fx:id="enableHomeAssistantDiscovery" mnemonicParsing="false" text="Enable Home Assistant discovery" GridPane.columnSpan="2" GridPane.rowIndex="7"/>
-
-            <Label text="Home Assistant base topic" GridPane.rowIndex="8"/>
-            <TextField fx:id="homeAssistantBaseTopic" prefHeight="25.0" prefWidth="331.0" promptText="homeassistant" GridPane.columnIndex="1" GridPane.rowIndex="8"/>
-        </children>
-    </GridPane>
-    <Button mnemonicParsing="false" onAction="#clearCurrentTopics" text="Clear all topics"/>
-
+    </VBox>
     <padding>
-        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
+        <Insets right="10.0"/>
     </padding>
-</VBox>
+</ScrollPane>

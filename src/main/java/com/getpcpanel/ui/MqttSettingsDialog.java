@@ -1,5 +1,7 @@
 package com.getpcpanel.ui;
 
+import static com.getpcpanel.profile.MqttSettings.DEFAULT_MQTT_PORT;
+
 import javax.annotation.Nonnull;
 
 import org.apache.commons.lang3.math.NumberUtils;
@@ -30,18 +32,18 @@ public class MqttSettingsDialog {
     @FXML private TextField baseTopic;
     @FXML private CheckBox enableHomeAssistantDiscovery;
     @FXML private TextField homeAssistantBaseTopic;
+    @FXML private CheckBox homeAssistantAvailability;
 
     public void save(Save save) {
         save.setMqtt(new MqttSettings(
                 enabled.isSelected(),
                 host.getText(),
-                NumberUtils.toInt(port.getText(), 1883),
+                NumberUtils.toInt(port.getText(), DEFAULT_MQTT_PORT),
                 username.getText(),
                 password.getText(),
                 secure.isSelected(),
                 baseTopic.getText(),
-                enableHomeAssistantDiscovery.isSelected(),
-                homeAssistantBaseTopic.getText()
+                new MqttSettings.HomeAssistantSettings(enableHomeAssistantDiscovery.isSelected(), homeAssistantBaseTopic.getText(), homeAssistantAvailability.isSelected())
         ));
     }
 
@@ -61,8 +63,10 @@ public class MqttSettingsDialog {
         password.setText(settings.password());
         secure.setSelected(settings.secure());
         baseTopic.setText(settings.baseTopic());
-        enableHomeAssistantDiscovery.setSelected(settings.homeAssistantDiscovery());
-        homeAssistantBaseTopic.setText(settings.homeAssistantBaseTopic());
+
+        enableHomeAssistantDiscovery.setSelected(settings.homeAssistant().enableDiscovery());
+        homeAssistantBaseTopic.setText(settings.homeAssistant().baseTopic());
+        homeAssistantAvailability.setSelected(settings.homeAssistant().availability());
     }
 
     public void clearCurrentTopics(ActionEvent actionEvent) {

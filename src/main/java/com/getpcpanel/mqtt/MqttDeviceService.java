@@ -119,7 +119,7 @@ public class MqttDeviceService implements IOverrideColorProviderProvider {
         writeLighting(device, lighting);
         buildSubscriptions(device, lighting);
 
-        if (saveService.get().getMqtt().homeAssistantDiscovery()) {
+        if (saveService.get().getMqtt().homeAssistant().enableDiscovery()) {
             mqttHomeAssistantHelper.discover(saveService.get().getMqtt(), device);
         }
     }
