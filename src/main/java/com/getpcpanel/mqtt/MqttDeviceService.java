@@ -123,6 +123,7 @@ public class MqttDeviceService implements IOverrideColorProviderProvider {
         }
 
         writeLighting(device, lighting);
+        writeButtons(device);
         buildSubscriptions(device, lighting);
 
         if (saveService.get().getMqtt().homeAssistant().enableDiscovery()) {
@@ -198,12 +199,19 @@ public class MqttDeviceService implements IOverrideColorProviderProvider {
     private <T> void sendColors(T[] items, DeviceMqttTopicHelper mqttHelper, ColorType colorType, Function<T, String> colorMapper) {
         EntryStream.of(items).forKeyValue((idx, knob) -> {
             var sliderTopic = mqttHelper.lightTopic(colorType, idx);
-            mqtt.send(sliderTopic, toColorString(colorMapper.apply(knob)), false);
+            mqtt.send(sliderTopic, toColorString(colorMapper.apply(knob)), true);
         });
     }
 
     private String toColorString(String color) {
         return color == null ? "000000" : color;
+    }
+
+    private void writeButtons(Device device) {
+        for (var i = 0; i < device.getDeviceType().getButtonCount(); i++) {
+            var topic = mqttTopicHelper.actionTopic(device.getSerialNumber(), button, i);
+            mqtt.send(topic, "release", true);
+        }
     }
 
     @Override
