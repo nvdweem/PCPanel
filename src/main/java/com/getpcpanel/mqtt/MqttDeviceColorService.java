@@ -147,7 +147,10 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
         mqtt.subscribeString(baseTopic + "/cmd", publish -> {
             log.debug("Command {}: {}", baseTopic, publish);
             switch (StringUtils.defaultString(StringUtils.lowerCase(publish))) {
-                case "off" -> colorOverrider.accept("#000000");
+                case "off" -> {
+                    sendColor(baseTopic, "#000000", false);
+                    colorOverrider.accept("#000000");
+                }
                 case "on" -> {
                     if (color.isOverriding) {
                         if (color.brightness == 0) {
