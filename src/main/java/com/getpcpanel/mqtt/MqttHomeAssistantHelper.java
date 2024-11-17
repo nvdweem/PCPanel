@@ -1,5 +1,8 @@
 package com.getpcpanel.mqtt;
 
+import static com.getpcpanel.mqtt.MqttDeviceColorService.EFFECT_NONE;
+import static com.getpcpanel.mqtt.MqttDeviceColorService.EFFECT_STOP_OVERRIDE;
+
 import java.util.List;
 
 import javax.annotation.Nonnull;
@@ -224,40 +227,35 @@ public class MqttHomeAssistantHelper {
             String name,
             String object_id,
             String unique_id,
-            String command_topic,
+            String state_topic,
             String icon,
 
             // Pre-set
-            String schema,
-            String command_off_template,
-            String command_on_template,
-            String red_template,
-            String green_template,
-            String blue_template,
-            String brightness_template,
-            String state_template,
-            String state_topic,
-            List<String> supported_color_modes,
+            String command_topic,
+            String brightness_command_topic,
+            String brightness_state_topic,
+            String effect_command_topic,
+            String effect_state_topic,
+            List<String> effect_list,
+            String rgb_command_topic,
+            String rgb_state_topic,
+            String state_value_template,
             boolean retain
     ) {
-        HomeAssistantLightConfig(HomeAssistantDevice device, @Nullable HomeAssistantAvailability availability, String name, String unique_id, String command_topic, String icon) {
-            this(device, availability, name, unique_id, unique_id, command_topic, icon,
-                    "template",
-                    "#000000",
-                    "#{{ '%02x%02x%02x' | format(" + asInt("red") + ", " + asInt("green") + ", " + asInt("blue") + ") }}",
-                    "{{value[1:3] | int(0, 16)}}",
-                    "{{value[3:5] | int(0, 16)}}",
-                    "{{value[5:7] | int(0, 16)}}",
-                    "255",
-                    "{{ 'on' if value != '#000000' else 'off' }}",
-                    command_topic,
-                    List.of("rgb"),
+        HomeAssistantLightConfig(HomeAssistantDevice device, @Nullable HomeAssistantAvailability availability, String name, String unique_id, String state_topic, String icon) {
+            this(device, availability, name, unique_id, unique_id, state_topic, icon,
+
+                    state_topic + "/cmd",
+                    state_topic + "/brightness",
+                    state_topic + "/brightness",
+                    state_topic + "/effect",
+                    state_topic + "/effect",
+                    List.of(EFFECT_NONE, EFFECT_STOP_OVERRIDE),
+                    state_topic + "/rgb",
+                    state_topic + "/rgb",
+                    "{{'OFF' if value == '#000000' else 'ON'}}",
                     true
             );
-        }
-
-        private static String asInt(String name) {
-            return name + " | int(255) if " + name + " is defined else 255";
         }
     }
 

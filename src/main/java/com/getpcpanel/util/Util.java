@@ -2,6 +2,7 @@ package com.getpcpanel.util;
 
 import java.io.File;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -58,6 +59,14 @@ public final class Util {
                     Math.round(c.getGreen() * 255.0D),
                     Math.round(c.getBlue() * 255.0D) });
         return null;
+    }
+
+    public static Optional<Color> parseColor(String color) {
+        try {
+            return Optional.of(Color.valueOf(color));
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
 
     public static List<Integer> numToList(int num) {
