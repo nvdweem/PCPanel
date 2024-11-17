@@ -17,6 +17,7 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.logging.log4j.util.TriConsumer;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,7 @@ import com.getpcpanel.profile.SingleKnobLightingConfig;
 import com.getpcpanel.profile.SingleLogoLightingConfig;
 import com.getpcpanel.profile.SingleSliderLabelLightingConfig;
 import com.getpcpanel.profile.SingleSliderLightingConfig;
+import com.getpcpanel.ui.HomePage;
 import com.getpcpanel.util.coloroverride.ColorOverrideHolder;
 import com.getpcpanel.util.coloroverride.IOverrideColorProvider;
 import com.getpcpanel.util.coloroverride.IOverrideColorProviderProvider;
@@ -47,6 +49,7 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
     private final MqttService mqtt;
     private final MqttTopicHelper mqttTopicHelper;
     private final ColorOverrideHolder colorOverrideHolder = new MqttColorOverrideHolder();
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Override
     public IOverrideColorProvider getOverrideColorProvider() {
@@ -94,7 +97,12 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
             andThen.run();
         };
 
-        subscribeTo(topicHelper.valueTopic(brightness, 0), payload -> lighting.setGlobalBrightness(NumberUtils.toInt(payload, 100)));
+        subscribeTo(topicHelper.valueTopic(brightness, 0), payload -> {
+            var newBrightness = NumberUtils.toInt(payload, 100);
+            lighting.setGlobalBrightness(newBrightness);
+            andThen.run();
+            applicationEventPublisher.publishEvent(new HomePage.GlobalBrightnessChangedEvent(newBrightness));
+        });
         subscribeToColors(lighting.getKnobConfigs(), topicHelper, dial, knobOverride, idx -> device.getLightingConfig().getKnobConfigs()[idx].getColor1());
         subscribeToColors(lighting.getSliderConfigs(), topicHelper, slider, sliderOverride, idx -> device.getLightingConfig().getSliderConfigs()[idx].getColor1());
         subscribeToColors(lighting.getSliderLabelConfigs(), topicHelper, label, sliderLabelOverride, idx -> device.getLightingConfig().getSliderLabelConfigs()[idx].getColor());

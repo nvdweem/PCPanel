@@ -105,6 +105,11 @@ public class HomePage extends Application {
         deviceScanner.init();
     }
 
+    @EventListener(GlobalBrightnessChangedEvent.class)
+    public void globalBrightnessChanged() {
+        globalBrightness.setValue(connectedDeviceList.getSelectionModel().getSelectedItem().getLightingConfig().getGlobalBrightness());
+    }
+
     private void addBrightnessListener() {
         globalBrightness.valueProperty().addListener((observable, oldValue, newValue) -> {
             var device = connectedDeviceList.getSelectionModel().getSelectedItem();
@@ -244,5 +249,8 @@ public class HomePage extends Application {
     }
 
     public record ShowMainEvent() {
+    }
+
+    public record GlobalBrightnessChangedEvent(int brightness) {
     }
 }
