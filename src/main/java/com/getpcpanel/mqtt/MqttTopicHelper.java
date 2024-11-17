@@ -31,8 +31,12 @@ class MqttTopicHelper {
         return baseJoining(deviceSerial, "values", type.name() + index);
     }
 
-    public String actionTopic(String deviceSerial, ActionType type, int index) {
+    public String buttonUpDownTopic(String deviceSerial, ActionType type, int index) {
         return baseJoining(deviceSerial, "actions", type.name() + index);
+    }
+
+    public String eventTopic(String deviceSerial, ActionType type, int index) {
+        return baseJoining(deviceSerial, "events", type.name() + index);
     }
 
     public String lightTopic(String deviceSerial, ColorType type, int index) {
@@ -69,10 +73,6 @@ class MqttTopicHelper {
 
         public String valueTopic(ValueType type, int index) {
             return MqttTopicHelper.this.valueTopic(deviceSerial, type, index);
-        }
-
-        public String actionTopic(ActionType type, int index) {
-            return MqttTopicHelper.this.actionTopic(deviceSerial, type, index);
         }
 
         public String lightTopic(ColorType type, int index) {

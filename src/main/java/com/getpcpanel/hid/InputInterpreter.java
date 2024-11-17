@@ -9,15 +9,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import javax.annotation.Nonnull;
-
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.getpcpanel.commands.PCPanelControlEvent;
 import com.getpcpanel.device.DeviceType;
-import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.util.Debouncer;
 
@@ -59,37 +56,44 @@ public final class InputInterpreter {
     }
 
     private void doClickAction(String serialNum, int knob) {
-        save.getProfile(serialNum).ifPresent(profile -> {
-            var clickId = new ClickId(serialNum, knob);
-            var timeDiff = System.currentTimeMillis() - lastClicks.getOrDefault(clickId, 0L);
-            determineClick(profile, clickId, timeDiff);
-        });
+        var clickId = new ClickId(serialNum, knob);
+        var timeDiff = System.currentTimeMillis() - lastClicks.getOrDefault(clickId, 0L);
+        determineClick(clickId, timeDiff);
     }
 
-    private void determineClick(@Nonnull Profile profile, ClickId clickId, long timeDiff) {
-        var debounceTime = requireNonNullElse(save.get().getDblClickInterval(), 500L);
-        var click = profile.getButtonData(clickId.button());
-        var dblClick = profile.getDblButtonData(clickId.button());
-        var hasDblClick = hasCommands(dblClick);
-        var shouldDblClick = hasDblClick && timeDiff < debounceTime;
+    private void determineClick(ClickId clickId, long timeDiff) {
+        long debounceTime = requireNonNullElse(save.get().getDblClickInterval(), 500L);
+        var isDblClick = timeDiff < debounceTime;
 
-        if (shouldDblClick) {
+        if (isDblClick) {
             debouncer.debounce(clickId, () -> {
             }, debounceTime, TimeUnit.MILLISECONDS);
-            eventPublisher.publishEvent(new PCPanelControlEvent(clickId.serialNum(), clickId.button(), dblClick, false, null));
+            eventPublisher.publishEvent(new ButtonClickEvent(clickId.serialNum(), clickId.button(), true));
             lastClicks.remove(clickId);
             return;
         }
 
         lastClicks.put(clickId, System.currentTimeMillis());
-        if (hasCommands(click)) {
-            var event = new PCPanelControlEvent(clickId.serialNum(), clickId.button(), click, false, null);
-            if (hasDblClick && save.get().isPreventClickWhenDblClick()) {
-                debouncer.debounce(clickId, () -> eventPublisher.publishEvent(event), debounceTime, TimeUnit.MILLISECONDS);
-            } else {
-                eventPublisher.publishEvent(event);
-            }
+        Runnable trigger = () -> eventPublisher.publishEvent(new ButtonClickEvent(clickId.serialNum(), clickId.button(), false));
+        if (save.get().isPreventClickWhenDblClick()) {
+            debouncer.debounce(clickId, trigger, debounceTime, TimeUnit.MILLISECONDS);
+        } else {
+            trigger.run();
         }
+    }
+
+    @EventListener
+    public void onButtonPress(ButtonClickEvent event) {
+        save.getProfile(event.serialNum()).ifPresent(profile -> {
+            var click = profile.getButtonData(event.button());
+            var dblClick = profile.getDblButtonData(event.button());
+
+            if (event.dblClick() && hasCommands(dblClick)) {
+                eventPublisher.publishEvent(new PCPanelControlEvent(event.serialNum(), event.button(), dblClick, false, null));
+            } else if (!event.dblClick() && hasCommands(click)) {
+                eventPublisher.publishEvent(new PCPanelControlEvent(event.serialNum(), event.button(), click, false, null));
+            }
+        });
     }
 
     private record ClickId(String serialNum, int button) {

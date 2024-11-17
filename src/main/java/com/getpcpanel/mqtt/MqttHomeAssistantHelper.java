@@ -141,17 +141,35 @@ public class MqttHomeAssistantHelper {
 
     private void addButtons(MqttSettings settings, Device device, HomeAssistantDevice haDevice, @Nullable HomeAssistantAvailability availability) {
         for (var i = 0; i < device.getDeviceType().getButtonCount(); i++) {
-            var configTopic = configTopicFor(settings, device, "binary_sensor", "button", i);
-            var valueTopic = topicHelper.actionTopic(device.getSerialNumber(), MqttTopicHelper.ActionType.button, i);
-
-            var config = new HomeAssistantButtonConfig(
-                    haDevice, availability,
-                    valueTopic,
-                    "Button " + (i + 1),
-                    device.getSerialNumber() + "_button_" + i
-            );
-            mqttService.send(configTopic, config, false);
+            addButtonUpDown(settings, device, haDevice, availability, i);
+            addButtonEvent(settings, device, haDevice, availability, i);
         }
+    }
+
+    private void addButtonUpDown(MqttSettings settings, Device device, HomeAssistantDevice haDevice, @Nullable HomeAssistantAvailability availability, int i) {
+        var configTopic = configTopicFor(settings, device, "binary_sensor", "button", i);
+        var valueTopic = topicHelper.buttonUpDownTopic(device.getSerialNumber(), MqttTopicHelper.ActionType.button, i);
+
+        var upDownConfig = new HomeAssistantButtonConfig(
+                haDevice, availability,
+                valueTopic,
+                "Button " + (i + 1),
+                device.getSerialNumber() + "_button_" + i
+        );
+        mqttService.send(configTopic, upDownConfig, false);
+    }
+
+    private void addButtonEvent(MqttSettings settings, Device device, HomeAssistantDevice haDevice, @Nullable HomeAssistantAvailability availability, int i) {
+        var eventConfigTopic = configTopicFor(settings, device, "event", "button", i);
+        var eventTopic = topicHelper.eventTopic(device.getSerialNumber(), MqttTopicHelper.ActionType.button, i);
+
+        var eventConfig = new HomeAssistantButtonEventConfig(
+                haDevice, availability,
+                eventTopic,
+                "Button " + (i + 1),
+                device.getSerialNumber() + "_button_event_" + i
+        );
+        mqttService.send(eventConfigTopic, eventConfig, false);
     }
 
     private String configTopicFor(MqttSettings settings, Device device, String domain, String type, int idx) {
@@ -274,10 +292,30 @@ public class MqttHomeAssistantHelper {
     ) {
         HomeAssistantButtonConfig(HomeAssistantDevice device, @Nullable HomeAssistantAvailability availability, String command_topic, String name, String object_id) {
             this(device, availability, command_topic, name, object_id, object_id,
-                    "click",
+                    "down",
                     "mdi:knob",
-                    "release",
-                    "click");
+                    "up",
+                    "down");
+        }
+    }
+
+    record HomeAssistantButtonEventConfig(HomeAssistantDevice device,
+                                          @Nullable HomeAssistantAvailability availability,
+                                          String state_topic,
+                                          String name,
+                                          String object_id,
+
+                                          String unique_id,
+                                          String icon,
+                                          String platform,
+                                          List<String> event_types) {
+        HomeAssistantButtonEventConfig(HomeAssistantDevice device, @Nullable HomeAssistantAvailability availability, String state_topic, String name, String object_id) {
+            this(device, availability, state_topic, name, object_id,
+                    object_id,
+                    "mdi:knob",
+                    "event",
+                    List.of("click", "double_click")
+            );
         }
     }
 

@@ -19,6 +19,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 
 import com.getpcpanel.device.Device;
+import com.getpcpanel.hid.ButtonClickEvent;
 import com.getpcpanel.hid.DeviceCommunicationHandler;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.hid.DeviceHolder.DeviceFullyConnectedEvent;
@@ -98,8 +99,16 @@ public class MqttDeviceService {
     @EventListener
     public void buttonPress(DeviceCommunicationHandler.ButtonPressEvent btn) {
         saveService.getProfile(btn.serialNum()).ifPresent(profile -> {
-            var topic = mqttTopicHelper.actionTopic(btn.serialNum(), button, btn.button());
-            mqtt.send(topic, btn.pressed() ? "click" : "release", true);
+            var topic = mqttTopicHelper.buttonUpDownTopic(btn.serialNum(), button, btn.button());
+            mqtt.send(topic, btn.pressed() ? "down" : "up", true);
+        });
+    }
+
+    @EventListener
+    public void buttonPress(ButtonClickEvent btn) {
+        saveService.getProfile(btn.serialNum()).ifPresent(profile -> {
+            var topic = mqttTopicHelper.eventTopic(btn.serialNum(), button, btn.button());
+            mqtt.send(topic, new MqttEvent(btn.dblClick() ? "double_click" : "click"), true);
         });
     }
 
@@ -150,8 +159,10 @@ public class MqttDeviceService {
 
     private void writeButtons(Device device) {
         for (var i = 0; i < device.getDeviceType().getButtonCount(); i++) {
-            var topic = mqttTopicHelper.actionTopic(device.getSerialNumber(), button, i);
-            mqtt.send(topic, "release", true);
+            mqtt.send(mqttTopicHelper.buttonUpDownTopic(device.getSerialNumber(), button, i), "up", true);
         }
+    }
+
+    record MqttEvent(String event_type) {
     }
 }
