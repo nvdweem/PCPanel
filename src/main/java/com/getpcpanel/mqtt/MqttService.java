@@ -1,6 +1,7 @@
 package com.getpcpanel.mqtt;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Optional;
@@ -35,6 +36,7 @@ import lombok.extern.log4j.Log4j2;
 @RequiredArgsConstructor
 public class MqttService {
     static final int ORDER_OF_SAVE = 0;
+    public static final String IGNORE_CORRELATION = "pcpanel";
     private final SaveService saveService;
     private final ApplicationEventPublisher eventPublisher;
     private final ObjectMapper objectMapper;
@@ -48,18 +50,22 @@ public class MqttService {
     }
 
     public void send(String topic, Object payload, boolean immediate) {
+        send(topic, payload, immediate, false);
+    }
+
+    public void send(String topic, Object payload, boolean immediate, boolean triggerSelf) {
         if (Objects.requireNonNull(payload) instanceof String s) {
-            send(topic, s.getBytes(), immediate);
+            send(topic, s.getBytes(), immediate, triggerSelf);
         } else {
             try {
-                send(topic, objectMapper.writeValueAsBytes(payload), immediate);
+                send(topic, objectMapper.writeValueAsBytes(payload), immediate, triggerSelf);
             } catch (Exception e) {
                 log.error("Failed to serialize payload", e);
             }
         }
     }
 
-    public void send(String topic, byte[] payload, boolean immediate) {
+    public void send(String topic, byte[] payload, boolean immediate, boolean triggerSelf) {
         Runnable send = () -> {
             if (log.isDebugEnabled()) {
                 log.debug("Sending to {}: {}", topic, new String(payload));
@@ -68,6 +74,7 @@ public class MqttService {
                       .topic(topic)
                       .payload(payload)
                       .retain(true)
+                      .correlationData(triggerSelf ? null : IGNORE_CORRELATION.getBytes()) // Will be ignored in the subscription
                       .send();
         };
 
@@ -186,7 +193,12 @@ public class MqttService {
     public <T> void subscribe(String topic, Function<byte[], T> converter, Consumer<T> consumer) {
         mqttClient.toAsync().subscribeWith()
                   .topicFilter(topic)
-                  .callback(publish -> consumer.accept(converter.apply(publish.getPayloadAsBytes())))
+                  .callback(publish -> {
+                      var ignore = publish.getCorrelationData().map(cd -> StandardCharsets.UTF_8.decode(cd).toString().equals(IGNORE_CORRELATION)).orElse(false);
+                      if (!ignore) {
+                          consumer.accept(converter.apply(publish.getPayloadAsBytes()));
+                      }
+                  })
                   .send();
     }
 

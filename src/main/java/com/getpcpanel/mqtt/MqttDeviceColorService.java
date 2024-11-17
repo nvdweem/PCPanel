@@ -63,7 +63,7 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
 
         // Home assistant seems to think that the brightness is the highest value of the RGB
         var brightness = Math.max(r, Math.max(g, b));
-        mqtt.send(topic + "/brightness", brightness, immediate);
+        mqtt.send(topic + "/brightness", brightness, immediate, true);
 
         // Write the RGB value to the full-bright color
         if (brightness != 0) {
@@ -71,7 +71,7 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
             g = g * 255 / brightness;
             b = b * 255 / brightness;
         }
-        mqtt.send(topic + "/rgb", "%d,%d,%d".formatted(r, g, b), immediate);
+        mqtt.send(topic + "/rgb", "%d,%d,%d".formatted(r, g, b), immediate, true);
     }
 
     public void buildSubscriptions(Device device, LightingConfig lighting) {
@@ -141,7 +141,12 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
                 case "off" -> colorOverrider.accept("#000000");
                 case "on" -> {
                     if (color.isOverriding) {
-                        colorOverrider.accept(color.toColorString());
+                        if (color.brightness == 0) {
+                            color.brightness = 255;
+                        }
+                        var colorString = color.toColorString();
+                        sendColor(baseTopic, colorString, false);
+                        colorOverrider.accept(colorString);
                     }
                 }
                 default -> log.error("Unknown command {}", publish);
@@ -183,11 +188,9 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
     }
 
     private static class MqttColorOverrideHolder extends ColorOverrideHolder {
-        public static final String OFF = "#000000";
-
         @Override
         public void setDialOverride(String deviceSerial, int dial, @Nullable SingleKnobLightingConfig config) {
-            if (config == null || config.getColor1().equals(OFF))
+            if (config == null || config.getColor1() == null)
                 super.setDialOverride(deviceSerial, dial, null);
             else
                 super.setDialOverride(deviceSerial, dial, config);
@@ -195,7 +198,7 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
 
         @Override
         public void setSliderOverride(String deviceSerial, int slider, @Nullable SingleSliderLightingConfig config) {
-            if (config == null || config.getColor1().equals(OFF))
+            if (config == null || config.getColor1() == null)
                 super.setSliderOverride(deviceSerial, slider, null);
             else
                 super.setSliderOverride(deviceSerial, slider, config);
@@ -203,7 +206,7 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
 
         @Override
         public void setSliderLabelOverride(String deviceSerial, int slider, @Nullable SingleSliderLabelLightingConfig config) {
-            if (config == null || config.getColor().equals(OFF))
+            if (config == null || config.getColor() == null)
                 super.setSliderLabelOverride(deviceSerial, slider, null);
             else
                 super.setSliderLabelOverride(deviceSerial, slider, config);
@@ -230,7 +233,7 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
             red = (int) Math.round(color.getRed() * 255);
             green = (int) Math.round(color.getGreen() * 255);
             blue = (int) Math.round(color.getBlue() * 255);
-            brightness = Math.max(red, Math.max(green, blue));
+            brightness = 255;
         }
 
         public String toColorString() {
