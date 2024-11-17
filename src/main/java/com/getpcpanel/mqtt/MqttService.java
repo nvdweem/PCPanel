@@ -197,6 +197,7 @@ public class MqttService {
                       var ignore = publish.getCorrelationData().map(cd -> StandardCharsets.UTF_8.decode(cd).toString().equals(IGNORE_CORRELATION)).orElse(false);
                       if (!ignore) {
                           consumer.accept(converter.apply(publish.getPayloadAsBytes()));
+                          send(topic, publish.getPayloadAsBytes(), true, false); // Ensure that the message isn't picked up after restart
                       }
                   })
                   .send();
