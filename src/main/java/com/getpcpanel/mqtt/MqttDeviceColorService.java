@@ -122,7 +122,8 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
             log.debug("Color changed {}: {}", baseTopic, publish);
             var setColor = parseColor(publish);
             if (setColor.isEmpty()) {
-                log.error("Invalid color {}, ignoring", publish);
+                log.debug("Invalid color {}, stop overriding", publish);
+                colorOverrider.accept(null);
                 return;
             }
 
