@@ -32,6 +32,7 @@ import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SingleKnobLightingConfig;
 import com.getpcpanel.profile.SingleSliderLabelLightingConfig;
 import com.getpcpanel.profile.SingleSliderLightingConfig;
+import com.getpcpanel.ui.HomePage.GlobalBrightnessChangedEvent;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -114,6 +115,11 @@ public class MqttDeviceService {
             var topic = mqttTopicHelper.eventTopic(btn.serialNum(), button, btn.button());
             mqtt.send(topic, new MqttEvent(btn.dblClick() ? "double_click" : "click"), true);
         });
+    }
+
+    @EventListener
+    public void globalBrightnessChange(GlobalBrightnessChangedEvent event) {
+        mqtt.send(mqttTopicHelper.valueTopic(event.serialNr(), brightness, 0), String.valueOf(event.brightness()), false);
     }
 
     private void initialize(Device device) {

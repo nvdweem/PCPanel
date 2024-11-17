@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
@@ -45,6 +46,7 @@ public class HomePage extends Application {
     private final SaveService saveService;
     private final DeviceScanner deviceScanner;
     private final DeviceHolder devices;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     @Value("${application.version}") private String version;
     @Value("${application.build}") private String build;
@@ -105,9 +107,11 @@ public class HomePage extends Application {
         deviceScanner.init();
     }
 
-    @EventListener(GlobalBrightnessChangedEvent.class)
-    public void globalBrightnessChanged() {
-        globalBrightness.setValue(connectedDeviceList.getSelectionModel().getSelectedItem().getLightingConfig().getGlobalBrightness());
+    @EventListener
+    public void globalBrightnessChanged(GlobalBrightnessChangedEvent event) {
+        if (!event.isSource(this)) {
+            globalBrightness.setValue(connectedDeviceList.getSelectionModel().getSelectedItem().getLightingConfig().getGlobalBrightness());
+        }
     }
 
     private void addBrightnessListener() {
@@ -130,6 +134,7 @@ public class HomePage extends Application {
             var light = device.getLightingConfig();
             light.setGlobalBrightness(newValue.byteValue());
             device.setLighting(light, false);
+            applicationEventPublisher.publishEvent(new GlobalBrightnessChangedEvent(this, serialNumber, newValue.intValue()));
         });
     }
 
@@ -251,6 +256,10 @@ public class HomePage extends Application {
     public record ShowMainEvent() {
     }
 
-    public record GlobalBrightnessChangedEvent(int brightness) {
+    public record GlobalBrightnessChangedEvent(Object source, String serialNr, int brightness) {
+        public boolean isSource(Object other) {
+            //noinspection ObjectEquality
+            return source == other;
+        }
     }
 }

@@ -101,7 +101,7 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
             var newBrightness = NumberUtils.toInt(payload, 100);
             lighting.setGlobalBrightness(newBrightness);
             andThen.run();
-            applicationEventPublisher.publishEvent(new HomePage.GlobalBrightnessChangedEvent(newBrightness));
+            applicationEventPublisher.publishEvent(new HomePage.GlobalBrightnessChangedEvent(this, device.getSerialNumber(), newBrightness));
         });
         subscribeToColors(lighting.getKnobConfigs(), topicHelper, dial, knobOverride, idx -> device.getLightingConfig().getKnobConfigs()[idx].getColor1());
         subscribeToColors(lighting.getSliderConfigs(), topicHelper, slider, sliderOverride, idx -> device.getLightingConfig().getSliderConfigs()[idx].getColor1());
