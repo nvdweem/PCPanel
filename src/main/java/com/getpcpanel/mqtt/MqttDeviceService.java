@@ -9,6 +9,8 @@ import static com.getpcpanel.mqtt.MqttTopicHelper.ColorType.slider;
 import static com.getpcpanel.mqtt.MqttTopicHelper.ValueType.analog;
 import static com.getpcpanel.mqtt.MqttTopicHelper.ValueType.brightness;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Function;
 
 import javax.annotation.Nonnull;
@@ -45,6 +47,7 @@ public class MqttDeviceService {
     private final MqttHomeAssistantHelper mqttHomeAssistantHelper;
     private final MqttTopicHelper mqttTopicHelper;
     private final MqttDeviceColorService deviceColorService;
+    private final Set<Device> initializedDevices = new HashSet<>();
 
     @Order(ORDER_OF_SAVE + 1) // Ensure we are disconnected if the setting is turned off
     @EventListener(SaveService.SaveEvent.class)
@@ -114,6 +117,11 @@ public class MqttDeviceService {
     }
 
     private void initialize(Device device) {
+        if (initializedDevices.contains(device)) {
+            return;
+        }
+        initializedDevices.add(device);
+
         var lighting = device.getLightingConfig();
         if (lighting.getLightingMode() != LightingConfig.LightingMode.CUSTOM) {
             log.debug("Only custom lighting will be written to mqtt");
@@ -130,6 +138,7 @@ public class MqttDeviceService {
     }
 
     private void clear(Device device) {
+        initializedDevices.remove(device);
         var baseTopic = mqttTopicHelper.baseTopicFilter();
         mqtt.removeAll(baseTopic);
         mqttHomeAssistantHelper.clearAll(saveService.get().getMqtt());
