@@ -1,5 +1,6 @@
 package com.getpcpanel.util.coloroverride;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -14,7 +15,7 @@ import com.getpcpanel.profile.SingleSliderLabelLightingConfig;
 import com.getpcpanel.profile.SingleSliderLightingConfig;
 
 public class ColorOverrideHolder implements IOverrideColorProvider {
-    private final Map<String, OverrideColors> overrides = new HashMap<>();
+    private final Map<String, OverrideColors> overrides = Collections.synchronizedMap(new HashMap<>());
 
     public void setDialOverride(String deviceSerial, int dial, @Nullable SingleKnobLightingConfig config) {
         overrides.computeIfAbsent(deviceSerial, s -> new OverrideColors())
