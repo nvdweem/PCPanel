@@ -157,7 +157,7 @@ public class MqttService {
         }
         mqttClient = builder.build();
         mqttClient.toBlocking().connect();
-        send(availabilityTopic, "online".getBytes(), true);
+        send(availabilityTopic, "online", true);
         log.info("Connected to MQTT server");
     }
 

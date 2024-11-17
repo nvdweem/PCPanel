@@ -66,6 +66,7 @@ public class MqttDeviceService {
 
     private void initialize() {
         deviceHolder.all().forEach(this::initialize);
+        mqtt.send(mqttTopicHelper.availabilityTopic(), "online", true); // Just to be sure, we might have cleared all the topics
     }
 
     public boolean clear() {
