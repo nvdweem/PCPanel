@@ -14,20 +14,21 @@ Linux might need a few more steps to get everything working.
    ```shell
    sudoedit /etc/udev/rules.d/70-pcpanel.rules
    ```
-2. Add the following lines:
+1. Add the following lines:
    ```properties
    SUBSYSTEM=="usb", ATTRS{idVendor}=="04D8", ATTRS{idProduct}=="eb52", TAG+="uaccess"
    SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="a3c4", TAG+="uaccess"
    SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="a3c5", TAG+="uaccess"
    ```
-3. Then run
+1. Then run
    ```shell
    sudo udevadm control --reload-rules
    ```
-4. It seems that the first run of the software needs to be done as root (`sudo /opt/pcpanel/bin/PCPanel`). This might be needed whenever the software gets updated.
-5. (Optional) Make the software startup automatically. When making the application startup automatically you can add the `quiet` parameter to not show the main window on startup.
+1. Disconnect and re-connect each of your devices (udev rules are applied whenever a device is connected).
+1. It seems that the first run of the software needs to be done as root (`sudo /opt/pcpanel/bin/PCPanel`). This might be needed whenever the software gets updated.
+1. (Optional) Make the software startup automatically. When making the application startup automatically you can add the `quiet` parameter to not show the main window on startup.
 
-I then had to restart to get it to work, logging out and in might work as well.
+If it still doesn't work, try restarting your computer (logging out is not enough).
 
 The software depends on some PulseAudio commands (`pactl`) from `pulseaudio-utils` for volume control
 and `xdotool` to get the currently active window for focus volume. These packages should be
