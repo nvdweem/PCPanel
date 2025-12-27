@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 import com.getpcpanel.MainFX;
 import com.getpcpanel.cpp.linux.SndCtrlLinuxDebug;
 import com.getpcpanel.cpp.windows.SndCtrlWindows;
+import com.getpcpanel.discord.DiscordService;
 import com.getpcpanel.obs.OBS;
 import com.getpcpanel.profile.Save;
 import com.getpcpanel.profile.SaveService;
@@ -83,12 +84,22 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
     @FXML private TextField obsAddress;
     @FXML private TextField obsPort;
     @FXML private TextField obsPassword;
+    @FXML private CheckBox discordEnable;
+    @FXML private Pane discordControls;
+    @FXML private TextField discordIpcPath;
+    @FXML private TextField discordClientId;
+    @FXML private TextField discordMuteHotkey;
+    @FXML private TextField discordDeafenHotkey;
+    @FXML private TextField discordPttHotkey;
+    @FXML private Button discordTestBtn;
+    @FXML private Label discordTestResult;
     @FXML private Button testBtn;
     @FXML private Label obsTestResult;
     @FXML private CheckBox vmEnable;
     @FXML private Pane vmControls;
     @FXML private TextField vmPath;
     @FXML private Tab voicemeeterTab;
+    @FXML private TextField sonarCorePropsPath;
     @FXML private TextField txtPreventSliderTwitch;
     @FXML private TextField txtSliderRollingAverage;
     @FXML private TextField txtOnlyIfDelta;
@@ -96,6 +107,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
     @FXML private OSCSettingsDialog oscSettingsController;
     @FXML private MqttSettingsDialog mqttSettingsController;
     @FXML private VBox debug;
+    @FXML private CheckBox debugMode;
     @FXML private Label copied;
     @FXML private ToggleButton btnTL;
     @FXML private ToggleButton btnTM;
@@ -107,6 +119,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
     @FXML private ToggleButton btnBM;
     @FXML private ToggleButton btnBR;
     @FXML public TextField overlayPadding;
+    private DebugConsoleWindow debugConsoleWindow;
 
     @Override
     public void initUI(@Nonnull SingleParamInitializer<Stage> args) {
@@ -142,6 +155,11 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
     }
 
     @FXML
+    private void onDiscordEnablePressed(@Nullable ActionEvent ignored) {
+        discordControls.setDisable(!discordEnable.isSelected());
+    }
+
+    @FXML
     private void onVMEnablePressed(@Nullable ActionEvent ignored) {
         vmControls.setDisable(!vmEnable.isSelected());
     }
@@ -149,6 +167,11 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
     @FXML
     private void onVoiceMeeterBrowse(ActionEvent event) {
         UIHelper.showFolderPicker("Pick VoiceMeeter directory", vmPath);
+    }
+
+    @FXML
+    private void onSonarCorePropsBrowse(ActionEvent event) {
+        UIHelper.showFilePicker("Pick coreProps.json", sonarCorePropsPath);
     }
 
     @FXML
@@ -174,15 +197,24 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
         save.setObsAddress(obsAddress.getText());
         save.setObsPort(obsPort.getText());
         save.setObsPassword(obsPassword.getText());
+        save.setDiscordEnabled(discordEnable.isSelected());
+        save.setDiscordIpcPath(discordIpcPath.getText());
+        save.setDiscordClientId(discordClientId.getText());
+        save.setDiscordMuteHotkey(discordMuteHotkey.getText());
+        save.setDiscordDeafenHotkey(discordDeafenHotkey.getText());
+        save.setDiscordPttHotkey(discordPttHotkey.getText());
         save.setVoicemeeterEnabled(vmEnable.isSelected());
         save.setVoicemeeterPath(vmPath.getText());
+        save.setSonarCorePropsPath(sonarCorePropsPath.getText());
         save.setPreventSliderTwitchDelay(NumberUtils.toInt(txtPreventSliderTwitch.getText(), 0));
         save.setSliderRollingAverage(NumberUtils.toInt(txtSliderRollingAverage.getText(), 0));
         save.setSendOnlyIfDelta(NumberUtils.toInt(txtOnlyIfDelta.getText(), 0));
         save.setWorkaroundsOnlySliders(cbFixOnlySliders.isSelected());
+        save.setDebugMode(debugMode.isSelected());
         oscSettingsController.save(save);
         mqttSettingsController.save(save);
         saveService.save();
+        applyDebugMode(save.isDebugMode());
         stage.close();
     }
 
@@ -197,6 +229,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
 
     @FXML
     private void closeButtonAction(ActionEvent event) {
+        applyDebugMode(saveService.get().isDebugMode());
         stage.close();
     }
 
@@ -225,13 +258,23 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
         obsPort.setText(save.getObsPort());
         obsPassword.setText(save.getObsPassword());
         onOBSEnablePressed(null);
+        discordEnable.setSelected(save.isDiscordEnabled());
+        discordIpcPath.setText(save.getDiscordIpcPath());
+        discordClientId.setText(save.getDiscordClientId());
+        discordMuteHotkey.setText(save.getDiscordMuteHotkey());
+        discordDeafenHotkey.setText(save.getDiscordDeafenHotkey());
+        discordPttHotkey.setText(save.getDiscordPttHotkey());
+        onDiscordEnablePressed(null);
         vmEnable.setSelected(save.isVoicemeeterEnabled());
         vmPath.setText(save.getVoicemeeterPath());
         onVMEnablePressed(null);
+        sonarCorePropsPath.setText(save.getSonarCorePropsPath());
         txtPreventSliderTwitch.setText(save.getPreventSliderTwitchDelay() == null ? "" : save.getPreventSliderTwitchDelay().toString());
         txtSliderRollingAverage.setText(save.getSliderRollingAverage() == null ? "" : save.getSliderRollingAverage().toString());
         txtOnlyIfDelta.setText(save.getSendOnlyIfDelta() == null ? "" : save.getSendOnlyIfDelta().toString());
         cbFixOnlySliders.setSelected(save.isWorkaroundsOnlySliders());
+        debugMode.setSelected(save.isDebugMode());
+        applyDebugMode(save.isDebugMode());
 
         oscSettingsController.populate(save);
         mqttSettingsController.populate(save);
@@ -295,6 +338,24 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
         osHelper.hideUnsupportedChildren(debug.getChildrenUnmodifiable());
     }
 
+    @FXML
+    private void onDebugModeToggle(ActionEvent event) {
+        applyDebugMode(debugMode.isSelected());
+    }
+
+    private void applyDebugMode(boolean enabled) {
+        if (enabled) {
+            if (debugConsoleWindow == null) {
+                debugConsoleWindow = new DebugConsoleWindow(fileUtil.getFile("logs/logging.log"));
+            }
+            if (!debugConsoleWindow.isShowing()) {
+                debugConsoleWindow.show(stage != null ? stage : parentStage);
+            }
+        } else if (debugConsoleWindow != null) {
+            debugConsoleWindow.close();
+        }
+    }
+
     public void doTest(ActionEvent ignored) {
         obsTestResult.setText("Testing...");
         testBtn.setDisable(true);
@@ -314,6 +375,20 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
             Platform.runLater(() -> {
                 testBtn.setDisable(false);
                 obsTestResult.setText(result);
+            });
+        }).start();
+    }
+
+    public void doDiscordTest(ActionEvent ignored) {
+        discordTestResult.setText("Testing...");
+        discordTestBtn.setDisable(true);
+        new Thread(() -> {
+            var ipcPath = discordIpcPath.getText();
+            var clientId = discordClientId.getText();
+            var result = MainFX.getBean(DiscordService.class).testConnection(ipcPath, clientId);
+            Platform.runLater(() -> {
+                discordTestBtn.setDisable(false);
+                discordTestResult.setText(result);
             });
         }).start();
     }

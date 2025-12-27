@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+<VBox prefHeight="146.0" prefWidth="553.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.command.button.BtnDiscordPttController">
+    <padding>
+        <Insets left="8.0" top="8.0"/>
+    </padding>
+    <Label text="Toggle Discord Push-To-Talk mode"/>
+</VBox>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.ToggleGroup?>
+<?import javafx.scene.layout.VBox?>
+<VBox prefHeight="146.0" prefWidth="553.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.command.button.BtnDiscordDeafenController">
+    <padding>
+        <Insets left="8.0" top="8.0"/>
+    </padding>
+    <Label text="Control Discord deafen"/>
+    <RadioButton fx:id="discordDeafen" mnemonicParsing="false" text="Deafen">
+        <toggleGroup>
+            <ToggleGroup fx:id="discordDeafenGroup"/>
+        </toggleGroup>
+    </RadioButton>
+    <RadioButton fx:id="discordUndeafen" mnemonicParsing="false" text="Undeafen" toggleGroup="$discordDeafenGroup"/>
+    <RadioButton fx:id="discordDeafenToggle" mnemonicParsing="false" text="Toggle" toggleGroup="$discordDeafenGroup"/>
+</VBox>

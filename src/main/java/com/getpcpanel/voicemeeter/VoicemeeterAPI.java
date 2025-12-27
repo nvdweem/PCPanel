@@ -19,6 +19,7 @@ import lombok.extern.log4j.Log4j2;
 public final class VoicemeeterAPI {
     private final SaveService saveService;
     private VoicemeeterInstance instance;
+    private boolean loggedLoadError;
     public final String DEFAULT_VM_WINDOWS_64BIT_PATH = "VoicemeeterRemote64.dll";
     public final String DEFAULT_VM_WINDOWS_32BIT_PATH = "VoicemeeterRemote.dll";
 
@@ -31,8 +32,12 @@ public final class VoicemeeterAPI {
         try {
             System.load(dllPath.getAbsolutePath());
             instance = Native.load("VoicemeeterRemote" + (is64bit ? "64" : ""), VoicemeeterInstance.class);
+            loggedLoadError = false;
         } catch (Throwable t) {
-            log.error("Unable to load VoiceMeeter");
+            if (!loggedLoadError) {
+                log.error("Unable to load VoiceMeeter");
+                loggedLoadError = true;
+            }
         }
     }
 
@@ -245,4 +250,3 @@ public final class VoicemeeterAPI {
         return new Memory(size);
     }
 }
-

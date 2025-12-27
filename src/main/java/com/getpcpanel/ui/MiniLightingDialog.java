@@ -36,6 +36,7 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TabPane.TabClosingPolicy;
 import javafx.scene.image.Image;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
@@ -75,6 +76,7 @@ public class MiniLightingDialog extends Application implements UIInitializer<Sin
     @FXML private Slider breathSpeed;
     @FXML private VBox wavebox;
     @FXML private VBox breathbox;
+    @FXML private FlowPane fullBodyPresets;
     @FXML private Button applyToAllButton;
     private ColorDialog allKnobColor;
     private static final int NUM_KNOBS = 4;
@@ -194,6 +196,7 @@ public class MiniLightingDialog extends Application implements UIInitializer<Sin
             }
             initFields();
         });
+        initPresets();
         initFields();
         initListeners(allSliders, allCheckBoxes);
     }
@@ -303,6 +306,44 @@ public class MiniLightingDialog extends Application implements UIInitializer<Sin
         });
     }
 
+    private void initPresets() {
+        for (var preset : LightingPresets.getPresets()) {
+            var btn = new Button(preset.name());
+            btn.setOnAction(e -> applyPreset(preset));
+            fullBodyPresets.getChildren().add(btn);
+        }
+    }
+
+    private void applyPreset(LightingPresets.Preset preset) {
+        var presetConfig = preset.create();
+        var mode = presetConfig.getLightingMode();
+        mainPane.getSelectionModel().select(0);
+        if (mode == LightingMode.ALL_COLOR) {
+            fullBodyTabbedPane.getSelectionModel().select(0);
+            allKnobColor.setCustomColor(Color.web(presetConfig.getAllColor()));
+        } else if (mode == LightingMode.ALL_RAINBOW) {
+            fullBodyTabbedPane.getSelectionModel().select(1);
+            rainbowPhaseShift.setValue(presetConfig.getRainbowPhaseShift() & 0xFF);
+            rainbowBrightness.setValue(presetConfig.getRainbowBrightness() & 0xFF);
+            rainbowSpeed.setValue(presetConfig.getRainbowSpeed() & 0xFF);
+            rainbowReverse.setSelected(presetConfig.getRainbowReverse() == 1);
+            rainbowVertical.setSelected(presetConfig.getRainbowVertical() == 1);
+        } else if (mode == LightingMode.ALL_WAVE) {
+            fullBodyTabbedPane.getSelectionModel().select(2);
+            waveHue.setHue(presetConfig.getWaveHue() & 0xFF);
+            waveBrightness.setValue(presetConfig.getWaveBrightness() & 0xFF);
+            waveSpeed.setValue(presetConfig.getWaveSpeed() & 0xFF);
+            waveReverse.setSelected(presetConfig.getWaveReverse() == 1);
+            waveBounce.setSelected(presetConfig.getWaveBounce() == 1);
+        } else if (mode == LightingMode.ALL_BREATH) {
+            fullBodyTabbedPane.getSelectionModel().select(3);
+            breathHue.setHue(presetConfig.getBreathHue() & 0xFF);
+            breathBrightness.setValue(presetConfig.getBreathBrightness() & 0xFF);
+            breathSpeed.setValue(presetConfig.getBreathSpeed() & 0xFF);
+        }
+        updateColors();
+    }
+
     private void updateApplyToAllButton() {
         if (mainPane.getSelectionModel().getSelectedIndex() == 0 || mainPane.getSelectionModel().getSelectedIndex() == 4) {
             applyToAllButton.setVisible(false);
@@ -321,6 +362,10 @@ public class MiniLightingDialog extends Application implements UIInitializer<Sin
     @SuppressWarnings("NumericCastThatLosesPrecision")
     private void updateColors() {
         if (mainPane.getSelectionModel().getSelectedIndex() == 0) {
+            var selected = fullBodyTabbedPane.getSelectionModel().getSelectedItem();
+            if (selected != null && "Presets".equals(selected.getText())) {
+                return;
+            }
             if (fullBodyTabbedPane.getSelectionModel().getSelectedIndex() == 0) {
                 lightingConfig = LightingConfig.createAllColor(allKnobColor.getCustomColor());
                 setDeviceLighting();

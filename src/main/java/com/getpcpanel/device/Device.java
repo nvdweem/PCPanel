@@ -17,6 +17,9 @@ import com.getpcpanel.ui.LightingChangedToDefaultEvent;
 import com.getpcpanel.ui.LimitedTextField;
 import com.getpcpanel.util.Images;
 
+import java.util.function.LongConsumer;
+
+import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.geometry.Pos;
@@ -54,6 +57,11 @@ public abstract class Device {
     @Getter protected String serialNumber;
     protected DeviceSave save;
     private LightingConfig lightingConfig;
+    private AnimationTimer lightingAnimator;
+    private LongConsumer lightingAnimatorTick;
+    private long lightingAnimatorStartNs = -1L;
+    private String lightingAnimatorKey;
+    private static final double UI_ANIMATION_SPEED_SCALE = 0.35D;
 
     protected Device(FxHelper fxHelper, SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, ApplicationEventPublisher eventPublisher, String serialNum,
             DeviceSave deviceSave) {
@@ -319,6 +327,84 @@ public abstract class Device {
             log.error("Unable to set lighting", e);
             setLighting(LightingConfig.defaultLightingConfig(getDeviceType()), priority);
         }
+    }
+
+    protected void startLightingAnimation(String key, LongConsumer tick) {
+        if (lightingAnimator == null) {
+            lightingAnimator = new AnimationTimer() {
+                @Override
+                public void handle(long now) {
+                    if (lightingAnimatorTick == null) {
+                        return;
+                    }
+                    if (lightingAnimatorStartNs < 0) {
+                        lightingAnimatorStartNs = now;
+                    }
+                    lightingAnimatorTick.accept(now - lightingAnimatorStartNs);
+                }
+            };
+        }
+        if (!StringUtils.equals(lightingAnimatorKey, key)) {
+            lightingAnimatorStartNs = -1L;
+        }
+        lightingAnimatorKey = key;
+        lightingAnimatorTick = tick;
+        lightingAnimator.start();
+    }
+
+    protected void stopLightingAnimation() {
+        if (lightingAnimator != null) {
+            lightingAnimator.stop();
+        }
+        lightingAnimatorKey = null;
+        lightingAnimatorTick = null;
+        lightingAnimatorStartNs = -1L;
+    }
+
+    protected static double byteToUnit(byte value) {
+        return (value & 0xFF) / 255.0D;
+    }
+
+    protected static double hueFromByte(byte value) {
+        return 360.0D * byteToUnit(value);
+    }
+
+    protected static double normalizeHue(double hue) {
+        var normalized = hue % 360.0D;
+        return normalized < 0 ? normalized + 360.0D : normalized;
+    }
+
+    protected static double timeToHueShift(double elapsedSeconds, byte speed, boolean reverse) {
+        var cyclesPerSecond = byteToUnit(speed) * UI_ANIMATION_SPEED_SCALE;
+        if (cyclesPerSecond == 0.0D) {
+            return 0.0D;
+        }
+        var direction = reverse ? -1.0D : 1.0D;
+        return direction * elapsedSeconds * cyclesPerSecond * 360.0D;
+    }
+
+    protected static double wavePhase(double elapsedSeconds, byte speed, boolean reverse, boolean bounce) {
+        var cyclesPerSecond = byteToUnit(speed) * UI_ANIMATION_SPEED_SCALE;
+        if (cyclesPerSecond == 0.0D) {
+            return 0.0D;
+        }
+        var phase = elapsedSeconds * cyclesPerSecond * 2.0D * Math.PI;
+        if (reverse) {
+            phase = -phase;
+        }
+        if (bounce) {
+            phase = Math.sin(phase) * Math.PI;
+        }
+        return phase;
+    }
+
+    protected static double breathFactor(double elapsedSeconds, byte speed) {
+        var cyclesPerSecond = byteToUnit(speed) * UI_ANIMATION_SPEED_SCALE;
+        if (cyclesPerSecond == 0.0D) {
+            return 1.0D;
+        }
+        var phase = elapsedSeconds * cyclesPerSecond * 2.0D * Math.PI;
+        return 0.5D + 0.5D * Math.sin(phase);
     }
 
     protected SVGPath getLightingImage() {

@@ -24,11 +24,13 @@ import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Slider;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.image.Image;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
@@ -63,6 +65,7 @@ public class RGBLightingDialog extends Application implements UIInitializer<Sing
     @FXML private Slider breathSpeed;
     @FXML private VBox wavebox;
     @FXML private VBox breathbox;
+    @FXML private FlowPane allKnobsPresets;
     @FXML private HBox volumeFollowBox;
     @FXML private HBox volumeFollowCheckboxContainer;
     private ColorDialog allKnobColor;
@@ -157,6 +160,7 @@ public class RGBLightingDialog extends Application implements UIInitializer<Sing
         wavebox.getChildren().add(1, waveHue);
         breathHue = new HueSlider();
         breathbox.getChildren().add(1, breathHue);
+        initPresets();
         initFields();
         initListeners(allSliders, allCheckBoxes);
     }
@@ -227,10 +231,54 @@ public class RGBLightingDialog extends Application implements UIInitializer<Sing
         allKnobsTabbedPane.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> updateColors());
     }
 
+    private void initPresets() {
+        for (var preset : LightingPresets.getPresets()) {
+            var btn = new Button(preset.name());
+            btn.setOnAction(e -> applyPreset(preset));
+            allKnobsPresets.getChildren().add(btn);
+        }
+    }
+
+    private void applyPreset(LightingPresets.Preset preset) {
+        var presetConfig = preset.create();
+        var mode = presetConfig.getLightingMode();
+        knobsTabbedPane.getSelectionModel().select(0);
+        if (mode == LightingMode.ALL_COLOR) {
+            allKnobsTabbedPane.getSelectionModel().select(0);
+            var color = Color.valueOf(presetConfig.getAllColor());
+            allKnobColor.setCustomColor(color);
+            for (var cd : cds)
+                cd.setCustomColor(color);
+        } else if (mode == LightingMode.ALL_RAINBOW) {
+            allKnobsTabbedPane.getSelectionModel().select(1);
+            rainbowPhaseShift.setValue(presetConfig.getRainbowPhaseShift() & 0xFF);
+            rainbowBrightness.setValue(presetConfig.getRainbowBrightness() & 0xFF);
+            rainbowSpeed.setValue(presetConfig.getRainbowSpeed() & 0xFF);
+            rainbowReverse.setSelected(presetConfig.getRainbowReverse() == 1);
+        } else if (mode == LightingMode.ALL_WAVE) {
+            allKnobsTabbedPane.getSelectionModel().select(2);
+            waveHue.setHue(presetConfig.getWaveHue() & 0xFF);
+            waveBrightness.setValue(presetConfig.getWaveBrightness() & 0xFF);
+            waveSpeed.setValue(presetConfig.getWaveSpeed() & 0xFF);
+            waveReverse.setSelected(presetConfig.getWaveReverse() == 1);
+            waveBounce.setSelected(presetConfig.getWaveBounce() == 1);
+        } else if (mode == LightingMode.ALL_BREATH) {
+            allKnobsTabbedPane.getSelectionModel().select(3);
+            breathHue.setHue(presetConfig.getBreathHue() & 0xFF);
+            breathBrightness.setValue(presetConfig.getBreathBrightness() & 0xFF);
+            breathSpeed.setValue(presetConfig.getBreathSpeed() & 0xFF);
+        }
+        updateColors();
+    }
+
     @SuppressWarnings("NumericCastThatLosesPrecision")
     private void updateColors() {
         setFollowingControlsVisible(false);
         if (knobsTabbedPane.getSelectionModel().getSelectedIndex() == 0) {
+            var selected = allKnobsTabbedPane.getSelectionModel().getSelectedItem();
+            if (selected != null && "Presets".equals(selected.getText())) {
+                return;
+            }
             if (allKnobsTabbedPane.getSelectionModel().getSelectedIndex() == 0) {
                 setFollowingControlsVisible(true);
                 lightingConfig = LightingConfig.createAllColor(allKnobColor.getCustomColor(), getVolumeTrackingData());

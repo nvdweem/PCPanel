@@ -225,11 +225,62 @@
                 </VBox>
             </VBox>
         </Tab>
+        <Tab text="Discord">
+            <VBox prefWidth="100.0" spacing="10.0">
+                <padding>
+                    <Insets bottom="8.0" left="8.0" right="8.0" top="8.0"/>
+                </padding>
+                <Label text="Discord integration uses the local IPC socket/pipe." wrapText="true"/>
+                <CheckBox fx:id="discordEnable" mnemonicParsing="false" onAction="#onDiscordEnablePressed" text="Discord Enable"/>
+                <VBox fx:id="discordControls" spacing="10.0">
+                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                        <Label text="IPC Path (optional override)"/>
+                        <TextField fx:id="discordIpcPath" prefHeight="31.0" prefWidth="167.0" promptText="leave blank for auto-detect" HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                        <Label text="Client ID"/>
+                        <TextField fx:id="discordClientId" prefHeight="31.0" prefWidth="167.0" promptText="Discord Application ID" HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                        <Label text="Mute Hotkey (fallback)"/>
+                        <TextField fx:id="discordMuteHotkey" prefHeight="31.0" prefWidth="167.0" promptText="e.g. ctrl+shift+m" HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                        <Label text="Deafen Hotkey (fallback)"/>
+                        <TextField fx:id="discordDeafenHotkey" prefHeight="31.0" prefWidth="167.0" promptText="e.g. ctrl+shift+d" HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                    <HBox alignment="CENTER_LEFT" spacing="10.0">
+                        <Label text="PTT Toggle Hotkey (fallback)"/>
+                        <TextField fx:id="discordPttHotkey" prefHeight="31.0" prefWidth="167.0" promptText="e.g. ctrl+shift+t" HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                    <Button fx:id="discordTestBtn" mnemonicParsing="false" onAction="#doDiscordTest" text="Test">
+                        <VBox.margin>
+                            <Insets left="100.0"/>
+                        </VBox.margin>
+                    </Button>
+                    <Label fx:id="discordTestResult"/>
+                </VBox>
+            </VBox>
+        </Tab>
+        <Tab text="SteelSeries GG">
+            <VBox prefWidth="100.0" spacing="10.0">
+                <padding>
+                    <Insets bottom="8.0" left="8.0" right="8.0" top="8.0"/>
+                </padding>
+                <Label text="Set the path to coreProps.json so the app can resolve the Sonar port." wrapText="true"/>
+                <HBox alignment="CENTER_LEFT" spacing="10.0">
+                    <Label prefWidth="160.0" text="coreProps.json path"/>
+                    <TextField fx:id="sonarCorePropsPath" prefHeight="31.0" prefWidth="167.0" promptText="C:\ProgramData\SteelSeries\SteelSeries Engine 3\coreProps.json" HBox.hgrow="ALWAYS"/>
+                    <Button mnemonicParsing="false" onAction="#onSonarCorePropsBrowse" text="..."/>
+                </HBox>
+            </VBox>
+        </Tab>
         <Tab text="Debug">
             <VBox fx:id="debug" layoutX="30.0" layoutY="28.0">
                 <padding>
                     <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
                 </padding>
+                <CheckBox fx:id="debugMode" mnemonicParsing="false" onAction="#onDebugModeToggle" text="Debug mode (show console)"/>
                 <Button layoutX="30.0" layoutY="28.0" mnemonicParsing="false" onAction="#openLogsFolder" text="Open Logs Folder"/>
                 <Button layoutX="30.0" layoutY="28.0" mnemonicParsing="false" onAction="#triggerAv" styleClass="only-windows" text="Trigger AV (for debugging)"/>
                 <HBox alignment="CENTER_LEFT" styleClass="only-linux">

@@ -13,6 +13,9 @@ public class SingleSliderLightingConfig {
     private String color2;
     private String muteOverrideDeviceOrFollow;
     private String muteOverrideColor;
+    private boolean micFollowEnabled;
+    private String micDeviceId;
+    private Float micMaxDb;
 
     public SingleSliderLightingConfig() {
         mode = SINGLE_SLIDER_MODE.NONE;
@@ -41,6 +44,8 @@ public class SingleSliderLightingConfig {
         color1 = c.color1;
         color2 = c.color2;
         mode = c.mode;
+        micFollowEnabled = c.micFollowEnabled;
+        micDeviceId = c.micDeviceId;
+        micMaxDb = c.micMaxDb;
     }
 }
-

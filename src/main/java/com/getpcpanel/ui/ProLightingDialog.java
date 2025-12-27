@@ -38,8 +38,11 @@ import javafx.scene.control.Slider;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TabPane.TabClosingPolicy;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -79,6 +82,7 @@ public class ProLightingDialog extends Application implements UIInitializer<Sing
     @FXML private Slider breathSpeed;
     @FXML private VBox wavebox;
     @FXML private VBox breathbox;
+    @FXML private FlowPane fullBodyPresets;
     @FXML private Button applyToAllButton;
     private ColorDialog allKnobColor;
     private static final int NUM_KNOBS = 5;
@@ -103,6 +107,9 @@ public class ProLightingDialog extends Application implements UIInitializer<Sing
     private final ColorDialog[] sliderStaticGradientBottomCD = new ColorDialog[NUM_SLIDERS];
     private final ColorDialog[] sliderVolumeGradientCD1 = new ColorDialog[NUM_SLIDERS];
     private final ColorDialog[] sliderVolumeGradientCD2 = new ColorDialog[NUM_SLIDERS];
+    private final CheckBox[] sliderMicFollowCheckboxes = new CheckBox[NUM_SLIDERS];
+    @SuppressWarnings("unchecked") private final ComboBox<AudioDevice>[] sliderMicDeviceBoxes = new ComboBox[NUM_SLIDERS];
+    private final TextField[] sliderMicMaxDbFields = new TextField[NUM_SLIDERS];
     private final ColorDialog[] sliderLabelStaticCDs = new ColorDialog[NUM_SLIDERS];
     private ColorDialog logoStaticColor;
     @FXML private Slider logoRainbowSpeed;
@@ -186,6 +193,7 @@ public class ProLightingDialog extends Application implements UIInitializer<Sing
 
     private void postInit() {
         int i;
+        var inputDevices = getInputDevices();
         for (i = 0; i < NUM_KNOBS; i++) {
             var knob = i + 1;
             var tab = new Tab("Knob " + knob);
@@ -216,9 +224,10 @@ public class ProLightingDialog extends Application implements UIInitializer<Sing
             sliderVolumeGradientCD2[i] = new ColorDialog();
             var volGradientGP = makeFourPanelGridPane("Color when volume is 100", "Color when volume is 0",
                     sliderVolumeGradientCD2[i], sliderVolumeGradientCD1[i]);
+            var micFollowBox = buildMicFollowBox(i, inputDevices);
             var staticTab = new Tab("Static", cd);
             var staticGradient = new Tab("Static Gradient", staticGradientGP);
-            var volGradient = new Tab("Volume Gradient", volGradientGP);
+            var volGradient = new Tab("Volume Gradient", new VBox(10, volGradientGP, micFollowBox));
             var singleSliderTabPane = new TabPane(staticTab, staticGradient, volGradient);
             sliderSingleTabPane[i] = singleSliderTabPane;
             Util.adjustTabs(singleSliderTabPane, 140, 30);
@@ -282,6 +291,7 @@ public class ProLightingDialog extends Application implements UIInitializer<Sing
             }
             initFields();
         });
+        initPresets();
         initFields();
         initListeners(allSliders, allCheckBoxes);
     }
@@ -355,6 +365,11 @@ public class ProLightingDialog extends Application implements UIInitializer<Sing
                     sliderVolumeGradientCD1[i].setCustomColor(Color.web(sliderConfig.getColor1()));
                     sliderVolumeGradientCD2[i].setCustomColor(Color.web(sliderConfig.getColor2()));
                 }
+                sliderMicFollowCheckboxes[i].setSelected(sliderConfig.isMicFollowEnabled());
+                sliderMicDeviceBoxes[i].setDisable(!sliderConfig.isMicFollowEnabled());
+                sliderMicDeviceBoxes[i].setValue(findDeviceById(sliderConfig.getMicDeviceId()));
+                sliderMicMaxDbFields[i].setDisable(!sliderConfig.isMicFollowEnabled());
+                sliderMicMaxDbFields[i].setText(formatMicMaxDb(sliderConfig.getMicMaxDb()));
                 setOverride(OverrideTargetType.SLIDER, i, sliderConfig.getMuteOverrideDeviceOrFollow(), sliderConfig.getMuteOverrideColor());
             }
             if (logoConfig.getMode() == SINGLE_LOGO_MODE.STATIC) {
@@ -442,6 +457,43 @@ public class ProLightingDialog extends Application implements UIInitializer<Sing
         });
     }
 
+    private void initPresets() {
+        for (var preset : LightingPresets.getPresets()) {
+            var btn = new Button(preset.name());
+            btn.setOnAction(e -> applyPreset(preset));
+            fullBodyPresets.getChildren().add(btn);
+        }
+    }
+
+    private void applyPreset(LightingPresets.Preset preset) {
+        var presetConfig = preset.create();
+        var mode = presetConfig.getLightingMode();
+        mainPane.getSelectionModel().select(0);
+        if (mode == LightingMode.ALL_COLOR) {
+            fullBodyTabbedPane.getSelectionModel().select(0);
+            allKnobColor.setCustomColor(Color.web(presetConfig.getAllColor()));
+        } else if (mode == LightingMode.ALL_RAINBOW) {
+            fullBodyTabbedPane.getSelectionModel().select(1);
+            rainbowPhaseShift.setValue(presetConfig.getRainbowPhaseShift() & 0xFF);
+            rainbowBrightness.setValue(presetConfig.getRainbowBrightness() & 0xFF);
+            rainbowSpeed.setValue(presetConfig.getRainbowSpeed() & 0xFF);
+            rainbowReverse.setSelected(presetConfig.getRainbowReverse() == 1);
+        } else if (mode == LightingMode.ALL_WAVE) {
+            fullBodyTabbedPane.getSelectionModel().select(2);
+            waveHue.setHue(presetConfig.getWaveHue() & 0xFF);
+            waveBrightness.setValue(presetConfig.getWaveBrightness() & 0xFF);
+            waveSpeed.setValue(presetConfig.getWaveSpeed() & 0xFF);
+            waveReverse.setSelected(presetConfig.getWaveReverse() == 1);
+            waveBounce.setSelected(presetConfig.getWaveBounce() == 1);
+        } else if (mode == LightingMode.ALL_BREATH) {
+            fullBodyTabbedPane.getSelectionModel().select(3);
+            breathHue.setHue(presetConfig.getBreathHue() & 0xFF);
+            breathBrightness.setValue(presetConfig.getBreathBrightness() & 0xFF);
+            breathSpeed.setValue(presetConfig.getBreathSpeed() & 0xFF);
+        }
+        updateColors();
+    }
+
     private void updateApplyToAllButton() {
         if (mainPane.getSelectionModel().getSelectedIndex() == 0 || mainPane.getSelectionModel().getSelectedIndex() == 4) {
             applyToAllButton.setVisible(false);
@@ -457,9 +509,76 @@ public class ProLightingDialog extends Application implements UIInitializer<Sing
         }
     }
 
+    private VBox buildMicFollowBox(int slider, Collection<AudioDevice> inputDevices) {
+        var followCheck = new CheckBox("Follow microphone level");
+        var deviceBox = new ComboBox<AudioDevice>();
+        deviceBox.getItems().addAll(inputDevices);
+        deviceBox.setDisable(true);
+        var maxDbField = new TextField();
+        maxDbField.setPromptText("-10");
+        maxDbField.setPrefWidth(70.0);
+        followCheck.setOnAction(e -> {
+            deviceBox.setDisable(!followCheck.isSelected());
+            maxDbField.setDisable(!followCheck.isSelected());
+            updateColors();
+        });
+        deviceBox.setOnAction(e -> updateColors());
+        maxDbField.textProperty().addListener((obs, oldValue, newValue) -> updateColors());
+        if (inputDevices.isEmpty()) {
+            followCheck.setDisable(true);
+            deviceBox.setDisable(true);
+            maxDbField.setDisable(true);
+        }
+        sliderMicFollowCheckboxes[slider] = followCheck;
+        sliderMicDeviceBoxes[slider] = deviceBox;
+        sliderMicMaxDbFields[slider] = maxDbField;
+
+        var row = new HBox(10, new Label("Microphone"), deviceBox);
+        var maxRow = new HBox(10, new Label("Max dB"), maxDbField);
+        var note = new Label("Note: Height levels are not supported by the panel; mic follow changes color only.");
+        var box = new VBox(8, followCheck, row, maxRow, note);
+        return box;
+    }
+
+    private Collection<AudioDevice> getInputDevices() {
+        return sndCtrl.getDevices().stream().filter(AudioDevice::isInput).toList();
+    }
+
+    private AudioDevice findDeviceById(String id) {
+        if (id == null || id.isBlank()) {
+            return null;
+        }
+        return sndCtrl.getDevices().stream().filter(d -> id.equals(d.id())).findFirst().orElse(null);
+    }
+
+    private String formatMicMaxDb(Float value) {
+        if (value == null) {
+            return "";
+        }
+        if (Math.abs(value - Math.round(value)) < 0.01f) {
+            return Integer.toString(Math.round(value));
+        }
+        return value.toString();
+    }
+
+    private Float parseMicMaxDb(String text) {
+        if (text == null || text.isBlank()) {
+            return null;
+        }
+        try {
+            return Float.parseFloat(text.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     @SuppressWarnings("NumericCastThatLosesPrecision")
     private void updateColors() {
         if (mainPane.getSelectionModel().getSelectedIndex() == 0) {
+            var selected = fullBodyTabbedPane.getSelectionModel().getSelectedItem();
+            if (selected != null && "Presets".equals(selected.getText())) {
+                return;
+            }
             if (fullBodyTabbedPane.getSelectionModel().getSelectedIndex() == 0) {
                 lightingConfig = LightingConfig.createAllColor(allKnobColor.getCustomColor());
                 setDeviceLighting();
@@ -513,6 +632,10 @@ public class ProLightingDialog extends Application implements UIInitializer<Sing
                     lightingConfig.getSliderConfigs()[slider].setColor2FromColor(sliderVolumeGradientCD2[slider].getCustomColor());
                 }
                 var sliderConfig = lightingConfig.getSliderConfigs()[slider];
+                sliderConfig.setMicFollowEnabled(sliderMicFollowCheckboxes[slider].isSelected());
+                var device = sliderMicDeviceBoxes[slider].getSelectionModel().getSelectedItem();
+                sliderConfig.setMicDeviceId(device != null ? device.id() : "");
+                sliderConfig.setMicMaxDb(parseMicMaxDb(sliderMicMaxDbFields[slider].getText()));
                 setOverrideSetting(OverrideTargetType.SLIDER, slider, sliderConfig::setMuteOverrideDeviceOrFollow, sliderConfig::setMuteOverrideColorFromColor);
             }
             if (logoTabPane.getSelectionModel().getSelectedIndex() == 0) {

@@ -17,8 +17,8 @@
     <description>PCPanel controller software</description>
 
     <properties>
-        <project.baseversion>1.7</project.baseversion>
-        <project.snapshot>-SNAPSHOT</project.snapshot>
+        <project.baseversion>2.0.0</project.baseversion>
+        <project.snapshot>-DEV</project.snapshot>
         <!--suppress UnresolvedMavenProperty -->
         <github.build>${env.GITHUB_RUN_NUMBER}</github.build>
         <!--suppress UnresolvedMavenProperty -->
@@ -389,7 +389,7 @@
                 </property>
             </activation>
             <properties>
-                <github.build>9999</github.build>
+                <github.build>1</github.build>
                 <github.repo>nvdweem/PCPanel</github.repo>
             </properties>
         </profile>

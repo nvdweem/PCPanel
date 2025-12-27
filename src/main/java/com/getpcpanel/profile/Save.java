@@ -21,6 +21,8 @@ public class Save {
     public static final String DEFAULT_OVERLAY_BAR_BACKGROUND_COLOR = "rgb(249, 249, 249)";
     public static final int DEFAULT_OVERLAY_BAR_HEIGHT = 18;
     public static final int DEFAULT_OVERLAY_PADDING = 10;
+    public static final String DEFAULT_SONAR_CORE_PROPS_PATH = "C:\\ProgramData\\SteelSeries\\SteelSeries Engine 3\\coreProps.json";
+    public static final String DEFAULT_DISCORD_CLIENT_ID = "1454170387217780882";
     private static final OverlayPosition DEFAULT_OVERLAY_POSITION = OverlayPosition.topLeft;
     private Map<String, DeviceSave> devices = new ConcurrentHashMap<>();
     private boolean mainUIIcons;
@@ -33,10 +35,18 @@ public class Save {
     private String obsPassword;
     private boolean voicemeeterEnabled;
     private String voicemeeterPath = "C:\\Program Files (x86)\\VB\\Voicemeeter";
+    private boolean discordEnabled;
+    private String discordIpcPath;
+    private String discordClientId = DEFAULT_DISCORD_CLIENT_ID;
+    private String discordMuteHotkey;
+    private String discordDeafenHotkey;
+    private String discordPttHotkey;
+    private String sonarCorePropsPath = DEFAULT_SONAR_CORE_PROPS_PATH;
     @Nullable private Integer preventSliderTwitchDelay;
     @Nullable private Integer sliderRollingAverage;
     @Nullable private Integer sendOnlyIfDelta;
     private boolean workaroundsOnlySliders;
+    private boolean debugMode;
     private Integer oscListenPort;
     private List<OSCConnectionInfo> oscConnections;
     private MqttSettings mqtt;

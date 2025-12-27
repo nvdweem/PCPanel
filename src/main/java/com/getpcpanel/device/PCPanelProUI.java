@@ -5,6 +5,7 @@ import java.util.Objects;
 
 import org.springframework.context.ApplicationEventPublisher;
 
+import com.getpcpanel.audio.MicrophoneLevelService;
 import com.getpcpanel.commands.IconService;
 import com.getpcpanel.hid.DeviceCommunicationHandler;
 import com.getpcpanel.hid.InputInterpreter;
@@ -14,6 +15,7 @@ import com.getpcpanel.profile.LightingConfig;
 import com.getpcpanel.profile.LightingConfig.LightingMode;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SingleKnobLightingConfig.SINGLE_KNOB_MODE;
+import com.getpcpanel.profile.SingleLogoLightingConfig;
 import com.getpcpanel.profile.SingleLogoLightingConfig.SINGLE_LOGO_MODE;
 import com.getpcpanel.profile.SingleSliderLabelLightingConfig.SINGLE_SLIDER_LABEL_MODE;
 import com.getpcpanel.profile.SingleSliderLightingConfig.SINGLE_SLIDER_MODE;
@@ -22,6 +24,8 @@ import com.getpcpanel.ui.HomePage;
 import com.getpcpanel.util.Util;
 import com.getpcpanel.util.coloroverride.OverrideColorService;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -39,17 +43,21 @@ import javafx.scene.paint.Paint;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class PCPanelProUI extends Device {
     private final InputInterpreter inputInterpreter;
     private final OverrideColorService overrideColorService;
+    private final MicrophoneLevelService microphoneLevelService;
 
     public static final int KNOB_COUNT = 5;
     public static final int SLIDER_COUNT = 4;
     private static final int LEDS_PER_SLIDER = 5;
     private static final int MAX_ANALOG_VALUE = 100;
+    private static final float MIC_MIN_DB = -60.0f;
+    private static final float MIC_DEFAULT_MAX_DB = -10.0f;
     @FXML private Pane lightPanes;
     @FXML private Pane panelPane;
     private Label label;
@@ -81,12 +89,15 @@ public class PCPanelProUI extends Device {
     private final SVGPath[] sliderLabels = new SVGPath[4];
     private final int[] analogValue = new int[9];
     private final Pane[] sliderHolders = new Pane[4];
+    private Timeline micLevelTimeline;
 
     public PCPanelProUI(FxHelper fxHelper, InputInterpreter inputInterpreter, SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, ApplicationEventPublisher eventPublisher, OverrideColorService overrideColorService,
+            MicrophoneLevelService microphoneLevelService,
             String serialNum, DeviceSave deviceSave) {
         super(fxHelper, saveService, outputInterpreter, iconService, eventPublisher, serialNum, deviceSave);
         this.inputInterpreter = inputInterpreter;
         this.overrideColorService = overrideColorService;
+        this.microphoneLevelService = microphoneLevelService;
         var loader = getFxHelper().getLoader(getClass().getResource("/assets/PCPanelPro/PCPanelPro.fxml"));
         loader.setController(this);
         try {
@@ -103,6 +114,7 @@ public class PCPanelProUI extends Device {
             log.error("Unable to init ui", e);
         }
         postInit();
+        initMicLevelTimer();
     }
 
     @Override
@@ -150,6 +162,32 @@ public class PCPanelProUI extends Device {
             childDialogStage = new Stage();
             getFxHelper().buildProLightingDialog(this).start(childDialogStage);
         });
+    }
+
+    private void initMicLevelTimer() {
+        micLevelTimeline = new Timeline(new KeyFrame(Duration.millis(50), e -> refreshMicLighting()));
+        micLevelTimeline.setCycleCount(Timeline.INDEFINITE);
+        micLevelTimeline.play();
+    }
+
+    private void refreshMicLighting() {
+        var config = getLightingConfig();
+        if (config.getLightingMode() != LightingMode.CUSTOM) {
+            return;
+        }
+        if (!hasMicTracking(config)) {
+            return;
+        }
+        setLighting(config, false);
+    }
+
+    private boolean hasMicTracking(LightingConfig config) {
+        for (var sliderConfig : config.getSliderConfigs()) {
+            if (sliderConfig.isMicFollowEnabled()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void initButtons() throws IOException {
@@ -291,31 +329,14 @@ public class PCPanelProUI extends Device {
     public void showLightingConfigToUI(LightingConfig config) {
         var mode = config.getLightingMode();
         if (mode == LightingMode.ALL_COLOR) {
+            stopLightingAnimation();
             setAllColor(Paint.valueOf(config.getAllColor()));
         } else if (mode == LightingMode.ALL_RAINBOW) {
-            var totalRows = 9;
-            var row = 0;
-            knobColor1.setFill(createFill(config, totalRows, row));
-            knobColor2.setFill(createFill(config, totalRows, row));
-            row++;
-            knobColor3.setFill(createFill(config, totalRows, row));
-            knobColor4.setFill(createFill(config, totalRows, row));
-            knobColor5.setFill(createFill(config, totalRows, row));
-            row++;
-            for (var p : sliderLabels) {
-                p.setFill(createFill(config, totalRows, row));
-            }
-            row++;
-            for (var i = 4; i >= 0; i--) {
-                for (var a = 0; a < 4; a++)
-                    ((SVGPath) sliderLightPanes[a].getChildren().get(i)).setFill(createFill(config, totalRows, row));
-                row++;
-            }
-            logoLight.setFill(createFill(config, totalRows, row));
+            startLightingAnimation("PRO_ALL_RAINBOW", elapsedNs -> applyRainbow(config, elapsedNs));
         } else if (mode == LightingMode.ALL_WAVE) {
-            setAllColor(Color.hsb(360.0D * (0xFF & config.getWaveHue()) / 255.0D, 1.0D, (0xFF & config.getWaveBrightness()) / 255.0D));
+            startLightingAnimation("PRO_ALL_WAVE", elapsedNs -> applyWave(config, elapsedNs));
         } else if (mode == LightingMode.ALL_BREATH) {
-            setAllColor(Color.hsb(360.0D * (0xFF & config.getBreathHue()) / 255.0D, 1.0D, (0xFF & config.getBreathBrightness()) / 255.0D));
+            startLightingAnimation("PRO_ALL_BREATH", elapsedNs -> applyBreath(config, elapsedNs));
         } else if (mode == LightingMode.CUSTOM) {
             var knobConfigs = config.getKnobConfigs();
             var sliderLabelConfigs = config.getSliderLabelConfigs();
@@ -327,7 +348,7 @@ public class PCPanelProUI extends Device {
                 } else if (knobConfig.getMode() == SINGLE_KNOB_MODE.VOLUME_GRADIENT) {
                     var c1 = Color.web(knobConfig.getColor1());
                     var c2 = Color.web(knobConfig.getColor2());
-                    knobColors[i].setFill(c1.interpolate(c2, analogValue[i] / 100.0D));
+                    knobColors[i].setFill(c1.interpolate(c2, analogValue[i] / (double) MAX_ANALOG_VALUE));
                 }
             }
             for (var i = 0; i < SLIDER_COUNT; i++) {
@@ -352,32 +373,150 @@ public class PCPanelProUI extends Device {
                 } else if (sliderConfig.getMode() == SINGLE_SLIDER_MODE.VOLUME_GRADIENT) {
                     var c1 = Color.web(sliderConfig.getColor1());
                     var c2 = Color.web(sliderConfig.getColor2());
-                    var f = 0.0D;
-                    var delta = 0.25D;
-                    for (var a = 0; a < 5; a++) {
-                        if (a < (analogValue[i + 5] + 10) * 5 / MAX_ANALOG_VALUE) {
-                            ((SVGPath) sliderLightPanes[i].getChildren().get(a)).setFill(c1.interpolate(c2, f));
-                        } else {
-                            ((SVGPath) sliderLightPanes[i].getChildren().get(a)).setFill(Paint.valueOf("black"));
+                    if (sliderConfig.isMicFollowEnabled()) {
+                        var t = normalizeMicLevel(sliderConfig);
+                        var color = c1.interpolate(c2, t);
+                        for (var n : sliderLightPanes[i].getChildren()) {
+                            ((SVGPath) n).setFill(color);
                         }
-                        f += delta;
+                    } else {
+                        var f = 0.0D;
+                        var delta = 0.25D;
+                        var level = analogValue[i + 5];
+                        var normalized = Math.max(0.0D, Math.min(1.0D, level / 255.0D));
+                        var lit = (int) Math.round(normalized * LEDS_PER_SLIDER);
+                        if (lit < 0) {
+                            lit = 0;
+                        } else if (lit > LEDS_PER_SLIDER) {
+                            lit = LEDS_PER_SLIDER;
+                        }
+                        for (var a = 0; a < 5; a++) {
+                            if (a < lit) {
+                                ((SVGPath) sliderLightPanes[i].getChildren().get(a)).setFill(c1.interpolate(c2, f));
+                            } else {
+                                ((SVGPath) sliderLightPanes[i].getChildren().get(a)).setFill(Paint.valueOf("black"));
+                            }
+                            f += delta;
+                        }
                     }
                 }
             }
 
             var logoConfig = overrideColorService.getLogoOverride(serialNumber).orElse(config.getLogoConfig());
             if (logoConfig.getMode() == SINGLE_LOGO_MODE.STATIC) {
+                stopLightingAnimation();
                 logoLight.setFill(Paint.valueOf(logoConfig.getColor()));
             } else if (logoConfig.getMode() == SINGLE_LOGO_MODE.RAINBOW) {
-                logoLight.setFill(Color.RED);
+                startLightingAnimation("PRO_CUSTOM_LOGO_RAINBOW", elapsedNs -> applyLogoRainbow(logoConfig, elapsedNs));
             } else if (logoConfig.getMode() == SINGLE_LOGO_MODE.BREATH) {
-                logoLight.setFill(Color.hsb(360.0D * (0xFF & logoConfig.getHue()) / 255.0D, 1.0D, (0xFF & logoConfig.getBrightness()) / 255.0D));
+                startLightingAnimation("PRO_CUSTOM_LOGO_BREATH", elapsedNs -> applyLogoBreath(logoConfig, elapsedNs));
+            } else {
+                stopLightingAnimation();
             }
         }
     }
 
-    private static Color createFill(LightingConfig config, int totalRows, int row) {
-        return Color.hsb((360 * (totalRows - row - 1) * (0xFF & config.getRainbowPhaseShift())) / 255.0D * totalRows, 1.0D, (0xFF & config.getRainbowBrightness()) / 255.0D);
+    private void applyRainbow(LightingConfig config, long elapsedNs) {
+        var elapsedSeconds = elapsedNs / 1_000_000_000.0D;
+        var hueShift = timeToHueShift(elapsedSeconds, config.getRainbowSpeed(), config.getRainbowReverse() == 1);
+        var totalRows = 9;
+        var row = 0;
+        knobColor1.setFill(createFill(config, totalRows, row, hueShift));
+        knobColor2.setFill(createFill(config, totalRows, row, hueShift));
+        row++;
+        knobColor3.setFill(createFill(config, totalRows, row, hueShift));
+        knobColor4.setFill(createFill(config, totalRows, row, hueShift));
+        knobColor5.setFill(createFill(config, totalRows, row, hueShift));
+        row++;
+        for (var p : sliderLabels) {
+            p.setFill(createFill(config, totalRows, row, hueShift));
+        }
+        row++;
+        for (var i = 4; i >= 0; i--) {
+            for (var a = 0; a < 4; a++) {
+                ((SVGPath) sliderLightPanes[a].getChildren().get(i)).setFill(createFill(config, totalRows, row, hueShift));
+            }
+            row++;
+        }
+        logoLight.setFill(createFill(config, totalRows, row, hueShift));
+    }
+
+    private void applyWave(LightingConfig config, long elapsedNs) {
+        var elapsedSeconds = elapsedNs / 1_000_000_000.0D;
+        var hue = hueFromByte(config.getWaveHue());
+        var baseBrightness = byteToUnit(config.getWaveBrightness());
+        var phase = wavePhase(elapsedSeconds, config.getWaveSpeed(), config.getWaveReverse() == 1, config.getWaveBounce() == 1);
+        var totalRows = 9;
+        var row = 0;
+        var color = Color.hsb(hue, 1.0D, baseBrightness * waveRowBrightness(totalRows, row, phase));
+        knobColor1.setFill(color);
+        knobColor2.setFill(color);
+        row++;
+        color = Color.hsb(hue, 1.0D, baseBrightness * waveRowBrightness(totalRows, row, phase));
+        knobColor3.setFill(color);
+        knobColor4.setFill(color);
+        knobColor5.setFill(color);
+        row++;
+        color = Color.hsb(hue, 1.0D, baseBrightness * waveRowBrightness(totalRows, row, phase));
+        for (var p : sliderLabels) {
+            p.setFill(color);
+        }
+        row++;
+        for (var i = 4; i >= 0; i--) {
+            color = Color.hsb(hue, 1.0D, baseBrightness * waveRowBrightness(totalRows, row, phase));
+            for (var a = 0; a < 4; a++) {
+                ((SVGPath) sliderLightPanes[a].getChildren().get(i)).setFill(color);
+            }
+            row++;
+        }
+        logoLight.setFill(Color.hsb(hue, 1.0D, baseBrightness * waveRowBrightness(totalRows, row, phase)));
+    }
+
+    private void applyBreath(LightingConfig config, long elapsedNs) {
+        var elapsedSeconds = elapsedNs / 1_000_000_000.0D;
+        var hue = hueFromByte(config.getBreathHue());
+        var baseBrightness = byteToUnit(config.getBreathBrightness());
+        var factor = breathFactor(elapsedSeconds, config.getBreathSpeed());
+        setAllColor(Color.hsb(hue, 1.0D, baseBrightness * factor));
+    }
+
+    private void applyLogoRainbow(SingleLogoLightingConfig logoConfig, long elapsedNs) {
+        var elapsedSeconds = elapsedNs / 1_000_000_000.0D;
+        var hueShift = timeToHueShift(elapsedSeconds, logoConfig.getSpeed(), false);
+        var brightness = byteToUnit(logoConfig.getBrightness());
+        logoLight.setFill(Color.hsb(normalizeHue(hueShift), 1.0D, brightness));
+    }
+
+    private void applyLogoBreath(SingleLogoLightingConfig logoConfig, long elapsedNs) {
+        var elapsedSeconds = elapsedNs / 1_000_000_000.0D;
+        var hue = hueFromByte(logoConfig.getHue());
+        var baseBrightness = byteToUnit(logoConfig.getBrightness());
+        var factor = breathFactor(elapsedSeconds, logoConfig.getSpeed());
+        logoLight.setFill(Color.hsb(hue, 1.0D, baseBrightness * factor));
+    }
+
+    private static double waveRowBrightness(int totalRows, int row, double phase) {
+        var offset = 2.0D * Math.PI * (totalRows - row - 1) / totalRows;
+        return 0.5D + 0.5D * Math.sin(phase + offset);
+    }
+
+    private static Color createFill(LightingConfig config, int totalRows, int row, double hueShift) {
+        var baseHue = (360 * (totalRows - row - 1) * (0xFF & config.getRainbowPhaseShift())) / 255.0D * totalRows;
+        var hue = normalizeHue(baseHue + hueShift);
+        var brightness = byteToUnit(config.getRainbowBrightness());
+        return Color.hsb(hue, 1.0D, brightness);
+    }
+
+    private float normalizeMicLevel(com.getpcpanel.profile.SingleSliderLightingConfig cfg) {
+        var maxDb = cfg.getMicMaxDb() == null ? MIC_DEFAULT_MAX_DB : cfg.getMicMaxDb();
+        var db = microphoneLevelService.getLevelDb(cfg.getMicDeviceId());
+        if (Float.isNaN(db) || db <= MIC_MIN_DB) {
+            return 0.0f;
+        }
+        if (db >= maxDb) {
+            return 1.0f;
+        }
+        return (db - MIC_MIN_DB) / (maxDb - MIC_MIN_DB);
     }
 
     @Override

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<HBox prefHeight="120.0" prefWidth="553.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.getpcpanel.ui.command.dial.DialMonitorBrightnessController">
+    <VBox spacing="15.0" HBox.hgrow="ALWAYS">
+        <padding>
+            <Insets left="8.0" top="8.0"/>
+        </padding>
+
+        <Label maxWidth="1.7976931348623157E308" prefHeight="28.0" text="Control monitor brightness"/>
+        <HBox alignment="CENTER_LEFT" spacing="10.0">
+            <Label prefWidth="80.0" text="Monitor"/>
+            <ChoiceBox fx:id="monitorChoice" prefHeight="31.0" prefWidth="420.0"/>
+        </HBox>
+    </VBox>
+</HBox>

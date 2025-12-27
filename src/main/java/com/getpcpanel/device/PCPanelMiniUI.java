@@ -236,23 +236,22 @@ public class PCPanelMiniUI extends Device {
     public void showLightingConfigToUI(LightingConfig config) {
         var mode = config.getLightingMode();
         if (mode == LightingMode.ALL_COLOR) {
+            stopLightingAnimation();
             setAllKnobUIColor(Color.valueOf(config.getAllColor()));
         } else if (mode == LightingMode.SINGLE_COLOR) {
+            stopLightingAnimation();
             for (var i = 0; i < getKnobCount(); i++) {
                 var color = overrideColorService.getDialOverride(serialNumber, i).map(SingleKnobLightingConfig::getColor1).orElse(config.getIndividualColors()[i]);
                 setKnobUIColorHex(i, color);
             }
         } else if (mode == LightingMode.ALL_RAINBOW) {
-            for (var i = 0; i < getKnobCount(); i++)
-                setKnobUIColor(i,
-                        Color.hsb((360 * (getKnobCount() - i - 1) * (0xFF & config.getRainbowPhaseShift())) / 255.0D * getKnobCount(), 1.0D, (0xFF & config.getRainbowBrightness()) / 255.0D));
+            startLightingAnimation("MINI_ALL_RAINBOW", elapsedNs -> applyRainbow(config, elapsedNs));
         } else if (mode == LightingMode.ALL_WAVE) {
-            for (var i = 0; i < getKnobCount(); i++)
-                setKnobUIColor(i, Color.hsb(360.0D * (0xFF & config.getWaveHue()) / 255.0D, 1.0D, (0xFF & config.getWaveBrightness()) / 255.0D));
+            startLightingAnimation("MINI_ALL_WAVE", elapsedNs -> applyWave(config, elapsedNs));
         } else if (mode == LightingMode.ALL_BREATH) {
-            for (var i = 0; i < getKnobCount(); i++)
-                setKnobUIColor(i, Color.hsb(360.0D * (0xFF & config.getBreathHue()) / 255.0D, 1.0D, (0xFF & config.getBreathBrightness()) / 255.0D));
+            startLightingAnimation("MINI_ALL_BREATH", elapsedNs -> applyBreath(config, elapsedNs));
         } else {
+            stopLightingAnimation();
             var knobConfigs = config.getKnobConfigs();
             for (var i = 0; i < KNOB_COUNT; i++) {
                 var knobConfig = overrideColorService.getDialOverride(serialNumber, i).orElse(knobConfigs[i]);
@@ -264,6 +263,38 @@ public class PCPanelMiniUI extends Device {
                     setKnobUIColor(i, c1.interpolate(c2, analogValue[i] / MAX_ANALOG_VALUE));
                 }
             }
+        }
+    }
+
+    private void applyRainbow(LightingConfig config, long elapsedNs) {
+        var elapsedSeconds = elapsedNs / 1_000_000_000.0D;
+        var hueShift = timeToHueShift(elapsedSeconds, config.getRainbowSpeed(), config.getRainbowReverse() == 1);
+        var brightness = byteToUnit(config.getRainbowBrightness());
+        for (var i = 0; i < getKnobCount(); i++) {
+            var baseHue = (360 * (getKnobCount() - i - 1) * (0xFF & config.getRainbowPhaseShift())) / 255.0D * getKnobCount();
+            setKnobUIColor(i, Color.hsb(normalizeHue(baseHue + hueShift), 1.0D, brightness));
+        }
+    }
+
+    private void applyWave(LightingConfig config, long elapsedNs) {
+        var elapsedSeconds = elapsedNs / 1_000_000_000.0D;
+        var hue = hueFromByte(config.getWaveHue());
+        var baseBrightness = byteToUnit(config.getWaveBrightness());
+        var phase = wavePhase(elapsedSeconds, config.getWaveSpeed(), config.getWaveReverse() == 1, config.getWaveBounce() == 1);
+        for (var i = 0; i < getKnobCount(); i++) {
+            var offset = 2.0D * Math.PI * (getKnobCount() - i - 1) / getKnobCount();
+            var wave = 0.5D + 0.5D * Math.sin(phase + offset);
+            setKnobUIColor(i, Color.hsb(hue, 1.0D, baseBrightness * wave));
+        }
+    }
+
+    private void applyBreath(LightingConfig config, long elapsedNs) {
+        var elapsedSeconds = elapsedNs / 1_000_000_000.0D;
+        var hue = hueFromByte(config.getBreathHue());
+        var baseBrightness = byteToUnit(config.getBreathBrightness());
+        var factor = breathFactor(elapsedSeconds, config.getBreathSpeed());
+        for (var i = 0; i < getKnobCount(); i++) {
+            setKnobUIColor(i, Color.hsb(hue, 1.0D, baseBrightness * factor));
         }
     }
 

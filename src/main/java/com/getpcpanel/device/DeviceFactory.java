@@ -4,6 +4,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Service;
 
+import com.getpcpanel.audio.MicrophoneLevelService;
 import com.getpcpanel.commands.IconService;
 import com.getpcpanel.hid.InputInterpreter;
 import com.getpcpanel.hid.OutputInterpreter;
@@ -25,6 +26,7 @@ public class DeviceFactory {
     private final IconService iconService;
     private final ApplicationEventPublisher eventPublisher;
     private final OverrideColorService overrideColorService;
+    private final MicrophoneLevelService microphoneLevelService;
 
     public PCPanelRGBUI buildRgb(String serialNum, DeviceSave deviceSave) {
         return new PCPanelRGBUI(fxHelper, inputInterpreter, saveService, outputInterpreter, iconService, eventPublisher, overrideColorService, deviceSave, serialNum);
@@ -35,6 +37,6 @@ public class DeviceFactory {
     }
 
     public PCPanelProUI buildPro(String serialNum, DeviceSave deviceSave) {
-        return new PCPanelProUI(fxHelper, inputInterpreter, saveService, outputInterpreter, iconService, eventPublisher, overrideColorService, serialNum, deviceSave);
+        return new PCPanelProUI(fxHelper, inputInterpreter, saveService, outputInterpreter, iconService, eventPublisher, overrideColorService, microphoneLevelService, serialNum, deviceSave);
     }
 }

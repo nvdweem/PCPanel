@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import org.springframework.stereotype.Service;
 
+import com.getpcpanel.audio.MicrophoneLevelService;
 import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.profile.LightingConfig;
 import com.getpcpanel.profile.SingleKnobLightingConfig;
@@ -22,6 +23,7 @@ import lombok.extern.log4j.Log4j2;
 public final class OutputInterpreter {
     private final DeviceScanner deviceScanner;
     private final OverrideColorService overrideColorService;
+    private final MicrophoneLevelService microphoneLevelService;
 
     private static final byte[] OUTPUT_CODE_INIT = { 1 };
     private static final byte ANIMATION_RAINBOW_HORIZONTAL = 1;
@@ -45,6 +47,8 @@ public final class OutputInterpreter {
     private static final byte PREFIX_MINI = 6;
     private static final byte PREFIX_PRO = 5;
     private static final int MAX_BYTE = 255;
+    private static final float MIC_MIN_DB = -60.0f;
+    private static final float MIC_DEFAULT_MAX_DB = -10.0f;
 
     public void sendInit(String deviceSerialNumber) {
         var handler = deviceScanner.getConnectedDevice(deviceSerialNumber);
@@ -219,9 +223,21 @@ public final class OutputInterpreter {
                 case STATIC_GRADIENT -> sliderData.append(1)
                                                   .append(Color.valueOf(sliderConfig.getColor1()))
                                                   .append(Color.valueOf(sliderConfig.getColor2()));
-                case VOLUME_GRADIENT -> sliderData.append(3)
-                                                  .append(Color.valueOf(sliderConfig.getColor1()))
-                                                  .append(Color.valueOf(sliderConfig.getColor2()));
+                case VOLUME_GRADIENT -> {
+                    if (sliderConfig.isMicFollowEnabled()) {
+                        var c1 = Color.valueOf(sliderConfig.getColor1());
+                        var c2 = Color.valueOf(sliderConfig.getColor2());
+                        var t = normalizeMicLevel(sliderConfig);
+                        var color = c1.interpolate(c2, t);
+                        yield sliderData.append(1)
+                                        .append(color)
+                                        .append(color);
+                    } else {
+                        yield sliderData.append(3)
+                                        .append(Color.valueOf(sliderConfig.getColor1()))
+                                        .append(Color.valueOf(sliderConfig.getColor2()));
+                    }
+                }
             };
             sliderData.skipFromMark(7);
         }
@@ -328,5 +344,17 @@ public final class OutputInterpreter {
 
     private boolean isIntByteSize(int... is) {
         return Arrays.stream(is).noneMatch(i -> i < 0 || i > MAX_BYTE);
+    }
+
+    private float normalizeMicLevel(SingleSliderLightingConfig cfg) {
+        var maxDb = cfg.getMicMaxDb() == null ? MIC_DEFAULT_MAX_DB : cfg.getMicMaxDb();
+        var db = microphoneLevelService.getLevelDb(cfg.getMicDeviceId());
+        if (Float.isNaN(db) || db <= MIC_MIN_DB) {
+            return 0.0f;
+        }
+        if (db >= maxDb) {
+            return 1.0f;
+        }
+        return (db - MIC_MIN_DB) / (maxDb - MIC_MIN_DB);
     }
 }

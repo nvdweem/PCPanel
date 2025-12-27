@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<HBox prefHeight="146.0" prefWidth="553.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.command.dial.DialSteelSeriesSonarController">
+    <VBox spacing="15.0" HBox.hgrow="ALWAYS">
+        <padding>
+            <Insets left="8.0" top="8.0"/>
+        </padding>
+
+        <Label maxWidth="1.7976931348623157E308" prefHeight="28.0" text="Control SteelSeries Sonar volume"/>
+        <GridPane hgap="10.0" vgap="10.0">
+            <Label text="Mode" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+            <ChoiceBox fx:id="sonarMode" onAction="#onModeChanged" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+
+            <Label text="Target" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+            <ChoiceBox fx:id="sonarTarget" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+
+            <Label text="Channel" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+            <ChoiceBox fx:id="sonarChannel" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+        </GridPane>
+    </VBox>
+</HBox>

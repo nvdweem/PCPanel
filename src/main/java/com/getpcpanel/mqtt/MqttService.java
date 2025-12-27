@@ -44,9 +44,22 @@ public class MqttService {
     private final MqttTopicHelper topicHelper;
     private MqttSettings connectedSettings;
     @Nullable private Mqtt5Client mqttClient;
+    private boolean loggedNotConnected;
 
     public boolean isConnected() {
         return mqttClient != null && mqttClient.getState().isConnected();
+    }
+
+    private boolean ensureConnected() {
+        if (isConnected()) {
+            loggedNotConnected = false;
+            return true;
+        }
+        if (!loggedNotConnected) {
+            log.debug("MQTT not connected, skipping publish/subscribe");
+            loggedNotConnected = true;
+        }
+        return false;
     }
 
     public void send(String topic, Object payload, boolean immediate) {
@@ -54,6 +67,9 @@ public class MqttService {
     }
 
     public void send(String topic, Object payload, boolean immediate, boolean triggerSelf) {
+        if (!ensureConnected()) {
+            return;
+        }
         if (Objects.requireNonNull(payload) instanceof String s) {
             send(topic, s.getBytes(), immediate, triggerSelf);
         } else {
@@ -66,6 +82,9 @@ public class MqttService {
     }
 
     public void send(String topic, byte[] payload, boolean immediate, boolean triggerSelf) {
+        if (!ensureConnected()) {
+            return;
+        }
         Runnable send = () -> {
             if (log.isDebugEnabled()) {
                 log.debug("Sending to {}: {}", topic, new String(payload));
@@ -86,6 +105,9 @@ public class MqttService {
     }
 
     public void remove(String topic) {
+        if (!ensureConnected()) {
+            return;
+        }
         log.debug("Clear topic: {}", topic);
         mqttClient.toAsync().publishWith()
                   .topic(topic)
@@ -95,6 +117,9 @@ public class MqttService {
     }
 
     public void removeAll(String topic) {
+        if (!ensureConnected()) {
+            return;
+        }
         log.debug("Clear all topics: {}", topic);
         var client = mqttClient.toBlocking();
         var toRemove = new ArrayList<String>();
@@ -191,6 +216,9 @@ public class MqttService {
     }
 
     public <T> void subscribe(String topic, Function<byte[], T> converter, Consumer<T> consumer) {
+        if (!ensureConnected()) {
+            return;
+        }
         mqttClient.toAsync().subscribeWith()
                   .topicFilter(topic)
                   .callback(publish -> {
