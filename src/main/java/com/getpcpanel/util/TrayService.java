@@ -14,6 +14,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+import com.getpcpanel.spring.ConditionalOnAwtTray;
 import com.getpcpanel.ui.HomePage;
 
 import jakarta.annotation.PostConstruct;
@@ -21,11 +22,16 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * AWT-based system tray implementation for Windows and X11 Linux.
+ * Uses java.awt.SystemTray which relies on the XEmbed protocol on Linux.
+ */
 @Log4j2
 @Service
 @RequiredArgsConstructor
 @ConditionalOnProperty(value = "disable.tray", havingValue = "false", matchIfMissing = true)
-public final class TrayService {
+@ConditionalOnAwtTray
+public final class TrayService implements ITrayService {
     private final ApplicationEventPublisher eventPublisher;
     @Getter private boolean trayDisabled;
 
