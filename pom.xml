@@ -18,7 +18,7 @@
 
     <properties>
         <project.baseversion>1.7</project.baseversion>
-        <project.snapshot>-SNAPSHOT</project.snapshot>
+        <project.snapshot></project.snapshot>
         <!--suppress UnresolvedMavenProperty -->
         <github.build>${env.GITHUB_RUN_NUMBER}</github.build>
         <!--suppress UnresolvedMavenProperty -->
