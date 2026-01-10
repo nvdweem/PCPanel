@@ -42,6 +42,7 @@
         <javafx.version>18.0.2</javafx.version>
         <jna.version>5.13.0</jna.version>
         <asm.version>9.5</asm.version>
+        <dbus-java.version>5.2.0</dbus-java.version>
 
         <module.name>ALL-UNNAMED</module.name>
     </properties>
@@ -191,6 +192,17 @@
             <version>3.1.9</version>
         </dependency>
 
+        <!-- D-Bus support for Linux Wayland system tray (StatusNotifierItem protocol) -->
+        <dependency>
+            <groupId>com.github.hypfvieh</groupId>
+            <artifactId>dbus-java-core</artifactId>
+            <version>${dbus-java.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.hypfvieh</groupId>
+            <artifactId>dbus-java-transport-native-unixsocket</artifactId>
+            <version>${dbus-java.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.junit.jupiter</groupId>
