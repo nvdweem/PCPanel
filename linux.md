@@ -68,9 +68,7 @@ java --module-path="[path-to-javafx]/lib" \
 ## Wayland / Sway
 
 System tray icons work on Wayland compositors that support the StatusNotifierItem (SNI) protocol:
-- **Sway**: Enable tray in swaybar config with `tray_output *`
-- **KDE Plasma**: Works out of the box
-- **GNOME**: Requires an SNI extension like AppIndicator
+- **Sway**: Enable tray in swaybar with `tray_output *` or waybar with tray module
 
 The application auto-detects Wayland via `XDG_SESSION_TYPE` or `WAYLAND_DISPLAY` environment variables.
 

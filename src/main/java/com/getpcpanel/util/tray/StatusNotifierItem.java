@@ -17,7 +17,16 @@ import org.freedesktop.dbus.interfaces.DBusInterface;
 @DBusProperty(name = "Status", type = String.class, access = Access.READ)
 @DBusProperty(name = "IconName", type = String.class, access = Access.READ)
 @DBusProperty(name = "Title", type = String.class, access = Access.READ)
+@DBusProperty(name = "ItemIsMenu", type = Boolean.class, access = Access.READ)
 public interface StatusNotifierItem extends DBusInterface {
+
+    // Properties (exposed via D-Bus Properties interface)
+    String getCategory();
+    String getId();
+    String getStatus();
+    String getIconName();
+    String getTitle();
+    Boolean getItemIsMenu();
 
     // Methods called by the StatusNotifierHost (tray implementation)
 

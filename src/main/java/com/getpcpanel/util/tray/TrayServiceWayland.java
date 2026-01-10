@@ -1,8 +1,12 @@
 package com.getpcpanel.util.tray;
 
+import java.util.Map;
+
 import org.freedesktop.dbus.connections.impl.DBusConnection;
 import org.freedesktop.dbus.connections.impl.DBusConnectionBuilder;
 import org.freedesktop.dbus.exceptions.DBusException;
+import org.freedesktop.dbus.interfaces.Properties;
+import org.freedesktop.dbus.types.Variant;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -88,7 +92,9 @@ public class TrayServiceWayland implements ITrayService {
      * Inner class implementing the StatusNotifierItem interface.
      * Handles tray icon properties and click events.
      */
-    private class PCPanelStatusNotifierItem implements StatusNotifierItem {
+    private class PCPanelStatusNotifierItem implements StatusNotifierItem, Properties {
+
+        private static final String SNI_INTERFACE = "org.kde.StatusNotifierItem";
 
         @Override
         public String getObjectPath() {
@@ -112,8 +118,6 @@ public class TrayServiceWayland implements ITrayService {
 
         @Override
         public String getIconName() {
-            // Use absolute path since PCPanel isn't installed to standard icon dirs
-            // TODO: Consider using IconPixmap for embedded icon data
             return "audio-volume-high";
         }
 
@@ -123,8 +127,52 @@ public class TrayServiceWayland implements ITrayService {
         }
 
         @Override
+        public Boolean getItemIsMenu() {
+            return Boolean.FALSE;
+        }
+
+        // Properties interface implementation
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <A> A Get(String interfaceName, String propertyName) {
+            if (!SNI_INTERFACE.equals(interfaceName)) {
+                return null;
+            }
+            return (A) switch (propertyName) {
+                case "Category" -> getCategory();
+                case "Id" -> getId();
+                case "Status" -> getStatus();
+                case "IconName" -> getIconName();
+                case "Title" -> getTitle();
+                case "ItemIsMenu" -> getItemIsMenu();
+                default -> null;
+            };
+        }
+
+        @Override
+        public <A> void Set(String interfaceName, String propertyName, A value) {
+            // Read-only properties
+        }
+
+        @Override
+        public Map<String, Variant<?>> GetAll(String interfaceName) {
+            if (!SNI_INTERFACE.equals(interfaceName)) {
+                return Map.of();
+            }
+            return Map.of(
+                "Category", new Variant<>(getCategory()),
+                "Id", new Variant<>(getId()),
+                "Status", new Variant<>(getStatus()),
+                "IconName", new Variant<>(getIconName()),
+                "Title", new Variant<>(getTitle()),
+                "ItemIsMenu", new Variant<>(getItemIsMenu())
+            );
+        }
+
+        @Override
         public void Activate(int x, int y) {
-            // Left-click: show main window
+            log.info("Tray Activate (left-click) at {},{}", x, y);
             Platform.runLater(() ->
                 eventPublisher.publishEvent(new HomePage.ShowMainEvent())
             );
@@ -132,11 +180,21 @@ public class TrayServiceWayland implements ITrayService {
 
         @Override
         public void ContextMenu(int x, int y) {
-            // Right-click: for now, just exit
-            // TODO: Show proper context menu with DBusMenu or JavaFX popup
+            log.info("Tray ContextMenu (right-click) at {},{}", x, y);
             Platform.runLater(() -> {
-                log.info("Tray context menu requested - exiting");
-                System.exit(0);
+                var alert = new javafx.scene.control.Alert(
+                    javafx.scene.control.Alert.AlertType.CONFIRMATION,
+                    "Exit PCPanel?",
+                    javafx.scene.control.ButtonType.YES,
+                    javafx.scene.control.ButtonType.NO
+                );
+                alert.setTitle("PCPanel");
+                alert.setHeaderText(null);
+                alert.showAndWait().ifPresent(response -> {
+                    if (response == javafx.scene.control.ButtonType.YES) {
+                        System.exit(0);
+                    }
+                });
             });
         }
 
