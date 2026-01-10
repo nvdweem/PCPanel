@@ -65,7 +65,18 @@ java --module-path="[path-to-javafx]/lib" \
      -jar [jarfile]
 ```
 
+## Wayland / Sway
+
+System tray icons work on Wayland compositors that support the StatusNotifierItem (SNI) protocol:
+- **Sway**: Enable tray in swaybar config with `tray_output *`
+- **KDE Plasma**: Works out of the box
+- **GNOME**: Requires an SNI extension like AppIndicator
+
+The application auto-detects Wayland via `XDG_SESSION_TYPE` or `WAYLAND_DISPLAY` environment variables.
+
 ## Notes
+
+### X11 tray issues
 
 In certain cases there will be a 'JavaEmbeddedFrame' when the application is running. This is caused by the tray icon.
 It is possible to disable the tray icon and removing the JavaEmbeddedFrame by adding `-Ddisable.tray` to the command line.

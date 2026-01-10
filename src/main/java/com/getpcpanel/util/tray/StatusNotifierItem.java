@@ -1,6 +1,8 @@
 package com.getpcpanel.util.tray;
 
 import org.freedesktop.dbus.annotations.DBusInterfaceName;
+import org.freedesktop.dbus.annotations.DBusProperty;
+import org.freedesktop.dbus.annotations.DBusProperty.Access;
 import org.freedesktop.dbus.interfaces.DBusInterface;
 
 /**
@@ -10,24 +12,12 @@ import org.freedesktop.dbus.interfaces.DBusInterface;
  * @see <a href="https://www.freedesktop.org/wiki/Specifications/StatusNotifierItem/">SNI Specification</a>
  */
 @DBusInterfaceName("org.kde.StatusNotifierItem")
+@DBusProperty(name = "Category", type = String.class, access = Access.READ)
+@DBusProperty(name = "Id", type = String.class, access = Access.READ)
+@DBusProperty(name = "Status", type = String.class, access = Access.READ)
+@DBusProperty(name = "IconName", type = String.class, access = Access.READ)
+@DBusProperty(name = "Title", type = String.class, access = Access.READ)
 public interface StatusNotifierItem extends DBusInterface {
-
-    // Required properties exposed as getters
-
-    /** Application category: ApplicationStatus, Communications, SystemServices, Hardware */
-    String getCategory();
-
-    /** Unique application identifier */
-    String getId();
-
-    /** Current status: Passive, Active, or NeedsAttention */
-    String getStatus();
-
-    /** Freedesktop-compliant icon name or absolute path */
-    String getIconName();
-
-    /** Human-readable application title */
-    String getTitle();
 
     // Methods called by the StatusNotifierHost (tray implementation)
 
