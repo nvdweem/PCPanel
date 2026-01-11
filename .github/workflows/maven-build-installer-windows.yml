@@ -7,9 +7,10 @@ env:
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - releases/**
   workflow_dispatch:
-    branches: [ main ]
 jobs:
   buildWindows:
     runs-on: windows-latest
