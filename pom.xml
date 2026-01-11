@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.0.5</version>
+        <version>3.5.9</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
@@ -17,15 +17,15 @@
     <description>PCPanel controller software</description>
 
     <properties>
-        <project.baseversion>1.7.1</project.baseversion>
-        <project.snapshot></project.snapshot>
+        <project.baseversion>1.8</project.baseversion>
+        <project.snapshot>-SNAPSHOT</project.snapshot>
         <!--suppress UnresolvedMavenProperty -->
         <github.build>${env.GITHUB_RUN_NUMBER}</github.build>
         <!--suppress UnresolvedMavenProperty -->
         <github.repo>${env.GITHUB_REPOSITORY}</github.repo>
 
         <java.version>17</java.version>
-        <jetty.version>9.4.49.v20220914</jetty.version> <!-- Required by OBS Websocket -->
+        <jetty.websocket.client.version>9.4.49.v20220914</jetty.websocket.client.version> <!-- Required by OBS Websocket -->
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
 
@@ -155,6 +155,32 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty.websocket</groupId>
+            <artifactId>websocket-client</artifactId>
+            <version>${jetty.websocket.client.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-client</artifactId>
+            <version>${jetty.websocket.client.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-io</artifactId>
+            <version>${jetty.websocket.client.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-http</artifactId>
+            <version>${jetty.websocket.client.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-util</artifactId>
+            <version>${jetty.websocket.client.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>com.illposed.osc</groupId>
             <artifactId>javaosc-core</artifactId>
@@ -339,7 +365,6 @@
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
-                            <version>${lombok.version}</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>

@@ -2,6 +2,8 @@
 
 <!-- Releasenotes without version are included in releases -->
 
+## [1.7]
+
 **Warning:** This version uses a new format for the savefile.
 A backup will be made when converting. If you want to downgrade to a previous version, you can restore the backup.
 
