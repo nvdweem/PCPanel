@@ -67,6 +67,10 @@ public class MqttService {
 
     public void send(String topic, byte[] payload, boolean immediate, boolean triggerSelf) {
         Runnable send = () -> {
+            if (mqttClient == null || !isConnected()) {
+                log.trace("Not connected, not sending to {}: {}", topic, new String(payload));
+                return;
+            }
             if (log.isDebugEnabled()) {
                 log.debug("Sending to {}: {}", topic, new String(payload));
             }
@@ -86,6 +90,10 @@ public class MqttService {
     }
 
     public void remove(String topic) {
+        if (mqttClient == null) {
+            log.warn("Removing {} but mqttClient is null", topic);
+            return;
+        }
         log.debug("Clear topic: {}", topic);
         mqttClient.toAsync().publishWith()
                   .topic(topic)
@@ -95,6 +103,10 @@ public class MqttService {
     }
 
     public void removeAll(String topic) {
+        if (mqttClient == null) {
+            log.warn("Removing all {} but mqttClient is null", topic);
+            return;
+        }
         log.debug("Clear all topics: {}", topic);
         var client = mqttClient.toBlocking();
         var toRemove = new ArrayList<String>();
@@ -163,16 +175,18 @@ public class MqttService {
             builder = builder.sslWithDefaultConfig();
         }
         mqttClient = builder.build();
-        mqttClient.toBlocking().connect();
-        send(availabilityTopic, "online", true);
-        log.info("Connected to MQTT server");
+        mqttClient.toAsync().connect()
+                  .thenAccept(connAck -> {
+                      send(availabilityTopic, "online", true);
+                      log.info("Connected to MQTT server");
+                  });
     }
 
     private void disconnect() {
         if (mqttClient == null) {
             return;
         }
-        mqttClient.toBlocking().disconnect();
+        mqttClient.toAsync().disconnect();
         mqttClient = null;
     }
 
@@ -191,6 +205,10 @@ public class MqttService {
     }
 
     public <T> void subscribe(String topic, Function<byte[], T> converter, Consumer<T> consumer) {
+        if (mqttClient == null) {
+            log.warn("Subscribing to {} but mqttClient is null", topic);
+            return;
+        }
         mqttClient.toAsync().subscribeWith()
                   .topicFilter(topic)
                   .callback(publish -> {

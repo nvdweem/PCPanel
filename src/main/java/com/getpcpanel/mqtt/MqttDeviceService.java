@@ -103,6 +103,9 @@ public class MqttDeviceService {
 
     @EventListener
     public void buttonPress(DeviceCommunicationHandler.ButtonPressEvent btn) {
+        if (!mqtt.isConnected()) {
+            return;
+        }
         saveService.getProfile(btn.serialNum()).ifPresent(profile -> {
             var topic = mqttTopicHelper.buttonUpDownTopic(btn.serialNum(), button, btn.button());
             mqtt.send(topic, btn.pressed() ? "down" : "up", true);
@@ -111,6 +114,9 @@ public class MqttDeviceService {
 
     @EventListener
     public void buttonPress(ButtonClickEvent btn) {
+        if (!mqtt.isConnected()) {
+            return;
+        }
         saveService.getProfile(btn.serialNum()).ifPresent(profile -> {
             var topic = mqttTopicHelper.eventTopic(btn.serialNum(), button, btn.button());
             mqtt.send(topic, new MqttEvent(btn.dblClick() ? "double_click" : "click"), true);
@@ -119,6 +125,9 @@ public class MqttDeviceService {
 
     @EventListener
     public void globalBrightnessChange(GlobalBrightnessChangedEvent event) {
+        if (!mqtt.isConnected()) {
+            return;
+        }
         mqtt.send(mqttTopicHelper.valueTopic(event.serialNr(), brightness, 0), String.valueOf(event.brightness()), false);
     }
 
