@@ -4,7 +4,6 @@ import static com.getpcpanel.util.version.Version.SNAPSHOT_POSTFIX;
 
 import java.util.Comparator;
 
-import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -47,7 +46,7 @@ public class VersionChecker extends Thread {
 
         var correctVersion = getVersionOfCorrectType(response.getBody());
         if (versionIsNewer(correctVersion)) {
-            updateVersionlabel(correctVersion);
+            updateVersionLabel(correctVersion);
         }
     }
 
@@ -68,30 +67,8 @@ public class VersionChecker extends Thread {
         return compared < 0;
     }
 
-    private void updateVersionlabel(Version remoteVersion) {
+    private void updateVersionLabel(Version remoteVersion) {
         eventPublisher.publishEvent(new NewVersionAvailableEvent(remoteVersion));
-    }
-
-    boolean isVersionNewer(String current, String latest) {
-        if (current.contains("@"))
-            return false;
-
-        var currentSnapshot = current.split("-");
-        var currentParts = StreamEx.of(currentSnapshot[0].split("\\.")).mapToInt(NumberUtils::toInt).toArray();
-        var latestParts = StreamEx.of(latest.split("\\.")).mapToInt(NumberUtils::toInt).toArray();
-
-        for (var i = 0; i < currentParts.length && i < latestParts.length; i++) {
-            if (currentParts[i] < latestParts[i]) {
-                return true;
-            }
-            if (currentParts[i] > latestParts[i]) {
-                return false;
-            }
-        }
-        if (currentParts.length == latestParts.length) {
-            return currentSnapshot.length == 2;
-        }
-        return currentParts.length < latestParts.length;
     }
 
     public record NewVersionAvailableEvent(Version version) {
