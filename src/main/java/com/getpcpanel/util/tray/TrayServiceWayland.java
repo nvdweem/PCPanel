@@ -1,6 +1,7 @@
 package com.getpcpanel.util.tray;
 
 import java.util.Map;
+import java.util.Objects;
 
 import org.freedesktop.dbus.connections.impl.DBusConnection;
 import org.freedesktop.dbus.connections.impl.DBusConnectionBuilder;
@@ -13,8 +14,8 @@ import org.springframework.stereotype.Service;
 
 import com.getpcpanel.spring.ConditionalOnWayland;
 import com.getpcpanel.ui.HomePage;
-import com.getpcpanel.util.ITrayService;
 
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import javafx.application.Platform;
@@ -30,17 +31,15 @@ import lombok.extern.log4j.Log4j2;
 @RequiredArgsConstructor
 @ConditionalOnProperty(value = "disable.tray", havingValue = "false", matchIfMissing = true)
 @ConditionalOnWayland
-public class TrayServiceWayland implements ITrayService {
+class TrayServiceWayland {
     private static final String WATCHER_BUS_NAME = "org.kde.StatusNotifierWatcher";
     private static final String WATCHER_OBJECT_PATH = "/StatusNotifierWatcher";
     private static final String ITEM_OBJECT_PATH = "/StatusNotifierItem";
 
     private final ApplicationEventPublisher eventPublisher;
     private DBusConnection connection;
-    private boolean trayDisabled = false;
     private String serviceName;
 
-    @Override
     @PostConstruct
     public void init() {
         try {
@@ -64,10 +63,8 @@ public class TrayServiceWayland implements ITrayService {
             log.info("Wayland tray icon registered via SNI protocol");
         } catch (DBusException e) {
             log.warn("D-Bus connection failed: {}", e.getMessage());
-            trayDisabled = true;
         } catch (Exception e) {
             log.warn("Wayland tray not available: {}", e.getMessage());
-            trayDisabled = true;
         }
     }
 
@@ -81,11 +78,6 @@ public class TrayServiceWayland implements ITrayService {
                 log.debug("Error closing D-Bus connection", e);
             }
         }
-    }
-
-    @Override
-    public boolean isTrayDisabled() {
-        return trayDisabled;
     }
 
     /**
@@ -134,8 +126,7 @@ public class TrayServiceWayland implements ITrayService {
         // Properties interface implementation
 
         @Override
-        @SuppressWarnings("unchecked")
-        public <A> A Get(String interfaceName, String propertyName) {
+        public <A> @Nullable A Get(String interfaceName, String propertyName) {
             if (!SNI_INTERFACE.equals(interfaceName)) {
                 return null;
             }
@@ -161,12 +152,12 @@ public class TrayServiceWayland implements ITrayService {
                 return Map.of();
             }
             return Map.of(
-                "Category", new Variant<>(getCategory()),
-                "Id", new Variant<>(getId()),
-                "Status", new Variant<>(getStatus()),
-                "IconName", new Variant<>(getIconName()),
-                "Title", new Variant<>(getTitle()),
-                "ItemIsMenu", new Variant<>(getItemIsMenu())
+                    "Category", new Variant<>(getCategory()),
+                    "Id", new Variant<>(getId()),
+                    "Status", new Variant<>(getStatus()),
+                    "IconName", new Variant<>(getIconName()),
+                    "Title", new Variant<>(getTitle()),
+                    "ItemIsMenu", new Variant<>(getItemIsMenu())
             );
         }
 

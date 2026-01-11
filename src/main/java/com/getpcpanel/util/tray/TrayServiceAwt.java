@@ -1,4 +1,4 @@
-package com.getpcpanel.util;
+package com.getpcpanel.util.tray;
 
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
@@ -14,11 +14,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
-import com.getpcpanel.spring.ConditionalOnAwtTray;
 import com.getpcpanel.ui.HomePage;
 
 import jakarta.annotation.PostConstruct;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
@@ -31,9 +29,8 @@ import lombok.extern.log4j.Log4j2;
 @RequiredArgsConstructor
 @ConditionalOnProperty(value = "disable.tray", havingValue = "false", matchIfMissing = true)
 @ConditionalOnAwtTray
-public final class TrayService implements ITrayService {
+class TrayServiceAwt {
     private final ApplicationEventPublisher eventPublisher;
-    @Getter private boolean trayDisabled;
 
     @PostConstruct
     public void init() {
@@ -42,17 +39,14 @@ public final class TrayService implements ITrayService {
         SystemTray tray;
         try {
             tray = SystemTray.getSystemTray();
-            var trayIconImage = ImageIO.read(Objects.requireNonNull(TrayService.class.getResource("/assets/32x32.png")));
+            var trayIconImage = ImageIO.read(Objects.requireNonNull(TrayServiceAwt.class.getResource("/assets/32x32.png")));
             var trayIconWidth = new TrayIcon(trayIconImage).getSize().width;
             trayIcon = new TrayIcon(trayIconImage.getScaledInstance(trayIconWidth, -1, 4));
-            trayDisabled = false;
         } catch (UnsupportedOperationException e) {
             log.warn("Tray icon is not supported");
-            trayDisabled = true;
             return;
         } catch (Exception e1) {
             log.error("Unable to initialize tray icon", e1);
-            trayDisabled = true;
             return;
         }
         var exitItem = new MenuItem("Exit");
