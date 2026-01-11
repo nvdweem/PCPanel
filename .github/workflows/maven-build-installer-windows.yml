@@ -79,6 +79,14 @@ jobs:
         run: echo "version=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)" >> $GITHUB_OUTPUT
         id: project
 
+      - name: Compute tag name
+        # Compute a branch-specific, filesystem-friendly tag name and export to job env
+        run: |
+          # Strip refs/heads/ prefix and replace non-alphanumeric characters with '-'
+          branch="${GITHUB_REF#refs/heads/}"
+          safe_branch=$(echo "$branch" | sed 's/[^A-Za-z0-9._-]/-/g')
+          echo "TAG_NAME=latest-windows-$safe_branch" >> $GITHUB_ENV
+
       # Remove old pre-releases
       - name: Remove Old Pre-release
         env:
@@ -91,7 +99,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh api --method DELETE -H "Accept: application/vnd.github.v3+json" /repos/{owner}/{repo}/git/refs/tags/latest-windows
+          gh api --method DELETE -H "Accept: application/vnd.github.v3+json" /repos/{owner}/{repo}/git/refs/tags/"$TAG_NAME"
 
       # Create new pre-release
       - name: Create Pre-release
@@ -99,7 +107,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
         run: |
-          gh release create latest-windows \
+          gh release create "$TAG_NAME" \
             --prerelease \
             --title "v${{ steps.project.outputs.version }} Pre-Release (${{ env.GITHUB_RUN_NUMBER }})" \
             --notes "$(sed '/##/Q' CHANGELOG.md)"
@@ -119,5 +127,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload latest-windows target/*
-          gh release edit latest-windows --draft=false
+          gh release upload "$TAG_NAME" target/*
+          gh release edit "$TAG_NAME" --draft=false
