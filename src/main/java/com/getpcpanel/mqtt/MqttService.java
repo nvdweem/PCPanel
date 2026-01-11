@@ -163,16 +163,18 @@ public class MqttService {
             builder = builder.sslWithDefaultConfig();
         }
         mqttClient = builder.build();
-        mqttClient.toBlocking().connect();
-        send(availabilityTopic, "online", true);
-        log.info("Connected to MQTT server");
+        mqttClient.toAsync().connect()
+                  .thenAccept(connAck -> {
+                      send(availabilityTopic, "online", true);
+                      log.info("Connected to MQTT server");
+                  });
     }
 
     private void disconnect() {
         if (mqttClient == null) {
             return;
         }
-        mqttClient.toBlocking().disconnect();
+        mqttClient.toAsync().disconnect();
         mqttClient = null;
     }
 
