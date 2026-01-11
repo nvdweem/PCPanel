@@ -1,4 +1,4 @@
-package com.getpcpanel.spring;
+package com.getpcpanel.util.tray;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -16,7 +16,7 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.TYPE, ElementType.METHOD })
 @Conditional(ConditionalOnX11.OnX11Condition.class)
-public @interface ConditionalOnX11 {
+@interface ConditionalOnX11 {
     class OnX11Condition implements Condition {
         @Override
         public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
