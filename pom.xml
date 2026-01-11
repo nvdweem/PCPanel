@@ -17,7 +17,7 @@
     <description>PCPanel controller software</description>
 
     <properties>
-        <project.baseversion>1.7</project.baseversion>
+        <project.baseversion>1.7.1</project.baseversion>
         <project.snapshot></project.snapshot>
         <!--suppress UnresolvedMavenProperty -->
         <github.build>${env.GITHUB_RUN_NUMBER}</github.build>
