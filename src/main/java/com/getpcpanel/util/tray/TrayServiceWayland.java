@@ -19,6 +19,8 @@ import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import javafx.application.Platform;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
@@ -163,26 +165,27 @@ class TrayServiceWayland {
 
         @Override
         public void Activate(int x, int y) {
-            log.info("Tray Activate (left-click) at {},{}", x, y);
+            log.debug("Tray Activate (left-click) at {},{}", x, y);
             Platform.runLater(() ->
-                eventPublisher.publishEvent(new HomePage.ShowMainEvent())
+                    eventPublisher.publishEvent(new HomePage.ShowMainEvent())
             );
         }
 
         @Override
         public void ContextMenu(int x, int y) {
-            log.info("Tray ContextMenu (right-click) at {},{}", x, y);
+            log.debug("Tray ContextMenu (right-click) at {},{}", x, y);
             Platform.runLater(() -> {
-                var alert = new javafx.scene.control.Alert(
-                    javafx.scene.control.Alert.AlertType.CONFIRMATION,
-                    "Exit PCPanel?",
-                    javafx.scene.control.ButtonType.YES,
-                    javafx.scene.control.ButtonType.NO
+                var alert = new Alert(
+                        Alert.AlertType.CONFIRMATION,
+                        "Exit PCPanel?",
+                        ButtonType.YES,
+                        ButtonType.NO
                 );
                 alert.setTitle("PCPanel");
                 alert.setHeaderText(null);
                 alert.showAndWait().ifPresent(response -> {
-                    if (response == javafx.scene.control.ButtonType.YES) {
+                    if (Objects.equals(response, ButtonType.YES)) {
+                        //noinspection CallToSystemExit
                         System.exit(0);
                     }
                 });
