@@ -2,6 +2,8 @@
 
 <!-- Releasenotes without version are included in releases -->
 
+- #79 - Added Wayland system tray support via SNI protocol (thanks to @ldumancas)
+
 ## [1.7]
 
 **Warning:** This version uses a new format for the savefile.
