@@ -24,7 +24,7 @@
         <!--suppress UnresolvedMavenProperty -->
         <github.repo>${env.GITHUB_REPOSITORY}</github.repo>
 
-        <java.version>17</java.version>
+        <java.version>21</java.version>
         <jetty.websocket.client.version>9.4.49.v20220914</jetty.websocket.client.version> <!-- Required by OBS Websocket -->
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
