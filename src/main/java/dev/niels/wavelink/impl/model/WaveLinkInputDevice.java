@@ -9,6 +9,9 @@ import org.apache.commons.lang3.ObjectUtils;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
+import lombok.With;
+
+@With
 @JsonInclude(Include.NON_NULL)
 public record WaveLinkInputDevice(
         String id,
@@ -16,6 +19,10 @@ public record WaveLinkInputDevice(
         @Nullable Boolean isWaveDevice,
         @Nullable List<Object> inputs
 ) implements WithId, Mergable<WaveLinkInputDevice> {
+    public WaveLinkInputDevice blank() {
+        return new WaveLinkInputDevice(id, null, null, null);
+    }
+
     @Override
     public WaveLinkInputDevice merge(@Nullable WaveLinkInputDevice other) {
         if (other == null)

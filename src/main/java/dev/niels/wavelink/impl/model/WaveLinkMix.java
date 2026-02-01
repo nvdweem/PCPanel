@@ -7,6 +7,9 @@ import org.apache.commons.lang3.ObjectUtils;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
+import lombok.With;
+
+@With
 @JsonInclude(Include.NON_NULL)
 public record WaveLinkMix(
         String id,
@@ -15,6 +18,10 @@ public record WaveLinkMix(
         @Nullable Boolean isMuted,
         @Nullable WaveLinkImage image
 ) implements WithId, Mergable<WaveLinkMix> {
+    public WaveLinkMix blank() {
+        return new WaveLinkMix(id, null, null, null, null);
+    }
+
     @Override
     public WaveLinkMix merge(@Nullable WaveLinkMix other) {
         if (other == null)

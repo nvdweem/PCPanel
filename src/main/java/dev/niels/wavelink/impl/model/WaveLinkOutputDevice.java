@@ -8,7 +8,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import io.reactivex.annotations.Nullable;
+import lombok.With;
 
+@With
 @JsonInclude(Include.NON_NULL)
 public record WaveLinkOutputDevice(
         String id,
@@ -16,6 +18,10 @@ public record WaveLinkOutputDevice(
         @Nullable Boolean isWaveDevice,
         @Nullable List<WaveLinkOutput> outputs
 ) implements WithId, Mergable<WaveLinkOutputDevice> {
+    public WaveLinkOutputDevice blank() {
+        return new WaveLinkOutputDevice(id, null, null, null);
+    }
+
     @Override
     public WaveLinkOutputDevice merge(@Nullable WaveLinkOutputDevice other) {
         if (other == null)

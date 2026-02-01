@@ -24,7 +24,11 @@ public record WaveLinkChannel(
         @Nullable List<WaveLinkEffect> effects,
         @Nullable WaveLinkImage image) implements WithId, Mergable<WaveLinkChannel> {
 
-    public WaveLinkChannel(String id) {
+    public WaveLinkChannel blank() {
+        return new WaveLinkChannel(id);
+    }
+
+    private WaveLinkChannel(String id) {
         this(id, null, null, null, null, null, null, null, null);
     }
 

@@ -3,11 +3,13 @@ package dev.niels.wavelink.impl;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
-import dev.niels.wavelink.impl.model.Mergable;
+import javax.annotation.Nonnull;
+
 import dev.niels.wavelink.impl.model.WaveLinkChannel;
 import dev.niels.wavelink.impl.model.WaveLinkInputDevice;
 import dev.niels.wavelink.impl.model.WaveLinkMix;
@@ -19,29 +21,49 @@ import dev.niels.wavelink.impl.rpc.WaveLinkGetOutputDevices.WaveLinkMainOutput;
 import dev.niels.wavelink.impl.rpc.WaveLinkJsonRpcCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkMixChangedCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkOutputDeviceChangedCommand;
-import dev.niels.wavelink.impl.rpc.WaveLinkSetChannelCommand;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public class WaveLinkClient implements AutoCloseable {
+public abstract class WaveLinkClientImpl implements AutoCloseable {
     private final CompletableFuture<WebSocket> websocket;
     private final WaveLinkListener waveLinkListener;
-    @Getter private final List<WaveLinkInputDevice> inputDevices = new ArrayList<>();
-    @Getter private final List<WaveLinkOutputDevice> outputDevices = new ArrayList<>();
-    @Getter private final List<WaveLinkChannel> channels = new ArrayList<>();
-    @Getter private final List<WaveLinkMix> mixes = new ArrayList<>();
+    private final HttpClient client;
+    @Getter private final Map<String, WaveLinkInputDevice> inputDevices = new ConcurrentHashMap<>();
+    @Getter private final Map<String, WaveLinkOutputDevice> outputDevices = new ConcurrentHashMap<>();
+    @Getter private final Map<String, WaveLinkChannel> channels = new ConcurrentHashMap<>();
+    @Getter private final Map<String, WaveLinkMix> mixes = new ConcurrentHashMap<>();
     private boolean initialized;
+    private String mainOutputDeviceId;
 
-    public WaveLinkClient() {
-        var client = HttpClient.newHttpClient();
+    protected WaveLinkClientImpl() {
+        client = HttpClient.newHttpClient();
 
         log.info("Connecting");
         waveLinkListener = new WaveLinkListener(this);
         websocket = client.newWebSocketBuilder()
                           .header("Origin", "streamdeck://")
-                          // .buildAsync(URI.create("ws://127.0.0.1:1885"), new WaveLinkListener(this));
                           .buildAsync(URI.create("ws://127.0.0.1:1884"), waveLinkListener);
+    }
+
+    @Nonnull
+    public WaveLinkInputDevice getInputDeviceFromId(String id) {
+        return inputDevices.getOrDefault(id, new WaveLinkInputDevice(id, null, null, null));
+    }
+
+    @Nonnull
+    public WaveLinkOutputDevice getOutputDeviceFromId(String id) {
+        return outputDevices.getOrDefault(id, new WaveLinkOutputDevice(id, null, null, null));
+    }
+
+    @Nonnull
+    public WaveLinkChannel getChannelFromId(String id) {
+        return channels.getOrDefault(id, new WaveLinkChannel(id, null, null, null, null, null, null, null, null));
+    }
+
+    @Nonnull
+    public WaveLinkMix getMixFromId(String id) {
+        return mixes.getOrDefault(id, new WaveLinkMix(id, null, null, null, null));
     }
 
     @Override
@@ -50,13 +72,14 @@ public class WaveLinkClient implements AutoCloseable {
         if (!socket.isInputClosed() || !socket.isOutputClosed()) {
             socket.sendClose(WebSocket.NORMAL_CLOSURE, "Done");
         }
+        try {
+            client.close();
+        } catch (Exception e) {
+            log.error("Error closing websocket", e);
+        }
     }
 
-    public CompletableFuture<WaveLinkChannel> setChannel(WaveLinkChannel channel) {
-        return send(new WaveLinkSetChannelCommand().setParams(channel));
-    }
-
-    <R> CompletableFuture<R> send(WaveLinkJsonRpcCommand<?, R> message) {
+    protected <R> CompletableFuture<R> send(WaveLinkJsonRpcCommand<?, R> message) {
         return waveLinkListener.sendExpectingResult(message);
     }
 
@@ -73,26 +96,15 @@ public class WaveLinkClient implements AutoCloseable {
         }
     }
 
-    private <T extends WithId> void updateEntries(List<T> entries, List<T> newEntries) {
-        entries.clear();
-        entries.addAll(newEntries);
+    private <T extends WithId> void updateEntries(Map<String, T> entries, List<T> newEntries) {
+        synchronized (entries) {
+            entries.clear();
+            newEntries.forEach(entry -> entries.put(entry.id(), entry));
+        }
     }
 
-    private <T extends WithId> void updateEntry(List<T> entries, T entry) {
-        synchronized (entries) {
-            for (var itt = entries.listIterator(); itt.hasNext(); ) {
-                var item = itt.next();
-                if (entry.id().equals(item.id())) {
-                    if (item instanceof Mergable m) {
-                        itt.set((T) m.merge(entry));
-                    } else {
-                        itt.set(entry);
-                    }
-                    return;
-                }
-            }
-            entries.add(entry);
-        }
+    private <T extends WithId> void updateEntry(Map<String, T> entries, T entry) {
+        entries.put(entry.id(), entry);
     }
 
     void updateInputDevices(List<WaveLinkInputDevice> waveLinkInputDevices) {
@@ -100,6 +112,7 @@ public class WaveLinkClient implements AutoCloseable {
     }
 
     void updateOutputDevices(List<WaveLinkOutputDevice> waveLinkOutputDevices, WaveLinkMainOutput waveLinkMainOutput) {
+        mainOutputDeviceId = waveLinkMainOutput.outputDeviceId();
         updateEntries(outputDevices, waveLinkOutputDevices);
     }
 

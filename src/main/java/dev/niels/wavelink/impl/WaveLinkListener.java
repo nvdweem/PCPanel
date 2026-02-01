@@ -32,7 +32,7 @@ public class WaveLinkListener implements Listener {
     private final ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     private final ObjectReader messageReader = mapper.readerFor(WaveLinkJsonRpcCommand.class);
     private final Map<Long, PendingRequest> pendingRequests = new ConcurrentHashMap<>();
-    private final WaveLinkClient client;
+    private final WaveLinkClientImpl client;
     @Nullable private WebSocket socket;
     private long nextSendId;
 

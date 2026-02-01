@@ -2,6 +2,7 @@ package dev.niels.wavelink.impl.rpc;
 
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -29,6 +30,8 @@ import lombok.Setter;
         @Type(value = WaveLinkGetMixes.class, name = "getMixes"),
 
         @Type(value = WaveLinkSetChannelCommand.class, name = "setChannel"),
+        @Type(value = WaveLinkSetMixCommand.class, name = "setMix"),
+        @Type(value = WaveLinkSetOutputDeviceCommand.class, name = "setOutputDevice"),
 })
 @Getter
 @Setter
@@ -38,6 +41,7 @@ public class WaveLinkJsonRpcCommand<T, R> {
     private T params;
     private long id;
 
+    @JsonIgnore
     public Class<R> getResultClass() {
         return (Class<R>) Map.class;
     }
