@@ -7,6 +7,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -70,7 +71,7 @@ public class WaveLinkListener implements Listener {
 
     @Override
     public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
-        log.info("Received message: {}", data);
+        log.debug("Received message: {}", data);
         try {
             var tree = mapper.readTree(data.toString());
             if (!tryReadResult(tree)) {
@@ -97,7 +98,7 @@ public class WaveLinkListener implements Listener {
             var result = mapper.treeToValue(tree.get("result"), pending.resultClass);
             ((CompletableFuture<Object>) pending.future).complete(result);
         } catch (JsonProcessingException e) {
-            log.warn("Unable to read {} from {}", pending.resultClass, tree.toPrettyString(), e);
+            log.debug("Unable to read {} from {}", pending.resultClass, tree.toPrettyString(), e);
             pending.future.complete(null);
         }
         return true;
@@ -122,7 +123,7 @@ public class WaveLinkListener implements Listener {
 
     @SneakyThrows
     public <R> CompletableFuture<R> sendExpectingResult(WaveLinkJsonRpcCommand<?, R> message) {
-        ensureSocketNotClosed();
+        var socket = ensureSocketNotClosed();
 
         var result = new CompletableFuture<R>();
         synchronized (pendingRequests) {
@@ -130,16 +131,18 @@ public class WaveLinkListener implements Listener {
             pendingRequests.put(message.getId(), new PendingRequest(message.getResultClass(), result));
         }
         var messageText = mapper.writeValueAsString(message);
-        log.info("Sending: {}", messageText);
+        log.debug("Sending: {}", messageText);
         socket.sendText(messageText, true);
 
         return result;
     }
 
-    private void ensureSocketNotClosed() {
+    @Nonnull
+    private WebSocket ensureSocketNotClosed() {
         if (socket == null || socket.isOutputClosed() || socket.isInputClosed()) {
             throw new IllegalStateException("WebSocket is closed");
         }
+        return socket;
     }
 
     record PendingRequest(Class<?> resultClass, CompletableFuture<?> future) {

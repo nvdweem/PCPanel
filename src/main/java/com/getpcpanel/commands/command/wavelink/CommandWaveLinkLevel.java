@@ -1,55 +1,70 @@
 package com.getpcpanel.commands.command.wavelink;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.MainFX;
 import com.getpcpanel.commands.command.DialAction;
 import com.getpcpanel.wavelink.WaveLinkService;
 
+import dev.niels.wavelink.impl.model.WaveLinkControlAction;
+import io.reactivex.annotations.Nullable;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.ToString;
+import lombok.extern.log4j.Log4j2;
 
 @Getter
+@Log4j2
 @ToString(callSuper = true)
-@RequiredArgsConstructor
+// @RequiredArgsConstructor
 public class CommandWaveLinkLevel extends CommandWaveLink implements DialAction {
     private final WaveLinkCommand commandType;
-    private Integer level;
-    private Boolean mute;
-    private DialCommandParams dialParams;
+    @Nullable private final String id1;
+    @Nullable private final String id2;
 
     @JsonCreator
     public CommandWaveLinkLevel(
             @JsonProperty("commandType") WaveLinkCommand commandType,
-            @JsonProperty("id") String id,
-            // @JsonProperty("level") Integer level,
-            // @JsonProperty("mute") Boolean mute,
-            @JsonProperty("dialParams") DialCommandParams dialParams) {
+            @JsonProperty("id1") @Nullable String id1,
+            @JsonProperty("id2") @Nullable String id2) {
         this.commandType = commandType;
-        level = level;
-        mute = mute;
-        this.dialParams = dialParams;
+        this.id1 = id1;
+        this.id2 = id2;
     }
 
     @Override
     public String buildLabel() {
-        return "Set " + commandType +
-                (level == null ? "" : " level: " + level) +
-                (mute == null ? "" : " mute: " + mute);
+        return "Set " + commandType;
     }
 
     @Override
     public void execute(DialActionParameters context) {
-        MainFX.getBean(WaveLinkService.class).client.setChannel(
-                "PCM_OUT_00_V_12_SD7",
-                "PCM_IN_01_V_00_SD1",
-                (double) context.dial().getValue(this, 0, 1),
-                false
-        );
+        var service = MainFX.getBean(WaveLinkService.class);
+        if (!service.isConnected()) {
+            log.warn("Not sending command, wavelink not connected");
+            return;
+        }
+        if (StringUtils.isBlank(id1)) {
+            log.warn("No id specified");
+            return;
+        }
+        var value = (double) context.dial().getValue(this, 0, 1);
+        switch (commandType) {
+            case Input -> service.setInputLevel(id1, WaveLinkControlAction.OutputVolume, value);
+            case Channel -> service.setChannelLevel(id1, value);
+            case Mix -> service.setChannelLevel(id1, id2, value);
+            case Output -> service.setOutputLevel(id1, value);
+        }
+    }
+
+    @Override
+    @Nullable
+    public DialCommandParams getDialParams() {
+        return null;
     }
 
     public enum WaveLinkCommand {
-        Input, Mix, Output
+        Input, Channel, Mix, Output
     }
 }

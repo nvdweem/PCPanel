@@ -29,6 +29,7 @@ import lombok.Setter;
         @Type(value = WaveLinkGetChannels.class, name = "getChannels"),
         @Type(value = WaveLinkGetMixes.class, name = "getMixes"),
 
+        // Commands
         @Type(value = WaveLinkSetChannelCommand.class, name = "setChannel"),
         @Type(value = WaveLinkSetMixCommand.class, name = "setMix"),
         @Type(value = WaveLinkSetOutputDeviceCommand.class, name = "setOutputDevice"),

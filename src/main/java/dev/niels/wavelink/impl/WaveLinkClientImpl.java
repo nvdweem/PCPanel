@@ -33,7 +33,7 @@ public abstract class WaveLinkClientImpl implements AutoCloseable {
     @Getter private final Map<String, WaveLinkOutputDevice> outputDevices = new ConcurrentHashMap<>();
     @Getter private final Map<String, WaveLinkChannel> channels = new ConcurrentHashMap<>();
     @Getter private final Map<String, WaveLinkMix> mixes = new ConcurrentHashMap<>();
-    private boolean initialized;
+    @Getter private boolean initialized;
     private String mainOutputDeviceId;
 
     protected WaveLinkClientImpl() {

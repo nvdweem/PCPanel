@@ -22,22 +22,17 @@ import one.util.streamex.StreamEx;
 @Log4j2
 public class WaveLinkClient extends WaveLinkClientImpl implements IWaveLinkClient {
     @Override
-    public void setInputLevel(WaveLinkInputDevice device, WaveLinkControlAction action, double value) {
-        log.warn("setInputLevel not implemented yet");
-    }
-
-    @Override
-    public void setInputMute(WaveLinkInputDevice device, WaveLinkControlAction action, boolean mute) {
+    public void setInput(WaveLinkInputDevice device, WaveLinkControlAction action, Double value, Boolean mute) {
         log.warn("setInputLevel not implemented yet");
     }
 
     @Override
     public void setInputAudioEffect(WaveLinkInputDevice device, WaveLinkEffect effect) {
-        log.warn("setInputLevel not implemented yet");
+        log.warn("setInputAudioEffect not implemented yet");
     }
 
     @Override
-    public void setChannel(WaveLinkChannel channel, WaveLinkMix mix, @Nullable Double value, @Nullable Boolean mute) {
+    public void setChannel(WaveLinkChannel channel, @Nullable WaveLinkMix mix, @Nullable Double value, @Nullable Boolean mute) {
         var newChannel = channel.blank();
         if (mix == null) {
             newChannel = newChannel.withLevel(value).withIsMuted(mute);

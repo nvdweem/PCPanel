@@ -1,5 +1,7 @@
 package dev.niels.wavelink;
 
+import java.util.Map;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -12,23 +14,61 @@ import dev.niels.wavelink.impl.model.WaveLinkOutput;
 import dev.niels.wavelink.impl.model.WaveLinkOutputDevice;
 
 public interface IWaveLinkClient {
-    @Nonnull
-    WaveLinkInputDevice getInputDeviceFromId(String id);
+    Map<String, WaveLinkInputDevice> getInputDevices();
+
+    Map<String, WaveLinkOutputDevice> getOutputDevices();
+
+    Map<String, WaveLinkChannel> getChannels();
+
+    Map<String, WaveLinkMix> getMixes();
 
     @Nonnull
-    WaveLinkOutputDevice getOutputDeviceFromId(String id);
+    default WaveLinkInputDevice getInputFromId(String id) {
+        return getInputDevices().getOrDefault(id, new WaveLinkInputDevice(id, null, null, null));
+    }
 
     @Nonnull
-    WaveLinkChannel getChannelFromId(String id);
+    default WaveLinkOutputDevice getOutputFromId(String id) {
+        return getOutputDevices().getOrDefault(id, new WaveLinkOutputDevice(id, null, null, null));
+    }
 
     @Nonnull
-    WaveLinkMix getMixFromId(String id);
+    default WaveLinkChannel getChannelFromId(String id) {
+        return getChannels().getOrDefault(id, new WaveLinkChannel(id, null, null, null, null, null, null, null, null));
+    }
 
-    void setInputLevel(WaveLinkInputDevice device, WaveLinkControlAction action, double value);
+    @Nonnull
+    default WaveLinkMix getMixFromId(String id) {
+        return getMixes().getOrDefault(id, new WaveLinkMix(id, null, null, null, null));
+    }
 
-    void setInputMute(WaveLinkInputDevice device, WaveLinkControlAction action, boolean mute);
+    default void setInputLevel(String deviceId, WaveLinkControlAction action, double value) {
+        setInputLevel(getInputFromId(deviceId), action, value);
+    }
+
+    default void setInputLevel(WaveLinkInputDevice device, WaveLinkControlAction action, double value) {
+        setInput(device, action, value, null);
+    }
+
+    default void setInputMute(WaveLinkInputDevice device, WaveLinkControlAction action, boolean mute) {
+        setInput(device, action, null, mute);
+    }
+
+    void setInput(WaveLinkInputDevice device, WaveLinkControlAction action, @Nullable Double value, @Nullable Boolean mute);
 
     void setInputAudioEffect(WaveLinkInputDevice device, WaveLinkEffect effect);
+
+    default void setChannelLevel(String channelId, double value) {
+        setChannel(channelId, null, value, null);
+    }
+
+    default void setChannelLevel(WaveLinkChannel channel, double value) {
+        setChannel(channel, null, value, null);
+    }
+
+    default void setChannelLevel(String channel, String mix, double value) {
+        setChannel(channel, mix, value, null);
+    }
 
     default void setChannelLevel(WaveLinkChannel channel, WaveLinkMix mix, double value) {
         setChannel(channel, mix, value, null);
@@ -38,11 +78,19 @@ public interface IWaveLinkClient {
         setChannel(channel, mix, null, mute);
     }
 
-    default void setChannel(String channelId, String mixId, Double value, Boolean mute) {
-        setChannel(getChannelFromId(channelId), getMixFromId(mixId), value, mute);
+    default void setChannel(WaveLinkChannel channel, boolean mute) {
+        setChannel(channel, null, null, mute);
     }
 
-    void setChannel(WaveLinkChannel channel, WaveLinkMix mix, @Nullable Double value, @Nullable Boolean mute);
+    default void setChannel(String channelId, Double value, Boolean mute) {
+        setChannel(channelId, null, value, mute);
+    }
+
+    default void setChannel(String channelId, @Nullable String mixId, @Nullable Double value, @Nullable Boolean mute) {
+        setChannel(getChannelFromId(channelId), mixId == null ? null : getMixFromId(mixId), value, mute);
+    }
+
+    void setChannel(WaveLinkChannel channel, @Nullable WaveLinkMix mix, @Nullable Double value, @Nullable Boolean mute);
 
     void addCurrentToChannel(WaveLinkChannel channel);
 
@@ -59,6 +107,10 @@ public interface IWaveLinkClient {
     void setMix(WaveLinkMix mix, @Nullable Double value, @Nullable Boolean mute);
 
     void setMixOutput(WaveLinkOutputDevice outputDevice, WaveLinkOutput mix);
+
+    default void setOutputLevel(String outputDeviceId, double value) {
+        setOutput(getOutputFromId(outputDeviceId), value, null);
+    }
 
     default void setOutputLevel(WaveLinkOutputDevice outputDevice, double value) {
         setOutput(outputDevice, value, null);
