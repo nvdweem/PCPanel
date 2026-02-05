@@ -8,6 +8,7 @@ import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.command.ButtonCommandController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
+import com.getpcpanel.ui.command.CommandController;
 
 import javafx.beans.Observable;
 import javafx.event.ActionEvent;
@@ -22,7 +23,7 @@ import lombok.extern.log4j.Log4j2;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Keystroke", fxml = "Keystroke", cmds = CommandKeystroke.class)
-public class BtnKeystrokeController extends ButtonCommandController<CommandKeystroke> {
+public class BtnKeystrokeController extends CommandController<CommandKeystroke> implements ButtonCommandController {
     @FXML private TextField keystrokeField;
     private boolean k_alt;
     private boolean k_ctrl;

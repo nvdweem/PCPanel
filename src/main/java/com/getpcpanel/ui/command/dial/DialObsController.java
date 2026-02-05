@@ -9,6 +9,7 @@ import com.getpcpanel.obs.OBS;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
+import com.getpcpanel.ui.command.CommandController;
 import com.getpcpanel.ui.command.DialCommandController;
 import com.getpcpanel.ui.command.ObsEnabled;
 
@@ -23,7 +24,7 @@ import lombok.extern.log4j.Log4j2;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "OBS", fxml = "Obs", cmds = CommandObsSetSourceVolume.class, enabled = ObsEnabled.class)
-public class DialObsController extends DialCommandController<CommandObsSetSourceVolume> {
+public class DialObsController extends CommandController<CommandObsSetSourceVolume> implements DialCommandController {
     private final OBS obs;
 
     @FXML private ChoiceBox<String> obsAudioSources;

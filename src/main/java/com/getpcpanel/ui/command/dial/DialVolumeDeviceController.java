@@ -15,6 +15,7 @@ import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
+import com.getpcpanel.ui.command.CommandController;
 import com.getpcpanel.ui.command.DialCommandController;
 
 import javafx.beans.Observable;
@@ -32,7 +33,7 @@ import one.util.streamex.StreamEx;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Device Volume", fxml = "VolumeDevice", cmds = CommandVolumeDevice.class)
-public class DialVolumeDeviceController extends DialCommandController<CommandVolumeDevice> {
+public class DialVolumeDeviceController extends CommandController<CommandVolumeDevice> implements DialCommandController {
     private final ISndCtrl sndCtrl;
     private Collection<AudioDevice> allSoundDevices;
     @FXML private CheckBox cb_device_unmute;
@@ -81,7 +82,8 @@ public class DialVolumeDeviceController extends DialCommandController<CommandVol
         volumedevice.setDisable(!rdio_device_specific.isSelected());
     }
 
-    private @Nullable AudioDevice getSoundDeviceById(String id) {
+    @Nullable
+    private AudioDevice getSoundDeviceById(String id) {
         return StreamEx.of(allSoundDevices).findFirst(sd -> sd.id().equals(id)).orElse(null);
     }
 }

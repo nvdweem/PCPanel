@@ -8,6 +8,7 @@ import com.getpcpanel.commands.command.DialAction.DialCommandParams;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
+import com.getpcpanel.ui.command.CommandController;
 import com.getpcpanel.ui.command.DialCommandController;
 
 import javafx.beans.Observable;
@@ -19,7 +20,7 @@ import lombok.extern.log4j.Log4j2;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Device Brightness", fxml = "Brightness", cmds = CommandBrightness.class)
-public class DialBrightnessController extends DialCommandController<CommandBrightness> {
+public class DialBrightnessController extends CommandController<CommandBrightness> implements DialCommandController {
 
     @Override
     public void postInit(CommandContext context) {

@@ -11,9 +11,11 @@ import com.getpcpanel.commands.command.CommandVolumeProcessMute;
 import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.PickProcessesController;
+import com.getpcpanel.ui.PickProcessesController.PickType;
 import com.getpcpanel.ui.command.ButtonCommandController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
+import com.getpcpanel.ui.command.CommandController;
 
 import javafx.beans.Observable;
 import javafx.fxml.FXML;
@@ -26,7 +28,7 @@ import lombok.extern.log4j.Log4j2;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Mute App", fxml = "VolumeProcessMute", cmds = CommandVolumeProcessMute.class, os = WINDOWS)
-public class BtnVolumeProcessMuteController extends ButtonCommandController<CommandVolumeProcessMute> {
+public class BtnVolumeProcessMuteController extends CommandController<CommandVolumeProcessMute> implements ButtonCommandController {
     @FXML private PickProcessesController appMuteController;
     @FXML private RadioButton rdio_mute_mute;
     @FXML private RadioButton rdio_mute_toggle;
@@ -34,7 +36,7 @@ public class BtnVolumeProcessMuteController extends ButtonCommandController<Comm
 
     @Override
     public void postInit(CommandContext context) {
-        appMuteController.setPickType(PickProcessesController.PickType.soundSource);
+        appMuteController.setPickType(PickType.soundSource);
     }
 
     @Override

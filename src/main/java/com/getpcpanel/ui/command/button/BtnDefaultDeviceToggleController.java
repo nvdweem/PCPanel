@@ -16,6 +16,7 @@ import com.getpcpanel.ui.SoundDeviceImportFactory;
 import com.getpcpanel.ui.command.ButtonCommandController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
+import com.getpcpanel.ui.command.CommandController;
 
 import javafx.beans.Observable;
 import javafx.collections.ListChangeListener;
@@ -30,7 +31,7 @@ import one.util.streamex.StreamEx;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Toggle Device", fxml = "DefaultDeviceToggle", cmds = CommandVolumeDefaultDeviceToggle.class)
-public class BtnDefaultDeviceToggleController extends ButtonCommandController<CommandVolumeDefaultDeviceToggle> {
+public class BtnDefaultDeviceToggleController extends CommandController<CommandVolumeDefaultDeviceToggle> implements ButtonCommandController {
     private final ISndCtrl sndCtrl;
     private Collection<AudioDevice> allSoundDevices;
     @FXML private ListView<AudioDevice> soundDevices2;
@@ -79,7 +80,8 @@ public class BtnDefaultDeviceToggleController extends ButtonCommandController<Co
         soundDeviceSource.refresh();
     }
 
-    private @Nullable AudioDevice getSoundDeviceById(String id) {
+    @Nullable
+    private AudioDevice getSoundDeviceById(String id) {
         return StreamEx.of(allSoundDevices).findFirst(sd -> sd.id().equals(id)).orElse(null);
     }
 }

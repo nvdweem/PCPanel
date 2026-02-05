@@ -20,13 +20,15 @@ import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.FxHelper;
 import com.getpcpanel.ui.MacroControllerService;
 import com.getpcpanel.ui.MacroControllerService.ControllerInfo;
+import com.getpcpanel.ui.command.Cmd.Type;
+import com.getpcpanel.ui.command.DialCutoffOptions.DialCutoffOptionsParams;
 import com.getpcpanel.ui.graphviewer.GraphViewer;
 import com.getpcpanel.util.Images;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.ListChangeListener;
+import javafx.collections.ListChangeListener.Change;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -63,7 +65,7 @@ public class ButtonController {
     private final MacroControllerService macroControllerService;
     private final FxHelper fxHelper;
 
-    private Cmd.Type cmdType;
+    private Type cmdType;
     private CommandContext context;
     private final ContextMenu addMenu = new ContextMenu();
     @FXML @Getter private TabPane root;
@@ -73,7 +75,7 @@ public class ButtonController {
     @FXML private ChoiceBox<CommandsType> commandsType;
     @Setter private Stage stage;
 
-    public void initController(Cmd.Type cmdType, CommandContext context, @Nullable Commands buttonData) {
+    public void initController(Type cmdType, CommandContext context, @Nullable Commands buttonData) {
         this.cmdType = cmdType;
         this.context = context;
         Commands.cmds(buttonData).forEach(this::add);
@@ -102,13 +104,13 @@ public class ButtonController {
             commandsType.getSelectionModel().select(buttonData.getType());
         }
 
-        if (cmdType == Cmd.Type.button) {
+        if (cmdType == Type.button) {
             commands.getPanes().addListener(this::determineCommandsTypeVisible);
             determineCommandsTypeVisible(null);
         }
     }
 
-    private void determineCommandsTypeVisible(@Nullable ListChangeListener.Change<?> change) {
+    private void determineCommandsTypeVisible(@Nullable Change<?> change) {
         commandsType.setVisible(commands.getPanes().size() > 1);
         if (!commandsType.isVisible()) {
             commandsType.getSelectionModel().selectFirst();
@@ -190,7 +192,7 @@ public class ButtonController {
     }
 
     private void addGraphViewer(PanelData panelData, CommandController<Command> controller, @Nonnull Command cmd, HBox hbox, CheckBox invertCheck) {
-        if (!(cmd instanceof DialAction) || !(controller instanceof DialCommandController<?> dc)) {
+        if (!(cmd instanceof DialAction) || !(controller instanceof DialCommandController dc)) {
             return;
         }
 
@@ -201,7 +203,7 @@ public class ButtonController {
         HBox.setMargin(graphBox, new Insets(0, 10, 0, 0));
         hbox.getChildren().add(0, graphBox);
         graphViewer.setOnAction(event -> {
-            var newParams = DialCutoffOptions.show(new DialCutoffOptions.DialCutoffOptionsParams(stage, panelData.params));
+            var newParams = DialCutoffOptions.show(new DialCutoffOptionsParams(stage, panelData.params));
             newParams.ifPresent(params -> {
                 panelData.setParams(params);
                 invertCheck.setSelected(params.invert());
@@ -240,7 +242,8 @@ public class ButtonController {
                 });
     }
 
-    private @Nonnull Label buildAdditionalLabel(@Nonnull CommandController<Command> controller, @Nonnull TitledPane pane) {
+    @Nonnull
+    private Label buildAdditionalLabel(@Nonnull CommandController<Command> controller, @Nonnull TitledPane pane) {
         var additionalLabel = new Label();
         additionalLabel.setStyle("-fx-text-fill: #999;");
         additionalLabel.textProperty().bind(appendSemiColonBinding(controller.additionalLabelText()));
@@ -266,7 +269,7 @@ public class ButtonController {
 
     private Button moveButton(@Nonnull TitledPane pane, SVGPath image, int idxChange) {
         var buttonMove = createButton(image);
-        commands.getPanes().addListener((ListChangeListener.Change<?> c) -> showHideButton(buttonMove, commands.getPanes().size() > 1));
+        commands.getPanes().addListener((Change<?> c) -> showHideButton(buttonMove, commands.getPanes().size() > 1));
         buttonMove.setOnAction(event -> {
             var idx = commands.getPanes().indexOf(pane);
             commands.getPanes().remove(pane);
@@ -281,9 +284,9 @@ public class ButtonController {
         var buttonCopy = createButton(Images.copy());
         buttonCopy.setOnAction(event -> {
             var data = (PanelData) pane.getUserData();
-            if (data.controller instanceof DialCommandController<?> dc) {
+            if (data.controller instanceof DialCommandController dc) {
                 add(dc.buildCommand(data.params));
-            } else if (data.controller instanceof ButtonCommandController<?> bc) {
+            } else if (data.controller instanceof ButtonCommandController bc) {
                 add(bc.buildCommand());
             }
             commands.setExpandedPane(commands.getPanes().get(commands.getPanes().size() - 1));
@@ -306,7 +309,7 @@ public class ButtonController {
     public Commands determineButtonCommand() {
         var userdata = StreamEx.of(commands.getPanes()).map(Node::getUserData);
 
-        if (cmdType == Cmd.Type.dial) {
+        if (cmdType == Type.dial) {
             userdata = userdata.select(PanelData.class)
                                .mapToEntry(PanelData::getController, PanelData::getParams)
                                .selectKeys(DialCommandController.class)

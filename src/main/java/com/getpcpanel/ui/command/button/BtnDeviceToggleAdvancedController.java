@@ -11,6 +11,7 @@ import com.getpcpanel.ui.AdvancedDevices;
 import com.getpcpanel.ui.command.ButtonCommandController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
+import com.getpcpanel.ui.command.CommandController;
 
 import javafx.beans.Observable;
 import javafx.event.ActionEvent;
@@ -23,7 +24,7 @@ import lombok.extern.log4j.Log4j2;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Toggle Device Advanced", fxml = "DeviceToggleAdvanced", cmds = CommandVolumeDefaultDeviceToggleAdvanced.class, os = WINDOWS)
-public class BtnDeviceToggleAdvancedController extends ButtonCommandController<CommandVolumeDefaultDeviceToggleAdvanced> {
+public class BtnDeviceToggleAdvancedController extends CommandController<CommandVolumeDefaultDeviceToggleAdvanced> implements ButtonCommandController {
     @FXML private AdvancedDevices defaultDeviceToggleAdvancedController;
 
     @Override
