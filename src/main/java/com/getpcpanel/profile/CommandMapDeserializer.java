@@ -21,9 +21,11 @@ import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandConverter;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import one.util.streamex.EntryStream;
 import one.util.streamex.IntStreamEx;
 
+@Log4j2
 @RequiredArgsConstructor
 public class CommandMapDeserializer extends JsonDeserializer<Map<Integer, Commands>> {
     private final ObjectMapper mapper = new ObjectMapper();
@@ -43,17 +45,25 @@ public class CommandMapDeserializer extends JsonDeserializer<Map<Integer, Comman
             // Read old format
             var oldType = new TypeReference<Map<Integer, Command>>() {
             };
-            var result = ctxt.<Map<Integer, Command>>readTreeAsValue(tree, mapper.constructType(oldType));
-            SaveService.encounterOldVersion("1.6");
-            return convertMapToMapWithCommands(result);
+            try {
+                var result = ctxt.<Map<Integer, Command>>readTreeAsValue(tree, mapper.constructType(oldType));
+                SaveService.encounterOldVersion("1.6");
+                return convertMapToMapWithCommands(result);
+            } catch (IOException ex) {
+                log.error("Unable to read old format", ex);
+                log.error("And unable to read new format", e);
+            }
+            throw new RuntimeException(e);
         }
     }
 
-    private @Nonnull Map<Integer, Commands> convertMapToMapWithCommands(@Nonnull Map<Integer, Command> result) {
+    @Nonnull
+    private Map<Integer, Commands> convertMapToMapWithCommands(@Nonnull Map<Integer, Command> result) {
         return EntryStream.of(result).mapValues(cmd -> new Commands(List.of(cmd), CommandsType.allAtOnce)).toMap();
     }
 
-    private @Nonnull Map<Integer, Commands> readOldFormat(@Nonnull JsonParser p) throws IOException {
+    @Nonnull
+    private Map<Integer, Commands> readOldFormat(@Nonnull JsonParser p) throws IOException {
         var result = new HashMap<Integer, Commands>();
         var arr = p.getCodec().readTree(p);
         IntStreamEx.range(arr.size())

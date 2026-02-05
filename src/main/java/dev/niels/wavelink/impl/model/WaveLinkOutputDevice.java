@@ -1,6 +1,7 @@
 package dev.niels.wavelink.impl.model;
 
 import java.util.List;
+import java.util.function.Function;
 
 import org.apache.commons.lang3.ObjectUtils;
 
@@ -20,6 +21,21 @@ public record WaveLinkOutputDevice(
 ) implements WithId, Mergable<WaveLinkOutputDevice> {
     public WaveLinkOutputDevice blank() {
         return new WaveLinkOutputDevice(id, null, null, null);
+    }
+
+    public WaveLinkOutputDevice blankWithOutputs() {
+        return new WaveLinkOutputDevice(id, null, null, outputs);
+    }
+
+    public WaveLinkOutputDevice withOutputs(List<WaveLinkOutput> outputs) {
+        return new WaveLinkOutputDevice(id, name, isWaveDevice, outputs);
+    }
+
+    public WaveLinkOutputDevice withOutputs(Function<WaveLinkOutput, WaveLinkOutput> mapper) {
+        if (outputs == null)
+            return this;
+
+        return new WaveLinkOutputDevice(id, name, isWaveDevice, outputs.stream().map(mapper).toList());
     }
 
     @Override

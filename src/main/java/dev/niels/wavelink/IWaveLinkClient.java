@@ -74,11 +74,19 @@ public interface IWaveLinkClient {
         setChannel(channel, mix, value, null);
     }
 
-    default void setChannel(WaveLinkChannel channel, WaveLinkMix mix, boolean mute) {
+    default void setChannelMute(String channel, String mix, boolean mute) {
         setChannel(channel, mix, null, mute);
     }
 
-    default void setChannel(WaveLinkChannel channel, boolean mute) {
+    default void setChannelMute(WaveLinkChannel channel, WaveLinkMix mix, boolean mute) {
+        setChannel(channel, mix, null, mute);
+    }
+
+    default void setChannelMute(String channelId, boolean mute) {
+        setChannel(getChannelFromId(channelId), null, null, mute);
+    }
+
+    default void setChannelMute(WaveLinkChannel channel, boolean mute) {
         setChannel(channel, null, null, mute);
     }
 
@@ -114,6 +122,10 @@ public interface IWaveLinkClient {
 
     default void setOutputLevel(WaveLinkOutputDevice outputDevice, double value) {
         setOutput(outputDevice, value, null);
+    }
+
+    default void setOutputMute(String outputDeviceId, boolean mute) {
+        setOutput(getOutputFromId(outputDeviceId), null, mute);
     }
 
     default void setOutputMute(WaveLinkOutputDevice outputDevice, boolean mute) {

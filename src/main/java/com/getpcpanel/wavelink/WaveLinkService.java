@@ -13,4 +13,8 @@ public class WaveLinkService {
     public boolean isConnected() {
         return ((WaveLinkClient) client).isInitialized();
     }
+
+    public boolean isEnabled() {
+        return true;
+    }
 }

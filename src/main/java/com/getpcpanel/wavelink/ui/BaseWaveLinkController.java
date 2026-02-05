@@ -1,19 +1,15 @@
-package com.getpcpanel.ui.command.dial;
+package com.getpcpanel.wavelink.ui;
 
 import java.util.Objects;
 import java.util.Optional;
 
-import org.springframework.stereotype.Component;
+import javax.annotation.Nonnull;
 
-import com.getpcpanel.commands.command.Command;
-import com.getpcpanel.commands.command.DialAction.DialCommandParams;
-import com.getpcpanel.commands.command.wavelink.CommandWaveLinkLevel;
-import com.getpcpanel.commands.command.wavelink.CommandWaveLinkLevel.WaveLinkCommand;
-import com.getpcpanel.spring.Prototype;
-import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
-import com.getpcpanel.ui.command.DialCommandController;
+import com.getpcpanel.ui.command.CommandController;
 import com.getpcpanel.wavelink.WaveLinkService;
+import com.getpcpanel.wavelink.command.CommandWaveLink;
+import com.getpcpanel.wavelink.command.WaveLinkCommandTarget;
 
 import dev.niels.wavelink.impl.model.WaveLinkChannel;
 import dev.niels.wavelink.impl.model.WaveLinkInputDevice;
@@ -30,17 +26,13 @@ import lombok.extern.log4j.Log4j2;
 import one.util.streamex.EntryStream;
 
 @Log4j2
-@Component
-@Prototype
 @RequiredArgsConstructor
-/*, enabled = VoiceMeeterEnabled.class*/
-@Cmd(name = "WaveLink", fxml = "WaveLink", cmds = CommandWaveLinkLevel.class)
-public class DialWaveLinkController extends DialCommandController<CommandWaveLinkLevel> {
-    private final WaveLinkService waveLinkService;
-    @FXML private ChoiceBox<WaveLinkCommand> typeChoice;
+class BaseWaveLinkController<T extends CommandWaveLink> extends CommandController<T> {
+    protected final WaveLinkService waveLinkService;
     @FXML private Label choice1Label;
-    @FXML private ChoiceBox<Entry> choice1;
     @FXML private Label choice2Label;
+    @FXML private ChoiceBox<WaveLinkCommandTarget> typeChoice;
+    @FXML private ChoiceBox<Entry> choice1;
     @FXML private ChoiceBox<Entry> choice2;
 
     @Override
@@ -49,7 +41,7 @@ public class DialWaveLinkController extends DialCommandController<CommandWaveLin
             return;
         }
 
-        typeChoice.getItems().setAll(WaveLinkCommand.values());
+        typeChoice.getItems().setAll(WaveLinkCommandTarget.values());
         typeChoice.valueProperty().addListener((obs, oldV, newV) -> {
             choice1Label.setVisible(true);
             choice1.setVisible(true);
@@ -102,7 +94,7 @@ public class DialWaveLinkController extends DialCommandController<CommandWaveLin
     }
 
     @Override
-    public void initFromCommand(CommandWaveLinkLevel cmd) {
+    public void initFromCommand(T cmd) {
         typeChoice.setValue(cmd.getCommandType());
         selectId(choice1, cmd.getId1());
         selectId(choice2, cmd.getId2());
@@ -117,16 +109,12 @@ public class DialWaveLinkController extends DialCommandController<CommandWaveLin
     }
 
     @Override
-    public Command buildCommand(DialCommandParams params) {
-        var command = Optional.ofNullable(typeChoice.getValue()).orElse(WaveLinkCommand.Channel);
-        var choice1Id = Optional.ofNullable(choice1.getValue()).map(Entry::id).orElse(null);
-        var choice2Id = Optional.ofNullable(choice2.getValue()).map(Entry::id).orElse(null);
-        return new CommandWaveLinkLevel(command, choice1Id, choice2Id);
-    }
-
-    @Override
     protected Observable[] determineDependencies() {
-        return new Observable[0];
+        return new Observable[] {
+                typeChoice.valueProperty(),
+                choice1.valueProperty(),
+                choice2.valueProperty()
+        };
     }
 
     record Entry(String id, String name) {
@@ -135,5 +123,15 @@ public class DialWaveLinkController extends DialCommandController<CommandWaveLin
         public String toString() {
             return name;
         }
+    }
+
+    protected ArgBase buildArgBase() {
+        var command = Optional.ofNullable(typeChoice.getValue()).orElse(WaveLinkCommandTarget.Channel);
+        var choice1Id = Optional.ofNullable(choice1.getValue()).map(Entry::id).orElse(null);
+        var choice2Id = Optional.ofNullable(choice2.getValue()).map(Entry::id).orElse(null);
+        return new ArgBase(command, choice1Id, choice2Id);
+    }
+
+    protected record ArgBase(@Nonnull WaveLinkCommandTarget target, @Nullable String id1, @Nullable String id2) {
     }
 }

@@ -3,12 +3,14 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
-<HBox prefHeight="200.0" prefWidth="440.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.wavelink.ui.DialWaveLinkController">
+<HBox minHeight="-Infinity" prefHeight="250.0" prefWidth="478.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.wavelink.ui.BtnWaveLinkController">
     <VBox prefHeight="171.0" prefWidth="435.0" spacing="15.0">
         <padding>
             <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
@@ -32,5 +34,14 @@
             <Label fx:id="choice2Label" text="Mix" GridPane.rowIndex="2"/>
             <ChoiceBox fx:id="choice2" prefWidth="150.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2"/>
         </GridPane>
+        <VBox spacing="15.0" HBox.hgrow="ALWAYS">
+            <RadioButton fx:id="mute_toggle" mnemonicParsing="false" selected="true" text="Toggle Mute/Unmute">
+                <toggleGroup>
+                    <ToggleGroup fx:id="mute_toggle_grp"/>
+                </toggleGroup>
+            </RadioButton>
+            <RadioButton fx:id="mute_mute" mnemonicParsing="false" text="Mute" toggleGroup="$mute_toggle_grp"/>
+            <RadioButton fx:id="mute_unmute" mnemonicParsing="false" text="Unmute" toggleGroup="$mute_toggle_grp"/>
+        </VBox>
     </VBox>
 </HBox>

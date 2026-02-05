@@ -17,7 +17,6 @@ import dev.niels.wavelink.impl.rpc.WaveLinkSetMixCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkSetOutputDeviceCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkSetOutputDeviceCommand.WaveLinkSetOutputDeviceParams;
 import lombok.extern.log4j.Log4j2;
-import one.util.streamex.StreamEx;
 
 @Log4j2
 public class WaveLinkClient extends WaveLinkClientImpl implements IWaveLinkClient {
@@ -73,8 +72,8 @@ public class WaveLinkClient extends WaveLinkClientImpl implements IWaveLinkClien
             return;
 
         send(new WaveLinkSetOutputDeviceCommand().setParams(new WaveLinkSetOutputDeviceParams(
-                outputDevice.blank()
-                            .withOutputs(StreamEx.of(outputDevice.outputs()).map(o -> o.blank().withLevel(value).withIsMuted(mute)).toList())
+                outputDevice.blankWithOutputs()
+                            .withOutputs(o -> o.blank().withLevel(value).withIsMuted(mute))
         )));
     }
 }
