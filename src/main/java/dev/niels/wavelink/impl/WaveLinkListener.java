@@ -36,6 +36,7 @@ public class WaveLinkListener implements Listener {
     private final WaveLinkClientImpl client;
     @Nullable private WebSocket socket;
     private long nextSendId;
+    private final StringBuffer msgBuffer = new StringBuffer();
 
     @Override
     public void onOpen(WebSocket webSocket) {
@@ -71,14 +72,19 @@ public class WaveLinkListener implements Listener {
 
     @Override
     public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
-        log.debug("Received message: {}", data);
-        try {
-            var tree = mapper.readTree(data.toString());
-            if (!tryReadResult(tree)) {
-                readMessage(messageReader.readValue(data.toString()));
+        msgBuffer.append(data);
+        if (last) {
+            var fullMessage = msgBuffer.toString();
+            msgBuffer.setLength(0);
+            log.debug("Received message: {}", fullMessage);
+            try {
+                var tree = mapper.readTree(fullMessage);
+                if (!tryReadResult(tree)) {
+                    readMessage(messageReader.readValue(fullMessage));
+                }
+            } catch (JsonProcessingException e) {
+                log.error("Failed to parse message, {}", data, e);
             }
-        } catch (JsonProcessingException e) {
-            log.error("Failed to parse message, {}", data, e);
         }
         return Listener.super.onText(webSocket, data, last);
     }
