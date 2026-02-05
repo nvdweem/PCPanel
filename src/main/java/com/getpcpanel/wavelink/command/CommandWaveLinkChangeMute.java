@@ -16,11 +16,11 @@ import lombok.extern.log4j.Log4j2;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
-public class CommandWaveLinkMute extends CommandWaveLink implements ButtonAction {
+public class CommandWaveLinkChangeMute extends CommandWaveLinkChange implements ButtonAction {
     private final MuteType muteType;
 
     @JsonCreator
-    public CommandWaveLinkMute(
+    public CommandWaveLinkChangeMute(
             @JsonProperty("commandType") WaveLinkCommandTarget commandType,
             @JsonProperty("id1") @Nullable String id1,
             @JsonProperty("id2") @Nullable String id2,

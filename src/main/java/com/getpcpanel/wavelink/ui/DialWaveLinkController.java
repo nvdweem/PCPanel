@@ -8,15 +8,15 @@ import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.DialCommandController;
 import com.getpcpanel.wavelink.WaveLinkService;
-import com.getpcpanel.wavelink.command.CommandWaveLinkLevel;
+import com.getpcpanel.wavelink.command.CommandWaveLinkChangeLevel;
 
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @Component
 @Prototype
-@Cmd(name = "WaveLink", fxml = "WaveLink", cmds = CommandWaveLinkLevel.class, enabled = WaveLinkEnabled.class)
-public class DialWaveLinkController extends BaseWaveLinkController<CommandWaveLinkLevel> implements DialCommandController {
+@Cmd(name = "WaveLink", fxml = "WaveLink", cmds = CommandWaveLinkChangeLevel.class, enabled = WaveLinkEnabled.class)
+public class DialWaveLinkController extends BaseWaveLinkController<CommandWaveLinkChangeLevel> implements DialCommandController {
     public DialWaveLinkController(WaveLinkService waveLinkService) {
         super(waveLinkService);
     }
@@ -24,6 +24,6 @@ public class DialWaveLinkController extends BaseWaveLinkController<CommandWaveLi
     @Override
     public Command buildCommand(DialCommandParams params) {
         var base = buildArgBase();
-        return new CommandWaveLinkLevel(base.target(), base.id1(), base.id2(), params);
+        return new CommandWaveLinkChangeLevel(base.target(), base.id1(), base.id2(), params);
     }
 }

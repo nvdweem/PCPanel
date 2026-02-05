@@ -133,4 +133,12 @@ public interface IWaveLinkClient {
     }
 
     void setOutput(WaveLinkOutputDevice outputDevice, @Nullable Double value, @Nullable Boolean mute);
+
+    default void setMainOutput(String id) {
+        setMainOutput(getOutputFromId(id));
+    }
+
+    void setMainOutput(WaveLinkOutputDevice outputDevice);
+
+    String getMainOutputDeviceId();
 }

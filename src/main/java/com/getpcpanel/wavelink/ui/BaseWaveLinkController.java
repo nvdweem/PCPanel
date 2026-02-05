@@ -9,6 +9,7 @@ import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.CommandController;
 import com.getpcpanel.wavelink.WaveLinkService;
 import com.getpcpanel.wavelink.command.CommandWaveLink;
+import com.getpcpanel.wavelink.command.CommandWaveLinkChange;
 import com.getpcpanel.wavelink.command.WaveLinkCommandTarget;
 
 import dev.niels.wavelink.impl.model.WaveLinkChannel;
@@ -29,11 +30,12 @@ import one.util.streamex.EntryStream;
 @RequiredArgsConstructor
 class BaseWaveLinkController<T extends CommandWaveLink> extends CommandController<T> {
     protected final WaveLinkService waveLinkService;
-    @FXML private Label choice1Label;
-    @FXML private Label choice2Label;
-    @FXML private ChoiceBox<WaveLinkCommandTarget> typeChoice;
-    @FXML private ChoiceBox<Entry> choice1;
-    @FXML private ChoiceBox<Entry> choice2;
+    @FXML protected Label choice1Label;
+    @FXML protected Label choice2Label;
+    @FXML protected Label typeLabel;
+    @FXML protected ChoiceBox<WaveLinkCommandTarget> typeChoice;
+    @FXML protected ChoiceBox<Entry> choice1;
+    @FXML protected ChoiceBox<Entry> choice2;
 
     @Override
     public void postInit(CommandContext context) {
@@ -43,10 +45,8 @@ class BaseWaveLinkController<T extends CommandWaveLink> extends CommandControlle
 
         typeChoice.getItems().setAll(WaveLinkCommandTarget.values());
         typeChoice.valueProperty().addListener((obs, oldV, newV) -> {
-            choice1Label.setVisible(true);
-            choice1.setVisible(true);
-            choice2Label.setVisible(false);
-            choice2.setVisible(false);
+            triggerVisibility();
+
             choice1.getItems().clear();
             choice2.getItems().clear();
             switch (newV) {
@@ -66,8 +66,6 @@ class BaseWaveLinkController<T extends CommandWaveLink> extends CommandControlle
                 }
                 case Mix -> {
                     choice1Label.setText("Channel");
-                    choice2Label.setVisible(true);
-                    choice2.setVisible(true);
 
                     EntryStream.of(waveLinkService.getChannels())
                                .mapValues(WaveLinkChannel::name)
@@ -85,19 +83,36 @@ class BaseWaveLinkController<T extends CommandWaveLink> extends CommandControlle
                                .mapKeyValue(Entry::new)
                                .into(choice1.getItems());
                 }
-                default -> {
-                    choice1Label.setVisible(false);
-                    choice1.setVisible(false);
-                }
             }
         });
     }
 
+    protected void triggerVisibility() {
+        choice1Label.setVisible(true);
+        choice1.setVisible(true);
+        choice2Label.setVisible(false);
+        choice2.setVisible(false);
+
+        switch (typeChoice.getValue()) {
+            case Output -> {
+                choice2Label.setVisible(true);
+                choice2.setVisible(true);
+            }
+            default -> {
+                choice1Label.setVisible(false);
+                choice1.setVisible(false);
+            }
+        }
+
+    }
+
     @Override
     public void initFromCommand(T cmd) {
-        typeChoice.setValue(cmd.getCommandType());
-        selectId(choice1, cmd.getId1());
-        selectId(choice2, cmd.getId2());
+        if (cmd instanceof CommandWaveLinkChange changeCmd) {
+            typeChoice.setValue(changeCmd.getCommandType());
+            selectId(choice1, changeCmd.getId1());
+            selectId(choice2, changeCmd.getId2());
+        }
 
         super.initFromCommand(cmd);
     }
@@ -130,6 +145,10 @@ class BaseWaveLinkController<T extends CommandWaveLink> extends CommandControlle
         var choice1Id = Optional.ofNullable(choice1.getValue()).map(Entry::id).orElse(null);
         var choice2Id = Optional.ofNullable(choice2.getValue()).map(Entry::id).orElse(null);
         return new ArgBase(command, choice1Id, choice2Id);
+    }
+
+    public Optional<Entry> getChoice1() {
+        return Optional.ofNullable(choice1.getValue());
     }
 
     protected record ArgBase(@Nonnull WaveLinkCommandTarget target, @Nullable String id1, @Nullable String id2) {

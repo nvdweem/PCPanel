@@ -15,11 +15,11 @@ import lombok.extern.log4j.Log4j2;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
-public class CommandWaveLinkLevel extends CommandWaveLink implements DialAction {
+public class CommandWaveLinkChangeLevel extends CommandWaveLinkChange implements DialAction {
     @Nullable private final DialCommandParams dialParams;
 
     @JsonCreator
-    public CommandWaveLinkLevel(
+    public CommandWaveLinkChangeLevel(
             @JsonProperty("commandType") WaveLinkCommandTarget commandType,
             @JsonProperty("id1") @Nullable String id1,
             @JsonProperty("id2") @Nullable String id2,
