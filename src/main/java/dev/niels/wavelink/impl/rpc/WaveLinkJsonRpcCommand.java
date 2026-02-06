@@ -21,6 +21,7 @@ import lombok.Setter;
         @Type(value = WaveLinkChannelsChangedCommand.class, name = "channelsChanged"),
         @Type(value = WaveLinkOutputDeviceChangedCommand.class, name = "outputDeviceChanged"),
         @Type(value = WaveLinkMixChangedCommand.class, name = "mixChanged"),
+        @Type(value = WaveLinkFocusedAppChangedCommand.class, name = "focusedAppChanged"),
 
         // Called by client to get info
         @Type(value = WaveLinkGetApplicationInfo.class, name = "getApplicationInfo"),
@@ -28,6 +29,8 @@ import lombok.Setter;
         @Type(value = WaveLinkGetOutputDevices.class, name = "getOutputDevices"),
         @Type(value = WaveLinkGetChannels.class, name = "getChannels"),
         @Type(value = WaveLinkGetMixes.class, name = "getMixes"),
+        @Type(value = WaveLinkSetSubscription.class, name = "setSubscription"),
+        @Type(value = WaveLinkAddToChannelCommand.class, name = "addToChannel"),
 
         // Commands
         @Type(value = WaveLinkSetChannelCommand.class, name = "setChannel"),

@@ -3,15 +3,20 @@ package dev.niels.wavelink.impl;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import dev.niels.wavelink.IWaveLinkClient;
+import dev.niels.wavelink.IWaveLinkClientEventListener;
+import dev.niels.wavelink.impl.model.WaveLinkApp;
 import dev.niels.wavelink.impl.model.WaveLinkChannel;
 import dev.niels.wavelink.impl.model.WaveLinkControlAction;
 import dev.niels.wavelink.impl.model.WaveLinkEffect;
@@ -21,8 +26,11 @@ import dev.niels.wavelink.impl.model.WaveLinkMix;
 import dev.niels.wavelink.impl.model.WaveLinkOutput;
 import dev.niels.wavelink.impl.model.WaveLinkOutputDevice;
 import dev.niels.wavelink.impl.model.WithId;
+import dev.niels.wavelink.impl.rpc.WaveLinkAddToChannelCommand;
+import dev.niels.wavelink.impl.rpc.WaveLinkAddToChannelCommand.WaveLinkAddToChannelParams;
 import dev.niels.wavelink.impl.rpc.WaveLinkChannelChangedCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkChannelsChangedCommand;
+import dev.niels.wavelink.impl.rpc.WaveLinkFocusedAppChangedCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkJsonRpcCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkMixChangedCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkOutputDeviceChangedCommand;
@@ -38,12 +46,14 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
     private final CompletableFuture<WebSocket> websocket;
     private final WaveLinkListener waveLinkListener;
     private final HttpClient client;
+    private final List<IWaveLinkClientEventListener> listeners = new ArrayList<>();
     @Getter private final Map<String, WaveLinkInputDevice> inputDevices = new ConcurrentHashMap<>();
     @Getter private final Map<String, WaveLinkOutputDevice> outputDevices = new ConcurrentHashMap<>();
     @Getter private final Map<String, WaveLinkChannel> channels = new ConcurrentHashMap<>();
     @Getter private final Map<String, WaveLinkMix> mixes = new ConcurrentHashMap<>();
     @Getter private boolean initialized;
     @Getter private String mainOutputDeviceId;
+    @Getter private WaveLinkApp lastFocusApp = WaveLinkApp.EMPTY;
 
     protected WaveLinkClientImpl() {
         client = HttpClient.newHttpClient();
@@ -53,6 +63,16 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
         websocket = client.newWebSocketBuilder()
                           .header("Origin", "streamdeck://")
                           .buildAsync(URI.create("ws://127.0.0.1:1884"), waveLinkListener);
+    }
+
+    @Override
+    public void addListener(IWaveLinkClientEventListener listener) {
+        listeners.add(listener);
+    }
+
+    @Override
+    public void removeListener(IWaveLinkClientEventListener listener) {
+        listeners.remove(listener);
     }
 
     @Override
@@ -78,7 +98,13 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
 
     @Override
     public void addCurrentToChannel(WaveLinkChannel channel) {
-        log.warn("addCurrentToChannel not implemented yet");
+        if (lastFocusApp.isEmpty()) {
+            log.info("WaveLink does not have focus app set, cannot add current to channel");
+            return;
+        }
+        send(new WaveLinkAddToChannelCommand().setParams(
+                new WaveLinkAddToChannelParams(lastFocusApp.id(), channel.id())
+        ));
     }
 
     @Override
@@ -163,43 +189,52 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
 
     void onMessage(WaveLinkJsonRpcCommand<?, ?> message) {
         switch (message) {
-            case WaveLinkChannelChangedCommand channelChanged -> updateEntry(channels, channelChanged.getParams());
-            case WaveLinkChannelsChangedCommand channelsChanged -> updateEntries(channels, channelsChanged.getParams().channels());
-
-            case WaveLinkOutputDeviceChangedCommand deviceChanged -> updateEntry(outputDevices, deviceChanged.getParams());
-            case WaveLinkMixChangedCommand mixChanged -> updateEntry(mixes, mixChanged.getParams());
-            default -> {
-                log.info("Received unhandled message: {}", message);
-            }
+            case WaveLinkChannelChangedCommand channelChanged -> updateEntry(IWaveLinkClientEventListener::channelChanged, channels, channelChanged.getParams());
+            case WaveLinkChannelsChangedCommand channelsChanged -> updateEntries(IWaveLinkClientEventListener::channelsChanged, channels, channelsChanged.getParams().channels());
+            case WaveLinkOutputDeviceChangedCommand deviceChanged -> updateEntry(IWaveLinkClientEventListener::outputDeviceChanged, outputDevices, deviceChanged.getParams());
+            case WaveLinkMixChangedCommand mixChanged -> updateEntry(IWaveLinkClientEventListener::mixChanged, mixes, mixChanged.getParams());
+            case WaveLinkFocusedAppChangedCommand appChanged -> setLastFocusApp(appChanged.getParams());
+            default -> log.info("Received unhandled message: {}", message);
         }
     }
 
-    private <T extends WithId> void updateEntries(Map<String, T> entries, List<T> newEntries) {
+    private void setLastFocusApp(WaveLinkApp app) {
+        lastFocusApp = app;
+        trigger(l -> l.focusedAppChanged(app));
+    }
+
+    private <T extends WithId> void updateEntries(Consumer<IWaveLinkClientEventListener> event, Map<String, T> entries, List<T> newEntries) {
         synchronized (entries) {
             entries.clear();
             newEntries.forEach(entry -> entries.put(entry.id(), entry));
         }
+        trigger(event);
     }
 
-    private <T extends WithId> void updateEntry(Map<String, T> entries, T entry) {
+    private <T extends WithId> void updateEntry(BiConsumer<IWaveLinkClientEventListener, T> event, Map<String, T> entries, T entry) {
         entries.put(entry.id(), entry);
+        trigger(e -> event.accept(e, entry));
     }
 
     void updateInputDevices(List<WaveLinkInputDevice> waveLinkInputDevices) {
-        updateEntries(inputDevices, waveLinkInputDevices);
+        updateEntries(IWaveLinkClientEventListener::inputDevicesChanged, inputDevices, waveLinkInputDevices);
     }
 
     void updateOutputDevices(List<WaveLinkOutputDevice> waveLinkOutputDevices, WaveLinkMainOutput waveLinkMainOutput) {
         mainOutputDeviceId = waveLinkMainOutput.outputDeviceId();
-        updateEntries(outputDevices, waveLinkOutputDevices);
+        updateEntries(IWaveLinkClientEventListener::outputDevicesChanged, outputDevices, waveLinkOutputDevices);
     }
 
     void updateChannels(List<WaveLinkChannel> channels) {
-        updateEntries(this.channels, channels);
+        updateEntries(IWaveLinkClientEventListener::channelsChanged, this.channels, channels);
     }
 
     void updateMixes(List<WaveLinkMix> mixes) {
-        updateEntries(this.mixes, mixes);
+        updateEntries(IWaveLinkClientEventListener::mixesChanged, this.mixes, mixes);
+    }
+
+    private void trigger(Consumer<IWaveLinkClientEventListener> event) {
+        listeners.forEach(event);
     }
 
     public void setInitialized() {

@@ -23,6 +23,8 @@ import dev.niels.wavelink.impl.rpc.WaveLinkGetInputDevices;
 import dev.niels.wavelink.impl.rpc.WaveLinkGetMixes;
 import dev.niels.wavelink.impl.rpc.WaveLinkGetOutputDevices;
 import dev.niels.wavelink.impl.rpc.WaveLinkJsonRpcCommand;
+import dev.niels.wavelink.impl.rpc.WaveLinkSetSubscription;
+import dev.niels.wavelink.impl.rpc.WaveLinkSetSubscription.WaveLinkSetSubscriptionParams;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
@@ -57,7 +59,10 @@ public class WaveLinkListener implements Listener {
                 sendExpectingResult(new WaveLinkGetInputDevices()).thenAccept(res -> client.updateInputDevices(res.inputDevices())),
                 sendExpectingResult(new WaveLinkGetOutputDevices()).thenAccept(res -> client.updateOutputDevices(res.outputDevices(), res.mainOutput())),
                 sendExpectingResult(new WaveLinkGetChannels()).thenAccept(res -> client.updateChannels(res.channels())),
-                sendExpectingResult(new WaveLinkGetMixes()).thenAccept(res -> client.updateMixes(res.mixes()))
+                sendExpectingResult(new WaveLinkGetMixes()).thenAccept(res -> client.updateMixes(res.mixes())),
+                sendExpectingResult(new WaveLinkSetSubscription().setParams(new WaveLinkSetSubscriptionParams(true, true))).thenAccept(res -> {
+                    log.debug("Successfully subscribed to websocket events");
+                })
         ).thenRun(client::setInitialized);
     }
 

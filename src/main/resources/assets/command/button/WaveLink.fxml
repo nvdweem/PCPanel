@@ -22,6 +22,7 @@
                 </toggleGroup>
             </RadioButton>
             <RadioButton fx:id="type_mainoutput" mnemonicParsing="false" text="Change main output" toggleGroup="$type_grp"/>
+            <RadioButton fx:id="type_add_focus_to_channel" mnemonicParsing="false" text="Add focus app to channel" toggleGroup="$type_grp"/>
         </HBox>
 
         <GridPane alignment="CENTER_LEFT" vgap="10.0">
@@ -44,7 +45,7 @@
             <ChoiceBox fx:id="choice2" prefWidth="150.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2"/>
         </GridPane>
 
-        <VBox spacing="15.0" HBox.hgrow="ALWAYS">
+        <VBox fx:id="mute_box" spacing="15.0" HBox.hgrow="ALWAYS">
             <RadioButton fx:id="mute_toggle" mnemonicParsing="false" selected="true" text="Toggle Mute/Unmute">
                 <toggleGroup>
                     <ToggleGroup fx:id="mute_toggle_grp"/>

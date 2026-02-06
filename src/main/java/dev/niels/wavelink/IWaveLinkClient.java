@@ -14,6 +14,10 @@ import dev.niels.wavelink.impl.model.WaveLinkOutput;
 import dev.niels.wavelink.impl.model.WaveLinkOutputDevice;
 
 public interface IWaveLinkClient {
+    void addListener(IWaveLinkClientEventListener listener);
+
+    void removeListener(IWaveLinkClientEventListener listener);
+
     Map<String, WaveLinkInputDevice> getInputDevices();
 
     Map<String, WaveLinkOutputDevice> getOutputDevices();
@@ -99,6 +103,10 @@ public interface IWaveLinkClient {
     }
 
     void setChannel(WaveLinkChannel channel, @Nullable WaveLinkMix mix, @Nullable Double value, @Nullable Boolean mute);
+
+    default void addCurrentToChannel(String channelId) {
+        addCurrentToChannel(getChannelFromId(channelId));
+    }
 
     void addCurrentToChannel(WaveLinkChannel channel);
 
