@@ -23,6 +23,8 @@ public interface IWaveLinkClient {
 
     CompletableFuture<Void> reconnect();
 
+    CompletableFuture<Void> disconnect();
+
     void addListener(IWaveLinkClientEventListener listener);
 
     void removeListener(IWaveLinkClientEventListener listener);

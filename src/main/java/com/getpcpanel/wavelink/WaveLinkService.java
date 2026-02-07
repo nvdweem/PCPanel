@@ -3,10 +3,12 @@ package com.getpcpanel.wavelink;
 import java.net.ConnectException;
 import java.util.concurrent.CompletionException;
 
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.profile.SaveService.SaveEvent;
 
 import dev.niels.wavelink.IWaveLinkClient;
 import dev.niels.wavelink.IWaveLinkClientEventListener;
@@ -19,14 +21,28 @@ import lombok.extern.log4j.Log4j2;
 public class WaveLinkService implements IWaveLinkClientEventListener {
     private final SaveService saveService;
     @Delegate private final IWaveLinkClient client = new WaveLinkClient(false);
+    private boolean wasEnabled;
 
     public WaveLinkService(SaveService saveService) {
         this.saveService = saveService;
+        wasEnabled = isEnabled();
         client.addListener(this);
     }
 
     public boolean isEnabled() {
         return saveService.get().getWaveLink().enabled();
+    }
+
+    @EventListener(SaveEvent.class)
+    public void settingsChanged() {
+        var is = isEnabled();
+        if (wasEnabled && !is) {
+            client.disconnect();
+        }
+        if (!wasEnabled && is) {
+            client.reconnect();
+        }
+        wasEnabled = isEnabled();
     }
 
     @Scheduled(fixedDelay = 10_000)
@@ -45,7 +61,7 @@ public class WaveLinkService implements IWaveLinkClientEventListener {
 
     @Override
     public void connectionClosed() {
-        log.warn("WaveLink connection closed.");
+        log.info("WaveLink connection closed.");
     }
 
     @Override

@@ -112,11 +112,34 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
 
     @Override
     public CompletableFuture<Void> reconnect() {
-        return websocket
-                .thenCompose(ws -> ws == null ? CompletableFuture.completedFuture(null) : ws.sendClose(WebSocket.NORMAL_CLOSURE, "Reconnecting"))
+        return disconnect()
                 .thenAccept(x -> connect())
-                .exceptionallyCompose(ex -> connect().thenAccept(x -> log.error("Connect after error", ex)))
-                ;
+                .exceptionallyCompose(ex -> connect().thenAccept(x -> log.error("Connect after error", ex)));
+    }
+
+    @Override
+    public CompletableFuture<Void> disconnect() {
+        if (isConnected()) {
+            var wsa = new WebSocket[1];
+            return websocket
+                    .thenCompose(
+                            ws -> {
+                                wsa[0] = ws;
+                                return ws == null
+                                        ? CompletableFuture.completedFuture(null)
+                                        : ws.sendClose(WebSocket.NORMAL_CLOSURE, "Reconnecting").thenAccept(x -> {
+                                });
+                            }
+                    )
+                    .exceptionally(ex -> {
+                        log.warn("Error disconnecting websocket", ex);
+                        if (wsa[0] != null) {
+                            wsa[0].abort();
+                        }
+                        return null;
+                    });
+        }
+        return CompletableFuture.completedFuture(null);
     }
 
     @Override
