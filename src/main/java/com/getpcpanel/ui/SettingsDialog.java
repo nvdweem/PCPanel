@@ -16,7 +16,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.stereotype.Component;
 
 import com.getpcpanel.MainFX;
-import com.getpcpanel.cpp.linux.SndCtrlLinuxDebug;
+import com.getpcpanel.cpp.linux.pulseaudio.SndCtrlPulseAudioDebug;
 import com.getpcpanel.cpp.windows.SndCtrlWindows;
 import com.getpcpanel.obs.OBS;
 import com.getpcpanel.profile.Save;
@@ -261,15 +261,24 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
 
     private OverlayPosition getOverlayPosition() {
         // @formatter:off
-        if (btnTL.isSelected()) return OverlayPosition.topLeft;
-        if (btnTM.isSelected()) return OverlayPosition.topMiddle;
-        if (btnTR.isSelected()) return OverlayPosition.topRight;
-        if (btnML.isSelected()) return OverlayPosition.middleLeft;
-        if (btnMM.isSelected()) return OverlayPosition.middleMiddle;
-        if (btnMR.isSelected()) return OverlayPosition.middleRight;
-        if (btnBL.isSelected()) return OverlayPosition.bottomLeft;
-        if (btnBM.isSelected()) return OverlayPosition.bottomMiddle;
-        if (btnBR.isSelected()) return OverlayPosition.bottomRight;
+        if (btnTL.isSelected())
+            return OverlayPosition.topLeft;
+        if (btnTM.isSelected())
+            return OverlayPosition.topMiddle;
+        if (btnTR.isSelected())
+            return OverlayPosition.topRight;
+        if (btnML.isSelected())
+            return OverlayPosition.middleLeft;
+        if (btnMM.isSelected())
+            return OverlayPosition.middleMiddle;
+        if (btnMR.isSelected())
+            return OverlayPosition.middleRight;
+        if (btnBL.isSelected())
+            return OverlayPosition.bottomLeft;
+        if (btnBM.isSelected())
+            return OverlayPosition.bottomMiddle;
+        if (btnBR.isSelected())
+            return OverlayPosition.bottomRight;
         // @formatter:on
         return OverlayPosition.topLeft;
     }
@@ -335,7 +344,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
 
     public void copyAudioOutput(ActionEvent ignored) {
         copied.setText("Preparing output");
-        MainFX.getBean(SndCtrlLinuxDebug.class).copyDebugOutput();
+        MainFX.getOptionalBean(SndCtrlPulseAudioDebug.class).ifPresent(SndCtrlPulseAudioDebug::copyDebugOutput);
         copied.setText("Output was copied to your clipboard");
     }
 

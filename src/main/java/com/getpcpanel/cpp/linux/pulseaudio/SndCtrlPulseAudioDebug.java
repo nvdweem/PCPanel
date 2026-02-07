@@ -1,11 +1,9 @@
-package com.getpcpanel.cpp.linux;
+package com.getpcpanel.cpp.linux.pulseaudio;
 
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 
 import org.springframework.stereotype.Service;
-
-import com.getpcpanel.spring.ConditionalOnLinux;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -13,9 +11,9 @@ import one.util.streamex.StreamEx;
 
 @Log4j2
 @Service
-@ConditionalOnLinux
+@ConditionalOnPulseAudio
 @RequiredArgsConstructor
-public class SndCtrlLinuxDebug {
+public class SndCtrlPulseAudioDebug {
     private final PulseAudioWrapper paWrapper;
     private final PulseAudioEventListener paEventListener;
 

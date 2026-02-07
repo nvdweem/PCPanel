@@ -1,5 +1,11 @@
 package com.getpcpanel;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
+import javax.annotation.Nullable;
+
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 
@@ -8,11 +14,13 @@ import com.getpcpanel.ui.HomePage;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.stage.Stage;
+import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class MainFX extends Application {
-    @SuppressWarnings("StaticNonFinalField") private static ConfigurableApplicationContext context;
+    @Getter @SuppressWarnings("StaticNonFinalField") private static ConfigurableApplicationContext context;
+    private static final Map<Class<?>, CacheObject> beanCache = new HashMap<>();
 
     @Override
     @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
@@ -34,11 +42,22 @@ public class MainFX extends Application {
         Platform.exit();
     }
 
+    @SuppressWarnings("unchecked")
+    public static <T> Optional<T> getOptionalBean(Class<T> clazz) {
+        return Optional.ofNullable((T) beanCache.computeIfAbsent(clazz, cls -> {
+            try {
+                return new CacheObject(context.getBean(clazz));
+            } catch (Exception e) {
+                return CacheObject.NULL;
+            }
+        }).o);
+    }
+
     public static <T> T getBean(Class<T> clazz) {
         return context.getBean(clazz);
     }
 
-    public static ConfigurableApplicationContext getContext() {
-        return context;
+    record CacheObject(@Nullable Object o) {
+        private static final CacheObject NULL = new CacheObject(null);
     }
 }

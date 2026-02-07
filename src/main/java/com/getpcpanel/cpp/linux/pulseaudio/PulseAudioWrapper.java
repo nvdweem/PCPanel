@@ -1,4 +1,4 @@
-package com.getpcpanel.cpp.linux;
+package com.getpcpanel.cpp.linux.pulseaudio;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -15,7 +15,6 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.stereotype.Service;
 
 import com.getpcpanel.cpp.MuteType;
-import com.getpcpanel.spring.ConditionalOnLinux;
 import com.getpcpanel.util.ProcessHelper;
 
 import lombok.Builder;
@@ -26,7 +25,7 @@ import one.util.streamex.StreamEx;
 
 @Log4j2
 @Service
-@ConditionalOnLinux
+@ConditionalOnPulseAudio
 @RequiredArgsConstructor
 public class PulseAudioWrapper {
     public static final int NO_OP_IDX = -1;

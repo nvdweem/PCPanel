@@ -1,4 +1,4 @@
-package com.getpcpanel.cpp.linux;
+package com.getpcpanel.cpp.linux.pulseaudio;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -11,7 +11,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
-import com.getpcpanel.spring.ConditionalOnLinux;
 import com.getpcpanel.util.ProcessHelper;
 
 import jakarta.annotation.PostConstruct;
@@ -21,7 +20,7 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @Component
-@ConditionalOnLinux
+@ConditionalOnPulseAudio
 @RequiredArgsConstructor
 public class PulseAudioEventListener extends Thread {
     private final ApplicationEventPublisher eventPublisher;
