@@ -1,6 +1,7 @@
 package dev.niels.wavelink;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -14,6 +15,14 @@ import dev.niels.wavelink.impl.model.WaveLinkOutput;
 import dev.niels.wavelink.impl.model.WaveLinkOutputDevice;
 
 public interface IWaveLinkClient {
+    boolean isInitialized();
+
+    boolean isConnected();
+
+    void ping();
+
+    CompletableFuture<Void> reconnect();
+
     void addListener(IWaveLinkClientEventListener listener);
 
     void removeListener(IWaveLinkClientEventListener listener);

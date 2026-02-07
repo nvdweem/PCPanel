@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 
+import dev.niels.wavelink.IWaveLinkClientEventListener;
 import dev.niels.wavelink.impl.rpc.WaveLinkGetApplicationInfo;
 import dev.niels.wavelink.impl.rpc.WaveLinkGetApplicationInfo.WaveLinkGetApplicationInfoResult;
 import dev.niels.wavelink.impl.rpc.WaveLinkGetChannels;
@@ -44,6 +45,7 @@ public class WaveLinkListener implements Listener {
         socket = webSocket;
         log.debug("WebSocket opened");
         Listener.super.onOpen(webSocket);
+        client.trigger(IWaveLinkClientEventListener::connected);
 
         log.trace("Sending get info request");
         sendExpectingResult(new WaveLinkGetApplicationInfo()).thenAccept(res -> {
@@ -122,12 +124,14 @@ public class WaveLinkListener implements Listener {
     public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
         socket = null;
         log.info("WebSocket closed with status code {} and reason {}", statusCode, reason);
+        client.trigger(IWaveLinkClientEventListener::connectionClosed);
         return Listener.super.onClose(webSocket, statusCode, reason);
     }
 
     @Override
     public void onError(WebSocket webSocket, Throwable error) {
         log.error("WebSocket error", error);
+        client.trigger(l -> l.onError(error));
         Listener.super.onError(webSocket, error);
     }
 

@@ -225,6 +225,14 @@
                 </VBox>
             </VBox>
         </Tab>
+        <Tab fx:id="waveLinkTab" text="Elgato Wave Link">
+            <VBox prefWidth="100.0" spacing="10.0">
+                <padding>
+                    <Insets bottom="8.0" left="8.0" right="8.0" top="8.0"/>
+                </padding>
+                <CheckBox fx:id="waveLinkEnable" mnemonicParsing="false" onAction="#onVMEnablePressed" text="Enable Elgato Wave Link support"/>
+            </VBox>
+        </Tab>
         <Tab text="Debug">
             <VBox fx:id="debug" layoutX="30.0" layoutY="28.0">
                 <padding>

@@ -6,6 +6,18 @@ import dev.niels.wavelink.impl.model.WaveLinkMix;
 import dev.niels.wavelink.impl.model.WaveLinkOutputDevice;
 
 public interface IWaveLinkClientEventListener {
+    default void connected() {
+    }
+
+    default void initialized() {
+    }
+
+    default void connectionClosed() {
+    }
+
+    default void onError(Throwable t) {
+    }
+
     default void inputDevicesChanged() {
     }
 

@@ -1,11 +1,14 @@
 package dev.niels.wavelink.impl;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
@@ -43,8 +46,8 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseable {
-    private final CompletableFuture<WebSocket> websocket;
-    private final WaveLinkListener waveLinkListener;
+    private CompletableFuture<WebSocket> websocket = CompletableFuture.completedFuture(null);
+    private WaveLinkListener waveLinkListener;
     private final HttpClient client;
     private final List<IWaveLinkClientEventListener> listeners = new ArrayList<>();
     @Getter private final Map<String, WaveLinkInputDevice> inputDevices = new ConcurrentHashMap<>();
@@ -55,14 +58,65 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
     @Getter private String mainOutputDeviceId;
     @Getter private WaveLinkApp lastFocusApp = WaveLinkApp.EMPTY;
 
-    protected WaveLinkClientImpl() {
+    protected WaveLinkClientImpl(boolean autoConnect) {
         client = HttpClient.newHttpClient();
+        if (autoConnect) {
+            connect();
+        }
+    }
 
-        log.info("Connecting");
+    @Override
+    public boolean isConnected() {
+        var ws = websocket.getNow(null);
+        if (ws == null) {
+            return false;
+        }
+        return !ws.isInputClosed() && !ws.isOutputClosed();
+    }
+
+    @Override
+    public void ping() {
+        Optional.ofNullable(websocket.getNow(null))
+                .ifPresent(ws ->
+                        ws.sendPing(ByteBuffer.wrap("ping".getBytes())).exceptionally(ex -> {
+                            if (ex instanceof IOException) {
+                                ensureDisconnect();
+                            }
+                            return null;
+                        })
+                );
+    }
+
+    private void ensureDisconnect() {
+        var currentWs = websocket.getNow(null);
+        if (currentWs != null) {
+            currentWs.abort();
+        }
+        websocket = CompletableFuture.completedFuture(null);
+    }
+
+    private CompletableFuture<WebSocket> connect() {
+        ensureDisconnect();
+
+        log.debug("Connecting");
         waveLinkListener = new WaveLinkListener(this);
         websocket = client.newWebSocketBuilder()
                           .header("Origin", "streamdeck://")
-                          .buildAsync(URI.create("ws://127.0.0.1:1884"), waveLinkListener);
+                          .buildAsync(URI.create("ws://127.0.0.1:1884"), waveLinkListener)
+                          .exceptionally(ex -> {
+                              trigger(l -> l.onError(ex));
+                              return null;
+                          });
+        return websocket;
+    }
+
+    @Override
+    public CompletableFuture<Void> reconnect() {
+        return websocket
+                .thenCompose(ws -> ws == null ? CompletableFuture.completedFuture(null) : ws.sendClose(WebSocket.NORMAL_CLOSURE, "Reconnecting"))
+                .thenAccept(x -> connect())
+                .exceptionallyCompose(ex -> connect().thenAccept(x -> log.error("Connect after error", ex)))
+                ;
     }
 
     @Override
@@ -238,12 +292,13 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
         updateEntries(IWaveLinkClientEventListener::mixesChanged, this.mixes, mixes);
     }
 
-    private void trigger(Consumer<IWaveLinkClientEventListener> event) {
+    void trigger(Consumer<IWaveLinkClientEventListener> event) {
         listeners.forEach(event);
     }
 
     public void setInitialized() {
         log.info("Connected to Wave Link and initialized");
         initialized = true;
+        trigger(IWaveLinkClientEventListener::initialized);
     }
 }
