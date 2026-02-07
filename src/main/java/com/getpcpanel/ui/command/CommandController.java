@@ -10,6 +10,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.scene.Node;
 
 public abstract class CommandController<T extends Command> {
     private final BooleanProperty initialized = new SimpleBooleanProperty(false);
@@ -40,5 +41,10 @@ public abstract class CommandController<T extends Command> {
             return bc.buildCommand().buildLabel();
         }
         return "";
+    }
+
+    protected void setVisible(Node node, boolean visible) {
+        node.setVisible(visible);
+        node.setManaged(visible);
     }
 }

@@ -88,19 +88,19 @@ class BaseWaveLinkController<T extends CommandWaveLink> extends CommandControlle
     }
 
     protected void triggerVisibility() {
-        choice1Label.setVisible(true);
-        choice1.setVisible(true);
-        choice2Label.setVisible(false);
-        choice2.setVisible(false);
+        setVisible(choice1Label, true);
+        setVisible(choice1, true);
+        setVisible(choice2Label, false);
+        setVisible(choice2, false);
 
         switch (typeChoice.getValue()) {
             case Output -> {
-                choice2Label.setVisible(true);
-                choice2.setVisible(true);
+                setVisible(choice2Label, true);
+                setVisible(choice2, true);
             }
             default -> {
-                choice1Label.setVisible(false);
-                choice1.setVisible(false);
+                setVisible(choice1Label, false);
+                setVisible(choice1, false);
             }
         }
 
@@ -149,6 +149,10 @@ class BaseWaveLinkController<T extends CommandWaveLink> extends CommandControlle
 
     public Optional<Entry> getChoice1() {
         return Optional.ofNullable(choice1.getValue());
+    }
+
+    public Optional<Entry> getChoice2() {
+        return Optional.ofNullable(choice2.getValue());
     }
 
     protected record ArgBase(@Nonnull WaveLinkCommandTarget target, @Nullable String id1, @Nullable String id2) {

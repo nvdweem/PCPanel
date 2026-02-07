@@ -93,7 +93,12 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
         } else {
             newChannel = newChannel.withMixes(List.of(mix.withLevel(value).withIsMuted(mute)));
         }
-        send(new WaveLinkSetChannelCommand().setParams(newChannel));
+        setChannel(newChannel);
+    }
+
+    @Override
+    public void setChannel(WaveLinkChannel channel) {
+        send(new WaveLinkSetChannelCommand().setParams(channel));
     }
 
     @Override

@@ -104,6 +104,8 @@ public interface IWaveLinkClient {
 
     void setChannel(WaveLinkChannel channel, @Nullable WaveLinkMix mix, @Nullable Double value, @Nullable Boolean mute);
 
+    void setChannel(WaveLinkChannel channel);
+
     default void addCurrentToChannel(String channelId) {
         addCurrentToChannel(getChannelFromId(channelId));
     }

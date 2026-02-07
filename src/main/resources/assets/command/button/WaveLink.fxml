@@ -10,19 +10,20 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
-<HBox minHeight="-Infinity" prefHeight="250.0" prefWidth="478.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.wavelink.ui.BtnWaveLinkController">
-    <VBox prefHeight="171.0" prefWidth="435.0" spacing="15.0">
+<HBox minHeight="-Infinity" prefHeight="250.0" prefWidth="651.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.wavelink.ui.BtnWaveLinkController">
+    <VBox fillWidth="true" prefHeight="250.0" spacing="15.0">
         <padding>
             <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
         </padding>
         <HBox spacing="15.0" HBox.hgrow="ALWAYS">
-            <RadioButton fx:id="type_mute" mnemonicParsing="false" selected="true" text="Mute/Unmute">
+            <RadioButton fx:id="type_mute" mnemonicParsing="false" prefWidth="175.0" selected="true" text="Mute/Unmute" HBox.hgrow="ALWAYS">
                 <toggleGroup>
                     <ToggleGroup fx:id="type_grp"/>
                 </toggleGroup>
             </RadioButton>
-            <RadioButton fx:id="type_mainoutput" mnemonicParsing="false" text="Change main output" toggleGroup="$type_grp"/>
-            <RadioButton fx:id="type_add_focus_to_channel" mnemonicParsing="false" text="Add focus app to channel" toggleGroup="$type_grp"/>
+            <RadioButton fx:id="type_mainoutput" mnemonicParsing="false" prefWidth="220.0" text="Change main output" toggleGroup="$type_grp" HBox.hgrow="ALWAYS"/>
+            <RadioButton fx:id="type_add_focus_to_channel" mnemonicParsing="false" prefWidth="211.0" text="Add focus app to channel" toggleGroup="$type_grp" HBox.hgrow="ALWAYS"/>
+            <RadioButton fx:id="type_channel_effect" mnemonicParsing="false" prefWidth="159.0" text="Channel effects" toggleGroup="$type_grp" HBox.hgrow="ALWAYS"/>
         </HBox>
 
         <GridPane alignment="CENTER_LEFT" vgap="10.0">
