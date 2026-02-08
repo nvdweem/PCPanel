@@ -8,7 +8,6 @@ import static com.getpcpanel.profile.Save.DEFAULT_OVERLAY_PADDING;
 import static com.getpcpanel.profile.Save.DEFAULT_OVERLAY_TEXT_COLOR;
 
 import java.util.Objects;
-import java.util.Optional;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -235,7 +234,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
         onOBSEnablePressed(null);
         vmEnable.setSelected(save.isVoicemeeterEnabled());
         vmPath.setText(save.getVoicemeeterPath());
-        waveLinkEnable.setSelected(Optional.ofNullable(save.getWaveLink()).map(WaveLinkSettings::enabled).orElse(false));
+        waveLinkEnable.setSelected(save.getWaveLink().enabled());
         onVMEnablePressed(null);
         txtPreventSliderTwitch.setText(save.getPreventSliderTwitchDelay() == null ? "" : save.getPreventSliderTwitchDelay().toString());
         txtSliderRollingAverage.setText(save.getSliderRollingAverage() == null ? "" : save.getSliderRollingAverage().toString());

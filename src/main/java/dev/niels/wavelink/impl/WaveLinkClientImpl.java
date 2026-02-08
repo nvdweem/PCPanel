@@ -5,12 +5,12 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -49,7 +49,7 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
     private CompletableFuture<WebSocket> websocket = CompletableFuture.completedFuture(null);
     private WaveLinkListener waveLinkListener;
     private final HttpClient client;
-    private final List<IWaveLinkClientEventListener> listeners = new ArrayList<>();
+    private final List<IWaveLinkClientEventListener> listeners = new CopyOnWriteArrayList<>();
     @Getter private final Map<String, WaveLinkInputDevice> inputDevices = new ConcurrentHashMap<>();
     @Getter private final Map<String, WaveLinkOutputDevice> outputDevices = new ConcurrentHashMap<>();
     @Getter private final Map<String, WaveLinkChannel> channels = new ConcurrentHashMap<>();

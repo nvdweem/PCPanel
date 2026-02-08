@@ -100,6 +100,10 @@ public class WaveLinkListener implements Listener {
 
     private void handleResponse(JsonRpcResponse response) {
         var id = response.getId();
+        if (id == null) {
+            log.warn("Received response without ID, ignoring");
+            return;
+        }
         var pending = pendingRequests.remove(id);
 
         if (pending == null) {
