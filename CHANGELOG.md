@@ -2,6 +2,14 @@
 
 <!-- Releasenotes without version are included in releases -->
 
+- Java 25 is now required to run the software. The installer will include it.
+- Added support for Elgato Wave Link, enable it in the settings to add the dial/button commands
+    - Input devices not yet supported (I don't have one so can't debug)
+    - Dials/sliders allow changing volume for Channels, Mixes and Output devices
+    - Buttons allow setting mute state, changing the main output, add the focus app to a mix and/or toggle effects
+
+## [1.7.1]
+
 - #79 - Added Wayland system tray support via SNI protocol (thanks to @ldumancas)
 
 ## [1.7]
