@@ -16,6 +16,7 @@ import com.getpcpanel.commands.PCPanelControlEvent;
 import com.getpcpanel.commands.command.ButtonAction;
 import com.getpcpanel.commands.command.DialAction;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.spring.ConditionalOnWindows;
 import com.getpcpanel.util.Debouncer;
 
@@ -24,6 +25,7 @@ import jakarta.annotation.PostConstruct;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.image.Image;
@@ -63,6 +65,7 @@ public class Overlay extends Popup {
     public void prepareStage(Stage helperStage) {
         stage = helperStage;
         stage.setOpacity(0);
+        stage.setScene(new Scene(new Pane(), 1, 1));
         helperStage.show();
         var loader = fxHelper.getLoader(getClass().getResource("/assets/Overlay.fxml"));
 
@@ -77,7 +80,7 @@ public class Overlay extends Popup {
         updateSaveValues();
     }
 
-    @EventListener(SaveService.SaveEvent.class)
+    @EventListener(SaveEvent.class)
     public void updateSaveValues() {
         updateStyle();
         determinePosition();
@@ -102,7 +105,7 @@ public class Overlay extends Popup {
         }
     }
 
-    @EventListener(SaveService.SaveEvent.class)
+    @EventListener(SaveEvent.class)
     public void updateStyle() {
         var save = this.save.get();
         var style = "-fx-background-color: " + save.getOverlayBackgroundColor() + ";";
@@ -178,7 +181,8 @@ public class Overlay extends Popup {
                         || command instanceof ButtonAction ba && ba.hasOverlay());
     }
 
-    private @Nonnull CommandAndIcon determineIconImage(PCPanelControlEvent event) {
+    @Nonnull
+    private CommandAndIcon determineIconImage(PCPanelControlEvent event) {
         return save.getProfile(event.serialNum()).map(profile -> {
             var data = event.cmd();
             var setting = event.vol() == null ? null : profile.getKnobSettings(event.knob());
