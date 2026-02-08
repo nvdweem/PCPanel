@@ -269,7 +269,7 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
         return waveLinkListener.sendExpectingResult(message);
     }
 
-    void onMessage(WaveLinkJsonRpcCommand<?, ?> message) {
+    void onCommand(WaveLinkJsonRpcCommand<?, ?> message) {
         switch (message) {
             case WaveLinkChannelChangedCommand channelChanged -> updateEntry(IWaveLinkClientEventListener::channelChanged, channels, channelChanged.getParams());
             case WaveLinkChannelsChangedCommand channelsChanged -> updateEntries(IWaveLinkClientEventListener::channelsChanged, channels, channelsChanged.getParams().channels());

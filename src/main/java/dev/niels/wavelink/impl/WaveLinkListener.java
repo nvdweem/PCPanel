@@ -12,11 +12,11 @@ import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 
 import dev.niels.wavelink.IWaveLinkClientEventListener;
+import dev.niels.wavelink.impl.rpc.JsonRpcMessage;
+import dev.niels.wavelink.impl.rpc.JsonRpcResponse;
 import dev.niels.wavelink.impl.rpc.WaveLinkGetApplicationInfo;
 import dev.niels.wavelink.impl.rpc.WaveLinkGetApplicationInfo.WaveLinkGetApplicationInfoResult;
 import dev.niels.wavelink.impl.rpc.WaveLinkGetChannels;
@@ -33,7 +33,6 @@ import lombok.extern.log4j.Log4j2;
 @RequiredArgsConstructor
 public class WaveLinkListener implements Listener {
     private final ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    private final ObjectReader messageReader = mapper.readerFor(WaveLinkJsonRpcCommand.class);
     private final Map<Long, PendingRequest> pendingRequests = new ConcurrentHashMap<>();
     private final WaveLinkClientImpl client;
     @Nullable private WebSocket socket;
@@ -84,40 +83,54 @@ public class WaveLinkListener implements Listener {
             msgBuffer.setLength(0);
             log.debug("Received message: {}", fullMessage);
             try {
-                var tree = mapper.readTree(fullMessage);
-                if (!tryReadResult(tree)) {
-                    readMessage(messageReader.readValue(fullMessage));
-                }
+                handleMessage(mapper.readValue(fullMessage, JsonRpcMessage.class));
             } catch (JsonProcessingException e) {
-                log.error("Failed to parse message, {}", data, e);
+                log.error("Failed to parse JSON-RPC message: {}", fullMessage, e);
             }
         }
         return Listener.super.onText(webSocket, data, last);
     }
 
-    private boolean tryReadResult(JsonNode tree) {
-        if (!tree.has("result")) {
-            return false;
+    private void handleMessage(JsonRpcMessage message) {
+        switch (message) {
+            case JsonRpcResponse response -> handleResponse(response);
+            case WaveLinkJsonRpcCommand<?, ?> command -> handleCommand(command);
         }
-        var id = tree.get("id").asLong();
-        var pending = pendingRequests.get(id);
+    }
+
+    private void handleResponse(JsonRpcResponse response) {
+        var id = response.getId();
+        var pending = pendingRequests.remove(id);
+
         if (pending == null) {
-            log.warn("Received result for unknown request {}: {}", id, tree.toPrettyString());
-            return true;
+            log.warn("Received response for unknown request ID {}", id);
+            return;
+        }
+
+        if (response.getError() != null) {
+            var error = response.getError();
+            var errorMessage = String.format("JSON-RPC error %d: %s%s",
+                    error.getCode(),
+                    error.getMessage(),
+                    error.getData() != null ? " [" + error.getData() + "]" : "");
+            log.error("Received error for request ID {}: {}", id, errorMessage);
+            pending.future.completeExceptionally(new RuntimeException(errorMessage));
+            return;
         }
 
         try {
-            var result = mapper.treeToValue(tree.get("result"), pending.resultClass);
-            ((CompletableFuture<Object>) pending.future).complete(result);
+            var value = mapper.treeToValue(response.getResult(), pending.resultClass);
+            ((CompletableFuture<Object>) pending.future).complete(value);
+            log.debug("Successfully handled result for request ID {}", id);
         } catch (JsonProcessingException e) {
-            log.debug("Unable to read {} from {}", pending.resultClass, tree.toPrettyString(), e);
-            pending.future.complete(null);
+            log.error("Failed to parse result for request ID {} as {}", id, pending.resultClass.getSimpleName(), e);
+            pending.future.completeExceptionally(new RuntimeException("Failed to parse JSON-RPC result", e));
         }
-        return true;
     }
 
-    private void readMessage(WaveLinkJsonRpcCommand<?, ?> cmd) {
-        client.onMessage(cmd);
+    private void handleCommand(WaveLinkJsonRpcCommand<?, ?> command) {
+        log.debug("Received command: {}", command.getClass().getSimpleName());
+        client.onCommand(command);
     }
 
     @Override

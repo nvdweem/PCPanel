@@ -39,7 +39,7 @@ import lombok.Setter;
 })
 @Getter
 @Setter
-public class WaveLinkJsonRpcCommand<T, R> {
+public non-sealed class WaveLinkJsonRpcCommand<T, R> implements JsonRpcMessage {
     private String jsonrpc = "2.0";
     @JsonInclude(Include.NON_NULL)
     private T params;
