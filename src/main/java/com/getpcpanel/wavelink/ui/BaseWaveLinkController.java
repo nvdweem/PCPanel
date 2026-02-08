@@ -2,6 +2,7 @@ package com.getpcpanel.wavelink.ui;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -29,6 +30,7 @@ import one.util.streamex.EntryStream;
 @Log4j2
 @RequiredArgsConstructor
 class BaseWaveLinkController<T extends CommandWaveLink> extends CommandController<T> {
+    static final Set<WaveLinkCommandTarget> withChoice2 = Set.of(WaveLinkCommandTarget.Mix);
     protected final WaveLinkService waveLinkService;
     @FXML protected Label choice1Label;
     @FXML protected Label choice2Label;
@@ -90,20 +92,8 @@ class BaseWaveLinkController<T extends CommandWaveLink> extends CommandControlle
     protected void triggerVisibility() {
         setVisible(choice1Label, true);
         setVisible(choice1, true);
-        setVisible(choice2Label, false);
-        setVisible(choice2, false);
-
-        switch (typeChoice.getValue()) {
-            case Output -> {
-                setVisible(choice2Label, true);
-                setVisible(choice2, true);
-            }
-            default -> {
-                setVisible(choice1Label, false);
-                setVisible(choice1, false);
-            }
-        }
-
+        setVisible(choice2Label, withChoice2.contains(typeChoice.getValue()));
+        setVisible(choice2, withChoice2.contains(typeChoice.getValue()));
     }
 
     @Override

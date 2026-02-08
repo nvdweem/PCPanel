@@ -255,7 +255,7 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
     @Override
     public void close() {
         var socket = websocket.join();
-        if (!socket.isInputClosed() || !socket.isOutputClosed()) {
+        if (socket != null && (!socket.isInputClosed() || !socket.isOutputClosed())) {
             socket.sendClose(WebSocket.NORMAL_CLOSURE, "Done");
         }
         try {
