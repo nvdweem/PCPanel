@@ -1,5 +1,7 @@
 package com.getpcpanel.wavelink.command;
 
+import javax.annotation.Nullable;
+
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -7,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.commands.command.DialAction;
 
 import dev.niels.wavelink.impl.model.WaveLinkControlAction;
-import io.reactivex.annotations.Nullable;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.log4j.Log4j2;

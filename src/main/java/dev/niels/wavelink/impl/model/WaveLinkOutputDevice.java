@@ -3,10 +3,11 @@ package dev.niels.wavelink.impl.model;
 import java.util.List;
 import java.util.function.Function;
 
+import javax.annotation.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
-import io.reactivex.annotations.Nullable;
 import lombok.With;
 
 @With

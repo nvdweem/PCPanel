@@ -1,6 +1,7 @@
 package com.getpcpanel.wavelink.command;
 
-import io.reactivex.annotations.Nullable;
+import javax.annotation.Nullable;
+
 import lombok.Getter;
 import lombok.ToString;
 

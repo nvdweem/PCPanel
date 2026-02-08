@@ -4,6 +4,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.CommandController;
@@ -17,7 +18,6 @@ import dev.niels.wavelink.impl.model.WaveLinkInputDevice;
 import dev.niels.wavelink.impl.model.WaveLinkMix;
 import dev.niels.wavelink.impl.model.WaveLinkOutputDevice;
 import io.reactivex.annotations.NonNull;
-import io.reactivex.annotations.Nullable;
 import javafx.beans.Observable;
 import javafx.fxml.FXML;
 import javafx.scene.control.ChoiceBox;

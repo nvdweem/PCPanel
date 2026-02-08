@@ -3,13 +3,14 @@ package com.getpcpanel.wavelink.command;
 import java.util.List;
 import java.util.Objects;
 
+import javax.annotation.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.commands.command.ButtonAction;
 import com.getpcpanel.cpp.MuteType;
 
 import dev.niels.wavelink.impl.model.WaveLinkEffect;
-import io.reactivex.annotations.Nullable;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
