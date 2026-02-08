@@ -4,8 +4,6 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang3.ObjectUtils;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
@@ -18,20 +16,8 @@ public record WaveLinkInputDevice(
         @Nullable String name,
         @Nullable Boolean isWaveDevice,
         @Nullable List<Object> inputs
-) implements WithId, Mergable<WaveLinkInputDevice> {
+) implements WithId {
     public WaveLinkInputDevice blank() {
         return new WaveLinkInputDevice(id, null, null, null);
-    }
-
-    @Override
-    public WaveLinkInputDevice merge(@Nullable WaveLinkInputDevice other) {
-        if (other == null)
-            return this;
-        return new WaveLinkInputDevice(
-                ObjectUtils.firstNonNull(other.id, id),
-                ObjectUtils.firstNonNull(other.name, name),
-                ObjectUtils.firstNonNull(other.isWaveDevice, isWaveDevice),
-                ObjectUtils.firstNonNull(other.inputs, inputs)
-        );
     }
 }

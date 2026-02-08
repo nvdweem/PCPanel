@@ -10,23 +10,21 @@ import org.springframework.stereotype.Service;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
 
-import dev.niels.wavelink.IWaveLinkClient;
 import dev.niels.wavelink.IWaveLinkClientEventListener;
 import dev.niels.wavelink.WaveLinkClient;
-import lombok.experimental.Delegate;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @Service
-public class WaveLinkService implements IWaveLinkClientEventListener {
+public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEventListener {
     private final SaveService saveService;
-    @Delegate private final IWaveLinkClient client = new WaveLinkClient(false);
     private boolean wasEnabled;
 
     public WaveLinkService(SaveService saveService) {
+        super(false);
         this.saveService = saveService;
         wasEnabled = isEnabled();
-        client.addListener(this);
+        addListener(this);
     }
 
     public boolean isEnabled() {
@@ -37,10 +35,10 @@ public class WaveLinkService implements IWaveLinkClientEventListener {
     public void settingsChanged() {
         var is = isEnabled();
         if (wasEnabled && !is) {
-            client.disconnect();
+            disconnect();
         }
         if (!wasEnabled && is) {
-            client.reconnect();
+            reconnect();
         }
         wasEnabled = isEnabled();
     }
@@ -52,10 +50,10 @@ public class WaveLinkService implements IWaveLinkClientEventListener {
         }
         if (isConnected()) {
             log.debug("WaveLink connected, sending ping.");
-            client.ping();
+            ping();
         } else {
             log.info("WaveLink not connected, connecting.");
-            client.reconnect();
+            reconnect();
         }
     }
 
@@ -70,7 +68,7 @@ public class WaveLinkService implements IWaveLinkClientEventListener {
             t = ce.getCause();
         }
 
-        if (t instanceof ConnectException ce) {
+        if (t instanceof ConnectException) {
             log.warn("Unable to connect to WaveLink");
         }
     }

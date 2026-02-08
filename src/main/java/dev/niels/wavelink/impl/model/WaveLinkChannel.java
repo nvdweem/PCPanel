@@ -5,7 +5,6 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -24,7 +23,7 @@ public record WaveLinkChannel(
         @Nullable Boolean isMuted,
         @Nullable List<WaveLinkApp> apps,
         @Nullable List<WaveLinkEffect> effects,
-        @Nullable WaveLinkImage image) implements WithId, Mergable<WaveLinkChannel> {
+        @Nullable WaveLinkImage image) implements WithId {
 
     public WaveLinkChannel blank() {
         return new WaveLinkChannel(id);
@@ -39,22 +38,5 @@ public record WaveLinkChannel(
                        .stream().flatMap(List::stream)
                        .filter(mix -> StringUtils.equalsIgnoreCase(mix.id(), id))
                        .findFirst();
-    }
-
-    @Override
-    public WaveLinkChannel merge(@Nullable WaveLinkChannel other) {
-        if (other == null)
-            return this;
-        return new WaveLinkChannel(
-                ObjectUtils.firstNonNull(other.id, id),
-                ObjectUtils.firstNonNull(other.name, name),
-                ObjectUtils.firstNonNull(other.type, type),
-                ObjectUtils.firstNonNull(other.mixes, mixes),
-                ObjectUtils.firstNonNull(other.level, level),
-                ObjectUtils.firstNonNull(other.isMuted, isMuted),
-                ObjectUtils.firstNonNull(other.apps, apps),
-                ObjectUtils.firstNonNull(other.effects, effects),
-                ObjectUtils.firstNonNull(other.image, image)
-        );
     }
 }
