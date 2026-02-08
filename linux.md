@@ -53,7 +53,12 @@ Download the deb file and install with your package manager or via terminal:
 If there is no option to install the .deb file then it might be needed to run the software manually.
 For that, download the jar file and run it with
 
-1. Download/install Java (at least 19) and [JavaFX 18](https://download2.gluonhq.com/openjfx/18.0.2/openjfx-18.0.2_linux-x64_bin-sdk.zip)
+1. Install a Java runtime with JavaFX included such as [Liberica JDK](https://bell-sw.com/pages/downloads/#jdk-25-lts)
+2. Run the application
+
+Or
+
+1. Download/install Java (at least 25) and [JavaFX 18](https://download2.gluonhq.com/openjfx/18.0.2/openjfx-18.0.2_linux-x64_bin-sdk.zip)
 2. Unpack JavaFX to a location
 3. Run the application:
 
@@ -68,6 +73,7 @@ java --module-path="[path-to-javafx]/lib" \
 ## Wayland / Sway
 
 System tray icons work on Wayland compositors that support the StatusNotifierItem (SNI) protocol:
+
 - **Sway**: Enable tray in swaybar with `tray_output *` or waybar with tray module
 
 The application auto-detects Wayland via `XDG_SESSION_TYPE` or `WAYLAND_DISPLAY` environment variables.

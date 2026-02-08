@@ -3,7 +3,7 @@
 
 name: Build Windows Installer
 env:
-  JAVA_VERSION: 19
+  JAVA_VERSION: 25
 
 on:
   push:
