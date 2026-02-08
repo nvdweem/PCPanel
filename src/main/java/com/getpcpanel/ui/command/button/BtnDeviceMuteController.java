@@ -16,6 +16,7 @@ import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.command.ButtonCommandController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
+import com.getpcpanel.ui.command.CommandController;
 
 import javafx.beans.Observable;
 import javafx.event.ActionEvent;
@@ -31,7 +32,7 @@ import one.util.streamex.StreamEx;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Mute Device", fxml = "DeviceMute", cmds = CommandVolumeDeviceMute.class)
-public class BtnDeviceMuteController extends ButtonCommandController<CommandVolumeDeviceMute> {
+public class BtnDeviceMuteController extends CommandController<CommandVolumeDeviceMute> implements ButtonCommandController {
     private final ISndCtrl sndCtrl;
     private Collection<AudioDevice> allSoundDevices;
     @FXML private ChoiceBox<AudioDevice> muteSoundDevice;
@@ -82,7 +83,8 @@ public class BtnDeviceMuteController extends ButtonCommandController<CommandVolu
         };
     }
 
-    private @Nullable AudioDevice getSoundDeviceById(String id) {
+    @Nullable
+    private AudioDevice getSoundDeviceById(String id) {
         return StreamEx.of(allSoundDevices).findFirst(sd -> sd.id().equals(id)).orElse(null);
     }
 

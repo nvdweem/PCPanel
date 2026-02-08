@@ -26,6 +26,10 @@ public class OsHelper {
         return !SystemUtils.IS_OS_WINDOWS;
     }
 
+    public boolean isLinux() {
+        return SystemUtils.IS_OS_LINUX;
+    }
+
     public String osString() {
         if (SystemUtils.IS_OS_WINDOWS) {
             return WINDOWS;

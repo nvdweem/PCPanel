@@ -2,8 +2,10 @@ package com.getpcpanel.profile;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.getpcpanel.device.DeviceType;
@@ -40,6 +42,7 @@ public class Save {
     private Integer oscListenPort;
     private List<OSCConnectionInfo> oscConnections;
     private MqttSettings mqtt;
+    private WaveLinkSettings waveLink;
 
     // Overlay
     private boolean overlayEnabled;
@@ -99,5 +102,10 @@ public class Save {
 
     public int getOverlayBarHeight() {
         return overlayBarHeight == null ? DEFAULT_OVERLAY_BAR_HEIGHT : overlayBarHeight;
+    }
+
+    @Nonnull
+    public WaveLinkSettings getWaveLink() {
+        return Objects.requireNonNullElse(waveLink, WaveLinkSettings.DEFAULT);
     }
 }

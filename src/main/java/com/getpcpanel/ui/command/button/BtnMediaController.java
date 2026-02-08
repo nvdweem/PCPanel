@@ -6,10 +6,12 @@ import org.springframework.stereotype.Component;
 
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandMedia;
+import com.getpcpanel.commands.command.CommandMedia.VolumeButton;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.command.ButtonCommandController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
+import com.getpcpanel.ui.command.CommandController;
 
 import javafx.beans.Observable;
 import javafx.fxml.FXML;
@@ -24,7 +26,7 @@ import lombok.extern.log4j.Log4j2;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Music Control", fxml = "Media", cmds = CommandMedia.class, os = WINDOWS)
-public class BtnMediaController extends ButtonCommandController<CommandMedia> {
+public class BtnMediaController extends CommandController<CommandMedia> implements ButtonCommandController {
     @FXML private ToggleGroup mediagroup;
     @FXML private CheckBox cmdMediaSpotify;
 
@@ -48,7 +50,7 @@ public class BtnMediaController extends ButtonCommandController<CommandMedia> {
 
     @Override
     public Command buildCommand() {
-        return new CommandMedia(CommandMedia.VolumeButton.valueOf(((RadioButton) mediagroup.getSelectedToggle()).getId()), cmdMediaSpotify.isSelected());
+        return new CommandMedia(VolumeButton.valueOf(((RadioButton) mediagroup.getSelectedToggle()).getId()), cmdMediaSpotify.isSelected());
     }
 
     @Override

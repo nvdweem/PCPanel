@@ -39,7 +39,7 @@ public class MacroControllerService {
         var provider = new ClassPathScanningCandidateComponentProvider(false);
         provider.addIncludeFilter(new AnnotationTypeFilter(Cmd.class));
 
-        var beanDefs = provider.findCandidateComponents(getClass().getPackageName());
+        var beanDefs = provider.findCandidateComponents("com.getpcpanel");
         for (var bd : beanDefs) {
             var controllerClass = Class.forName(bd.getBeanClassName());
             var cmd = controllerClass.getAnnotation(Cmd.class);

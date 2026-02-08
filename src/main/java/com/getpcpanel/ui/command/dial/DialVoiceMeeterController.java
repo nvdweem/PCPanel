@@ -12,10 +12,14 @@ import com.getpcpanel.commands.command.DialAction.DialCommandParams;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
+import com.getpcpanel.ui.command.CommandController;
 import com.getpcpanel.ui.command.DialCommandController;
 import com.getpcpanel.ui.command.VoiceMeeterEnabled;
 import com.getpcpanel.util.Util;
 import com.getpcpanel.voicemeeter.Voicemeeter;
+import com.getpcpanel.voicemeeter.Voicemeeter.ControlType;
+import com.getpcpanel.voicemeeter.Voicemeeter.DialControlMode;
+import com.getpcpanel.voicemeeter.Voicemeeter.DialType;
 
 import javafx.beans.Observable;
 import javafx.fxml.FXML;
@@ -30,20 +34,20 @@ import lombok.extern.log4j.Log4j2;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Voicemeeter", fxml = "VoiceMeeter", cmds = { CommandVoiceMeeterBasic.class, CommandVoiceMeeterAdvanced.class }, enabled = VoiceMeeterEnabled.class)
-public class DialVoiceMeeterController extends DialCommandController<CommandVoiceMeeter> {
+public class DialVoiceMeeterController extends CommandController<CommandVoiceMeeter> implements DialCommandController {
     private final Voicemeeter voiceMeeter;
     @FXML private ChoiceBox<Integer> voicemeeterBasicDialIndex;
-    @FXML private ChoiceBox<Voicemeeter.ControlType> voicemeeterBasicDialIO;
-    @FXML private ChoiceBox<Voicemeeter.DialControlMode> voicemeeterDialType;
-    @FXML private ChoiceBox<Voicemeeter.DialType> voicemeeterBasicDial;
+    @FXML private ChoiceBox<ControlType> voicemeeterBasicDialIO;
+    @FXML private ChoiceBox<DialControlMode> voicemeeterDialType;
+    @FXML private ChoiceBox<DialType> voicemeeterBasicDial;
     @FXML private TabPane voicemeeterTabPaneDial;
     @FXML private TextField voicemeeterDialParameter;
 
     @Override
     public void postInit(CommandContext context) {
-        voicemeeterDialType.getItems().addAll(Voicemeeter.DialControlMode.values());
+        voicemeeterDialType.getItems().addAll(DialControlMode.values());
         if (voiceMeeter.login()) {
-            voicemeeterBasicDialIO.getItems().addAll(Voicemeeter.ControlType.values());
+            voicemeeterBasicDialIO.getItems().addAll(ControlType.values());
             voicemeeterBasicDialIO.valueProperty().addListener((o, oldVal, newVal) -> {
                 if (newVal == null) {
                     Util.clearAndSetNull(voicemeeterBasicDialIndex);

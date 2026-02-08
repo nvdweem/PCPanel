@@ -1,0 +1,22 @@
+{
+  "name": "pcpanel-wavelink-proxy",
+  "version": "1.0.0",
+  "description": "WaveLink proxy for PCPanel development",
+  "main": "wsproxy.ts",
+  "scripts": {
+    "start": "ts-node wsproxy.ts",
+    "build": "tsc",
+    "dev": "ts-node-dev wsproxy.ts"
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/ws": "^8.5.10",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.3"
+  }
+}
+

@@ -10,9 +10,11 @@ import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandEndProgram;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.PickProcessesController;
+import com.getpcpanel.ui.PickProcessesController.PickType;
 import com.getpcpanel.ui.command.ButtonCommandController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
+import com.getpcpanel.ui.command.CommandController;
 
 import javafx.beans.Observable;
 import javafx.event.ActionEvent;
@@ -26,14 +28,14 @@ import lombok.extern.log4j.Log4j2;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "End Program", fxml = "EndProgram", cmds = CommandEndProgram.class)
-public class BtnEndProgramController extends ButtonCommandController<CommandEndProgram> {
+public class BtnEndProgramController extends CommandController<CommandEndProgram> implements ButtonCommandController {
     @FXML private RadioButton rdioEndFocusedProgram;
     @FXML private RadioButton rdioEndSpecificProgram;
     @FXML private PickProcessesController applicationEndProcessController;
 
     @Override
     public void postInit(CommandContext context) {
-        applicationEndProcessController.setPickType(PickProcessesController.PickType.process);
+        applicationEndProcessController.setPickType(PickType.process);
         applicationEndProcessController.setSingle(true);
     }
 

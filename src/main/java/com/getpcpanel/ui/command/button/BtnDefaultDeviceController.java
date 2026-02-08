@@ -16,6 +16,7 @@ import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.command.ButtonCommandController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
+import com.getpcpanel.ui.command.CommandController;
 
 import javafx.beans.Observable;
 import javafx.fxml.FXML;
@@ -29,7 +30,7 @@ import one.util.streamex.StreamEx;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Sound Device", fxml = "DefaultDevice", cmds = CommandVolumeDefaultDevice.class)
-public class BtnDefaultDeviceController extends ButtonCommandController<CommandVolumeDefaultDevice> {
+public class BtnDefaultDeviceController extends CommandController<CommandVolumeDefaultDevice> implements ButtonCommandController {
     private final ISndCtrl sndCtrl;
     private Collection<AudioDevice> allSoundDevices;
 
@@ -57,7 +58,8 @@ public class BtnDefaultDeviceController extends ButtonCommandController<CommandV
         return new Observable[] { sounddevices.valueProperty() };
     }
 
-    private @Nullable AudioDevice getSoundDeviceById(String id) {
+    @Nullable
+    private AudioDevice getSoundDeviceById(String id) {
         return StreamEx.of(allSoundDevices).findFirst(sd -> sd.id().equals(id)).orElse(null);
     }
 }

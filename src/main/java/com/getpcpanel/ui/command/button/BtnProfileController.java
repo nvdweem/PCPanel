@@ -10,6 +10,7 @@ import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.command.ButtonCommandController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
+import com.getpcpanel.ui.command.CommandController;
 
 import javafx.beans.Observable;
 import javafx.fxml.FXML;
@@ -23,7 +24,7 @@ import one.util.streamex.StreamEx;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Profile", fxml = "Profile", cmds = CommandProfile.class)
-public class BtnProfileController extends ButtonCommandController<CommandProfile> {
+public class BtnProfileController extends CommandController<CommandProfile> implements ButtonCommandController {
     private DeviceSave deviceSave;
 
     @FXML private ChoiceBox<Profile> profileDropdown;

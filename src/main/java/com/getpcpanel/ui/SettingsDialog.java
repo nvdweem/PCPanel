@@ -21,6 +21,7 @@ import com.getpcpanel.cpp.windows.SndCtrlWindows;
 import com.getpcpanel.obs.OBS;
 import com.getpcpanel.profile.Save;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.profile.WaveLinkSettings;
 import com.getpcpanel.spring.OsHelper;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.UIInitializer.SingleParamInitializer;
@@ -89,6 +90,8 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
     @FXML private Pane vmControls;
     @FXML private TextField vmPath;
     @FXML private Tab voicemeeterTab;
+    @FXML private Tab waveLinkTab;
+    @FXML private CheckBox waveLinkEnable;
     @FXML private TextField txtPreventSliderTwitch;
     @FXML private TextField txtSliderRollingAverage;
     @FXML private TextField txtOnlyIfDelta;
@@ -131,6 +134,9 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
 
         if (osHelper.notWindows()) {
             voicemeeterTab.getTabPane().getTabs().remove(voicemeeterTab);
+        }
+        if (osHelper.isLinux()) { // MacOS is supported by WaveLink
+            waveLinkTab.getTabPane().getTabs().remove(waveLinkTab);
         }
 
         stage.showAndWait();
@@ -176,6 +182,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
         save.setObsPassword(obsPassword.getText());
         save.setVoicemeeterEnabled(vmEnable.isSelected());
         save.setVoicemeeterPath(vmPath.getText());
+        save.setWaveLink(new WaveLinkSettings(waveLinkEnable.isSelected()));
         save.setPreventSliderTwitchDelay(NumberUtils.toInt(txtPreventSliderTwitch.getText(), 0));
         save.setSliderRollingAverage(NumberUtils.toInt(txtSliderRollingAverage.getText(), 0));
         save.setSendOnlyIfDelta(NumberUtils.toInt(txtOnlyIfDelta.getText(), 0));
@@ -227,6 +234,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
         onOBSEnablePressed(null);
         vmEnable.setSelected(save.isVoicemeeterEnabled());
         vmPath.setText(save.getVoicemeeterPath());
+        waveLinkEnable.setSelected(save.getWaveLink().enabled());
         onVMEnablePressed(null);
         txtPreventSliderTwitch.setText(save.getPreventSliderTwitchDelay() == null ? "" : save.getPreventSliderTwitchDelay().toString());
         txtSliderRollingAverage.setText(save.getSliderRollingAverage() == null ? "" : save.getSliderRollingAverage().toString());
@@ -252,6 +260,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
     }
 
     private OverlayPosition getOverlayPosition() {
+        // @formatter:off
         if (btnTL.isSelected()) return OverlayPosition.topLeft;
         if (btnTM.isSelected()) return OverlayPosition.topMiddle;
         if (btnTR.isSelected()) return OverlayPosition.topRight;
@@ -261,6 +270,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
         if (btnBL.isSelected()) return OverlayPosition.bottomLeft;
         if (btnBM.isSelected()) return OverlayPosition.bottomMiddle;
         if (btnBR.isSelected()) return OverlayPosition.bottomRight;
+        // @formatter:on
         return OverlayPosition.topLeft;
     }
 

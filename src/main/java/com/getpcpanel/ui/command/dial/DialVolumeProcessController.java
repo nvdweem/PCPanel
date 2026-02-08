@@ -15,8 +15,10 @@ import com.getpcpanel.cpp.AudioDevice;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.PickProcessesController;
+import com.getpcpanel.ui.PickProcessesController.PickType;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
+import com.getpcpanel.ui.command.CommandController;
 import com.getpcpanel.ui.command.DialCommandController;
 
 import javafx.beans.Observable;
@@ -34,7 +36,7 @@ import one.util.streamex.StreamEx;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "App Volume", fxml = "VolumeProcess", cmds = CommandVolumeProcess.class)
-public class DialVolumeProcessController extends DialCommandController<CommandVolumeProcess> {
+public class DialVolumeProcessController extends CommandController<CommandVolumeProcess> implements DialCommandController {
     private final ISndCtrl sndCtrl;
     private Collection<AudioDevice> allSoundDevices;
 
@@ -47,7 +49,7 @@ public class DialVolumeProcessController extends DialCommandController<CommandVo
 
     @Override
     public void postInit(CommandContext context) {
-        appVolumeController.setPickType(PickProcessesController.PickType.soundSource);
+        appVolumeController.setPickType(PickType.soundSource);
 
         allSoundDevices = sndCtrl.getDevices();
         var outputDevices = allSoundDevices.stream().filter(AudioDevice::isOutput).toList();
@@ -92,7 +94,8 @@ public class DialVolumeProcessController extends DialCommandController<CommandVo
         };
     }
 
-    private @Nullable AudioDevice getSoundDeviceById(String id) {
+    @Nullable
+    private AudioDevice getSoundDeviceById(String id) {
         return StreamEx.of(allSoundDevices).findFirst(sd -> sd.id().equals(id)).orElse(null);
     }
 

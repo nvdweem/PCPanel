@@ -9,12 +9,14 @@ import org.springframework.stereotype.Component;
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandObs;
 import com.getpcpanel.commands.command.CommandObsMuteSource;
+import com.getpcpanel.commands.command.CommandObsMuteSource.MuteType;
 import com.getpcpanel.commands.command.CommandObsSetScene;
 import com.getpcpanel.obs.OBS;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.command.ButtonCommandController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
+import com.getpcpanel.ui.command.CommandController;
 import com.getpcpanel.ui.command.ObsEnabled;
 
 import javafx.beans.Observable;
@@ -31,7 +33,7 @@ import lombok.extern.log4j.Log4j2;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "OBS", fxml = "Obs", cmds = { CommandObsSetScene.class, CommandObsMuteSource.class }, enabled = ObsEnabled.class)
-public class BtnObsController extends ButtonCommandController<CommandObs> {
+public class BtnObsController extends CommandController<CommandObs> implements ButtonCommandController {
     private final OBS obs;
 
     @FXML private ChoiceBox<String> obsSetScene;
@@ -84,7 +86,7 @@ public class BtnObsController extends ButtonCommandController<CommandObs> {
             return new CommandObsSetScene(obsSetScene.getSelectionModel().getSelectedItem());
         } else if (obs_rdio_MuteSource.isSelected()) {
             return new CommandObsMuteSource(obsSourceToMute.getSelectionModel().getSelectedItem(),
-                    obsMuteUnmute.isSelected() ? CommandObsMuteSource.MuteType.unmute : obsMuteMute.isSelected() ? CommandObsMuteSource.MuteType.mute : CommandObsMuteSource.MuteType.toggle);
+                    obsMuteUnmute.isSelected() ? MuteType.unmute : obsMuteMute.isSelected() ? MuteType.mute : MuteType.toggle);
         } else {
             log.error("ERROR INVALID RADIO BUTTON IN BUTTON OBS");
             return NOOP;

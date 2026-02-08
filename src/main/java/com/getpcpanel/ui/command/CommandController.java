@@ -10,6 +10,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.scene.Node;
 
 public abstract class CommandController<T extends Command> {
     private final BooleanProperty initialized = new SimpleBooleanProperty(false);
@@ -26,11 +27,24 @@ public abstract class CommandController<T extends Command> {
         dependencies[old.length] = initialized;
 
         var result = new SimpleStringProperty();
-        result.bind(Bindings.createStringBinding(() -> buildLabelCommand().buildLabel(), dependencies));
+        result.bind(Bindings.createStringBinding(() -> buildLabel(), dependencies));
         return result;
     }
 
     protected abstract Observable[] determineDependencies();
 
-    protected abstract Command buildLabelCommand();
+    protected String buildLabel() {
+        if (this instanceof DialCommandController dc) {
+            return dc.buildLabelCommand().buildLabel();
+        }
+        if (this instanceof ButtonCommandController bc) {
+            return bc.buildCommand().buildLabel();
+        }
+        return "";
+    }
+
+    protected void setVisible(Node node, boolean visible) {
+        node.setVisible(visible);
+        node.setManaged(visible);
+    }
 }

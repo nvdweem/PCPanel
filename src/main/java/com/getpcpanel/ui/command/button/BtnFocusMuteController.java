@@ -9,6 +9,7 @@ import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.command.ButtonCommandController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
+import com.getpcpanel.ui.command.CommandController;
 
 import javafx.beans.Observable;
 import javafx.fxml.FXML;
@@ -21,7 +22,7 @@ import lombok.extern.log4j.Log4j2;
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Focus Mute", fxml = "FocusMute", cmds = CommandVolumeFocusMute.class)
-public class BtnFocusMuteController extends ButtonCommandController<CommandVolumeFocusMute> {
+public class BtnFocusMuteController extends CommandController<CommandVolumeFocusMute> implements ButtonCommandController {
     @FXML private RadioButton rdio_focus_mute_mute;
     @FXML private RadioButton rdio_focus_mute_toggle;
     @FXML private RadioButton rdio_focus_mute_unmute;
