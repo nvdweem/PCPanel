@@ -21,10 +21,11 @@ import org.springframework.stereotype.Service;
 
 import com.getpcpanel.cpp.AudioDevice;
 import com.getpcpanel.cpp.AudioSession;
+import com.getpcpanel.cpp.AudioSessionEvent;
+import com.getpcpanel.cpp.EventType;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.cpp.linux.LinuxProcessHelper;
-import com.getpcpanel.spring.ConditionalOnLinux;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -60,8 +61,16 @@ public class SndCtrlPulseAudio implements ISndCtrl {
     @EventListener(PulseAudioEventListener.LinuxSessionChangedEvent.class)
     public void initSessions() {
         synchronized (sessions) {
+            var prev = new HashSet<>(sessions);
             sessions.clear();
             sessions.addAll(getSessionsFromCmd());
+
+            // Trigger events
+            var removed = StreamEx.of(prev).remove(sessions::contains);
+            var added = StreamEx.of(sessions).remove(prev::contains);
+            added.map(sess -> new AudioSessionEvent(sess, EventType.ADDED))
+                 .append(removed.map(sess -> new AudioSessionEvent(sess, EventType.REMOVED)))
+                 .forEach(eventPublisher::publishEvent);
         }
     }
 
