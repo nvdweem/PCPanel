@@ -50,7 +50,7 @@ public interface StatusNotifierItem extends DBusInterface {
 
     @DBusBoundProperty(access = DBusProperty.Access.READ)
     default boolean getItemIsMenu() {
-        return true;
+        return false;
     }
 
     /**
