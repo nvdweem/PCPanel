@@ -7,6 +7,7 @@ import static com.getpcpanel.profile.Save.DEFAULT_OVERLAY_BG_COLOR;
 import static com.getpcpanel.profile.Save.DEFAULT_OVERLAY_PADDING;
 import static com.getpcpanel.profile.Save.DEFAULT_OVERLAY_TEXT_COLOR;
 
+import java.util.List;
 import java.util.Objects;
 
 import javax.annotation.Nonnull;
@@ -16,7 +17,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.stereotype.Component;
 
 import com.getpcpanel.MainFX;
-import com.getpcpanel.cpp.linux.SndCtrlLinuxDebug;
+import com.getpcpanel.cpp.linux.pulseaudio.SndCtrlPulseAudioDebug;
 import com.getpcpanel.cpp.windows.SndCtrlWindows;
 import com.getpcpanel.obs.OBS;
 import com.getpcpanel.profile.Save;
@@ -66,6 +67,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
     @FXML private Pane root;
     @FXML private CheckBox mainUiIcons;
     @FXML private CheckBox startupVersionCheck;
+    @FXML private CheckBox forceVolume;
     @FXML private CheckBox overlay;
     @FXML private CheckBox overlayUseLog;
     @FXML private CheckBox overlayShowNumber;
@@ -139,6 +141,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
             waveLinkTab.getTabPane().getTabs().remove(waveLinkTab);
         }
 
+        osHelper.hideUnsupportedChildren(List.of(forceVolume));
         stage.showAndWait();
     }
 
@@ -162,6 +165,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
         var save = saveService.get();
         save.setMainUIIcons(mainUiIcons.isSelected());
         save.setStartupVersionCheck(startupVersionCheck.isSelected());
+        save.setForceVolume(forceVolume.isSelected());
         save.setOverlayEnabled(overlay.isSelected());
         save.setOverlayUseLog(overlayUseLog.isSelected());
         save.setOverlayShowNumber(overlayShowNumber.isSelected());
@@ -217,6 +221,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
         var save = saveService.get();
         mainUiIcons.setSelected(save.isMainUIIcons());
         startupVersionCheck.setSelected(save.isStartupVersionCheck());
+        forceVolume.setSelected(save.isForceVolume());
         overlay.setSelected(save.isOverlayEnabled());
         overlayUseLog.setSelected(save.isOverlayUseLog());
         overlayShowNumber.setSelected(save.isOverlayShowNumber());
@@ -261,15 +266,24 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
 
     private OverlayPosition getOverlayPosition() {
         // @formatter:off
-        if (btnTL.isSelected()) return OverlayPosition.topLeft;
-        if (btnTM.isSelected()) return OverlayPosition.topMiddle;
-        if (btnTR.isSelected()) return OverlayPosition.topRight;
-        if (btnML.isSelected()) return OverlayPosition.middleLeft;
-        if (btnMM.isSelected()) return OverlayPosition.middleMiddle;
-        if (btnMR.isSelected()) return OverlayPosition.middleRight;
-        if (btnBL.isSelected()) return OverlayPosition.bottomLeft;
-        if (btnBM.isSelected()) return OverlayPosition.bottomMiddle;
-        if (btnBR.isSelected()) return OverlayPosition.bottomRight;
+        if (btnTL.isSelected())
+            return OverlayPosition.topLeft;
+        if (btnTM.isSelected())
+            return OverlayPosition.topMiddle;
+        if (btnTR.isSelected())
+            return OverlayPosition.topRight;
+        if (btnML.isSelected())
+            return OverlayPosition.middleLeft;
+        if (btnMM.isSelected())
+            return OverlayPosition.middleMiddle;
+        if (btnMR.isSelected())
+            return OverlayPosition.middleRight;
+        if (btnBL.isSelected())
+            return OverlayPosition.bottomLeft;
+        if (btnBM.isSelected())
+            return OverlayPosition.bottomMiddle;
+        if (btnBR.isSelected())
+            return OverlayPosition.bottomRight;
         // @formatter:on
         return OverlayPosition.topLeft;
     }
@@ -335,7 +349,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
 
     public void copyAudioOutput(ActionEvent ignored) {
         copied.setText("Preparing output");
-        MainFX.getBean(SndCtrlLinuxDebug.class).copyDebugOutput();
+        MainFX.getOptionalBean(SndCtrlPulseAudioDebug.class).ifPresent(SndCtrlPulseAudioDebug::copyDebugOutput);
         copied.setText("Output was copied to your clipboard");
     }
 

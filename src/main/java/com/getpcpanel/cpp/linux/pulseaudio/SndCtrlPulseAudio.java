@@ -1,4 +1,7 @@
-package com.getpcpanel.cpp.linux;
+package com.getpcpanel.cpp.linux.pulseaudio;
+
+import static com.getpcpanel.cpp.linux.pulseaudio.PulseAudioWrapper.volumeFtoI;
+import static com.getpcpanel.cpp.linux.pulseaudio.PulseAudioWrapper.volumeItoF;
 
 import java.io.File;
 import java.util.Collection;
@@ -21,9 +24,12 @@ import org.springframework.stereotype.Service;
 
 import com.getpcpanel.cpp.AudioDevice;
 import com.getpcpanel.cpp.AudioSession;
+import com.getpcpanel.cpp.AudioSessionEvent;
+import com.getpcpanel.cpp.EventType;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.cpp.MuteType;
-import com.getpcpanel.spring.ConditionalOnLinux;
+import com.getpcpanel.cpp.linux.LinuxProcessHelper;
+import com.getpcpanel.cpp.linux.pulseaudio.PulseAudioEventListener.LinuxSessionChangedEvent;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -32,20 +38,20 @@ import one.util.streamex.StreamEx;
 
 @Log4j2
 @Service
-@ConditionalOnLinux
+@ConditionalOnPulseAudio
 @RequiredArgsConstructor
-public class SndCtrlLinux implements ISndCtrl {
+public class SndCtrlPulseAudio implements ISndCtrl {
     public static final String INPUT_PREFIX = "in_";
     private final PulseAudioWrapper cmd;
     private final LinuxProcessHelper processHelper;
     private final ApplicationEventPublisher eventPublisher;
-    @GuardedBy("devices") private final Map<String, LinuxAudioDevice> devices = new HashMap<>();
-    @GuardedBy("sessions") private final Set<LinuxAudioSession> sessions = new HashSet<>();
+    @GuardedBy("devices") private final Map<String, PulseAudioAudioDevice> devices = new HashMap<>();
+    @GuardedBy("sessions") private final Set<PulseAudioAudioSession> sessions = new HashSet<>();
 
     @PostConstruct
     public void init() {
         initDevices();
-        initSessions();
+        initSessions(null);
     }
 
     @EventListener(PulseAudioEventListener.LinuxDeviceChangedEvent.class)
@@ -56,12 +62,36 @@ public class SndCtrlLinux implements ISndCtrl {
         }
     }
 
-    @EventListener(PulseAudioEventListener.LinuxSessionChangedEvent.class)
-    public void initSessions() {
+    @EventListener
+    public void initSessions(@Nullable LinuxSessionChangedEvent event) {
         synchronized (sessions) {
+            var prevByIndex = StreamEx.of(sessions).mapToEntry(PulseAudioAudioSession::index).invert().toMap();
             sessions.clear();
             sessions.addAll(getSessionsFromCmd());
+            var currByIndex = StreamEx.of(sessions).mapToEntry(PulseAudioAudioSession::index).invert().toMap();
+
+            // Trigger events
+            var removed = StreamEx.of(prevByIndex.values()).remove(sessions::contains);
+            var added = StreamEx.of(sessions).remove(prevByIndex.values()::contains);
+            var changed = getChangedStream(event, prevByIndex, currByIndex);
+
+            added.map(sess -> new AudioSessionEvent(sess, EventType.ADDED))
+                 .append(removed.map(sess -> new AudioSessionEvent(sess, EventType.REMOVED)))
+                 .append(changed.map(sess -> new AudioSessionEvent(sess, EventType.CHANGED)))
+                 .forEach(eventPublisher::publishEvent);
         }
+    }
+
+    private StreamEx<PulseAudioAudioSession> getChangedStream(@Nullable LinuxSessionChangedEvent event, Map<Integer, PulseAudioAudioSession> prevs, Map<Integer, PulseAudioAudioSession> currents) {
+        if (event == null || event.sessionId() == null) {
+            return StreamEx.empty();
+        }
+        var prev = prevs.get(event.sessionId());
+        var current = currents.get(event.sessionId());
+        if (prev == null || current == null || (volumeFtoI(prev.volume()) == volumeFtoI(current.volume()) && prev.muted() == current.muted())) {
+            return StreamEx.empty();
+        }
+        return StreamEx.of(current);
     }
 
     @Override
@@ -104,7 +134,7 @@ public class SndCtrlLinux implements ISndCtrl {
 
     @Override
     public void setDefaultDevice(String deviceId) {
-        LinuxAudioDevice device;
+        PulseAudioAudioDevice device;
         synchronized (devices) {
             device = devices.get(deviceId);
         }
@@ -115,12 +145,15 @@ public class SndCtrlLinux implements ISndCtrl {
 
     @Override
     public void setProcessVolume(String fileName, @Nullable String device, float volume) {
-        Set<LinuxAudioSession> todo;
+        Set<PulseAudioAudioSession> todo;
         synchronized (sessions) {
             todo = allSessions().filter(s -> StringUtils.equalsAnyIgnoreCase(fileName, s.executable().getName(), s.title()))
                                 .toSet();
         }
-        todo.forEach(s -> cmd.setSessionVolume(s.index(), volume));
+        todo.forEach(s -> {
+            s.setVolumeNoTrigger(volume); // Prevent sending the volume when 'force volume' is enabled
+            cmd.setSessionVolume(s.index(), volume);
+        });
     }
 
     @Override
@@ -135,7 +168,7 @@ public class SndCtrlLinux implements ISndCtrl {
     @Override
     public void muteProcesses(Set<String> fileName, MuteType mute) {
         var lcFileNames = StreamEx.of(fileName).map(String::toLowerCase).toImmutableSet();
-        Set<LinuxAudioSession> todo;
+        Set<PulseAudioAudioSession> todo;
         synchronized (sessions) {
             todo = allSessions().filter(s -> lcFileNames.contains(StringUtils.lowerCase(s.executable().getName())) || lcFileNames.contains(StringUtils.lowerCase(s.title())))
                                 .toSet();
@@ -163,7 +196,7 @@ public class SndCtrlLinux implements ISndCtrl {
     @Override
     public @Nullable String defaultPlayer() {
         synchronized (devices) {
-            return StreamEx.ofValues(devices).findFirst(LinuxAudioDevice::isDefaultOutput).map(AudioDevice::id).orElse(null);
+            return StreamEx.ofValues(devices).findFirst(PulseAudioAudioDevice::isDefaultOutput).map(AudioDevice::id).orElse(null);
         }
     }
 
@@ -172,29 +205,42 @@ public class SndCtrlLinux implements ISndCtrl {
         return null;
     }
 
-    private Set<LinuxAudioDevice> getDevicesFromCmd() {
+    private Set<PulseAudioAudioDevice> getDevicesFromCmd() {
         return StreamEx.of(cmd.getDevices()).mapPartial(this::toDevice).toSet();
     }
 
-    private Optional<LinuxAudioDevice> toDevice(PulseAudioWrapper.PulseAudioTarget pa) {
+    private Optional<PulseAudioAudioDevice> toDevice(PulseAudioWrapper.PulseAudioTarget pa) {
         var isOutput = pa.type() == PulseAudioWrapper.InOutput.output;
         var name = pa.metas().get("Name");
         if (StringUtils.isBlank(name)) {
             return Optional.empty();
         }
-        return Optional.of(new LinuxAudioDevice(eventPublisher, pa.index(), pa.metas().get("Description"), (isOutput ? "" : INPUT_PREFIX) + pa.metas().get("Name"), pa.isDefault(), isOutput));
+        return Optional.of(new PulseAudioAudioDevice(eventPublisher, pa.index(), pa.metas().get("Description"), (isOutput ? "" : INPUT_PREFIX) + pa.metas().get("Name"), pa.isDefault(), isOutput));
     }
 
-    private Set<LinuxAudioSession> getSessionsFromCmd() {
+    private Set<PulseAudioAudioSession> getSessionsFromCmd() {
         return StreamEx.of(cmd.getSessions())
                        .map(pa ->
-                               new LinuxAudioSession(eventPublisher,
+                               new PulseAudioAudioSession(eventPublisher,
                                        pa.index(),
                                        NumberUtils.toInt(pa.properties().get("application.process.id"), -1),
                                        new File(pa.properties().getOrDefault("application.process.binary", "/")),
                                        pa.properties().get("application.name"),
-                                       "", 0, false))
+                                       "", extractVolume(pa), false))
                        .toSet();
+    }
+
+    float extractVolume(PulseAudioWrapper.PulseAudioTarget pa) {
+        var volumeStr = pa.metas().getOrDefault("Volume", "mono: 0 / 0% / -inf dB");
+        var outputParts = volumeStr.split(":", 2);
+        if (outputParts.length < 2) {
+            return 0;
+        }
+        var volumeParts = outputParts[1].split("/");
+        if (volumeParts.length == 0) {
+            return 0;
+        }
+        return volumeItoF(NumberUtils.toInt(StringUtils.trimToEmpty(volumeParts[0])));
     }
 
     private int deviceIdx(String deviceId) {
@@ -202,7 +248,7 @@ public class SndCtrlLinux implements ISndCtrl {
             return PulseAudioWrapper.DEFAULT_DEVICE;
         }
         synchronized (devices) {
-            return Optional.ofNullable(devices.get(deviceId)).map(LinuxAudioDevice::index).orElse(PulseAudioWrapper.NO_OP_IDX);
+            return Optional.ofNullable(devices.get(deviceId)).map(PulseAudioAudioDevice::index).orElse(PulseAudioWrapper.NO_OP_IDX);
         }
     }
 
@@ -210,7 +256,7 @@ public class SndCtrlLinux implements ISndCtrl {
         return !StringUtils.startsWith(deviceId, INPUT_PREFIX);
     }
 
-    private StreamEx<LinuxAudioSession> allSessions() {
+    private StreamEx<PulseAudioAudioSession> allSessions() {
         synchronized (sessions) {
             var sessionsCopy = new HashSet<>(sessions);
             return StreamEx.of(sessionsCopy).distinct();

@@ -7,6 +7,9 @@
     - Input devices not yet supported (I don't have one so can't debug)
     - Dials/sliders allow changing volume for Channels, Mixes and Output devices
     - Buttons allow setting mute state, changing the main output, add the focus app to a mix and/or toggle effects
+- Attempts to improve Wayland tray support (now works on Ubuntu)
+- #74 - (Linux) New audio sessions should trigger initial volume setting
+- #74 - (Linux) New setting 'Force application volume to panel volume', this tries to reset the volume when an application changes it. This seems to solve for instance Firefox from going back to 100% when playing a new song.
 
 ## [1.7.1]
 

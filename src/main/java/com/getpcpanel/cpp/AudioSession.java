@@ -71,6 +71,11 @@ public class AudioSession {
         return pid == 0 || StringUtils.containsIgnoreCase(icon, "AudioSrv.Dll");
     }
 
+    protected AudioSession setVolumeNoTrigger(float volume) {
+        this.volume = volume;
+        return this;
+    }
+
     private void triggerChange() {
         if (eventPublisher != null) {
             eventPublisher.publishEvent(new AudioSessionEvent(this, EventType.CHANGED));

@@ -1,4 +1,4 @@
-package com.getpcpanel.util.tray;
+package com.getpcpanel.util.tray.awt;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -20,7 +20,7 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ ElementType.TYPE })
+@Target(ElementType.TYPE)
 @Conditional(ConditionalOnAwtTray.OnAwtTrayCondition.class)
 @interface ConditionalOnAwtTray {
     class OnAwtTrayCondition implements Condition {

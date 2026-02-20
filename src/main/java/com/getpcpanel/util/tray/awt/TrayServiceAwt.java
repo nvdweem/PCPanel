@@ -1,4 +1,4 @@
-package com.getpcpanel.util.tray;
+package com.getpcpanel.util.tray.awt;
 
 import java.awt.MenuItem;
 import java.awt.PopupMenu;

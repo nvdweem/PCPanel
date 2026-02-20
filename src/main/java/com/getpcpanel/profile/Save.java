@@ -27,6 +27,7 @@ public class Save {
     private Map<String, DeviceSave> devices = new ConcurrentHashMap<>();
     private boolean mainUIIcons;
     private boolean startupVersionCheck = true;
+    private boolean forceVolume; // Linux only
     private Long dblClickInterval = 500L;
     private boolean preventClickWhenDblClick = true;
     private boolean obsEnabled;

@@ -1,17 +1,20 @@
-package com.getpcpanel.cpp.linux;
+package com.getpcpanel.cpp.linux.pulseaudio;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.regex.Pattern;
+
+import javax.annotation.Nullable;
 
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
-import com.getpcpanel.spring.ConditionalOnLinux;
 import com.getpcpanel.util.ProcessHelper;
 
 import jakarta.annotation.PostConstruct;
@@ -21,12 +24,13 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @Component
-@ConditionalOnLinux
+@ConditionalOnPulseAudio
 @RequiredArgsConstructor
 public class PulseAudioEventListener extends Thread {
     private final ApplicationEventPublisher eventPublisher;
     private final ProcessHelper processHelper;
     private final CircularFifoQueue<String> latestEvents = new CircularFifoQueue<>(50);
+    private final Pattern numberPattern = Pattern.compile("#(\\d+)");
 
     private boolean running = true;
 
@@ -67,10 +71,14 @@ public class PulseAudioEventListener extends Thread {
     }
 
     private void checkTrigger(String line) {
-        if (StringUtils.containsIgnoreCase(line, "Event 'new' on sink-input") || StringUtils.containsIgnoreCase(line, "Event 'remove' on sink-input")) {
-            eventPublisher.publishEvent(new LinuxSessionChangedEvent());
+        if (StringUtils.containsAnyIgnoreCase(line
+                , "Event 'new' on sink-input"
+                , "Event 'remove' on sink-input"
+                , "Event 'change' on sink-input")) {
+            var m = numberPattern.matcher(line);
+            eventPublisher.publishEvent(new LinuxSessionChangedEvent(m.find() ? NumberUtils.toInt(m.group(1)) : null));
         }
-        if (StringUtils.containsIgnoreCase(line, "Event 'new' on sink") || StringUtils.containsIgnoreCase(line, "Event 'remove' on sink")) {
+        if (StringUtils.containsAnyIgnoreCase(line, "Event 'new' on sink", "Event 'remove' on sink")) {
             eventPublisher.publishEvent(new LinuxDeviceChangedEvent());
         }
     }
@@ -78,6 +86,6 @@ public class PulseAudioEventListener extends Thread {
     public static class LinuxDeviceChangedEvent {
     }
 
-    public static class LinuxSessionChangedEvent {
+    public record LinuxSessionChangedEvent(@Nullable Integer sessionId) {
     }
 }
