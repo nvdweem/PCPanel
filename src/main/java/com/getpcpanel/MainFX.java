@@ -1,8 +1,8 @@
 package com.getpcpanel;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.Nullable;
 
@@ -20,7 +20,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public class MainFX extends Application {
     @Getter @SuppressWarnings("StaticNonFinalField") private static ConfigurableApplicationContext context;
-    private static final Map<Class<?>, CacheObject> beanCache = new HashMap<>();
+    private static final Map<Class<?>, CacheObject> beanCache = new ConcurrentHashMap<>();
 
     @Override
     @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
