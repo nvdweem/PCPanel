@@ -33,6 +33,11 @@
                         </padding>
                         <CheckBox fx:id="mainUiIcons" mnemonicParsing="false" text="Show icons in main UI"/>
                         <CheckBox fx:id="startupVersionCheck" mnemonicParsing="false" text="Startup version check"/>
+                        <CheckBox fx:id="forceVolume" styleClass="only-linux" mnemonicParsing="false" text="Force application volume to panel volume">
+                            <tooltip>
+                                <Tooltip text="This prevents external volume changes"/>
+                            </tooltip>
+                        </CheckBox>
                     </VBox>
                 </TitledPane>
                 <TitledPane animated="false" collapsible="false" text="Double click">

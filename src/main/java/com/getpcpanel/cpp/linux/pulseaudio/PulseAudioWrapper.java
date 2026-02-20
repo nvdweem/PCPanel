@@ -33,6 +33,14 @@ public class PulseAudioWrapper {
     private static final Pattern pactlFirstLine = Pattern.compile("(.*) #(\\d+)");
     private final ProcessHelper processHelper;
 
+    public static int volumeFtoI(float volume) {
+        return Math.round(volume * 65536);
+    }
+
+    public static float volumeItoF(int volume) {
+        return volume / 65536f;
+    }
+
     public List<PulseAudioTarget> getDevices() {
         return StreamEx.of(execAndParse(InOutput.output)).append(execAndParse(InOutput.input)).toList();
     }
@@ -42,8 +50,7 @@ public class PulseAudioWrapper {
             return;
         }
         var target = output ? "set-sink-volume" : "set-source-volume";
-        //noinspection NumericCastThatLosesPrecision
-        pactl(target, idxOrDefaultDevice(idx), (int) (volume * 100) + "%");
+        pactl(target, idxOrDefaultDevice(idx), String.valueOf(volumeFtoI(volume)));
     }
 
     public void muteDevice(boolean output, int idx, MuteType type) {
@@ -64,15 +71,14 @@ public class PulseAudioWrapper {
     }
 
     public void setSessionVolume(int index, float volume) {
-        //noinspection NumericCastThatLosesPrecision
-        pactl("set-sink-input-volume", String.valueOf(index), (int) (volume * 100) + "%");
+        pactl("set-sink-input-volume", String.valueOf(index), String.valueOf(volumeFtoI(volume)));
     }
 
     public void muteSession(int index, MuteType mute) {
         pactl("set-sink-input-mute", String.valueOf(index), muteTypeToMute(mute));
     }
 
-    public List<PulseAudioTarget> execAndParse(InOutput type) {
+    List<PulseAudioTarget> execAndParse(InOutput type) {
         var ret = new ArrayList<PulseAudioTarget>();
         var cmdOutput = runAndRead(processHelper.builder("pactl", "list", type.pulseType));
 
@@ -107,7 +113,7 @@ public class PulseAudioWrapper {
                     continue;
                 }
 
-                var parts = line.split(":");
+                var parts = line.split(":", 2);
                 if (parts.length > 1) {
                     metas.put(StringUtils.trimToEmpty(parts[0]), StringUtils.trimToEmpty(parts[1]));
                 }
@@ -156,7 +162,7 @@ public class PulseAudioWrapper {
     }
 
     @Builder
-    record PulseAudioTarget(int index, boolean isDefault, Map<String, String> metas, Map<String, String> properties, InOutput type) {
+    public record PulseAudioTarget(int index, boolean isDefault, Map<String, String> metas, Map<String, String> properties, InOutput type) {
     }
 
     @RequiredArgsConstructor

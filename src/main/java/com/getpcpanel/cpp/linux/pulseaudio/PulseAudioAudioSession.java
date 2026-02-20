@@ -18,4 +18,9 @@ public class PulseAudioAudioSession extends AudioSession {
         super(eventPublisher, pid, executable, title, icon, volume, muted);
         this.index = index;
     }
+
+    @Override
+    protected AudioSession setVolumeNoTrigger(float volume) {
+        return super.setVolumeNoTrigger(volume);
+    }
 }

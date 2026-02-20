@@ -7,6 +7,7 @@ import static com.getpcpanel.profile.Save.DEFAULT_OVERLAY_BG_COLOR;
 import static com.getpcpanel.profile.Save.DEFAULT_OVERLAY_PADDING;
 import static com.getpcpanel.profile.Save.DEFAULT_OVERLAY_TEXT_COLOR;
 
+import java.util.List;
 import java.util.Objects;
 
 import javax.annotation.Nonnull;
@@ -66,6 +67,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
     @FXML private Pane root;
     @FXML private CheckBox mainUiIcons;
     @FXML private CheckBox startupVersionCheck;
+    @FXML private CheckBox forceVolume;
     @FXML private CheckBox overlay;
     @FXML private CheckBox overlayUseLog;
     @FXML private CheckBox overlayShowNumber;
@@ -139,6 +141,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
             waveLinkTab.getTabPane().getTabs().remove(waveLinkTab);
         }
 
+        osHelper.hideUnsupportedChildren(List.of(forceVolume));
         stage.showAndWait();
     }
 
@@ -162,6 +165,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
         var save = saveService.get();
         save.setMainUIIcons(mainUiIcons.isSelected());
         save.setStartupVersionCheck(startupVersionCheck.isSelected());
+        save.setForceVolume(forceVolume.isSelected());
         save.setOverlayEnabled(overlay.isSelected());
         save.setOverlayUseLog(overlayUseLog.isSelected());
         save.setOverlayShowNumber(overlayShowNumber.isSelected());
@@ -217,6 +221,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
         var save = saveService.get();
         mainUiIcons.setSelected(save.isMainUIIcons());
         startupVersionCheck.setSelected(save.isStartupVersionCheck());
+        forceVolume.setSelected(save.isForceVolume());
         overlay.setSelected(save.isOverlayEnabled());
         overlayUseLog.setSelected(save.isOverlayUseLog());
         overlayShowNumber.setSelected(save.isOverlayShowNumber());
