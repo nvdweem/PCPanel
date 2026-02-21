@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.util.version.Version.SemVer;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -59,7 +60,11 @@ public class VersionChecker extends Thread {
     }
 
     private boolean versionIsNewer(Version remoteVersion) {
-        var currentSemVer = Version.SemVer.fromName(version);
+        var currentSemVer = SemVer.fromName(version);
+        if (currentIsSnapshot) {
+            currentSemVer = currentSemVer.withBuild(build);
+        }
+
         var compared = currentSemVer.compareTo(remoteVersion.semVer());
         if (compared == 0) {
             return currentIsSnapshot && build < remoteVersion.getBuild();

@@ -1,5 +1,6 @@
 package com.getpcpanel.util.version;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -15,7 +16,7 @@ public record Version(int id,
                       boolean prerelease,
                       SemVer semVer) {
     static final String SNAPSHOT_POSTFIX = "-SNAPSHOT";
-    private static final Pattern versionPattern = Pattern.compile("v?([\\d.]+)(-.*)?");
+    private static final Pattern versionPattern = Pattern.compile("v?([\\d.]+)(-\\S*)?");
     private static final Pattern buildPattern = Pattern.compile("\\((\\d+)\\)");
 
     public Version {
@@ -55,13 +56,17 @@ public record Version(int id,
         public static final SemVer EMPTY = new SemVer(Collections.emptyList(), "");
 
         public static SemVer fromName(String name) {
-                var matcher = versionPattern.matcher(name);
-                if (!matcher.find()) {
-                    return EMPTY;
-                }
-                return StreamEx.of(matcher.group(1).split("\\."))
-                               .map(s -> NumberUtils.toInt(s, 0))
-                               .toListAndThen(l -> new SemVer(l, StringUtils.defaultIfBlank(matcher.group(2), "")));
+            var matcher = versionPattern.matcher(name);
+            if (!matcher.find()) {
+                return EMPTY;
+            }
+            var buildNrMatcher = buildPattern.matcher(name);
+            var buildNr = StreamEx.of(buildNrMatcher.find() ? NumberUtils.toInt(buildNrMatcher.group(1), -1) : null).nonNull();
+
+            return StreamEx.of(matcher.group(1).split("\\."))
+                           .map(s -> NumberUtils.toInt(s, 0))
+                           .append(buildNr)
+                           .toListAndThen(l -> new SemVer(l, StringUtils.defaultIfBlank(matcher.group(2), "")));
         }
 
         @Override
@@ -71,13 +76,22 @@ public record Version(int id,
 
             while (thisPartsItt.hasNext() && oPartsItt.hasNext()) {
                 var cmp = Integer.compare(thisPartsItt.next(), oPartsItt.next());
-                if (cmp != 0) return cmp;
+                if (cmp != 0)
+                    return cmp;
             }
 
-            if (thisPartsItt.hasNext()) return 1;
-            if (oPartsItt.hasNext()) return -1;
+            if (thisPartsItt.hasNext())
+                return 1;
+            if (oPartsItt.hasNext())
+                return -1;
 
             return StringUtils.compareIgnoreCase(suffix, o.suffix);
+        }
+
+        public SemVer withBuild(int build) {
+            var newParts = new ArrayList<>(parts);
+            newParts.add(build);
+            return new SemVer(newParts, suffix);
         }
     }
 }
