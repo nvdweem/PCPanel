@@ -3,39 +3,35 @@ package dev.niels.elgato.jsonrpc;
 import java.net.http.WebSocket;
 import java.net.http.WebSocket.Listener;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.springframework.util.ReflectionUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 
-import dev.niels.elgato.wavelink.impl.rpc.JsonRpcMessage;
-import dev.niels.elgato.wavelink.impl.rpc.JsonRpcResponse;
-import dev.niels.elgato.wavelink.impl.rpc.WaveLinkJsonRpcCommand;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @RequiredArgsConstructor
-public class JsonRpcListener implements Listener {
-    private final ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    @Nullable private WebSocket socket;
-    private final Object service;
-    private long nextSendId;
+class JsonRpcListener implements Listener {
+    private final JsonRpcClient client;
+    private final JsonRpcService service;
+    private final Map<String, Consumer<JsonNode>> serviceMethodCache = new ConcurrentHashMap<>();
     private final StringBuffer msgBuffer = new StringBuffer();
-    private final Map<Long, PendingRequest> pendingRequests = new ConcurrentHashMap<>();
 
     @Override
     public void onOpen(WebSocket webSocket) {
-        socket = webSocket;
-        log.debug("WebSocket opened");
         Listener.super.onOpen(webSocket);
+        log.debug("WebSocket opened");
+        client.websocket = CompletableFuture.completedFuture(webSocket);
+        CompletableFuture.runAsync(() -> service._onConnect(client));
     }
 
     @Override
@@ -45,105 +41,91 @@ public class JsonRpcListener implements Listener {
             var fullMessage = msgBuffer.toString();
             msgBuffer.setLength(0);
             log.debug("Received message: {}", fullMessage);
-            try {
-                handleFullMessage(fullMessage);
-            } catch (JsonProcessingException e) {
-                log.error("Failed to parse JSON-RPC message: {}", fullMessage, e);
-            }
+            CompletableFuture.runAsync(() -> {
+                try {
+                    handleFullMessage(fullMessage);
+                } catch (JsonProcessingException e) {
+                    log.error("Failed to parse JSON-RPC message: {}", fullMessage, e);
+                }
+            });
         }
         return Listener.super.onText(webSocket, data, last);
     }
 
     private void handleFullMessage(String fullMessage) throws JsonProcessingException {
-
-    }
-
-    private void handleMessage(JsonRpcMessage message) {
-        switch (message) {
-            case JsonRpcResponse response -> handleResponse(response);
-            case WaveLinkJsonRpcCommand<?, ?> command -> handleCommand(command);
+        var tree = client.mapper.readTree(fullMessage);
+        if (tree.has("method")) {
+            handleMethod(tree);
+        } else if (tree.has("result")) {
+            getRequest(tree).ifPresent(req -> handleResult(tree, req));
+        } else if (tree.has("error")) {
+            getRequest(tree).ifPresent(req -> handleError(tree, req));
         }
     }
 
-    private void handleResponse(JsonRpcResponse response) {
-        var id = response.getId();
-        if (id == null) {
-            log.warn("Received response without ID, ignoring");
-            return;
-        }
-        var pending = pendingRequests.remove(id);
-
-        if (pending == null) {
-            log.warn("Received response for unknown request ID {}", id);
-            return;
-        }
-
-        if (response.getError() != null) {
-            var error = response.getError();
-            var errorMessage = String.format("JSON-RPC error %d: %s%s",
-                    error.getCode(),
-                    error.getMessage(),
-                    error.getData() != null ? " [" + error.getData() + "]" : "");
-            log.error("Received error for request ID {}: {}", id, errorMessage);
-            pending.future.completeExceptionally(new RuntimeException(errorMessage));
-            return;
-        }
-
-        try {
-            var value = mapper.treeToValue(response.getResult(), pending.resultClass);
-            ((CompletableFuture<Object>) pending.future).complete(value);
-            log.debug("Successfully handled result for request ID {}", id);
-        } catch (JsonProcessingException e) {
-            log.error("Failed to parse result for request ID {} as {}", id, pending.resultClass.getSimpleName(), e);
-            pending.future.completeExceptionally(new RuntimeException("Failed to parse JSON-RPC result", e));
+    @SneakyThrows
+    private void handleResult(JsonNode tree, PendingRequest<Object> request) {
+        if (Void.class.equals(request.resultClass())) {
+            request.future().complete(null);
+        } else {
+            var resultNode = tree.get("result");
+            var resultValue = client.mapper.treeToValue(resultNode, request.resultClass());
+            request.future().complete(resultValue);
         }
     }
 
-    private void handleCommand(WaveLinkJsonRpcCommand<?, ?> command) {
-        log.debug("Received command: {}", command.getClass().getSimpleName());
-        // client.onCommand(command);
+    @SneakyThrows
+    private void handleError(JsonNode tree, PendingRequest<Object> req) {
+        var ex = client.mapper.treeToValue(tree.get("error"), JsonRpcException.class);
+        req.future().completeExceptionally(ex);
+    }
+
+    private <T> Optional<PendingRequest<T>> getRequest(JsonNode tree) {
+        var id = tree.get("id").longValue();
+        return Optional.ofNullable((PendingRequest<T>) client.pendingRequests.get(id));
+    }
+
+    private void handleMethod(JsonNode tree) {
+        var methodName = tree.get("method").asText();
+        serviceMethodCache.computeIfAbsent(methodName, this::buildParser).accept(tree.get("params"));
+    }
+
+    private Consumer<JsonNode> buildParser(String methodName) {
+        var serviceMethod = ReflectionUtils.findMethod(service.getClass(), methodName, null);
+        if (serviceMethod == null) {
+            log.warn("No method '{}' found on service {}", methodName, service.getClass().getSimpleName());
+            return s -> log.debug("Not handling method call {}: {}", methodName, s);
+        }
+        serviceMethod.setAccessible(true);
+
+        return paramsNode -> {
+            try {
+                log.debug("Invoking service method '{}'", methodName);
+                if (serviceMethod.getParameterCount() == 0) {
+                    serviceMethod.invoke(service);
+                } else if (serviceMethod.getParameterCount() == 1 && paramsNode != null && !paramsNode.isNull()) {
+                    var arg = client.mapper.treeToValue(paramsNode, serviceMethod.getParameterTypes()[0]);
+                    serviceMethod.invoke(service, arg);
+                }
+            } catch (ReflectiveOperationException e) {
+                log.error("Failed to invoke method '{}' on service", methodName, e);
+            } catch (JsonProcessingException e) {
+                log.error("Failed to parse {} to {}", paramsNode, serviceMethod.getParameterTypes()[0], e);
+            }
+        };
     }
 
     @Override
     public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
-        socket = null;
         log.info("WebSocket closed with status code {} and reason {}", statusCode, reason);
-        // client.trigger(IWaveLinkClientEventListener::connectionClosed);
+        CompletableFuture.runAsync(service::_onClose);
         return Listener.super.onClose(webSocket, statusCode, reason);
     }
 
     @Override
     public void onError(WebSocket webSocket, Throwable error) {
         log.error("WebSocket error", error);
-        // client.trigger(l -> l.onError(error));
+        CompletableFuture.runAsync(() -> service._onError(error));
         Listener.super.onError(webSocket, error);
-    }
-
-    @SneakyThrows
-    public <R> CompletableFuture<R> sendExpectingResult(WaveLinkJsonRpcCommand<?, R> message) {
-        // var socket = ensureSocketNotClosed();
-        //
-        // var result = new CompletableFuture<R>();
-        // synchronized (pendingRequests) {
-        //     message.setId(nextSendId++);
-        //     pendingRequests.put(message.getId(), new WaveLinkListener.PendingRequest(message.getResultClass(), result));
-        // }
-        // var messageText = mapper.writeValueAsString(message);
-        // log.debug("Sending: {}", messageText);
-        // socket.sendText(messageText, true);
-        //
-        // return result;
-        return null;
-    }
-
-    @Nonnull
-    private WebSocket ensureSocketNotClosed() {
-        if (socket == null || socket.isOutputClosed() || socket.isInputClosed()) {
-            throw new IllegalStateException("WebSocket is closed");
-        }
-        return socket;
-    }
-
-    record PendingRequest(Class<?> resultClass, CompletableFuture<?> future) {
     }
 }

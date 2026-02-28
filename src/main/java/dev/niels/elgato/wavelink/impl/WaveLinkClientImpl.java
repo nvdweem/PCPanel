@@ -3,9 +3,7 @@ package dev.niels.elgato.wavelink.impl;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import javax.annotation.Nonnull;
@@ -14,7 +12,6 @@ import javax.annotation.Nullable;
 import dev.niels.elgato.jsonrpc.JsonRpcClient;
 import dev.niels.elgato.wavelink.IWaveLinkClient;
 import dev.niels.elgato.wavelink.IWaveLinkClientEventListener;
-import dev.niels.elgato.wavelink.impl.model.WaveLinkApp;
 import dev.niels.elgato.wavelink.impl.model.WaveLinkChannel;
 import dev.niels.elgato.wavelink.impl.model.WaveLinkControlAction;
 import dev.niels.elgato.wavelink.impl.model.WaveLinkEffect;
@@ -23,37 +20,28 @@ import dev.niels.elgato.wavelink.impl.model.WaveLinkMainOutput;
 import dev.niels.elgato.wavelink.impl.model.WaveLinkMix;
 import dev.niels.elgato.wavelink.impl.model.WaveLinkOutput;
 import dev.niels.elgato.wavelink.impl.model.WaveLinkOutputDevice;
-import dev.niels.elgato.wavelink.impl.model.WithId;
-import dev.niels.elgato.wavelink.impl.rpc.WaveLinkAddToChannelCommand;
-import dev.niels.elgato.wavelink.impl.rpc.WaveLinkAddToChannelCommand.WaveLinkAddToChannelParams;
-import dev.niels.elgato.wavelink.impl.rpc.WaveLinkChannelChangedCommand;
-import dev.niels.elgato.wavelink.impl.rpc.WaveLinkChannelsChangedCommand;
-import dev.niels.elgato.wavelink.impl.rpc.WaveLinkFocusedAppChangedCommand;
-import dev.niels.elgato.wavelink.impl.rpc.WaveLinkJsonRpcCommand;
-import dev.niels.elgato.wavelink.impl.rpc.WaveLinkMixChangedCommand;
-import dev.niels.elgato.wavelink.impl.rpc.WaveLinkOutputDeviceChangedCommand;
-import dev.niels.elgato.wavelink.impl.rpc.WaveLinkSetChannelCommand;
-import dev.niels.elgato.wavelink.impl.rpc.WaveLinkSetMixCommand;
-import dev.niels.elgato.wavelink.impl.rpc.WaveLinkSetOutputDeviceCommand;
-import dev.niels.elgato.wavelink.impl.rpc.WaveLinkSetOutputDeviceCommand.WaveLinkSetOutputDeviceParams;
+import dev.niels.elgato.wavelink.impl.rpc.WaveLinkAddToChannelParams;
+import dev.niels.elgato.wavelink.impl.rpc.WaveLinkSetOutputDeviceParams;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseable {
+    private final WaveLinkService service;
     private final JsonRpcClient jsonRpc;
+    private final WaveLinkRpcCommands commands;
 
     private final List<IWaveLinkClientEventListener> listeners = new CopyOnWriteArrayList<>();
-    @Getter private final Map<String, WaveLinkInputDevice> inputDevices = new ConcurrentHashMap<>();
-    @Getter private final Map<String, WaveLinkOutputDevice> outputDevices = new ConcurrentHashMap<>();
-    @Getter private final Map<String, WaveLinkChannel> channels = new ConcurrentHashMap<>();
-    @Getter private final Map<String, WaveLinkMix> mixes = new ConcurrentHashMap<>();
     @Getter private boolean initialized;
-    @Getter private String mainOutputDeviceId;
-    @Getter private WaveLinkApp lastFocusApp = WaveLinkApp.EMPTY;
 
     protected WaveLinkClientImpl(boolean autoConnect) {
-        jsonRpc = new JsonRpcClient("ws://127.0.0.1:1884", autoConnect, new WaveLinkService());
+        service = new WaveLinkService(this);
+        jsonRpc = new JsonRpcClient("ws://127.0.0.1:1884", false, service);
+        commands = jsonRpc.buildCommands(WaveLinkRpcCommands.class);
+        service.setCommands(commands);
+        if (autoConnect) {
+            jsonRpc.connect();
+        }
     }
 
     @Override
@@ -87,6 +75,26 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
     }
 
     @Override
+    public Map<String, WaveLinkInputDevice> getInputDevices() {
+        return service.getInputDevices();
+    }
+
+    @Override
+    public Map<String, WaveLinkOutputDevice> getOutputDevices() {
+        return service.getOutputDevices();
+    }
+
+    @Override
+    public Map<String, WaveLinkChannel> getChannels() {
+        return service.getChannels();
+    }
+
+    @Override
+    public Map<String, WaveLinkMix> getMixes() {
+        return service.getMixes();
+    }
+
+    @Override
     public void setInput(WaveLinkInputDevice device, WaveLinkControlAction action, Double value, Boolean mute) {
         log.warn("setInputLevel not implemented yet");
     }
@@ -109,39 +117,34 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
 
     @Override
     public void setChannel(WaveLinkChannel channel) {
-        send(new WaveLinkSetChannelCommand().setParams(channel));
+        commands.setChannel(channel);
     }
 
     @Override
     public void addCurrentToChannel(WaveLinkChannel channel) {
-        if (lastFocusApp.isEmpty()) {
+        if (service.getLastFocusApp().isEmpty()) {
             log.info("WaveLink does not have focus app set, cannot add current to channel");
             return;
         }
-        send(new WaveLinkAddToChannelCommand().setParams(
-                new WaveLinkAddToChannelParams(lastFocusApp.id(), channel.id())
-        ));
+        commands.addToChannel(new WaveLinkAddToChannelParams(service.getLastFocusApp().id(), channel.id()));
     }
 
     @Override
     public void setChannelAudioEffect(WaveLinkChannel channel, WaveLinkEffect effect) {
-        send(new WaveLinkSetChannelCommand().setParams(
-                channel.blank()
-                       .withEffects(List.of(effect.blank().withIsEnabled(effect.isEnabled())))
-        ));
+        commands.setChannel(channel.blank().withEffects(List.of(effect.blank().withIsEnabled(effect.isEnabled()))));
     }
 
     @Override
     public void setMix(WaveLinkMix mix, @Nullable Double value, @Nullable Boolean mute) {
-        send(new WaveLinkSetMixCommand().setParams(mix.blank().withLevel(value).withIsMuted(mute)));
+        commands.setMix(mix.blank().withLevel(value).withIsMuted(mute));
     }
 
     @Override
     public void setMixOutput(WaveLinkOutputDevice outputDevice, WaveLinkOutput output) {
-        send(new WaveLinkSetOutputDeviceCommand().setParams(new WaveLinkSetOutputDeviceParams(
+        commands.setOutputDevice(new WaveLinkSetOutputDeviceParams(
                 outputDevice.blank().withOutputs(List.of(output)),
                 null
-        )));
+        ));
     }
 
     @Override
@@ -149,97 +152,51 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
         if (outputDevice.outputs() == null)
             return;
 
-        send(new WaveLinkSetOutputDeviceCommand().setParams(new WaveLinkSetOutputDeviceParams(
+        commands.setOutputDevice(new WaveLinkSetOutputDeviceParams(
                 outputDevice.blankWithOutputs()
                             .withOutputs(o -> o.blank().withLevel(value).withIsMuted(mute)),
                 null
-        )));
+        ));
     }
 
     @Override
     public void setMainOutput(WaveLinkOutputDevice outputDevice) {
-        send(new WaveLinkSetOutputDeviceCommand().setParams(new WaveLinkSetOutputDeviceParams(
+        commands.setOutputDevice(new WaveLinkSetOutputDeviceParams(
                 null,
                 new WaveLinkMainOutput(outputDevice.id())
-        )));
+        ));
+    }
+
+    @Override
+    public String getMainOutputDeviceId() {
+        return "";
     }
 
     @Nonnull
     public WaveLinkInputDevice getInputDeviceFromId(String id) {
-        return inputDevices.getOrDefault(id, new WaveLinkInputDevice(id, null, null, null));
+        return service.getInputDevices().getOrDefault(id, new WaveLinkInputDevice(id, null, null, null));
     }
 
     @Nonnull
     public WaveLinkOutputDevice getOutputDeviceFromId(String id) {
-        return outputDevices.getOrDefault(id, new WaveLinkOutputDevice(id, null, null, null));
+        return service.getOutputDevices().getOrDefault(id, new WaveLinkOutputDevice(id, null, null, null));
     }
 
     @Override
     @Nonnull
     public WaveLinkChannel getChannelFromId(String id) {
-        return channels.getOrDefault(id, new WaveLinkChannel(id, null, null, null, null, null, null, null, null));
+        return service.getChannels().getOrDefault(id, new WaveLinkChannel(id, null, null, null, null, null, null, null, null));
     }
 
     @Override
     @Nonnull
     public WaveLinkMix getMixFromId(String id) {
-        return mixes.getOrDefault(id, new WaveLinkMix(id, null, null, null, null));
+        return service.getMixes().getOrDefault(id, new WaveLinkMix(id, null, null, null, null));
     }
 
     @Override
     public void close() {
         jsonRpc.close();
-    }
-
-    protected <R> CompletableFuture<R> send(WaveLinkJsonRpcCommand<?, R> message) {
-        // return waveLinkListener.sendExpectingResult(message);
-        return null;
-    }
-
-    void onCommand(WaveLinkJsonRpcCommand<?, ?> message) {
-        switch (message) {
-            case WaveLinkChannelChangedCommand channelChanged -> updateEntry(IWaveLinkClientEventListener::channelChanged, channels, channelChanged.getParams());
-            case WaveLinkChannelsChangedCommand channelsChanged -> updateEntries(IWaveLinkClientEventListener::channelsChanged, channels, channelsChanged.getParams().channels());
-            case WaveLinkOutputDeviceChangedCommand deviceChanged -> updateEntry(IWaveLinkClientEventListener::outputDeviceChanged, outputDevices, deviceChanged.getParams());
-            case WaveLinkMixChangedCommand mixChanged -> updateEntry(IWaveLinkClientEventListener::mixChanged, mixes, mixChanged.getParams());
-            case WaveLinkFocusedAppChangedCommand appChanged -> setLastFocusApp(appChanged.getParams());
-            default -> log.info("Received unhandled message: {}", message);
-        }
-    }
-
-    private void setLastFocusApp(WaveLinkApp app) {
-        lastFocusApp = app;
-        trigger(l -> l.focusedAppChanged(app));
-    }
-
-    private <T extends WithId> void updateEntries(Consumer<IWaveLinkClientEventListener> event, Map<String, T> entries, List<T> newEntries) {
-        synchronized (entries) {
-            entries.clear();
-            newEntries.forEach(entry -> entries.put(entry.id(), entry));
-        }
-        trigger(event);
-    }
-
-    private <T extends WithId> void updateEntry(BiConsumer<IWaveLinkClientEventListener, T> event, Map<String, T> entries, T entry) {
-        entries.put(entry.id(), entry);
-        trigger(e -> event.accept(e, entry));
-    }
-
-    void updateInputDevices(List<WaveLinkInputDevice> waveLinkInputDevices) {
-        updateEntries(IWaveLinkClientEventListener::inputDevicesChanged, inputDevices, waveLinkInputDevices);
-    }
-
-    void updateOutputDevices(List<WaveLinkOutputDevice> waveLinkOutputDevices, WaveLinkMainOutput waveLinkMainOutput) {
-        mainOutputDeviceId = waveLinkMainOutput.outputDeviceId();
-        updateEntries(IWaveLinkClientEventListener::outputDevicesChanged, outputDevices, waveLinkOutputDevices);
-    }
-
-    void updateChannels(List<WaveLinkChannel> channels) {
-        updateEntries(IWaveLinkClientEventListener::channelsChanged, this.channels, channels);
-    }
-
-    void updateMixes(List<WaveLinkMix> mixes) {
-        updateEntries(IWaveLinkClientEventListener::mixesChanged, this.mixes, mixes);
     }
 
     void trigger(Consumer<IWaveLinkClientEventListener> event) {

@@ -5,25 +5,40 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
 import java.nio.ByteBuffer;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
+import javax.annotation.Nonnull;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public class JsonRpcClient implements AutoCloseable {
+public class JsonRpcClient implements AutoCloseable, JsonRpcSender {
+    final ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     private final HttpClient client;
     private final String uri;
     private final JsonRpcListener jsonRpcListener;
-    private CompletableFuture<WebSocket> websocket = CompletableFuture.completedFuture(null);
+    CompletableFuture<WebSocket> websocket = CompletableFuture.completedFuture(null);
+    final Map<Long, PendingRequest<?>> pendingRequests = new ConcurrentHashMap<>();
+    private long nextSendId;
 
-    public JsonRpcClient(String uri, boolean autoConnect, Object service) {
+    public JsonRpcClient(String uri, boolean autoConnect, JsonRpcService service) {
         this.uri = uri;
-        jsonRpcListener = new JsonRpcListener(service);
+        jsonRpcListener = new JsonRpcListener(this, service);
         client = HttpClient.newHttpClient();
         if (autoConnect) {
             connect();
         }
+    }
+
+    public <T> T buildCommands(Class<T> commandsInterface) {
+        return JsonRpcWrapper.wrap(commandsInterface, this);
     }
 
     public boolean isConnected() {
@@ -64,6 +79,34 @@ public class JsonRpcClient implements AutoCloseable {
         return disconnect()
                 .thenAccept(x -> connect())
                 .exceptionallyCompose(ex -> connect().thenAccept(x -> log.error("Connect after error", ex)));
+    }
+
+    @Override
+    @SneakyThrows
+    public <R> CompletableFuture<R> sendExpectingResult(JsonRpcCommand<?> message, Class<R> resultClass) {
+        var socket = ensureSocketNotClosed();
+
+        var result = new CompletableFuture<R>();
+        var sending = message;
+        synchronized (pendingRequests) {
+            nextSendId++;
+            sending = message.withId(nextSendId);
+            pendingRequests.put(sending.id(), new PendingRequest<>(resultClass, result));
+        }
+
+        var sendingText = mapper.writeValueAsString(sending);
+        log.debug("Sending: {}", sendingText);
+        socket.sendText(sendingText, true);
+        return result;
+    }
+
+    @Nonnull
+    private WebSocket ensureSocketNotClosed() {
+        var socket = websocket.getNow(null);
+        if (socket == null || socket.isOutputClosed() || socket.isInputClosed()) {
+            throw new IllegalStateException("WebSocket is closed");
+        }
+        return socket;
     }
 
     public CompletableFuture<Void> disconnect() {
@@ -109,6 +152,5 @@ public class JsonRpcClient implements AutoCloseable {
         } catch (Exception e) {
             log.error("Error closing websocket", e);
         }
-
     }
 }
