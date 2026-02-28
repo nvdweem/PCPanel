@@ -22,7 +22,7 @@ import com.getpcpanel.wavelink.command.CommandWaveLinkChannelEffect;
 import com.getpcpanel.wavelink.command.CommandWaveLinkMainOutput;
 import com.getpcpanel.wavelink.command.WaveLinkCommandTarget;
 
-import dev.niels.wavelink.impl.model.WaveLinkEffect;
+import dev.niels.elgato.wavelink.impl.model.WaveLinkEffect;
 import javafx.beans.Observable;
 import javafx.fxml.FXML;
 import javafx.scene.control.RadioButton;

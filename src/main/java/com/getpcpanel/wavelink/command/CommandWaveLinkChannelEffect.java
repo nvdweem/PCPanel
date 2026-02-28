@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.commands.command.ButtonAction;
 import com.getpcpanel.cpp.MuteType;
 
-import dev.niels.wavelink.impl.model.WaveLinkEffect;
+import dev.niels.elgato.wavelink.impl.model.WaveLinkEffect;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.log4j.Log4j2;

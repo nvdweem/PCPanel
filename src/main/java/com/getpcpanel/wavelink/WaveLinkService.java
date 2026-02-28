@@ -10,8 +10,8 @@ import org.springframework.stereotype.Service;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
 
-import dev.niels.wavelink.IWaveLinkClientEventListener;
-import dev.niels.wavelink.WaveLinkClient;
+import dev.niels.elgato.wavelink.IWaveLinkClientEventListener;
+import dev.niels.elgato.wavelink.WaveLinkClient;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2

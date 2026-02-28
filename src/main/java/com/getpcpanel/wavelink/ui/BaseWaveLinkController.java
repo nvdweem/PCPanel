@@ -14,10 +14,10 @@ import com.getpcpanel.wavelink.command.CommandWaveLink;
 import com.getpcpanel.wavelink.command.CommandWaveLinkChange;
 import com.getpcpanel.wavelink.command.WaveLinkCommandTarget;
 
-import dev.niels.wavelink.impl.model.WaveLinkChannel;
-import dev.niels.wavelink.impl.model.WaveLinkInputDevice;
-import dev.niels.wavelink.impl.model.WaveLinkMix;
-import dev.niels.wavelink.impl.model.WaveLinkOutputDevice;
+import dev.niels.elgato.wavelink.impl.model.WaveLinkChannel;
+import dev.niels.elgato.wavelink.impl.model.WaveLinkInputDevice;
+import dev.niels.elgato.wavelink.impl.model.WaveLinkMix;
+import dev.niels.elgato.wavelink.impl.model.WaveLinkOutputDevice;
 import io.reactivex.annotations.NonNull;
 import javafx.beans.Observable;
 import javafx.fxml.FXML;
