@@ -1,4 +1,5 @@
 import { WebSocket, WebSocketServer } from 'ws';
+import { setInterval } from 'timers';
 
 const arg2 = (process.argv[3] ?? 'localhost:1885').split(':');
 const SERVER_PORT = Number(process.argv[2]) || 1884;
@@ -70,7 +71,7 @@ wss.on('connection', (clientSocket: WebSocket, request) => {
     // Proxy messages from target to client
     targetSocket.on('message', (data, isBinary) => {
         const dataSize = Buffer.isBuffer(data) ? data.length : data instanceof ArrayBuffer ? data.byteLength : 0;
-        const message = isBinary ? `<binary data: ${dataSize} bytes>` : data.toString();
+        const message = isBinary ? `<binary data: ${dataSize} bytes>` : registerMessage(data.toString());
         log(`WaveLink -> StreamDeck (${clientId}): ${message}`);
 
         if (clientSocket.readyState === WebSocket.OPEN) {
@@ -81,7 +82,7 @@ wss.on('connection', (clientSocket: WebSocket, request) => {
     // Proxy messages from client to target
     clientSocket.on('message', (data, isBinary) => {
         const dataSize = Buffer.isBuffer(data) ? data.length : data instanceof ArrayBuffer ? data.byteLength : 0;
-        const message = isBinary ? `<binary data: ${dataSize} bytes>` : data.toString();
+        const message = isBinary ? `<binary data: ${dataSize} bytes>` : registerMessage(data.toString());
 
         if (targetConnected && targetSocket.readyState === WebSocket.OPEN) {
             log(`StreamDeck (${clientId}) -> WaveLink: ${message}`);
@@ -108,4 +109,48 @@ log('WebSocket proxy is ready to accept connections');
 function log(msg: string, ...attrs: unknown[]) {
     console.log(`${msg}`, ...attrs);
     log_file.write(util.format.apply(null, arguments) + '\n');
+}
+
+
+// Grouped logging
+type JsonRpc = JsonRpcResult | JsonRpcRequest;
+
+interface JsonRpcResult {
+    id: number;
+    result: any;
+}
+
+interface JsonRpcRequest {
+    id: number;
+    method: string;
+    params?: any;
+}
+
+type JsonReqResp = Partial<JsonRpcRequest> & Partial<JsonRpcResult>;
+
+let newMessageRegistered = false;
+const requests = new Map<number, JsonReqResp>();
+setInterval(() => groupedLog(), 5000);
+
+function registerMessage(s: string): string {
+    newMessageRegistered = true;
+    const parsed: JsonRpc = JSON.parse(s);
+    requests.set(parsed.id, Object.assign({}, requests.get(parsed.id) ?? {}, parsed));
+    return s;
+}
+
+function groupedLog() {
+    if (!newMessageRegistered) return;
+    newMessageRegistered = false;
+    const result: Record<string, JsonReqResp[]> = {};
+    [...requests.entries()].forEach(([, req]) => {
+        if (req.method) {
+            result[req.method] = result[req.method] ?? [];
+            result[req.method].push(req);
+        }
+    });
+
+    const logFile = fs.createWriteStream(__dirname + '/debug.json', {flags: 'w'});
+    logFile.write(JSON.stringify(result, null, 2) + '\n');
+    logFile.close();
 }
