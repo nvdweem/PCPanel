@@ -1,8 +1,8 @@
-package com.getpcpanel.wavelink.ui;
+package com.getpcpanel.elgato.wavelink.ui;
 
 import com.getpcpanel.MainFX;
 import com.getpcpanel.ui.command.Cmd.CmdEnabled;
-import com.getpcpanel.wavelink.WaveLinkService;
+import com.getpcpanel.elgato.wavelink.WaveLinkService;
 
 class WaveLinkEnabled extends CmdEnabled {
     @Override

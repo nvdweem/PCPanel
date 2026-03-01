@@ -1,15 +1,15 @@
 package dev.niels.elgato.wavelink.impl;
 
+import static lombok.AccessLevel.PROTECTED;
+
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Consumer;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import dev.niels.elgato.jsonrpc.JsonRpcClient;
+import dev.niels.elgato.shared.ClientImpl;
 import dev.niels.elgato.wavelink.IWaveLinkClient;
 import dev.niels.elgato.wavelink.IWaveLinkClientEventListener;
 import dev.niels.elgato.wavelink.impl.model.WaveLinkChannel;
@@ -26,52 +26,19 @@ import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseable {
+public abstract class WaveLinkClientImpl extends ClientImpl<IWaveLinkClientEventListener> implements IWaveLinkClient, AutoCloseable {
     private final WaveLinkService service;
-    private final JsonRpcClient jsonRpc;
+    @Getter(PROTECTED) private final JsonRpcClient jsonRpc;
     private final WaveLinkRpcCommands commands;
-
-    private final List<IWaveLinkClientEventListener> listeners = new CopyOnWriteArrayList<>();
-    @Getter private boolean initialized;
 
     protected WaveLinkClientImpl(boolean autoConnect) {
         service = new WaveLinkService(this);
-        jsonRpc = new JsonRpcClient("ws://127.0.0.1:1884", false, service);
+        jsonRpc = new JsonRpcClient("ws://127.0.0.1:1884", false, this, service);
         commands = jsonRpc.buildCommands(WaveLinkRpcCommands.class);
         service.setCommands(commands);
         if (autoConnect) {
             jsonRpc.connect();
         }
-    }
-
-    @Override
-    public boolean isConnected() {
-        return jsonRpc.isConnected();
-    }
-
-    @Override
-    public void ping() {
-        jsonRpc.ping();
-    }
-
-    @Override
-    public CompletableFuture<Void> reconnect() {
-        return jsonRpc.reconnect();
-    }
-
-    @Override
-    public CompletableFuture<Void> disconnect() {
-        return jsonRpc.disconnect();
-    }
-
-    @Override
-    public void addListener(IWaveLinkClientEventListener listener) {
-        listeners.add(listener);
-    }
-
-    @Override
-    public void removeListener(IWaveLinkClientEventListener listener) {
-        listeners.remove(listener);
     }
 
     @Override
@@ -192,20 +159,5 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
     @Nonnull
     public WaveLinkMix getMixFromId(String id) {
         return service.getMixes().getOrDefault(id, new WaveLinkMix(id, null, null, null, null));
-    }
-
-    @Override
-    public void close() {
-        jsonRpc.close();
-    }
-
-    void trigger(Consumer<IWaveLinkClientEventListener> event) {
-        listeners.forEach(event);
-    }
-
-    public void setInitialized() {
-        log.info("Connected to Wave Link and initialized");
-        initialized = true;
-        trigger(IWaveLinkClientEventListener::initialized);
     }
 }

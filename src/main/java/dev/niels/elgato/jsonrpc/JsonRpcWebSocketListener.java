@@ -20,7 +20,7 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @RequiredArgsConstructor
-class JsonRpcListener implements Listener {
+class JsonRpcWebSocketListener implements Listener {
     private final JsonRpcClient client;
     private final JsonRpcService service;
     private final Map<String, Consumer<JsonNode>> serviceMethodCache = new ConcurrentHashMap<>();
@@ -32,6 +32,7 @@ class JsonRpcListener implements Listener {
         log.debug("WebSocket opened");
         client.websocket = CompletableFuture.completedFuture(webSocket);
         CompletableFuture.runAsync(() -> service._onConnect(client));
+        client.rpcListener.connected();
     }
 
     @Override
@@ -65,7 +66,7 @@ class JsonRpcListener implements Listener {
 
     @SneakyThrows
     private void handleResult(JsonNode tree, PendingRequest<Object> request) {
-        if (Void.class.equals(request.resultClass())) {
+        if (Void.class.equals(request.resultClass().getRawClass())) {
             request.future().complete(null);
         } else {
             var resultNode = tree.get("result");
@@ -78,6 +79,7 @@ class JsonRpcListener implements Listener {
     private void handleError(JsonNode tree, PendingRequest<Object> req) {
         var ex = client.mapper.treeToValue(tree.get("error"), JsonRpcException.class);
         req.future().completeExceptionally(ex);
+        client.rpcListener.onError(ex);
     }
 
     private <T> Optional<PendingRequest<T>> getRequest(JsonNode tree) {
@@ -119,7 +121,11 @@ class JsonRpcListener implements Listener {
     public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
         log.info("WebSocket closed with status code {} and reason {}", statusCode, reason);
         CompletableFuture.runAsync(service::_onClose);
-        return Listener.super.onClose(webSocket, statusCode, reason);
+        try {
+            return Listener.super.onClose(webSocket, statusCode, reason);
+        } finally {
+            client.rpcListener.connectionClosed();
+        }
     }
 
     @Override
@@ -127,5 +133,6 @@ class JsonRpcListener implements Listener {
         log.error("WebSocket error", error);
         CompletableFuture.runAsync(() -> service._onError(error));
         Listener.super.onError(webSocket, error);
+        client.rpcListener.onError(error);
     }
 }

@@ -1,4 +1,4 @@
-package com.getpcpanel.wavelink.command;
+package com.getpcpanel.elgato.wavelink.command;
 
 import java.util.List;
 import java.util.Objects;

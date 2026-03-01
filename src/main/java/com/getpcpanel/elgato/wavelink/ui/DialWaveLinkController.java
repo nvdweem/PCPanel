@@ -1,4 +1,4 @@
-package com.getpcpanel.wavelink.ui;
+package com.getpcpanel.elgato.wavelink.ui;
 
 import org.springframework.stereotype.Component;
 
@@ -7,8 +7,8 @@ import com.getpcpanel.commands.command.DialAction.DialCommandParams;
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.DialCommandController;
-import com.getpcpanel.wavelink.WaveLinkService;
-import com.getpcpanel.wavelink.command.CommandWaveLinkChangeLevel;
+import com.getpcpanel.elgato.wavelink.WaveLinkService;
+import com.getpcpanel.elgato.wavelink.command.CommandWaveLinkChangeLevel;
 
 import lombok.extern.log4j.Log4j2;
 

@@ -1,4 +1,4 @@
-package com.getpcpanel.wavelink;
+package com.getpcpanel.elgato.controlcenter;
 
 import java.net.ConnectException;
 import java.util.concurrent.CompletionException;
@@ -10,25 +10,25 @@ import org.springframework.stereotype.Service;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
 
+import dev.niels.elgato.controlcenter.ControlCenterClient;
 import dev.niels.elgato.wavelink.IWaveLinkClientEventListener;
-import dev.niels.elgato.wavelink.WaveLinkClient;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @Service
-public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEventListener {
+public class ControlCenterService extends ControlCenterClient implements IWaveLinkClientEventListener {
     private final SaveService saveService;
     private boolean wasEnabled;
 
-    public WaveLinkService(SaveService saveService) {
+    public ControlCenterService(SaveService saveService) {
         super(false);
         this.saveService = saveService;
         wasEnabled = isEnabled();
-        addListener(this);
+        // addListener(this);
     }
 
     public boolean isEnabled() {
-        return saveService.get().getWaveLink().enabled();
+        return saveService.get().getElgato().controlCenterEnabled();
     }
 
     @EventListener(SaveEvent.class)
@@ -49,17 +49,17 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
             return;
         }
         if (isConnected()) {
-            log.debug("WaveLink connected, sending ping.");
+            log.debug("ControlCenter connected, sending ping.");
             ping();
         } else {
-            log.info("WaveLink not connected, connecting.");
+            log.info("ControlCenter not connected, connecting.");
             reconnect();
         }
     }
 
     @Override
     public void connectionClosed() {
-        log.info("WaveLink connection closed.");
+        log.info("ControlCenter connection closed.");
     }
 
     @Override
@@ -69,7 +69,7 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
         }
 
         if (t instanceof ConnectException) {
-            log.warn("Unable to connect to WaveLink");
+            log.warn("Unable to connect to ControlCenter");
         }
     }
 }

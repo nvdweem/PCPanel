@@ -236,6 +236,7 @@
                     <Insets bottom="8.0" left="8.0" right="8.0" top="8.0"/>
                 </padding>
                 <CheckBox fx:id="waveLinkEnable" mnemonicParsing="false" text="Enable Elgato Wave Link support"/>
+                <CheckBox fx:id="controlCenterEnable" mnemonicParsing="false" text="Enable Elgato Control Center support"/>
             </VBox>
         </Tab>
         <Tab text="Debug">

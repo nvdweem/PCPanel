@@ -1,4 +1,4 @@
-package com.getpcpanel.wavelink.ui;
+package com.getpcpanel.elgato.wavelink.ui;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -9,10 +9,10 @@ import javax.annotation.Nullable;
 
 import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.CommandController;
-import com.getpcpanel.wavelink.WaveLinkService;
-import com.getpcpanel.wavelink.command.CommandWaveLink;
-import com.getpcpanel.wavelink.command.CommandWaveLinkChange;
-import com.getpcpanel.wavelink.command.WaveLinkCommandTarget;
+import com.getpcpanel.elgato.wavelink.WaveLinkService;
+import com.getpcpanel.elgato.wavelink.command.CommandWaveLink;
+import com.getpcpanel.elgato.wavelink.command.CommandWaveLinkChange;
+import com.getpcpanel.elgato.wavelink.command.WaveLinkCommandTarget;
 
 import dev.niels.elgato.wavelink.impl.model.WaveLinkChannel;
 import dev.niels.elgato.wavelink.impl.model.WaveLinkInputDevice;

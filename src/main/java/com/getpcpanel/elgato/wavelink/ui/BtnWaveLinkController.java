@@ -1,4 +1,4 @@
-package com.getpcpanel.wavelink.ui;
+package com.getpcpanel.elgato.wavelink.ui;
 
 import java.util.List;
 import java.util.Objects;
@@ -14,13 +14,13 @@ import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.command.ButtonCommandController;
 import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
-import com.getpcpanel.wavelink.WaveLinkService;
-import com.getpcpanel.wavelink.command.CommandWaveLink;
-import com.getpcpanel.wavelink.command.CommandWaveLinkAddFocusToChannel;
-import com.getpcpanel.wavelink.command.CommandWaveLinkChangeMute;
-import com.getpcpanel.wavelink.command.CommandWaveLinkChannelEffect;
-import com.getpcpanel.wavelink.command.CommandWaveLinkMainOutput;
-import com.getpcpanel.wavelink.command.WaveLinkCommandTarget;
+import com.getpcpanel.elgato.wavelink.WaveLinkService;
+import com.getpcpanel.elgato.wavelink.command.CommandWaveLink;
+import com.getpcpanel.elgato.wavelink.command.CommandWaveLinkAddFocusToChannel;
+import com.getpcpanel.elgato.wavelink.command.CommandWaveLinkChangeMute;
+import com.getpcpanel.elgato.wavelink.command.CommandWaveLinkChannelEffect;
+import com.getpcpanel.elgato.wavelink.command.CommandWaveLinkMainOutput;
+import com.getpcpanel.elgato.wavelink.command.WaveLinkCommandTarget;
 
 import dev.niels.elgato.wavelink.impl.model.WaveLinkEffect;
 import javafx.beans.Observable;

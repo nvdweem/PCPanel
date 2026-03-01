@@ -1,6 +1,7 @@
 package dev.niels.elgato.jsonrpc;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
@@ -13,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.SneakyThrows;
@@ -23,18 +25,25 @@ public class JsonRpcClient implements AutoCloseable, JsonRpcSender {
     final ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     private final HttpClient client;
     private final String uri;
-    private final JsonRpcListener jsonRpcListener;
+    final IJsonRpcClientListener rpcListener;
+    private final JsonRpcWebSocketListener jsonRpcWebSocketListener;
     CompletableFuture<WebSocket> websocket = CompletableFuture.completedFuture(null);
     final Map<Long, PendingRequest<?>> pendingRequests = new ConcurrentHashMap<>();
     private long nextSendId;
 
-    public JsonRpcClient(String uri, boolean autoConnect, JsonRpcService service) {
+    public JsonRpcClient(String uri, boolean autoConnect, IJsonRpcClientListener rpcListener, JsonRpcService service) {
         this.uri = uri;
-        jsonRpcListener = new JsonRpcListener(this, service);
+        this.rpcListener = rpcListener;
+        jsonRpcWebSocketListener = new JsonRpcWebSocketListener(this, service);
         client = HttpClient.newHttpClient();
         if (autoConnect) {
             connect();
         }
+    }
+
+    @Override
+    public JavaType toJavaType(Type type) {
+        return mapper.constructType(type);
     }
 
     public <T> T buildCommands(Class<T> commandsInterface) {
@@ -63,13 +72,12 @@ public class JsonRpcClient implements AutoCloseable, JsonRpcSender {
 
     public CompletableFuture<WebSocket> connect() {
         ensureDisconnect();
-
         log.debug("Connecting");
         websocket = client.newWebSocketBuilder()
                           .header("Origin", "streamdeck://")
-                          .buildAsync(URI.create(uri), jsonRpcListener)
+                          .buildAsync(URI.create(uri), jsonRpcWebSocketListener)
                           .exceptionally(ex -> {
-                              // trigger(l -> l.onError(ex));
+                              rpcListener.onError(ex);
                               return null;
                           });
         return websocket;
@@ -83,7 +91,7 @@ public class JsonRpcClient implements AutoCloseable, JsonRpcSender {
 
     @Override
     @SneakyThrows
-    public <R> CompletableFuture<R> sendExpectingResult(JsonRpcCommand<?> message, Class<R> resultClass) {
+    public <R> CompletableFuture<R> sendExpectingResult(JsonRpcCommand<?> message, JavaType resultClass) {
         var socket = ensureSocketNotClosed();
 
         var result = new CompletableFuture<R>();

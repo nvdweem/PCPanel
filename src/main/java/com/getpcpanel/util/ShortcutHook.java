@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.spring.ConditionalOnWindows;
 import com.github.kwhat.jnativehook.GlobalScreen;
 import com.github.kwhat.jnativehook.NativeHookException;
@@ -46,7 +47,7 @@ public class ShortcutHook implements NativeKeyListener {
         try {
             GlobalScreen.registerNativeHook();
             GlobalScreen.addNativeKeyListener(this);
-            log.info("Keyboard hook enabled");
+            log.info("Keyboard hook waveLinkEnabled");
         } catch (NativeHookException | UnsatisfiedLinkError ex) {
             log.error("Unable to register global hook, shortcuts will not work", ex);
         }
@@ -74,7 +75,7 @@ public class ShortcutHook implements NativeKeyListener {
         return String.join("+", modifiers, key);
     }
 
-    @EventListener(SaveService.SaveEvent.class)
+    @EventListener(SaveEvent.class)
     public void updateShortcuts() {
         shortcuts = EntryStream.of(saveService.get().getDevices())
                                .flatMapValues(ds -> ds.getProfiles().stream())

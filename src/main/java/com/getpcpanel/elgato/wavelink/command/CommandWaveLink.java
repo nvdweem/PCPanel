@@ -1,8 +1,8 @@
-package com.getpcpanel.wavelink.command;
+package com.getpcpanel.elgato.wavelink.command;
 
 import com.getpcpanel.MainFX;
 import com.getpcpanel.commands.command.Command;
-import com.getpcpanel.wavelink.WaveLinkService;
+import com.getpcpanel.elgato.wavelink.WaveLinkService;
 
 import lombok.Getter;
 import lombok.ToString;

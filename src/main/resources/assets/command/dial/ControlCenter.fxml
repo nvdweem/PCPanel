@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.ColumnConstraints?>
@@ -8,7 +9,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
-<HBox prefHeight="200.0" prefWidth="440.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.elgato.wavelink.ui.DialWaveLinkController">
+<HBox prefHeight="200.0" prefWidth="440.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.elgato.controlcenter.ui.DialControlCenterController">
     <VBox prefHeight="171.0" prefWidth="435.0" spacing="15.0">
         <padding>
             <Insets bottom="10.0" left="10.0" right="10.0" top="10.0"/>
@@ -22,15 +23,16 @@
                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
                 <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
+                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES"/>
             </rowConstraints>
             <Label text="Type"/>
             <ChoiceBox fx:id="typeChoice" prefWidth="150.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"/>
 
-            <Label fx:id="choice1Label" text="Device" GridPane.rowIndex="1"/>
-            <ChoiceBox fx:id="choice1" prefHeight="31.0" prefWidth="150.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1"/>
+            <Label text="Device" GridPane.rowIndex="1"/>
+            <ChoiceBox fx:id="device" prefHeight="31.0" prefWidth="150.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="1"/>
 
-            <Label fx:id="choice2Label" text="Mix" GridPane.rowIndex="2"/>
-            <ChoiceBox fx:id="choice2" prefWidth="150.0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.rowIndex="2"/>
+            <CheckBox GridPane.rowIndex="2" fx:id="minIsOff">Min value turns off light</CheckBox>
+            <CheckBox GridPane.rowIndex="3" fx:id="changeIsOn">Changing turns on light</CheckBox>
         </GridPane>
     </VBox>
 </HBox>

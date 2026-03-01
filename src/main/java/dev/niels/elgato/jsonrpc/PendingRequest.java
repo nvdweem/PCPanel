@@ -2,5 +2,7 @@ package dev.niels.elgato.jsonrpc;
 
 import java.util.concurrent.CompletableFuture;
 
-record PendingRequest<T>(Class<T> resultClass, CompletableFuture<T> future) {
+import com.fasterxml.jackson.databind.JavaType;
+
+record PendingRequest<T>(JavaType resultClass, CompletableFuture<T> future) {
 }

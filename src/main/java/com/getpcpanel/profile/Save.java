@@ -43,7 +43,7 @@ public class Save {
     private Integer oscListenPort;
     private List<OSCConnectionInfo> oscConnections;
     private MqttSettings mqtt;
-    private WaveLinkSettings waveLink;
+    private ElgatoSettings elgato;
 
     // Overlay
     private boolean overlayEnabled;
@@ -106,7 +106,7 @@ public class Save {
     }
 
     @Nonnull
-    public WaveLinkSettings getWaveLink() {
-        return Objects.requireNonNullElse(waveLink, WaveLinkSettings.DEFAULT);
+    public ElgatoSettings getElgato() {
+        return Objects.requireNonNullElse(elgato, ElgatoSettings.DEFAULT);
     }
 }
