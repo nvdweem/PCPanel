@@ -1,6 +1,16 @@
 import { WebSocket, WebSocketServer } from 'ws';
 import { setInterval } from 'timers';
 
+if ((process.argv[2] ?? '').toLowerCase().includes('wave')) {
+    console.log('Using WaveLink settings');
+    process.argv[2] = '1884';
+    process.argv[3] = 'localhost:1885';
+} else if ((process.argv[2] ?? '').toLowerCase().includes('control')) {
+    console.log('Using Control Center settings (might have to run as admin)');
+    process.argv[2] = '1804';
+    process.argv[3] = 'localhost:1805';
+}
+
 const arg2 = (process.argv[3] ?? 'localhost:1885').split(':');
 const SERVER_PORT = Number(process.argv[2]) || 1884;
 const TARGET_PORT = Number(arg2[1]) || 1885;
@@ -71,7 +81,7 @@ wss.on('connection', (clientSocket: WebSocket, request) => {
     // Proxy messages from target to client
     targetSocket.on('message', (data, isBinary) => {
         const dataSize = Buffer.isBuffer(data) ? data.length : data instanceof ArrayBuffer ? data.byteLength : 0;
-        const message = isBinary ? `<binary data: ${dataSize} bytes>` : registerMessage(data.toString());
+        const message = isBinary ? `<binary data: ${dataSize} bytes>` : registerMessage(data.toString(), false);
         log(`WaveLink -> StreamDeck (${clientId}): ${message}`);
 
         if (clientSocket.readyState === WebSocket.OPEN) {
@@ -82,7 +92,7 @@ wss.on('connection', (clientSocket: WebSocket, request) => {
     // Proxy messages from client to target
     clientSocket.on('message', (data, isBinary) => {
         const dataSize = Buffer.isBuffer(data) ? data.length : data instanceof ArrayBuffer ? data.byteLength : 0;
-        const message = isBinary ? `<binary data: ${dataSize} bytes>` : registerMessage(data.toString());
+        const message = isBinary ? `<binary data: ${dataSize} bytes>` : registerMessage(data.toString(), true);
 
         if (targetConnected && targetSocket.readyState === WebSocket.OPEN) {
             log(`StreamDeck (${clientId}) -> WaveLink: ${message}`);
@@ -126,31 +136,45 @@ interface JsonRpcRequest {
     params?: any;
 }
 
-type JsonReqResp = Partial<JsonRpcRequest> & Partial<JsonRpcResult>;
+type JsonSource = 'streamdeck' | 'wavelink';
+type JsonReqResp = Partial<JsonRpcRequest> & Partial<JsonRpcResult> & { source: JsonSource };
 
 let newMessageRegistered = false;
 const requests = new Map<number, JsonReqResp>();
 setInterval(() => groupedLog(), 5000);
 
-function registerMessage(s: string): string {
+function registerMessage(s: string, fromSource: boolean): string {
     newMessageRegistered = true;
     const parsed: JsonRpc = JSON.parse(s);
-    requests.set(parsed.id, Object.assign({}, requests.get(parsed.id) ?? {}, parsed));
+    const currentMessage = requests.get(parsed.id) ?? {};
+    const mergedMessage = Object.assign({}, {source: fromSource ? 'streamdeck' : 'wavelink'}, currentMessage, parsed) as JsonReqResp;
+
+    requests.set(parsed.id ?? nextId(), mergedMessage);
     return s;
 }
 
 function groupedLog() {
     if (!newMessageRegistered) return;
     newMessageRegistered = false;
-    const result: Record<string, JsonReqResp[]> = {};
+    const result: Record<JsonSource, Record<string, JsonReqResp[]>> = {
+        'streamdeck': {},
+        'wavelink': {},
+    };
     [...requests.entries()].forEach(([, req]) => {
         if (req.method) {
-            result[req.method] = result[req.method] ?? [];
-            result[req.method].push(req);
+            result[req.source] = result[req.source] ?? {};
+            result[req.source][req.method] = result[req.source][req.method] ?? [];
+            result[req.source][req.method].push(req);
         }
     });
 
     const logFile = fs.createWriteStream(__dirname + '/debug.json', {flags: 'w'});
     logFile.write(JSON.stringify(result, null, 2) + '\n');
     logFile.close();
+}
+
+let prevId = 0;
+
+function nextId() {
+    return --prevId;
 }
