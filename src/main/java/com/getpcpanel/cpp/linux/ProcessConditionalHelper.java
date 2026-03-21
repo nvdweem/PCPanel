@@ -19,9 +19,10 @@ public abstract class ProcessConditionalHelper {
         return resultCache.computeIfAbsent(normalizedProcess, k -> checkFileExists(k) || checkWhichProcess(k));
     }
 
-    private static boolean checkFileExists(String path) {
+    private static boolean checkFileExists(String pathStr) {
         try {
-            return Files.exists(Path.of(path));
+            var path = Path.of(pathStr);
+            return Files.exists(path) && Files.isExecutable(path);
         } catch (Exception ignored) {
         }
         return false;

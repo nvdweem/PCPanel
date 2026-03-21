@@ -4,7 +4,7 @@ Note: The software is not actively being developed for Linux, but attempts are b
 stay/become more Linux compatible. If there are any issues please report them via an issue.
 
 Due to there being a lot of Linux distributions there are bound to be features that won't work.
-There are also some features that are not possible (anymore) on Linux like the focus volume on Wayland.
+Wayland focus volume is starting to become possible again, install kdotool for that.
 
 ## Preparation
 
@@ -85,7 +85,7 @@ In certain cases there will be a 'JavaEmbeddedFrame' when the application is run
 It is possible to disable the tray icon and removing the JavaEmbeddedFrame by adding `-Ddisable.tray` to the command line.
 If the tray is disabled, the close button will still only hide the application. Starting the application again will show the main window.
 
-# Active window volume
+## Active window volume
 
 To get the active window, the software uses either `xdotool` (probably available in app-stores) or `kdotool` (which might not).
 
