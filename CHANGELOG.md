@@ -10,6 +10,7 @@
 - Attempts to improve Wayland tray support (now works on Ubuntu)
 - #74 - (Linux) New audio sessions should trigger initial volume setting
 - #74 - (Linux) New setting 'Force application volume to panel volume', this tries to reset the volume when an application changes it. This seems to solve for instance Firefox from going back to 100% when playing a new song.
+- #74 - (Linux) Allow using [kdotool](https://github.com/jinliu/kdotool) for getting the active window on Wayland and control its volume, see linux instructions for more information
 
 ## [1.7.1]
 

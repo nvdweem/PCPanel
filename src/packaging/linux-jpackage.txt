@@ -12,5 +12,4 @@
 --about-url "https://github.com/nvdweem/PCPanel"
 --linux-menu-group PCPanel
 --linux-package-deps pulseaudio-utils
---linux-package-deps xdotool
 --linux-shortcut
