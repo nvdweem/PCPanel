@@ -31,8 +31,7 @@ Linux might need a few more steps to get everything working.
 If it still doesn't work, try restarting your computer (logging out is not enough).
 
 The software depends on some PulseAudio commands (`pactl`) from `pulseaudio-utils` for volume control
-and `xdotool` to get the currently active window for focus volume. These packages should be
-installed automatically, but you can also install them manually if they are not.
+and `xdotool` (x11) or `kdotool` (wayland) to get the currently active window for focus volume.
 
 If there are no tray extensions available, the application will still hide when closed. To show
 the main window, just run the application again.
@@ -85,3 +84,25 @@ The application auto-detects Wayland via `XDG_SESSION_TYPE` or `WAYLAND_DISPLAY`
 In certain cases there will be a 'JavaEmbeddedFrame' when the application is running. This is caused by the tray icon.
 It is possible to disable the tray icon and removing the JavaEmbeddedFrame by adding `-Ddisable.tray` to the command line.
 If the tray is disabled, the close button will still only hide the application. Starting the application again will show the main window.
+
+# Active window volume
+
+To get the active window, the software uses either `xdotool` (probably available in app-stores) or `kdotool` (which might not).
+
+For me, the installation instructions for `kdotool` were:
+
+I also needed to update rust (due to compile errors in `cargo install`), so I included `rustup`.
+
+```shell
+# Install kdotool
+sudo apt install cargo rustup libdbus-1-dev pkg-config
+rustup default stable
+cargo install kdotool
+
+# Add cargo bin to path
+echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+Not sure if a restart is needed after that. I ended up adding an option to point to the executable by adding this VM argument:
+`-Dlinux.commands.kdotool=~/.cargo/bin/kdotool`
