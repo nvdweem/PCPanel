@@ -315,6 +315,11 @@
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
+                    <parameters>true</parameters>
+                    <compilerArgs>
+                        <arg>--add-exports=javafx.controls/com.sun.javafx.scene.control.skin.resources=ALL-UNNAMED</arg>
+                        <arg>--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED</arg>
+                    </compilerArgs>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
@@ -336,17 +341,6 @@
                 <extensions>true</extensions>
                 <configuration>
                     <jvmArgs>${javafx.add.exports} ${javafx.native-access}</jvmArgs>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>${compiler-plugin.version}</version>
-                <configuration>
-                    <parameters>true</parameters>
-                    <compilerArgs>
-                        <arg>--add-exports=javafx.controls/com.sun.javafx.scene.control.skin.resources=ALL-UNNAMED</arg>
-                        <arg>--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED</arg>
-                    </compilerArgs>
                 </configuration>
             </plugin>
             <plugin>

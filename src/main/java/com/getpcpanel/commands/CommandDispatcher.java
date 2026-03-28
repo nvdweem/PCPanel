@@ -20,7 +20,7 @@ public class CommandDispatcher {
         Runtime.getRuntime().addShutdownHook(new Thread(handler::doStop, "CommandHandler shutdown hook"));
     }
 
-    private CommandDispatcher() {
+    CommandDispatcher() {
     }
 
     public void onCommand(@Observes PCPanelControlEvent event) {

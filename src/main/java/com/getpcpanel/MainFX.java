@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.stage.Stage;
 import lombok.extern.log4j.Log4j2;
 
@@ -18,7 +19,6 @@ public class MainFX extends Application {
     @Override
     @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
     public void init() throws Exception {
-        System.out.println("Init");
         //     context = new SpringApplicationBuilder(Main.class)
         //             .headless(false)
         //             .run(getParameters().getRaw().toArray(new String[0]));
@@ -26,14 +26,15 @@ public class MainFX extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        //     log.info("Starting v{}", context.getEnvironment().getProperty("application.version"));
-        //     context.getBean(HomePage.class).start(primaryStage, getParameters().getRaw().contains("quiet"));
+        System.out.println("Test");
+        // log.info("Starting v{}", context.getEnvironment().getProperty("application.version"));
+        // context.getBean(HomePage.class).start(primaryStage, getParameters().getRaw().contains("quiet"));
     }
 
     @Override
     public void stop() throws Exception {
         //     context.close();
-        //     Platform.exit();
+        Platform.exit();
     }
 
     @SuppressWarnings("unchecked")

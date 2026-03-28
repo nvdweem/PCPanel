@@ -26,7 +26,7 @@ import lombok.extern.log4j.Log4j2;
 @ApplicationScoped
 @ConditionalOnPulseAudio
 @RequiredArgsConstructor
-public class PulseAudioEventListener extends Thread {
+public class PulseAudioEventListener {
     private final Event<Object> eventPublisher;
     private final ProcessHelper processHelper;
     private final CircularFifoQueue<String> latestEvents = new CircularFifoQueue<>(50);
@@ -36,9 +36,9 @@ public class PulseAudioEventListener extends Thread {
 
     @PostConstruct
     public void init() {
-        setName("PulseAudio change listener");
-        setDaemon(true);
-        start();
+        var thread = new Thread(this::run, "PulseAudio change listener");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     @PreDestroy
@@ -46,7 +46,6 @@ public class PulseAudioEventListener extends Thread {
         running = false;
     }
 
-    @Override
     public void run() {
         while (running) {
             try {

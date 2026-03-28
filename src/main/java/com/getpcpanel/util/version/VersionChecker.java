@@ -26,7 +26,7 @@ import one.util.streamex.StreamEx;
 @Log4j2
 @ApplicationScoped
 @RequiredArgsConstructor
-public class VersionChecker extends Thread {
+public class VersionChecker {
     private final Event<Object> eventPublisher;
     private final SaveService save;
     private static final HttpClient WEB_CLIENT = HttpClient.newBuilder().build();
@@ -37,13 +37,13 @@ public class VersionChecker extends Thread {
 
     @PostConstruct
     public void init() {
-        setDaemon(true);
         if (save.get().isStartupVersionCheck()) {
-            start();
+            var thread = new Thread(this::run, "VersionCheck");
+            thread.setDaemon(true);
+            thread.start();
         }
     }
 
-    @Override
     public void run() {
         var remoteVersions = getRemoteVersions();
         if (ArrayUtils.isEmpty(remoteVersions)) {

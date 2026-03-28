@@ -15,7 +15,7 @@
         <option value="$PROJECT_DIR$/pom.xml" />
       </list>
     </option>
-    <option name="enabledProfiles">
+    <option name="disabledProfiles">
       <list>
         <option value="native" />
       </list>

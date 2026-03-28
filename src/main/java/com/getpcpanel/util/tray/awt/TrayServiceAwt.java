@@ -32,7 +32,7 @@ import lombok.extern.log4j.Log4j2;
 @ConditionalOnAwtTray
 class TrayServiceAwt {
     private final Event<Object> eventPublisher;
-    @ConfigProperty(name = "disable.tray") @Setter private boolean disabled;
+    @ConfigProperty(name = "disable.tray", defaultValue = "false") @Setter private boolean disabled;
 
     @PostConstruct
     public void init() {
