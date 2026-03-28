@@ -4,7 +4,6 @@ import static com.getpcpanel.cpp.AudioSession.SYSTEM;
 
 import java.io.File;
 import java.util.HashMap;
-import java.util.Objects;
 import java.util.function.BiFunction;
 
 import javax.annotation.Nonnull;
@@ -40,18 +39,13 @@ import one.util.streamex.StreamEx;
 @ApplicationScoped
 @RequiredArgsConstructor
 public class IconService {
-    public static final Image DEFAULT = new Image(Objects.requireNonNull(IconService.class.getResource("/assets/32x32.png")).toExternalForm());
-    private static final Image OBS = new Image(Objects.requireNonNull(IconService.class.getResource("/assets/obs.png")).toExternalForm());
-    private static final Image VOICEMEETER = new Image(Objects.requireNonNull(IconService.class.getResource("/assets/voicemeeter.png")).toExternalForm());
-    private static final Image DEVICE = new Image(Objects.requireNonNull(IconService.class.getResource("/assets/device.png")).toExternalForm());
-    private static final Image SYSTEM_SOUND = new Image(Objects.requireNonNull(IconService.class.getResource("/assets/systemsounds.ico")).toExternalForm());
     private final SafeMap imageHandlers = new SafeMap();
     private final ISndCtrl sndCtrl;
     private final IIconService iconService;
 
     @PostConstruct
     public void init() {
-        imageHandlers.put(Command.class, (a, b) -> DEFAULT);
+        imageHandlers.put(Command.class, (a, b) -> IconServiceImages.DEFAULT);
 
         // Dials
         imageHandlers.put(CommandVolumeProcess.class, IconService::getRunningProcessIcon);
@@ -72,7 +66,7 @@ public class IconService {
     @Nonnull
     public Image getImageFrom(@Nullable Commands commands, @Nullable KnobSetting override) {
         if (!Commands.hasCommands(commands)) {
-            return DEFAULT;
+            return IconServiceImages.DEFAULT;
         }
 
         if (override != null) {
@@ -95,20 +89,20 @@ public class IconService {
         //noinspection ObjectEquality
         return StreamEx.of(commands.getCommands())
                        .map(imageHandlers::handle)
-                       .findFirst(result -> result != null && result != DEFAULT)
-                       .orElse(DEFAULT);
+                       .findFirst(result -> result != null && result != IconServiceImages.DEFAULT)
+                       .orElse(IconServiceImages.DEFAULT);
     }
 
     public boolean isDefault(Image img) {
         //noinspection ObjectEquality
-        return img == DEFAULT;
+        return img == IconServiceImages.DEFAULT;
     }
 
     private Image getRunningProcessIcon(CommandVolumeProcess commandIcon) {
         var allProcesses = sndCtrl.getRunningApplications();
         for (var process : commandIcon.getProcessName()) {
             if (StringUtils.equalsIgnoreCase(process, SYSTEM)) {
-                return SYSTEM_SOUND;
+                return IconServiceImages.SYSTEM_SOUND;
             }
             for (var runningProcess : allProcesses) {
                 if (StringUtils.containsIgnoreCase(runningProcess.file().getAbsolutePath(), process)) {
@@ -119,27 +113,27 @@ public class IconService {
                 }
             }
         }
-        return DEFAULT;
+        return IconServiceImages.DEFAULT;
     }
 
     private Image getFocusProcessIcon(CommandVolumeFocus command) {
         var image = iconService.getIconImageForFile(32, 32, new File(sndCtrl.getFocusApplication()));
         if (image == null) {
-            return DEFAULT;
+            return IconServiceImages.DEFAULT;
         }
         return image;
     }
 
     private Image getDeviceIcon(Command command) {
-        return DEVICE;
+        return IconServiceImages.DEVICE;
     }
 
     private Image getVoiceMeeterIcon(CommandVoiceMeeter command) {
-        return VOICEMEETER;
+        return IconServiceImages.VOICEMEETER;
     }
 
     private Image getObsIcon(CommandObs command) {
-        return OBS;
+        return IconServiceImages.OBS;
     }
 
     private class SafeMap extends HashMap<Class<? extends Command>, BiFunction<IconService, ? extends Command, Image>> {
@@ -150,7 +144,7 @@ public class IconService {
 
         public <T extends Command> Image handle(T icon) {
             if (icon == null)
-                return DEFAULT;
+                return IconServiceImages.DEFAULT;
 
             //noinspection unchecked
             return ((BiFunction<IconService, T, Image>) ensureHandler(icon.getClass())).apply(IconService.this, icon);

@@ -9,6 +9,7 @@ import java.util.function.Supplier;
 
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.IconService;
+import com.getpcpanel.commands.IconServiceImages;
 import com.getpcpanel.commands.PCPanelControlEvent;
 import com.getpcpanel.commands.command.ButtonAction;
 import com.getpcpanel.commands.command.DialAction;
@@ -193,6 +194,6 @@ public class Overlay extends Popup {
     }
 
     private record CommandAndIcon(Commands command, Image icon) {
-        static final CommandAndIcon DEFAULT = new CommandAndIcon(Commands.EMPTY, IconService.DEFAULT);
+        static final CommandAndIcon DEFAULT = new CommandAndIcon(Commands.EMPTY, IconServiceImages.DEFAULT);
     }
 }
