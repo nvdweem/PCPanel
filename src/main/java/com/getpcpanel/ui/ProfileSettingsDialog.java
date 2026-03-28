@@ -15,13 +15,11 @@ import com.getpcpanel.profile.OSCBinding;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.spring.OsHelper;
-import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.PickProcessesController.PickType;
 import com.getpcpanel.ui.ProfileSettingsDialog.ProfileSettingsArgs;
 import com.getpcpanel.util.ShortcutHook;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 
-import jakarta.inject.Singleton;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.transformation.FilteredList;
@@ -45,8 +43,8 @@ import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-@Singleton
-@Prototype
+// @Singleton
+// @Prototype
 @RequiredArgsConstructor
 public class ProfileSettingsDialog extends Application implements UIInitializer<ProfileSettingsArgs> {
     private final SaveService saveService;

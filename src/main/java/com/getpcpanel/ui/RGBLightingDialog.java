@@ -11,14 +11,12 @@ import com.getpcpanel.device.PCPanelRGBUI;
 import com.getpcpanel.profile.LightingConfig;
 import com.getpcpanel.profile.LightingConfig.LightingMode;
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.UIInitializer.SingleParamInitializer;
 import com.getpcpanel.ui.colorpicker.ColorDialog;
 import com.getpcpanel.ui.colorpicker.HueSlider;
 import com.getpcpanel.util.Util;
 
 import jakarta.enterprise.event.Event;
-import jakarta.inject.Singleton;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -38,8 +36,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Singleton
-@Prototype
+// @Singleton
+// @Prototype
 @RequiredArgsConstructor
 public class RGBLightingDialog extends Application implements UIInitializer<SingleParamInitializer<PCPanelRGBUI>> {
     private final SaveService saveService;

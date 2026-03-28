@@ -11,8 +11,8 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @ApplicationScoped
 public class CommandDispatcher {
-    private final Map<String, Runnable> map = new ConcurrentHashMap<>();
-    private final HandlerThread handler = new HandlerThread();
+    final Map<String, Runnable> map = new ConcurrentHashMap<>();
+    final HandlerThread handler = new HandlerThread();
 
     @PostConstruct
     public void init() {

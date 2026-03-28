@@ -12,13 +12,11 @@ import org.apache.commons.lang3.math.NumberUtils;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.profile.KnobSetting;
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.BasicMacro.MacroArgs;
 import com.getpcpanel.ui.command.ButtonController;
 import com.getpcpanel.ui.command.Cmd.Type;
 import com.getpcpanel.ui.command.CommandContext;
 
-import jakarta.inject.Singleton;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -35,8 +33,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Singleton
-@Prototype
+// @Singleton
+// @Prototype
 @RequiredArgsConstructor
 public class BasicMacro extends Application implements UIInitializer<MacroArgs> {
     private static final Pattern NUMBER_PATTERN = Pattern.compile("\\d*");

@@ -18,6 +18,7 @@ public class MainFX extends Application {
     @Override
     @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
     public void init() throws Exception {
+        System.out.println("Init");
         //     context = new SpringApplicationBuilder(Main.class)
         //             .headless(false)
         //             .run(getParameters().getRaw().toArray(new String[0]));

@@ -15,14 +15,12 @@ import com.getpcpanel.profile.SingleKnobLightingConfig.SINGLE_KNOB_MODE;
 import com.getpcpanel.profile.SingleLogoLightingConfig.SINGLE_LOGO_MODE;
 import com.getpcpanel.profile.SingleSliderLabelLightingConfig.SINGLE_SLIDER_LABEL_MODE;
 import com.getpcpanel.profile.SingleSliderLightingConfig.SINGLE_SLIDER_MODE;
-import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.UIInitializer.SingleParamInitializer;
 import com.getpcpanel.ui.colorpicker.ColorDialog;
 import com.getpcpanel.ui.colorpicker.HueSlider;
 import com.getpcpanel.util.Util;
 
 import jakarta.enterprise.event.Event;
-import jakarta.inject.Singleton;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -49,8 +47,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Singleton
-@Prototype
+// @Singleton
+// @Prototype
 @RequiredArgsConstructor
 public class ProLightingDialog extends Application implements UIInitializer<SingleParamInitializer<Device>>, ILightingDialogMuteOverrideHelper {
     private final SaveService saveService;

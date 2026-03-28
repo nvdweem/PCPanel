@@ -9,6 +9,7 @@ import com.getpcpanel.wavelink.WaveLinkService;
 import com.getpcpanel.wavelink.command.CommandWaveLinkChangeLevel;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -16,6 +17,10 @@ import lombok.extern.log4j.Log4j2;
 @Prototype
 @Cmd(name = "WaveLink", fxml = "WaveLink", cmds = CommandWaveLinkChangeLevel.class, enabled = WaveLinkEnabled.class)
 public class DialWaveLinkController extends BaseWaveLinkController<CommandWaveLinkChangeLevel> implements DialCommandController {
+    protected DialWaveLinkController() {
+    }
+
+    @Inject
     public DialWaveLinkController(WaveLinkService waveLinkService) {
         super(waveLinkService);
     }

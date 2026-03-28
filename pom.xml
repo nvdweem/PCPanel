@@ -49,6 +49,7 @@
         <!--        <module.name>ALL-UNNAMED</module.name>-->
         <lombok.version>1.18.44</lombok.version>
         <javafx.add.exports>--add-exports=javafx.controls/com.sun.javafx.scene.control.skin.resources=ALL-UNNAMED --add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED</javafx.add.exports>
+        <javafx.native-access>--enable-native-access=javafx.graphics</javafx.native-access>
     </properties>
 
     <dependencyManagement>
@@ -75,6 +76,11 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-rest</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkiverse.fx</groupId>
+            <artifactId>quarkus-fx</artifactId>
+            <version>0.10.3</version>
         </dependency>
 
         <!--        <dependency>-->
@@ -329,7 +335,7 @@
                 <version>${quarkus.platform.version}</version>
                 <extensions>true</extensions>
                 <configuration>
-                    <jvmArgs>${javafx.add.exports}</jvmArgs>
+                    <jvmArgs>${javafx.add.exports} ${javafx.native-access}</jvmArgs>
                 </configuration>
             </plugin>
             <plugin>

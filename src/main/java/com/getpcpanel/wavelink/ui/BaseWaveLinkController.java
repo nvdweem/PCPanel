@@ -39,6 +39,10 @@ class BaseWaveLinkController<T extends CommandWaveLink> extends CommandControlle
     @FXML protected ChoiceBox<Entry> choice1;
     @FXML protected ChoiceBox<Entry> choice2;
 
+    protected BaseWaveLinkController() {
+        waveLinkService = null;
+    }
+
     @Override
     public void postInit(CommandContext context) {
         if (!waveLinkService.isConnected()) {

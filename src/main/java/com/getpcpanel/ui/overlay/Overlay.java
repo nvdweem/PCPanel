@@ -1,4 +1,4 @@
-package com.getpcpanel.ui;
+package com.getpcpanel.ui.overlay;
 
 import java.awt.Toolkit;
 import java.io.IOException;
@@ -14,15 +14,11 @@ import com.getpcpanel.commands.PCPanelControlEvent;
 import com.getpcpanel.commands.command.ButtonAction;
 import com.getpcpanel.commands.command.DialAction;
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.profile.SaveService.SaveEvent;
-import com.getpcpanel.spring.ConditionalOnWindows;
+import com.getpcpanel.ui.FxHelper;
 import com.getpcpanel.util.Debouncer;
 
 import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
-import jakarta.enterprise.event.Observes;
-import jakarta.inject.Singleton;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -40,10 +36,8 @@ import javafx.stage.StageStyle;
 import lombok.RequiredArgsConstructor;
 import one.util.streamex.StreamEx;
 
-@Singleton
-@ConditionalOnWindows
 @RequiredArgsConstructor
-public class Overlay extends Popup {
+class Overlay extends Popup {
     private final FxHelper fxHelper;
     private final SaveService save;
     private final IconService iconService;
@@ -78,11 +72,11 @@ public class Overlay extends Popup {
             throw new RuntimeException(e);
         }
         getContent().addAll(panel);
-        updateSaveValues(null);
+        updateSaveValues();
     }
 
-    public void updateSaveValues(@Observes @Nullable SaveEvent event) {
-        updateStyle(null);
+    void updateSaveValues() {
+        updateStyle();
         determinePosition();
     }
 
@@ -105,7 +99,7 @@ public class Overlay extends Popup {
         }
     }
 
-    public void updateStyle(@Observes @Nullable SaveEvent event) {
+    public void updateStyle() {
         var save = this.save.get();
         var style = "-fx-background-color: " + save.getOverlayBackgroundColor() + ";";
         if (save.getOverlayWindowCornerRounding() > 0)
@@ -127,7 +121,7 @@ public class Overlay extends Popup {
         volume.setPrefHeight(save.getOverlayBarHeight());
     }
 
-    public void handleControl(@Observes PCPanelControlEvent event) {
+    public void handleControl(PCPanelControlEvent event) {
         if (event.initial()) {
             return;
         }

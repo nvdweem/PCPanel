@@ -17,10 +17,8 @@ import org.apache.commons.lang3.StringUtils;
 import com.getpcpanel.cpp.AudioSession;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.iconextract.IIconService;
-import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.AppFinderDialog.AppFinderParams;
 
-import jakarta.inject.Singleton;
 import javafx.application.Application;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
@@ -42,8 +40,8 @@ import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-@Singleton
-@Prototype
+// @Singleton
+// @Prototype
 @RequiredArgsConstructor
 public class AppFinderDialog extends Application implements UIInitializer<AppFinderParams> {
     private static final int ICON_SIZE = 90;

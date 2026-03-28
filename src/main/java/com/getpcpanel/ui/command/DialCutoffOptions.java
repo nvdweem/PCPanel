@@ -13,14 +13,12 @@ import com.getpcpanel.commands.command.CommandNoOp;
 import com.getpcpanel.commands.command.DialAction.DialCommandParams;
 import com.getpcpanel.hid.DialValueCalculator;
 import com.getpcpanel.profile.KnobSetting;
-import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.FxHelper;
 import com.getpcpanel.ui.UIHelper;
 import com.getpcpanel.ui.UIInitializer;
 import com.getpcpanel.ui.command.DialCutoffOptions.DialCutoffOptionsParams;
 import com.getpcpanel.ui.graphviewer.GraphViewer;
 
-import jakarta.inject.Singleton;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -34,8 +32,8 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import lombok.SneakyThrows;
 
-@Singleton
-@Prototype
+// @Singleton
+// @Prototype
 public class DialCutoffOptions extends Application implements UIInitializer<DialCutoffOptionsParams> {
     @FXML private CheckBox invert;
     @FXML private VBox panel;

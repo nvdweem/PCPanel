@@ -17,7 +17,6 @@ import com.getpcpanel.util.version.VersionChecker.NewVersionAvailableEvent;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.event.Event;
 import jakarta.enterprise.event.Observes;
-import jakarta.inject.Singleton;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -39,7 +38,7 @@ import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-@Singleton
+// @Singleton
 @RequiredArgsConstructor
 public class HomePage extends Application {
     private static final String TITLE_FORMAT = "PCPanel Controller %s";
@@ -70,6 +69,14 @@ public class HomePage extends Application {
     @FXML private ListView<Device> connectedDeviceList;
     @FXML private Slider globalBrightness;
     private Pane pane;
+
+    public HomePage() {
+        fxHelper = null;
+        saveService = null;
+        deviceScanner = null;
+        devices = null;
+        applicationEventPublisher = null;
+    }
 
     @Override
     @PostConstruct

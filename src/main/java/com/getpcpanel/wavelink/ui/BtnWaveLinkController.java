@@ -22,6 +22,7 @@ import com.getpcpanel.wavelink.command.WaveLinkCommandTarget;
 
 import dev.niels.wavelink.impl.model.WaveLinkEffect;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import javafx.beans.Observable;
 import javafx.fxml.FXML;
 import javafx.scene.control.RadioButton;
@@ -47,6 +48,10 @@ public class BtnWaveLinkController extends BaseWaveLinkController<CommandWaveLin
     @FXML private RadioButton mute_unmute;
     @FXML private ToggleGroup mute_toggle_grp;
 
+    protected BtnWaveLinkController() {
+    }
+
+    @Inject
     public BtnWaveLinkController(WaveLinkService waveLinkService) {
         super(waveLinkService);
     }
