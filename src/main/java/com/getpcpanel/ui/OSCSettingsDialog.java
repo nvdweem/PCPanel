@@ -3,12 +3,12 @@ package com.getpcpanel.ui;
 import java.util.List;
 
 import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.stereotype.Component;
 
 import com.getpcpanel.profile.OSCConnectionInfo;
 import com.getpcpanel.profile.Save;
 import com.getpcpanel.spring.Prototype;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -21,7 +21,7 @@ import javafx.scene.layout.VBox;
 import lombok.RequiredArgsConstructor;
 import one.util.streamex.StreamEx;
 
-@Component
+@ApplicationScoped
 @Prototype
 @RequiredArgsConstructor
 public class OSCSettingsDialog {

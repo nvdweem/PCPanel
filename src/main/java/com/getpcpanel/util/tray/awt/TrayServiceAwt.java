@@ -10,14 +10,16 @@ import java.util.Objects;
 
 import javax.imageio.ImageIO;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import com.getpcpanel.ui.HomePage;
+import com.getpcpanel.ui.HomePage.ShowMainEvent;
+import com.getpcpanel.util.tray.awt.ConditionalOnAwtTray.OnAwtTrayCondition;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
 /**
@@ -25,15 +27,19 @@ import lombok.extern.log4j.Log4j2;
  * Uses java.awt.SystemTray which relies on the XEmbed protocol on Linux.
  */
 @Log4j2
-@Service
+@ApplicationScoped
 @RequiredArgsConstructor
-@ConditionalOnProperty(value = "disable.tray", havingValue = "false", matchIfMissing = true)
 @ConditionalOnAwtTray
 class TrayServiceAwt {
-    private final ApplicationEventPublisher eventPublisher;
+    private final Event<Object> eventPublisher;
+    @ConfigProperty(name = "disable.tray") @Setter private boolean disabled;
 
     @PostConstruct
     public void init() {
+        if (disabled || !OnAwtTrayCondition.matches()) {
+            return;
+        }
+
         var popup = new PopupMenu();
         TrayIcon trayIcon;
         SystemTray tray;
@@ -71,7 +77,7 @@ class TrayServiceAwt {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getButton() == 1)
-                    eventPublisher.publishEvent(new HomePage.ShowMainEvent());
+                    eventPublisher.fire(new ShowMainEvent());
             }
         });
         popup.add(exitItem);

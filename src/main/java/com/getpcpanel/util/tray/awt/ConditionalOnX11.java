@@ -6,26 +6,17 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import javax.annotation.Nonnull;
-
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.annotation.Condition;
-import org.springframework.context.annotation.ConditionContext;
-import org.springframework.context.annotation.Conditional;
-import org.springframework.core.type.AnnotatedTypeMetadata;
 
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.TYPE, ElementType.METHOD })
-@Conditional(ConditionalOnX11.OnX11Condition.class)
 @interface ConditionalOnX11 {
-    class OnX11Condition implements Condition {
-        @Override
-        public boolean matches(@Nonnull ConditionContext context, @Nonnull AnnotatedTypeMetadata metadata) {
-            var env = context.getEnvironment();
-            var sessionType = env.getProperty("XDG_SESSION_TYPE");
-            var waylandDisplay = env.getProperty("WAYLAND_DISPLAY");
-            var display = env.getProperty("DISPLAY");
+    class OnX11Condition {
+        public static boolean matches() {
+            var sessionType = System.getenv().get("XDG_SESSION_TYPE");
+            var waylandDisplay = System.getenv().get("WAYLAND_DISPLAY");
+            var display = System.getenv().get("DISPLAY");
 
             // Explicit X11 session
             if ("x11".equalsIgnoreCase(sessionType)) {

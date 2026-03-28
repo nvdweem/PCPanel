@@ -1,7 +1,5 @@
 package com.getpcpanel.ui.command.dial;
 
-import org.springframework.stereotype.Component;
-
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandObsSetSourceVolume;
 import com.getpcpanel.commands.command.DialAction.DialCommandParams;
@@ -13,6 +11,7 @@ import com.getpcpanel.ui.command.CommandController;
 import com.getpcpanel.ui.command.DialCommandController;
 import com.getpcpanel.ui.command.ObsEnabled;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import javafx.beans.Observable;
 import javafx.fxml.FXML;
 import javafx.scene.control.ChoiceBox;
@@ -20,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Component
+@ApplicationScoped
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "OBS", fxml = "Obs", cmds = CommandObsSetSourceVolume.class, enabled = ObsEnabled.class)

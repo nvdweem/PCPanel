@@ -1,37 +1,34 @@
 package com.getpcpanel.hid;
 
-import static org.springframework.core.Ordered.HIGHEST_PRECEDENCE;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.context.event.EventListener;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Service;
-
 import com.getpcpanel.cpp.windows.WindowFocusChangedEvent;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.device.DeviceFactory;
 import com.getpcpanel.device.DeviceType;
+import com.getpcpanel.hid.DeviceScanner.DeviceConnectedEvent;
+import com.getpcpanel.hid.DeviceScanner.DeviceDisconnectedEvent;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.profile.SaveService.SaveEvent;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
 import javafx.application.Platform;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 
-@Service
+@ApplicationScoped
 @RequiredArgsConstructor
 public class DeviceHolder {
     private final Map<String, Device> devices = new ConcurrentHashMap<>();
     private final SaveService saveService;
-    @Autowired @Lazy @Setter private DeviceFactory deviceFactory;
+    @Inject DeviceFactory deviceFactory;
     private final OutputInterpreter outputInterpreter;
-    private final ApplicationEventPublisher eventPublisher;
+    private final Event<Object> eventPublisher;
 
     public Optional<Device> getDevice(String key) {
         return Optional.ofNullable(devices.get(key));
@@ -45,9 +42,8 @@ public class DeviceHolder {
         return devices.values();
     }
 
-    @EventListener
-    @Order(HIGHEST_PRECEDENCE)
-    public void deviceAdded(DeviceScanner.DeviceConnectedEvent event) {
+    // @Order(HIGHEST_PRECEDENCE) // TODO
+    public void deviceAdded(@Observes DeviceConnectedEvent event) {
         Device device;
         var save = saveService.get();
         if (!save.getDevices().containsKey(event.serialNum()))
@@ -63,25 +59,22 @@ public class DeviceHolder {
         }
         devices.put(event.serialNum(), device);
         outputInterpreter.sendInit(event.serialNum());
-        eventPublisher.publishEvent(new DeviceFullyConnectedEvent(device));
+        eventPublisher.fire(new DeviceFullyConnectedEvent(device));
     }
 
-    @Order
-    @EventListener
-    public void onDeviceDisconnected(DeviceScanner.DeviceDisconnectedEvent event) {
+    // @Order // TODO
+    public void onDeviceDisconnected(@Observes DeviceDisconnectedEvent event) {
         var device = devices.remove(event.serialNum());
         if (device != null) {
             Platform.runLater(device::disconnected);
         }
     }
 
-    @EventListener(WindowFocusChangedEvent.class)
-    public void focusApplicationChanged() {
+    public void focusApplicationChanged(@Observes WindowFocusChangedEvent event) {
         devices.values().forEach(Device::focusApplicationChanged);
     }
 
-    @EventListener(SaveService.SaveEvent.class)
-    public void saveChanged() {
+    public void saveChanged(@Observes SaveEvent event) {
         devices.values().forEach(Device::saveChanged);
     }
 

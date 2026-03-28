@@ -3,14 +3,13 @@ package com.getpcpanel.commands;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Service;
-
 import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Service
+@ApplicationScoped
 public final class CommandDispatcher {
     private final Map<String, Runnable> map = new ConcurrentHashMap<>();
     private final HandlerThread handler = new HandlerThread();
@@ -24,8 +23,7 @@ public final class CommandDispatcher {
     private CommandDispatcher() {
     }
 
-    @EventListener
-    public void onCommand(PCPanelControlEvent event) {
+    public void onCommand(@Observes PCPanelControlEvent event) {
         map.put(event.serialNum() + event.knob(), event.buildRunnable());
         handler.doNotify();
     }

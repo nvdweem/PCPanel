@@ -6,8 +6,6 @@ import java.net.URL;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import org.springframework.stereotype.Service;
-
 import com.getpcpanel.MainFX;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.device.PCPanelMiniUI;
@@ -20,6 +18,7 @@ import com.getpcpanel.ui.BasicMacro.MacroArgs;
 import com.getpcpanel.ui.ProfileSettingsDialog.ProfileSettingsArgs;
 import com.getpcpanel.ui.UIInitializer.SingleParamInitializer;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import javafx.fxml.FXMLLoader;
 import javafx.stage.Stage;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +26,7 @@ import lombok.RequiredArgsConstructor;
 /**
  * Factory for creating FX dialogs
  */
-@Service
+@ApplicationScoped
 @RequiredArgsConstructor
 public class FxHelper {
     public FXMLLoader getLoader(@Nullable URL location) {

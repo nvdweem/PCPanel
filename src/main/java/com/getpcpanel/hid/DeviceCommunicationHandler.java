@@ -17,11 +17,11 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.hid4java.HidDevice;
-import org.springframework.context.ApplicationEventPublisher;
 
 import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.profile.SaveService;
 
+import jakarta.enterprise.event.Event;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
@@ -30,7 +30,7 @@ public class DeviceCommunicationHandler {
     private static final byte INPUT_CODE_KNOB_CHANGE = 1;
     private static final byte INPUT_CODE_BUTTON_CHANGE = 2;
 
-    private final ApplicationEventPublisher eventPublisher;
+    private final Event<Object> eventPublisher;
     private final DeviceScanner deviceScanner;
     private final SaveService saveService;
     private final String key;
@@ -48,7 +48,7 @@ public class DeviceCommunicationHandler {
     private final RollingAverageSetter rollingAverageSetter = new RollingAverageSetter();
     private final Map<Integer, Integer> prevSent = new ConcurrentHashMap<>();
 
-    public DeviceCommunicationHandler(DeviceScanner deviceScanner, ApplicationEventPublisher eventPublisher, SaveService saveService, String key, HidDevice device, DeviceType deviceType) {
+    public DeviceCommunicationHandler(DeviceScanner deviceScanner, Event<Object> eventPublisher, SaveService saveService, String key, HidDevice device, DeviceType deviceType) {
         this.eventPublisher = eventPublisher;
         this.deviceScanner = deviceScanner;
         this.saveService = saveService;
@@ -164,7 +164,7 @@ public class DeviceCommunicationHandler {
         } else {
             prevSent.put(o.knob(), currentSendValue);
             log.debug("< {}", o);
-            eventPublisher.publishEvent(o);
+            eventPublisher.fire(o);
         }
     }
 
@@ -174,7 +174,7 @@ public class DeviceCommunicationHandler {
 
     private void triggerEvent(ButtonPressEvent o) {
         log.debug("< {}", o);
-        eventPublisher.publishEvent(o);
+        eventPublisher.fire(o);
     }
 
     private void triggerOrDebounce(KnobRotateEvent event) {

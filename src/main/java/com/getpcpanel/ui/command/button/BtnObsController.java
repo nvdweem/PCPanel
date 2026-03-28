@@ -4,8 +4,6 @@ import static com.getpcpanel.commands.command.CommandNoOp.NOOP;
 
 import javax.annotation.Nullable;
 
-import org.springframework.stereotype.Component;
-
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandObs;
 import com.getpcpanel.commands.command.CommandObsMuteSource;
@@ -19,6 +17,7 @@ import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.CommandController;
 import com.getpcpanel.ui.command.ObsEnabled;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import javafx.beans.Observable;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -29,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Component
+@ApplicationScoped
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "OBS", fxml = "Obs", cmds = { CommandObsSetScene.class, CommandObsMuteSource.class }, enabled = ObsEnabled.class)

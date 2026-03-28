@@ -4,14 +4,13 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.context.ApplicationEventPublisher;
-
 import com.getpcpanel.cpp.AudioDevice;
 import com.getpcpanel.cpp.AudioSession;
 import com.getpcpanel.cpp.AudioSessionEvent;
 import com.getpcpanel.cpp.DataFlow;
 import com.getpcpanel.cpp.EventType;
 
+import jakarta.enterprise.event.Event;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -19,7 +18,7 @@ import lombok.extern.log4j.Log4j2;
 public class WindowsAudioDevice extends AudioDevice {
     private final transient Map<Integer, WindowsAudioSession> sessions = new HashMap<>(); // pid -> pointer_addr -> session
 
-    public WindowsAudioDevice(ApplicationEventPublisher eventPublisher, String name, String id) {
+    public WindowsAudioDevice(Event<Object> eventPublisher, String name, String id) {
         super(eventPublisher, name, id);
     }
 
@@ -31,7 +30,7 @@ public class WindowsAudioDevice extends AudioDevice {
         log.debug("Add device session: {} {} {} {} {} {} {}", pointer, pid, name, title, icon, volume, muted);
         var result = sessions.computeIfAbsent(pid, p -> new WindowsAudioSession(this, eventPublisher, pid, new File(name), title, icon, volume, muted));
         result.pointers().add(pointer);
-        eventPublisher.publishEvent(new AudioSessionEvent(result, EventType.ADDED));
+        eventPublisher.fire(new AudioSessionEvent(result, EventType.ADDED));
         return result;
     }
 
@@ -46,7 +45,7 @@ public class WindowsAudioDevice extends AudioDevice {
         if (session.pointers().isEmpty()) {
             log.debug("Session removed: {} ({})", pid, pointer);
             sessions.remove(pid);
-            eventPublisher.publishEvent(new AudioSessionEvent(session, EventType.REMOVED));
+            eventPublisher.fire(new AudioSessionEvent(session, EventType.REMOVED));
         }
     }
 

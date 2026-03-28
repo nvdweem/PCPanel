@@ -3,13 +3,11 @@ package com.getpcpanel.ui;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 
 import javax.annotation.Nonnull;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.stereotype.Component;
 
 import com.getpcpanel.osc.OSCService;
 import com.getpcpanel.profile.DeviceSave;
@@ -18,9 +16,12 @@ import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.spring.OsHelper;
 import com.getpcpanel.spring.Prototype;
+import com.getpcpanel.ui.PickProcessesController.PickType;
+import com.getpcpanel.ui.ProfileSettingsDialog.ProfileSettingsArgs;
 import com.getpcpanel.util.ShortcutHook;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 
+import jakarta.inject.Singleton;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.transformation.FilteredList;
@@ -44,12 +45,12 @@ import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-@Component
+@Singleton
 @Prototype
 @RequiredArgsConstructor
-public class ProfileSettingsDialog extends Application implements UIInitializer<ProfileSettingsDialog.ProfileSettingsArgs> {
+public class ProfileSettingsDialog extends Application implements UIInitializer<ProfileSettingsArgs> {
     private final SaveService saveService;
-    private final Optional<ShortcutHook> shortcutHook;
+    private final ShortcutHook shortcutHook;
     private final OsHelper osHelper;
     private final OSCService oscService;
     @FXML private Pane root;
@@ -97,26 +98,24 @@ public class ProfileSettingsDialog extends Application implements UIInitializer<
         mainProfile.setSelected(profile.isMainProfile());
 
         focusBackOnLost.setSelected(profile.isFocusBackOnLost());
-        focusOnListListController.setPickType(PickProcessesController.PickType.process).setSelection(profile.getActivateApplications());
+        focusOnListListController.setPickType(PickType.process).setSelection(profile.getActivateApplications());
 
-        activationFld.focusedProperty().addListener((observable, oldValue, newValue) -> shortcutHook.ifPresent(hook -> {
+        activationFld.focusedProperty().addListener((observable, oldValue, newValue) -> {
                     if (newValue) {
-                        hook.setOverrideListener(this::registerShortcut);
+                        shortcutHook.setOverrideListener(this::registerShortcut);
                     } else {
-                        hook.setOverrideListener(null);
+                        shortcutHook.setOverrideListener(null);
                     }
                 }
-        ));
+        );
         activationFld.setText(StringUtils.defaultString(profile.getActivationShortcut()));
         initOsc();
     }
 
     private void registerShortcut(NativeKeyEvent event) {
-        shortcutHook.ifPresent(hook -> {
-            if (hook.canBeShortcut(event)) {
-                activationFld.setText(hook.toKeyString(event));
-            }
-        });
+        if (shortcutHook.canBeShortcut(event)) {
+            activationFld.setText(shortcutHook.toKeyString(event));
+        }
     }
 
     @FXML

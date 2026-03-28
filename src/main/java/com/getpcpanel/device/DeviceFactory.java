@@ -1,9 +1,5 @@
 package com.getpcpanel.device;
 
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.stereotype.Service;
-
 import com.getpcpanel.commands.IconService;
 import com.getpcpanel.hid.InputInterpreter;
 import com.getpcpanel.hid.OutputInterpreter;
@@ -12,10 +8,11 @@ import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.ui.FxHelper;
 import com.getpcpanel.util.coloroverride.OverrideColorService;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import lombok.RequiredArgsConstructor;
 
-@Service
-@Configuration
+@ApplicationScoped
 @RequiredArgsConstructor
 public class DeviceFactory {
     private final FxHelper fxHelper;
@@ -23,7 +20,7 @@ public class DeviceFactory {
     private final SaveService saveService;
     private final OutputInterpreter outputInterpreter;
     private final IconService iconService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final Event<Object> eventPublisher;
     private final OverrideColorService overrideColorService;
 
     public PCPanelRGBUI buildRgb(String serialNum, DeviceSave deviceSave) {

@@ -1,22 +1,22 @@
 package com.getpcpanel.sleepdetection;
 
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Service;
-
 import com.getpcpanel.device.Device;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.hid.OutputInterpreter;
 import com.getpcpanel.profile.LightingConfig;
+import com.getpcpanel.sleepdetection.WindowsSystemEventService.WindowsSystemEvent;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
 import javafx.application.Platform;
 import javafx.scene.paint.Color;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Service
+@ApplicationScoped
 @RequiredArgsConstructor
 public final class SleepDetector {
     private static final LightingConfig ALL_OFF = LightingConfig.createAllColor(Color.BLACK);
@@ -29,8 +29,7 @@ public final class SleepDetector {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> onSuspended(true), "Shutdown SleepDetector Hook Thread"));
     }
 
-    @EventListener
-    public void onEvent(WindowsSystemEventService.WindowsSystemEvent event) {
+    public void onEvent(@Observes WindowsSystemEvent event) {
         switch (event.type()) {
             case goingToSuspend, locked -> onSuspended(false);
             case resumedFromSuspend, unlocked -> onResumed();

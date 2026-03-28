@@ -6,16 +6,16 @@ import java.util.Objects;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Service
+@ApplicationScoped
 public class ExtractUtil {
-    @Value("${application.version}") private String version;
-    @Value("${application.build}") private String build;
+    @ConfigProperty(name = "application.version") private String version;
+    @ConfigProperty(name = "application.build") private String build;
 
     public File extractAndDeleteOnExit(String file) {
         var name = FilenameUtils.getBaseName(file);

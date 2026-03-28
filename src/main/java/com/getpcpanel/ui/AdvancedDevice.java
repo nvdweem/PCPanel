@@ -1,12 +1,11 @@
 package com.getpcpanel.ui;
 
-import org.springframework.stereotype.Component;
-
 import com.getpcpanel.commands.DeviceSet;
 import com.getpcpanel.cpp.AudioDevice;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.spring.Prototype;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
@@ -17,7 +16,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import one.util.streamex.StreamEx;
 
-@Component
+@ApplicationScoped
 @Prototype
 @RequiredArgsConstructor
 public class AdvancedDevice implements UIInitializer<Void> {

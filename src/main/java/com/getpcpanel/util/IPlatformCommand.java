@@ -3,13 +3,13 @@ package com.getpcpanel.util;
 import java.io.File;
 import java.io.IOException;
 
-import org.springframework.stereotype.Service;
-
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.cpp.linux.LinuxProcessHelper;
 import com.getpcpanel.spring.ConditionalOnLinux;
 import com.getpcpanel.spring.ConditionalOnWindows;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Typed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
@@ -22,9 +22,10 @@ public abstract class IPlatformCommand {
 
     public abstract void kill(String process);
 
-    @Service
+    @ApplicationScoped
     @ConditionalOnLinux
     @RequiredArgsConstructor
+    @Typed(LinuxPlatformCommand.class)
     public static class LinuxPlatformCommand extends IPlatformCommand {
         private final LinuxProcessHelper processHelper;
 
@@ -56,9 +57,10 @@ public abstract class IPlatformCommand {
         }
     }
 
-    @Service
+    @ApplicationScoped
     @ConditionalOnWindows
     @RequiredArgsConstructor
+    @Typed(WindowsPlatformCommand.class)
     public static class WindowsPlatformCommand extends IPlatformCommand {
         private final ISndCtrl sndCtrl;
 

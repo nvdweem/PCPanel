@@ -5,15 +5,16 @@ import java.util.List;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Component;
 
 import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.util.Images;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ListChangeListener.Change;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
@@ -26,7 +27,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import one.util.streamex.StreamEx;
 
-@Component
+@ApplicationScoped
 @Prototype
 @RequiredArgsConstructor
 public class PickProcessesController {
@@ -64,7 +65,7 @@ public class PickProcessesController {
 
     public Observable getObservable() {
         var binding = new SimpleLongProperty();
-        pickRows.getChildren().addListener((ListChangeListener.Change<?> c) -> {
+        pickRows.getChildren().addListener((Change<?> c) -> {
             binding.unbind();
             var values = StreamEx.of(pickRows.getChildren()).select(Pane.class).map(pane -> pane.getChildren().get(0)).select(TextField.class).map(TextField::textProperty).toArray(Observable[]::new);
             binding.bind(Bindings.createLongBinding(System::currentTimeMillis, values));

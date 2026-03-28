@@ -5,8 +5,6 @@ import java.util.Objects;
 
 import javax.annotation.Nullable;
 
-import org.springframework.stereotype.Component;
-
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandNoOp;
 import com.getpcpanel.cpp.MuteType;
@@ -23,6 +21,7 @@ import com.getpcpanel.wavelink.command.CommandWaveLinkMainOutput;
 import com.getpcpanel.wavelink.command.WaveLinkCommandTarget;
 
 import dev.niels.wavelink.impl.model.WaveLinkEffect;
+import jakarta.enterprise.context.ApplicationScoped;
 import javafx.beans.Observable;
 import javafx.fxml.FXML;
 import javafx.scene.control.RadioButton;
@@ -32,7 +31,7 @@ import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-@Component
+@ApplicationScoped
 @Prototype
 @Cmd(name = "WaveLink", fxml = "WaveLink", cmds = { CommandWaveLinkChangeMute.class, CommandWaveLinkMainOutput.class, CommandWaveLinkAddFocusToChannel.class, CommandWaveLinkChannelEffect.class }, enabled = WaveLinkEnabled.class)
 public class BtnWaveLinkController extends BaseWaveLinkController<CommandWaveLink> implements ButtonCommandController {

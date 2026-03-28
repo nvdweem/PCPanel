@@ -5,9 +5,6 @@ import java.util.Objects;
 
 import javax.annotation.Nonnull;
 
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Component;
-
 import com.getpcpanel.cpp.AudioDevice;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.device.Device;
@@ -21,6 +18,8 @@ import com.getpcpanel.ui.colorpicker.ColorDialog;
 import com.getpcpanel.ui.colorpicker.HueSlider;
 import com.getpcpanel.util.Util;
 
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Singleton;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -47,12 +46,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Component
+@Singleton
 @Prototype
 @RequiredArgsConstructor
 public class MiniLightingDialog extends Application implements UIInitializer<SingleParamInitializer<Device>>, ILightingDialogMuteOverrideHelper {
     private final SaveService saveService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final Event<Object> eventPublisher;
     private final ISndCtrl sndCtrl;
     private Device device;
 
@@ -113,7 +112,7 @@ public class MiniLightingDialog extends Application implements UIInitializer<Sin
             if (!pressedOk) {
                 device.setLighting(device.getSavedLightingConfig(), true);
             }
-            eventPublisher.publishEvent(LightingChangedToDefaultEvent.INSTANCE);
+            eventPublisher.fire(LightingChangedToDefaultEvent.INSTANCE);
         });
         stage.initModality(Modality.APPLICATION_MODAL);
         stage.initOwner(HomePage.stage);

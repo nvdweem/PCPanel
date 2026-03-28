@@ -1,7 +1,5 @@
 package com.getpcpanel.ui.command.dial;
 
-import org.springframework.stereotype.Component;
-
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandVolumeFocus;
 import com.getpcpanel.commands.command.DialAction.DialCommandParams;
@@ -11,12 +9,13 @@ import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.CommandController;
 import com.getpcpanel.ui.command.DialCommandController;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import javafx.beans.Observable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Component
+@ApplicationScoped
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Focus Volume", fxml = "VolumeFocus", cmds = CommandVolumeFocus.class)

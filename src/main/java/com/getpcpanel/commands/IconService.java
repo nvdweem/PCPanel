@@ -11,8 +11,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Service;
 
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandBrightness;
@@ -30,14 +28,16 @@ import com.getpcpanel.iconextract.IIconService;
 import com.getpcpanel.profile.KnobSetting;
 import com.getpcpanel.util.Images;
 
+import io.quarkus.cache.CacheResult;
 import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
 import javafx.scene.image.Image;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-@Service
+@ApplicationScoped
 @RequiredArgsConstructor
 public class IconService {
     public static final Image DEFAULT = new Image(Objects.requireNonNull(IconService.class.getResource("/assets/32x32.png")).toExternalForm());
@@ -68,8 +68,9 @@ public class IconService {
         imageHandlers.put(CommandVolumeDefaultDeviceToggle.class, IconService::getDeviceIcon);
     }
 
-    @Cacheable("command-icon")
-    public @Nonnull Image getImageFrom(@Nullable Commands commands, @Nullable KnobSetting override) {
+    @CacheResult(cacheName = "command-icon")
+    @Nonnull
+    public Image getImageFrom(@Nullable Commands commands, @Nullable KnobSetting override) {
         if (!Commands.hasCommands(commands)) {
             return DEFAULT;
         }

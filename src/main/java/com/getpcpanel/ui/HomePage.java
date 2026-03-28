@@ -3,18 +3,21 @@ package com.getpcpanel.ui;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Component;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import com.getpcpanel.device.Device;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.hid.DeviceScanner;
+import com.getpcpanel.hid.DeviceScanner.DeviceConnectedEvent;
+import com.getpcpanel.hid.DeviceScanner.DeviceDisconnectedEvent;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.util.version.VersionChecker.NewVersionAvailableEvent;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Singleton;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -36,7 +39,7 @@ import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-@Component
+@Singleton
 @RequiredArgsConstructor
 public class HomePage extends Application {
     private static final String TITLE_FORMAT = "PCPanel Controller %s";
@@ -46,10 +49,10 @@ public class HomePage extends Application {
     private final SaveService saveService;
     private final DeviceScanner deviceScanner;
     private final DeviceHolder devices;
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final Event<GlobalBrightnessChangedEvent> applicationEventPublisher;
 
-    @Value("${application.version}") private String version;
-    @Value("${application.build}") private String build;
+    @ConfigProperty(name = "application.version") private String version;
+    @ConfigProperty(name = "application.build") private String build;
 
     @FXML private Pane deviceHolder;
     @FXML private Pane titleHolder;
@@ -107,8 +110,7 @@ public class HomePage extends Application {
         deviceScanner.init();
     }
 
-    @EventListener
-    public void globalBrightnessChanged(GlobalBrightnessChangedEvent event) {
+    public void globalBrightnessChanged(@Observes GlobalBrightnessChangedEvent event) {
         if (!event.isSource(this)) {
             globalBrightness.setValue(connectedDeviceList.getSelectionModel().getSelectedItem().getLightingConfig().getGlobalBrightness());
         }
@@ -134,7 +136,7 @@ public class HomePage extends Application {
             var light = device.getLightingConfig();
             light.setGlobalBrightness(newValue.byteValue());
             device.setLighting(light, false);
-            applicationEventPublisher.publishEvent(new GlobalBrightnessChangedEvent(this, serialNumber, newValue.intValue()));
+            applicationEventPublisher.fire(new GlobalBrightnessChangedEvent(this, serialNumber, newValue.intValue()));
         });
     }
 
@@ -150,8 +152,7 @@ public class HomePage extends Application {
             window.hintHolder.getChildren().remove(window.hintLabel);
     }
 
-    @EventListener(ShowMainEvent.class)
-    public void reopen() {
+    public void reopen(@Observes ShowMainEvent event) {
         Platform.runLater(() -> {
             stage.show();
             stage.setIconified(false);
@@ -159,13 +160,11 @@ public class HomePage extends Application {
         });
     }
 
-    @EventListener
-    public void onDeviceConnected(DeviceScanner.DeviceConnectedEvent event) {
+    public void onDeviceConnected(@Observes DeviceConnectedEvent event) {
         Platform.runLater(() -> devices.getDevice(event.serialNum()).ifPresent(this::addDeviceToUI));
     }
 
-    @EventListener
-    public void onDeviceDisconnected(DeviceScanner.DeviceDisconnectedEvent event) {
+    public void onDeviceDisconnected(@Observes DeviceDisconnectedEvent event) {
         Platform.runLater(() -> StreamEx.of(connectedDeviceList.getItems()).filterBy(Device::getSerialNumber, event.serialNum()).findFirst().ifPresent(connectedDeviceList.getItems()::remove));
     }
 
@@ -233,16 +232,17 @@ public class HomePage extends Application {
         versionLabel.setText(TITLE_FORMAT.formatted(buildVersion()));
     }
 
-    @EventListener
-    public void newVersionAvailable(NewVersionAvailableEvent event) {
+    public void newVersionAvailable(@Observes NewVersionAvailableEvent event) {
         var label = new Label("New version available: " + event.version().versionDisplay());
         label.setStyle("-fx-text-fill: #ff8888; -fx-font-weight: bold;");
         label.setOnMouseClicked(e -> getHostServices().showDocument(event.version().html_url()));
         Platform.runLater(() -> labelTarget.getChildren().add(label));
     }
 
-    @EventListener
-    public void onSaveEvent(SaveService.SaveEvent event) {
+    public void onSaveEvent(@Observes SaveEvent event) {
+        if (1 == 1) {
+            return;
+        }
         Platform.runLater(() -> {
             showHint(event.isNew());
 

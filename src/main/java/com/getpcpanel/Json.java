@@ -1,9 +1,8 @@
 package com.getpcpanel;
 
-import org.springframework.stereotype.Service;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
@@ -12,7 +11,7 @@ import lombok.extern.log4j.Log4j2;
  * Jackson wrapper
  */
 @Log4j2
-@Service
+@ApplicationScoped
 @RequiredArgsConstructor
 public final class Json {
     private final ObjectMapper mapper;

@@ -6,7 +6,6 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Component;
 
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandVolumeProcess;
@@ -21,6 +20,7 @@ import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.CommandController;
 import com.getpcpanel.ui.command.DialCommandController;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import javafx.beans.Observable;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -32,7 +32,7 @@ import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-@Component
+@ApplicationScoped
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "App Volume", fxml = "VolumeProcess", cmds = CommandVolumeProcess.class)
@@ -78,7 +78,7 @@ public class DialVolumeProcessController extends CommandController<CommandVolume
         var device =
                 rdio_app_output_all.isSelected() ? "*" :
                         rdio_app_output_specific.isSelected() ? Optional.ofNullable(app_vol_output_device.getSelectionModel().getSelectedItem()).map(AudioDevice::id).orElse("") :
-                                "";
+                        "";
         return new CommandVolumeProcess(appVolumeController.getSelection(), device, cb_app_unmute.isSelected(), params);
     }
 

@@ -17,21 +17,26 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.logging.log4j.util.TriConsumer;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Service;
 
 import com.getpcpanel.device.Device;
+import com.getpcpanel.mqtt.MqttTopicHelper.ColorType;
+import com.getpcpanel.mqtt.MqttTopicHelper.DeviceMqttTopicHelper;
 import com.getpcpanel.profile.LightingConfig;
 import com.getpcpanel.profile.SingleKnobLightingConfig;
+import com.getpcpanel.profile.SingleKnobLightingConfig.SINGLE_KNOB_MODE;
 import com.getpcpanel.profile.SingleLogoLightingConfig;
+import com.getpcpanel.profile.SingleLogoLightingConfig.SINGLE_LOGO_MODE;
 import com.getpcpanel.profile.SingleSliderLabelLightingConfig;
+import com.getpcpanel.profile.SingleSliderLabelLightingConfig.SINGLE_SLIDER_LABEL_MODE;
 import com.getpcpanel.profile.SingleSliderLightingConfig;
-import com.getpcpanel.ui.HomePage;
+import com.getpcpanel.profile.SingleSliderLightingConfig.SINGLE_SLIDER_MODE;
+import com.getpcpanel.ui.HomePage.GlobalBrightnessChangedEvent;
 import com.getpcpanel.util.coloroverride.ColorOverrideHolder;
 import com.getpcpanel.util.coloroverride.IOverrideColorProvider;
 import com.getpcpanel.util.coloroverride.IOverrideColorProviderProvider;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import javafx.scene.paint.Color;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -39,8 +44,8 @@ import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-@Service
-@Order(1)
+@ApplicationScoped
+// @Order(1) // TODO
 @RequiredArgsConstructor
 public class MqttDeviceColorService implements IOverrideColorProviderProvider {
     public static final String EFFECT_NONE = "none";
@@ -49,7 +54,7 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
     private final MqttService mqtt;
     private final MqttTopicHelper mqttTopicHelper;
     private final ColorOverrideHolder colorOverrideHolder = new MqttColorOverrideHolder();
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final Event<Object> applicationEventPublisher;
 
     @Override
     public IOverrideColorProvider getOverrideColorProvider() {
@@ -81,19 +86,19 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
         var topicHelper = mqttTopicHelper.device(device.getSerialNumber());
         Runnable andThen = () -> device.setLighting(lighting, true);
         TriConsumer<Integer, String, SingleKnobLightingConfig> knobOverride = (idx, payload, knob) -> {
-            colorOverrideHolder.setDialOverride(device.getSerialNumber(), idx, new SingleKnobLightingConfig().setMode(SingleKnobLightingConfig.SINGLE_KNOB_MODE.STATIC).setColor1(payload));
+            colorOverrideHolder.setDialOverride(device.getSerialNumber(), idx, new SingleKnobLightingConfig().setMode(SINGLE_KNOB_MODE.STATIC).setColor1(payload));
             andThen.run();
         };
         TriConsumer<Integer, String, SingleSliderLightingConfig> sliderOverride = (idx, payload, knob) -> {
-            colorOverrideHolder.setSliderOverride(device.getSerialNumber(), idx, new SingleSliderLightingConfig().setMode(SingleSliderLightingConfig.SINGLE_SLIDER_MODE.STATIC).setColor1(payload));
+            colorOverrideHolder.setSliderOverride(device.getSerialNumber(), idx, new SingleSliderLightingConfig().setMode(SINGLE_SLIDER_MODE.STATIC).setColor1(payload));
             andThen.run();
         };
         TriConsumer<Integer, String, SingleSliderLabelLightingConfig> sliderLabelOverride = (idx, payload, knob) -> {
-            colorOverrideHolder.setSliderLabelOverride(device.getSerialNumber(), idx, new SingleSliderLabelLightingConfig().setMode(SingleSliderLabelLightingConfig.SINGLE_SLIDER_LABEL_MODE.STATIC).setColor(payload));
+            colorOverrideHolder.setSliderLabelOverride(device.getSerialNumber(), idx, new SingleSliderLabelLightingConfig().setMode(SINGLE_SLIDER_LABEL_MODE.STATIC).setColor(payload));
             andThen.run();
         };
         Consumer<String> logoOverride = payload -> {
-            colorOverrideHolder.setLogoOverride(device.getSerialNumber(), new SingleLogoLightingConfig().setMode(SingleLogoLightingConfig.SINGLE_LOGO_MODE.STATIC).setColor(payload));
+            colorOverrideHolder.setLogoOverride(device.getSerialNumber(), new SingleLogoLightingConfig().setMode(SINGLE_LOGO_MODE.STATIC).setColor(payload));
             andThen.run();
         };
 
@@ -101,7 +106,7 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
             var newBrightness = NumberUtils.toInt(payload, 100);
             lighting.setGlobalBrightness(newBrightness);
             andThen.run();
-            applicationEventPublisher.publishEvent(new HomePage.GlobalBrightnessChangedEvent(this, device.getSerialNumber(), newBrightness));
+            applicationEventPublisher.fire(new GlobalBrightnessChangedEvent(this, device.getSerialNumber(), newBrightness));
         });
         subscribeToColors(lighting.getKnobConfigs(), topicHelper, dial, knobOverride, idx -> device.getLightingConfig().getKnobConfigs()[idx].getColor1());
         subscribeToColors(lighting.getSliderConfigs(), topicHelper, slider, sliderOverride, idx -> device.getLightingConfig().getSliderConfigs()[idx].getColor1());
@@ -111,7 +116,7 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
         }
     }
 
-    private <T> void subscribeToColors(T[] items, MqttTopicHelper.DeviceMqttTopicHelper topicHelper, MqttTopicHelper.ColorType type, TriConsumer<Integer, String, T> consumer, Function<Integer, String> currentColorSupplier) {
+    private <T> void subscribeToColors(T[] items, DeviceMqttTopicHelper topicHelper, ColorType type, TriConsumer<Integer, String, T> consumer, Function<Integer, String> currentColorSupplier) {
         EntryStream.of(items).forKeyValue((idx, knob) -> {
             var topic = topicHelper.lightTopic(type, idx);
             subscribeToColor(topic, payload -> consumer.accept(idx, payload, knob), () -> currentColorSupplier.apply(idx));

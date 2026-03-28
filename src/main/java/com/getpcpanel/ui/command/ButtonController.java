@@ -5,8 +5,6 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.stereotype.Component;
-import org.springframework.util.ReflectionUtils;
 
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.CommandsType;
@@ -25,6 +23,7 @@ import com.getpcpanel.ui.command.DialCutoffOptions.DialCutoffOptionsParams;
 import com.getpcpanel.ui.graphviewer.GraphViewer;
 import com.getpcpanel.util.Images;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
@@ -58,7 +57,7 @@ import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-@Component
+@ApplicationScoped
 @Prototype
 @RequiredArgsConstructor
 public class ButtonController {
@@ -119,7 +118,10 @@ public class ButtonController {
 
     @SneakyThrows
     private static boolean isEnabled(@Nonnull ControllerInfo ctrlr) {
-        return ReflectionUtils.accessibleConstructor(ctrlr.cmd().enabled()).newInstance().isEnabled();
+        // TODO: Check
+        var ctor = ctrlr.cmd().enabled().getDeclaredConstructor();
+        ctor.setAccessible(true);
+        return ctor.newInstance().isEnabled();
     }
 
     private void add(Command cmd) {

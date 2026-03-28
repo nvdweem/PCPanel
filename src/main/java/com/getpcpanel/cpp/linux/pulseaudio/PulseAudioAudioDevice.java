@@ -1,10 +1,9 @@
 package com.getpcpanel.cpp.linux.pulseaudio;
 
-import org.springframework.context.ApplicationEventPublisher;
-
 import com.getpcpanel.cpp.AudioDevice;
 import com.getpcpanel.cpp.DataFlow;
 
+import jakarta.enterprise.event.Event;
 import lombok.Getter;
 
 @Getter
@@ -13,7 +12,7 @@ public class PulseAudioAudioDevice extends AudioDevice {
     private final boolean isDefault;
     private final boolean isOutput;
 
-    public PulseAudioAudioDevice(ApplicationEventPublisher eventPublisher, int index, String name, String id, boolean isDefault, boolean isOutput) {
+    public PulseAudioAudioDevice(Event<Object> eventPublisher, int index, String name, String id, boolean isDefault, boolean isOutput) {
         super(eventPublisher, name, id);
         this.index = index;
         this.isDefault = isDefault;
@@ -27,6 +26,6 @@ public class PulseAudioAudioDevice extends AudioDevice {
 
     @Override
     public String toString() {
-        return super.toString() + " ("+(isOutput ? "out" : "in")+")";
+        return super.toString() + " (" + (isOutput ? "out" : "in") + ")";
     }
 }

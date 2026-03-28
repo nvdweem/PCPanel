@@ -14,7 +14,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.stereotype.Component;
 
 import com.getpcpanel.MainFX;
 import com.getpcpanel.cpp.linux.pulseaudio.SndCtrlPulseAudioDebug;
@@ -29,6 +28,7 @@ import com.getpcpanel.ui.UIInitializer.SingleParamInitializer;
 import com.getpcpanel.util.FileUtil;
 import com.getpcpanel.util.IPlatformCommand;
 
+import jakarta.inject.Singleton;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -52,7 +52,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Component
+@Singleton
 @Prototype
 @RequiredArgsConstructor
 public class SettingsDialog extends Application implements UIInitializer<SingleParamInitializer<Stage>> {

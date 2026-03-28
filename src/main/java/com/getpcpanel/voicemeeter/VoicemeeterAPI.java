@@ -3,18 +3,17 @@ package com.getpcpanel.voicemeeter;
 import java.io.File;
 import java.util.Set;
 
-import org.springframework.stereotype.Service;
-
 import com.getpcpanel.profile.SaveService;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Service
+@ApplicationScoped
 @RequiredArgsConstructor
 public final class VoicemeeterAPI {
     private final SaveService saveService;

@@ -11,10 +11,6 @@ import javax.swing.JOptionPane;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Service;
 
 import com.getpcpanel.Json;
 import com.getpcpanel.hid.DeviceHolder;
@@ -22,21 +18,23 @@ import com.getpcpanel.util.Debouncer;
 import com.getpcpanel.util.FileUtil;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-@Service
+@ApplicationScoped
 @RequiredArgsConstructor
 public class SaveService {
     private static final String saveFileName = "profiles.json";
-    private final ApplicationEventPublisher eventPublisher;
+    private final Event<SaveEvent> eventPublisher;
     private final FileUtil fileUtil;
     private final Json json;
     private final Debouncer debouncer;
-    @Autowired @Lazy @Setter private DeviceHolder devices;
+    @Inject DeviceHolder devices;
     @SuppressWarnings("StaticNonFinalField") private static String oldVersionEncountered;
 
     private Save save;
@@ -54,7 +52,7 @@ public class SaveService {
         if (!saveFile.exists()) {
             log.info("No save file found, creating new one");
             save = new Save();
-            eventPublisher.publishEvent(new SaveEvent(save, true));
+            eventPublisher.fire(new SaveEvent(save, true));
             return;
         }
 
@@ -62,7 +60,7 @@ public class SaveService {
             save = json.read(FileUtils.readFileToString(saveFile, Charset.defaultCharset()), Save.class);
             handleOldVersionEncountered();
             StreamEx.ofValues(save.getDevices()).forEach(d -> StreamEx.of(d.getProfiles()).findFirst(Profile::isMainProfile).ifPresent(p -> d.setCurrentProfile(p.getName())));
-            eventPublisher.publishEvent(new SaveEvent(save, false));
+            eventPublisher.fire(new SaveEvent(save, false));
         } catch (Exception e) {
             log.error("Unable to read file", e);
             save = new Save();
@@ -115,7 +113,7 @@ public class SaveService {
             log.error("Unable to save file", e);
         }
 
-        eventPublisher.publishEvent(new SaveEvent(save, false));
+        eventPublisher.fire(new SaveEvent(save, false));
     }
 
     public void debouncedSave() {

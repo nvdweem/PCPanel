@@ -6,22 +6,25 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Service;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.spring.ConditionalOnWindows;
+import com.getpcpanel.spring.ConditionalOnWindows.OnWindowsCondition;
 import com.github.kwhat.jnativehook.GlobalScreen;
 import com.github.kwhat.jnativehook.NativeHookException;
 import com.github.kwhat.jnativehook.NativeInputEvent;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyEvent;
 import com.github.kwhat.jnativehook.keyboard.NativeKeyListener;
 
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
 import javafx.application.Platform;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -29,20 +32,24 @@ import lombok.extern.log4j.Log4j2;
 import one.util.streamex.EntryStream;
 
 @Log4j2
-@Service
+@ApplicationScoped
 @ConditionalOnWindows
 @RequiredArgsConstructor
-@ConditionalOnProperty(matchIfMissing = true, value = "pcpanel.shortcut-hook", havingValue = "true")
 public class ShortcutHook implements NativeKeyListener {
     public static final Set<Integer> modifiers = Set.of(NativeKeyEvent.VC_SHIFT, NativeKeyEvent.VC_CONTROL, NativeKeyEvent.VC_META, NativeKeyEvent.VC_ALT);
     private final SaveService saveService;
     private final DeviceHolder deviceHolder;
     @Setter private Consumer<NativeKeyEvent> overrideListener;
+    @ConfigProperty(name = "pcpanel.shortcut-hook", defaultValue = "true") @Setter private boolean enabled;
     private Map<String, DeviceProfile> shortcuts;
 
     @SuppressWarnings("ErrorNotRethrown")
     @PostConstruct
     public void init() {
+        if (!enabled || !OnWindowsCondition.matches()) {
+            log.info("Keyboard hook disabled");
+            return;
+        }
         try {
             GlobalScreen.registerNativeHook();
             GlobalScreen.addNativeKeyListener(this);
@@ -51,11 +58,14 @@ public class ShortcutHook implements NativeKeyListener {
             log.error("Unable to register global hook, shortcuts will not work", ex);
         }
 
-        updateShortcuts();
+        updateShortcuts(null);
     }
 
     @PreDestroy
     public void destroy() {
+        if (!enabled) {
+            return;
+        }
         GlobalScreen.removeNativeKeyListener(this);
         try {
             GlobalScreen.unregisterNativeHook();
@@ -74,8 +84,7 @@ public class ShortcutHook implements NativeKeyListener {
         return String.join("+", modifiers, key);
     }
 
-    @EventListener(SaveService.SaveEvent.class)
-    public void updateShortcuts() {
+    public void updateShortcuts(@Observes @Nullable SaveEvent event) {
         shortcuts = EntryStream.of(saveService.get().getDevices())
                                .flatMapValues(ds -> ds.getProfiles().stream())
                                .filterValues(p -> StringUtils.isNotBlank(p.getActivationShortcut()))

@@ -13,13 +13,14 @@ import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Component;
 
 import com.getpcpanel.cpp.AudioSession;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.iconextract.IIconService;
 import com.getpcpanel.spring.Prototype;
+import com.getpcpanel.ui.AppFinderDialog.AppFinderParams;
 
+import jakarta.inject.Singleton;
 import javafx.application.Application;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
@@ -41,10 +42,10 @@ import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-@Component
+@Singleton
 @Prototype
 @RequiredArgsConstructor
-public class AppFinderDialog extends Application implements UIInitializer<AppFinderDialog.AppFinderParams> {
+public class AppFinderDialog extends Application implements UIInitializer<AppFinderParams> {
     private static final int ICON_SIZE = 90;
     private final ISndCtrl sndCtrl;
     private final IIconService iconService;

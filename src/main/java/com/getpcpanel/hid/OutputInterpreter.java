@@ -2,8 +2,6 @@ package com.getpcpanel.hid;
 
 import java.util.Arrays;
 
-import org.springframework.stereotype.Service;
-
 import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.profile.LightingConfig;
 import com.getpcpanel.profile.SingleKnobLightingConfig;
@@ -12,12 +10,13 @@ import com.getpcpanel.profile.SingleSliderLabelLightingConfig;
 import com.getpcpanel.profile.SingleSliderLightingConfig;
 import com.getpcpanel.util.coloroverride.OverrideColorService;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import javafx.scene.paint.Color;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Service
+@ApplicationScoped
 @RequiredArgsConstructor
 public final class OutputInterpreter {
     private final DeviceScanner deviceScanner;

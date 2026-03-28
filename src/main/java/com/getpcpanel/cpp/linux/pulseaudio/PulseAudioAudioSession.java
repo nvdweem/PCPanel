@@ -2,10 +2,9 @@ package com.getpcpanel.cpp.linux.pulseaudio;
 
 import java.io.File;
 
-import org.springframework.context.ApplicationEventPublisher;
-
 import com.getpcpanel.cpp.AudioSession;
 
+import jakarta.enterprise.event.Event;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
@@ -14,7 +13,7 @@ import lombok.Getter;
 public class PulseAudioAudioSession extends AudioSession {
     private final int index;
 
-    public PulseAudioAudioSession(ApplicationEventPublisher eventPublisher, int index, int pid, File executable, String title, String icon, float volume, boolean muted) {
+    public PulseAudioAudioSession(Event<Object> eventPublisher, int index, int pid, File executable, String title, String icon, float volume, boolean muted) {
         super(eventPublisher, pid, executable, title, icon, volume, muted);
         this.index = index;
     }

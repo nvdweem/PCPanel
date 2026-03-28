@@ -3,7 +3,6 @@ package com.getpcpanel.device;
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.ApplicationEventPublisher;
 
 import com.getpcpanel.commands.IconService;
 import com.getpcpanel.commands.command.CommandVolumeFocus;
@@ -17,6 +16,7 @@ import com.getpcpanel.ui.LightingChangedToDefaultEvent;
 import com.getpcpanel.ui.LimitedTextField;
 import com.getpcpanel.util.Images;
 
+import jakarta.enterprise.event.Event;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.geometry.Pos;
@@ -48,14 +48,14 @@ public abstract class Device {
     private final SaveService saveService;
     private final OutputInterpreter outputInterpreter;
     private final IconService iconService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final Event<Object> eventPublisher;
     @Getter private HBox profileMenu;
     private ComboBox<Profile> profiles;
     @Getter protected String serialNumber;
     protected DeviceSave save;
     private LightingConfig lightingConfig;
 
-    protected Device(FxHelper fxHelper, SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, ApplicationEventPublisher eventPublisher, String serialNum,
+    protected Device(FxHelper fxHelper, SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, Event<Object> eventPublisher, String serialNum,
             DeviceSave deviceSave) {
         this.fxHelper = fxHelper;
         this.saveService = saveService;
@@ -159,7 +159,7 @@ public abstract class Device {
             return;
         setLighting(profile.get().getLightingConfig(), true);
         saveService.save();
-        eventPublisher.publishEvent(LightingChangedToDefaultEvent.INSTANCE);
+        eventPublisher.fire(LightingChangedToDefaultEvent.INSTANCE);
     }
 
     public void focusChanged(String from, String to) {

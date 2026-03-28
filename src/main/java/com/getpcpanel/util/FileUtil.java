@@ -2,18 +2,19 @@ package com.getpcpanel.util;
 
 import java.io.File;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Service
+@ApplicationScoped
 @RequiredArgsConstructor
 public class FileUtil {
-    @Value("${application.root}") private final File root;
+    @ConfigProperty(name = "application.root") @Setter private File root;
 
     @PostConstruct
     void ensureRoot() {

@@ -10,9 +10,6 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.getpcpanel.MainFX;
-import com.getpcpanel.ui.HomePage;
-
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -110,10 +107,11 @@ public class FileChecker extends Thread {
                             log.trace("Unable to delete {}", file);
                         }
                         log.debug("Showing window because another process was started");
-                        var eventPublisher = MainFX.getContext();
-                        if (eventPublisher != null) {
-                            eventPublisher.publishEvent(new HomePage.ShowMainEvent());
-                        }
+                        log.error("TODO"); // TODO
+                        // var eventPublisher = MainFX.getContext();
+                        // if (eventPublisher != null) {
+                        //     eventPublisher.fire(new ShowMainEvent());
+                        // }
                     }
                 }
             } catch (Exception e) {

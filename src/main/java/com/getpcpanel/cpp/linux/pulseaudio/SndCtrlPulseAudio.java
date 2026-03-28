@@ -18,9 +18,6 @@ import javax.annotation.concurrent.GuardedBy;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Service;
 
 import com.getpcpanel.cpp.AudioDevice;
 import com.getpcpanel.cpp.AudioSession;
@@ -29,22 +26,29 @@ import com.getpcpanel.cpp.EventType;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.cpp.linux.LinuxProcessHelper;
+import com.getpcpanel.cpp.linux.pulseaudio.PulseAudioEventListener.LinuxDeviceChangedEvent;
 import com.getpcpanel.cpp.linux.pulseaudio.PulseAudioEventListener.LinuxSessionChangedEvent;
+import com.getpcpanel.cpp.linux.pulseaudio.PulseAudioWrapper.InOutput;
+import com.getpcpanel.cpp.linux.pulseaudio.PulseAudioWrapper.PulseAudioTarget;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.inject.Typed;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-@Service
-@ConditionalOnPulseAudio
+@ApplicationScoped
 @RequiredArgsConstructor
+@Typed(SndCtrlPulseAudio.class)
 public class SndCtrlPulseAudio implements ISndCtrl {
     public static final String INPUT_PREFIX = "in_";
     private final PulseAudioWrapper cmd;
     private final LinuxProcessHelper processHelper;
-    private final ApplicationEventPublisher eventPublisher;
+    private final Event<Object> eventPublisher;
     @GuardedBy("devices") private final Map<String, PulseAudioAudioDevice> devices = new HashMap<>();
     @GuardedBy("sessions") private final Set<PulseAudioAudioSession> sessions = new HashSet<>();
 
@@ -54,7 +58,10 @@ public class SndCtrlPulseAudio implements ISndCtrl {
         initSessions(null);
     }
 
-    @EventListener(PulseAudioEventListener.LinuxDeviceChangedEvent.class)
+    void initDevices(@Observes LinuxDeviceChangedEvent event) {
+        initDevices();
+    }
+
     public void initDevices() {
         synchronized (devices) {
             devices.clear();
@@ -62,8 +69,7 @@ public class SndCtrlPulseAudio implements ISndCtrl {
         }
     }
 
-    @EventListener
-    public void initSessions(@Nullable LinuxSessionChangedEvent event) {
+    public void initSessions(@Observes @Nullable LinuxSessionChangedEvent event) {
         synchronized (sessions) {
             var prevByIndex = StreamEx.of(sessions).mapToEntry(PulseAudioAudioSession::index).invert().toMap();
             sessions.clear();
@@ -78,7 +84,7 @@ public class SndCtrlPulseAudio implements ISndCtrl {
             added.map(sess -> new AudioSessionEvent(sess, EventType.ADDED))
                  .append(removed.map(sess -> new AudioSessionEvent(sess, EventType.REMOVED)))
                  .append(changed.map(sess -> new AudioSessionEvent(sess, EventType.CHANGED)))
-                 .forEach(eventPublisher::publishEvent);
+                 .forEach(eventPublisher::fire);
         }
     }
 
@@ -177,7 +183,8 @@ public class SndCtrlPulseAudio implements ISndCtrl {
     }
 
     @Override
-    public @Nullable String getFocusApplication() {
+    @Nullable
+    public String getFocusApplication() {
         return null;
     }
 
@@ -189,19 +196,22 @@ public class SndCtrlPulseAudio implements ISndCtrl {
     }
 
     @Override
-    public @Nullable String defaultDeviceOnEmpty(String deviceId) {
+    @Nullable
+    public String defaultDeviceOnEmpty(String deviceId) {
         return null;
     }
 
     @Override
-    public @Nullable String defaultPlayer() {
+    @Nullable
+    public String defaultPlayer() {
         synchronized (devices) {
             return StreamEx.ofValues(devices).findFirst(PulseAudioAudioDevice::isDefaultOutput).map(AudioDevice::id).orElse(null);
         }
     }
 
     @Override
-    public @Nullable String defaultRecorder() {
+    @Nullable
+    public String defaultRecorder() {
         return null;
     }
 
@@ -209,8 +219,8 @@ public class SndCtrlPulseAudio implements ISndCtrl {
         return StreamEx.of(cmd.getDevices()).mapPartial(this::toDevice).toSet();
     }
 
-    private Optional<PulseAudioAudioDevice> toDevice(PulseAudioWrapper.PulseAudioTarget pa) {
-        var isOutput = pa.type() == PulseAudioWrapper.InOutput.output;
+    private Optional<PulseAudioAudioDevice> toDevice(PulseAudioTarget pa) {
+        var isOutput = pa.type() == InOutput.output;
         var name = pa.metas().get("Name");
         if (StringUtils.isBlank(name)) {
             return Optional.empty();
@@ -230,7 +240,7 @@ public class SndCtrlPulseAudio implements ISndCtrl {
                        .toSet();
     }
 
-    float extractVolume(PulseAudioWrapper.PulseAudioTarget pa) {
+    float extractVolume(PulseAudioTarget pa) {
         var volumeStr = pa.metas().getOrDefault("Volume", "mono: 0 / 0% / -inf dB");
         var outputParts = volumeStr.split(":", 2);
         if (outputParts.length < 2) {

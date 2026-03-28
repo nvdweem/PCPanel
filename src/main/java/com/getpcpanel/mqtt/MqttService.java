@@ -13,14 +13,10 @@ import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Service;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.getpcpanel.profile.MqttSettings;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.util.Debouncer;
 import com.hivemq.client.mqtt.MqttClient;
 import com.hivemq.client.mqtt.MqttGlobalPublishFilter;
@@ -28,17 +24,20 @@ import com.hivemq.client.mqtt.mqtt5.Mqtt5Client;
 import com.hivemq.client.mqtt.mqtt5.message.publish.Mqtt5Publish;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.Observes;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Service
+@ApplicationScoped
 @RequiredArgsConstructor
 public class MqttService {
     static final int ORDER_OF_SAVE = 0;
     public static final String IGNORE_CORRELATION = "pcpanel";
     private final SaveService saveService;
-    private final ApplicationEventPublisher eventPublisher;
+    private final Event<Object> eventPublisher;
     private final ObjectMapper objectMapper;
     private final Debouncer debouncer;
     private final MqttTopicHelper topicHelper;
@@ -140,14 +139,17 @@ public class MqttService {
         );
     }
 
-    @Order(ORDER_OF_SAVE)
     @PostConstruct
-    @EventListener(SaveService.SaveEvent.class)
-    public void saveChanged() {
+    void postConstruct() {
+        saveChanged(null);
+    }
+
+    // @Order(ORDER_OF_SAVE)
+    public void saveChanged(@Observes SaveEvent eventg) {
         var mqttSettings = saveService.get().getMqtt();
         if (mqttSettings == null || !mqttSettings.enabled()) {
             disconnect();
-            eventPublisher.publishEvent(new MqttStatusEvent(false));
+            eventPublisher.fire(new MqttStatusEvent(false));
             connectedSettings = MqttSettings.DEFAULT;
             return;
         }
@@ -158,7 +160,7 @@ public class MqttService {
         log.trace("Save changed, starting mqtt");
         connect(mqttSettings);
         connectedSettings = mqttSettings;
-        eventPublisher.publishEvent(new MqttStatusEvent(true));
+        eventPublisher.fire(new MqttStatusEvent(true));
     }
 
     private void connect(MqttSettings mqttSettings) {

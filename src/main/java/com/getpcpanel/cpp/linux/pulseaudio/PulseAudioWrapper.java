@@ -12,11 +12,12 @@ import javax.annotation.Nonnull;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.stereotype.Service;
 
 import com.getpcpanel.cpp.MuteType;
+import com.getpcpanel.cpp.linux.pulseaudio.PulseAudioWrapper.PulseAudioTarget.PulseAudioTargetBuilder;
 import com.getpcpanel.util.ProcessHelper;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -24,7 +25,7 @@ import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-@Service
+@ApplicationScoped
 @ConditionalOnPulseAudio
 @RequiredArgsConstructor
 public class PulseAudioWrapper {
@@ -82,7 +83,7 @@ public class PulseAudioWrapper {
         var ret = new ArrayList<PulseAudioTarget>();
         var cmdOutput = runAndRead(processHelper.builder("pactl", "list", type.pulseType));
 
-        PulseAudioTarget.PulseAudioTargetBuilder paTarget = null;
+        PulseAudioTargetBuilder paTarget = null;
         var properties = new HashMap<String, String>();
         var metas = new HashMap<String, String>();
 

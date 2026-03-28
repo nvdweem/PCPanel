@@ -7,9 +7,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Component;
-
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.IconService;
 import com.getpcpanel.commands.PCPanelControlEvent;
@@ -21,7 +18,10 @@ import com.getpcpanel.spring.ConditionalOnWindows;
 import com.getpcpanel.util.Debouncer;
 
 import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Singleton;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -39,7 +39,7 @@ import javafx.stage.StageStyle;
 import lombok.RequiredArgsConstructor;
 import one.util.streamex.StreamEx;
 
-@Component
+@Singleton
 @ConditionalOnWindows
 @RequiredArgsConstructor
 public class Overlay extends Popup {
@@ -77,12 +77,11 @@ public class Overlay extends Popup {
             throw new RuntimeException(e);
         }
         getContent().addAll(panel);
-        updateSaveValues();
+        updateSaveValues(null);
     }
 
-    @EventListener(SaveEvent.class)
-    public void updateSaveValues() {
-        updateStyle();
+    public void updateSaveValues(@Observes @Nullable SaveEvent event) {
+        updateStyle(null);
         determinePosition();
     }
 
@@ -105,8 +104,7 @@ public class Overlay extends Popup {
         }
     }
 
-    @EventListener(SaveEvent.class)
-    public void updateStyle() {
+    public void updateStyle(@Observes @Nullable SaveEvent event) {
         var save = this.save.get();
         var style = "-fx-background-color: " + save.getOverlayBackgroundColor() + ";";
         if (save.getOverlayWindowCornerRounding() > 0)
@@ -128,8 +126,7 @@ public class Overlay extends Popup {
         volume.setPrefHeight(save.getOverlayBarHeight());
     }
 
-    @EventListener
-    public void handleControl(PCPanelControlEvent event) {
+    public void handleControl(@Observes PCPanelControlEvent event) {
         if (event.initial()) {
             return;
         }

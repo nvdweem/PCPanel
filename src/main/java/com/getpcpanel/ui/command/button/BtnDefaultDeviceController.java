@@ -6,8 +6,6 @@ import java.util.Collection;
 
 import javax.annotation.Nullable;
 
-import org.springframework.stereotype.Component;
-
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandVolumeDefaultDevice;
 import com.getpcpanel.cpp.AudioDevice;
@@ -18,6 +16,7 @@ import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.CommandController;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import javafx.beans.Observable;
 import javafx.fxml.FXML;
 import javafx.scene.control.ChoiceBox;
@@ -26,7 +25,7 @@ import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-@Component
+@ApplicationScoped
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Sound Device", fxml = "DefaultDevice", cmds = CommandVolumeDefaultDevice.class)

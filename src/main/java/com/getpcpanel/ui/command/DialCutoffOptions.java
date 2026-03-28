@@ -6,7 +6,6 @@ import java.util.Optional;
 import javax.annotation.Nonnull;
 
 import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.stereotype.Component;
 
 import com.getpcpanel.MainFX;
 import com.getpcpanel.commands.command.CommandBrightness;
@@ -18,8 +17,10 @@ import com.getpcpanel.spring.Prototype;
 import com.getpcpanel.ui.FxHelper;
 import com.getpcpanel.ui.UIHelper;
 import com.getpcpanel.ui.UIInitializer;
+import com.getpcpanel.ui.command.DialCutoffOptions.DialCutoffOptionsParams;
 import com.getpcpanel.ui.graphviewer.GraphViewer;
 
+import jakarta.inject.Singleton;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -33,9 +34,9 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import lombok.SneakyThrows;
 
-@Component
+@Singleton
 @Prototype
-public class DialCutoffOptions extends Application implements UIInitializer<DialCutoffOptions.DialCutoffOptionsParams> {
+public class DialCutoffOptions extends Application implements UIInitializer<DialCutoffOptionsParams> {
     @FXML private CheckBox invert;
     @FXML private VBox panel;
     @FXML private TextField moveStart;

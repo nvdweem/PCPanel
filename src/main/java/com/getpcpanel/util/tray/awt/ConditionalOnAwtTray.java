@@ -6,13 +6,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import javax.annotation.Nonnull;
-
 import org.apache.commons.lang3.SystemUtils;
-import org.springframework.context.annotation.Condition;
-import org.springframework.context.annotation.ConditionContext;
-import org.springframework.context.annotation.Conditional;
-import org.springframework.core.type.AnnotatedTypeMetadata;
+
+import com.getpcpanel.util.tray.awt.ConditionalOnX11.OnX11Condition;
 
 /**
  * Condition that matches when AWT SystemTray is expected to work:
@@ -21,13 +17,9 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-@Conditional(ConditionalOnAwtTray.OnAwtTrayCondition.class)
 @interface ConditionalOnAwtTray {
-    class OnAwtTrayCondition implements Condition {
-        private static final ConditionalOnX11.OnX11Condition X11_CONDITION = new ConditionalOnX11.OnX11Condition();
-
-        @Override
-        public boolean matches(@Nonnull ConditionContext context, @Nonnull AnnotatedTypeMetadata metadata) {
+    class OnAwtTrayCondition {
+        public static boolean matches() {
             // Windows always supports AWT tray
             if (SystemUtils.IS_OS_WINDOWS) {
                 return true;
@@ -35,7 +27,7 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 
             // Linux only supports AWT tray on X11, not Wayland
             if (SystemUtils.IS_OS_LINUX) {
-                return X11_CONDITION.matches(context, metadata);
+                return OnX11Condition.matches();
             }
 
             // macOS and others - let AWT try (may or may not work)

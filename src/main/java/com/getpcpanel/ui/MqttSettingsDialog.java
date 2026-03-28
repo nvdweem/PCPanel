@@ -5,22 +5,24 @@ import static com.getpcpanel.profile.MqttSettings.DEFAULT_MQTT_PORT;
 import javax.annotation.Nonnull;
 
 import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.stereotype.Component;
 
 import com.getpcpanel.mqtt.MqttDeviceService;
 import com.getpcpanel.profile.MqttSettings;
+import com.getpcpanel.profile.MqttSettings.HomeAssistantSettings;
 import com.getpcpanel.profile.Save;
 import com.getpcpanel.spring.Prototype;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
 import lombok.RequiredArgsConstructor;
 
-@Component
+@ApplicationScoped
 @Prototype
 @RequiredArgsConstructor
 public class MqttSettingsDialog {
@@ -45,7 +47,7 @@ public class MqttSettingsDialog {
                 password.getText(),
                 secure.isSelected(),
                 baseTopic.getText(),
-                new MqttSettings.HomeAssistantSettings(enableHomeAssistantDiscovery.isSelected(), homeAssistantBaseTopic.getText(), homeAssistantAvailability.isSelected())
+                new HomeAssistantSettings(enableHomeAssistantDiscovery.isSelected(), homeAssistantBaseTopic.getText(), homeAssistantAvailability.isSelected())
         ));
     }
 
@@ -73,7 +75,7 @@ public class MqttSettingsDialog {
 
     public void clearCurrentTopics(ActionEvent actionEvent) {
         if (!mqttDeviceService.clear()) {
-            new Alert(Alert.AlertType.WARNING, "You must be connected to clear the mqtt broker", ButtonType.OK).show();
+            new Alert(AlertType.WARNING, "You must be connected to clear the mqtt broker", ButtonType.OK).show();
         }
     }
 }

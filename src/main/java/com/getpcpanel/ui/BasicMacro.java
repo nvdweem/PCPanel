@@ -8,16 +8,17 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.stereotype.Component;
 
 import com.getpcpanel.device.Device;
 import com.getpcpanel.profile.KnobSetting;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.spring.Prototype;
+import com.getpcpanel.ui.BasicMacro.MacroArgs;
 import com.getpcpanel.ui.command.ButtonController;
-import com.getpcpanel.ui.command.Cmd;
+import com.getpcpanel.ui.command.Cmd.Type;
 import com.getpcpanel.ui.command.CommandContext;
 
+import jakarta.inject.Singleton;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -34,10 +35,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Component
+@Singleton
 @Prototype
 @RequiredArgsConstructor
-public class BasicMacro extends Application implements UIInitializer<BasicMacro.MacroArgs> {
+public class BasicMacro extends Application implements UIInitializer<MacroArgs> {
     private static final Pattern NUMBER_PATTERN = Pattern.compile("\\d*");
     private static final Pattern NOT_NUMBER_PATTERN = Pattern.compile("\\D");
     private final SaveService saveService;
@@ -79,12 +80,12 @@ public class BasicMacro extends Application implements UIInitializer<BasicMacro.
             mainTabPane.getTabs().get(2).setText(analogType);
         }
         context = new CommandContext(stage, deviceSave, profile);
-        dialPanelController.initController(Cmd.Type.dial, context, profile.getDialData(dialNum));
+        dialPanelController.initController(Type.dial, context, profile.getDialData(dialNum));
         dialPanelController.setupGraphRenderer(trimMin, trimMax, logarithmic);
 
         if (hasButton) {
-            singleClickPanelController.initController(Cmd.Type.button, context, profile.getButtonData(dialNum));
-            doubleClickPanelController.initController(Cmd.Type.button, context, profile.getDblButtonData(dialNum));
+            singleClickPanelController.initController(Type.button, context, profile.getButtonData(dialNum));
+            doubleClickPanelController.initController(Type.button, context, profile.getDblButtonData(dialNum));
         } else {
             mainTabPane.getTabs().remove(0);
             mainTabPane.getTabs().remove(0);

@@ -1,35 +1,40 @@
 package com.getpcpanel.util.tray.wayland;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.freedesktop.dbus.connections.impl.DBusConnection;
 import org.freedesktop.dbus.connections.impl.DBusConnectionBuilder;
 import org.freedesktop.dbus.exceptions.DBusException;
 import org.freedesktop.dbus.interfaces.DBusInterface;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
 
 import com.getpcpanel.spring.ConditionalOnWayland;
+import com.getpcpanel.spring.ConditionalOnWayland.OnWaylandCondition;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Service
+@ApplicationScoped
 @RequiredArgsConstructor
-@ConditionalOnProperty(value = "disable.tray", havingValue = "false", matchIfMissing = true)
 @ConditionalOnWayland
 class TrayServiceWayland {
     static final String SNI_BUS_NAME = "org.kde.StatusNotifierItem";
     static final String WATCHER_BUS_NAME = "org.kde.StatusNotifierWatcher";
     static final String WATCHER_OBJECT_PATH = "/StatusNotifierWatcher";
+    @ConfigProperty(name = "disable.tray") @Setter private boolean disabled;
 
-    private final ApplicationEventPublisher eventPublisher;
+    private final Event<Object> eventPublisher;
     private DBusConnection connection;
 
     @PostConstruct
     public void init() {
+        if (disabled || !OnWaylandCondition.matches()) {
+            return;
+        }
         try {
             connection = DBusConnectionBuilder.forSessionBus().build();
             registerIcon();
@@ -51,7 +56,8 @@ class TrayServiceWayland {
         registerWithWatcher(wellKnownName);
     }
 
-    private @Nonnull String requestSniBus(int id) {
+    @Nonnull
+    private String requestSniBus(int id) {
         var wkn = SNI_BUS_NAME;
         try {
             wkn += "-" + ProcessHandle.current().pid() + "-" + id;

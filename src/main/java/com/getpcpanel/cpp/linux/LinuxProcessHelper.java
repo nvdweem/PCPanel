@@ -2,25 +2,23 @@ package com.getpcpanel.cpp.linux;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.Objects;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.stereotype.Service;
 
-import com.getpcpanel.MainFX;
 import com.getpcpanel.spring.ConditionalOnLinux;
 import com.getpcpanel.util.ProcessHelper;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Service
+@ApplicationScoped
 @ConditionalOnLinux
 @RequiredArgsConstructor
 public class LinuxProcessHelper {
@@ -48,7 +46,8 @@ public class LinuxProcessHelper {
         return Optional.empty();
     }
 
-    public @Nullable String getActiveProcess() {
+    @Nullable
+    public String getActiveProcess() {
         try {
             var pid = getActiveProcessPid();
             if (pid == -1)
@@ -60,7 +59,8 @@ public class LinuxProcessHelper {
         return null;
     }
 
-    private @Nullable String lineFrom(String... cmd) throws IOException {
+    @Nullable
+    private String lineFrom(String... cmd) throws IOException {
         var lines = IOUtils.readLines(processHelper.builder(cmd).start().getInputStream(), Charset.defaultCharset());
         if (lines.isEmpty()) {
             return null;
@@ -77,7 +77,9 @@ public class LinuxProcessHelper {
         private final boolean available;
 
         Tool(String tool) {
-            command = resolveHomeRelativePath(Objects.requireNonNullElse(MainFX.getContext().getEnvironment().getProperty("linux.commands." + tool), tool));
+            // TODO: Fix
+            // command = resolveHomeRelativePath(Objects.requireNonNullElse(MainFX.getContext().getEnvironment().getProperty("linux.commands." + tool), tool));
+            command = "";
             available = ProcessConditionalHelper.isProcessAvailable(command);
             log.info("Active Window tool {} enabled: {}", tool, available);
         }

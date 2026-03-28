@@ -3,18 +3,17 @@ package com.getpcpanel.ui;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.stereotype.Component;
-
 import com.getpcpanel.commands.DeviceSet;
 import com.getpcpanel.spring.Prototype;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import javafx.fxml.FXML;
 import javafx.scene.layout.VBox;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import one.util.streamex.StreamEx;
 
-@Component
+@ApplicationScoped
 @Prototype
 @RequiredArgsConstructor
 public class AdvancedDevices {

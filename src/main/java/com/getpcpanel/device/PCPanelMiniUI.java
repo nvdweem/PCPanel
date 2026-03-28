@@ -3,10 +3,9 @@ package com.getpcpanel.device;
 import java.io.IOException;
 import java.util.Objects;
 
-import org.springframework.context.ApplicationEventPublisher;
-
 import com.getpcpanel.commands.IconService;
 import com.getpcpanel.hid.DeviceCommunicationHandler;
+import com.getpcpanel.hid.DeviceCommunicationHandler.ButtonPressEvent;
 import com.getpcpanel.hid.InputInterpreter;
 import com.getpcpanel.hid.OutputInterpreter;
 import com.getpcpanel.profile.DeviceSave;
@@ -20,6 +19,7 @@ import com.getpcpanel.ui.HomePage;
 import com.getpcpanel.util.Util;
 import com.getpcpanel.util.coloroverride.OverrideColorService;
 
+import jakarta.enterprise.event.Event;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -55,7 +55,7 @@ public class PCPanelMiniUI extends Device {
     private static final Image previewImage = new Image(Objects.requireNonNull(PCPanelMiniUI.class.getResource("/assets/PCPanelMini/preview.png")).toExternalForm());
     private Stage childDialogStage;
 
-    public PCPanelMiniUI(FxHelper fxHelper, InputInterpreter inputInterpreter, SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, ApplicationEventPublisher eventPublisher, OverrideColorService overrideColorService,
+    public PCPanelMiniUI(FxHelper fxHelper, InputInterpreter inputInterpreter, SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, Event<Object> eventPublisher, OverrideColorService overrideColorService,
             String serialNum, DeviceSave deviceSave) {
         super(fxHelper, saveService, outputInterpreter, iconService, eventPublisher, serialNum, deviceSave);
         this.inputInterpreter = inputInterpreter;
@@ -158,12 +158,12 @@ public class PCPanelMiniUI extends Device {
             knobs[i].setOnMouseClicked(c -> {
                 if (c.getButton() == MouseButton.MIDDLE) {
                     try {
-                        inputInterpreter.onButtonPress(new DeviceCommunicationHandler.ButtonPressEvent(getSerialNumber(), knob, true));
+                        inputInterpreter.onButtonPress(new ButtonPressEvent(getSerialNumber(), knob, true));
                     } catch (IOException e1) {
                         log.error("Unable to handle button press", e1);
                     }
                     try {
-                        inputInterpreter.onButtonPress(new DeviceCommunicationHandler.ButtonPressEvent(getSerialNumber(), knob, false));
+                        inputInterpreter.onButtonPress(new ButtonPressEvent(getSerialNumber(), knob, false));
                     } catch (IOException e1) {
                         log.error("Unable to handle button up", e1);
                     }

@@ -19,12 +19,9 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
 
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.util.Util;
 
 import io.obswebsocket.community.client.OBSRemoteController;
@@ -34,24 +31,28 @@ import io.obswebsocket.community.client.message.event.inputs.InputMuteStateChang
 import io.obswebsocket.community.client.message.request.RequestBatch;
 import io.obswebsocket.community.client.message.request.inputs.GetInputMuteRequest;
 import io.obswebsocket.community.client.message.response.RequestBatchResponse;
-import io.obswebsocket.community.client.message.response.RequestResponse;
-import io.obswebsocket.community.client.message.response.inputs.GetInputMuteResponse;
+import io.obswebsocket.community.client.message.response.RequestResponse.Data;
+import io.obswebsocket.community.client.message.response.inputs.GetInputMuteResponse.SpecificData;
 import io.obswebsocket.community.client.model.Input;
 import io.obswebsocket.community.client.model.Scene;
+import io.quarkus.scheduler.Scheduled;
 import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.Observes;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-@Service
+@ApplicationScoped
 @RequiredArgsConstructor
 public final class OBS {
     private static final long WAIT_TIME_MS = 1000L;
     private static final ObsIdHelper OBS_ID_HELPER = new ObsIdHelper();
 
     private final SaveService save;
-    private final ApplicationEventPublisher eventPublisher;
+    private final Event<Object> eventPublisher;
     private List<Object> previousSettings = List.of();
     private boolean connected;
     private boolean shuttingDown;
@@ -62,7 +63,7 @@ public final class OBS {
         Runtime.getRuntime().addShutdownHook(new Thread(this::applicationEnding, "OBS Shutdown hook"));
     }
 
-    @Scheduled(fixedRateString = "${pcpanel.obs.rate:2500}")
+    @Scheduled(every = "${pcpanel.obs.rate:2500ms}")
     public void connect() {
         if (!connected && !shuttingDown) {
             buildAndConnectObsController();
@@ -129,7 +130,7 @@ public final class OBS {
     }
 
     private void onMuteChanged(InputMuteStateChangedEvent t) {
-        eventPublisher.publishEvent(new OBSMuteEvent(t.getMessageData().getEventData().getInputName(), t.getMessageData().getEventData().getInputMuted()));
+        eventPublisher.fire(new OBSMuteEvent(t.getMessageData().getEventData().getInputName(), t.getMessageData().getEventData().getInputMuted()));
     }
 
     private void disconnectController() {
@@ -220,8 +221,7 @@ public final class OBS {
         connected = true;
     }
 
-    @EventListener(SaveService.SaveEvent.class)
-    public void saveUpdated() {
+    public void saveUpdated(@Observes SaveEvent event) {
         buildAndConnectObsController();
     }
 
@@ -303,7 +303,7 @@ public final class OBS {
 
     private void doConnected(boolean connected) {
         new Thread(() -> {
-            eventPublisher.publishEvent(new OBSConnectEvent(connected));
+            eventPublisher.fire(new OBSConnectEvent(connected));
             if (connected) {
                 getSourcesWithMuteState();
             }
@@ -334,11 +334,11 @@ public final class OBS {
                 return Map.of();
             }
             return StreamEx.of(result.getData().getResults())
-                           .mapToEntry(rs -> muteRequests.get(rs.getRequestId()), RequestResponse.Data::getResponseData)
+                           .mapToEntry(rs -> muteRequests.get(rs.getRequestId()), Data::getResponseData)
                            .nonNullKeys().mapKeys(rn -> rn.name)
                            .nonNullValues()
-                           .selectValues(GetInputMuteResponse.SpecificData.class)
-                           .mapValues(GetInputMuteResponse.SpecificData::getInputMuted)
+                           .selectValues(SpecificData.class)
+                           .mapValues(SpecificData::getInputMuted)
                            .toMap();
         } catch (InterruptedException e) {
             return Map.of();

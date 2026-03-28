@@ -1,8 +1,8 @@
 package com.getpcpanel.util;
 
-import org.springframework.stereotype.Service;
+import jakarta.enterprise.context.ApplicationScoped;
 
-@Service
+@ApplicationScoped
 public class ProcessHelper {
     public ProcessBuilder builder(String... command) {
         var result = new ProcessBuilder(command);

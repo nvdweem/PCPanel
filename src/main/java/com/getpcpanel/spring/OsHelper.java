@@ -5,13 +5,13 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
-import org.springframework.stereotype.Service;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import javafx.css.Styleable;
 import javafx.scene.Node;
 import one.util.streamex.StreamEx;
 
-@Service
+@ApplicationScoped
 public class OsHelper {
     public static final String WINDOWS = "windows";
     public static final String LINUX = "linux";

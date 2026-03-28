@@ -13,24 +13,24 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Contract;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
 
 import com.getpcpanel.profile.SaveService;
 
+import io.quarkus.scheduler.Scheduled;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-@Service
+@ApplicationScoped
 @RequiredArgsConstructor
 public final class Voicemeeter {
     private final SaveService save;
     private final VoicemeeterAPI api;
-    private final ApplicationEventPublisher eventPublisher;
+    private final Event<Object> eventPublisher;
 
     private int version = -1;
     private volatile boolean hasFinishedConnection;
@@ -49,7 +49,8 @@ public final class Voicemeeter {
             return dn;
         }
 
-        public static @Nullable ControlType fromDn(@Nonnull String in) {
+        @Nullable
+        public static ControlType fromDn(@Nonnull String in) {
             return switch (in.toLowerCase()) {
                 case "input" -> STRIP;
                 case "output" -> BUS;
@@ -141,7 +142,8 @@ public final class Voicemeeter {
             return type == ControlType.BUS ? muteList : getStateButtons().get(version);
         }
 
-        public static @Nullable ButtonType fromName(String name) {
+        @Nullable
+        public static ButtonType fromName(String name) {
             return StreamEx.of(values()).findFirst(value -> StringUtils.equalsIgnoreCase(value.getParameterName(), name)).orElse(null);
         }
     }
@@ -206,7 +208,7 @@ public final class Voicemeeter {
                 checkParamsDirty();
                 version = api.getVoicemeeterType();
                 hasFinishedConnection = true;
-                eventPublisher.publishEvent(new VoiceMeeterConnectedEvent());
+                eventPublisher.fire(new VoiceMeeterConnectedEvent());
                 return true;
             } catch (Exception e) {
                 return false;
@@ -258,7 +260,8 @@ public final class Voicemeeter {
         return disconnectIfDisconnectError(() -> api.getParameterFloat(paramName) > 0, false);
     }
 
-    public @Nullable VoicemeeterVersion getVersion() {
+    @Nullable
+    public VoicemeeterVersion getVersion() {
         if (version < 1 || version > 3)
             return null;
         return versions[version - 1];
@@ -323,7 +326,7 @@ public final class Voicemeeter {
         });
     }
 
-    @Scheduled(fixedRate = 1_000)
+    @Scheduled(delay = 1_000, every = "1s")
     void checkParamsDirtyScheduled() {
         disconnectIfDisconnectError(() -> {
             if (login()) {
@@ -335,7 +338,7 @@ public final class Voicemeeter {
     private void checkParamsDirty() {
         disconnectIfDisconnectError(() -> {
             if (api.areParametersDirty()) {
-                eventPublisher.publishEvent(new VoiceMeeterDirtyEvent());
+                eventPublisher.fire(new VoiceMeeterDirtyEvent());
             }
         });
     }

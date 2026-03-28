@@ -3,12 +3,11 @@ package com.getpcpanel.iconextract;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
-import org.springframework.stereotype.Service;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Typed;
 
-import com.getpcpanel.spring.ConditionalOnWindows;
-
-@Service
-@ConditionalOnWindows
+@ApplicationScoped
+@Typed(IconServiceWindows.class)
 public class IconServiceWindows implements IIconService {
     @Override
     public BufferedImage getIconForFile(int width, int height, File file) {

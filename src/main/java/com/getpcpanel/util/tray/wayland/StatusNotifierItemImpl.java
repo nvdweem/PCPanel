@@ -5,12 +5,13 @@ import static com.getpcpanel.util.tray.wayland.TrayServiceWayland.SNI_BUS_NAME;
 import java.util.Objects;
 
 import org.freedesktop.dbus.annotations.DBusInterfaceName;
-import org.springframework.context.ApplicationEventPublisher;
 
-import com.getpcpanel.ui.HomePage;
+import com.getpcpanel.ui.HomePage.ShowMainEvent;
 
+import jakarta.enterprise.event.Event;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -19,14 +20,14 @@ import lombok.extern.log4j.Log4j2;
 @RequiredArgsConstructor
 @DBusInterfaceName(SNI_BUS_NAME)
 public class StatusNotifierItemImpl implements StatusNotifierItem {
-    private final ApplicationEventPublisher eventPublisher;
+    private final Event<Object> eventPublisher;
 
     // @Override
     @Override
     public void Activate(int x, int y) {
         log.debug("Tray Activate (left-click) at {},{}", x, y);
         Platform.runLater(() ->
-                eventPublisher.publishEvent(new HomePage.ShowMainEvent())
+                eventPublisher.fire(new ShowMainEvent())
         );
     }
 
@@ -35,7 +36,7 @@ public class StatusNotifierItemImpl implements StatusNotifierItem {
         log.debug("Tray ContextMenu (right-click) at {},{}", x, y);
         Platform.runLater(() -> {
             var alert = new Alert(
-                    Alert.AlertType.CONFIRMATION,
+                    AlertType.CONFIRMATION,
                     "Exit PCPanel?",
                     ButtonType.YES,
                     ButtonType.NO

@@ -4,8 +4,6 @@ import java.util.Collection;
 
 import javax.annotation.Nullable;
 
-import org.springframework.stereotype.Component;
-
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggle;
 import com.getpcpanel.cpp.AudioDevice;
@@ -18,6 +16,7 @@ import com.getpcpanel.ui.command.Cmd;
 import com.getpcpanel.ui.command.CommandContext;
 import com.getpcpanel.ui.command.CommandController;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import javafx.beans.Observable;
 import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
@@ -27,7 +26,7 @@ import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-@Component
+@ApplicationScoped
 @Prototype
 @RequiredArgsConstructor
 @Cmd(name = "Toggle Device", fxml = "DefaultDeviceToggle", cmds = CommandVolumeDefaultDeviceToggle.class)

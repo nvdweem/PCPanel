@@ -10,25 +10,23 @@ import org.hid4java.HidServicesListener;
 import org.hid4java.HidServicesSpecification;
 import org.hid4java.ScanMode;
 import org.hid4java.event.HidServicesEvent;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Service;
 
 import com.getpcpanel.device.DeviceType;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Service
+@ApplicationScoped
 @RequiredArgsConstructor
 public class DeviceScanner implements HidServicesListener {
     private final ConcurrentHashMap<String, DeviceCommunicationHandler> connectedDeviceMap = new ConcurrentHashMap<>();
-    private final ApplicationEventPublisher eventPublisher;
-    @Autowired @Lazy @Setter private DeviceCommunicationHandlerFactory deviceCommunicationHandlerFactory;
+    private final Event<Object> eventPublisher;
+    @Inject DeviceCommunicationHandlerFactory deviceCommunicationHandlerFactory;
 
     private HidServices hidServices;
 
@@ -64,14 +62,14 @@ public class DeviceScanner implements HidServicesListener {
         var deviceHandler = deviceCommunicationHandlerFactory.build(key, device, deviceType);
         connectedDeviceMap.put(key, deviceHandler);
         deviceHandler.start();
-        eventPublisher.publishEvent(new DeviceConnectedEvent(key, deviceType));
+        eventPublisher.fire(new DeviceConnectedEvent(key, deviceType));
     }
 
     public void deviceRemoved(String key, HidDevice device) {
         if (key == null || device == null)
             throw new IllegalArgumentException("serialNum or device cannot be null serialNum: " + key + " device: " + device);
         if (connectedDeviceMap.remove(key) != null)
-            eventPublisher.publishEvent(new DeviceDisconnectedEvent(key));
+            eventPublisher.fire(new DeviceDisconnectedEvent(key));
     }
 
     private void foundPCPanel(HidDevice newPCPanel, DeviceType deviceType) {

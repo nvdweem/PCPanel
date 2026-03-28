@@ -1,16 +1,15 @@
 package com.getpcpanel.mqtt;
 
-import org.springframework.stereotype.Service;
-
 import com.getpcpanel.profile.MqttSettings;
 import com.getpcpanel.profile.SaveService;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-@Service
+@ApplicationScoped
 @RequiredArgsConstructor
 class MqttTopicHelper {
     private final SaveService saveService;
