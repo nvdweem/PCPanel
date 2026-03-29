@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Objects;
 
 import com.getpcpanel.commands.IconService;
-import com.getpcpanel.hid.DeviceCommunicationHandler;
 import com.getpcpanel.hid.DeviceCommunicationHandler.ButtonPressEvent;
 import com.getpcpanel.hid.InputInterpreter;
 import com.getpcpanel.hid.OutputInterpreter;
@@ -15,7 +14,7 @@ import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SingleKnobLightingConfig;
 import com.getpcpanel.profile.SingleKnobLightingConfig.SINGLE_KNOB_MODE;
 import com.getpcpanel.ui.FxHelper;
-import com.getpcpanel.ui.HomePage;
+import com.getpcpanel.ui.HomePageController;
 import com.getpcpanel.util.Util;
 import com.getpcpanel.util.coloroverride.OverrideColorService;
 
@@ -145,7 +144,7 @@ public class PCPanelMiniUI extends Device {
 
             var knob = i;
             knobs[i].setOnAction(e -> {
-                HomePage.showHint(false);
+                HomePageController.showHint(false);
                 var bm = getFxHelper().buildBasicMacro(this, knob);
                 try {
                     childDialogStage = new Stage();

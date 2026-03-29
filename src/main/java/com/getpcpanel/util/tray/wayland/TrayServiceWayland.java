@@ -25,7 +25,7 @@ class TrayServiceWayland {
     static final String SNI_BUS_NAME = "org.kde.StatusNotifierItem";
     static final String WATCHER_BUS_NAME = "org.kde.StatusNotifierWatcher";
     static final String WATCHER_OBJECT_PATH = "/StatusNotifierWatcher";
-    @ConfigProperty(name = "disable.tray") @Setter private boolean disabled;
+    @ConfigProperty(name = "disable.tray", defaultValue = "false") @Setter private boolean disabled;
 
     private final Event<Object> eventPublisher;
     private DBusConnection connection;

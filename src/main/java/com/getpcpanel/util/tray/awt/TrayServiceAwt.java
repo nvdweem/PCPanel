@@ -12,7 +12,7 @@ import javax.imageio.ImageIO;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import com.getpcpanel.ui.HomePage.ShowMainEvent;
+import com.getpcpanel.ui.HomePageController.ShowMainEvent;
 import com.getpcpanel.util.tray.awt.ConditionalOnAwtTray.OnAwtTrayCondition;
 
 import jakarta.annotation.PostConstruct;

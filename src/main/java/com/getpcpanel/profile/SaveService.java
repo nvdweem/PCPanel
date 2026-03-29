@@ -18,15 +18,15 @@ import com.getpcpanel.util.Debouncer;
 import com.getpcpanel.util.FileUtil;
 
 import jakarta.annotation.PostConstruct;
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-@ApplicationScoped
+@Singleton
 @RequiredArgsConstructor
 public class SaveService {
     private static final String saveFileName = "profiles.json";

@@ -6,7 +6,7 @@ import java.util.Objects;
 
 import org.freedesktop.dbus.annotations.DBusInterfaceName;
 
-import com.getpcpanel.ui.HomePage.ShowMainEvent;
+import com.getpcpanel.ui.HomePageController.ShowMainEvent;
 
 import jakarta.enterprise.event.Event;
 import javafx.application.Platform;

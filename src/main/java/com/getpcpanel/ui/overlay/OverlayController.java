@@ -1,7 +1,5 @@
 package com.getpcpanel.ui.overlay;
 
-import java.awt.Toolkit;
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -14,15 +12,15 @@ import com.getpcpanel.commands.PCPanelControlEvent;
 import com.getpcpanel.commands.command.ButtonAction;
 import com.getpcpanel.commands.command.DialAction;
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.ui.FxHelper;
 import com.getpcpanel.util.Debouncer;
 
+import io.quarkiverse.fx.views.FxView;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.Dependent;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.image.Image;
@@ -30,15 +28,15 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
-import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import lombok.RequiredArgsConstructor;
 import one.util.streamex.StreamEx;
 
+@FxView
+@Dependent
 @RequiredArgsConstructor
-class Overlay extends Popup {
-    private final FxHelper fxHelper;
+class OverlayController {
     private final SaveService save;
     private final IconService iconService;
     private final Debouncer debouncer;
@@ -50,53 +48,17 @@ class Overlay extends Popup {
     @FXML private Label volumeText;
     @FXML private Label text;
     @FXML private ImageView icon;
-    private Stage stage;
+    private OverlayPopup popup;
 
     @PostConstruct
     public void doInit() {
-        Platform.runLater(() -> prepareStage(new Stage(StageStyle.UTILITY)));
-    }
-
-    public void prepareStage(Stage helperStage) {
-        stage = helperStage;
-        stage.setOpacity(0);
-        stage.setScene(new Scene(new Pane(), 1, 1));
-        helperStage.show();
-        var loader = fxHelper.getLoader(getClass().getResource("/assets/Overlay.fxml"));
-
-        loader.setController(this);
-        HBox panel;
-        try {
-            panel = loader.load();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        getContent().addAll(panel);
-        updateSaveValues();
+        popup = new OverlayPopup(this);
+        Platform.runLater(() -> popup.prepareStage(new Stage(StageStyle.UTILITY)));
     }
 
     void updateSaveValues() {
         updateStyle();
-        determinePosition();
-    }
-
-    private void determinePosition() {
-        var window = Toolkit.getDefaultToolkit().getScreenSize();
-        var x = window.getWidth();
-        var y = window.getHeight();
-        var width = getWidth();
-        var height = getHeight();
-
-        switch (save.get().getOverlayPosition()) {
-            case topLeft, topMiddle, topRight -> setY(save.get().getOverlayPadding());
-            case middleLeft, middleMiddle, middleRight -> setY(y / 2 - height / 2);
-            case bottomLeft, bottomMiddle, bottomRight -> setY(y - getHeight() - save.get().getOverlayPadding());
-        }
-        switch (save.get().getOverlayPosition()) {
-            case topLeft, middleLeft, bottomLeft -> setX(save.get().getOverlayPadding());
-            case topMiddle, middleMiddle, bottomMiddle -> setX(x / 2 - width / 2);
-            case topRight, middleRight, bottomRight -> setX(x - width - save.get().getOverlayPadding());
-        }
+        popup.determinePosition();
     }
 
     public void updateStyle() {
@@ -110,7 +72,6 @@ class Overlay extends Popup {
     }
 
     private void initAfterShow() {
-        determinePosition();
         var save = this.save.get();
         if (save.getOverlayBarCornerRounding() > 0) {
             var barStyle = "-fx-background-radius: " + save.getOverlayBarCornerRounding() + "px;";
@@ -160,11 +121,11 @@ class Overlay extends Popup {
             var cai = pre.get();
             if (hasOverlay(cai.command) && pred.test(cai.command)) {
                 icon.setImage(cai.icon);
-                show(stage);
+                popup.show();
                 initAfterShow();
             }
         });
-        debouncer.debounce(this, () -> Platform.runLater(this::hide), 2, TimeUnit.SECONDS);
+        debouncer.debounce(this, () -> Platform.runLater(popup::hide), 2, TimeUnit.SECONDS);
     }
 
     private boolean hasOverlay(Commands commands) {

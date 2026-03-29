@@ -113,7 +113,7 @@ public class MiniLightingDialog extends Application implements UIInitializer<Sin
             eventPublisher.fire(LightingChangedToDefaultEvent.INSTANCE);
         });
         stage.initModality(Modality.APPLICATION_MODAL);
-        stage.initOwner(HomePage.stage);
+        stage.initOwner(HomePageController.stage);
         stage.setScene(scene);
         stage.sizeToScene();
         stage.setTitle("Lighting Dialog");

@@ -30,10 +30,11 @@ import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.profile.SingleKnobLightingConfig;
 import com.getpcpanel.profile.SingleSliderLabelLightingConfig;
 import com.getpcpanel.profile.SingleSliderLightingConfig;
-import com.getpcpanel.ui.HomePage.GlobalBrightnessChangedEvent;
+import com.getpcpanel.ui.HomePageController.GlobalBrightnessChangedEvent;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.EntryStream;
@@ -42,12 +43,12 @@ import one.util.streamex.EntryStream;
 @ApplicationScoped
 @RequiredArgsConstructor
 public class MqttDeviceService {
-    private final MqttService mqtt;
-    private final SaveService saveService;
-    private final DeviceHolder deviceHolder;
-    private final MqttHomeAssistantHelper mqttHomeAssistantHelper;
-    private final MqttTopicHelper mqttTopicHelper;
-    private final MqttDeviceColorService deviceColorService;
+    @Inject MqttService mqtt;
+    @Inject SaveService saveService;
+    @Inject DeviceHolder deviceHolder;
+    @Inject MqttHomeAssistantHelper mqttHomeAssistantHelper;
+    @Inject MqttTopicHelper mqttTopicHelper;
+    @Inject MqttDeviceColorService deviceColorService;
     private final Set<Device> initializedDevices = new HashSet<>();
 
     // @Order(ORDER_OF_SAVE + 1) // Ensure we are disconnected if the setting is turned off

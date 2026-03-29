@@ -8,7 +8,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
-<HBox prefHeight="524.0" prefWidth="946.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1">
+<HBox prefHeight="524.0" prefWidth="946.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.HomePageController">
     <ListView fx:id="connectedDeviceList" minWidth="-Infinity" prefWidth="230.0"/>
     <VBox prefHeight="524.0" prefWidth="340.0" HBox.hgrow="ALWAYS">
         <VBox alignment="TOP_CENTER" maxHeight="-Infinity" prefHeight="100.0">

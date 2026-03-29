@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Objects;
 
 import com.getpcpanel.commands.IconService;
-import com.getpcpanel.hid.DeviceCommunicationHandler;
 import com.getpcpanel.hid.DeviceCommunicationHandler.ButtonPressEvent;
 import com.getpcpanel.hid.InputInterpreter;
 import com.getpcpanel.hid.OutputInterpreter;
@@ -17,7 +16,7 @@ import com.getpcpanel.profile.SingleLogoLightingConfig.SINGLE_LOGO_MODE;
 import com.getpcpanel.profile.SingleSliderLabelLightingConfig.SINGLE_SLIDER_LABEL_MODE;
 import com.getpcpanel.profile.SingleSliderLightingConfig.SINGLE_SLIDER_MODE;
 import com.getpcpanel.ui.FxHelper;
-import com.getpcpanel.ui.HomePage;
+import com.getpcpanel.ui.HomePageController;
 import com.getpcpanel.util.Util;
 import com.getpcpanel.util.coloroverride.OverrideColorService;
 
@@ -195,7 +194,7 @@ public class PCPanelProUI extends Device {
             }
             var knob = i;
             knobs[i].setOnAction(e -> {
-                HomePage.showHint(false);
+                HomePageController.showHint(false);
                 var name = (knob < 5) ? ("Knob " + (knob + 1)) : ("Slider " + (knob - 5 + 1));
                 var analogType = (knob < 5) ? "Knob" : "Slider";
                 var bm = getFxHelper().buildBasicMacro(this, knob, knob < 5, name, analogType);

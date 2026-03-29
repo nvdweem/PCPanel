@@ -14,10 +14,12 @@ import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.util.version.VersionChecker.NewVersionAvailableEvent;
 
+import io.quarkiverse.fx.views.FxView;
 import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.event.Event;
 import jakarta.enterprise.event.Observes;
-import javafx.application.Application;
+import javafx.application.HostServices;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
@@ -38,20 +40,22 @@ import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-// @Singleton
+@FxView
+@Dependent
 @RequiredArgsConstructor
-public class HomePage extends Application {
+public class HomePageController {
     private static final String TITLE_FORMAT = "PCPanel Controller %s";
-    @SuppressWarnings("StaticNonFinalField") @Setter private static HomePage window;
+    @SuppressWarnings("StaticNonFinalField") @Setter private static HomePageController window;
     @SuppressWarnings("StaticNonFinalField") @Setter public static Stage stage;
     private final FxHelper fxHelper;
     private final SaveService saveService;
     private final DeviceScanner deviceScanner;
     private final DeviceHolder devices;
     private final Event<GlobalBrightnessChangedEvent> applicationEventPublisher;
+    private final HostServices hostServices;
 
-    @ConfigProperty(name = "application.version") private String version;
-    @ConfigProperty(name = "application.build") private String build;
+    @ConfigProperty(name = "application.version") String version;
+    @ConfigProperty(name = "application.build") String build;
 
     @FXML private Pane deviceHolder;
     @FXML private Pane titleHolder;
@@ -70,15 +74,6 @@ public class HomePage extends Application {
     @FXML private Slider globalBrightness;
     private Pane pane;
 
-    public HomePage() {
-        fxHelper = null;
-        saveService = null;
-        deviceScanner = null;
-        devices = null;
-        applicationEventPublisher = null;
-    }
-
-    @Override
     @PostConstruct
     public void init() {
         if (window != null) {
@@ -88,19 +83,11 @@ public class HomePage extends Application {
         setWindow(this);
     }
 
-    public void start(Stage stage, boolean quiet) throws Exception {
-        start(stage);
-        if (!quiet)
-            stage.show();
-    }
-
-    @Override
-    public void start(Stage stage) throws Exception {
+    public void start(Stage stage, Pane pane) throws Exception {
         setStage(stage);
-        var loader = fxHelper.getLoader(getClass().getResource("/assets/HomePage.fxml"));
-        loader.setController(this);
-        pane = loader.load();
+        this.pane = pane;
         pane.setId("pane");
+
         var scene = new Scene(pane, 1000.0D, 870.0D);
         showHint(false);
         initWindow();
@@ -242,7 +229,7 @@ public class HomePage extends Application {
     public void newVersionAvailable(@Observes NewVersionAvailableEvent event) {
         var label = new Label("New version available: " + event.version().versionDisplay());
         label.setStyle("-fx-text-fill: #ff8888; -fx-font-weight: bold;");
-        label.setOnMouseClicked(e -> getHostServices().showDocument(event.version().html_url()));
+        label.setOnMouseClicked(e -> hostServices.showDocument(event.version().html_url()));
         Platform.runLater(() -> labelTarget.getChildren().add(label));
     }
 
