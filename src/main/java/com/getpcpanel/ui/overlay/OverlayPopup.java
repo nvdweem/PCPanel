@@ -6,7 +6,6 @@ import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.spring.ConditionalOnWindows;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.stage.Popup;
@@ -17,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 @ConditionalOnWindows
 @RequiredArgsConstructor
 class OverlayPopup extends Popup {
-    @Inject SaveService save;
     private Stage stage;
     private final OverlayController controller;
 
@@ -41,15 +39,19 @@ class OverlayPopup extends Popup {
         var width = getWidth();
         var height = getHeight();
 
-        switch (save.get().getOverlayPosition()) {
-            case topLeft, topMiddle, topRight -> setY(save.get().getOverlayPadding());
+        switch (getSave().get().getOverlayPosition()) {
+            case topLeft, topMiddle, topRight -> setY(getSave().get().getOverlayPadding());
             case middleLeft, middleMiddle, middleRight -> setY(y / 2 - height / 2);
-            case bottomLeft, bottomMiddle, bottomRight -> setY(y - getHeight() - save.get().getOverlayPadding());
+            case bottomLeft, bottomMiddle, bottomRight -> setY(y - getHeight() - getSave().get().getOverlayPadding());
         }
-        switch (save.get().getOverlayPosition()) {
-            case topLeft, middleLeft, bottomLeft -> setX(save.get().getOverlayPadding());
+        switch (getSave().get().getOverlayPosition()) {
+            case topLeft, middleLeft, bottomLeft -> setX(getSave().get().getOverlayPadding());
             case topMiddle, middleMiddle, bottomMiddle -> setX(x / 2 - width / 2);
-            case topRight, middleRight, bottomRight -> setX(x - width - save.get().getOverlayPadding());
+            case topRight, middleRight, bottomRight -> setX(x - width - getSave().get().getOverlayPadding());
         }
+    }
+
+    private SaveService getSave() {
+        return controller.save;
     }
 }

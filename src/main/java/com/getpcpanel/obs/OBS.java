@@ -37,15 +37,15 @@ import io.obswebsocket.community.client.model.Input;
 import io.obswebsocket.community.client.model.Scene;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.annotation.PostConstruct;
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.enterprise.event.Observes;
+import jakarta.inject.Singleton;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-@ApplicationScoped
+@Singleton
 @RequiredArgsConstructor
 public final class OBS {
     private static final long WAIT_TIME_MS = 1000L;

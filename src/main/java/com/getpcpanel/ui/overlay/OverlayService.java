@@ -21,9 +21,9 @@ public class OverlayService {
     private final FxViewRepository viewRepository;
     private Optional<OverlayController> overlay = Optional.empty();
 
-    void onPostStartup(@Observes FxPostStartupEvent event) throws Exception {
+    void onPostStartup(@Observes FxPostStartupEvent event) {
         if (OnWindowsCondition.matches()) {
-            overlay = viewRepository.getViewData("Overlay").getController();
+            overlay = Optional.of(viewRepository.getViewData("Overlay").getController());
         }
     }
 

@@ -18,6 +18,7 @@ import io.quarkiverse.fx.views.FxView;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -30,16 +31,14 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import lombok.RequiredArgsConstructor;
 import one.util.streamex.StreamEx;
 
 @FxView
 @Dependent
-@RequiredArgsConstructor
-class OverlayController {
-    private final SaveService save;
-    private final IconService iconService;
-    private final Debouncer debouncer;
+public class OverlayController {
+    @Inject SaveService save;
+    @Inject IconService iconService;
+    @Inject Debouncer debouncer;
 
     @FXML private Pane panel;
     @FXML private HBox volumePanel;

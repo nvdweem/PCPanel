@@ -35,13 +35,11 @@ import com.getpcpanel.ui.HomePageController.GlobalBrightnessChangedEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.EntryStream;
 
 @Log4j2
 @ApplicationScoped
-@RequiredArgsConstructor
 public class MqttDeviceService {
     @Inject MqttService mqtt;
     @Inject SaveService saveService;

@@ -7,7 +7,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.text.Font?>
-<HBox fx:id="panel" alignment="CENTER" prefHeight="56.0" prefWidth="264.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1">
+<HBox fx:id="panel" alignment="CENTER" prefHeight="56.0" prefWidth="264.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getpcpanel.ui.overlay.OverlayController">
     <ImageView fx:id="icon" fitHeight="32.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true">
         <HBox.margin>
             <Insets right="10.0"/>
@@ -15,7 +15,7 @@
     </ImageView>
     <StackPane alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
         <HBox fx:id="volumePanel" alignment="CENTER_LEFT" StackPane.alignment="CENTER_LEFT">
-            <ProgressBar fx:id="volume" maxWidth="1000.0" progress="0.0" HBox.hgrow="ALWAYS" />
+            <ProgressBar fx:id="volume" maxWidth="1000.0" progress="0.0" HBox.hgrow="ALWAYS"/>
             <Label fx:id="volumeText" alignment="CENTER" prefHeight="17.0" prefWidth="30.0" style="-fx-background-color: transparent;" text="100" textAlignment="CENTER">
                 <HBox.margin>
                     <Insets left="10.0"/>

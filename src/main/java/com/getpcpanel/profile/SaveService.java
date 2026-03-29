@@ -18,22 +18,20 @@ import com.getpcpanel.util.Debouncer;
 import com.getpcpanel.util.FileUtil;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-@Singleton
-@RequiredArgsConstructor
+@ApplicationScoped
 public class SaveService {
     private static final String saveFileName = "profiles.json";
-    private final Event<SaveEvent> eventPublisher;
-    private final FileUtil fileUtil;
-    private final Json json;
-    private final Debouncer debouncer;
+    @Inject Event<SaveEvent> eventPublisher;
+    @Inject FileUtil fileUtil;
+    @Inject Json json;
+    @Inject Debouncer debouncer;
     @Inject DeviceHolder devices;
     @SuppressWarnings("StaticNonFinalField") private static String oldVersionEncountered;
 
@@ -52,7 +50,7 @@ public class SaveService {
         if (!saveFile.exists()) {
             log.info("No save file found, creating new one");
             save = new Save();
-            eventPublisher.fire(new SaveEvent(save, true));
+            eventPublisher.fireAsync(new SaveEvent(save, true));
             return;
         }
 
@@ -60,7 +58,7 @@ public class SaveService {
             save = json.read(FileUtils.readFileToString(saveFile, Charset.defaultCharset()), Save.class);
             handleOldVersionEncountered();
             StreamEx.ofValues(save.getDevices()).forEach(d -> StreamEx.of(d.getProfiles()).findFirst(Profile::isMainProfile).ifPresent(p -> d.setCurrentProfile(p.getName())));
-            eventPublisher.fire(new SaveEvent(save, false));
+            eventPublisher.fireAsync(new SaveEvent(save, false));
         } catch (Exception e) {
             log.error("Unable to read file", e);
             save = new Save();
