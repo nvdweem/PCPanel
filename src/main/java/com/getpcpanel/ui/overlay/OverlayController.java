@@ -148,6 +148,13 @@ public class OverlayController {
     }
 
     private record CommandAndIcon(Commands command, Image icon) {
-        static final CommandAndIcon DEFAULT = new CommandAndIcon(Commands.EMPTY, IconServiceImages.DEFAULT);
+        private static CommandAndIcon DEFAULT;
+
+        static CommandAndIcon getDefault() {
+            if (DEFAULT == null) {
+                DEFAULT = new CommandAndIcon(Commands.EMPTY, IconServiceImages.getDefault());
+            }
+            return DEFAULT;
+        }
     }
 }

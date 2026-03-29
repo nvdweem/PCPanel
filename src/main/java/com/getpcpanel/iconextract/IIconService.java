@@ -5,8 +5,9 @@ import java.io.File;
 
 import javax.annotation.Nullable;
 
+import com.getpcpanel.util.FxImageUtil;
+
 import io.quarkus.cache.CacheResult;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.Image;
 
 public interface IIconService {
@@ -18,7 +19,7 @@ public interface IIconService {
     default Image getIconImageForFile(int width, int height, File file) {
         var image = getIconForFile(width, height, file);
         if (image != null) {
-            return SwingFXUtils.toFXImage(image, null);
+            return FxImageUtil.toFxImage(image);
         }
         return null;
     }

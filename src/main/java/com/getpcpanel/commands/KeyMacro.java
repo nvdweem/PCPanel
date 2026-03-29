@@ -8,7 +8,14 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public final class KeyMacro {
-    private static final Robot robot = buildRobot();
+    private static Robot robot;
+
+    private static Robot getRobot() {
+        if (robot == null) {
+            robot = buildRobot();
+        }
+        return robot;
+    }
 
     private static Robot buildRobot() {
         try {
@@ -32,18 +39,18 @@ public final class KeyMacro {
                 if (result == 0) {
                     log.error("bad serialNum modifier: {}", ar[i]);
                 } else {
-                    robot.keyPress(result);
+                    getRobot().keyPress(result);
                 }
             }
             var keyEvent = letterToKeyEvent(ar[ar.length - 1]);
-            robot.keyPress(keyEvent);
-            robot.keyRelease(keyEvent);
+            getRobot().keyPress(keyEvent);
+            getRobot().keyRelease(keyEvent);
             for (var j = 0; j < ar.length - 1; j++) {
                 var result = modifierToKeyEvent(ar[j]);
                 if (result == 0) {
                     log.error("bad serialNum modifier: {}", ar[j]);
                 } else {
-                    robot.keyRelease(result);
+                    getRobot().keyRelease(result);
                 }
             }
         } catch (Exception e) {

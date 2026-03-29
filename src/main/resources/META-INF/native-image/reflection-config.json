@@ -1,0 +1,15 @@
+[
+  {
+    "name": "javafx.application.HostServices",
+    "condition": {
+      "typeReachable": "javafx.application.HostServices"
+    },
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  }
+]
+

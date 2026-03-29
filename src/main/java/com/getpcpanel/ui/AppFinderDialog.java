@@ -18,9 +18,9 @@ import com.getpcpanel.cpp.AudioSession;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.iconextract.IIconService;
 import com.getpcpanel.ui.AppFinderDialog.AppFinderParams;
+import com.getpcpanel.util.FxImageUtil;
 
 import javafx.application.Application;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -122,7 +122,7 @@ public class AppFinderDialog extends Application implements UIInitializer<AppFin
         } else {
             bi = toBufferedImage(session.executable());
         }
-        var writableImage = SwingFXUtils.toFXImage(bi, null);
+        var writableImage = FxImageUtil.toFxImage(bi);
         return new ImageView(writableImage);
     }
 

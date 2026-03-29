@@ -45,7 +45,7 @@ public class IconService {
 
     @PostConstruct
     public void init() {
-        imageHandlers.put(Command.class, (a, b) -> IconServiceImages.DEFAULT);
+        imageHandlers.put(Command.class, (a, b) -> IconServiceImages.getDefault());
 
         // Dials
         imageHandlers.put(CommandVolumeProcess.class, IconService::getRunningProcessIcon);
@@ -66,7 +66,7 @@ public class IconService {
     @Nonnull
     public Image getImageFrom(@Nullable Commands commands, @Nullable KnobSetting override) {
         if (!Commands.hasCommands(commands)) {
-            return IconServiceImages.DEFAULT;
+            return IconServiceImages.getDefault();
         }
 
         if (override != null) {
@@ -89,20 +89,20 @@ public class IconService {
         //noinspection ObjectEquality
         return StreamEx.of(commands.getCommands())
                        .map(imageHandlers::handle)
-                       .findFirst(result -> result != null && result != IconServiceImages.DEFAULT)
-                       .orElse(IconServiceImages.DEFAULT);
+                       .findFirst(result -> result != null && result != IconServiceImages.getDefault())
+                       .orElse(IconServiceImages.getDefault());
     }
 
     public boolean isDefault(Image img) {
         //noinspection ObjectEquality
-        return img == IconServiceImages.DEFAULT;
+        return img == IconServiceImages.getDefault();
     }
 
     private Image getRunningProcessIcon(CommandVolumeProcess commandIcon) {
         var allProcesses = sndCtrl.getRunningApplications();
         for (var process : commandIcon.getProcessName()) {
             if (StringUtils.equalsIgnoreCase(process, SYSTEM)) {
-                return IconServiceImages.SYSTEM_SOUND;
+                return IconServiceImages.getSystemSound();
             }
             for (var runningProcess : allProcesses) {
                 if (StringUtils.containsIgnoreCase(runningProcess.file().getAbsolutePath(), process)) {
@@ -113,27 +113,27 @@ public class IconService {
                 }
             }
         }
-        return IconServiceImages.DEFAULT;
+        return IconServiceImages.getDefault();
     }
 
     private Image getFocusProcessIcon(CommandVolumeFocus command) {
         var image = iconService.getIconImageForFile(32, 32, new File(sndCtrl.getFocusApplication()));
         if (image == null) {
-            return IconServiceImages.DEFAULT;
+            return IconServiceImages.getDefault();
         }
         return image;
     }
 
     private Image getDeviceIcon(Command command) {
-        return IconServiceImages.DEVICE;
+        return IconServiceImages.getDevice();
     }
 
     private Image getVoiceMeeterIcon(CommandVoiceMeeter command) {
-        return IconServiceImages.VOICEMEETER;
+        return IconServiceImages.getVoicemeeter();
     }
 
     private Image getObsIcon(CommandObs command) {
-        return IconServiceImages.OBS;
+        return IconServiceImages.getObs();
     }
 
     private class SafeMap extends HashMap<Class<? extends Command>, BiFunction<IconService, ? extends Command, Image>> {
@@ -144,7 +144,7 @@ public class IconService {
 
         public <T extends Command> Image handle(T icon) {
             if (icon == null)
-                return IconServiceImages.DEFAULT;
+                return IconServiceImages.getDefault();
 
             //noinspection unchecked
             return ((BiFunction<IconService, T, Image>) ensureHandler(icon.getClass())).apply(IconService.this, icon);
