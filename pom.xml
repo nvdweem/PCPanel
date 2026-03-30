@@ -12,8 +12,8 @@
 
     <properties>
         <compiler-plugin.version>3.15.0</compiler-plugin.version>
-        <maven.compiler.source>25</maven.compiler.source>
-        <maven.compiler.target>25</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
@@ -390,7 +390,9 @@
                 <skipITs>false</skipITs>
                 <quarkus.native.enabled>true</quarkus.native.enabled>
                 <!-- Fix for HostServices proxying issue in native image -->
-                <quarkus.native.additional-build-args>--initialize-at-run-time=io.quarkus.runner.ApplicationImpl,--initialize-at-run-time=org.hid4java.jna.LibusbHidApiLibrary,--initialize-at-run-time=org.hid4java.jna.HidApi,--initialize-at-run-time=org.hid4java.HidManager,--initialize-at-run-time=org.hid4java.HidServices,--initialize-at-run-time=org.hid4java,--initialize-at-run-time=com.sun.jna,--initialize-at-run-time=com.sun.glass.ui.Application,--initialize-at-run-time=com.sun.glass.ui.win.WinApplication,--initialize-at-run-time=com.sun.javafx.tk.quantum.QuantumToolkit,-J--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED,-J--add-exports=javafx.controls/com.sun.javafx.scene.control.skin.resources=ALL-UNNAMED,-H:NativeLinkerOption=shlwapi.lib</quarkus.native.additional-build-args>
+                <quarkus.native.additional-build-args>
+                    --initialize-at-run-time=io.quarkus.runner.ApplicationImpl,--initialize-at-run-time=org.hid4java.jna.LibusbHidApiLibrary,--initialize-at-run-time=org.hid4java.jna.HidApi,--initialize-at-run-time=org.hid4java.HidManager,--initialize-at-run-time=org.hid4java.HidServices,--initialize-at-run-time=org.hid4java,--initialize-at-run-time=com.sun.jna,--initialize-at-run-time=com.sun.glass.ui.Application,--initialize-at-run-time=com.sun.glass.ui.win.WinApplication,--initialize-at-run-time=com.sun.javafx.tk.quantum.QuantumToolkit,--add-modules=javafx.graphics,--add-modules=javafx.controls,--add-modules=javafx.fxml,-J--add-exports=javafx.base/com.sun.javafx.event=ALL-UNNAMED,-J--add-exports=javafx.controls/com.sun.javafx.scene.control.skin.resources=ALL-UNNAMED,-H:NativeLinkerOption=shlwapi.lib
+                </quarkus.native.additional-build-args>
             </properties>
         </profile>
         <profile>
