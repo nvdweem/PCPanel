@@ -5,8 +5,11 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.WebSocket;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,6 +19,11 @@ import java.util.function.Consumer;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import dev.niels.wavelink.IWaveLinkClient;
 import dev.niels.wavelink.IWaveLinkClientEventListener;
@@ -46,6 +54,8 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseable {
+    private static final int DEFAULT_WAVELINK_PORT = 1884;
+    private static final int WAVELINK_PORT = getWaveLinkPort();
     private CompletableFuture<WebSocket> websocket = CompletableFuture.completedFuture(null);
     private WaveLinkListener waveLinkListener;
     private final HttpClient client;
@@ -57,6 +67,24 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
     @Getter private boolean initialized;
     @Getter private String mainOutputDeviceId;
     @Getter private WaveLinkApp lastFocusApp = WaveLinkApp.EMPTY;
+
+    private static int getWaveLinkPort() {
+        // Just using a static port is too easy for Elgato, so we retrieve the (random?) port from the ws-info.json, just like the StreamDeck does...
+        var userProfile = System.getenv("USERPROFILE");
+        if (!StringUtils.isBlank(userProfile)) {
+            var wsInfoPath = Path.of(userProfile, "AppData", "Local", "Packages", "Elgato.WaveLink_g54w8ztgkx496", "LocalState", "ws-info.json");
+            try {
+                var content = Files.readString(wsInfoPath);
+                var mapper = new ObjectMapper();
+                var wsInfo = mapper.readValue(content, Map.class);
+                log.info("WaveLink port: {}", wsInfo.get("port"));
+                return NumberUtils.toInt(Objects.toString(wsInfo.get("port")), DEFAULT_WAVELINK_PORT);
+            } catch (Exception e) {
+                log.warn("Failed to read WaveLink ws-info.json", e);
+            }
+        }
+        return DEFAULT_WAVELINK_PORT;
+    }
 
     protected WaveLinkClientImpl(boolean autoConnect) {
         client = HttpClient.newHttpClient();
@@ -102,7 +130,7 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
         waveLinkListener = new WaveLinkListener(this);
         websocket = client.newWebSocketBuilder()
                           .header("Origin", "streamdeck://")
-                          .buildAsync(URI.create("ws://127.0.0.1:1884"), waveLinkListener)
+                          .buildAsync(URI.create("ws://127.0.0.1:" + WAVELINK_PORT), waveLinkListener)
                           .exceptionally(ex -> {
                               trigger(l -> l.onError(ex));
                               return null;
