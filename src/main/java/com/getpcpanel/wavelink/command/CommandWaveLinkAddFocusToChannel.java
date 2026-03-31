@@ -15,7 +15,7 @@ import lombok.extern.log4j.Log4j2;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
-public class CommandWaveLinkAddFocusToChannel extends CommandWaveLink implements ButtonAction {
+public final class CommandWaveLinkAddFocusToChannel extends CommandWaveLink implements ButtonAction {
     @Nullable private final String channelId;
     @Nullable private final String channelName;
 

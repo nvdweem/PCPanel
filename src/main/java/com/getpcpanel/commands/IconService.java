@@ -4,6 +4,7 @@ import static com.getpcpanel.cpp.AudioSession.SYSTEM;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
 
@@ -43,11 +44,12 @@ public class IconService {
     public static final Image DEFAULT = new Image(Objects.requireNonNull(IconService.class.getResource("/assets/32x32.png")).toExternalForm());
     private static final Image OBS = new Image(Objects.requireNonNull(IconService.class.getResource("/assets/obs.png")).toExternalForm());
     private static final Image VOICEMEETER = new Image(Objects.requireNonNull(IconService.class.getResource("/assets/voicemeeter.png")).toExternalForm());
-    private static final Image DEVICE = new Image(Objects.requireNonNull(IconService.class.getResource("/assets/device.png")).toExternalForm());
-    private static final Image SYSTEM_SOUND = new Image(Objects.requireNonNull(IconService.class.getResource("/assets/systemsounds.ico")).toExternalForm());
+    public static final Image DEVICE = new Image(Objects.requireNonNull(IconService.class.getResource("/assets/device.png")).toExternalForm());
+    public static final Image SYSTEM_SOUND = new Image(Objects.requireNonNull(IconService.class.getResource("/assets/systemsounds.ico")).toExternalForm());
     private final SafeMap imageHandlers = new SafeMap();
     private final ISndCtrl sndCtrl;
     private final IIconService iconService;
+    private final List<IIconHandler<?>> iconHandlers;
 
     @PostConstruct
     public void init() {
@@ -66,10 +68,17 @@ public class IconService {
         imageHandlers.put(CommandVolumeDefaultDeviceToggleAdvanced.class, IconService::getDeviceIcon);
         imageHandlers.put(CommandVolumeDefaultDevice.class, IconService::getDeviceIcon);
         imageHandlers.put(CommandVolumeDefaultDeviceToggle.class, IconService::getDeviceIcon);
+
+        // Other handlers
+        iconHandlers.forEach(ih -> {
+            IIconHandler untyped = ih;
+            imageHandlers.put(ih.getCommandClass(), (is, cmd) -> (Image) untyped.supplyImage(cmd).orElse(null));
+        });
     }
 
     @Cacheable("command-icon")
-    public @Nonnull Image getImageFrom(@Nullable Commands commands, @Nullable KnobSetting override) {
+    @Nonnull
+    public Image getImageFrom(@Nullable Commands commands, @Nullable KnobSetting override) {
         if (!Commands.hasCommands(commands)) {
             return DEFAULT;
         }

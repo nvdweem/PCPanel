@@ -15,7 +15,7 @@ import lombok.extern.log4j.Log4j2;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
-public class CommandWaveLinkMainOutput extends CommandWaveLink implements ButtonAction {
+public final class CommandWaveLinkMainOutput extends CommandWaveLink implements ButtonAction {
     @Nullable private final String id;
     @Nullable private final String name;
 

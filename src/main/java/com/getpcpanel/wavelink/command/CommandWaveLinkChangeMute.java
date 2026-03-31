@@ -17,7 +17,7 @@ import lombok.extern.log4j.Log4j2;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
-public class CommandWaveLinkChangeMute extends CommandWaveLinkChange implements ButtonAction {
+public final class CommandWaveLinkChangeMute extends CommandWaveLinkChange implements ButtonAction {
     private final MuteType muteType;
 
     @JsonCreator

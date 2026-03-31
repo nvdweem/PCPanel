@@ -280,7 +280,7 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
 
     void onCommand(WaveLinkJsonRpcCommand<?, ?> message) {
         switch (message) {
-            case WaveLinkChannelChangedCommand channelChanged -> updateEntry(IWaveLinkClientEventListener::channelChanged, channels, channelChanged.getParams());
+            case WaveLinkChannelChangedCommand channelChanged -> updateEntry(IWaveLinkClientEventListener::channelChanged, channels, restoreImage(channelChanged.getParams()));
             case WaveLinkChannelsChangedCommand channelsChanged -> updateEntries(IWaveLinkClientEventListener::channelsChanged, channels, channelsChanged.getParams().channels());
             case WaveLinkOutputDeviceChangedCommand deviceChanged -> updateEntry(IWaveLinkClientEventListener::outputDeviceChanged, outputDevices, deviceChanged.getParams());
             case WaveLinkMixChangedCommand mixChanged -> updateEntry(IWaveLinkClientEventListener::mixChanged, mixes, mixChanged.getParams());
@@ -332,6 +332,14 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
         log.info("Connected to Wave Link and initialized");
         initialized = true;
         trigger(IWaveLinkClientEventListener::initialized);
+    }
+
+    private WaveLinkChannel restoreImage(WaveLinkChannel params) {
+        var existing = channels.get(params.id());
+        if (existing == null) {
+            return params;
+        }
+        return params.withImage(existing.image());
     }
 
     private int getWaveLinkPort() {

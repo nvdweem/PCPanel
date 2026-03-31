@@ -9,7 +9,7 @@ import lombok.ToString;
 
 @Getter
 @ToString(callSuper = true)
-public abstract class CommandWaveLink extends Command {
+public abstract sealed class CommandWaveLink extends Command permits CommandWaveLinkAddFocusToChannel, CommandWaveLinkChange, CommandWaveLinkChannelEffect, CommandWaveLinkMainOutput {
     protected WaveLinkService getWaveLinkService() {
         return MainFX.getBean(WaveLinkService.class);
     }

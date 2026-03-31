@@ -7,7 +7,7 @@ import lombok.ToString;
 
 @Getter
 @ToString(callSuper = true)
-public abstract class CommandWaveLinkChange extends CommandWaveLink {
+public abstract sealed class CommandWaveLinkChange extends CommandWaveLink permits CommandWaveLinkChangeLevel, CommandWaveLinkChangeMute {
     private final WaveLinkCommandTarget commandType;
     @Nullable private final String id1;
     @Nullable private final String id2;

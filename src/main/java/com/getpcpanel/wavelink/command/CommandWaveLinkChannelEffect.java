@@ -19,7 +19,7 @@ import one.util.streamex.StreamEx;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
-public class CommandWaveLinkChannelEffect extends CommandWaveLink implements ButtonAction {
+public final class CommandWaveLinkChannelEffect extends CommandWaveLink implements ButtonAction {
     @Nullable private final String channelId;
     @Nullable private final String channelName;
     @Nullable private final String effectId;
