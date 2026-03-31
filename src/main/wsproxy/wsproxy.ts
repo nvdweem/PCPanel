@@ -1,31 +1,36 @@
 import { WebSocket, WebSocketServer } from 'ws';
+import * as fs from 'fs';
+import * as util from 'util';
+
+let log_file = fs.createWriteStream(__dirname + '/debug.log', {flags: 'w'});
+
+if (process.argv[2]?.toLowerCase() == 'wavelink') {
+    setupWaveLinkProxy();
+}
 
 const arg2 = (process.argv[3] ?? 'localhost:1885').split(':');
-const SERVER_PORT = Number(process.argv[2]) || 1884;
-const TARGET_PORT = Number(arg2[1]) || 1885;
-const TARGET_HOST = arg2[0] || 'localhost';
+const LISTEN_PORT = Number(process.argv[2]) || 1884;
+const CONNECT_PORT = Number(arg2[1]) || 1885;
+const CONNECT_HOST = arg2[0] || 'localhost';
 const CONNECT_HEADERS = {
     origin: 'streamdeck://',
 };
 
-let fs = require('fs');
-let util = require('util');
-let log_file = fs.createWriteStream(__dirname + '/debug.log', {flags: 'w'});
 
-log(`Starting WebSocket proxy server on port ${SERVER_PORT}`);
-log(`Proxying connections to ${TARGET_HOST}:${TARGET_PORT}`);
+log(`Starting WebSocket proxy server on port ${LISTEN_PORT}`);
+log(`Proxying connections to ${CONNECT_HOST}:${CONNECT_PORT}`);
 
 let isListening = false;
-const wss = new WebSocketServer({port: SERVER_PORT});
+const wss = new WebSocketServer({port: LISTEN_PORT});
 
 wss.on('listening', () => {
     isListening = true;
-    log(`WebSocket proxy server listening on port ${SERVER_PORT}`);
+    log(`WebSocket proxy server listening on port ${LISTEN_PORT}`);
 });
 
 wss.on('error', (error) => {
     if (!isListening || (error as any).syscall === 'listen') {
-        console.error('Unable to bind WebSocket server to port', SERVER_PORT, ':', error.message);
+        console.error('Unable to bind WebSocket server to port', LISTEN_PORT, ':', error.message);
         console.error('Please ensure no other application is using this port and try again.');
         process.exit(1);
     }
@@ -41,10 +46,10 @@ wss.on('connection', (clientSocket: WebSocket, request) => {
     let targetConnected = false;
 
     // Connect to the target server with forwarded headers
-    const targetSocket = new WebSocket(`ws://${TARGET_HOST}:${TARGET_PORT}`, CONNECT_HEADERS);
+    const targetSocket = new WebSocket(`ws://${CONNECT_HOST}:${CONNECT_PORT}`, CONNECT_HEADERS);
 
     targetSocket.on('open', () => {
-        log(`Connected to WaveLink ${TARGET_HOST}:${TARGET_PORT} for StreamDeck ${clientId}`);
+        log(`Connected to WaveLink ${CONNECT_HOST}:${CONNECT_PORT} for StreamDeck ${clientId}`);
         targetConnected = true;
 
         // Send all buffered messages
@@ -108,4 +113,45 @@ log('WebSocket proxy is ready to accept connections');
 function log(msg: string, ...attrs: unknown[]) {
     console.log(`${msg}`, ...attrs);
     log_file.write(util.format.apply(null, arguments) + '\n');
+}
+
+function writeTempFile(targetFile: string, originalContent: string, newContent: string) {
+    log('Replacing wavelink port file', targetFile);
+    fs.writeFileSync(targetFile, newContent, 'utf-8');
+
+    // Restore original file on shutdown
+    process.on('exit', () => {
+        fs.writeFileSync(targetFile, originalContent, 'utf-8');
+        log('Restored original WaveLink configuration file', targetFile);
+    });
+
+    process.on('SIGINT', () => {
+        log('Received SIGINT, shutting down...');
+        process.exit(0);
+    });
+
+    process.on('SIGTERM', () => {
+        log('Received SIGTERM, shutting down...');
+        process.exit(0);
+    });
+}
+
+function setupWaveLinkProxy() {
+    const portFile = process.env.APPDATA?.replace('Roaming', 'Local/Packages/Elgato.WaveLink_g54w8ztgkx496/LocalState/ws-info.json');
+    if (portFile) {
+        try {
+            const originalFileContent = fs.readFileSync(portFile, 'utf-8');
+            const content = JSON.parse(originalFileContent);
+            const wavelinkPort = content.port;
+
+            content.port = 1883;
+            writeTempFile(portFile, originalFileContent, JSON.stringify(content));
+
+            process.argv.length = 4;
+            process.argv[2] = '1883';
+            process.argv[3] = `localhost:${wavelinkPort}`;
+        } catch (error) {
+            console.error('Failed to read WaveLink port file:', error);
+        }
+    }
 }
