@@ -2,7 +2,8 @@ package com.getpcpanel.hid;
 
 import java.util.Arrays;
 
-import org.springframework.stereotype.Service;
+import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.profile.LightingConfig;
@@ -14,14 +15,15 @@ import com.getpcpanel.util.coloroverride.OverrideColorService;
 
 import javafx.scene.paint.Color;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 
-@Log4j2
-@Service
-@RequiredArgsConstructor
+@JBossLog
+@ApplicationScoped
 public final class OutputInterpreter {
-    private final DeviceScanner deviceScanner;
-    private final OverrideColorService overrideColorService;
+    @Inject
+    DeviceScanner deviceScanner;
+    @Inject
+    OverrideColorService overrideColorService;
 
     private static final byte[] OUTPUT_CODE_INIT = { 1 };
     private static final byte ANIMATION_RAINBOW_HORIZONTAL = 1;

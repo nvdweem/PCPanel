@@ -10,9 +10,9 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 
-@Log4j2
+@JBossLog
 public class FileChecker extends Thread {
     @SuppressWarnings("AccessOfSystemProperties") public static final File FILES_ROOT = new File(System.getProperty("user.home"), ".pcpanel"); // This is not a bean so don't configure the root, just pick the default
     private static final File REOPEN_FILE = new File(FILES_ROOT, "reopen.txt");

@@ -43,4 +43,3 @@ public class SingleSliderLightingConfig {
         mode = c.mode;
     }
 }
-

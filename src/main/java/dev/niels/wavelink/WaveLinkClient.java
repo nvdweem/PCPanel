@@ -1,9 +1,9 @@
 package dev.niels.wavelink;
 
 import dev.niels.wavelink.impl.WaveLinkClientImpl;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 
-@Log4j2
+@JBossLog
 public class WaveLinkClient extends WaveLinkClientImpl {
     public WaveLinkClient(boolean autoConnect) {
         super(autoConnect);

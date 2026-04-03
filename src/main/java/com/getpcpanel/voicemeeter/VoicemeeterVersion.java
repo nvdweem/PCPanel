@@ -181,4 +181,3 @@ public enum VoicemeeterVersion {
         return null;
     }
 }
-

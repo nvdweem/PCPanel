@@ -9,22 +9,24 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.device.Device;
 import com.getpcpanel.profile.MqttSettings;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 
-@Log4j2
-@Service
-@RequiredArgsConstructor
+@JBossLog
+@ApplicationScoped
 public class MqttHomeAssistantHelper {
-    private final MqttTopicHelper topicHelper;
-    private final MqttService mqttService;
-    @Value("${application.version}") private String version;
+    @Inject
+    MqttTopicHelper topicHelper;
+    @Inject
+    MqttService mqttService;
+    @ConfigProperty(name="pcpanel.version") private String version;
 
     public void clearAll(MqttSettings settings) {
         var topic = StringUtils.joinWith("/", settings.homeAssistant().baseTopic(), "+", "pcpanel", "#");

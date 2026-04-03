@@ -16,9 +16,10 @@ import java.util.function.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import org.springframework.context.event.EventListener;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Service;
+import jakarta.inject.Inject;
+import jakarta.enterprise.event.Observes;
+import jakarta.annotation.Priority;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.device.Device;
 import com.getpcpanel.hid.ButtonClickEvent;
@@ -35,31 +36,34 @@ import com.getpcpanel.profile.SingleSliderLightingConfig;
 import com.getpcpanel.ui.HomePage.GlobalBrightnessChangedEvent;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 import one.util.streamex.EntryStream;
 
-@Log4j2
-@Service
-@RequiredArgsConstructor
+@JBossLog
+@ApplicationScoped
 public class MqttDeviceService {
-    private final MqttService mqtt;
-    private final SaveService saveService;
-    private final DeviceHolder deviceHolder;
-    private final MqttHomeAssistantHelper mqttHomeAssistantHelper;
-    private final MqttTopicHelper mqttTopicHelper;
-    private final MqttDeviceColorService deviceColorService;
+    @Inject
+    MqttService mqtt;
+    @Inject
+    SaveService saveService;
+    @Inject
+    DeviceHolder deviceHolder;
+    @Inject
+    MqttHomeAssistantHelper mqttHomeAssistantHelper;
+    @Inject
+    MqttTopicHelper mqttTopicHelper;
+    @Inject
+    MqttDeviceColorService deviceColorService;
     private final Set<Device> initializedDevices = new HashSet<>();
 
-    @Order(ORDER_OF_SAVE + 1) // Ensure we are disconnected if the setting is turned off
-    @EventListener(SaveService.SaveEvent.class)
-    public void saveChanged() {
+    @Priority(ORDER_OF_SAVE + 1) // Ensure we are disconnected if the setting is turned off
+        public void saveChanged() {
         if (mqtt.isConnected()) {
             initialize();
         }
     }
 
-    @EventListener
-    public void mqttConnected(MqttStatusEvent event) {
+        public void mqttConnected(@Observes MqttStatusEvent event) {
         if (!event.connected()) {
             return;
         }
@@ -81,16 +85,14 @@ public class MqttDeviceService {
         return false;
     }
 
-    @EventListener
-    public void deviceConnected(DeviceFullyConnectedEvent event) {
+        public void deviceConnected(@Observes DeviceFullyConnectedEvent event) {
         if (!mqtt.isConnected()) {
             return;
         }
         initialize(event.device());
     }
 
-    @EventListener
-    public void dialAction(DeviceCommunicationHandler.KnobRotateEvent dial) {
+        public void dialAction(@Observes DeviceCommunicationHandler.KnobRotateEvent dial) {
         if (!mqtt.isConnected()) {
             return;
         }
@@ -101,8 +103,7 @@ public class MqttDeviceService {
         });
     }
 
-    @EventListener
-    public void buttonPress(DeviceCommunicationHandler.ButtonPressEvent btn) {
+        public void buttonPress(@Observes DeviceCommunicationHandler.ButtonPressEvent btn) {
         if (!mqtt.isConnected()) {
             return;
         }
@@ -112,8 +113,7 @@ public class MqttDeviceService {
         });
     }
 
-    @EventListener
-    public void buttonPress(ButtonClickEvent btn) {
+        public void buttonPress(@Observes ButtonClickEvent btn) {
         if (!mqtt.isConnected()) {
             return;
         }
@@ -123,8 +123,7 @@ public class MqttDeviceService {
         });
     }
 
-    @EventListener
-    public void globalBrightnessChange(GlobalBrightnessChangedEvent event) {
+        public void globalBrightnessChange(@Observes GlobalBrightnessChangedEvent event) {
         if (!mqtt.isConnected()) {
             return;
         }

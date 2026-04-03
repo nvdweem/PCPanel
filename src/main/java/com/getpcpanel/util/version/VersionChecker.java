@@ -2,31 +2,124 @@ package com.getpcpanel.util.version;
 
 import static com.getpcpanel.util.version.Version.SNAPSHOT_POSTFIX;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.Comparator;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.util.version.Version.SemVer;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import lombok.extern.jbosslog.JBossLog;
+import one.util.streamex.StreamEx;
+
+@JBossLog
+@ApplicationScoped
+public class VersionChecker extends Thread {
+    @Inject Event<Object> eventBus;
+    @Inject SaveService save;
+    @Inject ObjectMapper objectMapper;
+
+    @ConfigProperty(name = "pcpanel.version")
+    String version;
+
+    @ConfigProperty(name = "pcpanel.build")
+    int build;
+
+    @ConfigProperty(name = "pcpanel.github.user-and-repo")
+    String githubUserAndRepo;
+
+    private boolean currentIsSnapshot;
+
+    @PostConstruct
+    public void init() {
+        currentIsSnapshot = version.endsWith(SNAPSHOT_POSTFIX);
+        setDaemon(true);
+        if (save.get().isStartupVersionCheck()) {
+            start();
+        }
+    }
+
+    @Override
+    public void run() {
+        try {
+            var url = "https://api.github.com/repos/" + githubUserAndRepo + "/releases?per_page=4";
+            var client = HttpClient.newHttpClient();
+            var request = HttpRequest.newBuilder(URI.create(url)).build();
+            var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            var versions = objectMapper.readValue(response.body(), Version[].class);
+
+            var correctVersion = getVersionOfCorrectType(versions);
+            if (versionIsNewer(correctVersion)) {
+                eventBus.fire(new NewVersionAvailableEvent(correctVersion));
+            }
+        } catch (Exception e) {
+            log.error("Unable to get latest version from GitHub", e);
+        }
+    }
+
+    private Version getVersionOfCorrectType(Version[] versions) {
+        return StreamEx.of(versions)
+                       .sorted(Comparator.comparing(Version::semVer).reversed())
+                       .filter(v -> currentIsSnapshot || !v.prerelease())
+                       .findFirst()
+                       .orElseThrow(() -> new RuntimeException("Unable to find release"));
+    }
+
+    private boolean versionIsNewer(Version remoteVersion) {
+        var currentSemVer = SemVer.fromName(version);
+        if (currentIsSnapshot) {
+            currentSemVer = currentSemVer.withBuild(build);
+        }
+        var compared = currentSemVer.compareTo(remoteVersion.semVer());
+        if (compared == 0) {
+            return currentIsSnapshot && build < remoteVersion.getBuild();
+        }
+        return compared < 0;
+    }
+
+    public record NewVersionAvailableEvent(Version version) {
+    }
+}
+
+
+import static com.getpcpanel.util.version.Version.SNAPSHOT_POSTFIX;
+
+import java.util.Comparator;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
+import java.net.http.HttpClient;
 
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.util.version.Version.SemVer;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 import one.util.streamex.StreamEx;
 
-@Log4j2
-@Service
+@JBossLog
+@ApplicationScoped
 @RequiredArgsConstructor
 public class VersionChecker extends Thread {
-    private final ApplicationEventPublisher eventPublisher;
+    @Inject
+    Event<Object> eventBus;
     private final SaveService save;
     private final RestTemplate webClient;
     @Value("https://api.github.com/repos/${application.github.user-and-repo}/releases?per_page=4") private final String versionCheck;
-    @Value("${application.version}") private final String version;
-    @Value("${application.build}") private final int build;
+    @ConfigProperty(name="pcpanel.version") private final String version;
+    @ConfigProperty(name="pcpanel.build") private final int build;
     @Value("#{'${application.version}'.endsWith('" + SNAPSHOT_POSTFIX + "')}") private final boolean currentIsSnapshot;
 
     @PostConstruct
@@ -73,7 +166,7 @@ public class VersionChecker extends Thread {
     }
 
     private void updateVersionLabel(Version remoteVersion) {
-        eventPublisher.publishEvent(new NewVersionAvailableEvent(remoteVersion));
+        eventBus.fire(new NewVersionAvailableEvent(remoteVersion));
     }
 
     public record NewVersionAvailableEvent(Version version) {

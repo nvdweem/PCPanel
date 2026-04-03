@@ -1,5 +1,61 @@
 package com.getpcpanel.obs;
 
+import java.util.List;
+import java.util.Map;
+
+import com.getpcpanel.profile.SaveService;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import lombok.extern.jbosslog.JBossLog;
+
+/**
+ * OBS integration stub - disabled due to javax/jakarta conflict.
+ * TODO: Re-enable when obs4j migrates to jakarta.
+ */
+@JBossLog
+@ApplicationScoped
+public final class OBS {
+    @Inject SaveService save;
+    @Inject Event<Object> eventBus;
+
+    @PostConstruct
+    public void init() {
+        log.info("OBS integration disabled (javax/jakarta conflict)");
+    }
+
+    public List<String> getSourcesWithAudio() {
+        return List.of();
+    }
+
+    public Map<String, Boolean> getSourcesWithMuteState() {
+        return Map.of();
+    }
+
+    public List<String> getScenes() {
+        return List.of();
+    }
+
+    public void setSourceVolume(String sourceName, int vol) {}
+
+    public void toggleSourceMute(String sourceName) {}
+
+    public void setSourceMute(String sourceName, boolean mute) {}
+
+    public void setCurrentScene(String sceneName) {}
+
+    public boolean isConnected() {
+        return false;
+    }
+
+    public String test(String address, int port, String password, long timeout) {
+        return "OBS integration disabled";
+    }
+}
+
+
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
@@ -19,10 +75,10 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import io.quarkus.scheduler.Scheduled;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.util.Util;
@@ -40,18 +96,19 @@ import io.obswebsocket.community.client.model.Input;
 import io.obswebsocket.community.client.model.Scene;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 import one.util.streamex.StreamEx;
 
-@Log4j2
-@Service
+@JBossLog
+@ApplicationScoped
 @RequiredArgsConstructor
 public final class OBS {
     private static final long WAIT_TIME_MS = 1000L;
     private static final ObsIdHelper OBS_ID_HELPER = new ObsIdHelper();
 
     private final SaveService save;
-    private final ApplicationEventPublisher eventPublisher;
+    @Inject
+    Event<Object> eventBus;
     private List<Object> previousSettings = List.of();
     private boolean connected;
     private boolean shuttingDown;
@@ -62,7 +119,7 @@ public final class OBS {
         Runtime.getRuntime().addShutdownHook(new Thread(this::applicationEnding, "OBS Shutdown hook"));
     }
 
-    @Scheduled(fixedRateString = "${pcpanel.obs.rate:2500}")
+    @Scheduled(every="${pcpanel.obs.rate:2500}s")
     public void connect() {
         if (!connected && !shuttingDown) {
             buildAndConnectObsController();
@@ -129,7 +186,7 @@ public final class OBS {
     }
 
     private void onMuteChanged(InputMuteStateChangedEvent t) {
-        eventPublisher.publishEvent(new OBSMuteEvent(t.getMessageData().getEventData().getInputName(), t.getMessageData().getEventData().getInputMuted()));
+        eventBus.fire(new OBSMuteEvent(t.getMessageData().getEventData().getInputName(), t.getMessageData().getEventData().getInputMuted()));
     }
 
     private void disconnectController() {
@@ -220,8 +277,7 @@ public final class OBS {
         connected = true;
     }
 
-    @EventListener(SaveService.SaveEvent.class)
-    public void saveUpdated() {
+        public void saveUpdated() {
         buildAndConnectObsController();
     }
 
@@ -303,7 +359,7 @@ public final class OBS {
 
     private void doConnected(boolean connected) {
         new Thread(() -> {
-            eventPublisher.publishEvent(new OBSConnectEvent(connected));
+            eventBus.fire(new OBSConnectEvent(connected));
             if (connected) {
                 getSourcesWithMuteState();
             }

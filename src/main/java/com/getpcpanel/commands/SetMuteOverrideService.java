@@ -9,9 +9,10 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.context.event.EventListener;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Service;
+import jakarta.inject.Inject;
+import jakarta.enterprise.event.Observes;
+import jakarta.annotation.Priority;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.commands.command.CommandObsSetSourceVolume;
 import com.getpcpanel.commands.command.CommandVoiceMeeter;
@@ -44,27 +45,29 @@ import com.getpcpanel.voicemeeter.Voicemeeter.ButtonType;
 import com.getpcpanel.voicemeeter.Voicemeeter.ControlType;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 
 /**
  * Triggers a color change when the device or application that is controlled by the dial/slider is muted/unmuted.
  */
-@Log4j2
-@Service
-@Order(0)
-@RequiredArgsConstructor
+@JBossLog
+@ApplicationScoped
+@Priority(0)
 public class SetMuteOverrideService implements IOverrideColorProviderProvider {
     private static final Pattern voiceMeeterPattern = Pattern.compile("VoiceMeeter: (Input|Output) (\\d+), (.*)"); // 1: In/Out, 2: Idx, 3: ButtonType
-    private final DeviceHolder devices;
-    private final ISndCtrl sndCtrl;
-    private final SaveService saveService;
-    private final OBS obs;
+    @Inject
+    DeviceHolder devices;
+    @Inject
+    ISndCtrl sndCtrl;
+    @Inject
+    SaveService saveService;
+    @Inject
+    OBS obs;
     private final ColorOverrideHolder colorOverrideHolder = new ColorOverrideHolder();
 
-    @EventListener({ DeviceScanner.DeviceConnectedEvent.class, LightingChangedToDefaultEvent.class })
-    public void triggerAll() {
+        public void triggerAll() {
         colorOverrideHolder.clearAllOverrides();
         for (var device : sndCtrl.getDevices()) {
             onAudioDevice(new AudioDeviceEvent(device, EventType.CHANGED));
@@ -75,8 +78,7 @@ public class SetMuteOverrideService implements IOverrideColorProviderProvider {
         updateObs(new OBSConnectEvent(obs.isConnected()));
     }
 
-    @EventListener(OBSConnectEvent.class)
-    public void updateObs(OBSConnectEvent event) {
+        public void updateObs(@Observes OBSConnectEvent event) {
         if (!event.connected()) {
             return;
         }
@@ -84,8 +86,7 @@ public class SetMuteOverrideService implements IOverrideColorProviderProvider {
         EntryStream.of(obs.getSourcesWithMuteState()).mapKeyValue(OBSMuteEvent::new).forEach(this::onObsSource);
     }
 
-    @EventListener
-    public void onObsSource(OBSMuteEvent event) {
+        public void onObsSource(@Observes OBSMuteEvent event) {
         var lcName = event.input();
         handleEvent(
                 dlc -> isFollow(dlc) &&
@@ -93,8 +94,7 @@ public class SetMuteOverrideService implements IOverrideColorProviderProvider {
                 event.muted());
     }
 
-    @EventListener
-    public void onVoiceMeeterSource(VoiceMeeterMuteEvent event) {
+        public void onVoiceMeeterSource(@Observes VoiceMeeterMuteEvent event) {
         var type = event.ct();
         var idx = event.idx();
         var button = event.button();
@@ -122,8 +122,7 @@ public class SetMuteOverrideService implements IOverrideColorProviderProvider {
                 event.state());
     }
 
-    @EventListener
-    public void onAudioSession(AudioSessionEvent event) {
+        public void onAudioSession(@Observes AudioSessionEvent event) {
         var lcName = StringUtils.lowerCase(event.session().executable().getName().toLowerCase());
         handleEvent(
                 dlc -> isFollow(dlc) &&
@@ -131,8 +130,7 @@ public class SetMuteOverrideService implements IOverrideColorProviderProvider {
                 event.session().muted());
     }
 
-    @EventListener
-    public void onAudioDevice(AudioDeviceEvent event) {
+        public void onAudioDevice(@Observes AudioDeviceEvent event) {
         handleEvent(
                 dlc -> isDevice(event, dlc) || (isFollow(dlc) &&
                         dlc.cmd.getCommand(CommandVolumeDevice.class).filter(vd -> sndCtrl.defaultDeviceOnEmpty(vd.getDeviceId()).equals(event.device().id())).isPresent()),

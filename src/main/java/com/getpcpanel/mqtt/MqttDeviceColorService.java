@@ -17,9 +17,10 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.logging.log4j.util.TriConsumer;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Service;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.annotation.Priority;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.device.Device;
 import com.getpcpanel.profile.LightingConfig;
@@ -34,22 +35,24 @@ import com.getpcpanel.util.coloroverride.IOverrideColorProviderProvider;
 
 import javafx.scene.paint.Color;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 
-@Log4j2
-@Service
-@Order(1)
-@RequiredArgsConstructor
+@JBossLog
+@ApplicationScoped
+@Priority(1)
 public class MqttDeviceColorService implements IOverrideColorProviderProvider {
     public static final String EFFECT_NONE = "none";
     public static final String EFFECT_STOP_OVERRIDE = "stop_override";
 
-    private final MqttService mqtt;
-    private final MqttTopicHelper mqttTopicHelper;
+    @Inject
+    MqttService mqtt;
+    @Inject
+    MqttTopicHelper mqttTopicHelper;
     private final ColorOverrideHolder colorOverrideHolder = new MqttColorOverrideHolder();
-    private final ApplicationEventPublisher applicationEventPublisher;
+    @Inject
+    Event<Object> eventBus;
 
     @Override
     public IOverrideColorProvider getOverrideColorProvider() {
@@ -101,7 +104,7 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
             var newBrightness = NumberUtils.toInt(payload, 100);
             lighting.setGlobalBrightness(newBrightness);
             andThen.run();
-            applicationEventPublisher.publishEvent(new HomePage.GlobalBrightnessChangedEvent(this, device.getSerialNumber(), newBrightness));
+            eventBus.fire(new HomePage.GlobalBrightnessChangedEvent(this, device.getSerialNumber(), newBrightness));
         });
         subscribeToColors(lighting.getKnobConfigs(), topicHelper, dial, knobOverride, idx -> device.getLightingConfig().getKnobConfigs()[idx].getColor1());
         subscribeToColors(lighting.getSliderConfigs(), topicHelper, slider, sliderOverride, idx -> device.getLightingConfig().getSliderConfigs()[idx].getColor1());

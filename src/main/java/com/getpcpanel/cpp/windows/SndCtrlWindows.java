@@ -12,8 +12,9 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.cpp.AudioDevice;
 import com.getpcpanel.cpp.AudioDeviceEvent;
@@ -28,17 +29,16 @@ import com.getpcpanel.util.ExtractUtil;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 import one.util.streamex.StreamEx;
 
-@Log4j2
-@Service
-@ConditionalOnWindows
-@RequiredArgsConstructor
+@JBossLog
+@ApplicationScoped
+@WindowsImpl
 @SuppressWarnings("unused") // Methods are called from JNI
 public class SndCtrlWindows implements ISndCtrl {
-    private final ExtractUtil extractUtil;
-    private final ApplicationEventPublisher eventPublisher;
+    @Inject ExtractUtil extractUtil;
+    @Inject Event<Object> eventBus;
     @GuardedBy("defaults") private final Map<DefaultFor, String> defaults = new HashMap<>();
     @GuardedBy("devices") private final Map<String, WindowsAudioDevice> devices = new HashMap<>();
 
@@ -203,13 +203,13 @@ public class SndCtrlWindows implements ISndCtrl {
     }
 
     private AudioDevice deviceAdded(String name, String id, float volume, boolean muted, int dataFlow) {
-        var result = new WindowsAudioDevice(eventPublisher, name, id).volume(volume).muted(muted).dataflow(DataFlow.from(dataFlow));
+        var result = new WindowsAudioDevice(eventBus, name, id).volume(volume).muted(muted).dataflow(DataFlow.from(dataFlow));
         synchronized (devices) {
             devices.put(id, result);
         }
         log.trace("Device added: {}", result);
 
-        eventPublisher.publishEvent(new AudioDeviceEvent(result, EventType.ADDED));
+        eventBus.fire(new AudioDeviceEvent(result, EventType.ADDED));
         return result;
     }
 
@@ -220,7 +220,7 @@ public class SndCtrlWindows implements ISndCtrl {
             removed = devices.remove(id);
         }
         if (removed != null) {
-            eventPublisher.publishEvent(new AudioDeviceEvent(removed, EventType.REMOVED));
+            eventBus.fire(new AudioDeviceEvent(removed, EventType.REMOVED));
         }
     }
 
@@ -233,7 +233,7 @@ public class SndCtrlWindows implements ISndCtrl {
 
     private void focusChanged(String to) {
         log.trace("Focus changed to {}", to);
-        eventPublisher.publishEvent(new WindowFocusChangedEvent(to));
+        eventBus.fire(new WindowFocusChangedEvent(to));
     }
 
     public Map<DefaultFor, String> getDefaults() {

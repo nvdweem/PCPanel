@@ -1,18 +1,15 @@
 package com.getpcpanel.hid;
 
-import static org.springframework.core.Ordered.HIGHEST_PRECEDENCE;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.context.event.EventListener;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Service;
+import jakarta.annotation.Priority;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
 
 import com.getpcpanel.cpp.windows.WindowFocusChangedEvent;
 import com.getpcpanel.device.Device;
@@ -20,18 +17,15 @@ import com.getpcpanel.device.DeviceFactory;
 import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.profile.SaveService;
 
-import javafx.application.Platform;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 
-@Service
-@RequiredArgsConstructor
+@ApplicationScoped
 public class DeviceHolder {
     private final Map<String, Device> devices = new ConcurrentHashMap<>();
-    private final SaveService saveService;
-    @Autowired @Lazy @Setter private DeviceFactory deviceFactory;
-    private final OutputInterpreter outputInterpreter;
-    private final ApplicationEventPublisher eventPublisher;
+    @Inject SaveService saveService;
+    @Inject DeviceFactory deviceFactory;
+    @Inject OutputInterpreter outputInterpreter;
+    @Inject Event<Object> eventBus;
 
     public Optional<Device> getDevice(String key) {
         return Optional.ofNullable(devices.get(key));
@@ -45,9 +39,8 @@ public class DeviceHolder {
         return devices.values();
     }
 
-    @EventListener
-    @Order(HIGHEST_PRECEDENCE)
-    public void deviceAdded(DeviceScanner.DeviceConnectedEvent event) {
+    @Priority(1)
+    public void deviceAdded(@Observes DeviceScanner.DeviceConnectedEvent event) {
         Device device;
         var save = saveService.get();
         if (!save.getDevices().containsKey(event.serialNum()))
@@ -63,25 +56,112 @@ public class DeviceHolder {
         }
         devices.put(event.serialNum(), device);
         outputInterpreter.sendInit(event.serialNum());
-        eventPublisher.publishEvent(new DeviceFullyConnectedEvent(device));
+        eventBus.fire(new DeviceFullyConnectedEvent(device));
     }
 
-    @Order
-    @EventListener
-    public void onDeviceDisconnected(DeviceScanner.DeviceDisconnectedEvent event) {
+    public void onDeviceDisconnected(@Observes DeviceScanner.DeviceDisconnectedEvent event) {
+        var device = devices.remove(event.serialNum());
+        if (device != null) {
+            device.disconnected();
+        }
+    }
+
+    public void focusApplicationChanged(@Observes WindowFocusChangedEvent event) {
+        devices.values().forEach(Device::focusApplicationChanged);
+    }
+
+    public void saveChanged(@Observes SaveService.SaveEvent event) {
+        devices.values().forEach(Device::saveChanged);
+    }
+
+    public Collection<Device> all() {
+        return devices.values();
+    }
+
+    public record DeviceFullyConnectedEvent(Device device) {
+    }
+}
+
+
+import static org.springframework.core.Ordered.HIGHEST_PRECEDENCE;
+
+import java.util.Collection;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+
+import jakarta.inject.Inject;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.Observes;
+import jakarta.annotation.Priority;
+import jakarta.enterprise.context.ApplicationScoped;
+
+import com.getpcpanel.cpp.windows.WindowFocusChangedEvent;
+import com.getpcpanel.device.Device;
+import com.getpcpanel.device.DeviceFactory;
+import com.getpcpanel.device.DeviceType;
+import com.getpcpanel.profile.SaveService;
+
+import javafx.application.Platform;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+
+@ApplicationScoped
+public class DeviceHolder {
+    private final Map<String, Device> devices = new ConcurrentHashMap<>();
+    @Inject
+    SaveService saveService;
+    @Inject @Lazy @Setter private DeviceFactory deviceFactory;
+    @Inject
+    OutputInterpreter outputInterpreter;
+    @Inject
+    Event<Object> eventBus;
+
+    public Optional<Device> getDevice(String key) {
+        return Optional.ofNullable(devices.get(key));
+    }
+
+    public int size() {
+        return devices.size();
+    }
+
+    public Collection<Device> values() {
+        return devices.values();
+    }
+
+        @Priority(1)
+    public void deviceAdded(@Observes DeviceScanner.DeviceConnectedEvent event) {
+        Device device;
+        var save = saveService.get();
+        if (!save.getDevices().containsKey(event.serialNum()))
+            save.createSaveForNewDevice(event.serialNum(), event.deviceType());
+        if (event.deviceType() == DeviceType.PCPANEL_RGB) {
+            device = deviceFactory.buildRgb(event.serialNum(), save.getDeviceSave(event.serialNum()));
+        } else if (event.deviceType() == DeviceType.PCPANEL_MINI) {
+            device = deviceFactory.buildMini(event.serialNum(), save.getDeviceSave(event.serialNum()));
+        } else if (event.deviceType() == DeviceType.PCPANEL_PRO) {
+            device = deviceFactory.buildPro(event.serialNum(), save.getDeviceSave(event.serialNum()));
+        } else {
+            throw new IllegalArgumentException("unknown devicetype: " + event.deviceType().name());
+        }
+        devices.put(event.serialNum(), device);
+        outputInterpreter.sendInit(event.serialNum());
+        eventBus.fire(new DeviceFullyConnectedEvent(device));
+    }
+
+    @Priority
+        public void onDeviceDisconnected(@Observes DeviceScanner.DeviceDisconnectedEvent event) {
         var device = devices.remove(event.serialNum());
         if (device != null) {
             Platform.runLater(device::disconnected);
         }
     }
 
-    @EventListener(WindowFocusChangedEvent.class)
-    public void focusApplicationChanged() {
+        public void focusApplicationChanged() {
         devices.values().forEach(Device::focusApplicationChanged);
     }
 
-    @EventListener(SaveService.SaveEvent.class)
-    public void saveChanged() {
+        public void saveChanged() {
         devices.values().forEach(Device::saveChanged);
     }
 

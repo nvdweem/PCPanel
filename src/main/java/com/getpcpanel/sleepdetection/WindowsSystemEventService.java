@@ -1,7 +1,8 @@
 package com.getpcpanel.sleepdetection;
 
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.spring.ConditionalOnWindows;
 import com.sun.jna.WString;
@@ -19,21 +20,21 @@ import com.sun.jna.platform.win32.Wtsapi32;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 
 /**
  * https://gist.github.com/luanht/88ba957b94f94792a1fd
  */
-@Log4j2
-@Service
-@ConditionalOnWindows
-@RequiredArgsConstructor
+@JBossLog
+@ApplicationScoped
+@WindowsImpl
 public class WindowsSystemEventService implements WindowProc {
     private static final int WM_POWERBROADCAST = 536;
     private static final int PBT_APMRESUMESUSPEND = 7;
     private static final int PBT_APMSUSPEND = 4;
 
-    private final ApplicationEventPublisher eventPublisher;
+    @Inject
+    Event<Object> eventBus;
 
     @PostConstruct
     public void init() {
@@ -135,7 +136,7 @@ public class WindowsSystemEventService implements WindowProc {
     }
 
     private void triggerEvent(WindowsSystemEventType type) {
-        eventPublisher.publishEvent(new WindowsSystemEvent(type));
+        eventBus.fire(new WindowsSystemEvent(type));
     }
 
     public record WindowsSystemEvent(WindowsSystemEventType type) {

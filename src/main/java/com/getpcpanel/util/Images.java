@@ -10,9 +10,9 @@ import org.apache.commons.io.IOUtils;
 import javafx.scene.image.Image;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 
-@Log4j2
+@JBossLog
 public abstract class Images {
     private static final Pattern PATH_RE = Pattern.compile("path d=\"(.*?)\"");
     public static final Image lighting = new Image(Objects.requireNonNull(Images.class.getResource("/assets/lighting.png")).toExternalForm());

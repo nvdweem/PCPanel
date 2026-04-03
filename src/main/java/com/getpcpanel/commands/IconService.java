@@ -12,8 +12,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Service;
+import io.quarkus.cache.CacheResult;
+import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandBrightness;
@@ -34,12 +35,11 @@ import com.getpcpanel.util.Images;
 import jakarta.annotation.PostConstruct;
 import javafx.scene.image.Image;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 import one.util.streamex.StreamEx;
 
-@Log4j2
-@Service
-@RequiredArgsConstructor
+@JBossLog
+@ApplicationScoped
 public class IconService {
     public static final Image DEFAULT = new Image(Objects.requireNonNull(IconService.class.getResource("/assets/32x32.png")).toExternalForm());
     private static final Image OBS = new Image(Objects.requireNonNull(IconService.class.getResource("/assets/obs.png")).toExternalForm());
@@ -47,8 +47,10 @@ public class IconService {
     public static final Image DEVICE = new Image(Objects.requireNonNull(IconService.class.getResource("/assets/device.png")).toExternalForm());
     public static final Image SYSTEM_SOUND = new Image(Objects.requireNonNull(IconService.class.getResource("/assets/systemsounds.ico")).toExternalForm());
     private final SafeMap imageHandlers = new SafeMap();
-    private final ISndCtrl sndCtrl;
-    private final IIconService iconService;
+    @Inject
+    ISndCtrl sndCtrl;
+    @Inject
+    IIconService iconService;
     private final List<IIconHandler<?>> iconHandlers;
 
     @PostConstruct
@@ -76,7 +78,7 @@ public class IconService {
         });
     }
 
-    @Cacheable("command-icon")
+    @CacheResult(cacheName="command-icon")
     @Nonnull
     public Image getImageFrom(@Nullable Commands commands, @Nullable KnobSetting override) {
         if (!Commands.hasCommands(commands)) {

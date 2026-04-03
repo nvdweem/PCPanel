@@ -19,12 +19,12 @@ import com.getpcpanel.cpp.windows.SndCtrlWindows;
 
 import lombok.Getter;
 import lombok.ToString;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 
 @Getter
-@Log4j2
+@JBossLog
 @ToString(callSuper = true)
 public class CommandVolumeDefaultDeviceToggleAdvanced extends CommandVolume implements ButtonAction {
     private final List<DeviceSet> devices;

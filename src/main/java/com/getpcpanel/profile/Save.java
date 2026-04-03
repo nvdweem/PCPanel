@@ -12,10 +12,10 @@ import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.ui.OverlayPosition;
 
 import lombok.Data;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 
 @Data
-@Log4j2
+@JBossLog
 public class Save {
     public static final String DEFAULT_OVERLAY_BG_COLOR = "rgba(255, 255, 255, 0.5)";
     public static final String DEFAULT_OVERLAY_TEXT_COLOR = "rgba(0, 0, 0, 1)";

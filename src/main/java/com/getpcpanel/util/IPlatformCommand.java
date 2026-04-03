@@ -3,7 +3,7 @@ package com.getpcpanel.util;
 import java.io.File;
 import java.io.IOException;
 
-import org.springframework.stereotype.Service;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.cpp.linux.LinuxProcessHelper;
@@ -11,9 +11,9 @@ import com.getpcpanel.spring.ConditionalOnLinux;
 import com.getpcpanel.spring.ConditionalOnWindows;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 
-@Log4j2
+@JBossLog
 public abstract class IPlatformCommand {
     public static final String FOCUS = "FOCUS";
     protected static final Runtime rt = Runtime.getRuntime();
@@ -22,8 +22,8 @@ public abstract class IPlatformCommand {
 
     public abstract void kill(String process);
 
-    @Service
-    @ConditionalOnLinux
+    @ApplicationScoped
+    @LinuxImpl
     @RequiredArgsConstructor
     public static class LinuxPlatformCommand extends IPlatformCommand {
         private final LinuxProcessHelper processHelper;
@@ -56,8 +56,8 @@ public abstract class IPlatformCommand {
         }
     }
 
-    @Service
-    @ConditionalOnWindows
+    @ApplicationScoped
+    @WindowsImpl
     @RequiredArgsConstructor
     public static class WindowsPlatformCommand extends IPlatformCommand {
         private final ISndCtrl sndCtrl;

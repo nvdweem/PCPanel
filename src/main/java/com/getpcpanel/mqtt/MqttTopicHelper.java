@@ -1,19 +1,20 @@
 package com.getpcpanel.mqtt;
 
-import org.springframework.stereotype.Service;
+import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.profile.MqttSettings;
 import com.getpcpanel.profile.SaveService;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 import one.util.streamex.StreamEx;
 
-@Log4j2
-@Service
-@RequiredArgsConstructor
+@JBossLog
+@ApplicationScoped
 class MqttTopicHelper {
-    private final SaveService saveService;
+    @Inject
+    SaveService saveService;
 
     public DeviceMqttTopicHelper device(String deviceSerial) {
         return new DeviceMqttTopicHelper(deviceSerial);
@@ -67,8 +68,7 @@ class MqttTopicHelper {
         logo,
     }
 
-    @RequiredArgsConstructor
-    class DeviceMqttTopicHelper {
+        class DeviceMqttTopicHelper {
         private final String deviceSerial;
 
         public String valueTopic(ValueType type, int index) {

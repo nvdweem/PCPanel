@@ -37,4 +37,3 @@ public class SingleSliderLabelLightingConfig {
         mode = c.mode;
     }
 }
-

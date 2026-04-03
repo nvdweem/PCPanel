@@ -9,7 +9,8 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.stereotype.Service;
+import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.MainFX;
 import com.getpcpanel.spring.ConditionalOnLinux;
@@ -17,14 +18,14 @@ import com.getpcpanel.util.ProcessHelper;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 
-@Log4j2
-@Service
-@ConditionalOnLinux
-@RequiredArgsConstructor
+@JBossLog
+@ApplicationScoped
+@LinuxImpl
 public class LinuxProcessHelper {
-    private final ProcessHelper processHelper;
+    @Inject
+    ProcessHelper processHelper;
 
     public ProcessBuilder builder(String... command) {
         return processHelper.builder(command);

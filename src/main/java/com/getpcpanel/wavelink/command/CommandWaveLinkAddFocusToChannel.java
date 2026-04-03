@@ -10,10 +10,10 @@ import com.getpcpanel.commands.command.ButtonAction;
 
 import lombok.Getter;
 import lombok.ToString;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 
 @Getter
-@Log4j2
+@JBossLog
 @ToString(callSuper = true)
 public final class CommandWaveLinkAddFocusToChannel extends CommandWaveLink implements ButtonAction {
     @Nullable private final String channelId;

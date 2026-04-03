@@ -10,8 +10,9 @@ import java.util.Set;
 
 import javax.annotation.Nonnull;
 
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Service;
+import jakarta.inject.Inject;
+import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.context.ApplicationScoped;
 import org.springframework.util.CollectionUtils;
 
 import com.getpcpanel.hid.DeviceCommunicationHandler;
@@ -31,14 +32,14 @@ import com.illposed.osc.transport.OSCPortOut;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 import one.util.streamex.StreamEx;
 
-@Log4j2
-@Service
-@RequiredArgsConstructor
+@JBossLog
+@ApplicationScoped
 public class OSCService {
-    private final SaveService saveService;
+    @Inject
+    SaveService saveService;
     private OSCPortIn portIn;
     private List<OSCPortOut> ports = List.of();
     private Integer prevListenPort;
@@ -46,8 +47,7 @@ public class OSCService {
     @Getter private final Set<String> addresses = new HashSet<>();
 
     @PostConstruct
-    @EventListener(SaveService.SaveEvent.class)
-    public void saveChanged() {
+        public void saveChanged() {
         log.trace("Save changed, restarting OSC");
         initSend();
         initListen();
@@ -105,8 +105,7 @@ public class OSCService {
         }
     }
 
-    @EventListener
-    public void dialAction(DeviceCommunicationHandler.KnobRotateEvent dial) {
+        public void dialAction(@Observes DeviceCommunicationHandler.KnobRotateEvent dial) {
         if (dial.initial() || CollectionUtils.isEmpty(ports)) {
             return;
         }
@@ -122,8 +121,7 @@ public class OSCService {
         });
     }
 
-    @EventListener
-    public void dialAction(DeviceCommunicationHandler.ButtonPressEvent button) {
+        public void dialAction(@Observes DeviceCommunicationHandler.ButtonPressEvent button) {
         if (CollectionUtils.isEmpty(ports)) {
             return;
         }

@@ -5,9 +5,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Service;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.ui.LightingChangedToDefaultEvent;
 import com.getpcpanel.voicemeeter.Voicemeeter.ButtonType;
@@ -15,23 +15,22 @@ import com.getpcpanel.voicemeeter.Voicemeeter.ControlType;
 
 import lombok.RequiredArgsConstructor;
 
-@Service
-@RequiredArgsConstructor
+@ApplicationScoped
 public class VoiceMeeterMuteService {
-    private final Voicemeeter voiceMeeter;
-    private final ApplicationEventPublisher eventPublisher;
+    @Inject
+    Voicemeeter voiceMeeter;
+    @Inject
+    Event<Object> eventBus;
     private final Map<ControlType, Map<Integer, Map<ButtonType, Boolean>>> toggleMap = new EnumMap<>(ControlType.class);
 
-    @EventListener(LightingChangedToDefaultEvent.class)
-    public void resetMuteStates() {
+        public void resetMuteStates() {
         toggleMap.clear();
         if (voiceMeeter.login()) {
             updateMuteState();
         }
     }
 
-    @EventListener(VoiceMeeterDirtyEvent.class)
-    public void updateMuteState() {
+        public void updateMuteState() {
         updateMuteStateFor(ControlType.STRIP);
         updateMuteStateFor(ControlType.BUS);
     }
@@ -51,7 +50,7 @@ public class VoiceMeeterMuteService {
                 var newState = voiceMeeter.getButtonState(type, idx, button);
                 if (!Objects.equals(current, newState)) {
                     currentStates.put(button, newState);
-                    eventPublisher.publishEvent(new VoiceMeeterMuteEvent(type, idx, button, newState));
+                    eventBus.fire(new VoiceMeeterMuteEvent(type, idx, button, newState));
                 }
             }
         }

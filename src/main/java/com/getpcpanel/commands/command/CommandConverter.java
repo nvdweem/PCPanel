@@ -12,10 +12,10 @@ import com.getpcpanel.commands.command.DialAction.DialCommandParams;
 import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.voicemeeter.Voicemeeter;
 
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 import one.util.streamex.StreamEx;
 
-@Log4j2
+@JBossLog
 public final class CommandConverter {
     private CommandConverter() {
     }

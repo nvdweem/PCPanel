@@ -50,4 +50,3 @@ public class SingleKnobLightingConfig {
         mode = c.mode;
     }
 }
-

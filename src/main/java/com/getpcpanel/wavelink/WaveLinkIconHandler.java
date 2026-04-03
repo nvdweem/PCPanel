@@ -4,7 +4,8 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
-import org.springframework.stereotype.Service;
+import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.commands.IIconHandler;
 import com.getpcpanel.commands.IconService;
@@ -18,13 +19,13 @@ import dev.niels.wavelink.impl.model.WaveLinkChannel;
 import dev.niels.wavelink.impl.model.WaveLinkImage;
 import javafx.scene.image.Image;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 
-@Log4j2
-@Service
-@RequiredArgsConstructor
+@JBossLog
+@ApplicationScoped
 public class WaveLinkIconHandler implements IIconHandler<CommandWaveLink> {
-    private final WaveLinkService waveLinkService;
+    @Inject
+    WaveLinkService waveLinkService;
 
     @Override
     public Class<CommandWaveLink> getCommandClass() {

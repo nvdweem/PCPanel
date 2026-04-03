@@ -12,23 +12,25 @@ import javax.annotation.Nullable;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Component;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.util.ProcessHelper;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 
-@Log4j2
-@Component
-@ConditionalOnPulseAudio
-@RequiredArgsConstructor
+@JBossLog
+@ApplicationScoped
+@PulseAudioImpl
 public class PulseAudioEventListener extends Thread {
-    private final ApplicationEventPublisher eventPublisher;
-    private final ProcessHelper processHelper;
+    @Inject
+    Event<Object> eventBus;
+    @Inject
+    ProcessHelper processHelper;
     private final CircularFifoQueue<String> latestEvents = new CircularFifoQueue<>(50);
     private final Pattern numberPattern = Pattern.compile("#(\\d+)");
 
@@ -76,10 +78,10 @@ public class PulseAudioEventListener extends Thread {
                 , "Event 'remove' on sink-input"
                 , "Event 'change' on sink-input")) {
             var m = numberPattern.matcher(line);
-            eventPublisher.publishEvent(new LinuxSessionChangedEvent(m.find() ? NumberUtils.toInt(m.group(1)) : null));
+            eventBus.fire(new LinuxSessionChangedEvent(m.find() ? NumberUtils.toInt(m.group(1)) : null));
         }
         if (StringUtils.containsAnyIgnoreCase(line, "Event 'new' on sink", "Event 'remove' on sink")) {
-            eventPublisher.publishEvent(new LinuxDeviceChangedEvent());
+            eventBus.fire(new LinuxDeviceChangedEvent());
         }
     }
 

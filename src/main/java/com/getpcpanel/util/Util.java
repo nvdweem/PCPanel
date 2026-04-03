@@ -20,10 +20,10 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 
 @SuppressWarnings("ALL")
-@Log4j2
+@JBossLog
 public final class Util {
     private static final Set<String> executables = Set.of("bat", "bin", "cmd", "com", "cpl", "exe", "gadget", "inf1", "ins", "inx", "isu", "job", "jse", "lnk", "msc", "msi", "msp", "mst", "paf",
             "pif", "ps1", "reg", "rgs", "scr", "sct", "shb", "shs", "u3p", "vb", "vbe", "vbs", "vbscript", "ws", "wsf", "wsh");

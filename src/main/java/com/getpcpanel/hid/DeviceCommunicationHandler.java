@@ -17,20 +17,22 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.hid4java.HidDevice;
-import org.springframework.context.ApplicationEventPublisher;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 
 import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.profile.SaveService;
 
 import lombok.Setter;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 
-@Log4j2
+@JBossLog
 public class DeviceCommunicationHandler {
     private static final byte INPUT_CODE_KNOB_CHANGE = 1;
     private static final byte INPUT_CODE_BUTTON_CHANGE = 2;
 
-    private final ApplicationEventPublisher eventPublisher;
+    @Inject
+    Event<Object> eventBus;
     private final DeviceScanner deviceScanner;
     private final SaveService saveService;
     private final String key;
@@ -48,8 +50,7 @@ public class DeviceCommunicationHandler {
     private final RollingAverageSetter rollingAverageSetter = new RollingAverageSetter();
     private final Map<Integer, Integer> prevSent = new ConcurrentHashMap<>();
 
-    public DeviceCommunicationHandler(DeviceScanner deviceScanner, ApplicationEventPublisher eventPublisher, SaveService saveService, String key, HidDevice device, DeviceType deviceType) {
-        this.eventPublisher = eventPublisher;
+    public DeviceCommunicationHandler(DeviceScanner deviceScanner, SaveService saveService, String key, HidDevice device, DeviceType deviceType) {
         this.deviceScanner = deviceScanner;
         this.saveService = saveService;
         this.key = key;
@@ -164,7 +165,7 @@ public class DeviceCommunicationHandler {
         } else {
             prevSent.put(o.knob(), currentSendValue);
             log.debug("< {}", o);
-            eventPublisher.publishEvent(o);
+            eventBus.fire(o);
         }
     }
 
@@ -174,7 +175,7 @@ public class DeviceCommunicationHandler {
 
     private void triggerEvent(ButtonPressEvent o) {
         log.debug("< {}", o);
-        eventPublisher.publishEvent(o);
+        eventBus.fire(o);
     }
 
     private void triggerOrDebounce(KnobRotateEvent event) {

@@ -11,10 +11,10 @@ import com.getpcpanel.commands.command.DialAction;
 import dev.niels.wavelink.impl.model.WaveLinkControlAction;
 import lombok.Getter;
 import lombok.ToString;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 
 @Getter
-@Log4j2
+@JBossLog
 @ToString(callSuper = true)
 public final class CommandWaveLinkChangeLevel extends CommandWaveLinkChange implements DialAction {
     @Nullable private final DialCommandParams dialParams;

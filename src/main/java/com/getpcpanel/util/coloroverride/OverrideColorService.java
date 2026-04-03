@@ -3,9 +3,8 @@ package com.getpcpanel.util.coloroverride;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Service;
+import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.profile.SingleKnobLightingConfig;
 import com.getpcpanel.profile.SingleLogoLightingConfig;
@@ -17,10 +16,9 @@ import lombok.Setter;
 import one.util.streamex.StreamEx;
 
 @Setter
-@Service
-@RequiredArgsConstructor
+@ApplicationScoped
 public class OverrideColorService {
-    @Autowired @Lazy private List<IOverrideColorProvider> overriders;
+    @Inject @Lazy private List<IOverrideColorProvider> overriders;
 
     public Optional<SingleKnobLightingConfig> getDialOverride(String deviceSerial, int dial) {
         return StreamEx.of(overriders).mapPartial(p -> p.getDialOverride(deviceSerial, dial)).findFirst();

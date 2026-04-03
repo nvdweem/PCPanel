@@ -18,9 +18,10 @@ import javax.annotation.concurrent.GuardedBy;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Service;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.cpp.AudioDevice;
 import com.getpcpanel.cpp.AudioSession;
@@ -33,18 +34,17 @@ import com.getpcpanel.cpp.linux.pulseaudio.PulseAudioEventListener.LinuxSessionC
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 import one.util.streamex.StreamEx;
 
-@Log4j2
-@Service
-@ConditionalOnPulseAudio
-@RequiredArgsConstructor
+@JBossLog
+@ApplicationScoped
+@PulseAudioImpl
 public class SndCtrlPulseAudio implements ISndCtrl {
     public static final String INPUT_PREFIX = "in_";
-    private final PulseAudioWrapper cmd;
-    private final LinuxProcessHelper processHelper;
-    private final ApplicationEventPublisher eventPublisher;
+    @Inject PulseAudioWrapper cmd;
+    @Inject LinuxProcessHelper processHelper;
+    @Inject Event<Object> eventBus;
     @GuardedBy("devices") private final Map<String, PulseAudioAudioDevice> devices = new HashMap<>();
     @GuardedBy("sessions") private final Set<PulseAudioAudioSession> sessions = new HashSet<>();
 
@@ -54,16 +54,14 @@ public class SndCtrlPulseAudio implements ISndCtrl {
         initSessions(null);
     }
 
-    @EventListener(PulseAudioEventListener.LinuxDeviceChangedEvent.class)
-    public void initDevices() {
+        public void initDevices() {
         synchronized (devices) {
             devices.clear();
             StreamEx.of(getDevicesFromCmd()).mapToEntry(AudioDevice::id, Function.identity()).into(devices);
         }
     }
 
-    @EventListener
-    public void initSessions(@Nullable LinuxSessionChangedEvent event) {
+        public void initSessions(@Observes @Nullable LinuxSessionChangedEvent event) {
         synchronized (sessions) {
             var prevByIndex = StreamEx.of(sessions).mapToEntry(PulseAudioAudioSession::index).invert().toMap();
             sessions.clear();
@@ -78,7 +76,7 @@ public class SndCtrlPulseAudio implements ISndCtrl {
             added.map(sess -> new AudioSessionEvent(sess, EventType.ADDED))
                  .append(removed.map(sess -> new AudioSessionEvent(sess, EventType.REMOVED)))
                  .append(changed.map(sess -> new AudioSessionEvent(sess, EventType.CHANGED)))
-                 .forEach(eventPublisher::publishEvent);
+                 .forEach(e -> eventBus.fire(e));
         }
     }
 
@@ -215,13 +213,13 @@ public class SndCtrlPulseAudio implements ISndCtrl {
         if (StringUtils.isBlank(name)) {
             return Optional.empty();
         }
-        return Optional.of(new PulseAudioAudioDevice(eventPublisher, pa.index(), pa.metas().get("Description"), (isOutput ? "" : INPUT_PREFIX) + pa.metas().get("Name"), pa.isDefault(), isOutput));
+        return Optional.of(new PulseAudioAudioDevice(eventBus, pa.index(), pa.metas().get("Description"), (isOutput ? "" : INPUT_PREFIX) + pa.metas().get("Name"), pa.isDefault(), isOutput));
     }
 
     private Set<PulseAudioAudioSession> getSessionsFromCmd() {
         return StreamEx.of(cmd.getSessions())
                        .map(pa ->
-                               new PulseAudioAudioSession(eventPublisher,
+                               new PulseAudioAudioSession(eventBus,
                                        pa.index(),
                                        NumberUtils.toInt(pa.properties().get("application.process.id"), -1),
                                        new File(pa.properties().getOrDefault("application.process.binary", "/")),

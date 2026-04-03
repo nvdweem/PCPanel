@@ -13,24 +13,27 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Contract;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import io.quarkus.scheduler.Scheduled;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.profile.SaveService;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 import one.util.streamex.StreamEx;
 
-@Log4j2
-@Service
-@RequiredArgsConstructor
+@JBossLog
+@ApplicationScoped
 public final class Voicemeeter {
-    private final SaveService save;
-    private final VoicemeeterAPI api;
-    private final ApplicationEventPublisher eventPublisher;
+    @Inject
+    SaveService save;
+    @Inject
+    VoicemeeterAPI api;
+    @Inject
+    Event<Object> eventBus;
 
     private int version = -1;
     private volatile boolean hasFinishedConnection;
@@ -38,8 +41,7 @@ public final class Voicemeeter {
     private final VoicemeeterVersion[] versions = { VoicemeeterVersion.VOICEMEETER, VoicemeeterVersion.BANANA, VoicemeeterVersion.POTATO };
 
     @Getter
-    @RequiredArgsConstructor
-    public enum ControlType {
+        public enum ControlType {
         STRIP("Input"),
         BUS("Output");
 
@@ -94,8 +96,7 @@ public final class Voicemeeter {
         }
     }
 
-    @RequiredArgsConstructor
-    public enum ButtonType {
+        public enum ButtonType {
         MONO("Mono", "mono"),
         MUTE("Mute", "Mute"),
         SOLO("Solo", "solo"),
@@ -168,7 +169,8 @@ public final class Voicemeeter {
 
         private final String dn;
 
-        private final DialControlMode dcm;
+        @Inject
+    DialControlMode dcm;
 
         DialType(String param, String dn, DialControlMode dcm) {
             this.param = param;
@@ -206,7 +208,7 @@ public final class Voicemeeter {
                 checkParamsDirty();
                 version = api.getVoicemeeterType();
                 hasFinishedConnection = true;
-                eventPublisher.publishEvent(new VoiceMeeterConnectedEvent());
+                eventBus.fire(new VoiceMeeterConnectedEvent());
                 return true;
             } catch (Exception e) {
                 return false;
@@ -323,7 +325,7 @@ public final class Voicemeeter {
         });
     }
 
-    @Scheduled(fixedRate = 1_000)
+    @Scheduled(every="1_000s")
     void checkParamsDirtyScheduled() {
         disconnectIfDisconnectError(() -> {
             if (login()) {
@@ -335,7 +337,7 @@ public final class Voicemeeter {
     private void checkParamsDirty() {
         disconnectIfDisconnectError(() -> {
             if (api.areParametersDirty()) {
-                eventPublisher.publishEvent(new VoiceMeeterDirtyEvent());
+                eventBus.fire(new VoiceMeeterDirtyEvent());
             }
         });
     }
@@ -372,4 +374,3 @@ public final class Voicemeeter {
         void run() throws VoicemeeterException;
     }
 }
-

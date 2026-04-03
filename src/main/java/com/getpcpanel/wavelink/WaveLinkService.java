@@ -3,19 +3,18 @@ package com.getpcpanel.wavelink;
 import java.net.ConnectException;
 import java.util.concurrent.CompletionException;
 
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
+import io.quarkus.scheduler.Scheduled;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
 
 import dev.niels.wavelink.IWaveLinkClientEventListener;
 import dev.niels.wavelink.WaveLinkClient;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 
-@Log4j2
-@Service
+@JBossLog
+@ApplicationScoped
 public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEventListener {
     private final SaveService saveService;
     private boolean wasEnabled;
@@ -31,8 +30,7 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
         return saveService.get().getWaveLink().enabled();
     }
 
-    @EventListener(SaveEvent.class)
-    public void settingsChanged() {
+        public void settingsChanged() {
         var is = isEnabled();
         if (wasEnabled && !is) {
             disconnect();
@@ -43,7 +41,7 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
         wasEnabled = isEnabled();
     }
 
-    @Scheduled(fixedDelay = 10_000)
+    @Scheduled(every="10s")
     public void checkConnection() {
         if (!isEnabled()) {
             return;

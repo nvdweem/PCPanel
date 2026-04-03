@@ -1,28 +1,44 @@
 package com.getpcpanel;
 
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.EnableCaching;
-import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.scheduling.annotation.Scheduled;
+import io.quarkus.cache.CacheInvalidateAll;
+import io.quarkus.scheduler.Scheduled;
+import jakarta.enterprise.context.ApplicationScoped;
+import lombok.extern.jbosslog.JBossLog;
 
-@Configuration
-@EnableCaching
+@JBossLog
+@ApplicationScoped
 public class CachingConfig {
-    @Bean
+
+    @CacheInvalidateAll(cacheName = "icon")
+    @Scheduled(every = "300s")
+    public void iconEvict() {
+        log.debug("Evicting icon cache");
+    }
+
+    @CacheInvalidateAll(cacheName = "command-icon")
+    @Scheduled(every = "1s")
+    public void commandIconEvict() {
+    }
+}
+
+
+import io.quarkus.cache.CacheInvalidateAll;
+import jakarta.enterprise.inject.Produces;
+import io.quarkus.scheduler.Scheduled;
+
+public class CachingConfig {
+    @Produces
     public CacheManager cacheManager() {
         return new ConcurrentMapCacheManager("icon", "command-icon");
     }
 
-    @CacheEvict(allEntries = true, cacheNames = "icon")
-    @Scheduled(fixedDelay = 300_000)
+    @CacheInvalidateAll(cacheName="icon")
+    @Scheduled(every="300s")
     public void iconEvict() {
     }
 
-    @CacheEvict(allEntries = true, cacheNames = "command-icon")
-    @Scheduled(fixedDelay = 1_000)
+    @CacheInvalidateAll(cacheName="command-icon")
+    @Scheduled(every="1s")
     public void commandIconEvict() {
     }
 }

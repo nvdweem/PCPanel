@@ -9,9 +9,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import javafx.scene.image.Image;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 
-@Log4j2
+@JBossLog
 @JsonInclude(Include.NON_NULL)
 public record WaveLinkImage(
         @Nullable String name,

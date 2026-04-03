@@ -12,7 +12,8 @@ import javax.annotation.Nonnull;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.stereotype.Service;
+import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.util.ProcessHelper;
@@ -20,18 +21,18 @@ import com.getpcpanel.util.ProcessHelper;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 import one.util.streamex.StreamEx;
 
-@Log4j2
-@Service
-@ConditionalOnPulseAudio
-@RequiredArgsConstructor
+@JBossLog
+@ApplicationScoped
+@PulseAudioImpl
 public class PulseAudioWrapper {
     public static final int NO_OP_IDX = -1;
     public static final int DEFAULT_DEVICE = -2;
     private static final Pattern pactlFirstLine = Pattern.compile("(.*) #(\\d+)");
-    private final ProcessHelper processHelper;
+    @Inject
+    ProcessHelper processHelper;
 
     public static int volumeFtoI(float volume) {
         return Math.round(volume * 65536);
@@ -165,8 +166,7 @@ public class PulseAudioWrapper {
     public record PulseAudioTarget(int index, boolean isDefault, Map<String, String> metas, Map<String, String> properties, InOutput type) {
     }
 
-    @RequiredArgsConstructor
-    enum InOutput {
+        enum InOutput {
         input("sources"), output("sinks"), session("sink-inputs");
 
         private final String pulseType;

@@ -12,10 +12,10 @@ import com.getpcpanel.cpp.MuteType;
 
 import lombok.Getter;
 import lombok.ToString;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 
 @Getter
-@Log4j2
+@JBossLog
 @ToString(callSuper = true)
 public final class CommandWaveLinkChangeMute extends CommandWaveLinkChange implements ButtonAction {
     private final MuteType muteType;

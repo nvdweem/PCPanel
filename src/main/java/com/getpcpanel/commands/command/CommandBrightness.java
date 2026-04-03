@@ -8,10 +8,10 @@ import com.getpcpanel.profile.SaveService;
 
 import lombok.Getter;
 import lombok.ToString;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.jbosslog.JBossLog;
 
 @Getter
-@Log4j2
+@JBossLog
 @ToString(callSuper = true)
 public class CommandBrightness extends Command implements DialAction {
     private final DialCommandParams dialParams;
