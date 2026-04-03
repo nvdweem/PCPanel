@@ -28,13 +28,12 @@ jobs:
       - name: Add Wix to Path
         run: echo "$HOME/target/wix" >> $GITHUB_PATH
       - uses: actions/checkout@v6
-      - name: Set up GraalVM
-        uses: graalvm/setup-graalvm@v1
+      - name: Set up JDK
+        uses: actions/setup-java@v5
         with:
           java-version: ${{ env.JAVA_VERSION }}
-          distribution: 'graalvm'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          native-image-job-reports: 'true'
+          distribution: 'liberica'
+          java-package: jdk+fx
           cache: 'maven'
       - name: Build with Maven (native)
         run: mvn -B clean install -Pnative --file pom.xml
@@ -55,8 +54,8 @@ jobs:
           distribution: 'liberica'
           java-package: jdk+fx
           cache: 'maven'
-      - name: Build with Maven
-        run: mvn -B clean install --file pom.xml
+      - name: Build with Maven (native)
+        run: mvn -B clean install -Pnative --file pom.xml
       - name: Store artifact
         uses: actions/upload-artifact@v6
         with:
