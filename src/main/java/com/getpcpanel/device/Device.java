@@ -91,12 +91,7 @@ public abstract class Device {
 
     public abstract void setButtonPressed(int paramInt, boolean paramBoolean);
 
-    public abstract void closeDialogs();
-
-    public abstract void showLightingConfigToUI(LightingConfig paramLightingConfig);
-
     public void disconnected() {
-        closeDialogs();
     }
 
     public void setProfile(String profileName) {

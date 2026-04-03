@@ -60,15 +60,11 @@ Last updated: 2026-04-03
 
 ## ❌ Remaining Work
 
-### Phase 4 (partial): Device model cleanup
-The `Device` base class still declares two abstract UI methods that are implemented as no-ops:
-```java
-public abstract void closeDialogs();
-public abstract void showLightingConfigToUI(LightingConfig config);
-```
-These should be **removed** from `Device.java` and from each device subclass
-(`PCPanelProDevice`, `PCPanelMiniDevice`, `PCPanelRGBDevice`).
-The full Device/DeviceModel split described in 4c has not been done yet — `Device.java`
+### Phase 4 (partial): Device model cleanup ✅
+- **DONE** — `closeDialogs()` and `showLightingConfigToUI()` abstract methods removed from `Device.java`;
+  no-op overrides removed from `PCPanelProDevice`, `PCPanelMiniDevice`, `PCPanelRGBDevice`.
+  `disconnected()` in `Device.java` no longer calls `closeDialogs()`.
+  The full Device/DeviceModel split described in 4c has not been done yet — `Device.java`
 still mixes some UI-era concerns into the business class.
 
 ### Phase 5 (partial): Missing REST resources
@@ -108,15 +104,13 @@ Not started:
 
 ## Known Issues / Decisions Needed
 
-1. **`closeDialogs()` / `showLightingConfigToUI()` in `Device`** — These abstract methods are no-ops since the UI was removed. They should be deleted but need confirming nothing calls them from the business layer.
+1. **Overlay (on-screen volume display)** — The existing `Overlay.java` (JavaFX window) was deleted with the UI package. A replacement for the overlay has not been designed. Options: keep it as a system tray tooltip, implement it as an always-on-top browser window via a separate Quarkus endpoint, or defer entirely.
 
-2. **Overlay (on-screen volume display)** — The existing `Overlay.java` (JavaFX window) was deleted with the UI package. A replacement for the overlay has not been designed. Options: keep it as a system tray tooltip, implement it as an always-on-top browser window via a separate Quarkus endpoint, or defer entirely.
+2. **`IconResource` / process icons** — `IconService` fetches icons from running processes; the `icon` field on `AudioSession` is already a base64 PNG string. The REST layer just needs to expose it. This is a prerequisite for the `CommandConfigComponent` process picker.
 
-3. **`IconResource` / process icons** — `IconService` fetches icons from running processes; the `icon` field on `AudioSession` is already a base64 PNG string. The REST layer just needs to expose it. This is a prerequisite for the `CommandConfigComponent` process picker.
+3. **OBS re-enablement** — Tracked in Phase 9. A custom Jakarta-compatible OBS WebSocket 5 client can be written against `quarkus-websockets-next` when needed (~200 lines).
 
-4. **OBS re-enablement** — Tracked in Phase 9. A custom Jakarta-compatible OBS WebSocket 5 client can be written against `quarkus-websockets-next` when needed (~200 lines).
-
-5. **Profile/Command data model in Angular** — The command types (34 subtypes of `Command`) need to be modelled in TypeScript for the `CommandConfigComponent`. Jackson polymorphism is via `@class` discriminator; the Angular command editor must handle all 34 types.
+4. **Profile/Command data model in Angular** — The command types (34 subtypes of `Command`) need to be modelled in TypeScript for the `CommandConfigComponent`. Jackson polymorphism is via `@class` discriminator; the Angular command editor must handle all 34 types.
 
 ---
 
