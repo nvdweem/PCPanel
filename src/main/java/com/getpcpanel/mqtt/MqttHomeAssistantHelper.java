@@ -67,8 +67,8 @@ public class MqttHomeAssistantHelper {
 
         var config = new HomeAssistantLightConfig(
                 haDevice, availability,
-                StringUtils.capitalize(type.getName()) + " " + (idx + 1) + " Light",
-                device.getSerialNumber() + "_" + type.getName() + "_" + idx,
+                StringUtils.capitalize(type.name()) + " " + (idx + 1) + " Light",
+                device.getSerialNumber() + "_" + type.name() + "_" + idx,
                 controlValueTopic,
                 determineAnalogIcon(device, i)
         );
@@ -81,7 +81,7 @@ public class MqttHomeAssistantHelper {
 
         var labelConfig = new HomeAssistantLightConfig(
                 haDevice, availability,
-                StringUtils.capitalize(type.getName()) + " " + (idx + 1) + " Label Light",
+                StringUtils.capitalize(type.name()) + " " + (idx + 1) + " Label Light",
                 device.getSerialNumber() + "_label_" + idx,
                 labelValueTopic,
                 "mdi:label-variant"

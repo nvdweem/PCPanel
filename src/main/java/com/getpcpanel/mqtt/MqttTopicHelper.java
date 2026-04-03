@@ -71,6 +71,10 @@ class MqttTopicHelper {
         class DeviceMqttTopicHelper {
         private final String deviceSerial;
 
+        DeviceMqttTopicHelper(String deviceSerial) {
+            this.deviceSerial = deviceSerial;
+        }
+
         public String valueTopic(ValueType type, int index) {
             return MqttTopicHelper.this.valueTopic(deviceSerial, type, index);
         }
