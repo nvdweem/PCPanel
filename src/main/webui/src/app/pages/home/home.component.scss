@@ -1,0 +1,122 @@
+.home-page {
+  min-height: 100vh;
+  background: #1a1a2e;
+  color: #e0e0e0;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background: #16213e;
+  border-bottom: 1px solid #0f3460;
+
+  h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #e94560;
+  }
+}
+
+main {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.no-devices {
+  text-align: center;
+  padding: 4rem;
+  color: #888;
+
+  p { margin: 0.5rem 0; }
+  .hint { font-size: 0.9rem; }
+}
+
+.device-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.device-card {
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 8px;
+  padding: 1.5rem;
+
+  .device-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+
+  h2 {
+    margin: 0 0 0.25rem;
+    font-size: 1.1rem;
+  }
+
+  .device-type {
+    font-size: 0.8rem;
+    color: #888;
+  }
+}
+
+.profile-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+
+  label { font-size: 0.9rem; color: #aaa; }
+}
+
+.profile-select {
+  flex: 1;
+  background: #0f3460;
+  color: #e0e0e0;
+  border: 1px solid #1a4a8a;
+  border-radius: 4px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.9rem;
+}
+
+.device-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+// Buttons
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 1rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: opacity 0.2s;
+
+  &:hover { opacity: 0.85; }
+
+  &.btn-primary {
+    background: #e94560;
+    color: white;
+  }
+
+  &.btn-secondary {
+    background: #0f3460;
+    color: #e0e0e0;
+  }
+
+  &.btn-icon {
+    background: transparent;
+    color: #aaa;
+    font-size: 1.2rem;
+    padding: 0.25rem;
+  }
+}
