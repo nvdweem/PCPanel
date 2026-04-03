@@ -3,7 +3,7 @@
 
 name: Build Native Image
 env:
-  JAVA_VERSION: '25'        # GraalVM CE 25 (latest) — Quarkus 3.34.1 supports Java 25; use 21 LTS if native-image issues arise
+  JAVA_VERSION: '25'        # GraalVM CE 25 — Java 25 source/target and runtime; Quarkus 3.34.1 supports Java 25
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
   buildWindows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Set up GraalVM CE
         uses: graalvm/setup-graalvm@v1
@@ -30,7 +30,7 @@ jobs:
         run: mvn -B package -Pnative --file pom.xml
 
       - name: Store artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: windows-native
           path: ./target/*-runner.exe
@@ -38,7 +38,7 @@ jobs:
   buildLinux:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - name: Set up GraalVM CE
         uses: graalvm/setup-graalvm@v1
@@ -52,7 +52,7 @@ jobs:
         run: mvn -B package -Pnative --file pom.xml
 
       - name: Store artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: linux-native
           path: ./target/*-runner
@@ -65,7 +65,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Fetch Sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Extract Maven project version
         run: echo "version=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)" >> $GITHUB_OUTPUT
@@ -106,12 +106,12 @@ jobs:
             --title "v${{ steps.project.outputs.version }} Pre-Release (${{ env.GITHUB_RUN_NUMBER }})" \
             --notes "$(sed '/##/Q' CHANGELOG.md)"
 
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v4
         with:
           name: windows-native
           path: target
 
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v4
         with:
           name: linux-native
           path: target
@@ -122,4 +122,3 @@ jobs:
         run: |
           gh release upload "$TAG_NAME" target/*
           gh release edit "$TAG_NAME" --draft=false
-

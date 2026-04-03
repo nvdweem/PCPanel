@@ -101,7 +101,7 @@ The Angular frontend has scaffolding but is incomplete vs. the plan:
   - Windows artifact: `target/*-runner.exe`; Linux artifact: `target/*-runner`
   - `preRelease` job updated to download `windows-native` / `linux-native` artifacts
   - Tag name simplified: `latest-<safe-branch>` (removed `-windows-` prefix)
-- **Java version decision (updated)** — pom.xml compile target is **Java 21** (minimum LTS supported by Quarkus 3.x). The GraalVM runner in CI uses **JDK 25** (`JAVA_VERSION: '25'`). Quarkus 3.34.1 supports Java 25 for JVM builds; GraalVM CE 25 can compile Java 21 source/targets to native. If Java 25 language features are needed later, bump `<java.version>25</java.version>` in pom.xml.
+- **Java version decision (updated)** — pom.xml compile target is **Java 25** (`<java.version>25</java.version>`). The GraalVM runner in CI also uses **JDK 25** (`JAVA_VERSION: '25'`). Local devs should install JDK 25. All action versions in the workflow are v4 (checkout, upload-artifact, download-artifact).
 
 ### Phase 9: OBS WebSocket Integration
 - **DONE** — `ObsWebSocketClient.java` (`com.getpcpanel.obs`) — custom OBS WebSocket 5 client built on `java.net.http.WebSocket`:
