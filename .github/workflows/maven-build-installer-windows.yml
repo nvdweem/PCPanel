@@ -1,9 +1,9 @@
-# This workflow will build a Java project with Maven
-# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+# Build native executables with GraalVM and publish a pre-release
+# Replaces the old Spring Boot/JavaFX MSI pipeline now that the app is a Quarkus native image.
 
-name: Build Windows Installer
+name: Build Native Image
 env:
-  JAVA_VERSION: 25
+  JAVA_VERSION: '21'        # GraalVM CE 21 (LTS) — most stable for Quarkus native
 
 on:
   push:
@@ -11,58 +11,51 @@ on:
       - main
       - releases/**
   workflow_dispatch:
+
 jobs:
   buildWindows:
     runs-on: windows-latest
     steps:
-      - name: Download Wix
-        uses: i3h/download-release-asset@v1
-        with:
-          owner: wixtoolset
-          repo: wix3
-          tag: wix3112rtm
-          file: wix311-binaries.zip
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Decompress Wix
-        run: 7z x wix311-binaries.zip "-o./target/wix"
-      - name: Add Wix to Path
-        run: echo "$HOME/target/wix" >> $GITHUB_PATH
       - uses: actions/checkout@v6
-      - name: Set up JDK
-        uses: actions/setup-java@v5
+
+      - name: Set up GraalVM CE
+        uses: graalvm/setup-graalvm@v1
         with:
           java-version: ${{ env.JAVA_VERSION }}
-          distribution: 'liberica'
-          java-package: jdk+fx
+          distribution: 'graalvm-community'
+          native-image-job-reports: 'true'
           cache: 'maven'
-      - name: Build with Maven
-        run: mvn -B clean install --file pom.xml
+
+      - name: Build native image (Windows)
+        run: mvn -B package -Pnative --file pom.xml
+
       - name: Store artifact
         uses: actions/upload-artifact@v6
         with:
-          name: windows-installer
-          path: ./target/*.msi
+          name: windows-native
+          path: ./target/*-runner.exe
 
   buildLinux:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - name: Set up JDK
-        uses: actions/setup-java@v5
+
+      - name: Set up GraalVM CE
+        uses: graalvm/setup-graalvm@v1
         with:
           java-version: ${{ env.JAVA_VERSION }}
-          distribution: 'liberica'
-          java-package: jdk+fx
+          distribution: 'graalvm-community'
+          native-image-job-reports: 'true'
           cache: 'maven'
-      - name: Build with Maven
-        run: mvn -B clean install --file pom.xml
+
+      - name: Build native image (Linux)
+        run: mvn -B package -Pnative --file pom.xml
+
       - name: Store artifact
         uses: actions/upload-artifact@v6
         with:
-          name: linux-installer
-          path: |
-            ./target/*.deb
-            ./target/*.jar
+          name: linux-native
+          path: ./target/*-runner
 
   preRelease:
     name: Pre-release
@@ -71,7 +64,6 @@ jobs:
       - buildLinux
     runs-on: ubuntu-latest
     steps:
-      # Check out current repository
       - name: Fetch Sources
         uses: actions/checkout@v6
 
@@ -80,14 +72,11 @@ jobs:
         id: project
 
       - name: Compute tag name
-        # Compute a branch-specific, filesystem-friendly tag name and export to job env
         run: |
-          # Strip refs/heads/ prefix and replace non-alphanumeric characters with '-'
           branch="${GITHUB_REF#refs/heads/}"
           safe_branch=$(echo "$branch" | sed 's/[^A-Za-z0-9._-]/-/g')
-          echo "TAG_NAME=latest-windows-$safe_branch" >> $GITHUB_ENV
+          echo "TAG_NAME=latest-$safe_branch" >> $GITHUB_ENV
 
-      # Remove old pre-releases
       - name: Remove Old Pre-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -95,6 +84,7 @@ jobs:
           gh api repos/{owner}/{repo}/releases \
             --jq '.[] | select(.prerelease == true) | .id' \
             | xargs -I '{}' gh api -X DELETE repos/{owner}/{repo}/releases/{}
+
       - name: Remove previous tag
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -106,7 +96,6 @@ jobs:
             echo "Tag $TAG_NAME does not exist; skipping delete"
           fi
 
-      # Create new pre-release
       - name: Create Pre-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -117,20 +106,20 @@ jobs:
             --title "v${{ steps.project.outputs.version }} Pre-Release (${{ env.GITHUB_RUN_NUMBER }})" \
             --notes "$(sed '/##/Q' CHANGELOG.md)"
 
-      # Only now download the artifacts so that there is a delay between creating the pre-release and adding the artifacts
       - uses: actions/download-artifact@v7
         with:
-          name: windows-installer
-          path: target
-      - uses: actions/download-artifact@v7
-        with:
-          name: linux-installer
+          name: windows-native
           path: target
 
-      # Upload artifact as a release asset
+      - uses: actions/download-artifact@v7
+        with:
+          name: linux-native
+          path: target
+
       - name: Upload Release Asset
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload "$TAG_NAME" target/*
           gh release edit "$TAG_NAME" --draft=false
+

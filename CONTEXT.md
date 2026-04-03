@@ -95,12 +95,14 @@ The Angular frontend has scaffolding but is incomplete vs. the plan:
 - **NOT DONE** — End-to-end native build test on Windows (requires GraalVM toolchain, deferred to CI)
 
 ### Phase 8: GitHub Actions Updates
-Not started:
-- [ ] Replace Liberica JDK with `graalvm/setup-graalvm@v1` in the Windows build job
-- [ ] Add `mvn package -Pnative` build step
-- [ ] Update artifact paths from `*.msi`/`*.deb` → `*-runner.exe`/`*-runner`
-- [ ] Add Linux native build job (optional)
-- [ ] Drop Java version from 25 → 21
+- **DONE** — `maven-build-installer-windows.yml` fully rewritten:
+  - WiX / MSI installer steps removed
+  - `actions/setup-java` (Liberica JDK+FX) replaced with `graalvm/setup-graalvm@v1` (Java 21 LTS, `graalvm-community`)
+  - Both `buildWindows` and `buildLinux` jobs run `mvn -B package -Pnative`
+  - Windows artifact: `target/*-runner.exe`; Linux artifact: `target/*-runner`
+  - `preRelease` job updated to download `windows-native` / `linux-native` artifacts
+  - Tag name simplified: `latest-<safe-branch>` (removed `-windows-` prefix)
+- **Java version decision** — pom.xml compile target stays at Java 17 (minimum for Quarkus; Java 25 features are not used). The GraalVM runner in CI provides JDK 21, which hosts Maven and runs the native-image tool. Java 25 is feasible for JVM-only builds (Quarkus 3.34.1 supports it) but GraalVM native image is most reliable on the LTS track (21). If Java 25 native image is needed, change `JAVA_VERSION: '21'` → `'25'` in the workflow and bump `<java.version>` in pom.xml to 25.
 
 ---
 
