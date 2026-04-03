@@ -77,8 +77,11 @@ The following resources from the plan are **not yet created**:
 
 ### Phase 6 (partial): Angular UI completeness
 The Angular frontend has scaffolding but is incomplete vs. the plan:
-- **Missing**: `CommandConfigComponent` — the modal for configuring button/dial actions (replaces 54 FXML dialogs); currently `editDial()` / `editButton()` show `alert()` placeholders
-- **Missing**: `AudioPickerComponent` — process/device picker for volume commands
+- ~~**Missing**: `CommandConfigComponent`~~ **DONE** — modal for configuring button/dial actions; covers all 25 command types with type-specific form fields
+- ~~**Missing**: `AudioPickerComponent`~~ **DONE** — process/device picker with thumbnail list; used inside `CommandConfigComponent`
+- ~~**Missing**: `ProcessService`~~ **DONE** — Angular service wrapping `GET /api/processes`
+- ~~**Missing**: `DialParamsEditorComponent`~~ **DONE** — reusable invert/moveStart/moveEnd sub-form
+- **`DeviceComponent`** updated — `editDial()` / `editButton()` now open `CommandConfigComponent` modal; save paths call `setDialCommands` / `setButtonCommands`
 - **Missing**: Full `DeviceDetailComponent` with a visual representation of each device type (Pro: knobs+sliders, Mini: 4 buttons, RGB: grid)
 - **Missing**: Overlay settings are in the settings page but the overlay itself (the on-screen volume bar) has no web equivalent yet
 - **Partial**: `SettingsComponent` covers General/OBS/VoiceMeeter/Overlay/MQTT but lacks OSC and WaveLink tabs
