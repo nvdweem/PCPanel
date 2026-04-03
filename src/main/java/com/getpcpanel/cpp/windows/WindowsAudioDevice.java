@@ -6,6 +6,8 @@ import java.util.Map;
 
 import jakarta.enterprise.event.Event;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import com.getpcpanel.cpp.AudioDevice;
 import com.getpcpanel.cpp.AudioSession;
 import com.getpcpanel.cpp.AudioSessionEvent;
@@ -23,6 +25,7 @@ public class WindowsAudioDevice extends AudioDevice {
         super(eventBus, name, id);
     }
 
+    @JsonIgnore
     public Map<Integer, WindowsAudioSession> getSessions() {
         return sessions;
     }

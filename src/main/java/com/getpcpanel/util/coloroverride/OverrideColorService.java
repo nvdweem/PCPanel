@@ -3,6 +3,7 @@ package com.getpcpanel.util.coloroverride;
 import java.util.List;
 import java.util.Optional;
 
+import io.quarkus.arc.All;
 import jakarta.inject.Inject;
 import jakarta.enterprise.context.ApplicationScoped;
 
@@ -18,7 +19,7 @@ import one.util.streamex.StreamEx;
 @Setter
 @ApplicationScoped
 public class OverrideColorService {
-    @Inject private List<IOverrideColorProvider> overriders;
+    @Inject @All private List<IOverrideColorProvider> overriders;
 
     public Optional<SingleKnobLightingConfig> getDialOverride(String deviceSerial, int dial) {
         return StreamEx.of(overriders).mapPartial(p -> p.getDialOverride(deviceSerial, dial)).findFirst();

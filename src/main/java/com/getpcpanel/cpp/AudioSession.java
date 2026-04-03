@@ -6,6 +6,8 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.enterprise.event.Event;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -17,7 +19,7 @@ import lombok.extern.log4j.Log4j2;
 @SuppressWarnings("unused") // Methods called from JNI
 public class AudioSession {
     public static final String SYSTEM = "System Sounds";
-    @EqualsAndHashCode.Exclude @ToString.Exclude @Nullable
+    @JsonIgnore @EqualsAndHashCode.Exclude @ToString.Exclude @Nullable
     transient Event<Object> eventBus;
     private int pid;
     private File executable;

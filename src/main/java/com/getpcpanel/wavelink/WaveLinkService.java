@@ -3,14 +3,13 @@ package com.getpcpanel.wavelink;
 import java.net.ConnectException;
 import java.util.concurrent.CompletionException;
 
-import io.quarkus.scheduler.Scheduled;
-import jakarta.enterprise.context.ApplicationScoped;
-
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.profile.SaveService.SaveEvent;
 
 import dev.niels.wavelink.IWaveLinkClientEventListener;
 import dev.niels.wavelink.WaveLinkClient;
+import io.quarkus.scheduler.Scheduled;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -19,6 +18,12 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
     private final SaveService saveService;
     private boolean wasEnabled;
 
+    WaveLinkService() {
+        super(false);
+        saveService = null;
+    }
+
+    @Inject
     public WaveLinkService(SaveService saveService) {
         super(false);
         this.saveService = saveService;
@@ -30,7 +35,7 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
         return saveService.get().getWaveLink().enabled();
     }
 
-        public void settingsChanged() {
+    public void settingsChanged() {
         var is = isEnabled();
         if (wasEnabled && !is) {
             disconnect();
@@ -41,7 +46,7 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
         wasEnabled = isEnabled();
     }
 
-    @Scheduled(every="10s")
+    @Scheduled(every = "10s")
     public void checkConnection() {
         if (!isEnabled()) {
             return;

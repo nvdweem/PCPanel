@@ -31,6 +31,7 @@ import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.cpp.linux.LinuxProcessHelper;
 import com.getpcpanel.cpp.linux.pulseaudio.PulseAudioEventListener.LinuxSessionChangedEvent;
+import com.getpcpanel.spring.LinuxImpl;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -42,8 +43,8 @@ import one.util.streamex.StreamEx;
 @PulseAudioImpl
 public class SndCtrlPulseAudio implements ISndCtrl {
     public static final String INPUT_PREFIX = "in_";
-    @Inject PulseAudioWrapper cmd;
-    @Inject LinuxProcessHelper processHelper;
+    @Inject @PulseAudioImpl PulseAudioWrapper cmd;
+    @Inject @LinuxImpl LinuxProcessHelper processHelper;
     @Inject Event<Object> eventBus;
     @GuardedBy("devices") private final Map<String, PulseAudioAudioDevice> devices = new HashMap<>();
     @GuardedBy("sessions") private final Set<PulseAudioAudioSession> sessions = new HashSet<>();

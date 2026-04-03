@@ -14,9 +14,9 @@ import one.util.streamex.StreamEx;
 @ApplicationScoped
 @PulseAudioImpl
 public class SndCtrlPulseAudioDebug {
-    @Inject
+    @Inject @PulseAudioImpl
     PulseAudioWrapper paWrapper;
-    @Inject
+    @Inject @PulseAudioImpl
     PulseAudioEventListener paEventListener;
 
     public void copyDebugOutput() {

@@ -13,15 +13,14 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Contract;
-import jakarta.enterprise.event.Event;
-import jakarta.inject.Inject;
-import io.quarkus.scheduler.Scheduled;
-import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.profile.SaveService;
 
+import io.quarkus.scheduler.Scheduled;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
@@ -41,7 +40,7 @@ public final class Voicemeeter {
     private final VoicemeeterVersion[] versions = { VoicemeeterVersion.VOICEMEETER, VoicemeeterVersion.BANANA, VoicemeeterVersion.POTATO };
 
     @Getter
-        public enum ControlType {
+    public enum ControlType {
         STRIP("Input"),
         BUS("Output");
 
@@ -59,7 +58,8 @@ public final class Voicemeeter {
             return dn;
         }
 
-        public static @Nullable ControlType fromDn(@Nonnull String in) {
+        @Nullable
+        public static ControlType fromDn(@Nonnull String in) {
             return switch (in.toLowerCase()) {
                 case "input" -> STRIP;
                 case "output" -> BUS;
@@ -104,7 +104,7 @@ public final class Voicemeeter {
         }
     }
 
-        public enum ButtonType {
+    public enum ButtonType {
         MONO("Mono", "mono"),
         MUTE("Mute", "Mute"),
         SOLO("Solo", "solo"),
@@ -155,7 +155,8 @@ public final class Voicemeeter {
             return type == ControlType.BUS ? muteList : getStateButtons().get(version);
         }
 
-        public static @Nullable ButtonType fromName(String name) {
+        @Nullable
+        public static ButtonType fromName(String name) {
             return StreamEx.of(values()).findFirst(value -> StringUtils.equalsIgnoreCase(value.getParameterName(), name)).orElse(null);
         }
     }
@@ -183,7 +184,7 @@ public final class Voicemeeter {
         private final String dn;
 
         @Inject
-    DialControlMode dcm;
+        DialControlMode dcm;
 
         DialType(String param, String dn, DialControlMode dcm) {
             this.param = param;
@@ -273,7 +274,8 @@ public final class Voicemeeter {
         return disconnectIfDisconnectError(() -> api.getParameterFloat(paramName) > 0, false);
     }
 
-    public @Nullable VoicemeeterVersion getVersion() {
+    @Nullable
+    public VoicemeeterVersion getVersion() {
         if (version < 1 || version > 3)
             return null;
         return versions[version - 1];
@@ -338,7 +340,7 @@ public final class Voicemeeter {
         });
     }
 
-    @Scheduled(every="1_000s")
+    @Scheduled(every = "1s")
     void checkParamsDirtyScheduled() {
         disconnectIfDisconnectError(() -> {
             if (login()) {

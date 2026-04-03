@@ -6,6 +6,7 @@ import java.io.IOException;
 import com.getpcpanel.spring.LinuxImpl;
 import com.getpcpanel.spring.WindowsImpl;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.cpp.linux.LinuxProcessHelper;
@@ -24,9 +25,9 @@ public abstract class IPlatformCommand {
 
     @ApplicationScoped
     @LinuxImpl
-    @RequiredArgsConstructor
     public static class LinuxPlatformCommand extends IPlatformCommand {
-        private final LinuxProcessHelper processHelper;
+        @Inject @LinuxImpl
+        LinuxProcessHelper processHelper;
 
         @Override
         public void exec(String shortcut) {

@@ -6,6 +6,8 @@ import java.util.Set;
 
 import jakarta.enterprise.event.Event;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import com.getpcpanel.cpp.AudioDevice;
 import com.getpcpanel.cpp.AudioSession;
 
@@ -16,8 +18,8 @@ import lombok.ToString;
 @Getter
 @EqualsAndHashCode(callSuper = true)
 public class WindowsAudioSession extends AudioSession {
-    @ToString.Exclude private final AudioDevice device;
-    private final Set<Long> pointers = new HashSet<>();
+    @JsonIgnore @ToString.Exclude private final AudioDevice device;
+    @JsonIgnore private final Set<Long> pointers = new HashSet<>();
 
     public WindowsAudioSession(AudioDevice device, Event<Object> eventBus, int pid, File executable, String title, String icon,
             float volume, boolean muted) {

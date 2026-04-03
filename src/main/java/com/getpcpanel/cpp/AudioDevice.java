@@ -4,6 +4,8 @@ import java.io.Serializable;
 
 import jakarta.enterprise.event.Event;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Setter;
@@ -14,7 +16,7 @@ import lombok.extern.log4j.Log4j2;
 @Setter(AccessLevel.PROTECTED)
 @SuppressWarnings("unused") // Methods called from JNI
 public class AudioDevice implements Serializable {
-    protected final transient Event<Object> eventBus;
+    @JsonIgnore protected final transient Event<Object> eventBus;
     private final String name;
     private final String id;
     private float volume;

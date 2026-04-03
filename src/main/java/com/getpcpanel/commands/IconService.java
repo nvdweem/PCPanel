@@ -14,6 +14,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
+import io.quarkus.arc.All;
 import io.quarkus.cache.CacheResult;
 import jakarta.inject.Inject;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -63,7 +64,7 @@ public class IconService {
     ISndCtrl sndCtrl;
     @Inject
     IIconService iconService;
-    @Inject
+    @Inject @All
     List<IIconHandler<?>> iconHandlers;
 
     @PostConstruct
