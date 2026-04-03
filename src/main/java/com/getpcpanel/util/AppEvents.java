@@ -11,7 +11,7 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class AppEvents {
     @SuppressWarnings("StaticNonFinalField")
-    private static AppEvents instance;
+    private static volatile AppEvents instance;
 
     @Inject
     Event<Object> eventBus;
