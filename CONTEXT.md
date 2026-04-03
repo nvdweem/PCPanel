@@ -72,8 +72,8 @@ The following resources from the plan are **not yet created**:
 - `ProfileResource` (`/api/profiles`) — profile commands are embedded in `DeviceResource`; consider extracting to a dedicated resource
 - `CommandResource` (`/api/commands`) — button/dial command assignment endpoints exist inside `DeviceResource` but a dedicated `CommandResource` was planned; the full command-type catalog (34 types) is not yet exposed
 - `LightingResource` (`/api/lighting`) — lighting endpoints exist inside `DeviceResource`; consider extracting
-- `IconResource` (`/api/icons`) — application icons not yet served over REST (needed for the Angular process picker)
-- `ProcessResource` (`/api/processes`) — running process list not yet exposed (needed for the Angular process picker)
+- ~~`IconResource` (`/api/icons`)~~ **DONE** — `GET /api/icons?path=...&size=...` returns icon PNG for a file path
+- ~~`ProcessResource` (`/api/processes`)~~ **DONE** — `GET /api/processes` returns running processes with base64 PNG icons
 
 ### Phase 6 (partial): Angular UI completeness
 The Angular frontend has scaffolding but is incomplete vs. the plan:
@@ -106,7 +106,7 @@ Not started:
 
 1. **Overlay (on-screen volume display)** — The existing `Overlay.java` (JavaFX window) was deleted with the UI package. A replacement for the overlay has not been designed. Options: keep it as a system tray tooltip, implement it as an always-on-top browser window via a separate Quarkus endpoint, or defer entirely.
 
-2. **`IconResource` / process icons** — `IconService` fetches icons from running processes; the `icon` field on `AudioSession` is already a base64 PNG string. The REST layer just needs to expose it. This is a prerequisite for the `CommandConfigComponent` process picker.
+2. ~~**`IconResource` / process icons**~~ — **DONE** — `GET /api/icons?path=...` serves PNG icons; `GET /api/processes` returns processes with inline base64 icons. The `icon` field on `AudioSession` is a base64 PNG string (set from JNI on Windows).
 
 3. **OBS re-enablement** — Tracked in Phase 9. A custom Jakarta-compatible OBS WebSocket 5 client can be written against `quarkus-websockets-next` when needed (~200 lines).
 
