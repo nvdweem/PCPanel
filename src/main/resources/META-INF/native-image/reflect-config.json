@@ -1,0 +1,74 @@
+[
+  {
+    "name": "com.getpcpanel.cpp.windows.SndCtrlNative",
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "com.getpcpanel.iconextract.Shell32Extra",
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "com.getpcpanel.iconextract.IShellItemImageFactory",
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "com.getpcpanel.iconextract.SIZEByValue",
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "com.getpcpanel.voicemeeter.VoicemeeterInstance",
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOINFO",
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOBUFFER",
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "com.sun.jna.Native",
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "com.sun.jna.Structure",
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "com.sun.jna.Pointer",
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "com.sun.jna.platform.win32.WinUser$WindowProc",
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true,
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "com.sun.jna.platform.win32.WinUser$WNDCLASSEX",
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true,
+    "allDeclaredConstructors": true
+  }
+]

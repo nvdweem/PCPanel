@@ -87,13 +87,12 @@ The Angular frontend has scaffolding but is incomplete vs. the plan:
 - **Partial**: `SettingsComponent` covers General/OBS/VoiceMeeter/Overlay/MQTT but lacks OSC and WaveLink tabs
 
 ### Phase 7: Native Image Support (GraalVM)
-Nothing in this phase has been started:
-- [ ] Add `@RegisterForReflection` to all 34 command classes
-- [ ] Create `reflect-config.json` for JNA interfaces and hid4java internals
-- [ ] Configure `quarkus.native.resources.includes` for hid4java native libs
-- [ ] Add `%native` profile to `application.properties` with `--initialize-at-run-time` args
-- [ ] Add `native` Maven profile to `pom.xml`
-- [ ] Test native build end-to-end on Windows
+- **DONE** — `NativeImageConfig.java` (`com.getpcpanel.graalvm`) — single `@RegisterForReflection(targets={...})` hub registering all 34 command classes, `Commands`, `CommandsType`, `DeviceSet`, `DialCommandParams`
+- **DONE** — `src/main/resources/META-INF/native-image/reflect-config.json` — JNA interfaces: `SndCtrlNative`, `VoicemeeterInstance` + inner Structures, `Shell32Extra`, `IShellItemImageFactory`, `SIZEByValue`, `com.sun.jna.Native/Structure/Pointer`, `WinUser$WindowProc/WNDCLASSEX`
+- **DONE** — `quarkus.native.resources.includes=SndCtrl.dll,*.so,*.dll,*.dylib` added to `application.properties`
+- **DONE** — `%native.quarkus.native.additional-build-args` added: `--initialize-at-run-time=com.sun.jna`, `--initialize-at-run-time=org.hid4java`, `-H:ReflectionConfigurationFiles=...`
+- **DONE** — `native` Maven profile already present in `pom.xml` (`<quarkus.native.enabled>true</quarkus.native.enabled>`)
+- **NOT DONE** — End-to-end native build test on Windows (requires GraalVM toolchain, deferred to CI)
 
 ### Phase 8: GitHub Actions Updates
 Not started:

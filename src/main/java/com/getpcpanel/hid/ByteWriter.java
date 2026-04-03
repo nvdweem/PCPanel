@@ -44,9 +44,9 @@ class ByteWriter {
         if (hexColor != null) {
             try {
                 String hex = hexColor.startsWith("#") ? hexColor.substring(1) : hexColor;
-                r = Integer.parseInt(hex.substring(0, 2), 16);
-                g = Integer.parseInt(hex.substring(2, 4), 16);
-                b = Integer.parseInt(hex.substring(4, 6), 16);
+                r = Integer.parseInt(hex.substring(0, 2), 16) & 0xFF;
+                g = Integer.parseInt(hex.substring(2, 4), 16) & 0xFF;
+                b = Integer.parseInt(hex.substring(4, 6), 16) & 0xFF;
             } catch (Exception ignored) {
             }
         }
@@ -54,10 +54,14 @@ class ByteWriter {
     }
 
     /**
-     * Append RGB from int components (0-255).
+     * Append RGB from int components (0-255). Values are clamped to [0, 255].
      */
     public ByteWriter appendRGB(int r, int g, int b) {
-        return append(applyBrightness((byte) r), applyBrightness((byte) g), applyBrightness((byte) b));
+        return append(
+            applyBrightness((byte) (Math.min(255, Math.max(0, r)) & 0xFF)),
+            applyBrightness((byte) (Math.min(255, Math.max(0, g)) & 0xFF)),
+            applyBrightness((byte) (Math.min(255, Math.max(0, b)) & 0xFF))
+        );
     }
 
     private byte applyBrightness(byte nr) {

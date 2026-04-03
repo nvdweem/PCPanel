@@ -2,6 +2,7 @@ package com.getpcpanel.rest;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
@@ -32,8 +33,14 @@ public class IconResource {
         if (filePath == null || filePath.isBlank()) {
             throw new NotFoundException();
         }
-        var file = new File(filePath);
-        if (!file.exists()) {
+        // Resolve canonical path to prevent path traversal sequences (e.g. "../")
+        File file;
+        try {
+            file = new File(filePath).getCanonicalFile();
+        } catch (IOException e) {
+            throw new NotFoundException();
+        }
+        if (!file.isFile()) {
             throw new NotFoundException();
         }
         var img = iconService.getIconForFile(size, size, file);
