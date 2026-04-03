@@ -1,94 +1,36 @@
-.home-layout {
-  display: flex;
-  height: 100vh;
-  background: #25262a;
-  color: #e0e0e0;
-  overflow: hidden;
-}
+.home-container { height: 100vh; }
 
-.device-sidebar {
+.device-sidenav {
   width: 230px;
-  min-width: 230px;
-  background: #1c1d20;
+  background: #1c1d20 !important;
   border-right: 1px solid #3b3c41;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
 
-  .sidebar-header {
-    padding: 12px 16px;
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: #ffc940;
-    border-bottom: 1px solid #3b3c41;
+  .sidebar-title {
+    font-size: 1rem;
+    font-weight: 500;
     letter-spacing: 1px;
+    min-height: 48px;
+    border-bottom: 1px solid #3b3c41;
   }
 
   .sidebar-empty {
     padding: 16px;
     color: #666;
     font-size: 0.85rem;
-  }
-
-  .sidebar-device {
-    padding: 12px 16px;
-    cursor: pointer;
-    border-bottom: 1px solid #2a2b2f;
-    transition: background 0.15s;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-
-    &:hover { background: #2d2e33; }
-    &.active {
-      background: #2d2e33;
-      border-left: 3px solid #ffc940;
-      padding-left: 13px;
-    }
-
-    .sidebar-device-name {
-      font-size: 0.95rem;
-      color: #e0e0e0;
-    }
-    .sidebar-device-type {
-      font-size: 0.75rem;
-      color: #9a9a9a;
-    }
+    margin: 0;
   }
 }
 
-.device-main {
-  flex: 1;
+.main-content {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  height: 100%;
+  background: #25262a;
 }
 
 .main-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 16px;
-  background: #1c1d20;
-  border-bottom: 1px solid #3b3c41;
-  min-height: 44px;
-
-  .selected-device-name {
-    font-size: 0.95rem;
-    color: #e0e0e0;
-  }
-
-  .btn-icon {
-    background: transparent;
-    border: none;
-    color: #9a9a9a;
-    font-size: 1.3rem;
-    cursor: pointer;
-    text-decoration: none;
-    padding: 4px 8px;
-    border-radius: 4px;
-    &:hover { color: #e0e0e0; background: #2d2e33; }
-  }
+  .toolbar-title { font-size: 0.95rem; }
+  .spacer { flex: 1; }
 }
 
 .no-device-center {
@@ -96,12 +38,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  .no-device-label { color: #555; font-size: 1rem; letter-spacing: 2px; }
+}
 
-  .no-device-label {
-    font-size: 1rem;
-    color: #666;
-    letter-spacing: 2px;
-  }
+.device-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
 }
 
 .device-visual {
@@ -114,7 +58,7 @@
   gap: 1.5rem;
 }
 
-.pcpanel-rgb, .pcpanel-mini {
+.pcpanel-knobs, .pcpanel-pro {
   display: flex;
   gap: 24px;
   align-items: flex-end;
@@ -124,26 +68,12 @@
   border: 1px solid #3b3c41;
 }
 
-.pcpanel-pro {
-  display: flex;
-  gap: 20px;
-  align-items: flex-end;
-  background: #2d2e33;
-  padding: 24px 32px;
-  border-radius: 12px;
-  border: 1px solid #3b3c41;
-}
-
-.knob-container {
+.knob-container, .slider-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
   cursor: pointer;
-
-  &:hover .knob {
-    box-shadow: 0 0 0 3px #ffc94040;
-  }
 }
 
 .knob {
@@ -153,7 +83,7 @@
   background: radial-gradient(circle at 40% 35%, #3b3c42, #0f1012);
   border: 2px solid #4a4b52;
   position: relative;
-  transition: box-shadow 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 
   &::after {
     content: '';
@@ -168,22 +98,8 @@
     opacity: 0.9;
   }
 
-  &.active {
-    border-color: #ffc940;
-    box-shadow: 0 0 0 3px #ffc94060;
-  }
-}
-
-.slider-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-
-  &:hover .slider-track {
-    border-color: #ffc940;
-  }
+  .knob-container:hover & { box-shadow: 0 0 0 3px #ffc94040; }
+  &.active { border-color: #ffc940; box-shadow: 0 0 0 3px #ffc94060; }
 }
 
 .slider-track {
@@ -194,6 +110,8 @@
   border-radius: 12px;
   position: relative;
   transition: border-color 0.15s;
+
+  .slider-container:hover & { border-color: #ffc940; }
 }
 
 .slider-thumb {
@@ -206,7 +124,6 @@
   background: #3b3c41;
   border: 1px solid #5a5b62;
   border-radius: 3px;
-
   &.active { background: #ffc940; }
 }
 
@@ -228,33 +145,15 @@
 }
 
 .btn-control {
-  padding: 6px 16px;
-  background: #2d2e33;
-  border: 1px solid #4a4b52;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.78rem;
-  color: #9a9a9a;
-  max-width: 100px;
+  max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  transition: all 0.15s;
-
-  &:hover { border-color: #ffc940; color: #e0e0e0; }
-  &.active { border-color: #ffc940; background: #3a3800; color: #ffc940; }
+  font-size: 0.78rem;
+  &.active { border-color: #ffc940 !important; color: #ffc940 !important; }
 }
 
-.hint-bar {
-  padding: 8px 0;
-  text-align: center;
-
-  .hint-text {
-    font-size: 0.85rem;
-    color: #555;
-    letter-spacing: 0.5px;
-  }
-}
+.hint-text { color: #555; font-size: 0.82rem; text-align: center; margin: 0; }
 
 .bottom-bar {
   display: flex;
@@ -263,44 +162,18 @@
   padding: 8px 16px;
   background: #1c1d20;
   border-top: 1px solid #3b3c41;
+  gap: 1rem;
 
-  .version-label {
-    font-size: 0.8rem;
-    color: #555;
-  }
+  .version-label { font-size: 0.8rem; color: #555; }
 
   .profile-area {
     display: flex;
     align-items: center;
     gap: 8px;
 
-    label {
-      font-size: 0.85rem;
-      color: #9a9a9a;
+    .profile-field {
+      width: 180px;
+      .mat-mdc-form-field-subscript-wrapper { display: none; }
     }
   }
-}
-
-.profile-select {
-  background: #2d2e33;
-  color: #e0e0e0;
-  border: 1px solid #4a4b52;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 0.85rem;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  border: none;
-  cursor: pointer;
-  text-decoration: none;
-  transition: opacity 0.15s;
-  &:hover { opacity: 0.85; }
-  &.btn-primary { background: #ffc940; color: #1c1d20; font-weight: 600; }
-  &.btn-secondary { background: #2d2e33; color: #e0e0e0; border: 1px solid #4a4b52; }
-  &.btn-sm { padding: 4px 12px; font-size: 0.82rem; }
 }
