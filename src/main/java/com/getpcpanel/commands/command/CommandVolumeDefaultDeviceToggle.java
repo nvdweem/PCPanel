@@ -44,7 +44,7 @@ public class CommandVolumeDefaultDeviceToggle extends CommandVolume implements B
         if (!devices.isEmpty()) {
             var targetDevice = getSndCtrl().getDevicesMap().get(devices.get(currentIdx));
             if (targetDevice != null) {
-                return targetDevice.getName();
+                return targetDevice.name();
             }
         }
         return null;

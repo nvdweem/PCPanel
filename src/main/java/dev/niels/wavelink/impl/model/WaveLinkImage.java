@@ -1,6 +1,8 @@
 package dev.niels.wavelink.impl.model;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import javax.imageio.ImageIO;
 import java.util.Base64;
 
 import javax.annotation.Nullable;
@@ -23,8 +25,8 @@ public record WaveLinkImage(
         if (imgData != null && !imgData.isBlank()) {
             try {
                 var imageBytes = Base64.getDecoder().decode(imgData);
-                return new BufferedImage(new ByteArrayInputStream(imageBytes));
-            } catch (IllegalArgumentException e) {
+                return ImageIO.read(new ByteArrayInputStream(imageBytes));
+            } catch (IOException | IllegalArgumentException e) {
                 log.debug("Unable to create image from image data {}", this);
             }
         }

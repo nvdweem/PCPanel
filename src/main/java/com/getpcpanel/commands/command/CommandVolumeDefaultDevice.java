@@ -27,7 +27,7 @@ public class CommandVolumeDefaultDevice extends CommandVolume implements ButtonA
     public @Nullable String getOverlayText() {
         var targetDevice = getSndCtrl().getDevicesMap().get(deviceId);
         if (targetDevice != null) {
-            return targetDevice.getName();
+            return targetDevice.name();
         }
         return null;
     }

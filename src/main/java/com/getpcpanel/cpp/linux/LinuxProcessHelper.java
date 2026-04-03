@@ -12,6 +12,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import jakarta.inject.Inject;
 import com.getpcpanel.spring.LinuxImpl;
 import jakarta.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.config.ConfigProvider;
 
 import com.getpcpanel.util.ProcessHelper;
 
@@ -65,7 +66,7 @@ public class LinuxProcessHelper {
         if (lines.isEmpty()) {
             return null;
         }
-        return lines.getFirst();
+        return lines.isEmpty() ? null : lines.get(0);
     }
 
     @Getter
@@ -77,7 +78,7 @@ public class LinuxProcessHelper {
         private final boolean available;
 
         Tool(String tool) {
-            command = resolveHomeRelativePath(Objects.requireNonNullElse(MainFX.getContext().getEnvironment().getProperty("linux.commands." + tool), tool));
+            command = resolveHomeRelativePath(ConfigProvider.getConfig().getOptionalValue("linux.commands." + tool, String.class).orElse(tool));
             available = ProcessConditionalHelper.isProcessAvailable(command);
             log.info("Active Window tool {} enabled: {}", tool, available);
         }

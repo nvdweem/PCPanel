@@ -72,8 +72,8 @@ public class ShortcutHook implements NativeKeyListener {
     }
 
         public void updateShortcuts() {
-        shortcuts = EntryStream.of(saveService.get().devices())
-                               .flatMapValues(ds -> ds.profiles().stream())
+        shortcuts = EntryStream.of(saveService.get().getDevices())
+                               .flatMapValues(ds -> ds.getProfiles().stream())
                                .filterValues(p -> StringUtils.isNotBlank(p.getActivationShortcut()))
                                .mapKeyValue(DeviceProfile::new)
                                .mapToEntry(dp -> dp.profile.getActivationShortcut(), Function.identity())

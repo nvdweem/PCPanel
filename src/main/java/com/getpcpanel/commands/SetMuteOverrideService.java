@@ -140,11 +140,11 @@ public class SetMuteOverrideService implements IOverrideColorProviderProvider {
     }
 
     private boolean isDevice(AudioDeviceEvent event, DeviceLightingCapable dlc) {
-        return StringUtils.containsIgnoreCase(event.device().getName(), dlc.deviceOrFollow);
+        return StringUtils.containsIgnoreCase(event.device().name(), dlc.deviceOrFollow);
     }
 
     public void handleEvent(Predicate<DeviceLightingCapable> isApplicable, boolean isMuted) {
-        for (var idDeviceSave : saveService.get().devices().entrySet()) {
+        for (var idDeviceSave : saveService.get().getDevices().entrySet()) {
             var deviceOpt = devices.getDevice(idDeviceSave.getKey());
             if (deviceOpt.isEmpty()) {
                 log.debug("Device {} not connected", idDeviceSave.getKey());

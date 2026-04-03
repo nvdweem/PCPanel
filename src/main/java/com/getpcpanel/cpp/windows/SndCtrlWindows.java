@@ -129,7 +129,7 @@ public class SndCtrlWindows implements ISndCtrl {
             return;
         }
         synchronized (devices) {
-            StreamEx.ofValues(devices).findFirst(d -> d.dataflow() == flow && StringUtils.containsIgnoreCase(d.getName(), deviceName)).ifPresent(d -> SndCtrlNative.instance.setDefaultDevice(d.id(), flow.ordinal(), role.ordinal()));
+            StreamEx.ofValues(devices).findFirst(d -> d.dataflow() == flow && StringUtils.containsIgnoreCase(d.name(), deviceName)).ifPresent(d -> SndCtrlNative.instance.setDefaultDevice(d.id(), flow.ordinal(), role.ordinal()));
         }
     }
 

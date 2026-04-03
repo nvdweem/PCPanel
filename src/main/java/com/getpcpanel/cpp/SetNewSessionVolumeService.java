@@ -37,7 +37,7 @@ public class SetNewSessionVolumeService extends AbstractNewXVolumeService {
         var deviceId = c.getDevice();
         if (StringUtils.isBlank(deviceId) || "*".equals(deviceId)) return true;
         if (session instanceof WindowsAudioSession was) {
-            return deviceId.equals(was.device().getId());
+            return deviceId.equals(was.device().id());
         }
         return false;
     }

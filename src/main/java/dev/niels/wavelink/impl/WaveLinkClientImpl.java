@@ -268,7 +268,6 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
             socket.sendClose(WebSocket.NORMAL_CLOSURE, "Done");
         }
         try {
-            client.close();
         } catch (Exception e) {
             log.error("Error closing websocket", e);
         }

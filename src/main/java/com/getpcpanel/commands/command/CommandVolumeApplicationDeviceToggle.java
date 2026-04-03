@@ -65,7 +65,7 @@ public class CommandVolumeApplicationDeviceToggle extends CommandVolume implemen
             return null;
         }
         var sndCtrl = getWinSndCtrl();
-        return StreamEx.of(sndCtrl.devices()).findFirst(d -> StringUtils.containsIgnoreCase(d.getName(), mediaPlayback)).map(AudioDevice::id).orElse(null);
+        return StreamEx.of(sndCtrl.devices()).findFirst(d -> StringUtils.containsIgnoreCase(d.name(), mediaPlayback)).map(AudioDevice::id).orElse(null);
     }
 
     private Set<Integer> determineTargets() {
@@ -88,6 +88,6 @@ public class CommandVolumeApplicationDeviceToggle extends CommandVolume implemen
         if (currentIdx == -1 && !devices.isEmpty() || devices.size() == 0) {
             return null;
         }
-        return devices.get(currentIdx % devices.size()).getName();
+        return devices.get(currentIdx % devices.size()).name();
     }
 }

@@ -64,7 +64,7 @@ public final class CommandWaveLinkChangeMute extends CommandWaveLinkChange imple
             case Output -> {
                 var output = service.getOutputFromId(getId1());
                 if (!(output.outputs() == null || output.outputs().isEmpty())) {
-                    var newMuted = muteType.convert(output.outputs().getFirst().isMuted());
+                    var newMuted = muteType.convert(output.outputs().get(0).isMuted());
                     service.setOutputMute(getId1(), newMuted);
                 } else {
                     log.warn("No outputs found for output {}", getId1());

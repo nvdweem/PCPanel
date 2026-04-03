@@ -42,7 +42,7 @@ public class TrayServiceWayland implements ITrayService {
 
     private void registerIcon() throws DBusException {
         DBusInterface menuBarObject = () -> "/MenuBar";
-        var statusNotifierItem = new StatusNotifierItemImpl(eventBus);
+        var statusNotifierItem = new StatusNotifierItemImpl();
 
         var wellKnownName = requestSniBus(1);
         connection.exportObject("/MenuBar", menuBarObject);

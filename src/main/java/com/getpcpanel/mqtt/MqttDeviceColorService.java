@@ -6,6 +6,7 @@ import static com.getpcpanel.mqtt.MqttTopicHelper.ColorType.logo;
 import static com.getpcpanel.mqtt.MqttTopicHelper.ColorType.slider;
 import static com.getpcpanel.mqtt.MqttTopicHelper.ValueType.brightness;
 import static com.getpcpanel.util.Util.parseColor;
+import static com.getpcpanel.util.Util.parseColorComponents;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -16,6 +17,7 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import com.getpcpanel.device.GlobalBrightnessChangedEvent;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.annotation.Priority;
@@ -65,10 +67,10 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
     public void sendColor(String topic, @Nonnull String colorString, boolean immediate) {
         mqtt.send(topic, colorString, immediate);
 
-        var setColor = parseColor(colorString).orElse("#000000");
-        var r = Math.round(setColor.getRed() * 255);
-        var g = Math.round(setColor.getGreen() * 255);
-        var b = Math.round(setColor.getBlue() * 255);
+        var colorComponents = parseColorComponents(colorString);
+        int r = colorComponents != null ? colorComponents[0] : 0;
+        int g = colorComponents != null ? colorComponents[1] : 0;
+        int b = colorComponents != null ? colorComponents[2] : 0;
 
         // Home assistant seems to think that the brightness is the highest value of the RGB
         var brightness = Math.max(r, Math.max(g, b));
@@ -107,7 +109,7 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
             var newBrightness = NumberUtils.toInt(payload, 100);
             lighting.setGlobalBrightness(newBrightness);
             andThen.run();
-            eventBus.fire(new HomePage.GlobalBrightnessChangedEvent(this, device.getSerialNumber(), newBrightness));
+            eventBus.fire(new GlobalBrightnessChangedEvent(device.getSerialNumber(), newBrightness));
         });
         subscribeToColors(lighting.knobConfigs(), topicHelper, dial, knobOverride, idx -> device.lightingConfig().knobConfigs()[idx].getColor1());
         subscribeToColors(lighting.sliderConfigs(), topicHelper, slider, sliderOverride, idx -> device.lightingConfig().sliderConfigs()[idx].getColor1());
@@ -120,7 +122,7 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
     private <T> void subscribeToColors(T[] items, MqttTopicHelper.DeviceMqttTopicHelper topicHelper, MqttTopicHelper.ColorType type, TriFunction<Integer, String, T, T> consumer, Function<Integer, String> currentColorSupplier) {
         EntryStream.of(items).forKeyValue((idx, knob) -> {
             var topic = topicHelper.lightTopic(type, idx);
-            subscribeToColor(topic, payload -> consumer.accept(idx, payload, knob), () -> currentColorSupplier.apply(idx));
+            subscribeToColor(topic, payload -> consumer.apply(idx, payload, knob), () -> currentColorSupplier.apply(idx));
         });
     }
 

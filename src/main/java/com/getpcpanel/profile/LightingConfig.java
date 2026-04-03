@@ -129,6 +129,13 @@ public class LightingConfig {
         return lc;
     }
 
+    public static LightingConfig createAllColor(String color) {
+        var lc = new LightingConfig();
+        lc.lightingMode = LightingMode.ALL_COLOR;
+        lc.allColor = color;
+        return lc;
+    }
+
     public LightingMode lightingMode() {
         return lightingMode;
     }

@@ -170,6 +170,10 @@ public class PulseAudioWrapper {
         input("sources"), output("sinks"), session("sink-inputs");
 
         private final String pulseType;
+
+        InOutput(String pulseType) {
+            this.pulseType = pulseType;
+        }
     }
 
     private String muteTypeToMute(MuteType type) {

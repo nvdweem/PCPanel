@@ -99,6 +99,10 @@ public abstract class Device {
         closeDialogs();
     }
 
+    public void setProfile(String profileName) {
+        save.setCurrentProfileName(profileName);
+    }
+
     public Profile currentProfile() {
         return save.ensureCurrentProfile(deviceType());
     }

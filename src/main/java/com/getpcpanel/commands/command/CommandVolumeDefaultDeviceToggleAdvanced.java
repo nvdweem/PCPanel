@@ -92,6 +92,6 @@ public class CommandVolumeDefaultDeviceToggleAdvanced extends CommandVolume impl
         if (currentIdx == -1) {
             return null;
         }
-        return devices.get(currentIdx % devices.size()).getName();
+        return devices.get(currentIdx % devices.size()).name();
     }
 }

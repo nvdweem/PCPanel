@@ -69,7 +69,7 @@ public class WaveLinkListener implements Listener {
     private void ensureCorrectVersion(WaveLinkGetApplicationInfoResult res) {
         log.info("Connected websocket, wavelink info: {}", res);
         var correctAppId = "ewl".equalsIgnoreCase(res.appID());
-        var correctAppName = "Elgato Wave Link".equalsIgnoreCase(res.getName());
+        var correctAppName = "Elgato Wave Link".equalsIgnoreCase(res.name());
         if (!correctAppId || !correctAppName) {
             throw new IllegalStateException("Expected appId ewl and appName Elgato Wave Link, got " + res);
         }

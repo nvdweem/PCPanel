@@ -47,6 +47,14 @@ public final class Voicemeeter {
 
         private final String dn;
 
+        ControlType(String dn) {
+            this.dn = dn;
+        }
+
+        public String getName() {
+            return name().charAt(0) + name().substring(1).toLowerCase();
+        }
+
         public String toString() {
             return dn;
         }
@@ -122,6 +130,11 @@ public final class Voicemeeter {
 
         @Getter private final String parameterName;
         private final String dn;
+
+        ButtonType(String parameterName, String dn) {
+            this.parameterName = parameterName;
+            this.dn = dn;
+        }
 
         public String toString() {
             return dn;

@@ -101,7 +101,7 @@ public class IconService {
             try {
                 var iconStr = override.getOverlayIcon();
                 if (StringUtils.endsWithAny(iconStr, "exe", "dll") && new File(iconStr).exists()) {
-                    var result = iconService.getIconImageForFile(32, 32, new File(iconStr));
+                    var result = iconService.getIconForFile(32, 32, new File(iconStr));
                     if (result != null) {
                         return result;
                     }
@@ -134,7 +134,7 @@ public class IconService {
             }
             for (var runningProcess : allProcesses) {
                 if (StringUtils.containsIgnoreCase(runningProcess.file().getAbsolutePath(), process)) {
-                    var image = iconService.getIconImageForFile(32, 32, runningProcess.file());
+                    var image = iconService.getIconForFile(32, 32, runningProcess.file());
                     if (image != null) {
                         return image;
                     }
@@ -145,7 +145,7 @@ public class IconService {
     }
 
     private BufferedImage getFocusProcessIcon(CommandVolumeFocus command) {
-        var image = iconService.getIconImageForFile(32, 32, new File(sndCtrl.getFocusApplication()));
+        var image = iconService.getIconForFile(32, 32, new File(sndCtrl.getFocusApplication()));
         if (image == null) {
             return DEFAULT;
         }
