@@ -92,9 +92,10 @@ public class WaveLinkListener implements Listener {
     }
 
     private void handleMessage(JsonRpcMessage message) {
-        switch (message) {
-            case JsonRpcResponse response -> handleResponse(response);
-            case WaveLinkJsonRpcCommand<?, ?> command -> handleCommand(command);
+        if (message instanceof JsonRpcResponse response) {
+            handleResponse(response);
+        } else if (message instanceof WaveLinkJsonRpcCommand<?, ?> command) {
+            handleCommand(command);
         }
     }
 

@@ -5,10 +5,12 @@ import java.util.Arrays;
 import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.util.Util;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
+@AllArgsConstructor
 @Builder(toBuilder = true)
 public class LightingConfig {
     private LightingMode lightingMode;

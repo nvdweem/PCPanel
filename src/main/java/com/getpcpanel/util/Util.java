@@ -33,7 +33,7 @@ public final class Util {
      * Parse a CSS hex color string like "#rrggbb" into an int[]{r,g,b} array (0-255 each).
      * Returns null if the string is null or not parseable.
      */
-    public static int @Nullable [] parseColorComponents(String color) {
+    public static @Nullable int[] parseColorComponents(String color) {
         if (color == null) return null;
         try {
             String hex = color.startsWith("#") ? color.substring(1) : color;

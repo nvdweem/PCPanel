@@ -22,7 +22,7 @@ public class Commands {
 
     public static @Nonnull List<Command> cmds(@Nullable Commands buttonData) {
         if (buttonData != null) {
-            return buttonData.commands();
+            return buttonData.getCommands();
         }
         return List.of();
     }

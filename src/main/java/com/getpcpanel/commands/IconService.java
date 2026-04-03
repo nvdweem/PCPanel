@@ -3,10 +3,12 @@ package com.getpcpanel.commands;
 import static com.getpcpanel.cpp.AudioSession.SYSTEM;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
+import javax.imageio.ImageIO;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -41,11 +43,21 @@ import one.util.streamex.StreamEx;
 @Log4j2
 @ApplicationScoped
 public class IconService {
-    public static final BufferedImage DEFAULT = new BufferedImage(Objects.requireNonNull(IconService.class.getResource("/assets/32x32.png")).toExternalForm());
-    private static final BufferedImage OBS = new BufferedImage(Objects.requireNonNull(IconService.class.getResource("/assets/obs.png")).toExternalForm());
-    private static final BufferedImage VOICEMEETER = new BufferedImage(Objects.requireNonNull(IconService.class.getResource("/assets/voicemeeter.png")).toExternalForm());
-    public static final BufferedImage DEVICE = new BufferedImage(Objects.requireNonNull(IconService.class.getResource("/assets/device.png")).toExternalForm());
-    public static final BufferedImage SYSTEM_SOUND = new BufferedImage(Objects.requireNonNull(IconService.class.getResource("/assets/systemsounds.ico")).toExternalForm());
+    public static final BufferedImage DEFAULT = loadImage("/assets/32x32.png");
+    private static final BufferedImage OBS = loadImage("/assets/obs.png");
+    private static final BufferedImage VOICEMEETER = loadImage("/assets/voicemeeter.png");
+    public static final BufferedImage DEVICE = loadImage("/assets/device.png");
+    public static final BufferedImage SYSTEM_SOUND = loadImage("/assets/systemsounds.ico");
+
+    private static BufferedImage loadImage(String path) {
+        try {
+            var url = IconService.class.getResource(path);
+            if (url != null) return ImageIO.read(url);
+        } catch (IOException e) {
+            // fall through
+        }
+        return new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
+    }
     private final SafeMap imageHandlers = new SafeMap();
     @Inject
     ISndCtrl sndCtrl;
@@ -95,7 +107,7 @@ public class IconService {
                     }
                 }
                 if (StringUtils.isNotBlank(iconStr)) {
-                    return new BufferedImage(override.getOverlayIcon());
+                    return loadImage(iconStr);
                 }
             } catch (Exception e) {
                 log.trace("Unable to load {}", override, e);
@@ -103,7 +115,7 @@ public class IconService {
         }
 
         //noinspection ObjectEquality
-        return StreamEx.of(commands.commands())
+        return StreamEx.of(commands.getCommands())
                        .map(imageHandlers::handle)
                        .findFirst(result -> result != null && result != DEFAULT)
                        .orElse(DEFAULT);
@@ -179,6 +191,6 @@ public class IconService {
     }
 
     private BufferedImage getBrightnessIcon(Command command) {
-        return Images.lighting;
+        return DEFAULT;
     }
 }

@@ -35,12 +35,16 @@ public class WaveLinkIconHandler implements IIconHandler<CommandWaveLink> {
     @Override
     @Nullable
     public Optional<BufferedImage> supplyImage(CommandWaveLink cmd) {
-        return switch (cmd) {
-            case CommandWaveLinkMainOutput o -> Optional.of(outputImage());
-            case CommandWaveLinkChannelEffect ce -> channelImage(ce.getChannelId());
-            case CommandWaveLinkChange c -> fromChange(c);
-            case CommandWaveLinkAddFocusToChannel ac -> channelImage(ac.getChannelId());
-        };
+        if (cmd instanceof CommandWaveLinkMainOutput) {
+            return Optional.of(outputImage());
+        } else if (cmd instanceof CommandWaveLinkChannelEffect ce) {
+            return channelImage(ce.getChannelId());
+        } else if (cmd instanceof CommandWaveLinkChange c) {
+            return fromChange(c);
+        } else if (cmd instanceof CommandWaveLinkAddFocusToChannel ac) {
+            return channelImage(ac.getChannelId());
+        }
+        return Optional.empty();
     }
 
     @Nullable

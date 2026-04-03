@@ -73,7 +73,7 @@ public class DeviceScanner implements HidServicesListener {
     private void foundPCPanel(HidDevice newPCPanel, DeviceType deviceType) {
         log.info("FOUND PCPANEL : {}", newPCPanel);
         try {
-            deviceAdded(newPCPanel.serialNumber(), newPCPanel, deviceType);
+            deviceAdded(newPCPanel.getSerialNumber(), newPCPanel, deviceType);
         } catch (Exception e) {
             log.error("Unable to handle device added", e);
         }
@@ -82,7 +82,7 @@ public class DeviceScanner implements HidServicesListener {
     private void lostPCPanel(HidDevice lostPCPanel) {
         log.info("LOST PCPANEL : {}", lostPCPanel);
         try {
-            deviceRemoved(lostPCPanel.serialNumber(), lostPCPanel);
+            deviceRemoved(lostPCPanel.getSerialNumber(), lostPCPanel);
         } catch (Exception e) {
             log.error("Unable to handle device disconnect", e);
         }
@@ -105,7 +105,7 @@ public class DeviceScanner implements HidServicesListener {
 
     private Optional<DeviceType> determineType(HidServicesEvent event) {
         for (var deviceType : DeviceType.ALL) {
-            if (event.getHidDevice().isVidPidSerial(deviceType.getVid(), deviceType.pid(), null))
+            if (event.getHidDevice().isVidPidSerial(deviceType.getVid(), deviceType.getPid(), null))
                 return Optional.of(deviceType);
         }
         return Optional.empty();

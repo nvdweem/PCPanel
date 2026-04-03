@@ -52,7 +52,7 @@ public class DeviceHolder {
         } else if (event.deviceType() == DeviceType.PCPANEL_PRO) {
             device = deviceFactory.buildPro(event.serialNum(), save.getDeviceSave(event.serialNum()));
         } else {
-            throw new IllegalArgumentException("unknown devicetype: " + event.deviceType().getName());
+            throw new IllegalArgumentException("unknown devicetype: " + event.deviceType().name());
         }
         devices.put(event.serialNum(), device);
         outputInterpreter.sendInit(event.serialNum());
