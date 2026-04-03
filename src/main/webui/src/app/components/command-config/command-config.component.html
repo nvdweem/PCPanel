@@ -1,0 +1,327 @@
+<div class="modal-overlay" (click)="onOverlayClick($event)">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Configure {{ kind === 'dial' ? 'Dial' : 'Button' }} {{ index + 1 }}</h2>
+      <button class="close-btn" (click)="cancel()" type="button">✕</button>
+    </div>
+
+    @if (cmd) {
+      <div class="modal-body">
+        <div class="field-row">
+          <label>Action Type</label>
+          <select [(ngModel)]="selectedType" (ngModelChange)="onTypeChange($event)">
+            @for (t of availableTypes; track t._type) {
+              <option [value]="t._type">{{ t.label }}</option>
+            }
+          </select>
+        </div>
+
+        @if (is('CommandMedia')) {
+          <div class="field-row">
+            <label>Media Button</label>
+            <select [(ngModel)]="cmd['button']">
+              <option value="playPause">Play/Pause</option>
+              <option value="next">Next</option>
+              <option value="prev">Previous</option>
+              <option value="stop">Stop</option>
+              <option value="mute">Mute</option>
+            </select>
+          </div>
+          <div class="field-row checkbox-row">
+            <label><input type="checkbox" [(ngModel)]="cmd['spotify']" /> Spotify only</label>
+          </div>
+        }
+
+        @if (is('CommandKeystroke')) {
+          <div class="field-row">
+            <label>Keystroke</label>
+            <input type="text" [(ngModel)]="cmd['keystroke']" placeholder="e.g. ctrl+shift+m" />
+          </div>
+        }
+
+        @if (is('CommandRun')) {
+          <div class="field-row">
+            <label>Command</label>
+            <input type="text" [(ngModel)]="cmd['command']" placeholder="Path or shell command" />
+          </div>
+        }
+
+        @if (is('CommandShortcut')) {
+          <div class="field-row">
+            <label>Shortcut</label>
+            <input type="text" [(ngModel)]="cmd['shortcut']" placeholder="e.g. notepad.exe" />
+          </div>
+        }
+
+        @if (is('CommandEndProgram')) {
+          <div class="field-row checkbox-row">
+            <label><input type="checkbox" [(ngModel)]="cmd['specific']" /> Specific process</label>
+          </div>
+          @if (cmd['specific']) {
+            <div class="field-row">
+              <label>Process name</label>
+              <app-audio-picker mode="process" [(value)]="cmd['name']" />
+            </div>
+          }
+        }
+
+        @if (is('CommandProfile')) {
+          <div class="field-row">
+            <label>Profile name</label>
+            <input type="text" [(ngModel)]="cmd['profile']" placeholder="Profile name" />
+          </div>
+        }
+
+        @if (is('CommandVolumeFocusMute')) {
+          <div class="field-row">
+            <label>Mute action</label>
+            <select [(ngModel)]="cmd['muteType']">
+              @for (m of muteTypes; track m) {
+                <option [value]="m">{{ m }}</option>
+              }
+            </select>
+          </div>
+        }
+
+        @if (is('CommandVolumeDevice')) {
+          <div class="field-row">
+            <label>Audio Device</label>
+            <app-audio-picker mode="device" [(value)]="cmd['deviceId']" />
+          </div>
+          <div class="field-row checkbox-row">
+            <label><input type="checkbox" [(ngModel)]="cmd['isUnMuteOnVolumeChange']" /> Unmute on volume change</label>
+          </div>
+          <app-dial-params-editor [params]="cmd['dialParams']" />
+        }
+
+        @if (is('CommandVolumeDeviceMute')) {
+          <div class="field-row">
+            <label>Audio Device</label>
+            <app-audio-picker mode="device" [(value)]="cmd['deviceId']" />
+          </div>
+          <div class="field-row">
+            <label>Mute action</label>
+            <select [(ngModel)]="cmd['muteType']">
+              @for (m of muteTypes; track m) {
+                <option [value]="m">{{ m }}</option>
+              }
+            </select>
+          </div>
+        }
+
+        @if (is('CommandVolumeDefaultDevice')) {
+          <div class="field-row">
+            <label>Audio Device</label>
+            <app-audio-picker mode="device" [(value)]="cmd['deviceId']" />
+          </div>
+        }
+
+        @if (is('CommandVolumeDefaultDeviceToggle')) {
+          <div class="field-row">
+            <label>Devices (cycle through)</label>
+            <div class="multi-device">
+              @for (d of cmd['devices']; track $index; let i = $index) {
+                <div class="multi-device-row">
+                  <app-audio-picker mode="device" [value]="cmd['devices'][i]" (valueChange)="cmd['devices'][i] = $event" />
+                  <button type="button" class="btn-icon" (click)="removeItem(cmd['devices'], i)">✕</button>
+                </div>
+              }
+              <button type="button" class="btn-small" (click)="cmd['devices'].push('')">+ Add Device</button>
+            </div>
+          </div>
+        }
+
+        @if (is('CommandVolumeDefaultDeviceAdvanced')) {
+          <div class="field-row">
+            <label>Label</label>
+            <input type="text" [(ngModel)]="cmd['name']" />
+          </div>
+          <div class="field-row">
+            <label>Media Playback</label>
+            <app-audio-picker mode="device" deviceFilter="output" [(value)]="cmd['mediaPb']" />
+          </div>
+          <div class="field-row">
+            <label>Media Record</label>
+            <app-audio-picker mode="device" deviceFilter="input" [(value)]="cmd['mediaRec']" />
+          </div>
+          <div class="field-row">
+            <label>Comm. Playback</label>
+            <app-audio-picker mode="device" deviceFilter="output" [(value)]="cmd['communicationPb']" />
+          </div>
+          <div class="field-row">
+            <label>Comm. Record</label>
+            <app-audio-picker mode="device" deviceFilter="input" [(value)]="cmd['communicationRec']" />
+          </div>
+        }
+
+        @if (is('CommandVolumeProcess')) {
+          <div class="field-row">
+            <label>Processes</label>
+            <div class="multi-process">
+              @for (p of cmd['processName']; track $index; let i = $index) {
+                <div class="multi-process-row">
+                  <app-audio-picker mode="process" [value]="cmd['processName'][i]" (valueChange)="cmd['processName'][i] = $event" />
+                  <button type="button" class="btn-icon" (click)="removeItem(cmd['processName'], i)">✕</button>
+                </div>
+              }
+              <button type="button" class="btn-small" (click)="cmd['processName'].push('')">+ Add Process</button>
+            </div>
+          </div>
+          <div class="field-row">
+            <label>Device</label>
+            <app-audio-picker mode="device" [(value)]="cmd['device']" placeholder="Default device" />
+          </div>
+          <div class="field-row checkbox-row">
+            <label><input type="checkbox" [(ngModel)]="cmd['isUnMuteOnVolumeChange']" /> Unmute on volume change</label>
+          </div>
+          <app-dial-params-editor [params]="cmd['dialParams']" />
+        }
+
+        @if (is('CommandVolumeProcessMute')) {
+          <div class="field-row">
+            <label>Processes</label>
+            <div class="multi-process">
+              @for (p of asArray(cmd['processName']); track $index; let i = $index) {
+                <div class="multi-process-row">
+                  <app-audio-picker mode="process" [value]="asArray(cmd['processName'])[i]" (valueChange)="asArray(cmd['processName'])[i] = $event" />
+                  <button type="button" class="btn-icon" (click)="removeItem(asArray(cmd['processName']), i)">✕</button>
+                </div>
+              }
+              <button type="button" class="btn-small" (click)="asArray(cmd['processName']).push('')">+ Add Process</button>
+            </div>
+          </div>
+          <div class="field-row">
+            <label>Mute action</label>
+            <select [(ngModel)]="cmd['muteType']">
+              @for (m of muteTypes; track m) {
+                <option [value]="m">{{ m }}</option>
+              }
+            </select>
+          </div>
+        }
+
+        @if (is('CommandVolumeFocus') || is('CommandBrightness')) {
+          <app-dial-params-editor [params]="cmd['dialParams']" />
+        }
+
+        @if (is('CommandObsMuteSource')) {
+          <div class="field-row">
+            <label>Source name</label>
+            <input type="text" [(ngModel)]="cmd['source']" />
+          </div>
+          <div class="field-row">
+            <label>Mute action</label>
+            <select [(ngModel)]="cmd['type']">
+              @for (m of muteTypes; track m) {
+                <option [value]="m">{{ m }}</option>
+              }
+            </select>
+          </div>
+        }
+
+        @if (is('CommandObsSetScene')) {
+          <div class="field-row">
+            <label>Scene name</label>
+            <input type="text" [(ngModel)]="cmd['scene']" />
+          </div>
+        }
+
+        @if (is('CommandObsSetSourceVolume')) {
+          <div class="field-row">
+            <label>Source name</label>
+            <input type="text" [(ngModel)]="cmd['sourceName']" />
+          </div>
+          <app-dial-params-editor [params]="cmd['dialParams']" />
+        }
+
+        @if (is('CommandVoiceMeeterBasic')) {
+          <div class="field-row">
+            <label>Control type</label>
+            <select [(ngModel)]="cmd['ct']">
+              @for (t of vmControlTypes; track t) {
+                <option [value]="t">{{ t }}</option>
+              }
+            </select>
+          </div>
+          <div class="field-row">
+            <label>Index</label>
+            <input type="number" [(ngModel)]="cmd['index']" min="0" max="8" />
+          </div>
+          <div class="field-row">
+            <label>Dial type</label>
+            <select [(ngModel)]="cmd['dt']">
+              @for (t of vmDialTypes; track t) {
+                <option [value]="t">{{ t }}</option>
+              }
+            </select>
+          </div>
+          <app-dial-params-editor [params]="cmd['dialParams']" />
+        }
+
+        @if (is('CommandVoiceMeeterBasicButton')) {
+          <div class="field-row">
+            <label>Control type</label>
+            <select [(ngModel)]="cmd['ct']">
+              @for (t of vmControlTypes; track t) {
+                <option [value]="t">{{ t }}</option>
+              }
+            </select>
+          </div>
+          <div class="field-row">
+            <label>Index</label>
+            <input type="number" [(ngModel)]="cmd['index']" min="0" max="8" />
+          </div>
+          <div class="field-row">
+            <label>Button type</label>
+            <select [(ngModel)]="cmd['bt']">
+              @for (t of vmButtonTypes; track t) {
+                <option [value]="t">{{ t }}</option>
+              }
+            </select>
+          </div>
+        }
+
+        @if (is('CommandVoiceMeeterAdvanced')) {
+          <div class="field-row">
+            <label>Parameter</label>
+            <input type="text" [(ngModel)]="cmd['fullParam']" placeholder="e.g. Strip[0].Gain" />
+          </div>
+          <div class="field-row">
+            <label>Control mode</label>
+            <select [(ngModel)]="cmd['ct']">
+              <option value="ABSOLUTE">Absolute</option>
+              <option value="RELATIVE">Relative</option>
+            </select>
+          </div>
+          <app-dial-params-editor [params]="cmd['dialParams']" />
+        }
+
+        @if (is('CommandVoiceMeeterAdvancedButton')) {
+          <div class="field-row">
+            <label>Parameter</label>
+            <input type="text" [(ngModel)]="cmd['fullParam']" placeholder="e.g. Strip[0].Mute" />
+          </div>
+          <div class="field-row">
+            <label>Button mode</label>
+            <select [(ngModel)]="cmd['bt']">
+              <option value="SET">Set value</option>
+              <option value="TOGGLE">Toggle</option>
+            </select>
+          </div>
+          @if (cmd['bt'] === 'SET') {
+            <div class="field-row">
+              <label>Value</label>
+              <input type="text" [(ngModel)]="cmd['stringValue']" placeholder="e.g. 1" />
+            </div>
+          }
+        }
+
+      </div>
+    }
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="save()">Save</button>
+    </div>
+  </div>
+</div>

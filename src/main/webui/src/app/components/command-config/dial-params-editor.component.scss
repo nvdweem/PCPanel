@@ -1,0 +1,19 @@
+.dial-params {
+  border-top: 1px solid #3b3c41;
+  padding-top: 10px;
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.field-row { display: flex; flex-direction: column; gap: 4px; }
+.field-row label { font-size: 12px; color: #9a9a9a; }
+.field-row input {
+  padding: 6px 8px;
+  border: 1px solid #4a4b52;
+  border-radius: 4px;
+  background: #2d2e33;
+  color: #e0e0e0;
+  font-size: 13px;
+}
+.checkbox-row label { display: flex; align-items: center; gap: 6px; color: #e0e0e0; font-size: 13px; cursor: pointer; }

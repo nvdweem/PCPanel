@@ -1,0 +1,99 @@
+@if (device) {
+  <div class="device-page">
+    <nav class="breadcrumb">
+      <a routerLink="/">Home</a> &rsaquo; {{ device.displayName }}
+    </nav>
+
+    <div class="page-header">
+      <div>
+        @if (!editingName) {
+          <h1 (dblclick)="startEditName()">{{ device.displayName }}</h1>
+        }
+        @if (editingName) {
+          <div class="name-edit">
+            <input [(ngModel)]="newName" (keyup.enter)="saveName()" (keyup.escape)="cancelEditName()" />
+            <button (click)="saveName()" class="btn btn-primary">Save</button>
+            <button (click)="cancelEditName()" class="btn btn-secondary">Cancel</button>
+          </div>
+        }
+        <span class="device-type">{{ friendlyType(device.deviceType) }} &mdash; {{ device.serial }}</span>
+      </div>
+      <div class="header-actions">
+        <a [routerLink]="['/lighting', device.serial]" class="btn btn-secondary">Lighting</a>
+      </div>
+    </div>
+
+    <div class="profiles-section">
+      <h2>Profiles</h2>
+      <div class="profile-list">
+        @for (p of device.profiles; track p) {
+          <button [class.active]="p === device.currentProfile"
+                  (click)="switchProfile(p)"
+                  class="profile-btn">
+            {{ p }}
+          </button>
+        }
+        <button (click)="addProfile()" class="profile-btn add">+ Add Profile</button>
+      </div>
+    </div>
+
+    @if (device.currentProfile) {
+      <div class="controls-section">
+        @if (device.analogCount > 0) {
+          <div class="controls-dials">
+            <h2>Dials ({{ device.analogCount }})</h2>
+            <div class="control-grid">
+              @for (i of range(device.analogCount); track $index) {
+                <div class="control-card">
+                  <div class="control-label">Dial {{ i + 1 }}</div>
+                  <div class="control-assignment" (click)="editDial(i)">
+                    <span class="assignment-text">{{ getDialLabel(i) }}</span>
+                    <span class="edit-icon">✎</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        @if (device.buttonCount > 0) {
+          <div class="controls-buttons">
+            <h2>Buttons ({{ device.buttonCount }})</h2>
+            <div class="control-grid">
+              @for (i of range(device.buttonCount); track $index) {
+                <div class="control-card">
+                  <div class="control-label">Button {{ i + 1 }}</div>
+                  <div class="control-assignment" (click)="editButton(i)">
+                    <span class="assignment-text">{{ getButtonLabel(i) }}</span>
+                    <span class="edit-icon">✎</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    @if (!device.currentProfile) {
+      <div class="no-profile">
+        <p>No profile selected. Create one above.</p>
+      </div>
+    }
+  </div>
+}
+
+@if (!device) {
+  <div class="loading">Loading device…</div>
+}
+
+@if (editingCommand) {
+  <app-command-config
+    [kind]="editCommandKind"
+    [index]="editCommandIndex"
+    [currentCommands]="editCurrentCommands"
+    [profiles]="device?.profiles ?? []"
+    (saved)="onCommandSaved($event)"
+    (cancelled)="closeCommandEditor()"
+  />
+}

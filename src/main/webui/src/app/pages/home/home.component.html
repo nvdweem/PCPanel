@@ -1,0 +1,110 @@
+<div class="home-layout">
+  <aside class="device-sidebar">
+    <div class="sidebar-header">PCPanel</div>
+    @if (devices.length === 0) {
+      <div class="sidebar-empty">No devices</div>
+    }
+    @for (device of devices; track device.serial) {
+      <div class="sidebar-device"
+           [class.active]="selectedSerial === device.serial"
+           (click)="selectDevice(device)">
+        <span class="sidebar-device-name">{{ device.displayName }}</span>
+        <span class="sidebar-device-type">{{ friendlyType(device.deviceType) }}</span>
+      </div>
+    }
+  </aside>
+
+  <main class="device-main">
+    <div class="main-toolbar">
+      <div class="toolbar-left">
+        @if (selectedDevice) {
+          <span class="selected-device-name">{{ selectedDevice.displayName }}</span>
+        }
+      </div>
+      <div class="toolbar-right">
+        <a routerLink="/settings" class="btn btn-icon" title="Settings">⚙</a>
+      </div>
+    </div>
+
+    @if (!selectedDevice) {
+      <div class="no-device-center">
+        <div class="no-device-label">NO DEVICES CONNECTED</div>
+      </div>
+    }
+
+    @if (selectedDevice) {
+      <div class="device-visual">
+        @if (selectedDevice.deviceType === 'PCPANEL_RGB') {
+          <div class="pcpanel-rgb">
+            @for (i of range(selectedDevice.analogCount); track i) {
+              <div class="knob-container" (click)="editDial(i)">
+                <div class="knob" [class.active]="editingDial === i"></div>
+                <div class="knob-label">{{ getDialLabel(i) }}</div>
+              </div>
+            }
+          </div>
+        }
+        @if (selectedDevice.deviceType === 'PCPANEL_MINI') {
+          <div class="pcpanel-mini">
+            @for (i of range(selectedDevice.analogCount); track i) {
+              <div class="knob-container" (click)="editDial(i)">
+                <div class="knob" [class.active]="editingDial === i"></div>
+                <div class="knob-label">{{ getDialLabel(i) }}</div>
+              </div>
+            }
+          </div>
+        }
+        @if (selectedDevice.deviceType === 'PCPANEL_PRO') {
+          <div class="pcpanel-pro">
+            @for (i of range(selectedDevice.analogCount); track i) {
+              <div class="slider-container" (click)="editDial(i)">
+                <div class="slider-track">
+                  <div class="slider-thumb" [class.active]="editingDial === i"></div>
+                </div>
+                <div class="knob-label">{{ getDialLabel(i) }}</div>
+              </div>
+            }
+          </div>
+        }
+        @if (selectedDevice.buttonCount > 0) {
+          <div class="button-row">
+            @for (i of range(selectedDevice.buttonCount); track i) {
+              <div class="btn-control" [class.active]="editingButton === i" (click)="editButton(i)">
+                {{ getButtonLabel(i) }}
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="hint-bar">
+        <span class="hint-text">Click a control to configure it</span>
+      </div>
+
+      <div class="bottom-bar">
+        <span class="version-label">PCPanel Editor</span>
+        <div class="profile-area">
+          <label>Profile:</label>
+          <select (change)="switchProfile(selectedDevice, $event)" class="profile-select">
+            @for (p of selectedDevice.profiles; track p) {
+              <option [value]="p" [selected]="p === selectedDevice.currentProfile">{{ p }}</option>
+            }
+          </select>
+          <a [routerLink]="['/lighting', selectedDevice.serial]" class="btn btn-secondary btn-sm">Lighting</a>
+          <a [routerLink]="['/device', selectedDevice.serial]" class="btn btn-primary btn-sm">Advanced</a>
+        </div>
+      </div>
+    }
+  </main>
+</div>
+
+@if (editingCommand) {
+  <app-command-config
+    [kind]="editCommandKind"
+    [index]="editCommandIndex"
+    [currentCommands]="editCurrentCommands"
+    [profiles]="selectedDevice?.profiles ?? []"
+    (saved)="onCommandSaved($event)"
+    (cancelled)="closeCommandEditor()"
+  />
+}

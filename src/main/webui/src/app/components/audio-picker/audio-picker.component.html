@@ -1,0 +1,45 @@
+<div class="audio-picker">
+  @if (mode === 'process') {
+    <div class="picker-section">
+      <input
+        type="text"
+        class="picker-input"
+        [placeholder]="placeholder || 'Process name (e.g. chrome.exe)'"
+        [(ngModel)]="value"
+        (ngModelChange)="valueChange.emit($event)"
+        list="process-list" />
+      <datalist id="process-list">
+        @for (p of processes; track p.name) {
+          <option [value]="p.name">{{ p.name }}</option>
+        }
+      </datalist>
+      @if (processes.length) {
+        <div class="process-thumbnails">
+          @for (p of processes; track p.name) {
+            <button class="process-thumb"
+                    [class.selected]="value === p.name"
+                    (click)="selectProcess(p)"
+                    type="button"
+                    [title]="p.path">
+              @if (p.icon) {
+                <img [src]="p.icon" width="20" height="20" alt="" />
+              }
+              <span class="process-name">{{ p.name }}</span>
+            </button>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  @if (mode === 'device') {
+    <div class="picker-section">
+      <select class="picker-select" [(ngModel)]="value" (ngModelChange)="valueChange.emit($event)">
+        <option value="">Default Device</option>
+        @for (d of devices; track d.id) {
+          <option [value]="d.id">{{ d.name }}</option>
+        }
+      </select>
+    </div>
+  }
+</div>

@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommandsWrapper, DeviceDto, KnobSetting } from '../../models/models';
@@ -9,87 +8,8 @@ import { CommandConfigComponent } from '../../components/command-config/command-
 @Component({
   selector: 'app-device',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, CommandConfigComponent],
-  template: `
-    <div class="device-page" *ngIf="device">
-      <nav class="breadcrumb">
-        <a routerLink="/">Home</a> &rsaquo; {{ device.displayName }}
-      </nav>
-
-      <div class="page-header">
-        <div>
-          <h1 *ngIf="!editingName" (dblclick)="startEditName()">{{ device.displayName }}</h1>
-          <div *ngIf="editingName" class="name-edit">
-            <input [(ngModel)]="newName" (keyup.enter)="saveName()" (keyup.escape)="cancelEditName()" />
-            <button (click)="saveName()" class="btn btn-primary">Save</button>
-            <button (click)="cancelEditName()" class="btn btn-secondary">Cancel</button>
-          </div>
-          <span class="device-type">{{ friendlyType(device.deviceType) }} &mdash; {{ device.serial }}</span>
-        </div>
-        <div class="header-actions">
-          <a [routerLink]="['/lighting', device.serial]" class="btn btn-secondary">Lighting</a>
-        </div>
-      </div>
-
-      <div class="profiles-section">
-        <h2>Profiles</h2>
-        <div class="profile-list">
-          <button *ngFor="let p of device.profiles"
-                  [class.active]="p === device.currentProfile"
-                  (click)="switchProfile(p)"
-                  class="profile-btn">
-            {{ p }}
-          </button>
-          <button (click)="addProfile()" class="profile-btn add">+ Add Profile</button>
-        </div>
-      </div>
-
-      <div class="controls-section" *ngIf="device.currentProfile">
-        <div class="controls-dials" *ngIf="device.analogCount > 0">
-          <h2>Dials ({{ device.analogCount }})</h2>
-          <div class="control-grid">
-            <div *ngFor="let i of range(device.analogCount)" class="control-card">
-              <div class="control-label">Dial {{ i + 1 }}</div>
-              <div class="control-assignment" (click)="editDial(i)">
-                <span class="assignment-text">{{ getDialLabel(i) }}</span>
-                <span class="edit-icon">✎</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="controls-buttons" *ngIf="device.buttonCount > 0">
-          <h2>Buttons ({{ device.buttonCount }})</h2>
-          <div class="control-grid">
-            <div *ngFor="let i of range(device.buttonCount)" class="control-card">
-              <div class="control-label">Button {{ i + 1 }}</div>
-              <div class="control-assignment" (click)="editButton(i)">
-                <span class="assignment-text">{{ getButtonLabel(i) }}</span>
-                <span class="edit-icon">✎</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div *ngIf="!device.currentProfile" class="no-profile">
-        <p>No profile selected. Create one above.</p>
-      </div>
-    </div>
-
-    <div *ngIf="!device" class="loading">Loading device…</div>
-
-    <!-- Command config modal -->
-    <app-command-config
-      *ngIf="editingCommand"
-      [kind]="editCommandKind"
-      [index]="editCommandIndex"
-      [currentCommands]="editCurrentCommands"
-      [profiles]="device?.profiles ?? []"
-      (saved)="onCommandSaved($event)"
-      (cancelled)="closeCommandEditor()"
-    />
-  `,
+  imports: [RouterModule, FormsModule, CommandConfigComponent],
+  templateUrl: './device.component.html',
   styleUrl: './device.component.scss'
 })
 export class DeviceComponent implements OnInit {

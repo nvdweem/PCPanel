@@ -1,0 +1,15 @@
+@if (params) {
+  <div class="dial-params">
+    <div class="field-row checkbox-row">
+      <label><input type="checkbox" [(ngModel)]="params.invert" /> Invert</label>
+    </div>
+    <div class="field-row">
+      <label>Move start (0–100, blank = default)</label>
+      <input type="number" [(ngModel)]="params.moveStart" min="0" max="100" placeholder="0" />
+    </div>
+    <div class="field-row">
+      <label>Move end (0–100, blank = default)</label>
+      <input type="number" [(ngModel)]="params.moveEnd" min="0" max="100" placeholder="100" />
+    </div>
+  </div>
+}

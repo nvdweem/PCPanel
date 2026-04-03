@@ -1,6 +1,6 @@
 .device-page {
   min-height: 100vh;
-  background: #1a1a2e;
+  background: #25262a;
   color: #e0e0e0;
   padding: 2rem;
   max-width: 1000px;
@@ -9,11 +9,11 @@
 
 .breadcrumb {
   font-size: 0.85rem;
-  color: #888;
+  color: #9a9a9a;
   margin-bottom: 1.5rem;
 
   a {
-    color: #e94560;
+    color: #ffc940;
     text-decoration: none;
     &:hover { text-decoration: underline; }
   }
@@ -29,12 +29,12 @@
     margin: 0 0 0.25rem;
     font-size: 1.6rem;
     cursor: pointer;
-    &:hover { color: #e94560; }
+    &:hover { color: #ffc940; }
   }
 
   .device-type {
     font-size: 0.85rem;
-    color: #888;
+    color: #9a9a9a;
   }
 }
 
@@ -45,9 +45,9 @@
   margin-bottom: 0.25rem;
 
   input {
-    background: #0f3460;
+    background: #2d2e33;
     color: #e0e0e0;
-    border: 1px solid #1a4a8a;
+    border: 1px solid #4a4b52;
     border-radius: 4px;
     padding: 0.4rem 0.6rem;
     font-size: 1rem;
@@ -57,7 +57,7 @@
 .profiles-section {
   margin-bottom: 2rem;
 
-  h2 { font-size: 1rem; color: #aaa; margin-bottom: 0.75rem; }
+  h2 { font-size: 1rem; color: #9a9a9a; margin-bottom: 0.75rem; }
 }
 
 .profile-list {
@@ -69,7 +69,7 @@
 .profile-btn {
   padding: 0.4rem 1rem;
   border-radius: 20px;
-  border: 1px solid #0f3460;
+  border: 1px solid #3b3c41;
   background: transparent;
   color: #e0e0e0;
   cursor: pointer;
@@ -77,24 +77,26 @@
   transition: all 0.2s;
 
   &.active {
-    background: #e94560;
-    border-color: #e94560;
+    background: #ffc940;
+    border-color: #ffc940;
+    color: #1c1d20;
+    font-weight: 600;
   }
 
   &.add {
     border-style: dashed;
-    color: #888;
+    color: #9a9a9a;
     &:hover { color: #e0e0e0; border-color: #e0e0e0; }
   }
 
   &:hover:not(.active):not(.add) {
-    border-color: #e94560;
-    color: #e94560;
+    border-color: #ffc940;
+    color: #ffc940;
   }
 }
 
 .controls-section {
-  h2 { font-size: 1rem; color: #aaa; margin: 1.5rem 0 0.75rem; }
+  h2 { font-size: 1rem; color: #9a9a9a; margin: 1.5rem 0 0.75rem; }
 }
 
 .control-grid {
@@ -104,17 +106,17 @@
 }
 
 .control-card {
-  background: #16213e;
-  border: 1px solid #0f3460;
+  background: #1c1d20;
+  border: 1px solid #3b3c41;
   border-radius: 8px;
   overflow: hidden;
 
   .control-label {
     padding: 0.5rem 0.75rem;
     font-size: 0.8rem;
-    color: #888;
-    background: #0f1b33;
-    border-bottom: 1px solid #0f3460;
+    color: #9a9a9a;
+    background: #18191d;
+    border-bottom: 1px solid #3b3c41;
   }
 
   .control-assignment {
@@ -125,15 +127,15 @@
     cursor: pointer;
     min-height: 2.5rem;
 
-    &:hover { background: #1a2a4a; }
+    &:hover { background: #2d2e33; }
 
     .assignment-text {
       font-size: 0.85rem;
-      color: #ccc;
+      color: #e0e0e0;
     }
 
     .edit-icon {
-      color: #555;
+      color: #666;
       font-size: 0.9rem;
     }
   }
@@ -142,7 +144,7 @@
 .no-profile {
   text-align: center;
   padding: 3rem;
-  color: #888;
+  color: #9a9a9a;
 }
 
 .loading {
@@ -150,8 +152,8 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: #1a1a2e;
-  color: #888;
+  background: #25262a;
+  color: #9a9a9a;
 }
 
 .header-actions {
@@ -173,6 +175,6 @@
 
   &:hover { opacity: 0.85; }
 
-  &.btn-primary { background: #e94560; color: white; }
-  &.btn-secondary { background: #0f3460; color: #e0e0e0; }
+  &.btn-primary { background: #ffc940; color: #1c1d20; font-weight: 600; }
+  &.btn-secondary { background: #2d2e33; color: #e0e0e0; border: 1px solid #4a4b52; }
 }

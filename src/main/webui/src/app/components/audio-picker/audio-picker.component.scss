@@ -1,0 +1,37 @@
+.audio-picker { display: flex; flex-direction: column; gap: 6px; }
+.picker-input, .picker-select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #4a4b52;
+  border-radius: 4px;
+  background: #2d2e33;
+  color: #e0e0e0;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+.process-thumbnails {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-height: 120px;
+  overflow-y: auto;
+  border: 1px solid #3b3c41;
+  border-radius: 4px;
+  padding: 4px;
+  background: #1c1d20;
+}
+.process-thumb {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  border: 1px solid #3b3c41;
+  border-radius: 3px;
+  background: #2d2e33;
+  color: #9a9a9a;
+  cursor: pointer;
+  font-size: 12px;
+}
+.process-thumb:hover { background: #3a3b41; }
+.process-thumb.selected { border-color: #ffc940; background: #3a3800; color: #ffc940; }
+.process-name { max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
