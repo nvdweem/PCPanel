@@ -1,45 +1,41 @@
 <div class="audio-picker">
   @if (mode === 'process') {
-    <div class="picker-section">
-      <input
-        type="text"
-        class="picker-input"
-        [placeholder]="placeholder || 'Process name (e.g. chrome.exe)'"
-        [(ngModel)]="value"
-        (ngModelChange)="valueChange.emit($event)"
-        list="process-list" />
-      <datalist id="process-list">
-        @for (p of processes; track p.name) {
-          <option [value]="p.name">{{ p.name }}</option>
-        }
-      </datalist>
-      @if (processes.length) {
-        <div class="process-thumbnails">
-          @for (p of processes; track p.name) {
-            <button class="process-thumb"
-                    [class.selected]="value === p.name"
-                    (click)="selectProcess(p)"
-                    type="button"
-                    [title]="p.path">
-              @if (p.icon) {
-                <img [src]="p.icon" width="20" height="20" alt="" />
-              }
-              <span class="process-name">{{ p.name }}</span>
-            </button>
-          }
-        </div>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>{{ placeholder || 'Process name' }}</mat-label>
+      <input matInput
+             [(ngModel)]="value"
+             (ngModelChange)="valueChange.emit($event)"
+             attr.list="proc-{{placeholder}}" />
+    </mat-form-field>
+    <datalist id="proc-{{placeholder}}">
+      @for (p of processes; track p.name) {
+        <option [value]="p.name">{{ p.name }}</option>
       }
-    </div>
-  }
-
-  @if (mode === 'device') {
-    <div class="picker-section">
-      <select class="picker-select" [(ngModel)]="value" (ngModelChange)="valueChange.emit($event)">
-        <option value="">Default Device</option>
-        @for (d of devices; track d.id) {
-          <option [value]="d.id">{{ d.name }}</option>
+    </datalist>
+    @if (processes.length) {
+      <div class="process-thumbnails">
+        @for (p of processes; track p.name) {
+          <button class="process-thumb"
+                  [class.selected]="value === p.name"
+                  (click)="selectProcess(p)"
+                  type="button"
+                  [title]="p.path">
+            @if (p.icon) { <img [src]="p.icon" width="16" height="16" alt="" /> }
+            <span class="process-name">{{ p.name }}</span>
+          </button>
         }
-      </select>
-    </div>
+      </div>
+    }
+  }
+  @if (mode === 'device') {
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>{{ placeholder || 'Audio device' }}</mat-label>
+      <mat-select [(ngModel)]="value" (ngModelChange)="valueChange.emit($event)">
+        <mat-option value="">Default Device</mat-option>
+        @for (d of devices; track d.id) {
+          <mat-option [value]="d.id">{{ d.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
   }
 </div>
