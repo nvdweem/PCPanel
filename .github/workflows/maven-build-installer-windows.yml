@@ -3,7 +3,7 @@
 
 name: Build Native Image
 env:
-  JAVA_VERSION: '21'        # GraalVM CE 21 (LTS) — most stable for Quarkus native
+  JAVA_VERSION: '25'        # GraalVM CE 25 (latest) — Quarkus 3.34.1 supports Java 25; use 21 LTS if native-image issues arise
 
 on:
   push:

@@ -52,9 +52,8 @@ Last updated: 2026-04-03
 - **DONE** — Angular services: `DeviceService`, `AudioService`, `SettingsService`, `EventService` (WebSocket)
 - **DONE** — Dev proxy config: `npm start` forwards `/api` and `/ws` to Quarkus on port 7654
 
-### Phase 9: OBS Disable
-- **DONE** — OBS code present but disabled via `application.properties` flag (`pcpanel.obs.enabled=false`);
-  Jetty deps removed from pom.xml; OBS classes are dormant
+### Phase 9: OBS WebSocket Integration
+- **DONE** — OBS WebSocket 5 client implemented (see Phase 9 in Remaining Work → now complete)
 
 ---
 
@@ -97,12 +96,27 @@ The Angular frontend has scaffolding but is incomplete vs. the plan:
 ### Phase 8: GitHub Actions Updates
 - **DONE** — `maven-build-installer-windows.yml` fully rewritten:
   - WiX / MSI installer steps removed
-  - `actions/setup-java` (Liberica JDK+FX) replaced with `graalvm/setup-graalvm@v1` (Java 21 LTS, `graalvm-community`)
+  - `actions/setup-java` (Liberica JDK+FX) replaced with `graalvm/setup-graalvm@v1` (**Java 25**, `graalvm-community`)
   - Both `buildWindows` and `buildLinux` jobs run `mvn -B package -Pnative`
   - Windows artifact: `target/*-runner.exe`; Linux artifact: `target/*-runner`
   - `preRelease` job updated to download `windows-native` / `linux-native` artifacts
   - Tag name simplified: `latest-<safe-branch>` (removed `-windows-` prefix)
-- **Java version decision** — pom.xml compile target stays at Java 17 (minimum for Quarkus; Java 25 features are not used). The GraalVM runner in CI provides JDK 21, which hosts Maven and runs the native-image tool. Java 25 is feasible for JVM-only builds (Quarkus 3.34.1 supports it) but GraalVM native image is most reliable on the LTS track (21). If Java 25 native image is needed, change `JAVA_VERSION: '21'` → `'25'` in the workflow and bump `<java.version>` in pom.xml to 25.
+- **Java version decision (updated)** — pom.xml compile target is **Java 21** (minimum LTS supported by Quarkus 3.x). The GraalVM runner in CI uses **JDK 25** (`JAVA_VERSION: '25'`). Quarkus 3.34.1 supports Java 25 for JVM builds; GraalVM CE 25 can compile Java 21 source/targets to native. If Java 25 language features are needed later, bump `<java.version>25</java.version>` in pom.xml.
+
+### Phase 9: OBS WebSocket Integration
+- **DONE** — `ObsWebSocketClient.java` (`com.getpcpanel.obs`) — custom OBS WebSocket 5 client built on `java.net.http.WebSocket`:
+  - Handles hello/identify handshake (op 0/1/2)
+  - SHA-256 + Base64 password authentication
+  - Request/response correlation via UUID + `CompletableFuture`
+  - Subscribes to `InputMuteStateChanged` events (eventSubscriptions=8)
+  - Operations: `getSourcesWithAudio`, `getSourcesWithMuteState`, `getScenes`, `setSourceVolume`, `toggleSourceMute`, `setSourceMute`, `setCurrentScene`
+- **DONE** — `OBS.java` rewritten from stub to full CDI service:
+  - Auto-connects on startup if `save.obsEnabled=true`
+  - `@Scheduled(every="30s")` reconnect loop
+  - Fires `OBSConnectEvent(true/false)` and `OBSMuteEvent` CDI events
+  - `test()` method for connection testing from settings UI
+- **DONE** — `application.properties` OBS hard-disable (`pcpanel.obs.enabled=false`) removed; OBS is now enabled/disabled per user settings (`save.obsEnabled`)
+- **NOT DONE** — `ObsConnectedVolumeService` fires on OBSConnectEvent and triggers dial commands — already wired up
 
 ---
 
@@ -112,7 +126,7 @@ The Angular frontend has scaffolding but is incomplete vs. the plan:
 
 2. ~~**`IconResource` / process icons**~~ — **DONE** — `GET /api/icons?path=...` serves PNG icons; `GET /api/processes` returns processes with inline base64 icons. The `icon` field on `AudioSession` is a base64 PNG string (set from JNI on Windows).
 
-3. **OBS re-enablement** — Tracked in Phase 9. A custom Jakarta-compatible OBS WebSocket 5 client can be written against `quarkus-websockets-next` when needed (~200 lines).
+3. ~~**OBS re-enablement**~~ — **DONE** — Phase 9 complete. Custom `ObsWebSocketClient` built on `java.net.http.WebSocket` implements OBS WebSocket protocol 5. `OBS.java` is a full CDI service with auto-reconnect.
 
 4. **Profile/Command data model in Angular** — The command types (34 subtypes of `Command`) need to be modelled in TypeScript for the `CommandConfigComponent`. Jackson polymorphism is via `@class` discriminator; the Angular command editor must handle all 34 types.
 
