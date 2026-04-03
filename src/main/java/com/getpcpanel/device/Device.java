@@ -10,9 +10,9 @@ import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
 
 import lombok.Getter;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 
-@JBossLog
+@Log4j2
 public abstract class Device {
     private final SaveService saveService;
     private final OutputInterpreter outputInterpreter;
@@ -43,15 +43,15 @@ public abstract class Device {
         save.setDisplayName(name);
     }
 
-    public LightingConfig getLightingConfig() {
+    public LightingConfig lightingConfig() {
         if (lightingConfig == null) {
-            lightingConfig = currentProfile().getLightingConfig();
+            lightingConfig = currentProfile().lightingConfig();
         }
         return lightingConfig;
     }
 
     public LightingConfig getSavedLightingConfig() {
-        return currentProfile().getLightingConfig();
+        return currentProfile().lightingConfig();
     }
 
     public void setLighting(LightingConfig config, boolean priority) {
@@ -66,14 +66,14 @@ public abstract class Device {
     private void doSetLighting(LightingConfig config, boolean priority) {
         lightingConfig = config;
         if (config == null) {
-            config = LightingConfig.defaultLightingConfig(getDeviceType());
+            config = LightingConfig.defaultLightingConfig(deviceType());
             saveService.save();
         }
         try {
-            outputInterpreter.sendLightingConfig(getSerialNumber(), getDeviceType(), config, priority);
+            outputInterpreter.sendLightingConfig(serialNumber, deviceType(), config, priority);
         } catch (Exception e) {
             log.error("Unable to send lighting config", e);
-            setLighting(LightingConfig.defaultLightingConfig(getDeviceType()), priority);
+            setLighting(LightingConfig.defaultLightingConfig(deviceType()), priority);
         }
     }
 
@@ -83,7 +83,7 @@ public abstract class Device {
     public void saveChanged() {
     }
 
-    public abstract DeviceType getDeviceType();
+    public abstract DeviceType deviceType();
 
     public abstract void setKnobRotation(int paramInt1, int paramInt2);
 
@@ -100,6 +100,6 @@ public abstract class Device {
     }
 
     public Profile currentProfile() {
-        return save.ensureCurrentProfile(getDeviceType());
+        return save.ensureCurrentProfile(deviceType());
     }
 }

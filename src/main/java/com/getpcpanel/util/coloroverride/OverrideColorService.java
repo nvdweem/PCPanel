@@ -18,7 +18,7 @@ import one.util.streamex.StreamEx;
 @Setter
 @ApplicationScoped
 public class OverrideColorService {
-    @Inject @Lazy private List<IOverrideColorProvider> overriders;
+    @Inject private List<IOverrideColorProvider> overriders;
 
     public Optional<SingleKnobLightingConfig> getDialOverride(String deviceSerial, int dial) {
         return StreamEx.of(overriders).mapPartial(p -> p.getDialOverride(deviceSerial, dial)).findFirst();

@@ -13,9 +13,9 @@ import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 
-@JBossLog
+@Log4j2
 @ApplicationScoped
 @WaylandImpl
 public class TrayServiceWayland implements ITrayService {
@@ -43,87 +43,6 @@ public class TrayServiceWayland implements ITrayService {
     private void registerIcon() throws DBusException {
         DBusInterface menuBarObject = () -> "/MenuBar";
         var statusNotifierItem = new StatusNotifierItemImpl(eventBus);
-
-        var wellKnownName = requestSniBus(1);
-        connection.exportObject("/MenuBar", menuBarObject);
-        connection.exportObject(statusNotifierItem);
-        registerWithWatcher(wellKnownName);
-    }
-
-    private @Nonnull String requestSniBus(int id) {
-        var wkn = SNI_BUS_NAME;
-        try {
-            wkn += "-" + ProcessHandle.current().pid() + "-" + id;
-            connection.requestBusName(wkn);
-            return wkn;
-        } catch (DBusException e) {
-            log.error("Could not request well-known bus name", e);
-            return "error";
-        }
-    }
-
-    private void registerWithWatcher(String wellKnownName) {
-        try {
-            getStatusNotifierWatcher().RegisterStatusNotifierItem(wellKnownName);
-        } catch (DBusException e) {
-            log.warn("StatusNotifierWatcher not available (Wayland tray may not work): {}", e.getMessage());
-        }
-    }
-
-    private StatusNotifierWatcher getStatusNotifierWatcher() throws DBusException {
-        return connection.getRemoteObject(
-                WATCHER_BUS_NAME,
-                WATCHER_OBJECT_PATH,
-                StatusNotifierWatcher.class
-        );
-    }
-}
-
-
-import org.freedesktop.dbus.connections.impl.DBusConnection;
-import org.freedesktop.dbus.connections.impl.DBusConnectionBuilder;
-import org.freedesktop.dbus.exceptions.DBusException;
-import org.freedesktop.dbus.interfaces.DBusInterface;
-import jakarta.enterprise.event.Event;
-import jakarta.inject.Inject;
-import jakarta.enterprise.context.ApplicationScoped;
-
-import com.getpcpanel.spring.ConditionalOnWayland;
-
-import jakarta.annotation.Nonnull;
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.jbosslog.JBossLog;
-
-@JBossLog
-@ApplicationScoped
-
-@WaylandImpl
-class TrayServiceWayland {
-    static final String SNI_BUS_NAME = "org.kde.StatusNotifierItem";
-    static final String WATCHER_BUS_NAME = "org.kde.StatusNotifierWatcher";
-    static final String WATCHER_OBJECT_PATH = "/StatusNotifierWatcher";
-
-    @Inject
-    Event<Object> eventBus;
-    private DBusConnection connection;
-
-    @PostConstruct
-    public void init() {
-        try {
-            connection = DBusConnectionBuilder.forSessionBus().build();
-            registerIcon();
-            log.debug("Wayland tray initialized");
-        } catch (DBusException e) {
-            log.warn("D-Bus connection failed: {}", e.getMessage());
-        } catch (Exception e) {
-            log.error("Failed to initialize Wayland tray", e);
-        }
-    }
-
-    private void registerIcon() throws DBusException {
-        DBusInterface menuBarObject = () -> "/MenuBar";
-        var statusNotifierItem = new StatusNotifierItemImpl(eventPublisher);
 
         var wellKnownName = requestSniBus(1);
         connection.exportObject("/MenuBar", menuBarObject);

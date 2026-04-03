@@ -9,13 +9,13 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.getpcpanel.device.DeviceType;
-import com.getpcpanel.ui.OverlayPosition;
+import com.getpcpanel.profile.OverlayPosition;
 
 import lombok.Data;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 
 @Data
-@JBossLog
+@Log4j2
 public class Save {
     public static final String DEFAULT_OVERLAY_BG_COLOR = "rgba(255, 255, 255, 0.5)";
     public static final String DEFAULT_OVERLAY_TEXT_COLOR = "rgba(0, 0, 0, 1)";

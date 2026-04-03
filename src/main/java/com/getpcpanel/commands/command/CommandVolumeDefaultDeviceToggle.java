@@ -14,11 +14,11 @@ import com.getpcpanel.cpp.DataFlow;
 
 import lombok.Getter;
 import lombok.ToString;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Getter
-@JBossLog
+@Log4j2
 @ToString(callSuper = true)
 public class CommandVolumeDefaultDeviceToggle extends CommandVolume implements ButtonAction {
     private final List<String> devices;
@@ -44,7 +44,7 @@ public class CommandVolumeDefaultDeviceToggle extends CommandVolume implements B
         if (!devices.isEmpty()) {
             var targetDevice = getSndCtrl().getDevicesMap().get(devices.get(currentIdx));
             if (targetDevice != null) {
-                return targetDevice.name();
+                return targetDevice.getName();
             }
         }
         return null;

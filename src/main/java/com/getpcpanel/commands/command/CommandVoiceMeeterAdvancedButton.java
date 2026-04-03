@@ -6,7 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.getpcpanel.MainFX;
+import com.getpcpanel.util.CdiHelper;
 import com.getpcpanel.voicemeeter.Voicemeeter;
 
 import lombok.Getter;
@@ -31,7 +31,7 @@ public class CommandVoiceMeeterAdvancedButton extends CommandVoiceMeeter impleme
 
     @Override
     public void execute() {
-        var voiceMeeter = MainFX.getBean(Voicemeeter.class);
+        var voiceMeeter = CdiHelper.getBean(Voicemeeter.class);
         if (voiceMeeter.login()) {
             voiceMeeter.controlButton(fullParam, bt, stringValue);
         }

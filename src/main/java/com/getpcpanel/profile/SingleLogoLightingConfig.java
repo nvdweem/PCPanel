@@ -2,7 +2,6 @@ package com.getpcpanel.profile;
 
 import com.getpcpanel.util.Util;
 
-import javafx.scene.paint.Color;
 import lombok.Data;
 
 @Data
@@ -19,11 +18,6 @@ public class SingleLogoLightingConfig {
 
     public enum SINGLE_LOGO_MODE {
         NONE, STATIC, RAINBOW, BREATH
-    }
-
-    public SingleLogoLightingConfig setColor(Color color) {
-        this.color = Util.formatHexString(color);
-        return this;
     }
 
     /**

@@ -3,7 +3,6 @@ package com.getpcpanel.wavelink.command;
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.util.CollectionUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -12,10 +11,10 @@ import com.getpcpanel.cpp.MuteType;
 
 import lombok.Getter;
 import lombok.ToString;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 
 @Getter
-@JBossLog
+@Log4j2
 @ToString(callSuper = true)
 public final class CommandWaveLinkChangeMute extends CommandWaveLinkChange implements ButtonAction {
     private final MuteType muteType;
@@ -64,7 +63,7 @@ public final class CommandWaveLinkChangeMute extends CommandWaveLinkChange imple
             }
             case Output -> {
                 var output = service.getOutputFromId(getId1());
-                if (!CollectionUtils.isEmpty(output.outputs())) {
+                if (!(output.outputs() == null || output.outputs().isEmpty())) {
                     var newMuted = muteType.convert(output.outputs().getFirst().isMuted());
                     service.setOutputMute(getId1(), newMuted);
                 } else {

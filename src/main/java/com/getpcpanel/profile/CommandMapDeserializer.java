@@ -21,11 +21,11 @@ import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandConverter;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 import one.util.streamex.EntryStream;
 import one.util.streamex.IntStreamEx;
 
-@JBossLog
+@Log4j2
 @RequiredArgsConstructor
 public class CommandMapDeserializer extends JsonDeserializer<Map<Integer, Commands>> {
     private final ObjectMapper mapper = new ObjectMapper();

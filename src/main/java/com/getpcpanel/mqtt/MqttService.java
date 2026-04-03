@@ -29,9 +29,9 @@ import com.hivemq.client.mqtt.mqtt5.message.publish.Mqtt5Publish;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 
-@JBossLog
+@Log4j2
 @ApplicationScoped
 public class MqttService {
     static final int ORDER_OF_SAVE = 0;

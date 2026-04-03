@@ -1,8 +1,9 @@
 package com.getpcpanel.sleepdetection;
 
-import jakarta.inject.Inject;
-import jakarta.enterprise.event.Observes;
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
 
 import com.getpcpanel.device.Device;
 import com.getpcpanel.hid.DeviceHolder;
@@ -10,16 +11,13 @@ import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.hid.OutputInterpreter;
 import com.getpcpanel.profile.LightingConfig;
 
-import jakarta.annotation.PostConstruct;
-import javafx.application.Platform;
-import javafx.scene.paint.Color;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 
-@JBossLog
+@Log4j2
 @ApplicationScoped
 public final class SleepDetector {
-    private static final LightingConfig ALL_OFF = LightingConfig.createAllColor(Color.BLACK);
+    private static final LightingConfig ALL_OFF = LightingConfig.createAllColor("#000000");
+
     @Inject
     DeviceScanner deviceScanner;
     @Inject
@@ -32,7 +30,7 @@ public final class SleepDetector {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> onSuspended(true), "Shutdown SleepDetector Hook Thread"));
     }
 
-        public void onEvent(@Observes WindowsSystemEventService.WindowsSystemEvent event) {
+    public void onEvent(@Observes WindowsSystemEventService.WindowsSystemEvent event) {
         switch (event.type()) {
             case goingToSuspend, locked -> onSuspended(false);
             case resumedFromSuspend, unlocked -> onResumed();
@@ -43,20 +41,20 @@ public final class SleepDetector {
         Runnable r = () -> {
             for (var device : devices.values()) {
                 log.debug("Pause: {}", device.getSerialNumber());
-                outputInterpreter.sendLightingConfig(device.getSerialNumber(), device.getDeviceType(), ALL_OFF, true);
-
+                outputInterpreter.sendLightingConfig(device.getSerialNumber(), device.deviceType(), ALL_OFF, true);
                 if (shutdown) {
                     waitUntilEmptyPrioQueue(device);
                 }
             }
-            if (shutdown)
+            if (shutdown) {
                 deviceScanner.close();
+            }
         };
 
         if (shutdown) {
             r.run();
         } else {
-            Platform.runLater(r);
+            new Thread(r, "SleepDetector-suspend").start();
         }
         log.info("Stopped sleep detector");
     }
@@ -75,11 +73,9 @@ public final class SleepDetector {
     }
 
     private void onResumed() {
-        Platform.runLater(() -> {
-            for (var device : devices.values()) {
-                log.info("RESUME: {}", device.getSerialNumber());
-                outputInterpreter.sendLightingConfig(device.getSerialNumber(), device.getDeviceType(), device.getLightingConfig(), true);
-            }
-        });
+        for (var device : devices.values()) {
+            log.info("RESUME: {}", device.getSerialNumber());
+            outputInterpreter.sendLightingConfig(device.getSerialNumber(), device.deviceType(), device.lightingConfig(), true);
+        }
     }
 }

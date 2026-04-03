@@ -10,10 +10,10 @@ import jakarta.enterprise.event.Event;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 
 @Data
-@JBossLog
+@Log4j2
 @SuppressWarnings("unused") // Methods called from JNI
 public class AudioSession {
     public static final String SYSTEM = "System Sounds";
@@ -79,92 +79,6 @@ public class AudioSession {
 
     private void triggerChange() {
         if (eventBus != null) {
-            eventBus.fire(new AudioSessionEvent(this, EventType.CHANGED));
-        }
-    }
-}
-
-
-import java.io.File;
-
-import javax.annotation.Nullable;
-
-import org.apache.commons.lang3.StringUtils;
-import jakarta.enterprise.event.Event;
-import jakarta.inject.Inject;
-
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
-import lombok.extern.jbosslog.JBossLog;
-
-@Data
-@JBossLog
-@SuppressWarnings("unused") // Methods called from JNI
-public class AudioSession {
-    public static final String SYSTEM = "System Sounds";
-    @EqualsAndHashCode.Exclude @ToString.Exclude @Nullable @Inject
-    Event<Object> eventBus;
-    private int pid;
-    private File executable;
-    @EqualsAndHashCode.Exclude private String title;
-    @EqualsAndHashCode.Exclude @Nullable private String icon;
-    @EqualsAndHashCode.Exclude private float volume;
-    @EqualsAndHashCode.Exclude private boolean muted;
-
-    public AudioSession(@Nullable Event<Object> eventBus, int pid, File executable, String title, @Nullable String icon, float volume, boolean muted) {
-        this.eventBus = eventBus;
-        this.pid = pid;
-        this.executable = executable;
-        this.icon = icon;
-        this.volume = volume;
-        this.muted = muted;
-
-        // Uses pid and icon, so do this late
-        this.title = isSystemSounds() ? SYSTEM : StringUtils.firstNonBlank(title, executable.getName());
-    }
-
-    public AudioSession name(String title) {
-        this.title = title;
-        triggerChange();
-        return this;
-    }
-
-    private AudioSession title(String title) {
-        this.title = title;
-        triggerChange();
-        return this;
-    }
-
-    private AudioSession icon(String icon) {
-        this.icon = icon;
-        triggerChange();
-        return this;
-    }
-
-    private AudioSession volume(float volume) {
-        this.volume = volume;
-        triggerChange();
-        return this;
-    }
-
-    private AudioSession muted(boolean muted) {
-        this.muted = muted;
-        triggerChange();
-        return this;
-    }
-
-    public boolean isSystemSounds() {
-        return pid == 0 || StringUtils.containsIgnoreCase(icon, "AudioSrv.Dll");
-    }
-
-    protected AudioSession setVolumeNoTrigger(float volume) {
-        this.volume = volume;
-        return this;
-    }
-
-    private void triggerChange() {
-        if (eventPublisher != null) {
             eventBus.fire(new AudioSessionEvent(this, EventType.CHANGED));
         }
     }

@@ -21,9 +21,9 @@ import com.getpcpanel.util.ProcessHelper;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 
-@JBossLog
+@Log4j2
 @ApplicationScoped
 @PulseAudioImpl
 public class PulseAudioEventListener extends Thread {

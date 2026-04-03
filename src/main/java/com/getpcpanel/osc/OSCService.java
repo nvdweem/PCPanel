@@ -13,7 +13,6 @@ import javax.annotation.Nonnull;
 import jakarta.inject.Inject;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.context.ApplicationScoped;
-import org.springframework.util.CollectionUtils;
 
 import com.getpcpanel.hid.DeviceCommunicationHandler;
 import com.getpcpanel.profile.OSCBinding;
@@ -32,10 +31,10 @@ import com.illposed.osc.transport.OSCPortOut;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
-@JBossLog
+@Log4j2
 @ApplicationScoped
 public class OSCService {
     @Inject
@@ -106,12 +105,12 @@ public class OSCService {
     }
 
         public void dialAction(@Observes DeviceCommunicationHandler.KnobRotateEvent dial) {
-        if (dial.initial() || CollectionUtils.isEmpty(ports)) {
+        if (dial.initial() || (ports == null || ports.isEmpty())) {
             return;
         }
 
         saveService.getProfile(dial.serialNum()).ifPresent(profile -> {
-            var knobLength = profile.getLightingConfig().getKnobConfigs().length;
+            var knobLength = profile.lightingConfig().knobConfigs().length;
             var idx = dial.knob() < knobLength ? dial.knob() * 2 : dial.knob() + knobLength;
 
             var target = profile.getOscBinding().get(idx);
@@ -122,7 +121,7 @@ public class OSCService {
     }
 
         public void dialAction(@Observes DeviceCommunicationHandler.ButtonPressEvent button) {
-        if (CollectionUtils.isEmpty(ports)) {
+        if ((ports == null || ports.isEmpty())) {
             return;
         }
         var idx = button.button() * 2 + 1;

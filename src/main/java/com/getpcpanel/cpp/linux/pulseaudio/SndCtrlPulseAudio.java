@@ -34,10 +34,10 @@ import com.getpcpanel.cpp.linux.pulseaudio.PulseAudioEventListener.LinuxSessionC
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
-@JBossLog
+@Log4j2
 @ApplicationScoped
 @PulseAudioImpl
 public class SndCtrlPulseAudio implements ISndCtrl {
@@ -100,7 +100,7 @@ public class SndCtrlPulseAudio implements ISndCtrl {
     }
 
     @Override
-    public Collection<AudioDevice> getDevices() {
+    public Collection<AudioDevice> devices() {
         synchronized (devices) {
             return StreamEx.ofValues(devices).select(AudioDevice.class).toSet();
         }
@@ -204,7 +204,7 @@ public class SndCtrlPulseAudio implements ISndCtrl {
     }
 
     private Set<PulseAudioAudioDevice> getDevicesFromCmd() {
-        return StreamEx.of(cmd.getDevices()).mapPartial(this::toDevice).toSet();
+        return StreamEx.of(cmd.devices()).mapPartial(this::toDevice).toSet();
     }
 
     private Optional<PulseAudioAudioDevice> toDevice(PulseAudioWrapper.PulseAudioTarget pa) {

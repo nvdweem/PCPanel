@@ -5,13 +5,10 @@ import java.util.Arrays;
 import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.util.Util;
 
-import javafx.scene.paint.Color;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
-@AllArgsConstructor
 @Builder(toBuilder = true)
 public class LightingConfig {
     private LightingMode lightingMode;
@@ -89,31 +86,6 @@ public class LightingConfig {
         throw new IllegalArgumentException("unknown deviceType");
     }
 
-    public static LightingConfig createSingleColor(Color[] color, boolean[] volumeTracking) {
-        var lc = new LightingConfig();
-        lc.lightingMode = LightingMode.SINGLE_COLOR;
-        lc.individualColors = new String[color.length];
-        for (var i = 0; i < color.length; i++)
-            lc.individualColors[i] = Util.formatHexString(color[i]);
-        lc.volumeBrightnessTrackingEnabled = volumeTracking;
-        return lc;
-    }
-
-    public static LightingConfig createAllColor(Color color, boolean[] volumeTracking) {
-        var lc = new LightingConfig();
-        lc.lightingMode = LightingMode.ALL_COLOR;
-        lc.allColor = Util.formatHexString(color);
-        lc.volumeBrightnessTrackingEnabled = volumeTracking;
-        return lc;
-    }
-
-    public static LightingConfig createAllColor(Color color) {
-        var lc = new LightingConfig();
-        lc.lightingMode = LightingMode.ALL_COLOR;
-        lc.allColor = Util.formatHexString(color);
-        return lc;
-    }
-
     public static LightingConfig createRainbowAnimation(byte phaseShift, byte brightness, byte speed, boolean reverse) {
         var lc = new LightingConfig();
         lc.lightingMode = LightingMode.ALL_RAINBOW;
@@ -155,7 +127,7 @@ public class LightingConfig {
         return lc;
     }
 
-    public LightingMode getLightingMode() {
+    public LightingMode lightingMode() {
         return lightingMode;
     }
 
@@ -163,37 +135,37 @@ public class LightingConfig {
         this.lightingMode = lightingMode;
     }
 
-    public String[] getIndividualColors() {
+    public String[] individualColors() {
         return individualColors;
     }
 
-    public String getAllColor() {
+    public String allColor() {
         return allColor;
     }
 
-    public boolean[] getVolumeBrightnessTrackingEnabled() {
+    public boolean[] volumeBrightnessTrackingEnabled() {
         if (volumeBrightnessTrackingEnabled == null)
             volumeBrightnessTrackingEnabled = new boolean[0];
         return volumeBrightnessTrackingEnabled;
     }
 
-    public byte getRainbowPhaseShift() {
+    public byte rainbowPhaseShift() {
         return rainbowPhaseShift;
     }
 
-    public byte getRainbowBrightness() {
+    public byte rainbowBrightness() {
         return rainbowBrightness;
     }
 
-    public byte getRainbowSpeed() {
+    public byte rainbowSpeed() {
         return rainbowSpeed;
     }
 
-    public byte getRainbowReverse() {
+    public byte rainbowReverse() {
         return rainbowReverse;
     }
 
-    public byte getRainbowVertical() {
+    public byte rainbowVertical() {
         return rainbowVertical;
     }
 
@@ -209,51 +181,51 @@ public class LightingConfig {
         this.rainbowSpeed = rainbowSpeed;
     }
 
-    public byte getWaveHue() {
+    public byte waveHue() {
         return waveHue;
     }
 
-    public byte getWaveBrightness() {
+    public byte waveBrightness() {
         return waveBrightness;
     }
 
-    public byte getWaveSpeed() {
+    public byte waveSpeed() {
         return waveSpeed;
     }
 
-    public byte getWaveReverse() {
+    public byte waveReverse() {
         return waveReverse;
     }
 
-    public byte getWaveBounce() {
+    public byte waveBounce() {
         return waveBounce;
     }
 
-    public byte getBreathHue() {
+    public byte breathHue() {
         return breathHue;
     }
 
-    public byte getBreathBrightness() {
+    public byte breathBrightness() {
         return breathBrightness;
     }
 
-    public byte getBreathSpeed() {
+    public byte breathSpeed() {
         return breathSpeed;
     }
 
-    public SingleKnobLightingConfig[] getKnobConfigs() {
+    public SingleKnobLightingConfig[] knobConfigs() {
         return knobConfigs;
     }
 
-    public SingleSliderLabelLightingConfig[] getSliderLabelConfigs() {
+    public SingleSliderLabelLightingConfig[] sliderLabelConfigs() {
         return sliderLabelConfigs;
     }
 
-    public SingleSliderLightingConfig[] getSliderConfigs() {
+    public SingleSliderLightingConfig[] sliderConfigs() {
         return sliderConfigs;
     }
 
-    public SingleLogoLightingConfig getLogoConfig() {
+    public SingleLogoLightingConfig logoConfig() {
         return logoConfig;
     }
 }

@@ -13,11 +13,11 @@ import com.getpcpanel.cpp.MuteType;
 import dev.niels.wavelink.impl.model.WaveLinkEffect;
 import lombok.Getter;
 import lombok.ToString;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Getter
-@JBossLog
+@Log4j2
 @ToString(callSuper = true)
 public final class CommandWaveLinkChannelEffect extends CommandWaveLink implements ButtonAction {
     @Nullable private final String channelId;

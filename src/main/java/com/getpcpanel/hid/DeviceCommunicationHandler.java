@@ -24,9 +24,9 @@ import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.profile.SaveService;
 
 import lombok.Setter;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 
-@JBossLog
+@Log4j2
 public class DeviceCommunicationHandler {
     private static final byte INPUT_CODE_KNOB_CHANGE = 1;
     private static final byte INPUT_CODE_BUTTON_CHANGE = 2;

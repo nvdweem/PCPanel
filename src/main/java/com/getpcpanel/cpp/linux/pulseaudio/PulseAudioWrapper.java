@@ -21,10 +21,10 @@ import com.getpcpanel.util.ProcessHelper;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
-@JBossLog
+@Log4j2
 @ApplicationScoped
 @PulseAudioImpl
 public class PulseAudioWrapper {
@@ -42,7 +42,7 @@ public class PulseAudioWrapper {
         return volume / 65536f;
     }
 
-    public List<PulseAudioTarget> getDevices() {
+    public List<PulseAudioTarget> devices() {
         return StreamEx.of(execAndParse(InOutput.output)).append(execAndParse(InOutput.input)).toList();
     }
 

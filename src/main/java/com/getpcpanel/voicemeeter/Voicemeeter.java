@@ -22,10 +22,10 @@ import com.getpcpanel.profile.SaveService;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
-@JBossLog
+@Log4j2
 @ApplicationScoped
 public final class Voicemeeter {
     @Inject
@@ -351,7 +351,7 @@ public final class Voicemeeter {
     }
 
     public String makeParameterString(ControlType ct, int index, String parameter) {
-        return ct.name() + "[" + index + "]." + parameter;
+        return ct.getName() + "[" + index + "]." + parameter;
     }
 
     private float convertLevel(@Nonnull DialControlMode ct, int level) {

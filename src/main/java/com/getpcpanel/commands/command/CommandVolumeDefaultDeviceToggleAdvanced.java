@@ -19,12 +19,12 @@ import com.getpcpanel.cpp.windows.SndCtrlWindows;
 
 import lombok.Getter;
 import lombok.ToString;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 
 @Getter
-@JBossLog
+@Log4j2
 @ToString(callSuper = true)
 public class CommandVolumeDefaultDeviceToggleAdvanced extends CommandVolume implements ButtonAction {
     private final List<DeviceSet> devices;
@@ -92,6 +92,6 @@ public class CommandVolumeDefaultDeviceToggleAdvanced extends CommandVolume impl
         if (currentIdx == -1) {
             return null;
         }
-        return devices.get(currentIdx % devices.size()).name();
+        return devices.get(currentIdx % devices.size()).getName();
     }
 }

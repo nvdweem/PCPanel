@@ -16,7 +16,7 @@ public class PCPanelMiniDevice extends Device {
         super(saveService, outputInterpreter, iconService, serialNum, deviceSave);
     }
 
-    @Override public DeviceType getDeviceType() { return DeviceType.PCPANEL_MINI; }
+    @Override public DeviceType deviceType() { return DeviceType.PCPANEL_MINI; }
     @Override public void setKnobRotation(int knob, int rotation) { knobRotations[knob] = rotation; }
     @Override public int getKnobRotation(int knob) { return knobRotations[knob]; }
     @Override public void setButtonPressed(int button, boolean pressed) {}

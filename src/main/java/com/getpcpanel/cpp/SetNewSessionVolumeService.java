@@ -11,12 +11,12 @@ import com.getpcpanel.profile.SaveService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 
 /**
  * Triggers a volume change when a new audio session is started and that session is controlled by the panel.
  */
-@JBossLog
+@Log4j2
 @ApplicationScoped
 public class SetNewSessionVolumeService extends AbstractNewXVolumeService {
     @Inject ISndCtrl sndCtrl;

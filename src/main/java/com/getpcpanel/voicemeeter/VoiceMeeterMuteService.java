@@ -9,7 +9,7 @@ import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.enterprise.context.ApplicationScoped;
 
-import com.getpcpanel.ui.LightingChangedToDefaultEvent;
+import com.getpcpanel.profile.LightingChangedToDefaultEvent;
 import com.getpcpanel.voicemeeter.Voicemeeter.ButtonType;
 import com.getpcpanel.voicemeeter.Voicemeeter.ControlType;
 

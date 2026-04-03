@@ -34,7 +34,7 @@ public class Profile {
     protected Profile() {
     }
 
-    public LightingConfig getLightingConfig() {
+    public LightingConfig lightingConfig() {
         return lightingConfig.deepCopy();
     }
 

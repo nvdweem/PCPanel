@@ -13,14 +13,14 @@ import com.getpcpanel.hid.DeviceCommunicationHandler;
 import com.getpcpanel.hid.DeviceHolder;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 
 /**
  * Parent class for services that trigger when a process starts or another tool connects.
  */
-@JBossLog
+@Log4j2
 @ApplicationScoped
 public abstract class AbstractNewXVolumeService {
     @Inject
@@ -31,7 +31,7 @@ public abstract class AbstractNewXVolumeService {
     protected <T extends Command> void triggerCommandsOf(Class<T> clazz, Function<EntryStream<DeviceAndDial, T>, EntryStream<DeviceAndDial, T>> chain) {
         StreamEx.of(devices.all())
                 .mapToEntry(Device::getSerialNumber).invert()
-                .mapValues(Device::currentProfile)
+                .mapValues(d -> d.currentProfile())
                 .flatMapKeyValue((id, profile) -> EntryStream.of(profile.getDialData()).mapKeys(d -> new DeviceAndDial(id, d)))
                 .mapToEntry(Map.Entry::getKey, Map.Entry::getValue)
                 .flatMapValues(d -> Commands.cmds(d).stream())

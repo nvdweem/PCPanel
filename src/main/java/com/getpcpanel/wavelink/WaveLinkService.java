@@ -11,9 +11,9 @@ import com.getpcpanel.profile.SaveService.SaveEvent;
 
 import dev.niels.wavelink.IWaveLinkClientEventListener;
 import dev.niels.wavelink.WaveLinkClient;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 
-@JBossLog
+@Log4j2
 @ApplicationScoped
 public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEventListener {
     private final SaveService saveService;

@@ -7,10 +7,10 @@ import com.getpcpanel.profile.MqttSettings;
 import com.getpcpanel.profile.SaveService;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
-@JBossLog
+@Log4j2
 @ApplicationScoped
 class MqttTopicHelper {
     @Inject
@@ -29,19 +29,19 @@ class MqttTopicHelper {
     }
 
     public String valueTopic(String deviceSerial, ValueType type, int index) {
-        return baseJoining(deviceSerial, "values", type.name() + index);
+        return baseJoining(deviceSerial, "values", type.getName() + index);
     }
 
     public String buttonUpDownTopic(String deviceSerial, ActionType type, int index) {
-        return baseJoining(deviceSerial, "actions", type.name() + index);
+        return baseJoining(deviceSerial, "actions", type.getName() + index);
     }
 
     public String eventTopic(String deviceSerial, ActionType type, int index) {
-        return baseJoining(deviceSerial, "events", type.name() + index);
+        return baseJoining(deviceSerial, "events", type.getName() + index);
     }
 
     public String lightTopic(String deviceSerial, ColorType type, int index) {
-        return baseJoining(deviceSerial, "lighting", type.name(), index);
+        return baseJoining(deviceSerial, "lighting", type.getName(), index);
     }
 
     private String baseJoining(Object... parts) {

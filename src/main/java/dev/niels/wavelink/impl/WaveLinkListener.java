@@ -27,9 +27,9 @@ import dev.niels.wavelink.impl.rpc.WaveLinkJsonRpcCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkSetSubscription;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 
-@JBossLog
+@Log4j2
 @RequiredArgsConstructor
 public class WaveLinkListener implements Listener {
     private final ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -69,7 +69,7 @@ public class WaveLinkListener implements Listener {
     private void ensureCorrectVersion(WaveLinkGetApplicationInfoResult res) {
         log.info("Connected websocket, wavelink info: {}", res);
         var correctAppId = "ewl".equalsIgnoreCase(res.appID());
-        var correctAppName = "Elgato Wave Link".equalsIgnoreCase(res.name());
+        var correctAppName = "Elgato Wave Link".equalsIgnoreCase(res.getName());
         if (!correctAppId || !correctAppName) {
             throw new IllegalStateException("Expected appId ewl and appName Elgato Wave Link, got " + res);
         }

@@ -2,7 +2,7 @@ package com.getpcpanel.commands.command;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.getpcpanel.MainFX;
+import com.getpcpanel.util.CdiHelper;
 import com.getpcpanel.obs.OBS;
 
 import lombok.Getter;
@@ -26,7 +26,7 @@ public class CommandObsMuteSource extends CommandObs implements ButtonAction {
 
     @Override
     public void execute() {
-        var obs = MainFX.getBean(OBS.class);
+        var obs = CdiHelper.getBean(OBS.class);
         if (obs.isConnected()) {
             switch (type) {
                 case toggle -> obs.toggleSourceMute(source);

@@ -9,9 +9,9 @@ import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.profile.SaveService;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 
-@JBossLog
+@Log4j2
 @ApplicationScoped
 public class DeviceCommunicationHandlerFactory {
     @Inject

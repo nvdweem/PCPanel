@@ -22,17 +22,17 @@ import com.getpcpanel.cpp.AudioSession;
 import com.getpcpanel.cpp.DataFlow;
 import com.getpcpanel.cpp.EventType;
 import com.getpcpanel.cpp.ISndCtrl;
+import com.getpcpanel.spring.WindowsImpl;
 import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.cpp.Role;
-import com.getpcpanel.spring.ConditionalOnWindows;
 import com.getpcpanel.util.ExtractUtil;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
-@JBossLog
+@Log4j2
 @ApplicationScoped
 @WindowsImpl
 @SuppressWarnings("unused") // Methods are called from JNI
@@ -75,7 +75,7 @@ public class SndCtrlWindows implements ISndCtrl {
     }
 
     @Override
-    public Collection<AudioDevice> getDevices() {
+    public Collection<AudioDevice> devices() {
         synchronized (devices) {
             return Collections.unmodifiableCollection(devices.values());
         }
@@ -129,7 +129,7 @@ public class SndCtrlWindows implements ISndCtrl {
             return;
         }
         synchronized (devices) {
-            StreamEx.ofValues(devices).findFirst(d -> d.dataflow() == flow && StringUtils.containsIgnoreCase(d.name(), deviceName)).ifPresent(d -> SndCtrlNative.instance.setDefaultDevice(d.id(), flow.ordinal(), role.ordinal()));
+            StreamEx.ofValues(devices).findFirst(d -> d.dataflow() == flow && StringUtils.containsIgnoreCase(d.getName(), deviceName)).ifPresent(d -> SndCtrlNative.instance.setDefaultDevice(d.id(), flow.ordinal(), role.ordinal()));
         }
     }
 

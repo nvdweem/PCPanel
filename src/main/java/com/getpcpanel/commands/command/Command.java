@@ -6,9 +6,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.getpcpanel.hid.DialValue;
 
 import lombok.ToString;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 
-@JBossLog
+@Log4j2
 @ToString
 @SuppressWarnings("InstanceofThis")
 @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "_type")

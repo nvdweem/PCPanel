@@ -18,11 +18,11 @@ import com.getpcpanel.cpp.windows.SndCtrlWindows;
 
 import lombok.Getter;
 import lombok.ToString;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Getter
-@JBossLog
+@Log4j2
 @ToString(callSuper = true)
 public class CommandVolumeApplicationDeviceToggle extends CommandVolume implements ButtonAction {
     private final List<String> processes;
@@ -65,7 +65,7 @@ public class CommandVolumeApplicationDeviceToggle extends CommandVolume implemen
             return null;
         }
         var sndCtrl = getWinSndCtrl();
-        return StreamEx.of(sndCtrl.getDevices()).findFirst(d -> StringUtils.containsIgnoreCase(d.name(), mediaPlayback)).map(AudioDevice::id).orElse(null);
+        return StreamEx.of(sndCtrl.devices()).findFirst(d -> StringUtils.containsIgnoreCase(d.getName(), mediaPlayback)).map(AudioDevice::id).orElse(null);
     }
 
     private Set<Integer> determineTargets() {
@@ -88,6 +88,6 @@ public class CommandVolumeApplicationDeviceToggle extends CommandVolume implemen
         if (currentIdx == -1 && !devices.isEmpty() || devices.size() == 0) {
             return null;
         }
-        return devices.get(currentIdx % devices.size()).name();
+        return devices.get(currentIdx % devices.size()).getName();
     }
 }

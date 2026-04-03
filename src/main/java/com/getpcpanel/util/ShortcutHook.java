@@ -11,7 +11,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.spring.ConditionalOnWindows;
+import com.getpcpanel.spring.WindowsImpl;
 import com.github.kwhat.jnativehook.GlobalScreen;
 import com.github.kwhat.jnativehook.NativeHookException;
 import com.github.kwhat.jnativehook.NativeInputEvent;
@@ -20,13 +20,12 @@ import com.github.kwhat.jnativehook.keyboard.NativeKeyListener;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import javafx.application.Platform;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 import one.util.streamex.EntryStream;
 
-@JBossLog
+@Log4j2
 @ApplicationScoped
 @WindowsImpl
 @RequiredArgsConstructor
@@ -73,8 +72,8 @@ public class ShortcutHook implements NativeKeyListener {
     }
 
         public void updateShortcuts() {
-        shortcuts = EntryStream.of(saveService.get().getDevices())
-                               .flatMapValues(ds -> ds.getProfiles().stream())
+        shortcuts = EntryStream.of(saveService.get().devices())
+                               .flatMapValues(ds -> ds.profiles().stream())
                                .filterValues(p -> StringUtils.isNotBlank(p.getActivationShortcut()))
                                .mapKeyValue(DeviceProfile::new)
                                .mapToEntry(dp -> dp.profile.getActivationShortcut(), Function.identity())
@@ -99,7 +98,7 @@ public class ShortcutHook implements NativeKeyListener {
         if (canBeShortcut(nativeKeyEvent)) {
             var profile = shortcuts.get(toKeyString(nativeKeyEvent));
             if (profile != null) {
-                Platform.runLater(() -> deviceHolder.getDevice(profile.deviceId()).ifPresent(device -> device.setProfile(profile.profile.getName())));
+                deviceHolder.getDevice(profile.deviceId()).ifPresent(device -> device.setProfile(profile.profile.getName()));
             }
         }
     }

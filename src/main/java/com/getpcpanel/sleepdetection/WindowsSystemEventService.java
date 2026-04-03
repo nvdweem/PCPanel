@@ -4,7 +4,7 @@ import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.enterprise.context.ApplicationScoped;
 
-import com.getpcpanel.spring.ConditionalOnWindows;
+import com.getpcpanel.spring.WindowsImpl;
 import com.sun.jna.WString;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.User32;
@@ -20,12 +20,12 @@ import com.sun.jna.platform.win32.Wtsapi32;
 
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 
 /**
  * https://gist.github.com/luanht/88ba957b94f94792a1fd
  */
-@JBossLog
+@Log4j2
 @ApplicationScoped
 @WindowsImpl
 public class WindowsSystemEventService implements WindowProc {

@@ -7,9 +7,9 @@ import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import jakarta.annotation.PostConstruct;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 
-@JBossLog
+@Log4j2
 @ApplicationScoped
 public final class CommandDispatcher {
     private final Map<String, Runnable> map = new ConcurrentHashMap<>();

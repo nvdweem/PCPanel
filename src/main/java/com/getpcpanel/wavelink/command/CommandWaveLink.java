@@ -1,6 +1,6 @@
 package com.getpcpanel.wavelink.command;
 
-import com.getpcpanel.MainFX;
+import com.getpcpanel.util.CdiHelper;
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.wavelink.WaveLinkService;
 
@@ -11,6 +11,6 @@ import lombok.ToString;
 @ToString(callSuper = true)
 public abstract sealed class CommandWaveLink extends Command permits CommandWaveLinkAddFocusToChannel, CommandWaveLinkChange, CommandWaveLinkChannelEffect, CommandWaveLinkMainOutput {
     protected WaveLinkService getWaveLinkService() {
-        return MainFX.getBean(WaveLinkService.class);
+        return CdiHelper.getBean(WaveLinkService.class);
     }
 }

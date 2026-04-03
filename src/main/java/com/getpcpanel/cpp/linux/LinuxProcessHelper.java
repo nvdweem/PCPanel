@@ -10,17 +10,16 @@ import javax.annotation.Nullable;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import jakarta.inject.Inject;
+import com.getpcpanel.spring.LinuxImpl;
 import jakarta.enterprise.context.ApplicationScoped;
 
-import com.getpcpanel.MainFX;
-import com.getpcpanel.spring.ConditionalOnLinux;
 import com.getpcpanel.util.ProcessHelper;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 
-@JBossLog
+@Log4j2
 @ApplicationScoped
 @LinuxImpl
 public class LinuxProcessHelper {

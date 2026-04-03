@@ -7,10 +7,10 @@ import jakarta.inject.Inject;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
-@JBossLog
+@Log4j2
 @ApplicationScoped
 @PulseAudioImpl
 public class SndCtrlPulseAudioDebug {

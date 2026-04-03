@@ -9,9 +9,9 @@ import org.apache.commons.io.FilenameUtils;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import jakarta.enterprise.context.ApplicationScoped;
 
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 
-@JBossLog
+@Log4j2
 @ApplicationScoped
 public class ExtractUtil {
     @ConfigProperty(name="pcpanel.version") private String version;

@@ -11,9 +11,9 @@ import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 
-@JBossLog
+@Log4j2
 @ApplicationScoped
 @RequiredArgsConstructor
 public final class VoicemeeterAPI {
@@ -225,7 +225,7 @@ public final class VoicemeeterAPI {
             return type;
         }
 
-        public String getName() {
+        public String name() {
             return name;
         }
 

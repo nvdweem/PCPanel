@@ -7,58 +7,10 @@ import jakarta.enterprise.event.Event;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Setter;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 
 @Data
-@JBossLog
-@Setter(AccessLevel.PROTECTED)
-@SuppressWarnings("unused") // Methods called from JNI
-public class AudioDevice implements Serializable {
-    protected final transient Event<Object> eventBus;
-    private final String name;
-    private final String id;
-    private float volume;
-    private boolean muted;
-    private DataFlow dataflow;
-
-    public AudioDevice(Event<Object> eventBus, String name, String id) {
-        this.eventBus = eventBus;
-        this.name = name;
-        this.id = id;
-    }
-
-    private void setState(float volume, boolean muted) {
-        volume(volume).muted(muted);
-        eventBus.fire(new AudioDeviceEvent(this, EventType.CHANGED));
-        log.trace("State changed: {}", this);
-    }
-
-    public boolean isOutput() {
-        return dataflow.output();
-    }
-
-    public boolean isInput() {
-        return dataflow.input();
-    }
-
-    public String toString() {
-        return name;
-    }
-}
-
-
-import java.io.Serializable;
-
-import jakarta.enterprise.event.Event;
-import jakarta.inject.Inject;
-
-import lombok.AccessLevel;
-import lombok.Data;
-import lombok.Setter;
-import lombok.extern.jbosslog.JBossLog;
-
-@Data
-@JBossLog
+@Log4j2
 @Setter(AccessLevel.PROTECTED)
 @SuppressWarnings("unused") // Methods called from JNI
 public class AudioDevice implements Serializable {

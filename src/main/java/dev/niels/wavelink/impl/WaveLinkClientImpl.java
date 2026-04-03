@@ -50,9 +50,9 @@ import dev.niels.wavelink.impl.rpc.WaveLinkSetMixCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkSetOutputDeviceCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkSetOutputDeviceCommand.WaveLinkSetOutputDeviceParams;
 import lombok.Getter;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 
-@JBossLog
+@Log4j2
 public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseable {
     private static final int DEFAULT_WAVELINK_PORT = 1884;
     private CompletableFuture<WebSocket> websocket = CompletableFuture.completedFuture(null);

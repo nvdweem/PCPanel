@@ -46,14 +46,14 @@ public class DeviceSave {
         if (name == null) {
             return Optional.empty();
         }
-        return StreamEx.of(getProfiles()).findFirst(p -> p.getName().equals(name));
+        return StreamEx.of(profiles).findFirst(p -> p.getName().equals(name));
     }
 
     @JsonIgnore
     private Optional<Profile> getCurrentProfile() {
         var p = getProfile(currentProfileName);
         if (!profiles.isEmpty() && p.isEmpty()) {
-            return Optional.of(getProfiles().get(0));
+            return Optional.of(profiles.get(0));
         }
         return p;
     }

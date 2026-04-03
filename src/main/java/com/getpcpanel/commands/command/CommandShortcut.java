@@ -2,15 +2,15 @@ package com.getpcpanel.commands.command;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.getpcpanel.MainFX;
+import com.getpcpanel.util.CdiHelper;
 import com.getpcpanel.util.IPlatformCommand;
 
 import lombok.Getter;
 import lombok.ToString;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 
 @Getter
-@JBossLog
+@Log4j2
 @ToString(callSuper = true)
 public class CommandShortcut extends Command implements ButtonAction {
     private static final Runtime rt = Runtime.getRuntime();
@@ -23,7 +23,7 @@ public class CommandShortcut extends Command implements ButtonAction {
 
     @Override
     public void execute() {
-        MainFX.getBean(IPlatformCommand.class).exec(shortcut);
+        CdiHelper.getBean(IPlatformCommand.class).exec(shortcut);
     }
 
     @Override

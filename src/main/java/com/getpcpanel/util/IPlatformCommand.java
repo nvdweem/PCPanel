@@ -3,17 +3,17 @@ package com.getpcpanel.util;
 import java.io.File;
 import java.io.IOException;
 
+import com.getpcpanel.spring.LinuxImpl;
+import com.getpcpanel.spring.WindowsImpl;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.cpp.linux.LinuxProcessHelper;
-import com.getpcpanel.spring.ConditionalOnLinux;
-import com.getpcpanel.spring.ConditionalOnWindows;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 
-@JBossLog
+@Log4j2
 public abstract class IPlatformCommand {
     public static final String FOCUS = "FOCUS";
     protected static final Runtime rt = Runtime.getRuntime();
@@ -57,7 +57,7 @@ public abstract class IPlatformCommand {
     }
 
     @ApplicationScoped
-    @WindowsImpl
+    
     @RequiredArgsConstructor
     public static class WindowsPlatformCommand extends IPlatformCommand {
         private final ISndCtrl sndCtrl;

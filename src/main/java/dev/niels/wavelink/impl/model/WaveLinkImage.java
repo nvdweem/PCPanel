@@ -8,10 +8,10 @@ import javax.annotation.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
-import javafx.scene.image.Image;
-import lombok.extern.jbosslog.JBossLog;
+import java.awt.image.BufferedImage;
+import lombok.extern.log4j.Log4j2;
 
-@JBossLog
+@Log4j2
 @JsonInclude(Include.NON_NULL)
 public record WaveLinkImage(
         @Nullable String name,
@@ -19,11 +19,11 @@ public record WaveLinkImage(
         @Nullable Boolean isAppIcon
 ) {
     @Nullable
-    public Image getImage() {
+    public BufferedImage getImage() {
         if (imgData != null && !imgData.isBlank()) {
             try {
                 var imageBytes = Base64.getDecoder().decode(imgData);
-                return new Image(new ByteArrayInputStream(imageBytes));
+                return new BufferedImage(new ByteArrayInputStream(imageBytes));
             } catch (IllegalArgumentException e) {
                 log.debug("Unable to create image from image data {}", this);
             }

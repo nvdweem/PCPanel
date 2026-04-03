@@ -18,10 +18,10 @@ import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
-@JBossLog
+@Log4j2
 @ApplicationScoped
 public class VersionChecker extends Thread {
     @Inject Event<Object> eventBus;
@@ -84,89 +84,6 @@ public class VersionChecker extends Thread {
             return currentIsSnapshot && build < remoteVersion.getBuild();
         }
         return compared < 0;
-    }
-
-    public record NewVersionAvailableEvent(Version version) {
-    }
-}
-
-
-import static com.getpcpanel.util.version.Version.SNAPSHOT_POSTFIX;
-
-import java.util.Comparator;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import jakarta.enterprise.event.Event;
-import jakarta.inject.Inject;
-import jakarta.enterprise.context.ApplicationScoped;
-import java.net.http.HttpClient;
-
-import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.util.version.Version.SemVer;
-
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.jbosslog.JBossLog;
-import one.util.streamex.StreamEx;
-
-@JBossLog
-@ApplicationScoped
-@RequiredArgsConstructor
-public class VersionChecker extends Thread {
-    @Inject
-    Event<Object> eventBus;
-    private final SaveService save;
-    private final RestTemplate webClient;
-    @Value("https://api.github.com/repos/${application.github.user-and-repo}/releases?per_page=4") private final String versionCheck;
-    @ConfigProperty(name="pcpanel.version") private final String version;
-    @ConfigProperty(name="pcpanel.build") private final int build;
-    @Value("#{'${application.version}'.endsWith('" + SNAPSHOT_POSTFIX + "')}") private final boolean currentIsSnapshot;
-
-    @PostConstruct
-    public void init() {
-        setDaemon(true);
-        if (save.get().isStartupVersionCheck()) {
-            start();
-        }
-    }
-
-    @Override
-    public void run() {
-        var response = webClient.getForEntity(versionCheck, Version[].class);
-        if (response.getBody() == null) {
-            log.error("Unable to get latest version from GitHub");
-            return;
-        }
-
-        var correctVersion = getVersionOfCorrectType(response.getBody());
-        if (versionIsNewer(correctVersion)) {
-            updateVersionLabel(correctVersion);
-        }
-    }
-
-    private Version getVersionOfCorrectType(Version[] versions) {
-        return StreamEx.of(versions)
-                       .sorted(Comparator.comparing(Version::semVer).reversed()) // Not really nullable
-                       .filter(v -> currentIsSnapshot || !v.prerelease()) // Remove snapshots if not currently on one
-                       .findFirst()
-                       .orElseThrow(() -> new RuntimeException("Unable to find release"));
-    }
-
-    private boolean versionIsNewer(Version remoteVersion) {
-        var currentSemVer = SemVer.fromName(version);
-        if (currentIsSnapshot) {
-            currentSemVer = currentSemVer.withBuild(build);
-        }
-
-        var compared = currentSemVer.compareTo(remoteVersion.semVer());
-        if (compared == 0) {
-            return currentIsSnapshot && build < remoteVersion.getBuild();
-        }
-        return compared < 0;
-    }
-
-    private void updateVersionLabel(Version remoteVersion) {
-        eventBus.fire(new NewVersionAvailableEvent(remoteVersion));
     }
 
     public record NewVersionAvailableEvent(Version version) {

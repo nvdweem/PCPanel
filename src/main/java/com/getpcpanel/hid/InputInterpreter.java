@@ -20,9 +20,9 @@ import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.util.Debouncer;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.jbosslog.JBossLog;
+import lombok.extern.log4j.Log4j2;
 
-@JBossLog
+@Log4j2
 @ApplicationScoped
 public final class InputInterpreter {
     @Inject
@@ -38,7 +38,7 @@ public final class InputInterpreter {
         public void onKnobRotate(@Observes DeviceCommunicationHandler.KnobRotateEvent event) {
         devices.getDevice(event.serialNum()).ifPresent(device -> {
             var value = event.value();
-            if (device.getDeviceType() == DeviceType.PCPANEL_RGB) {
+            if (device.deviceType() == DeviceType.PCPANEL_RGB) {
                 value = map(value, 0, 100, 0, 255);
             }
             device.setKnobRotation(event.knob(), value);

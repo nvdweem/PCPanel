@@ -9,7 +9,7 @@ import java.util.Set;
 public interface ISndCtrl {
     Map<String, AudioDevice> getDevicesMap();
 
-    Collection<AudioDevice> getDevices();
+    Collection<AudioDevice> devices();
 
     Collection<AudioSession> getAllSessions();
 
@@ -43,7 +43,7 @@ public interface ISndCtrl {
     static ISndCtrl noOp() {
         return new ISndCtrl() {
             @Override public Map<String, AudioDevice> getDevicesMap() { return Map.of(); }
-            @Override public Collection<AudioDevice> getDevices() { return List.of(); }
+            @Override public Collection<AudioDevice> devices() { return List.of(); }
             @Override public Collection<AudioSession> getAllSessions() { return List.of(); }
             @Override public AudioDevice getDevice(String id) { return null; }
             @Override public void setDeviceVolume(String deviceId, float volume) {}
