@@ -91,14 +91,17 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
         TriFunction<Integer, String, SingleKnobLightingConfig, SingleKnobLightingConfig> knobOverride = (idx, payload, knob) -> {
             colorOverrideHolder.setDialOverride(device.getSerialNumber(), idx, new SingleKnobLightingConfig().setMode(SingleKnobLightingConfig.SINGLE_KNOB_MODE.STATIC).setColor1(payload));
             andThen.run();
+            return null;
         };
         TriFunction<Integer, String, SingleSliderLightingConfig, SingleSliderLightingConfig> sliderOverride = (idx, payload, knob) -> {
             colorOverrideHolder.setSliderOverride(device.getSerialNumber(), idx, new SingleSliderLightingConfig().setMode(SingleSliderLightingConfig.SINGLE_SLIDER_MODE.STATIC).setColor1(payload));
             andThen.run();
+            return null;
         };
         TriFunction<Integer, String, SingleSliderLabelLightingConfig, SingleSliderLabelLightingConfig> sliderLabelOverride = (idx, payload, knob) -> {
             colorOverrideHolder.setSliderLabelOverride(device.getSerialNumber(), idx, new SingleSliderLabelLightingConfig().setMode(SingleSliderLabelLightingConfig.SINGLE_SLIDER_LABEL_MODE.STATIC).setColor(payload));
             andThen.run();
+            return null;
         };
         Consumer<String> logoOverride = payload -> {
             colorOverrideHolder.setLogoOverride(device.getSerialNumber(), new SingleLogoLightingConfig().setMode(SingleLogoLightingConfig.SINGLE_LOGO_MODE.STATIC).setColor(payload));

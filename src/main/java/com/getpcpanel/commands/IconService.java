@@ -63,7 +63,8 @@ public class IconService {
     ISndCtrl sndCtrl;
     @Inject
     IIconService iconService;
-    private final List<IIconHandler<?>> iconHandlers;
+    @Inject
+    List<IIconHandler<?>> iconHandlers;
 
     @PostConstruct
     public void init() {

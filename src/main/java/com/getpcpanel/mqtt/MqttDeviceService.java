@@ -127,7 +127,7 @@ public class MqttDeviceService {
         if (!mqtt.isConnected()) {
             return;
         }
-        mqtt.send(mqttTopicHelper.valueTopic(event.serialNum(), brightness, 0), String.valueOf(event.getBrightness()), false);
+        mqtt.send(mqttTopicHelper.valueTopic(event.serialNum(), brightness, 0), String.valueOf(event.brightness()), false);
     }
 
     private void initialize(Device device) {
