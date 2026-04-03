@@ -412,6 +412,12 @@
     </reporting>
     <profiles>
         <profile>
+            <id>native</id>
+            <properties>
+                <quarkus.native.enabled>true</quarkus.native.enabled>
+            </properties>
+        </profile>
+        <profile>
             <id>not-github-build</id>
             <activation>
                 <property>
