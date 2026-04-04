@@ -24,6 +24,10 @@ class MqttTopicHelper {
         return baseJoining("available");
     }
 
+    public String availabilityTopic(MqttSettings settings) {
+        return baseJoining(settings, "available");
+    }
+
     public String baseTopicFilter() {
         return baseJoining("#");
     }
@@ -46,6 +50,10 @@ class MqttTopicHelper {
 
     private String baseJoining(Object... parts) {
         return StreamEx.of(parts).prepend(getSettings().baseTopic()).joining("/");
+    }
+
+    private String baseJoining(MqttSettings settings, Object... parts) {
+        return StreamEx.of(parts).prepend(settings.baseTopic()).joining("/");
     }
 
     private MqttSettings getSettings() {

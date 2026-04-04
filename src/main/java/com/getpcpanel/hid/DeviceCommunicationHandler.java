@@ -18,11 +18,9 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.tuple.Pair;
 import org.hid4java.HidDevice;
 import jakarta.enterprise.event.Event;
-import jakarta.inject.Inject;
 
 import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.profile.SaveService;
-
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
@@ -31,8 +29,7 @@ public class DeviceCommunicationHandler {
     private static final byte INPUT_CODE_KNOB_CHANGE = 1;
     private static final byte INPUT_CODE_BUTTON_CHANGE = 2;
 
-    @Inject
-    Event<Object> eventBus;
+    private final Event<Object> eventBus;
     private final DeviceScanner deviceScanner;
     private final SaveService saveService;
     private final String key;
@@ -50,9 +47,10 @@ public class DeviceCommunicationHandler {
     private final RollingAverageSetter rollingAverageSetter = new RollingAverageSetter();
     private final Map<Integer, Integer> prevSent = new ConcurrentHashMap<>();
 
-    public DeviceCommunicationHandler(DeviceScanner deviceScanner, SaveService saveService, String key, HidDevice device, DeviceType deviceType) {
+    public DeviceCommunicationHandler(DeviceScanner deviceScanner, SaveService saveService, Event<Object> eventBus, String key, HidDevice device, DeviceType deviceType) {
         this.deviceScanner = deviceScanner;
         this.saveService = saveService;
+        this.eventBus = eventBus;
         this.key = key;
         this.device = device;
         this.deviceType = deviceType;

@@ -15,7 +15,9 @@ import com.getpcpanel.device.DeviceType;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
+import io.quarkus.runtime.StartupEvent;
 import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
 
@@ -33,6 +35,10 @@ public class DeviceScanner implements HidServicesListener {
     }
 
     // Not @PostConstruct because the startup sequence needs to control when this runs
+    public void onStart(@Observes StartupEvent ev) {
+        init();
+    }
+
     public void init() {
         hidServices = HidManager.getHidServices(buildSpecification());
         hidServices.addHidServicesListener(this);

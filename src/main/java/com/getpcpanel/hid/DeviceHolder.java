@@ -56,6 +56,7 @@ public class DeviceHolder {
         }
         devices.put(event.serialNum(), device);
         outputInterpreter.sendInit(event.serialNum());
+        device.setLighting(device.lightingConfig(), true);
         eventBus.fire(new DeviceFullyConnectedEvent(device));
     }
 

@@ -13,22 +13,20 @@ import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
-import jakarta.enterprise.event.Event;
-import jakarta.inject.Inject;
-import jakarta.annotation.Priority;
-import jakarta.enterprise.context.ApplicationScoped;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.getpcpanel.profile.MqttSettings;
-import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.util.Debouncer;
 import com.hivemq.client.mqtt.MqttClient;
 import com.hivemq.client.mqtt.MqttGlobalPublishFilter;
 import com.hivemq.client.mqtt.mqtt5.Mqtt5Client;
 import com.hivemq.client.mqtt.mqtt5.message.publish.Mqtt5Publish;
 
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
+import jakarta.annotation.Priority;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -36,8 +34,6 @@ import lombok.extern.log4j.Log4j2;
 public class MqttService {
     static final int ORDER_OF_SAVE = 0;
     public static final String IGNORE_CORRELATION = "pcpanel";
-    @Inject
-    SaveService saveService;
     @Inject
     Event<Object> eventBus;
     @Inject
@@ -145,9 +141,8 @@ public class MqttService {
     }
 
     @Priority(ORDER_OF_SAVE)
-    @PostConstruct
-        public void saveChanged() {
-        var mqttSettings = saveService.get().getMqtt();
+    public void saveChanged(@Observes SaveEvent event) {
+        var mqttSettings = event.save().getMqtt();
         if (mqttSettings == null || !mqttSettings.enabled()) {
             disconnect();
             eventBus.fire(new MqttStatusEvent(false));
@@ -165,7 +160,7 @@ public class MqttService {
     }
 
     private void connect(MqttSettings mqttSettings) {
-        var availabilityTopic = topicHelper.availabilityTopic();
+        var availabilityTopic = topicHelper.availabilityTopic(mqttSettings);
         var builder = MqttClient.builder()
                                 .identifier(UUID.randomUUID().toString())
                                 .serverHost(mqttSettings.host())

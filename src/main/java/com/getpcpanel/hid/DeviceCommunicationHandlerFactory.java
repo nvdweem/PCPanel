@@ -8,7 +8,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.profile.SaveService;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -22,6 +21,6 @@ public class DeviceCommunicationHandlerFactory {
     SaveService saveService;
 
     public DeviceCommunicationHandler build(String key, HidDevice device, DeviceType deviceType) {
-        return new DeviceCommunicationHandler(deviceScanner, saveService, key, device, deviceType);
+        return new DeviceCommunicationHandler(deviceScanner, saveService, eventBus, key, device, deviceType);
     }
 }

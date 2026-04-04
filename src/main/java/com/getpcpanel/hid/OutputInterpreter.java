@@ -88,6 +88,10 @@ public final class OutputInterpreter {
     private void sendLightingConfigMini(String serialNumber, LightingConfig config) {
         var handler = deviceScanner.getConnectedDevice(serialNumber);
         var mode = config.lightingMode();
+        if (mode == null) {
+            log.error("Null lighting mode in sendLightingConfigMini, ignoring");
+            return;
+        }
         switch (mode) {
             case ALL_COLOR -> writeAllColor(handler, PREFIX_MINI, (byte) 5, config);
             case ALL_RAINBOW -> writeAllRainbow(handler, PREFIX_MINI, config);
@@ -103,6 +107,10 @@ public final class OutputInterpreter {
     private void sendLightingConfigPro(String serialNumber, LightingConfig config) {
         var handler = deviceScanner.getConnectedDevice(serialNumber);
         var mode = config.lightingMode();
+        if (mode == null) {
+            log.error("Null lighting mode in sendLightingConfigPro, ignoring");
+            return;
+        }
         switch (mode) {
             case ALL_COLOR -> writeAllColor(handler, PREFIX_PRO, (byte) 2, config);
             case ALL_RAINBOW -> writeAllRainbow(handler, PREFIX_PRO, config);

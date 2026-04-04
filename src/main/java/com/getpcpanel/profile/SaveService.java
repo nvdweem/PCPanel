@@ -17,9 +17,12 @@ import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.util.Debouncer;
 import com.getpcpanel.util.FileUtil;
 
+import io.quarkus.runtime.StartupEvent;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
@@ -36,6 +39,7 @@ public class SaveService {
     @SuppressWarnings("StaticNonFinalField") private static String oldVersionEncountered;
 
     private Save save;
+    private boolean isNew = false;
 
     public Save get() {
         return save;
@@ -50,7 +54,7 @@ public class SaveService {
         if (!saveFile.exists()) {
             log.info("No save file found, creating new one");
             save = new Save();
-            eventBus.fire(new SaveEvent(save, true));
+            isNew = true;
             return;
         }
 
@@ -58,11 +62,20 @@ public class SaveService {
             save = json.read(FileUtils.readFileToString(saveFile, Charset.defaultCharset()), Save.class);
             handleOldVersionEncountered();
             StreamEx.ofValues(save.getDevices()).forEach(d -> StreamEx.of(d.getProfiles()).findFirst(p -> p.isMainProfile()).ifPresent(p -> d.setCurrentProfile(p.getName())));
-            eventBus.fire(new SaveEvent(save, false));
         } catch (Exception e) {
             log.error("Unable to read file", e);
             save = new Save();
+            isNew = true;
         }
+    }
+
+    /**
+     * Fire the initial SaveEvent after all beans are fully initialized.
+     * Using @Priority(1) to ensure this runs before DeviceScanner.onStart() (default priority ~2000).
+     */
+    @Priority(1)
+    public void onStart(@Observes StartupEvent ev) {
+        eventBus.fire(new SaveEvent(save, isNew));
     }
 
     private void handleOldVersionEncountered() {
@@ -70,7 +83,16 @@ public class SaveService {
             return;
         }
         backup();
-        save();
+        writeToFile(); // write file only, SaveEvent will be fired from onStart()
+    }
+
+    private void writeToFile() {
+        var saveFile = fileUtil.getFile(saveFileName);
+        try {
+            FileUtils.writeStringToFile(saveFile, json.writePretty(save), Charset.defaultCharset());
+        } catch (IOException e) {
+            log.error("Unable to save file", e);
+        }
     }
 
     private void backup() {
@@ -104,13 +126,7 @@ public class SaveService {
     }
 
     public void save() {
-        var saveFile = fileUtil.getFile(saveFileName);
-        try {
-            FileUtils.writeStringToFile(saveFile, json.writePretty(save), Charset.defaultCharset());
-        } catch (IOException e) {
-            log.error("Unable to save file", e);
-        }
-
+        writeToFile();
         eventBus.fire(new SaveEvent(save, false));
     }
 

@@ -57,7 +57,7 @@ public class MqttDeviceService {
     private final Set<Device> initializedDevices = new HashSet<>();
 
     @Priority(ORDER_OF_SAVE + 1) // Ensure we are disconnected if the setting is turned off
-        public void saveChanged() {
+        public void saveChanged(@Observes SaveService.SaveEvent event) {
         if (mqtt.isConnected()) {
             initialize();
         }

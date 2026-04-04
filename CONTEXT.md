@@ -126,6 +126,14 @@ The Angular frontend has scaffolding but is incomplete vs. the plan:
 
 ---
 
+## Recent Bug Fixes (2026-04-04)
+
+- **Jackson deserialization of `LightingConfig`**: `LightingConfig` uses non-standard (non-JavaBeans) accessors (`knobConfigs()` instead of `getKnobConfigs()`), has no setters for its array fields, and a private no-arg constructor. Jackson couldn't set private fields like `knobConfigs`, `sliderConfigs`, `sliderLabelConfigs` — they stayed as empty `{}`. Fixed by adding `@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)` to `LightingConfig`, which enables direct field access for both serialization and deserialization.
+- **`SetMuteOverrideService.getAllDeviceLightingCapable` AIOOBE**: Added bounds checking before accessing `oLightConfig.knobConfigs()[idx]` and `oLightConfig.sliderConfigs()[slider]` to prevent `ArrayIndexOutOfBoundsException` if array lengths don't match.
+- **Missing initial lighting send**: When a device connects, its saved lighting config was never sent to the physical device. Fixed by adding `device.setLighting(device.lightingConfig(), true)` in `DeviceHolder.deviceAdded()`.
+
+---
+
 ## Known Issues / Decisions Needed
 
 1. **Overlay (on-screen volume display)** — The existing `Overlay.java` (JavaFX window) was deleted with the UI package. A replacement for the overlay has not been designed. Options: keep it as a system tray tooltip, implement it as an always-on-top browser window via a separate Quarkus endpoint, or defer entirely.

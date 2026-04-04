@@ -3,17 +3,16 @@ package com.getpcpanel.commands;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import jakarta.enterprise.event.Observes;
-import jakarta.enterprise.context.ApplicationScoped;
-
 import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @ApplicationScoped
 public final class CommandDispatcher {
-    private final Map<String, Runnable> map = new ConcurrentHashMap<>();
-    private final HandlerThread handler = new HandlerThread();
+    final Map<String, Runnable> map = new ConcurrentHashMap<>();
+    final HandlerThread handler = new HandlerThread();
 
     @PostConstruct
     public void init() {
@@ -24,7 +23,7 @@ public final class CommandDispatcher {
     private CommandDispatcher() {
     }
 
-        public void onCommand(@Observes PCPanelControlEvent event) {
+    public void onCommand(@Observes PCPanelControlEvent event) {
         map.put(event.serialNum() + event.knob(), event.buildRunnable());
         handler.doNotify();
     }

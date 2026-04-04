@@ -189,13 +189,21 @@ public class SetMuteOverrideService implements IOverrideColorProviderProvider {
 
         var oLightConfig = profile.lightingConfig();
         var knobLength = mayBeChangedLC.knobConfigs().length;
+        var oKnobConfigs = oLightConfig.knobConfigs();
+        var oSliderConfigs = oLightConfig.sliderConfigs();
+        var oSliderLabelConfigs = oLightConfig.sliderLabelConfigs();
+
         for (var idxCommand : profile.getDialData().entrySet()) {
             var idx = idxCommand.getKey();
             var command = idxCommand.getValue();
             if (idx < knobLength) {
                 // It's a knob
-                var deviceOrFollow = oLightConfig.knobConfigs()[idx].getMuteOverrideDeviceOrFollow();
-                var muteOverrideColor = oLightConfig.knobConfigs()[idx].getMuteOverrideColor();
+                if (idx >= oKnobConfigs.length) {
+                    log.warn("knobConfig index {} out of bounds (length {}), skipping", idx, oKnobConfigs.length);
+                    continue;
+                }
+                var deviceOrFollow = oKnobConfigs[idx].getMuteOverrideDeviceOrFollow();
+                var muteOverrideColor = oKnobConfigs[idx].getMuteOverrideColor();
                 if (StringUtils.isNoneBlank(deviceOrFollow, muteOverrideColor)) {
                     Runnable toOriginal = () -> colorOverrideHolder.setDialOverride(deviceSerial, idx, null);
                     Runnable toMute = () -> colorOverrideHolder.setDialOverride(deviceSerial, idx, new SingleKnobLightingConfig().setMode(SingleKnobLightingConfig.SINGLE_KNOB_MODE.STATIC)
@@ -206,8 +214,12 @@ public class SetMuteOverrideService implements IOverrideColorProviderProvider {
                 }
             } else { // It's a slider with label
                 var slider = idx - knobLength;
-                var sliderDeviceOrFollow = oLightConfig.sliderConfigs()[slider].getMuteOverrideDeviceOrFollow();
-                var sliderOverride = oLightConfig.sliderConfigs()[slider].getMuteOverrideColor();
+                if (slider >= oSliderConfigs.length || slider >= oSliderLabelConfigs.length) {
+                    log.warn("sliderConfig index {} out of bounds (sliders={}, labels={}), skipping", slider, oSliderConfigs.length, oSliderLabelConfigs.length);
+                    continue;
+                }
+                var sliderDeviceOrFollow = oSliderConfigs[slider].getMuteOverrideDeviceOrFollow();
+                var sliderOverride = oSliderConfigs[slider].getMuteOverrideColor();
                 if (StringUtils.isNoneBlank(sliderDeviceOrFollow, sliderOverride)) {
                     Runnable toOriginal = () -> colorOverrideHolder.setSliderOverride(deviceSerial, slider, null);
                     Runnable toMute = () -> colorOverrideHolder.setSliderOverride(deviceSerial, slider, new SingleSliderLightingConfig().setMode(SingleSliderLightingConfig.SINGLE_SLIDER_MODE.STATIC)
@@ -217,8 +229,8 @@ public class SetMuteOverrideService implements IOverrideColorProviderProvider {
                     result.add(new DeviceLightingCapable(sliderDeviceOrFollow, command, toOriginal, toMute)); // Slider
                 }
 
-                var labelDeviceOrFollow = oLightConfig.sliderLabelConfigs()[slider].getMuteOverrideDeviceOrFollow();
-                var labelOverride = oLightConfig.sliderLabelConfigs()[slider].getMuteOverrideColor();
+                var labelDeviceOrFollow = oSliderLabelConfigs[slider].getMuteOverrideDeviceOrFollow();
+                var labelOverride = oSliderLabelConfigs[slider].getMuteOverrideColor();
                 if (StringUtils.isNoneBlank(labelDeviceOrFollow, labelOverride)) {
                     Runnable toOriginal = () -> colorOverrideHolder.setSliderLabelOverride(deviceSerial, slider, null);
                     Runnable toMute = () -> colorOverrideHolder.setSliderLabelOverride(deviceSerial, slider, new SingleSliderLabelLightingConfig().setMode(SingleSliderLabelLightingConfig.SINGLE_SLIDER_LABEL_MODE.STATIC)
