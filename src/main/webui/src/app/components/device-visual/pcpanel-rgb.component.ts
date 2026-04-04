@@ -1,22 +1,20 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
-import { NgFor, NgIf } from '@angular/common';
+import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
 
 function truncate(s: string, n: number): string { return s.length > n ? s.substring(0, n) + '…' : s; }
 
 @Component({
   selector: 'app-pcpanel-rgb',
   standalone: true,
-  imports: [NgFor, NgIf],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './device-visual.scss',
   templateUrl: './pcpanel-rgb.component.html',
 })
 export class PcpanelRgbComponent {
-  @Input() analogValues: Map<number, number> = new Map();
-  @Input() lightingConfig: any = null;
-  @Input() activeDial: number | null = null;
-  @Input() dialLabels: Map<number, string> = new Map();
-  @Output() dialClick = new EventEmitter<number>();
+  analogValues = input<Map<number, number>>(new Map());
+  lightingConfig = input<any>(null);
+  activeDial = input<number | null>(null);
+  dialLabels = input<Map<number, string>>(new Map());
+  dialClick = output<number>();
 
   readonly knobIndices = [0, 1, 2, 3];
 
@@ -32,19 +30,19 @@ export class PcpanelRgbComponent {
 
   /** Rotation: 0-255 → 30°–330° */
   knobAngle(i: number): number {
-    const v = this.analogValues.get(i) ?? 0;
+    const v = this.analogValues().get(i) ?? 0;
     return 3 * (v / 2.55) + 30;
   }
 
   ledColor(i: number): string {
-    const cfg = this.lightingConfig;
+    const cfg = this.lightingConfig();
     if (!cfg) return 'dodgerblue';
     if (cfg.lightingMode === 'ALL_COLOR') return cfg.allColor ?? 'dodgerblue';
     if (cfg.lightingMode === 'SINGLE_COLOR') return cfg.individualColors?.[i] ?? 'dodgerblue';
     return 'dodgerblue';
   }
 
-  isActive(i: number): boolean { return this.activeDial === i; }
-  label(i: number): string { return truncate(this.dialLabels.get(i) ?? '—', 9); }
+  isActive(i: number): boolean { return this.activeDial() === i; }
+  label(i: number): string { return truncate(this.dialLabels().get(i) ?? '—', 9); }
   onDialClick(i: number): void { this.dialClick.emit(i); }
 }

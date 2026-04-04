@@ -1,7 +1,27 @@
 # PCPanel Migration — Current Status & Remaining Work
 
 This file tracks what has been completed from [PLAN.md](./PLAN.md) and what remains.
-Last updated: 2026-04-03
+Last updated: 2026-04-04
+
+---
+
+## 🖥️ Native Build Status (Windows)
+
+**Most recent CI run**: Workflow run `23977652879` on branch `copilot/migration-to-quarkus-again`
+was triggered but resulted in `action_required` (GitHub requires owner approval when a bot
+modifies workflow files). The build jobs did **not** execute.
+
+**Exe size**: Not yet available — no successful native image CI run has completed on this branch.
+The old Spring Boot MSI artifact on `main` was ~82 MB (compressed zip).
+
+**Native image fixes applied** (commit `f3d70a2`):
+- Added WaveLink command + RPC + model classes to `NativeImageConfig.java` reflection registration
+- Added `jnativehook` to `--initialize-at-run-time` in `application.properties`
+- Removed `batik-transcoder` dependency (incompatible with native image)
+
+**Workflow**: `maven-build-installer-windows.yml` — "Build Native Image", triggers on `main` and
+`releases/**` and via `workflow_dispatch`. Uses GraalVM CE Java 25. Produces `*-runner.exe`
+(Windows) and `*-runner` (Linux).
 
 ---
 
@@ -46,11 +66,23 @@ Last updated: 2026-04-03
 - **DONE** — `EventWebSocket` + `EventBroadcaster` — WebSocket at `/ws/events` for device connect/disconnect, knob rotate, button press
 
 ### Phase 6: Angular Frontend (via Quinoa)
-- **DONE** — Angular 19.2.20 project scaffolded in `src/main/webui/`; build output → `dist/pcpanel`
+- **DONE** — Angular 21.x project in `src/main/webui/`; build output → `dist/pcpanel`
 - **DONE** — Quinoa configured: `quarkus.quinoa.build-dir=dist/pcpanel`, `%dev.quarkus.quinoa.dev-server.port=4200`
 - **DONE** — Angular pages: `HomeComponent`, `DeviceComponent`, `LightingComponent`, `SettingsComponent`
 - **DONE** — Angular services: `DeviceService`, `AudioService`, `SettingsService`, `EventService` (WebSocket)
 - **DONE** — Dev proxy config: `npm start` forwards `/api` and `/ws` to Quarkus on port 7654
+- **DONE** — **Zoneless change detection**: `provideZonelessChangeDetection()` (Angular 18+ stable API);
+  `zone.js` removed from polyfills in `angular.json`
+- **DONE** — **Angular Signals**: `HomeComponent` fully converted to signal-based state (`signal()`,
+  `computed()`, `inject()`). Device visual components (`PcpanelProComponent`, `PcpanelMiniComponent`,
+  `PcpanelRgbComponent`) use `input()` / `output()` signal APIs. `AudioPickerComponent` uses
+  `model()` for two-way binding, `input()` for other inputs, `signal()` for async state.
+- **DONE** — **New control flow syntax**: All templates migrated from `*ngIf`/`*ngFor` to `@if`/`@for`.
+  `NgIf`/`NgFor` imports removed from all components.
+- **DONE** — Components with `[(ngModel)]` on mutable object properties (`SettingsComponent`,
+  `LightingComponent`, `DeviceComponent`) use `ChangeDetectorRef.markForCheck()` after async data
+  loads to ensure proper rendering in zoneless mode. `DialParamsEditorComponent` retains `@Input()`
+  for `params` due to `[(ngModel)]` on nested properties.
 
 ### Phase 9: OBS WebSocket Integration
 - **DONE** — OBS WebSocket 5 client implemented (see Phase 9 in Remaining Work → now complete)

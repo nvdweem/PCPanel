@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, OnInit, inject, input, model, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -15,32 +15,31 @@ import { ProcessService } from '../../services/process.service';
   styleUrl: './audio-picker.component.scss',
 })
 export class AudioPickerComponent implements OnInit {
-  @Input() mode: 'process' | 'device' = 'process';
-  @Input() deviceFilter: 'output' | 'input' | 'all' = 'all';
-  @Input() value = '';
-  @Input() placeholder?: string;
-  @Output() valueChange = new EventEmitter<string>();
+  private audioService = inject(AudioService);
+  private processService = inject(ProcessService);
 
-  processes: ProcessDto[] = [];
-  devices: AudioDevice[] = [];
+  mode = input<'process' | 'device'>('process');
+  deviceFilter = input<'output' | 'input' | 'all'>('all');
+  value = model('');
+  placeholder = input<string | undefined>(undefined);
 
-  constructor(private audioService: AudioService, private processService: ProcessService) {}
+  processes = signal<ProcessDto[]>([]);
+  devices = signal<AudioDevice[]>([]);
 
   ngOnInit(): void {
-    if (this.mode === 'process') {
-      this.processService.listProcesses().subscribe(p => this.processes = p);
+    if (this.mode() === 'process') {
+      this.processService.listProcesses().subscribe(p => this.processes.set(p));
     } else {
-      const obs$ = this.deviceFilter === 'output'
+      const obs$ = this.deviceFilter() === 'output'
         ? this.audioService.listOutputDevices()
-        : this.deviceFilter === 'input'
+        : this.deviceFilter() === 'input'
           ? this.audioService.listInputDevices()
           : this.audioService.listDevices();
-      obs$.subscribe(d => this.devices = d);
+      obs$.subscribe(d => this.devices.set(d));
     }
   }
 
   selectProcess(p: ProcessDto): void {
-    this.value = p.name;
-    this.valueChange.emit(p.name);
+    this.value.set(p.name);
   }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -27,6 +27,11 @@ import { CommandConfigComponent, CommandDialogData } from '../../components/comm
   styleUrl: './device.component.scss'
 })
 export class DeviceComponent implements OnInit {
+  private route = inject(ActivatedRoute);
+  private deviceService = inject(DeviceService);
+  private dialog = inject(MatDialog);
+  private cdr = inject(ChangeDetectorRef);
+
   device: DeviceDto | null = null;
   editingName = false;
   newName = '';
@@ -34,12 +39,6 @@ export class DeviceComponent implements OnInit {
   buttonLabels: Map<number, string> = new Map();
   dialCommands: Map<number, CommandsWrapper> = new Map();
   buttonCommands: Map<number, CommandsWrapper> = new Map();
-
-  constructor(
-    private route: ActivatedRoute,
-    private deviceService: DeviceService,
-    private dialog: MatDialog,
-  ) {}
 
   ngOnInit(): void {
     const serial = this.route.snapshot.paramMap.get('serial')!;
@@ -50,6 +49,7 @@ export class DeviceComponent implements OnInit {
     this.deviceService.getDevice(serial).subscribe(d => {
       this.device = d;
       if (d.currentProfile) this.loadAssignments();
+      this.cdr.markForCheck();
     });
   }
 
@@ -60,12 +60,14 @@ export class DeviceComponent implements OnInit {
       this.deviceService.getDialCommands(serial, currentProfile, i).subscribe(cmds => {
         this.dialCommands.set(i, cmds);
         this.dialLabels.set(i, this.formatCommands(cmds));
+        this.cdr.markForCheck();
       });
     }
     for (let i = 0; i < buttonCount; i++) {
       this.deviceService.getButtonCommands(serial, currentProfile, i).subscribe(cmds => {
         this.buttonCommands.set(i, cmds);
         this.buttonLabels.set(i, this.formatCommands(cmds));
+        this.cdr.markForCheck();
       });
     }
   }
@@ -77,6 +79,7 @@ export class DeviceComponent implements OnInit {
     this.deviceService.renameDevice(this.device.serial, this.newName.trim()).subscribe(() => {
       this.device!.displayName = this.newName.trim();
       this.editingName = false;
+      this.cdr.markForCheck();
     });
   }
 
@@ -87,6 +90,7 @@ export class DeviceComponent implements OnInit {
     this.deviceService.switchProfile(this.device.serial, name).subscribe(() => {
       this.device!.currentProfile = name;
       this.loadAssignments();
+      this.cdr.markForCheck();
     });
   }
 
@@ -112,11 +116,13 @@ export class DeviceComponent implements OnInit {
         this.deviceService.setDialCommands(serial, currentProfile, index, result).subscribe(() => {
           this.dialCommands.set(index, result);
           this.dialLabels.set(index, this.formatCommands(result));
+          this.cdr.markForCheck();
         });
       } else {
         this.deviceService.setButtonCommands(serial, currentProfile, index, result).subscribe(() => {
           this.buttonCommands.set(index, result);
           this.buttonLabels.set(index, this.formatCommands(result));
+          this.cdr.markForCheck();
         });
       }
     });

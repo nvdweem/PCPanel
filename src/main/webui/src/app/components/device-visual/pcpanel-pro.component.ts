@@ -1,5 +1,4 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy, OnChanges } from '@angular/core';
-import { NgFor, NgIf } from '@angular/common';
+import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
 
 function mapRange(v: number, inMin: number, inMax: number, outMin: number, outMax: number): number {
   return ((v - inMin) / (inMax - inMin)) * (outMax - outMin) + outMin;
@@ -21,17 +20,16 @@ const SLIDER_LABEL_PATH =
 @Component({
   selector: 'app-pcpanel-pro',
   standalone: true,
-  imports: [NgFor, NgIf],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './device-visual.scss',
   templateUrl: './pcpanel-pro.component.html',
 })
 export class PcpanelProComponent {
-  @Input() analogValues: Map<number, number> = new Map();
-  @Input() lightingConfig: any = null;
-  @Input() activeDial: number | null = null;
-  @Input() dialLabels: Map<number, string> = new Map();
-  @Output() dialClick = new EventEmitter<number>();
+  analogValues = input<Map<number, number>>(new Map());
+  lightingConfig = input<any>(null);
+  activeDial = input<number | null>(null);
+  dialLabels = input<Map<number, string>>(new Map());
+  dialClick = output<number>();
 
   readonly knobRingPath = KNOB_RING_PATH;
   readonly sliderLabelPath = SLIDER_LABEL_PATH;
@@ -80,26 +78,26 @@ export class PcpanelProComponent {
 
   /** Knob indicator rotation: 0-255 → 30°–330° */
   knobAngle(i: number): number {
-    const v = this.analogValues.get(i) ?? 0;
+    const v = this.analogValues().get(i) ?? 0;
     return 3 * (v / 2.55) + 30;
   }
 
   /** Slider thumb Y within 225px holder (val=0→bottom, val=255→top) */
   thumbY(si: number): number {
-    const v = this.analogValues.get(si) ?? 0;
+    const v = this.analogValues().get(si) ?? 0;
     return mapRange(v, 0, 255, 225 - 20, 0);
   }
 
   /** How many slider LED segments should be lit (0-5) based on value */
   litSegs(si: number): number {
-    const v = this.analogValues.get(si) ?? 0;
+    const v = this.analogValues().get(si) ?? 0;
     return Math.round(mapRange(v, 0, 255, 0, 5));
   }
 
   // ── Colors ────────────────────────────────────────────────────────────────────
 
   knobRingColor(i: number): string {
-    const cfg = this.lightingConfig;
+    const cfg = this.lightingConfig();
     if (!cfg) return 'none';
     if (cfg.lightingMode === 'ALL_COLOR') return cfg.allColor ?? '#ffc940';
     if (cfg.lightingMode === 'SINGLE_COLOR') return cfg.individualColors?.[i] ?? '#ffc940';
@@ -107,16 +105,16 @@ export class PcpanelProComponent {
   }
 
   sliderSegColor(si: number, seg: number): string {
-    const cfg = this.lightingConfig;
+    const cfg = this.lightingConfig();
     const base = cfg?.lightingMode === 'ALL_COLOR' ? (cfg.allColor ?? '#4488ff')
                : cfg?.lightingMode === 'SINGLE_COLOR' ? (cfg.individualColors?.[si] ?? '#4488ff')
                : '#4488ff';
     return seg < this.litSegs(si) ? base : '#222';
   }
 
-  isActive(i: number): boolean { return this.activeDial === i; }
+  isActive(i: number): boolean { return this.activeDial() === i; }
 
-  label(i: number): string { return truncate(this.dialLabels.get(i) ?? '—', 9); }
+  label(i: number): string { return truncate(this.dialLabels().get(i) ?? '—', 9); }
 
   onDialClick(i: number): void { this.dialClick.emit(i); }
 }

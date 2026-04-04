@@ -37,66 +37,75 @@
   </g>
 
   <!-- ── Knob LED rings ──────────────────────────────────────────────────── -->
-  <g *ngFor="let ki of knobIndices" [attr.transform]="knobRingTransform(ki)">
-    <path [attr.fill]="knobRingColor(ki)" [attr.d]="knobRingPath" opacity="0.9"/>
-  </g>
+  @for (ki of knobIndices; track ki) {
+    <g [attr.transform]="knobRingTransform(ki)">
+      <path [attr.fill]="knobRingColor(ki)" [attr.d]="knobRingPath" opacity="0.9"/>
+    </g>
+  }
 
   <!-- ── Knobs ─────────────────────────────────────────────────────────── -->
-  <g *ngFor="let ki of knobIndices" [attr.transform]="knobTransform(ki)"
-     (click)="onDialClick(ki)" style="cursor:pointer">
-    <!-- Shadow -->
-    <circle cx="34" cy="36" r="30" opacity="0.25" fill="black"/>
-    <!-- Outer body -->
-    <circle cx="30" cy="30" r="30" fill="url(#pro-knob-outer)"/>
-    <!-- Inner face -->
-    <circle cx="30" cy="30" r="23" fill="url(#pro-knob-inner)" stroke="#a7aeb7" stroke-width="0.5"/>
-    <!-- Active highlight ring -->
-    <circle *ngIf="isActive(ki)" cx="30" cy="30" r="30" fill="none" stroke="#ffc940" stroke-width="3" opacity="0.9"/>
-    <!-- Rotating indicator (rotates around center 30,30) -->
-    <g [attr.transform]="'rotate(' + knobAngle(ki) + ',30,30)'">
-      <rect x="28" y="42" width="4" height="10" fill="#3c3f42"/>
-      <circle cx="30" cy="42" r="2" fill="#3c3f42" stroke="#2b2b2b" stroke-width="0.5"/>
+  @for (ki of knobIndices; track ki) {
+    <g [attr.transform]="knobTransform(ki)" (click)="onDialClick(ki)" style="cursor:pointer">
+      <!-- Shadow -->
+      <circle cx="34" cy="36" r="30" opacity="0.25" fill="black"/>
+      <!-- Outer body -->
+      <circle cx="30" cy="30" r="30" fill="url(#pro-knob-outer)"/>
+      <!-- Inner face -->
+      <circle cx="30" cy="30" r="23" fill="url(#pro-knob-inner)" stroke="#a7aeb7" stroke-width="0.5"/>
+      <!-- Active highlight ring -->
+      @if (isActive(ki)) {
+        <circle cx="30" cy="30" r="30" fill="none" stroke="#ffc940" stroke-width="3" opacity="0.9"/>
+      }
+      <!-- Rotating indicator (rotates around center 30,30) -->
+      <g [attr.transform]="'rotate(' + knobAngle(ki) + ',30,30)'">
+        <rect x="28" y="42" width="4" height="10" fill="#3c3f42"/>
+        <circle cx="30" cy="42" r="2" fill="#3c3f42" stroke="#2b2b2b" stroke-width="0.5"/>
+      </g>
+      <!-- Label -->
+      <text x="30" y="73" text-anchor="middle" font-size="7" fill="#9a9a9a" font-family="sans-serif">{{ label(ki) }}</text>
+      <!-- Invisible click area -->
+      <circle cx="30" cy="30" r="32" fill="transparent"/>
     </g>
-    <!-- Label -->
-    <text x="30" y="73" text-anchor="middle" font-size="7" fill="#9a9a9a" font-family="sans-serif">{{ label(ki) }}</text>
-    <!-- Invisible click area -->
-    <circle cx="30" cy="30" r="32" fill="transparent"/>
-  </g>
+  }
 
   <!-- ── Slider LED columns ─────────────────────────────────────────────── -->
-  <g *ngFor="let si of sliderIndices" [attr.transform]="sliderLightTransform(si - 5)">
-    <g *ngFor="let seg of sliderLightSegs">
-      <rect x="3" [attr.y]="(4 - seg) * 46 + 2" width="35" height="40"
-            [attr.fill]="sliderSegColor(si, seg)" rx="3" opacity="0.85"/>
+  @for (si of sliderIndices; track si) {
+    <g [attr.transform]="sliderLightTransform(si - 5)">
+      @for (seg of sliderLightSegs; track seg) {
+        <rect x="3" [attr.y]="(4 - seg) * 46 + 2" width="35" height="40"
+              [attr.fill]="sliderSegColor(si, seg)" rx="3" opacity="0.85"/>
+      }
     </g>
-  </g>
+  }
 
   <!-- ── Sliders ───────────────────────────────────────────────────────── -->
-  <g *ngFor="let si of sliderIndices" [attr.transform]="sliderTransform(si - 5)"
-     (click)="onDialClick(si)" style="cursor:pointer">
-    <!-- Track background -->
-    <rect x="0" y="0" width="30" height="225" fill="url(#pro-slider-bg)" rx="4"/>
-    <rect x="5" y="10" width="20" height="205" fill="url(#pro-slider-track)" rx="3"/>
-    <!-- Active border -->
-    <rect *ngIf="isActive(si)" x="0" y="0" width="30" height="225"
-          fill="none" stroke="#ffc940" stroke-width="2" rx="4"/>
-    <!-- Movable thumb -->
-    <g [attr.transform]="'translate(0,' + thumbY(si) + ')'">
-      <rect x="1" y="0" width="28" height="20" fill="#3c3f42" stroke="#5a5b62" stroke-width="0.5" rx="3"/>
-      <rect x="5" y="8" width="20" height="4" fill="#61656b" rx="1"/>
+  @for (si of sliderIndices; track si) {
+    <g [attr.transform]="sliderTransform(si - 5)" (click)="onDialClick(si)" style="cursor:pointer">
+      <!-- Track background -->
+      <rect x="0" y="0" width="30" height="225" fill="url(#pro-slider-bg)" rx="4"/>
+      <rect x="5" y="10" width="20" height="205" fill="url(#pro-slider-track)" rx="3"/>
+      <!-- Active border -->
+      @if (isActive(si)) {
+        <rect x="0" y="0" width="30" height="225" fill="none" stroke="#ffc940" stroke-width="2" rx="4"/>
+      }
+      <!-- Movable thumb -->
+      <g [attr.transform]="'translate(0,' + thumbY(si) + ')'">
+        <rect x="1" y="0" width="28" height="20" fill="#3c3f42" stroke="#5a5b62" stroke-width="0.5" rx="3"/>
+        <rect x="5" y="8" width="20" height="4" fill="#61656b" rx="1"/>
+      </g>
+      <!-- Label -->
+      <text x="15" y="240" text-anchor="middle" font-size="7" fill="#9a9a9a" font-family="sans-serif">{{ label(si) }}</text>
+      <!-- Click area -->
+      <rect x="0" y="0" width="30" height="225" fill="transparent"/>
     </g>
-    <!-- Label -->
-    <text x="15" y="240" text-anchor="middle" font-size="7" fill="#9a9a9a" font-family="sans-serif">{{ label(si) }}</text>
-    <!-- Click area -->
-    <rect x="0" y="0" width="30" height="225" fill="transparent"/>
-  </g>
+  }
 
   <!-- ── Slider labels (S markers next to slider tops) ─────────────────── -->
-  <g *ngFor="let si of sliderIndices">
+  @for (si of sliderIndices; track si) {
     <g [attr.transform]="'translate(' + (76 + (si-5)*91 + 34) + ',310)'">
       <path [attr.fill]="knobRingColor(si)" [attr.d]="sliderLabelPath" transform="scale(2.5)"/>
     </g>
-  </g>
+  }
 
   <!-- ── Model label ──────────────────────────────────────────────────── -->
   <text x="240" y="598" text-anchor="middle" font-family="Arial,sans-serif" font-size="11"

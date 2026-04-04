@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { RouterModule, ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -21,18 +21,17 @@ import { DeviceService } from '../../services/device.service';
   styleUrl: './lighting.component.scss',
 })
 export class LightingComponent implements OnInit {
+  private route = inject(ActivatedRoute);
+  private deviceService = inject(DeviceService);
+  private location = inject(Location);
+  private cdr = inject(ChangeDetectorRef);
+
   serial = '';
   config: LightingConfig | null = null;
 
-  constructor(
-    private route: ActivatedRoute,
-    private deviceService: DeviceService,
-    private location: Location,
-  ) {}
-
   ngOnInit(): void {
     this.serial = this.route.snapshot.paramMap.get('serial')!;
-    this.deviceService.getLighting(this.serial).subscribe(c => this.config = c);
+    this.deviceService.getLighting(this.serial).subscribe(c => { this.config = c; this.cdr.markForCheck(); });
   }
 
   goBack(): void { this.location.back(); }

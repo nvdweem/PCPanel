@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -28,16 +28,18 @@ import { SettingsService } from '../../services/settings.service';
   styleUrl: './settings.component.scss',
 })
 export class SettingsComponent implements OnInit {
+  private settingsService = inject(SettingsService);
+  private snack = inject(MatSnackBar);
+  private cdr = inject(ChangeDetectorRef);
+
   settings: SettingsDto | null = null;
   mqtt: MqttSettings | null = null;
   waveLink: WaveLinkSettings | null = null;
 
-  constructor(private settingsService: SettingsService, private snack: MatSnackBar) {}
-
   ngOnInit(): void {
-    this.settingsService.getSettings().subscribe(s => this.settings = s);
-    this.settingsService.getMqttSettings().subscribe(m => this.mqtt = m);
-    this.settingsService.getWaveLinkSettings().subscribe(w => this.waveLink = w);
+    this.settingsService.getSettings().subscribe(s => { this.settings = s; this.cdr.markForCheck(); });
+    this.settingsService.getMqttSettings().subscribe(m => { this.mqtt = m; this.cdr.markForCheck(); });
+    this.settingsService.getWaveLinkSettings().subscribe(w => { this.waveLink = w; this.cdr.markForCheck(); });
   }
 
   save(): void {

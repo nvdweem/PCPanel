@@ -11,10 +11,10 @@
 
   <!-- ── LED backgrounds (behind knobs, colored rectangles 102x95) ────── -->
   <!-- lightPanes at x=40, y=55, prefW=428, 4 cols of 107 each -->
-  <g *ngFor="let ki of knobIndices">
+  @for (ki of knobIndices; track ki) {
     <rect [attr.x]="40 + ki * 107" y="55" width="102" height="95"
           [attr.fill]="ledColor(ki)" opacity="0.85"/>
-  </g>
+  }
 
   <!-- ── Device body ────────────────────────────────────────────────────── -->
   <!-- Inner pane: layoutX=223, layoutY=70, prefW=600, prefH=170, scaleX=1.725, scaleY=1.76 -->
@@ -41,24 +41,27 @@
   </g>
 
   <!-- ── Knobs ─────────────────────────────────────────────────────────── -->
-  <g *ngFor="let ki of knobIndices" [attr.transform]="knobTransform(ki)"
-     (click)="onDialClick(ki)" style="cursor:pointer">
-    <!-- Shadow -->
-    <circle cx="34" cy="36" r="30" opacity="0.4" fill="black"/>
-    <!-- Outer body -->
-    <circle cx="30" cy="30" r="30" fill="url(#rgb-knob-outer)" stroke="#3a3a3a" stroke-width="0"/>
-    <!-- Inner face -->
-    <circle cx="30" cy="30" r="27" fill="url(#rgb-knob-inner)" stroke="#3a3a3a" stroke-width="0.5"/>
-    <!-- Active ring -->
-    <circle *ngIf="isActive(ki)" cx="30" cy="30" r="30" fill="none" stroke="#ffc940" stroke-width="3" opacity="0.9"/>
-    <!-- Rotating indicator dot -->
-    <g [attr.transform]="'rotate(' + knobAngle(ki) + ',30,30)'">
-      <circle cx="30" cy="50" r="3" fill="white" stroke="#2b2b2b" stroke-width="0.5"/>
+  @for (ki of knobIndices; track ki) {
+    <g [attr.transform]="knobTransform(ki)" (click)="onDialClick(ki)" style="cursor:pointer">
+      <!-- Shadow -->
+      <circle cx="34" cy="36" r="30" opacity="0.4" fill="black"/>
+      <!-- Outer body -->
+      <circle cx="30" cy="30" r="30" fill="url(#rgb-knob-outer)" stroke="#3a3a3a" stroke-width="0"/>
+      <!-- Inner face -->
+      <circle cx="30" cy="30" r="27" fill="url(#rgb-knob-inner)" stroke="#3a3a3a" stroke-width="0.5"/>
+      <!-- Active ring -->
+      @if (isActive(ki)) {
+        <circle cx="30" cy="30" r="30" fill="none" stroke="#ffc940" stroke-width="3" opacity="0.9"/>
+      }
+      <!-- Rotating indicator dot -->
+      <g [attr.transform]="'rotate(' + knobAngle(ki) + ',30,30)'">
+        <circle cx="30" cy="50" r="3" fill="white" stroke="#2b2b2b" stroke-width="0.5"/>
+      </g>
+      <!-- Label -->
+      <text x="30" y="73" text-anchor="middle" font-size="8" fill="#9a9a9a" font-family="sans-serif">{{ label(ki) }}</text>
+      <circle cx="30" cy="30" r="32" fill="transparent"/>
     </g>
-    <!-- Label -->
-    <text x="30" y="73" text-anchor="middle" font-size="8" fill="#9a9a9a" font-family="sans-serif">{{ label(ki) }}</text>
-    <circle cx="30" cy="30" r="32" fill="transparent"/>
-  </g>
+  }
 
   <text x="300" y="162" text-anchor="middle" font-family="Arial,sans-serif" font-size="10"
         letter-spacing="4" fill="rgba(255,255,255,0.35)" font-weight="bold">PCPANEL RGB</text>

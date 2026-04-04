@@ -19,24 +19,29 @@
   </g>
 
   <!-- ── Knob LED rings ──────────────────────────────────────────────────── -->
-  <g *ngFor="let ki of knobIndices" [attr.transform]="knobRingTransform(ki)">
-    <path [attr.fill]="knobRingColor(ki)" [attr.d]="knobRingPath" opacity="0.9"/>
-  </g>
+  @for (ki of knobIndices; track ki) {
+    <g [attr.transform]="knobRingTransform(ki)">
+      <path [attr.fill]="knobRingColor(ki)" [attr.d]="knobRingPath" opacity="0.9"/>
+    </g>
+  }
 
   <!-- ── Knobs ─────────────────────────────────────────────────────────── -->
-  <g *ngFor="let ki of knobIndices" [attr.transform]="knobTransform(ki)"
-     (click)="onDialClick(ki)" style="cursor:pointer">
-    <circle cx="34" cy="36" r="30" opacity="0.25" fill="black"/>
-    <circle cx="30" cy="30" r="30" fill="url(#mini-knob-outer)"/>
-    <circle cx="30" cy="30" r="23" fill="url(#mini-knob-inner)" stroke="#a7aeb7" stroke-width="0.5"/>
-    <circle *ngIf="isActive(ki)" cx="30" cy="30" r="30" fill="none" stroke="#ffc940" stroke-width="3" opacity="0.9"/>
-    <g [attr.transform]="'rotate(' + knobAngle(ki) + ',30,30)'">
-      <rect x="28" y="42" width="4" height="10" fill="#3c3f42"/>
-      <circle cx="30" cy="42" r="2" fill="#3c3f42" stroke="#2b2b2b" stroke-width="0.5"/>
+  @for (ki of knobIndices; track ki) {
+    <g [attr.transform]="knobTransform(ki)" (click)="onDialClick(ki)" style="cursor:pointer">
+      <circle cx="34" cy="36" r="30" opacity="0.25" fill="black"/>
+      <circle cx="30" cy="30" r="30" fill="url(#mini-knob-outer)"/>
+      <circle cx="30" cy="30" r="23" fill="url(#mini-knob-inner)" stroke="#a7aeb7" stroke-width="0.5"/>
+      @if (isActive(ki)) {
+        <circle cx="30" cy="30" r="30" fill="none" stroke="#ffc940" stroke-width="3" opacity="0.9"/>
+      }
+      <g [attr.transform]="'rotate(' + knobAngle(ki) + ',30,30)'">
+        <rect x="28" y="42" width="4" height="10" fill="#3c3f42"/>
+        <circle cx="30" cy="42" r="2" fill="#3c3f42" stroke="#2b2b2b" stroke-width="0.5"/>
+      </g>
+      <text x="30" y="73" text-anchor="middle" font-size="8" fill="#9a9a9a" font-family="sans-serif">{{ label(ki) }}</text>
+      <circle cx="30" cy="30" r="32" fill="transparent"/>
     </g>
-    <text x="30" y="73" text-anchor="middle" font-size="8" fill="#9a9a9a" font-family="sans-serif">{{ label(ki) }}</text>
-    <circle cx="30" cy="30" r="32" fill="transparent"/>
-  </g>
+  }
 
   <text x="300" y="255" text-anchor="middle" font-family="Arial,sans-serif" font-size="11"
         letter-spacing="4" fill="rgba(255,255,255,0.35)" font-weight="bold">PCPANEL MINI</text>
