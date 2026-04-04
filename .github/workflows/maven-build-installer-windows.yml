@@ -10,6 +10,7 @@ on:
     branches:
       - main
       - releases/**
+      - copilot/migration-to-quarkus-again
   workflow_dispatch:
 
 jobs:

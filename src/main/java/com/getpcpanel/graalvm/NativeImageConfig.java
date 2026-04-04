@@ -36,6 +36,45 @@ import com.getpcpanel.commands.command.CommandVolumeFocusMute;
 import com.getpcpanel.commands.command.CommandVolumeProcess;
 import com.getpcpanel.commands.command.CommandVolumeProcessMute;
 import com.getpcpanel.commands.command.DialAction.DialCommandParams;
+import com.getpcpanel.wavelink.command.CommandWaveLink;
+import com.getpcpanel.wavelink.command.CommandWaveLinkAddFocusToChannel;
+import com.getpcpanel.wavelink.command.CommandWaveLinkChange;
+import com.getpcpanel.wavelink.command.CommandWaveLinkChangeLevel;
+import com.getpcpanel.wavelink.command.CommandWaveLinkChangeMute;
+import com.getpcpanel.wavelink.command.CommandWaveLinkChannelEffect;
+import com.getpcpanel.wavelink.command.CommandWaveLinkMainOutput;
+import com.getpcpanel.wavelink.command.WaveLinkCommandTarget;
+import dev.niels.wavelink.impl.model.WaveLinkApp;
+import dev.niels.wavelink.impl.model.WaveLinkChannel;
+import dev.niels.wavelink.impl.model.WaveLinkControlAction;
+import dev.niels.wavelink.impl.model.WaveLinkEffect;
+import dev.niels.wavelink.impl.model.WaveLinkGain;
+import dev.niels.wavelink.impl.model.WaveLinkImage;
+import dev.niels.wavelink.impl.model.WaveLinkInput;
+import dev.niels.wavelink.impl.model.WaveLinkInputDevice;
+import dev.niels.wavelink.impl.model.WaveLinkMainOutput;
+import dev.niels.wavelink.impl.model.WaveLinkMix;
+import dev.niels.wavelink.impl.model.WaveLinkOutput;
+import dev.niels.wavelink.impl.model.WaveLinkOutputDevice;
+import dev.niels.wavelink.impl.rpc.JsonRpcMessage;
+import dev.niels.wavelink.impl.rpc.JsonRpcResponse;
+import dev.niels.wavelink.impl.rpc.WaveLinkAddToChannelCommand;
+import dev.niels.wavelink.impl.rpc.WaveLinkChannelChangedCommand;
+import dev.niels.wavelink.impl.rpc.WaveLinkChannelsChangedCommand;
+import dev.niels.wavelink.impl.rpc.WaveLinkFocusedAppChangedCommand;
+import dev.niels.wavelink.impl.rpc.WaveLinkGetApplicationInfo;
+import dev.niels.wavelink.impl.rpc.WaveLinkGetChannels;
+import dev.niels.wavelink.impl.rpc.WaveLinkGetInputDevices;
+import dev.niels.wavelink.impl.rpc.WaveLinkGetMixes;
+import dev.niels.wavelink.impl.rpc.WaveLinkGetOutputDevices;
+import dev.niels.wavelink.impl.rpc.WaveLinkJsonRpcCommand;
+import dev.niels.wavelink.impl.rpc.WaveLinkMixChangedCommand;
+import dev.niels.wavelink.impl.rpc.WaveLinkOutputDeviceChangedCommand;
+import dev.niels.wavelink.impl.rpc.WaveLinkSetChannelCommand;
+import dev.niels.wavelink.impl.rpc.WaveLinkSetMixCommand;
+import dev.niels.wavelink.impl.rpc.WaveLinkSetOutputDeviceCommand;
+import dev.niels.wavelink.impl.rpc.WaveLinkSetSubscription;
+import dev.niels.wavelink.impl.rpc.WaveLinkUnknownCommand;
 
 /**
  * GraalVM native image reflection hints.
@@ -79,6 +118,52 @@ import com.getpcpanel.commands.command.DialAction.DialCommandParams;
     CommandVolumeFocusMute.class,
     CommandVolumeProcess.class,
     CommandVolumeProcessMute.class,
+
+    // WaveLink command hierarchy (also extends Command → ID.CLASS polymorphism)
+    CommandWaveLink.class,
+    CommandWaveLinkAddFocusToChannel.class,
+    CommandWaveLinkChange.class,
+    CommandWaveLinkChangeLevel.class,
+    CommandWaveLinkChangeMute.class,
+    CommandWaveLinkChannelEffect.class,
+    CommandWaveLinkMainOutput.class,
+    WaveLinkCommandTarget.class,
+
+    // WaveLink RPC protocol classes (Jackson @JsonSubTypes / @JsonTypeInfo)
+    JsonRpcMessage.class,
+    JsonRpcResponse.class,
+    JsonRpcResponse.ErrorDetail.class,
+    WaveLinkJsonRpcCommand.class,
+    WaveLinkChannelChangedCommand.class,
+    WaveLinkChannelsChangedCommand.class,
+    WaveLinkFocusedAppChangedCommand.class,
+    WaveLinkMixChangedCommand.class,
+    WaveLinkOutputDeviceChangedCommand.class,
+    WaveLinkGetApplicationInfo.class,
+    WaveLinkGetChannels.class,
+    WaveLinkGetInputDevices.class,
+    WaveLinkGetMixes.class,
+    WaveLinkGetOutputDevices.class,
+    WaveLinkSetChannelCommand.class,
+    WaveLinkSetMixCommand.class,
+    WaveLinkSetOutputDeviceCommand.class,
+    WaveLinkSetSubscription.class,
+    WaveLinkAddToChannelCommand.class,
+    WaveLinkUnknownCommand.class,
+
+    // WaveLink model classes (deserialised from WaveLink JSON API)
+    WaveLinkApp.class,
+    WaveLinkChannel.class,
+    WaveLinkControlAction.class,
+    WaveLinkEffect.class,
+    WaveLinkGain.class,
+    WaveLinkImage.class,
+    WaveLinkInput.class,
+    WaveLinkInputDevice.class,
+    WaveLinkMainOutput.class,
+    WaveLinkMix.class,
+    WaveLinkOutput.class,
+    WaveLinkOutputDevice.class,
 
     // Command support types serialised by Jackson
     Commands.class,

@@ -208,13 +208,6 @@
             <version>24.0.1</version>
         </dependency>
 
-        <!-- SVG rendering -->
-        <dependency>
-            <groupId>org.apache.xmlgraphics</groupId>
-            <artifactId>batik-transcoder</artifactId>
-            <version>1.16</version>
-        </dependency>
-
         <!-- MQTT client -->
         <dependency>
             <groupId>com.hivemq</groupId>
