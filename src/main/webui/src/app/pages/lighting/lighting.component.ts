@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterModule, ActivatedRoute } from '@angular/router';
+import { Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
@@ -17,18 +18,27 @@ import { DeviceService } from '../../services/device.service';
   standalone: true,
   imports: [RouterModule, FormsModule, MatToolbarModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatSelectModule, MatSliderModule, MatCardModule, MatProgressSpinnerModule],
   templateUrl: './lighting.component.html',
-  styleUrl: './lighting.component.scss'
+  styleUrl: './lighting.component.scss',
 })
 export class LightingComponent implements OnInit {
   serial = '';
   config: LightingConfig | null = null;
-  constructor(private route: ActivatedRoute, private deviceService: DeviceService) {}
+
+  constructor(
+    private route: ActivatedRoute,
+    private deviceService: DeviceService,
+    private location: Location,
+  ) {}
+
   ngOnInit(): void {
     this.serial = this.route.snapshot.paramMap.get('serial')!;
     this.deviceService.getLighting(this.serial).subscribe(c => this.config = c);
   }
+
+  goBack(): void { this.location.back(); }
+
   save(): void {
     if (!this.config) return;
-    this.deviceService.setLighting(this.serial, this.config).subscribe(() => alert('Lighting saved!'));
+    this.deviceService.setLighting(this.serial, this.config).subscribe();
   }
 }

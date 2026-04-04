@@ -9,11 +9,16 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSliderModule } from '@angular/material/slider';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
-import { CommandsWrapper, DeviceDto } from '../../models/models';
+import { CommandsWrapper, DeviceDto, LightingConfig } from '../../models/models';
 import { DeviceService } from '../../services/device.service';
 import { EventService } from '../../services/event.service';
 import { CommandConfigComponent, CommandDialogData } from '../../components/command-config/command-config.component';
+
+// PCPanel Pro: first 5 analog = knobs, last 4 = sliders
+const PRO_KNOB_COUNT = 5;
 
 @Component({
   selector: 'app-home',
@@ -22,24 +27,29 @@ import { CommandConfigComponent, CommandDialogData } from '../../components/comm
     RouterModule, FormsModule,
     MatSidenavModule, MatToolbarModule, MatListModule,
     MatButtonModule, MatIconModule, MatSelectModule, MatFormFieldModule,
+    MatSliderModule, MatTooltipModule,
   ],
   templateUrl: './home.component.html',
-  styleUrl: './home.component.scss'
+  styleUrl: './home.component.scss',
 })
 export class HomeComponent implements OnInit, OnDestroy {
   devices: DeviceDto[] = [];
   selectedSerial: string | null = null;
   selectedDevice: DeviceDto | null = null;
+  lightingConfig: LightingConfig | null = null;
 
   dialLabels: Map<number, string> = new Map();
   buttonLabels: Map<number, string> = new Map();
   dialCommands: Map<number, CommandsWrapper> = new Map();
   buttonCommands: Map<number, CommandsWrapper> = new Map();
+  /** Live 0–100 values received from hardware via WebSocket */
+  analogValues: Map<number, number> = new Map();
 
   editingDial: number | null = null;
   editingButton: number | null = null;
 
   private sub?: Subscription;
+  private brightnessTimer?: ReturnType<typeof setTimeout>;
 
   constructor(
     private deviceService: DeviceService,
@@ -52,11 +62,17 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.sub = this.eventService.events$.subscribe(event => {
       if (event.type === 'device_connected' || event.type === 'device_disconnected') {
         this.loadDevices();
+      } else if (event.type === 'knob_rotate' && event.serial === this.selectedSerial) {
+        const e = event as any;
+        this.analogValues.set(e.knob, e.value);
       }
     });
   }
 
-  ngOnDestroy(): void { this.sub?.unsubscribe(); }
+  ngOnDestroy(): void {
+    this.sub?.unsubscribe();
+    if (this.brightnessTimer) clearTimeout(this.brightnessTimer);
+  }
 
   private loadDevices(): void {
     this.deviceService.listDevices().subscribe(devices => {
@@ -65,7 +81,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         const found = devices.find(d => d.serial === this.selectedSerial);
         if (found) { this.selectedDevice = found; }
         else if (devices.length > 0) { this.selectDevice(devices[0]); }
-        else { this.selectedDevice = null; this.selectedSerial = null; }
+        else { this.selectedDevice = null; this.selectedSerial = null; this.lightingConfig = null; }
       } else if (devices.length > 0) {
         this.selectDevice(devices[0]);
       }
@@ -77,7 +93,10 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.selectedDevice = device;
     this.dialLabels.clear(); this.buttonLabels.clear();
     this.dialCommands.clear(); this.buttonCommands.clear();
+    this.analogValues.clear();
+    this.lightingConfig = null;
     this.loadAssignments();
+    this.loadLighting(device.serial);
   }
 
   private loadAssignments(): void {
@@ -97,12 +116,29 @@ export class HomeComponent implements OnInit, OnDestroy {
     }
   }
 
+  private loadLighting(serial: string): void {
+    this.deviceService.getLighting(serial).subscribe(cfg => {
+      this.lightingConfig = cfg;
+    });
+  }
+
   switchProfile(profileName: string): void {
     if (!this.selectedDevice) return;
     this.deviceService.switchProfile(this.selectedDevice.serial, profileName).subscribe(() => {
       this.selectedDevice!.currentProfile = profileName;
       this.loadAssignments();
     });
+  }
+
+  onBrightnessChange(value: number): void {
+    if (!this.lightingConfig || !this.selectedDevice) return;
+    this.lightingConfig.globalBrightness = value;
+    if (this.brightnessTimer) clearTimeout(this.brightnessTimer);
+    this.brightnessTimer = setTimeout(() => {
+      if (this.selectedDevice && this.lightingConfig) {
+        this.deviceService.setLighting(this.selectedDevice.serial, this.lightingConfig).subscribe();
+      }
+    }, 200);
   }
 
   editDial(index: number): void {
@@ -143,6 +179,42 @@ export class HomeComponent implements OnInit, OnDestroy {
         }
       }
     });
+  }
+
+  // ── Device visual helpers ────────────────────────────────────────────────────
+
+  /** Knob indices: For Pro = 0..4, for RGB/Mini = 0..analogCount-1 */
+  get knobIndices(): number[] {
+    if (!this.selectedDevice) return [];
+    if (this.selectedDevice.deviceType === 'PCPANEL_PRO') {
+      return this.range(PRO_KNOB_COUNT);
+    }
+    return this.range(this.selectedDevice.analogCount);
+  }
+
+  /** Slider indices: only for Pro = 5..8 */
+  get sliderIndices(): number[] {
+    if (this.selectedDevice?.deviceType === 'PCPANEL_PRO') {
+      return this.range(this.selectedDevice.analogCount - PRO_KNOB_COUNT).map(i => i + PRO_KNOB_COUNT);
+    }
+    return [];
+  }
+
+  /** Returns CSS transform for knob indicator dot rotation.
+   *  Value 0 → -135deg (7 o'clock), 50 → 0deg (6 o'clock), 100 → +135deg (5 o'clock) */
+  knobRotation(index: number): string {
+    const v = this.analogValues.get(index) ?? 50;
+    const deg = (v / 100) * 270 - 135;
+    return `rotate(${deg}deg)`;
+  }
+
+  /** Returns CSS 'top' percentage for slider thumb.
+   *  Value 0 → near bottom, value 100 → near top */
+  sliderThumbTop(index: number): string {
+    const v = this.analogValues.get(index) ?? 50;
+    // track height = 100px, thumb height = 16px → usable = 84px
+    const pct = (1 - v / 100) * 84;
+    return `${pct}px`;
   }
 
   getDialLabel(i: number): string { return this.dialLabels.get(i) ?? '—'; }

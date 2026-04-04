@@ -24,60 +24,93 @@
         @if (selectedDevice) { {{ selectedDevice.displayName }} }
       </span>
       <span class="spacer"></span>
-      <button mat-icon-button routerLink="/settings" aria-label="Settings">
+      <button mat-icon-button routerLink="/settings" aria-label="Settings" matTooltip="Settings">
         <mat-icon>settings</mat-icon>
       </button>
     </mat-toolbar>
 
     @if (!selectedDevice) {
       <div class="no-device-center">
+        <mat-icon class="no-device-icon">devices</mat-icon>
         <span class="no-device-label">NO DEVICES CONNECTED</span>
+        <span class="no-device-sub">Connect a PCPanel device via USB</span>
       </div>
     }
 
     @if (selectedDevice) {
       <div class="device-area">
+
+        <!-- Hardware visual -->
         <div class="device-visual">
-          @if (selectedDevice.deviceType === 'PCPANEL_RGB' || selectedDevice.deviceType === 'PCPANEL_MINI') {
-            <div class="pcpanel-knobs">
-              @for (i of range(selectedDevice.analogCount); track i) {
-                <div class="knob-container" (click)="editDial(i)">
-                  <div class="knob" [class.active]="editingDial === i"></div>
-                  <div class="knob-label">{{ getDialLabel(i) }}</div>
-                </div>
-              }
-            </div>
-          }
-          @if (selectedDevice.deviceType === 'PCPANEL_PRO') {
-            <div class="pcpanel-pro">
-              @for (i of range(selectedDevice.analogCount); track i) {
-                <div class="slider-container" (click)="editDial(i)">
-                  <div class="slider-track">
-                    <div class="slider-thumb" [class.active]="editingDial === i"></div>
+
+          <!-- Row 1: knobs (all devices have knobs at the top) -->
+          @if (knobIndices.length > 0) {
+            <div class="pcpanel-row pcpanel-knobs">
+              @for (i of knobIndices; track i) {
+                <div class="knob-container"
+                     [class.active]="editingDial === i"
+                     (click)="editDial(i)"
+                     [matTooltip]="getDialLabel(i)">
+                  <div class="knob" [style.transform]="knobRotation(i)">
+                    <span class="knob-dot"></span>
                   </div>
                   <div class="knob-label">{{ getDialLabel(i) }}</div>
                 </div>
               }
             </div>
           }
+
+          <!-- Row 2: sliders (Pro only) -->
+          @if (sliderIndices.length > 0) {
+            <div class="pcpanel-row pcpanel-sliders">
+              @for (i of sliderIndices; track i) {
+                <div class="slider-container"
+                     [class.active]="editingDial === i"
+                     (click)="editDial(i)"
+                     [matTooltip]="getDialLabel(i)">
+                  <div class="slider-track">
+                    <div class="slider-thumb" [style.top]="sliderThumbTop(i)"></div>
+                  </div>
+                  <div class="knob-label">{{ getDialLabel(i) }}</div>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Buttons row -->
           @if (selectedDevice.buttonCount > 0) {
             <div class="button-row">
               @for (i of range(selectedDevice.buttonCount); track i) {
                 <button mat-stroked-button
                         class="btn-control"
                         [class.active]="editingButton === i"
+                        [matTooltip]="getButtonLabel(i)"
                         (click)="editButton(i)">
                   {{ getButtonLabel(i) }}
                 </button>
               }
             </div>
           }
+
+          <p class="hint-text">Click a control to configure it</p>
         </div>
 
-        <p class="hint-text">Click a control to configure it</p>
-
+        <!-- Bottom bar -->
         <div class="bottom-bar">
           <span class="version-label">PCPanel Editor</span>
+
+          @if (lightingConfig) {
+            <div class="brightness-area">
+              <mat-icon class="brightness-icon">brightness_medium</mat-icon>
+              <mat-slider min="0" max="100" step="1" class="brightness-slider">
+                <input matSliderThumb
+                       [value]="lightingConfig.globalBrightness"
+                       (valueChange)="onBrightnessChange($event)" />
+              </mat-slider>
+              <span class="brightness-value">{{ lightingConfig.globalBrightness }}%</span>
+            </div>
+          }
+
           <div class="profile-area">
             <mat-form-field appearance="outline" class="profile-field">
               <mat-label>Profile</mat-label>
@@ -87,10 +120,15 @@
                 }
               </mat-select>
             </mat-form-field>
-            <button mat-stroked-button [routerLink]="['/lighting', selectedDevice.serial]">Lighting</button>
-            <button mat-raised-button color="primary" [routerLink]="['/device', selectedDevice.serial]">Advanced</button>
+            <button mat-stroked-button [routerLink]="['/lighting', selectedDevice.serial]" matTooltip="Configure lighting">
+              <mat-icon>light_mode</mat-icon>
+            </button>
+            <button mat-raised-button color="primary" [routerLink]="['/device', selectedDevice.serial]" matTooltip="Advanced configuration">
+              Advanced
+            </button>
           </div>
         </div>
+
       </div>
     }
   </mat-sidenav-content>

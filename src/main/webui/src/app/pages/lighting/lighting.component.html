@@ -2,7 +2,7 @@
 @if (config) {
   <div class="lighting-page">
     <mat-toolbar>
-      <button mat-icon-button [routerLink]="['/device', serial]" aria-label="Back"><mat-icon>arrow_back</mat-icon></button>
+      <button mat-icon-button (click)="goBack()" aria-label="Back"><mat-icon>arrow_back</mat-icon></button>
       <span>Lighting</span>
     </mat-toolbar>
     <div class="lighting-body">
@@ -35,7 +35,7 @@
         </mat-card-content>
         <mat-card-actions>
           <button mat-raised-button color="primary" (click)="save()">Save Lighting</button>
-          <button mat-stroked-button [routerLink]="['/device', serial]">Cancel</button>
+          <button mat-stroked-button (click)="goBack()">Cancel</button>
         </mat-card-actions>
       </mat-card>
     </div>

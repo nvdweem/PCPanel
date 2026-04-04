@@ -81,9 +81,15 @@ The Angular frontend has scaffolding but is incomplete vs. the plan:
 - ~~**Missing**: `ProcessService`~~ **DONE** — Angular service wrapping `GET /api/processes`
 - ~~**Missing**: `DialParamsEditorComponent`~~ **DONE** — reusable invert/moveStart/moveEnd sub-form
 - **`DeviceComponent`** updated — `editDial()` / `editButton()` now open `CommandConfigComponent` modal; save paths call `setDialCommands` / `setButtonCommands`
-- **Missing**: Full `DeviceDetailComponent` with a visual representation of each device type (Pro: knobs+sliders, Mini: 4 buttons, RGB: grid)
+- ~~**Missing**: Full `DeviceDetailComponent` with a visual representation of each device type~~ **DONE** — Home component now shows:
+  - PCPanel RGB / Mini: row of CSS knobs (rotary) with live rotation from WebSocket
+  - PCPanel Pro: row of 5 knobs PLUS row of 4 sliders (correct hardware layout), with live thumb position from WebSocket
+  - Button row below hardware visual
+  - Global brightness slider in bottom bar (reads/writes lighting config)
+  - Knob/slider positions update in real-time from `knob_rotate` WebSocket events
+- ~~**Missing**: OSC settings tab~~ **DONE** — Settings page has General / OBS / VoiceMeeter / Overlay / MQTT / OSC tabs
 - **Missing**: Overlay settings are in the settings page but the overlay itself (the on-screen volume bar) has no web equivalent yet
-- **Partial**: `SettingsComponent` covers General/OBS/VoiceMeeter/Overlay/MQTT but lacks OSC and WaveLink tabs
+- **Partial**: WaveLink tab not in settings (WaveLink fields not in SettingsDto backend either)
 
 ### Phase 7: Native Image Support (GraalVM)
 - **DONE** — `NativeImageConfig.java` (`com.getpcpanel.graalvm`) — single `@RegisterForReflection(targets={...})` hub registering all 34 command classes, `Commands`, `CommandsType`, `DeviceSet`, `DialCommandParams`
