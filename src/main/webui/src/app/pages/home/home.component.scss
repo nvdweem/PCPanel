@@ -1,218 +1,71 @@
 .home-container { height: 100vh; }
 
-// ── Sidebar ───────────────────────────────────────────────────────────────────
+// ── Sidebar ──────────────────────────────────────────────────────────────────
 .device-sidenav {
-  width: 230px;
+  width: 220px;
   background: #1c1d20 !important;
   border-right: 1px solid #3b3c41;
-
-  .sidebar-title {
-    font-size: 1rem;
-    font-weight: 600;
-    letter-spacing: 1px;
-    min-height: 48px;
-    border-bottom: 1px solid #3b3c41;
-  }
-
-  .sidebar-empty {
-    padding: 16px;
-    color: #666;
-    font-size: 0.85rem;
-    margin: 0;
-  }
+  .sidebar-title { font-size: 0.95rem; font-weight: 600; letter-spacing: 1px; min-height: 48px; border-bottom: 1px solid #3b3c41; }
+  .sidebar-empty { padding: 16px; color: #666; font-size: 0.85rem; margin: 0; }
 }
 
 // ── Main content ──────────────────────────────────────────────────────────────
-.main-content {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: #25262a;
-}
+.main-content { display: flex; flex-direction: column; height: 100%; background: #25262a; }
 
 .main-toolbar {
-  .toolbar-title { font-size: 0.95rem; }
+  .toolbar-title { font-size: 0.92rem; }
   .spacer { flex: 1; }
 }
 
-// ── Empty state ───────────────────────────────────────────────────────────────
+// ── No device ─────────────────────────────────────────────────────────────────
 .no-device-center {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
   .no-device-icon { font-size: 48px; width: 48px; height: 48px; color: #444; }
   .no-device-label { color: #555; font-size: 1rem; letter-spacing: 2px; }
   .no-device-sub { color: #444; font-size: 0.82rem; }
 }
 
 // ── Device area ───────────────────────────────────────────────────────────────
-.device-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: auto;
-}
+.device-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-.device-visual {
+// ── SVG device visual wrapper ─────────────────────────────────────────────────
+.device-visual-wrap {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
-  gap: 1.5rem;
-}
-
-// ── Hardware rows ─────────────────────────────────────────────────────────────
-.pcpanel-row {
-  display: flex;
-  gap: 24px;
-  align-items: flex-end;
-  background: #2d2e33;
-  padding: 24px 32px;
-  border-radius: 12px;
-  border: 1px solid #3b3c41;
-}
-
-// ── Knobs ─────────────────────────────────────────────────────────────────────
-.knob-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-
-  &:hover .knob { box-shadow: 0 0 0 3px #ffc94040; border-color: #ffc94080; }
-  &.active .knob { border-color: #ffc940; box-shadow: 0 0 0 3px #ffc94060; }
-}
-
-.knob {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 38% 33%, #46474e, #0f1012);
-  border: 2px solid #4a4b52;
-  position: relative;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  // rotation is applied via [style.transform] in the template
-}
-
-.knob-dot {
-  position: absolute;
-  bottom: 7px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #fff;
-  opacity: 0.9;
-}
-
-// ── Sliders ───────────────────────────────────────────────────────────────────
-.slider-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-
-  &:hover .slider-track { border-color: #ffc94080; }
-  &.active .slider-track { border-color: #ffc940; }
-}
-
-.slider-track {
-  width: 24px;
-  height: 100px;
-  background: #1c1d20;
-  border: 1px solid #4a4b52;
-  border-radius: 12px;
-  position: relative;
-  transition: border-color 0.15s;
-}
-
-.slider-thumb {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 20px;
-  height: 16px;
-  background: #3b3c41;
-  border: 1px solid #5a5b62;
-  border-radius: 3px;
-  transition: top 0.1s, background 0.15s;
-
-  .slider-container.active & { background: #ffc940; border-color: #ffc940; }
-}
-
-.knob-label {
-  font-size: 0.7rem;
-  color: #9a9a9a;
-  max-width: 72px;
-  text-align: center;
-  white-space: nowrap;
+  padding: 16px;
+  min-height: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
+
+  // The SVG components fill this area (maintaining aspect ratio via viewBox)
+  app-pcpanel-pro, app-pcpanel-mini, app-pcpanel-rgb {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    max-height: 100%;
+    display: block;
+  }
 }
 
-// ── Buttons ───────────────────────────────────────────────────────────────────
-.button-row {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.btn-control {
-  min-width: 80px;
-  max-width: 130px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.78rem;
-  &.active { border-color: #ffc940 !important; color: #ffc940 !important; }
-}
-
-.hint-text { color: #555; font-size: 0.82rem; text-align: center; margin: 0; }
+.hint-text { color: #555; font-size: 0.78rem; text-align: center; margin: 4px 0 0; }
 
 // ── Bottom bar ────────────────────────────────────────────────────────────────
 .bottom-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 16px;
-  background: #1c1d20;
-  border-top: 1px solid #3b3c41;
-  gap: 1rem;
-  flex-wrap: wrap;
-
-  .version-label { font-size: 0.8rem; color: #555; }
-
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: 8px 16px; background: #1c1d20; border-top: 1px solid #3b3c41; flex-wrap: wrap;
+  .version-label { font-size: 0.78rem; color: #555; }
   .brightness-area {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    flex: 1;
-    min-width: 160px;
-    max-width: 260px;
-
+    display: flex; align-items: center; gap: 4px; flex: 1; min-width: 150px; max-width: 240px;
     .brightness-icon { font-size: 18px; width: 18px; height: 18px; color: #888; }
     .brightness-slider { flex: 1; }
     .brightness-value { font-size: 0.78rem; color: #999; min-width: 32px; text-align: right; }
   }
-
   .profile-area {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
+    display: flex; align-items: center; gap: 8px;
     .profile-field {
       width: 160px;
-      // hide subscript wrapper to save vertical space
       ::ng-deep .mat-mdc-form-field-subscript-wrapper { display: none; }
     }
   }

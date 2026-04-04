@@ -1,135 +1,94 @@
 <mat-sidenav-container class="home-container">
+  <!-- ── Device list sidebar ──────────────────────────────────────────── -->
   <mat-sidenav mode="side" opened class="device-sidenav">
     <mat-toolbar class="sidebar-title">PCPanel</mat-toolbar>
-
-    @if (devices.length === 0) {
-      <p class="sidebar-empty">No devices connected</p>
-    }
-
+    <p *ngIf="devices.length === 0" class="sidebar-empty">No devices connected</p>
     <mat-nav-list>
-      @for (device of devices; track device.serial) {
-        <mat-list-item
+      <mat-list-item *ngFor="let device of devices"
           [activated]="selectedSerial === device.serial"
           (click)="selectDevice(device)">
-          <span matListItemTitle>{{ device.displayName }}</span>
-          <span matListItemLine>{{ friendlyType(device.deviceType) }}</span>
-        </mat-list-item>
-      }
+        <span matListItemTitle>{{ device.displayName }}</span>
+        <span matListItemLine>{{ friendlyType(device.deviceType) }}</span>
+      </mat-list-item>
     </mat-nav-list>
   </mat-sidenav>
 
+  <!-- ── Main area ────────────────────────────────────────────────────── -->
   <mat-sidenav-content class="main-content">
     <mat-toolbar class="main-toolbar">
-      <span class="toolbar-title">
-        @if (selectedDevice) { {{ selectedDevice.displayName }} }
-      </span>
+      <span class="toolbar-title">{{ selectedDevice?.displayName }}</span>
       <span class="spacer"></span>
       <button mat-icon-button routerLink="/settings" aria-label="Settings" matTooltip="Settings">
         <mat-icon>settings</mat-icon>
       </button>
     </mat-toolbar>
 
-    @if (!selectedDevice) {
-      <div class="no-device-center">
-        <mat-icon class="no-device-icon">devices</mat-icon>
-        <span class="no-device-label">NO DEVICES CONNECTED</span>
-        <span class="no-device-sub">Connect a PCPanel device via USB</span>
+    <!-- No device selected -->
+    <div *ngIf="!selectedDevice" class="no-device-center">
+      <mat-icon class="no-device-icon">devices</mat-icon>
+      <span class="no-device-label">NO DEVICES CONNECTED</span>
+      <span class="no-device-sub">Connect a PCPanel device via USB</span>
+    </div>
+
+    <!-- Device panel -->
+    <div *ngIf="selectedDevice" class="device-area">
+
+      <!-- SVG device visual - fills available space, click knobs/sliders to configure -->
+      <div class="device-visual-wrap">
+        <app-pcpanel-pro *ngIf="isPro"
+          [analogValues]="analogValues"
+          [lightingConfig]="lightingConfig"
+          [activeDial]="activeDial"
+          [dialLabels]="dialLabels"
+          (dialClick)="onDialClick($event)">
+        </app-pcpanel-pro>
+        <app-pcpanel-mini *ngIf="isMini"
+          [analogValues]="analogValues"
+          [lightingConfig]="lightingConfig"
+          [activeDial]="activeDial"
+          [dialLabels]="dialLabels"
+          (dialClick)="onDialClick($event)">
+        </app-pcpanel-mini>
+        <app-pcpanel-rgb *ngIf="isRgb"
+          [analogValues]="analogValues"
+          [lightingConfig]="lightingConfig"
+          [activeDial]="activeDial"
+          [dialLabels]="dialLabels"
+          (dialClick)="onDialClick($event)">
+        </app-pcpanel-rgb>
+        <p class="hint-text">Click a dial or slider to configure it</p>
       </div>
-    }
 
-    @if (selectedDevice) {
-      <div class="device-area">
+      <!-- Bottom bar: brightness + profile selector + actions -->
+      <div class="bottom-bar">
+        <span class="version-label">PCPanel Editor</span>
 
-        <!-- Hardware visual -->
-        <div class="device-visual">
-
-          <!-- Row 1: knobs (all devices have knobs at the top) -->
-          @if (knobIndices.length > 0) {
-            <div class="pcpanel-row pcpanel-knobs">
-              @for (i of knobIndices; track i) {
-                <div class="knob-container"
-                     [class.active]="editingDial === i"
-                     (click)="editDial(i)"
-                     [matTooltip]="getDialLabel(i)">
-                  <div class="knob" [style.transform]="knobRotation(i)">
-                    <span class="knob-dot"></span>
-                  </div>
-                  <div class="knob-label">{{ getDialLabel(i) }}</div>
-                </div>
-              }
-            </div>
-          }
-
-          <!-- Row 2: sliders (Pro only) -->
-          @if (sliderIndices.length > 0) {
-            <div class="pcpanel-row pcpanel-sliders">
-              @for (i of sliderIndices; track i) {
-                <div class="slider-container"
-                     [class.active]="editingDial === i"
-                     (click)="editDial(i)"
-                     [matTooltip]="getDialLabel(i)">
-                  <div class="slider-track">
-                    <div class="slider-thumb" [style.top]="sliderThumbTop(i)"></div>
-                  </div>
-                  <div class="knob-label">{{ getDialLabel(i) }}</div>
-                </div>
-              }
-            </div>
-          }
-
-          <!-- Buttons row -->
-          @if (selectedDevice.buttonCount > 0) {
-            <div class="button-row">
-              @for (i of range(selectedDevice.buttonCount); track i) {
-                <button mat-stroked-button
-                        class="btn-control"
-                        [class.active]="editingButton === i"
-                        [matTooltip]="getButtonLabel(i)"
-                        (click)="editButton(i)">
-                  {{ getButtonLabel(i) }}
-                </button>
-              }
-            </div>
-          }
-
-          <p class="hint-text">Click a control to configure it</p>
+        <div *ngIf="lightingConfig" class="brightness-area">
+          <mat-icon class="brightness-icon">brightness_medium</mat-icon>
+          <mat-slider min="0" max="100" step="1" class="brightness-slider">
+            <input matSliderThumb
+                   [value]="lightingConfig.globalBrightness"
+                   (valueChange)="onBrightnessChange($event)" />
+          </mat-slider>
+          <span class="brightness-value">{{ lightingConfig.globalBrightness }}%</span>
         </div>
 
-        <!-- Bottom bar -->
-        <div class="bottom-bar">
-          <span class="version-label">PCPanel Editor</span>
-
-          @if (lightingConfig) {
-            <div class="brightness-area">
-              <mat-icon class="brightness-icon">brightness_medium</mat-icon>
-              <mat-slider min="0" max="100" step="1" class="brightness-slider">
-                <input matSliderThumb
-                       [value]="lightingConfig.globalBrightness"
-                       (valueChange)="onBrightnessChange($event)" />
-              </mat-slider>
-              <span class="brightness-value">{{ lightingConfig.globalBrightness }}%</span>
-            </div>
-          }
-
-          <div class="profile-area">
-            <mat-form-field appearance="outline" class="profile-field">
-              <mat-label>Profile</mat-label>
-              <mat-select [value]="selectedDevice.currentProfile" (valueChange)="switchProfile($event)">
-                @for (p of selectedDevice.profiles; track p) {
-                  <mat-option [value]="p">{{ p }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-            <button mat-stroked-button [routerLink]="['/lighting', selectedDevice.serial]" matTooltip="Configure lighting">
-              <mat-icon>light_mode</mat-icon>
-            </button>
-            <button mat-raised-button color="primary" [routerLink]="['/device', selectedDevice.serial]" matTooltip="Advanced configuration">
-              Advanced
-            </button>
-          </div>
+        <div class="profile-area">
+          <mat-form-field appearance="outline" class="profile-field">
+            <mat-label>Profile</mat-label>
+            <mat-select [value]="selectedDevice.currentProfile" (valueChange)="switchProfile($event)">
+              <mat-option *ngFor="let p of selectedDevice.profiles" [value]="p">{{ p }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <button mat-stroked-button [routerLink]="['/lighting', selectedDevice.serial]" matTooltip="Configure lighting">
+            <mat-icon>light_mode</mat-icon>
+          </button>
+          <button mat-raised-button color="primary" [routerLink]="['/device', selectedDevice.serial]" matTooltip="Advanced configuration">
+            Advanced
+          </button>
         </div>
-
       </div>
-    }
+
+    </div>
   </mat-sidenav-content>
 </mat-sidenav-container>

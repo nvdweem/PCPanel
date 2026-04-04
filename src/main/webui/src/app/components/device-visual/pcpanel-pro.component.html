@@ -1,0 +1,104 @@
+<svg class="device-svg" viewBox="0 0 480 610" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="pro-knob-outer" x1="0.506" y1="0" x2="0.500" y2="1">
+      <stop offset="0%" stop-color="#3b3b3b"/>
+      <stop offset="0.77%" stop-color="#61656b"/>
+      <stop offset="100%" stop-color="#acb4c1"/>
+    </linearGradient>
+    <linearGradient id="pro-knob-inner" x1="0.52" y1="0" x2="0.46" y2="1">
+      <stop offset="0%" stop-color="#acb4c1"/>
+      <stop offset="100%" stop-color="#61656b"/>
+    </linearGradient>
+    <linearGradient id="pro-slider-bg" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#61656b"/>
+      <stop offset="100%" stop-color="#acb4c1"/>
+    </linearGradient>
+    <linearGradient id="pro-slider-track" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#acb4c1"/>
+      <stop offset="100%" stop-color="#61656b"/>
+    </linearGradient>
+    <linearGradient id="pro-body-edge" x1="1" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#5d6066"/>
+      <stop offset="0.77%" stop-color="#5d6066"/>
+      <stop offset="100%" stop-color="#5d6066" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ── Device body (body paths scaled in inner pane coordinate space) ── -->
+  <g transform="matrix(1.25,0,0,1.25,5,2.5)">
+    <path fill="#acb4c1" d="M346.27,0H50.32A30.13,30.13,0,0,0,32.85,5.57c-.24.15-.48.29-.72.45L13.66,18.18A30.27,30.27,0,0,0,0,43.48V451.93a30.31,30.31,0,0,0,30.28,30.28h296a30.13,30.13,0,0,0,17-5.24l18.47-12.17.32-.22a30.3,30.3,0,0,0,14.52-25.85V30.28A30.32,30.32,0,0,0,346.27,0Z"/>
+    <path fill="url(#pro-body-edge)" d="M375.38,31.06V439.51a30.27,30.27,0,0,1-13.66,25.29c-2.6,1.74-18.48,11.64-18.48,11.64A30.25,30.25,0,0,0,356.61,451.23V43.48a29.73,29.73,0,0,0-.67-6.3l19.38-9A27.73,27.73,0,0,1,375.38,31.06Z"/>
+    <path fill="#212121" d="M353.68,43.48V451.93a27.45,27.45,0,0,1-27.45,27.45h-296A27.45,27.45,0,0,1,2.83,451.93V43.48A27.45,27.45,0,0,1,30.28,16h296a27.43,27.43,0,0,1,27,22.38A26.49,26.49,0,0,1,353.68,43.48Z"/>
+    <!-- Slider guide rails -->
+    <rect x="63.19" y="248.28" width="7.72" height="203.87" fill="#7f7f7f"/>
+    <rect x="137.33" y="248.28" width="7.72" height="203.87" fill="#7f7f7f"/>
+    <rect x="211.46" y="248.28" width="7.72" height="203.87" fill="#7f7f7f"/>
+    <rect x="285.6" y="248.28" width="7.72" height="203.87" fill="#7f7f7f"/>
+  </g>
+
+  <!-- ── Knob LED rings ──────────────────────────────────────────────────── -->
+  <g *ngFor="let ki of knobIndices" [attr.transform]="knobRingTransform(ki)">
+    <path [attr.fill]="knobRingColor(ki)" [attr.d]="knobRingPath" opacity="0.9"/>
+  </g>
+
+  <!-- ── Knobs ─────────────────────────────────────────────────────────── -->
+  <g *ngFor="let ki of knobIndices" [attr.transform]="knobTransform(ki)"
+     (click)="onDialClick(ki)" style="cursor:pointer">
+    <!-- Shadow -->
+    <circle cx="34" cy="36" r="30" opacity="0.25" fill="black"/>
+    <!-- Outer body -->
+    <circle cx="30" cy="30" r="30" fill="url(#pro-knob-outer)"/>
+    <!-- Inner face -->
+    <circle cx="30" cy="30" r="23" fill="url(#pro-knob-inner)" stroke="#a7aeb7" stroke-width="0.5"/>
+    <!-- Active highlight ring -->
+    <circle *ngIf="isActive(ki)" cx="30" cy="30" r="30" fill="none" stroke="#ffc940" stroke-width="3" opacity="0.9"/>
+    <!-- Rotating indicator (rotates around center 30,30) -->
+    <g [attr.transform]="'rotate(' + knobAngle(ki) + ',30,30)'">
+      <rect x="28" y="42" width="4" height="10" fill="#3c3f42"/>
+      <circle cx="30" cy="42" r="2" fill="#3c3f42" stroke="#2b2b2b" stroke-width="0.5"/>
+    </g>
+    <!-- Label -->
+    <text x="30" y="73" text-anchor="middle" font-size="7" fill="#9a9a9a" font-family="sans-serif">{{ label(ki) }}</text>
+    <!-- Invisible click area -->
+    <circle cx="30" cy="30" r="32" fill="transparent"/>
+  </g>
+
+  <!-- ── Slider LED columns ─────────────────────────────────────────────── -->
+  <g *ngFor="let si of sliderIndices" [attr.transform]="sliderLightTransform(si - 5)">
+    <g *ngFor="let seg of sliderLightSegs">
+      <rect x="3" [attr.y]="(4 - seg) * 46 + 2" width="35" height="40"
+            [attr.fill]="sliderSegColor(si, seg)" rx="3" opacity="0.85"/>
+    </g>
+  </g>
+
+  <!-- ── Sliders ───────────────────────────────────────────────────────── -->
+  <g *ngFor="let si of sliderIndices" [attr.transform]="sliderTransform(si - 5)"
+     (click)="onDialClick(si)" style="cursor:pointer">
+    <!-- Track background -->
+    <rect x="0" y="0" width="30" height="225" fill="url(#pro-slider-bg)" rx="4"/>
+    <rect x="5" y="10" width="20" height="205" fill="url(#pro-slider-track)" rx="3"/>
+    <!-- Active border -->
+    <rect *ngIf="isActive(si)" x="0" y="0" width="30" height="225"
+          fill="none" stroke="#ffc940" stroke-width="2" rx="4"/>
+    <!-- Movable thumb -->
+    <g [attr.transform]="'translate(0,' + thumbY(si) + ')'">
+      <rect x="1" y="0" width="28" height="20" fill="#3c3f42" stroke="#5a5b62" stroke-width="0.5" rx="3"/>
+      <rect x="5" y="8" width="20" height="4" fill="#61656b" rx="1"/>
+    </g>
+    <!-- Label -->
+    <text x="15" y="240" text-anchor="middle" font-size="7" fill="#9a9a9a" font-family="sans-serif">{{ label(si) }}</text>
+    <!-- Click area -->
+    <rect x="0" y="0" width="30" height="225" fill="transparent"/>
+  </g>
+
+  <!-- ── Slider labels (S markers next to slider tops) ─────────────────── -->
+  <g *ngFor="let si of sliderIndices">
+    <g [attr.transform]="'translate(' + (76 + (si-5)*91 + 34) + ',310)'">
+      <path [attr.fill]="knobRingColor(si)" [attr.d]="sliderLabelPath" transform="scale(2.5)"/>
+    </g>
+  </g>
+
+  <!-- ── Model label ──────────────────────────────────────────────────── -->
+  <text x="240" y="598" text-anchor="middle" font-family="Arial,sans-serif" font-size="11"
+        letter-spacing="4" fill="rgba(255,255,255,0.35)" font-weight="bold">PCPANEL PRO</text>
+</svg>

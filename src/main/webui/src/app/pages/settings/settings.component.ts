@@ -10,7 +10,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MqttSettings, SettingsDto } from '../../models/models';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MqttSettings, SettingsDto, WaveLinkSettings } from '../../models/models';
 import { SettingsService } from '../../services/settings.service';
 
 @Component({
@@ -21,29 +22,30 @@ import { SettingsService } from '../../services/settings.service';
     MatToolbarModule, MatTabsModule, MatCheckboxModule,
     MatFormFieldModule, MatInputModule, MatSelectModule,
     MatButtonModule, MatIconModule, MatProgressSpinnerModule,
+    MatSnackBarModule,
   ],
   templateUrl: './settings.component.html',
-  styleUrl: './settings.component.scss'
+  styleUrl: './settings.component.scss',
 })
 export class SettingsComponent implements OnInit {
   settings: SettingsDto | null = null;
   mqtt: MqttSettings | null = null;
+  waveLink: WaveLinkSettings | null = null;
 
-  constructor(private settingsService: SettingsService) {}
+  constructor(private settingsService: SettingsService, private snack: MatSnackBar) {}
 
   ngOnInit(): void {
     this.settingsService.getSettings().subscribe(s => this.settings = s);
     this.settingsService.getMqttSettings().subscribe(m => this.mqtt = m);
+    this.settingsService.getWaveLinkSettings().subscribe(w => this.waveLink = w);
   }
 
   save(): void {
     if (!this.settings) return;
-    this.settingsService.updateSettings(this.settings).subscribe(() => {
-      if (this.mqtt) {
-        this.settingsService.updateMqttSettings(this.mqtt).subscribe(() => alert('Settings saved!'));
-      } else {
-        alert('Settings saved!');
-      }
-    });
+    const calls: Promise<void>[] = [];
+    calls.push(this.settingsService.updateSettings(this.settings).toPromise() as Promise<void>);
+    if (this.mqtt) calls.push(this.settingsService.updateMqttSettings(this.mqtt).toPromise() as Promise<void>);
+    if (this.waveLink) calls.push(this.settingsService.updateWaveLinkSettings(this.waveLink).toPromise() as Promise<void>);
+    Promise.all(calls).then(() => this.snack.open('Settings saved', 'OK', { duration: 2000 }));
   }
 }

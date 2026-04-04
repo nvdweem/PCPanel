@@ -229,3 +229,7 @@ export interface WsButtonEvent extends WsEvent {
   button: number;
   pressed: boolean;
 }
+
+export interface WaveLinkSettings {
+  enabled: boolean;
+}

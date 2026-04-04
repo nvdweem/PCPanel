@@ -1,0 +1,65 @@
+<svg class="device-svg" viewBox="0 0 600 170" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="rgb-knob-outer" x1="0.467" y1="0" x2="0.486" y2="1">
+      <stop offset="0%" stop-color="#3b3b3b"/><stop offset="0.77%" stop-color="#3b3b3b"/>
+      <stop offset="100%" stop-color="#0d0f0f"/>
+    </linearGradient>
+    <linearGradient id="rgb-knob-inner" x1="0.529" y1="0" x2="0.543" y2="1">
+      <stop offset="0%" stop-color="#2c2e30"/><stop offset="100%" stop-color="#39393f"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ── LED backgrounds (behind knobs, colored rectangles 102x95) ────── -->
+  <!-- lightPanes at x=40, y=55, prefW=428, 4 cols of 107 each -->
+  <g *ngFor="let ki of knobIndices">
+    <rect [attr.x]="40 + ki * 107" y="55" width="102" height="95"
+          [attr.fill]="ledColor(ki)" opacity="0.85"/>
+  </g>
+
+  <!-- ── Device body ────────────────────────────────────────────────────── -->
+  <!-- Inner pane: layoutX=223, layoutY=70, prefW=600, prefH=170, scaleX=1.725, scaleY=1.76 -->
+  <!-- matrix(1.725,0,0,1.76,5.5,5.4) -->
+  <g transform="matrix(1.725,0,0,1.76,5.5,5.4)">
+    <!-- Main body with 4 circular cutouts for knobs -->
+    <path fill="#25262a" d="M0,17.5V88.4H289.1V17.5ZM49.3,82.8A26.9,26.9,0,1,1,76.2,55.9,26.91,26.91,0,0,1,49.3,82.8Zm63.4,0a26.9,26.9,0,1,1,26.9-26.9h0A27,27,0,0,1,112.7,82.8Zm63.3,0a26.9,26.9,0,1,1,26.9-26.9h0A26.91,26.91,0,0,1,176,82.8Zm63.4,0a26.9,26.9,0,1,1,26.9-26.9h0a27,27,0,0,1-26.9,26.9Z"/>
+    <!-- Top scale arc for knob 1 -->
+    <path fill="#868993" d="M49.3,24.5A31.21,31.21,0,0,0,19.7,45.7l1.7.6a29.47,29.47,0,0,1,55.8,0l1.7-.6A31.34,31.34,0,0,0,49.3,24.5Z"/>
+    <rect fill="#868993" height="1.4" width="6.3" x="19.7" y="25.6"/>
+    <polygon fill="#868993" points="79.4,25.6,76.9,25.6,76.9,23.2,75.5,23.2,75.5,25.6,73.1,25.6,73.1,27,75.5,27,75.5,29.5,76.9,29.5,76.9,27,79.4,27"/>
+    <!-- Top scale arc for knob 2 -->
+    <path fill="#868993" d="M112.7,24.5A31.43,31.43,0,0,0,83,45.7l1.7.6a29.47,29.47,0,0,1,55.8,0l1.7-.6A31.31,31.31,0,0,0,112.7,24.5Z"/>
+    <rect fill="#868993" height="1.4" width="6.3" x="83" y="25.6"/>
+    <polygon fill="#868993" points="142.8,25.6,140.3,25.6,140.3,23.2,138.9,23.2,138.9,25.6,136.4,25.6,136.4,27,138.9,27,138.9,29.5,140.3,29.5,140.3,27,142.8,27"/>
+    <!-- Top scale arc for knob 3 -->
+    <path fill="#868993" d="M176,24.5A31.43,31.43,0,0,0,146.3,45.7l1.7.6a29.47,29.47,0,0,1,55.8,0l1.7-.6A31.31,31.31,0,0,0,176,24.5Z"/>
+    <rect fill="#868993" height="1.4" width="6.3" x="146.3" y="25.6"/>
+    <polygon fill="#868993" points="206.1,25.6,203.6,25.6,203.6,23.2,202.2,23.2,202.2,25.6,199.7,25.6,199.7,27,202.2,27,202.2,29.5,203.6,29.5,203.6,27,206.1,27"/>
+    <!-- Top scale arc for knob 4 -->
+    <path fill="#868993" d="M239.4,24.5A31.21,31.21,0,0,0,209.8,45.7l1.7.6a29.47,29.47,0,0,1,55.8,0l1.7-.6A31.34,31.34,0,0,0,239.4,24.5Z"/>
+    <rect fill="#868993" height="1.4" width="6.3" x="209.8" y="25.6"/>
+    <polygon fill="#868993" points="269.5,25.6,267,25.6,267,23.2,265.6,23.2,265.6,25.6,263.1,25.6,263.1,27,265.6,27,265.6,29.5,267,29.5,267,27,269.5,27"/>
+  </g>
+
+  <!-- ── Knobs ─────────────────────────────────────────────────────────── -->
+  <g *ngFor="let ki of knobIndices" [attr.transform]="knobTransform(ki)"
+     (click)="onDialClick(ki)" style="cursor:pointer">
+    <!-- Shadow -->
+    <circle cx="34" cy="36" r="30" opacity="0.4" fill="black"/>
+    <!-- Outer body -->
+    <circle cx="30" cy="30" r="30" fill="url(#rgb-knob-outer)" stroke="#3a3a3a" stroke-width="0"/>
+    <!-- Inner face -->
+    <circle cx="30" cy="30" r="27" fill="url(#rgb-knob-inner)" stroke="#3a3a3a" stroke-width="0.5"/>
+    <!-- Active ring -->
+    <circle *ngIf="isActive(ki)" cx="30" cy="30" r="30" fill="none" stroke="#ffc940" stroke-width="3" opacity="0.9"/>
+    <!-- Rotating indicator dot -->
+    <g [attr.transform]="'rotate(' + knobAngle(ki) + ',30,30)'">
+      <circle cx="30" cy="50" r="3" fill="white" stroke="#2b2b2b" stroke-width="0.5"/>
+    </g>
+    <!-- Label -->
+    <text x="30" y="73" text-anchor="middle" font-size="8" fill="#9a9a9a" font-family="sans-serif">{{ label(ki) }}</text>
+    <circle cx="30" cy="30" r="32" fill="transparent"/>
+  </g>
+
+  <text x="300" y="162" text-anchor="middle" font-family="Arial,sans-serif" font-size="10"
+        letter-spacing="4" fill="rgba(255,255,255,0.35)" font-weight="bold">PCPANEL RGB</text>
+</svg>

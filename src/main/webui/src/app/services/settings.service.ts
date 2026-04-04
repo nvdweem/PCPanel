@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { MqttSettings, SettingsDto } from '../models/models';
+import { MqttSettings, SettingsDto, WaveLinkSettings } from '../models/models';
 
 @Injectable({ providedIn: 'root' })
 export class SettingsService {
@@ -23,5 +23,13 @@ export class SettingsService {
 
   updateMqttSettings(settings: MqttSettings): Observable<void> {
     return this.http.put<void>(`${this.base}/mqtt`, settings);
+  }
+
+  getWaveLinkSettings(): Observable<WaveLinkSettings> {
+    return this.http.get<WaveLinkSettings>(`${this.base}/wavelink`);
+  }
+
+  updateWaveLinkSettings(settings: WaveLinkSettings): Observable<void> {
+    return this.http.put<void>(`${this.base}/wavelink`, settings);
   }
 }
