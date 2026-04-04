@@ -40,6 +40,14 @@ public class IconResource {
         } catch (IOException e) {
             throw new NotFoundException();
         }
+        // Restrict to files with known safe extensions to prevent arbitrary file access
+        var name = file.getName().toLowerCase();
+        var allowed = name.endsWith(".exe") || name.endsWith(".lnk") || name.endsWith(".ico")
+                   || name.endsWith(".png") || name.endsWith(".jpg") || name.endsWith(".jpeg")
+                   || name.endsWith(".bmp") || name.endsWith(".gif");
+        if (!allowed) {
+            throw new NotFoundException();
+        }
         if (!file.isFile()) {
             throw new NotFoundException();
         }
