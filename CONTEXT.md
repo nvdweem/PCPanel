@@ -7,17 +7,33 @@ Last updated: 2026-04-04
 
 ## 🖥️ Native Build Status (Windows)
 
-**Most recent CI run**: Workflow run `23977652879` on branch `copilot/migration-to-quarkus-again`
-was triggered but resulted in `action_required` (GitHub requires owner approval when a bot
-modifies workflow files). The build jobs did **not** execute.
+**Status**: ✅ **Working** — verified 2026-04-06, produces `target/pcpanel-1.8-SNAPSHOT-runner.exe` (~55 MB)
 
-**Exe size**: Not yet available — no successful native image CI run has completed on this branch.
-The old Spring Boot MSI artifact on `main` was ~82 MB (compressed zip).
+**Build time**: ~1 min 12 s total (46 s for native-image generation)
+
+**Toolchain required**:
+- **JAVA_HOME**: any Java 25 JDK (e.g. `liberica-full-25.0.1`)
+- **GRAALVM_HOME**: `C:\Users\Niels\.jdks\bellsoft-liberica-vm-full-openjdk25-25.0.2` (Liberica NIK 25 — provides `native-image`). The `liberica-full` JDK does **not** ship `native-image`.
+- **C compiler**: Visual Studio 2026 — auto-detected via `vswhere.exe` (no manual `vcvars64.bat` needed on GraalVM 23+)
+
+**Build command** (standard Maven, no wrapper scripts):
+```bat
+$env:GRAALVM_HOME = "C:\Users\Niels\.jdks\bellsoft-liberica-vm-full-openjdk25-25.0.2"
+./mvnw quarkus:build -Pnative -DskipTests
+```
+
+**How it works**: the `native` Maven profile in `pom.xml` propagates `${env.GRAALVM_HOME}` as the
+`quarkus.native.graalvm-home` system property (ordinal 400). When `GRAALVM_HOME` is unset, the
+property resolves to `""` and Quarkus falls back to `JAVA_HOME`. This means CI works automatically
+as long as `graalvm/setup-graalvm@v1` sets `GRAALVM_HOME`.
 
 **Native image fixes applied** (commit `f3d70a2`):
 - Added WaveLink command + RPC + model classes to `NativeImageConfig.java` reflection registration
 - Added `jnativehook` to `--initialize-at-run-time` in `application.properties`
 - Removed `batik-transcoder` dependency (incompatible with native image)
+
+**pom.xml fix** (2026-04-06):
+- Renamed `quarkus-junit5` → `quarkus-junit` (artifact relocated in Quarkus 3.31, was causing WARNING)
 
 **Workflow**: `maven-build-installer-windows.yml` — "Build Native Image", triggers on `main` and
 `releases/**` and via `workflow_dispatch`. Uses GraalVM CE Java 25. Produces `*-runner.exe`
@@ -181,9 +197,16 @@ The Angular frontend has scaffolding but is incomplete vs. the plan:
 ## Build Commands (verified)
 
 ```bash
-# Java backend
+# Java backend (JVM mode)
 mvn compile          # fast compile check
 mvn package          # full JVM build
+
+# Native image (Windows / Linux)
+# Requires GRAALVM_HOME set to a JDK that includes native-image (Liberica NIK, GraalVM CE, etc.)
+# MSVC is auto-detected on Windows via vswhere.exe — no manual vcvars64.bat needed.
+$env:GRAALVM_HOME = "C:\Users\Niels\.jdks\bellsoft-liberica-vm-full-openjdk25-25.0.2"
+./mvnw quarkus:build -Pnative -DskipTests
+# Output: target/pcpanel-1.8-SNAPSHOT-runner.exe (~55 MB), ~1:12 min
 
 # Angular frontend
 cd src/main/webui

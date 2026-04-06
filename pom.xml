@@ -368,6 +368,7 @@
             <id>native</id>
             <properties>
                 <quarkus.native.enabled>true</quarkus.native.enabled>
+                <quarkus.native.graalvm-home>${env.GRAALVM_HOME}</quarkus.native.graalvm-home>
             </properties>
         </profile>
     </profiles>
