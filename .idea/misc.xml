@@ -20,6 +20,11 @@
         <option value="native" />
       </list>
     </option>
+    <option name="disabledProfiles">
+      <list>
+        <option value="not-github-build" />
+      </list>
+    </option>
   </component>
   <component name="NullableNotNullManager">
     <option name="myDefaultNullable" value="javax.annotation.Nullable" />

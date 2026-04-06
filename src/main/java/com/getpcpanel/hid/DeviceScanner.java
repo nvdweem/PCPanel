@@ -36,7 +36,11 @@ public class DeviceScanner implements HidServicesListener {
 
     // Not @PostConstruct because the startup sequence needs to control when this runs
     public void onStart(@Observes StartupEvent ev) {
-        init();
+        try {
+            init();
+        } catch (Throwable e) {
+            log.error("Failed to initialize HID services – device scanning will be unavailable: {}", e.getMessage(), e);
+        }
     }
 
     public void init() {

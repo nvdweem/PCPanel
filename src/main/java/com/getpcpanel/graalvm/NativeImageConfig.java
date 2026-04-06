@@ -2,6 +2,14 @@ package com.getpcpanel.graalvm;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
+import org.hid4java.jna.HidApi;
+import org.hid4java.jna.HidApiLibrary;
+import org.hid4java.jna.HidDeviceInfoStructure;
+import org.hid4java.jna.HidDeviceStructure;
+import org.hid4java.jna.HidrawHidApiLibrary;
+import org.hid4java.jna.LibusbHidApiLibrary;
+import org.hid4java.jna.WideStringBuffer;
+
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.CommandsType;
 import com.getpcpanel.commands.DeviceSet;
@@ -75,6 +83,20 @@ import dev.niels.wavelink.impl.rpc.WaveLinkSetMixCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkSetOutputDeviceCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkSetSubscription;
 import dev.niels.wavelink.impl.rpc.WaveLinkUnknownCommand;
+import com.getpcpanel.profile.DeviceSave;
+import com.getpcpanel.profile.KnobSetting;
+import com.getpcpanel.profile.LightingConfig;
+import com.getpcpanel.profile.MqttSettings;
+import com.getpcpanel.profile.OSCBinding;
+import com.getpcpanel.profile.OSCConnectionInfo;
+import com.getpcpanel.profile.OverlayPosition;
+import com.getpcpanel.profile.Profile;
+import com.getpcpanel.profile.Save;
+import com.getpcpanel.profile.SingleKnobLightingConfig;
+import com.getpcpanel.profile.SingleLogoLightingConfig;
+import com.getpcpanel.profile.SingleSliderLabelLightingConfig;
+import com.getpcpanel.profile.SingleSliderLightingConfig;
+import com.getpcpanel.profile.WaveLinkSettings;
 
 /**
  * GraalVM native image reflection hints.
@@ -83,9 +105,22 @@ import dev.niels.wavelink.impl.rpc.WaveLinkUnknownCommand;
  * every concrete subtype must be registered for reflection.  All profile/command model classes that
  * are serialised/deserialised by Jackson are collected here.
  *
- * <p>JNA interfaces are covered by {@code reflect-config.json}.
+ * <p>hid4java JNA structures and library interfaces are also registered here for JNA reflective
+ * instantiation and field access.
  */
 @RegisterForReflection(targets = {
+    // hid4java JNA library + structure classes (JNA needs reflection to instantiate structures)
+    HidApi.class,
+    HidApiLibrary.class,
+    HidDeviceInfoStructure.class,
+    HidDeviceStructure.class,
+    HidrawHidApiLibrary.class,
+    LibusbHidApiLibrary.class,
+    WideStringBuffer.class,
+
+    // MQTT Home Assistant discovery payload classes (serialised to JSON by Jackson)
+    // Note: these records are package-private so referenced by classNames below
+
     // Command type hierarchy
     Command.class,
     CommandBrightness.class,
@@ -170,6 +205,37 @@ import dev.niels.wavelink.impl.rpc.WaveLinkUnknownCommand;
     CommandsType.class,
     DeviceSet.class,
     DialCommandParams.class,
+
+    // Profile / save model classes (Jackson deserialization of user save file)
+    Save.class,
+    DeviceSave.class,
+    Profile.class,
+    LightingConfig.class,
+    LightingConfig.LightingMode.class,
+    SingleKnobLightingConfig.class,
+    SingleKnobLightingConfig.SINGLE_KNOB_MODE.class,
+    SingleSliderLightingConfig.class,
+    SingleSliderLightingConfig.SINGLE_SLIDER_MODE.class,
+    SingleSliderLabelLightingConfig.class,
+    SingleSliderLabelLightingConfig.SINGLE_SLIDER_LABEL_MODE.class,
+    SingleLogoLightingConfig.class,
+    SingleLogoLightingConfig.SINGLE_LOGO_MODE.class,
+    KnobSetting.class,
+    MqttSettings.class,
+    MqttSettings.HomeAssistantSettings.class,
+    WaveLinkSettings.class,
+    OSCConnectionInfo.class,
+    OSCBinding.class,
+    OverlayPosition.class,
+})
+@RegisterForReflection(classNames = {
+    // MQTT Home Assistant discovery records (package-private inner classes – referenced by name)
+    "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantAvailability",
+    "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantButtonConfig",
+    "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantButtonEventConfig",
+    "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantDevice",
+    "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantLightConfig",
+    "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantNumberConfig",
 })
 public class NativeImageConfig {
     private NativeImageConfig() {
