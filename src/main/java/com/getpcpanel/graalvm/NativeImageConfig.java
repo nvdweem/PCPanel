@@ -227,8 +227,7 @@ import com.getpcpanel.profile.WaveLinkSettings;
     OSCConnectionInfo.class,
     OSCBinding.class,
     OverlayPosition.class,
-})
-@RegisterForReflection(classNames = {
+}, classNames = {
     // MQTT Home Assistant discovery records (package-private inner classes – referenced by name)
     "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantAvailability",
     "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantButtonConfig",
