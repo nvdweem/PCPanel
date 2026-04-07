@@ -349,3 +349,127 @@ Key metrics:
 3. Inner classes in Java are separate classes — must be listed individually
 4. `VoicemeeterInstance$tagVBVMR_AUDIOINFO` (dollar-sign inner class syntax) works fine in
    both application.properties and pom.xml
+
+## SESSION 5 RESUMED (new prompt) - 2026-04-07
+
+### Build 8d executable: SEGFAULT
+
+App starts correctly on port 7654, REST endpoints work (/api/devices returns []), frontend loads.
+But then: **SegfaultHandler caught a segfault in thread com.hivemq.client.mqtt-2-1**
+
+**Crash details:**
+- RIP: `MqttOutgoingQosHandler.run(MqttOutgoingQosHandler.java)` — HiveMQ internal class
+- Crash instruction: `AND RDX, [RAX]` — reading a heap object reference from an array
+- RAX = `0x042f760fa03f5e08` — completely invalid (not a heap pointer)
+- RSI points to `SpscUnboundedArrayQueue` (jctools concurrent queue)
+- R11 has `FlowableFlatMap$InnerSubscriber` (RxJava2 internal)
+- Thread: `com.hivemq.client.mqtt-2-1` (HiveMQ Netty event loop)
+
+**Root Cause:**
+`--initialize-at-run-time=com.hivemq.client.internal.mqtt` was too narrow.
+HiveMQ client also has classes in:
+- `com.hivemq.client.mqtt` (public API)
+- `com.hivemq.client.internal.rx` (RxJava2 integration)
+- `com.hivemq.client.internal.netty` (Netty handlers)
+- `com.hivemq.client.internal.util` (utility classes)
+
+These OTHER packages were still initialized at build time, causing static fields with
+Netty/RxJava2 objects to be stored in the image heap with references that become invalid
+at runtime → corrupted object references → segfault.
+
+Additionally, `io.reactivex` (RxJava2) which HiveMQ uses internally was NOT deferred
+to runtime. Its `FlowableFlatMap$InnerSubscriber` and other classes have Unsafe-based
+atomics that could behave incorrectly if initialized at build time.
+
+**User's MQTT config:** Enabled, connecting to 192.168.178.50:1883
+**Crash trigger:** App loads save → MQTT enabled → connect() → publish "online" → segfault
+
+**Fix Applied (Build 9):**
+- Changed `--initialize-at-run-time=com.hivemq.client.internal.mqtt`
+  → `--initialize-at-run-time=com.hivemq.client` (covers ALL HiveMQ packages)
+- Added `--initialize-at-run-time=io.reactivex` (covers RxJava2 used by HiveMQ)
+- Updated BOTH application.properties AND pom.xml
+
+### Build 9 - Starting
+
+### Build 9 results
+
+**Attempt 9a: `--initialize-at-run-time=com.hivemq.client` (all HiveMQ)**
+- BUILD FAILED: `com.hivemq.client.internal.netty.NettyEventLoopProvider$EpollHolder` references
+  `io.netty.channel.epoll.Epoll` which is Linux-only and not on the classpath
+- LESSON: Can't use package-level runtime-init for `com.hivemq.client` because it includes
+  netty helpers that reference platform-specific Netty classes
+
+**Attempt 9b: Added `io.reactivex` + `org.jctools` + `com.hivemq.client.internal.rx`**
+- BUILD FAILED: `io.reactivex.internal.schedulers.ComputationScheduler` found in image heap
+  (via `MqttClientExecutorConfigImpl.applicationScheduler`) but marked for runtime init
+- LESSON: Can't defer io.reactivex to runtime because HiveMQ's build-time objects reference it
+
+**Attempt 9c: Only `org.jctools` added (no io.reactivex)**
+- BUILD SUCCESS! But runtime crash:
+  ```
+  java.lang.NoSuchFieldException: consumerIndex
+  at org.jctools.util.UnsafeAccess.fieldOffset(UnsafeAccess.java:107)
+  ```
+- jctools runtime init uses `getDeclaredField()` which isn't registered for reflection in native image
+- LESSON: Can't defer org.jctools to runtime — its static init uses reflection for Unsafe offsets
+
+### ROOT CAUSE DISCOVERY 🎯
+
+The **real root cause** of the segfault was found:
+
+1. GraalVM build log warning (previously ignored):
+   ```
+   Warning: RecomputeFieldValue.ArrayIndexScale automatic field value transformation failed.
+   Could not determine the field where the value produced by Unsafe.arrayIndexScale(Class)
+   is stored. Class: org.jctools.util.UnsafeRefArrayAccess
+   ```
+
+2. jctools `UnsafeRefArrayAccess` computes `REF_ELEMENT_SHIFT = log2(Unsafe.arrayIndexScale(Object[].class))`
+
+3. At BUILD time (JDK 25 JVM with compressed oops):
+   - `arrayIndexScale(Object[].class)` = 4 → `REF_ELEMENT_SHIFT` = 2
+
+4. At RUNTIME (GraalVM native image, no compressed oops):
+   - `arrayIndexScale(Object[].class)` = 8 → REF_ELEMENT_SHIFT should be 3
+
+5. GraalVM FAILED to recompute this value (unusual jctools code pattern), so the
+   native image stores `REF_ELEMENT_SHIFT = 2` from build time.
+
+6. Every jctools queue array access uses the wrong shift:
+   - Element at index 1 read from offset `base + (1 << 2) = base + 4`
+   - But actual element 1 is at `base + (1 << 3) = base + 8`
+   - Reads half of element 0 + half of element 1 → garbage reference → SEGFAULT
+
+**THE FIX**: Add `-J-XX:-UseCompressedOops` to native-image build args.
+This disables compressed oops in the build JVM, making `arrayIndexScale` = 8 at build time,
+matching the native image runtime. Even though GraalVM fails to recompute the value,
+the stored build-time value is already correct.
+
+### Build 10 - Running with `-J-XX:-UseCompressedOops`
+
+### Build 10 Results - SUCCESS! 🎉🎉🎉
+
+**BUILD SUCCESS** in ~1m 16s
+
+**Runtime test results (app ran for 1+ minutes, no crash):**
+- App starts on port 7654 in 0.435s ✅
+- All features installed: cdi, rest, scheduler, quinoa, websockets-next ✅
+- `IAudioPolicyConfigFactory constructed successfully` — SndCtrl.dll works ✅
+- `/api/devices` returns actual device data:
+  ```json
+  [{"serial":"5D43E1353833","displayName":"pcpanel1","deviceType":"PCPANEL_PRO",
+    "analogCount":9,"buttonCount":5,"hasLogoLed":true,
+    "currentProfile":"Standaard","profiles":["Standaard","profile 1","profile 2"]}]
+  ```
+- Health check: UP ✅
+- **No segfault, no stderr errors** ✅
+- MQTT connected successfully (no crash when publishing "online") ✅
+
+**Key fix:** `-J-XX:-UseCompressedOops` in native-image build args.
+This ensures the build JVM uses 8-byte object references (matching the native image runtime),
+so jctools' `UnsafeRefArrayAccess.REF_ELEMENT_SHIFT` is computed correctly as 3 (not 2).
+
+**Remaining minor issue:** Frontend returns 404 for `/` and `/index.html`.
+This might be a Quinoa static file serving issue in native mode, or a route configuration issue.
+Backend API works perfectly.
