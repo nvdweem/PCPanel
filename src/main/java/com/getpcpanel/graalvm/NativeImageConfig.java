@@ -97,6 +97,7 @@ import com.getpcpanel.profile.SingleLogoLightingConfig;
 import com.getpcpanel.profile.SingleSliderLabelLightingConfig;
 import com.getpcpanel.profile.SingleSliderLightingConfig;
 import com.getpcpanel.profile.WaveLinkSettings;
+import com.getpcpanel.rest.EventBroadcaster;
 
 /**
  * GraalVM native image reflection hints.
@@ -227,6 +228,11 @@ import com.getpcpanel.profile.WaveLinkSettings;
     OSCConnectionInfo.class,
     OSCBinding.class,
     OverlayPosition.class,
+
+    // WebSocket event DTOs (serialised to JSON by Jackson for broadcasting to WebSocket clients)
+    EventBroadcaster.WsEvent.class,
+    EventBroadcaster.WsKnobEvent.class,
+    EventBroadcaster.WsButtonEvent.class,
 }, classNames = {
     // MQTT Home Assistant discovery records (package-private inner classes – referenced by name)
     "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantAvailability",

@@ -1,9 +1,9 @@
 package com.getpcpanel.sleepdetection;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
+import io.quarkus.runtime.ShutdownEvent;
 
 import com.getpcpanel.device.Device;
 import com.getpcpanel.hid.DeviceHolder;
@@ -25,9 +25,8 @@ public final class SleepDetector {
     @Inject
     DeviceHolder devices;
 
-    @PostConstruct
-    public void init() {
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> onSuspended(true), "Shutdown SleepDetector Hook Thread"));
+    public void onShutdown(@Observes ShutdownEvent event) {
+        onSuspended(true);
     }
 
     public void onEvent(@Observes WindowsSystemEventService.WindowsSystemEvent event) {

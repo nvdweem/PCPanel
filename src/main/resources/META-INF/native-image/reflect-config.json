@@ -70,5 +70,11 @@
     "allDeclaredMethods": true,
     "allDeclaredFields": true,
     "allDeclaredConstructors": true
+  },
+  {
+    "name": "io.quarkus.websockets.next.WebSocketConnection",
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true,
+    "allDeclaredConstructors": true
   }
 ]

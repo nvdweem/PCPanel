@@ -18,10 +18,6 @@
     <option name="enabledProfiles">
       <list>
         <option value="native" />
-      </list>
-    </option>
-    <option name="disabledProfiles">
-      <list>
         <option value="not-github-build" />
       </list>
     </option>
@@ -85,7 +81,7 @@
       <option value="org.jetbrains.annotations.NotNull" />
     </instrumentedNotNulls>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_17" project-jdk-name="liberica-full-graalvm-25" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_17" project-jdk-name="graalvm-ce-25" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
 </project>
