@@ -14,10 +14,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.hid4java.HidDevice;
 import jakarta.enterprise.event.Event;
+import javax.annotation.Nullable;
 
 import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.profile.SaveService;
@@ -46,6 +48,9 @@ public class DeviceCommunicationHandler {
     private final KnobDebouncer debouncer = new KnobDebouncer();
     private final RollingAverageSetter rollingAverageSetter = new RollingAverageSetter();
     private final Map<Integer, Integer> prevSent = new ConcurrentHashMap<>();
+    private final AtomicBoolean stopping = new AtomicBoolean(false);
+    private Thread readerThread;
+    private Thread writerThread;
 
     public DeviceCommunicationHandler(DeviceScanner deviceScanner, SaveService saveService, Event<Object> eventBus, String key, HidDevice device, DeviceType deviceType) {
         this.deviceScanner = deviceScanner;
@@ -57,12 +62,50 @@ public class DeviceCommunicationHandler {
     }
 
     public void start() {
-        var reader = new Thread(this::reader, "HIDReader " + device.getSerialNumber());
-        var writer = new Thread(this::writer, "HIDWriter " + device.getSerialNumber());
-        reader.setDaemon(true);
-        writer.setDaemon(true);
-        reader.start();
-        writer.start();
+        readerThread = new Thread(this::reader, "HIDReader " + device.getSerialNumber());
+        writerThread = new Thread(this::writer, "HIDWriter " + device.getSerialNumber());
+        readerThread.setDaemon(true);
+        writerThread.setDaemon(true);
+        readerThread.start();
+        writerThread.start();
+    }
+
+    public void stopGracefully(long joinTimeoutMs) {
+        if (!stopping.compareAndSet(false, true)) {
+            return;
+        }
+
+        queue.clear();
+        if (readerThread != null) {
+            readerThread.interrupt();
+        }
+        if (writerThread != null) {
+            writerThread.interrupt();
+        }
+
+        joinThread(readerThread, joinTimeoutMs);
+        joinThread(writerThread, joinTimeoutMs);
+
+        debouncer.shutdown();
+        rollingAverageSetter.shutdown();
+
+        try {
+            device.close();
+        } catch (Exception e) {
+            log.debug("Error while closing HID device {}", key, e);
+        }
+    }
+
+    private void joinThread(@Nullable Thread thread, long timeoutMs) {
+        if (thread == null) {
+            return;
+        }
+        try {
+            thread.join(timeoutMs);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.debug("Interrupted while waiting for {} to stop", thread.getName(), e);
+        }
     }
 
     public void sendMessage(byte[]... data) {
@@ -81,14 +124,19 @@ public class DeviceCommunicationHandler {
 
                 switch (val) {
                     case -1 -> {
-                        log.error("DCH ERR: {}", device.getLastErrorMessage());
-                        deviceScanner.deviceRemoved(key, device);
+                        if (!stopping.get()) {
+                            log.error("DCH ERR: {}", device.getLastErrorMessage());
+                            deviceScanner.deviceRemoved(key, device);
+                        }
                         return;
                     }
                     case 0 -> {
                         moreData = false;
                         continue;
                     }
+                }
+                if (!isConnected()) {
+                    return;
                 }
                 interpretInputData(readUntilNotInitial != 0, data);
             }
@@ -103,16 +151,18 @@ public class DeviceCommunicationHandler {
                     sendMessageReal(toSend);
                 }
             } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                if (stopping.get()) {
+                    return;
+                }
+                Thread.currentThread().interrupt();
+                return;
             }
         }
-        debouncer.shutdown();
-        rollingAverageSetter.shutdown();
     }
 
     private boolean isConnected() {
         //noinspection ObjectEquality
-        return deviceScanner.getConnectedDevice(key) == this;
+        return !stopping.get() && deviceScanner.getConnectedDevice(key) == this;
     }
 
     private void sendMessageReal(byte[] info) {
@@ -271,7 +321,7 @@ public class DeviceCommunicationHandler {
 
         public void setKnob(KnobRotateEvent knob, Integer rollWindowMs) {
             this.rollWindowMs = rollWindowMs;
-            var target = targets.computeIfAbsent(knob.knob(), k -> new ArrayDeque<>());
+            var target = targets.computeIfAbsent(knob.knob(), ignoredKnob -> new ArrayDeque<>());
             synchronized (target) {
                 if (knob.initial()) {
                     triggerEvent(knob);

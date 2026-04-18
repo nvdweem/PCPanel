@@ -45,9 +45,6 @@ public final class SleepDetector {
                     waitUntilEmptyPrioQueue(device);
                 }
             }
-            if (shutdown) {
-                deviceScanner.close();
-            }
         };
 
         if (shutdown) {

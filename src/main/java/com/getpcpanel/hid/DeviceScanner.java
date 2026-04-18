@@ -1,7 +1,9 @@
 package com.getpcpanel.hid;
 
 import java.util.Optional;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.hid4java.HidDevice;
 import org.hid4java.HidManager;
@@ -17,6 +19,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
+import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
 import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
@@ -25,6 +28,8 @@ import lombok.extern.log4j.Log4j2;
 @ApplicationScoped
 public class DeviceScanner implements HidServicesListener {
     private final ConcurrentHashMap<String, DeviceCommunicationHandler> connectedDeviceMap = new ConcurrentHashMap<>();
+    private final AtomicBoolean shuttingDown = new AtomicBoolean(false);
+    private static final long HANDLER_JOIN_TIMEOUT_MS = 1000;
     @Inject Event<Object> eventBus;
     @Inject DeviceCommunicationHandlerFactory deviceCommunicationHandlerFactory;
 
@@ -36,11 +41,16 @@ public class DeviceScanner implements HidServicesListener {
 
     // Not @PostConstruct because the startup sequence needs to control when this runs
     public void onStart(@Observes StartupEvent ev) {
+        shuttingDown.set(false);
         try {
             init();
         } catch (Throwable e) {
             log.error("Failed to initialize HID services – device scanning will be unavailable: {}", e.getMessage(), e);
         }
+    }
+
+    public void onShutdown(@Observes ShutdownEvent event) {
+        close();
     }
 
     public void init() {
@@ -62,6 +72,9 @@ public class DeviceScanner implements HidServicesListener {
     }
 
     public void deviceAdded(@NonNull String key, @NonNull HidDevice device, DeviceType deviceType) {
+        if (shuttingDown.get()) {
+            return;
+        }
         if (!device.isOpen()) {
             if (!device.open()) {
                 log.error("Unable to open device, it won't be possible to use the panel");
@@ -74,6 +87,10 @@ public class DeviceScanner implements HidServicesListener {
     }
 
     public void deviceRemoved(String key, HidDevice device) {
+        if (shuttingDown.get()) {
+            connectedDeviceMap.remove(key);
+            return;
+        }
         if (key == null || device == null)
             throw new IllegalArgumentException("serialNum or device cannot be null serialNum: " + key + " device: " + device);
         if (connectedDeviceMap.remove(key) != null)
@@ -100,17 +117,30 @@ public class DeviceScanner implements HidServicesListener {
 
     @Override
     public void hidDeviceAttached(HidServicesEvent event) {
+        if (shuttingDown.get()) {
+            return;
+        }
         determineType(event).ifPresent(type -> foundPCPanel(event.getHidDevice(), type));
     }
 
     @Override
     public void hidDeviceDetached(HidServicesEvent event) {
-        determineType(event).ifPresent(type -> lostPCPanel(event.getHidDevice()));
+        if (shuttingDown.get()) {
+            return;
+        }
+        if (determineType(event).isPresent()) {
+            lostPCPanel(event.getHidDevice());
+        }
     }
 
     @Override
     public void hidFailure(HidServicesEvent event) {
-        determineType(event).ifPresent(type -> lostPCPanel(event.getHidDevice()));
+        if (shuttingDown.get()) {
+            return;
+        }
+        if (determineType(event).isPresent()) {
+            lostPCPanel(event.getHidDevice());
+        }
     }
 
     private Optional<DeviceType> determineType(HidServicesEvent event) {
@@ -122,8 +152,24 @@ public class DeviceScanner implements HidServicesListener {
     }
 
     public void close() {
+        if (!shuttingDown.compareAndSet(false, true)) {
+            return;
+        }
+
+        var handlers = new ArrayList<>(connectedDeviceMap.values());
+        connectedDeviceMap.clear();
+        for (var handler : handlers) {
+            try {
+                handler.stopGracefully(HANDLER_JOIN_TIMEOUT_MS);
+            } catch (Exception e) {
+                log.debug("Error while stopping handler during shutdown", e);
+            }
+        }
+
         try {
-            hidServices.shutdown();
+            if (hidServices != null) {
+                hidServices.shutdown();
+            }
         } catch (Exception e) {
             log.error("Error occurred when closing device", e);
         }
