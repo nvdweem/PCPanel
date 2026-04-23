@@ -7,7 +7,7 @@ import javax.annotation.Nullable;
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.DialAction;
 import com.getpcpanel.commands.command.DialAction.DialCommandParams;
-import com.getpcpanel.profile.KnobSetting;
+import com.getpcpanel.profile.dto.KnobSetting;
 
 public class DialValueCalculator {
     public static final double EXP_CONST = 1.04723275; // This will make 0-100 map to 1-101 exponentially

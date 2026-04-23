@@ -17,23 +17,28 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import com.getpcpanel.device.GlobalBrightnessChangedEvent;
-import jakarta.enterprise.event.Event;
-import jakarta.inject.Inject;
-import jakarta.annotation.Priority;
-import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.device.Device;
-import com.getpcpanel.profile.LightingConfig;
-import com.getpcpanel.profile.SingleKnobLightingConfig;
-import com.getpcpanel.profile.SingleLogoLightingConfig;
-import com.getpcpanel.profile.SingleSliderLabelLightingConfig;
-import com.getpcpanel.profile.SingleSliderLightingConfig;
+import com.getpcpanel.device.GlobalBrightnessChangedEvent;
+import com.getpcpanel.mqtt.MqttTopicHelper.ColorType;
+import com.getpcpanel.mqtt.MqttTopicHelper.DeviceMqttTopicHelper;
+import com.getpcpanel.profile.dto.LightingConfig;
+import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
+import com.getpcpanel.profile.dto.SingleKnobLightingConfig.SINGLE_KNOB_MODE;
+import com.getpcpanel.profile.dto.SingleLogoLightingConfig;
+import com.getpcpanel.profile.dto.SingleLogoLightingConfig.SINGLE_LOGO_MODE;
+import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig;
+import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig.SINGLE_SLIDER_LABEL_MODE;
+import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
+import com.getpcpanel.profile.dto.SingleSliderLightingConfig.SINGLE_SLIDER_MODE;
 import com.getpcpanel.util.coloroverride.ColorOverrideHolder;
 import com.getpcpanel.util.coloroverride.IOverrideColorProvider;
 import com.getpcpanel.util.coloroverride.IOverrideColorProviderProvider;
 
-import lombok.RequiredArgsConstructor;
+import jakarta.annotation.Priority;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
@@ -89,22 +94,22 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
         var topicHelper = mqttTopicHelper.device(device.getSerialNumber());
         Runnable andThen = () -> device.setLighting(lighting, true);
         TriFunction<Integer, String, SingleKnobLightingConfig, SingleKnobLightingConfig> knobOverride = (idx, payload, knob) -> {
-            colorOverrideHolder.setDialOverride(device.getSerialNumber(), idx, new SingleKnobLightingConfig().setMode(SingleKnobLightingConfig.SINGLE_KNOB_MODE.STATIC).setColor1(payload));
+            colorOverrideHolder.setDialOverride(device.getSerialNumber(), idx, new SingleKnobLightingConfig().setMode(SINGLE_KNOB_MODE.STATIC).setColor1(payload));
             andThen.run();
             return null;
         };
         TriFunction<Integer, String, SingleSliderLightingConfig, SingleSliderLightingConfig> sliderOverride = (idx, payload, knob) -> {
-            colorOverrideHolder.setSliderOverride(device.getSerialNumber(), idx, new SingleSliderLightingConfig().setMode(SingleSliderLightingConfig.SINGLE_SLIDER_MODE.STATIC).setColor1(payload));
+            colorOverrideHolder.setSliderOverride(device.getSerialNumber(), idx, new SingleSliderLightingConfig().setMode(SINGLE_SLIDER_MODE.STATIC).setColor1(payload));
             andThen.run();
             return null;
         };
         TriFunction<Integer, String, SingleSliderLabelLightingConfig, SingleSliderLabelLightingConfig> sliderLabelOverride = (idx, payload, knob) -> {
-            colorOverrideHolder.setSliderLabelOverride(device.getSerialNumber(), idx, new SingleSliderLabelLightingConfig().setMode(SingleSliderLabelLightingConfig.SINGLE_SLIDER_LABEL_MODE.STATIC).setColor(payload));
+            colorOverrideHolder.setSliderLabelOverride(device.getSerialNumber(), idx, new SingleSliderLabelLightingConfig().setMode(SINGLE_SLIDER_LABEL_MODE.STATIC).setColor(payload));
             andThen.run();
             return null;
         };
         Consumer<String> logoOverride = payload -> {
-            colorOverrideHolder.setLogoOverride(device.getSerialNumber(), new SingleLogoLightingConfig().setMode(SingleLogoLightingConfig.SINGLE_LOGO_MODE.STATIC).setColor(payload));
+            colorOverrideHolder.setLogoOverride(device.getSerialNumber(), new SingleLogoLightingConfig().setMode(SINGLE_LOGO_MODE.STATIC).setColor(payload));
             andThen.run();
         };
 
@@ -122,7 +127,7 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
         }
     }
 
-    private <T> void subscribeToColors(T[] items, MqttTopicHelper.DeviceMqttTopicHelper topicHelper, MqttTopicHelper.ColorType type, TriFunction<Integer, String, T, T> consumer, Function<Integer, String> currentColorSupplier) {
+    private <T> void subscribeToColors(T[] items, DeviceMqttTopicHelper topicHelper, ColorType type, TriFunction<Integer, String, T, T> consumer, Function<Integer, String> currentColorSupplier) {
         EntryStream.of(items).forKeyValue((idx, knob) -> {
             var topic = topicHelper.lightTopic(type, idx);
             subscribeToColor(topic, payload -> consumer.apply(idx, payload, knob), () -> currentColorSupplier.apply(idx));
@@ -252,14 +257,16 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
         int brightness = 255;
 
         public void fromHex(String hex) {
-            if (hex == null) return;
+            if (hex == null)
+                return;
             try {
                 String h = hex.startsWith("#") ? hex.substring(1) : hex;
                 red = Integer.parseInt(h.substring(0, 2), 16);
                 green = Integer.parseInt(h.substring(2, 4), 16);
                 blue = Integer.parseInt(h.substring(4, 6), 16);
                 brightness = 255;
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
 
         public String toColorString() {

@@ -4,11 +4,11 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Optional;
 
-import javax.annotation.Nullable;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.eclipse.microprofile.config.ConfigProvider;
+
+import javax.annotation.Nullable;
 
 import com.getpcpanel.spring.LinuxImpl;
 import com.getpcpanel.util.ProcessHelper;

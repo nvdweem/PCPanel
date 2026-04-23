@@ -1,16 +1,18 @@
-@if (!config) { <div class="loading-center"><mat-spinner /></div> }
-@if (config) {
+@if (loading()) { <div class="loading-center"><mat-spinner /></div> }
+@if (!loading()) {
   <div class="lighting-page">
     <mat-toolbar>
       <button mat-icon-button (click)="goBack()" aria-label="Back"><mat-icon>arrow_back</mat-icon></button>
       <span>Lighting</span>
+      <span class="spacer"></span>
+      <app-connection-status />
     </mat-toolbar>
     <div class="lighting-body">
       <mat-card>
         <mat-card-content>
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Mode</mat-label>
-            <mat-select [(ngModel)]="config.lightingMode">
+            <mat-select [formField]="configForm.lightingMode">
               <mat-option value="ALL_COLOR">All Color</mat-option>
               <mat-option value="ALL_RAINBOW">Rainbow</mat-option>
               <mat-option value="ALL_WAVE">Wave</mat-option>
@@ -19,22 +21,22 @@
               <mat-option value="CUSTOM">Custom</mat-option>
             </mat-select>
           </mat-form-field>
-          @if (config.lightingMode === 'ALL_COLOR') {
-            <div class="color-row"><label>Color</label><input type="color" [(ngModel)]="config.allColor" /><span>{{ config.allColor }}</span></div>
+          @if (configModel().lightingMode === 'ALL_COLOR') {
+            <div class="color-row"><label>Color</label><input type="color" [formField]="configForm.allColor" /><span>{{ configModel().allColor }}</span></div>
           }
-          @if (config.lightingMode === 'ALL_RAINBOW') {
-            <div class="slider-row"><label>Phase Shift</label><mat-slider min="0" max="255" class="flex-slider"><input matSliderThumb [(ngModel)]="config.rainbowPhaseShift" /></mat-slider><span>{{ config.rainbowPhaseShift }}</span></div>
-            <div class="slider-row"><label>Brightness</label><mat-slider min="0" max="255" class="flex-slider"><input matSliderThumb [(ngModel)]="config.rainbowBrightness" /></mat-slider><span>{{ config.rainbowBrightness }}</span></div>
-            <div class="slider-row"><label>Speed</label><mat-slider min="0" max="255" class="flex-slider"><input matSliderThumb [(ngModel)]="config.rainbowSpeed" /></mat-slider><span>{{ config.rainbowSpeed }}</span></div>
+          @if (configModel().lightingMode === 'ALL_RAINBOW') {
+            <div class="slider-row"><label>Phase Shift</label><mat-slider min="0" max="255" class="flex-slider"><input matSliderThumb [formField]="configForm.rainbowPhaseShift" /></mat-slider><span>{{ configModel().rainbowPhaseShift }}</span></div>
+            <div class="slider-row"><label>Brightness</label><mat-slider min="0" max="255" class="flex-slider"><input matSliderThumb [formField]="configForm.rainbowBrightness" /></mat-slider><span>{{ configModel().rainbowBrightness }}</span></div>
+            <div class="slider-row"><label>Speed</label><mat-slider min="0" max="255" class="flex-slider"><input matSliderThumb [formField]="configForm.rainbowSpeed" /></mat-slider><span>{{ configModel().rainbowSpeed }}</span></div>
           }
-          @if (config.lightingMode === 'ALL_BREATH') {
-            <div class="slider-row"><label>Brightness</label><mat-slider min="0" max="255" class="flex-slider"><input matSliderThumb [(ngModel)]="config.breathBrightness" /></mat-slider><span>{{ config.breathBrightness }}</span></div>
-            <div class="slider-row"><label>Speed</label><mat-slider min="0" max="255" class="flex-slider"><input matSliderThumb [(ngModel)]="config.breathSpeed" /></mat-slider><span>{{ config.breathSpeed }}</span></div>
+          @if (configModel().lightingMode === 'ALL_BREATH') {
+            <div class="slider-row"><label>Brightness</label><mat-slider min="0" max="255" class="flex-slider"><input matSliderThumb [formField]="configForm.breathBrightness" /></mat-slider><span>{{ configModel().breathBrightness }}</span></div>
+            <div class="slider-row"><label>Speed</label><mat-slider min="0" max="255" class="flex-slider"><input matSliderThumb [formField]="configForm.breathSpeed" /></mat-slider><span>{{ configModel().breathSpeed }}</span></div>
           }
-          <div class="slider-row"><label>Global Brightness</label><mat-slider min="0" max="100" class="flex-slider"><input matSliderThumb [(ngModel)]="config.globalBrightness" /></mat-slider><span>{{ config.globalBrightness }}%</span></div>
+          <div class="slider-row"><label>Global Brightness</label><mat-slider min="0" max="100" class="flex-slider"><input matSliderThumb [formField]="configForm.globalBrightness" /></mat-slider><span>{{ configModel().globalBrightness }}%</span></div>
         </mat-card-content>
         <mat-card-actions>
-          <button mat-raised-button color="primary" (click)="save()">Save Lighting</button>
+          <button mat-raised-button color="primary" (click)="save()" [disabled]="saving()">Save Lighting</button>
           <button mat-stroked-button (click)="goBack()">Cancel</button>
         </mat-card-actions>
       </mat-card>

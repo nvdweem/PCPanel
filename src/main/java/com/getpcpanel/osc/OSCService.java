@@ -10,14 +10,11 @@ import java.util.Set;
 
 import javax.annotation.Nonnull;
 
-import jakarta.inject.Inject;
-import jakarta.enterprise.event.Observes;
-import jakarta.enterprise.context.ApplicationScoped;
-
-import com.getpcpanel.hid.DeviceCommunicationHandler;
-import com.getpcpanel.profile.OSCBinding;
-import com.getpcpanel.profile.OSCConnectionInfo;
+import com.getpcpanel.hid.DeviceCommunicationHandler.ButtonPressEvent;
+import com.getpcpanel.hid.DeviceCommunicationHandler.KnobRotateEvent;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.profile.dto.OSCBinding;
+import com.getpcpanel.profile.dto.OSCConnectionInfo;
 import com.getpcpanel.util.Util;
 import com.illposed.osc.OSCBadDataEvent;
 import com.illposed.osc.OSCBundle;
@@ -29,8 +26,10 @@ import com.illposed.osc.transport.OSCPortIn;
 import com.illposed.osc.transport.OSCPortOut;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
@@ -46,7 +45,7 @@ public class OSCService {
     @Getter private final Set<String> addresses = new HashSet<>();
 
     @PostConstruct
-        public void saveChanged() {
+    public void saveChanged() {
         log.trace("Save changed, restarting OSC");
         initSend();
         initListen();
@@ -104,8 +103,8 @@ public class OSCService {
         }
     }
 
-        public void dialAction(@Observes DeviceCommunicationHandler.KnobRotateEvent dial) {
-        if (dial.initial() || (ports == null || ports.isEmpty())) {
+    public void dialAction(@Observes KnobRotateEvent dial) {
+        if (dial.initial() || ports == null || ports.isEmpty()) {
             return;
         }
 
@@ -120,8 +119,8 @@ public class OSCService {
         });
     }
 
-        public void dialAction(@Observes DeviceCommunicationHandler.ButtonPressEvent button) {
-        if ((ports == null || ports.isEmpty())) {
+    public void dialAction(@Observes ButtonPressEvent button) {
+        if (ports == null || ports.isEmpty()) {
             return;
         }
         var idx = button.button() * 2 + 1;
@@ -149,7 +148,8 @@ public class OSCService {
         return Util.map(val, 0, 1, target.min(), target.max());
     }
 
-    private static @Nonnull OSCMessage buildMessage(OSCBinding target, String defaultTarget, float val) {
+    @Nonnull
+    private static OSCMessage buildMessage(OSCBinding target, String defaultTarget, float val) {
         var targetString = target == null ? defaultTarget : target.address();
         try {
             return new OSCMessage(targetString, List.of(val));

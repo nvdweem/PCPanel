@@ -1,10 +1,10 @@
-package com.getpcpanel.profile;
+package com.getpcpanel.profile.dto;
 
 import java.util.Arrays;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.getpcpanel.device.DeviceType;
-import com.getpcpanel.util.Util;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,7 +13,7 @@ import lombok.Setter;
 
 @AllArgsConstructor
 @Builder(toBuilder = true)
-@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
+@JsonAutoDetect(fieldVisibility = Visibility.ANY)
 public class LightingConfig {
     private LightingMode lightingMode;
     private String[] individualColors = {};

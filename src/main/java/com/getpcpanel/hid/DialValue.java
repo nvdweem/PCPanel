@@ -3,7 +3,7 @@ package com.getpcpanel.hid;
 import javax.annotation.Nullable;
 
 import com.getpcpanel.commands.command.Command;
-import com.getpcpanel.profile.KnobSetting;
+import com.getpcpanel.profile.dto.KnobSetting;
 
 public record DialValue(
         DialValueCalculator settings,

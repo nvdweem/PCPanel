@@ -2,18 +2,16 @@ package com.getpcpanel.hid;
 
 import java.util.Arrays;
 
-import jakarta.inject.Inject;
-import jakarta.enterprise.context.ApplicationScoped;
-
 import com.getpcpanel.device.DeviceType;
-import com.getpcpanel.profile.LightingConfig;
-import com.getpcpanel.profile.SingleKnobLightingConfig;
-import com.getpcpanel.profile.SingleLogoLightingConfig;
-import com.getpcpanel.profile.SingleSliderLabelLightingConfig;
-import com.getpcpanel.profile.SingleSliderLightingConfig;
+import com.getpcpanel.profile.dto.LightingConfig;
+import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
+import com.getpcpanel.profile.dto.SingleLogoLightingConfig;
+import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig;
+import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
 import com.getpcpanel.util.coloroverride.OverrideColorService;
 
-import lombok.RequiredArgsConstructor;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -321,7 +319,8 @@ public final class OutputInterpreter {
                 r = Integer.parseInt(hex.substring(0, 2), 16);
                 g = Integer.parseInt(hex.substring(2, 4), 16);
                 b = Integer.parseInt(hex.substring(4, 6), 16);
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
         sendRGBAll(deviceSerialNumber, brightness, r, g, b, bs, priority);
     }

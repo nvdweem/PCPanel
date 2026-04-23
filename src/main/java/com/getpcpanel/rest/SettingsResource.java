@@ -1,5 +1,10 @@
 package com.getpcpanel.rest;
 
+import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.profile.dto.MqttSettings;
+import com.getpcpanel.profile.dto.WaveLinkSettings;
+import com.getpcpanel.rest.model.dto.SettingsDto;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
@@ -9,13 +14,6 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-
-import com.getpcpanel.profile.MqttSettings;
-import com.getpcpanel.profile.OSCConnectionInfo;
-import com.getpcpanel.profile.Save;
-import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.profile.WaveLinkSettings;
-import com.getpcpanel.rest.dto.SettingsDto;
 
 @Path("/api/settings")
 @ApplicationScoped

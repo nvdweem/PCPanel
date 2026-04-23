@@ -3,16 +3,14 @@ package com.getpcpanel.util.coloroverride;
 import java.util.List;
 import java.util.Optional;
 
+import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
+import com.getpcpanel.profile.dto.SingleLogoLightingConfig;
+import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig;
+import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
+
 import io.quarkus.arc.All;
-import jakarta.inject.Inject;
 import jakarta.enterprise.context.ApplicationScoped;
-
-import com.getpcpanel.profile.SingleKnobLightingConfig;
-import com.getpcpanel.profile.SingleLogoLightingConfig;
-import com.getpcpanel.profile.SingleSliderLabelLightingConfig;
-import com.getpcpanel.profile.SingleSliderLightingConfig;
-
-import lombok.RequiredArgsConstructor;
+import jakarta.inject.Inject;
 import lombok.Setter;
 import one.util.streamex.StreamEx;
 

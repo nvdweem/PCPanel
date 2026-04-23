@@ -6,10 +6,14 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.Nonnull;
+
 import javax.annotation.Nullable;
 
 import com.getpcpanel.device.DeviceType;
-import com.getpcpanel.profile.OverlayPosition;
+import com.getpcpanel.profile.dto.MqttSettings;
+import com.getpcpanel.profile.dto.OSCConnectionInfo;
+import com.getpcpanel.profile.dto.OverlayPosition;
+import com.getpcpanel.profile.dto.WaveLinkSettings;
 
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;

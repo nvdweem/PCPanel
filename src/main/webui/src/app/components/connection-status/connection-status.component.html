@@ -1,0 +1,4 @@
+<span class="connection-badge" [class.state-connected]="state() === 'connected'" [class.state-reconnecting]="state() === 'reconnecting'" [class.state-error]="state() === 'error'" [class.state-connecting]="state() === 'connecting'" [title]="errorText() ?? label()">
+  <mat-icon class="connection-icon">{{ icon() }}</mat-icon>
+  <span>{{ label() }}</span>
+</span>

@@ -19,11 +19,13 @@
   </g>
 
   <!-- ── Knob LED rings ──────────────────────────────────────────────────── -->
-  @for (ki of knobIndices; track ki) {
-    <g [attr.transform]="knobRingTransform(ki)">
-      <path [attr.fill]="knobRingColor(ki)" [attr.d]="knobRingPath" opacity="0.9"/>
-    </g>
-  }
+  <g [style.--anim-duration]="animDuration()" [style.--breath-min]="breathMin()">
+    @for (ki of knobIndices; track ki) {
+      <g [attr.transform]="knobRingTransform(ki)">
+        <path [attr.fill]="knobRingColor(ki)" [class]="animClass()" [attr.d]="knobRingPath" opacity="0.9"/>
+      </g>
+    }
+  </g>
 
   <!-- ── Knobs ─────────────────────────────────────────────────────────── -->
   @for (ki of knobIndices; track ki) {

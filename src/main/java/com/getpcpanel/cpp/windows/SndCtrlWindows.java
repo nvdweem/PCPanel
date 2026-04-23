@@ -8,13 +8,11 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 
 import org.apache.commons.lang3.StringUtils;
-import jakarta.enterprise.event.Event;
-import jakarta.inject.Inject;
-import jakarta.enterprise.context.ApplicationScoped;
+
+import javax.annotation.Nullable;
 
 import com.getpcpanel.cpp.AudioDevice;
 import com.getpcpanel.cpp.AudioDeviceEvent;
@@ -22,12 +20,15 @@ import com.getpcpanel.cpp.AudioSession;
 import com.getpcpanel.cpp.DataFlow;
 import com.getpcpanel.cpp.EventType;
 import com.getpcpanel.cpp.ISndCtrl;
-import com.getpcpanel.spring.WindowsImpl;
 import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.cpp.Role;
+import com.getpcpanel.spring.WindowsImpl;
 import com.getpcpanel.util.ExtractUtil;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;

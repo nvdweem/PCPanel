@@ -11,10 +11,12 @@
 
   <!-- ── LED backgrounds (behind knobs, colored rectangles 102x95) ────── -->
   <!-- lightPanes at x=40, y=55, prefW=428, 4 cols of 107 each -->
-  @for (ki of knobIndices; track ki) {
-    <rect [attr.x]="40 + ki * 107" y="55" width="102" height="95"
-          [attr.fill]="ledColor(ki)" opacity="0.85"/>
-  }
+  <g [style.--anim-duration]="animDuration()" [style.--breath-min]="breathMin()">
+    @for (ki of knobIndices; track ki) {
+      <rect [attr.x]="40 + ki * 107" y="55" width="102" height="95"
+            [attr.fill]="ledColor(ki)" [class]="animClass()" opacity="0.85"/>
+    }
+  </g>
 
   <!-- ── Device body ────────────────────────────────────────────────────── -->
   <!-- Inner pane: layoutX=223, layoutY=70, prefW=600, prefH=170, scaleX=1.725, scaleY=1.76 -->

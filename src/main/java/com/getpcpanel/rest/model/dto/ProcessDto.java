@@ -1,4 +1,4 @@
-package com.getpcpanel.rest.dto;
+package com.getpcpanel.rest.model.dto;
 
 import javax.annotation.Nullable;
 

@@ -8,17 +8,16 @@ import java.util.List;
 
 import javax.imageio.ImageIO;
 
+import com.getpcpanel.cpp.ISndCtrl;
+import com.getpcpanel.iconextract.IIconService;
+import com.getpcpanel.rest.model.dto.ProcessDto;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
-
-import com.getpcpanel.cpp.ISndCtrl;
-import com.getpcpanel.iconextract.IIconService;
-import com.getpcpanel.rest.dto.ProcessDto;
-
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2

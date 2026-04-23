@@ -1,13 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { MqttSettings, SettingsDto, WaveLinkSettings } from '../models/models';
+import { MqttSettings, SettingsDto, WaveLinkSettings } from '../models/generated/backend.types';
 
-@Injectable({ providedIn: 'root' })
+@Injectable({providedIn: 'root'})
 export class SettingsService {
   private readonly base = '/api/settings';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+  }
 
   getSettings(): Observable<SettingsDto> {
     return this.http.get<SettingsDto>(this.base);

@@ -1,15 +1,15 @@
-import { Component, OnInit, inject, input, model, signal } from '@angular/core';
+import { Component, inject, input, model, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { AudioDevice, ProcessDto } from '../../models/models';
+import { AudioDevice } from '../../models/models';
 import { AudioService } from '../../services/audio.service';
 import { ProcessService } from '../../services/process.service';
+import { ProcessDto } from '../../models/generated/backend.types';
 
 @Component({
   selector: 'app-audio-picker',
-  standalone: true,
   imports: [FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule],
   templateUrl: './audio-picker.component.html',
   styleUrl: './audio-picker.component.scss',

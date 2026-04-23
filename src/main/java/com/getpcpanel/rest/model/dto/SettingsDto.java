@@ -1,12 +1,12 @@
-package com.getpcpanel.rest.dto;
+package com.getpcpanel.rest.model.dto;
 
 import java.util.List;
 
 import javax.annotation.Nullable;
 
-import com.getpcpanel.profile.OSCConnectionInfo;
-import com.getpcpanel.profile.OverlayPosition;
 import com.getpcpanel.profile.Save;
+import com.getpcpanel.profile.dto.OSCConnectionInfo;
+import com.getpcpanel.profile.dto.OverlayPosition;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,9 +20,9 @@ public class SettingsDto {
     private boolean forceVolume;
     private Long dblClickInterval;
     private boolean preventClickWhenDblClick;
-    private @Nullable Integer preventSliderTwitchDelay;
-    private @Nullable Integer sliderRollingAverage;
-    private @Nullable Integer sendOnlyIfDelta;
+    @Nullable private Integer preventSliderTwitchDelay;
+    @Nullable private Integer sliderRollingAverage;
+    @Nullable private Integer sendOnlyIfDelta;
     private boolean workaroundsOnlySliders;
 
     // OBS
@@ -47,11 +47,11 @@ public class SettingsDto {
     private String overlayTextColor;
     private String overlayBarColor;
     private String overlayBarBackgroundColor;
-    private @Nullable Integer overlayWindowCornerRounding;
-    private @Nullable Integer overlayBarHeight;
-    private @Nullable Integer overlayBarCornerRounding;
-    private @Nullable OverlayPosition overlayPosition;
-    private @Nullable Integer overlayPadding;
+    @Nullable private Integer overlayWindowCornerRounding;
+    @Nullable private Integer overlayBarHeight;
+    @Nullable private Integer overlayBarCornerRounding;
+    @Nullable private OverlayPosition overlayPosition;
+    @Nullable private Integer overlayPadding;
 
     public static SettingsDto from(Save save) {
         var dto = new SettingsDto();

@@ -1,11 +1,9 @@
 package com.getpcpanel.wavelink;
 
+import java.awt.image.BufferedImage;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
-
-import jakarta.inject.Inject;
-import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.commands.IIconHandler;
 import com.getpcpanel.commands.IconService;
@@ -17,8 +15,8 @@ import com.getpcpanel.wavelink.command.CommandWaveLinkMainOutput;
 
 import dev.niels.wavelink.impl.model.WaveLinkChannel;
 import dev.niels.wavelink.impl.model.WaveLinkImage;
-import java.awt.image.BufferedImage;
-import lombok.RequiredArgsConstructor;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2

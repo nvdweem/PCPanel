@@ -1,8 +1,9 @@
-package com.getpcpanel.rest.dto;
+package com.getpcpanel.rest.model.dto;
 
 import java.util.List;
 
 import com.getpcpanel.device.Device;
+import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.profile.DeviceSave;
 
 import one.util.streamex.StreamEx;
@@ -10,7 +11,7 @@ import one.util.streamex.StreamEx;
 public record DeviceDto(
         String serial,
         String displayName,
-        String deviceType,
+        DeviceType deviceType,
         int analogCount,
         int buttonCount,
         boolean hasLogoLed,
@@ -22,7 +23,7 @@ public record DeviceDto(
         return new DeviceDto(
                 device.getSerialNumber(),
                 device.getDisplayName(),
-                type.name(),
+                type,
                 type.getAnalogCount(),
                 type.getButtonCount(),
                 type.isHasLogoLed(),

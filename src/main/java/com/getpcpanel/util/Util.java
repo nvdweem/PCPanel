@@ -25,7 +25,8 @@ public final class Util {
     /**
      * Format a CSS-style hex color string from RGB components (0-255 each).
      */
-    public static @Nullable String formatHexString(int r, int g, int b) {
+    @Nullable
+    public static String formatHexString(int r, int g, int b) {
         return String.format("#%02x%02x%02x", r, g, b);
     }
 
@@ -33,14 +34,16 @@ public final class Util {
      * Parse a CSS hex color string like "#rrggbb" into an int[]{r,g,b} array (0-255 each).
      * Returns null if the string is null or not parseable.
      */
-    public static @Nullable int[] parseColorComponents(String color) {
-        if (color == null) return null;
+    @Nullable
+    public static int[] parseColorComponents(String color) {
+        if (color == null)
+            return null;
         try {
             String hex = color.startsWith("#") ? color.substring(1) : color;
             int r = Integer.parseInt(hex.substring(0, 2), 16);
             int g = Integer.parseInt(hex.substring(2, 4), 16);
             int b = Integer.parseInt(hex.substring(4, 6), 16);
-            return new int[]{r, g, b};
+            return new int[] { r, g, b };
         } catch (Exception e) {
             return null;
         }
@@ -50,9 +53,11 @@ public final class Util {
      * Parse a CSS hex color string and return it as-is (passthrough for backward compat).
      */
     public static Optional<String> parseColor(String color) {
-        if (color == null) return Optional.empty();
+        if (color == null)
+            return Optional.empty();
         var components = parseColorComponents(color);
-        if (components == null) return Optional.empty();
+        if (components == null)
+            return Optional.empty();
         return Optional.of(color);
     }
 

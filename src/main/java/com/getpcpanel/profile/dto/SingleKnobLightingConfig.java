@@ -1,4 +1,4 @@
-package com.getpcpanel.profile;
+package com.getpcpanel.profile.dto;
 
 import javax.annotation.Nullable;
 

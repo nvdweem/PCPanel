@@ -3,7 +3,25 @@ package com.getpcpanel.rest;
 import java.util.List;
 import java.util.Optional;
 
+import com.getpcpanel.commands.Commands;
+import com.getpcpanel.device.Device;
+import com.getpcpanel.hid.DeviceHolder;
+import com.getpcpanel.profile.DeviceSave;
+import com.getpcpanel.profile.Profile;
+import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.profile.dto.KnobSetting;
+import com.getpcpanel.profile.dto.LightingConfig;
+import com.getpcpanel.rest.EventBroadcaster.AssignmentChangedEvent;
+import com.getpcpanel.rest.EventBroadcaster.AssignmentChangedEvent.Kinds;
+import com.getpcpanel.rest.EventBroadcaster.DeviceRenamedEvent;
+import com.getpcpanel.rest.EventBroadcaster.LightingChangedEvent;
+import com.getpcpanel.rest.EventBroadcaster.ProfileSwitchedEvent;
+import com.getpcpanel.rest.model.dto.DeviceDto;
+import com.getpcpanel.rest.model.dto.ProfileDto;
+import com.getpcpanel.rest.model.dto.ProfileSnapshotDto;
+
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
@@ -16,19 +34,6 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-
-import com.getpcpanel.commands.Commands;
-import com.getpcpanel.device.Device;
-import com.getpcpanel.device.DeviceType;
-import com.getpcpanel.hid.DeviceHolder;
-import com.getpcpanel.profile.DeviceSave;
-import com.getpcpanel.profile.KnobSetting;
-import com.getpcpanel.profile.LightingConfig;
-import com.getpcpanel.profile.Profile;
-import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.rest.dto.DeviceDto;
-import com.getpcpanel.rest.dto.ProfileDto;
-
 import one.util.streamex.StreamEx;
 
 @Path("/api/devices")
@@ -38,6 +43,7 @@ import one.util.streamex.StreamEx;
 public class DeviceResource {
     @Inject DeviceHolder deviceHolder;
     @Inject SaveService saveService;
+    @Inject Event<Object> eventBus;
 
     @GET
     public List<DeviceDto> listDevices() {
@@ -60,6 +66,7 @@ public class DeviceResource {
         var device = deviceHolder.getDevice(serial).orElseThrow(NotFoundException::new);
         device.setDisplayName(name);
         saveService.save();
+        eventBus.fire(new DeviceRenamedEvent(serial, name));
         return Response.ok().build();
     }
 
@@ -96,8 +103,9 @@ public class DeviceResource {
     @Path("/{serial}/profiles/current")
     public Response switchProfile(@PathParam("serial") String serial, String name) {
         var deviceSave = getDeviceSave(serial);
-        deviceSave.setCurrentProfile(name).orElseThrow(() -> new NotFoundException("Profile not found: " + name));
+        var profile = deviceSave.setCurrentProfile(name).orElseThrow(() -> new NotFoundException("Profile not found: " + name));
         saveService.save();
+        eventBus.fire(new ProfileSwitchedEvent(serial, name, ProfileSnapshotDto.from(profile)));
         return Response.ok().build();
     }
 
@@ -106,27 +114,28 @@ public class DeviceResource {
     @GET
     @Path("/{serial}/profiles/{profile}/buttons/{index}")
     public Commands getButton(@PathParam("serial") String serial,
-                               @PathParam("profile") String profileName,
-                               @PathParam("index") int index) {
+            @PathParam("profile") String profileName,
+            @PathParam("index") int index) {
         return getProfile(serial, profileName).getButtonData(index);
     }
 
     @PUT
     @Path("/{serial}/profiles/{profile}/buttons/{index}")
     public Response setButton(@PathParam("serial") String serial,
-                               @PathParam("profile") String profileName,
-                               @PathParam("index") int index,
-                               Commands commands) {
+            @PathParam("profile") String profileName,
+            @PathParam("index") int index,
+            Commands commands) {
         getProfile(serial, profileName).setButtonData(index, commands);
         saveService.save();
+        eventBus.fire(new AssignmentChangedEvent(serial, Kinds.button, index, commands));
         return Response.ok().build();
     }
 
     @GET
     @Path("/{serial}/profiles/{profile}/dblbuttons/{index}")
     public Commands getDblButton(@PathParam("serial") String serial,
-                                  @PathParam("profile") String profileName,
-                                  @PathParam("index") int index) {
+            @PathParam("profile") String profileName,
+            @PathParam("index") int index) {
         return Optional.ofNullable(getProfile(serial, profileName).getDblButtonData(index))
                        .orElse(Commands.EMPTY);
     }
@@ -134,19 +143,20 @@ public class DeviceResource {
     @PUT
     @Path("/{serial}/profiles/{profile}/dblbuttons/{index}")
     public Response setDblButton(@PathParam("serial") String serial,
-                                  @PathParam("profile") String profileName,
-                                  @PathParam("index") int index,
-                                  Commands commands) {
+            @PathParam("profile") String profileName,
+            @PathParam("index") int index,
+            Commands commands) {
         getProfile(serial, profileName).setDblButtonData(index, commands);
         saveService.save();
+        eventBus.fire(new AssignmentChangedEvent(serial, Kinds.dblbutton, index, commands));
         return Response.ok().build();
     }
 
     @GET
     @Path("/{serial}/profiles/{profile}/dials/{index}")
     public Commands getDial(@PathParam("serial") String serial,
-                             @PathParam("profile") String profileName,
-                             @PathParam("index") int index) {
+            @PathParam("profile") String profileName,
+            @PathParam("index") int index) {
         return Optional.ofNullable(getProfile(serial, profileName).getDialData(index))
                        .orElse(Commands.EMPTY);
     }
@@ -154,28 +164,29 @@ public class DeviceResource {
     @PUT
     @Path("/{serial}/profiles/{profile}/dials/{index}")
     public Response setDial(@PathParam("serial") String serial,
-                             @PathParam("profile") String profileName,
-                             @PathParam("index") int index,
-                             Commands commands) {
+            @PathParam("profile") String profileName,
+            @PathParam("index") int index,
+            Commands commands) {
         getProfile(serial, profileName).setDialData(index, commands);
         saveService.save();
+        eventBus.fire(new AssignmentChangedEvent(serial, Kinds.dial, index, commands));
         return Response.ok().build();
     }
 
     @GET
     @Path("/{serial}/profiles/{profile}/knobsettings/{index}")
     public KnobSetting getKnobSettings(@PathParam("serial") String serial,
-                                        @PathParam("profile") String profileName,
-                                        @PathParam("index") int index) {
+            @PathParam("profile") String profileName,
+            @PathParam("index") int index) {
         return getProfile(serial, profileName).getKnobSettings(index);
     }
 
     @PUT
     @Path("/{serial}/profiles/{profile}/knobsettings/{index}")
     public Response setKnobSettings(@PathParam("serial") String serial,
-                                     @PathParam("profile") String profileName,
-                                     @PathParam("index") int index,
-                                     KnobSetting settings) {
+            @PathParam("profile") String profileName,
+            @PathParam("index") int index,
+            KnobSetting settings) {
         var knob = getProfile(serial, profileName).getKnobSettings(index);
         knob.setMinTrim(settings.getMinTrim());
         knob.setMaxTrim(settings.getMaxTrim());
@@ -202,6 +213,7 @@ public class DeviceResource {
         var device = deviceHolder.getDevice(serial).orElseThrow(NotFoundException::new);
         device.setSavedLighting(config);
         saveService.save();
+        eventBus.fire(new LightingChangedEvent(serial, config));
         return Response.ok().build();
     }
 

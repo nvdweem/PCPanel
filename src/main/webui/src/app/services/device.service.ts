@@ -1,13 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { DeviceDto, LightingConfig, KnobSetting, ProfileDto } from '../models/models';
+import { Commands, DeviceDto, KnobSetting, LightingConfig, ProfileDto } from '../models/generated/backend.types';
 
-@Injectable({ providedIn: 'root' })
+@Injectable({providedIn: 'root'})
 export class DeviceService {
   private readonly base = '/api/devices';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+  }
 
   listDevices(): Observable<DeviceDto[]> {
     return this.http.get<DeviceDto[]>(this.base);
@@ -18,7 +19,7 @@ export class DeviceService {
   }
 
   renameDevice(serial: string, name: string): Observable<void> {
-    return this.http.put<void>(`${this.base}/${serial}/name`, name, { headers: { 'Content-Type': 'text/plain' } });
+    return this.http.put<void>(`${this.base}/${serial}/name`, name, {headers: {'Content-Type': 'text/plain'}});
   }
 
   // Profiles
@@ -27,7 +28,7 @@ export class DeviceService {
   }
 
   createProfile(serial: string, name: string): Observable<ProfileDto> {
-    return this.http.post<ProfileDto>(`${this.base}/${serial}/profiles`, name, { headers: { 'Content-Type': 'text/plain' } });
+    return this.http.post<ProfileDto>(`${this.base}/${serial}/profiles`, name, {headers: {'Content-Type': 'text/plain'}});
   }
 
   deleteProfile(serial: string, name: string): Observable<void> {
@@ -35,31 +36,33 @@ export class DeviceService {
   }
 
   switchProfile(serial: string, name: string): Observable<void> {
-    return this.http.put<void>(`${this.base}/${serial}/profiles/current`, name, { headers: { 'Content-Type': 'text/plain' } });
+    return this.http.put<void>(`${this.base}/${serial}/profiles/current`, name, {headers: {'Content-Type': 'text/plain'}});
   }
 
   // Button/dial commands
-  getButtonCommands(serial: string, profile: string, index: number): Observable<any> {
-    return this.http.get<any>(`${this.base}/${serial}/profiles/${profile}/buttons/${index}`);
+  // @ts-ignore
+  getButtonCommands(serial: string, profile: string, index: number): Observable<Commands> {
+    // @ts-ignore
+    return this.http.get<Commands>(`${this.base}/${serial}/profiles/${profile}/buttons/${index}`);
   }
 
-  setButtonCommands(serial: string, profile: string, index: number, commands: any): Observable<void> {
+  setButtonCommands(serial: string, profile: string, index: number, commands: Commands): Observable<void> {
     return this.http.put<void>(`${this.base}/${serial}/profiles/${profile}/buttons/${index}`, commands);
   }
 
-  getDblButtonCommands(serial: string, profile: string, index: number): Observable<any> {
-    return this.http.get<any>(`${this.base}/${serial}/profiles/${profile}/dblbuttons/${index}`);
+  getDblButtonCommands(serial: string, profile: string, index: number): Observable<Commands> {
+    return this.http.get<Commands>(`${this.base}/${serial}/profiles/${profile}/dblbuttons/${index}`);
   }
 
-  setDblButtonCommands(serial: string, profile: string, index: number, commands: any): Observable<void> {
+  setDblButtonCommands(serial: string, profile: string, index: number, commands: Commands): Observable<void> {
     return this.http.put<void>(`${this.base}/${serial}/profiles/${profile}/dblbuttons/${index}`, commands);
   }
 
-  getDialCommands(serial: string, profile: string, index: number): Observable<any> {
-    return this.http.get<any>(`${this.base}/${serial}/profiles/${profile}/dials/${index}`);
+  getDialCommands(serial: string, profile: string, index: number): Observable<Commands> {
+    return this.http.get<Commands>(`${this.base}/${serial}/profiles/${profile}/dials/${index}`);
   }
 
-  setDialCommands(serial: string, profile: string, index: number, commands: any): Observable<void> {
+  setDialCommands(serial: string, profile: string, index: number, commands: Commands): Observable<void> {
     return this.http.put<void>(`${this.base}/${serial}/profiles/${profile}/dials/${index}`, commands);
   }
 

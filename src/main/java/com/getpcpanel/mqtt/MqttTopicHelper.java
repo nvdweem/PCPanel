@@ -1,12 +1,10 @@
 package com.getpcpanel.mqtt;
 
-import jakarta.inject.Inject;
-import jakarta.enterprise.context.ApplicationScoped;
-
-import com.getpcpanel.profile.MqttSettings;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.profile.dto.MqttSettings;
 
-import lombok.RequiredArgsConstructor;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
@@ -76,7 +74,7 @@ class MqttTopicHelper {
         logo,
     }
 
-        class DeviceMqttTopicHelper {
+    class DeviceMqttTopicHelper {
         private final String deviceSerial;
 
         DeviceMqttTopicHelper(String deviceSerial) {

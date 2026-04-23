@@ -15,7 +15,8 @@ public interface DialAction {
         return true;
     }
 
-    @Nullable DialCommandParams getDialParams();
+    @Nullable
+    DialCommandParams getDialParams();
 
     default boolean isInvert() {
         return getDialParams() != null && getDialParams().invert;

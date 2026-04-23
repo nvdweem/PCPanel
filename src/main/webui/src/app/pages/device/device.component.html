@@ -1,20 +1,20 @@
-@if (!device) {
+@if (!device()) {
   <div class="loading-center"><mat-spinner /></div>
 }
 
-@if (device) {
+@if (device(); as device) {
   <div class="device-page">
     <mat-toolbar class="page-toolbar">
       <button mat-icon-button routerLink="/" aria-label="Back">
         <mat-icon>arrow_back</mat-icon>
       </button>
 
-      @if (!editingName) {
+      @if (!editingName()) {
         <span class="device-title" (dblclick)="startEditName()">{{ device.displayName }}</span>
       }
-      @if (editingName) {
+      @if (editingName()) {
         <mat-form-field appearance="outline" class="name-field">
-          <input matInput [(ngModel)]="newName" (keyup.enter)="saveName()" (keyup.escape)="cancelEditName()" />
+          <input matInput [ngModel]="newName()" (ngModelChange)="newName.set($event)" (keyup.enter)="saveName()" (keyup.escape)="cancelEditName()" />
         </mat-form-field>
         <button mat-icon-button (click)="saveName()"><mat-icon>check</mat-icon></button>
         <button mat-icon-button (click)="cancelEditName()"><mat-icon>close</mat-icon></button>
@@ -22,6 +22,7 @@
 
       <span class="device-subtitle">{{ friendlyType(device.deviceType) }} · {{ device.serial }}</span>
       <span class="spacer"></span>
+      <app-connection-status />
       <button mat-stroked-button [routerLink]="['/lighting', device.serial]">
         <mat-icon>light_mode</mat-icon> Lighting
       </button>

@@ -2,22 +2,20 @@ package com.getpcpanel.commands;
 
 import static com.getpcpanel.cpp.AudioSession.SYSTEM;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.BiFunction;
-import javax.imageio.ImageIO;
 
 import javax.annotation.Nonnull;
+
 import javax.annotation.Nullable;
 
+import javax.imageio.ImageIO;
+
 import org.apache.commons.lang3.StringUtils;
-import io.quarkus.arc.All;
-import io.quarkus.cache.CacheResult;
-import jakarta.inject.Inject;
-import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandBrightness;
@@ -32,12 +30,13 @@ import com.getpcpanel.commands.command.CommandVolumeFocus;
 import com.getpcpanel.commands.command.CommandVolumeProcess;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.iconextract.IIconService;
-import com.getpcpanel.profile.KnobSetting;
-import com.getpcpanel.util.Images;
+import com.getpcpanel.profile.dto.KnobSetting;
 
+import io.quarkus.arc.All;
+import io.quarkus.cache.CacheResult;
 import jakarta.annotation.PostConstruct;
-import java.awt.image.BufferedImage;
-import lombok.RequiredArgsConstructor;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
@@ -53,12 +52,14 @@ public class IconService {
     private static BufferedImage loadImage(String path) {
         try {
             var url = IconService.class.getResource(path);
-            if (url != null) return ImageIO.read(url);
+            if (url != null)
+                return ImageIO.read(url);
         } catch (IOException e) {
             // fall through
         }
         return new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
     }
+
     private final SafeMap imageHandlers = new SafeMap();
     @Inject
     ISndCtrl sndCtrl;
@@ -92,7 +93,7 @@ public class IconService {
         });
     }
 
-    @CacheResult(cacheName="command-icon")
+    @CacheResult(cacheName = "command-icon")
     @Nonnull
     public BufferedImage getImageFrom(@Nullable Commands commands, @Nullable KnobSetting override) {
         if (!Commands.hasCommands(commands)) {

@@ -14,8 +14,8 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.getpcpanel.profile.MqttSettings;
 import com.getpcpanel.profile.SaveService.SaveEvent;
+import com.getpcpanel.profile.dto.MqttSettings;
 import com.getpcpanel.util.Debouncer;
 import com.hivemq.client.mqtt.MqttClient;
 import com.hivemq.client.mqtt.MqttGlobalPublishFilter;

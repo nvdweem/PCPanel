@@ -2,15 +2,16 @@ package com.getpcpanel.cpp;
 
 import java.io.File;
 
-import javax.annotation.Nullable;
-
 import org.apache.commons.lang3.StringUtils;
+
+import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.enterprise.event.Event;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.EqualsAndHashCode.Exclude;
 import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
 
@@ -19,14 +20,14 @@ import lombok.extern.log4j.Log4j2;
 @SuppressWarnings("unused") // Methods called from JNI
 public class AudioSession {
     public static final String SYSTEM = "System Sounds";
-    @JsonIgnore @EqualsAndHashCode.Exclude @ToString.Exclude @Nullable
+    @JsonIgnore @Exclude @ToString.Exclude @Nullable
     transient Event<Object> eventBus;
     private int pid;
     private File executable;
-    @EqualsAndHashCode.Exclude private String title;
-    @EqualsAndHashCode.Exclude @Nullable private String icon;
-    @EqualsAndHashCode.Exclude private float volume;
-    @EqualsAndHashCode.Exclude private boolean muted;
+    @Exclude private String title;
+    @Exclude @Nullable private String icon;
+    @Exclude private float volume;
+    @Exclude private boolean muted;
 
     public AudioSession(@Nullable Event<Object> eventBus, int pid, File executable, String title, @Nullable String icon, float volume, boolean muted) {
         this.eventBus = eventBus;

@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import javax.annotation.Nonnull;
+
 import javax.annotation.Nullable;
 
 import dev.niels.wavelink.impl.model.WaveLinkChannel;

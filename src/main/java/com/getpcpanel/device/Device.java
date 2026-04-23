@@ -1,13 +1,11 @@
 package com.getpcpanel.device;
 
-import org.apache.commons.lang3.StringUtils;
-
 import com.getpcpanel.commands.IconService;
 import com.getpcpanel.hid.OutputInterpreter;
 import com.getpcpanel.profile.DeviceSave;
-import com.getpcpanel.profile.LightingConfig;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.profile.dto.LightingConfig;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;

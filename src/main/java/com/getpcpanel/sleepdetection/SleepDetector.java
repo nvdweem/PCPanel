@@ -1,16 +1,16 @@
 package com.getpcpanel.sleepdetection;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Observes;
-import jakarta.inject.Inject;
-import io.quarkus.runtime.ShutdownEvent;
-
 import com.getpcpanel.device.Device;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.hid.OutputInterpreter;
-import com.getpcpanel.profile.LightingConfig;
+import com.getpcpanel.profile.dto.LightingConfig;
+import com.getpcpanel.sleepdetection.WindowsSystemEventService.WindowsSystemEvent;
 
+import io.quarkus.runtime.ShutdownEvent;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -29,7 +29,7 @@ public final class SleepDetector {
         onSuspended(true);
     }
 
-    public void onEvent(@Observes WindowsSystemEventService.WindowsSystemEvent event) {
+    public void onEvent(@Observes WindowsSystemEvent event) {
         switch (event.type()) {
             case goingToSuspend, locked -> onSuspended(false);
             case resumedFromSuspend, unlocked -> onResumed();

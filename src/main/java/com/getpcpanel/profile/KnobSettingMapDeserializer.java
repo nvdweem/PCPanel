@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.getpcpanel.profile.dto.KnobSetting;
 
 public class KnobSettingMapDeserializer extends JsonDeserializer<Map<Integer, KnobSetting>> {
     @Override

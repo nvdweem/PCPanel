@@ -1,7 +1,4 @@
-package com.getpcpanel.profile;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.getpcpanel.util.Util;
+package com.getpcpanel.profile.dto;
 
 import lombok.Data;
 

@@ -1,6 +1,4 @@
-package com.getpcpanel.profile;
-
-import com.getpcpanel.util.Util;
+package com.getpcpanel.profile.dto;
 
 import lombok.Data;
 

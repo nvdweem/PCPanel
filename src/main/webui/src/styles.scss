@@ -12,7 +12,9 @@ html {
   ));
 }
 
-*, *::before, *::after { box-sizing: border-box; }
+*, *::before, *::after {
+  box-sizing: border-box;
+}
 
 html, body {
   margin: 0;
@@ -30,16 +32,33 @@ app-root {
 }
 
 // Override Material sidenav container background
-.mat-drawer-container { background: #25262a !important; }
-.mat-drawer { background: #1c1d20 !important; }
-.mat-toolbar { background: #1c1d20 !important; border-bottom: 1px solid #3b3c41; }
+.mat-drawer-container {
+  background: #25262a !important;
+}
+
+.mat-drawer {
+  background: #1c1d20 !important;
+}
+
+.mat-toolbar {
+  background: #1c1d20 !important;
+  border-bottom: 1px solid #3b3c41;
+}
 
 // Breadcrumb link style
 .breadcrumb {
   font-size: 0.85rem;
   color: #9a9a9a;
   margin-bottom: 1.5rem;
-  a { color: #ffc940; text-decoration: none; &:hover { text-decoration: underline; } }
+
+  a {
+    color: #ffc940;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 }
 
 // Loading placeholder
@@ -49,4 +68,8 @@ app-root {
   justify-content: center;
   height: 100%;
   min-height: 200px;
+}
+
+.cur-p {
+  cursor: pointer;
 }

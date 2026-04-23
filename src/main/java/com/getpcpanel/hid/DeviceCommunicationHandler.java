@@ -18,11 +18,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.hid4java.HidDevice;
-import jakarta.enterprise.event.Event;
+
 import javax.annotation.Nullable;
 
 import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.profile.SaveService;
+
+import jakarta.enterprise.event.Event;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 

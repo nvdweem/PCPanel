@@ -9,10 +9,11 @@ import java.util.Map;
 import java.util.Objects;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Contract;
+
+import javax.annotation.Nullable;
 
 import com.getpcpanel.profile.SaveService;
 
