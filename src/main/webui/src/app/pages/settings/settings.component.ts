@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterModule } from '@angular/router';
 import { form, FormField, max, min } from '@angular/forms/signals';
@@ -70,6 +70,7 @@ const DEFAULT_WAVELINK: WaveLinkSettings = {
 
 @Component({
   selector: 'app-settings',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     RouterModule, FormField,
     MatToolbarModule, MatTabsModule, MatCheckboxModule,

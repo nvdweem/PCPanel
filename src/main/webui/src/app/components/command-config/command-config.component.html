@@ -1,123 +1,27 @@
-<h2 mat-dialog-title>Configure {{ data.kind === 'dial' ? 'Dial' : 'Button' }} {{ data.index + 1 }}</h2>
-
+<h2 mat-dialog-title>{{ data.title }}</h2>
 <mat-dialog-content>
-  <div class="form-fields">
-    <mat-form-field appearance="outline" class="full-width">
-      <mat-label>Action Type</mat-label>
-      <mat-select [(ngModel)]="selectedType" (ngModelChange)="onTypeChange($event)">
-        @for (t of availableTypes; track t._type) { <mat-option [value]="t._type">{{ t.label }}</mat-option> }
-      </mat-select>
-    </mat-form-field>
-
-    @if (is('CommandMedia')) {
-      <mat-form-field appearance="outline" class="full-width"><mat-label>Media Button</mat-label>
-        <mat-select [(ngModel)]="cmd['button']">
-          <mat-option value="playPause">Play/Pause</mat-option><mat-option value="next">Next</mat-option>
-          <mat-option value="prev">Previous</mat-option><mat-option value="stop">Stop</mat-option><mat-option value="mute">Mute</mat-option>
-        </mat-select>
-      </mat-form-field>
-      <mat-checkbox [(ngModel)]="cmd['spotify']">Spotify only</mat-checkbox>
+  <mat-tab-group>
+    @if (form.button) {
+      <mat-tab label="Click">
+        <app-commands type="button" [commands]="form.button"/>
+      </mat-tab>
     }
-    @if (is('CommandKeystroke')) { <mat-form-field appearance="outline" class="full-width"><mat-label>Keystroke</mat-label><input matInput [(ngModel)]="cmd['keystroke']" placeholder="e.g. ctrl+shift+m" /></mat-form-field> }
-    @if (is('CommandRun')) { <mat-form-field appearance="outline" class="full-width"><mat-label>Command</mat-label><input matInput [(ngModel)]="cmd['command']" placeholder="Path or shell command" /></mat-form-field> }
-    @if (is('CommandShortcut')) { <mat-form-field appearance="outline" class="full-width"><mat-label>Shortcut</mat-label><input matInput [(ngModel)]="cmd['shortcut']" /></mat-form-field> }
-    @if (is('CommandEndProgram')) {
-      <mat-checkbox [(ngModel)]="cmd['specific']">Specific process</mat-checkbox>
-      @if (cmd['specific']) { <label class="field-label">Process name</label><app-audio-picker mode="process" [(value)]="cmd['name']" /> }
+    @if (form.dblButton) {
+      <mat-tab label="Double click">
+        <app-commands type="button" [commands]="form.dblButton"/>
+      </mat-tab>
     }
-    @if (is('CommandProfile')) { <mat-form-field appearance="outline" class="full-width"><mat-label>Profile name</mat-label><input matInput [(ngModel)]="cmd['profile']" /></mat-form-field> }
-    @if (is('CommandVolumeFocusMute')) {
-      <mat-form-field appearance="outline" class="full-width"><mat-label>Mute action</mat-label>
-        <mat-select [(ngModel)]="cmd['muteType']">@for (m of muteTypes; track m) { <mat-option [value]="m">{{ m }}</mat-option> }</mat-select>
-      </mat-form-field>
+    @if (form.analog) {
+      <mat-tab label="Dial/Slider">
+        <app-commands type="dial" [commands]="form.analog"/>
+      </mat-tab>
     }
-    @if (is('CommandVolumeDevice')) {
-      <label class="field-label">Audio Device</label><app-audio-picker mode="device" [(value)]="cmd['deviceId']" />
-      <mat-checkbox [(ngModel)]="cmd['isUnMuteOnVolumeChange']">Unmute on volume change</mat-checkbox>
-      <app-dial-params-editor [params]="cmd['dialParams']" />
-    }
-    @if (is('CommandVolumeDeviceMute')) {
-      <label class="field-label">Audio Device</label><app-audio-picker mode="device" [(value)]="cmd['deviceId']" />
-      <mat-form-field appearance="outline" class="full-width"><mat-label>Mute action</mat-label>
-        <mat-select [(ngModel)]="cmd['muteType']">@for (m of muteTypes; track m) { <mat-option [value]="m">{{ m }}</mat-option> }</mat-select>
-      </mat-form-field>
-    }
-    @if (is('CommandVolumeDefaultDevice')) { <label class="field-label">Audio Device</label><app-audio-picker mode="device" [(value)]="cmd['deviceId']" /> }
-    @if (is('CommandVolumeDefaultDeviceToggle')) {
-      <label class="field-label">Devices (cycle through)</label>
-      <div class="multi-list">
-        @for (d of cmd['devices']; track $index; let i = $index) {
-          <div class="multi-row"><app-audio-picker mode="device" [value]="cmd['devices'][i]" (valueChange)="cmd['devices'][i] = $event" /><button mat-icon-button type="button" (click)="removeItem(cmd['devices'], i)"><mat-icon>delete</mat-icon></button></div>
-        }
-        <button mat-stroked-button type="button" (click)="cmd['devices'].push('')"><mat-icon>add</mat-icon> Add Device</button>
-      </div>
-    }
-    @if (is('CommandVolumeDefaultDeviceAdvanced')) {
-      <mat-form-field appearance="outline" class="full-width"><mat-label>Label</mat-label><input matInput [(ngModel)]="cmd['name']" /></mat-form-field>
-      <label class="field-label">Media Playback</label><app-audio-picker mode="device" deviceFilter="output" [(value)]="cmd['mediaPb']" />
-      <label class="field-label">Media Record</label><app-audio-picker mode="device" deviceFilter="input" [(value)]="cmd['mediaRec']" />
-      <label class="field-label">Comm. Playback</label><app-audio-picker mode="device" deviceFilter="output" [(value)]="cmd['communicationPb']" />
-      <label class="field-label">Comm. Record</label><app-audio-picker mode="device" deviceFilter="input" [(value)]="cmd['communicationRec']" />
-    }
-    @if (is('CommandVolumeProcess')) {
-      <label class="field-label">Processes</label>
-      <div class="multi-list">
-        @for (p of cmd['processName']; track $index; let i = $index) {
-          <div class="multi-row"><app-audio-picker mode="process" [value]="cmd['processName'][i]" (valueChange)="cmd['processName'][i] = $event" /><button mat-icon-button type="button" (click)="removeItem(cmd['processName'], i)"><mat-icon>delete</mat-icon></button></div>
-        }
-        <button mat-stroked-button type="button" (click)="cmd['processName'].push('')"><mat-icon>add</mat-icon> Add Process</button>
-      </div>
-      <label class="field-label">Device</label><app-audio-picker mode="device" [(value)]="cmd['device']" />
-      <mat-checkbox [(ngModel)]="cmd['isUnMuteOnVolumeChange']">Unmute on volume change</mat-checkbox>
-      <app-dial-params-editor [params]="cmd['dialParams']" />
-    }
-    @if (is('CommandVolumeProcessMute')) {
-      <label class="field-label">Processes</label>
-      <div class="multi-list">
-        @for (p of asArray(cmd['processName']); track $index; let i = $index) {
-          <div class="multi-row"><app-audio-picker mode="process" [value]="asArray(cmd['processName'])[i]" (valueChange)="asArray(cmd['processName'])[i] = $event" /><button mat-icon-button type="button" (click)="removeItem(asArray(cmd['processName']), i)"><mat-icon>delete</mat-icon></button></div>
-        }
-        <button mat-stroked-button type="button" (click)="asArray(cmd['processName']).push('')"><mat-icon>add</mat-icon> Add Process</button>
-      </div>
-      <mat-form-field appearance="outline" class="full-width"><mat-label>Mute action</mat-label>
-        <mat-select [(ngModel)]="cmd['muteType']">@for (m of muteTypes; track m) { <mat-option [value]="m">{{ m }}</mat-option> }</mat-select>
-      </mat-form-field>
-    }
-    @if (is('CommandVolumeFocus') || is('CommandBrightness')) { <app-dial-params-editor [params]="cmd['dialParams']" /> }
-    @if (is('CommandObsMuteSource')) {
-      <mat-form-field appearance="outline" class="full-width"><mat-label>Source name</mat-label><input matInput [(ngModel)]="cmd['source']" /></mat-form-field>
-      <mat-form-field appearance="outline" class="full-width"><mat-label>Mute action</mat-label><mat-select [(ngModel)]="cmd['type']">@for (m of muteTypes; track m) { <mat-option [value]="m">{{ m }}</mat-option> }</mat-select></mat-form-field>
-    }
-    @if (is('CommandObsSetScene')) { <mat-form-field appearance="outline" class="full-width"><mat-label>Scene name</mat-label><input matInput [(ngModel)]="cmd['scene']" /></mat-form-field> }
-    @if (is('CommandObsSetSourceVolume')) {
-      <mat-form-field appearance="outline" class="full-width"><mat-label>Source name</mat-label><input matInput [(ngModel)]="cmd['sourceName']" /></mat-form-field>
-      <app-dial-params-editor [params]="cmd['dialParams']" />
-    }
-    @if (is('CommandVoiceMeeterBasic')) {
-      <mat-form-field appearance="outline" class="full-width"><mat-label>Control type</mat-label><mat-select [(ngModel)]="cmd['ct']">@for (t of vmControlTypes; track t) { <mat-option [value]="t">{{ t }}</mat-option> }</mat-select></mat-form-field>
-      <mat-form-field appearance="outline" class="full-width"><mat-label>Index</mat-label><input matInput type="number" [(ngModel)]="cmd['index']" min="0" max="8" /></mat-form-field>
-      <mat-form-field appearance="outline" class="full-width"><mat-label>Dial type</mat-label><mat-select [(ngModel)]="cmd['dt']">@for (t of vmDialTypes; track t) { <mat-option [value]="t">{{ t }}</mat-option> }</mat-select></mat-form-field>
-      <app-dial-params-editor [params]="cmd['dialParams']" />
-    }
-    @if (is('CommandVoiceMeeterBasicButton')) {
-      <mat-form-field appearance="outline" class="full-width"><mat-label>Control type</mat-label><mat-select [(ngModel)]="cmd['ct']">@for (t of vmControlTypes; track t) { <mat-option [value]="t">{{ t }}</mat-option> }</mat-select></mat-form-field>
-      <mat-form-field appearance="outline" class="full-width"><mat-label>Index</mat-label><input matInput type="number" [(ngModel)]="cmd['index']" min="0" max="8" /></mat-form-field>
-      <mat-form-field appearance="outline" class="full-width"><mat-label>Button type</mat-label><mat-select [(ngModel)]="cmd['bt']">@for (t of vmButtonTypes; track t) { <mat-option [value]="t">{{ t }}</mat-option> }</mat-select></mat-form-field>
-    }
-    @if (is('CommandVoiceMeeterAdvanced')) {
-      <mat-form-field appearance="outline" class="full-width"><mat-label>Parameter</mat-label><input matInput [(ngModel)]="cmd['fullParam']" placeholder="e.g. Strip[0].Gain" /></mat-form-field>
-      <mat-form-field appearance="outline" class="full-width"><mat-label>Control mode</mat-label><mat-select [(ngModel)]="cmd['ct']"><mat-option value="ABSOLUTE">Absolute</mat-option><mat-option value="RELATIVE">Relative</mat-option></mat-select></mat-form-field>
-      <app-dial-params-editor [params]="cmd['dialParams']" />
-    }
-    @if (is('CommandVoiceMeeterAdvancedButton')) {
-      <mat-form-field appearance="outline" class="full-width"><mat-label>Parameter</mat-label><input matInput [(ngModel)]="cmd['fullParam']" placeholder="e.g. Strip[0].Mute" /></mat-form-field>
-      <mat-form-field appearance="outline" class="full-width"><mat-label>Button mode</mat-label><mat-select [(ngModel)]="cmd['bt']"><mat-option value="SET">Set value</mat-option><mat-option value="TOGGLE">Toggle</mat-option></mat-select></mat-form-field>
-      @if (cmd['bt'] === 'SET') { <mat-form-field appearance="outline" class="full-width"><mat-label>Value</mat-label><input matInput [(ngModel)]="cmd['stringValue']" placeholder="e.g. 1" /></mat-form-field> }
-    }
-  </div>
+    <mat-tab label="Settings">
+      Settings
+    </mat-tab>
+  </mat-tab-group>
 </mat-dialog-content>
-
-<mat-dialog-actions align="end">
-  <button mat-stroked-button (click)="cancel()">Cancel</button>
-  <button mat-raised-button color="primary" (click)="save()">Save</button>
+<mat-dialog-actions>
+  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-button cdkFocusInitial>Ok</button>
 </mat-dialog-actions>

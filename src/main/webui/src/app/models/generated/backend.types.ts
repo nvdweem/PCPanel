@@ -6,7 +6,7 @@ export interface ButtonAction {
 }
 
 export interface Command {
-    _type: "com.getpcpanel.commands.command.CommandBrightness" | "com.getpcpanel.commands.command.CommandEndProgram" | "com.getpcpanel.commands.command.CommandKeystroke" | "com.getpcpanel.commands.command.CommandMedia" | "com.getpcpanel.commands.command.CommandNoOp" | "com.getpcpanel.commands.command.CommandObs" | "com.getpcpanel.commands.command.CommandObsMuteSource" | "com.getpcpanel.commands.command.CommandObsSetScene" | "com.getpcpanel.commands.command.CommandObsSetSourceVolume" | "com.getpcpanel.commands.command.CommandProfile" | "com.getpcpanel.commands.command.CommandRun" | "com.getpcpanel.commands.command.CommandShortcut" | "com.getpcpanel.commands.command.CommandVoiceMeeter" | "com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced" | "com.getpcpanel.commands.command.CommandVoiceMeeterAdvancedButton" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasic" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton" | "com.getpcpanel.commands.command.CommandVolume" | "com.getpcpanel.commands.command.CommandVolumeApplicationDeviceToggle" | "com.getpcpanel.commands.command.CommandVolumeDefaultDevice" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceAdvanced" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggle" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggleAdvanced" | "com.getpcpanel.commands.command.CommandVolumeDevice" | "com.getpcpanel.commands.command.CommandVolumeDeviceMute" | "com.getpcpanel.commands.command.CommandVolumeFocus" | "com.getpcpanel.commands.command.CommandVolumeFocusMute" | "com.getpcpanel.commands.command.CommandVolumeProcess" | "com.getpcpanel.commands.command.CommandVolumeProcessMute";
+    _type: "com.getpcpanel.commands.command.CommandBrightness" | "com.getpcpanel.commands.command.CommandEndProgram" | "com.getpcpanel.commands.command.CommandKeystroke" | "com.getpcpanel.commands.command.CommandMedia" | "com.getpcpanel.commands.command.CommandNoOp" | "com.getpcpanel.commands.command.CommandObs" | "com.getpcpanel.commands.command.CommandObsMuteSource" | "com.getpcpanel.commands.command.CommandObsSetScene" | "com.getpcpanel.commands.command.CommandObsSetSourceVolume" | "com.getpcpanel.commands.command.CommandProfile" | "com.getpcpanel.commands.command.CommandRun" | "com.getpcpanel.commands.command.CommandShortcut" | "com.getpcpanel.commands.command.CommandVoiceMeeter" | "com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced" | "com.getpcpanel.commands.command.CommandVoiceMeeterAdvancedButton" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasic" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton" | "com.getpcpanel.commands.command.CommandVolume" | "com.getpcpanel.commands.command.CommandVolumeApplicationDeviceToggle" | "com.getpcpanel.commands.command.CommandVolumeDefaultDevice" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceAdvanced" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggle" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggleAdvanced" | "com.getpcpanel.commands.command.CommandVolumeDevice" | "com.getpcpanel.commands.command.CommandVolumeDeviceMute" | "com.getpcpanel.commands.command.CommandVolumeFocus" | "com.getpcpanel.commands.command.CommandVolumeFocusMute" | "com.getpcpanel.commands.command.CommandVolumeProcess" | "com.getpcpanel.commands.command.CommandVolumeProcessMute" | "com.getpcpanel.wavelink.command.CommandWaveLink" | "com.getpcpanel.wavelink.command.CommandWaveLinkAddFocusToChannel" | "com.getpcpanel.wavelink.command.CommandWaveLinkChange" | "com.getpcpanel.wavelink.command.CommandWaveLinkChangeLevel" | "com.getpcpanel.wavelink.command.CommandWaveLinkChangeMute" | "com.getpcpanel.wavelink.command.CommandWaveLinkChannelEffect" | "com.getpcpanel.wavelink.command.CommandWaveLinkMainOutput";
 }
 
 export interface CommandBrightness extends Command, DialAction {
@@ -75,6 +75,13 @@ export interface Commands {
 export interface CommandShortcut extends Command, ButtonAction {
     _type: "com.getpcpanel.commands.command.CommandShortcut";
     shortcut: string;
+}
+
+export interface CommandType {
+    category: CommandCategory;
+    command: string;
+    kind: Kinds;
+    name: string;
 }
 
 export interface CommandVoiceMeeter extends Command {
@@ -183,6 +190,49 @@ export interface CommandVolumeProcessMute extends CommandVolume, ButtonAction {
     _type: "com.getpcpanel.commands.command.CommandVolumeProcessMute";
     muteType: MuteType;
     processName: string[];
+}
+
+export interface CommandWaveLink extends Command {
+    _type: "com.getpcpanel.wavelink.command.CommandWaveLink" | "com.getpcpanel.wavelink.command.CommandWaveLinkAddFocusToChannel" | "com.getpcpanel.wavelink.command.CommandWaveLinkChange" | "com.getpcpanel.wavelink.command.CommandWaveLinkChangeLevel" | "com.getpcpanel.wavelink.command.CommandWaveLinkChangeMute" | "com.getpcpanel.wavelink.command.CommandWaveLinkChannelEffect" | "com.getpcpanel.wavelink.command.CommandWaveLinkMainOutput";
+}
+
+export interface CommandWaveLinkAddFocusToChannel extends CommandWaveLink, ButtonAction {
+    _type: "com.getpcpanel.wavelink.command.CommandWaveLinkAddFocusToChannel";
+    channelId?: string;
+    channelName?: string;
+    id?: string;
+    name?: string;
+}
+
+export interface CommandWaveLinkChange extends CommandWaveLink {
+    _type: "com.getpcpanel.wavelink.command.CommandWaveLinkChange" | "com.getpcpanel.wavelink.command.CommandWaveLinkChangeLevel" | "com.getpcpanel.wavelink.command.CommandWaveLinkChangeMute";
+    commandType: WaveLinkCommandTarget;
+    id1?: string;
+    id2?: string;
+}
+
+export interface CommandWaveLinkChangeLevel extends CommandWaveLinkChange, DialAction {
+    _type: "com.getpcpanel.wavelink.command.CommandWaveLinkChangeLevel";
+}
+
+export interface CommandWaveLinkChangeMute extends CommandWaveLinkChange, ButtonAction {
+    _type: "com.getpcpanel.wavelink.command.CommandWaveLinkChangeMute";
+    muteType: MuteType;
+}
+
+export interface CommandWaveLinkChannelEffect extends CommandWaveLink, ButtonAction {
+    _type: "com.getpcpanel.wavelink.command.CommandWaveLinkChannelEffect";
+    channelId?: string;
+    channelName?: string;
+    effectId?: string;
+    effectName?: string;
+    toggleType: MuteType;
+}
+
+export interface CommandWaveLinkMainOutput extends CommandWaveLink, ButtonAction {
+    _type: "com.getpcpanel.wavelink.command.CommandWaveLinkMainOutput";
+    id?: string;
+    name?: string;
 }
 
 export interface DeviceAction {
@@ -483,6 +533,8 @@ export type ButtonControlMode = "Enable" | "Disable" | "Toggle" | "String";
 
 export type ButtonType = "mono" | "Mute" | "solo" | "M.C" | "EQ" | "A1" | "A2" | "A3" | "A4" | "A5" | "B1" | "B2" | "B3" | "SEL" | "MIXA" | "MIXB" | "Repeat" | "Composite";
 
+export type CommandCategory = "standard" | "voicemeeter" | "obs" | "wavelink";
+
 export type CommandsType = "All at once" | "In sequence";
 
 export type ControlType = "Input" | "Output";
@@ -510,5 +562,7 @@ export type SINGLE_SLIDER_LABEL_MODE = "NONE" | "STATIC";
 export type SINGLE_SLIDER_MODE = "NONE" | "STATIC" | "STATIC_GRADIENT" | "VOLUME_GRADIENT";
 
 export type VolumeButton = "mute" | "next" | "prev" | "stop" | "playPause";
+
+export type WaveLinkCommandTarget = "Input" | "Channel" | "Mix" | "Output";
 
 export type WsEventUnion = WsAssignmentChangedEvent | WsButtonEvent | WsDeviceConnectedEvent | WsDeviceDisconnectedEvent | WsDeviceRenamedEvent | WsKnobEvent | WsLightingChangedEvent | WsProfileSwitchedEvent | WsVisualColorsChangedEvent | DeviceSnapshotDto;

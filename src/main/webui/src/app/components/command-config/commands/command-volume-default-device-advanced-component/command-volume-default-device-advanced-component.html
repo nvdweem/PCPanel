@@ -1,0 +1,58 @@
+<div>
+  <mat-form-field>
+    <mat-label>Name</mat-label>
+    <input matInput [formField]="field().name" />
+  </mat-form-field>
+</div>
+
+<div>
+  <mat-form-field>
+    <mat-label>Media Playback</mat-label>
+    <input matInput [formField]="field().mediaPb" [matAutocomplete]="mediaPbAuto" />
+    <mat-autocomplete #mediaPbAuto>
+      <mat-option value="">None</mat-option>
+      @for (device of filteredMediaPb(); track device.id) {
+        <mat-option [value]="device.name">{{ device.name }}</mat-option>
+      }
+    </mat-autocomplete>
+  </mat-form-field>
+</div>
+
+<div>
+  <mat-form-field>
+    <mat-label>Media Record</mat-label>
+    <input matInput [formField]="field().mediaRec" [matAutocomplete]="mediaRecAuto" />
+    <mat-autocomplete #mediaRecAuto>
+      <mat-option value="">None</mat-option>
+      @for (device of filteredMediaRec(); track device.id) {
+        <mat-option [value]="device.name">{{ device.name }}</mat-option>
+      }
+    </mat-autocomplete>
+  </mat-form-field>
+</div>
+
+<div>
+  <mat-form-field>
+    <mat-label>Communication Playback</mat-label>
+    <input matInput [formField]="field().communicationPb" [matAutocomplete]="commPbAuto" />
+    <mat-autocomplete #commPbAuto>
+      <mat-option value="">None</mat-option>
+      @for (device of filteredCommPb(); track device.id) {
+        <mat-option [value]="device.name">{{ device.name }}</mat-option>
+      }
+    </mat-autocomplete>
+  </mat-form-field>
+</div>
+
+<div>
+  <mat-form-field>
+    <mat-label>Communication Record</mat-label>
+    <input matInput [formField]="field().communicationRec" [matAutocomplete]="commRecAuto" />
+    <mat-autocomplete #commRecAuto>
+      <mat-option value="">None</mat-option>
+      @for (device of filteredCommRec(); track device.id) {
+        <mat-option [value]="device.name">{{ device.name }}</mat-option>
+      }
+    </mat-autocomplete>
+  </mat-form-field>
+</div>

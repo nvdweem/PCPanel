@@ -1,0 +1,14 @@
+<div>
+  <mat-form-field>
+    <mat-label>Button</mat-label>
+    <mat-select [formField]="field().button">
+      @for (button of buttons; track button) {
+        <mat-option [value]="button">{{ buttonLabels[button] }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</div>
+
+<div>
+  <mat-checkbox [formField]="field().spotify">Spotify mode</mat-checkbox>
+</div>

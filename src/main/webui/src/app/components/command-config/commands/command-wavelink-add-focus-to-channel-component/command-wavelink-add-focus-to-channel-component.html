@@ -1,0 +1,10 @@
+<div>
+  <mat-form-field>
+    <mat-label>Channel</mat-label>
+    <mat-select [formField]="field().id">
+      @for (channel of waveLinkService.channels.value(); track channel.id) {
+        <mat-option [value]="channel.id">{{ channel.name }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</div>

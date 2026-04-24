@@ -51,15 +51,13 @@
             <app-pcpanel-mini
               [lightingConfig]="facade.lightingConfig()"
               [activeDial]="facade.activeDial()"
-              [dialLabels]="facade.dialLabels()"
-              (dialClick)="onDialClick($event)" />
+              [dialLabels]="facade.dialLabels()" />
           }
           @if (facade.isRgb()) {
             <app-pcpanel-rgb
               [lightingConfig]="facade.lightingConfig()"
               [activeDial]="facade.activeDial()"
-              [dialLabels]="facade.dialLabels()"
-              (dialClick)="onDialClick($event)" />
+              [dialLabels]="facade.dialLabels()" />
           }
           <p class="hint-text">Click a dial or slider to configure it</p>
         </div>

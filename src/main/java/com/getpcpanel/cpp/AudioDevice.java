@@ -2,10 +2,10 @@ package com.getpcpanel.cpp;
 
 import java.io.Serializable;
 
-import jakarta.enterprise.event.Event;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+import jakarta.enterprise.event.Event;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Setter;
@@ -17,11 +17,11 @@ import lombok.extern.log4j.Log4j2;
 @SuppressWarnings("unused") // Methods called from JNI
 public class AudioDevice implements Serializable {
     @JsonIgnore protected final transient Event<Object> eventBus;
-    private final String name;
-    private final String id;
+    @JsonProperty private final String name;
+    @JsonProperty private final String id;
     private float volume;
     private boolean muted;
-    private DataFlow dataflow;
+    @JsonProperty private DataFlow dataflow;
 
     public AudioDevice(Event<Object> eventBus, String name, String id) {
         this.eventBus = eventBus;

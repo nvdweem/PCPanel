@@ -1,4 +1,4 @@
-import { Component, computed, DestroyRef, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -13,12 +13,12 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog } from '@angular/material/dialog';
 import { DeviceService } from '../../services/device.service';
 import { DeviceStateService } from '../../services/device-state.service';
-import { CommandConfigComponent, CommandDialogData } from '../../components/command-config/command-config.component';
 import { ConnectionStatusComponent } from '../../components/connection-status/connection-status.component';
 import { Command, Commands } from '../../models/generated/backend.types';
 
 @Component({
   selector: 'app-device',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     RouterModule, FormsModule,
     MatToolbarModule, MatButtonModule, MatButtonToggleModule,
@@ -115,26 +115,27 @@ export class DeviceComponent {
   }
 
   private openDialog(kind: 'dial' | 'button', index: number, currentCommands: Commands | null): void {
-    const dev = this.device();
-    const data: CommandDialogData = {kind, index, currentCommands, profiles: dev?.profiles ?? []};
-    const ref = this.dialog.open(CommandConfigComponent, {data, width: '560px', panelClass: 'command-dialog-panel'});
-    ref.afterClosed()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((result: Commands | null | undefined) => {
-        const currentDevice = this.device();
-        if (!result || !currentDevice?.currentProfile) return;
-        const {serial, currentProfile} = currentDevice;
-        // HTTP mutation — backend emits assignment_changed which updates DeviceStateService
-        if (kind === 'dial') {
-          this.deviceService.setDialCommands(serial, currentProfile, index, result)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe();
-        } else {
-          this.deviceService.setButtonCommands(serial, currentProfile, index, result)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe();
-        }
-      });
+    console.log('TODO!');
+    // const dev = this.device();
+    // const data: CommandDialogData = {kind, index, currentCommands, profiles: dev?.profiles ?? []};
+    // const ref = this.dialog.open(CommandConfigComponent, {data, width: '560px', panelClass: 'command-dialog-panel'});
+    // ref.afterClosed()
+    //   .pipe(takeUntilDestroyed(this.destroyRef))
+    //   .subscribe((result: Commands | null | undefined) => {
+    //     const currentDevice = this.device();
+    //     if (!result || !currentDevice?.currentProfile) return;
+    //     const {serial, currentProfile} = currentDevice;
+    //     // HTTP mutation — backend emits assignment_changed which updates DeviceStateService
+    //     if (kind === 'dial') {
+    //       this.deviceService.setDialCommands(serial, currentProfile, index, result)
+    //         .pipe(takeUntilDestroyed(this.destroyRef))
+    //         .subscribe();
+    //     } else {
+    //       this.deviceService.setButtonCommands(serial, currentProfile, index, result)
+    //         .pipe(takeUntilDestroyed(this.destroyRef))
+    //         .subscribe();
+    //     }
+    //   });
   }
 
   getDialLabel(i: number): string {

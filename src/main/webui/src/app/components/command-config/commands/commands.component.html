@@ -1,0 +1,23 @@
+<mat-menu #menu="matMenu">
+  @for (command of availableCommands(); track command.command) {
+    <button mat-menu-item (click)="addCommand(command)">{{ command.name }}</button>
+  }
+</mat-menu>
+<button mat-button [matMenuTriggerFor]="menu"> Add command</button>
+
+<mat-accordion>
+  @for (cmd of commands().commands; track cmd) {
+    @let value = cmd().value();
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title>{{nameOf(value._type)}}</mat-panel-title>
+      </mat-expansion-panel-header>
+      @let component = componentFor(value);
+      @if (component) {
+        <ng-container *ngComponentOutlet="component; inputs: {field: cmd}"/>
+      } @else {
+        <p>Unknown command type: {{value._type}}</p>
+      }
+    </mat-expansion-panel>
+  }
+</mat-accordion>

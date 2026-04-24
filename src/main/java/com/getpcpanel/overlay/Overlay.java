@@ -72,7 +72,8 @@ public class Overlay {
         if (event.initial()) {
             return;
         }
-        var value = save.get().isOverlayUseLog() ? event.vol().getValue(null, 0, 1) : event.vol().value() / 255f;
+        var vol = event.vol();
+        var value = vol == null ? -1 : save.get().isOverlayUseLog() ? vol.getValue(null, 0, 1) : vol.value() / 255f;
         showDebounced(value, () -> determineIconImage(event), command -> true);
     }
 

@@ -1,0 +1,8 @@
+<div>
+  Mute mode:
+  <mat-radio-group [formField]="field().muteType">
+    @for (type of muteTypes; track type) {
+      <mat-radio-button [value]="type">{{ type | titlecase }}</mat-radio-button>
+    }
+  </mat-radio-group>
+</div>

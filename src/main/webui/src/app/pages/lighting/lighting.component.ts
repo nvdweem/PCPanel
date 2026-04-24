@@ -1,4 +1,4 @@
-import { Component, computed, DestroyRef, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterModule } from '@angular/router';
 import { Location } from '@angular/common';
@@ -50,6 +50,7 @@ const DEFAULT_LIGHTING: LightingConfig = {
 
 @Component({
   selector: 'app-lighting',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterModule, FormField, MatToolbarModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatSelectModule, MatSliderModule, MatCardModule, MatProgressSpinnerModule, ConnectionStatusComponent],
   templateUrl: './lighting.component.html',
   styleUrl: './lighting.component.scss',

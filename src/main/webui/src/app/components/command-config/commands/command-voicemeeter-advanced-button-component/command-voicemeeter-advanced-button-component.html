@@ -1,0 +1,31 @@
+<div>
+  <mat-form-field>
+    <mat-label>Parameter</mat-label>
+    <input matInput [formField]="field().fullParam" [matAutocomplete]="paramAuto"/>
+    <mat-autocomplete #paramAuto>
+      @for (param of allParams(); track param) {
+        <mat-option [value]="param">{{ param }}</mat-option>
+      }
+    </mat-autocomplete>
+  </mat-form-field>
+</div>
+
+<div>
+  <mat-form-field>
+    <mat-label>Button Control Mode</mat-label>
+    <mat-select [formField]="field().bt">
+      @for (mode of buttonControlModes; track mode) {
+        <mat-option [value]="mode">{{ mode }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</div>
+
+@if (field().bt().value() === 'String') {
+  <div>
+    <mat-form-field>
+      <mat-label>String Value</mat-label>
+      <input matInput [formField]="field().stringValue"/>
+    </mat-form-field>
+  </div>
+}

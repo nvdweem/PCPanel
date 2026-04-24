@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -20,10 +20,10 @@ import { HomeFacade } from './home.facade';
 import { ConnectionStatusComponent } from '../../components/connection-status/connection-status.component';
 import { KeyValuePipe } from '@angular/common';
 import { Commands } from '../../models/generated/backend.types';
-import { DeviceClickEvent } from '../../components/device-visual/events';
 
 @Component({
   selector: 'app-home',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     RouterModule, FormsModule,
     MatSidenavModule, MatToolbarModule, MatListModule,
@@ -41,27 +41,23 @@ export class HomeComponent {
   private dialog = inject(MatDialog);
   protected readonly facade = inject(HomeFacade);
 
-  onDialClick(index: number): void {
-    this.facade.setActiveDial(index);
-    const data: CommandDialogData = {
-      kind: 'dial', index,
-      currentCommands: this.facade.dialCommands().get(index) ?? null,
-      profiles: this.facade.selectedDevice()?.profiles ?? [],
-    };
+  onDialClick(data: CommandDialogData): void {
+    // this.facade.setActiveDial(index);
+
     const ref = this.dialog.open(CommandConfigComponent, {data, width: '560px'});
     ref.afterClosed().subscribe((result: Commands | null | undefined) => {
       this.facade.setActiveDial(null);
       const dev = this.facade.selectedDevice();
       if (result && dev?.currentProfile) {
         const {serial, currentProfile} = dev;
-        this.deviceService.setDialCommands(serial, currentProfile, index, result).subscribe(() => {
-          this.facade.updateDialCommand(index, result);
-        });
+        // this.deviceService.setDialCommands(serial, currentProfile, index, result).subscribe(() => {
+        //   this.facade.updateDialCommand(index, result);
+        // });
       }
     });
   }
 
-  protected triggerEdit(event: DeviceClickEvent) {
-    this.onDialClick(event.idx);
+  protected triggerEdit(event: CommandDialogData) {
+    this.onDialClick(event);
   }
 }

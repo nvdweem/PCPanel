@@ -1,4 +1,4 @@
-import { Component, inject, input, model, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, model, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -13,6 +13,7 @@ import { ProcessDto } from '../../models/generated/backend.types';
   imports: [FormsModule, MatFormFieldModule, MatInputModule, MatSelectModule],
   templateUrl: './audio-picker.component.html',
   styleUrl: './audio-picker.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AudioPickerComponent implements OnInit {
   private audioService = inject(AudioService);

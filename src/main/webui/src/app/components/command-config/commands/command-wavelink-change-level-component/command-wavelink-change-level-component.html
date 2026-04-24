@@ -1,0 +1,36 @@
+<div>
+  <mat-form-field>
+    <mat-label>Command Type</mat-label>
+    <mat-select [formField]="field().commandType">
+      @for (type of commandTypes; track type) {
+        <mat-option [value]="type">{{ type }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</div>
+
+<div>
+  <mat-form-field>
+    <mat-label>Channel</mat-label>
+    <mat-select [formField]="field().id1">
+      <mat-option value="">None</mat-option>
+      @for (channel of waveLinkService.channels.value(); track channel.id) {
+        <mat-option [value]="channel.id">{{ channel.name }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</div>
+
+@if (field().commandType().value() === 'Mix') {
+  <div>
+    <mat-form-field>
+      <mat-label>Mix Channel</mat-label>
+      <mat-select [formField]="field().id2">
+        <mat-option value="">None</mat-option>
+        @for (channel of waveLinkService.channels.value(); track channel.id) {
+          <mat-option [value]="channel.id">{{ channel.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+}

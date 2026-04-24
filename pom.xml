@@ -321,6 +321,7 @@
                         <classPattern>com.getpcpanel.rest.model.**</classPattern>
                         <classPattern>com.getpcpanel.commands.Commands</classPattern>
                         <classPattern>com.getpcpanel.commands.command.**</classPattern>
+                        <classPattern>com.getpcpanel.wavelink.command.**</classPattern>
                         <classPattern>**.dto.**</classPattern>
                     </classPatterns>
                     <optionalAnnotations>

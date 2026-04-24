@@ -2,9 +2,10 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, output } f
 import { NgTemplateOutlet } from '@angular/common';
 import { DeviceStateService } from '../../services/device-state.service';
 import { breathBaseColor, lightingAnimClass, lightingAnimDuration, lightingBreathMin, rainbowBaseColor, resolveColorVisual, waveBaseColor, } from './lighting-animation';
-import { mapRange } from '../../../shared';
+import { ensureCommands, mapRange } from '../../../shared';
 import { LightingConfig } from '../../models/generated/backend.types';
-import { ControlType, DeviceClickEvent } from './events';
+import { ControlType } from './events';
+import { CommandDialogData } from '../command-config/command-config.component';
 
 interface SliderPosition {
   left: number;
@@ -30,7 +31,7 @@ const PRO_EMPTY_LOGO_COLOR = BLACK;
 export class PcpanelProComponent {
   protected deviceService = inject(DeviceStateService);
   serial = input.required<string>();
-  onedit = output<DeviceClickEvent>();
+  onedit = output<CommandDialogData>();
 
   protected device = this.deviceService.snapshotFor(this.serial);
   protected sliderPositions: SliderPosition[] = [
@@ -100,12 +101,19 @@ export class PcpanelProComponent {
     if (contextClicked) {
       event?.preventDefault();
     }
+    const device = this.deviceService.devices()[this.serial()];
+
+    const title = `${type} ${(idx % 5) + 1}`;
+    const analog = ensureCommands(true, device?.currentProfileSnapshot?.dialData[String(idx)]);
+    const button = ensureCommands(idx < 5, device?.currentProfileSnapshot?.buttonData[String(idx)]);
+    const dblButton = ensureCommands(idx < 5, device?.currentProfileSnapshot?.dblButtonData[String(idx)]);
+
     this.onedit.emit({
-      idx,
-      type,
-      contextClicked,
-      event,
-    })
+      title,
+      analog,
+      button,
+      dblButton,
+    });
   }
 
   protected dialRotation(number: number) {

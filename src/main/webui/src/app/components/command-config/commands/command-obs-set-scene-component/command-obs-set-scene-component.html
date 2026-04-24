@@ -1,0 +1,10 @@
+<div>
+  <mat-form-field>
+    <mat-label>Scene</mat-label>
+    <mat-select [formField]="field().scene">
+      @for (scene of obsService.scenes.value(); track scene) {
+        <mat-option [value]="scene">{{ scene }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</div>
