@@ -2,7 +2,7 @@ package com.getpcpanel.commands.command;
 
 import javax.annotation.Nullable;
 
-import com.getpcpanel.MainFX;
+import com.getpcpanel.util.CdiHelper;
 import com.getpcpanel.cpp.DataFlow;
 import com.getpcpanel.cpp.Role;
 import com.getpcpanel.cpp.windows.SndCtrlWindows;
@@ -27,7 +27,7 @@ public class CommandVolumeDefaultDeviceAdvanced extends CommandVolume implements
 
     @Override
     public void execute() {
-        var windowsSndCtrl = MainFX.getBean(SndCtrlWindows.class);
+        var windowsSndCtrl = CdiHelper.getBean(SndCtrlWindows.class);
         windowsSndCtrl.setDefaultDevice(mediaPb, DataFlow.dfRender, Role.roleMultimedia);
         windowsSndCtrl.setDefaultDevice(mediaRec, DataFlow.dfCapture, Role.roleMultimedia);
         windowsSndCtrl.setDefaultDevice(communicationPb, DataFlow.dfRender, Role.roleCommunications);

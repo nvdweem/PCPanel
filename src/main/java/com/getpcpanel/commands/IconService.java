@@ -2,18 +2,20 @@ package com.getpcpanel.commands;
 
 import static com.getpcpanel.cpp.AudioSession.SYSTEM;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.BiFunction;
 
 import javax.annotation.Nonnull;
+
 import javax.annotation.Nullable;
 
+import javax.imageio.ImageIO;
+
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Service;
 
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandBrightness;
@@ -28,28 +30,43 @@ import com.getpcpanel.commands.command.CommandVolumeFocus;
 import com.getpcpanel.commands.command.CommandVolumeProcess;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.iconextract.IIconService;
-import com.getpcpanel.profile.KnobSetting;
-import com.getpcpanel.util.Images;
+import com.getpcpanel.profile.dto.KnobSetting;
 
+import io.quarkus.arc.All;
+import io.quarkus.cache.CacheResult;
 import jakarta.annotation.PostConstruct;
-import javafx.scene.image.Image;
-import lombok.RequiredArgsConstructor;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-@Service
-@RequiredArgsConstructor
+@ApplicationScoped
 public class IconService {
-    public static final Image DEFAULT = new Image(Objects.requireNonNull(IconService.class.getResource("/assets/32x32.png")).toExternalForm());
-    private static final Image OBS = new Image(Objects.requireNonNull(IconService.class.getResource("/assets/obs.png")).toExternalForm());
-    private static final Image VOICEMEETER = new Image(Objects.requireNonNull(IconService.class.getResource("/assets/voicemeeter.png")).toExternalForm());
-    public static final Image DEVICE = new Image(Objects.requireNonNull(IconService.class.getResource("/assets/device.png")).toExternalForm());
-    public static final Image SYSTEM_SOUND = new Image(Objects.requireNonNull(IconService.class.getResource("/assets/systemsounds.ico")).toExternalForm());
+    public static final BufferedImage DEFAULT = loadImage("/assets/32x32.png");
+    private static final BufferedImage OBS = loadImage("/assets/obs.png");
+    private static final BufferedImage VOICEMEETER = loadImage("/assets/voicemeeter.png");
+    public static final BufferedImage DEVICE = loadImage("/assets/device.png");
+    public static final BufferedImage SYSTEM_SOUND = loadImage("/assets/systemsounds.ico");
+
+    private static BufferedImage loadImage(String path) {
+        try {
+            var url = IconService.class.getResource(path);
+            if (url != null)
+                return ImageIO.read(url);
+        } catch (IOException e) {
+            // fall through
+        }
+        return new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
+    }
+
     private final SafeMap imageHandlers = new SafeMap();
-    private final ISndCtrl sndCtrl;
-    private final IIconService iconService;
-    private final List<IIconHandler<?>> iconHandlers;
+    @Inject
+    ISndCtrl sndCtrl;
+    @Inject
+    IIconService iconService;
+    @Inject @All
+    List<IIconHandler<?>> iconHandlers;
 
     @PostConstruct
     public void init() {
@@ -72,13 +89,13 @@ public class IconService {
         // Other handlers
         iconHandlers.forEach(ih -> {
             IIconHandler untyped = ih;
-            imageHandlers.put(ih.getCommandClass(), (is, cmd) -> (Image) untyped.supplyImage(cmd).orElse(null));
+            imageHandlers.put(ih.getCommandClass(), (is, cmd) -> (BufferedImage) untyped.supplyImage(cmd).orElse(null));
         });
     }
 
-    @Cacheable("command-icon")
+    @CacheResult(cacheName = "command-icon")
     @Nonnull
-    public Image getImageFrom(@Nullable Commands commands, @Nullable KnobSetting override) {
+    public BufferedImage getImageFrom(@Nullable Commands commands, @Nullable KnobSetting override) {
         if (!Commands.hasCommands(commands)) {
             return DEFAULT;
         }
@@ -87,13 +104,13 @@ public class IconService {
             try {
                 var iconStr = override.getOverlayIcon();
                 if (StringUtils.endsWithAny(iconStr, "exe", "dll") && new File(iconStr).exists()) {
-                    var result = iconService.getIconImageForFile(32, 32, new File(iconStr));
+                    var result = iconService.getIconForFile(32, 32, new File(iconStr));
                     if (result != null) {
                         return result;
                     }
                 }
                 if (StringUtils.isNotBlank(iconStr)) {
-                    return new Image(override.getOverlayIcon());
+                    return loadImage(iconStr);
                 }
             } catch (Exception e) {
                 log.trace("Unable to load {}", override, e);
@@ -107,12 +124,12 @@ public class IconService {
                        .orElse(DEFAULT);
     }
 
-    public boolean isDefault(Image img) {
+    public boolean isDefault(BufferedImage img) {
         //noinspection ObjectEquality
         return img == DEFAULT;
     }
 
-    private Image getRunningProcessIcon(CommandVolumeProcess commandIcon) {
+    private BufferedImage getRunningProcessIcon(CommandVolumeProcess commandIcon) {
         var allProcesses = sndCtrl.getRunningApplications();
         for (var process : commandIcon.getProcessName()) {
             if (StringUtils.equalsIgnoreCase(process, SYSTEM)) {
@@ -120,7 +137,7 @@ public class IconService {
             }
             for (var runningProcess : allProcesses) {
                 if (StringUtils.containsIgnoreCase(runningProcess.file().getAbsolutePath(), process)) {
-                    var image = iconService.getIconImageForFile(32, 32, runningProcess.file());
+                    var image = iconService.getIconForFile(32, 32, runningProcess.file());
                     if (image != null) {
                         return image;
                     }
@@ -130,53 +147,53 @@ public class IconService {
         return DEFAULT;
     }
 
-    private Image getFocusProcessIcon(CommandVolumeFocus command) {
-        var image = iconService.getIconImageForFile(32, 32, new File(sndCtrl.getFocusApplication()));
+    private BufferedImage getFocusProcessIcon(CommandVolumeFocus command) {
+        var image = iconService.getIconForFile(32, 32, new File(sndCtrl.getFocusApplication()));
         if (image == null) {
             return DEFAULT;
         }
         return image;
     }
 
-    private Image getDeviceIcon(Command command) {
+    private BufferedImage getDeviceIcon(Command command) {
         return DEVICE;
     }
 
-    private Image getVoiceMeeterIcon(CommandVoiceMeeter command) {
+    private BufferedImage getVoiceMeeterIcon(CommandVoiceMeeter command) {
         return VOICEMEETER;
     }
 
-    private Image getObsIcon(CommandObs command) {
+    private BufferedImage getObsIcon(CommandObs command) {
         return OBS;
     }
 
-    private class SafeMap extends HashMap<Class<? extends Command>, BiFunction<IconService, ? extends Command, Image>> {
+    private class SafeMap extends HashMap<Class<? extends Command>, BiFunction<IconService, ? extends Command, BufferedImage>> {
 
-        public <T extends Command> void put(Class<T> key, BiFunction<IconService, T, Image> value) {
+        public <T extends Command> void put(Class<T> key, BiFunction<IconService, T, BufferedImage> value) {
             super.put(key, value);
         }
 
-        public <T extends Command> Image handle(T icon) {
+        public <T extends Command> BufferedImage handle(T icon) {
             if (icon == null)
                 return DEFAULT;
 
             //noinspection unchecked
-            return ((BiFunction<IconService, T, Image>) ensureHandler(icon.getClass())).apply(IconService.this, icon);
+            return ((BiFunction<IconService, T, BufferedImage>) ensureHandler(icon.getClass())).apply(IconService.this, icon);
         }
 
         @SuppressWarnings("unchecked")
-        private <T> BiFunction<IconService, T, Image> ensureHandler(Class<T> icon) {
+        private <T> BiFunction<IconService, T, BufferedImage> ensureHandler(Class<T> icon) {
             if (imageHandlers.containsKey(icon)) {
-                return (BiFunction<IconService, T, Image>) imageHandlers.get(icon);
+                return (BiFunction<IconService, T, BufferedImage>) imageHandlers.get(icon);
             }
 
-            var handler = (BiFunction<IconService, T, Image>) ensureHandler(icon.getSuperclass());
-            imageHandlers.put((Class<? extends Command>) icon, (BiFunction<IconService, ? extends Command, Image>) handler);
+            var handler = (BiFunction<IconService, T, BufferedImage>) ensureHandler(icon.getSuperclass());
+            imageHandlers.put((Class<? extends Command>) icon, (BiFunction<IconService, ? extends Command, BufferedImage>) handler);
             return handler;
         }
     }
 
-    private Image getBrightnessIcon(Command command) {
-        return Images.lighting;
+    private BufferedImage getBrightnessIcon(Command command) {
+        return DEFAULT;
     }
 }

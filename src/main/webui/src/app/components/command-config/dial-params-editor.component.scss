@@ -1,0 +1,8 @@
+.dial-params {
+  border-top: 1px solid #3b3c41;
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  mat-form-field { width: 100%; }
+}

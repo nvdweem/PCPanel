@@ -1,0 +1,9 @@
+.lighting-page { min-height: 100vh; background: #25262a; color: #e0e0e0; }
+.spacer { flex: 1; }
+.lighting-body { max-width: 600px; margin: 0 auto; padding: 1.5rem 2rem; }
+.full-width { width: 100%; }
+mat-card { background: #1c1d20 !important; border: 1px solid #3b3c41; mat-card-content { display: flex; flex-direction: column; gap: 16px; padding-top: 16px; } }
+.color-row { display: flex; align-items: center; gap: 12px; label { font-size: 0.9rem; color: #9a9a9a; } input[type=color] { height: 2rem; width: 4rem; border-radius: 4px; border: 1px solid #3b3c41; cursor: pointer; } }
+.slider-row { display: flex; align-items: center; gap: 12px; label { font-size: 0.85rem; color: #9a9a9a; min-width: 100px; } span { min-width: 40px; text-align: right; font-size: 0.85rem; } }
+.flex-slider { flex: 1; }
+.loading-center { display: flex; align-items: center; justify-content: center; height: 100vh; }

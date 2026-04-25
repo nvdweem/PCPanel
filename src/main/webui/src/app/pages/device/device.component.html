@@ -1,0 +1,91 @@
+@if (!device()) {
+  <div class="loading-center"><mat-spinner /></div>
+}
+
+@if (device(); as device) {
+  <div class="device-page">
+    <mat-toolbar class="page-toolbar">
+      <button mat-icon-button routerLink="/" aria-label="Back">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+
+      @if (!editingName()) {
+        <span class="device-title" (dblclick)="startEditName()">{{ device.displayName }}</span>
+      }
+      @if (editingName()) {
+        <mat-form-field appearance="outline" class="name-field">
+          <input matInput [ngModel]="newName()" (ngModelChange)="newName.set($event)" (keyup.enter)="saveName()" (keyup.escape)="cancelEditName()" />
+        </mat-form-field>
+        <button mat-icon-button (click)="saveName()"><mat-icon>check</mat-icon></button>
+        <button mat-icon-button (click)="cancelEditName()"><mat-icon>close</mat-icon></button>
+      }
+
+      <span class="device-subtitle">{{ friendlyType(device.deviceType) }} · {{ device.serial }}</span>
+      <span class="spacer"></span>
+      <app-connection-status />
+      <button mat-stroked-button [routerLink]="['/lighting', device.serial]">
+        <mat-icon>light_mode</mat-icon> Lighting
+      </button>
+    </mat-toolbar>
+
+    <div class="page-body">
+      <section class="profiles-section">
+        <h3>Profiles</h3>
+        <div class="profile-list">
+          <mat-button-toggle-group [value]="device.currentProfile">
+            @for (p of device.profiles; track p) {
+              <mat-button-toggle [value]="p" (click)="switchProfile(p)">{{ p }}</mat-button-toggle>
+            }
+          </mat-button-toggle-group>
+          <button mat-stroked-button (click)="addProfile()">
+            <mat-icon>add</mat-icon> Add Profile
+          </button>
+        </div>
+      </section>
+
+      @if (!device.currentProfile) {
+        <p class="hint">No profile selected. Create one above.</p>
+      }
+
+      @if (device.currentProfile) {
+        @if (device.analogCount > 0) {
+          <section>
+            <h3>Dials ({{ device.analogCount }})</h3>
+            <div class="control-grid">
+              @for (i of range(device.analogCount); track $index) {
+                <mat-card class="control-card" (click)="editDial(i)">
+                  <mat-card-header>
+                    <mat-card-subtitle>Dial {{ i + 1 }}</mat-card-subtitle>
+                  </mat-card-header>
+                  <mat-card-content>{{ getDialLabel(i) }}</mat-card-content>
+                  <mat-card-actions align="end">
+                    <button mat-icon-button><mat-icon>edit</mat-icon></button>
+                  </mat-card-actions>
+                </mat-card>
+              }
+            </div>
+          </section>
+        }
+
+        @if (device.buttonCount > 0) {
+          <section>
+            <h3>Buttons ({{ device.buttonCount }})</h3>
+            <div class="control-grid">
+              @for (i of range(device.buttonCount); track $index) {
+                <mat-card class="control-card" (click)="editButton(i)">
+                  <mat-card-header>
+                    <mat-card-subtitle>Button {{ i + 1 }}</mat-card-subtitle>
+                  </mat-card-header>
+                  <mat-card-content>{{ getButtonLabel(i) }}</mat-card-content>
+                  <mat-card-actions align="end">
+                    <button mat-icon-button><mat-icon>edit</mat-icon></button>
+                  </mat-card-actions>
+                </mat-card>
+              }
+            </div>
+          </section>
+        }
+      }
+    </div>
+  </div>
+}

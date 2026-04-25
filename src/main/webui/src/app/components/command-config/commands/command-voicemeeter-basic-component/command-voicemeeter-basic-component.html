@@ -1,0 +1,39 @@
+<div>
+  <mat-form-field>
+    <mat-label>Control Type</mat-label>
+    <mat-select [formField]="field().ct">
+      @for (ct of controlTypes; track ct) {
+        <mat-option [value]="ct">{{ ct }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</div>
+
+<div>
+  @if ((voiceMeeterService.basicParams.value()?.length ?? 0) > 0) {
+    <mat-form-field>
+      <mat-label>Channel</mat-label>
+      <mat-select [formField]="field().index">
+        @for (channel of voiceMeeterService.basicParams.value(); track $index; let i = $index) {
+          <mat-option [value]="i">{{ channel.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  } @else {
+    <mat-form-field>
+      <mat-label>Channel Index</mat-label>
+      <input matInput type="number" [formField]="field().index" />
+    </mat-form-field>
+  }
+</div>
+
+<div>
+  <mat-form-field>
+    <mat-label>Dial Type</mat-label>
+    <mat-select [formField]="field().dt">
+      @for (dt of availableDialTypes(); track dt) {
+        <mat-option [value]="dt">{{ dt }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</div>

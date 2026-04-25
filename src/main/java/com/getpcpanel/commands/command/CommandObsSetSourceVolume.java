@@ -2,7 +2,7 @@ package com.getpcpanel.commands.command;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.getpcpanel.MainFX;
+import com.getpcpanel.util.CdiHelper;
 import com.getpcpanel.obs.OBS;
 
 import lombok.Getter;
@@ -24,7 +24,7 @@ public class CommandObsSetSourceVolume extends CommandObs implements DialAction 
 
     @Override
     public void execute(DialActionParameters context) {
-        var obs = MainFX.getBean(OBS.class);
+        var obs = CdiHelper.getBean(OBS.class);
         if (obs.isConnected()) {
             obs.setSourceVolume(sourceName, context.dial().getValue(this));
         }

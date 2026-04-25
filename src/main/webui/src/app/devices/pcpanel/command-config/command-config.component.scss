@@ -1,0 +1,6 @@
+.form-fields { display: flex; flex-direction: column; gap: 12px; padding-top: 8px; min-width: 480px; }
+.full-width { width: 100%; }
+.field-label { font-size: 12px; color: var(--mat-sys-on-surface-variant, #aaa); margin-bottom: -4px; }
+mat-checkbox { display: block; }
+.multi-list { display: flex; flex-direction: column; gap: 8px; }
+.multi-row { display: flex; align-items: flex-start; gap: 4px; app-audio-picker { flex: 1; } }

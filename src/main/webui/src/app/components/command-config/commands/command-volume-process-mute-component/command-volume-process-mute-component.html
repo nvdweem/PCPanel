@@ -1,0 +1,27 @@
+<div>
+  <button mat-raised-button (click)="addProcess()">Add Process</button>
+
+  @for (process of field().processName().value(); track $index; let i = $index) {
+    <div>
+      <mat-form-field>
+        <mat-label>Process</mat-label>
+        <input matInput type="text" [ngModel]="process" (ngModelChange)="updateProcess(i, $event)" [matAutocomplete]="processAuto" />
+      </mat-form-field>
+      <mat-autocomplete #processAuto>
+        @for (p of audioService.uniqueProcesses(); track p.pid) {
+          <mat-option [value]="p.name">{{ p.name }}</mat-option>
+        }
+      </mat-autocomplete>
+      <button mat-button color="warn" (click)="removeProcess(i)">Remove</button>
+    </div>
+  }
+</div>
+
+<div>
+  Mute mode:
+  <mat-radio-group [formField]="field().muteType">
+    @for (type of muteTypes; track type) {
+      <mat-radio-button [value]="type">{{ type | titlecase }}</mat-radio-button>
+    }
+  </mat-radio-group>
+</div>

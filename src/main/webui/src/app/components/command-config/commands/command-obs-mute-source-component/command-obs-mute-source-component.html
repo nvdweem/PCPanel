@@ -1,0 +1,19 @@
+<div>
+  <mat-form-field>
+    <mat-label>Source</mat-label>
+    <mat-select [formField]="field().source">
+      @for (source of obsService.sources.value(); track source) {
+        <mat-option [value]="source">{{ source }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</div>
+
+<div>
+  Mute mode:
+  <mat-radio-group [formField]="field().type">
+    @for (type of muteTypes; track type) {
+      <mat-radio-button [value]="type">{{ type | titlecase }}</mat-radio-button>
+    }
+  </mat-radio-group>
+</div>

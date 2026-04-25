@@ -1,0 +1,19 @@
+<div>
+  Target:
+  <mat-radio-group [(ngModel)]="specificProgram" (change)="changeDefault($event)">
+    <mat-radio-button [value]="false">Focused window</mat-radio-button>
+    <mat-radio-button [value]="true">Specific program</mat-radio-button>
+  </mat-radio-group>
+
+  @if (specificProgram()) {
+    <mat-form-field>
+      <mat-label>Program name</mat-label>
+      <input matInput [formField]="field().name" [matAutocomplete]="processAuto" />
+      <mat-autocomplete #processAuto>
+        @for (process of filteredPrograms(); track process.pid) {
+          <mat-option [value]="process.name">{{ process.name }}</mat-option>
+        }
+      </mat-autocomplete>
+    </mat-form-field>
+  }
+</div>

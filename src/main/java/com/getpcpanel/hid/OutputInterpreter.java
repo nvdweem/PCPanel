@@ -2,26 +2,25 @@ package com.getpcpanel.hid;
 
 import java.util.Arrays;
 
-import org.springframework.stereotype.Service;
-
 import com.getpcpanel.device.DeviceType;
-import com.getpcpanel.profile.LightingConfig;
-import com.getpcpanel.profile.SingleKnobLightingConfig;
-import com.getpcpanel.profile.SingleLogoLightingConfig;
-import com.getpcpanel.profile.SingleSliderLabelLightingConfig;
-import com.getpcpanel.profile.SingleSliderLightingConfig;
+import com.getpcpanel.profile.dto.LightingConfig;
+import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
+import com.getpcpanel.profile.dto.SingleLogoLightingConfig;
+import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig;
+import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
 import com.getpcpanel.util.coloroverride.OverrideColorService;
 
-import javafx.scene.paint.Color;
-import lombok.RequiredArgsConstructor;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Service
-@RequiredArgsConstructor
+@ApplicationScoped
 public final class OutputInterpreter {
-    private final DeviceScanner deviceScanner;
-    private final OverrideColorService overrideColorService;
+    @Inject
+    DeviceScanner deviceScanner;
+    @Inject
+    OverrideColorService overrideColorService;
 
     private static final byte[] OUTPUT_CODE_INIT = { 1 };
     private static final byte ANIMATION_RAINBOW_HORIZONTAL = 1;
@@ -61,7 +60,7 @@ public final class OutputInterpreter {
         var data = new ByteWriter(brightness, 2 + 4 * colors.length + colors.length).append(2, 0);
         for (var color : colors) {
             var toSend = overrideColorService.getDialOverride(deviceSerialNumber, 0).map(SingleKnobLightingConfig::getColor1).orElse(color);
-            data.append(OUTPUT_CODE_RGB_RGB).append(Color.valueOf(toSend));
+            data.append(OUTPUT_CODE_RGB_RGB).appendHex(toSend);
         }
         for (var b : volumeTrack) {
             data.append(b ? 1 : 0);
@@ -86,14 +85,18 @@ public final class OutputInterpreter {
 
     private void sendLightingConfigMini(String serialNumber, LightingConfig config) {
         var handler = deviceScanner.getConnectedDevice(serialNumber);
-        var mode = config.getLightingMode();
+        var mode = config.lightingMode();
+        if (mode == null) {
+            log.error("Null lighting mode in sendLightingConfigMini, ignoring");
+            return;
+        }
         switch (mode) {
             case ALL_COLOR -> writeAllColor(handler, PREFIX_MINI, (byte) 5, config);
             case ALL_RAINBOW -> writeAllRainbow(handler, PREFIX_MINI, config);
             case ALL_WAVE -> writeAllWave(handler, PREFIX_MINI, config);
             case ALL_BREATH -> writeAllBreath(handler, PREFIX_MINI, config);
             case CUSTOM -> {
-                var knobData = buildKnobData(serialNumber, PREFIX_MINI, config.getGlobalBrightness(), config.getKnobConfigs());
+                var knobData = buildKnobData(serialNumber, PREFIX_MINI, config.getGlobalBrightness(), config.knobConfigs());
                 handler.sendMessage(new byte[][] { knobData });
             }
         }
@@ -101,35 +104,39 @@ public final class OutputInterpreter {
 
     private void sendLightingConfigPro(String serialNumber, LightingConfig config) {
         var handler = deviceScanner.getConnectedDevice(serialNumber);
-        var mode = config.getLightingMode();
+        var mode = config.lightingMode();
+        if (mode == null) {
+            log.error("Null lighting mode in sendLightingConfigPro, ignoring");
+            return;
+        }
         switch (mode) {
             case ALL_COLOR -> writeAllColor(handler, PREFIX_PRO, (byte) 2, config);
             case ALL_RAINBOW -> writeAllRainbow(handler, PREFIX_PRO, config);
             case ALL_WAVE -> writeAllWave(handler, PREFIX_PRO, config);
             case ALL_BREATH -> writeAllBreath(handler, PREFIX_PRO, config);
             case CUSTOM -> {
-                var knobData = buildKnobData(serialNumber, PREFIX_PRO, config.getGlobalBrightness(), config.getKnobConfigs());
-                var sliderLabelData = buildSliderLabelData(serialNumber, config.getGlobalBrightness(), config.getSliderLabelConfigs());
-                var sliderData = buildSliderData(serialNumber, config.getGlobalBrightness(), config.getSliderConfigs());
-                var logoData = buildLogoData(serialNumber, config.getGlobalBrightness(), config.getLogoConfig());
+                var knobData = buildKnobData(serialNumber, PREFIX_PRO, config.getGlobalBrightness(), config.knobConfigs());
+                var sliderLabelData = buildSliderLabelData(serialNumber, config.getGlobalBrightness(), config.sliderLabelConfigs());
+                var sliderData = buildSliderData(serialNumber, config.getGlobalBrightness(), config.sliderConfigs());
+                var logoData = buildLogoData(serialNumber, config.getGlobalBrightness(), config.logoConfig());
                 handler.sendMessage(knobData, sliderLabelData, sliderData, logoData);
             }
         }
     }
 
     private void writeAllColor(DeviceCommunicationHandler handler, byte prefix, byte secondPrefix, LightingConfig config) {
-        var c1 = Color.valueOf(config.getAllColor());
-        var data = new ByteWriter(config.getGlobalBrightness()).append(prefix, MODE_LIGHT_ANIMATION, secondPrefix).append(c1).get();
+        var c1 = config.allColor();
+        var data = new ByteWriter(config.getGlobalBrightness()).append(prefix, MODE_LIGHT_ANIMATION, secondPrefix).appendHex(c1).get();
         handler.sendMessage(new byte[][] { data });
     }
 
     private void writeAllRainbow(DeviceCommunicationHandler handler, byte prefix, LightingConfig config) {
-        var data = new ByteWriter(config.getGlobalBrightness()).append(prefix, MODE_LIGHT_ANIMATION, (config.getRainbowVertical() == 1) ? ANIMATION_RAINBOW_VERTICAL : ANIMATION_RAINBOW_HORIZONTAL)
-                                                               .append(config.getRainbowPhaseShift(),
+        var data = new ByteWriter(config.getGlobalBrightness()).append(prefix, MODE_LIGHT_ANIMATION, (config.rainbowVertical() == 1) ? ANIMATION_RAINBOW_VERTICAL : ANIMATION_RAINBOW_HORIZONTAL)
+                                                               .append(config.rainbowPhaseShift(),
                                                                        -1)
-                                                               .appendBrightness(config.getRainbowBrightness())
-                                                               .append(config.getRainbowSpeed(),
-                                                                       config.getRainbowReverse())
+                                                               .appendBrightness(config.rainbowBrightness())
+                                                               .append(config.rainbowSpeed(),
+                                                                       config.rainbowReverse())
                                                                .get();
         handler.sendMessage(new byte[][] { data });
     }
@@ -137,22 +144,22 @@ public final class OutputInterpreter {
     private void writeAllWave(DeviceCommunicationHandler handler, byte prefix, LightingConfig config) {
         var data = new ByteWriter(config.getGlobalBrightness())
                 .append(prefix, MODE_LIGHT_ANIMATION, ANIMATION_WAVE)
-                .append(config.getWaveHue(),
+                .append(config.waveHue(),
                         -1)
-                .appendBrightness(config.getWaveBrightness())
-                .append(config.getWaveSpeed(),
-                        config.getWaveReverse(),
-                        config.getWaveBounce());
+                .appendBrightness(config.waveBrightness())
+                .append(config.waveSpeed(),
+                        config.waveReverse(),
+                        config.waveBounce());
         handler.sendMessage(new byte[][] { data.get() });
     }
 
     private void writeAllBreath(DeviceCommunicationHandler handler, byte prefix, LightingConfig config) {
         var data = new ByteWriter(config.getGlobalBrightness())
                 .append(prefix, MODE_LIGHT_ANIMATION, ANIMATION_BREATH)
-                .append(config.getBreathHue(),
+                .append(config.breathHue(),
                         -1)
-                .appendBrightness(config.getBreathBrightness())
-                .append(config.getBreathSpeed());
+                .appendBrightness(config.breathBrightness())
+                .append(config.breathSpeed());
         handler.sendMessage(new byte[][] { data.get() });
     }
 
@@ -166,16 +173,16 @@ public final class OutputInterpreter {
             var ignored = switch (knobConfig.getMode()) {
                 case NONE -> knobData;
                 case STATIC -> {
-                    var c1 = Color.valueOf(knobConfig.getColor1());
+                    var c1 = knobConfig.getColor1();
                     yield knobData.append(COLOR_STATIC)
-                                  .append(c1);
+                                  .appendHex(c1);
                 }
                 case VOLUME_GRADIENT -> {
-                    var c1 = Color.valueOf(knobConfig.getColor1());
-                    var c2 = Color.valueOf(knobConfig.getColor2());
+                    var c1 = knobConfig.getColor1();
+                    var c2 = knobConfig.getColor2();
                     yield knobData.append(COLOR_GRADIENT)
-                                  .append(c1)
-                                  .append(c2);
+                                  .appendHex(c1)
+                                  .appendHex(c2);
                 }
             };
             knobData.skipFromMark(7);
@@ -191,10 +198,10 @@ public final class OutputInterpreter {
             var ignored = switch (sliderLabelConfig.getMode()) {
                 case NONE -> sliderLabelData;
                 case STATIC -> {
-                    var c1 = Color.valueOf(sliderLabelConfig.getColor());
+                    var c1 = sliderLabelConfig.getColor();
                     yield sliderLabelData.mark()
                                          .append(1)
-                                         .append(c1);
+                                         .appendHex(c1);
                 }
             };
             sliderLabelData.skipFromMark(7);
@@ -211,17 +218,17 @@ public final class OutputInterpreter {
             var ignored = switch (sliderConfig.getMode()) {
                 case NONE -> sliderData;
                 case STATIC -> {
-                    var c1 = Color.valueOf(sliderConfig.getColor1());
+                    var c1 = sliderConfig.getColor1();
                     yield sliderData.append(1)
-                                    .append(c1)
-                                    .append(c1);
+                                    .appendHex(c1)
+                                    .appendHex(c1);
                 }
                 case STATIC_GRADIENT -> sliderData.append(1)
-                                                  .append(Color.valueOf(sliderConfig.getColor1()))
-                                                  .append(Color.valueOf(sliderConfig.getColor2()));
+                                                  .appendHex(sliderConfig.getColor1())
+                                                  .appendHex(sliderConfig.getColor2());
                 case VOLUME_GRADIENT -> sliderData.append(3)
-                                                  .append(Color.valueOf(sliderConfig.getColor1()))
-                                                  .append(Color.valueOf(sliderConfig.getColor2()));
+                                                  .appendHex(sliderConfig.getColor1())
+                                                  .appendHex(sliderConfig.getColor2());
             };
             sliderData.skipFromMark(7);
         }
@@ -234,8 +241,8 @@ public final class OutputInterpreter {
         var ignored = switch (logoConfig.getMode()) {
             case NONE -> logoConfig;
             case STATIC -> {
-                var c1 = Color.valueOf(logoConfig.getColor());
-                yield logoData.append(COLOR_STATIC).append(c1);
+                var c1 = logoConfig.getColor();
+                yield logoData.append(COLOR_STATIC).appendHex(c1);
             }
             case RAINBOW -> logoData.append(LOGO_RAINBOW)
                                     .append(-1)
@@ -251,18 +258,18 @@ public final class OutputInterpreter {
     }
 
     private void sendLightingConfigRGB(String serialNumber, LightingConfig config, boolean priority) {
-        var mode = config.getLightingMode();
+        var mode = config.lightingMode();
         if (mode == null) {
             log.error("unexpected lighting mode in deviceOutputHandler");
             return;
         }
 
         switch (mode) {
-            case ALL_COLOR -> sendRGBAll(serialNumber, config.getGlobalBrightness(), Color.valueOf(config.getAllColor()), config.getVolumeBrightnessTrackingEnabled(), priority);
-            case SINGLE_COLOR -> sendFullLEDData(serialNumber, config.getGlobalBrightness(), config.getIndividualColors(), config.getVolumeBrightnessTrackingEnabled(), priority);
-            case ALL_RAINBOW -> sendRainbow(serialNumber, config.getRainbowPhaseShift(), (byte) -1, config.getRainbowBrightness(), config.getRainbowSpeed(), config.getRainbowReverse(), priority);
-            case ALL_WAVE -> sendWave(serialNumber, config.getWaveHue(), (byte) -1, config.getWaveBrightness(), config.getWaveSpeed(), config.getWaveReverse(), config.getWaveBounce(), priority);
-            case ALL_BREATH -> sendBreath(serialNumber, config.getBreathHue(), (byte) -1, config.getBreathBrightness(), config.getBreathSpeed(), priority);
+            case ALL_COLOR -> sendRGBAll(serialNumber, config.getGlobalBrightness(), config.allColor(), config.volumeBrightnessTrackingEnabled(), priority);
+            case SINGLE_COLOR -> sendFullLEDData(serialNumber, config.getGlobalBrightness(), config.individualColors(), config.volumeBrightnessTrackingEnabled(), priority);
+            case ALL_RAINBOW -> sendRainbow(serialNumber, config.rainbowPhaseShift(), (byte) -1, config.rainbowBrightness(), config.rainbowSpeed(), config.rainbowReverse(), priority);
+            case ALL_WAVE -> sendWave(serialNumber, config.waveHue(), (byte) -1, config.waveBrightness(), config.waveSpeed(), config.waveReverse(), config.waveBounce(), priority);
+            case ALL_BREATH -> sendBreath(serialNumber, config.breathHue(), (byte) -1, config.breathBrightness(), config.breathSpeed(), priority);
             default -> log.error("unexpected lighting mode in deviceOutputHandler");
         }
     }
@@ -304,8 +311,18 @@ public final class OutputInterpreter {
     }
 
     @SuppressWarnings("NumericCastThatLosesPrecision")
-    public void sendRGBAll(String deviceSerialNumber, int brightness, Color color, boolean[] bs, boolean priority) {
-        sendRGBAll(deviceSerialNumber, brightness, (int) (color.getRed() * MAX_BYTE), (int) (color.getGreen() * MAX_BYTE), (int) (color.getBlue() * MAX_BYTE), bs, priority);
+    public void sendRGBAll(String deviceSerialNumber, int brightness, String hexColor, boolean[] bs, boolean priority) {
+        int r = 0, g = 0, b = 0;
+        if (hexColor != null) {
+            try {
+                String hex = hexColor.startsWith("#") ? hexColor.substring(1) : hexColor;
+                r = Integer.parseInt(hex.substring(0, 2), 16);
+                g = Integer.parseInt(hex.substring(2, 4), 16);
+                b = Integer.parseInt(hex.substring(4, 6), 16);
+            } catch (Exception ignored) {
+            }
+        }
+        sendRGBAll(deviceSerialNumber, brightness, r, g, b, bs, priority);
     }
 
     public void sendRGBAll(String deviceSerialNumber, int brightness, int red, int green, int blue, boolean[] volumeTrack, boolean priority) {
@@ -316,7 +333,7 @@ public final class OutputInterpreter {
             throw new IllegalArgumentException("ints must be byte size");
         var data = new ByteWriter(brightness, 6 + volumeTrack.length)
                 .append(OUTPUT_CODE_RGB, OUTPUT_CODE_RGB_RGB, 0)
-                .append(Color.rgb(red, green, blue));
+                .appendRGB(red, green, blue);
         for (var b : volumeTrack)
             data.append(b ? 1 : 0);
         if (priority) {

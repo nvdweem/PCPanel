@@ -1,0 +1,82 @@
+<h2 mat-dialog-title>{{ data.title }}</h2>
+<mat-dialog-content>
+  <mat-tab-group>
+    @if (form.button) {
+      <mat-tab label="Click">
+        <app-commands type="button" [commands]="form.button"/>
+      </mat-tab>
+    }
+    @if (form.dblButton) {
+      <mat-tab label="Double click">
+        <app-commands type="button" [commands]="form.dblButton"/>
+      </mat-tab>
+    }
+    @if (form.analog) {
+      <mat-tab label="Dial/Slider">
+        <app-commands type="dial" [commands]="form.analog"/>
+      </mat-tab>
+    }
+    @if (form.knobSetting) {
+      <mat-tab label="Settings">
+        Dial settings:
+        <mat-checkbox [formField]="form.knobSetting.logarithmic">Logarithmic scaling</mat-checkbox>
+
+        <hr>
+
+        <mat-form-field>
+          <mat-label>Trim min</mat-label>
+          <input matInput type="number" [formField]="form.knobSetting.minTrim"/>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Trim max</mat-label>
+          <input matInput type="number" [formField]="form.knobSetting.maxTrim"/>
+        </mat-form-field>
+
+        <hr>
+
+        <mat-form-field>
+          <mat-label>Overlay icon</mat-label>
+          <input matInput [formField]="form.knobSetting.overlayIcon"/>
+        </mat-form-field>
+      </mat-tab>
+    }
+    <mat-tab label="Lighting">
+      <div class="form-fields">
+        <p class="field-label">Type: {{ lightingType() }}</p>
+
+        @if (form.lighting) {
+          <mat-form-field>
+            <mat-label>Mode</mat-label>
+            <mat-select [formField]="form.lighting.mode">
+              @if (data.controlType === 'dial') {
+                <mat-option value="STATIC">Static</mat-option>
+                <mat-option value="VOLUME_GRADIENT">Volume gradient</mat-option>
+              }
+              @if (data.controlType === 'slider') {
+                <mat-option value="STATIC">Static</mat-option>
+                <mat-option value="STATIC_GRADIENT">Static gradient</mat-option>
+                <mat-option value="VOLUME_GRADIENT">Volume gradient</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <div class="field-label">Primary color</div>
+          <input type="color" [formField]="form.lighting.color1"/>
+
+          @if (showKnobSecondColor() || showSliderSecondColor()) {
+            <div class="field-label">Secondary color</div>
+            <input type="color" [formField]="form.lighting.color2"/>
+          }
+        }
+
+        @if (!form.lighting) {
+          <p class="field-label">Per-control lighting is only available for knob and slider controls.</p>
+        }
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button mat-dialog-close>Cancel</button>
+  <button mat-button cdkFocusInitial (click)="saveOptions()">Ok</button>
+</mat-dialog-actions>

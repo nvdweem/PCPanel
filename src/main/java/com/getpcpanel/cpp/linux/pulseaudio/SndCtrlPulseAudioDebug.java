@@ -3,19 +3,21 @@ package com.getpcpanel.cpp.linux.pulseaudio;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 
-import org.springframework.stereotype.Service;
+import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-@Service
-@ConditionalOnPulseAudio
-@RequiredArgsConstructor
+@ApplicationScoped
+@PulseAudioImpl
 public class SndCtrlPulseAudioDebug {
-    private final PulseAudioWrapper paWrapper;
-    private final PulseAudioEventListener paEventListener;
+    @Inject @PulseAudioImpl
+    PulseAudioWrapper paWrapper;
+    @Inject @PulseAudioImpl
+    PulseAudioEventListener paEventListener;
 
     public void copyDebugOutput() {
         var output = StreamEx.of(paWrapper.getDebugOutput())

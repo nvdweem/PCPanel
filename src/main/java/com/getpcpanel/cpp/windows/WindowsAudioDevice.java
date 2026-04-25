@@ -4,7 +4,9 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.context.ApplicationEventPublisher;
+import jakarta.enterprise.event.Event;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import com.getpcpanel.cpp.AudioDevice;
 import com.getpcpanel.cpp.AudioSession;
@@ -19,19 +21,20 @@ import lombok.extern.log4j.Log4j2;
 public class WindowsAudioDevice extends AudioDevice {
     private final transient Map<Integer, WindowsAudioSession> sessions = new HashMap<>(); // pid -> pointer_addr -> session
 
-    public WindowsAudioDevice(ApplicationEventPublisher eventPublisher, String name, String id) {
-        super(eventPublisher, name, id);
+    public WindowsAudioDevice(Event<Object> eventBus, String name, String id) {
+        super(eventBus, name, id);
     }
 
+    @JsonIgnore
     public Map<Integer, WindowsAudioSession> getSessions() {
         return sessions;
     }
 
     public AudioSession addSession(long pointer, int pid, String name, String title, String icon, float volume, boolean muted) {
         log.debug("Add device session: {} {} {} {} {} {} {}", pointer, pid, name, title, icon, volume, muted);
-        var result = sessions.computeIfAbsent(pid, p -> new WindowsAudioSession(this, eventPublisher, pid, new File(name), title, icon, volume, muted));
+        var result = sessions.computeIfAbsent(pid, p -> new WindowsAudioSession(this, eventBus, pid, new File(name), title, icon, volume, muted));
         result.pointers().add(pointer);
-        eventPublisher.publishEvent(new AudioSessionEvent(result, EventType.ADDED));
+        eventBus.fire(new AudioSessionEvent(result, EventType.ADDED));
         return result;
     }
 
@@ -46,7 +49,7 @@ public class WindowsAudioDevice extends AudioDevice {
         if (session.pointers().isEmpty()) {
             log.debug("Session removed: {} ({})", pid, pointer);
             sessions.remove(pid);
-            eventPublisher.publishEvent(new AudioSessionEvent(session, EventType.REMOVED));
+            eventBus.fire(new AudioSessionEvent(session, EventType.REMOVED));
         }
     }
 

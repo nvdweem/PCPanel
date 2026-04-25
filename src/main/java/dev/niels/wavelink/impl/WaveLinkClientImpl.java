@@ -18,10 +18,11 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+
+import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -268,7 +269,6 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
             socket.sendClose(WebSocket.NORMAL_CLOSURE, "Done");
         }
         try {
-            client.close();
         } catch (Exception e) {
             log.error("Error closing websocket", e);
         }
@@ -279,13 +279,18 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
     }
 
     void onCommand(WaveLinkJsonRpcCommand<?, ?> message) {
-        switch (message) {
-            case WaveLinkChannelChangedCommand channelChanged -> updateEntry(IWaveLinkClientEventListener::channelChanged, channels, restoreImage(channelChanged.getParams()));
-            case WaveLinkChannelsChangedCommand channelsChanged -> updateEntries(IWaveLinkClientEventListener::channelsChanged, channels, channelsChanged.getParams().channels());
-            case WaveLinkOutputDeviceChangedCommand deviceChanged -> updateEntry(IWaveLinkClientEventListener::outputDeviceChanged, outputDevices, deviceChanged.getParams());
-            case WaveLinkMixChangedCommand mixChanged -> updateEntry(IWaveLinkClientEventListener::mixChanged, mixes, mixChanged.getParams());
-            case WaveLinkFocusedAppChangedCommand appChanged -> setLastFocusApp(appChanged.getParams());
-            default -> log.info("Received unhandled message: {}", message);
+        if (message instanceof WaveLinkChannelChangedCommand channelChanged) {
+            updateEntry(IWaveLinkClientEventListener::channelChanged, channels, restoreImage(channelChanged.getParams()));
+        } else if (message instanceof WaveLinkChannelsChangedCommand channelsChanged) {
+            updateEntries(IWaveLinkClientEventListener::channelsChanged, channels, channelsChanged.getParams().channels());
+        } else if (message instanceof WaveLinkOutputDeviceChangedCommand deviceChanged) {
+            updateEntry(IWaveLinkClientEventListener::outputDeviceChanged, outputDevices, deviceChanged.getParams());
+        } else if (message instanceof WaveLinkMixChangedCommand mixChanged) {
+            updateEntry(IWaveLinkClientEventListener::mixChanged, mixes, mixChanged.getParams());
+        } else if (message instanceof WaveLinkFocusedAppChangedCommand appChanged) {
+            setLastFocusApp(appChanged.getParams());
+        } else {
+            log.info("Received unhandled message: {}", message);
         }
     }
 

@@ -2,7 +2,7 @@ package com.getpcpanel.commands.command;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.getpcpanel.MainFX;
+import com.getpcpanel.util.CdiHelper;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.profile.SaveService;
 
@@ -23,12 +23,12 @@ public class CommandBrightness extends Command implements DialAction {
 
     @Override
     public void execute(DialActionParameters context) {
-        MainFX.getBean(DeviceHolder.class).getDevice(context.device()).ifPresent(device -> {
-            var lightingConfig = device.getLightingConfig();
+        CdiHelper.getBean(DeviceHolder.class).getDevice(context.device()).ifPresent(device -> {
+            var lightingConfig = device.lightingConfig();
             lightingConfig.setGlobalBrightness(context.dial().getValue(this));
             device.setLighting(lightingConfig, false);
 
-            MainFX.getBean(SaveService.class).debouncedSave();
+            CdiHelper.getBean(SaveService.class).debouncedSave();
         });
     }
 

@@ -1,8 +1,8 @@
 package com.getpcpanel.wavelink.command;
 
-import javax.annotation.Nullable;
-
 import org.apache.commons.lang3.StringUtils;
+
+import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

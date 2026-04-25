@@ -1,0 +1,14 @@
+.audio-picker { display: flex; flex-direction: column; gap: 4px; }
+.full-width { width: 100%; }
+.process-thumbnails {
+  display: flex; flex-wrap: wrap; gap: 4px; max-height: 100px; overflow-y: auto;
+  border: 1px solid #3b3c41; border-radius: 4px; padding: 4px;
+}
+.process-thumb {
+  display: flex; align-items: center; gap: 4px; padding: 2px 8px;
+  border: 1px solid #3b3c41; border-radius: 12px; background: transparent;
+  color: #ccc; cursor: pointer; font-size: 11px; transition: background 0.1s;
+  &:hover { background: #2d2e33; }
+  &.selected { border-color: #ffc940; background: #3a3800; color: #ffc940; }
+}
+.process-name { max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

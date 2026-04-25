@@ -1,0 +1,55 @@
+<div class="fab">
+  <mat-menu #menu="matMenu">
+    @for (group of commandGroups(); track group) {
+      <mat-menu #inner>
+        @let commands = groupedCommands()[group];
+        @for (command of commands; track command.command) {
+          <button mat-menu-item (click)="addCommand(command)">{{ command.name }}</button>
+        }
+      </mat-menu>
+      <button mat-menu-item [matMenuTriggerFor]="inner">{{ group | titlecase }}</button>
+    }
+  </mat-menu>
+  <button matMiniFab  [matMenuTriggerFor]="menu">
+    <mat-icon>add</mat-icon>
+  </button>
+</div>
+
+<mat-accordion>
+  @for (cmd of commands().commands; track cmd) {
+    @let value = cmd().value();
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title>{{ nameOf(value._type) }}</mat-panel-title>
+        <mat-panel-description class="header-description">
+          @if (type() === 'dial' && cmd['dialParams']) {
+            <ng-container *ngTemplateOutlet="dialParams; context: {$implicit: cmd['dialParams']}"/>
+          }
+          <button matIconButton aria-label="Delete action" (click)="delete($index, $event)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      @let component = componentFor(value);
+      @if (component) {
+        <ng-container *ngComponentOutlet="component; inputs: {field: cmd}"/>
+      } @else {
+        <p>Unknown command type: {{ value._type }}</p>
+      }
+    </mat-expansion-panel>
+  }
+</mat-accordion>
+
+<ng-template #dialParams let-cmd>
+    @let width = 100;
+    @let height = 40;
+    <svg [attr.viewBox]="`0 0 ${width} ${height}`" [attr.width]="width" [attr.height]="height" class="example-line" (click)="$event.stopPropagation(); editDialParams(cmd)">
+      <rect x="0" y="0" [attr.width]="width" [attr.height]="height"/>
+      @let lineStart = cmd.moveStart().value() || 0;
+      @let lineEnd = cmd.moveEnd().value() || width;
+      @let lineStartY = cmd.invert().value() ? 0 : height;
+      @let lineEndY = cmd.invert().value() ? height : 0;
+      <line [attr.x1]="lineStart" [attr.x2]="lineEnd" [attr.y1]="lineStartY" [attr.y2]="lineEndY"/>
+    </svg>
+    <mat-checkbox [formField]="cmd.invert" (click)="$event.stopPropagation()">Invert</mat-checkbox>
+</ng-template>

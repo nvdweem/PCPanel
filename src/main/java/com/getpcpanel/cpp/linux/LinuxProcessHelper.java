@@ -2,29 +2,37 @@ package com.getpcpanel.cpp.linux;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.Objects;
 import java.util.Optional;
-
-import javax.annotation.Nullable;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.stereotype.Service;
+import org.eclipse.microprofile.config.ConfigProvider;
 
-import com.getpcpanel.MainFX;
-import com.getpcpanel.spring.ConditionalOnLinux;
+import javax.annotation.Nullable;
+
+import com.getpcpanel.spring.LinuxImpl;
 import com.getpcpanel.util.ProcessHelper;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Service
-@ConditionalOnLinux
-@RequiredArgsConstructor
+@ApplicationScoped
+@LinuxImpl
 public class LinuxProcessHelper {
-    private final ProcessHelper processHelper;
+    @Inject
+    ProcessHelper processHelper;
+
+    @PostConstruct
+    void logResolvedTools() {
+        for (var tool : Tool.values()) {
+            var command = tool.command();
+            log.info("Active window tool {} command: {} (available: {})", tool.tool, command, tool.available(command));
+        }
+    }
 
     public ProcessBuilder builder(String... command) {
         return processHelper.builder(command);
@@ -37,9 +45,10 @@ public class LinuxProcessHelper {
     }
 
     private Optional<Integer> getActiveProcessPid(Tool tool) {
-        if (tool.available()) {
+        var command = tool.command();
+        if (tool.available(command)) {
             try {
-                var line = lineFrom(tool.command, "getactivewindow", "getwindowpid");
+                var line = lineFrom(command, "getactivewindow", "getwindowpid");
                 return Optional.of(NumberUtils.toInt(line, -1)).filter(v -> v != -1);
             } catch (Exception e) {
                 log.error("Unable to run process", e);
@@ -65,7 +74,7 @@ public class LinuxProcessHelper {
         if (lines.isEmpty()) {
             return null;
         }
-        return lines.getFirst();
+        return lines.get(0);
     }
 
     @Getter
@@ -73,13 +82,26 @@ public class LinuxProcessHelper {
         XDoTool("xdotool"),
         KDoTool("kdotool");
 
-        private final String command;
-        private final boolean available;
+        private final String tool;
 
         Tool(String tool) {
-            command = resolveHomeRelativePath(Objects.requireNonNullElse(MainFX.getContext().getEnvironment().getProperty("linux.commands." + tool), tool));
-            available = ProcessConditionalHelper.isProcessAvailable(command);
-            log.info("Active Window tool {} enabled: {}", tool, available);
+            this.tool = tool;
+        }
+
+        @PostConstruct
+        public void bla() {
+            log.error("Post construct");
+        }
+
+        private String command() {
+            var configured = ConfigProvider.getConfig().getOptionalValue("linux.commands." + tool, String.class).orElse(tool);
+            return resolveHomeRelativePath(configured);
+        }
+
+        private boolean available(String command) {
+            var available = ProcessConditionalHelper.isProcessAvailable(command);
+            log.debug("Active Window tool {} command {} enabled: {}", tool, command, available);
+            return available;
         }
 
         private static String resolveHomeRelativePath(String process) {

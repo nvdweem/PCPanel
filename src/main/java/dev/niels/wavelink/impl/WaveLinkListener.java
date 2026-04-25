@@ -55,15 +55,12 @@ public class WaveLinkListener implements Listener {
     }
 
     private void getInfo() {
-        CompletableFuture.allOf(
-                sendExpectingResult(new WaveLinkGetInputDevices()).thenAccept(res -> client.updateInputDevices(res.inputDevices())),
+        CompletableFuture.allOf(sendExpectingResult(new WaveLinkGetInputDevices()).thenAccept(res -> client.updateInputDevices(res.inputDevices())),
                 sendExpectingResult(new WaveLinkGetOutputDevices()).thenAccept(res -> client.updateOutputDevices(res.outputDevices(), res.mainOutput())),
-                sendExpectingResult(new WaveLinkGetChannels()).thenAccept(res -> client.updateChannels(res.channels())),
-                sendExpectingResult(new WaveLinkGetMixes()).thenAccept(res -> client.updateMixes(res.mixes())),
+                sendExpectingResult(new WaveLinkGetChannels()).thenAccept(res -> client.updateChannels(res.channels())), sendExpectingResult(new WaveLinkGetMixes()).thenAccept(res -> client.updateMixes(res.mixes())),
                 sendExpectingResult(WaveLinkSetSubscription.setFocusAppChanged(true)).thenAccept(res -> {
                     log.debug("Successfully subscribed to websocket events");
-                })
-        ).thenRun(client::setInitialized);
+                })).thenRun(client::setInitialized);
     }
 
     private void ensureCorrectVersion(WaveLinkGetApplicationInfoResult res) {
@@ -92,9 +89,10 @@ public class WaveLinkListener implements Listener {
     }
 
     private void handleMessage(JsonRpcMessage message) {
-        switch (message) {
-            case JsonRpcResponse response -> handleResponse(response);
-            case WaveLinkJsonRpcCommand<?, ?> command -> handleCommand(command);
+        if (message instanceof JsonRpcResponse response) {
+            handleResponse(response);
+        } else if (message instanceof WaveLinkJsonRpcCommand<?, ?> command) {
+            handleCommand(command);
         }
     }
 
@@ -113,10 +111,7 @@ public class WaveLinkListener implements Listener {
 
         if (response.getError() != null) {
             var error = response.getError();
-            var errorMessage = String.format("JSON-RPC error %d: %s%s",
-                    error.getCode(),
-                    error.getMessage(),
-                    error.getData() != null ? " [" + error.getData() + "]" : "");
+            var errorMessage = String.format("JSON-RPC error %d: %s%s", error.getCode(), error.getMessage(), error.getData() != null ? " [" + error.getData() + "]" : "");
             log.error("Received error for request ID {}: {}", id, errorMessage);
             pending.future.completeExceptionally(new RuntimeException(errorMessage));
             return;

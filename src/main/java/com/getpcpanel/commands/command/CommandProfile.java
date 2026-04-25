@@ -6,10 +6,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.getpcpanel.MainFX;
 import com.getpcpanel.hid.DeviceHolder;
+import com.getpcpanel.util.CdiHelper;
 
-import javafx.application.Platform;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -24,7 +23,7 @@ public class CommandProfile extends Command implements DeviceAction {
 
     @Override
     public void execute(DeviceActionParameters context) {
-        Platform.runLater(() -> MainFX.getBean(DeviceHolder.class).getDevice(context.device()).ifPresent(device -> device.setProfile(profile)));
+        CdiHelper.getBean(DeviceHolder.class).getDevice(context.device()).ifPresent(device -> device.setProfile(profile));
     }
 
     @Override

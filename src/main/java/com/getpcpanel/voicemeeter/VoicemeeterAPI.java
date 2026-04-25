@@ -3,7 +3,7 @@ package com.getpcpanel.voicemeeter;
 import java.io.File;
 import java.util.Set;
 
-import org.springframework.stereotype.Service;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.profile.SaveService;
 import com.sun.jna.Memory;
@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Service
+@ApplicationScoped
 @RequiredArgsConstructor
 public final class VoicemeeterAPI {
     private final SaveService saveService;
@@ -225,7 +225,7 @@ public final class VoicemeeterAPI {
             return type;
         }
 
-        public String getName() {
+        public String name() {
             return name;
         }
 
@@ -245,4 +245,3 @@ public final class VoicemeeterAPI {
         return new Memory(size);
     }
 }
-

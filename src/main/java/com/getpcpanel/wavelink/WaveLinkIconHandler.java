@@ -1,10 +1,9 @@
 package com.getpcpanel.wavelink;
 
+import java.awt.image.BufferedImage;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
-
-import org.springframework.stereotype.Service;
 
 import com.getpcpanel.commands.IIconHandler;
 import com.getpcpanel.commands.IconService;
@@ -16,15 +15,15 @@ import com.getpcpanel.wavelink.command.CommandWaveLinkMainOutput;
 
 import dev.niels.wavelink.impl.model.WaveLinkChannel;
 import dev.niels.wavelink.impl.model.WaveLinkImage;
-import javafx.scene.image.Image;
-import lombok.RequiredArgsConstructor;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Service
-@RequiredArgsConstructor
+@ApplicationScoped
 public class WaveLinkIconHandler implements IIconHandler<CommandWaveLink> {
-    private final WaveLinkService waveLinkService;
+    @Inject
+    WaveLinkService waveLinkService;
 
     @Override
     public Class<CommandWaveLink> getCommandClass() {
@@ -33,17 +32,21 @@ public class WaveLinkIconHandler implements IIconHandler<CommandWaveLink> {
 
     @Override
     @Nullable
-    public Optional<Image> supplyImage(CommandWaveLink cmd) {
-        return switch (cmd) {
-            case CommandWaveLinkMainOutput o -> Optional.of(outputImage());
-            case CommandWaveLinkChannelEffect ce -> channelImage(ce.getChannelId());
-            case CommandWaveLinkChange c -> fromChange(c);
-            case CommandWaveLinkAddFocusToChannel ac -> channelImage(ac.getChannelId());
-        };
+    public Optional<BufferedImage> supplyImage(CommandWaveLink cmd) {
+        if (cmd instanceof CommandWaveLinkMainOutput) {
+            return Optional.of(outputImage());
+        } else if (cmd instanceof CommandWaveLinkChannelEffect ce) {
+            return channelImage(ce.getChannelId());
+        } else if (cmd instanceof CommandWaveLinkChange c) {
+            return fromChange(c);
+        } else if (cmd instanceof CommandWaveLinkAddFocusToChannel ac) {
+            return channelImage(ac.getChannelId());
+        }
+        return Optional.empty();
     }
 
     @Nullable
-    private Optional<Image> fromChange(CommandWaveLinkChange change) {
+    private Optional<BufferedImage> fromChange(CommandWaveLinkChange change) {
         switch (change.getCommandType()) {
             case Channel, Mix -> {
                 return channelImage(change.getId1());
@@ -55,13 +58,13 @@ public class WaveLinkIconHandler implements IIconHandler<CommandWaveLink> {
         return Optional.empty();
     }
 
-    private Optional<Image> channelImage(@Nullable String id) {
+    private Optional<BufferedImage> channelImage(@Nullable String id) {
         return Optional.ofNullable(waveLinkService.getChannels().get(id))
                        .map(WaveLinkChannel::image)
                        .map(WaveLinkImage::getImage);
     }
 
-    private Image outputImage() {
+    private BufferedImage outputImage() {
         return IconService.DEVICE;
     }
 }

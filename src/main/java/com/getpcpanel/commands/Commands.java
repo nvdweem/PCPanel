@@ -4,9 +4,12 @@ import java.util.List;
 import java.util.Optional;
 
 import javax.annotation.Nonnull;
+
 import javax.annotation.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandNoOp;
 
@@ -27,7 +30,8 @@ public class Commands {
         return List.of();
     }
 
-    public Commands(@Nonnull List<Command> commands, @Nullable CommandsType type) {
+    @JsonCreator
+    public Commands(@JsonProperty("commands") @Nonnull List<Command> commands, @JsonProperty("type") @Nullable CommandsType type) {
         this.commands = StreamEx.of(commands).remove(CommandNoOp.class::isInstance).toImmutableList();
         this.type = type != null ? type : CommandsType.allAtOnce;
     }

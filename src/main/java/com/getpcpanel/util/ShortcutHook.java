@@ -6,14 +6,12 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Service;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.spring.ConditionalOnWindows;
+import com.getpcpanel.spring.WindowsImpl;
 import com.github.kwhat.jnativehook.GlobalScreen;
 import com.github.kwhat.jnativehook.NativeHookException;
 import com.github.kwhat.jnativehook.NativeInputEvent;
@@ -22,17 +20,16 @@ import com.github.kwhat.jnativehook.keyboard.NativeKeyListener;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import javafx.application.Platform;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.EntryStream;
 
 @Log4j2
-@Service
-@ConditionalOnWindows
+@ApplicationScoped
+@WindowsImpl
 @RequiredArgsConstructor
-@ConditionalOnProperty(matchIfMissing = true, value = "pcpanel.shortcut-hook", havingValue = "true")
+
 public class ShortcutHook implements NativeKeyListener {
     public static final Set<Integer> modifiers = Set.of(NativeKeyEvent.VC_SHIFT, NativeKeyEvent.VC_CONTROL, NativeKeyEvent.VC_META, NativeKeyEvent.VC_ALT);
     private final SaveService saveService;
@@ -74,8 +71,7 @@ public class ShortcutHook implements NativeKeyListener {
         return String.join("+", modifiers, key);
     }
 
-    @EventListener(SaveService.SaveEvent.class)
-    public void updateShortcuts() {
+        public void updateShortcuts() {
         shortcuts = EntryStream.of(saveService.get().getDevices())
                                .flatMapValues(ds -> ds.getProfiles().stream())
                                .filterValues(p -> StringUtils.isNotBlank(p.getActivationShortcut()))
@@ -102,7 +98,7 @@ public class ShortcutHook implements NativeKeyListener {
         if (canBeShortcut(nativeKeyEvent)) {
             var profile = shortcuts.get(toKeyString(nativeKeyEvent));
             if (profile != null) {
-                Platform.runLater(() -> deviceHolder.getDevice(profile.deviceId()).ifPresent(device -> device.setProfile(profile.profile.getName())));
+                deviceHolder.getDevice(profile.deviceId()).ifPresent(device -> device.setProfile(profile.profile.getName()));
             }
         }
     }

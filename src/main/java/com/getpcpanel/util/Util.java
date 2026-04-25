@@ -12,17 +12,8 @@ import javax.annotation.Nullable;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.Group;
-import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.TabPane;
-import javafx.scene.layout.StackPane;
-import javafx.scene.paint.Color;
 import lombok.extern.log4j.Log4j2;
 
-@SuppressWarnings("ALL")
 @Log4j2
 public final class Util {
     private static final Set<String> executables = Set.of("bat", "bin", "cmd", "com", "cpl", "exe", "gadget", "inf1", "ins", "inx", "isu", "job", "jse", "lnk", "msc", "msi", "msp", "mst", "paf",
@@ -31,67 +22,47 @@ public final class Util {
     private Util() {
     }
 
-    public static void adjustTabs(TabPane tabPane, int width, int height) {
-        adjustTabs(tabPane);
-        tabPane.setTabMinHeight(width);
-        tabPane.setTabMaxHeight(width);
-        tabPane.setTabMinWidth(height);
+    /**
+     * Format a CSS-style hex color string from RGB components (0-255 each).
+     */
+    @Nullable
+    public static String formatHexString(int r, int g, int b) {
+        return String.format("#%02x%02x%02x", r, g, b);
     }
 
-    public static void adjustTabs(TabPane tabPane) {
-        tabPane.setRotateGraphic(true);
-        for (var tab : tabPane.getTabs()) {
-            var l = new Label(tab.getText());
-            l.setPadding(new Insets(0.0D, 0.0D, 0.0D, 10.0D));
-            l.setRotate(90.0D);
-            var stp = new StackPane(new Group(l));
-            stp.setAlignment(Pos.TOP_CENTER);
-            stp.setPrefHeight(200.0D);
-            stp.setRotate(90.0D);
-            tab.setGraphic(stp);
-            tab.setText("");
-        }
-    }
-
-    public static @Nullable String formatHexString(Color c) {
-        if (c != null)
-            return String.format(null, "#%02x%02x%02x", new Object[] { Math.round(c.getRed() * 255.0D),
-                    Math.round(c.getGreen() * 255.0D),
-                    Math.round(c.getBlue() * 255.0D) });
-        return null;
-    }
-
-    public static Optional<Color> parseColor(String color) {
+    /**
+     * Parse a CSS hex color string like "#rrggbb" into an int[]{r,g,b} array (0-255 each).
+     * Returns null if the string is null or not parseable.
+     */
+    @Nullable
+    public static int[] parseColorComponents(String color) {
+        if (color == null)
+            return null;
         try {
-            return Optional.of(Color.valueOf(color));
+            String hex = color.startsWith("#") ? color.substring(1) : color;
+            int r = Integer.parseInt(hex.substring(0, 2), 16);
+            int g = Integer.parseInt(hex.substring(2, 4), 16);
+            int b = Integer.parseInt(hex.substring(4, 6), 16);
+            return new int[] { r, g, b };
         } catch (Exception e) {
-            return Optional.empty();
+            return null;
         }
+    }
+
+    /**
+     * Parse a CSS hex color string and return it as-is (passthrough for backward compat).
+     */
+    public static Optional<String> parseColor(String color) {
+        if (color == null)
+            return Optional.empty();
+        var components = parseColorComponents(color);
+        if (components == null)
+            return Optional.empty();
+        return Optional.of(color);
     }
 
     public static List<Integer> numToList(int num) {
         return IntStream.rangeClosed(1, num).boxed().collect(Collectors.toList());
-    }
-
-    public static <T> void changeItemsTo(ChoiceBox<T> cb, List<T> list) {
-        changeItemsTo(cb, list, true);
-    }
-
-    public static <T> void changeItemsTo(ChoiceBox<T> cb, List<T> list, boolean nevernull) {
-        var prev = cb.getValue();
-        cb.getItems().setAll(list);
-        if (list.contains(prev)) {
-            cb.setValue(prev);
-        } else if (nevernull) {
-            cb.getSelectionModel().selectFirst();
-        } else {
-            cb.setValue(null);
-        }
-    }
-
-    public static void clearAndSetNull(ChoiceBox<?> cb) {
-        cb.setValue(null);
-        cb.getItems().clear();
     }
 
     public static boolean isFileExecutable(File file) {
@@ -99,7 +70,11 @@ public final class Util {
     }
 
     public static int map(int x, int in_min, int in_max, int out_min, int out_max) {
-        return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+        var div = in_max - in_min;
+        if (div == 0) {
+            return 0;
+        }
+        return (x - in_min) * (out_max - out_min) / div + out_min;
     }
 
     public static double map(double x, double in_min, double in_max, double out_min, double out_max) {

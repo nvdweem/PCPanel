@@ -6,25 +6,30 @@ import static com.getpcpanel.mqtt.MqttDeviceColorService.EFFECT_STOP_OVERRIDE;
 import java.util.List;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
+import javax.annotation.Nullable;
 
 import com.getpcpanel.device.Device;
-import com.getpcpanel.profile.MqttSettings;
+import com.getpcpanel.mqtt.MqttTopicHelper.ActionType;
+import com.getpcpanel.mqtt.MqttTopicHelper.ColorType;
+import com.getpcpanel.mqtt.MqttTopicHelper.ValueType;
+import com.getpcpanel.profile.dto.MqttSettings;
 
-import lombok.RequiredArgsConstructor;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Service
-@RequiredArgsConstructor
+@ApplicationScoped
 public class MqttHomeAssistantHelper {
-    private final MqttTopicHelper topicHelper;
-    private final MqttService mqttService;
-    @Value("${application.version}") private String version;
+    @Inject
+    MqttTopicHelper topicHelper;
+    @Inject
+    MqttService mqttService;
+    @ConfigProperty(name = "pcpanel.version") private String version;
 
     public void clearAll(MqttSettings settings) {
         var topic = StringUtils.joinWith("/", settings.homeAssistant().baseTopic(), "+", "pcpanel", "#");
@@ -47,19 +52,19 @@ public class MqttHomeAssistantHelper {
     }
 
     private void addControlLights(MqttSettings settings, Device device, HomeAssistantDevice haDevice, @Nullable HomeAssistantAvailability availability) {
-        for (var i = 0; i < device.getDeviceType().getAnalogCount(); i++) {
-            var buttonCount = device.getDeviceType().getButtonCount();
-            var type = i < buttonCount ? MqttTopicHelper.ColorType.dial : MqttTopicHelper.ColorType.slider;
+        for (var i = 0; i < device.deviceType().getAnalogCount(); i++) {
+            var buttonCount = device.deviceType().getButtonCount();
+            var type = i < buttonCount ? ColorType.dial : ColorType.slider;
             var idx = i < buttonCount ? i : i - buttonCount;
 
             addControlLightConfig(settings, device, haDevice, availability, i, type, idx);
-            if (type == MqttTopicHelper.ColorType.slider) {
+            if (type == ColorType.slider) {
                 addSliderLabelLightConfig(settings, device, haDevice, availability, idx, type);
             }
         }
     }
 
-    private void addControlLightConfig(MqttSettings settings, Device device, HomeAssistantDevice haDevice, @Nullable HomeAssistantAvailability availability, int i, MqttTopicHelper.ColorType type, int idx) {
+    private void addControlLightConfig(MqttSettings settings, Device device, HomeAssistantDevice haDevice, @Nullable HomeAssistantAvailability availability, int i, ColorType type, int idx) {
         var controlConfigTopic = lightTopicFor(settings, device, "control_" + i);
         var controlValueTopic = topicHelper.lightTopic(device.getSerialNumber(), type, idx);
 
@@ -73,9 +78,9 @@ public class MqttHomeAssistantHelper {
         mqttService.send(controlConfigTopic, config, false);
     }
 
-    private void addSliderLabelLightConfig(MqttSettings settings, Device device, HomeAssistantDevice haDevice, @Nullable HomeAssistantAvailability availability, int idx, MqttTopicHelper.ColorType type) {
+    private void addSliderLabelLightConfig(MqttSettings settings, Device device, HomeAssistantDevice haDevice, @Nullable HomeAssistantAvailability availability, int idx, ColorType type) {
         var labelConfigTopic = lightTopicFor(settings, device, "label_" + idx);
-        var labelValueTopic = topicHelper.lightTopic(device.getSerialNumber(), MqttTopicHelper.ColorType.label, idx);
+        var labelValueTopic = topicHelper.lightTopic(device.getSerialNumber(), ColorType.label, idx);
 
         var labelConfig = new HomeAssistantLightConfig(
                 haDevice, availability,
@@ -88,9 +93,9 @@ public class MqttHomeAssistantHelper {
     }
 
     private void addAnalogValueConfigs(MqttSettings settings, Device device, HomeAssistantDevice haDevice, @Nullable HomeAssistantAvailability availability) {
-        for (var i = 0; i < device.getDeviceType().getAnalogCount(); i++) {
+        for (var i = 0; i < device.deviceType().getAnalogCount(); i++) {
             var configTopic = configTopicFor(settings, device, "number", "analog", i);
-            var valueTopic = topicHelper.valueTopic(device.getSerialNumber(), MqttTopicHelper.ValueType.analog, i);
+            var valueTopic = topicHelper.valueTopic(device.getSerialNumber(), ValueType.analog, i);
 
             var config = new HomeAssistantNumberConfig(
                     haDevice, availability,
@@ -107,7 +112,7 @@ public class MqttHomeAssistantHelper {
 
     private void addBrightnessDevice(MqttSettings settings, Device device, HomeAssistantDevice haDevice, @Nullable HomeAssistantAvailability availability) {
         var configTopic = configTopicFor(settings, device, "number", "brightness", 0);
-        var valueTopic = topicHelper.valueTopic(device.getSerialNumber(), MqttTopicHelper.ValueType.brightness, 0);
+        var valueTopic = topicHelper.valueTopic(device.getSerialNumber(), ValueType.brightness, 0);
 
         var config = new HomeAssistantNumberConfig(
                 haDevice, availability,
@@ -122,12 +127,12 @@ public class MqttHomeAssistantHelper {
     }
 
     private void addLogoLight(MqttSettings settings, Device device, HomeAssistantDevice haDevice, @Nullable HomeAssistantAvailability availability) {
-        if (!device.getDeviceType().isHasLogoLed()) {
+        if (!device.deviceType().isHasLogoLed()) {
             return;
         }
 
         var configTopic = lightTopicFor(settings, device, "logo");
-        var valueTopic = topicHelper.lightTopic(device.getSerialNumber(), MqttTopicHelper.ColorType.logo, 0);
+        var valueTopic = topicHelper.lightTopic(device.getSerialNumber(), ColorType.logo, 0);
 
         var config = new HomeAssistantLightConfig(
                 haDevice, availability,
@@ -140,7 +145,7 @@ public class MqttHomeAssistantHelper {
     }
 
     private void addButtons(MqttSettings settings, Device device, HomeAssistantDevice haDevice, @Nullable HomeAssistantAvailability availability) {
-        for (var i = 0; i < device.getDeviceType().getButtonCount(); i++) {
+        for (var i = 0; i < device.deviceType().getButtonCount(); i++) {
             addButtonUpDown(settings, device, haDevice, availability, i);
             addButtonEvent(settings, device, haDevice, availability, i);
         }
@@ -148,7 +153,7 @@ public class MqttHomeAssistantHelper {
 
     private void addButtonUpDown(MqttSettings settings, Device device, HomeAssistantDevice haDevice, @Nullable HomeAssistantAvailability availability, int i) {
         var configTopic = configTopicFor(settings, device, "binary_sensor", "button", i);
-        var valueTopic = topicHelper.buttonUpDownTopic(device.getSerialNumber(), MqttTopicHelper.ActionType.button, i);
+        var valueTopic = topicHelper.buttonUpDownTopic(device.getSerialNumber(), ActionType.button, i);
 
         var upDownConfig = new HomeAssistantButtonConfig(
                 haDevice, availability,
@@ -161,7 +166,7 @@ public class MqttHomeAssistantHelper {
 
     private void addButtonEvent(MqttSettings settings, Device device, HomeAssistantDevice haDevice, @Nullable HomeAssistantAvailability availability, int i) {
         var eventConfigTopic = configTopicFor(settings, device, "event", "button", i);
-        var eventTopic = topicHelper.eventTopic(device.getSerialNumber(), MqttTopicHelper.ActionType.button, i);
+        var eventTopic = topicHelper.eventTopic(device.getSerialNumber(), ActionType.button, i);
 
         var eventConfig = new HomeAssistantButtonEventConfig(
                 haDevice, availability,
@@ -193,7 +198,7 @@ public class MqttHomeAssistantHelper {
     }
 
     private String determineAnalogIcon(Device device, int i) {
-        var buttonCount = device.getDeviceType().getButtonCount();
+        var buttonCount = device.deviceType().getButtonCount();
         if (i < buttonCount) {
             return "mdi:knob";
         }
@@ -201,7 +206,7 @@ public class MqttHomeAssistantHelper {
     }
 
     private String determineAnalogName(Device device, int i) {
-        var buttonCount = device.getDeviceType().getButtonCount();
+        var buttonCount = device.deviceType().getButtonCount();
         if (i < buttonCount) {
             return "Dial " + (i + 1);
         }
@@ -325,14 +330,15 @@ public class MqttHomeAssistantHelper {
                 version,
                 List.of(device.getSerialNumber()),
                 "PCPanel Holdings, LLC",
-                device.getDeviceType().getNiceName(),
+                device.deviceType().getNiceName(),
                 device.getSerialNumber(),
                 device.getSerialNumber(),
                 "Office"
         );
     }
 
-    private @Nullable HomeAssistantAvailability buildAvailability(MqttSettings settings) {
+    @Nullable
+    private HomeAssistantAvailability buildAvailability(MqttSettings settings) {
         if (settings.homeAssistant().availability()) {
             return new HomeAssistantAvailability(
                     topicHelper.availabilityTopic(),

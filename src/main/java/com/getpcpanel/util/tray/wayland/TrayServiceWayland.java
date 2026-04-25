@@ -4,30 +4,29 @@ import org.freedesktop.dbus.connections.impl.DBusConnection;
 import org.freedesktop.dbus.connections.impl.DBusConnectionBuilder;
 import org.freedesktop.dbus.exceptions.DBusException;
 import org.freedesktop.dbus.interfaces.DBusInterface;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
 
-import com.getpcpanel.spring.ConditionalOnWayland;
+import com.getpcpanel.spring.WaylandImpl;
+import com.getpcpanel.util.tray.ITrayService;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Service
-@RequiredArgsConstructor
-@ConditionalOnProperty(value = "disable.tray", havingValue = "false", matchIfMissing = true)
-@ConditionalOnWayland
-class TrayServiceWayland {
+@ApplicationScoped
+@WaylandImpl
+public class TrayServiceWayland implements ITrayService {
     static final String SNI_BUS_NAME = "org.kde.StatusNotifierItem";
     static final String WATCHER_BUS_NAME = "org.kde.StatusNotifierWatcher";
     static final String WATCHER_OBJECT_PATH = "/StatusNotifierWatcher";
 
-    private final ApplicationEventPublisher eventPublisher;
+    @Inject Event<Object> eventBus;
     private DBusConnection connection;
 
+    @Override
     @PostConstruct
     public void init() {
         try {
@@ -43,7 +42,7 @@ class TrayServiceWayland {
 
     private void registerIcon() throws DBusException {
         DBusInterface menuBarObject = () -> "/MenuBar";
-        var statusNotifierItem = new StatusNotifierItemImpl(eventPublisher);
+        var statusNotifierItem = new StatusNotifierItemImpl();
 
         var wellKnownName = requestSniBus(1);
         connection.exportObject("/MenuBar", menuBarObject);
