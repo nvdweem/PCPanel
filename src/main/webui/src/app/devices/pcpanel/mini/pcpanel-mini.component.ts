@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { breathBaseColor, lightingAnimClass, lightingAnimDuration, lightingBreathMin, rainbowBaseColor, waveBaseColor, } from './lighting-animation';
-import { LightingConfig } from '../../models/generated/backend.types';
+import { LightingConfig } from '../../../models/generated/backend.types';
+import { breathBaseColor, lightingAnimClass, lightingAnimDuration, lightingBreathMin, rainbowBaseColor, waveBaseColor } from '../lighting-animation';
 
 function truncate(s: string, n: number): string {
   return s.length > n ? s.substring(0, n) + '…' : s;
@@ -14,9 +14,9 @@ const KNOB_RING_PATH =
   '-5.56,1.59.91L50.9,13.08a29.37,29.37,0,0,1,9.4,9.42l1.82-1.05L63,23l-1.82,1.05A28.8,28.8,0,0,1,64.55,34.9c0,.54.07,1.08.1,1.62Z';
 
 @Component({
-  selector: 'app-pcpanel-mini',
+  selector: 'pcpanel-pcpanel-mini',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  styleUrl: './device-visual.scss',
+  styleUrl: '../device-visual.scss',
   templateUrl: './pcpanel-mini.component.html',
 })
 export class PcpanelMiniComponent {

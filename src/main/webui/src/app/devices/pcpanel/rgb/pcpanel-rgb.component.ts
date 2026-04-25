@@ -1,15 +1,15 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { breathBaseColor, lightingAnimClass, lightingAnimDuration, lightingBreathMin, rainbowBaseColor, waveBaseColor, } from './lighting-animation';
-import { LightingConfig } from '../../models/generated/backend.types';
+import { breathBaseColor, lightingAnimClass, lightingAnimDuration, lightingBreathMin, rainbowBaseColor, waveBaseColor, } from '../lighting-animation';
+import { LightingConfig } from '../../../models/generated/backend.types';
 
 function truncate(s: string, n: number): string {
   return s.length > n ? s.substring(0, n) + '…' : s;
 }
 
 @Component({
-  selector: 'app-pcpanel-rgb',
+  selector: 'pcpanel-pcpanel-rgb',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  styleUrl: './device-visual.scss',
+  styleUrl: '../device-visual.scss',
   templateUrl: './pcpanel-rgb.component.html',
 })
 export class PcpanelRgbComponent {

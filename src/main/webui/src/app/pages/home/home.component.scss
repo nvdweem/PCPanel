@@ -1,32 +1,82 @@
-.home-container { height: 100vh; }
+.home-container {
+  height: 100vh;
+}
 
 // ── Sidebar ──────────────────────────────────────────────────────────────────
 .device-sidenav {
   width: 220px;
   background: #1c1d20 !important;
   border-right: 1px solid #3b3c41;
-  .sidebar-title { font-size: 0.95rem; font-weight: 600; letter-spacing: 1px; min-height: 48px; border-bottom: 1px solid #3b3c41; }
-  .sidebar-empty { padding: 16px; color: #666; font-size: 0.85rem; margin: 0; }
+
+  .sidebar-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    min-height: 48px;
+    border-bottom: 1px solid #3b3c41;
+  }
+
+  .sidebar-empty {
+    padding: 16px;
+    color: #666;
+    font-size: 0.85rem;
+    margin: 0;
+  }
 }
 
 // ── Main content ──────────────────────────────────────────────────────────────
-.main-content { display: flex; flex-direction: column; height: 100%; background: #25262a; }
+.main-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #25262a;
+}
 
 .main-toolbar {
-  .toolbar-title { font-size: 0.92rem; }
-  .spacer { flex: 1; }
+  .toolbar-title {
+    font-size: 0.92rem;
+  }
+
+  .spacer {
+    flex: 1;
+  }
 }
 
 // ── No device ─────────────────────────────────────────────────────────────────
 .no-device-center {
-  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
-  .no-device-icon { font-size: 48px; width: 48px; height: 48px; color: #444; }
-  .no-device-label { color: #555; font-size: 1rem; letter-spacing: 2px; }
-  .no-device-sub { color: #444; font-size: 0.82rem; }
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+
+  .no-device-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: #444;
+  }
+
+  .no-device-label {
+    color: #555;
+    font-size: 1rem;
+    letter-spacing: 2px;
+  }
+
+  .no-device-sub {
+    color: #444;
+    font-size: 0.82rem;
+  }
 }
 
 // ── Device area ───────────────────────────────────────────────────────────────
-.device-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.device-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 
 // ── SVG device visual wrapper ─────────────────────────────────────────────────
 .device-visual-wrap {
@@ -40,7 +90,7 @@
   overflow: hidden;
 
   // The SVG components fill this area (maintaining aspect ratio via viewBox)
-  app-pcpanel-pro, app-pcpanel-mini, app-pcpanel-rgb {
+  pcpanel-pcpanel-pro, app-pcpanel-mini, pcpanel-pcpanel-rgb {
     flex: 1;
     min-height: 0;
     width: 100%;
@@ -49,24 +99,67 @@
   }
 }
 
-.hint-text { color: #555; font-size: 0.78rem; text-align: center; margin: 4px 0 0; }
+.hint-text {
+  color: #555;
+  font-size: 0.78rem;
+  text-align: center;
+  margin: 4px 0 0;
+}
 
 // ── Bottom bar ────────────────────────────────────────────────────────────────
 .bottom-bar {
-  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-  padding: 8px 16px; background: #1c1d20; border-top: 1px solid #3b3c41; flex-wrap: wrap;
-  .version-label { font-size: 0.78rem; color: #555; }
-  .brightness-area {
-    display: flex; align-items: center; gap: 4px; flex: 1; min-width: 150px; max-width: 240px;
-    .brightness-icon { font-size: 18px; width: 18px; height: 18px; color: #888; }
-    .brightness-slider { flex: 1; }
-    .brightness-value { font-size: 0.78rem; color: #999; min-width: 32px; text-align: right; }
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 8px 16px;
+  background: #1c1d20;
+  border-top: 1px solid #3b3c41;
+  flex-wrap: wrap;
+
+  .version-label {
+    font-size: 0.78rem;
+    color: #555;
   }
+
+  .brightness-area {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    min-width: 150px;
+    max-width: 240px;
+
+    .brightness-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: #888;
+    }
+
+    .brightness-slider {
+      flex: 1;
+    }
+
+    .brightness-value {
+      font-size: 0.78rem;
+      color: #999;
+      min-width: 32px;
+      text-align: right;
+    }
+  }
+
   .profile-area {
-    display: flex; align-items: center; gap: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
     .profile-field {
       width: 160px;
-      ::ng-deep .mat-mdc-form-field-subscript-wrapper { display: none; }
+
+      ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+        display: none;
+      }
     }
   }
 }

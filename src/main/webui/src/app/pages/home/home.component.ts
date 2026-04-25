@@ -10,16 +10,12 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDialog } from '@angular/material/dialog';
-import { DeviceService } from '../../services/device.service';
-import { CommandConfigComponent, CommandDialogData } from '../../components/command-config/command-config.component';
-import { PcpanelProComponent } from '../../components/device-visual/pcpanel-pro.component';
-import { PcpanelMiniComponent } from '../../components/device-visual/pcpanel-mini.component';
-import { PcpanelRgbComponent } from '../../components/device-visual/pcpanel-rgb.component';
 import { HomeFacade } from './home.facade';
 import { ConnectionStatusComponent } from '../../components/connection-status/connection-status.component';
 import { KeyValuePipe } from '@angular/common';
-import { Commands } from '../../models/generated/backend.types';
+import { PcpanelProComponent } from '../../devices/pcpanel/pro/pcpanel-pro.component';
+import { PcpanelMiniComponent } from '../../devices/pcpanel/mini/pcpanel-mini.component';
+import { PcpanelRgbComponent } from '../../devices/pcpanel/rgb/pcpanel-rgb.component';
 
 @Component({
   selector: 'app-home',
@@ -29,35 +25,12 @@ import { Commands } from '../../models/generated/backend.types';
     MatSidenavModule, MatToolbarModule, MatListModule,
     MatButtonModule, MatIconModule, MatSelectModule, MatFormFieldModule,
     MatSliderModule, MatTooltipModule,
-    PcpanelProComponent, PcpanelMiniComponent, PcpanelRgbComponent,
-    ConnectionStatusComponent, KeyValuePipe,
+    ConnectionStatusComponent, KeyValuePipe, PcpanelProComponent, PcpanelMiniComponent, PcpanelRgbComponent,
   ],
   providers: [HomeFacade],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
 })
 export class HomeComponent {
-  private deviceService = inject(DeviceService);
-  private dialog = inject(MatDialog);
   protected readonly facade = inject(HomeFacade);
-
-  onDialClick(data: CommandDialogData): void {
-    // this.facade.setActiveDial(index);
-
-    const ref = this.dialog.open(CommandConfigComponent, {data, width: '560px'});
-    ref.afterClosed().subscribe((result: Commands | null | undefined) => {
-      this.facade.setActiveDial(null);
-      const dev = this.facade.selectedDevice();
-      if (result && dev?.currentProfile) {
-        const {serial, currentProfile} = dev;
-        // this.deviceService.setDialCommands(serial, currentProfile, index, result).subscribe(() => {
-        //   this.facade.updateDialCommand(index, result);
-        // });
-      }
-    });
-  }
-
-  protected triggerEdit(event: CommandDialogData) {
-    this.onDialClick(event);
-  }
 }

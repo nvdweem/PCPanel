@@ -7,10 +7,10 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
-import { Commands, KnobSetting } from '../../models/generated/backend.types';
 import { MatTab, MatTabGroup } from '@angular/material/tabs';
 import { form, FormField } from '@angular/forms/signals';
-import { CommandsComponent } from './commands/commands.component';
+import { Commands, KnobSetting } from '../../../models/generated/backend.types';
+import { CommandsComponent } from '../../../components/command-config/commands/commands.component';
 
 export interface CommandDialogData {
   title: string;
@@ -21,7 +21,7 @@ export interface CommandDialogData {
 }
 
 @Component({
-  selector: 'app-command-config',
+  selector: 'pcpanel-command-config',
   imports: [FormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatIconModule, MatTabGroup, MatTab, CommandsComponent, FormField],
   templateUrl: './command-config.component.html',
   styleUrl: './command-config.component.scss',
@@ -31,4 +31,8 @@ export class CommandConfigComponent {
   private readonly dialogRef = inject(MatDialogRef);
   protected readonly data = inject(MAT_DIALOG_DATA) as CommandDialogData;
   protected readonly form = form(signal(this.data));
+
+  protected saveOptions() {
+    this.dialogRef.close(this.form().value());
+  }
 }

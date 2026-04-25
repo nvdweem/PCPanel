@@ -1,11 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { DeviceStateService } from '../../services/device-state.service';
-import { breathBaseColor, lightingAnimClass, lightingAnimDuration, lightingBreathMin, rainbowBaseColor, resolveColorVisual, waveBaseColor, } from './lighting-animation';
-import { ensureCommands, mapRange } from '../../../shared';
-import { LightingConfig } from '../../models/generated/backend.types';
-import { ControlType } from './events';
-import { CommandDialogData } from '../command-config/command-config.component';
+import { breathBaseColor, lightingAnimClass, lightingAnimDuration, lightingBreathMin, rainbowBaseColor, resolveColorVisual, waveBaseColor, } from '../lighting-animation';
+import { DeviceStateService } from '../../../services/device-state.service';
+import { ControlType } from '../events';
+import { ensureCommands, mapRange } from '../../../../shared';
+import { LightingConfig } from '../../../models/generated/backend.types';
+import { PcpanelCommandService } from '../pcpanel-command.service';
+import { ensureDialData } from '../pcpanel.shared';
 
 interface SliderPosition {
   left: number;
@@ -20,9 +21,9 @@ const PRO_EMPTY_SLIDER_COLORS = [[BLACK, BLACK, BLACK, BLACK, BLACK], [BLACK, BL
 const PRO_EMPTY_LOGO_COLOR = BLACK;
 
 @Component({
-  selector: 'app-pcpanel-pro',
+  selector: 'pcpanel-pcpanel-pro',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  styleUrl: './device-visual.scss',
+  styleUrls: ['../device-visual.scss'],
   templateUrl: './pcpanel-pro.component.html',
   imports: [
     NgTemplateOutlet,
@@ -30,8 +31,8 @@ const PRO_EMPTY_LOGO_COLOR = BLACK;
 })
 export class PcpanelProComponent {
   protected deviceService = inject(DeviceStateService);
+  private commandService = inject(PcpanelCommandService);
   serial = input.required<string>();
-  onedit = output<CommandDialogData>();
 
   protected device = this.deviceService.snapshotFor(this.serial);
   protected sliderPositions: SliderPosition[] = [
@@ -104,17 +105,20 @@ export class PcpanelProComponent {
     const device = this.deviceService.devices()[this.serial()];
 
     const title = `${type} ${(idx % 5) + 1}`;
-    const analog = ensureCommands(true, device?.currentProfileSnapshot?.dialData[String(idx)]);
+    const analog = ensureDialData(ensureCommands(true, device?.currentProfileSnapshot?.dialData[String(idx)]));
     const button = ensureCommands(idx < 5, device?.currentProfileSnapshot?.buttonData[String(idx)]);
     const dblButton = ensureCommands(idx < 5, device?.currentProfileSnapshot?.dblButtonData[String(idx)]);
     const knobSetting = device?.currentProfileSnapshot?.knobSettings[String(idx)];
-
-    this.onedit.emit({
-      title,
-      analog,
-      button,
-      dblButton,
-      knobSetting,
+    this.commandService.openCommandDialog({
+      serial: this.serial(),
+      controlIdx: idx,
+      data: {
+        title,
+        analog,
+        button,
+        dblButton,
+        knobSetting,
+      }
     });
   }
 

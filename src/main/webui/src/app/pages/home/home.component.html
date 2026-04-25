@@ -45,16 +45,16 @@
       <div class="device-area">
         <div class="device-visual-wrap">
           @if (facade.isPro()) {
-            <app-pcpanel-pro [serial]="dev.serial" (onedit)="triggerEdit($event)" />
+            <pcpanel-pcpanel-pro [serial]="dev.serial" />
           }
           @if (facade.isMini()) {
-            <app-pcpanel-mini
+            <pcpanel-pcpanel-mini
               [lightingConfig]="facade.lightingConfig()"
               [activeDial]="facade.activeDial()"
               [dialLabels]="facade.dialLabels()" />
           }
           @if (facade.isRgb()) {
-            <app-pcpanel-rgb
+            <pcpanel-pcpanel-rgb
               [lightingConfig]="facade.lightingConfig()"
               [activeDial]="facade.activeDial()"
               [dialLabels]="facade.dialLabels()" />
