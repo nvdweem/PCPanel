@@ -16,9 +16,30 @@
         <app-commands type="dial" [commands]="form.analog"/>
       </mat-tab>
     }
-    <mat-tab label="Settings">
-      Settings
-    </mat-tab>
+    @if (form.knobSetting) {
+      <mat-tab label="Settings">
+        Dial settings:
+        <mat-checkbox [formField]="form.knobSetting.logarithmic">Logarithmic scaling</mat-checkbox>
+
+        <hr>
+
+        <mat-form-field>
+          <mat-label>Trim min</mat-label>
+          <input matInput type="number" [formField]="form.knobSetting.minTrim"/>
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Trim max</mat-label>
+          <input matInput type="number" [formField]="form.knobSetting.maxTrim"/>
+        </mat-form-field>
+
+        <hr>
+
+        <mat-form-field>
+          <mat-label>Overlay icon</mat-label>
+          <input matInput [formField]="form.knobSetting.overlayIcon"/>
+        </mat-form-field>
+      </mat-tab>
+    }
   </mat-tab-group>
 </mat-dialog-content>
 <mat-dialog-actions>

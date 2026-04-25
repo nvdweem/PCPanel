@@ -7,9 +7,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
-import { Commands } from '../../models/generated/backend.types';
+import { Commands, KnobSetting } from '../../models/generated/backend.types';
 import { MatTab, MatTabGroup } from '@angular/material/tabs';
-import { form } from '@angular/forms/signals';
+import { form, FormField } from '@angular/forms/signals';
 import { CommandsComponent } from './commands/commands.component';
 
 export interface CommandDialogData {
@@ -17,11 +17,12 @@ export interface CommandDialogData {
   button?: Commands;
   dblButton?: Commands;
   analog?: Commands;
+  knobSetting?: KnobSetting;
 }
 
 @Component({
   selector: 'app-command-config',
-  imports: [FormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatIconModule, MatTabGroup, MatTab, CommandsComponent],
+  imports: [FormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatIconModule, MatTabGroup, MatTab, CommandsComponent, FormField],
   templateUrl: './command-config.component.html',
   styleUrl: './command-config.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,13 +1,16 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, Type, viewChildren } from '@angular/core';
-import { Command, Commands, CommandType } from '../../../models/generated/backend.types';
+import { Command, Commands, CommandType, DialCommandParams } from '../../../models/generated/backend.types';
 import { MatIconButton, MatMiniFabButton } from '@angular/material/button';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { CommandsService } from './commands-service';
 import { commandComponentMap, validateCommands } from './commands.components';
-import { FieldTree } from '@angular/forms/signals';
+import { FieldTree, FormField } from '@angular/forms/signals';
 import { MatAccordion, MatExpansionPanel, MatExpansionPanelDescription, MatExpansionPanelHeader, MatExpansionPanelTitle } from '@angular/material/expansion';
-import { NgComponentOutlet, TitleCasePipe } from '@angular/common';
+import { NgComponentOutlet, NgTemplateOutlet, TitleCasePipe } from '@angular/common';
 import { MatIcon } from '@angular/material/icon';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatDialog } from '@angular/material/dialog';
+import { DialParamsEditorComponent, DialParamsEditorComponentData } from '../dial-params-editor.component';
 
 const grpToIdx = new Map([['standard', 0], ['obs', 1], ['wavelink', 2], ['voicemeeter', 3]]);
 
@@ -30,7 +33,10 @@ function commandGroupIndexOf(grp: string): number {
     MatIcon,
     MatMenuItem,
     TitleCasePipe,
-    MatMiniFabButton
+    MatMiniFabButton,
+    NgTemplateOutlet,
+    MatCheckbox,
+    FormField
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './commands.component.html',
@@ -38,6 +44,7 @@ function commandGroupIndexOf(grp: string): number {
 })
 export class CommandsComponent {
   private readonly commandService = inject(CommandsService);
+  private readonly dialog = inject(MatDialog);
   commands = input.required<FieldTree<Commands>>();
   type = input.required<'dial' | 'button'>();
 
@@ -79,5 +86,11 @@ export class CommandsComponent {
   protected delete(index: number, event?: MouseEvent) {
     event?.stopPropagation();
     this.commands().commands().value.update(val => val.filter((_, i) => i !== index));
+  }
+
+  protected editDialParams(cmd: FieldTree<Required<DialCommandParams>>) {
+    this.dialog.open<DialParamsEditorComponent, DialParamsEditorComponentData>(DialParamsEditorComponent, {
+      data: {command: cmd},
+    });
   }
 }

@@ -107,12 +107,14 @@ export class PcpanelProComponent {
     const analog = ensureCommands(true, device?.currentProfileSnapshot?.dialData[String(idx)]);
     const button = ensureCommands(idx < 5, device?.currentProfileSnapshot?.buttonData[String(idx)]);
     const dblButton = ensureCommands(idx < 5, device?.currentProfileSnapshot?.dblButtonData[String(idx)]);
+    const knobSetting = device?.currentProfileSnapshot?.knobSettings[String(idx)];
 
     this.onedit.emit({
       title,
       analog,
       button,
       dblButton,
+      knobSetting,
     });
   }
 

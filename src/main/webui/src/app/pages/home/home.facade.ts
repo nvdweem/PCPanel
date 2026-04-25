@@ -3,7 +3,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DeviceService } from '../../services/device.service';
 import { DeviceStateService } from '../../services/device-state.service';
 import { Command, Commands, DeviceSnapshotDto, LightingConfig } from '../../models/generated/backend.types';
-import { CommandDialogData } from '../../components/command-config/command-config.component';
 
 @Injectable()
 export class HomeFacade implements OnDestroy {
@@ -31,25 +30,6 @@ export class HomeFacade implements OnDestroy {
 
   readonly dialCommands = computed<Map<number, Commands>>(() => {
     return new Map(Object.entries(this.selectedDevice()?.currentProfileSnapshot?.dialData ?? {}).map(([k, v]) => [Number(k), v]));
-  });
-  readonly btnCommands = computed<Map<number, Commands>>(() => {
-    return new Map(Object.entries(this.selectedDevice()?.currentProfileSnapshot?.buttonData ?? {}).map(([k, v]) => [Number(k), v]));
-  });
-  readonly dblBtnCommands = computed<Map<number, Commands>>(() => {
-    return new Map(Object.entries(this.selectedDevice()?.currentProfileSnapshot?.dblButtonData ?? {}).map(([k, v]) => [Number(k), v]));
-  });
-
-  readonly commands = computed(() => {
-    const dials = this.dialCommands();
-    const btns = this.btnCommands();
-    const dblBtns = this.dblBtnCommands();
-    const labels = this.dialLabels();
-    return new Map(Object.keys({...Object.fromEntries(dials), ...Object.fromEntries(btns), ...Object.fromEntries(dblBtns)}).map(k => Number(k)).map(k => ([k, {
-      title: labels.get(k) ?? `Control ${k + 1}`,
-      analog: dials.get(k),
-      button: btns.get(k),
-      dblButton: dblBtns.get(k),
-    } satisfies CommandDialogData])));
   });
 
   readonly dialLabels = computed<Map<number, string>>(() => {
