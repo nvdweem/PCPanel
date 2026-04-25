@@ -16,6 +16,7 @@ import com.getpcpanel.rest.EventBroadcaster.AssignmentChangedEvent.Kinds;
 import com.getpcpanel.rest.EventBroadcaster.DeviceRenamedEvent;
 import com.getpcpanel.rest.EventBroadcaster.LightingChangedEvent;
 import com.getpcpanel.rest.EventBroadcaster.ProfileSwitchedEvent;
+import com.getpcpanel.rest.model.dto.ControlAssignmentsUpdateDto;
 import com.getpcpanel.rest.model.dto.DeviceDto;
 import com.getpcpanel.rest.model.dto.ProfileDto;
 import com.getpcpanel.rest.model.dto.ProfileSnapshotDto;
@@ -231,5 +232,49 @@ public class DeviceResource {
     private Profile getProfile(String serial, String profileName) {
         return getDeviceSave(serial).getProfile(profileName)
                                     .orElseThrow(() -> new NotFoundException("Profile not found: " + profileName));
+    }
+
+    @PUT
+    @Path("/{serial}/profiles/{profile}/controls/{index}")
+    public Response setControlAssignments(@PathParam("serial") String serial,
+            @PathParam("profile") String profileName,
+            @PathParam("index") int index,
+            ControlAssignmentsUpdateDto update) {
+        var profile = getProfile(serial, profileName);
+        var changed = false;
+
+        if (update.analog() != null) {
+            profile.setDialData(index, update.analog());
+            eventBus.fire(new AssignmentChangedEvent(serial, Kinds.dial, index, update.analog()));
+            changed = true;
+        }
+
+        if (update.button() != null) {
+            profile.setButtonData(index, update.button());
+            eventBus.fire(new AssignmentChangedEvent(serial, Kinds.button, index, update.button()));
+            changed = true;
+        }
+
+        if (update.dblButton() != null) {
+            profile.setDblButtonData(index, update.dblButton());
+            eventBus.fire(new AssignmentChangedEvent(serial, Kinds.dblbutton, index, update.dblButton()));
+            changed = true;
+        }
+
+        if (update.knobSetting() != null) {
+            var knob = profile.getKnobSettings(index);
+            knob.setMinTrim(update.knobSetting().getMinTrim());
+            knob.setMaxTrim(update.knobSetting().getMaxTrim());
+            knob.setLogarithmic(update.knobSetting().isLogarithmic());
+            knob.setOverlayIcon(update.knobSetting().getOverlayIcon());
+            knob.setButtonDebounce(update.knobSetting().getButtonDebounce());
+            changed = true;
+        }
+
+        if (changed) {
+            saveService.save();
+        }
+
+        return Response.ok().build();
     }
 }

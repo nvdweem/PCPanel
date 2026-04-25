@@ -7,7 +7,7 @@ export function mapRange(v: number, inMin: number, inMax: number, outMin: number
 
 export function ensureCommands(sure: boolean, cmds?: Commands): Commands | undefined {
   if (sure) {
-    return cmds ?? {commands: [], type: 'All at once'};
+    return cmds ?? {commands: [], type: 'allAtOnce'};
   }
   return undefined;
 }

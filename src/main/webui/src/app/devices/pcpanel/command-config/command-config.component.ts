@@ -9,15 +9,11 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTab, MatTabGroup } from '@angular/material/tabs';
 import { form, FormField } from '@angular/forms/signals';
-import { Commands, KnobSetting } from '../../../models/generated/backend.types';
+import { ControlAssignmentsUpdateDto } from '../../../models/generated/backend.types';
 import { CommandsComponent } from '../../../components/command-config/commands/commands.component';
 
-export interface CommandDialogData {
+export interface CommandDialogData extends ControlAssignmentsUpdateDto {
   title: string;
-  button?: Commands;
-  dblButton?: Commands;
-  analog?: Commands;
-  knobSetting?: KnobSetting;
 }
 
 @Component({

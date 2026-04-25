@@ -302,8 +302,8 @@ function buildEmptyCommandObsSetSourceVolume(): Required<CommandObsSetSourceVolu
 function buildEmptyCommandVoiceMeeterBasic(): Required<CommandVoiceMeeterBasic> {
   return {
     _type: 'com.getpcpanel.commands.command.CommandVoiceMeeterBasic',
-    ct: 'Input',
-    dt: 'Gain',
+    ct: 'BUS',
+    dt: 'COMP',
     index: 0,
     dialParams: buildEmptyDialCommandParams(),
     invert: false,
@@ -313,7 +313,7 @@ function buildEmptyCommandVoiceMeeterBasic(): Required<CommandVoiceMeeterBasic> 
 function buildEmptyCommandVoiceMeeterAdvanced(): Required<CommandVoiceMeeterAdvanced> {
   return {
     _type: 'com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced',
-    ct: '-12 to 12',
+    ct: 'NEG_12_TO_12',
     fullParam: '',
     dialParams: buildEmptyDialCommandParams(),
     invert: false,
@@ -323,8 +323,8 @@ function buildEmptyCommandVoiceMeeterAdvanced(): Required<CommandVoiceMeeterAdva
 function buildEmptyCommandVoiceMeeterBasicButton(): Required<CommandVoiceMeeterBasicButton> {
   return {
     _type: 'com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton',
-    bt: 'Mute',
-    ct: 'Input',
+    bt: 'MUTE',
+    ct: 'BUS',
     index: 0,
     overlayText: '',
   };
@@ -333,7 +333,7 @@ function buildEmptyCommandVoiceMeeterBasicButton(): Required<CommandVoiceMeeterB
 function buildEmptyCommandVoiceMeeterAdvancedButton(): Required<CommandVoiceMeeterAdvancedButton> {
   return {
     _type: 'com.getpcpanel.commands.command.CommandVoiceMeeterAdvancedButton',
-    bt: 'Toggle',
+    bt: 'TOGGLE',
     fullParam: '',
     stringValue: '',
     overlayText: '',

@@ -304,7 +304,7 @@
                 <executions>
                     <execution>
                         <id>generate-websocket-typescript-contract</id>
-                        <phase>process-classes</phase>
+                        <phase>compile</phase>
                         <goals>
                             <goal>generate</goal>
                         </goals>
@@ -312,7 +312,7 @@
                 </executions>
                 <configuration>
                     <outputKind>module</outputKind>
-                    <jsonLibrary>jackson3</jsonLibrary>
+                    <jsonLibrary>jackson2</jsonLibrary>
                     <outputFileType>implementationFile</outputFileType>
                     <mapEnum>asUnion</mapEnum>
                     <sortDeclarations>true</sortDeclarations>
@@ -326,6 +326,7 @@
                     </classPatterns>
                     <optionalAnnotations>
                         <optionalAnnotation>javax.annotation.Nullable</optionalAnnotation>
+                        <optionalAnnotation>jakarta.annotation.Nullable</optionalAnnotation>
                     </optionalAnnotations>
                     <outputFile>${project.basedir}/src/main/webui/src/app/models/generated/backend.types.ts</outputFile>
                 </configuration>

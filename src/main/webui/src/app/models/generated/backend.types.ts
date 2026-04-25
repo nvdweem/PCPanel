@@ -235,6 +235,13 @@ export interface CommandWaveLinkMainOutput extends CommandWaveLink, ButtonAction
     name?: string;
 }
 
+export interface ControlAssignmentsUpdateDto {
+    analog?: Commands;
+    button?: Commands;
+    dblButton?: Commands;
+    knobSetting?: KnobSetting;
+}
+
 export interface DeviceAction {
 }
 
@@ -529,21 +536,21 @@ export interface WsVisualColorsChangedEvent extends WsEvent {
     type: "visual_colors_changed";
 }
 
-export type ButtonControlMode = "Enable" | "Disable" | "Toggle" | "String";
+export type ButtonControlMode = "ENABLE" | "DISABLE" | "TOGGLE" | "STRING";
 
-export type ButtonType = "mono" | "Mute" | "solo" | "M.C" | "EQ" | "A1" | "A2" | "A3" | "A4" | "A5" | "B1" | "B2" | "B3" | "SEL" | "MIXA" | "MIXB" | "Repeat" | "Composite";
+export type ButtonType = "MONO" | "MUTE" | "SOLO" | "MC" | "EQ" | "A1" | "A2" | "A3" | "A4" | "A5" | "B1" | "B2" | "B3" | "SEL" | "MIXA" | "MIXB" | "REPEAT" | "COMPOSITE";
 
 export type CommandCategory = "standard" | "voicemeeter" | "obs" | "wavelink";
 
-export type CommandsType = "All at once" | "In sequence";
+export type CommandsType = "allAtOnce" | "sequential";
 
-export type ControlType = "Input" | "Output";
+export type ControlType = "STRIP" | "BUS";
 
 export type DeviceType = "PCPANEL_RGB" | "PCPANEL_MINI" | "PCPANEL_PRO";
 
-export type DialControlMode = "-12 to 12" | "0 to 12" | "-40 to 12" | "-60 to 12" | "-Inf to 12" | "-Inf to 0";
+export type DialControlMode = "NEG_12_TO_12" | "ZERO_TO_10" | "NEG_40_TO_12" | "NEG_60_TO_12" | "NEG_INF_TO_12" | "NEG_INF_TO_ZERO";
 
-export type DialType = "Gain" | "Audibility" | "Comp" | "Gate" | "Limit" | "EQ Gain 1" | "EQ Gain 2" | "EQ Gain 3" | "Reverb" | "Delay" | "FX 1" | "FX 2" | "Return Reverb" | "Return Delay" | "Return FX 1" | "Return FX 2";
+export type DialType = "GAIN" | "AUDIBILITY" | "COMP" | "GATE" | "LIMIT" | "EQGAIN1" | "EQGAIN2" | "EQGAIN3" | "REVERB" | "DELAY" | "FX1" | "FX2" | "RETURNREVERB" | "RETURNDELAY" | "RETURNFX1" | "RETURNFX2";
 
 export type Kinds = "dial" | "button" | "dblbutton";
 

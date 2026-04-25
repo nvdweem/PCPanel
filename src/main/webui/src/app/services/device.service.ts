@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Commands, DeviceDto, KnobSetting, LightingConfig, ProfileDto } from '../models/generated/backend.types';
+import { Commands, ControlAssignmentsUpdateDto, DeviceDto, KnobSetting, LightingConfig, ProfileDto } from '../models/generated/backend.types';
 
 @Injectable({providedIn: 'root'})
 export class DeviceService {
@@ -72,6 +72,10 @@ export class DeviceService {
 
   setKnobSettings(serial: string, profile: string, index: number, settings: KnobSetting): Observable<void> {
     return this.http.put<void>(`${this.base}/${serial}/profiles/${profile}/knobsettings/${index}`, settings);
+  }
+
+  setControlAssignments(serial: string, profile: string, index: number, update: ControlAssignmentsUpdateDto): Observable<void> {
+    return this.http.put<void>(`${this.base}/${serial}/profiles/${profile}/controls/${index}`, update);
   }
 
   // Lighting
