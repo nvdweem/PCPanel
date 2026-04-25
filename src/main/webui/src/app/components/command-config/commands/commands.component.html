@@ -1,22 +1,37 @@
-<mat-menu #menu="matMenu">
-  @for (command of availableCommands(); track command.command) {
-    <button mat-menu-item (click)="addCommand(command)">{{ command.name }}</button>
-  }
-</mat-menu>
-<button mat-button [matMenuTriggerFor]="menu"> Add command</button>
+<div class="fab">
+  <mat-menu #menu="matMenu">
+    @for (group of commandGroups(); track group) {
+      <mat-menu #inner>
+        @let commands = groupedCommands()[group];
+        @for (command of commands; track command.command) {
+          <button mat-menu-item (click)="addCommand(command)">{{ command.name }}</button>
+        }
+      </mat-menu>
+      <button mat-menu-item [matMenuTriggerFor]="inner">{{ group | titlecase }}</button>
+    }
+  </mat-menu>
+  <button matMiniFab  [matMenuTriggerFor]="menu">
+    <mat-icon>add</mat-icon>
+  </button>
+</div>
 
 <mat-accordion>
   @for (cmd of commands().commands; track cmd) {
     @let value = cmd().value();
     <mat-expansion-panel>
       <mat-expansion-panel-header>
-        <mat-panel-title>{{nameOf(value._type)}}</mat-panel-title>
+        <mat-panel-title>{{ nameOf(value._type) }}</mat-panel-title>
+        <mat-panel-description class="header-description">
+          <button matIconButton aria-label="Delete action" (click)="delete($index, $event)">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </mat-panel-description>
       </mat-expansion-panel-header>
       @let component = componentFor(value);
       @if (component) {
         <ng-container *ngComponentOutlet="component; inputs: {field: cmd}"/>
       } @else {
-        <p>Unknown command type: {{value._type}}</p>
+        <p>Unknown command type: {{ value._type }}</p>
       }
     </mat-expansion-panel>
   }
