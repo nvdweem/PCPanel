@@ -1,95 +1,78 @@
-@if (loading()) {
-  <div class="loading-center"><mat-spinner /></div>
-}
+<h2 mat-dialog-title>Settings</h2>
+<mat-dialog-content>
+  @if (loaded(settingsForm)) {
+    <mat-tab-group animationDuration="0">
+      <mat-tab label="General">
+        <div class="tab-content">
+          <mat-checkbox [formField]="settingsForm.mainUIIcons">Show app icons in main UI</mat-checkbox>
+          <mat-checkbox [formField]="settingsForm.startupVersionCheck">Check for updates on startup</mat-checkbox>
+          <mat-checkbox [formField]="settingsForm.forceVolume">Force volume (Linux)</mat-checkbox>
+          <mat-checkbox [formField]="settingsForm.preventClickWhenDblClick">Prevent single click when double-clicking</mat-checkbox>
+          <mat-form-field appearance="outline">
+            <mat-label>Double-click interval (ms)</mat-label>
+            <input matInput type="number" [formField]="settingsForm.dblClickInterval"/>
+          </mat-form-field>
+        </div>
+      </mat-tab>
+      <mat-tab label="OBS">
+        <div class="tab-content">
+          <mat-checkbox [formField]="settingsForm.obsEnabled">OBS enabled</mat-checkbox>
+          <mat-form-field appearance="outline">
+            <mat-label>WebSocket host</mat-label>
+            <input matInput [formField]="settingsForm.obsAddress"/></mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>WebSocket port</mat-label>
+            <input matInput [formField]="settingsForm.obsPort"/></mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Password</mat-label>
+            <input matInput type="password" [formField]="settingsForm.obsPassword"/></mat-form-field>
+        </div>
+      </mat-tab>
+      <mat-tab label="VoiceMeeter">
+        <div class="tab-content">
+          <mat-checkbox [formField]="settingsForm.voicemeeterEnabled">VoiceMeeter enabled</mat-checkbox>
+          <mat-form-field appearance="outline">
+            <mat-label>VoiceMeeter path</mat-label>
+            <input matInput [formField]="settingsForm.voicemeeterPath"/></mat-form-field>
+        </div>
+      </mat-tab>
+      <mat-tab label="Overlay">
+        <div class="tab-content" cdkScrollable>
+          <mat-checkbox [formField]="settingsForm.overlayEnabled">Enable overlay</mat-checkbox>
+          <mat-checkbox [formField]="settingsForm.overlayUseLog">Use logarithmic scale</mat-checkbox>
+          <mat-checkbox [formField]="settingsForm.overlayShowNumber">Show percentage number</mat-checkbox>
+          <mat-form-field appearance="outline">
+            <mat-label>Position</mat-label>
+            <mat-select [formField]="settingsForm.overlayPosition!">
+              <mat-option value="topLeft">Top Left</mat-option>
+              <mat-option value="topRight">Top Right</mat-option>
+              <mat-option value="bottomLeft">Bottom Left</mat-option>
+              <mat-option value="bottomRight">Bottom Right</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Rounded corners</mat-label>
+            <input matInput [formField]="settingsForm.overlayWindowCornerRounding" type="number">
+          </mat-form-field>
 
-@if (!loading()) {
-  <div class="settings-page">
-    <mat-toolbar>
-      <button mat-icon-button routerLink="/" aria-label="Back"><mat-icon>arrow_back</mat-icon></button>
-      <span>Settings</span>
-      <span class="spacer"></span>
-      <app-connection-status />
-    </mat-toolbar>
-
-    <div class="settings-body">
-      <mat-tab-group animationDuration="0">
-        <mat-tab label="General">
-          <div class="tab-content">
-            <mat-checkbox [formField]="settingsForm.mainUIIcons">Show app icons in main UI</mat-checkbox>
-            <mat-checkbox [formField]="settingsForm.startupVersionCheck">Check for updates on startup</mat-checkbox>
-            <mat-checkbox [formField]="settingsForm.forceVolume">Force volume (Linux)</mat-checkbox>
-            <mat-checkbox [formField]="settingsForm.preventClickWhenDblClick">Prevent single click when double-clicking</mat-checkbox>
-            <mat-form-field appearance="outline">
-              <mat-label>Double-click interval (ms)</mat-label>
-              <input matInput type="number" [formField]="settingsForm.dblClickInterval" />
-            </mat-form-field>
-          </div>
-        </mat-tab>
-        <mat-tab label="OBS">
-          <div class="tab-content">
-            <mat-checkbox [formField]="settingsForm.obsEnabled">OBS enabled</mat-checkbox>
-            <mat-form-field appearance="outline"><mat-label>WebSocket host</mat-label><input matInput [formField]="settingsForm.obsAddress" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>WebSocket port</mat-label><input matInput [formField]="settingsForm.obsPort" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Password</mat-label><input matInput type="password" [formField]="settingsForm.obsPassword" /></mat-form-field>
-          </div>
-        </mat-tab>
-        <mat-tab label="VoiceMeeter">
-          <div class="tab-content">
-            <mat-checkbox [formField]="settingsForm.voicemeeterEnabled">VoiceMeeter enabled</mat-checkbox>
-            <mat-form-field appearance="outline"><mat-label>VoiceMeeter path</mat-label><input matInput [formField]="settingsForm.voicemeeterPath" /></mat-form-field>
-          </div>
-        </mat-tab>
-        <mat-tab label="Overlay">
-          <div class="tab-content">
-            <mat-checkbox [formField]="settingsForm.overlayEnabled">Enable overlay</mat-checkbox>
-            <mat-checkbox [formField]="settingsForm.overlayUseLog">Use logarithmic scale</mat-checkbox>
-            <mat-checkbox [formField]="settingsForm.overlayShowNumber">Show percentage number</mat-checkbox>
-            <div class="color-row"><label>Background color</label><input type="color" [formField]="settingsForm.overlayBackgroundColor" /></div>
-            <div class="color-row"><label>Text color</label><input type="color" [formField]="settingsForm.overlayTextColor" /></div>
-            <div class="color-row"><label>Bar color</label><input type="color" [formField]="settingsForm.overlayBarColor" /></div>
-            <mat-form-field appearance="outline">
-              <mat-label>Position</mat-label>
-<!--              <mat-select [formField]="settingsForm.overlayPosition">-->
-<!--                <mat-option value="topLeft">Top Left</mat-option>-->
-<!--                <mat-option value="topRight">Top Right</mat-option>-->
-<!--                <mat-option value="bottomLeft">Bottom Left</mat-option>-->
-<!--                <mat-option value="bottomRight">Bottom Right</mat-option>-->
-<!--              </mat-select>-->
-            </mat-form-field>
-          </div>
-        </mat-tab>
-        <mat-tab label="MQTT">
-          <div class="tab-content">
-            <mat-checkbox [formField]="mqttForm.enabled">MQTT enabled</mat-checkbox>
-            <mat-form-field appearance="outline"><mat-label>Host</mat-label><input matInput [formField]="mqttForm.host" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Port</mat-label><input matInput type="number" [formField]="mqttForm.port" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Username</mat-label><input matInput [formField]="mqttForm.username" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Password</mat-label><input matInput type="password" [formField]="mqttForm.password" /></mat-form-field>
-            <mat-form-field appearance="outline"><mat-label>Base topic</mat-label><input matInput [formField]="mqttForm.baseTopic" /></mat-form-field>
-            <mat-checkbox [formField]="mqttForm.homeAssistant">Home Assistant integration</mat-checkbox>
-          </div>
-        </mat-tab>
-        <mat-tab label="OSC">
-          <div class="tab-content">
-            <mat-form-field appearance="outline">
-              <mat-label>OSC listen port</mat-label>
-              <input matInput type="number" [formField]="settingsForm.oscListenPort" placeholder="e.g. 8000" />
-              <mat-hint>Leave blank to disable OSC</mat-hint>
-            </mat-form-field>
-          </div>
-        </mat-tab>
-        <mat-tab label="WaveLink">
-          <div class="tab-content">
-            <mat-checkbox [formField]="waveLinkForm.enabled">WaveLink enabled</mat-checkbox>
-            <p class="tab-hint">Enables Elgato WaveLink integration. Requires WaveLink to be running.</p>
-          </div>
-        </mat-tab>
-      </mat-tab-group>
-
-      <div class="actions">
-        <button mat-raised-button color="primary" (click)="save()" [disabled]="saving()">Save Settings</button>
-        <button mat-stroked-button routerLink="/">Cancel</button>
-      </div>
-    </div>
-  </div>
-}
+          <app-color-picker alwaysShow [field]="settingsForm.overlayBackgroundColor">Background color</app-color-picker>
+          <app-color-picker alwaysShow [field]="settingsForm.overlayTextColor">Text color</app-color-picker>
+          <app-color-picker alwaysShow [field]="settingsForm.overlayBarColor">Bar color</app-color-picker>
+        </div>
+      </mat-tab>
+      <mat-tab label="OSC">
+        <div class="tab-content">
+          <mat-form-field appearance="outline">
+            <mat-label>OSC listen port</mat-label>
+            <input matInput type="number" [formField]="settingsForm.oscListenPort" placeholder="e.g. 8000"/>
+            <mat-hint>Leave blank to disable OSC</mat-hint>
+          </mat-form-field>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  }
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button matButton matDialogClose>Cancel</button>
+  <button matButton="filled" (click)="save()">Save</button>
+</mat-dialog-actions>

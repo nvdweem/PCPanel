@@ -40,6 +40,40 @@
         </mat-form-field>
       </mat-tab>
     }
+    <mat-tab label="Lighting">
+      <div class="form-fields">
+        <p class="field-label">Type: {{ lightingType() }}</p>
+
+        @if (form.lighting) {
+          <mat-form-field>
+            <mat-label>Mode</mat-label>
+            <mat-select [formField]="form.lighting.mode">
+              @if (data.controlType === 'dial') {
+                <mat-option value="STATIC">Static</mat-option>
+                <mat-option value="VOLUME_GRADIENT">Volume gradient</mat-option>
+              }
+              @if (data.controlType === 'slider') {
+                <mat-option value="STATIC">Static</mat-option>
+                <mat-option value="STATIC_GRADIENT">Static gradient</mat-option>
+                <mat-option value="VOLUME_GRADIENT">Volume gradient</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <div class="field-label">Primary color</div>
+          <input type="color" [formField]="form.lighting.color1"/>
+
+          @if (showKnobSecondColor() || showSliderSecondColor()) {
+            <div class="field-label">Secondary color</div>
+            <input type="color" [formField]="form.lighting.color2"/>
+          }
+        }
+
+        @if (!form.lighting) {
+          <p class="field-label">Per-control lighting is only available for knob and slider controls.</p>
+        }
+      </div>
+    </mat-tab>
   </mat-tab-group>
 </mat-dialog-content>
 <mat-dialog-actions>

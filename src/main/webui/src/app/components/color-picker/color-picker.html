@@ -1,0 +1,11 @@
+<mat-form-field (click)="picker()?.openDialog()">
+  <mat-label><ng-content /></mat-label>
+  <input matInput hidden value="x">
+  @if (alwaysShow()) {
+    <div [(colorPicker)]="field()().value"
+         [cpToggle]="true"
+         cpDialogDisplay="inline"></div>
+  } @else {
+    <div class="color" [(colorPicker)]="field()().value" [style.background-color]="field()().value()"></div>
+  }
+</mat-form-field>

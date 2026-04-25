@@ -9,11 +9,16 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTab, MatTabGroup } from '@angular/material/tabs';
 import { form, FormField } from '@angular/forms/signals';
-import { ControlAssignmentsUpdateDto } from '../../../models/generated/backend.types';
+import { ControlAssignmentsUpdateDto, SingleKnobLightingConfig, SingleSliderLightingConfig } from '../../../models/generated/backend.types';
+import { ControlType } from '../events';
 import { CommandsComponent } from '../../../components/command-config/commands/commands.component';
+
+type ControlLighting = SingleKnobLightingConfig | SingleSliderLightingConfig;
 
 export interface CommandDialogData extends ControlAssignmentsUpdateDto {
   title: string;
+  controlType: ControlType;
+  lighting?: ControlLighting;
 }
 
 @Component({
@@ -27,6 +32,35 @@ export class CommandConfigComponent {
   private readonly dialogRef = inject(MatDialogRef);
   protected readonly data = inject(MAT_DIALOG_DATA) as CommandDialogData;
   protected readonly form = form(signal(this.data));
+
+  protected lightingType() {
+    switch (this.data.controlType) {
+      case 'dial':
+        return 'Knob lighting';
+      case 'slider':
+        return 'Slider lighting';
+      case 'logo':
+        return 'Logo lighting';
+      default:
+        return 'Lighting';
+    }
+  }
+
+  protected lightingMode() {
+    return this.form().value().lighting?.mode;
+  }
+
+  protected showKnobSecondColor() {
+    return this.data.controlType === 'dial' && this.lightingMode() === 'VOLUME_GRADIENT';
+  }
+
+  protected showSliderSecondColor() {
+    if (this.data.controlType !== 'slider') {
+      return false;
+    }
+    const mode = this.lightingMode();
+    return mode === 'STATIC_GRADIENT' || mode === 'VOLUME_GRADIENT';
+  }
 
   protected saveOptions() {
     this.dialogRef.close(this.form().value());

@@ -24,7 +24,7 @@
       <span class="toolbar-title">{{ facade.selectedDevice()?.displayName }}</span>
       <span class="spacer"></span>
       <app-connection-status />
-      <button mat-icon-button routerLink="/settings" aria-label="Settings" matTooltip="Settings">
+      <button mat-icon-button (click)="openSettings()" aria-label="Settings" matTooltip="Settings">
         <mat-icon>settings</mat-icon>
       </button>
     </mat-toolbar>

@@ -4,7 +4,7 @@ import { breathBaseColor, lightingAnimClass, lightingAnimDuration, lightingBreat
 import { DeviceStateService } from '../../../services/device-state.service';
 import { ControlType } from '../events';
 import { ensureCommands, mapRange } from '../../../../shared';
-import { LightingConfig } from '../../../models/generated/backend.types';
+import { LightingConfig, SingleKnobLightingConfig, SingleSliderLightingConfig } from '../../../models/generated/backend.types';
 import { PcpanelCommandService } from '../pcpanel-command.service';
 import { ensureDialData } from '../pcpanel.shared';
 
@@ -109,15 +109,22 @@ export class PcpanelProComponent {
     const button = ensureCommands(idx < 5, device?.currentProfileSnapshot?.buttonData[String(idx)]);
     const dblButton = ensureCommands(idx < 5, device?.currentProfileSnapshot?.dblButtonData[String(idx)]);
     const knobSetting = device?.currentProfileSnapshot?.knobSettings[String(idx)];
+    const lighting = type === 'dial'
+      ? this.normalizeKnobLighting(device?.lightingConfig?.knobConfigs?.[idx])
+      : type === 'slider'
+        ? this.normalizeSliderLighting(device?.lightingConfig?.sliderConfigs?.[idx - 5])
+        : undefined;
     this.commandService.openCommandDialog({
       serial: this.serial(),
       controlIdx: idx,
       data: {
         title,
+        controlType: type,
         analog,
         button,
         dblButton,
         knobSetting,
+        lighting,
       }
     });
   }
@@ -192,5 +199,26 @@ export class PcpanelProComponent {
       return breathBaseColor(cfg);
     }
     return fallback;
+  }
+
+  private normalizeKnobLighting(config?: SingleKnobLightingConfig): SingleKnobLightingConfig {
+    return {
+      mode: config?.mode === 'VOLUME_GRADIENT' ? 'VOLUME_GRADIENT' : 'STATIC',
+      color1: config?.color1 || '#ffffff',
+      color2: config?.color2 || '#000000',
+      muteOverrideColor: config?.muteOverrideColor,
+      muteOverrideDeviceOrFollow: config?.muteOverrideDeviceOrFollow,
+    };
+  }
+
+  private normalizeSliderLighting(config?: SingleSliderLightingConfig): SingleSliderLightingConfig {
+    const mode = config?.mode;
+    return {
+      mode: mode === 'STATIC_GRADIENT' || mode === 'VOLUME_GRADIENT' ? mode : 'STATIC',
+      color1: config?.color1 || '#ffffff',
+      color2: config?.color2 || '#000000',
+      muteOverrideColor: config?.muteOverrideColor || '#000000',
+      muteOverrideDeviceOrFollow: config?.muteOverrideDeviceOrFollow || '',
+    };
   }
 }

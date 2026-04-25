@@ -418,7 +418,7 @@ export interface SettingsDto {
     overlayShowNumber: boolean;
     overlayTextColor: string;
     overlayUseLog: boolean;
-    overlayWindowCornerRounding?: number;
+    overlayWindowCornerRounding: number;
     preventClickWhenDblClick: boolean;
     preventSliderTwitchDelay?: number;
     sendOnlyIfDelta?: number;

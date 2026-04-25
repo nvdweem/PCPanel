@@ -16,6 +16,8 @@ import { KeyValuePipe } from '@angular/common';
 import { PcpanelProComponent } from '../../devices/pcpanel/pro/pcpanel-pro.component';
 import { PcpanelMiniComponent } from '../../devices/pcpanel/mini/pcpanel-mini.component';
 import { PcpanelRgbComponent } from '../../devices/pcpanel/rgb/pcpanel-rgb.component';
+import { MatDialog } from '@angular/material/dialog';
+import { SettingsComponent } from '../settings/settings.component';
 
 @Component({
   selector: 'app-home',
@@ -33,4 +35,9 @@ import { PcpanelRgbComponent } from '../../devices/pcpanel/rgb/pcpanel-rgb.compo
 })
 export class HomeComponent {
   protected readonly facade = inject(HomeFacade);
+  private readonly dialog = inject(MatDialog);
+
+  protected openSettings() {
+    this.dialog.open(SettingsComponent)
+  }
 }

@@ -1,8 +1,0 @@
-.settings-page { min-height: 100vh; background: #25262a; color: #e0e0e0; }
-.spacer { flex: 1; }
-.settings-body { max-width: 680px; margin: 0 auto; padding: 1.5rem 2rem; }
-.tab-content { display: flex; flex-direction: column; gap: 16px; padding: 1.5rem 0; mat-form-field { width: 100%; } mat-checkbox { display: block; } }
-.color-row { display: flex; align-items: center; gap: 12px; label { font-size: 0.9rem; color: #ccc; min-width: 120px; } input[type=color] { height: 2rem; width: 4rem; border-radius: 4px; border: 1px solid #3b3c41; cursor: pointer; } }
-.actions { display: flex; gap: 12px; margin-top: 2rem; }
-.loading-center { display: flex; align-items: center; justify-content: center; height: 100vh; }
-.tab-hint { color: #888; font-size: 0.85rem; margin: 0; }

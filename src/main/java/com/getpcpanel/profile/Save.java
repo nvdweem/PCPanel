@@ -6,7 +6,6 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.Nonnull;
-
 import javax.annotation.Nullable;
 
 import com.getpcpanel.device.DeviceType;
@@ -57,7 +56,7 @@ public class Save {
     private String overlayTextColor = DEFAULT_OVERLAY_TEXT_COLOR;
     private String overlayBarColor = DEFAULT_OVERLAY_BAR_COLOR;
     private String overlayBarBackgroundColor = DEFAULT_OVERLAY_BAR_BACKGROUND_COLOR;
-    @Nullable private Integer overlayWindowCornerRounding = 0;
+    private int overlayWindowCornerRounding;
     @Nullable private Integer overlayBarHeight = DEFAULT_OVERLAY_BAR_HEIGHT;
     @Nullable private Integer overlayBarCornerRounding = 0;
     @Nullable private OverlayPosition overlayPosition = DEFAULT_OVERLAY_POSITION;
@@ -87,10 +86,6 @@ public class Save {
 
     public void setSendOnlyIfDelta(Integer sendOnlyIfDelta) {
         this.sendOnlyIfDelta = sendOnlyIfDelta == null || sendOnlyIfDelta == 0 ? null : sendOnlyIfDelta;
-    }
-
-    public int getOverlayWindowCornerRounding() {
-        return overlayWindowCornerRounding == null ? 0 : overlayWindowCornerRounding;
     }
 
     public int getOverlayBarCornerRounding() {

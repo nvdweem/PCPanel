@@ -47,7 +47,7 @@ public class SettingsDto {
     private String overlayTextColor;
     private String overlayBarColor;
     private String overlayBarBackgroundColor;
-    @Nullable private Integer overlayWindowCornerRounding;
+    private int overlayWindowCornerRounding;
     @Nullable private Integer overlayBarHeight;
     @Nullable private Integer overlayBarCornerRounding;
     @Nullable private OverlayPosition overlayPosition;
