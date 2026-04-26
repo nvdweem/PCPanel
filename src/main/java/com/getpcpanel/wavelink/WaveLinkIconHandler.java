@@ -40,7 +40,7 @@ public class WaveLinkIconHandler implements IIconHandler<CommandWaveLink> {
         } else if (cmd instanceof CommandWaveLinkChange c) {
             return fromChange(c);
         } else if (cmd instanceof CommandWaveLinkAddFocusToChannel ac) {
-            return channelImage(ac.getChannelId());
+            return channelImage(ac.getId());
         }
         return Optional.empty();
     }

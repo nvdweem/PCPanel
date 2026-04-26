@@ -6,7 +6,15 @@
   flex: 0 0 auto;
 }
 
-.example-line * {
-  fill: var(--mat-sys-surface);
-  stroke: var(--mat-sys-on-surface);
+.example-line {
+  max-width: var(--w);
+  max-height: var(--h);
+  width: var(--w);
+  height: var(--h);
+  flex: 0 0 auto;
+
+  * {
+    fill: var(--mat-sys-surface);
+    stroke: var(--mat-sys-on-surface);
+  }
 }

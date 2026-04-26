@@ -198,8 +198,6 @@ export interface CommandWaveLink extends Command {
 
 export interface CommandWaveLinkAddFocusToChannel extends CommandWaveLink, ButtonAction {
     _type: "com.getpcpanel.wavelink.command.CommandWaveLinkAddFocusToChannel";
-    channelId?: string;
-    channelName?: string;
     id?: string;
     name?: string;
 }
@@ -458,6 +456,48 @@ export interface SingleSliderLightingConfig {
     mode: SINGLE_SLIDER_MODE;
     muteOverrideColor: string;
     muteOverrideDeviceOrFollow: string;
+}
+
+export interface WaveLinkAppDto {
+    id: string;
+    name: string;
+}
+
+export interface WaveLinkChannelDto {
+    apps: WaveLinkAppDto[];
+    effects: WaveLinkEffectDto[];
+    id: string;
+    mixes: WaveLinkMixDto[];
+    name?: string;
+    type?: string;
+}
+
+export interface WaveLinkEffectDto {
+    id: string;
+    isEnabled: boolean;
+    name?: string;
+}
+
+export interface WaveLinkInputDto {
+    id: string;
+    name?: string;
+}
+
+export interface WaveLinkMixDto {
+    id: string;
+    name?: string;
+}
+
+export interface WaveLinkOutputDto {
+    id: string;
+    name?: string;
+}
+
+export interface WaveLinkResponseDto {
+    channels: WaveLinkChannelDto[];
+    inputs: WaveLinkInputDto[];
+    mixes: WaveLinkMixDto[];
+    outputs: WaveLinkOutputDto[];
 }
 
 export interface WaveLinkSettings {

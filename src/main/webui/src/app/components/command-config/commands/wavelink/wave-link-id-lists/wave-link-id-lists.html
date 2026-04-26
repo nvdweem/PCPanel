@@ -1,0 +1,32 @@
+<mat-form-field>
+  <mat-label>Command Type</mat-label>
+  <mat-select [formField]="field().commandType">
+    @for (type of commandTypes; track type) {
+      <mat-option [value]="type">{{ type }}</mat-option>
+    }
+  </mat-select>
+</mat-form-field>
+
+@let state = formState();
+@if (state.id1Name && state.id1List) {
+  <mat-form-field>
+    <mat-label>{{ state.id1Name }}</mat-label>
+    <mat-select [formField]="field().id1">
+      <mat-option value="">None</mat-option>
+      @for (item of state.id1List(); track item.id) {
+        <mat-option [value]="item.id">{{ item.name }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+}
+@if (state.id2Name && state.id2List) {
+  <mat-form-field>
+    <mat-label>{{ state.id2Name }}</mat-label>
+    <mat-select [formField]="field().id2">
+      <mat-option value="">None</mat-option>
+      @for (item of state.id2List(); track item.id) {
+        <mat-option [value]="item.id">{{ item.name }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+}

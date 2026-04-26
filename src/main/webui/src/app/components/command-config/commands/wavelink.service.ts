@@ -1,19 +1,14 @@
-import { Injectable } from '@angular/core';
+import { computed, Injectable } from '@angular/core';
 import { httpResource } from '@angular/common/http';
-
-export interface WaveLinkChannel {
-  id: string;
-  name: string;
-}
-
-export interface WaveLinkEffect {
-  id: string;
-  name: string;
-}
+import { WaveLinkResponseDto } from '../../../models/generated/backend.types';
 
 @Injectable({providedIn: 'root'})
 export class WaveLinkService {
   // TODO: reset when save changes
-  channels = httpResource<WaveLinkChannel[]>(() => '/api/wavelink/channels');
-  effects = httpResource<WaveLinkEffect[]>(() => '/api/wavelink/effects');
+  devices = httpResource<WaveLinkResponseDto>(() => '/api/wavelink/devices');
+
+  channels = computed(() => this.devices.value()?.channels ?? []);
+  inputs = computed(() => this.devices.value()?.inputs ?? []);
+  mixes = computed(() => this.devices.value()?.mixes ?? []);
+  outputs = computed(() => this.devices.value()?.outputs ?? []);
 }

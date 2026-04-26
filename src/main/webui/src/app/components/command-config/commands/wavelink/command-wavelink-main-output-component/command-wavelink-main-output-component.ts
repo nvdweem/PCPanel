@@ -1,14 +1,14 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormField } from '@angular/forms/signals';
-import { CommandWaveLinkAddFocusToChannel } from '../../../../models/generated/backend.types';
+import { CommandWaveLinkMainOutput } from '../../../../../models/generated/backend.types';
 import { FormsModule } from '@angular/forms';
-import { WaveLinkService } from '../wavelink.service';
+import { WaveLinkService } from '../../wavelink.service';
 import { MatFormField, MatLabel } from '@angular/material/input';
 import { MatOption, MatSelect } from '@angular/material/select';
-import { CommandComponent } from '../command.component';
+import { CommandComponent } from '../../command.component';
 
 @Component({
-  selector: 'app-command-wavelink-add-focus-to-channel-component',
+  selector: 'app-command-wavelink-main-output-component',
   imports: [
     FormsModule,
     FormField,
@@ -17,10 +17,10 @@ import { CommandComponent } from '../command.component';
     MatOption,
     MatSelect,
   ],
-  templateUrl: './command-wavelink-add-focus-to-channel-component.html',
-  styleUrl: './command-wavelink-add-focus-to-channel-component.scss',
+  templateUrl: './command-wavelink-main-output-component.html',
+  styleUrl: './command-wavelink-main-output-component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CommandWaveLinkAddFocusToChannelComponent extends CommandComponent<CommandWaveLinkAddFocusToChannel> {
+export class CommandWaveLinkMainOutputComponent extends CommandComponent<CommandWaveLinkMainOutput> {
   protected waveLinkService = inject(WaveLinkService);
 }

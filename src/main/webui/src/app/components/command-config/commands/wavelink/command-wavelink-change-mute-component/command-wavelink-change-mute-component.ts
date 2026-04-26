@@ -1,13 +1,12 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormField } from '@angular/forms/signals';
-import { CommandWaveLinkChangeMute } from '../../../../models/generated/backend.types';
+import { CommandWaveLinkChangeMute } from '../../../../../models/generated/backend.types';
 import { FormsModule } from '@angular/forms';
-import { WaveLinkService } from '../wavelink.service';
-import { MatFormField, MatLabel } from '@angular/material/input';
-import { MatOption, MatSelect } from '@angular/material/select';
+import { WaveLinkService } from '../../wavelink.service';
 import { MatRadioButton, MatRadioGroup } from '@angular/material/radio';
 import { CommonModule, TitleCasePipe } from '@angular/common';
-import { CommandComponent } from '../command.component';
+import { CommandComponent } from '../../command.component';
+import { WaveLinkIdLists } from '../wave-link-id-lists/wave-link-id-lists';
 
 @Component({
   selector: 'app-command-wavelink-change-mute-component',
@@ -15,13 +14,10 @@ import { CommandComponent } from '../command.component';
     CommonModule,
     FormsModule,
     FormField,
-    MatFormField,
-    MatLabel,
-    MatOption,
-    MatSelect,
     MatRadioButton,
     MatRadioGroup,
     TitleCasePipe,
+    WaveLinkIdLists,
   ],
   templateUrl: './command-wavelink-change-mute-component.html',
   styleUrl: './command-wavelink-change-mute-component.scss',

@@ -22,7 +22,7 @@
             </mat-select>
           </mat-form-field>
           @if (configModel().lightingMode === 'ALL_COLOR') {
-            <div class="color-row"><label>Color</label><input type="color" [formField]="configForm.allColor" /><span>{{ configModel().allColor }}</span></div>
+            <app-color-picker [field]="configForm.allColor" alwaysShow>Color</app-color-picker>
           }
           @if (configModel().lightingMode === 'ALL_RAINBOW') {
             <div class="slider-row"><label>Phase Shift</label><mat-slider min="0" max="255" class="flex-slider"><input matSliderThumb [formField]="configForm.rainbowPhaseShift" /></mat-slider><span>{{ configModel().rainbowPhaseShift }}</span></div>

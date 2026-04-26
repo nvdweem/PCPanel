@@ -1,13 +1,13 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { FormField } from '@angular/forms/signals';
-import { CommandWaveLinkChannelEffect } from '../../../../models/generated/backend.types';
+import { CommandWaveLinkChannelEffect } from '../../../../../models/generated/backend.types';
 import { FormsModule } from '@angular/forms';
-import { WaveLinkService } from '../wavelink.service';
+import { WaveLinkService } from '../../wavelink.service';
 import { MatFormField, MatLabel } from '@angular/material/input';
 import { MatOption, MatSelect } from '@angular/material/select';
 import { MatRadioButton, MatRadioGroup } from '@angular/material/radio';
 import { CommonModule, TitleCasePipe } from '@angular/common';
-import { CommandComponent } from '../command.component';
+import { CommandComponent } from '../../command.component';
 
 @Component({
   selector: 'app-command-wavelink-channel-effect-component',
@@ -30,4 +30,9 @@ import { CommandComponent } from '../command.component';
 export class CommandWaveLinkChannelEffectComponent extends CommandComponent<CommandWaveLinkChannelEffect> {
   protected waveLinkService = inject(WaveLinkService);
   protected readonly toggleTypes = ['toggle', 'mute', 'unmute'] as const;
+
+  protected currentChannelEffects = computed(() => {
+    const id = this.field().channelId().value();
+    return this.waveLinkService.channels().find(c => c.id === id)?.effects ?? [];
+  });
 }

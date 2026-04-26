@@ -15,6 +15,7 @@ import { DeviceService } from '../../services/device.service';
 import { DeviceStateService } from '../../services/device-state.service';
 import { ConnectionStatusComponent } from '../../components/connection-status/connection-status.component';
 import { LightingConfig } from '../../models/generated/backend.types';
+import { ColorPicker } from '../../components/color-picker/color-picker';
 
 const DEFAULT_LIGHTING: LightingConfig = {
   lightingMode: 'ALL_COLOR',
@@ -51,7 +52,7 @@ const DEFAULT_LIGHTING: LightingConfig = {
 @Component({
   selector: 'app-lighting',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterModule, FormField, MatToolbarModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatSelectModule, MatSliderModule, MatCardModule, MatProgressSpinnerModule, ConnectionStatusComponent],
+  imports: [RouterModule, FormField, MatToolbarModule, MatButtonModule, MatIconModule, MatFormFieldModule, MatSelectModule, MatSliderModule, MatCardModule, MatProgressSpinnerModule, ConnectionStatusComponent, ColorPicker],
   templateUrl: './lighting.component.html',
   styleUrl: './lighting.component.scss',
 })

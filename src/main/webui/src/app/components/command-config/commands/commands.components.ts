@@ -1,4 +1,5 @@
 import {
+  Command,
   CommandBrightness,
   CommandEndProgram,
   CommandKeystroke,
@@ -7,6 +8,7 @@ import {
   CommandObsSetScene,
   CommandObsSetSourceVolume,
   CommandRun,
+  Commands,
   CommandShortcut,
   CommandType,
   CommandVoiceMeeterAdvanced,
@@ -54,11 +56,11 @@ import { CommandVoiceMeeterBasicComponent } from './command-voicemeeter-basic-co
 import { CommandVoiceMeeterAdvancedComponent } from './command-voicemeeter-advanced-component/command-voicemeeter-advanced-component';
 import { CommandVoiceMeeterBasicButtonComponent } from './command-voicemeeter-basic-button-component/command-voicemeeter-basic-button-component';
 import { CommandVoiceMeeterAdvancedButtonComponent } from './command-voicemeeter-advanced-button-component/command-voicemeeter-advanced-button-component';
-import { CommandWaveLinkChangeLevelComponent } from './command-wavelink-change-level-component/command-wavelink-change-level-component';
-import { CommandWaveLinkAddFocusToChannelComponent } from './command-wavelink-add-focus-to-channel-component/command-wavelink-add-focus-to-channel-component';
-import { CommandWaveLinkChangeMuteComponent } from './command-wavelink-change-mute-component/command-wavelink-change-mute-component';
-import { CommandWaveLinkChannelEffectComponent } from './command-wavelink-channel-effect-component/command-wavelink-channel-effect-component';
-import { CommandWaveLinkMainOutputComponent } from './command-wavelink-main-output-component/command-wavelink-main-output-component';
+import { CommandWaveLinkChangeLevelComponent } from './wavelink/command-wavelink-change-level-component/command-wavelink-change-level-component';
+import { CommandWaveLinkAddFocusToChannelComponent } from './wavelink/command-wavelink-add-focus-to-channel-component/command-wavelink-add-focus-to-channel-component';
+import { CommandWaveLinkChangeMuteComponent } from './wavelink/command-wavelink-change-mute-component/command-wavelink-change-mute-component';
+import { CommandWaveLinkChannelEffectComponent } from './wavelink/command-wavelink-channel-effect-component/command-wavelink-channel-effect-component';
+import { CommandWaveLinkMainOutputComponent } from './wavelink/command-wavelink-main-output-component/command-wavelink-main-output-component';
 import { CommandVolumeDeviceComponent } from './command-volume-device-component/command-volume-device-component';
 import { Type } from '@angular/core';
 
@@ -67,6 +69,25 @@ export function validateCommands(command: CommandType[]) {
   if (withoutComponent.length > 0) {
     console.error(`No component for commands: ${withoutComponent.map(c => c.command).join(', ')}`);
   }
+}
+
+function ensureValidCommand(cmd: Command): Command {
+  const entry = commandComponentMap.get(cmd._type);
+  return {
+    ...(entry?.buildEmpty() ?? {}),
+    ...cmd,
+  };
+}
+
+export function ensureValidCommands(cmds: Commands | undefined): Commands | undefined {
+  if (!cmds) {
+    return undefined;
+  }
+
+  return {
+    commands: cmds.commands.map(ensureValidCommand),
+    type: cmds.type,
+  };
 }
 
 interface CommandComponentDefinition<T> {
@@ -354,8 +375,6 @@ function buildEmptyCommandWaveLinkChangeLevel(): Required<CommandWaveLinkChangeL
 function buildEmptyCommandWaveLinkAddFocusToChannel(): Required<CommandWaveLinkAddFocusToChannel> {
   return {
     _type: 'com.getpcpanel.wavelink.command.CommandWaveLinkAddFocusToChannel',
-    channelId: '',
-    channelName: '',
     id: '',
     name: '',
     overlayText: '',

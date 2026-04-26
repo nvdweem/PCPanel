@@ -12,6 +12,8 @@ import { form, FormField } from '@angular/forms/signals';
 import { ControlAssignmentsUpdateDto, SingleKnobLightingConfig, SingleSliderLightingConfig } from '../../../models/generated/backend.types';
 import { ControlType } from '../events';
 import { CommandsComponent } from '../../../components/command-config/commands/commands.component';
+import { ensureValidCommands } from '../../../components/command-config/commands/commands.components';
+import { ColorPicker } from '../../../components/color-picker/color-picker';
 
 type ControlLighting = SingleKnobLightingConfig | SingleSliderLightingConfig;
 
@@ -21,16 +23,25 @@ export interface CommandDialogData extends ControlAssignmentsUpdateDto {
   lighting?: ControlLighting;
 }
 
+function ensureValidData(data: CommandDialogData) {
+  return {
+    ...data,
+    analog: ensureValidCommands(data.analog),
+    button: ensureValidCommands(data.button),
+    dblButton: ensureValidCommands(data.dblButton),
+  };
+}
+
 @Component({
   selector: 'pcpanel-command-config',
-  imports: [FormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatIconModule, MatTabGroup, MatTab, CommandsComponent, FormField],
+  imports: [FormsModule, MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatIconModule, MatTabGroup, MatTab, CommandsComponent, FormField, ColorPicker],
   templateUrl: './command-config.component.html',
   styleUrl: './command-config.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CommandConfigComponent {
   private readonly dialogRef = inject(MatDialogRef);
-  protected readonly data = inject(MAT_DIALOG_DATA) as CommandDialogData;
+  protected readonly data = ensureValidData(inject(MAT_DIALOG_DATA) as CommandDialogData);
   protected readonly form = form(signal(this.data));
 
   protected lightingType() {

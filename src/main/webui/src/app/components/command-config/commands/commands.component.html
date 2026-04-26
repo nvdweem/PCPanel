@@ -43,7 +43,9 @@
 <ng-template #dialParams let-cmd>
     @let width = 100;
     @let height = 40;
-    <svg [attr.viewBox]="`0 0 ${width} ${height}`" [attr.width]="width" [attr.height]="height" class="example-line" (click)="$event.stopPropagation(); editDialParams(cmd)">
+    <svg [attr.viewBox]="`0 0 ${width} ${height}`" class="example-line" (click)="$event.stopPropagation(); editDialParams(cmd)"
+         [style.--w.px]="80" [style.--h.px]="height"
+    >
       <rect x="0" y="0" [attr.width]="width" [attr.height]="height"/>
       @let lineStart = cmd.moveStart().value() || 0;
       @let lineEnd = cmd.moveEnd().value() || width;

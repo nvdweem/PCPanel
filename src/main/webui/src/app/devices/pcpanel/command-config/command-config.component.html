@@ -60,12 +60,9 @@
             </mat-select>
           </mat-form-field>
 
-          <div class="field-label">Primary color</div>
-          <input type="color" [formField]="form.lighting.color1"/>
-
+          <app-color-picker [field]="form.lighting.color1" alwaysShow>Color</app-color-picker>
           @if (showKnobSecondColor() || showSliderSecondColor()) {
-            <div class="field-label">Secondary color</div>
-            <input type="color" [formField]="form.lighting.color2"/>
+            <app-color-picker [field]="form.lighting.color2" alwaysShow>Secondary color</app-color-picker>
           }
         }
 
