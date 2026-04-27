@@ -6,10 +6,13 @@ import com.getpcpanel.commands.Commands;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.dto.KnobSetting;
 
+import io.quarkus.runtime.annotations.RegisterForReflection;
+
 /**
  * Snapshot of the currently active profile — all assignment data the frontend
  * needs to render the device page without any additional HTTP calls.
  */
+@RegisterForReflection
 public record ProfileSnapshotDto(
         String name,
         Map<Integer, Commands> dialData,

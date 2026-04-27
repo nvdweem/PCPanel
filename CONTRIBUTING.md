@@ -55,3 +55,10 @@ The SndCtrlTest project is there because Access Violations within JNI just close
 Running it with the Test code might actually show the error.
 
 An `EnableFullDump.reg` registry file is included to enable full dumps when the application crashes. This can be used to debug the native code.
+
+## Native build stuff
+
+```shell
+java.exe -agentlib:native-image-agent=config-output-dir=native-image
+         -jar target/pcpanel-1.8-SNAPSHOT-native-image-source-jar/pcpanel-1.8-SNAPSHOT-runner.jar
+```

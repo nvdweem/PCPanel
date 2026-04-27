@@ -105,6 +105,6 @@ public class Overlay {
     }
 
     private record CommandAndIcon(Commands command, Image icon) {
-        static final CommandAndIcon DEFAULT = new CommandAndIcon(Commands.EMPTY, IconService.DEFAULT);
+        static final CommandAndIcon DEFAULT = new CommandAndIcon(Commands.EMPTY, null);
     }
 }

@@ -15,10 +15,23 @@ import java.util.regex.Pattern;
 import javax.swing.JPanel;
 import javax.swing.JWindow;
 import javax.swing.Timer;
+import javax.swing.UIManager;
 
 import com.getpcpanel.profile.Save;
 
 public class VolumeOverlay extends JWindow {
+    // Install the cross-platform (Metal) Look and Feel before any Swing
+    // component is constructed.  This static block runs when VolumeOverlay is
+    // first loaded – before the implicit JWindow() super-constructor call –
+    // so JPanel / JRootPane can find their ComponentUI delegates.
+    static {
+        try {
+            UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+        } catch (Exception ignored) {
+            // If Metal L&F is unavailable in native image, swallow and continue.
+        }
+    }
+
     private static final int WIDTH = 340;
     private static final int DEFAULT_HEIGHT = 56;
     private static final int DEFAULT_CORNER_RADIUS = 28;

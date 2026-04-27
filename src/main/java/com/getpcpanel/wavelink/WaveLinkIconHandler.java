@@ -24,6 +24,8 @@ import lombok.extern.log4j.Log4j2;
 public class WaveLinkIconHandler implements IIconHandler<CommandWaveLink> {
     @Inject
     WaveLinkService waveLinkService;
+    @Inject
+    IconService iconService;
 
     @Override
     public Class<CommandWaveLink> getCommandClass() {
@@ -65,6 +67,6 @@ public class WaveLinkIconHandler implements IIconHandler<CommandWaveLink> {
     }
 
     private BufferedImage outputImage() {
-        return IconService.DEVICE;
+        return iconService.DEVICE;
     }
 }

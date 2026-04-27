@@ -43,11 +43,11 @@ import one.util.streamex.StreamEx;
 @Log4j2
 @ApplicationScoped
 public class IconService {
-    public static final BufferedImage DEFAULT = loadImage("/assets/32x32.png");
-    private static final BufferedImage OBS = loadImage("/assets/obs.png");
-    private static final BufferedImage VOICEMEETER = loadImage("/assets/voicemeeter.png");
-    public static final BufferedImage DEVICE = loadImage("/assets/device.png");
-    public static final BufferedImage SYSTEM_SOUND = loadImage("/assets/systemsounds.ico");
+    public BufferedImage DEFAULT;
+    private BufferedImage OBS;
+    private BufferedImage VOICEMEETER;
+    public BufferedImage DEVICE;
+    public BufferedImage SYSTEM_SOUND;
 
     private static BufferedImage loadImage(String path) {
         try {
@@ -70,6 +70,12 @@ public class IconService {
 
     @PostConstruct
     public void init() {
+        DEFAULT = loadImage("/assets/32x32.png");
+        OBS = loadImage("/assets/obs.png");
+        VOICEMEETER = loadImage("/assets/voicemeeter.png");
+        DEVICE = loadImage("/assets/device.png");
+        SYSTEM_SOUND = loadImage("/assets/systemsounds.ico");
+
         imageHandlers.put(Command.class, (a, b) -> DEFAULT);
 
         // Dials

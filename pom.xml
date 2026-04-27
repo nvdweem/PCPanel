@@ -51,7 +51,7 @@
         <!-- Disable compressed oops in build JVM so Unsafe.arrayIndexScale(Object[].class) = 8, matching native image runtime.
              Without this, jctools stores scale=4 (compressed oops) but native image uses 8-byte refs → segfault. -->
         <quarkus.native.additional-build-args>
-            -J-XX:-UseCompressedOops,--initialize-at-run-time=com.sun.jna,--initialize-at-run-time=org.hid4java,--initialize-at-run-time=com.github.kwhat.jnativehook,--initialize-at-run-time=com.getpcpanel.commands.KeyMacro,--initialize-at-run-time=com.getpcpanel.iconextract.Shell32Extra,--initialize-at-run-time=org.freedesktop.dbus,--initialize-at-run-time=sun.font.FontManagerFactory,--initialize-at-run-time=sun.font.FontFamily,--initialize-at-run-time=sun.java2d.Disposer,--initialize-at-run-time=com.hivemq.client.internal.mqtt,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOINFO,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOBUFFER,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_INTERFACE
+            -J-XX:-UseCompressedOops,--initialize-at-run-time=com.sun.jna,--initialize-at-run-time=org.hid4java,--initialize-at-run-time=com.github.kwhat.jnativehook,--initialize-at-run-time=com.getpcpanel.commands.KeyMacro,--initialize-at-run-time=com.getpcpanel.iconextract.Shell32Extra,--initialize-at-run-time=org.freedesktop.dbus,--initialize-at-run-time=sun.font.FontManagerFactory,--initialize-at-run-time=sun.font.FontFamily,--initialize-at-run-time=sun.java2d.Disposer,--initialize-at-run-time=com.hivemq.client.internal.mqtt,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOINFO,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOBUFFER,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_INTERFACE,--initialize-at-run-time=sun.awt.windows,--initialize-at-run-time=sun.java2d.d3d,--initialize-at-run-time=sun.java2d.windows,--initialize-at-run-time=javax.swing.plaf.metal,--initialize-at-build-time=javax.swing.plaf.ColorUIResource,--initialize-at-build-time=java.awt.font.FontRenderContext,--initialize-at-build-time=sun.awt.SunHints,--initialize-at-build-time=sun.awt.SunHints$Value,--initialize-at-build-time=sun.awt.SunHints$LCDContrastKey,--initialize-at-build-time=sun.awt.SunHints$Key,--initialize-at-build-time=java.awt.Dimension,--initialize-at-build-time=java.awt.geom.Dimension2D
         </quarkus.native.additional-build-args>
     </properties>
 
@@ -108,6 +108,10 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-vertx</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-awt</artifactId>
         </dependency>
 
         <!-- Frontend via Quinoa -->
