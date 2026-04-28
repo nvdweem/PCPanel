@@ -18,6 +18,7 @@ import com.getpcpanel.profile.dto.OverlayPosition;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,14 @@ import one.util.streamex.StreamEx;
 public class Overlay {
     private final SaveService save;
     private final IconService iconService;
-    private final VolumeOverlay overlay = new VolumeOverlay();
+    private VolumeOverlay overlay = new VolumeOverlay();
+
+    @PostConstruct
+    public void init() {
+        SwingUtilities.invokeLater(() -> {
+            overlay = new VolumeOverlay();
+        });
+    }
 
     public void updateSaveValues(@Observes SaveEvent event) {
         updateStyle(null);
@@ -64,8 +72,12 @@ public class Overlay {
         overlay.setBounds(b);
     }
 
+    public void show(float value) {
+        showDebounced(value, () -> CommandAndIcon.DEFAULT, x -> true);
+    }
+
     public void updateStyle(@Nullable @Observes SaveEvent event) {
-        overlay.setStyles(save.get());
+        SwingUtilities.invokeLater(() -> overlay.setStyles(save.get()));
     }
 
     public void handleControl(@Observes PCPanelControlEvent event) {

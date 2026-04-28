@@ -2302,6 +2302,30 @@
       ]
     },
     {
+      "type": "com.getpcpanel.rest.OverlayResource"
+    },
+    {
+      "type": "com.getpcpanel.rest.OverlayResource$OverlayDto"
+    },
+    {
+      "type": "com.getpcpanel.rest.OverlayResource$quarkusrestinvoker$showOverlay_53c93d1310f135ffd7c8e51be7eb1f6ba4eac4ba",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "com.getpcpanel.rest.OverlayResource$quarkusrestinvoker$testOverlay_25269a521d728b138ab48fc9e9ade9c8f2dfd2fc",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
       "type": "com.getpcpanel.rest.ProVisualColorsService"
     },
     {
@@ -8793,12 +8817,6 @@
         }
       ],
       "methods": [
-        {
-          "name": "dispose",
-          "parameterTypes": [
-            "long"
-          ]
-        },
         {
           "name": "setSurfaceLost",
           "parameterTypes": [

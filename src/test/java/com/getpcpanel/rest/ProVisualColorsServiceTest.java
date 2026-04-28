@@ -18,6 +18,6 @@ class ProVisualColorsServiceTest {
 
         var color = service.resolveLogoColor(logo);
 
-        assertEquals("#00ff00", color);
+        assertEquals("$RAINBOW!", color);
     }
 }

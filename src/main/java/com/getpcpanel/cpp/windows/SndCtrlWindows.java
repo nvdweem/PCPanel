@@ -8,11 +8,10 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 
 import org.apache.commons.lang3.StringUtils;
-
-import javax.annotation.Nullable;
 
 import com.getpcpanel.cpp.AudioDevice;
 import com.getpcpanel.cpp.AudioDeviceEvent;
@@ -203,38 +202,44 @@ public class SndCtrlWindows implements ISndCtrl {
         }
     }
 
-    private AudioDevice deviceAdded(String name, String id, float volume, boolean muted, int dataFlow) {
+    public AudioDevice deviceAdded(String name, String id, float volume, boolean muted, int dataFlow) {
         var result = new WindowsAudioDevice(eventBus, name, id).volume(volume).muted(muted).dataflow(DataFlow.from(dataFlow));
         synchronized (devices) {
             devices.put(id, result);
         }
         log.trace("Device added: {}", result);
 
-        eventBus.fire(new AudioDeviceEvent(result, EventType.ADDED));
+        fireEvent(new AudioDeviceEvent(result, EventType.ADDED));
         return result;
     }
 
-    private void deviceRemoved(String id) {
+    private void fireEvent(Object result) {
+        if (eventBus != null) {
+            eventBus.fire(result);
+        }
+    }
+
+    public void deviceRemoved(String id) {
         log.trace("Device removed: {}", id);
         AudioDevice removed;
         synchronized (devices) {
             removed = devices.remove(id);
         }
         if (removed != null) {
-            eventBus.fire(new AudioDeviceEvent(removed, EventType.REMOVED));
+            fireEvent(new AudioDeviceEvent(removed, EventType.REMOVED));
         }
     }
 
-    private void setDefaultDevice(String id, int dataFlow, int role) {
+    public void setDefaultDevice(String id, int dataFlow, int role) {
         synchronized (defaults) {
             defaults.put(DefaultFor.of(dataFlow, role), id);
         }
         log.trace("Default changed: {}: {}", DefaultFor.of(dataFlow, role), id);
     }
 
-    private void focusChanged(String to) {
+    public void focusChanged(String to) {
         log.trace("Focus changed to {}", to);
-        eventBus.fire(new WindowFocusChangedEvent(to));
+        fireEvent(new WindowFocusChangedEvent(to));
     }
 
     public Map<DefaultFor, String> getDefaults() {
@@ -267,11 +272,13 @@ public class SndCtrlWindows implements ISndCtrl {
         communicationPlayback(DataFlow.dfRender.ordinal(), Role.roleCommunications.ordinal()),
         communicationRecord(DataFlow.dfCapture.ordinal(), Role.roleCommunications.ordinal());
 
-        public static @Nullable DefaultFor of(DataFlow dataFlow, Role role) {
+        @Nullable
+        public static DefaultFor of(DataFlow dataFlow, Role role) {
             return of(dataFlow.ordinal(), role.ordinal());
         }
 
-        public static @Nullable DefaultFor of(int dataFlow, int role) {
+        @Nullable
+        public static DefaultFor of(int dataFlow, int role) {
             return StreamEx.of(values()).findFirst(d -> d.dataFlow == dataFlow && d.role == role).orElse(null);
         }
 
