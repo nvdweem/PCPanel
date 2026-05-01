@@ -134,7 +134,7 @@ export function buildEmptyDialCommandParams(): DialCommandParams {
   return {
     invert: false,
     moveStart: 0,
-    moveEnd: 100,
+    moveEnd: 0,
   };
 }
 

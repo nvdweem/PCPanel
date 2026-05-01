@@ -154,6 +154,9 @@ public class IconService {
     }
 
     private BufferedImage getFocusProcessIcon(CommandVolumeFocus command) {
+        if (sndCtrl.getFocusApplication() == null) {
+            return DEFAULT;
+        }
         var image = iconService.getIconForFile(32, 32, new File(sndCtrl.getFocusApplication()));
         if (image == null) {
             return DEFAULT;

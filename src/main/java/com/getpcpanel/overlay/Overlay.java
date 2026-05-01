@@ -31,12 +31,12 @@ public class Overlay {
     private final IconService iconService;
     private VolumeOverlay overlay = new VolumeOverlay();
 
-    @PostConstruct
-    public void init() {
-        SwingUtilities.invokeLater(() -> {
-            overlay = new VolumeOverlay();
-        });
-    }
+    // @PostConstruct
+    // public void init() {
+    //     SwingUtilities.invokeLater(() -> {
+    //         overlay;
+    //     });
+    // }
 
     public void updateSaveValues(@Observes SaveEvent event) {
         updateStyle(null);
