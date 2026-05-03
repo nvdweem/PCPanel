@@ -27,10 +27,11 @@ import com.getpcpanel.cpp.EventType;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.cpp.linux.LinuxProcessHelper;
+import com.getpcpanel.cpp.linux.pulseaudio.PulseAudioEventListener.LinuxDeviceChangedEvent;
 import com.getpcpanel.cpp.linux.pulseaudio.PulseAudioEventListener.LinuxSessionChangedEvent;
 import com.getpcpanel.cpp.linux.pulseaudio.PulseAudioWrapper.InOutput;
 import com.getpcpanel.cpp.linux.pulseaudio.PulseAudioWrapper.PulseAudioTarget;
-import com.getpcpanel.spring.LinuxImpl;
+import com.getpcpanel.platform.LinuxBuild;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -42,22 +43,22 @@ import one.util.streamex.StreamEx;
 
 @Log4j2
 @ApplicationScoped
-@PulseAudioImpl
+@LinuxBuild
 public class SndCtrlPulseAudio implements ISndCtrl {
     public static final String INPUT_PREFIX = "in_";
-    @Inject @PulseAudioImpl PulseAudioWrapper cmd;
-    @Inject @LinuxImpl LinuxProcessHelper processHelper;
+    @Inject PulseAudioWrapper cmd;
+    @Inject LinuxProcessHelper processHelper;
     @Inject Event<Object> eventBus;
     @GuardedBy("devices") private final Map<String, PulseAudioAudioDevice> devices = new HashMap<>();
     @GuardedBy("sessions") private final Set<PulseAudioAudioSession> sessions = new HashSet<>();
 
     @PostConstruct
     public void init() {
-        initDevices();
+        initDevices(null);
         initSessions(null);
     }
 
-    public void initDevices() {
+    public void initDevices(@Observes @Nullable LinuxDeviceChangedEvent event) {
         synchronized (devices) {
             devices.clear();
             StreamEx.of(getDevicesFromCmd()).mapToEntry(AudioDevice::id, Function.identity()).into(devices);

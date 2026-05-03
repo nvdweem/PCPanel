@@ -10,7 +10,7 @@ import org.eclipse.microprofile.config.ConfigProvider;
 
 import javax.annotation.Nullable;
 
-import com.getpcpanel.spring.LinuxImpl;
+import com.getpcpanel.platform.LinuxBuild;
 import com.getpcpanel.util.ProcessHelper;
 
 import jakarta.annotation.PostConstruct;
@@ -21,7 +21,7 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @ApplicationScoped
-@LinuxImpl
+@LinuxBuild
 public class LinuxProcessHelper {
     @Inject
     ProcessHelper processHelper;

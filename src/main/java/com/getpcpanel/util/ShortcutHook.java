@@ -11,7 +11,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.spring.WindowsImpl;
+import com.getpcpanel.platform.WindowsBuild;
 import com.github.kwhat.jnativehook.GlobalScreen;
 import com.github.kwhat.jnativehook.NativeHookException;
 import com.github.kwhat.jnativehook.NativeInputEvent;
@@ -27,9 +27,8 @@ import one.util.streamex.EntryStream;
 
 @Log4j2
 @ApplicationScoped
-@WindowsImpl
+@WindowsBuild
 @RequiredArgsConstructor
-
 public class ShortcutHook implements NativeKeyListener {
     public static final Set<Integer> modifiers = Set.of(NativeKeyEvent.VC_SHIFT, NativeKeyEvent.VC_CONTROL, NativeKeyEvent.VC_META, NativeKeyEvent.VC_ALT);
     private final SaveService saveService;

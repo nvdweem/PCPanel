@@ -21,7 +21,6 @@ import one.util.streamex.StreamEx;
  * Parent class for services that trigger when a process starts or another tool connects.
  */
 @Log4j2
-@ApplicationScoped
 public abstract class AbstractNewXVolumeService {
     @Inject
     DeviceHolder devices;

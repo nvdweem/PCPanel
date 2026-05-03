@@ -4,7 +4,7 @@ import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.enterprise.context.ApplicationScoped;
 
-import com.getpcpanel.spring.WindowsImpl;
+import com.getpcpanel.platform.WindowsBuild;
 import com.sun.jna.WString;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.User32;
@@ -27,7 +27,7 @@ import lombok.extern.log4j.Log4j2;
  */
 @Log4j2
 @ApplicationScoped
-@WindowsImpl
+@WindowsBuild
 public class WindowsSystemEventService implements WindowProc {
     private static final int WM_POWERBROADCAST = 536;
     private static final int PBT_APMRESUMESUSPEND = 7;

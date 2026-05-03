@@ -5,7 +5,7 @@ import org.freedesktop.dbus.connections.impl.DBusConnectionBuilder;
 import org.freedesktop.dbus.exceptions.DBusException;
 import org.freedesktop.dbus.interfaces.DBusInterface;
 
-import com.getpcpanel.spring.WaylandImpl;
+import com.getpcpanel.platform.LinuxBuild;
 import com.getpcpanel.util.tray.ITrayService;
 
 import jakarta.annotation.Nonnull;
@@ -17,7 +17,7 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @ApplicationScoped
-@WaylandImpl
+@LinuxBuild
 public class TrayServiceWayland implements ITrayService {
     static final String SNI_BUS_NAME = "org.kde.StatusNotifierItem";
     static final String WATCHER_BUS_NAME = "org.kde.StatusNotifierWatcher";

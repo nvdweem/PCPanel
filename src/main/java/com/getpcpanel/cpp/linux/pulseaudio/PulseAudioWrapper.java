@@ -16,17 +16,17 @@ import jakarta.inject.Inject;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.cpp.MuteType;
+import com.getpcpanel.platform.LinuxBuild;
 import com.getpcpanel.util.ProcessHelper;
 
 import lombok.Builder;
-import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
 @ApplicationScoped
-@PulseAudioImpl
+@LinuxBuild
 public class PulseAudioWrapper {
     public static final int NO_OP_IDX = -1;
     public static final int DEFAULT_DEVICE = -2;

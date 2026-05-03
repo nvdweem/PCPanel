@@ -3,20 +3,20 @@ package com.getpcpanel.cpp.linux.pulseaudio;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 
+import com.getpcpanel.platform.LinuxBuild;
 import jakarta.inject.Inject;
 import jakarta.enterprise.context.ApplicationScoped;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
 @ApplicationScoped
-@PulseAudioImpl
+@LinuxBuild
 public class SndCtrlPulseAudioDebug {
-    @Inject @PulseAudioImpl
+    @Inject
     PulseAudioWrapper paWrapper;
-    @Inject @PulseAudioImpl
+    @Inject
     PulseAudioEventListener paEventListener;
 
     public void copyDebugOutput() {

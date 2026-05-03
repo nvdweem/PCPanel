@@ -21,7 +21,7 @@ import com.getpcpanel.cpp.EventType;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.cpp.Role;
-import com.getpcpanel.spring.WindowsImpl;
+import com.getpcpanel.platform.WindowsBuild;
 import com.getpcpanel.util.ExtractUtil;
 
 import jakarta.annotation.PostConstruct;
@@ -34,7 +34,7 @@ import one.util.streamex.StreamEx;
 
 @Log4j2
 @ApplicationScoped
-@WindowsImpl
+@WindowsBuild
 @SuppressWarnings("unused") // Methods are called from JNI
 public class SndCtrlWindows implements ISndCtrl {
     @Inject ExtractUtil extractUtil;

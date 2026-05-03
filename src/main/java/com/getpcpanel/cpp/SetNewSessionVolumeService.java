@@ -19,7 +19,6 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @ApplicationScoped
 public class SetNewSessionVolumeService extends AbstractNewXVolumeService {
-    @Inject ISndCtrl sndCtrl;
     @Inject SaveService save;
 
     public void onNewAudioSession(@Observes AudioSessionEvent event) {

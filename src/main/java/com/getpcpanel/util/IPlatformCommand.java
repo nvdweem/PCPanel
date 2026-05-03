@@ -3,8 +3,8 @@ package com.getpcpanel.util;
 import java.io.File;
 import java.io.IOException;
 
-import com.getpcpanel.spring.LinuxImpl;
-import com.getpcpanel.spring.WindowsImpl;
+import com.getpcpanel.platform.LinuxBuild;
+import com.getpcpanel.platform.WindowsBuild;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -24,9 +24,9 @@ public abstract class IPlatformCommand {
     public abstract void kill(String process);
 
     @ApplicationScoped
-    @LinuxImpl
+    @LinuxBuild
     public static class LinuxPlatformCommand extends IPlatformCommand {
-        @Inject @LinuxImpl
+        @Inject
         LinuxProcessHelper processHelper;
 
         @Override
@@ -58,7 +58,7 @@ public abstract class IPlatformCommand {
     }
 
     @ApplicationScoped
-    
+    @WindowsBuild
     @RequiredArgsConstructor
     public static class WindowsPlatformCommand extends IPlatformCommand {
         private final ISndCtrl sndCtrl;
