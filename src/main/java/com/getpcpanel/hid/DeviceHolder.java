@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -11,6 +13,8 @@ import jakarta.enterprise.event.Event;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 
+import com.getpcpanel.commands.Commands;
+import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.cpp.windows.WindowFocusChangedEvent;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.device.DeviceFactory;
@@ -18,6 +22,8 @@ import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.profile.SaveService;
 
 import lombok.RequiredArgsConstructor;
+import one.util.streamex.EntryStream;
+import one.util.streamex.StreamEx;
 
 @ApplicationScoped
 public class DeviceHolder {
@@ -77,6 +83,32 @@ public class DeviceHolder {
 
     public Collection<Device> all() {
         return devices.values();
+    }
+
+    private <T extends Command> EntryStream<DeviceAndDial, T> buildCommandStream(Class<T> clazz) {
+        return StreamEx.of(all())
+                       .mapToEntry(Device::getSerialNumber).invert()
+                       .mapValues(d -> d.currentProfile())
+                       .flatMapKeyValue((id, profile) -> EntryStream.of(profile.getDialData()).mapKeys(d -> new DeviceAndDial(id, d)))
+                       .mapToEntry(Map.Entry::getKey, Map.Entry::getValue)
+                       .flatMapValues(d -> Commands.cmds(d).stream())
+                       .selectValues(clazz);
+    }
+
+    public <T extends Command> boolean hasCommandsOf(Class<T> clazz, Predicate<T> filter) {
+        return buildCommandStream(clazz).values().anyMatch(filter);
+    }
+
+    public <T extends Command> void triggerCommandsOf(Class<T> clazz, Function<EntryStream<DeviceAndDial, T>, EntryStream<DeviceAndDial, T>> chain) {
+        buildCommandStream(clazz)
+                .chain(chain)
+                .forKeyValue((idAndDial, cmd) -> getDevice(idAndDial.id()).ifPresent(device -> {
+                    var current = device.getKnobRotation(idAndDial.dial());
+                    eventBus.fire(new DeviceCommunicationHandler.KnobRotateEvent(idAndDial.id(), idAndDial.dial(), current, false));
+                }));
+    }
+
+    public record DeviceAndDial(String id, int dial) {
     }
 
     public record DeviceFullyConnectedEvent(Device device) {

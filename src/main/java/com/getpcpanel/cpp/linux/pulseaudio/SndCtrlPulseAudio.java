@@ -33,6 +33,7 @@ import com.getpcpanel.cpp.linux.pulseaudio.PulseAudioWrapper.InOutput;
 import com.getpcpanel.cpp.linux.pulseaudio.PulseAudioWrapper.PulseAudioTarget;
 import com.getpcpanel.platform.LinuxBuild;
 
+import io.quarkus.runtime.StartupEvent;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
@@ -55,7 +56,19 @@ public class SndCtrlPulseAudio implements ISndCtrl {
     @PostConstruct
     public void init() {
         initDevices(null);
-        initSessions(null);
+        synchronized (sessions) {
+            sessions.addAll(getSessionsFromCmd());
+        }
+    }
+
+    public void onStart(@Observes StartupEvent ev) {
+        Set<PulseAudioAudioSession> snapshot;
+        synchronized (sessions) {
+            snapshot = new HashSet<>(sessions);
+        }
+        snapshot.stream()
+                .map(sess -> new AudioSessionEvent(sess, EventType.ADDED))
+                .forEach(e -> eventBus.fire(e));
     }
 
     public void initDevices(@Observes @Nullable LinuxDeviceChangedEvent event) {
@@ -180,7 +193,7 @@ public class SndCtrlPulseAudio implements ISndCtrl {
 
     @Override
     public @Nullable String getFocusApplication() {
-        return null;
+        return processHelper.getActiveProcess();
     }
 
     @Override
