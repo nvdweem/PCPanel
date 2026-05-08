@@ -10,11 +10,13 @@ import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.volume.FocusVolumeEvent.FocusVolumeTarget;
 import com.getpcpanel.wavelink.WaveLinkService;
 
+import io.quarkus.arc.Unremovable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
+@Unremovable
 @ApplicationScoped
 public class VolumeCoordinatorService {
     @Inject ISndCtrl sndCtrl;

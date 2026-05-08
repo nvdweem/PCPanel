@@ -399,6 +399,7 @@ export interface SettingsDto {
     dblClickInterval: number;
     forceVolume: boolean;
     mainUIIcons: boolean;
+    mqtt: MqttSettings;
     obsAddress: string;
     obsEnabled: boolean;
     obsPassword: string;

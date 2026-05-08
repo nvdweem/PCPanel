@@ -60,6 +60,42 @@
           <app-color-picker alwaysShow [field]="settingsForm.overlayBarColor">Bar color</app-color-picker>
         </div>
       </mat-tab>
+      <mat-tab label="MQTT">
+        <div class="tab-content">
+          <mat-checkbox [formField]="settingsForm.mqtt.enabled">Enabled</mat-checkbox>
+          <mat-form-field appearance="outline">
+            <mat-label>Base topic</mat-label>
+            <input matInput [formField]="settingsForm.mqtt.baseTopic"/>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Host</mat-label>
+            <input matInput [formField]="settingsForm.mqtt.host"/>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Port</mat-label>
+            <input matInput type="number" [formField]="settingsForm.mqtt.port"/>
+          </mat-form-field>
+          <mat-checkbox [formField]="settingsForm.mqtt.secure">Secure</mat-checkbox>
+          <mat-form-field appearance="outline">
+            <mat-label>Username</mat-label>
+            <input matInput [formField]="settingsForm.mqtt.username"/>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Password</mat-label>
+            <input matInput [formField]="settingsForm.mqtt.password"/>
+          </mat-form-field>
+
+          <div>
+            <h2> Home Assistant </h2>
+            <mat-checkbox [formField]="settingsForm.mqtt.homeAssistant.enableDiscovery">Enable discovery</mat-checkbox>
+            <mat-checkbox [formField]="settingsForm.mqtt.homeAssistant.availability">Availability</mat-checkbox>
+            <mat-form-field appearance="outline">
+              <mat-label>Base topic</mat-label>
+              <input matInput [formField]="settingsForm.mqtt.homeAssistant.baseTopic"/>
+            </mat-form-field>
+          </div>
+        </div>
+      </mat-tab>
       <mat-tab label="OSC">
         <div class="tab-content">
           <mat-form-field appearance="outline">

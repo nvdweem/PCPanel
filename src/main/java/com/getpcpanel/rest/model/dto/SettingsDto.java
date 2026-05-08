@@ -5,6 +5,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 import com.getpcpanel.profile.Save;
+import com.getpcpanel.profile.dto.MqttSettings;
 import com.getpcpanel.profile.dto.OSCConnectionInfo;
 import com.getpcpanel.profile.dto.OverlayPosition;
 
@@ -52,6 +53,7 @@ public class SettingsDto {
     @Nullable private Integer overlayBarCornerRounding;
     @Nullable private OverlayPosition overlayPosition;
     @Nullable private Integer overlayPadding;
+    private MqttSettings mqtt;
 
     public static SettingsDto from(Save save) {
         var dto = new SettingsDto();
@@ -84,6 +86,7 @@ public class SettingsDto {
         dto.overlayBarCornerRounding = save.getOverlayBarCornerRounding();
         dto.overlayPosition = save.getOverlayPosition();
         dto.overlayPadding = save.getOverlayPadding();
+        dto.mqtt = save.getMqtt();
         return dto;
     }
 
@@ -117,5 +120,6 @@ public class SettingsDto {
         save.setOverlayBarCornerRounding(overlayBarCornerRounding);
         save.setOverlayPosition(overlayPosition);
         save.setOverlayPadding(overlayPadding);
+        save.setMqtt(mqtt);
     }
 }
