@@ -5,9 +5,8 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.CompletionException;
 
-import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.util.CdiHelper;
+import com.getpcpanel.volume.IFocusRedirector;
 
 import dev.niels.wavelink.IWaveLinkClientEventListener;
 import dev.niels.wavelink.WaveLinkClient;
@@ -20,13 +19,23 @@ import one.util.streamex.StreamEx;
 
 @Log4j2
 @ApplicationScoped
-public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEventListener {
+public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEventListener, IFocusRedirector {
     private final SaveService saveService;
     private boolean wasEnabled;
 
     WaveLinkService() {
         super(false);
         saveService = null;
+    }
+
+    @Override
+    public boolean handleFocusVolumeRequest(String targetProcess, float volume) {
+        var channelId = findChannelIdForFocusApp();
+        if (channelId.isPresent()) {
+            setChannelLevel(channelId.get(), volume);
+            return true;
+        }
+        return false;
     }
 
     @Inject
@@ -85,10 +94,10 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
             return Optional.empty();
         }
         return StreamEx.ofValues(getChannels())
-                .mapToEntry(WaveLinkChannel::apps).flatMapValues(Collection::stream)
-                .filterValues(app -> focusApp.id().equals(app.id()))
-                .keys()
-                .map(WaveLinkChannel::id).findFirst();
+                       .mapToEntry(WaveLinkChannel::apps).flatMapValues(Collection::stream)
+                       .filterValues(app -> focusApp.id().equals(app.id()))
+                       .keys()
+                       .map(WaveLinkChannel::id).findFirst();
     }
 
     @Override

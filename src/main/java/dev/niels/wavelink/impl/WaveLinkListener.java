@@ -154,7 +154,7 @@ public class WaveLinkListener implements Listener {
         var result = new CompletableFuture<R>();
         synchronized (pendingRequests) {
             message.setId(nextSendId++);
-            pendingRequests.put(message.getId(), new PendingRequest(message.getResultClass(), result));
+            pendingRequests.put(message.getId(), new PendingRequest(message, message.getResultClass(), result));
         }
         var messageText = mapper.writeValueAsString(message);
         log.debug("Sending: {}", messageText);
@@ -171,6 +171,6 @@ public class WaveLinkListener implements Listener {
         return socket;
     }
 
-    record PendingRequest(Class<?> resultClass, CompletableFuture<?> future) {
+    record PendingRequest(WaveLinkJsonRpcCommand<?, ?> request, Class<?> resultClass, CompletableFuture<?> future) {
     }
 }

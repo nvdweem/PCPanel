@@ -18,11 +18,10 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-
-import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -344,7 +343,8 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
         if (existing == null) {
             return params;
         }
-        return params.withImage(existing.image());
+        return params.withImage(existing.image())
+                     .withApps(existing.apps());
     }
 
     private int getWaveLinkPort() {

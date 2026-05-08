@@ -1,38 +1,36 @@
 package com.getpcpanel.volume;
 
-import static com.getpcpanel.volume.FocusVolumeEventType.process;
-import static com.getpcpanel.volume.FocusVolumeEventType.wavelinkChannel;
-
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.getpcpanel.cpp.ISndCtrl;
-import com.getpcpanel.volume.FocusVolumeEvent.FocusVolumeTarget;
-import com.getpcpanel.wavelink.WaveLinkService;
 
 import io.quarkus.arc.Unremovable;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
+import one.util.streamex.StreamEx;
 
 @Log4j2
 @Unremovable
 @ApplicationScoped
 public class VolumeCoordinatorService {
     @Inject ISndCtrl sndCtrl;
-    @Inject WaveLinkService waveLinkService;
+    @Inject Instance<IFocusRedirector> focusRedirectors;
+
     private final List<FocusVolumeListener> focusVolumeListeners = new CopyOnWriteArrayList<>();
 
     public void setFocusVolume(double value) {
-        var channelId = waveLinkService.findChannelIdForFocusApp();
+        var application = sndCtrl.getFocusApplication();
         var floatValue = (float) value;
-        if (channelId.isPresent()) {
-            notifyFocusVolumeListeners(new FocusVolumeEvent(new FocusVolumeTarget(wavelinkChannel, channelId.get()), floatValue));
-            waveLinkService.setChannelLevel(channelId.get(), value);
-        } else {
-            notifyFocusVolumeListeners(new FocusVolumeEvent(new FocusVolumeTarget(process, sndCtrl.getFocusApplication()), floatValue));
-            sndCtrl.setFocusVolume(floatValue);
-        }
+
+        StreamEx.of(focusRedirectors.handlesStream())
+                .findFirst(fr -> fr.get().handleFocusVolumeRequest(application, floatValue))
+                .ifPresentOrElse(
+                        handler -> log.trace("Focus volume request for {} handled by {}", application, handler.getClass().getSimpleName()),
+                        () -> sndCtrl.setFocusVolume(floatValue)
+                );
     }
 
     public void addFocusVolumeListener(FocusVolumeListener listener) {
