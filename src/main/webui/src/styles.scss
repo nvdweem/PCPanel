@@ -77,3 +77,28 @@ app-root {
 mat-form-field, mat-checkbox {
   width: 100%;
 }
+
+// Vertical tabs
+[matVertical] {
+  .mat-mdc-tab-group, &.mat-mdc-tab-group {
+    flex-direction: row;
+  }
+
+  .mat-mdc-tab-labels {
+    flex-direction: column;
+  }
+
+  .mat-mdc-ink-bar {
+    height: 100%;
+    left: 98% !important;
+  }
+
+  .mat-mdc-tab-body-wrapper {
+    flex: 1 1 auto;
+  }
+
+  .mat-mdc-tab-label-container {
+    border-bottom: 0;
+    border-right: 1px solid var(--mat-sys-surface-variant);
+  }
+}

@@ -1,6 +1,6 @@
 <h2 mat-dialog-title>{{ data.title }}</h2>
 <mat-dialog-content>
-  <mat-tab-group>
+  <mat-tab-group matVertical>
     @if (form.button) {
       <mat-tab label="Click">
         <app-commands type="button" [commands]="form.button"/>
