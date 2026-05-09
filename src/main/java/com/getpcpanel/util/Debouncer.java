@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import org.springframework.stereotype.Service;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
@@ -17,7 +17,7 @@ import io.reactivex.internal.schedulers.ExecutorScheduler;
 import io.reactivex.subjects.PublishSubject;
 import jakarta.annotation.PreDestroy;
 
-@Service
+@ApplicationScoped
 public class Debouncer {
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private final ExecutorScheduler rxScheduler = new ExecutorScheduler(scheduler, false);

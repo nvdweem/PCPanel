@@ -1,0 +1,67 @@
+.device-page {
+  min-height: 100vh;
+  background: #25262a;
+  color: #e0e0e0;
+}
+
+.page-toolbar {
+  gap: 8px;
+  .device-title { font-size: 1rem; cursor: pointer; &:hover { color: #ffc940; } }
+  .device-subtitle { font-size: 0.78rem; color: #9a9a9a; margin-left: 8px; }
+  .spacer { flex: 1; }
+  .name-field {
+    width: 240px;
+    .mat-mdc-form-field-subscript-wrapper { display: none; }
+  }
+}
+
+.page-body {
+  padding: 1.5rem 2rem;
+  max-width: 960px;
+  margin: 0 auto;
+
+  h3 {
+    font-size: 0.85rem;
+    color: #9a9a9a;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 1.5rem 0 0.75rem;
+  }
+}
+
+.profiles-section .profile-list {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.control-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+.control-card {
+  cursor: pointer;
+  background: #1c1d20 !important;
+  border: 1px solid #3b3c41;
+  transition: border-color 0.15s;
+  &:hover { border-color: #ffc940; }
+
+  mat-card-content {
+    font-size: 0.82rem;
+    color: #9a9a9a;
+    padding: 0 16px 8px;
+    min-height: 2rem;
+  }
+}
+
+.hint { color: #666; padding: 2rem; text-align: center; }
+
+.loading-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}

@@ -1,10 +1,9 @@
 package com.getpcpanel;
 
-import org.springframework.stereotype.Service;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import lombok.RequiredArgsConstructor;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 
@@ -12,10 +11,10 @@ import lombok.extern.log4j.Log4j2;
  * Jackson wrapper
  */
 @Log4j2
-@Service
-@RequiredArgsConstructor
+@ApplicationScoped
 public final class Json {
-    private final ObjectMapper mapper;
+    @Inject
+    ObjectMapper mapper;
 
     @SneakyThrows
     public String write(Object o) {

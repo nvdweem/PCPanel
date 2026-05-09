@@ -6,7 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.getpcpanel.MainFX;
+import com.getpcpanel.util.CdiHelper;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.cpp.windows.SndCtrlWindows;
 import com.sun.jna.platform.win32.BaseTSD;
@@ -92,7 +92,7 @@ public class CommandMedia extends Command implements ButtonAction {
 
     private WinDef.HWND findSpotify() {
         var result = new WinDef.HWND[] { null };
-        var pidIsSpotify = StreamEx.of(MainFX.getBean(SndCtrlWindows.class).getRunningApplications()).mapToEntry(ISndCtrl.RunningApplication::pid, ra -> StringUtils.equalsIgnoreCase("spotify.exe", ra.file().getName())).distinctKeys().toMap();
+        var pidIsSpotify = StreamEx.of(CdiHelper.getBean(SndCtrlWindows.class).getRunningApplications()).mapToEntry(ISndCtrl.RunningApplication::pid, ra -> StringUtils.equalsIgnoreCase("spotify.exe", ra.file().getName())).distinctKeys().toMap();
         User32.INSTANCE.EnumWindows((hWnd, data) -> {
             var target = new IntByReference();
             User32.INSTANCE.GetWindowThreadProcessId(hWnd, target);

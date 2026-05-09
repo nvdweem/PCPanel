@@ -6,6 +6,7 @@ import static com.getpcpanel.mqtt.MqttTopicHelper.ColorType.logo;
 import static com.getpcpanel.mqtt.MqttTopicHelper.ColorType.slider;
 import static com.getpcpanel.mqtt.MqttTopicHelper.ValueType.brightness;
 import static com.getpcpanel.util.Util.parseColor;
+import static com.getpcpanel.util.Util.parseColorComponents;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -16,40 +17,52 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.apache.logging.log4j.util.TriConsumer;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Service;
 
 import com.getpcpanel.device.Device;
-import com.getpcpanel.profile.LightingConfig;
-import com.getpcpanel.profile.SingleKnobLightingConfig;
-import com.getpcpanel.profile.SingleLogoLightingConfig;
-import com.getpcpanel.profile.SingleSliderLabelLightingConfig;
-import com.getpcpanel.profile.SingleSliderLightingConfig;
-import com.getpcpanel.ui.HomePage;
+import com.getpcpanel.device.GlobalBrightnessChangedEvent;
+import com.getpcpanel.mqtt.MqttTopicHelper.ColorType;
+import com.getpcpanel.mqtt.MqttTopicHelper.DeviceMqttTopicHelper;
+import com.getpcpanel.profile.dto.LightingConfig;
+import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
+import com.getpcpanel.profile.dto.SingleKnobLightingConfig.SINGLE_KNOB_MODE;
+import com.getpcpanel.profile.dto.SingleLogoLightingConfig;
+import com.getpcpanel.profile.dto.SingleLogoLightingConfig.SINGLE_LOGO_MODE;
+import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig;
+import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig.SINGLE_SLIDER_LABEL_MODE;
+import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
+import com.getpcpanel.profile.dto.SingleSliderLightingConfig.SINGLE_SLIDER_MODE;
 import com.getpcpanel.util.coloroverride.ColorOverrideHolder;
 import com.getpcpanel.util.coloroverride.IOverrideColorProvider;
 import com.getpcpanel.util.coloroverride.IOverrideColorProviderProvider;
 
-import javafx.scene.paint.Color;
-import lombok.RequiredArgsConstructor;
+import jakarta.annotation.Priority;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-@Service
-@Order(1)
-@RequiredArgsConstructor
+@ApplicationScoped
+@Priority(1)
 public class MqttDeviceColorService implements IOverrideColorProviderProvider {
+
+    @FunctionalInterface
+    interface TriFunction<A, B, C, R> {
+        R apply(A a, B b, C c);
+    }
+
     public static final String EFFECT_NONE = "none";
     public static final String EFFECT_STOP_OVERRIDE = "stop_override";
 
-    private final MqttService mqtt;
-    private final MqttTopicHelper mqttTopicHelper;
+    @Inject
+    MqttService mqtt;
+    @Inject
+    MqttTopicHelper mqttTopicHelper;
     private final ColorOverrideHolder colorOverrideHolder = new MqttColorOverrideHolder();
-    private final ApplicationEventPublisher applicationEventPublisher;
+    @Inject
+    Event<Object> eventBus;
 
     @Override
     public IOverrideColorProvider getOverrideColorProvider() {
@@ -59,10 +72,10 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
     public void sendColor(String topic, @Nonnull String colorString, boolean immediate) {
         mqtt.send(topic, colorString, immediate);
 
-        var setColor = parseColor(colorString).orElse(Color.BLACK);
-        var r = Math.round(setColor.getRed() * 255);
-        var g = Math.round(setColor.getGreen() * 255);
-        var b = Math.round(setColor.getBlue() * 255);
+        var colorComponents = parseColorComponents(colorString);
+        int r = colorComponents != null ? colorComponents[0] : 0;
+        int g = colorComponents != null ? colorComponents[1] : 0;
+        int b = colorComponents != null ? colorComponents[2] : 0;
 
         // Home assistant seems to think that the brightness is the highest value of the RGB
         var brightness = Math.max(r, Math.max(g, b));
@@ -80,20 +93,23 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
     public void buildSubscriptions(Device device, LightingConfig lighting) {
         var topicHelper = mqttTopicHelper.device(device.getSerialNumber());
         Runnable andThen = () -> device.setLighting(lighting, true);
-        TriConsumer<Integer, String, SingleKnobLightingConfig> knobOverride = (idx, payload, knob) -> {
-            colorOverrideHolder.setDialOverride(device.getSerialNumber(), idx, new SingleKnobLightingConfig().setMode(SingleKnobLightingConfig.SINGLE_KNOB_MODE.STATIC).setColor1(payload));
+        TriFunction<Integer, String, SingleKnobLightingConfig, SingleKnobLightingConfig> knobOverride = (idx, payload, knob) -> {
+            colorOverrideHolder.setDialOverride(device.getSerialNumber(), idx, new SingleKnobLightingConfig().setMode(SINGLE_KNOB_MODE.STATIC).setColor1(payload));
             andThen.run();
+            return null;
         };
-        TriConsumer<Integer, String, SingleSliderLightingConfig> sliderOverride = (idx, payload, knob) -> {
-            colorOverrideHolder.setSliderOverride(device.getSerialNumber(), idx, new SingleSliderLightingConfig().setMode(SingleSliderLightingConfig.SINGLE_SLIDER_MODE.STATIC).setColor1(payload));
+        TriFunction<Integer, String, SingleSliderLightingConfig, SingleSliderLightingConfig> sliderOverride = (idx, payload, knob) -> {
+            colorOverrideHolder.setSliderOverride(device.getSerialNumber(), idx, new SingleSliderLightingConfig().setMode(SINGLE_SLIDER_MODE.STATIC).setColor1(payload));
             andThen.run();
+            return null;
         };
-        TriConsumer<Integer, String, SingleSliderLabelLightingConfig> sliderLabelOverride = (idx, payload, knob) -> {
-            colorOverrideHolder.setSliderLabelOverride(device.getSerialNumber(), idx, new SingleSliderLabelLightingConfig().setMode(SingleSliderLabelLightingConfig.SINGLE_SLIDER_LABEL_MODE.STATIC).setColor(payload));
+        TriFunction<Integer, String, SingleSliderLabelLightingConfig, SingleSliderLabelLightingConfig> sliderLabelOverride = (idx, payload, knob) -> {
+            colorOverrideHolder.setSliderLabelOverride(device.getSerialNumber(), idx, new SingleSliderLabelLightingConfig().setMode(SINGLE_SLIDER_LABEL_MODE.STATIC).setColor(payload));
             andThen.run();
+            return null;
         };
         Consumer<String> logoOverride = payload -> {
-            colorOverrideHolder.setLogoOverride(device.getSerialNumber(), new SingleLogoLightingConfig().setMode(SingleLogoLightingConfig.SINGLE_LOGO_MODE.STATIC).setColor(payload));
+            colorOverrideHolder.setLogoOverride(device.getSerialNumber(), new SingleLogoLightingConfig().setMode(SINGLE_LOGO_MODE.STATIC).setColor(payload));
             andThen.run();
         };
 
@@ -101,20 +117,20 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
             var newBrightness = NumberUtils.toInt(payload, 100);
             lighting.setGlobalBrightness(newBrightness);
             andThen.run();
-            applicationEventPublisher.publishEvent(new HomePage.GlobalBrightnessChangedEvent(this, device.getSerialNumber(), newBrightness));
+            eventBus.fire(new GlobalBrightnessChangedEvent(device.getSerialNumber(), newBrightness));
         });
-        subscribeToColors(lighting.getKnobConfigs(), topicHelper, dial, knobOverride, idx -> device.getLightingConfig().getKnobConfigs()[idx].getColor1());
-        subscribeToColors(lighting.getSliderConfigs(), topicHelper, slider, sliderOverride, idx -> device.getLightingConfig().getSliderConfigs()[idx].getColor1());
-        subscribeToColors(lighting.getSliderLabelConfigs(), topicHelper, label, sliderLabelOverride, idx -> device.getLightingConfig().getSliderLabelConfigs()[idx].getColor());
-        if (lighting.getLogoConfig() != null) {
-            subscribeToColor(topicHelper.lightTopic(logo, 0), logoOverride, () -> device.getLightingConfig().getLogoConfig().getColor());
+        subscribeToColors(lighting.knobConfigs(), topicHelper, dial, knobOverride, idx -> device.lightingConfig().knobConfigs()[idx].getColor1());
+        subscribeToColors(lighting.sliderConfigs(), topicHelper, slider, sliderOverride, idx -> device.lightingConfig().sliderConfigs()[idx].getColor1());
+        subscribeToColors(lighting.sliderLabelConfigs(), topicHelper, label, sliderLabelOverride, idx -> device.lightingConfig().sliderLabelConfigs()[idx].getColor());
+        if (lighting.logoConfig() != null) {
+            subscribeToColor(topicHelper.lightTopic(logo, 0), logoOverride, () -> device.lightingConfig().logoConfig().getColor());
         }
     }
 
-    private <T> void subscribeToColors(T[] items, MqttTopicHelper.DeviceMqttTopicHelper topicHelper, MqttTopicHelper.ColorType type, TriConsumer<Integer, String, T> consumer, Function<Integer, String> currentColorSupplier) {
+    private <T> void subscribeToColors(T[] items, DeviceMqttTopicHelper topicHelper, ColorType type, TriFunction<Integer, String, T, T> consumer, Function<Integer, String> currentColorSupplier) {
         EntryStream.of(items).forKeyValue((idx, knob) -> {
             var topic = topicHelper.lightTopic(type, idx);
-            subscribeToColor(topic, payload -> consumer.accept(idx, payload, knob), () -> currentColorSupplier.apply(idx));
+            subscribeToColor(topic, payload -> consumer.apply(idx, payload, knob), () -> currentColorSupplier.apply(idx));
         });
     }
 
@@ -135,7 +151,7 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
                 return;
             }
 
-            color.fromColor(setColor.get());
+            color.fromHex(setColor.get());
             colorOverrider.accept(publish);
         });
 
@@ -240,12 +256,17 @@ public class MqttDeviceColorService implements IOverrideColorProviderProvider {
         int blue = 255;
         int brightness = 255;
 
-        @SuppressWarnings("NumericCastThatLosesPrecision")
-        public void fromColor(Color color) {
-            red = (int) Math.round(color.getRed() * 255);
-            green = (int) Math.round(color.getGreen() * 255);
-            blue = (int) Math.round(color.getBlue() * 255);
-            brightness = 255;
+        public void fromHex(String hex) {
+            if (hex == null)
+                return;
+            try {
+                String h = hex.startsWith("#") ? hex.substring(1) : hex;
+                red = Integer.parseInt(h.substring(0, 2), 16);
+                green = Integer.parseInt(h.substring(2, 4), 16);
+                blue = Integer.parseInt(h.substring(4, 6), 16);
+                brightness = 255;
+            } catch (Exception ignored) {
+            }
         }
 
         public String toColorString() {

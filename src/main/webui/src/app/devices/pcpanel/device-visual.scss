@@ -1,0 +1,42 @@
+.device-svg {
+  width: 100%;
+  height: 100%;
+  max-height: 100%;
+  overflow: visible;
+  display: block;
+}
+
+/* ── Lighting animation keyframes ────────────────────────────────────────── */
+
+@keyframes hue-cycle {
+  from { filter: hue-rotate(0deg); }
+  to   { filter: hue-rotate(360deg); }
+}
+
+@keyframes hue-cycle-reverse {
+  from { filter: hue-rotate(0deg); }
+  to   { filter: hue-rotate(-360deg); }
+}
+
+/* Wave bounce: center hue oscillates ±0.18 hue units = ±64.8° */
+@keyframes hue-bounce {
+  0%   { filter: hue-rotate(0deg); }
+  25%  { filter: hue-rotate(64.8deg); }
+  50%  { filter: hue-rotate(0deg); }
+  75%  { filter: hue-rotate(-64.8deg); }
+  100% { filter: hue-rotate(0deg); }
+}
+
+@keyframes breath-pulse {
+  0%, 100% { filter: brightness(var(--breath-min, 0.18)); }
+  50%      { filter: brightness(1); }
+}
+
+/* ── Animation utility classes (duration/min driven by CSS custom props) ─── */
+
+.anim-rainbow         { animation: hue-cycle         var(--anim-duration, 10s) infinite linear; }
+.anim-rainbow-reverse { animation: hue-cycle-reverse  var(--anim-duration, 10s) infinite linear; }
+.anim-wave            { animation: hue-cycle          var(--anim-duration,  5s) infinite linear; }
+.anim-wave-reverse    { animation: hue-cycle-reverse  var(--anim-duration,  5s) infinite linear; }
+.anim-wave-bounce     { animation: hue-bounce         var(--anim-duration,  5s) infinite linear; }
+.anim-breath          { animation: breath-pulse       var(--anim-duration,  3s) infinite ease-in-out; }

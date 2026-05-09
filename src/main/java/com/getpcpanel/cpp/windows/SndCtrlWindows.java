@@ -12,8 +12,6 @@ import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
 
 import com.getpcpanel.cpp.AudioDevice;
 import com.getpcpanel.cpp.AudioDeviceEvent;
@@ -23,22 +21,24 @@ import com.getpcpanel.cpp.EventType;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.cpp.Role;
-import com.getpcpanel.spring.ConditionalOnWindows;
+import com.getpcpanel.platform.WindowsBuild;
 import com.getpcpanel.util.ExtractUtil;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-@Service
-@ConditionalOnWindows
-@RequiredArgsConstructor
+@ApplicationScoped
+@WindowsBuild
 @SuppressWarnings("unused") // Methods are called from JNI
 public class SndCtrlWindows implements ISndCtrl {
-    private final ExtractUtil extractUtil;
-    private final ApplicationEventPublisher eventPublisher;
+    @Inject ExtractUtil extractUtil;
+    @Inject Event<Object> eventBus;
     @GuardedBy("defaults") private final Map<DefaultFor, String> defaults = new HashMap<>();
     @GuardedBy("devices") private final Map<String, WindowsAudioDevice> devices = new HashMap<>();
 
@@ -75,7 +75,7 @@ public class SndCtrlWindows implements ISndCtrl {
     }
 
     @Override
-    public Collection<AudioDevice> getDevices() {
+    public Collection<AudioDevice> devices() {
         synchronized (devices) {
             return Collections.unmodifiableCollection(devices.values());
         }
@@ -202,38 +202,44 @@ public class SndCtrlWindows implements ISndCtrl {
         }
     }
 
-    private AudioDevice deviceAdded(String name, String id, float volume, boolean muted, int dataFlow) {
-        var result = new WindowsAudioDevice(eventPublisher, name, id).volume(volume).muted(muted).dataflow(DataFlow.from(dataFlow));
+    public AudioDevice deviceAdded(String name, String id, float volume, boolean muted, int dataFlow) {
+        var result = new WindowsAudioDevice(eventBus, name, id).volume(volume).muted(muted).dataflow(DataFlow.from(dataFlow));
         synchronized (devices) {
             devices.put(id, result);
         }
         log.trace("Device added: {}", result);
 
-        eventPublisher.publishEvent(new AudioDeviceEvent(result, EventType.ADDED));
+        fireEvent(new AudioDeviceEvent(result, EventType.ADDED));
         return result;
     }
 
-    private void deviceRemoved(String id) {
+    private void fireEvent(Object result) {
+        if (eventBus != null) {
+            eventBus.fire(result);
+        }
+    }
+
+    public void deviceRemoved(String id) {
         log.trace("Device removed: {}", id);
         AudioDevice removed;
         synchronized (devices) {
             removed = devices.remove(id);
         }
         if (removed != null) {
-            eventPublisher.publishEvent(new AudioDeviceEvent(removed, EventType.REMOVED));
+            fireEvent(new AudioDeviceEvent(removed, EventType.REMOVED));
         }
     }
 
-    private void setDefaultDevice(String id, int dataFlow, int role) {
+    public void setDefaultDevice(String id, int dataFlow, int role) {
         synchronized (defaults) {
             defaults.put(DefaultFor.of(dataFlow, role), id);
         }
         log.trace("Default changed: {}: {}", DefaultFor.of(dataFlow, role), id);
     }
 
-    private void focusChanged(String to) {
+    public void focusChanged(String to) {
         log.trace("Focus changed to {}", to);
-        eventPublisher.publishEvent(new WindowFocusChangedEvent(to));
+        fireEvent(new WindowFocusChangedEvent(to));
     }
 
     public Map<DefaultFor, String> getDefaults() {
@@ -266,11 +272,13 @@ public class SndCtrlWindows implements ISndCtrl {
         communicationPlayback(DataFlow.dfRender.ordinal(), Role.roleCommunications.ordinal()),
         communicationRecord(DataFlow.dfCapture.ordinal(), Role.roleCommunications.ordinal());
 
-        public static @Nullable DefaultFor of(DataFlow dataFlow, Role role) {
+        @Nullable
+        public static DefaultFor of(DataFlow dataFlow, Role role) {
             return of(dataFlow.ordinal(), role.ordinal());
         }
 
-        public static @Nullable DefaultFor of(int dataFlow, int role) {
+        @Nullable
+        public static DefaultFor of(int dataFlow, int role) {
             return StreamEx.of(values()).findFirst(d -> d.dataFlow == dataFlow && d.role == role).orElse(null);
         }
 

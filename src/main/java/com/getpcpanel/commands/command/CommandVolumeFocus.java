@@ -2,6 +2,8 @@ package com.getpcpanel.commands.command;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.getpcpanel.volume.VolumeCoordinatorService;
+import com.getpcpanel.util.CdiHelper;
 
 import lombok.Getter;
 import lombok.ToString;
@@ -18,7 +20,7 @@ public class CommandVolumeFocus extends CommandVolume implements DialAction {
 
     @Override
     public void execute(DialActionParameters context) {
-        getSndCtrl().setFocusVolume(context.dial().getValue(this, 0, 1));
+        CdiHelper.getBean(VolumeCoordinatorService.class).setFocusVolume(context.dial().getValue(this, 0, 1));
     }
 
     @Override
@@ -26,3 +28,4 @@ public class CommandVolumeFocus extends CommandVolume implements DialAction {
         return "";
     }
 }
+

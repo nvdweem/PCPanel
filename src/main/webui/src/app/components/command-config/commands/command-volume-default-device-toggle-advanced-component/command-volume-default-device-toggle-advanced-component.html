@@ -1,0 +1,55 @@
+<div>
+  <button mat-raised-button (click)="addDeviceSet()">Add Device Set</button>
+
+  @for (deviceSet of field().devices().value(); track $index; let i = $index) {
+    <div class="device-set">
+      <h3>Device Set {{ i + 1 }}</h3>
+      <button mat-button color="warn" (click)="removeDeviceSet(i)">Remove</button>
+
+      <mat-form-field>
+        <mat-label>Name</mat-label>
+        <input matInput [ngModel]="deviceSet.name" (ngModelChange)="updateDeviceSet(i, 'name', $event)" />
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Media Playback</mat-label>
+        <mat-select [ngModel]="deviceSet.mediaPlayback" (ngModelChange)="updateDeviceSet(i, 'mediaPlayback', $event)">
+          <mat-option value="">None</mat-option>
+          @for (device of devicesService.devices.value(); track device.id) {
+            <mat-option [value]="device.id">{{ device.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Media Record</mat-label>
+        <mat-select [ngModel]="deviceSet.mediaRecord" (ngModelChange)="updateDeviceSet(i, 'mediaRecord', $event)">
+          <mat-option value="">None</mat-option>
+          @for (device of devicesService.devices.value(); track device.id) {
+            <mat-option [value]="device.id">{{ device.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Communication Playback</mat-label>
+        <mat-select [ngModel]="deviceSet.communicationPlayback" (ngModelChange)="updateDeviceSet(i, 'communicationPlayback', $event)">
+          <mat-option value="">None</mat-option>
+          @for (device of devicesService.devices.value(); track device.id) {
+            <mat-option [value]="device.id">{{ device.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Communication Record</mat-label>
+        <mat-select [ngModel]="deviceSet.communicationRecord" (ngModelChange)="updateDeviceSet(i, 'communicationRecord', $event)">
+          <mat-option value="">None</mat-option>
+          @for (device of devicesService.devices.value(); track device.id) {
+            <mat-option [value]="device.id">{{ device.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+  }
+</div>

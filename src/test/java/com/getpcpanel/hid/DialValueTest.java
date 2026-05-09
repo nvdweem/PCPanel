@@ -7,7 +7,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import com.getpcpanel.commands.command.CommandBrightness;
 import com.getpcpanel.commands.command.DialAction.DialCommandParams;
-import com.getpcpanel.profile.KnobSetting;
+import com.getpcpanel.profile.dto.KnobSetting;
 
 class DialValueTest {
 

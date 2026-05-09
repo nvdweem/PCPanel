@@ -1,27 +1,21 @@
 package com.getpcpanel.voicemeeter;
 
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Service;
-
-import com.getpcpanel.commands.AbstractNewXVolumeService;
 import com.getpcpanel.commands.command.CommandVoiceMeeter;
 import com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced;
 import com.getpcpanel.commands.command.CommandVoiceMeeterBasic;
 import com.getpcpanel.hid.DeviceHolder;
-import com.getpcpanel.spring.ConditionalOnWindows;
+import com.getpcpanel.platform.WindowsBuild;
 
-@Service
-@ConditionalOnWindows
-public class VoiceMeeterConnectedVolumeService extends AbstractNewXVolumeService {
-    public VoiceMeeterConnectedVolumeService(DeviceHolder devices, ApplicationEventPublisher eventPublisher) {
-        super(devices, eventPublisher);
-    }
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
 
-    @EventListener(VoiceMeeterConnectedEvent.class)
-    public void onVoiceMeeterConnected() {
-        triggerCommandsOf(CommandVoiceMeeter.class,
-                s -> s.filterValues(cmd -> cmd instanceof CommandVoiceMeeterBasic || cmd instanceof CommandVoiceMeeterAdvanced)
-        );
+@ApplicationScoped
+@WindowsBuild
+public class VoiceMeeterConnectedVolumeService {
+    @Inject DeviceHolder devices;
+
+    public void onVoiceMeeterConnected(@Observes VoiceMeeterConnectedEvent event) {
+        devices.triggerCommandsOf(CommandVoiceMeeter.class, s -> s.filterValues(cmd -> cmd instanceof CommandVoiceMeeterBasic || cmd instanceof CommandVoiceMeeterAdvanced));
     }
 }

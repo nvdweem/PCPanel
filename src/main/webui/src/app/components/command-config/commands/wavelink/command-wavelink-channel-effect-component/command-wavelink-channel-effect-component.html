@@ -1,0 +1,26 @@
+<mat-form-field>
+  <mat-label>Channel</mat-label>
+  <mat-select [formField]="field().channelId">
+    @for (channel of waveLinkService.channels(); track channel.id) {
+      <mat-option [value]="channel.id">{{ channel.name }}</mat-option>
+    }
+  </mat-select>
+</mat-form-field>
+
+<mat-form-field>
+  <mat-label>Effect</mat-label>
+  <mat-select [formField]="field().effectId">
+    @for (effect of currentChannelEffects(); track effect.id) {
+      <mat-option [value]="effect.id">{{ effect.name }}</mat-option>
+    }
+  </mat-select>
+</mat-form-field>
+
+<div>
+  Toggle type:
+  <mat-radio-group [formField]="field().toggleType">
+    @for (type of toggleTypes; track type) {
+      <mat-radio-button [value]="type">{{ type | titlecase }}</mat-radio-button>
+    }
+  </mat-radio-group>
+</div>

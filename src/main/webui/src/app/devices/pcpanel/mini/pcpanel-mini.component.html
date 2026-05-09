@@ -1,0 +1,50 @@
+<svg class="device-svg" viewBox="0 0 600 270" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="mini-knob-outer" x1="0.506" y1="0" x2="0.500" y2="1">
+      <stop offset="0%" stop-color="#3b3b3b"/><stop offset="0.77%" stop-color="#61656b"/>
+      <stop offset="100%" stop-color="#acb4c1"/>
+    </linearGradient>
+    <linearGradient id="mini-knob-inner" x1="0.52" y1="0" x2="0.46" y2="1">
+      <stop offset="0%" stop-color="#acb4c1"/><stop offset="100%" stop-color="#61656b"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ── Device body ────────────────────────────────────────────────────── -->
+  <!-- Inner pane: layoutX=206, layoutY=87, prefW=600, prefH=270, scaleX=1.67, scaleY=1.6 -->
+  <!-- matrix = scale(1.67,1.6) from center(300+206,135+87)=(506,222) → translate(5,6) scale(1.67,1.6) -->
+  <g transform="matrix(1.67,0,0,1.6,5,6)">
+    <path fill="#acb4c1" d="M337.24,0h-283a17.41,17.41,0,0,0-9.9,3.08l-.72.45-.2.14c-.42.24-.83.49-1.23.76L8.34,25.7A17.51,17.51,0,0,0,0,40.59V143a17.53,17.53,0,0,0,17.52,17.51H300.57a17.48,17.48,0,0,0,9.9-3.07c.24-.15,33.56-21.11,33.79-21.27l.19-.13c.43-.24.85-.5,1.25-.77.24-.15.49-.3.72-.46a17.51,17.51,0,0,0,8.34-14.89V17.52A17.54,17.54,0,0,0,337.24,0Z"/>
+    <path fill="rgba(93,96,102,0.5)" d="M352.6,18.88V121.31a17.49,17.49,0,0,1-8.34,14.89c-.21.15-27.59,17.37-32.9,20.71A17.07,17.07,0,0,0,318,143.38V40.24a16.73,16.73,0,0,0-.52-4.15Z"/>
+    <path fill="#212121" d="M315.18,40.24V143.38a14.25,14.25,0,0,1-14.25,14.25H17.16A14.25,14.25,0,0,1,2.91,143.38V40.24A14.25,14.25,0,0,1,17.16,26H300.93a14.24,14.24,0,0,1,14.25,14.25Z"/>
+  </g>
+
+  <!-- ── Knob LED rings ──────────────────────────────────────────────────── -->
+  <g [style.--anim-duration]="animDuration()" [style.--breath-min]="breathMin()">
+    @for (ki of knobIndices; track ki) {
+      <g [attr.transform]="knobRingTransform(ki)">
+        <path [attr.fill]="knobRingColor(ki)" [class]="animClass()" [attr.d]="knobRingPath" opacity="0.9"/>
+      </g>
+    }
+  </g>
+
+  <!-- ── Knobs ─────────────────────────────────────────────────────────── -->
+  @for (ki of knobIndices; track ki) {
+    <g [attr.transform]="knobTransform(ki)" (click)="onDialClick(ki)" style="cursor:pointer">
+      <circle cx="34" cy="36" r="30" opacity="0.25" fill="black"/>
+      <circle cx="30" cy="30" r="30" fill="url(#mini-knob-outer)"/>
+      <circle cx="30" cy="30" r="23" fill="url(#mini-knob-inner)" stroke="#a7aeb7" stroke-width="0.5"/>
+      @if (isActive(ki)) {
+        <circle cx="30" cy="30" r="30" fill="none" stroke="#ffc940" stroke-width="3" opacity="0.9"/>
+      }
+      <g [attr.transform]="'rotate(' + knobAngle(ki) + ',30,30)'">
+        <rect x="28" y="42" width="4" height="10" fill="#3c3f42"/>
+        <circle cx="30" cy="42" r="2" fill="#3c3f42" stroke="#2b2b2b" stroke-width="0.5"/>
+      </g>
+      <text x="30" y="73" text-anchor="middle" font-size="8" fill="#9a9a9a" font-family="sans-serif">{{ label(ki) }}</text>
+      <circle cx="30" cy="30" r="32" fill="transparent"/>
+    </g>
+  }
+
+  <text x="300" y="255" text-anchor="middle" font-family="Arial,sans-serif" font-size="11"
+        letter-spacing="4" fill="rgba(255,255,255,0.35)" font-weight="bold">PCPANEL MINI</text>
+</svg>

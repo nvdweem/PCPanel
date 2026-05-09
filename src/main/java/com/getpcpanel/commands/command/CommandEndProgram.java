@@ -2,7 +2,7 @@ package com.getpcpanel.commands.command;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.getpcpanel.MainFX;
+import com.getpcpanel.util.CdiHelper;
 import com.getpcpanel.util.IPlatformCommand;
 
 import lombok.Getter;
@@ -25,7 +25,7 @@ public class CommandEndProgram extends Command implements ButtonAction {
 
     @Override
     public void execute() {
-        MainFX.getBean(IPlatformCommand.class).kill(specific ? name : IPlatformCommand.FOCUS);
+        CdiHelper.getBean(IPlatformCommand.class).kill(specific ? name : IPlatformCommand.FOCUS);
     }
 
     @Override

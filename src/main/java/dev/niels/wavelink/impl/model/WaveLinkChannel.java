@@ -18,12 +18,24 @@ public record WaveLinkChannel(
         String id,
         @Nullable String name,
         @Nullable String type,
-        @Nullable List<WaveLinkMix> mixes,
+        List<WaveLinkMix> mixes,
         @Nullable Double level,
         @Nullable Boolean isMuted,
-        @Nullable List<WaveLinkApp> apps,
-        @Nullable List<WaveLinkEffect> effects,
+        List<WaveLinkApp> apps,
+        List<WaveLinkEffect> effects,
         @Nullable WaveLinkImage image) implements WithId {
+
+    public WaveLinkChannel {
+        if (mixes == null) {
+            mixes = List.of();
+        }
+        if (apps == null) {
+            apps = List.of();
+        }
+        if (effects == null) {
+            effects = List.of();
+        }
+    }
 
     public WaveLinkChannel blank() {
         return new WaveLinkChannel(id);

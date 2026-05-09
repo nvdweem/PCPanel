@@ -1,19 +1,18 @@
 package com.getpcpanel.mqtt;
 
-import org.springframework.stereotype.Service;
-
-import com.getpcpanel.profile.MqttSettings;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.profile.dto.MqttSettings;
 
-import lombok.RequiredArgsConstructor;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
-@Service
-@RequiredArgsConstructor
+@ApplicationScoped
 class MqttTopicHelper {
-    private final SaveService saveService;
+    @Inject
+    SaveService saveService;
 
     public DeviceMqttTopicHelper device(String deviceSerial) {
         return new DeviceMqttTopicHelper(deviceSerial);
@@ -21,6 +20,10 @@ class MqttTopicHelper {
 
     public String availabilityTopic() {
         return baseJoining("available");
+    }
+
+    public String availabilityTopic(MqttSettings settings) {
+        return baseJoining(settings, "available");
     }
 
     public String baseTopicFilter() {
@@ -47,6 +50,10 @@ class MqttTopicHelper {
         return StreamEx.of(parts).prepend(getSettings().baseTopic()).joining("/");
     }
 
+    private String baseJoining(MqttSettings settings, Object... parts) {
+        return StreamEx.of(parts).prepend(settings.baseTopic()).joining("/");
+    }
+
     private MqttSettings getSettings() {
         return saveService.get().getMqtt();
     }
@@ -67,9 +74,12 @@ class MqttTopicHelper {
         logo,
     }
 
-    @RequiredArgsConstructor
     class DeviceMqttTopicHelper {
         private final String deviceSerial;
+
+        DeviceMqttTopicHelper(String deviceSerial) {
+            this.deviceSerial = deviceSerial;
+        }
 
         public String valueTopic(ValueType type, int index) {
             return MqttTopicHelper.this.valueTopic(deviceSerial, type, index);

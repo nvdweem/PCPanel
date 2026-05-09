@@ -7,12 +7,13 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.annotation.Nonnull;
+
 import javax.annotation.Nullable;
 
-import com.getpcpanel.profile.SingleKnobLightingConfig;
-import com.getpcpanel.profile.SingleLogoLightingConfig;
-import com.getpcpanel.profile.SingleSliderLabelLightingConfig;
-import com.getpcpanel.profile.SingleSliderLightingConfig;
+import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
+import com.getpcpanel.profile.dto.SingleLogoLightingConfig;
+import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig;
+import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
 
 public class ColorOverrideHolder implements IOverrideColorProvider {
     private final Map<String, OverrideColors> overrides = Collections.synchronizedMap(new HashMap<>());

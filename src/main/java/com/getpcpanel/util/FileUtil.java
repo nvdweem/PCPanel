@@ -2,28 +2,34 @@ package com.getpcpanel.util;
 
 import java.io.File;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
+import jakarta.enterprise.context.ApplicationScoped;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Service
-@RequiredArgsConstructor
+@ApplicationScoped
 public class FileUtil {
-    @Value("${application.root}") private final File root;
+    @ConfigProperty(name = "pcpanel.root")
+    String rootPath;
+
+    private File root;
 
     @PostConstruct
     void ensureRoot() {
-        log.info("Using root: {}", root);
+        root = new File(rootPath);
+        log.info("Using root: " + root);
         if (!root.exists() && !root.mkdirs()) {
-            log.error("Unable to create file root: {}", root);
+            log.error("Unable to create file root: " + root);
         }
     }
 
     public File getFile(String file) {
         return new File(root, file);
+    }
+
+    public File getRoot() {
+        return root;
     }
 }

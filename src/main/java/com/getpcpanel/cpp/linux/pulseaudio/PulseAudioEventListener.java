@@ -7,47 +7,54 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.regex.Pattern;
 
-import javax.annotation.Nullable;
-
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Component;
 
+import javax.annotation.Nullable;
+
+import com.getpcpanel.platform.LinuxBuild;
 import com.getpcpanel.util.ProcessHelper;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import lombok.RequiredArgsConstructor;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import io.quarkus.runtime.Startup;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Component
-@ConditionalOnPulseAudio
-@RequiredArgsConstructor
-public class PulseAudioEventListener extends Thread {
-    private final ApplicationEventPublisher eventPublisher;
-    private final ProcessHelper processHelper;
+@Startup
+@Singleton
+@LinuxBuild
+public class PulseAudioEventListener {
+    @Inject
+    Event<Object> eventBus;
+    @Inject
+    ProcessHelper processHelper;
     private final CircularFifoQueue<String> latestEvents = new CircularFifoQueue<>(50);
     private final Pattern numberPattern = Pattern.compile("#(\\d+)");
 
-    private boolean running = true;
+    private volatile boolean running = true;
+    private Thread thread;
 
     @PostConstruct
     public void init() {
-        setName("PulseAudio change listener");
-        setDaemon(true);
-        start();
+        thread = new Thread(this::run, "PulseAudio change listener");
+        thread.setDaemon(true);
+        thread.start();
     }
 
     @PreDestroy
     public void deInit() {
         running = false;
+        if (thread != null) {
+            thread.interrupt();
+        }
     }
 
-    @Override
-    public void run() {
+    private void run() {
         while (running) {
             try {
                 var process = processHelper.builder("pactl", "subscribe").start();
@@ -76,10 +83,10 @@ public class PulseAudioEventListener extends Thread {
                 , "Event 'remove' on sink-input"
                 , "Event 'change' on sink-input")) {
             var m = numberPattern.matcher(line);
-            eventPublisher.publishEvent(new LinuxSessionChangedEvent(m.find() ? NumberUtils.toInt(m.group(1)) : null));
+            eventBus.fire(new LinuxSessionChangedEvent(m.find() ? NumberUtils.toInt(m.group(1)) : null));
         }
         if (StringUtils.containsAnyIgnoreCase(line, "Event 'new' on sink", "Event 'remove' on sink")) {
-            eventPublisher.publishEvent(new LinuxDeviceChangedEvent());
+            eventBus.fire(new LinuxDeviceChangedEvent());
         }
     }
 

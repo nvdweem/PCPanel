@@ -9,9 +9,6 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.context.event.EventListener;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Service;
 
 import com.getpcpanel.commands.command.CommandObsSetSourceVolume;
 import com.getpcpanel.commands.command.CommandVoiceMeeter;
@@ -24,18 +21,19 @@ import com.getpcpanel.cpp.AudioSessionEvent;
 import com.getpcpanel.cpp.EventType;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.hid.DeviceHolder;
-import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.obs.OBS;
 import com.getpcpanel.obs.OBSConnectEvent;
 import com.getpcpanel.obs.OBSMuteEvent;
-import com.getpcpanel.profile.LightingConfig;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.profile.SingleKnobLightingConfig;
-import com.getpcpanel.profile.SingleSliderLabelLightingConfig;
-import com.getpcpanel.profile.SingleSliderLightingConfig;
-import com.getpcpanel.ui.ILightingDialogMuteOverrideHelper;
-import com.getpcpanel.ui.LightingChangedToDefaultEvent;
+import com.getpcpanel.profile.dto.LightingConfig;
+import com.getpcpanel.profile.dto.LightingConfig.LightingMode;
+import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
+import com.getpcpanel.profile.dto.SingleKnobLightingConfig.SINGLE_KNOB_MODE;
+import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig;
+import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig.SINGLE_SLIDER_LABEL_MODE;
+import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
+import com.getpcpanel.profile.dto.SingleSliderLightingConfig.SINGLE_SLIDER_MODE;
 import com.getpcpanel.util.coloroverride.ColorOverrideHolder;
 import com.getpcpanel.util.coloroverride.IOverrideColorProvider;
 import com.getpcpanel.util.coloroverride.IOverrideColorProviderProvider;
@@ -43,7 +41,10 @@ import com.getpcpanel.voicemeeter.VoiceMeeterMuteEvent;
 import com.getpcpanel.voicemeeter.Voicemeeter.ButtonType;
 import com.getpcpanel.voicemeeter.Voicemeeter.ControlType;
 
-import lombok.RequiredArgsConstructor;
+import jakarta.annotation.Priority;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
@@ -52,21 +53,23 @@ import one.util.streamex.StreamEx;
  * Triggers a color change when the device or application that is controlled by the dial/slider is muted/unmuted.
  */
 @Log4j2
-@Service
-@Order(0)
-@RequiredArgsConstructor
+@ApplicationScoped
+@Priority(0)
 public class SetMuteOverrideService implements IOverrideColorProviderProvider {
     private static final Pattern voiceMeeterPattern = Pattern.compile("VoiceMeeter: (Input|Output) (\\d+), (.*)"); // 1: In/Out, 2: Idx, 3: ButtonType
-    private final DeviceHolder devices;
-    private final ISndCtrl sndCtrl;
-    private final SaveService saveService;
-    private final OBS obs;
+    @Inject
+    DeviceHolder devices;
+    @Inject
+    ISndCtrl sndCtrl;
+    @Inject
+    SaveService saveService;
+    @Inject
+    OBS obs;
     private final ColorOverrideHolder colorOverrideHolder = new ColorOverrideHolder();
 
-    @EventListener({ DeviceScanner.DeviceConnectedEvent.class, LightingChangedToDefaultEvent.class })
     public void triggerAll() {
         colorOverrideHolder.clearAllOverrides();
-        for (var device : sndCtrl.getDevices()) {
+        for (var device : sndCtrl.devices()) {
             onAudioDevice(new AudioDeviceEvent(device, EventType.CHANGED));
         }
         for (var sess : sndCtrl.getAllSessions()) {
@@ -75,8 +78,7 @@ public class SetMuteOverrideService implements IOverrideColorProviderProvider {
         updateObs(new OBSConnectEvent(obs.isConnected()));
     }
 
-    @EventListener(OBSConnectEvent.class)
-    public void updateObs(OBSConnectEvent event) {
+    public void updateObs(@Observes OBSConnectEvent event) {
         if (!event.connected()) {
             return;
         }
@@ -84,8 +86,7 @@ public class SetMuteOverrideService implements IOverrideColorProviderProvider {
         EntryStream.of(obs.getSourcesWithMuteState()).mapKeyValue(OBSMuteEvent::new).forEach(this::onObsSource);
     }
 
-    @EventListener
-    public void onObsSource(OBSMuteEvent event) {
+    public void onObsSource(@Observes OBSMuteEvent event) {
         var lcName = event.input();
         handleEvent(
                 dlc -> isFollow(dlc) &&
@@ -93,8 +94,7 @@ public class SetMuteOverrideService implements IOverrideColorProviderProvider {
                 event.muted());
     }
 
-    @EventListener
-    public void onVoiceMeeterSource(VoiceMeeterMuteEvent event) {
+    public void onVoiceMeeterSource(@Observes VoiceMeeterMuteEvent event) {
         var type = event.ct();
         var idx = event.idx();
         var button = event.button();
@@ -105,7 +105,7 @@ public class SetMuteOverrideService implements IOverrideColorProviderProvider {
                         if (voiceMeeterCmd instanceof CommandVoiceMeeterBasic vmBasic) {
                             return vmBasic.getCt() == type && vmBasic.getIndex() == idx;
                         } else if (voiceMeeterCmd instanceof CommandVoiceMeeterAdvanced vmAdv) {
-                            return StringUtils.startsWithIgnoreCase(vmAdv.getFullParam(), type.name() + "[" + idx + "]");
+                            return StringUtils.startsWithIgnoreCase(vmAdv.getFullParam(), type.getName() + "[" + idx + "]");
                         }
                     } else if (StringUtils.isNotBlank(dlc.deviceOrFollow)) {
                         var matcher = voiceMeeterPattern.matcher(dlc.deviceOrFollow);
@@ -122,8 +122,7 @@ public class SetMuteOverrideService implements IOverrideColorProviderProvider {
                 event.state());
     }
 
-    @EventListener
-    public void onAudioSession(AudioSessionEvent event) {
+    public void onAudioSession(@Observes AudioSessionEvent event) {
         var lcName = StringUtils.lowerCase(event.session().executable().getName().toLowerCase());
         handleEvent(
                 dlc -> isFollow(dlc) &&
@@ -131,8 +130,7 @@ public class SetMuteOverrideService implements IOverrideColorProviderProvider {
                 event.session().muted());
     }
 
-    @EventListener
-    public void onAudioDevice(AudioDeviceEvent event) {
+    public void onAudioDevice(@Observes AudioDeviceEvent event) {
         handleEvent(
                 dlc -> isDevice(event, dlc) || (isFollow(dlc) &&
                         dlc.cmd.getCommand(CommandVolumeDevice.class).filter(vd -> sndCtrl.defaultDeviceOnEmpty(vd.getDeviceId()).equals(event.device().id())).isPresent()),
@@ -156,9 +154,9 @@ public class SetMuteOverrideService implements IOverrideColorProviderProvider {
             }
             var device = deviceOpt.get();
             var deviceSave = idDeviceSave.getValue();
-            var profile = deviceSave.ensureCurrentProfile(device.getDeviceType());
-            var mayBeChangedLC = device.getLightingConfig();
-            if (mayBeChangedLC.getLightingMode() != LightingConfig.LightingMode.CUSTOM) {
+            var profile = deviceSave.ensureCurrentProfile(device.deviceType());
+            var mayBeChangedLC = device.lightingConfig();
+            if (mayBeChangedLC.lightingMode() != LightingMode.CUSTOM) {
                 continue;
             }
 
@@ -191,18 +189,26 @@ public class SetMuteOverrideService implements IOverrideColorProviderProvider {
     private List<DeviceLightingCapable> getAllDeviceLightingCapable(String deviceSerial, LightingConfig mayBeChangedLC, Profile profile) {
         var result = new ArrayList<DeviceLightingCapable>();
 
-        var oLightConfig = profile.getLightingConfig();
-        var knobLength = mayBeChangedLC.getKnobConfigs().length;
+        var oLightConfig = profile.lightingConfig();
+        var knobLength = mayBeChangedLC.knobConfigs().length;
+        var oKnobConfigs = oLightConfig.knobConfigs();
+        var oSliderConfigs = oLightConfig.sliderConfigs();
+        var oSliderLabelConfigs = oLightConfig.sliderLabelConfigs();
+
         for (var idxCommand : profile.getDialData().entrySet()) {
             var idx = idxCommand.getKey();
             var command = idxCommand.getValue();
             if (idx < knobLength) {
                 // It's a knob
-                var deviceOrFollow = oLightConfig.getKnobConfigs()[idx].getMuteOverrideDeviceOrFollow();
-                var muteOverrideColor = oLightConfig.getKnobConfigs()[idx].getMuteOverrideColor();
+                if (idx >= oKnobConfigs.length) {
+                    log.warn("knobConfig index {} out of bounds (length {}), skipping", idx, oKnobConfigs.length);
+                    continue;
+                }
+                var deviceOrFollow = oKnobConfigs[idx].getMuteOverrideDeviceOrFollow();
+                var muteOverrideColor = oKnobConfigs[idx].getMuteOverrideColor();
                 if (StringUtils.isNoneBlank(deviceOrFollow, muteOverrideColor)) {
                     Runnable toOriginal = () -> colorOverrideHolder.setDialOverride(deviceSerial, idx, null);
-                    Runnable toMute = () -> colorOverrideHolder.setDialOverride(deviceSerial, idx, new SingleKnobLightingConfig().setMode(SingleKnobLightingConfig.SINGLE_KNOB_MODE.STATIC)
+                    Runnable toMute = () -> colorOverrideHolder.setDialOverride(deviceSerial, idx, new SingleKnobLightingConfig().setMode(SINGLE_KNOB_MODE.STATIC)
                                                                                                                                  .setColor1(muteOverrideColor)
                                                                                                                                  .setMuteOverrideDeviceOrFollow(deviceOrFollow)
                                                                                                                                  .setMuteOverrideColor(muteOverrideColor));
@@ -210,22 +216,26 @@ public class SetMuteOverrideService implements IOverrideColorProviderProvider {
                 }
             } else { // It's a slider with label
                 var slider = idx - knobLength;
-                var sliderDeviceOrFollow = oLightConfig.getSliderConfigs()[slider].getMuteOverrideDeviceOrFollow();
-                var sliderOverride = oLightConfig.getSliderConfigs()[slider].getMuteOverrideColor();
+                if (slider >= oSliderConfigs.length || slider >= oSliderLabelConfigs.length) {
+                    log.warn("sliderConfig index {} out of bounds (sliders={}, labels={}), skipping", slider, oSliderConfigs.length, oSliderLabelConfigs.length);
+                    continue;
+                }
+                var sliderDeviceOrFollow = oSliderConfigs[slider].getMuteOverrideDeviceOrFollow();
+                var sliderOverride = oSliderConfigs[slider].getMuteOverrideColor();
                 if (StringUtils.isNoneBlank(sliderDeviceOrFollow, sliderOverride)) {
                     Runnable toOriginal = () -> colorOverrideHolder.setSliderOverride(deviceSerial, slider, null);
-                    Runnable toMute = () -> colorOverrideHolder.setSliderOverride(deviceSerial, slider, new SingleSliderLightingConfig().setMode(SingleSliderLightingConfig.SINGLE_SLIDER_MODE.STATIC)
+                    Runnable toMute = () -> colorOverrideHolder.setSliderOverride(deviceSerial, slider, new SingleSliderLightingConfig().setMode(SINGLE_SLIDER_MODE.STATIC)
                                                                                                                                         .setColor1(sliderOverride)
                                                                                                                                         .setMuteOverrideDeviceOrFollow(sliderDeviceOrFollow)
                                                                                                                                         .setMuteOverrideColor(sliderOverride));
                     result.add(new DeviceLightingCapable(sliderDeviceOrFollow, command, toOriginal, toMute)); // Slider
                 }
 
-                var labelDeviceOrFollow = oLightConfig.getSliderLabelConfigs()[slider].getMuteOverrideDeviceOrFollow();
-                var labelOverride = oLightConfig.getSliderLabelConfigs()[slider].getMuteOverrideColor();
+                var labelDeviceOrFollow = oSliderLabelConfigs[slider].getMuteOverrideDeviceOrFollow();
+                var labelOverride = oSliderLabelConfigs[slider].getMuteOverrideColor();
                 if (StringUtils.isNoneBlank(labelDeviceOrFollow, labelOverride)) {
                     Runnable toOriginal = () -> colorOverrideHolder.setSliderLabelOverride(deviceSerial, slider, null);
-                    Runnable toMute = () -> colorOverrideHolder.setSliderLabelOverride(deviceSerial, slider, new SingleSliderLabelLightingConfig().setMode(SingleSliderLabelLightingConfig.SINGLE_SLIDER_LABEL_MODE.STATIC)
+                    Runnable toMute = () -> colorOverrideHolder.setSliderLabelOverride(deviceSerial, slider, new SingleSliderLabelLightingConfig().setMode(SINGLE_SLIDER_LABEL_MODE.STATIC)
                                                                                                                                                   .setColor(labelOverride)
                                                                                                                                                   .setMuteOverrideDeviceOrFollow(labelDeviceOrFollow)
                                                                                                                                                   .setMuteOverrideColor(labelOverride));

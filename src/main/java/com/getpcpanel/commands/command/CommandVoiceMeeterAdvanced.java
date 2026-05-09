@@ -2,7 +2,7 @@ package com.getpcpanel.commands.command;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.getpcpanel.MainFX;
+import com.getpcpanel.util.CdiHelper;
 import com.getpcpanel.voicemeeter.Voicemeeter;
 
 import lombok.Getter;
@@ -30,7 +30,7 @@ public class CommandVoiceMeeterAdvanced extends CommandVoiceMeeter implements Di
         if (ct == null) {
             return;
         }
-        var voiceMeeter = MainFX.getBean(Voicemeeter.class);
+        var voiceMeeter = CdiHelper.getBean(Voicemeeter.class);
         if (voiceMeeter.login()) {
             voiceMeeter.controlLevel(fullParam, ct, context.dial().getValue(this));
         }

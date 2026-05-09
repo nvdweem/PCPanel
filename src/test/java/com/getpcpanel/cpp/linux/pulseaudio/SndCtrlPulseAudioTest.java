@@ -7,6 +7,8 @@ import java.util.Map;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import com.getpcpanel.cpp.linux.pulseaudio.PulseAudioWrapper.PulseAudioTarget;
+
 class SndCtrlPulseAudioTest {
 
     @CsvSource(value = {
@@ -16,9 +18,9 @@ class SndCtrlPulseAudioTest {
     }, delimiter = ';')
     @ParameterizedTest
     void extractVolume(float expected, String input) {
-        var sut = new SndCtrlPulseAudio(null, null, null);
+        var sut = new SndCtrlPulseAudio();
 
-        var pa = PulseAudioWrapper.PulseAudioTarget.builder().metas(Map.of("Volume", input)).build();
+        var pa = PulseAudioTarget.builder().metas(Map.of("Volume", input)).build();
         var volume = sut.extractVolume(pa);
         assertEquals(expected, volume);
     }

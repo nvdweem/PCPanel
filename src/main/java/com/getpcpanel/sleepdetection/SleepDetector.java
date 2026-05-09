@@ -1,36 +1,35 @@
 package com.getpcpanel.sleepdetection;
 
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Service;
-
 import com.getpcpanel.device.Device;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.hid.OutputInterpreter;
-import com.getpcpanel.profile.LightingConfig;
+import com.getpcpanel.profile.dto.LightingConfig;
+import com.getpcpanel.sleepdetection.WindowsSystemEventService.WindowsSystemEvent;
 
-import jakarta.annotation.PostConstruct;
-import javafx.application.Platform;
-import javafx.scene.paint.Color;
-import lombok.RequiredArgsConstructor;
+import io.quarkus.runtime.ShutdownEvent;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Service
-@RequiredArgsConstructor
+@ApplicationScoped
 public final class SleepDetector {
-    private static final LightingConfig ALL_OFF = LightingConfig.createAllColor(Color.BLACK);
-    private final DeviceScanner deviceScanner;
-    private final OutputInterpreter outputInterpreter;
-    private final DeviceHolder devices;
+    private static final LightingConfig ALL_OFF = LightingConfig.createAllColor("#000000");
 
-    @PostConstruct
-    public void init() {
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> onSuspended(true), "Shutdown SleepDetector Hook Thread"));
+    @Inject
+    DeviceScanner deviceScanner;
+    @Inject
+    OutputInterpreter outputInterpreter;
+    @Inject
+    DeviceHolder devices;
+
+    public void onShutdown(@Observes ShutdownEvent event) {
+        onSuspended(true);
     }
 
-    @EventListener
-    public void onEvent(WindowsSystemEventService.WindowsSystemEvent event) {
+    public void onEvent(@Observes WindowsSystemEvent event) {
         switch (event.type()) {
             case goingToSuspend, locked -> onSuspended(false);
             case resumedFromSuspend, unlocked -> onResumed();
@@ -41,20 +40,17 @@ public final class SleepDetector {
         Runnable r = () -> {
             for (var device : devices.values()) {
                 log.debug("Pause: {}", device.getSerialNumber());
-                outputInterpreter.sendLightingConfig(device.getSerialNumber(), device.getDeviceType(), ALL_OFF, true);
-
+                outputInterpreter.sendLightingConfig(device.getSerialNumber(), device.deviceType(), ALL_OFF, true);
                 if (shutdown) {
                     waitUntilEmptyPrioQueue(device);
                 }
             }
-            if (shutdown)
-                deviceScanner.close();
         };
 
         if (shutdown) {
             r.run();
         } else {
-            Platform.runLater(r);
+            new Thread(r, "SleepDetector-suspend").start();
         }
         log.info("Stopped sleep detector");
     }
@@ -73,11 +69,9 @@ public final class SleepDetector {
     }
 
     private void onResumed() {
-        Platform.runLater(() -> {
-            for (var device : devices.values()) {
-                log.info("RESUME: {}", device.getSerialNumber());
-                outputInterpreter.sendLightingConfig(device.getSerialNumber(), device.getDeviceType(), device.getLightingConfig(), true);
-            }
-        });
+        for (var device : devices.values()) {
+            log.info("RESUME: {}", device.getSerialNumber());
+            outputInterpreter.sendLightingConfig(device.getSerialNumber(), device.deviceType(), device.lightingConfig(), true);
+        }
     }
 }

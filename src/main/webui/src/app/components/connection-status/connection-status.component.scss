@@ -1,0 +1,41 @@
+.connection-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  line-height: 1.3;
+  border: 1px solid transparent;
+  white-space: nowrap;
+
+  .connection-icon {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+  }
+}
+
+.state-connected {
+  color: #7edb96;
+  background: rgba(56, 142, 60, 0.2);
+  border-color: rgba(126, 219, 150, 0.45);
+}
+
+.state-reconnecting {
+  color: #ffcf70;
+  background: rgba(255, 193, 7, 0.16);
+  border-color: rgba(255, 207, 112, 0.45);
+}
+
+.state-error {
+  color: #ff8a80;
+  background: rgba(211, 47, 47, 0.2);
+  border-color: rgba(255, 138, 128, 0.45);
+}
+
+.state-connecting {
+  color: #9ad0ff;
+  background: rgba(25, 118, 210, 0.16);
+  border-color: rgba(154, 208, 255, 0.45);
+}

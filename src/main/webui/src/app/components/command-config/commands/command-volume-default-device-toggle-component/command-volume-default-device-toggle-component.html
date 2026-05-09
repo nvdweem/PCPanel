@@ -1,0 +1,13 @@
+<div>
+  <p>Select devices to toggle between:</p>
+  @for (device of devicesService.devices.value(); track device.id) {
+    <div>
+      <input
+        type="checkbox"
+        [checked]="isDeviceSelected(device.id)"
+        (change)="toggleDevice(device.id, $any($event.target).checked)"
+      />
+      {{ device.name }}
+    </div>
+  }
+</div>

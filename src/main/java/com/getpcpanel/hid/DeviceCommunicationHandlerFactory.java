@@ -1,24 +1,26 @@
 package com.getpcpanel.hid;
 
 import org.hid4java.HidDevice;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.profile.SaveService;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-@Service
-@RequiredArgsConstructor
+@ApplicationScoped
 public class DeviceCommunicationHandlerFactory {
-    private final ApplicationEventPublisher eventPublisher;
-    private final DeviceScanner deviceScanner;
-    private final SaveService saveService;
+    @Inject
+    Event<Object> eventBus;
+    @Inject
+    DeviceScanner deviceScanner;
+    @Inject
+    SaveService saveService;
 
     public DeviceCommunicationHandler build(String key, HidDevice device, DeviceType deviceType) {
-        return new DeviceCommunicationHandler(deviceScanner, eventPublisher, saveService, key, device, deviceType);
+        return new DeviceCommunicationHandler(deviceScanner, saveService, eventBus, key, device, deviceType);
     }
 }

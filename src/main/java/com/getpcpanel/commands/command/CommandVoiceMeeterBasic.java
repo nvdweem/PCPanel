@@ -2,7 +2,7 @@ package com.getpcpanel.commands.command;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.getpcpanel.MainFX;
+import com.getpcpanel.util.CdiHelper;
 import com.getpcpanel.voicemeeter.Voicemeeter;
 
 import lombok.Getter;
@@ -30,7 +30,7 @@ public class CommandVoiceMeeterBasic extends CommandVoiceMeeter implements DialA
 
     @Override
     public void execute(DialActionParameters context) {
-        var voiceMeeter = MainFX.getBean(Voicemeeter.class);
+        var voiceMeeter = CdiHelper.getBean(Voicemeeter.class);
         if (voiceMeeter.login()) {
             voiceMeeter.controlLevel(ct, index, dt, context.dial().getValue(this));
         }

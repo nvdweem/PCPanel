@@ -1,0 +1,16 @@
+<mat-dialog-content>
+  <div class="dial-params">
+    <mat-checkbox [formField]="form.invert">Invert</mat-checkbox>
+    <mat-form-field appearance="outline">
+      <mat-label>Move start (0–100)</mat-label>
+      <input matInput type="number" [formField]="form.moveStart" placeholder="0" />
+    </mat-form-field>
+    <mat-form-field appearance="outline">
+      <mat-label>Move end (0–100)</mat-label>
+      <input matInput type="number" [formField]="form.moveEnd" placeholder="100" />
+    </mat-form-field>
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button matButton cdkFocusInitial matDialogClose>Ok</button>
+</mat-dialog-actions>

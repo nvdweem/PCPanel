@@ -2,10 +2,10 @@ package com.getpcpanel.util.coloroverride;
 
 import java.util.Optional;
 
-import com.getpcpanel.profile.SingleKnobLightingConfig;
-import com.getpcpanel.profile.SingleLogoLightingConfig;
-import com.getpcpanel.profile.SingleSliderLabelLightingConfig;
-import com.getpcpanel.profile.SingleSliderLightingConfig;
+import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
+import com.getpcpanel.profile.dto.SingleLogoLightingConfig;
+import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig;
+import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
 
 public interface IOverrideColorProvider {
     Optional<SingleKnobLightingConfig> getDialOverride(String deviceSerial, int dial);

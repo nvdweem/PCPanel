@@ -1,0 +1,34 @@
+<div>
+  <button mat-raised-button (click)="addProcess()">Add Process</button>
+
+  @for (process of field().processName().value(); track $index; let i = $index) {
+    <div>
+      <mat-form-field>
+        <mat-label>Process</mat-label>
+        <input matInput type="text" [ngModel]="process" (ngModelChange)="updateProcess(i, $event)" [matAutocomplete]="processAuto" />
+      </mat-form-field>
+      <mat-autocomplete #processAuto>
+        @for (p of devicesService.uniqueProcesses(); track p.pid) {
+          <mat-option [value]="p.name">{{ p.name }}</mat-option>
+        }
+      </mat-autocomplete>
+      <button mat-button color="warn" (click)="removeProcess(i)">Remove</button>
+    </div>
+  }
+</div>
+
+<div>
+  <mat-form-field>
+    <mat-label>Device</mat-label>
+    <mat-select [formField]="field().device">
+      <mat-option value="">Default</mat-option>
+      @for (device of devicesService.devices.value(); track device.id) {
+        <mat-option [value]="device.id">{{ device.name }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</div>
+
+<div>
+  <mat-checkbox [formField]="field().unMuteOnVolumeChange">Unmute on volume change</mat-checkbox>
+</div>

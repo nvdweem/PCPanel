@@ -45,5 +45,13 @@ manually copy the settings file:
 to
 `%userprofile%\.pcpanel\profiles.json`
 
+# Generate reachability metadata
+
+```shell
+mvn test "-DargLine=-agentlib:native-image-agent=config-output-dir=src/main/resources/META-INF/native-image/ -Djava.awt.headless=false"
+mvn test "-DargLine=-Dnative -Dquarkus.native.agent-configuration-apply" -Dnative -Dquarkus.native.agent-configuration-apply
+```
+
+
 ---
 Build template from [wiverson](https://github.com/wiverson/maven-jpackage-template)

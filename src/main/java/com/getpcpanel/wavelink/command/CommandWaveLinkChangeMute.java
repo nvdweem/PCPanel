@@ -1,9 +1,8 @@
 package com.getpcpanel.wavelink.command;
 
-import javax.annotation.Nullable;
-
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.util.CollectionUtils;
+
+import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -64,8 +63,8 @@ public final class CommandWaveLinkChangeMute extends CommandWaveLinkChange imple
             }
             case Output -> {
                 var output = service.getOutputFromId(getId1());
-                if (!CollectionUtils.isEmpty(output.outputs())) {
-                    var newMuted = muteType.convert(output.outputs().getFirst().isMuted());
+                if (!(output.outputs() == null || output.outputs().isEmpty())) {
+                    var newMuted = muteType.convert(output.outputs().get(0).isMuted());
                     service.setOutputMute(getId1(), newMuted);
                 } else {
                     log.warn("No outputs found for output {}", getId1());

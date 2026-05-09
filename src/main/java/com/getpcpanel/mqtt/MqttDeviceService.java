@@ -16,50 +16,55 @@ import java.util.function.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import org.springframework.context.event.EventListener;
-import org.springframework.core.annotation.Order;
-import org.springframework.stereotype.Service;
-
 import com.getpcpanel.device.Device;
+import com.getpcpanel.device.GlobalBrightnessChangedEvent;
 import com.getpcpanel.hid.ButtonClickEvent;
-import com.getpcpanel.hid.DeviceCommunicationHandler;
+import com.getpcpanel.hid.DeviceCommunicationHandler.ButtonPressEvent;
+import com.getpcpanel.hid.DeviceCommunicationHandler.KnobRotateEvent;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.hid.DeviceHolder.DeviceFullyConnectedEvent;
 import com.getpcpanel.mqtt.MqttTopicHelper.ColorType;
 import com.getpcpanel.mqtt.MqttTopicHelper.DeviceMqttTopicHelper;
-import com.getpcpanel.profile.LightingConfig;
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.profile.SingleKnobLightingConfig;
-import com.getpcpanel.profile.SingleSliderLabelLightingConfig;
-import com.getpcpanel.profile.SingleSliderLightingConfig;
-import com.getpcpanel.ui.HomePage.GlobalBrightnessChangedEvent;
+import com.getpcpanel.profile.SaveService.SaveEvent;
+import com.getpcpanel.profile.dto.LightingConfig;
+import com.getpcpanel.profile.dto.LightingConfig.LightingMode;
+import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
+import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig;
+import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
 
-import lombok.RequiredArgsConstructor;
+import jakarta.annotation.Priority;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.EntryStream;
 
 @Log4j2
-@Service
-@RequiredArgsConstructor
+@ApplicationScoped
 public class MqttDeviceService {
-    private final MqttService mqtt;
-    private final SaveService saveService;
-    private final DeviceHolder deviceHolder;
-    private final MqttHomeAssistantHelper mqttHomeAssistantHelper;
-    private final MqttTopicHelper mqttTopicHelper;
-    private final MqttDeviceColorService deviceColorService;
+    @Inject
+    MqttService mqtt;
+    @Inject
+    SaveService saveService;
+    @Inject
+    DeviceHolder deviceHolder;
+    @Inject
+    MqttHomeAssistantHelper mqttHomeAssistantHelper;
+    @Inject
+    MqttTopicHelper mqttTopicHelper;
+    @Inject
+    MqttDeviceColorService deviceColorService;
     private final Set<Device> initializedDevices = new HashSet<>();
 
-    @Order(ORDER_OF_SAVE + 1) // Ensure we are disconnected if the setting is turned off
-    @EventListener(SaveService.SaveEvent.class)
-    public void saveChanged() {
+    @Priority(ORDER_OF_SAVE + 1) // Ensure we are disconnected if the setting is turned off
+    public void saveChanged(@Observes SaveEvent event) {
         if (mqtt.isConnected()) {
             initialize();
         }
     }
 
-    @EventListener
-    public void mqttConnected(MqttStatusEvent event) {
+    public void mqttConnected(@Observes MqttStatusEvent event) {
         if (!event.connected()) {
             return;
         }
@@ -81,16 +86,14 @@ public class MqttDeviceService {
         return false;
     }
 
-    @EventListener
-    public void deviceConnected(DeviceFullyConnectedEvent event) {
+    public void deviceConnected(@Observes DeviceFullyConnectedEvent event) {
         if (!mqtt.isConnected()) {
             return;
         }
         initialize(event.device());
     }
 
-    @EventListener
-    public void dialAction(DeviceCommunicationHandler.KnobRotateEvent dial) {
+    public void dialAction(@Observes KnobRotateEvent dial) {
         if (!mqtt.isConnected()) {
             return;
         }
@@ -101,8 +104,7 @@ public class MqttDeviceService {
         });
     }
 
-    @EventListener
-    public void buttonPress(DeviceCommunicationHandler.ButtonPressEvent btn) {
+    public void buttonPress(@Observes ButtonPressEvent btn) {
         if (!mqtt.isConnected()) {
             return;
         }
@@ -112,8 +114,7 @@ public class MqttDeviceService {
         });
     }
 
-    @EventListener
-    public void buttonPress(ButtonClickEvent btn) {
+    public void buttonPress(@Observes ButtonClickEvent btn) {
         if (!mqtt.isConnected()) {
             return;
         }
@@ -123,12 +124,11 @@ public class MqttDeviceService {
         });
     }
 
-    @EventListener
-    public void globalBrightnessChange(GlobalBrightnessChangedEvent event) {
+    public void globalBrightnessChange(@Observes GlobalBrightnessChangedEvent event) {
         if (!mqtt.isConnected()) {
             return;
         }
-        mqtt.send(mqttTopicHelper.valueTopic(event.serialNr(), brightness, 0), String.valueOf(event.brightness()), false);
+        mqtt.send(mqttTopicHelper.valueTopic(event.serialNum(), brightness, 0), String.valueOf(event.brightness()), false);
     }
 
     private void initialize(Device device) {
@@ -137,8 +137,8 @@ public class MqttDeviceService {
         }
         initializedDevices.add(device);
 
-        var lighting = device.getLightingConfig();
-        if (lighting.getLightingMode() != LightingConfig.LightingMode.CUSTOM) {
+        var lighting = device.lightingConfig();
+        if (lighting.lightingMode() != LightingMode.CUSTOM) {
             log.debug("Only custom lighting will be written to mqtt");
             return;
         }
@@ -163,11 +163,11 @@ public class MqttDeviceService {
         var mqttHelper = mqttTopicHelper.device(device.getSerialNumber());
 
         mqtt.send(mqttHelper.valueTopic(brightness, 0), String.valueOf(lighting.getGlobalBrightness()), false);
-        sendColors(lighting.getKnobConfigs(), mqttHelper, dial, SingleKnobLightingConfig::getColor1);
-        sendColors(lighting.getSliderConfigs(), mqttHelper, slider, SingleSliderLightingConfig::getColor1);
-        sendColors(lighting.getSliderLabelConfigs(), mqttHelper, label, SingleSliderLabelLightingConfig::getColor);
-        if (device.getDeviceType().isHasLogoLed() && lighting.getLogoConfig() != null) {
-            deviceColorService.sendColor(mqttHelper.lightTopic(logo, 0), toColorString(lighting.getLogoConfig().getColor()), false);
+        sendColors(lighting.knobConfigs(), mqttHelper, dial, SingleKnobLightingConfig::getColor1);
+        sendColors(lighting.sliderConfigs(), mqttHelper, slider, SingleSliderLightingConfig::getColor1);
+        sendColors(lighting.sliderLabelConfigs(), mqttHelper, label, SingleSliderLabelLightingConfig::getColor);
+        if (device.deviceType().isHasLogoLed() && lighting.logoConfig() != null) {
+            deviceColorService.sendColor(mqttHelper.lightTopic(logo, 0), toColorString(lighting.logoConfig().getColor()), false);
         }
     }
 
@@ -178,12 +178,13 @@ public class MqttDeviceService {
         });
     }
 
-    private @Nonnull String toColorString(@Nullable String color) {
+    @Nonnull
+    private String toColorString(@Nullable String color) {
         return color == null ? "#000000" : color;
     }
 
     private void writeButtons(Device device) {
-        for (var i = 0; i < device.getDeviceType().getButtonCount(); i++) {
+        for (var i = 0; i < device.deviceType().getButtonCount(); i++) {
             mqtt.send(mqttTopicHelper.buttonUpDownTopic(device.getSerialNumber(), button, i), "up", true);
         }
     }

@@ -15,4 +15,3 @@ public class VoicemeeterException extends Exception {
         this.disconnected = disconnected;
     }
 }
-

@@ -1,27 +1,22 @@
 package com.getpcpanel.obs;
 
 import java.util.function.Function;
-
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Service;
-
-import com.getpcpanel.commands.AbstractNewXVolumeService;
 import com.getpcpanel.commands.command.CommandObsSetSourceVolume;
 import com.getpcpanel.hid.DeviceHolder;
-import com.getpcpanel.spring.ConditionalOnWindows;
+import com.getpcpanel.platform.WindowsBuild;
 
-@Service
-@ConditionalOnWindows
-public class ObsConnectedVolumeService extends AbstractNewXVolumeService {
-    public ObsConnectedVolumeService(DeviceHolder devices, ApplicationEventPublisher eventPublisher) {
-        super(devices, eventPublisher);
-    }
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
 
-    @EventListener
-    public void onVoiceMeeterConnected(OBSConnectEvent event) {
+@ApplicationScoped
+@WindowsBuild
+public class ObsConnectedVolumeService {
+    @Inject DeviceHolder devices;
+
+    public void onVoiceMeeterConnected(@Observes OBSConnectEvent event) {
         if (event.connected()) {
-            triggerCommandsOf(CommandObsSetSourceVolume.class, Function.identity());
+            devices.triggerCommandsOf(CommandObsSetSourceVolume.class, Function.identity());
         }
     }
 }

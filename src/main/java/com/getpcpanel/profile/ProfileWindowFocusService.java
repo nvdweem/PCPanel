@@ -1,21 +1,21 @@
 package com.getpcpanel.profile;
 
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Service;
+import jakarta.inject.Inject;
+import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.cpp.windows.WindowFocusChangedEvent;
 import com.getpcpanel.hid.DeviceHolder;
 
 import lombok.RequiredArgsConstructor;
 
-@Service
-@RequiredArgsConstructor
+@ApplicationScoped
 public class ProfileWindowFocusService {
-    private final DeviceHolder devices;
+    @Inject
+    DeviceHolder devices;
     private String previousApplication = "";
 
-    @EventListener
-    public void onFocusChanged(WindowFocusChangedEvent event) {
+        public void onFocusChanged(@Observes WindowFocusChangedEvent event) {
         devices.values().forEach(d -> d.focusChanged(previousApplication, event.application()));
         previousApplication = event.application();
     }

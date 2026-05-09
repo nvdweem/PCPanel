@@ -1,0 +1,10 @@
+<div>
+  <mat-form-field>
+    <mat-label>Device</mat-label>
+    <mat-select [formField]="field().deviceId">
+      @for (device of devicesService.devices.value(); track device.id) {
+        <mat-option [value]="device.id">{{ device.name }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</div>

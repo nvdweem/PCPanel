@@ -1,362 +1,139 @@
 package com.getpcpanel.obs;
 
-import java.net.ConnectException;
-import java.net.SocketTimeoutException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
-import javax.annotation.Nullable;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.util.Util;
 
-import io.obswebsocket.community.client.OBSRemoteController;
-import io.obswebsocket.community.client.OBSRemoteControllerBuilder;
-import io.obswebsocket.community.client.listener.lifecycle.ReasonThrowable;
-import io.obswebsocket.community.client.message.event.inputs.InputMuteStateChangedEvent;
-import io.obswebsocket.community.client.message.request.RequestBatch;
-import io.obswebsocket.community.client.message.request.inputs.GetInputMuteRequest;
-import io.obswebsocket.community.client.message.response.RequestBatchResponse;
-import io.obswebsocket.community.client.message.response.RequestResponse;
-import io.obswebsocket.community.client.message.response.inputs.GetInputMuteResponse;
-import io.obswebsocket.community.client.model.Input;
-import io.obswebsocket.community.client.model.Scene;
+import io.quarkus.scheduler.Scheduled;
 import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
+import jakarta.annotation.PreDestroy;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
-import one.util.streamex.StreamEx;
 
+/**
+ * OBS integration via a custom OBS WebSocket 5 client.
+ *
+ * <p>Connects automatically when {@code obsEnabled=true} in the user's settings.
+ * Reconnects every 30 s if the connection is lost.
+ * Fires {@link OBSConnectEvent} and {@link OBSMuteEvent} CDI events.
+ */
 @Log4j2
-@Service
-@RequiredArgsConstructor
+@ApplicationScoped
 public final class OBS {
-    private static final long WAIT_TIME_MS = 1000L;
-    private static final ObsIdHelper OBS_ID_HELPER = new ObsIdHelper();
+    private static final long CONNECT_TIMEOUT_MS = 5_000;
 
-    private final SaveService save;
-    private final ApplicationEventPublisher eventPublisher;
-    private List<Object> previousSettings = List.of();
-    private boolean connected;
-    private boolean shuttingDown;
-    @Nullable private OBSRemoteController controller;
+    @Inject SaveService save;
+    @Inject Event<OBSConnectEvent> connectEvent;
+    @Inject Event<OBSMuteEvent> muteEvent;
+    @Inject ObjectMapper objectMapper;
+
+    private ObsWebSocketClient client;
 
     @PostConstruct
     public void init() {
-        Runtime.getRuntime().addShutdownHook(new Thread(this::applicationEnding, "OBS Shutdown hook"));
+        reconnectIfNeeded();
     }
 
-    @Scheduled(fixedRateString = "${pcpanel.obs.rate:2500}")
-    public void connect() {
-        if (!connected && !shuttingDown) {
-            buildAndConnectObsController();
+    @PreDestroy
+    public void destroy() {
+        if (client != null) {
+            client.disconnect();
         }
     }
 
-    private void applicationEnding() {
-        shuttingDown = true;
-        disconnectController();
-    }
-
-    private void buildAndConnectObsController() {
-        var save = this.save.get();
-        if (!save.isObsEnabled() || (connected && !settingsStillSame(false)) || shuttingDown) {
-            log.trace("Obs is disabled({})/already connected({})/we are shutting down({})", save.isObsEnabled(), connected, shuttingDown);
-            disconnectController();
+    @Scheduled(every = "30s")
+    public void reconnectIfNeeded() {
+        var settings = save.get();
+        if (!settings.isObsEnabled()) {
             return;
         }
-
-        try {
-            doBuildAndConnectObsController();
-        } catch (Exception e) {
-            doConnected(false);
-            connected = false;
-            log.debug("Connecting failed", e);
+        if (client != null && client.isConnected()) {
+            return;
         }
+        connect(settings.getObsAddress(), parsePort(settings.getObsPort()), settings.getObsPassword());
     }
 
-    private void doBuildAndConnectObsController() {
-        var save = this.save.get();
-        log.debug("Connecting to OBS");
-        if (settingsStillSame(true) && controller != null) {
-            if (connected) {
-                return;
+    private void connect(String host, int port, String password) {
+        try {
+            if (client != null) {
+                client.disconnect();
             }
-            connected = true;
-            controller.connect();
-            return;
-        }
-
-        disconnectController();
-        connected = true;
-        var port = NumberUtils.toInt(save.getObsPort(), -1);
-        var address = save.getObsAddress();
-        var password = StringUtils.trimToNull(save.getObsPassword());
-
-        if (port != -1 && StringUtils.isNotBlank(address)) {
-            var currentIdx = OBS_ID_HELPER.incAndGet();
-            controller = buildController(address, port, password).lifecycle()
-                                                                 .onReady(this::connected)
-                                                                 .onDisconnect(() -> OBS_ID_HELPER.runIfIdEq(currentIdx, () -> {
-                                                                     doConnected(false);
-                                                                     connected = false;
-                                                                 }))
-                                                                 .onControllerError(e -> OBS_ID_HELPER.runIfIdEq(currentIdx, () -> onError(e)))
-                                                                 .and()
-                                                                 .registerEventListener(InputMuteStateChangedEvent.class, this::onMuteChanged)
-                                                                 .build();
-            controller.connect();
-        } else {
-            doConnected(false);
-            connected = false;
+            client = new ObsWebSocketClient(objectMapper, password,
+                    connected -> connectEvent.fire(new OBSConnectEvent(connected)),
+                    event -> muteEvent.fire(event));
+            client.connect(host, port, CONNECT_TIMEOUT_MS);
+            log.info("OBS: connecting to {}:{}", host, port);
+        } catch (Exception e) {
+            log.debug("OBS: connection attempt failed: {}", e.getMessage());
         }
     }
 
-    private void onMuteChanged(InputMuteStateChangedEvent t) {
-        eventPublisher.publishEvent(new OBSMuteEvent(t.getMessageData().getEventData().getInputName(), t.getMessageData().getEventData().getInputMuted()));
-    }
-
-    private void disconnectController() {
-        doConnected(false);
-        connected = false;
-        if (controller != null) {
-            controller.disconnect();
-            controller.stop();
-            controller = null;
-        }
-    }
-
-    @Nullable
-    public String test(String address, int port, String password, long timeout) {
-        var latch = new CountDownLatch(1);
-        var result = new String[1];
-        Consumer<String> doResult = str -> {
-            result[0] = str;
-            latch.countDown();
-        };
-
-        var controller = buildController(address, port, password).lifecycle()
-                                                                 .onReady(() -> doResult.accept(null))
-                                                                 .onDisconnect(latch::countDown)
-                                                                 .onControllerError(e -> doResult.accept(e.getReason()))
-                                                                 .onCommunicatorError(e -> doResult.accept(e.getReason()))
-                                                                 .onClose(e -> doResult.accept(e.name()))
-                                                                 .and().build();
-        controller.connect();
-
+    private static int parsePort(String port) {
         try {
-            var waitSuccess = latch.await(timeout, TimeUnit.MILLISECONDS);
-            var message = waitSuccess && result[0] == null ? null : result[0];
-            controller.disconnect();
-            controller.stop();
-            return message;
-        } catch (InterruptedException e) {
-            log.warn("Unable to wait for the latch");
+            return Integer.parseInt(port);
+        } catch (NumberFormatException e) {
+            return 4455;
         }
-        return null;
     }
 
-    private OBSRemoteControllerBuilder buildController(String address, int port, String password) {
-        return OBSRemoteController.builder()
-                                  .autoConnect(false)
-                                  .host(address)
-                                  .port(port)
-                                  .password(password)
-                                  .lifecycle()
-                                  .withControllerDefaultLogging(false)
-                                  .withCommunicatorDefaultLogging(false)
-                                  .and();
-    }
+    // --- Public API used by command classes ---
 
-    private void onError(ReasonThrowable reasonThrowable) {
-        var exception = reasonThrowable.getThrowable();
-        if (exception instanceof ExecutionException exEx) {
-            exception = exEx.getCause();
-        }
-
-        if (exception instanceof SocketTimeoutException || exception instanceof TimeoutException || exception instanceof ConnectException) {
-            log.debug("Timeout/connect exception occurred", exception);
-        } else {
-            log.warn("Unknown OBS error, stack is logged in debug");
-            log.debug("Unknown OBS error", exception);
-        }
-        doConnected(false);
-        connected = false;
-    }
-
-    private boolean settingsStillSame(boolean updatePrevious) {
-        var port = NumberUtils.toInt(save.get().getObsPort(), -1);
-        var address = save.get().getObsAddress();
-        var password = StringUtils.trimToNull(save.get().getObsPassword());
-        var settings = List.<Object>of(port, Objects.requireNonNullElse(address, "-"), Objects.requireNonNullElse(password, "-"));
-        if (settings.equals(previousSettings)) {
-            return true;
-        }
-        if (updatePrevious) {
-            previousSettings = settings;
-        }
-        return false;
-    }
-
-    private void connected() {
-        log.info("Connected to OBS");
-        doConnected(true);
-        connected = true;
-    }
-
-    @EventListener(SaveService.SaveEvent.class)
-    public void saveUpdated() {
-        buildAndConnectObsController();
+    public boolean isConnected() {
+        return client != null && client.isConnected();
     }
 
     public List<String> getSourcesWithAudio() {
-        var nameToMute = getSourcesWithMuteState();
-        return new ArrayList<>(nameToMute.keySet());
+        return isConnected() ? client.getSourcesWithAudio() : List.of();
     }
 
     public Map<String, Boolean> getSourcesWithMuteState() {
-        if (!isConnected() || controller == null) {
-            return Map.of();
-        }
-        var result = controller.getInputList(null, WAIT_TIME_MS);
-        if (result == null) {
-            return Map.of();
-        }
-        var sources = result.getInputs();
-        return getNameToMuteState(sources);
+        return isConnected() ? client.getSourcesWithMuteState() : Map.of();
     }
 
     public List<String> getScenes() {
-        if (!isConnected() || controller == null) {
-            return List.of();
-        }
-
-        return Optional.ofNullable(controller.getSceneList(WAIT_TIME_MS))
-                       .map(ss -> StreamEx.of(ss.getScenes()).map(Scene::getSceneName).toList())
-                       .orElse(List.of());
+        return isConnected() ? client.getScenes() : List.of();
     }
 
     public void setSourceVolume(String sourceName, int vol) {
-        if (!isConnected() || controller == null) {
-            return;
-        }
-        try {
-            var decimal = (float) Util.map(vol, 0, 100, -97, 0);
-            controller.setInputVolume(sourceName, null, decimal, WAIT_TIME_MS);
-        } catch (Exception e) {
-            log.error("Unable to get source volume", e);
+        if (isConnected()) {
+            client.setSourceVolume(sourceName, vol);
         }
     }
 
     public void toggleSourceMute(String sourceName) {
-        if (!isConnected() || controller == null) {
-            return;
-        }
-        try {
-            controller.toggleInputMute(sourceName, WAIT_TIME_MS);
-        } catch (Exception e) {
-            log.error("Unable to toggle source mute {}", sourceName, e);
+        if (isConnected()) {
+            client.toggleSourceMute(sourceName);
         }
     }
 
     public void setSourceMute(String sourceName, boolean mute) {
-        if (!isConnected() || controller == null) {
-            return;
-        }
-        try {
-            controller.setInputMute(sourceName, mute, WAIT_TIME_MS);
-        } catch (Exception e) {
-            log.error("Unable to set source mute {} {}", sourceName, mute, e);
+        if (isConnected()) {
+            client.setSourceMute(sourceName, mute);
         }
     }
 
     public void setCurrentScene(String sceneName) {
-        if (!isConnected() || controller == null) {
-            return;
+        if (isConnected()) {
+            client.setCurrentScene(sceneName);
         }
+    }
+
+    /** Returns null on success, or an error message on failure. */
+    public String test(String address, int port, String password, long timeout) {
+        var tester = new ObsWebSocketClient(objectMapper, password, c -> {}, e -> {});
         try {
-            controller.setCurrentProgramScene(sceneName, WAIT_TIME_MS);
+            tester.connect(address, port, timeout);
+            Thread.sleep(500); // allow hello/identify exchange
+            return tester.isConnected() ? null : "Connected but not authenticated";
         } catch (Exception e) {
-            log.error("Unable to set current scene to {}", sceneName, e);
-        }
-    }
-
-    public boolean isConnected() {
-        return save.get().isObsEnabled() && controller != null && connected;
-    }
-
-    private void doConnected(boolean connected) {
-        new Thread(() -> {
-            eventPublisher.publishEvent(new OBSConnectEvent(connected));
-            if (connected) {
-                getSourcesWithMuteState();
-            }
-        }).start();
-    }
-
-    private Map<String, Boolean> getNameToMuteState(List<Input> sources) {
-        if (controller == null) {
-            return Map.of();
-        }
-        record RequestAndName(GetInputMuteRequest request, String name) {
-        }
-
-        var muteRequests = StreamEx.of(sources)
-                                   .map(source -> {
-                                       var req = GetInputMuteRequest.builder().inputName(source.getInputName()).build();
-                                       return new RequestAndName(req, source.getInputName());
-                                   })
-                                   .mapToEntry(rn -> rn.request.getRequestId(), Function.identity())
-                                   .toMap();
-
-        var latch = new ArrayBlockingQueue<RequestBatchResponse>(1);
-        controller.sendRequestBatch(RequestBatch.builder().requests(StreamEx.ofValues(muteRequests).map(RequestAndName::request).toList()).build(), latch::offer);
-
-        try {
-            var result = latch.poll(WAIT_TIME_MS, TimeUnit.MILLISECONDS);
-            if (result == null) {
-                return Map.of();
-            }
-            return StreamEx.of(result.getData().getResults())
-                           .mapToEntry(rs -> muteRequests.get(rs.getRequestId()), RequestResponse.Data::getResponseData)
-                           .nonNullKeys().mapKeys(rn -> rn.name)
-                           .nonNullValues()
-                           .selectValues(GetInputMuteResponse.SpecificData.class)
-                           .mapValues(GetInputMuteResponse.SpecificData::getInputMuted)
-                           .toMap();
-        } catch (InterruptedException e) {
-            return Map.of();
-        }
-    }
-
-    static class ObsIdHelper {
-        private int activeIdx;
-
-        private int incAndGet() {
-            activeIdx++;
-            return activeIdx;
-        }
-
-        private void runIfIdEq(int id, Runnable toRun) {
-            if (activeIdx == id) {
-                toRun.run();
-            }
+            return e.getMessage();
+        } finally {
+            tester.disconnect();
         }
     }
 }
+

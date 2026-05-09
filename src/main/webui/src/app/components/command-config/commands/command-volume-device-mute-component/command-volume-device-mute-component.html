@@ -1,0 +1,27 @@
+<div>
+  Device to mute:
+  <mat-radio-group [(ngModel)]="specificDevice" (change)="changeDefault($event)">
+    <mat-radio-button [value]="false">Default device</mat-radio-button>
+    <mat-radio-button [value]="true">Specific device</mat-radio-button>
+  </mat-radio-group>
+
+  @if (specificDevice() && devicesService.devices.hasValue()) {
+    <mat-form-field>
+      <mat-label>Device</mat-label>
+      <mat-select [formField]="field().deviceId">
+        @for (device of devicesService.devices.value(); track device.id) {
+          <mat-option [value]="device.id">{{ device.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+</div>
+
+<div>
+  Mute mode:
+  <mat-radio-group [formField]="field().muteType">
+    <mat-radio-button value="toggle">Toggle mute</mat-radio-button>
+    <mat-radio-button value="mute">Mute</mat-radio-button>
+    <mat-radio-button value="unmute">Unmute</mat-radio-button>
+  </mat-radio-group>
+</div>

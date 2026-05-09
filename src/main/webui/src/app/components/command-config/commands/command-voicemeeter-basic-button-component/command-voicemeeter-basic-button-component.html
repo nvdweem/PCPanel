@@ -1,0 +1,28 @@
+<div>
+  <mat-form-field>
+    <mat-label>Control Type</mat-label>
+    <mat-select [formField]="field().ct">
+      @for (ct of controlTypes; track ct) {
+        <mat-option [value]="ct">{{ ct }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</div>
+
+<div>
+  <mat-form-field>
+    <mat-label>Index</mat-label>
+    <input matInput type="number" [formField]="field().index" />
+  </mat-form-field>
+</div>
+
+<div>
+  <mat-form-field>
+    <mat-label>Button Type</mat-label>
+    <mat-select [formField]="field().bt">
+      @for (bt of buttonTypes; track bt) {
+        <mat-option [value]="bt">{{ bt }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</div>

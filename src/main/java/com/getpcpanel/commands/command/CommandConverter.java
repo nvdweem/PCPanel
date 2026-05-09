@@ -8,9 +8,14 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
+import com.getpcpanel.commands.command.CommandMedia.VolumeButton;
 import com.getpcpanel.commands.command.DialAction.DialCommandParams;
 import com.getpcpanel.cpp.MuteType;
-import com.getpcpanel.voicemeeter.Voicemeeter;
+import com.getpcpanel.voicemeeter.Voicemeeter.ButtonControlMode;
+import com.getpcpanel.voicemeeter.Voicemeeter.ButtonType;
+import com.getpcpanel.voicemeeter.Voicemeeter.ControlType;
+import com.getpcpanel.voicemeeter.Voicemeeter.DialControlMode;
+import com.getpcpanel.voicemeeter.Voicemeeter.DialType;
 
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
@@ -37,9 +42,9 @@ public final class CommandConverter {
             case "obs_dial" -> new CommandObsSetSourceVolume(data[2], DialCommandParams.DEFAULT);
             case "voicemeeter_dial" -> {
                 if ("basic".equals(data[1])) {
-                    yield new CommandVoiceMeeterBasic(Voicemeeter.ControlType.valueOf(data[2]), NumberUtils.toInt(data[3], 1), Voicemeeter.DialType.valueOf(data[4]), DialCommandParams.DEFAULT);
+                    yield new CommandVoiceMeeterBasic(ControlType.valueOf(data[2]), NumberUtils.toInt(data[3], 1), DialType.valueOf(data[4]), DialCommandParams.DEFAULT);
                 } else if ("advanced".equals(data[1])) {
-                    var dt = Voicemeeter.DialControlMode.valueOf(data[3]);
+                    var dt = DialControlMode.valueOf(data[3]);
                     yield new CommandVoiceMeeterAdvanced(data[2], dt, DialCommandParams.DEFAULT);
                 }
                 yield NOOP;
@@ -52,7 +57,7 @@ public final class CommandConverter {
                 yield new CommandKeystroke(data[1]);
             }
             case "shortcut" -> new CommandShortcut(data[1]);
-            case "media" -> CommandMedia.VolumeButton.tryValueOf(data[1]).map(v -> new CommandMedia(v, false)).map(Command.class::cast).orElse(NOOP);
+            case "media" -> VolumeButton.tryValueOf(data[1]).map(v -> new CommandMedia(v, false)).map(Command.class::cast).orElse(NOOP);
             case "end_program" -> new CommandEndProgram(StringUtils.equals("specific", data[1]), data[2]);
             case "sound_device" -> new CommandVolumeDefaultDevice(data[1]);
             case "toggle_device" -> new CommandVolumeDefaultDeviceToggle(List.of(data[1].split("\\|")));
@@ -62,15 +67,15 @@ public final class CommandConverter {
                 if ("set_scene".equals(data[1])) {
                     yield new CommandObsSetScene(data[2]);
                 } else if ("mute_source".equals(data[1])) {
-                    yield new CommandObsMuteSource(data[2], CommandObsMuteSource.MuteType.valueOf(data[3]));
+                    yield new CommandObsMuteSource(data[2], MuteType.valueOf(data[3]));
                 }
                 yield NOOP;
             }
             case "voicemeeter_button" -> {
                 if ("basic".equals(data[1])) {
-                    yield new CommandVoiceMeeterBasicButton(Voicemeeter.ControlType.valueOf(data[2]), NumberUtils.toInt(data[3], 1), Voicemeeter.ButtonType.valueOf(data[4]));
+                    yield new CommandVoiceMeeterBasicButton(ControlType.valueOf(data[2]), NumberUtils.toInt(data[3], 1), ButtonType.valueOf(data[4]));
                 } else if ("advanced".equals(data[1])) {
-                    var bt = Voicemeeter.ButtonControlMode.valueOf(data[3]);
+                    var bt = ButtonControlMode.valueOf(data[3]);
                     yield new CommandVoiceMeeterAdvancedButton(data[2], bt, null);
                 }
                 yield NOOP;

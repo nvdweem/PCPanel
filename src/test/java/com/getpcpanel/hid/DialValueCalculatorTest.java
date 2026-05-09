@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 import com.getpcpanel.commands.command.CommandBrightness;
-import com.getpcpanel.commands.command.DialAction;
-import com.getpcpanel.profile.KnobSetting;
+import com.getpcpanel.commands.command.DialAction.DialCommandParams;
+import com.getpcpanel.profile.dto.KnobSetting;
 import com.getpcpanel.util.Util;
 
 class DialValueCalculatorTest {
@@ -25,7 +25,7 @@ class DialValueCalculatorTest {
     @Test
     void calcUsingStartEnd() {
         var calculator = new DialValueCalculator(new KnobSetting());
-        var cmd = new CommandBrightness(new DialAction.DialCommandParams(false, 25, 25));
+        var cmd = new CommandBrightness(new DialCommandParams(false, 25, 25));
 
         for (var i = 0; i < 255; i++) {
             var result = Math.round(calculator.calcValue(cmd, i, 0, 100));
