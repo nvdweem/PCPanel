@@ -8,12 +8,14 @@ import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.hid.DeviceHolder.DeviceFullyConnectedEvent;
 import com.getpcpanel.hid.DeviceScanner.DeviceDisconnectedEvent;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.profile.dto.KnobSetting;
 import com.getpcpanel.profile.dto.LightingConfig;
 import com.getpcpanel.rest.ProVisualColorsService.ProVisualColors;
 import com.getpcpanel.rest.model.dto.DeviceSnapshotDto;
 import com.getpcpanel.rest.model.dto.ProfileSnapshotDto;
 import com.getpcpanel.rest.model.ws.WsAssignmentChangedEvent;
 import com.getpcpanel.rest.model.ws.WsButtonEvent;
+import com.getpcpanel.rest.model.ws.WsControlSettingChangedEvent;
 import com.getpcpanel.rest.model.ws.WsDeviceConnectedEvent;
 import com.getpcpanel.rest.model.ws.WsDeviceDisconnectedEvent;
 import com.getpcpanel.rest.model.ws.WsDeviceRenamedEvent;
@@ -97,6 +99,10 @@ public class EventBroadcaster {
         broadcast(new WsAssignmentChangedEvent(event.serial(), event.kind(), event.index(), event.commands()));
     }
 
+    public void onSettingChanged(@Observes KnobSettingChangedEvent event) {
+        broadcast(new WsControlSettingChangedEvent(event.serial(), event.index(), event.settings()));
+    }
+
     // ── CDI mutation events (fired by DeviceResource) ─────────────────────────
 
     public record DeviceRenamedEvent(String serial, String displayName) {
@@ -109,6 +115,9 @@ public class EventBroadcaster {
     }
 
     public record VisualColorsChangedEvent(String serial) {
+    }
+
+    public record KnobSettingChangedEvent(String serial, int index, KnobSetting settings) {
     }
 
     public record AssignmentChangedEvent(String serial, Kinds kind, int index, Commands commands) {

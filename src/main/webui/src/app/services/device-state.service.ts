@@ -1,5 +1,5 @@
 import { computed, Injectable, OnDestroy, Signal, signal } from '@angular/core';
-import { DeviceSnapshotDto, ProfileSnapshotDto, WsAssignmentChangedEvent, WsEvent, WsEventUnion } from '../models/generated/backend.types';
+import { DeviceSnapshotDto, ProfileSnapshotDto, WsAssignmentChangedEvent, WsControlSettingChangedEvent, WsEvent, WsEventUnion } from '../models/generated/backend.types';
 
 type DeviceMap = Record<string, DeviceSnapshotDto>;
 
@@ -105,7 +105,7 @@ export class DeviceStateService implements OnDestroy {
     const event = value as Record<string, unknown>;
     if (typeof event['type'] !== 'string') return false;
 
-    switch (event['type']) {
+    switch (event['type'] as WsEventUnion['type'] | true) {// Makes this fallthrough with undefined but fail on adding new items
       case 'device_connected':
       case 'device_snapshot':
       case 'device_disconnected':
@@ -116,33 +116,34 @@ export class DeviceStateService implements OnDestroy {
       case 'lighting_changed':
       case 'visual_colors_changed':
       case 'assignment_changed':
+      case 'control_setting_changed':
         return true;
-      default:
+      case true:
         return false;
     }
   }
 
   // ── Event application ──────────────────────────────────────────────────────
 
-  private apply(event: WsEventUnion): void {
+  private apply(event: WsEventUnion): boolean {
     switch (event.type) {
       case 'device_connected':
         this.updateDevice(event.deviceSnapshot);
-        break;
+        return true;
       case 'device_snapshot':
         this.updateDevice(event);
-        break;
+        return true;
       case 'device_disconnected':
         this._devices.update(ds => {
           const c = {...ds};
           delete c[event.serial];
           return c;
         });
-        break;
+        return true;
 
       case 'device_renamed':
         this._devices.update(patch(event.serial, d => ({...d, displayName: event.displayName})));
-        break;
+        return true;
 
       case 'profile_switched':
         this._devices.update(patch(event.serial, d => ({
@@ -154,7 +155,7 @@ export class DeviceStateService implements OnDestroy {
           sliderColors: event.sliderColors,
           logoColor: event.logoColor,
         })));
-        break;
+        return true;
 
       case 'lighting_changed':
         this._devices.update(patch(event.serial, d => ({
@@ -165,7 +166,7 @@ export class DeviceStateService implements OnDestroy {
           sliderColors: event.sliderColors,
           logoColor: event.logoColor,
         })));
-        break;
+        return true;
 
       case 'visual_colors_changed':
         this._devices.update(patch(event.serial, d => ({
@@ -175,14 +176,14 @@ export class DeviceStateService implements OnDestroy {
           sliderColors: event.sliderColors,
           logoColor: event.logoColor,
         })));
-        break;
+        return true;
 
       case 'assignment_changed':
         this._devices.update(patch(event.serial, d => ({
           ...d,
           currentProfileSnapshot: applyAssignment(d.currentProfileSnapshot, event),
         })));
-        break;
+        return true;
 
       case 'knob_rotate':
         let analogValues = this.devices()[event.serial]?.analogValues;
@@ -192,7 +193,16 @@ export class DeviceStateService implements OnDestroy {
           ...d,
           analogValues,
         })));
-        break;
+        return true;
+      case 'control_setting_changed':
+        this._devices.update(patch(event.serial, d => ({
+          ...d,
+          currentProfileSnapshot: applyKnobSetting(d.currentProfileSnapshot, event),
+        })));
+        return true;
+
+      case 'button_press':
+        return false;
     }
   }
 
@@ -219,8 +229,6 @@ export class DeviceStateService implements OnDestroy {
   }
 }
 
-// ── Pure helpers (no side effects) ────────────────────────────────────────────
-
 function patch(
   serial: string,
   updater: (d: DeviceSnapshotDto) => DeviceSnapshotDto,
@@ -243,4 +251,11 @@ function applyAssignment(
     case 'dblbutton':
       return {...snapshot, dblButtonData: {...snapshot.dblButtonData, [event.index]: event.commands}};
   }
+}
+
+function applyKnobSetting(
+  snapshot: ProfileSnapshotDto,
+  event: WsControlSettingChangedEvent,
+): ProfileSnapshotDto {
+  return {...snapshot, knobSettings: {...snapshot.dialData, [event.index]: event.settings}};
 }

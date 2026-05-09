@@ -16,6 +16,7 @@ import com.getpcpanel.rest.EventBroadcaster.AssignmentChangedEvent.Kinds;
 import com.getpcpanel.rest.EventBroadcaster.DeviceRenamedEvent;
 import com.getpcpanel.rest.EventBroadcaster.LightingChangedEvent;
 import com.getpcpanel.rest.EventBroadcaster.ProfileSwitchedEvent;
+import com.getpcpanel.rest.EventBroadcaster.KnobSettingChangedEvent;
 import com.getpcpanel.rest.model.dto.ControlAssignmentsUpdateDto;
 import com.getpcpanel.rest.model.dto.DeviceDto;
 import com.getpcpanel.rest.model.dto.ProfileDto;
@@ -195,6 +196,7 @@ public class DeviceResource {
         knob.setOverlayIcon(settings.getOverlayIcon());
         knob.setButtonDebounce(settings.getButtonDebounce());
         saveService.save();
+        eventBus.fire(new KnobSettingChangedEvent(serial, index, knob));
         return Response.ok().build();
     }
 
@@ -268,6 +270,7 @@ public class DeviceResource {
             knob.setLogarithmic(update.knobSetting().isLogarithmic());
             knob.setOverlayIcon(update.knobSetting().getOverlayIcon());
             knob.setButtonDebounce(update.knobSetting().getButtonDebounce());
+            eventBus.fire(new KnobSettingChangedEvent(serial, index, knob));
             changed = true;
         }
 
