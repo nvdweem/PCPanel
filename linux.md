@@ -64,8 +64,6 @@ Or
 ```shell
 java --module-path="[path-to-javafx]/lib" \
      --add-modules=javafx.controls,javafx.fxml \
-     --add-exports javafx.controls/com.sun.javafx.scene.control.skin.resources=ALL-UNNAMED \
-     --add-exports javafx.base/com.sun.javafx.event=ALL-UNNAMED \
      -jar [jarfile]
 ```
 

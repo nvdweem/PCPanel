@@ -2,8 +2,6 @@ package com.getpcpanel.ui.colorpicker;
 
 import java.util.Objects;
 
-import com.sun.javafx.scene.control.skin.resources.ControlResources;
-
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
@@ -62,7 +60,20 @@ public class ColorDialog extends HBox {
     }
 
     static String getString(String key) {
-        return ControlResources.getString("ColorPicker." + key);
+        return switch (key) {
+            case "hue_colon" -> "Hue:";
+            case "saturation_colon" -> "Saturation:";
+            case "brightness_colon" -> "Brightness:";
+            case "red_colon" -> "Red:";
+            case "green_colon" -> "Green:";
+            case "blue_colon" -> "Blue:";
+            case "web_colon" -> "Web:";
+            case "opacity_colon" -> "Opacity:";
+            case "colorType.hsb" -> "HSB";
+            case "colorType.rgb" -> "RGB";
+            case "colorType.web" -> "Web";
+            default -> key;
+        };
     }
 
     public ObjectProperty<Color> customColorProperty() {

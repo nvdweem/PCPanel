@@ -14,7 +14,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder(toBuilder = true)
 public class LightingConfig {
-    private LightingMode lightingMode;
+    private LightingMode lightingMode = LightingMode.CUSTOM;
     private String[] individualColors = {};
     private boolean[] volumeBrightnessTrackingEnabled = {};
     private String allColor;

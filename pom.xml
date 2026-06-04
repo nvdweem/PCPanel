@@ -313,10 +313,6 @@
                 <version>0.0.8</version>
                 <configuration>
                     <mainClass>${start-class}</mainClass>
-                    <options>
-                        <option>--add-exports javafx.controls/com.sun.javafx.scene.control.skin.resources=${module.name}</option>
-                        <option>--add-exports javafx.base/com.sun.javafx.event=${module.name}</option>
-                    </options>
                     <includePathExceptionsInClasspath>true</includePathExceptionsInClasspath>
                 </configuration>
             </plugin>

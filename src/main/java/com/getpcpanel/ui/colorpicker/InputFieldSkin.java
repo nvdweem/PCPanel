@@ -1,9 +1,6 @@
 package com.getpcpanel.ui.colorpicker;
 
-import com.sun.javafx.event.EventDispatchChainImpl;
-
 import javafx.beans.InvalidationListener;
-import javafx.event.EventDispatchChain;
 import javafx.scene.Node;
 import javafx.scene.control.Skin;
 import javafx.scene.control.TextField;
@@ -83,13 +80,6 @@ abstract class InputFieldSkin implements Skin<InputField> {
 
         public void handleFocus(boolean b) {
             setFocused(b);
-        }
-
-        @Override
-        public EventDispatchChain buildEventDispatchChain(EventDispatchChain tail) {
-            var eventDispatchChainImpl = new EventDispatchChainImpl();
-            eventDispatchChainImpl.append(textField.getEventDispatcher());
-            return eventDispatchChainImpl;
         }
     }
 }
