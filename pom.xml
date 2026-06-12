@@ -113,7 +113,7 @@
         <dependency>
             <groupId>org.hid4java</groupId>
             <artifactId>hid4java</artifactId>
-            <version>0.7.0</version>
+            <version>0.8.0</version>
         </dependency>
         <dependency>
             <groupId>one.util</groupId>
@@ -471,6 +471,36 @@
                                 <argument>${project.build.directory}/packaging/add-launch-to-msi.js</argument>
                             </arguments>
                         </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>mac-active</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                </os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.coderplus.maven.plugins</groupId>
+                        <artifactId>copy-rename-maven-plugin</artifactId>
+                        <version>1.0.1</version>
+                        <executions>
+                            <execution>
+                                <id>rename-file</id>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>rename</goal>
+                                </goals>
+                                <configuration>
+                                    <sourceFile>${project.build.directory}/${app.name}-${app.version}.dmg</sourceFile>
+                                    <destinationFile>${project.build.directory}/${app.name}-${project.version}-${os.detected.arch}.dmg</destinationFile>
+                                </configuration>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>

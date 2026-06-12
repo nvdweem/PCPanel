@@ -1,6 +1,7 @@
 package com.getpcpanel.ui.command.button;
 
 import static com.getpcpanel.commands.command.CommandNoOp.NOOP;
+import static com.getpcpanel.spring.OsHelper.WINDOWS;
 
 import org.springframework.stereotype.Component;
 
@@ -33,7 +34,7 @@ import lombok.extern.log4j.Log4j2;
 @Component
 @Prototype
 @RequiredArgsConstructor
-@Cmd(name = "Voicemeeter", fxml = "VoiceMeeter", cmds = { CommandVoiceMeeterBasicButton.class, CommandVoiceMeeterAdvancedButton.class }, enabled = VoiceMeeterEnabled.class)
+@Cmd(name = "Voicemeeter", fxml = "VoiceMeeter", cmds = { CommandVoiceMeeterBasicButton.class, CommandVoiceMeeterAdvancedButton.class }, os = WINDOWS, enabled = VoiceMeeterEnabled.class)
 public class BtnVoiceMeeterController extends CommandController<CommandVoiceMeeter> implements ButtonCommandController {
     private final Voicemeeter voiceMeeter;
 

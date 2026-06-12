@@ -3,6 +3,7 @@ package com.getpcpanel.hid;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.hid4java.HidDevice;
 import org.hid4java.HidManager;
 import org.hid4java.HidServices;
@@ -16,6 +17,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.getpcpanel.device.DeviceType;
+import com.getpcpanel.util.OsxPermissionHelper;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +45,27 @@ public class DeviceScanner implements HidServicesListener {
         log.info("Starting HID services.");
         hidServices.start();
         log.info("Enumerating attached devices...");
+        if (SystemUtils.IS_OS_MAC) {
+            scheduleNoDeviceFoundCheck();
+        }
+    }
+
+    private void scheduleNoDeviceFoundCheck() {
+        var checker = new Thread(() -> {
+            try {
+                Thread.sleep(10_000L);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+            if (connectedDeviceMap.isEmpty()) {
+                log.warn("No PCPanel found after 10 seconds. Either the device is not connected (check the USB cable/port), "
+                        + "or macOS Input Monitoring permission is blocking HID access (Input Monitoring granted: {}): "
+                        + "System Settings > Privacy & Security > Input Monitoring > enable PCPanel", OsxPermissionHelper.isInputMonitoringGranted());
+            }
+        }, "PCPanel device detection check");
+        checker.setDaemon(true);
+        checker.start();
     }
 
     static HidServicesSpecification buildSpecification() {
@@ -58,7 +81,11 @@ public class DeviceScanner implements HidServicesListener {
     public void deviceAdded(@NonNull String key, @NonNull HidDevice device, DeviceType deviceType) {
         if (!device.isOpen()) {
             if (!device.open()) {
-                log.error("Unable to open device, it won't be possible to use the panel");
+                if (SystemUtils.IS_OS_MAC && !OsxPermissionHelper.isInputMonitoringGranted()) {
+                    log.error("Unable to open device, it won't be possible to use the panel. macOS Input Monitoring permission is missing: System Settings > Privacy & Security > Input Monitoring > enable PCPanel");
+                } else {
+                    log.error("Unable to open device, it won't be possible to use the panel");
+                }
             }
         }
         var deviceHandler = deviceCommunicationHandlerFactory.build(key, device, deviceType);
@@ -105,6 +132,11 @@ public class DeviceScanner implements HidServicesListener {
     @Override
     public void hidFailure(HidServicesEvent event) {
         determineType(event).ifPresent(type -> lostPCPanel(event.getHidDevice()));
+    }
+
+    @Override
+    public void hidDataReceived(HidServicesEvent event) {
+        // Reports are read by the DeviceCommunicationHandler reader thread
     }
 
     private Optional<DeviceType> determineType(HidServicesEvent event) {

@@ -37,7 +37,11 @@ public class CommandVolumeDefaultDeviceToggleAdvanced extends CommandVolume impl
 
     @Override
     public void execute() {
-        if (devices.isEmpty() || !(getSndCtrl() instanceof SndCtrlWindows)) {
+        if (!(getSndCtrl() instanceof SndCtrlWindows)) {
+            log.warn("The default device toggle (advanced) command is only available on Windows");
+            return;
+        }
+        if (devices.isEmpty()) {
             return;
         }
         determineIndex();

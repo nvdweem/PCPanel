@@ -15,7 +15,7 @@ public class HidDebug {
 
     @SneakyThrows
     public HidDebug() {
-        var outputFile = new File(System.getenv("USERPROFILE") + "/.pcpanel/hid-debug.txt");
+        var outputFile = new File(System.getProperty("user.home") + "/.pcpanel/hid-debug.txt");
         outputFile.getParentFile().mkdirs();
         writer = new PrintWriter(new FileOutputStream(outputFile));
     }
@@ -46,6 +46,10 @@ public class HidDebug {
 
             @Override public void hidFailure(HidServicesEvent event) {
                 write("Hid failure: " + event);
+            }
+
+            @Override public void hidDataReceived(HidServicesEvent event) {
+                write("Data received: " + event);
             }
         };
     }

@@ -9,6 +9,6 @@
         <padding>
             <Insets left="8.0" top="8.0"/>
         </padding>
-        <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="Control the device brightness. No further configuration."/>
+        <Label maxWidth="1.7976931348623157E308" prefHeight="25.0" text="Control the brightness of the PCPanel's LED lighting (not your monitor). No further configuration."/>
     </VBox>
 </HBox>

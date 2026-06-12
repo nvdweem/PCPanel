@@ -10,12 +10,16 @@ import com.getpcpanel.hid.HidDebug;
 import com.getpcpanel.util.FileChecker;
 
 import javafx.application.Application;
+import lombok.extern.log4j.Log4j2;
 
+@Log4j2
 @EnableCaching
 @EnableScheduling
 @SpringBootApplication
 public class Main {
     public static void main(String[] args) {
+        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> log.error("Uncaught exception on thread {}", thread.getName(), throwable));
+
         var argSet = Set.of(args);
         if (!argSet.contains("skipfilecheck")) {
             FileChecker.createAndStart();

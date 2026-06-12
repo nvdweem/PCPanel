@@ -21,6 +21,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -344,9 +345,8 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
 
     private int getWaveLinkPort() {
         // Just using a static port is too easy for Elgato, so we retrieve the (random?) port from the ws-info.json, just like the StreamDeck does...
-        var userProfile = System.getenv("USERPROFILE");
-        if (!StringUtils.isBlank(userProfile)) {
-            var wsInfoPath = Path.of(userProfile, "AppData", "Local", "Packages", "Elgato.WaveLink_g54w8ztgkx496", "LocalState", "ws-info.json");
+        var wsInfoPath = getWsInfoPath();
+        if (wsInfoPath != null) {
             try {
                 var content = Files.readString(wsInfoPath);
                 var mapper = new ObjectMapper();
@@ -358,5 +358,18 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
             }
         }
         return DEFAULT_WAVELINK_PORT;
+    }
+
+    @Nullable
+    private Path getWsInfoPath() {
+        var userProfile = System.getenv("USERPROFILE");
+        if (!StringUtils.isBlank(userProfile)) {
+            return Path.of(userProfile, "AppData", "Local", "Packages", "Elgato.WaveLink_g54w8ztgkx496", "LocalState", "ws-info.json");
+        }
+        if (SystemUtils.IS_OS_MAC) {
+            var macPath = Path.of(System.getProperty("user.home"), "Library", "Application Support", "Elgato", "WaveLink", "ws-info.json");
+            return Files.exists(macPath) ? macPath : null;
+        }
+        return null;
     }
 }

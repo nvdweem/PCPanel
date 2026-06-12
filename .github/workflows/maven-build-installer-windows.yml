@@ -64,11 +64,38 @@ jobs:
             ./target/*.deb
             ./target/*.jar
 
+  buildMacos:
+    strategy:
+      matrix:
+        include:
+          - runner: macos-latest
+            arch: aarch_64
+          - runner: macos-15-intel
+            arch: x86_64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'liberica'
+          java-package: jdk+fx
+          cache: 'maven'
+      - name: Build with Maven
+        run: mvn -B clean install --file pom.xml
+      - name: Store artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: macos-installer-${{ matrix.arch }}
+          path: ./target/*.dmg
+
   preRelease:
     name: Pre-release
     needs:
       - buildWindows
       - buildLinux
+      - buildMacos
     runs-on: ubuntu-latest
     steps:
       # Check out current repository
@@ -125,6 +152,14 @@ jobs:
       - uses: actions/download-artifact@v7
         with:
           name: linux-installer
+          path: target
+      - uses: actions/download-artifact@v7
+        with:
+          name: macos-installer-aarch_64
+          path: target
+      - uses: actions/download-artifact@v7
+        with:
+          name: macos-installer-x86_64
           path: target
 
       # Upload artifact as a release asset

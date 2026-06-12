@@ -3,8 +3,9 @@
     -fx-accent: #e7eff7;
     -fx-default-button: #7f878f;
 
-    -fx-focus-color: transparent;
-    -fx-faint-focus-color: transparent;
+    /* muted ring so keyboard focus is visible on the dark palette */
+    -fx-focus-color: #5e9bd6;
+    -fx-faint-focus-color: #5e9bd622;
 
     -fx-focused-text-base-color: ladder(
             -fx-selection-bar,
@@ -78,6 +79,43 @@
 
 .separator *.line {
     -fx-border-color: #898989;
+}
+
+.button,
+.toggle-button,
+.check-box,
+.combo-box,
+.choice-box,
+.color-picker,
+.menu-item,
+.tab-pane > .tab-header-area > .headers-region > .tab,
+.slider .thumb,
+.list-cell:filled {
+    -fx-cursor: hand;
+}
+
+.menu-item:disabled {
+    -fx-cursor: default;
+}
+
+.button:hover,
+.toggle-button:hover {
+    -fx-color: derive(-fx-base, 25%);
+}
+
+.button:armed,
+.toggle-button:armed {
+    -fx-color: derive(-fx-base, -12%);
+}
+
+.list-cell:filled:hover {
+    -fx-background-color: derive(#25262A, 30%);
+    -fx-text-fill: white;
+}
+
+.list-cell:filled:focused:hover {
+    -fx-background-color: derive(#004f8b, 15%);
+    -fx-text-fill: white;
 }
 
 

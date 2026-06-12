@@ -3,8 +3,9 @@
     -fx-accent: #e7eff7;
     -fx-default-button: #7f878f;
 
-    -fx-focus-color: transparent;
-    -fx-faint-focus-color: transparent;
+    /* muted ring so keyboard focus is visible on the dark palette */
+    -fx-focus-color: #5e9bd6;
+    -fx-faint-focus-color: #5e9bd622;
 
     -fx-focused-text-base-color: ladder(
             -fx-selection-bar,
@@ -138,4 +139,68 @@
     -fx-max-width: 22;
 
     -fx-shape: "M306.6,139.3l-284-0.5c-12.4,0-22.5,7.1-22.5,15.9l0,10.6c0,8.8,10,15.9,22.4,16l284,0.5c12.4,0,22.5-7.1,22.5-15.9l0-10.6 C329,146.4,319,139.3,306.6,139.3z";
+}
+
+.button,
+.toggle-button,
+.check-box,
+.combo-box,
+.menu-item,
+.slider .thumb,
+.list-cell:filled {
+    -fx-cursor: hand;
+}
+
+.menu-item:disabled {
+    -fx-cursor: default;
+}
+
+.button:hover,
+.toggle-button:hover {
+    -fx-color: derive(-fx-base, 25%);
+}
+
+.button:armed,
+.toggle-button:armed {
+    -fx-color: derive(-fx-base, -12%);
+}
+
+.toggle-button:selected:hover {
+    -fx-background-color: derive(#FFC940, -10%);
+}
+
+.toggle-button:selected:armed {
+    -fx-background-color: derive(#FFC940, -18%);
+}
+
+.list-cell:filled:hover {
+    -fx-background-color: derive(#25262A, 30%);
+}
+
+.list-cell:filled:focused:hover {
+    -fx-background-color: derive(#FFC940, -8%);
+    -fx-text-fill: black;
+}
+
+/* knobs/sliders are the primary interaction; a glow signals they're clickable */
+#dial_button:hover {
+    -fx-effect: dropshadow(gaussian, #e7eff780, 16, 0.3, 0, 0);
+}
+
+#dial_button:armed {
+    -fx-effect: dropshadow(gaussian, #e7eff74d, 7, 0.3, 0, 0);
+}
+
+#close:hover,
+#deviceListToggle:hover,
+#settings:hover,
+#min:hover #icon {
+    -fx-effect: dropshadow(gaussian, #ffffff8c, 8, 0.3, 0, 0);
+}
+
+#close:armed,
+#deviceListToggle:armed,
+#settings:armed,
+#min:armed #icon {
+    -icon-paint: derive(white, -30%);
 }

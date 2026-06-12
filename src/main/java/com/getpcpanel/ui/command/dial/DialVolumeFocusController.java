@@ -1,5 +1,8 @@
 package com.getpcpanel.ui.command.dial;
 
+import static com.getpcpanel.spring.OsHelper.LINUX;
+import static com.getpcpanel.spring.OsHelper.WINDOWS;
+
 import org.springframework.stereotype.Component;
 
 import com.getpcpanel.commands.command.Command;
@@ -19,7 +22,7 @@ import lombok.extern.log4j.Log4j2;
 @Component
 @Prototype
 @RequiredArgsConstructor
-@Cmd(name = "Focus Volume", fxml = "VolumeFocus", cmds = CommandVolumeFocus.class)
+@Cmd(name = "Focus Volume", fxml = "VolumeFocus", cmds = CommandVolumeFocus.class, os = { WINDOWS, LINUX })
 public class DialVolumeFocusController extends CommandController<CommandVolumeFocus> implements DialCommandController {
 
     @Override

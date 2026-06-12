@@ -198,8 +198,8 @@ public class PCPanelProUI extends Device {
                 HomePage.showHint(false);
                 var name = (knob < 5) ? ("Knob " + (knob + 1)) : ("Slider " + (knob - 5 + 1));
                 var analogType = (knob < 5) ? "Knob" : "Slider";
-                var bm = getFxHelper().buildBasicMacro(this, knob, knob < 5, name, analogType);
                 try {
+                    var bm = getFxHelper().buildBasicMacro(this, knob, knob < 5, name, analogType);
                     childDialogStage = new Stage();
                     bm.start(childDialogStage);
                 } catch (Exception ex) {

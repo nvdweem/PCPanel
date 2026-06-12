@@ -15,7 +15,8 @@ Development focus is mainly targeted at Windows but some effort is put into maki
 The installer can be found by clicking the latest release on the right side of the page. When development is ongoing there will
 also be a 'snapshot' release which can be found by opening the [releases](https://github.com/nvdweem/PCPanel/releases) page.
 
-Once on the release page there will be a changelog and a list of assets. The Windows installer is the msi, the Linux installer is the .deb file.
+Once on the release page there will be a changelog and a list of assets. The Windows installer is the msi, the Linux installer is the .deb file
+and the macOS installer is the .dmg file.
 It's also possible to download the jar file to run it manually using a local Java installation.
 
 The 'Source code' artifact is probably not needed for anybody.
@@ -30,6 +31,11 @@ is complete and will add the application to start automatically on Windows start
 ## Linux
 
 Installing on Linux is a bit harder, see [Linux instructions](linux.md).
+
+## macOS
+
+See [macOS instructions](mac.md). macOS support is experimental: device volume, mute and
+default-device switching work, but per-application volume is not possible on stock macOS.
 
 # Issues / Feature requests
 

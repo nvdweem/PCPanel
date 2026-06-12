@@ -1,15 +1,18 @@
 package com.getpcpanel.util.tray.awt;
 
+import java.awt.Desktop;
 import java.awt.MenuItem;
 import java.awt.PopupMenu;
 import java.awt.SystemTray;
 import java.awt.TrayIcon;
+import java.awt.desktop.AppReopenedListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.Objects;
 
 import javax.imageio.ImageIO;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -39,7 +42,9 @@ class TrayServiceAwt {
         SystemTray tray;
         try {
             tray = SystemTray.getSystemTray();
-            var trayIconImage = ImageIO.read(Objects.requireNonNull(TrayServiceAwt.class.getResource("/assets/32x32.png")));
+            // On macOS the menu bar is rendered at Retina scale, so scale down from a larger source for a sharper icon
+            var iconResource = SystemUtils.IS_OS_MAC ? "/assets/256x256.png" : "/assets/32x32.png";
+            var trayIconImage = ImageIO.read(Objects.requireNonNull(TrayServiceAwt.class.getResource(iconResource)));
             var trayIconWidth = new TrayIcon(trayIconImage).getSize().width;
             trayIcon = new TrayIcon(trayIconImage.getScaledInstance(trayIconWidth, -1, 4));
         } catch (UnsupportedOperationException e) {
@@ -49,6 +54,9 @@ class TrayServiceAwt {
             log.error("Unable to initialize tray icon", e1);
             return;
         }
+        // On macOS the popup opens on mouse-down and consumes the click, so mouseClicked never fires; a menu item works on all platforms
+        var showItem = new MenuItem("Show PCPanel");
+        showItem.addActionListener(e -> eventPublisher.publishEvent(new HomePage.ShowMainEvent()));
         var exitItem = new MenuItem("Exit");
         exitItem.addActionListener(e -> System.exit(0));
         trayIcon.addMouseListener(new MouseListener() {
@@ -74,6 +82,7 @@ class TrayServiceAwt {
                     eventPublisher.publishEvent(new HomePage.ShowMainEvent());
             }
         });
+        popup.add(showItem);
         popup.add(exitItem);
         trayIcon.setToolTip("PCPanel");
         trayIcon.setPopupMenu(popup);
@@ -81,6 +90,22 @@ class TrayServiceAwt {
             tray.add(trayIcon);
         } catch (Exception e) {
             log.error("TrayIcon could not be added.", e);
+        }
+        if (SystemUtils.IS_OS_MAC) {
+            registerDockReopenHandler();
+        }
+    }
+
+    /**
+     * On macOS, clicking the Dock icon fires an app-reopened event rather than a tray click.
+     */
+    private void registerDockReopenHandler() {
+        try {
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.APP_EVENT_REOPENED)) {
+                Desktop.getDesktop().addAppEventListener((AppReopenedListener) e -> eventPublisher.publishEvent(new HomePage.ShowMainEvent()));
+            }
+        } catch (Throwable t) {
+            log.warn("Unable to register dock reopen handler", t);
         }
     }
 }

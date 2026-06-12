@@ -44,11 +44,12 @@ public class MacroControllerService {
             var controllerClass = Class.forName(bd.getBeanClassName());
             var cmd = controllerClass.getAnnotation(Cmd.class);
 
-            if (!osHelper.isOs(cmd.os())) {
-                continue;
+            var osSupported = osHelper.isOs(cmd.os());
+            if (!osSupported) {
+                log.info("Command '{}' ({}) is not supported on this OS, it will be shown as unavailable", cmd.name(), controllerClass.getSimpleName());
             }
 
-            var info = new ControllerInfo(controllerClass, cmd);
+            var info = new ControllerInfo(controllerClass, cmd, osSupported);
             var type = getTypeForController(controllerClass);
             typeToControllers.computeIfAbsent(type, t -> new ArrayList<>()).add(info);
             for (var command : cmd.cmds()) {
@@ -73,7 +74,7 @@ public class MacroControllerService {
         return DialCommandController.class.isAssignableFrom(controllerClass) ? Type.dial : Type.button;
     }
 
-    public record ControllerInfo(Class<?> controllerClass, Cmd cmd) {
+    public record ControllerInfo(Class<?> controllerClass, Cmd cmd, boolean osSupported) {
         public URL getFxml() {
             return requireNonNull(getClass().getResource("/assets/command/%s/%s.fxml".formatted(getTypeForController(controllerClass).name(), cmd.fxml())));
         }

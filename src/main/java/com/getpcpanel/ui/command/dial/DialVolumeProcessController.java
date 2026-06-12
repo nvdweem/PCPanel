@@ -1,5 +1,8 @@
 package com.getpcpanel.ui.command.dial;
 
+import static com.getpcpanel.spring.OsHelper.LINUX;
+import static com.getpcpanel.spring.OsHelper.WINDOWS;
+
 import java.util.Collection;
 import java.util.Optional;
 
@@ -35,7 +38,7 @@ import one.util.streamex.StreamEx;
 @Component
 @Prototype
 @RequiredArgsConstructor
-@Cmd(name = "App Volume", fxml = "VolumeProcess", cmds = CommandVolumeProcess.class)
+@Cmd(name = "App Volume", fxml = "VolumeProcess", cmds = CommandVolumeProcess.class, os = { WINDOWS, LINUX })
 public class DialVolumeProcessController extends CommandController<CommandVolumeProcess> implements DialCommandController {
     private final ISndCtrl sndCtrl;
     private Collection<AudioDevice> allSoundDevices;

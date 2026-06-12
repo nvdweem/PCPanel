@@ -1,9 +1,14 @@
 package com.getpcpanel.ui.command;
 
+import static java.util.Objects.requireNonNull;
+
+import java.util.ArrayList;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ReflectionUtils;
@@ -85,8 +90,15 @@ public class ButtonController {
             commands.setExpandedPane(panes.get(0));
         }
 
+        var availableItems = new ArrayList<MenuItem>();
+        var unavailableItems = new ArrayList<MenuItem>();
         macroControllerService.getControllersForType(cmdType).forEach(ctrlr -> {
+            if (!ctrlr.osSupported()) {
+                unavailableItems.add(disabledMenuItem("%s (not available on %s)".formatted(ctrlr.cmd().name(), currentOsName())));
+                return;
+            }
             if (!isEnabled(ctrlr)) {
+                unavailableItems.add(disabledMenuItem("%s (enable in Settings)".formatted(ctrlr.cmd().name())));
                 return;
             }
 
@@ -95,8 +107,10 @@ public class ButtonController {
                 add(ctrlr, null);
                 commands.setExpandedPane(panes.get(panes.size() - 1));
             });
-            addMenu.getItems().add(menuItem);
+            availableItems.add(menuItem);
         });
+        addMenu.getItems().addAll(availableItems);
+        addMenu.getItems().addAll(unavailableItems);
         addButton.setContextMenu(addMenu);
 
         commandsType.getItems().addAll(CommandsType.values());
@@ -122,13 +136,44 @@ public class ButtonController {
         return ReflectionUtils.accessibleConstructor(ctrlr.cmd().enabled()).newInstance().isEnabled();
     }
 
+    private static MenuItem disabledMenuItem(String title) {
+        var menuItem = new MenuItem(title);
+        menuItem.setDisable(true);
+        return menuItem;
+    }
+
+    private static String currentOsName() {
+        if (SystemUtils.IS_OS_MAC) {
+            return "macOS";
+        }
+        if (SystemUtils.IS_OS_LINUX) {
+            return "Linux";
+        }
+        return SystemUtils.IS_OS_WINDOWS ? "Windows" : SystemUtils.OS_NAME;
+    }
+
     private void add(Command cmd) {
         var controllerInfo = macroControllerService.getControllerForCommand(cmd.getClass());
-        if (controllerInfo == null) {
-            log.warn("Dial/button with {} found, but that command is not supported", cmd);
+        if (controllerInfo == null || !controllerInfo.osSupported()) {
+            log.warn("Dial/button with {} found, but that command is not supported on this OS, it will be shown as unavailable", cmd);
+            addUnsupported(cmd);
             return;
         }
         add(controllerInfo, cmd);
+    }
+
+    /**
+     * Adds a pane for a command whose controller is not available on this OS. The controller is never instantiated
+     * and its fxml is never loaded, the original command is kept as-is and contributed unchanged on save.
+     */
+    private void addUnsupported(@Nonnull Command cmd) {
+        var label = new Label("This action is not available on %s.".formatted(currentOsName()));
+        label.setPadding(new Insets(8));
+
+        var pane = new TitledPane(null, label);
+        var panelData = addPanelOptions(null, pane, StringUtils.defaultIfBlank(cmd.buildLabel(), cmd.getClass().getSimpleName()), cmd);
+        pane.setUserData(panelData);
+        commands.getPanes().add(pane);
     }
 
     @SneakyThrows
@@ -149,11 +194,13 @@ public class ButtonController {
         }
     }
 
-    private PanelData addPanelOptions(CommandController<Command> controller, @Nonnull TitledPane pane, String title, @Nullable Command cmd) {
+    private PanelData addPanelOptions(@Nullable CommandController<Command> controller, @Nonnull TitledPane pane, String title, @Nullable Command cmd) {
         // Labels
         var titleOfTitledPane = new Label(title);
-        var additionalLabel = buildAdditionalLabel(controller, pane);
-        var labelsBox = new HBox(titleOfTitledPane, additionalLabel);
+        var labelsBox = new HBox(titleOfTitledPane);
+        if (controller != null) {
+            labelsBox.getChildren().add(buildAdditionalLabel(controller, pane));
+        }
         labelsBox.setAlignment(Pos.CENTER_LEFT);
 
         // Buttons
@@ -163,9 +210,10 @@ public class ButtonController {
         var buttonCopy = copyButton(pane);
 
         var hbox = new HBox(buttonCopy, buttonUp, buttonDown, buttonDelete);
-        var result = new PanelData(controller, cmd instanceof DialAction da ? da.getDialParams() : null);
+        var result = controller == null ? new PanelData(requireNonNull(cmd))
+                : new PanelData(controller, cmd instanceof DialAction da ? da.getDialParams() : null);
 
-        if (cmd instanceof DialAction da) {
+        if (controller != null && cmd instanceof DialAction da) {
             var invertCheck = addInvertCheck(result, hbox, da);
             addGraphViewer(result, controller, cmd, hbox, invertCheck);
         }
@@ -284,7 +332,9 @@ public class ButtonController {
         var buttonCopy = createButton(Images.copy());
         buttonCopy.setOnAction(event -> {
             var data = (PanelData) pane.getUserData();
-            if (data.controller instanceof DialCommandController dc) {
+            if (data.rawCommand != null) {
+                add(data.rawCommand);
+            } else if (data.controller instanceof DialCommandController dc) {
                 add(dc.buildCommand(data.params));
             } else if (data.controller instanceof ButtonCommandController bc) {
                 add(bc.buildCommand());
@@ -307,19 +357,28 @@ public class ButtonController {
     }
 
     public Commands determineButtonCommand() {
-        var userdata = StreamEx.of(commands.getPanes()).map(Node::getUserData);
-
-        if (cmdType == Type.dial) {
-            userdata = userdata.select(PanelData.class)
-                               .mapToEntry(PanelData::getController, PanelData::getParams)
-                               .selectKeys(DialCommandController.class)
-                               .mapKeyValue(DialCommandController::buildCommand);
-        } else {
-            userdata = userdata.select(PanelData.class).map(PanelData::getController).select(ButtonCommandController.class).map(ButtonCommandController::buildCommand);
-        }
-
-        var cmds = userdata.select(Command.class).remove(CommandNoOp.class::isInstance).toList();
+        var cmds = StreamEx.of(commands.getPanes())
+                           .map(Node::getUserData)
+                           .select(PanelData.class)
+                           .map(this::buildCommand)
+                           .nonNull()
+                           .remove(CommandNoOp.class::isInstance)
+                           .toList();
         return new Commands(cmds, commandsType.getValue());
+    }
+
+    @Nullable
+    private Command buildCommand(@Nonnull PanelData data) {
+        if (data.rawCommand != null) {
+            return data.rawCommand; // OS-unsupported command, contribute it unchanged
+        }
+        if (cmdType == Type.dial && data.controller instanceof DialCommandController dc) {
+            return dc.buildCommand(data.params);
+        }
+        if (cmdType != Type.dial && data.controller instanceof ButtonCommandController bc) {
+            return bc.buildCommand();
+        }
+        return null;
     }
 
     public void showActionsMenu(ActionEvent ignored) {
@@ -328,14 +387,22 @@ public class ButtonController {
 
     @Getter
     private static class PanelData {
-        private final CommandController<?> controller;
+        @Nullable private final CommandController<?> controller;
+        @Nullable private final Command rawCommand; // Original command of a pane whose controller is not supported on this OS
 
         @Setter private GraphViewer graph;
         @Setter private DialCommandParams params;
 
-        public PanelData(CommandController<?> controller, @Nullable DialCommandParams params) {
+        public PanelData(@Nonnull CommandController<?> controller, @Nullable DialCommandParams params) {
             this.controller = controller;
+            rawCommand = null;
             this.params = params == null ? DialCommandParams.DEFAULT : params;
+        }
+
+        public PanelData(@Nonnull Command rawCommand) {
+            controller = null;
+            this.rawCommand = rawCommand;
+            params = DialCommandParams.DEFAULT;
         }
     }
 }

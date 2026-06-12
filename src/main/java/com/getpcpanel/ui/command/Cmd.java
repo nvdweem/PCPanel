@@ -13,7 +13,7 @@ public @interface Cmd {
 
     Class<? extends Command>[] cmds();
 
-    String os() default "*";
+    String[] os() default "*";
 
     Class<? extends CmdEnabled> enabled() default CmdEnabled.class;
 

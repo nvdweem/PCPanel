@@ -12,6 +12,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.jetbrains.annotations.Contract;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -191,7 +192,7 @@ public final class Voicemeeter {
 
     public boolean login() {
         return disconnectIfDisconnectError(() -> {
-            if (!save.get().isVoicemeeterEnabled())
+            if (!SystemUtils.IS_OS_WINDOWS || !save.get().isVoicemeeterEnabled())
                 return false;
             if (hasFinishedConnection) {
                 checkParamsDirty();

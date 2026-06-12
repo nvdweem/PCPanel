@@ -7,7 +7,9 @@ import org.springframework.stereotype.Service;
 
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.cpp.linux.LinuxProcessHelper;
+import com.getpcpanel.cpp.osx.OsxProcessHelper;
 import com.getpcpanel.spring.ConditionalOnLinux;
+import com.getpcpanel.spring.ConditionalOnMac;
 import com.getpcpanel.spring.ConditionalOnWindows;
 
 import lombok.RequiredArgsConstructor;
@@ -49,6 +51,48 @@ public abstract class IPlatformCommand {
                     processHelper.builder("kill", String.valueOf(processHelper.getActiveProcessPid())).start();
                 } else {
                     processHelper.builder("pkill", process).start();
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    @Service
+    @ConditionalOnMac
+    @RequiredArgsConstructor
+    public static class OsxPlatformCommand extends IPlatformCommand {
+        private final OsxProcessHelper processHelper;
+
+        @Override
+        public void exec(String shortcut) {
+            try {
+                var file = new File(shortcut);
+                if (file.exists()) {
+                    rt.exec(new String[] { "/usr/bin/open", file.getAbsolutePath() });
+                } else {
+                    rt.exec(shortcut);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public void kill(String process) {
+            try {
+                if (FOCUS.equals(process)) {
+                    var app = processHelper.getFrontmostApp();
+                    if (app != null) {
+                        rt.exec(new String[] { "/bin/kill", String.valueOf(app.pid()) });
+                    }
+                } else {
+                    // pkill matches by unanchored regex which over-matches (or fails on names with parentheses),
+                    // so match the exact executable name that the application picker stored
+                    var name = new File(process).getName();
+                    ProcessHandle.allProcesses()
+                                 .filter(ph -> ph.info().command().map(cmd -> new File(cmd).getName().equals(name)).orElse(false))
+                                 .forEach(ProcessHandle::destroy);
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);

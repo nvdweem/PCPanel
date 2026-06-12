@@ -21,6 +21,7 @@ import com.getpcpanel.iconextract.IIconService;
 import com.getpcpanel.spring.Prototype;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.scene.Scene;
@@ -46,6 +47,7 @@ import one.util.streamex.StreamEx;
 @RequiredArgsConstructor
 public class AppFinderDialog extends Application implements UIInitializer<AppFinderDialog.AppFinderParams> {
     private static final int ICON_SIZE = 90;
+    private static final Font TILE_FONT = new Font(18.0D);
     private final ISndCtrl sndCtrl;
     private final IIconService iconService;
     @Nullable private Stage parentStage;
@@ -116,15 +118,14 @@ public class AppFinderDialog extends Application implements UIInitializer<AppFin
         return resize(ImageIO.read(Objects.requireNonNull(AppFinderDialog.class.getResourceAsStream("/assets/DefaultExeIcon.ico"))));
     }
 
-    private ImageView getImage(AudioSession session) throws Exception {
+    private Image getImage(AudioSession session) throws Exception {
         BufferedImage bi;
         if (session.isSystemSounds()) {
             bi = resize(ImageIO.read(Objects.requireNonNull(getClass().getResourceAsStream("/assets/systemsounds.ico"))));
         } else {
             bi = toBufferedImage(session.executable());
         }
-        var writableImage = SwingFXUtils.toFXImage(bi, null);
-        return new ImageView(writableImage);
+        return SwingFXUtils.toFXImage(bi, null);
     }
 
     private List<AudioSession> getProgs() {
@@ -147,35 +148,53 @@ public class AppFinderDialog extends Application implements UIInitializer<AppFin
             flowPane.setPrefWidth(bounds.getWidth());
             flowPane.setPrefHeight(bounds.getHeight());
         });
-        var font = new Font(18.0D);
+        var loader = new Thread(this::populateApps, "AppFinder app loader");
+        loader.setDaemon(true);
+        loader.start();
+    }
+
+    /**
+     * Listing applications and extracting their icons spawn external processes on macOS, so both run off the FX
+     * thread. The tiles appear with the default icon and are updated one by one as the real icons resolve.
+     */
+    private void populateApps() {
         try {
-            var apps = getProgs();
+            var defaultImage = SwingFXUtils.toFXImage(getDefaultImage(), null);
+            var apps = StreamEx.of(getProgs()).map(app -> buildAppButton(app, defaultImage)).toList();
+            Platform.runLater(() -> {
+                StreamEx.of(apps).map(AppButton::tile).toListAndThen(allProgs::addAll);
+                onFilterChanged(null);
+            });
             for (var app : apps) {
-                var iv = getImage(app);
-                var button = new Button(app.title(), iv);
-                var size = 180;
-                var ivSize = 64;
-                iv.minHeight(ivSize);
-                iv.minWidth(ivSize);
-                iv.maxHeight(ivSize);
-                iv.maxWidth(ivSize);
-                button.setMinSize(size, size);
-                button.setMaxSize(size, size);
-                button.setGraphicTextGap(10.0D);
-                button.setFont(font);
-                button.setWrapText(true);
-                button.setTextAlignment(TextAlignment.CENTER);
-                button.setContentDisplay(ContentDisplay.TOP);
-                button.setOnAction(a -> {
-                    processName = app.isSystemSounds() ? AudioSession.SYSTEM : StringUtils.firstNonBlank(app.executable().getName(), app.title());
-                    stage.close();
-                });
-                allProgs.add(new ButtonTitleExe(button, app.title(), app.executable().getName()));
+                var image = getImage(app.session());
+                Platform.runLater(() -> app.icon().setImage(image));
             }
-            StreamEx.of(allProgs).map(ButtonTitleExe::button).toListAndThen(flowPane.getChildren()::addAll);
         } catch (Exception e) {
             log.error("Unable to add app-buttons", e);
         }
+    }
+
+    private AppButton buildAppButton(AudioSession app, Image defaultImage) {
+        var iv = new ImageView(defaultImage);
+        var button = new Button(app.title(), iv);
+        var size = 180;
+        var ivSize = 64;
+        iv.minHeight(ivSize);
+        iv.minWidth(ivSize);
+        iv.maxHeight(ivSize);
+        iv.maxWidth(ivSize);
+        button.setMinSize(size, size);
+        button.setMaxSize(size, size);
+        button.setGraphicTextGap(10.0D);
+        button.setFont(TILE_FONT);
+        button.setWrapText(true);
+        button.setTextAlignment(TextAlignment.CENTER);
+        button.setContentDisplay(ContentDisplay.TOP);
+        button.setOnAction(a -> {
+            processName = app.isSystemSounds() ? AudioSession.SYSTEM : StringUtils.firstNonBlank(app.executable().getName(), app.title());
+            stage.close();
+        });
+        return new AppButton(app, new ButtonTitleExe(button, app.title(), app.executable().getName()), iv);
     }
 
     @FXML
@@ -189,6 +208,9 @@ public class AppFinderDialog extends Application implements UIInitializer<AppFin
         boolean matches(String filter) {
             return StringUtils.containsIgnoreCase(title, filter) || StringUtils.containsIgnoreCase(exe, filter);
         }
+    }
+
+    private record AppButton(AudioSession session, ButtonTitleExe tile, ImageView icon) {
     }
 
     record AppFinderParams(@Nullable Stage parentStage, boolean volumeApps) {

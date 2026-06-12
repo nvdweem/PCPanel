@@ -134,8 +134,8 @@ public class PCPanelRGBUI extends Device {
             var knob = i;
             knobs[i].setOnAction(e -> {
                 HomePage.showHint(false);
-                var bm = getFxHelper().buildBasicMacro(this, knob);
                 try {
+                    var bm = getFxHelper().buildBasicMacro(this, knob);
                     childDialogStage = new Stage();
                     bm.start(childDialogStage);
                 } catch (Exception ex) {

@@ -15,7 +15,8 @@ import one.util.streamex.StreamEx;
 public class OsHelper {
     public static final String WINDOWS = "windows";
     public static final String LINUX = "linux";
-    private static final Set<String> supportedOss = Set.of(WINDOWS, LINUX);
+    public static final String MAC = "mac";
+    private static final Set<String> supportedOss = Set.of(WINDOWS, LINUX, MAC);
     private final Set<String> toHideClasses;
 
     public OsHelper() {
@@ -30,12 +31,19 @@ public class OsHelper {
         return SystemUtils.IS_OS_LINUX;
     }
 
+    public boolean isMac() {
+        return SystemUtils.IS_OS_MAC;
+    }
+
     public String osString() {
         if (SystemUtils.IS_OS_WINDOWS) {
             return WINDOWS;
         }
         if (SystemUtils.IS_OS_LINUX) {
             return LINUX;
+        }
+        if (SystemUtils.IS_OS_MAC) {
+            return MAC;
         }
         return "unsupported";
     }
@@ -51,7 +59,8 @@ public class OsHelper {
         });
     }
 
-    public boolean isOs(String os) {
-        return StringUtils.equalsAny(os, "*", osString());
+    public boolean isOs(String... os) {
+        var current = osString();
+        return StreamEx.of(os).anyMatch(o -> StringUtils.equalsAny(o, "*", current));
     }
 }

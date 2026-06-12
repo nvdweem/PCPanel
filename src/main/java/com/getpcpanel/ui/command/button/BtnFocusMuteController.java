@@ -1,5 +1,8 @@
 package com.getpcpanel.ui.command.button;
 
+import static com.getpcpanel.spring.OsHelper.LINUX;
+import static com.getpcpanel.spring.OsHelper.WINDOWS;
+
 import org.springframework.stereotype.Component;
 
 import com.getpcpanel.commands.command.Command;
@@ -21,7 +24,7 @@ import lombok.extern.log4j.Log4j2;
 @Component
 @Prototype
 @RequiredArgsConstructor
-@Cmd(name = "Focus Mute", fxml = "FocusMute", cmds = CommandVolumeFocusMute.class)
+@Cmd(name = "Focus Mute", fxml = "FocusMute", cmds = CommandVolumeFocusMute.class, os = { WINDOWS, LINUX })
 public class BtnFocusMuteController extends CommandController<CommandVolumeFocusMute> implements ButtonCommandController {
     @FXML private RadioButton rdio_focus_mute_mute;
     @FXML private RadioButton rdio_focus_mute_toggle;

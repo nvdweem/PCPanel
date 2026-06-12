@@ -1,6 +1,5 @@
 package com.getpcpanel.ui;
 
-import java.awt.Toolkit;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -17,7 +16,7 @@ import com.getpcpanel.commands.command.ButtonAction;
 import com.getpcpanel.commands.command.DialAction;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
-import com.getpcpanel.spring.ConditionalOnWindows;
+import com.getpcpanel.spring.ConditionalOnWinOrMac;
 import com.getpcpanel.util.Debouncer;
 
 import jakarta.annotation.Nonnull;
@@ -34,13 +33,16 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.Popup;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
+@Log4j2
 @Component
-@ConditionalOnWindows
+@ConditionalOnWinOrMac
 @RequiredArgsConstructor
 public class Overlay extends Popup {
     private final FxHelper fxHelper;
@@ -87,21 +89,19 @@ public class Overlay extends Popup {
     }
 
     private void determinePosition() {
-        var window = Toolkit.getDefaultToolkit().getScreenSize();
-        var x = window.getWidth();
-        var y = window.getHeight();
+        var screen = Screen.getPrimary().getVisualBounds(); // Excludes taskbar/menu bar/dock, may not start at 0,0
         var width = getWidth();
         var height = getHeight();
 
         switch (save.get().getOverlayPosition()) {
-            case topLeft, topMiddle, topRight -> setY(save.get().getOverlayPadding());
-            case middleLeft, middleMiddle, middleRight -> setY(y / 2 - height / 2);
-            case bottomLeft, bottomMiddle, bottomRight -> setY(y - getHeight() - save.get().getOverlayPadding());
+            case topLeft, topMiddle, topRight -> setY(screen.getMinY() + save.get().getOverlayPadding());
+            case middleLeft, middleMiddle, middleRight -> setY(screen.getMinY() + screen.getHeight() / 2 - height / 2);
+            case bottomLeft, bottomMiddle, bottomRight -> setY(screen.getMaxY() - height - save.get().getOverlayPadding());
         }
         switch (save.get().getOverlayPosition()) {
-            case topLeft, middleLeft, bottomLeft -> setX(save.get().getOverlayPadding());
-            case topMiddle, middleMiddle, bottomMiddle -> setX(x / 2 - width / 2);
-            case topRight, middleRight, bottomRight -> setX(x - width - save.get().getOverlayPadding());
+            case topLeft, middleLeft, bottomLeft -> setX(screen.getMinX() + save.get().getOverlayPadding());
+            case topMiddle, middleMiddle, bottomMiddle -> setX(screen.getMinX() + screen.getWidth() / 2 - width / 2);
+            case topRight, middleRight, bottomRight -> setX(screen.getMaxX() - width - save.get().getOverlayPadding());
         }
     }
 
@@ -165,14 +165,26 @@ public class Overlay extends Popup {
             return;
         }
         Platform.runLater(() -> {
-            var cai = pre.get();
-            if (hasOverlay(cai.command) && pred.test(cai.command)) {
-                icon.setImage(cai.icon);
-                show(stage);
-                initAfterShow();
+            try {
+                var cai = pre.get();
+                if (hasOverlay(cai.command) && pred.test(cai.command)) {
+                    icon.setImage(cai.icon);
+                    show(stage);
+                    initAfterShow();
+                }
+            } catch (Exception e) {
+                log.error("Unable to show overlay", e);
             }
         });
-        debouncer.debounce(this, () -> Platform.runLater(this::hide), 2, TimeUnit.SECONDS);
+        debouncer.debounce(this, () -> Platform.runLater(this::hideOverlay), 2, TimeUnit.SECONDS);
+    }
+
+    private void hideOverlay() {
+        try {
+            hide();
+        } catch (Exception e) {
+            log.error("Unable to hide overlay", e);
+        }
     }
 
     private boolean hasOverlay(Commands commands) {

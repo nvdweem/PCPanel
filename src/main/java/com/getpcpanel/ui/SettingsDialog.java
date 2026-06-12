@@ -344,7 +344,7 @@ public class SettingsDialog extends Application implements UIInitializer<SingleP
 
     @SuppressWarnings("unused")
     public void triggerAv(ActionEvent ignored) {
-        MainFX.getBean(SndCtrlWindows.class).triggerAv();
+        MainFX.getOptionalBean(SndCtrlWindows.class).ifPresentOrElse(SndCtrlWindows::triggerAv, () -> log.warn("Triggering AV is only available on Windows"));
     }
 
     public void copyAudioOutput(ActionEvent ignored) {

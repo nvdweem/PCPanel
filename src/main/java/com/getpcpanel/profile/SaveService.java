@@ -22,6 +22,7 @@ import com.getpcpanel.util.Debouncer;
 import com.getpcpanel.util.FileUtil;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
@@ -40,6 +41,7 @@ public class SaveService {
     @SuppressWarnings("StaticNonFinalField") private static String oldVersionEncountered;
 
     private Save save;
+    private volatile boolean loadFailed;
 
     public Save get() {
         return save;
@@ -65,6 +67,7 @@ public class SaveService {
             eventPublisher.publishEvent(new SaveEvent(save, false));
         } catch (Exception e) {
             log.error("Unable to read file", e);
+            loadFailed = true; // Prevent save-on-exit from overwriting a file we could not read
             save = new Save();
         }
     }
@@ -93,7 +96,11 @@ public class SaveService {
     }
 
     private void tryMigrate(File saveFile) {
-        @SuppressWarnings("CallToSystemGetenv") var oldFile = new File(System.getenv("LOCALAPPDATA"), "PCPanel Software/save.json");
+        @SuppressWarnings("CallToSystemGetenv") var localAppData = System.getenv("LOCALAPPDATA");
+        if (localAppData == null) {
+            return;
+        }
+        var oldFile = new File(localAppData, "PCPanel Software/save.json");
         if (oldFile.exists()) {
             var result = JOptionPane.showConfirmDialog(null, "No save file found, would you like to migrate from original PCPanel software?", "Migrate", JOptionPane.YES_NO_OPTION);
             if (result == JOptionPane.YES_OPTION) {
@@ -108,18 +115,32 @@ public class SaveService {
     }
 
     public void save() {
+        writeSaveFile();
+        eventPublisher.publishEvent(new SaveEvent(save, false));
+    }
+
+    private synchronized void writeSaveFile() { // Synchronized: a pending debounced save may run concurrently with the shutdown-thread write
         var saveFile = fileUtil.getFile(saveFileName);
         try {
             FileUtils.writeStringToFile(saveFile, json.writePretty(save), Charset.defaultCharset());
+            loadFailed = false; // The file now holds the in-memory state, so save-on-exit can no longer destroy anything
         } catch (IOException e) {
             log.error("Unable to save file", e);
         }
-
-        eventPublisher.publishEvent(new SaveEvent(save, false));
     }
 
     public void debouncedSave() {
         debouncer.debounce(this, this::save, 1, TimeUnit.SECONDS);
+    }
+
+    @PreDestroy
+    public void saveOnExit() {
+        if (save == null || loadFailed) {
+            return;
+        }
+        // Writes the full in-memory state, so any save still pending in the debouncer is covered too.
+        // Write directly without publishing SaveEvent: listeners (OBS/MQTT/OSC/...) must not run while beans are being destroyed.
+        writeSaveFile();
     }
 
     public Optional<Profile> getProfile(String serialNum) {

@@ -19,7 +19,7 @@ import lombok.extern.log4j.Log4j2;
 @Component
 @Prototype
 @RequiredArgsConstructor
-@Cmd(name = "Device Brightness", fxml = "Brightness", cmds = CommandBrightness.class)
+@Cmd(name = "PCPanel Brightness", fxml = "Brightness", cmds = CommandBrightness.class)
 public class DialBrightnessController extends CommandController<CommandBrightness> implements DialCommandController {
 
     @Override

@@ -12,8 +12,10 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.jackson.Jacksonized;
+import lombok.extern.log4j.Log4j2;
 
 @Getter
+@Log4j2
 @Builder
 @Jacksonized
 @AllArgsConstructor
@@ -27,7 +29,12 @@ public class CommandVolumeDefaultDeviceAdvanced extends CommandVolume implements
 
     @Override
     public void execute() {
-        var windowsSndCtrl = MainFX.getBean(SndCtrlWindows.class);
+        var windowsSndCtrlOpt = MainFX.getOptionalBean(SndCtrlWindows.class);
+        if (windowsSndCtrlOpt.isEmpty()) {
+            log.warn("The default device (advanced) command is only available on Windows");
+            return;
+        }
+        var windowsSndCtrl = windowsSndCtrlOpt.get();
         windowsSndCtrl.setDefaultDevice(mediaPb, DataFlow.dfRender, Role.roleMultimedia);
         windowsSndCtrl.setDefaultDevice(mediaRec, DataFlow.dfCapture, Role.roleMultimedia);
         windowsSndCtrl.setDefaultDevice(communicationPb, DataFlow.dfRender, Role.roleCommunications);

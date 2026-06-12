@@ -39,7 +39,11 @@ public class CommandVolumeApplicationDeviceToggle extends CommandVolume implemen
 
     @Override
     public void execute() {
-        if (devices.isEmpty() || !(getSndCtrl() instanceof SndCtrlWindows)) {
+        if (!(getSndCtrl() instanceof SndCtrlWindows)) {
+            log.warn("The application device toggle command is only available on Windows");
+            return;
+        }
+        if (devices.isEmpty()) {
             return;
         }
         currentIdx++;
