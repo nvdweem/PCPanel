@@ -5,6 +5,7 @@ import java.util.Set;
 import org.eclipse.microprofile.config.ConfigProvider;
 
 import com.getpcpanel.hid.HidDebug;
+import com.getpcpanel.util.ConsoleSupport;
 import com.getpcpanel.util.FileChecker;
 
 import io.quarkus.runtime.Quarkus;
@@ -18,6 +19,9 @@ public class Main implements QuarkusApplication {
 
     static void main(String... args) {
         var argSet = Set.of(args);
+        if (argSet.contains(ConsoleSupport.CONSOLE_ARG)) {
+            ConsoleSupport.attachConsole(); // Open a console before Quarkus boots so its logs are captured too.
+        }
         if (argSet.contains("hiddebug")) {
             new HidDebug().execute();
             return;
