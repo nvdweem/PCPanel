@@ -40,6 +40,13 @@ public class WindowsSystemEventService implements WindowProc {
 
     @PostConstruct
     public void init() {
+        if ("runtime".equals(System.getProperty("org.graalvm.nativeimage.imagecode"))) {
+            // This service installs a JNA window-procedure callback (native→Java upcall). Such
+            // callbacks are unsupported in the GraalVM native image and segfault the process, so
+            // sleep/session detection is disabled in the native build (it works in JVM mode).
+            log.warn("System sleep/session detection is unavailable in the native image; skipping.");
+            return;
+        }
         new Thread(() -> {
             var windowClass = new WString("AnotherWindowClass");
             var hInst = Kernel32.INSTANCE.GetModuleHandle("");

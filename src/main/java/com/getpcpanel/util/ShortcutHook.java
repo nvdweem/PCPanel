@@ -40,6 +40,15 @@ public class ShortcutHook implements NativeKeyListener {
     @SuppressWarnings("ErrorNotRethrown")
     @PostConstruct
     public void init() {
+        if ("runtime".equals(System.getProperty("org.graalvm.nativeimage.imagecode"))) {
+            // jnativehook loads a JNI library that delivers key events via native→Java callbacks,
+            // neither of which works in the GraalVM native image. Skip registration cleanly (rather
+            // than failing with an UnsatisfiedLinkError) so global shortcuts are simply unavailable
+            // in the native build; they still work in JVM mode.
+            log.warn("Global keyboard shortcuts are unavailable in the native image; skipping.");
+            updateShortcuts();
+            return;
+        }
         try {
             GlobalScreen.registerNativeHook();
             GlobalScreen.addNativeKeyListener(this);
@@ -53,6 +62,9 @@ public class ShortcutHook implements NativeKeyListener {
 
     @PreDestroy
     public void destroy() {
+        if ("runtime".equals(System.getProperty("org.graalvm.nativeimage.imagecode"))) {
+            return;
+        }
         GlobalScreen.removeNativeKeyListener(this);
         try {
             GlobalScreen.unregisterNativeHook();

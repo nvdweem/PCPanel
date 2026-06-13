@@ -1,11 +1,8 @@
 package com.getpcpanel.overlay;
 
 import java.awt.Image;
-import java.awt.Toolkit;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-
-import javax.swing.SwingUtilities;
 
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.IconService;
@@ -15,10 +12,10 @@ import com.getpcpanel.commands.command.DialAction;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.profile.dto.OverlayPosition;
+import com.sun.jna.Platform;
 
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
-import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import lombok.RequiredArgsConstructor;
@@ -29,14 +26,10 @@ import one.util.streamex.StreamEx;
 public class Overlay {
     private final SaveService save;
     private final IconService iconService;
-    private VolumeOverlay overlay = new VolumeOverlay();
-
-    // @PostConstruct
-    // public void init() {
-    //     SwingUtilities.invokeLater(() -> {
-    //         overlay;
-    //     });
-    // }
+    // On Windows the Swing/AWT windowing toolkit is unsupported in the native image (it segfaults
+    // the native WToolkit event loop), so use a JNA layered window instead. Other platforms keep
+    // the Swing implementation, which works there.
+    private final OverlayWindow overlay = Platform.isWindows() ? new Win32VolumeOverlay() : new VolumeOverlay();
 
     public void updateSaveValues(@Observes SaveEvent event) {
         updateStyle(null);
@@ -44,7 +37,7 @@ public class Overlay {
     }
 
     private void determinePosition() {
-        var window = Toolkit.getDefaultToolkit().getScreenSize();
+        var window = overlay.getScreenSize();
         var x = window.width;
         var y = window.height;
         var width = overlay.getWidth();
@@ -66,10 +59,7 @@ public class Overlay {
     }
 
     private void setXY(int x, int y) {
-        var b = overlay.getBounds();
-        b.x = x;
-        b.y = y;
-        overlay.setBounds(b);
+        overlay.setLocation(x, y);
     }
 
     public void show(float value) {
@@ -77,7 +67,7 @@ public class Overlay {
     }
 
     public void updateStyle(@Nullable @Observes SaveEvent event) {
-        SwingUtilities.invokeLater(() -> overlay.setStyles(save.get()));
+        overlay.setStyles(save.get());
     }
 
     public void handleControl(@Observes PCPanelControlEvent event) {
@@ -93,12 +83,10 @@ public class Overlay {
         if (!save.get().isOverlayEnabled()) {
             return;
         }
-        SwingUtilities.invokeLater(() -> {
-            var cai = pre.get();
-            if (hasOverlay(cai.command) && pred.test(cai.command)) {
-                overlay.show(value, cai.icon);
-            }
-        });
+        var cai = pre.get();
+        if (hasOverlay(cai.command) && pred.test(cai.command)) {
+            overlay.show(value, cai.icon);
+        }
     }
 
     private boolean hasOverlay(Commands commands) {

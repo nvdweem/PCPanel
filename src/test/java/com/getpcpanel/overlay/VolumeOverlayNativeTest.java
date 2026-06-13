@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.awt.Color;
 import java.awt.GraphicsEnvironment;
 import java.awt.Window;
-import java.lang.reflect.Method;
 
 import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
@@ -49,21 +48,11 @@ class VolumeOverlayNativeTest {
         new VolumeOverlay().show(1, null);
     }
 
-    // ── Shared reflection handle on the private static parseColor method ─────
-
-    private static Method parseColorMethod;
-
-    @BeforeAll
-    static void resolveParseColor() throws Exception {
-        parseColorMethod = VolumeOverlay.class.getDeclaredMethod("parseColor", String.class, Color.class);
-        parseColorMethod.setAccessible(true);
-    }
-
     /**
-     * Invoke the private {@code VolumeOverlay.parseColor(String, Color)} helper.
+     * Invoke the package-private {@code OverlayRenderer.parseColor(String, Color)} helper.
      */
-    private Color parseColor(String value, Color fallback) throws Exception {
-        return (Color) parseColorMethod.invoke(null, value, fallback);
+    private Color parseColor(String value, Color fallback) {
+        return OverlayRenderer.parseColor(value, fallback);
     }
 
     // ── Color parsing – hex formats ──────────────────────────────────────────

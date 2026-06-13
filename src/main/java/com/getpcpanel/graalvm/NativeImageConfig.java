@@ -236,6 +236,11 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         OSCBinding.class,
         OverlayPosition.class,
 }, classNames = {
+        // GitHub release version model – deserialised by a plain ObjectMapper in VersionChecker,
+        // so Quarkus does not auto-detect it for reflection (records need their canonical creator).
+        "com.getpcpanel.util.version.Version",
+        "com.getpcpanel.util.version.Version$SemVer",
+
         // MQTT Home Assistant discovery records (package-private inner classes – referenced by name)
         "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantAvailability",
         "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantButtonConfig",
