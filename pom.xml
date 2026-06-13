@@ -55,12 +55,12 @@
             -Os,
             -R:MaxHeapSize=67108864,
             --initialize-at-run-time=com.getpcpanel.util.Kernel32Console,
-            -H:+UnlockExperimentalVMOptions,
-            -H:NativeLinkerOption=/SUBSYSTEM:WINDOWS,
-            -H:NativeLinkerOption=/ENTRY:mainCRTStartup,
-            -H:-UnlockExperimentalVMOptions,
-            -J-XX:-UseCompressedOops,--initialize-at-run-time=com.sun.jna,--initialize-at-run-time=org.hid4java,--initialize-at-run-time=com.github.kwhat.jnativehook,--initialize-at-run-time=com.getpcpanel.commands.KeyMacro,--initialize-at-run-time=com.getpcpanel.iconextract.Shell32Extra,--initialize-at-run-time=org.freedesktop.dbus,--initialize-at-run-time=sun.font.FontManagerFactory,--initialize-at-run-time=sun.font.FontFamily,--initialize-at-run-time=sun.java2d.Disposer,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOINFO,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOBUFFER,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_INTERFACE,--initialize-at-run-time=sun.awt.windows,--initialize-at-run-time=sun.java2d.d3d,--initialize-at-run-time=sun.java2d.windows,--initialize-at-run-time=javax.swing.plaf.metal,--initialize-at-build-time=javax.swing.plaf.ColorUIResource,--initialize-at-build-time=java.awt.font.FontRenderContext,--initialize-at-build-time=sun.awt.SunHints,--initialize-at-build-time=sun.awt.SunHints$Value,--initialize-at-build-time=sun.awt.SunHints$LCDContrastKey,--initialize-at-build-time=sun.awt.SunHints$Key,--initialize-at-build-time=java.awt.Dimension,--initialize-at-build-time=java.awt.geom.Dimension2D
+            -J-XX:-UseCompressedOops,--initialize-at-run-time=com.sun.jna,--initialize-at-run-time=org.hid4java,--initialize-at-run-time=com.github.kwhat.jnativehook,--initialize-at-run-time=com.getpcpanel.commands.KeyMacro,--initialize-at-run-time=com.getpcpanel.iconextract.Shell32Extra,--initialize-at-run-time=org.freedesktop.dbus,--initialize-at-run-time=sun.font.FontManagerFactory,--initialize-at-run-time=sun.font.FontFamily,--initialize-at-run-time=sun.java2d.Disposer,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOINFO,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOBUFFER,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_INTERFACE,--initialize-at-run-time=sun.awt.windows,--initialize-at-run-time=sun.java2d.d3d,--initialize-at-run-time=sun.java2d.windows,--initialize-at-run-time=javax.swing.plaf.metal,--initialize-at-build-time=javax.swing.plaf.ColorUIResource,--initialize-at-build-time=java.awt.font.FontRenderContext,--initialize-at-build-time=sun.awt.SunHints,--initialize-at-build-time=sun.awt.SunHints$Value,--initialize-at-build-time=sun.awt.SunHints$LCDContrastKey,--initialize-at-build-time=sun.awt.SunHints$Key,--initialize-at-build-time=java.awt.Dimension,--initialize-at-build-time=java.awt.geom.Dimension2D${native.platform.linker.args}
         </quarkus.native.additional-build-args>
+        <!-- Platform-specific native-image args, appended to the list above. Empty by default
+             (Linux/macOS); the os-windows profile injects the GUI-subsystem linker flags. The
+             leading comma joins it to the preceding arg; keep it empty (not blank lines) elsewhere. -->
+        <native.platform.linker.args></native.platform.linker.args>
     </properties>
 
     <dependencyManagement>
@@ -432,6 +432,22 @@
             <id>native</id>
             <!-- Retained for backward compatibility (CI uses -Pnative explicitly). -->
             <!-- All native-image properties now live in the main <properties> section. -->
+        </profile>
+        <profile>
+            <!-- Windows-only: link the native image as a GUI-subsystem executable so no console
+                 window spawns on launch. /ENTRY:mainCRTStartup is required because /SUBSYSTEM:WINDOWS
+                 otherwise makes the MSVC linker look for WinMain instead of main(). These are MSVC
+                 linker flags, so they must NOT be passed on Linux/macOS (GNU ld / ld64 reject them);
+                 hence this OS-activated profile rather than the shared <properties> block. -->
+            <id>os-windows</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                </os>
+            </activation>
+            <properties>
+                <native.platform.linker.args>,-H:+UnlockExperimentalVMOptions,-H:NativeLinkerOption=/SUBSYSTEM:WINDOWS,-H:NativeLinkerOption=/ENTRY:mainCRTStartup,-H:-UnlockExperimentalVMOptions</native.platform.linker.args>
+            </properties>
         </profile>
     </profiles>
 </project>
