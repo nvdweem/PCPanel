@@ -52,7 +52,9 @@
              Without this, jctools stores scale=4 (compressed oops) but native image uses 8-byte refs → segfault. -->
         <quarkus.native.additional-build-args>
             --exclude-config pcpanel-1.8-SNAPSHOT-runner /META-INF/native-image/com\.getpcpanel/pcpanel/jni-config\.json,
-            -J-XX:-UseCompressedOops,--initialize-at-run-time=com.sun.jna,--initialize-at-run-time=org.hid4java,--initialize-at-run-time=com.github.kwhat.jnativehook,--initialize-at-run-time=com.getpcpanel.commands.KeyMacro,--initialize-at-run-time=com.getpcpanel.iconextract.Shell32Extra,--initialize-at-run-time=org.freedesktop.dbus,--initialize-at-run-time=sun.font.FontManagerFactory,--initialize-at-run-time=sun.font.FontFamily,--initialize-at-run-time=sun.java2d.Disposer,--initialize-at-run-time=com.hivemq.client.internal.mqtt,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOINFO,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOBUFFER,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_INTERFACE,--initialize-at-run-time=sun.awt.windows,--initialize-at-run-time=sun.java2d.d3d,--initialize-at-run-time=sun.java2d.windows,--initialize-at-run-time=javax.swing.plaf.metal,--initialize-at-build-time=javax.swing.plaf.ColorUIResource,--initialize-at-build-time=java.awt.font.FontRenderContext,--initialize-at-build-time=sun.awt.SunHints,--initialize-at-build-time=sun.awt.SunHints$Value,--initialize-at-build-time=sun.awt.SunHints$LCDContrastKey,--initialize-at-build-time=sun.awt.SunHints$Key,--initialize-at-build-time=java.awt.Dimension,--initialize-at-build-time=java.awt.geom.Dimension2D
+            -Os,
+            -R:MaxHeapSize=67108864,
+            -J-XX:-UseCompressedOops,--initialize-at-run-time=com.sun.jna,--initialize-at-run-time=org.hid4java,--initialize-at-run-time=com.github.kwhat.jnativehook,--initialize-at-run-time=com.getpcpanel.commands.KeyMacro,--initialize-at-run-time=com.getpcpanel.iconextract.Shell32Extra,--initialize-at-run-time=org.freedesktop.dbus,--initialize-at-run-time=sun.font.FontManagerFactory,--initialize-at-run-time=sun.font.FontFamily,--initialize-at-run-time=sun.java2d.Disposer,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOINFO,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOBUFFER,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_INTERFACE,--initialize-at-run-time=sun.awt.windows,--initialize-at-run-time=sun.java2d.d3d,--initialize-at-run-time=sun.java2d.windows,--initialize-at-run-time=javax.swing.plaf.metal,--initialize-at-build-time=javax.swing.plaf.ColorUIResource,--initialize-at-build-time=java.awt.font.FontRenderContext,--initialize-at-build-time=sun.awt.SunHints,--initialize-at-build-time=sun.awt.SunHints$Value,--initialize-at-build-time=sun.awt.SunHints$LCDContrastKey,--initialize-at-build-time=sun.awt.SunHints$Key,--initialize-at-build-time=java.awt.Dimension,--initialize-at-build-time=java.awt.geom.Dimension2D
         </quarkus.native.additional-build-args>
     </properties>
 
@@ -233,18 +235,11 @@
             <version>24.0.1</version>
         </dependency>
 
-        <!-- MQTT client -->
+        <!-- MQTT client: Eclipse Paho mqttv5 — pure Java (no Netty/RxJava), keeps native footprint small -->
         <dependency>
-            <groupId>com.hivemq</groupId>
-            <artifactId>hivemq-mqtt-client</artifactId>
-            <version>1.3.3</version>
-        </dependency>
-
-        <!-- Reactive extensions -->
-        <dependency>
-            <groupId>io.reactivex.rxjava3</groupId>
-            <artifactId>rxjava</artifactId>
-            <version>3.1.9</version>
+            <groupId>org.eclipse.paho</groupId>
+            <artifactId>org.eclipse.paho.mqttv5.client</artifactId>
+            <version>1.2.5</version>
         </dependency>
 
         <!-- D-Bus support for Linux Wayland system tray (StatusNotifierItem protocol) -->

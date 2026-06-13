@@ -236,6 +236,15 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         OSCBinding.class,
         OverlayPosition.class,
 }, classNames = {
+        // Eclipse Paho instantiates its logger reflectively in LoggerFactory.getLogger().
+        "org.eclipse.paho.mqttv5.client.logging.JSR47Logger",
+        // Paho resolves the transport for a URI scheme (tcp/ssl/ws/wss) through a ServiceLoader of
+        // NetworkModuleFactory; the implementations must be reflectively instantiable in native.
+        "org.eclipse.paho.mqttv5.client.internal.TCPNetworkModuleFactory",
+        "org.eclipse.paho.mqttv5.client.internal.SSLNetworkModuleFactory",
+        "org.eclipse.paho.mqttv5.client.websocket.WebSocketNetworkModuleFactory",
+        "org.eclipse.paho.mqttv5.client.websocket.WebSocketSecureNetworkModuleFactory",
+
         // GitHub release version model – deserialised by a plain ObjectMapper in VersionChecker,
         // so Quarkus does not auto-detect it for reflection (records need their canonical creator).
         "com.getpcpanel.util.version.Version",

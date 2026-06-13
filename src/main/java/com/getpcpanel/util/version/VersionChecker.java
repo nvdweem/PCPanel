@@ -3,7 +3,7 @@ package com.getpcpanel.util.version;
 import static com.getpcpanel.util.version.Version.SNAPSHOT_POSTFIX;
 
 import java.net.URI;
-import java.net.http.HttpClient;
+import com.getpcpanel.util.SharedHttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Comparator;
@@ -54,7 +54,7 @@ public class VersionChecker extends Thread {
     public void run() {
         try {
             var url = "https://api.github.com/repos/" + githubUserAndRepo + "/releases?per_page=4";
-            var client = HttpClient.newHttpClient();
+            var client = SharedHttpClient.get();
             var request = HttpRequest.newBuilder(URI.create(url)).build();
             var response = client.send(request, HttpResponse.BodyHandlers.ofString());
             var versions = objectMapper.readValue(response.body(), Version[].class);

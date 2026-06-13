@@ -4,51 +4,68 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
+import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 
-import io.reactivex.Observable;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.internal.schedulers.ExecutorScheduler;
-import io.reactivex.subjects.PublishSubject;
-import jakarta.annotation.PreDestroy;
-
+/**
+ * Small debounce/rate-limit helper backed by a single scheduled executor.
+ *
+ * <p>Previously implemented with RxJava ({@code PublishSubject} + {@code debounce}/{@code throttleLatest}),
+ * which pulled in the whole RxJava runtime and its computation thread pool. This plain-Java version
+ * keeps the same semantics with one daemon thread and no extra dependencies.
+ */
 @ApplicationScoped
 public class Debouncer {
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    private final ExecutorScheduler rxScheduler = new ExecutorScheduler(scheduler, false);
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
+        var t = new Thread(r, "Debouncer");
+        t.setDaemon(true);
+        return t;
+    });
 
-    private final Map<Object, RxScheduled> delayedMap = new ConcurrentHashMap<>();
+    private final Map<Object, ScheduledFuture<?>> debounces = new ConcurrentHashMap<>();
+    private final Map<Object, Throttle> throttles = new ConcurrentHashMap<>();
 
+    /**
+     * Trailing debounce: runs {@code runnable} once, {@code delay} after the last call for {@code key}.
+     * Each new call within the window resets the timer and replaces the pending runnable.
+     */
     public void debounce(Object key, Runnable runnable, long delay, TimeUnit unit) {
-        delayedMap.compute(key, computeStream(x -> x.debounce(delay, unit, rxScheduler), runnable));
-    }
-
-    public void rateLimit(Object key, Runnable runnable, long delay, TimeUnit unit) {
-        delayedMap.compute(key, computeStream(x -> x.throttleLatest(delay, unit), runnable));
-    }
-
-    private BiFunction<Object, RxScheduled, RxScheduled> computeStream(
-            Function<Observable<Object>, Observable<Object>> operator,
-            Runnable runnable) {
-        return (k, v) -> {
-            if (v != null) {
-                v.runnable.set(runnable);
-                v.subject.onNext("");
-                return v;
+        debounces.compute(key, (k, previous) -> {
+            if (previous != null) {
+                previous.cancel(false);
             }
+            return scheduler.schedule(runnable, delay, unit);
+        });
+    }
 
-            var subject = PublishSubject.create();
-            var result = new RxScheduled(new AtomicReference<>(runnable), subject);
-            result.disposer.set(operator.apply(subject).subscribe(ignored -> result.runnable.get().run()));
+    /**
+     * Trailing rate-limit: runs at most once per {@code delay} window, always using the most recent
+     * {@code runnable} supplied during that window.
+     */
+    public void rateLimit(Object key, Runnable runnable, long delay, TimeUnit unit) {
+        var throttle = throttles.computeIfAbsent(key, k -> new Throttle());
+        synchronized (throttle) {
+            throttle.latest = runnable;
+            if (!throttle.scheduled) {
+                throttle.scheduled = true;
+                scheduler.schedule(() -> flush(throttle), delay, unit);
+            }
+        }
+    }
 
-            subject.onNext("");
-            return result;
-        };
+    private void flush(Throttle throttle) {
+        Runnable toRun;
+        synchronized (throttle) {
+            toRun = throttle.latest;
+            throttle.latest = null;
+            throttle.scheduled = false;
+        }
+        if (toRun != null) {
+            toRun.run();
+        }
     }
 
     @PreDestroy
@@ -56,9 +73,8 @@ public class Debouncer {
         scheduler.shutdownNow();
     }
 
-    record RxScheduled(AtomicReference<Runnable> runnable, PublishSubject<Object> subject, AtomicReference<Disposable> disposer) {
-        RxScheduled(AtomicReference<Runnable> runnable, PublishSubject<Object> subject) {
-            this(runnable, subject, new AtomicReference<>(null));
-        }
+    private static final class Throttle {
+        private Runnable latest;
+        private boolean scheduled;
     }
 }

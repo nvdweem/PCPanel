@@ -1,7 +1,7 @@
 package com.getpcpanel.obs;
 
 import java.net.URI;
-import java.net.http.HttpClient;
+import com.getpcpanel.util.SharedHttpClient;
 import java.net.http.WebSocket;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -63,7 +63,7 @@ public class ObsWebSocketClient implements WebSocket.Listener {
 
     public void connect(String host, int port, long timeoutMs) throws Exception {
         var uri = URI.create("ws://" + host + ":" + port);
-        webSocket = HttpClient.newHttpClient()
+        webSocket = SharedHttpClient.get()
                 .newWebSocketBuilder()
                 .buildAsync(uri, this)
                 .get(timeoutMs, TimeUnit.MILLISECONDS);

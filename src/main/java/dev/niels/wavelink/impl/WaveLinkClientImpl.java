@@ -68,7 +68,7 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
     @Getter private WaveLinkApp lastFocusApp = WaveLinkApp.EMPTY;
 
     protected WaveLinkClientImpl(boolean autoConnect) {
-        client = HttpClient.newHttpClient();
+        client = com.getpcpanel.util.SharedHttpClient.get();
         if (autoConnect) {
             connect();
         }
