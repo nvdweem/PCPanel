@@ -20,6 +20,7 @@ import com.github.kwhat.jnativehook.keyboard.NativeKeyListener;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import jakarta.enterprise.event.Observes;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
@@ -70,7 +71,11 @@ public class ShortcutHook implements NativeKeyListener {
         return String.join("+", modifiers, key);
     }
 
-        public void updateShortcuts() {
+    public void onSaveChanged(@Observes SaveService.SaveEvent event) {
+        updateShortcuts();
+    }
+
+    public void updateShortcuts() {
         shortcuts = EntryStream.of(saveService.get().getDevices())
                                .flatMapValues(ds -> ds.getProfiles().stream())
                                .filterValues(p -> StringUtils.isNotBlank(p.getActivationShortcut()))
@@ -97,7 +102,7 @@ public class ShortcutHook implements NativeKeyListener {
         if (canBeShortcut(nativeKeyEvent)) {
             var profile = shortcuts.get(toKeyString(nativeKeyEvent));
             if (profile != null) {
-                deviceHolder.getDevice(profile.deviceId()).ifPresent(device -> device.setProfile(profile.profile.getName()));
+                deviceHolder.getDevice(profile.deviceId()).ifPresent(device -> device.switchProfile(profile.profile.getName()));
             }
         }
     }

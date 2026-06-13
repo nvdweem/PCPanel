@@ -233,10 +233,10 @@ function patch(
   serial: string,
   updater: (d: DeviceSnapshotDto) => DeviceSnapshotDto,
 ): (devices: DeviceMap) => DeviceMap {
-  return devices => ({
+  return devices => devices[serial] ? {
     ...devices,
     [serial]: updater(devices[serial]),
-  });
+  } : devices;
 }
 
 function applyAssignment(
@@ -257,5 +257,5 @@ function applyKnobSetting(
   snapshot: ProfileSnapshotDto,
   event: WsControlSettingChangedEvent,
 ): ProfileSnapshotDto {
-  return {...snapshot, knobSettings: {...snapshot.dialData, [event.index]: event.settings}};
+  return {...snapshot, knobSettings: {...snapshot.knobSettings, [event.index]: event.settings}};
 }

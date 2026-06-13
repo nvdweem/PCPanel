@@ -12,7 +12,6 @@ import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.platform.LinuxBuild;
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.volume.FocusVolumeEvent.FocusVolumeTarget;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
@@ -31,7 +30,9 @@ public class LinuxNewSessionVolumeService implements IFocusRedirector {
 
     @Override
     public boolean handleFocusVolumeRequest(String targetProcess, float volume) {
-        storedFocusAppVolume.put(targetProcess, volume);
+        if (targetProcess != null) {
+            storedFocusAppVolume.put(StringUtils.lowerCase(targetProcess), volume);
+        }
         return false;
     }
 
@@ -54,7 +55,7 @@ public class LinuxNewSessionVolumeService implements IFocusRedirector {
     }
 
     private boolean triggerStoredFocusAppVolume(String exe) {
-        var stored = storedFocusAppVolume.get(new FocusVolumeTarget(FocusVolumeEventType.process, exe));
+        var stored = storedFocusAppVolume.get(StringUtils.lowerCase(exe));
         if (stored != null) {
             sndCtrl.setProcessVolume(exe, null, stored);
             return true;

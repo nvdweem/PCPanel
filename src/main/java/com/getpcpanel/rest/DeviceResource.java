@@ -7,7 +7,9 @@ import com.getpcpanel.commands.Commands;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.profile.DeviceSave;
+import com.getpcpanel.profile.LightingChangedToDefaultEvent;
 import com.getpcpanel.profile.Profile;
+import com.getpcpanel.profile.ProfileSwitchedEvent;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.dto.KnobSetting;
 import com.getpcpanel.profile.dto.LightingConfig;
@@ -15,12 +17,10 @@ import com.getpcpanel.rest.EventBroadcaster.AssignmentChangedEvent;
 import com.getpcpanel.rest.EventBroadcaster.AssignmentChangedEvent.Kinds;
 import com.getpcpanel.rest.EventBroadcaster.DeviceRenamedEvent;
 import com.getpcpanel.rest.EventBroadcaster.LightingChangedEvent;
-import com.getpcpanel.rest.EventBroadcaster.ProfileSwitchedEvent;
 import com.getpcpanel.rest.EventBroadcaster.KnobSettingChangedEvent;
 import com.getpcpanel.rest.model.dto.ControlAssignmentsUpdateDto;
 import com.getpcpanel.rest.model.dto.DeviceDto;
 import com.getpcpanel.rest.model.dto.ProfileDto;
-import com.getpcpanel.rest.model.dto.ProfileSnapshotDto;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
@@ -64,6 +64,7 @@ public class DeviceResource {
 
     @PUT
     @Path("/{serial}/name")
+    @Consumes(MediaType.TEXT_PLAIN)
     public Response renameDevice(@PathParam("serial") String serial, String name) {
         var device = deviceHolder.getDevice(serial).orElseThrow(NotFoundException::new);
         device.setDisplayName(name);
@@ -83,6 +84,7 @@ public class DeviceResource {
 
     @POST
     @Path("/{serial}/profiles")
+    @Consumes(MediaType.TEXT_PLAIN)
     public Response createProfile(@PathParam("serial") String serial, String name) {
         var deviceSave = getDeviceSave(serial);
         var device = deviceHolder.getDevice(serial).orElseThrow(NotFoundException::new);
@@ -103,11 +105,17 @@ public class DeviceResource {
 
     @PUT
     @Path("/{serial}/profiles/current")
+    @Consumes(MediaType.TEXT_PLAIN)
     public Response switchProfile(@PathParam("serial") String serial, String name) {
         var deviceSave = getDeviceSave(serial);
-        var profile = deviceSave.setCurrentProfile(name).orElseThrow(() -> new NotFoundException("Profile not found: " + name));
-        saveService.save();
-        eventBus.fire(new ProfileSwitchedEvent(serial, name, ProfileSnapshotDto.from(profile)));
+        deviceSave.getProfile(name).orElseThrow(() -> new NotFoundException("Profile not found: " + name));
+        deviceHolder.getDevice(serial).ifPresentOrElse(
+                device -> device.switchProfile(name),
+                () -> {
+                    deviceSave.setCurrentProfile(name);
+                    saveService.save();
+                    eventBus.fire(new ProfileSwitchedEvent(serial, name));
+                });
         return Response.ok().build();
     }
 
@@ -216,6 +224,7 @@ public class DeviceResource {
         var device = deviceHolder.getDevice(serial).orElseThrow(NotFoundException::new);
         device.setSavedLighting(config);
         saveService.save();
+        eventBus.fire(new LightingChangedToDefaultEvent(serial));
         eventBus.fire(new LightingChangedEvent(serial, config));
         return Response.ok().build();
     }

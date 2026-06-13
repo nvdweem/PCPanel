@@ -55,8 +55,9 @@ export class HomeFacade implements OnDestroy {
     effect(() => {
       const serial = this.selectedSerial();
       const devices = this.deviceState.devices();
-      if (serial && !Object.values(devices).some(d => d.serial === serial)) {
-        this.selectedSerial.set(this.deviceState.deviceCount() > 0 ? devices[0].serial : null);
+      if (serial && !devices[serial]) {
+        const first = Object.values(devices)[0];
+        this.selectedSerial.set(first ? first.serial : null);
       }
     });
   }

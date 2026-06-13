@@ -5,15 +5,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import jakarta.enterprise.event.Event;
-import jakarta.inject.Inject;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
 
 import com.getpcpanel.profile.LightingChangedToDefaultEvent;
 import com.getpcpanel.voicemeeter.Voicemeeter.ButtonType;
 import com.getpcpanel.voicemeeter.Voicemeeter.ControlType;
-
-import lombok.RequiredArgsConstructor;
 
 @ApplicationScoped
 public class VoiceMeeterMuteService {
@@ -23,14 +22,18 @@ public class VoiceMeeterMuteService {
     Event<Object> eventBus;
     private final Map<ControlType, Map<Integer, Map<ButtonType, Boolean>>> toggleMap = new EnumMap<>(ControlType.class);
 
-        public void resetMuteStates() {
+    public void resetMuteStates(@Observes LightingChangedToDefaultEvent event) {
         toggleMap.clear();
         if (voiceMeeter.login()) {
             updateMuteState();
         }
     }
 
-        public void updateMuteState() {
+    public void onVoiceMeeterDirty(@Observes VoiceMeeterDirtyEvent event) {
+        updateMuteState();
+    }
+
+    private void updateMuteState() {
         updateMuteStateFor(ControlType.STRIP);
         updateMuteStateFor(ControlType.BUS);
     }

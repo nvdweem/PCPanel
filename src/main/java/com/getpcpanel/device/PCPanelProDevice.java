@@ -7,12 +7,14 @@ import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.util.coloroverride.OverrideColorService;
 
+import jakarta.enterprise.event.Event;
+
 public class PCPanelProDevice extends Device {
     private final int[] knobRotations = new int[DeviceType.PCPANEL_PRO.getAnalogCount()];
 
     public PCPanelProDevice(InputInterpreter inputInterpreter, SaveService saveService, OutputInterpreter outputInterpreter,
-            IconService iconService, OverrideColorService overrideColorService, String serialNum, DeviceSave deviceSave) {
-        super(saveService, outputInterpreter, iconService, serialNum, deviceSave);
+            IconService iconService, OverrideColorService overrideColorService, Event<Object> eventBus, String serialNum, DeviceSave deviceSave) {
+        super(saveService, outputInterpreter, iconService, eventBus, serialNum, deviceSave);
     }
 
     @Override public DeviceType deviceType() { return DeviceType.PCPANEL_PRO; }

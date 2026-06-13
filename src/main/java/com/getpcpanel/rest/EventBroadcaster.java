@@ -7,6 +7,7 @@ import com.getpcpanel.hid.DeviceCommunicationHandler.KnobRotateEvent;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.hid.DeviceHolder.DeviceFullyConnectedEvent;
 import com.getpcpanel.hid.DeviceScanner.DeviceDisconnectedEvent;
+import com.getpcpanel.profile.ProfileSwitchedEvent;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.dto.KnobSetting;
 import com.getpcpanel.profile.dto.LightingConfig;
@@ -81,8 +82,14 @@ public class EventBroadcaster {
     }
 
     public void onProfileSwitched(@Observes ProfileSwitchedEvent event) {
-        var colors = colorsFor(event.serial());
-        broadcast(new WsProfileSwitchedEvent(event.serial(), event.profileName(), event.profileSnapshot(), colors.dialColors(), colors.sliderLabelColors(), colors.sliderColors(), colors.logoColor()));
+        var deviceSave = saveService.get().getDeviceSave(event.serial());
+        if (deviceSave == null) {
+            return;
+        }
+        deviceSave.getProfile(event.profileName()).ifPresent(profile -> {
+            var colors = colorsFor(event.serial());
+            broadcast(new WsProfileSwitchedEvent(event.serial(), event.profileName(), ProfileSnapshotDto.from(profile), colors.dialColors(), colors.sliderLabelColors(), colors.sliderColors(), colors.logoColor()));
+        });
     }
 
     public void onLightingChanged(@Observes LightingChangedEvent event) {
@@ -106,9 +113,6 @@ public class EventBroadcaster {
     // ── CDI mutation events (fired by DeviceResource) ─────────────────────────
 
     public record DeviceRenamedEvent(String serial, String displayName) {
-    }
-
-    public record ProfileSwitchedEvent(String serial, String profileName, ProfileSnapshotDto profileSnapshot) {
     }
 
     public record LightingChangedEvent(String serial, LightingConfig lightingConfig) {

@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.util.version.Version.SemVer;
 
+import io.quarkus.runtime.Startup;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
@@ -22,6 +23,7 @@ import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
+@Startup
 @ApplicationScoped
 public class VersionChecker extends Thread {
     @Inject Event<Object> eventBus;

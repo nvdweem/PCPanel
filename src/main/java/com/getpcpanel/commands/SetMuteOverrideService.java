@@ -24,6 +24,7 @@ import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.obs.OBS;
 import com.getpcpanel.obs.OBSConnectEvent;
 import com.getpcpanel.obs.OBSMuteEvent;
+import com.getpcpanel.profile.LightingChangedToDefaultEvent;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.dto.LightingConfig;
@@ -66,6 +67,14 @@ public class SetMuteOverrideService implements IOverrideColorProviderProvider {
     @Inject
     OBS obs;
     private final ColorOverrideHolder colorOverrideHolder = new ColorOverrideHolder();
+
+    public void onDeviceConnected(@Observes DeviceHolder.DeviceFullyConnectedEvent event) {
+        triggerAll();
+    }
+
+    public void onLightingChangedToDefault(@Observes LightingChangedToDefaultEvent event) {
+        triggerAll();
+    }
 
     public void triggerAll() {
         colorOverrideHolder.clearAllOverrides();

@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletionException;
 
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.volume.IFocusRedirector;
 
 import dev.niels.wavelink.IWaveLinkClientEventListener;
@@ -13,6 +14,7 @@ import dev.niels.wavelink.WaveLinkClient;
 import dev.niels.wavelink.impl.model.WaveLinkChannel;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
@@ -50,7 +52,7 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
         return saveService.get().getWaveLink().enabled();
     }
 
-    public void settingsChanged() {
+    public void settingsChanged(@Observes SaveEvent event) {
         var is = isEnabled();
         if (wasEnabled && !is) {
             disconnect();

@@ -25,7 +25,6 @@ import com.illposed.osc.OSCPacketListener;
 import com.illposed.osc.transport.OSCPortIn;
 import com.illposed.osc.transport.OSCPortOut;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
@@ -44,8 +43,7 @@ public class OSCService {
     private List<OSCConnectionInfo> prevOscConnections;
     @Getter private final Set<String> addresses = new HashSet<>();
 
-    @PostConstruct
-    public void saveChanged() {
+    public void saveChanged(@Observes SaveService.SaveEvent event) {
         log.trace("Save changed, restarting OSC");
         initSend();
         initListen();

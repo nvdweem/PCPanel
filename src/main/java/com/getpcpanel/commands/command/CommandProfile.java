@@ -23,7 +23,7 @@ public class CommandProfile extends Command implements DeviceAction {
 
     @Override
     public void execute(DeviceActionParameters context) {
-        CdiHelper.getBean(DeviceHolder.class).getDevice(context.device()).ifPresent(device -> device.setProfile(profile));
+        CdiHelper.getBean(DeviceHolder.class).getDevice(context.device()).ifPresent(device -> device.switchProfile(profile));
     }
 
     @Override

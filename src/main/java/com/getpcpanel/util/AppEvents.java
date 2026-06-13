@@ -1,5 +1,6 @@
 package com.getpcpanel.util;
 
+import io.quarkus.runtime.Startup;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
@@ -8,6 +9,7 @@ import jakarta.inject.Inject;
 /**
  * Static accessor for CDI events from non-CDI contexts (e.g., plain Thread subclasses).
  */
+@Startup
 @ApplicationScoped
 public class AppEvents {
     @SuppressWarnings("StaticNonFinalField")

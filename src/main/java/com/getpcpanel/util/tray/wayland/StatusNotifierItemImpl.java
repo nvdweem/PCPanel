@@ -2,23 +2,19 @@ package com.getpcpanel.util.tray.wayland;
 
 import static com.getpcpanel.util.tray.wayland.TrayServiceWayland.SNI_BUS_NAME;
 
+import com.getpcpanel.util.AppEvents;
 import com.getpcpanel.util.ShowMainEvent;
 
 import org.freedesktop.dbus.annotations.DBusInterfaceName;
-import jakarta.enterprise.event.Event;
-import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @DBusInterfaceName(SNI_BUS_NAME)
 public class StatusNotifierItemImpl implements StatusNotifierItem {
-    @Inject
-    Event<Object> eventBus;
-
     @Override
     public void Activate(int x, int y) {
         log.debug("Tray Activate (left-click) at {},{}", x, y);
-        eventBus.fire(new ShowMainEvent());
+        AppEvents.fire(new ShowMainEvent());
     }
 
     @Override

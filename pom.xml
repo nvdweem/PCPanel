@@ -45,8 +45,8 @@
         <quarkus.native.graalvm-home>${env.GRAALVM_HOME}</quarkus.native.graalvm-home>
         <!-- Include all charsets so JNA/Cp1252 (Windows native encoding) is available -->
         <quarkus.native.add-all-charsets>true</quarkus.native.add-all-charsets>
-        <!-- Bundle all native DLLs/SOs: SndCtrl.dll (root), hidapi (win32-x86-64/), jnidispatch (com/sun/jna/...) -->
-        <quarkus.native.resources.includes>SndCtrl.dll,**/*.dll,**/*.so,**/*.dylib</quarkus.native.resources.includes>
+        <!-- Bundle all native DLLs/SOs: SndCtrl.dll (root), hidapi (win32-x86-64/), jnidispatch (com/sun/jna/...) plus runtime icon assets -->
+        <quarkus.native.resources.includes>SndCtrl.dll,**/*.dll,**/*.so,**/*.dylib,assets/**</quarkus.native.resources.includes>
         <!-- JNA, hid4java, jnativehook, and AWT-dependent classes must initialise at run time -->
         <!-- Disable compressed oops in build JVM so Unsafe.arrayIndexScale(Object[].class) = 8, matching native image runtime.
              Without this, jctools stores scale=4 (compressed oops) but native image uses 8-byte refs → segfault. -->

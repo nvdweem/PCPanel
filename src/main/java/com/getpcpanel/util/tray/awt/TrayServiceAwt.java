@@ -10,6 +10,7 @@ import java.util.Objects;
 
 import javax.imageio.ImageIO;
 
+import com.getpcpanel.util.ShowMainEvent;
 import com.getpcpanel.util.tray.ITrayService;
 
 import jakarta.annotation.PostConstruct;
@@ -79,8 +80,5 @@ public class TrayServiceAwt implements ITrayService {
         } catch (Exception e) {
             log.error("TrayIcon could not be added.", e);
         }
-    }
-
-    public record ShowMainEvent() {
     }
 }

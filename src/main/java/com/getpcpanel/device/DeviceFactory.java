@@ -1,6 +1,7 @@
 package com.getpcpanel.device;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 
 import com.getpcpanel.commands.IconService;
@@ -19,16 +20,17 @@ public class DeviceFactory {
     @Inject OutputInterpreter outputInterpreter;
     @Inject IconService iconService;
     @Inject OverrideColorService overrideColorService;
+    @Inject Event<Object> eventBus;
 
     public Device buildRgb(String serialNum, DeviceSave deviceSave) {
-        return new PCPanelRGBDevice(inputInterpreter, saveService, outputInterpreter, iconService, overrideColorService, deviceSave, serialNum);
+        return new PCPanelRGBDevice(inputInterpreter, saveService, outputInterpreter, iconService, overrideColorService, eventBus, deviceSave, serialNum);
     }
 
     public Device buildMini(String serialNum, DeviceSave deviceSave) {
-        return new PCPanelMiniDevice(inputInterpreter, saveService, outputInterpreter, iconService, overrideColorService, serialNum, deviceSave);
+        return new PCPanelMiniDevice(inputInterpreter, saveService, outputInterpreter, iconService, overrideColorService, eventBus, serialNum, deviceSave);
     }
 
     public Device buildPro(String serialNum, DeviceSave deviceSave) {
-        return new PCPanelProDevice(inputInterpreter, saveService, outputInterpreter, iconService, overrideColorService, serialNum, deviceSave);
+        return new PCPanelProDevice(inputInterpreter, saveService, outputInterpreter, iconService, overrideColorService, eventBus, serialNum, deviceSave);
     }
 }
