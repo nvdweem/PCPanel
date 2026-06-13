@@ -146,7 +146,10 @@ public class MqttService {
         var toRemove = new ArrayList<String>();
         try {
             // Retained messages are delivered right after subscribing; collect them briefly.
-            client.subscribe(new MqttSubscription(topic, QOS), (t, msg) -> toRemove.add(t)).waitForCompletion(2000);
+            // Array-listener overload avoids the Paho 1.2.5 single-listener IndexOutOfBoundsException bug.
+            client.subscribe(new MqttSubscription[] { new MqttSubscription(topic, QOS) }, null, null,
+                    new IMqttMessageListener[] { (t, msg) -> toRemove.add(t) }, new MqttProperties())
+                    .waitForCompletion(2000);
             Thread.sleep(300);
             client.unsubscribe(topic).waitForCompletion(2000);
         } catch (MqttException e) {
@@ -266,7 +269,10 @@ public class MqttService {
             return;
         }
         try {
-            client.subscribe(new MqttSubscription(topic, QOS), listener);
+            // Use the array-listener overload: the single-listener overload in Paho 1.2.5 crashes
+            // with IndexOutOfBoundsException because it reads getSubscriptionIdentifiers().get(0) on an empty list.
+            client.subscribe(new MqttSubscription[] { new MqttSubscription(topic, QOS) }, null, null,
+                    new IMqttMessageListener[] { listener }, new MqttProperties());
         } catch (MqttException e) {
             log.error("Failed to subscribe to {}", topic, e);
         }
