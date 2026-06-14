@@ -1,0 +1,247 @@
+# Build the Quarkus native image for Windows and Linux, wrap it in proper installers,
+# and publish a pre-release.
+#
+# Why installers instead of the bare executable: the GraalVM native image is NOT a
+# single self-contained file. native-image emits the executable PLUS a set of companion
+# shared libraries (awt/fontmanager/lcms/jvm/... as *.dll on Windows, *.so on Linux) that
+# the binary loads from its own directory at runtime via java.library.path. Shipping just
+# the *-runner(.exe) — as the previous workflow did — produces a binary that crashes on
+# first AWT/tray use. Every artifact below bundles the executable together with its libs.
+#
+#   Windows : per-user Inno Setup installer (no admin, installs under %LOCALAPPDATA%,
+#             optional autostart on sign-in, launches after install)
+#   Linux   : .deb (standard) + best-effort Flatpak bundle
+
+name: Build & Release
+env:
+  JAVA_VERSION: '25'        # GraalVM CE 25 — Quarkus 3.34.1 supports Java 25
+
+on:
+  push:
+    branches:
+      - main
+      - releases/**
+  workflow_dispatch:
+
+jobs:
+  buildWindows:
+    name: Windows installer
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up GraalVM CE
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'graalvm-community'
+          native-image-job-reports: 'true'
+          cache: 'maven'
+
+      - name: Compute app version
+        id: ver
+        shell: pwsh
+        run: |
+          $base = (Select-String -Path pom.xml -Pattern '<project\.baseversion>(.*?)</project\.baseversion>').Matches[0].Groups[1].Value
+          $version = "$base.$env:GITHUB_RUN_NUMBER"
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "App version: $version"
+
+      - name: Build native image (Windows)
+        run: mvn -B package -Pnative --file pom.xml
+
+      - name: Assemble distribution (exe + companion DLLs)
+        shell: pwsh
+        run: |
+          $dist = "target/windows-dist"
+          New-Item -ItemType Directory -Force -Path $dist | Out-Null
+          Copy-Item (Get-ChildItem target/*-runner.exe | Select-Object -First 1).FullName "$dist/PCPanel.exe"
+          # native-image drops the companion DLLs next to the runner in target/.
+          Copy-Item target/*.dll $dist/ -ErrorAction SilentlyContinue
+          Write-Host "Distribution contents:"
+          Get-ChildItem $dist | ForEach-Object { Write-Host "  $($_.Name)" }
+          if (-not (Get-ChildItem "$dist/*.dll" -ErrorAction SilentlyContinue)) {
+            Write-Warning "No companion DLLs found next to the executable - the installer may be incomplete."
+          }
+
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress -y
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" `
+            "/DMyAppVersion=${{ steps.ver.outputs.version }}" `
+            "/DSourceDir=$(Resolve-Path target/windows-dist)" `
+            "/DOutputDir=$(Resolve-Path target)" `
+            packaging/windows/pcpanel.iss
+
+      - name: Store artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-installer
+          path: ./target/PCPanel-*-setup.exe
+          if-no-files-found: error
+
+  buildLinux:
+    name: Linux .deb + Flatpak
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up GraalVM CE
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'graalvm-community'
+          native-image-job-reports: 'true'
+          cache: 'maven'
+
+      - name: Compute app version
+        id: ver
+        run: |
+          base=$(grep -oP '(?<=<project\.baseversion>)[^<]+' pom.xml | head -1)
+          echo "version=${base}.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+
+      - name: Build native image (Linux)
+        run: mvn -B package -Pnative --file pom.xml
+
+      - name: Build .deb
+        run: |
+          exe=$(ls target/*-runner | head -1)
+          bash packaging/linux/build-deb.sh "${{ steps.ver.outputs.version }}" "$exe" target
+
+      - name: Build AppImage
+        run: |
+          # Recommended download for immutable distros: single sandbox-free file.
+          curl -fsSL --retry 3 -o appimagetool \
+            https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool
+          export APPIMAGETOOL="$PWD/appimagetool"
+          export APPIMAGE_EXTRACT_AND_RUN=1   # CI runners have no FUSE
+          export ARCH=x86_64
+          exe=$(ls target/*-runner | head -1)
+          bash packaging/linux/appimage/build-appimage.sh "${{ steps.ver.outputs.version }}" "$exe" target
+
+      - name: Build Flatpak bundle (best-effort)
+        id: flatpak
+        continue-on-error: true
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder
+
+          flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
+          flatpak install --user -y flathub org.freedesktop.Platform//24.08 org.freedesktop.Sdk//24.08
+
+          # Stage everything the manifest references next to the manifest.
+          build=flatpak-build
+          mkdir -p "$build"
+          cp packaging/linux/flatpak/com.getpcpanel.PCPanel.yml "$build/"
+          cp packaging/linux/flatpak/pcpanel-launcher.sh "$build/"
+          cp packaging/linux/flatpak/host-spawn-wrapper.sh "$build/"
+          cp packaging/linux/com.getpcpanel.PCPanel.desktop "$build/"
+          cp packaging/linux/com.getpcpanel.PCPanel.metainfo.xml "$build/"
+          cp app-icon.png "$build/"
+
+          # Native executable + companion .so libraries as a flat tarball.
+          stage=$(mktemp -d)
+          cp "$(ls target/*-runner | head -1)" "$stage/PCPanel"
+          cp target/*.so "$stage/" 2>/dev/null || true
+          tar -czf "$build/pcpanel-native.tar.gz" -C "$stage" .
+
+          flatpak-builder --user --force-clean --install-deps-from=flathub \
+            --repo=flatpak-repo flatpak-builder-dir "$build/com.getpcpanel.PCPanel.yml"
+          flatpak build-bundle flatpak-repo \
+            "target/PCPanel-${{ steps.ver.outputs.version }}.flatpak" com.getpcpanel.PCPanel
+
+      - name: Report Flatpak result
+        if: steps.flatpak.outcome != 'success'
+        run: echo "::warning::Flatpak bundle failed to build; releasing .deb only."
+
+      - name: Store .deb artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: linux-deb
+          path: ./target/*.deb
+          if-no-files-found: error
+
+      - name: Store AppImage artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: linux-appimage
+          path: ./target/*.AppImage
+          if-no-files-found: error
+
+      - name: Store Flatpak artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: linux-flatpak
+          path: ./target/*.flatpak
+          if-no-files-found: ignore
+
+  preRelease:
+    name: Pre-release
+    needs:
+      - buildWindows
+      - buildLinux
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Sources
+        uses: actions/checkout@v6
+
+      - name: Extract Maven project version
+        run: echo "version=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)" >> $GITHUB_OUTPUT
+        id: project
+
+      - name: Compute tag name
+        run: |
+          branch="${GITHUB_REF#refs/heads/}"
+          safe_branch=$(echo "$branch" | sed 's/[^A-Za-z0-9._-]/-/g')
+          echo "TAG_NAME=latest-$safe_branch" >> $GITHUB_ENV
+
+      - name: Remove existing pre-release for this branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Only delete THIS branch's snapshot pre-release (tag == $TAG_NAME).
+          # Other branches' snapshots and every stable (non-prerelease) release are
+          # left untouched — deleting all prereleases repo-wide would wipe unrelated
+          # snapshots such as the 1.8 `latest-windows-main` build.
+          gh api repos/{owner}/{repo}/releases \
+            --jq ".[] | select(.tag_name == \"$TAG_NAME\") | .id" \
+            | xargs -r -I '{}' gh api -X DELETE repos/{owner}/{repo}/releases/{}
+
+      - name: Remove previous tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh api /repos/{owner}/{repo}/git/refs/tags/"$TAG_NAME" >/dev/null 2>&1; then
+            gh api --method DELETE -H "Accept: application/vnd.github.v3+json" /repos/{owner}/{repo}/git/refs/tags/"$TAG_NAME"
+            echo "Deleted tag $TAG_NAME"
+          else
+            echo "Tag $TAG_NAME does not exist; skipping delete"
+          fi
+
+      - name: Create Pre-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          gh release create "$TAG_NAME" \
+            --prerelease \
+            --title "v${{ steps.project.outputs.version }} Pre-Release (${{ env.GITHUB_RUN_NUMBER }})" \
+            --notes "$(sed '/##/Q' CHANGELOG.md)"
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Upload Release Assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "$TAG_NAME" dist/*
+          gh release edit "$TAG_NAME" --draft=false
