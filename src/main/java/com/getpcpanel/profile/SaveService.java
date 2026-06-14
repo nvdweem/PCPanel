@@ -17,6 +17,7 @@ import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.util.Debouncer;
 import com.getpcpanel.util.FileUtil;
 
+import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Priority;
@@ -40,6 +41,7 @@ public class SaveService {
 
     private Save save;
     private boolean isNew = false;
+    private volatile boolean loadFailed;
 
     public Save get() {
         return save;
@@ -64,6 +66,7 @@ public class SaveService {
             StreamEx.ofValues(save.getDevices()).forEach(d -> StreamEx.of(d.getProfiles()).findFirst(p -> p.isMainProfile()).ifPresent(p -> d.setCurrentProfile(p.getName())));
         } catch (Exception e) {
             log.error("Unable to read file", e);
+            loadFailed = true; // Prevent save-on-exit from overwriting a file we could not read
             save = new Save();
             isNew = true;
         }
@@ -86,10 +89,11 @@ public class SaveService {
         writeToFile(); // write file only, SaveEvent will be fired from onStart()
     }
 
-    private void writeToFile() {
+    private synchronized void writeToFile() { // Synchronized: a pending debounced save may run concurrently with the shutdown write
         var saveFile = fileUtil.getFile(saveFileName);
         try {
             FileUtils.writeStringToFile(saveFile, json.writePretty(save), Charset.defaultCharset());
+            loadFailed = false; // The file now holds the in-memory state, so save-on-exit can no longer destroy anything
         } catch (IOException e) {
             log.error("Unable to save file", e);
         }
@@ -111,7 +115,11 @@ public class SaveService {
     }
 
     private void tryMigrate(File saveFile) {
-        @SuppressWarnings("CallToSystemGetenv") var oldFile = new File(System.getenv("LOCALAPPDATA"), "PCPanel Software/save.json");
+        @SuppressWarnings("CallToSystemGetenv") var localAppData = System.getenv("LOCALAPPDATA");
+        if (localAppData == null) { // Not Windows: nothing to migrate from
+            return;
+        }
+        var oldFile = new File(localAppData, "PCPanel Software/save.json");
         if (oldFile.exists()) {
             var result = JOptionPane.showConfirmDialog(null, "No save file found, would you like to migrate from original PCPanel software?", "Migrate", JOptionPane.YES_NO_OPTION);
             if (result == JOptionPane.YES_OPTION) {
@@ -132,6 +140,19 @@ public class SaveService {
 
     public void debouncedSave() {
         debouncer.debounce(this, this::save, 1, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Persist the in-memory state when the app shuts down, so a profile change made within the
+     * debounce window (the {@link Debouncer} discards pending tasks on shutdown) is not lost.
+     * Writes the file directly without firing a SaveEvent: listeners (OBS/MQTT/OSC/...) must not
+     * run while beans are being destroyed.
+     */
+    public void saveOnExit(@Observes ShutdownEvent ev) {
+        if (save == null || loadFailed) {
+            return;
+        }
+        writeToFile();
     }
 
     public Optional<Profile> getProfile(String serialNum) {
