@@ -51,7 +51,7 @@
         <!-- Disable compressed oops in build JVM so Unsafe.arrayIndexScale(Object[].class) = 8, matching native image runtime.
              Without this, jctools stores scale=4 (compressed oops) but native image uses 8-byte refs → segfault. -->
         <quarkus.native.additional-build-args>
-            --exclude-config pcpanel-1.8-SNAPSHOT-runner /META-INF/native-image/com\.getpcpanel/pcpanel/jni-config\.json,
+            --exclude-config pcpanel-.*-runner /META-INF/native-image/com\.getpcpanel/pcpanel/jni-config\.json,
             -Os,
             -R:MaxHeapSize=67108864,
             --initialize-at-run-time=com.getpcpanel.util.Kernel32Console,
