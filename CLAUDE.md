@@ -29,8 +29,11 @@ native builds; the `JAVAFX_HOME` instructions in CONTRIBUTING.md are stale — J
 ```
 
 - `package` produces a native executable at `target/*-runner` (Linux) / `target/*-runner.exe` (Windows).
-- CI (`.github/workflows/maven-build-installer-windows.yml`) builds native images on both Windows and
-  Linux via `mvn -B package -Pnative` and publishes a pre-release.
+- CI (`.github/workflows/build-and-release.yml`) builds the native image on Windows and Linux via
+  `mvn -B package -Pnative`, wraps it in installers (Windows Inno Setup `.exe`, Linux `.deb` /
+  AppImage / Flatpak — see `packaging/`), and publishes a per-branch pre-release. The native image is
+  NOT self-contained: it loads companion `*.dll`/`*.so` libraries from its own directory, so every
+  artifact must bundle them alongside the executable.
 - **Run two instances side by side:** pass the `skipfilecheck` arg (otherwise launching a second
   instance just focuses the already-installed one — see `Main`/`FileChecker`). For a separate dev
   data dir, set `pcpanel.root=${user.home}/.pcpaneldev/` (dev profile already does this).

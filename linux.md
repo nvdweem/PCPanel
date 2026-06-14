@@ -8,7 +8,9 @@ Wayland focus volume is starting to become possible again, install kdotool for t
 
 ## Preparation
 
-Linux might need a few more steps to get everything working.
+The `.deb` package installs the udev rules (`/usr/lib/udev/rules.d/70-pcpanel.rules`) and reloads them automatically, so when
+installing the Debian package the steps below are handled for you. If you run the executable manually (or use the Flatpak),
+set the device access up yourself:
 
 1. Allow the software to access the device:
    ```shell
@@ -25,7 +27,6 @@ Linux might need a few more steps to get everything working.
    sudo udevadm control --reload-rules
    ```
 1. Disconnect and re-connect each of your devices (udev rules are applied whenever a device is connected).
-1. It seems that the first run of the software needs to be done as root (`sudo /opt/pcpanel/bin/PCPanel`). This might be needed whenever the software gets updated.
 1. (Optional) Make the software startup automatically. When making the application startup automatically you can add the `quiet` parameter to not show the main window on startup.
 
 If it still doesn't work, try restarting your computer (logging out is not enough).
@@ -38,35 +39,86 @@ the main window, just run the application again.
 
 ## Install
 
-### Debian
+The application is shipped as a GraalVM native executable, so no Java installation is needed. The build is a 64-bit (`amd64`)
+binary that loads its companion shared libraries from its own directory; keep the installed files together.
 
-Download the deb file and install with your package manager or via terminal:
+### Debian / Ubuntu (.deb)
+
+Download the `.deb` file and install with your package manager or via terminal:
 
    ```shell
-   dpkg -i pcpanel_[version].deb
-   apt-get -f install   # This is only needed if not-installed dependencies were found
+   sudo apt install ./pcpanel_[version]_amd64.deb   # resolves dependencies automatically
+   # or:
+   sudo dpkg -i pcpanel_[version]_amd64.deb
+   sudo apt-get -f install   # only needed if dependencies were missing
    ```
+
+This installs the executable to `/opt/pcpanel`, adds a `pcpanel` command on your `PATH`, a desktop entry, and the udev rules.
+`pulseaudio-utils` (`pactl`) and `xdotool` are pulled in as recommended packages for volume control and focus detection.
+
+### Flatpak (best-effort)
+
+A Flatpak bundle is provided as an alternative. Note that the app is primarily developed for Windows and the Flatpak sandbox
+makes some features harder; it is provided on a best-effort basis.
+
+   ```shell
+   flatpak install --user PCPanel-[version].flatpak
+   flatpak run com.getpcpanel.PCPanel
+   ```
+
+The sandbox is granted USB device access, audio (PulseAudio/PipeWire), network, X11/Wayland and tray permissions. Volume
+control (`pactl`) and focus detection (`xdotool`/`kdotool`) are forwarded to the host via `flatpak-spawn`, so those host tools
+still need to be installed on your system.
 
 ### Other
 
-If there is no option to install the .deb file then it might be needed to run the software manually.
-For that, download the jar file and run it with
+If neither package works on your distribution, download the raw executable from the release (it sits inside the `.deb`
+under `/opt/pcpanel`) together with its `.so` libraries and run `./PCPanel`.
 
-1. Install a Java runtime with JavaFX included such as [Liberica JDK](https://bell-sw.com/pages/downloads/#jdk-25-lts)
-2. Run the application
+## Autostart on login
 
-Or
+There is no installer on Linux, so autostart is set up manually. Add the `quiet` argument so the main window stays
+hidden on login. Pick whichever fits your setup:
 
-1. Download/install Java (at least 25) and [JavaFX 18](https://download2.gluonhq.com/openjfx/18.0.2/openjfx-18.0.2_linux-x64_bin-sdk.zip)
-2. Unpack JavaFX to a location
-3. Run the application:
+### XDG autostart (most desktops: GNOME, KDE, XFCE, …)
+
+Create `~/.config/autostart/pcpanel.desktop`:
+
+```ini
+[Desktop Entry]
+Type=Application
+Name=PCPanel
+Exec=pcpanel quiet
+Icon=com.getpcpanel.PCPanel
+X-GNOME-Autostart-enabled=true
+```
+
+(If you installed manually instead of via the `.deb`, replace `pcpanel` with the full path to the executable, e.g.
+`/opt/pcpanel/PCPanel quiet`. For the Flatpak, use `Exec=flatpak run com.getpcpanel.PCPanel quiet`.)
+
+### systemd user service
+
+Create `~/.config/systemd/user/pcpanel.service`:
+
+```ini
+[Unit]
+Description=PCPanel
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+ExecStart=/usr/bin/pcpanel quiet
+Restart=on-failure
+
+[Install]
+WantedBy=graphical-session.target
+```
+
+Then enable it:
 
 ```shell
-java --module-path="[path-to-javafx]/lib" \
-     --add-modules=javafx.controls,javafx.fxml \
-     --add-exports javafx.controls/com.sun.javafx.scene.control.skin.resources=ALL-UNNAMED \
-     --add-exports javafx.base/com.sun.javafx.event=ALL-UNNAMED \
-     -jar [jarfile]
+systemctl --user daemon-reload
+systemctl --user enable --now pcpanel.service
 ```
 
 ## Wayland / Sway
