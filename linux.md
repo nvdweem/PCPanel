@@ -31,8 +31,14 @@ set the device access up yourself:
 
 If it still doesn't work, try restarting your computer (logging out is not enough).
 
-The software depends on some PulseAudio commands (`pactl`) from `pulseaudio-utils` for volume control
-and `xdotool` (x11) or `kdotool` (wayland) to get the currently active window for focus volume.
+The software depends on:
+
+- `libusb-1.0-0` (provides `libusb-1.0.so.0`) — required for USB/HID device access. Without it the
+  app crashes during HID init with `libusb-1.0.so.0: cannot open shared object file`. The `.deb`
+  should list it under `Depends:`; on a manual install make sure it is present (`apt-get install
+  libusb-1.0-0`).
+- `pulseaudio-utils` (the `pactl` command) — for volume control.
+- `xdotool` (X11) or `kdotool` (Wayland) — to get the currently active window for focus volume.
 
 If there are no tray extensions available, the application will still hide when closed. To show
 the main window, just run the application again.
