@@ -4,6 +4,7 @@
 
 - Java 25 is now required to run the software. The installer will include it.
 - #87 - Experimental macOS support (community contributed by Choaterboater, ported to the new Quarkus build). Device volume/mute/default-device switching via Core Audio, keystrokes, shortcuts and Music/Spotify media control. Per-application volume is not possible on stock macOS. See the [macOS instructions](mac.md).
+- Profiles are now saved on application exit, so a change made right before quitting is no longer lost.
 - Added support for Elgato Wave Link, enable it in the settings to add the dial/button commands
     - Input devices not yet supported (I don't have one so can't debug)
     - Dials/sliders allow changing volume for Channels, Mixes and Output devices
