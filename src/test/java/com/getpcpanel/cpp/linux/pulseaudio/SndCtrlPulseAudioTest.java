@@ -56,6 +56,22 @@ class SndCtrlPulseAudioTest {
         assertFalse(SndCtrlPulseAudio.matches(session, ""), "blank query never matches");
     }
 
+    /** The app selector must show a bindable name; metadata-sparse sink-inputs fall back to title/portal id (#71). */
+    @Test
+    void runningAppNamePrefersExecutableThenTitle() {
+        var firefox = session(Map.of("application.process.binary", "firefox", "application.name", "Firefox"));
+        assertEquals("firefox", SndCtrlPulseAudio.runningAppName(firefox), "uses the executable name when present");
+
+        var spotify = session(Map.of("media.name", "audio-src", "pipewire.access.portal.app_id", "com.spotify.Client"));
+        assertEquals("com.spotify.Client", SndCtrlPulseAudio.runningAppName(spotify),
+                "falls back to a non-blank, bindable name when no executable is exposed");
+        assertTrue(SndCtrlPulseAudio.matches(spotify, SndCtrlPulseAudio.runningAppName(spotify)),
+                "the selector name must be something matches() accepts, so binding works");
+
+        var mediaOnly = session(Map.of("media.name", "Discord"));
+        assertEquals("Discord", SndCtrlPulseAudio.runningAppName(mediaOnly), "uses media.name when that is all there is");
+    }
+
     private static PulseAudioAudioSession session(Map<String, String> properties) {
         var pa = PulseAudioTarget.builder().properties(properties).metas(Map.of()).build();
         return new SndCtrlPulseAudio().toSession(pa);

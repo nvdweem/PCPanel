@@ -214,8 +214,19 @@ public class SndCtrlPulseAudio implements ISndCtrl {
     @Override
     public List<RunningApplication> getRunningApplications() {
         synchronized (sessions) {
-            return allSessions().map(AudioSession::executable).map(f -> new RunningApplication(0, f, f.getName())).toList();
+            return allSessions().map(s -> new RunningApplication(0, s.executable(), runningAppName(s))).toList();
         }
+    }
+
+    /**
+     * The selector display name doubles as the binding query, so it must be non-blank and something {@link #matches}
+     * accepts (executable name / title / portal app id). Flatpak/metadata-sparse sink-inputs (e.g. Discord Canary,
+     * Spotify) carry no application.process.binary, so the executable defaults to "/" and its name is blank - fall back
+     * to the session title (application.name/portal id/media.name) so the app both shows a name in the selector and can
+     * actually be bound (#71, #92).
+     */
+    static String runningAppName(PulseAudioAudioSession s) {
+        return StringUtils.firstNonBlank(s.executable().getName(), s.title(), s.portalAppId());
     }
 
     @Override
