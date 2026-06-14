@@ -14,12 +14,24 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class FileChecker extends Thread {
-    @SuppressWarnings("AccessOfSystemProperties") public static final File FILES_ROOT = new File(System.getProperty("user.home"), ".pcpanel"); // This is not a bean so don't configure the root, just pick the default
-    private static final File REOPEN_FILE = new File(FILES_ROOT, "reopen.txt");
-    private static final File LOCK_FILE = new File(FILES_ROOT, "lock.txt");
     private static final AtomicBoolean started = new AtomicBoolean(false);
     @SuppressWarnings("FieldCanBeLocal") // If this field is local then the lock will be released.
     private RandomAccessFile randomFile;
+
+    // This is not a bean so don't configure the root, just pick the default. Resolve it lazily at run time:
+    // a static-final new File(System.getProperty("user.home"), ...) would be frozen to the build machine's
+    // home in a native image. See PCPanelHome.
+    public static File getFilesRoot() {
+        return PCPanelHome.resolve();
+    }
+
+    private static File reopenFile() {
+        return new File(getFilesRoot(), "reopen.txt");
+    }
+
+    private static File lockFile() {
+        return new File(getFilesRoot(), "lock.txt");
+    }
 
     public static void createAndStart() {
         if (started.getAndSet(true)) {
@@ -43,22 +55,23 @@ public class FileChecker extends Thread {
     public FileChecker() {
         super("File Checker Thread");
         setDaemon(true);
-        if (!REOPEN_FILE.delete()) {
-            log.trace("Unable to delete {}", REOPEN_FILE);
+        var reopenFile = reopenFile();
+        if (!reopenFile.delete()) {
+            log.trace("Unable to delete {}", reopenFile);
         }
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> started.set(false), "FileChecker shutdown hook"));
     }
 
     private boolean isDuplicate() throws IOException {
-        randomFile = new RandomAccessFile(LOCK_FILE, "rw");
+        randomFile = new RandomAccessFile(lockFile(), "rw");
         var channel = randomFile.getChannel();
         var lock = channel.tryLock();
         return lock == null;
     }
 
     private static void showOtherAndExit() throws IOException {
-        if (!REOPEN_FILE.createNewFile()) {
+        if (!reopenFile().createNewFile()) {
             log.debug("Unable to create reopen file.");
         }
         //noinspection CallToSystemExit
@@ -66,14 +79,20 @@ public class FileChecker extends Thread {
     }
 
     private static void tryCreateLockFile() {
+        var lockFile = lockFile();
         try {
-            if (!LOCK_FILE.exists()) {
-                if (!LOCK_FILE.createNewFile()) {
+            // Ensure the data directory exists; FileChecker can run before FileUtil has created it.
+            var root = lockFile.getParentFile();
+            if (root != null && !root.exists() && !root.mkdirs()) {
+                log.debug("Unable to create data directory {}", root);
+            }
+            if (!lockFile.exists()) {
+                if (!lockFile.createNewFile()) {
                     log.debug("Unable to create lock file.");
                 }
             }
         } catch (IOException e) {
-            log.error("Unable to create lock file {}, allowing duplicate instances.", LOCK_FILE, e);
+            log.error("Unable to create lock file {}, allowing duplicate instances.", lockFile, e);
         }
     }
 
@@ -87,7 +106,8 @@ public class FileChecker extends Thread {
             log.error("Unable to start watch service", e);
             return;
         }
-        var folder = REOPEN_FILE.getParentFile().toPath();
+        var reopenFile = reopenFile();
+        var folder = reopenFile.getParentFile().toPath();
         WatchKey watchkey = null;
         try {
             watchkey = folder.register(watcher, StandardWatchEventKinds.ENTRY_CREATE);
@@ -102,8 +122,8 @@ public class FileChecker extends Thread {
                     continue;
                 for (var event : watchkey.pollEvents()) {
                     var file = (Path) event.context();
-                    if (file.toString().equals(REOPEN_FILE.getName())) {
-                        if (!REOPEN_FILE.delete()) {
+                    if (file.toString().equals(reopenFile.getName())) {
+                        if (!reopenFile.delete()) {
                             log.trace("Unable to delete {}", file);
                         }
                         log.debug("Showing window because another process was started");
