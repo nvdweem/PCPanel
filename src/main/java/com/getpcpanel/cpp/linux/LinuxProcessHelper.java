@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -92,7 +93,7 @@ public class LinuxProcessHelper {
 
     private @Nullable String processName(int pid) {
         try {
-            return lineFrom("ps", "-p", String.valueOf(pid), "-o", "comm=");
+            return lineFrom(hostCmd("ps", "-p", String.valueOf(pid), "-o", "comm="));
         } catch (Exception e) {
             log.error("Unable to resolve process name for pid {}", pid, e);
             return null;
@@ -105,32 +106,68 @@ public class LinuxProcessHelper {
      * at {@code /proc/<hostpid>/root/.flatpak-info}, with the app id under {@code [Application] name=}.
      */
     private @Nullable String flatpakAppId(int pid) {
-        var info = Path.of("/proc", String.valueOf(pid), "root", ".flatpak-info");
-        if (!Files.isReadable(info)) {
+        var path = "/proc/" + pid + "/root/.flatpak-info";
+        try {
+            // When PCPanel itself runs inside the Flatpak sandbox the active window's host PID belongs to a
+            // different PID namespace, so the file must be read on the host (like pactl/kdotool are). Outside
+            // a sandbox just read it directly.
+            List<String> lines;
+            if (inFlatpakSandbox()) {
+                lines = linesFrom(hostCmd("cat", path));
+            } else if (Files.isReadable(Path.of(path))) {
+                lines = Files.readAllLines(Path.of(path));
+            } else {
+                return null;
+            }
+            return parseFlatpakAppId(lines);
+        } catch (Exception e) {
+            log.debug("Could not read {} for flatpak app id", path, e);
             return null;
         }
-        try {
-            var inApplication = false;
-            for (var line : Files.readAllLines(info)) {
-                var trimmed = line.trim();
-                if (trimmed.startsWith("[")) {
-                    inApplication = "[Application]".equals(trimmed);
-                } else if (inApplication && trimmed.startsWith("name=")) {
-                    return StringUtils.trimToNull(trimmed.substring("name=".length()));
-                }
+    }
+
+    static @Nullable String parseFlatpakAppId(List<String> lines) {
+        var inApplication = false;
+        for (var line : lines) {
+            var trimmed = line.trim();
+            if (trimmed.startsWith("[")) {
+                inApplication = "[Application]".equals(trimmed);
+            } else if (inApplication && trimmed.startsWith("name=")) {
+                return StringUtils.trimToNull(trimmed.substring("name=".length()));
             }
-        } catch (Exception e) {
-            log.debug("Could not read {} for flatpak app id", info, e);
         }
         return null;
     }
 
+    /** Inside the Flatpak sandbox host introspection (ps, /proc) must be forwarded to the host via flatpak-spawn. */
+    private static boolean inFlatpakSandbox() {
+        return StringUtils.isNotBlank(System.getenv("FLATPAK_ID"));
+    }
+
+    private static String[] hostCmd(String... cmd) {
+        if (!inFlatpakSandbox()) {
+            return cmd;
+        }
+        var full = new String[cmd.length + 2];
+        full[0] = "flatpak-spawn";
+        full[1] = "--host";
+        System.arraycopy(cmd, 0, full, 2, cmd.length);
+        return full;
+    }
+
     private @Nullable String lineFrom(String... cmd) throws IOException {
-        var lines = IOUtils.readLines(processHelper.builder(cmd).start().getInputStream(), Charset.defaultCharset());
+        var lines = linesFrom(cmd);
         if (lines.isEmpty()) {
             return null;
         }
         return lines.get(0);
+    }
+
+    private List<String> linesFrom(String... cmd) throws IOException {
+        // Discard stderr so an expected failure (e.g. cat on a non-flatpak target's missing .flatpak-info)
+        // doesn't leak to the console.
+        var process = processHelper.builder(cmd).redirectError(ProcessBuilder.Redirect.DISCARD).start();
+        return IOUtils.readLines(process.getInputStream(), Charset.defaultCharset());
     }
 
     /**
