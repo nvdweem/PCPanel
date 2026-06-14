@@ -1,0 +1,72 @@
+# Flatpak manifest for PCPanel.
+#
+# This packages the *prebuilt* GraalVM native image (built earlier in CI) rather than
+# compiling inside flatpak-builder — native-image needs a full GraalVM toolchain that
+# does not belong in a Flatpak SDK build. CI assembles `pcpanel-native.tar.gz`
+# (PCPanel executable + companion *.so libraries) next to this manifest before building.
+#
+# Known limitations (the app is primarily developed for Windows):
+#   * Volume control and focused-window detection rely on host tools (pactl, xdotool,
+#     kdotool). They are forwarded to the host with flatpak-spawn, which needs the host
+#     binaries installed and the org.freedesktop.Flatpak talk permission below.
+#   * Autostart on login is not configured here; enable it via your desktop's autostart
+#     settings or `flatpak run` from a user systemd unit.
+app-id: com.getpcpanel.PCPanel
+runtime: org.freedesktop.Platform
+runtime-version: '24.08'
+sdk: org.freedesktop.Sdk
+command: pcpanel
+
+finish-args:
+  # GUI
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --share=ipc
+  - --device=dri
+  # Audio (PulseAudio / PipeWire socket)
+  - --socket=pulseaudio
+  # Raw USB HID access to the PCPanel device
+  - --device=all
+  # MQTT, OBS WebSocket, OSC, device discovery
+  - --share=network
+  # System tray (StatusNotifierItem)
+  - --talk-name=org.kde.StatusNotifierWatcher
+  - --talk-name=org.freedesktop.Notifications
+  # Run host tools (pactl/xdotool/kdotool) via flatpak-spawn --host
+  - --talk-name=org.freedesktop.Flatpak
+  # Profile + migration from the legacy ~/.pcpanel location
+  - --filesystem=~/.pcpanel:create
+  - --env=PATH=/app/bin:/usr/bin
+
+modules:
+  - name: pcpanel
+    buildsystem: simple
+    build-commands:
+      # Native executable + companion shared libraries.
+      - install -d /app/pcpanel
+      - install -m 0755 PCPanel /app/pcpanel/PCPanel
+      - install -d /app/bin
+      - 'for so in *.so *.so.*; do [ -e "$so" ] && install -m 0644 "$so" /app/pcpanel/ || true; done'
+      # Launcher + host-tool shims.
+      - install -m 0755 pcpanel-launcher.sh /app/bin/pcpanel
+      - install -m 0755 host-spawn-wrapper.sh /app/bin/pactl
+      - install -m 0755 host-spawn-wrapper.sh /app/bin/xdotool
+      - install -m 0755 host-spawn-wrapper.sh /app/bin/kdotool
+      # Desktop integration.
+      - install -Dm 0644 com.getpcpanel.PCPanel.desktop /app/share/applications/com.getpcpanel.PCPanel.desktop
+      - install -Dm 0644 com.getpcpanel.PCPanel.metainfo.xml /app/share/metainfo/com.getpcpanel.PCPanel.metainfo.xml
+      - install -Dm 0644 app-icon.png /app/share/icons/hicolor/256x256/apps/com.getpcpanel.PCPanel.png
+    sources:
+      - type: archive
+        path: pcpanel-native.tar.gz
+        strip-components: 0
+      - type: file
+        path: pcpanel-launcher.sh
+      - type: file
+        path: host-spawn-wrapper.sh
+      - type: file
+        path: com.getpcpanel.PCPanel.desktop
+      - type: file
+        path: com.getpcpanel.PCPanel.metainfo.xml
+      - type: file
+        path: app-icon.png
