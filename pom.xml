@@ -487,7 +487,7 @@
                 </os>
             </activation>
             <properties>
-                <native.awt.args>,--initialize-at-run-time=java.awt,--initialize-at-run-time=javax.swing,--initialize-at-run-time=sun.awt,--initialize-at-run-time=sun.lwawt,--initialize-at-run-time=sun.java2d,--initialize-at-run-time=sun.font,--initialize-at-run-time=javax.imageio,--initialize-at-run-time=com.sun.imageio</native.awt.args>
+                <native.awt.args>,--initialize-at-run-time=java.awt,--initialize-at-run-time=javax.swing,--initialize-at-run-time=sun.awt,--initialize-at-run-time=sun.lwawt,--initialize-at-run-time=sun.java2d,--initialize-at-run-time=sun.font,--initialize-at-run-time=javax.imageio,--initialize-at-run-time=com.sun.imageio,--initialize-at-run-time=com.getpcpanel.overlay.OverlayRenderer,--initialize-at-run-time=com.getpcpanel.overlay.VolumeOverlay</native.awt.args>
             </properties>
         </profile>
     </profiles>
