@@ -82,15 +82,23 @@ public class DeviceScanner implements HidServicesListener {
     }
 
     public void deviceAdded(@NonNull String key, @NonNull HidDevice device, DeviceType deviceType) {
-        if (!device.isOpen()) {
-            if (!device.open()) {
+        // A device can be reported twice on startup: once by reconnectDevicesAfterRestart() and once by the
+        // scanner's initial hidDeviceAttached event. Each carries a different HidDevice instance for the same
+        // physical device. On Linux (libusb backend) opening an already-opened device fails, so the second
+        // handler would run on an unopened device ("Device has not been opened"). Register atomically per key so
+        // only the first event opens the device and creates a handler.
+        var created = new DeviceCommunicationHandler[1];
+        connectedDeviceMap.computeIfAbsent(key, k -> {
+            if (!device.isOpen() && !device.open()) {
                 log.error("Unable to open device, it won't be possible to use the panel");
+                return null;
             }
+            return created[0] = deviceCommunicationHandlerFactory.build(k, device, deviceType);
+        });
+        if (created[0] != null) {
+            created[0].start();
+            fireEvent(new DeviceConnectedEvent(key, deviceType));
         }
-        var deviceHandler = deviceCommunicationHandlerFactory.build(key, device, deviceType);
-        connectedDeviceMap.put(key, deviceHandler);
-        deviceHandler.start();
-        fireEvent(new DeviceConnectedEvent(key, deviceType));
     }
 
     public void deviceRemoved(String key, HidDevice device) {
@@ -102,10 +110,9 @@ public class DeviceScanner implements HidServicesListener {
 
     private void foundPCPanel(HidDevice newPCPanel, DeviceType deviceType) {
         log.info("FOUND PCPANEL : {}", newPCPanel);
-        if (!newPCPanel.isOpen())
-            newPCPanel.open();
-
         try {
+            // Opening happens inside deviceAdded so it is done exactly once per device, even when the same
+            // device is reported by both the reconnect scan and the hidDeviceAttached event.
             deviceAdded(newPCPanel.getSerialNumber(), newPCPanel, deviceType);
         } catch (Exception e) {
             log.error("Unable to handle device added", e);
