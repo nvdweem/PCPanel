@@ -48,16 +48,10 @@
             <pcpanel-pcpanel-pro [serial]="dev.serial" />
           }
           @if (facade.isMini()) {
-            <pcpanel-pcpanel-mini
-              [lightingConfig]="facade.lightingConfig()"
-              [activeDial]="facade.activeDial()"
-              [dialLabels]="facade.dialLabels()" />
+            <pcpanel-pcpanel-mini [serial]="dev.serial" />
           }
           @if (facade.isRgb()) {
-            <pcpanel-pcpanel-rgb
-              [lightingConfig]="facade.lightingConfig()"
-              [activeDial]="facade.activeDial()"
-              [dialLabels]="facade.dialLabels()" />
+            <pcpanel-pcpanel-rgb [serial]="dev.serial" />
           }
           <p class="hint-text">Click a dial or slider to configure it</p>
         </div>

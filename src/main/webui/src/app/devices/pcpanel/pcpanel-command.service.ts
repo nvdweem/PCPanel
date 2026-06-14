@@ -54,6 +54,17 @@ export class PcpanelCommandService {
       return null;
     }
 
+    // PCPanel RGB stores per-knob colors as a single hex in the global
+    // SINGLE_COLOR individualColors[] array (no CUSTOM/knobConfigs support).
+    if (result.lightingVariant === 'rgb-single') {
+      const color = (result.lighting as SingleKnobLightingConfig).color1 || '#000000';
+      return {
+        ...currentLighting,
+        lightingMode: 'SINGLE_COLOR',
+        individualColors: this.patchIndividualColor(currentLighting.individualColors, controlIdx, color),
+      };
+    }
+
     if (result.controlType === 'dial') {
       return {
         ...currentLighting,
@@ -86,6 +97,13 @@ export class PcpanelCommandService {
   private patchSliderConfig(source: SingleSliderLightingConfig[], idx: number, value: SingleSliderLightingConfig): SingleSliderLightingConfig[] {
     const next = [...(source ?? [])];
     next[idx] = {...value};
+    return next;
+  }
+
+  private patchIndividualColor(source: string[] | undefined, idx: number, color: string): string[] {
+    const length = Math.max(idx + 1, source?.length ?? 0);
+    const next = Array.from({length}, (_, i) => source?.[i] || '#000000');
+    next[idx] = color;
     return next;
   }
 }

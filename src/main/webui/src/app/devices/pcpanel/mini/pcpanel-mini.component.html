@@ -22,20 +22,18 @@
   <g [style.--anim-duration]="animDuration()" [style.--breath-min]="breathMin()">
     @for (ki of knobIndices; track ki) {
       <g [attr.transform]="knobRingTransform(ki)">
-        <path [attr.fill]="knobRingColor(ki)" [class]="animClass()" [attr.d]="knobRingPath" opacity="0.9"/>
+        <path [attr.fill]="ringColor(ki)" [class]="animClass()" [attr.d]="knobRingPath" opacity="0.9"/>
       </g>
     }
   </g>
 
   <!-- ── Knobs ─────────────────────────────────────────────────────────── -->
   @for (ki of knobIndices; track ki) {
-    <g [attr.transform]="knobTransform(ki)" (click)="onDialClick(ki)" style="cursor:pointer">
+    <g [attr.transform]="knobTransform(ki)" class="cur-p"
+       (click)="edit($event, ki, false)" (contextmenu)="edit($event, ki, true)" style="cursor:pointer">
       <circle cx="34" cy="36" r="30" opacity="0.25" fill="black"/>
       <circle cx="30" cy="30" r="30" fill="url(#mini-knob-outer)"/>
       <circle cx="30" cy="30" r="23" fill="url(#mini-knob-inner)" stroke="#a7aeb7" stroke-width="0.5"/>
-      @if (isActive(ki)) {
-        <circle cx="30" cy="30" r="30" fill="none" stroke="#ffc940" stroke-width="3" opacity="0.9"/>
-      }
       <g [attr.transform]="'rotate(' + knobAngle(ki) + ',30,30)'">
         <rect x="28" y="42" width="4" height="10" fill="#3c3f42"/>
         <circle cx="30" cy="42" r="2" fill="#3c3f42" stroke="#2b2b2b" stroke-width="0.5"/>

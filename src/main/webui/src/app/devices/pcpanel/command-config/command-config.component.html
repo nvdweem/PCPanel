@@ -45,23 +45,25 @@
         <p class="field-label">Type: {{ lightingType() }}</p>
 
         @if (form.lighting) {
-          <mat-form-field>
-            <mat-label>Mode</mat-label>
-            <mat-select [formField]="form.lighting.mode">
-              @if (data.controlType === 'dial') {
-                <mat-option value="STATIC">Static</mat-option>
-                <mat-option value="VOLUME_GRADIENT">Volume gradient</mat-option>
-              }
-              @if (data.controlType === 'slider') {
-                <mat-option value="STATIC">Static</mat-option>
-                <mat-option value="STATIC_GRADIENT">Static gradient</mat-option>
-                <mat-option value="VOLUME_GRADIENT">Volume gradient</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
+          @if (!isRgbSingle()) {
+            <mat-form-field>
+              <mat-label>Mode</mat-label>
+              <mat-select [formField]="form.lighting.mode">
+                @if (data.controlType === 'dial') {
+                  <mat-option value="STATIC">Static</mat-option>
+                  <mat-option value="VOLUME_GRADIENT">Volume gradient</mat-option>
+                }
+                @if (data.controlType === 'slider') {
+                  <mat-option value="STATIC">Static</mat-option>
+                  <mat-option value="STATIC_GRADIENT">Static gradient</mat-option>
+                  <mat-option value="VOLUME_GRADIENT">Volume gradient</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          }
 
           <app-color-picker [field]="form.lighting.color1" alwaysShow>Color</app-color-picker>
-          @if (showKnobSecondColor() || showSliderSecondColor()) {
+          @if (!isRgbSingle() && (showKnobSecondColor() || showSliderSecondColor())) {
             <app-color-picker [field]="form.lighting.color2" alwaysShow>Secondary color</app-color-picker>
           }
         }

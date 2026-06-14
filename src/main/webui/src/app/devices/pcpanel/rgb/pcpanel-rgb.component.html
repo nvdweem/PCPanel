@@ -14,7 +14,7 @@
   <g [style.--anim-duration]="animDuration()" [style.--breath-min]="breathMin()">
     @for (ki of knobIndices; track ki) {
       <rect [attr.x]="40 + ki * 107" y="55" width="102" height="95"
-            [attr.fill]="ledColor(ki)" [class]="animClass()" opacity="0.85"/>
+            [attr.fill]="ringColor(ki)" [class]="animClass()" opacity="0.85"/>
     }
   </g>
 
@@ -44,17 +44,14 @@
 
   <!-- ── Knobs ─────────────────────────────────────────────────────────── -->
   @for (ki of knobIndices; track ki) {
-    <g [attr.transform]="knobTransform(ki)" (click)="onDialClick(ki)" style="cursor:pointer">
+    <g [attr.transform]="knobTransform(ki)" class="cur-p"
+       (click)="edit($event, ki, false)" (contextmenu)="edit($event, ki, true)" style="cursor:pointer">
       <!-- Shadow -->
       <circle cx="34" cy="36" r="30" opacity="0.4" fill="black"/>
       <!-- Outer body -->
       <circle cx="30" cy="30" r="30" fill="url(#rgb-knob-outer)" stroke="#3a3a3a" stroke-width="0"/>
       <!-- Inner face -->
       <circle cx="30" cy="30" r="27" fill="url(#rgb-knob-inner)" stroke="#3a3a3a" stroke-width="0.5"/>
-      <!-- Active ring -->
-      @if (isActive(ki)) {
-        <circle cx="30" cy="30" r="30" fill="none" stroke="#ffc940" stroke-width="3" opacity="0.9"/>
-      }
       <!-- Rotating indicator dot -->
       <g [attr.transform]="'rotate(' + knobAngle(ki) + ',30,30)'">
         <circle cx="30" cy="50" r="3" fill="white" stroke="#2b2b2b" stroke-width="0.5"/>

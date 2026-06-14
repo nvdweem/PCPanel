@@ -64,6 +64,36 @@ export function breathBaseColor(config: LightingConfig): string {
   return hsbToHex(unitByte(config.breathHue), 1, unitByte(config.breathBrightness));
 }
 
+/**
+ * Resolve the visual color of a single knob LED ring (index of `total`) for a
+ * non-Pro device (Mini/RGB). Animated modes return their phase-shifted base
+ * color (CSS animation classes handle the motion); static modes return the
+ * configured color. Handles every {@link LightingConfig} mode so the same
+ * resolver works for Mini (CUSTOM/knobConfigs) and RGB (SINGLE_COLOR/individualColors).
+ */
+export function knobRingColor(config: LightingConfig | null | undefined, index: number, total: number, fallback: string): string {
+  if (!config) return fallback;
+  switch (config.lightingMode) {
+    case 'ALL_RAINBOW':
+      return rainbowBaseColor(config, index, total);
+    case 'ALL_WAVE':
+      return waveBaseColor(config, index, total);
+    case 'ALL_BREATH':
+      return breathBaseColor(config);
+    case 'ALL_COLOR':
+      return config.allColor || fallback;
+    case 'SINGLE_COLOR':
+      return config.individualColors?.[index] || fallback;
+    case 'CUSTOM': {
+      const knob = config.knobConfigs?.[index];
+      if (!knob || knob.mode === 'NONE') return '#000000';
+      return knob.color1 || fallback;
+    }
+    default:
+      return fallback;
+  }
+}
+
 // ── CSS animation helpers (drives class + custom-property bindings) ───────────
 
 function speedFactor(speed: number | null | undefined): number {

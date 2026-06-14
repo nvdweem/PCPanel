@@ -2,7 +2,7 @@ import { computed, DestroyRef, effect, inject, Injectable, OnDestroy, signal } f
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DeviceService } from '../../services/device.service';
 import { DeviceStateService } from '../../services/device-state.service';
-import { Command, Commands, DeviceSnapshotDto, LightingConfig } from '../../models/generated/backend.types';
+import { DeviceSnapshotDto, LightingConfig } from '../../models/generated/backend.types';
 
 @Injectable()
 export class HomeFacade implements OnDestroy {
@@ -11,7 +11,6 @@ export class HomeFacade implements OnDestroy {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly selectedSerial = signal<string | null>(null);
-  readonly activeDial = signal<number | null>(null);
   private readonly _pendingBrightness = signal<number | null>(null);
   private brightnessTimer?: ReturnType<typeof setTimeout>;
 
@@ -26,16 +25,6 @@ export class HomeFacade implements OnDestroy {
     if (!base) return null;
     const pending = this._pendingBrightness();
     return pending !== null ? {...base, globalBrightness: pending} : base;
-  });
-
-  readonly dialCommands = computed<Map<number, Commands>>(() => {
-    return new Map(Object.entries(this.selectedDevice()?.currentProfileSnapshot?.dialData ?? {}).map(([k, v]) => [Number(k), v]));
-  });
-
-  readonly dialLabels = computed<Map<number, string>>(() => {
-    const labels = new Map<number, string>();
-    this.dialCommands().forEach((cmds, i) => labels.set(i, this.formatCommands(cmds)));
-    return labels;
   });
 
   readonly isPro = computed(() => this.selectedDevice()?.deviceType === 'PCPANEL_PRO');
@@ -101,15 +90,6 @@ export class HomeFacade implements OnDestroy {
     }, 200);
   }
 
-  setActiveDial(index: number | null): void {
-    this.activeDial.set(index);
-  }
-
-  /** Called from HomeComponent after a dial command is saved via HTTP. */
-  updateDialCommand(_index: number, _command: Commands): void {
-    // No-op: the backend emits assignment_changed which updates DeviceStateService automatically.
-  }
-
   friendlyType(type: string): string {
     switch (type) {
       case 'PCPANEL_RGB':
@@ -121,10 +101,5 @@ export class HomeFacade implements OnDestroy {
       default:
         return type;
     }
-  }
-
-  private formatCommands(cmds: Commands | null | undefined): string {
-    if (!cmds?.commands?.length) return '—';
-    return cmds.commands.map((c: Command) => (c['_type'] ?? '').split('.').pop() ?? '?').join(', ');
   }
 }

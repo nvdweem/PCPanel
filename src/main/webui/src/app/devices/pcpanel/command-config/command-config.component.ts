@@ -17,10 +17,19 @@ import { ColorPicker } from '../../../components/color-picker/color-picker';
 
 type ControlLighting = SingleKnobLightingConfig | SingleSliderLightingConfig;
 
+/**
+ * Distinguishes how the per-control lighting editor behaves and how the result
+ * is persisted. Knobs/sliders/logo use the Pro per-control config (knobConfigs/
+ * sliderConfigs/CUSTOM); 'rgb-single' is the PCPanel RGB model where a knob has
+ * a single color stored in the global SINGLE_COLOR individualColors[] array.
+ */
+export type LightingVariant = 'knob' | 'rgb-single' | 'slider' | 'logo';
+
 export interface CommandDialogData extends ControlAssignmentsUpdateDto {
   title: string;
   controlType: ControlType;
   lighting?: ControlLighting;
+  lightingVariant?: LightingVariant;
 }
 
 function ensureValidData(data: CommandDialogData) {
@@ -59,6 +68,11 @@ export class CommandConfigComponent {
 
   protected lightingMode() {
     return this.form().value().lighting?.mode;
+  }
+
+  /** RGB knobs expose a single color only (SINGLE_COLOR/individualColors) — no mode or gradient. */
+  protected isRgbSingle() {
+    return this.data.lightingVariant === 'rgb-single';
   }
 
   protected showKnobSecondColor() {
