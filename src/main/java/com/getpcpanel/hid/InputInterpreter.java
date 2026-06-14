@@ -57,10 +57,22 @@ public final class InputInterpreter {
         save.getProfile(serialNum).map(p -> p.getDialData(knob)).ifPresent(data -> eventBus.fire(new PCPanelControlEvent(serialNum, knob, data, initial, v)));
     }
 
-    private void doClickAction(String serialNum, int knob) {
-        var clickId = new ClickId(serialNum, knob);
+    void doClickAction(String serialNum, int button) {
+        // Double-click detection only matters when the button actually has a double-click action bound. For a plain
+        // button (the common case - e.g. a mute/toggle) the debounce only added latency and, worse, a second press
+        // that landed within the interval was reclassified as a double-click and dropped, leaving toggles stuck on
+        // their first state (#72). Fire those immediately so every press toggles reliably.
+        if (!hasDblClickAction(serialNum, button)) {
+            eventBus.fire(new ButtonClickEvent(serialNum, button, false));
+            return;
+        }
+        var clickId = new ClickId(serialNum, button);
         var timeDiff = System.currentTimeMillis() - lastClicks.getOrDefault(clickId, 0L);
         determineClick(clickId, timeDiff);
+    }
+
+    private boolean hasDblClickAction(String serialNum, int button) {
+        return save.getProfile(serialNum).map(p -> p.getDblButtonData(button)).filter(d -> hasCommands(d)).isPresent();
     }
 
     private void determineClick(ClickId clickId, long timeDiff) {
