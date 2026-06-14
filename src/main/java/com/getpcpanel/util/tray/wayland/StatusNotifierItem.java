@@ -2,6 +2,8 @@ package com.getpcpanel.util.tray.wayland;
 
 import static com.getpcpanel.util.tray.wayland.TrayServiceWayland.SNI_BUS_NAME;
 
+import java.util.List;
+
 import org.freedesktop.dbus.DBusPath;
 import org.freedesktop.dbus.annotations.DBusBoundProperty;
 import org.freedesktop.dbus.annotations.DBusInterfaceName;
@@ -38,9 +40,22 @@ public interface StatusNotifierItem extends DBusInterface {
         return "ApplicationStatus";
     }
 
+    /**
+     * Left empty so the host falls back to {@link #getIconPixmap()}, which carries the actual
+     * PCPanel icon. PCPanel is not part of any icon theme, so there is no themed name to return.
+     */
     @DBusBoundProperty(access = DBusProperty.Access.READ)
     default String getIconName() {
-        return "application-x-executable";
+        return "";
+    }
+
+    /**
+     * The PCPanel application icon as raw ARGB bitmap data. Used by the host when
+     * {@link #getIconName()} is empty.
+     */
+    @DBusBoundProperty(access = DBusProperty.Access.READ)
+    default List<IconPixmap> getIconPixmap() {
+        return WaylandTrayIcon.pixmap();
     }
 
     @DBusBoundProperty(access = DBusProperty.Access.READ)
