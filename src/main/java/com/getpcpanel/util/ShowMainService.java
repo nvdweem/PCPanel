@@ -1,8 +1,6 @@
 package com.getpcpanel.util;
 
-import java.awt.Desktop;
 import java.io.IOException;
-import java.net.URI;
 
 import org.apache.commons.lang3.SystemUtils;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -23,18 +21,8 @@ public class ShowMainService {
 
     public void onShowMain(@Observes ShowMainEvent event) {
         var url = "http://localhost:" + port + "/";
-        // macOS native images have no AWT/libawt, so java.awt.Desktop (which loads the AWT toolkit)
-        // must not be touched there; fall straight through to the `open` command.
-        if (!SystemUtils.IS_OS_MAC) {
-            try {
-                if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-                    Desktop.getDesktop().browse(URI.create(url));
-                    return;
-                }
-            } catch (Exception e) {
-                log.warn("Unable to open browser through Desktop, falling back to platform command", e);
-            }
-        }
+        // Open the browser via the platform's native command rather than java.awt.Desktop, which would
+        // load the AWT toolkit (absent in the macOS native image and the heavy subsystem we are dropping).
         try {
             String[] command;
             if (SystemUtils.IS_OS_WINDOWS) {
