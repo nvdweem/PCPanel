@@ -51,9 +51,10 @@ public class IconService {
     public BufferedImage SYSTEM_SOUND;
 
     private static BufferedImage loadImage(String path) {
-        // macOS native images have no libawt, so ImageIO.read would crash. Constructing an empty
-        // BufferedImage is pure Java (no native toolkit) and is safe; icons are not shown on macOS.
-        if (!SystemUtils.IS_OS_MAC) {
+        // Only the Windows native image bundles libawt (headless Java2D); macOS and Linux have no
+        // libawt, so ImageIO.read would crash there. Constructing an empty BufferedImage is pure Java
+        // (no native toolkit) and is safe; icons are simply not shown on macOS/Linux.
+        if (SystemUtils.IS_OS_WINDOWS) {
             try {
                 var url = IconService.class.getResource(path);
                 if (url != null)
@@ -107,9 +108,9 @@ public class IconService {
     @CacheResult(cacheName = "command-icon")
     @Nonnull
     public BufferedImage getImageFrom(@Nullable Commands commands, @Nullable KnobSetting override) {
-        // No AWT-based icon extraction on macOS (no libawt); the icon handlers below decode images via
-        // ImageIO, so short-circuit to the blank default to keep the whole path libawt-free.
-        if (SystemUtils.IS_OS_MAC) {
+        // Icon extraction/decoding (ImageIO, JIconExtract) needs libawt, which only the Windows native
+        // image bundles. On macOS and Linux short-circuit to the blank default to keep the path libawt-free.
+        if (!SystemUtils.IS_OS_WINDOWS) {
             return DEFAULT;
         }
         if (!Commands.hasCommands(commands)) {

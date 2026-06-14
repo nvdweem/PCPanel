@@ -9,6 +9,8 @@ import javax.imageio.ImageIO;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.SystemUtils;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
@@ -23,6 +25,10 @@ public record WaveLinkImage(
 ) {
     @Nullable
     public BufferedImage getImage() {
+        // ImageIO needs libawt, which only the Windows native image bundles; skip decoding elsewhere.
+        if (!SystemUtils.IS_OS_WINDOWS) {
+            return null;
+        }
         if (imgData != null && !imgData.isBlank()) {
             try {
                 var imageBytes = Base64.getDecoder().decode(imgData);
