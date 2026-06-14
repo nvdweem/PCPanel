@@ -1,0 +1,55 @@
+[
+  {
+    "name": "org.freedesktop.dbus.transport.jre.NativeTransportProvider",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.freedesktop.dbus.connections.base.GlobalHandler",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.freedesktop.dbus.interfaces.DBus",
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.freedesktop.dbus.interfaces.DBus$NameAcquired",
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true
+  },
+  {
+    "name": "org.freedesktop.dbus.interfaces.Introspectable",
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.freedesktop.dbus.interfaces.Peer",
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.freedesktop.dbus.interfaces.Properties",
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.freedesktop.dbus.interfaces.Properties$PropertiesChanged",
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true
+  },
+  {
+    "name": "com.getpcpanel.util.tray.wayland.StatusNotifierWatcher",
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "com.getpcpanel.util.tray.wayland.StatusNotifierItem",
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "com.getpcpanel.util.tray.wayland.StatusNotifierItemImpl",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  }
+]

@@ -10,5 +10,7 @@
   {"interfaces": ["com.sun.jna.platform.win32.Shell32"]},
   {"interfaces": ["com.sun.jna.platform.win32.GDI32"]},
   {"interfaces": ["com.sun.jna.platform.win32.Ole32"]},
-  {"interfaces": ["com.sun.jna.platform.win32.Wtsapi32"]}
+  {"interfaces": ["com.sun.jna.platform.win32.Wtsapi32"]},
+  {"interfaces": ["com.getpcpanel.util.tray.wayland.StatusNotifierWatcher"]},
+  {"interfaces": ["org.freedesktop.dbus.interfaces.DBus"]}
 ]

@@ -3,5 +3,12 @@
     {
       "name": "org.eclipse.paho.mqttv5.client.internal.nls.logcat"
     }
-  ]
+  ],
+  "resources": {
+    "includes": [
+      {
+        "pattern": "META-INF/services/org\\.freedesktop\\.dbus\\.spi\\.transport\\.ITransportProvider"
+      }
+    ]
+  }
 }
