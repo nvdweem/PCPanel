@@ -23,12 +23,13 @@ on:
       - releases/**
   workflow_dispatch:
 
-# Serialize runs per branch so two pushes can't race on the same `latest-<branch>`
-# pre-release (delete/create/upload). cancel-in-progress=false queues rather than
-# cancelling, so a run is never killed mid-publish.
+# One run per branch. The snapshot pre-release only reflects the latest commit, so a
+# newer push supersedes an in-flight build instead of queueing behind it (and two runs
+# can never race on the same `latest-<branch>` release). A run cancelled mid-publish
+# self-heals: the next run's scoped delete+create rebuilds the release cleanly.
 concurrency:
   group: release-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   buildWindows:
