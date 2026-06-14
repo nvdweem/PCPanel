@@ -137,3 +137,9 @@ under project properties → C/C++ → General → Additional Include Directorie
   generator's optional-property detection.
 - `.editorconfig` defines formatting and a large set of IntelliJ inspection settings; follow it.
 - Linux device access needs udev rules and other setup — see `linux.md`.
+
+## Git workflow
+
+- Make small, clean intermediate commits as work progresses (one logical change per commit) rather
+  than one large commit at the end.
+- Never `git push` until the user explicitly asks for it.
