@@ -35,8 +35,8 @@ The software depends on:
 
 - `libusb-1.0-0` (provides `libusb-1.0.so.0`) — required for USB/HID device access. Without it the
   app crashes during HID init with `libusb-1.0.so.0: cannot open shared object file`. The `.deb`
-  should list it under `Depends:`; on a manual install make sure it is present (`apt-get install
-  libusb-1.0-0`).
+  declares it under `Depends:` so it is installed automatically; for a manual/AppImage install make
+  sure it is present (`apt-get install libusb-1.0-0`). It is part of the Flatpak runtime already.
 - `pulseaudio-utils` (the `pactl` command) — for volume control.
 - `xdotool` (X11) or `kdotool` (Wayland) — to get the currently active window for focus volume.
 
@@ -137,11 +137,18 @@ The application auto-detects Wayland via `XDG_SESSION_TYPE` or `WAYLAND_DISPLAY`
 
 ## Notes
 
-### X11 tray issues
+### Disabling the tray icon
 
-In certain cases there will be a 'JavaEmbeddedFrame' when the application is running. This is caused by the tray icon.
-It is possible to disable the tray icon and removing the JavaEmbeddedFrame by adding `-Ddisable.tray` to the command line.
-If the tray is disabled, the close button will still only hide the application. Starting the application again will show the main window.
+The tray icon can be turned off entirely (both the Wayland StatusNotifierItem and the X11/AWT tray,
+which can leave a stray 'JavaEmbeddedFrame'). Either:
+
+- pass `-Ddisable.tray` on the command line (e.g. `pcpanel -Ddisable.tray`, or for the Flatpak
+  `flatpak run com.getpcpanel.PCPanel -Ddisable.tray`), or
+- set the `PCPANEL_DISABLE_TRAY=1` environment variable (handy for autostart units or launchers that
+  don't forward extra arguments to the binary as `-D` properties).
+
+If the tray is disabled, the close button still only hides the application; starting it again shows
+the main window.
 
 ## Active window volume
 

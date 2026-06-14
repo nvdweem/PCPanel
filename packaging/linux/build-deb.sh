@@ -62,7 +62,7 @@ Priority: optional
 Architecture: $ARCH
 Maintainer: nvdweem <https://github.com/nvdweem/PCPanel>
 Installed-Size: $INSTALLED_SIZE
-Depends: libc6, libfreetype6, libfontconfig1, zlib1g, libx11-6, libxext6, libxrender1, libxtst6, libxi6
+Depends: libc6, libfreetype6, libfontconfig1, zlib1g, libx11-6, libxext6, libxrender1, libxtst6, libxi6, libusb-1.0-0
 Recommends: pulseaudio-utils, xdotool
 Provides: pcpanel
 Homepage: https://github.com/nvdweem/PCPanel
