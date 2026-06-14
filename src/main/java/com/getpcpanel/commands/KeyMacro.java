@@ -3,12 +3,19 @@ package com.getpcpanel.commands;
 import java.awt.AWTException;
 import java.awt.Robot;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.apache.commons.lang3.SystemUtils;
+
+import com.getpcpanel.util.OsxPermissionHelper;
 
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public final class KeyMacro {
     private static final Robot robot = buildRobot();
+    private static final AtomicBoolean accessibilityWarned = new AtomicBoolean();
 
     private static Robot buildRobot() {
         try {
@@ -23,31 +30,42 @@ public final class KeyMacro {
     }
 
     public static void executeKeyStroke(String input) {
+        if (input.contains("UNDEFINED"))
+            return;
+        warnIfAccessibilityNotGranted();
+        var ar = input.replace(" ", "").split("\\+");
+        // Track what we actually pressed so the finally block can release exactly those, in reverse order.
+        // Releasing on failure too prevents a half-finished combination from leaving a modifier stuck system-wide.
+        var pressed = new ArrayList<Integer>();
         try {
-            if (input.contains("UNDEFINED"))
-                return;
-            var ar = input.replace(" ", "").split("\\+");
             for (var i = 0; i < ar.length - 1; i++) {
                 var result = modifierToKeyEvent(ar[i]);
                 if (result == 0) {
                     log.error("bad serialNum modifier: {}", ar[i]);
                 } else {
                     robot.keyPress(result);
+                    pressed.add(result);
                 }
             }
             var keyEvent = letterToKeyEvent(ar[ar.length - 1]);
             robot.keyPress(keyEvent);
-            robot.keyRelease(keyEvent);
-            for (var j = 0; j < ar.length - 1; j++) {
-                var result = modifierToKeyEvent(ar[j]);
-                if (result == 0) {
-                    log.error("bad serialNum modifier: {}", ar[j]);
-                } else {
-                    robot.keyRelease(result);
-                }
-            }
+            pressed.add(keyEvent);
         } catch (Exception e) {
             log.error("bad input: {}", input, e);
+        } finally {
+            for (var i = pressed.size() - 1; i >= 0; i--) {
+                try {
+                    robot.keyRelease(pressed.get(i));
+                } catch (Exception e) {
+                    log.error("Unable to release key {}", pressed.get(i), e);
+                }
+            }
+        }
+    }
+
+    private static void warnIfAccessibilityNotGranted() {
+        if (SystemUtils.IS_OS_MAC && !OsxPermissionHelper.isAccessibilityGranted() && accessibilityWarned.compareAndSet(false, true)) {
+            log.warn("Keystrokes require Accessibility permission: System Settings > Privacy & Security > Accessibility > enable PCPanel");
         }
     }
 
@@ -63,6 +81,8 @@ public final class KeyMacro {
             case "ctrl" -> KeyEvent.VK_CONTROL;
             case "shift" -> KeyEvent.VK_SHIFT;
             case "alt" -> KeyEvent.VK_ALT;
+            case "cmd", "command" -> KeyEvent.VK_META;
+            case "windows" -> KeyEvent.VK_WINDOWS;
             default -> 0;
         };
     }

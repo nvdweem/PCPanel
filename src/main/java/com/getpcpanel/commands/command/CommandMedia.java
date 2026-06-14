@@ -3,10 +3,12 @@ package com.getpcpanel.commands.command;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.util.CdiHelper;
+import com.getpcpanel.util.OsxMediaControl;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.cpp.windows.SndCtrlWindows;
 import com.sun.jna.platform.win32.BaseTSD;
@@ -58,6 +60,11 @@ public class CommandMedia extends Command implements ButtonAction {
 
     @Override
     public void execute() {
+        if (SystemUtils.IS_OS_MAC) {
+            // Branch before the Windows paths so the win32 JNA classes are never touched on macOS
+            CdiHelper.getBean(OsxMediaControl.class).execute(button, spotify);
+            return;
+        }
         if (spotify) {
             executeSpotify();
         } else {

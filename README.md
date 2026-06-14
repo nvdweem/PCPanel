@@ -8,7 +8,7 @@ software, this project started counting at version 1.0 which was essentially a b
 
 To see all changes since the original software, see the [changelog](CHANGELOG.md).
 
-Development focus is mainly targeted at Windows but some effort is put into making the software run on Linux.
+Development focus is mainly targeted at Windows but some effort is put into making the software run on Linux and macOS.
 
 # Download
 
@@ -16,8 +16,9 @@ The installer can be found by clicking the latest release on the right side of t
 also be a 'snapshot' release which can be found by opening the [releases](https://github.com/nvdweem/PCPanel/releases) page.
 
 Once on the release page there will be a changelog and a list of assets. The Windows installer is the `PCPanel-<version>-setup.exe`,
-the Linux installer is the `.deb` file (a Flatpak bundle is also provided as a best-effort alternative). The application is now a
-native executable, so a separate Java installation is no longer required.
+the Linux installer is the `.deb` file (a Flatpak bundle is also provided as a best-effort alternative) and the macOS installer is the
+architecture-specific `PCPanel-<version>-<arch>.dmg`. The application is now a native executable, so a separate Java installation is
+no longer required.
 
 The 'Source code' artifact is probably not needed for anybody.
 
@@ -33,6 +34,11 @@ administrator privileges (set up as a scheduled task), which is needed if you wa
 ## Linux
 
 Installing on Linux is a bit harder, see [Linux instructions](linux.md).
+
+## macOS
+
+macOS support is experimental and community-contributed, see [macOS instructions](mac.md). Device
+volume, mute and default-device switching work, but per-application volume is not possible on stock macOS.
 
 # Issues / Feature requests
 

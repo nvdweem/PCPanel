@@ -10,7 +10,10 @@
 #
 #   Windows : per-user Inno Setup installer (no admin, installs under %LOCALAPPDATA%,
 #             optional autostart on sign-in, launches after install)
-#   Linux   : .deb (standard) + best-effort Flatpak bundle
+#   Linux   : .deb (standard) + AppImage + best-effort Flatpak bundle
+#   macOS   : best-effort .app bundled into an architecture-specific .dmg (unsigned).
+#             The macOS build is experimental and runs continue-on-error so it never
+#             blocks the Windows/Linux release if a runner image changes.
 
 name: Build & Release
 env:
@@ -200,11 +203,87 @@ jobs:
           path: ./target/*.flatpak
           if-no-files-found: ignore
 
+  buildMac:
+    name: macOS .dmg (best-effort)
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-14   # Apple Silicon (aarch64)
+          - runner: macos-13   # Intel (x86_64)
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up GraalVM CE
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'graalvm-community'
+          native-image-job-reports: 'true'
+          cache: 'maven'
+
+      - name: Compute app version
+        id: ver
+        run: |
+          base=$(grep -oE '<project\.baseversion>[^<]+' pom.xml | head -1 | sed 's/<project\.baseversion>//')
+          echo "version=${base}.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+
+      # macOS detection (os.detected.name) resolves pcpanel.build.os to "osx", so the @MacBuild
+      # beans are included automatically; no extra flags are needed.
+      - name: Build native image (macOS)
+        id: build
+        continue-on-error: true
+        run: mvn -B package -Pnative --file pom.xml
+
+      - name: Assemble .app and .dmg
+        id: package
+        continue-on-error: true
+        run: |
+          set -euxo pipefail
+          arch=$(uname -m)   # arm64 or x86_64
+          exe=$(ls target/*-runner | head -1)
+          app="target/PCPanel.app"
+          mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
+          cp "$exe" "$app/Contents/MacOS/PCPanel"
+          chmod +x "$app/Contents/MacOS/PCPanel"
+          # native-image drops the companion .dylib files next to the runner; keep them beside the binary.
+          cp target/*.dylib "$app/Contents/MacOS/" 2>/dev/null || true
+          cp app-icon.icns "$app/Contents/Resources/PCPanel.icns" 2>/dev/null || true
+          cat > "$app/Contents/Info.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleName</key><string>PCPanel</string>
+            <key>CFBundleDisplayName</key><string>PCPanel</string>
+            <key>CFBundleIdentifier</key><string>com.getpcpanel.PCPanel</string>
+            <key>CFBundleVersion</key><string>${{ steps.ver.outputs.version }}</string>
+            <key>CFBundleShortVersionString</key><string>${{ steps.ver.outputs.version }}</string>
+            <key>CFBundleExecutable</key><string>PCPanel</string>
+            <key>CFBundleIconFile</key><string>PCPanel</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>LSMinimumSystemVersion</key><string>11.0</string>
+            <key>NSHighResolutionCapable</key><true/>
+          </dict>
+          </plist>
+          PLIST
+          hdiutil create -volname PCPanel -srcfolder "$app" -ov -format UDZO \
+            "target/PCPanel-${{ steps.ver.outputs.version }}-${arch}.dmg"
+
+      - name: Store .dmg artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: macos-dmg-${{ matrix.runner }}
+          path: ./target/PCPanel-*.dmg
+          if-no-files-found: ignore
+
   preRelease:
     name: Pre-release
     needs:
       - buildWindows
       - buildLinux
+      - buildMac
     runs-on: ubuntu-latest
     steps:
       - name: Fetch Sources

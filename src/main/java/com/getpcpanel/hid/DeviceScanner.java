@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.hid4java.HidDevice;
 import org.hid4java.HidManager;
 import org.hid4java.HidServices;
@@ -14,6 +15,7 @@ import org.hid4java.ScanMode;
 import org.hid4java.event.HidServicesEvent;
 
 import com.getpcpanel.device.DeviceType;
+import com.getpcpanel.util.OsxPermissionHelper;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
@@ -63,6 +65,32 @@ public class DeviceScanner implements HidServicesListener {
         if (!shuttingDown.compareAndSet(true, false)) {
             reconnectDevicesAfterRestart();
         }
+
+        scheduleNoDeviceFoundCheck();
+    }
+
+    /**
+     * On macOS the HID device does not even enumerate without the Input Monitoring permission, so a missing
+     * permission shows up as "no device found" rather than a failed open. Warn about it shortly after startup.
+     */
+    private void scheduleNoDeviceFoundCheck() {
+        if (!SystemUtils.IS_OS_MAC) {
+            return;
+        }
+        var checker = new Thread(() -> {
+            try {
+                Thread.sleep(10_000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+            if (connectedDeviceMap.isEmpty() && !OsxPermissionHelper.isInputMonitoringGranted()) {
+                log.warn("No PCPanel detected. macOS requires the Input Monitoring permission: " +
+                        "System Settings > Privacy & Security > Input Monitoring > enable PCPanel, then restart PCPanel");
+            }
+        }, "pcpanel-mac-permission-check");
+        checker.setDaemon(true);
+        checker.start();
     }
 
     private void reconnectDevicesAfterRestart() {
@@ -91,6 +119,10 @@ public class DeviceScanner implements HidServicesListener {
         connectedDeviceMap.computeIfAbsent(key, k -> {
             if (!device.isOpen() && !device.open()) {
                 log.error("Unable to open device, it won't be possible to use the panel");
+                if (SystemUtils.IS_OS_MAC && !OsxPermissionHelper.isInputMonitoringGranted()) {
+                    log.error("macOS requires the Input Monitoring permission: " +
+                            "System Settings > Privacy & Security > Input Monitoring > enable PCPanel");
+                }
                 return null;
             }
             return created[0] = deviceCommunicationHandlerFactory.build(k, device, deviceType);
