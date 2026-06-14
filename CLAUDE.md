@@ -34,6 +34,9 @@ native builds; the `JAVAFX_HOME` instructions in CONTRIBUTING.md are stale — J
   AppImage / Flatpak — see `packaging/`), and publishes a per-branch pre-release. The native image is
   NOT self-contained: it loads companion `*.dll`/`*.so` libraries from its own directory, so every
   artifact must bundle them alongside the executable.
+- **Releasing:** `<project.baseversion>` in `pom.xml` is the version source of truth (artifacts are
+  `<baseversion>.<build>`). Bump it with `packaging/bump-version.sh <version>` (also updates the
+  AppStream metadata), then push a `releases/<version>` branch to trigger a pre-release build.
 - **Run two instances side by side:** pass the `skipfilecheck` arg (otherwise launching a second
   instance just focuses the already-installed one — see `Main`/`FileChecker`). For a separate dev
   data dir, set `pcpanel.root=${user.home}/.pcpaneldev/` (dev profile already does this).
