@@ -37,8 +37,6 @@ concurrency:
 jobs:
   buildWindows:
     name: Windows installer
-    # TEMP: disabled to validate the new macOS Intel build in isolation. RE-ENABLE (remove `if: false`).
-    if: false
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v6
@@ -104,8 +102,6 @@ jobs:
 
   buildLinux:
     name: Linux .deb + Flatpak
-    # TEMP: disabled to validate the new macOS Intel build in isolation. RE-ENABLE (remove `if: false`).
-    if: false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -290,8 +286,6 @@ jobs:
 
   preRelease:
     name: Pre-release
-    # TEMP: disabled to validate the new macOS Intel build in isolation. RE-ENABLE (remove `if: false`).
-    if: false
     needs:
       - buildWindows
       - buildLinux
