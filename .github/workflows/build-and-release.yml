@@ -37,6 +37,8 @@ concurrency:
 jobs:
   buildWindows:
     name: Windows installer
+    # TEMP: disabled to validate the new macOS Intel build in isolation. RE-ENABLE (remove `if: false`).
+    if: false
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v6
@@ -102,6 +104,8 @@ jobs:
 
   buildLinux:
     name: Linux .deb + Flatpak
+    # TEMP: disabled to validate the new macOS Intel build in isolation. RE-ENABLE (remove `if: false`).
+    if: false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -205,11 +209,19 @@ jobs:
 
   buildMac:
     name: macOS .dmg (best-effort)
-    # macos-latest tracks GitHub's current macOS image (Apple Silicon / aarch64) so this job does not
-    # break when a pinned image is retired (as macos-13 was). The native build is single-architecture
-    # and the code is architecture-independent, so an Intel image can still be produced on an x86_64
-    # Mac from the same sources; CI only publishes the arm64 build that the hosted runner produces.
-    runs-on: macos-latest
+    # A native image is architecture-specific machine code, so an Apple Silicon (arm64) build does NOT
+    # run on Intel Macs (and Rosetta only goes x86_64 -> arm64, not the reverse). We therefore build
+    # both architectures:
+    #   - macos-latest   : Apple Silicon (arm64). Tracks GitHub's current image so it cannot be retired
+    #                      out from under us (as the pinned macos-13 was).
+    #   - macos-15-intel : Intel (x86_64), GitHub's free successor to the retired macos-13 Intel image.
+    # The sources are architecture-independent; each runner just emits its own arch's binary + .dmg.
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-latest, macos-15-intel]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v6
 
@@ -278,6 +290,8 @@ jobs:
 
   preRelease:
     name: Pre-release
+    # TEMP: disabled to validate the new macOS Intel build in isolation. RE-ENABLE (remove `if: false`).
+    if: false
     needs:
       - buildWindows
       - buildLinux
