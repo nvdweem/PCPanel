@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=PCPanel
+GenericName=PCPanel controller
+Comment=Control software for PCPanel devices
+Exec=pcpanel
+Icon=com.getpcpanel.PCPanel
+Terminal=false
+Categories=AudioVideo;Audio;Utility;
+Keywords=pcpanel;volume;audio;mixer;dial;
+StartupNotify=false

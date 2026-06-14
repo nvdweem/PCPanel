@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- AppStream metadata. Required by Flatpak and used by the .deb / app stores. -->
+<component type="desktop-application">
+  <id>com.getpcpanel.PCPanel</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>PCPanel</name>
+  <summary>Control software for PCPanel devices</summary>
+  <description>
+    <p>
+      Third-party / community controller software for PCPanel devices. Map dials and
+      sliders to volume, focus volume, WaveLink, OBS, MQTT, OSC and more.
+    </p>
+    <p>
+      This software is not affiliated with PCPanel Software.
+    </p>
+  </description>
+  <launchable type="desktop-id">com.getpcpanel.PCPanel.desktop</launchable>
+  <url type="homepage">https://github.com/nvdweem/PCPanel</url>
+  <url type="bugtracker">https://github.com/nvdweem/PCPanel/issues</url>
+  <developer id="com.getpcpanel">
+    <name>nvdweem</name>
+  </developer>
+  <content_rating type="oars-1.1" />
+  <releases>
+    <release version="1.8" date="2026-06-14" />
+  </releases>
+</component>

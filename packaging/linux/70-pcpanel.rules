@@ -1,0 +1,6 @@
+# udev rules granting the logged-in user access to PCPanel USB devices.
+# Installed to /usr/lib/udev/rules.d/70-pcpanel.rules by the .deb package.
+# After install: `sudo udevadm control --reload-rules` and reconnect the device.
+SUBSYSTEM=="usb", ATTRS{idVendor}=="04D8", ATTRS{idProduct}=="eb52", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="a3c4", TAG+="uaccess"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="a3c5", TAG+="uaccess"
