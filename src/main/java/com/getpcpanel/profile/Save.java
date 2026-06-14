@@ -108,4 +108,9 @@ public class Save {
     public WaveLinkSettings getWaveLink() {
         return Objects.requireNonNullElse(waveLink, WaveLinkSettings.DEFAULT);
     }
+
+    @Nonnull
+    public MqttSettings getMqtt() {
+        return Objects.requireNonNullElse(mqtt, MqttSettings.DEFAULT);
+    }
 }
