@@ -37,6 +37,9 @@ concurrency:
 jobs:
   buildWindows:
     name: Windows installer
+    # TEMP: disabled while iterating on the macOS native build to save CI minutes. RE-ENABLE (remove
+    # this `if: false`) before merging/releasing — Windows is unaffected by the macOS-only changes.
+    if: false
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v6
@@ -102,6 +105,9 @@ jobs:
 
   buildLinux:
     name: Linux .deb + Flatpak
+    # TEMP: disabled while iterating on the macOS native build to save CI minutes. RE-ENABLE (remove
+    # this `if: false`) before merging/releasing — Linux is unaffected by the macOS-only changes.
+    if: false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -205,15 +211,11 @@ jobs:
 
   buildMac:
     name: macOS .dmg (best-effort)
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - runner: macos-14   # Apple Silicon (aarch64)
-          # macos-13 (Intel/x86_64) is omitted: GitHub retired the macos-13 runner image, so that job
-          # would queue forever. The JNA code is architecture-independent, so an Intel native image can
-          # still be produced on an x86_64 Mac (locally or a future runner) from the same sources.
-    runs-on: ${{ matrix.runner }}
+    # macos-latest tracks GitHub's current macOS image (Apple Silicon / aarch64) so this job does not
+    # break when a pinned image is retired (as macos-13 was). The native build is single-architecture
+    # and the code is architecture-independent, so an Intel image can still be produced on an x86_64
+    # Mac from the same sources; CI only publishes the arm64 build that the hosted runner produces.
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v6
 
@@ -276,12 +278,15 @@ jobs:
       - name: Store .dmg artifact
         uses: actions/upload-artifact@v7
         with:
-          name: macos-dmg-${{ matrix.runner }}
+          name: macos-dmg-${{ runner.arch }}
           path: ./target/PCPanel-*.dmg
           if-no-files-found: ignore
 
   preRelease:
     name: Pre-release
+    # TEMP: disabled while iterating on the macOS native build so no half-built pre-release is published
+    # and no minutes are spent. RE-ENABLE (remove this `if: false`) before merging/releasing.
+    if: false
     needs:
       - buildWindows
       - buildLinux

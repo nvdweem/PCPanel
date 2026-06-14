@@ -26,7 +26,12 @@ import lombok.extern.log4j.Log4j2;
 @ApplicationScoped
 @MacBuild
 public class CoreAudioWrapper {
-    private static final CoreAudioLib CA = CoreAudioLib.INSTANCE;
+    // Accessed lazily (not via a static field) so this bean class stays build-time-initializable:
+    // CoreAudioLib.INSTANCE runs Native.load in its own initializer, which must happen at run time.
+    private static CoreAudioLib ca() {
+        return CoreAudioLib.INSTANCE;
+    }
+
     private static final int SYSTEM_OBJECT = CoreAudioLib.kAudioObjectSystemObject;
     private static final int ELEMENT_MAIN = 0;
     private static final int ELEMENT_WILDCARD = 0xFFFFFFFF;
@@ -65,7 +70,7 @@ public class CoreAudioWrapper {
         // Move HAL notifications off the main run loop to CoreAudio's own thread
         try (var data = new Memory(Native.POINTER_SIZE)) {
             data.setPointer(0, null);
-            var status = CA.AudioObjectSetPropertyData(SYSTEM_OBJECT, address(PROP_RUN_LOOP, SCOPE_GLOBAL, ELEMENT_MAIN), 0, null, (int) data.size(), data);
+            var status = ca().AudioObjectSetPropertyData(SYSTEM_OBJECT, address(PROP_RUN_LOOP, SCOPE_GLOBAL, ELEMENT_MAIN), 0, null, (int) data.size(), data);
             if (status != 0) {
                 log.debug("Unable to set CoreAudio run loop ({})", status);
             }
@@ -117,12 +122,12 @@ public class CoreAudioWrapper {
     public int[] getDeviceIds() {
         var address = address(PROP_DEVICES, SCOPE_GLOBAL, ELEMENT_MAIN);
         var size = new IntByReference();
-        var status = CA.AudioObjectGetPropertyDataSize(SYSTEM_OBJECT, address, 0, null, size);
+        var status = ca().AudioObjectGetPropertyDataSize(SYSTEM_OBJECT, address, 0, null, size);
         if (status != 0 || size.getValue() == 0) {
             return new int[0];
         }
         try (var data = new Memory(size.getValue())) {
-            status = CA.AudioObjectGetPropertyData(SYSTEM_OBJECT, address, 0, null, size, data);
+            status = ca().AudioObjectGetPropertyData(SYSTEM_OBJECT, address, 0, null, size, data);
             if (status != 0) {
                 log.warn("Unable to list audio devices ({})", status);
                 return new int[0];
@@ -135,7 +140,7 @@ public class CoreAudioWrapper {
         var address = address(output ? PROP_DEFAULT_OUTPUT_DEVICE : PROP_DEFAULT_INPUT_DEVICE, SCOPE_GLOBAL, ELEMENT_MAIN);
         try (var data = new Memory(4)) {
             var size = new IntByReference(4);
-            var status = CA.AudioObjectGetPropertyData(SYSTEM_OBJECT, address, 0, null, size, data);
+            var status = ca().AudioObjectGetPropertyData(SYSTEM_OBJECT, address, 0, null, size, data);
             if (status != 0) {
                 log.warn("Unable to determine default {} device ({})", output ? "output" : "input", status);
                 return 0;
@@ -148,7 +153,7 @@ public class CoreAudioWrapper {
         var address = address(output ? PROP_DEFAULT_OUTPUT_DEVICE : PROP_DEFAULT_INPUT_DEVICE, SCOPE_GLOBAL, ELEMENT_MAIN);
         try (var data = new Memory(4)) {
             data.setInt(0, deviceId);
-            var status = CA.AudioObjectSetPropertyData(SYSTEM_OBJECT, address, 0, null, 4, data);
+            var status = ca().AudioObjectSetPropertyData(SYSTEM_OBJECT, address, 0, null, 4, data);
             if (status != 0) {
                 log.warn("Unable to set default {} device to {} ({})", output ? "output" : "input", deviceId, status);
             }
@@ -221,7 +226,7 @@ public class CoreAudioWrapper {
         if (hasProperty(deviceId, PROP_PREFERRED_STEREO_CHANNELS, scope, ELEMENT_MAIN)) {
             try (var data = new Memory(8)) {
                 var size = new IntByReference(8);
-                var status = CA.AudioObjectGetPropertyData(deviceId, address(PROP_PREFERRED_STEREO_CHANNELS, scope, ELEMENT_MAIN), 0, null, size, data);
+                var status = ca().AudioObjectGetPropertyData(deviceId, address(PROP_PREFERRED_STEREO_CHANNELS, scope, ELEMENT_MAIN), 0, null, size, data);
                 if (status == 0 && size.getValue() == 8) {
                     return new int[] { data.getInt(0), data.getInt(4) };
                 }
@@ -248,7 +253,7 @@ public class CoreAudioWrapper {
             }
             return 0;
         };
-        var status = CA.AudioObjectAddPropertyListener(objectId, address, proc, null);
+        var status = ca().AudioObjectAddPropertyListener(objectId, address, proc, null);
         if (status != 0) {
             log.warn("Unable to add CoreAudio listener for {} on {} ({})", selector, objectId, status);
             return null;
@@ -260,22 +265,22 @@ public class CoreAudioWrapper {
         if (handle == null) {
             return;
         }
-        CA.AudioObjectRemovePropertyListener(handle.objectId(), handle.address(), handle.proc(), null);
+        ca().AudioObjectRemovePropertyListener(handle.objectId(), handle.address(), handle.proc(), null);
     }
 
     private boolean hasProperty(int objectId, int selector, int scope, int element) {
-        return CA.AudioObjectHasProperty(objectId, address(selector, scope, element)) != 0;
+        return ca().AudioObjectHasProperty(objectId, address(selector, scope, element)) != 0;
     }
 
     private boolean isSettable(int objectId, int selector, int scope, int element) {
         var settable = new ByteByReference();
-        var status = CA.AudioObjectIsPropertySettable(objectId, address(selector, scope, element), settable);
+        var status = ca().AudioObjectIsPropertySettable(objectId, address(selector, scope, element), settable);
         return status == 0 && settable.getValue() != 0;
     }
 
     private int streamCount(int deviceId, int scope) {
         var size = new IntByReference();
-        var status = CA.AudioObjectGetPropertyDataSize(deviceId, address(PROP_STREAMS, scope, ELEMENT_MAIN), 0, null, size);
+        var status = ca().AudioObjectGetPropertyDataSize(deviceId, address(PROP_STREAMS, scope, ELEMENT_MAIN), 0, null, size);
         return status == 0 ? size.getValue() / 4 : 0;
     }
 
@@ -286,7 +291,7 @@ public class CoreAudioWrapper {
         }
         try (var data = new Memory(Native.POINTER_SIZE)) {
             var size = new IntByReference(Native.POINTER_SIZE);
-            var status = CA.AudioObjectGetPropertyData(objectId, address(selector, SCOPE_GLOBAL, ELEMENT_MAIN), 0, null, size, data);
+            var status = ca().AudioObjectGetPropertyData(objectId, address(selector, SCOPE_GLOBAL, ELEMENT_MAIN), 0, null, size, data);
             if (status != 0) {
                 return null;
             }
@@ -310,7 +315,7 @@ public class CoreAudioWrapper {
         }
         try (var data = new Memory(4)) {
             var size = new IntByReference(4);
-            var status = CA.AudioObjectGetPropertyData(objectId, address(selector, scope, element), 0, null, size, data);
+            var status = ca().AudioObjectGetPropertyData(objectId, address(selector, scope, element), 0, null, size, data);
             return status == 0 ? data.getFloat(0) : null;
         }
     }
@@ -321,7 +326,7 @@ public class CoreAudioWrapper {
         }
         try (var data = new Memory(4)) {
             data.setFloat(0, value);
-            return CA.AudioObjectSetPropertyData(objectId, address(selector, scope, element), 0, null, 4, data) == 0;
+            return ca().AudioObjectSetPropertyData(objectId, address(selector, scope, element), 0, null, 4, data) == 0;
         }
     }
 
@@ -332,7 +337,7 @@ public class CoreAudioWrapper {
         }
         try (var data = new Memory(4)) {
             var size = new IntByReference(4);
-            var status = CA.AudioObjectGetPropertyData(objectId, address(selector, scope, element), 0, null, size, data);
+            var status = ca().AudioObjectGetPropertyData(objectId, address(selector, scope, element), 0, null, size, data);
             return status == 0 ? data.getInt(0) : null;
         }
     }
@@ -343,7 +348,7 @@ public class CoreAudioWrapper {
         }
         try (var data = new Memory(4)) {
             data.setInt(0, value);
-            return CA.AudioObjectSetPropertyData(objectId, address(selector, scope, element), 0, null, 4, data) == 0;
+            return ca().AudioObjectSetPropertyData(objectId, address(selector, scope, element), 0, null, 4, data) == 0;
         }
     }
 
