@@ -16,15 +16,19 @@ import com.getpcpanel.util.version.Version.SemVer;
 
 import io.quarkus.runtime.Startup;
 import jakarta.annotation.PostConstruct;
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
+// @Singleton (not @ApplicationScoped) on purpose: this bean extends Thread, and a normal-scoped
+// bean needs an Arc client proxy that subclasses the bean type. Thread's many final methods can't
+// be overridden in that proxy, which logs a "cannot be proxied" warning for each. @Singleton beans
+// are not client-proxied, so they avoid the noise; nothing injects this bean by contextual reference.
 @Log4j2
 @Startup
-@ApplicationScoped
+@Singleton
 public class VersionChecker extends Thread {
     @Inject Event<Object> eventBus;
     @Inject SaveService save;
