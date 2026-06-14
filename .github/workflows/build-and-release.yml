@@ -38,12 +38,17 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      # native-image-job-reports is intentionally OFF: it makes setup-graalvm pass
+      # -H:BuildOutputJSONFile pointing at the runner's TEMP on C:, while the build output lives on
+      # the workspace drive (D:). GraalVM's BuildArtifactsExporter then relativizes that JSON against
+      # the output dir and crashes with "'other' has different root" (cross-drive). That report JSON
+      # was the only artifact off the workspace drive; without it every produced artifact stays under
+      # target/ on one drive and the native build is clean.
       - name: Set up GraalVM CE
         uses: graalvm/setup-graalvm@v1
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'graalvm-community'
-          native-image-job-reports: 'true'
           cache: 'maven'
 
       - name: Compute app version
@@ -55,26 +60,9 @@ jobs:
           "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           Write-Host "App version: $version"
 
-      # GraalVM's BuildArtifactsExporter relativizes every produced artifact against the image output
-      # directory and crashes with "'other' has different root" the moment one artifact lives on a
-      # different drive than the output (WindowsPath.relativize -> BuildArtifactsExporter:72). On
-      # GitHub Windows runners GraalVM, the MSVC/Windows SDK link outputs and the user ~/.m2 all sit
-      # on C: while the checkout/target are on the workspace drive (D:), so something always straddles
-      # the two. Mirroring GraalVM onto D: did NOT fix it (the straggler is inherently on C:), so build
-      # entirely on C: instead: redirect Maven's build directory (and TEMP) there so every input and
-      # produced artifact shares the C: root, then copy the outputs back onto the workspace drive so
-      # the assemble/installer steps below find them under ./target as usual.
       - name: Build native image (Windows)
         shell: pwsh
-        env:
-          TMP: C:\pcpanel-build\tmp
-          TEMP: C:\pcpanel-build\tmp
-        run: |
-          New-Item -ItemType Directory -Force -Path $env:TEMP, C:\pcpanel-build\target | Out-Null
-          mvn -B package -Pnative "-Dproject.build.directory=C:\pcpanel-build\target" --file pom.xml
-          robocopy C:\pcpanel-build\target "$env:GITHUB_WORKSPACE\target" /E /MT:8 /NFL /NDL /NJH /NJS /NP
-          if ($LASTEXITCODE -ge 8) { Write-Error "robocopy back failed ($LASTEXITCODE)"; exit 1 }
-          exit 0
+        run: mvn -B package -Pnative --file pom.xml
 
       - name: Assemble distribution (exe + companion DLLs)
         shell: pwsh
