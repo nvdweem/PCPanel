@@ -16,7 +16,9 @@ import lombok.extern.log4j.Log4j2;
 /**
  * Picks the system tray implementation at runtime: the AWT tray works on Windows and X11,
  * Wayland sessions need the StatusNotifierItem D-Bus protocol instead.
- * Instantiating the selected bean triggers its {@code @PostConstruct} initialization.
+ * The chosen bean's {@link ITrayService#init()} is invoked explicitly - the tray beans are lazy
+ * {@code @ApplicationScoped} client proxies, so merely calling {@code Instance.get()} does not
+ * create the instance (and would never run a {@code @PostConstruct}); a real method call does.
  */
 @Log4j2
 @ApplicationScoped
@@ -31,10 +33,10 @@ public class TrayInitializer {
         }
         if (isWayland() && waylandTray.isResolvable()) {
             log.debug("Initializing Wayland tray");
-            waylandTray.get();
+            waylandTray.get().init();
         } else if (awtTray.isResolvable()) {
             log.debug("Initializing AWT tray");
-            awtTray.get();
+            awtTray.get().init();
         } else {
             log.warn("No tray implementation available");
         }

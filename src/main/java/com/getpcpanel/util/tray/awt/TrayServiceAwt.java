@@ -13,7 +13,6 @@ import javax.imageio.ImageIO;
 import com.getpcpanel.util.ShowMainEvent;
 import com.getpcpanel.util.tray.ITrayService;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
@@ -22,6 +21,7 @@ import lombok.extern.log4j.Log4j2;
 /**
  * AWT-based system tray implementation for Windows and X11 Linux.
  * Uses java.awt.SystemTray which relies on the XEmbed protocol on Linux.
+ * {@link #init()} is invoked explicitly by {@link com.getpcpanel.util.tray.TrayInitializer}.
  */
 @Log4j2
 @ApplicationScoped
@@ -30,7 +30,6 @@ public class TrayServiceAwt implements ITrayService {
     @Inject Event<Object> eventBus;
 
     @Override
-    @PostConstruct
     public void init() {
         var popup = new PopupMenu();
         TrayIcon trayIcon;

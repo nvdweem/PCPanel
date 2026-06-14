@@ -13,7 +13,6 @@ import com.getpcpanel.platform.LinuxBuild;
 import com.getpcpanel.util.tray.ITrayService;
 
 import jakarta.annotation.Nonnull;
-import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
@@ -31,7 +30,6 @@ public class TrayServiceWayland implements ITrayService {
     private DBusConnection connection;
 
     @Override
-    @PostConstruct
     public void init() {
         // Catch Throwable, not just Exception: in a GraalVM native image a missing/unreachable
         // class (e.g. com.sun.security.auth.module.UnixSystem, see #86) surfaces as a
