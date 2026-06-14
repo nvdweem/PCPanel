@@ -27,6 +27,7 @@ import com.getpcpanel.cpp.EventType;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.cpp.linux.LinuxProcessHelper;
+import com.getpcpanel.cpp.linux.LinuxProcessHelper.ActiveWindow;
 import com.getpcpanel.cpp.linux.pulseaudio.PulseAudioEventListener.LinuxDeviceChangedEvent;
 import com.getpcpanel.cpp.linux.pulseaudio.PulseAudioEventListener.LinuxSessionChangedEvent;
 import com.getpcpanel.cpp.linux.pulseaudio.PulseAudioWrapper.InOutput;
@@ -162,8 +163,7 @@ public class SndCtrlPulseAudio implements ISndCtrl {
     public void setProcessVolume(String fileName, @Nullable String device, float volume) {
         Set<PulseAudioAudioSession> todo;
         synchronized (sessions) {
-            todo = allSessions().filter(s -> StringUtils.equalsAnyIgnoreCase(fileName, s.executable().getName(), s.title()))
-                                .toSet();
+            todo = allSessions().filter(s -> matches(s, fileName)).toSet();
         }
         todo.forEach(s -> {
             s.setVolumeNoTrigger(volume); // Prevent sending the volume when 'force volume' is enabled
@@ -173,27 +173,42 @@ public class SndCtrlPulseAudio implements ISndCtrl {
 
     @Override
     public void setFocusVolume(float volume) {
-        var process = processHelper.getActiveProcess();
-        if (process == null) {
+        var candidates = processHelper.getActiveWindow().map(ActiveWindow::identifiers).orElseGet(Set::of);
+        if (candidates.isEmpty()) {
             return;
         }
-        setProcessVolume(process, null, volume);
+        Set<PulseAudioAudioSession> todo;
+        synchronized (sessions) {
+            todo = allSessions().filter(s -> matchesAny(s, candidates)).toSet();
+        }
+        todo.forEach(s -> {
+            s.setVolumeNoTrigger(volume); // Prevent sending the volume when 'force volume' is enabled
+            cmd.setSessionVolume(s.index(), volume);
+        });
     }
 
     @Override
     public void muteProcesses(Set<String> fileName, MuteType mute) {
-        var lcFileNames = StreamEx.of(fileName).map(String::toLowerCase).toImmutableSet();
         Set<PulseAudioAudioSession> todo;
         synchronized (sessions) {
-            todo = allSessions().filter(s -> lcFileNames.contains(StringUtils.lowerCase(s.executable().getName())) || lcFileNames.contains(StringUtils.lowerCase(s.title())))
-                                .toSet();
+            todo = allSessions().filter(s -> matchesAny(s, fileName)).toSet();
         }
         todo.forEach(s -> cmd.muteSession(s.index(), mute));
     }
 
+    /** A session matches a binding query against its executable name, its title, or its portal app id (#88, #92). */
+    static boolean matches(PulseAudioAudioSession s, @Nullable String query) {
+        return StringUtils.isNotBlank(query)
+                && StringUtils.equalsAnyIgnoreCase(query, s.executable().getName(), s.title(), s.portalAppId());
+    }
+
+    private static boolean matchesAny(PulseAudioAudioSession s, Collection<String> queries) {
+        return StreamEx.of(queries).anyMatch(q -> matches(s, q));
+    }
+
     @Override
     public @Nullable String getFocusApplication() {
-        return processHelper.getActiveProcess();
+        return processHelper.getActiveWindow().map(ActiveWindow::primaryIdentifier).orElse(null);
     }
 
     @Override
@@ -234,15 +249,22 @@ public class SndCtrlPulseAudio implements ISndCtrl {
     }
 
     private Set<PulseAudioAudioSession> getSessionsFromCmd() {
-        return StreamEx.of(cmd.getSessions())
-                       .map(pa ->
-                               new PulseAudioAudioSession(eventBus,
-                                       pa.index(),
-                                       NumberUtils.toInt(pa.properties().get("application.process.id"), -1),
-                                       new File(pa.properties().getOrDefault("application.process.binary", "/")),
-                                       pa.properties().get("application.name"),
-                                       "", extractVolume(pa), false))
-                       .toSet();
+        return StreamEx.of(cmd.getSessions()).map(this::toSession).toSet();
+    }
+
+    PulseAudioAudioSession toSession(PulseAudioTarget pa) {
+        var props = pa.properties();
+        var portalAppId = StringUtils.trimToNull(props.get("pipewire.access.portal.app_id"));
+        // Some streams (notably Flatpak Spotify >= 1.2.86) expose no application.name / process.binary at all -
+        // fall back to the portal app id, then media.name, so the session keeps a usable, bindable title (#92).
+        var title = StringUtils.firstNonBlank(props.get("application.name"), portalAppId, props.get("media.name"));
+        return new PulseAudioAudioSession(eventBus,
+                pa.index(),
+                NumberUtils.toInt(props.get("application.process.id"), -1),
+                new File(props.getOrDefault("application.process.binary", "/")),
+                title,
+                "", extractVolume(pa), false,
+                portalAppId);
     }
 
     float extractVolume(PulseAudioTarget pa) {

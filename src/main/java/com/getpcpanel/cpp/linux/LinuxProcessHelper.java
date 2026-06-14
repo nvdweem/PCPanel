@@ -2,9 +2,13 @@ package com.getpcpanel.cpp.linux;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.eclipse.microprofile.config.ConfigProvider;
 
@@ -18,6 +22,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
+import one.util.streamex.StreamEx;
 
 @Log4j2
 @ApplicationScoped
@@ -62,9 +67,60 @@ public class LinuxProcessHelper {
             var pid = getActiveProcessPid();
             if (pid == -1)
                 return null;
-            return lineFrom("ps", "-p", String.valueOf(pid), "-o", "comm=");
+            return processName(pid);
         } catch (Exception e) {
             log.error("Unable to run process", e);
+        }
+        return null;
+    }
+
+    /**
+     * Resolves the active window once and exposes every identifier we can use to match it against a
+     * PulseAudio/PipeWire stream: the host process name (from {@code ps}) and, for Flatpak apps, the
+     * sandbox application id (from {@code /proc/<pid>/root/.flatpak-info}). The Flatpak id is needed
+     * because sandboxed apps report a sandbox-internal PID and often no process metadata to PipeWire,
+     * so the host process name never matches their stream - but the Flatpak id equals the stream's
+     * {@code pipewire.access.portal.app_id} (see #88).
+     */
+    public Optional<ActiveWindow> getActiveWindow() {
+        var pid = getActiveProcessPid();
+        if (pid == -1) {
+            return Optional.empty();
+        }
+        return Optional.of(new ActiveWindow(pid, processName(pid), flatpakAppId(pid)));
+    }
+
+    private @Nullable String processName(int pid) {
+        try {
+            return lineFrom("ps", "-p", String.valueOf(pid), "-o", "comm=");
+        } catch (Exception e) {
+            log.error("Unable to resolve process name for pid {}", pid, e);
+            return null;
+        }
+    }
+
+    /**
+     * Reads the Flatpak application id of a host process, if it is a Flatpak. Each Flatpak instance
+     * has a {@code .flatpak-info} ini file at the root of its sandbox; from the host it is reachable
+     * at {@code /proc/<hostpid>/root/.flatpak-info}, with the app id under {@code [Application] name=}.
+     */
+    private @Nullable String flatpakAppId(int pid) {
+        var info = Path.of("/proc", String.valueOf(pid), "root", ".flatpak-info");
+        if (!Files.isReadable(info)) {
+            return null;
+        }
+        try {
+            var inApplication = false;
+            for (var line : Files.readAllLines(info)) {
+                var trimmed = line.trim();
+                if (trimmed.startsWith("[")) {
+                    inApplication = "[Application]".equals(trimmed);
+                } else if (inApplication && trimmed.startsWith("name=")) {
+                    return StringUtils.trimToNull(trimmed.substring("name=".length()));
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Could not read {} for flatpak app id", info, e);
         }
         return null;
     }
@@ -75,6 +131,21 @@ public class LinuxProcessHelper {
             return null;
         }
         return lines.get(0);
+    }
+
+    /**
+     * The resolved active window. {@link #identifiers()} returns every string we can match a stream
+     * against; {@link #primaryIdentifier()} is the best single name for display / icon lookup,
+     * preferring the Flatpak id so sandboxed apps resolve correctly.
+     */
+    public record ActiveWindow(int pid, @Nullable String process, @Nullable String flatpakAppId) {
+        public Set<String> identifiers() {
+            return StreamEx.of(process, flatpakAppId).filter(StringUtils::isNotBlank).toSet();
+        }
+
+        public @Nullable String primaryIdentifier() {
+            return StringUtils.firstNonBlank(flatpakAppId, process);
+        }
     }
 
     @Getter
