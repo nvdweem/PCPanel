@@ -37,9 +37,6 @@ concurrency:
 jobs:
   buildWindows:
     name: Windows installer
-    # TEMP: disabled while iterating on the macOS native build to save CI minutes. RE-ENABLE (remove
-    # this `if: false`) before merging/releasing — Windows is unaffected by the macOS-only changes.
-    if: false
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v6
@@ -105,9 +102,6 @@ jobs:
 
   buildLinux:
     name: Linux .deb + Flatpak
-    # TEMP: disabled while iterating on the macOS native build to save CI minutes. RE-ENABLE (remove
-    # this `if: false`) before merging/releasing — Linux is unaffected by the macOS-only changes.
-    if: false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -284,9 +278,6 @@ jobs:
 
   preRelease:
     name: Pre-release
-    # TEMP: disabled while iterating on the macOS native build so no half-built pre-release is published
-    # and no minutes are spent. RE-ENABLE (remove this `if: false`) before merging/releasing.
-    if: false
     needs:
       - buildWindows
       - buildLinux

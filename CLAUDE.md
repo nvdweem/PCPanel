@@ -93,16 +93,29 @@ D-Bus StatusNotifierItem protocol via dbus-java).
 
 ## GraalVM native image — important
 
-Native image config is the most fragile part of the build. The **authoritative**
-`quarkus.native.*` settings (resource includes, `additional-build-args`) live in **`pom.xml`'s
-`<properties>` block**, NOT in `application.properties` (the copy there is documentation only —
-process-resources doesn't run before `quarkus:build` when invoked directly). Key constraints baked
-into those args, change with care:
+Native image config is the most fragile part of the build, and it lives in **two** places that
+must be kept in sync: the `quarkus.native.*` properties in **`pom.xml`'s `<properties>` block** and
+the copy in **`application.properties`**. Which one wins depends on how the build is invoked: a full
+`mvn package`/`mvn verify` (CI) runs `process-resources`, which filters `application.properties` onto
+the classpath where its `additional-build-args` **outranks** the pom property — so for CI,
+`application.properties` is authoritative. When `quarkus:build`/`quarkus:dev` is invoked directly,
+`process-resources` has not run, so the pom value is used. **Change both**, or you will get different
+native images locally vs. in CI. The OS-specific AWT init policy is shared between them via the
+Maven-filtered `${native.awt.args}` placeholder (default vs. the `os-mac` profile in `pom.xml`);
+`src/main/resources` has `<filtering>true</filtering>`, which is what makes that substitution work.
+Key constraints baked into those args, change with care:
 
 - `-J-XX:-UseCompressedOops` is required so `Unsafe.arrayIndexScale` matches the runtime (8-byte
   refs); omitting it segfaults jctools.
 - JNA, hid4java, jnativehook, dbus, AWT-dependent and Voicemeeter classes are
   `--initialize-at-run-time`; certain AWT font/hint classes are `--initialize-at-build-time`.
+- **macOS has no `libawt` in the native image at all** (GraalVM/Quarkus reject AWT there:
+  `quarkus-awt` is dropped via the `os-non-mac` profile, and the `os-mac` profile defers the whole
+  AWT/Java2D/Swing/ImageIO subsystem to run-time). So macOS must never *call* AWT: the overlay is a
+  no-op (`NoOpOverlayWindow`), icons are disabled, keystrokes use CoreGraphics `CGEvent`
+  (`com.getpcpanel.cpp.osx.OsxKeyboard`), the tray and `java.awt.Desktop` are skipped. JNA classes
+  that run `Native.load` in their initializer must be `--initialize-at-run-time` (narrowly, by class —
+  a package-wide directive would wrongly catch Quarkus's build-time CDI `_Bean` objects).
 - Windows-only GUI-subsystem linker flags (`/SUBSYSTEM:WINDOWS`, `/ENTRY:mainCRTStartup`) are MSVC
   flags injected only via the `os-windows` profile (`native.platform.linker.args`); they break
   GNU ld / ld64, so never add them to the shared block.
