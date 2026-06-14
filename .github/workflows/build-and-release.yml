@@ -55,32 +55,26 @@ jobs:
           "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           Write-Host "App version: $version"
 
-      # GraalVM's BuildArtifactsExporter relativizes every build artifact against the image output dir
-      # and crashes with "'other' has different root" when they live on different drives. On GitHub
-      # Windows runners GraalVM is in the tool cache on C: while the checkout/target are on the
-      # workspace drive (D:), so the bundled JDK libraries (awt.dll, ...) can't be relativized. Mirror
-      # GraalVM onto the workspace drive so every artifact shares a root.
-      - name: Mirror GraalVM onto the workspace drive
-        shell: pwsh
-        run: |
-          $dst = "${{ github.workspace }}\graalvm"
-          robocopy "$env:GRAALVM_HOME" "$dst" /E /MT:8 /NFL /NDL /NJH /NJS /NP
-          if ($LASTEXITCODE -ge 8) { Write-Error "robocopy failed ($LASTEXITCODE)"; exit 1 }
-          "GRAALVM_HOME=$dst" | Out-File -FilePath $env:GITHUB_ENV  -Append
-          "JAVA_HOME=$dst"    | Out-File -FilePath $env:GITHUB_ENV  -Append
-          "$dst\bin"          | Out-File -FilePath $env:GITHUB_PATH -Append
-          exit 0
-
+      # GraalVM's BuildArtifactsExporter relativizes every produced artifact against the image output
+      # directory and crashes with "'other' has different root" the moment one artifact lives on a
+      # different drive than the output (WindowsPath.relativize -> BuildArtifactsExporter:72). On
+      # GitHub Windows runners GraalVM, the MSVC/Windows SDK link outputs and the user ~/.m2 all sit
+      # on C: while the checkout/target are on the workspace drive (D:), so something always straddles
+      # the two. Mirroring GraalVM onto D: did NOT fix it (the straggler is inherently on C:), so build
+      # entirely on C: instead: redirect Maven's build directory (and TEMP) there so every input and
+      # produced artifact shares the C: root, then copy the outputs back onto the workspace drive so
+      # the assemble/installer steps below find them under ./target as usual.
       - name: Build native image (Windows)
         shell: pwsh
-        # Keep TEMP on the workspace drive too, so native-image's intermediate artifacts share the
-        # same root as target/ (see the cross-drive note on the mirror step above).
         env:
-          TMP: ${{ github.workspace }}\build-tmp
-          TEMP: ${{ github.workspace }}\build-tmp
+          TMP: C:\pcpanel-build\tmp
+          TEMP: C:\pcpanel-build\tmp
         run: |
-          New-Item -ItemType Directory -Force -Path $env:TEMP | Out-Null
-          mvn -B package -Pnative --file pom.xml
+          New-Item -ItemType Directory -Force -Path $env:TEMP, C:\pcpanel-build\target | Out-Null
+          mvn -B package -Pnative "-Dproject.build.directory=C:\pcpanel-build\target" --file pom.xml
+          robocopy C:\pcpanel-build\target "$env:GITHUB_WORKSPACE\target" /E /MT:8 /NFL /NDL /NJH /NJS /NP
+          if ($LASTEXITCODE -ge 8) { Write-Error "robocopy back failed ($LASTEXITCODE)"; exit 1 }
+          exit 0
 
       - name: Assemble distribution (exe + companion DLLs)
         shell: pwsh
