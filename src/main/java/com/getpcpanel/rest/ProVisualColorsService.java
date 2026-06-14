@@ -1,6 +1,5 @@
 package com.getpcpanel.rest;
 
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -238,11 +237,39 @@ public class ProVisualColorsService {
     }
 
     private String colorFromHsb(float hue, float saturation, float brightness) {
-        var rgb = Color.HSBtoRGB(hue, saturation, brightness);
+        var rgb = hsbToRgb(hue, saturation, brightness);
         var r = (rgb >> 16) & 0xFF;
         var g = (rgb >> 8) & 0xFF;
         var b = rgb & 0xFF;
         return toHex(r, g, b);
+    }
+
+    /**
+     * Pure-Java HSB→RGB conversion (the standard algorithm, identical to {@code java.awt.Color.HSBtoRGB}),
+     * so LED colour computation does not depend on AWT/libawt in the native image.
+     */
+    private static int hsbToRgb(float hue, float saturation, float brightness) {
+        int r;
+        int g;
+        int b;
+        if (saturation == 0f) {
+            r = g = b = (int) (brightness * 255f + 0.5f);
+        } else {
+            var h = (hue - (float) Math.floor(hue)) * 6f;
+            var f = h - (float) Math.floor(h);
+            var p = brightness * (1f - saturation);
+            var q = brightness * (1f - saturation * f);
+            var t = brightness * (1f - saturation * (1f - f));
+            switch ((int) h) {
+                case 0 -> { r = (int) (brightness * 255f + 0.5f); g = (int) (t * 255f + 0.5f); b = (int) (p * 255f + 0.5f); }
+                case 1 -> { r = (int) (q * 255f + 0.5f); g = (int) (brightness * 255f + 0.5f); b = (int) (p * 255f + 0.5f); }
+                case 2 -> { r = (int) (p * 255f + 0.5f); g = (int) (brightness * 255f + 0.5f); b = (int) (t * 255f + 0.5f); }
+                case 3 -> { r = (int) (p * 255f + 0.5f); g = (int) (q * 255f + 0.5f); b = (int) (brightness * 255f + 0.5f); }
+                case 4 -> { r = (int) (t * 255f + 0.5f); g = (int) (p * 255f + 0.5f); b = (int) (brightness * 255f + 0.5f); }
+                default -> { r = (int) (brightness * 255f + 0.5f); g = (int) (p * 255f + 0.5f); b = (int) (q * 255f + 0.5f); }
+            }
+        }
+        return 0xff000000 | (r << 16) | (g << 8) | b;
     }
 
     private String toHex(int r, int g, int b) {

@@ -1,6 +1,5 @@
 package com.getpcpanel.overlay;
 
-import java.awt.Dimension;
 import java.awt.Image;
 
 import com.getpcpanel.profile.Save;
@@ -34,5 +33,5 @@ public interface OverlayWindow {
     int getHeight();
 
     /** The size of the primary screen, used to position the overlay. */
-    Dimension getScreenSize();
+    ScreenSize getScreenSize();
 }

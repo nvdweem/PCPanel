@@ -50,10 +50,11 @@ public class IconService {
     public BufferedImage DEVICE;
     public BufferedImage SYSTEM_SOUND;
 
+    @Nullable
     private static BufferedImage loadImage(String path) {
-        // Only the Windows native image bundles libawt (headless Java2D); macOS and Linux have no
-        // libawt, so ImageIO.read would crash there. Constructing an empty BufferedImage is pure Java
-        // (no native toolkit) and is safe; icons are simply not shown on macOS/Linux.
+        // Only the Windows native image bundles libawt (headless Java2D). On macOS and Linux there is no
+        // libawt, so even constructing a BufferedImage fails (its Java2D class initializer throws); icons
+        // are simply not shown there, so return null and never touch AWT.
         if (SystemUtils.IS_OS_WINDOWS) {
             try {
                 var url = IconService.class.getResource(path);
@@ -63,7 +64,7 @@ public class IconService {
                 // fall through
             }
         }
-        return new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
+        return null;
     }
 
     private final SafeMap imageHandlers = new SafeMap();

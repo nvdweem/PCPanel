@@ -1,6 +1,5 @@
 package com.getpcpanel.overlay;
 
-import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
@@ -129,9 +128,9 @@ public class Win32VolumeOverlay implements OverlayWindow {
     }
 
     @Override
-    public Dimension getScreenSize() {
+    public ScreenSize getScreenSize() {
         var user32 = User32.INSTANCE;
-        return new Dimension(user32.GetSystemMetrics(WinUser.SM_CXSCREEN), user32.GetSystemMetrics(WinUser.SM_CYSCREEN));
+        return new ScreenSize(user32.GetSystemMetrics(WinUser.SM_CXSCREEN), user32.GetSystemMetrics(WinUser.SM_CYSCREEN));
     }
 
     private void ensureStarted() {

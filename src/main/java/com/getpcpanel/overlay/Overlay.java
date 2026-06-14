@@ -45,8 +45,8 @@ public class Overlay {
 
     private void determinePosition() {
         var window = overlay.getScreenSize();
-        var x = window.width;
-        var y = window.height;
+        var x = window.width();
+        var y = window.height();
         var width = overlay.getWidth();
         var height = overlay.getHeight();
 
@@ -107,7 +107,10 @@ public class Overlay {
         return save.getProfile(event.serialNum()).map(profile -> {
             var data = event.cmd();
             var setting = event.vol() == null ? null : profile.getKnobSettings(event.knob());
-            return new CommandAndIcon(data, iconService.getImageFrom(data, setting));
+            // Icon decoding needs libawt (Windows only); elsewhere the overlay is a no-op that ignores
+            // the icon, so skip the BufferedImage lookup entirely to stay libawt-free.
+            var icon = Platform.isWindows() ? iconService.getImageFrom(data, setting) : null;
+            return new CommandAndIcon(data, icon);
         }).orElse(CommandAndIcon.DEFAULT);
     }
 
