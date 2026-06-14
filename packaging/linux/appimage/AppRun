@@ -1,0 +1,8 @@
+#!/bin/sh
+# AppImage entry point. The GraalVM native binary loads its companion shared
+# libraries (libawt_xawt.so, libfontmanager.so, ...) from its own directory via
+# java.library.path, so we exec it in place inside the mounted AppDir rather than
+# copying it elsewhere. AppImage runs without a sandbox, so USB HID access and the
+# host tools (pactl, xdotool/kdotool) all work natively — no portals or shims.
+HERE="$(dirname "$(readlink -f "${0}")")"
+exec "${HERE}/usr/bin/PCPanel" "$@"
