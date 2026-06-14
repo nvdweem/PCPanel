@@ -25,6 +25,10 @@ public class TrayInitializer {
     @Inject Instance<TrayServiceWayland> waylandTray;
 
     void onStart(@Observes StartupEvent event) {
+        if (isTrayDisabled()) {
+            log.info("Tray disabled (disable.tray / PCPANEL_DISABLE_TRAY); running without a system tray icon");
+            return;
+        }
         if (isWayland() && waylandTray.isResolvable()) {
             log.debug("Initializing Wayland tray");
             waylandTray.get();
@@ -34,6 +38,20 @@ public class TrayInitializer {
         } else {
             log.warn("No tray implementation available");
         }
+    }
+
+    /**
+     * The tray can be turned off via the documented {@code -Ddisable.tray} JVM system property
+     * (presence is enough, e.g. {@code -Ddisable.tray}), or via the {@code PCPANEL_DISABLE_TRAY}
+     * environment variable. The env var is a robust alternative for launchers where extra args are
+     * not forwarded to the JVM as {@code -D} properties (see #90).
+     */
+    private static boolean isTrayDisabled() {
+        if (System.getProperty("disable.tray") != null) {
+            return true;
+        }
+        var env = System.getenv("PCPANEL_DISABLE_TRAY");
+        return StringUtils.isNotBlank(env) && !StringUtils.equalsAnyIgnoreCase(env, "0", "false", "no");
     }
 
     private static boolean isWayland() {
