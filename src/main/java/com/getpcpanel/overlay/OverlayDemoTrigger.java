@@ -29,7 +29,7 @@ public class OverlayDemoTrigger {
     }
 
     private void sweep() {
-        OverlayWindow overlay = Platform.isWindows() ? new Win32VolumeOverlay() : new VolumeOverlay();
+        OverlayWindow overlay = Platform.isWindows() ? new Win32VolumeOverlay() : new NoOpOverlayWindow();
         var screen = overlay.getScreenSize();
         overlay.setLocation((screen.width - overlay.getWidth()) / 2, 120);
         try {

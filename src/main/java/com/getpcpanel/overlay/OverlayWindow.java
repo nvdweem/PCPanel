@@ -10,10 +10,11 @@ import com.getpcpanel.profile.Save;
  *
  * <p>Two implementations exist:
  * <ul>
- *   <li>{@link VolumeOverlay} – a Swing {@code JWindow}, used on Linux/macOS and the JVM.</li>
  *   <li>{@link Win32VolumeOverlay} – a JNA-backed Win32 layered window, used on Windows. This
  *       avoids the AWT windowing toolkit ({@code sun.awt.windows.WToolkit}), which is unsupported
- *       in the Quarkus/GraalVM native image and crashes its native event loop on Windows.</li>
+ *       in the Quarkus/GraalVM native image and crashes its native event loop.</li>
+ *   <li>{@link NoOpOverlayWindow} – a disabled overlay, used on macOS and Linux, which have no
+ *       AWT-free overlay implementation yet.</li>
  * </ul>
  *
  * Implementations are responsible for marshalling work onto their own UI thread.
