@@ -2,12 +2,14 @@ import { computed, DestroyRef, effect, inject, Injectable, OnDestroy, signal } f
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DeviceService } from '../../services/device.service';
 import { DeviceStateService } from '../../services/device-state.service';
+import { DebugService } from '../../services/debug.service';
 import { DeviceSnapshotDto, LightingConfig } from '../../models/generated/backend.types';
 
 @Injectable()
 export class HomeFacade implements OnDestroy {
   readonly deviceState = inject(DeviceStateService);
   private readonly deviceService = inject(DeviceService);
+  private readonly debug = inject(DebugService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly selectedSerial = signal<string | null>(null);
@@ -27,9 +29,20 @@ export class HomeFacade implements OnDestroy {
     return pending !== null ? {...base, globalBrightness: pending} : base;
   });
 
-  readonly isPro = computed(() => this.selectedDevice()?.deviceType === 'PCPANEL_PRO');
-  readonly isMini = computed(() => this.selectedDevice()?.deviceType === 'PCPANEL_MINI');
-  readonly isRgb = computed(() => this.selectedDevice()?.deviceType === 'PCPANEL_RGB');
+  /**
+   * Device type used for rendering. The debug override (Settings → Debug) wins,
+   * so a single connected Pro can stand in for the Mini/RGB visuals; otherwise
+   * the device's real type is used.
+   */
+  readonly effectiveType = computed(() => {
+    const override = this.debug.deviceTypeOverride();
+    const real = this.selectedDevice()?.deviceType;
+    return override || real;
+  });
+
+  readonly isPro = computed(() => this.effectiveType() === 'PCPANEL_PRO');
+  readonly isMini = computed(() => this.effectiveType() === 'PCPANEL_MINI');
+  readonly isRgb = computed(() => this.effectiveType() === 'PCPANEL_RGB');
 
   constructor() {
     // Auto-select the first device once state arrives and nothing is selected.

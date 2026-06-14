@@ -105,6 +105,23 @@
           </mat-form-field>
         </div>
       </mat-tab>
+      <mat-tab label="Debug">
+        <div class="tab-content">
+          <mat-form-field appearance="outline">
+            <mat-label>Render devices as</mat-label>
+            <mat-select [value]="debug.deviceTypeOverride()"
+                        (selectionChange)="setDeviceTypeOverride($event.value)">
+              <mat-option value="">No override (use real type)</mat-option>
+              <mat-option value="PCPANEL_MINI">PCPanel Mini</mat-option>
+              <mat-option value="PCPANEL_RGB">PCPanel RGB</mat-option>
+              <mat-option value="PCPANEL_PRO">PCPanel Pro</mat-option>
+            </mat-select>
+            <mat-hint>Forces every connected device to render as the chosen type. A
+              connected Pro has enough controls to stand in for Mini/RGB. Applied
+              immediately; affects the UI only.</mat-hint>
+          </mat-form-field>
+        </div>
+      </mat-tab>
     </mat-tab-group>
   }
 </mat-dialog-content>

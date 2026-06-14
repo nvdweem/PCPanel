@@ -14,6 +14,7 @@ import { SettingsService } from '../../services/settings.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { SettingsDto } from '../../models/generated/backend.types';
 import { ColorPicker } from '../../components/color-picker/color-picker';
+import { DebugService, DeviceTypeOverride } from '../../services/debug.service';
 
 @Component({
   selector: 'app-settings',
@@ -33,8 +34,14 @@ export class SettingsComponent {
   private readonly settingsService = inject(SettingsService);
   private readonly snack = inject(MatSnackBar);
   private readonly dialogRef = inject(MatDialogRef);
+  protected readonly debug = inject(DebugService);
   private settings = linkedSignal(() => this.settingsService.settings.value() ?? false);
   protected settingsForm = form(this.settings);
+
+  /** Debug device-type override is applied live (frontend-only), not via Save. */
+  protected setDeviceTypeOverride(value: DeviceTypeOverride) {
+    this.debug.setDeviceTypeOverride(value);
+  }
 
   protected save() {
     const value = this.settingsForm().value();
