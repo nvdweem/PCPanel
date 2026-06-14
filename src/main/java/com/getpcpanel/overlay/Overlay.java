@@ -27,9 +27,19 @@ public class Overlay {
     private final SaveService save;
     private final IconService iconService;
     // On Windows the Swing/AWT windowing toolkit is unsupported in the native image (it segfaults
-    // the native WToolkit event loop), so use a JNA layered window instead. Other platforms keep
-    // the Swing implementation, which works there.
-    private final OverlayWindow overlay = Platform.isWindows() ? new Win32VolumeOverlay() : new VolumeOverlay();
+    // the native WToolkit event loop), so use a JNA layered window instead. macOS native images have
+    // no AWT/libawt at all, so the overlay is disabled there. Linux/JVM keep the Swing implementation.
+    private final OverlayWindow overlay = createOverlay();
+
+    private static OverlayWindow createOverlay() {
+        if (Platform.isWindows()) {
+            return new Win32VolumeOverlay();
+        }
+        if (Platform.isMac()) {
+            return new NoOpOverlayWindow();
+        }
+        return new VolumeOverlay();
+    }
 
     public void updateSaveValues(@Observes SaveEvent event) {
         updateStyle(null);

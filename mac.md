@@ -39,7 +39,8 @@ stops working after upgrading. PCPanel logs a hint when it detects a missing per
 - Device volume / mute / default-device switching via Core Audio.
 - Per-channel volume fallback for outputs that only expose per-channel controls (e.g. some HDMI /
   DisplayPort monitors).
-- Keystroke and shortcut mappings, including the `cmd` modifier.
+- Keystroke and shortcut mappings, including the `cmd` modifier (synthesised through CoreGraphics
+  `CGEvent`s — works on both Intel and Apple Silicon).
 - Media control of Music.app and Spotify (AppleScript; the player is only controlled if it is already
   running, never launched).
 - Run program / end program / profile switching, plus the OBS, OSC, MQTT and Wave Link integrations.
@@ -50,11 +51,17 @@ stops working after upgrading. PCPanel logs a hint when it detects a missing per
   audio sessions, so these commands are no-ops.
 - Voicemeeter is Windows-only.
 - The Media button's `mute` action has no AppleScript equivalent and is ignored.
+- **No AWT/Swing-based UI features.** GraalVM/Quarkus cannot bundle AWT (`libawt`) in a macOS native
+  image, so anything that relied on it is disabled on macOS: the on-screen volume **overlay**, the
+  per-application **icons** in the configuration UI, and the **menu-bar (tray) icon**. These could be
+  reimplemented later with native Cocoa/Quartz via JNA (the way the Windows overlay uses a Win32 layered
+  window). Audio control and keystrokes are unaffected.
 
-## Menu bar / closing the window
+## Closing the window
 
-Closing the window hides the application to the menu bar (the system tray). Click the menu-bar icon or
-launch the app again to bring the window back. Pass the `quiet` argument to start hidden.
+Closing the browser window only closes the UI; the backend keeps running. Launch `PCPanel.app` again to
+reopen the window (a second launch reopens the UI rather than starting a second instance). Pass the
+`quiet` argument to start hidden. There is currently no menu-bar icon on macOS (see Limitations).
 
 ## Autostart on login
 

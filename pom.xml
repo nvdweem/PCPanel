@@ -117,10 +117,10 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-vertx</artifactId>
         </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-awt</artifactId>
-        </dependency>
+        <!-- quarkus-awt is added per-OS in the os-non-mac profile below: its native build step
+             unconditionally fails on macOS ("MacOS AWT integration is not ready"), and GraalVM has
+             no libawt on macOS at all. The macOS build is therefore AWT-free (overlay/icons disabled,
+             keystrokes via CoreGraphics JNA); Windows and Linux keep full AWT support. -->
 
         <!-- Frontend via Quinoa -->
         <dependency>
@@ -448,6 +448,24 @@
             <properties>
                 <native.platform.linker.args>,-H:+UnlockExperimentalVMOptions,-H:NativeLinkerOption=/SUBSYSTEM:WINDOWS,-H:NativeLinkerOption=/ENTRY:mainCRTStartup,-H:-UnlockExperimentalVMOptions</native.platform.linker.args>
             </properties>
+        </profile>
+        <profile>
+            <!-- AWT support (quarkus-awt) on every OS except macOS. Maven OS activation supports the
+                 '!' negation, so this profile is active on Windows and Linux but not macOS. The macOS
+                 native image must not contain quarkus-awt (its build step hard-fails the macOS native
+                 build) and has no libawt to load, so AWT features are replaced by JNA there. -->
+            <id>os-non-mac</id>
+            <activation>
+                <os>
+                    <family>!mac</family>
+                </os>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>io.quarkus</groupId>
+                    <artifactId>quarkus-awt</artifactId>
+                </dependency>
+            </dependencies>
         </profile>
     </profiles>
 </project>

@@ -210,7 +210,9 @@ jobs:
       matrix:
         include:
           - runner: macos-14   # Apple Silicon (aarch64)
-          - runner: macos-13   # Intel (x86_64)
+          # macos-13 (Intel/x86_64) is omitted: GitHub retired the macos-13 runner image, so that job
+          # would queue forever. The JNA code is architecture-independent, so an Intel native image can
+          # still be produced on an x86_64 Mac (locally or a future runner) from the same sources.
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v6

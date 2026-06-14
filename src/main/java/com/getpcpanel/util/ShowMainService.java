@@ -23,18 +23,27 @@ public class ShowMainService {
 
     public void onShowMain(@Observes ShowMainEvent event) {
         var url = "http://localhost:" + port + "/";
-        try {
-            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
-                Desktop.getDesktop().browse(URI.create(url));
-                return;
+        // macOS native images have no AWT/libawt, so java.awt.Desktop (which loads the AWT toolkit)
+        // must not be touched there; fall straight through to the `open` command.
+        if (!SystemUtils.IS_OS_MAC) {
+            try {
+                if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                    Desktop.getDesktop().browse(URI.create(url));
+                    return;
+                }
+            } catch (Exception e) {
+                log.warn("Unable to open browser through Desktop, falling back to platform command", e);
             }
-        } catch (Exception e) {
-            log.warn("Unable to open browser through Desktop, falling back to platform command", e);
         }
         try {
-            var command = SystemUtils.IS_OS_WINDOWS
-                    ? new String[] { "rundll32", "url.dll,FileProtocolHandler", url }
-                    : new String[] { "xdg-open", url };
+            String[] command;
+            if (SystemUtils.IS_OS_WINDOWS) {
+                command = new String[] { "rundll32", "url.dll,FileProtocolHandler", url };
+            } else if (SystemUtils.IS_OS_MAC) {
+                command = new String[] { "open", url };
+            } else {
+                command = new String[] { "xdg-open", url };
+            }
             new ProcessBuilder(command).start();
         } catch (IOException e) {
             log.error("Unable to open browser for {}", url, e);

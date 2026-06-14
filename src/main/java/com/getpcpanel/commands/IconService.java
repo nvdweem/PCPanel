@@ -16,6 +16,7 @@ import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandBrightness;
@@ -50,12 +51,16 @@ public class IconService {
     public BufferedImage SYSTEM_SOUND;
 
     private static BufferedImage loadImage(String path) {
-        try {
-            var url = IconService.class.getResource(path);
-            if (url != null)
-                return ImageIO.read(url);
-        } catch (IOException e) {
-            // fall through
+        // macOS native images have no libawt, so ImageIO.read would crash. Constructing an empty
+        // BufferedImage is pure Java (no native toolkit) and is safe; icons are not shown on macOS.
+        if (!SystemUtils.IS_OS_MAC) {
+            try {
+                var url = IconService.class.getResource(path);
+                if (url != null)
+                    return ImageIO.read(url);
+            } catch (IOException e) {
+                // fall through
+            }
         }
         return new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
     }
@@ -102,6 +107,11 @@ public class IconService {
     @CacheResult(cacheName = "command-icon")
     @Nonnull
     public BufferedImage getImageFrom(@Nullable Commands commands, @Nullable KnobSetting override) {
+        // No AWT-based icon extraction on macOS (no libawt); the icon handlers below decode images via
+        // ImageIO, so short-circuit to the blank default to keep the whole path libawt-free.
+        if (SystemUtils.IS_OS_MAC) {
+            return DEFAULT;
+        }
         if (!Commands.hasCommands(commands)) {
             return DEFAULT;
         }

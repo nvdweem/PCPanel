@@ -8,19 +8,22 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.SystemUtils;
 
+import com.getpcpanel.cpp.osx.OsxKeyboard;
 import com.getpcpanel.util.OsxPermissionHelper;
 
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public final class KeyMacro {
-    private static final Robot robot = buildRobot();
+    // On macOS there is no AWT/libawt in the native image, so Robot cannot be constructed there;
+    // keystrokes go through CoreGraphics CGEvents (OsxKeyboard) instead.
+    private static final Robot robot = SystemUtils.IS_OS_MAC ? null : buildRobot();
     private static final AtomicBoolean accessibilityWarned = new AtomicBoolean();
 
     private static Robot buildRobot() {
         try {
             return new Robot();
-        } catch (AWTException e) {
+        } catch (AWTException | RuntimeException | LinkageError e) {
             log.error("Unable to construct robot", e);
         }
         return null;
@@ -32,7 +35,11 @@ public final class KeyMacro {
     public static void executeKeyStroke(String input) {
         if (input.contains("UNDEFINED"))
             return;
-        warnIfAccessibilityNotGranted();
+        if (SystemUtils.IS_OS_MAC) {
+            warnIfAccessibilityNotGranted();
+            OsxKeyboard.executeKeyStroke(input);
+            return;
+        }
         var ar = input.replace(" ", "").split("\\+");
         // Track what we actually pressed so the finally block can release exactly those, in reverse order.
         // Releasing on failure too prevents a half-finished combination from leaving a modifier stuck system-wide.

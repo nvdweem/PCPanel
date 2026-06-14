@@ -34,7 +34,9 @@ public class TrayInitializer {
         if (isWayland() && waylandTray.isResolvable()) {
             log.debug("Initializing Wayland tray");
             waylandTray.get().init();
-        } else if (awtTray.isResolvable()) {
+        } else if (!SystemUtils.IS_OS_MAC && awtTray.isResolvable()) {
+            // The AWT tray (java.awt.SystemTray) needs libawt, which the macOS native image lacks;
+            // macOS runs without a tray icon until a native (NSStatusItem/JNA) tray is added.
             log.debug("Initializing AWT tray");
             awtTray.get().init();
         } else {
