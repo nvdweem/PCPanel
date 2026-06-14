@@ -55,7 +55,17 @@ jobs:
           Write-Host "App version: $version"
 
       - name: Build native image (Windows)
-        run: mvn -B package -Pnative --file pom.xml
+        shell: pwsh
+        # GraalVM's BuildArtifactsExporter relativizes the build artifacts against the image output
+        # dir and crashes with "'other' has different root" when they sit on different drives. GitHub
+        # Windows runners default TEMP to C: while the checkout is on D:, so native-image's temp
+        # artifacts and target/ end up on different drives. Pin TEMP to the workspace drive.
+        env:
+          TMP: ${{ github.workspace }}\build-tmp
+          TEMP: ${{ github.workspace }}\build-tmp
+        run: |
+          New-Item -ItemType Directory -Force -Path $env:TEMP | Out-Null
+          mvn -B package -Pnative --file pom.xml
 
       - name: Assemble distribution (exe + companion DLLs)
         shell: pwsh
@@ -110,8 +120,14 @@ jobs:
           base=$(grep -oP '(?<=<project\.baseversion>)[^<]+' pom.xml | head -1)
           echo "version=${base}.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
 
+      - name: Install xvfb
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
       - name: Build native image (Linux)
-        run: mvn -B package -Pnative --file pom.xml
+        # A unit test (VolumeOverlayNativeTest) constructs a Swing overlay window, which throws
+        # HeadlessException on the display-less runner. Run the whole build under a virtual X server
+        # so the AWT/Swing tests have a display; native-image compilation itself is headless-safe.
+        run: xvfb-run -a mvn -B package -Pnative --file pom.xml
 
       - name: Build .deb
         run: |
