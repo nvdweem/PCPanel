@@ -31,6 +31,19 @@ public class TrayServiceAwt implements ITrayService {
 
     @Override
     public void init() {
+        try {
+            initTray();
+        } catch (Throwable t) {
+            // AWT relies on the JDK's native awt library. In a GraalVM native image that library
+            // (awt.dll + deps) is emitted next to the executable and must be shipped with it; if it
+            // is missing, loading it throws UnsatisfiedLinkError (an Error, not an Exception). init()
+            // runs from the StartupEvent observer, so an uncaught Throwable would abort boot — a
+            // missing tray icon must never do that, so swallow it here.
+            log.warn("System tray is unavailable; continuing without a tray icon ({})", t.toString());
+        }
+    }
+
+    private void initTray() {
         var popup = new PopupMenu();
         TrayIcon trayIcon;
         SystemTray tray;
