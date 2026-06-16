@@ -3737,7 +3737,16 @@
       "jniAccessible": true
     },
     {
-      "type": "com.sun.jna.CallbackProxy"
+      "type": "com.sun.jna.CallbackProxy",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "callback",
+          "parameterTypes": [
+            "java.lang.Object[]"
+          ]
+        }
+      ]
     },
     {
       "type": "com.sun.jna.CallbackReference",
@@ -4206,7 +4215,35 @@
       ]
     },
     {
-      "type": "com.sun.jna.platform.win32.WinUser$WindowProc"
+      "type": "com.sun.jna.platform.win32.WinUser$WindowProc",
+      "methods": [
+        {
+          "name": "callback",
+          "parameterTypes": [
+            "com.sun.jna.platform.win32.WinDef$HWND",
+            "int",
+            "com.sun.jna.platform.win32.WinDef$WPARAM",
+            "com.sun.jna.platform.win32.WinDef$LPARAM"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "com.sun.jna.platform.win32.WinUser$WNDCLASSEX",
+      "fields": [
+        { "name": "cbClsExtra" },
+        { "name": "cbSize" },
+        { "name": "cbWndExtra" },
+        { "name": "hCursor" },
+        { "name": "hIcon" },
+        { "name": "hIconSm" },
+        { "name": "hInstance" },
+        { "name": "hbrBackground" },
+        { "name": "lpfnWndProc" },
+        { "name": "lpszClassName" },
+        { "name": "lpszMenuName" },
+        { "name": "style" }
+      ]
     },
     {
       "type": "com.sun.jna.ptr.PointerByReference",
@@ -11628,6 +11665,9 @@
     },
     {
       "glob": "assets/obs.png"
+    },
+    {
+      "glob": "assets/app-icon.ico"
     },
     {
       "glob": "assets/systemsounds.ico"
