@@ -46,6 +46,8 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         // their methods) reflectively, so the interface types need fields+methods registered.
         "com.getpcpanel.util.tray.win.WinShell32",
         "com.getpcpanel.util.tray.win.WinUser32Ext",
+        // Desktop-lock detection helper (OpenInputDesktop/CloseDesktop): same reflective JNA mapping.
+        "com.getpcpanel.sleepdetection.Win32Desktop",
 })
 public final class JnaWin32ReflectionConfig {
     private JnaWin32ReflectionConfig() {
