@@ -1,18 +1,13 @@
 package dev.niels.wavelink.impl.model;
 
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.util.Base64;
-
-import javax.imageio.ImageIO;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang3.SystemUtils;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.getpcpanel.util.PngDecoder;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -25,18 +20,19 @@ public record WaveLinkImage(
 ) {
     @Nullable
     public BufferedImage getImage() {
-        // ImageIO needs libawt, which only the Windows native image bundles; skip decoding elsewhere.
-        if (!SystemUtils.IS_OS_WINDOWS) {
+        if (imgData == null || imgData.isBlank()) {
             return null;
         }
-        if (imgData != null && !imgData.isBlank()) {
-            try {
-                var imageBytes = Base64.getDecoder().decode(imgData);
-                return ImageIO.read(new ByteArrayInputStream(imageBytes));
-            } catch (IOException | IllegalArgumentException e) {
-                log.debug("Unable to create image from image data {}", this);
-            }
+        try {
+            // Decode with the pure-Java PngDecoder, NOT ImageIO. ImageIO's static initialization reaches
+            // java.awt.Toolkit, whose native library (awt.dll) cannot be loaded in the GraalVM native image
+            // — even on Windows, where headless Java2D is otherwise available — and throws
+            // UnsatisfiedLinkError, killing the input thread when an overlay icon is rendered. Wave Link
+            // sends PNG image data, which PngDecoder handles without touching AWT/Toolkit.
+            return PngDecoder.decode(Base64.getDecoder().decode(imgData));
+        } catch (IllegalArgumentException e) {
+            log.debug("Unable to create image from image data {}", this);
+            return null;
         }
-        return null;
     }
 }
