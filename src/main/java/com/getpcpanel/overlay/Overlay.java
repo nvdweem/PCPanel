@@ -19,8 +19,10 @@ import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
+@Log4j2
 @ApplicationScoped
 @RequiredArgsConstructor
 public class Overlay {
@@ -81,9 +83,18 @@ public class Overlay {
         if (event.initial()) {
             return;
         }
-        var vol = event.vol();
-        var value = vol == null ? -1 : save.get().isOverlayUseLog() ? vol.getValue(null, 0, 1) : vol.value() / 255f;
-        showDebounced(value, () -> determineIconImage(event), command -> true);
+        // The overlay is purely cosmetic, but this observer runs synchronously on the same event
+        // notification as CommandDispatcher (the bean that actually performs the volume/mute/etc. action),
+        // on the HID input thread. An uncaught Throwable here would abort the notification (so the command
+        // never runs) and kill the input thread, freezing ALL hardware control. The icon path depends on
+        // AWT/Java2D, which is fragile in the native image, so isolate it: on any failure, log and move on.
+        try {
+            var vol = event.vol();
+            var value = vol == null ? -1 : save.get().isOverlayUseLog() ? vol.getValue(null, 0, 1) : vol.value() / 255f;
+            showDebounced(value, () -> determineIconImage(event), command -> true);
+        } catch (Throwable t) {
+            log.warn("Overlay failed to handle control event; ignoring (hardware control is unaffected)", t);
+        }
     }
 
     private void showDebounced(float value, Supplier<CommandAndIcon> pre, Predicate<Commands> pred) {

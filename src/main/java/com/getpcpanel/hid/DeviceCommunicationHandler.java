@@ -188,7 +188,10 @@ public class DeviceCommunicationHandler {
             var value = data[2] & 0xFF;
             try {
                 triggerOrDebounce(new KnobRotateEvent(key, knob, value, initial));
-            } catch (Exception ex) {
+            } catch (Throwable ex) {
+                // Catch Throwable, not just Exception: a single bad event (e.g. a NoClassDefFoundError from
+                // the AWT/overlay path in the native image) must never propagate out and kill this reader
+                // thread, which would silently brick ALL hardware input for the device.
                 log.error("Unable to handle knob rotate", ex);
             }
         } else if (data[0] == INPUT_CODE_BUTTON_CHANGE) {
@@ -196,7 +199,8 @@ public class DeviceCommunicationHandler {
             var value = data[2] & 0xFF;
             try {
                 triggerEvent(new ButtonPressEvent(key, knob, value == 1));
-            } catch (Exception ex) {
+            } catch (Throwable ex) {
+                // See the knob-rotate handler above: never let one event kill the reader thread.
                 log.error("Unable to handle button press", ex);
             }
         } else {

@@ -217,26 +217,32 @@ public class Win32VolumeOverlay implements OverlayWindow {
         int ht;
         int posX;
         int posY;
-        BufferedImage image;
         synchronized (lock) {
             w = width;
             ht = height;
             posX = x;
             posY = y;
-            image = new BufferedImage(w, ht, BufferedImage.TYPE_INT_ARGB_PRE);
+        }
+
+        try {
+            // Render and present OUTSIDE the lock: show() runs on the HID input thread and takes the same
+            // lock, so a slow render must never hold it. And catch Throwable: the AWT/Java2D image pipeline
+            // is fragile in the native image (e.g. BufferedImage class init can fail to load native awt), so
+            // a failure here must only skip a frame, never kill this thread.
+            var image = new BufferedImage(w, ht, BufferedImage.TYPE_INT_ARGB_PRE);
             var g2 = image.createGraphics();
             try {
                 renderer.render(g2, w, ht);
             } finally {
                 g2.dispose();
             }
-        }
-
-        pushBitmap(hWnd, image, w, ht, posX, posY);
-
-        if (!visible) {
-            User32.INSTANCE.ShowWindow(hWnd, WinUser.SW_SHOWNA);
-            visible = true;
+            pushBitmap(hWnd, image, w, ht, posX, posY);
+            if (!visible) {
+                User32.INSTANCE.ShowWindow(hWnd, WinUser.SW_SHOWNA);
+                visible = true;
+            }
+        } catch (Throwable t) {
+            log.warn("Overlay render/show failed; skipping frame", t);
         }
     }
 
