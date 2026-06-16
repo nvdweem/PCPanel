@@ -5,7 +5,6 @@ import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.hid.OutputInterpreter;
 import com.getpcpanel.profile.dto.LightingConfig;
-import com.getpcpanel.sleepdetection.WindowsSystemEventService.WindowsSystemEvent;
 
 import io.quarkus.runtime.ShutdownEvent;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -29,10 +28,11 @@ public final class SleepDetector {
         onSuspended(true);
     }
 
-    public void onEvent(@Observes WindowsSystemEvent event) {
+    public void onEvent(@Observes SystemEvent event) {
         switch (event.type()) {
             case goingToSuspend, locked -> onSuspended(false);
             case resumedFromSuspend, unlocked -> onResumed();
+            case logon, logoff -> { /* no lighting action */ }
         }
     }
 
