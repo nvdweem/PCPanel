@@ -2,6 +2,8 @@
 
 <!-- Releasenotes without version are included in releases -->
 
+> **⚠️ 2.0 is an early pre-release and is NOT stable.** It may fail to start at all, and you should expect bugs and breaking changes. Do not rely on it. Back up your profiles before upgrading.
+
 - Java 25 is now required to run the software. The installer will include it.
 - #87 - Experimental macOS support (community contributed by Choaterboater, ported to the new Quarkus build). Device volume/mute/default-device switching via Core Audio, keystrokes, shortcuts and Music/Spotify media control. Per-application volume is not possible on stock macOS. See the [macOS instructions](mac.md).
 - Profiles are now saved on application exit, so a change made right before quitting is no longer lost.
