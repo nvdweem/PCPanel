@@ -4,7 +4,6 @@ import static com.getpcpanel.cpp.AudioSession.SYSTEM;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -12,8 +11,6 @@ import java.util.function.BiFunction;
 import javax.annotation.Nonnull;
 
 import javax.annotation.Nullable;
-
-import javax.imageio.ImageIO;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -32,6 +29,7 @@ import com.getpcpanel.commands.command.CommandVolumeProcess;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.iconextract.IIconService;
 import com.getpcpanel.profile.dto.KnobSetting;
+import com.getpcpanel.util.PngDecoder;
 
 import io.quarkus.arc.All;
 import io.quarkus.cache.CacheResult;
@@ -51,16 +49,21 @@ public class IconService {
     public BufferedImage SYSTEM_SOUND;
 
     private static BufferedImage loadImage(String path) {
-        // macOS native images have no libawt, so ImageIO.read would crash. Constructing an empty
-        // BufferedImage is pure Java (no native toolkit) and is safe; icons are not shown on macOS.
-        if (!SystemUtils.IS_OS_MAC) {
-            try {
-                var url = IconService.class.getResource(path);
-                if (url != null)
-                    return ImageIO.read(url);
-            } catch (IOException e) {
-                // fall through
+        // Decode without ImageIO: ImageIO's initialization reaches java.awt.Toolkit (awt.dll), which is
+        // dead in the Windows native image and throws NoClassDefFoundError — which would kill the input
+        // thread on the first overlay icon. PngDecoder is pure Java and works on every platform.
+        try {
+            var url = IconService.class.getResource(path);
+            if (url != null) {
+                try (var in = url.openStream()) {
+                    var img = PngDecoder.decode(in.readAllBytes());
+                    if (img != null) {
+                        return img;
+                    }
+                }
             }
+        } catch (Throwable t) {
+            log.trace("Unable to load image {}", path, t);
         }
         return new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
     }

@@ -11450,6 +11450,20 @@
           "org.hid4java.jna.HidApiLibrary"
         ]
       }
+    },
+    {
+      "type": {
+        "proxy": [
+          "com.getpcpanel.util.tray.win.WinShell32"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "com.getpcpanel.util.tray.win.WinUser32Ext"
+        ]
+      }
     }
   ],
   "resources": [

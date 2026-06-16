@@ -4,6 +4,8 @@
   {"interfaces": ["org.hid4java.jna.LibusbHidApiLibrary"]},
   {"interfaces": ["com.getpcpanel.voicemeeter.VoicemeeterInstance"]},
   {"interfaces": ["com.getpcpanel.iconextract.Shell32Extra"]},
+  {"interfaces": ["com.getpcpanel.util.tray.win.WinShell32"]},
+  {"interfaces": ["com.getpcpanel.util.tray.win.WinUser32Ext"]},
   {"interfaces": ["com.getpcpanel.util.Kernel32Console"]},
   {"interfaces": ["com.sun.jna.platform.win32.Kernel32"]},
   {"interfaces": ["com.sun.jna.platform.win32.User32"]},

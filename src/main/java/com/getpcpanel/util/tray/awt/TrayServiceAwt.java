@@ -10,6 +10,7 @@ import java.util.Objects;
 
 import javax.imageio.ImageIO;
 
+import com.getpcpanel.platform.LinuxBuild;
 import com.getpcpanel.util.ShowMainEvent;
 import com.getpcpanel.util.tray.ITrayService;
 
@@ -19,12 +20,15 @@ import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 
 /**
- * AWT-based system tray implementation for Windows and X11 Linux.
- * Uses java.awt.SystemTray which relies on the XEmbed protocol on Linux.
+ * AWT-based system tray implementation for X11 Linux, where {@code java.awt.SystemTray} works via the
+ * XEmbed protocol. Confined to the Linux build ({@link LinuxBuild}): Windows uses the JNA
+ * {@link com.getpcpanel.util.tray.win.TrayServiceWin} (AWT's native toolkit is unreliable in the
+ * Windows native image), and Wayland sessions use the StatusNotifierItem D-Bus tray.
  * {@link #init()} is invoked explicitly by {@link com.getpcpanel.util.tray.TrayInitializer}.
  */
 @Log4j2
 @ApplicationScoped
+@LinuxBuild
 @AwtTrayImpl
 public class TrayServiceAwt implements ITrayService {
     @Inject Event<Object> eventBus;

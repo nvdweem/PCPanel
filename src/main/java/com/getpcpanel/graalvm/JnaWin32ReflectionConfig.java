@@ -37,6 +37,15 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         "com.sun.jna.platform.win32.WinUser$MSG",
         "com.sun.jna.platform.win32.WinDef$POINT",
         "com.sun.jna.platform.win32.WinUser$BLENDFUNCTION",
+        // System-tray NOTIFYICONDATA struct (and the GUID it embeds): JNA reads the struct's declared
+        // fields reflectively to compute its layout. Without this, Structure.getFieldOrder() sees no
+        // fields in the native image and the tray fails with "declared field names ([])".
+        "com.getpcpanel.util.tray.win.WinShell32$NOTIFYICONDATA",
+        "com.sun.jna.platform.win32.Guid$GUID",
+        // The tray JNA library interfaces themselves: JNA reads their static INSTANCE field (and maps
+        // their methods) reflectively, so the interface types need fields+methods registered.
+        "com.getpcpanel.util.tray.win.WinShell32",
+        "com.getpcpanel.util.tray.win.WinUser32Ext",
 })
 public final class JnaWin32ReflectionConfig {
     private JnaWin32ReflectionConfig() {
