@@ -3223,7 +3223,7 @@
       "type": "com.getpcpanel.sleepdetection.WindowsSystemEventService"
     },
     {
-      "type": "com.getpcpanel.sleepdetection.WindowsSystemEventService$WindowsSystemEvent"
+      "type": "com.getpcpanel.sleepdetection.SystemEvent"
     },
     {
       "type": "com.getpcpanel.spring.OsHelper"

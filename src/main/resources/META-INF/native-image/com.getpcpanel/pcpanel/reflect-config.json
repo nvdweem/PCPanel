@@ -51,5 +51,32 @@
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
+  },
+  {
+    "name": "com.getpcpanel.sleepdetection.Login1Manager",
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "com.getpcpanel.sleepdetection.Login1Manager$PrepareForSleep",
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "com.getpcpanel.sleepdetection.Login1Session",
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "com.getpcpanel.sleepdetection.Login1Session$Lock",
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true
+  },
+  {
+    "name": "com.getpcpanel.sleepdetection.Login1Session$Unlock",
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true
   }
 ]
