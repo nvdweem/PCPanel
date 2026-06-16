@@ -1,16 +1,13 @@
 package com.getpcpanel.rest;
 
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
-
-import javax.imageio.ImageIO;
 
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.iconextract.IIconService;
 import com.getpcpanel.rest.model.dto.ProcessDto;
+import com.getpcpanel.util.PngEncoder;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -43,13 +40,13 @@ public class ProcessResource {
         if (img == null) {
             return null;
         }
-        try {
-            var baos = new ByteArrayOutputStream();
-            ImageIO.write(img, "png", baos);
-            return "data:image/png;base64," + Base64.getEncoder().encodeToString(baos.toByteArray());
-        } catch (IOException e) {
-            log.debug("Failed to encode process icon", e);
+        // Encode with the pure-Java PngEncoder, not ImageIO (which loads the AWT Toolkit and crashes
+        // the native image — see PngEncoder).
+        var png = PngEncoder.encode(img);
+        if (png == null) {
+            log.debug("Failed to encode process icon");
             return null;
         }
+        return "data:image/png;base64," + Base64.getEncoder().encodeToString(png);
     }
 }

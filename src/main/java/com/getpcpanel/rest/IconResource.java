@@ -1,10 +1,7 @@
 package com.getpcpanel.rest;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-
-import javax.imageio.ImageIO;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -17,6 +14,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
 
 import com.getpcpanel.iconextract.IIconService;
+import com.getpcpanel.util.PngEncoder;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -55,13 +53,13 @@ public class IconResource {
         if (img == null) {
             throw new NotFoundException();
         }
-        try {
-            var baos = new ByteArrayOutputStream();
-            ImageIO.write(img, "png", baos);
-            return Response.ok(baos.toByteArray()).type("image/png").build();
-        } catch (Exception e) {
-            log.error("Failed to encode icon for {}", filePath, e);
+        // Encode with the pure-Java PngEncoder, not ImageIO (which loads the AWT Toolkit and crashes
+        // the native image — see PngEncoder).
+        var png = PngEncoder.encode(img);
+        if (png == null) {
+            log.error("Failed to encode icon for {}", filePath);
             return Response.serverError().build();
         }
+        return Response.ok(png).type("image/png").build();
     }
 }
