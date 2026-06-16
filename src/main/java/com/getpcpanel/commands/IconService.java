@@ -48,10 +48,17 @@ public class IconService {
     public BufferedImage DEVICE;
     public BufferedImage SYSTEM_SOUND;
 
+    @Nullable
     private static BufferedImage loadImage(String path) {
-        // Decode without ImageIO: ImageIO's initialization reaches java.awt.Toolkit (awt.dll), which is
-        // dead in the Windows native image and throws NoClassDefFoundError — which would kill the input
-        // thread on the first overlay icon. PngDecoder is pure Java and works on every platform.
+        // Only the Windows native image bundles libawt (headless Java2D). On macOS and Linux there is no
+        // libawt, so even constructing a BufferedImage fails (its Java2D class initializer throws); icons
+        // are simply not shown there, so return null and never touch AWT.
+        if (!SystemUtils.IS_OS_WINDOWS) {
+            return null;
+        }
+        // On Windows, decode without ImageIO: ImageIO's initialization reaches java.awt.Toolkit (awt.dll),
+        // which is dead in the native image and throws NoClassDefFoundError — which would kill the input
+        // thread on the first overlay icon. PngDecoder is pure Java and never touches AWT.
         try {
             var url = IconService.class.getResource(path);
             if (url != null) {
@@ -65,7 +72,7 @@ public class IconService {
         } catch (Throwable t) {
             log.trace("Unable to load image {}", path, t);
         }
-        return new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
+        return null;
     }
 
     private final SafeMap imageHandlers = new SafeMap();
@@ -110,9 +117,9 @@ public class IconService {
     @CacheResult(cacheName = "command-icon")
     @Nonnull
     public BufferedImage getImageFrom(@Nullable Commands commands, @Nullable KnobSetting override) {
-        // No AWT-based icon extraction on macOS (no libawt); the icon handlers below decode images via
-        // ImageIO, so short-circuit to the blank default to keep the whole path libawt-free.
-        if (SystemUtils.IS_OS_MAC) {
+        // Icon extraction/decoding (ImageIO, JIconExtract) needs libawt, which only the Windows native
+        // image bundles. On macOS and Linux short-circuit to the blank default to keep the path libawt-free.
+        if (!SystemUtils.IS_OS_WINDOWS) {
             return DEFAULT;
         }
         if (!Commands.hasCommands(commands)) {

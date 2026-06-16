@@ -18,9 +18,8 @@ import com.getpcpanel.profile.Save;
  * <p>This class deliberately avoids the AWT/Swing windowing toolkit – it only paints into a
  * supplied {@link Graphics2D}. Headless Java2D (drawing into a {@code BufferedImage}) is fully
  * supported by the GraalVM native image, whereas the Swing windowing toolkit
- * ({@code sun.awt.windows.WToolkit}) is not. Both the Swing-backed {@link VolumeOverlay} (Linux)
- * and the JNA-backed {@link Win32VolumeOverlay} (Windows) share this renderer so the look stays
- * identical across platforms.
+ * ({@code sun.awt.windows.WToolkit}) is not. The JNA-backed {@link Win32VolumeOverlay} (Windows)
+ * uses this renderer to paint into a layered-window bitmap.
  */
 class OverlayRenderer {
     static final int WIDTH = 340;

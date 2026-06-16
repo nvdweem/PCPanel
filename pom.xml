@@ -57,13 +57,14 @@
             --initialize-at-run-time=com.getpcpanel.util.Kernel32Console,
             -J-XX:-UseCompressedOops,--initialize-at-run-time=com.sun.jna,--initialize-at-run-time=org.hid4java,--initialize-at-run-time=com.github.kwhat.jnativehook,--initialize-at-run-time=com.getpcpanel.commands.KeyMacro,--initialize-at-run-time=com.getpcpanel.iconextract.Shell32Extra,--initialize-at-run-time=com.getpcpanel.util.tray.win.WinShell32,--initialize-at-run-time=com.getpcpanel.util.tray.win.WinUser32Ext,--initialize-at-run-time=com.getpcpanel.cpp.osx.CoreAudioLib,--initialize-at-run-time=com.getpcpanel.cpp.osx.CoreAudioLib$AudioObjectPropertyAddress,--initialize-at-run-time=com.getpcpanel.cpp.osx.CoreAudioLib$AudioObjectPropertyListenerProc,--initialize-at-run-time=com.getpcpanel.cpp.osx.OsxKeyboard$CoreGraphics,--initialize-at-run-time=com.getpcpanel.cpp.osx.OsxKeyboard$CoreFoundation,--initialize-at-run-time=com.getpcpanel.util.OsxPermissionHelper,--initialize-at-run-time=com.getpcpanel.util.OsxPermissionHelper$ApplicationServicesLib,--initialize-at-run-time=com.getpcpanel.util.OsxPermissionHelper$IOKitLib,--initialize-at-run-time=org.freedesktop.dbus,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOINFO,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOBUFFER,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_INTERFACE${native.awt.args}${native.platform.linker.args}
         </quarkus.native.additional-build-args>
-        <!-- AWT/Java2D/Swing native-image initialization policy. Windows and Linux have GraalVM AWT
-             support (libawt is bundled), so a few classes are pinned to build-time init for the
-             headless overlay renderer and the rest default sensibly. macOS has NO libawt at all and
-             must not run any AWT static initializer at build time (e.g. sun.java2d.SurfaceData.initIDs),
-             so the os-mac profile instead defers the whole AWT subsystem to run-time init. The leading
-             comma joins this onto the preceding arg; keep it as a single comma-separated arg list. -->
-        <native.awt.args>,-J-Djava.awt.headless=false,--initialize-at-run-time=java.awt,--initialize-at-run-time=sun.awt,--initialize-at-run-time=sun.font.FontManagerFactory,--initialize-at-run-time=sun.font.FontFamily,--initialize-at-run-time=sun.java2d.Disposer,--initialize-at-run-time=sun.awt.windows,--initialize-at-run-time=sun.java2d.d3d,--initialize-at-run-time=sun.java2d.windows,--initialize-at-run-time=javax.swing.plaf.metal,--initialize-at-build-time=javax.swing.plaf.ColorUIResource,--initialize-at-build-time=java.awt.font.FontRenderContext,--initialize-at-build-time=sun.awt.SunHints,--initialize-at-build-time=sun.awt.SunHints$Value,--initialize-at-build-time=sun.awt.SunHints$LCDContrastKey,--initialize-at-build-time=sun.awt.SunHints$Key,--initialize-at-build-time=java.awt.Dimension,--initialize-at-build-time=java.awt.geom.Dimension2D</native.awt.args>
+        <!-- AWT/Java2D native-image initialization policy. This default value is the Linux build, which
+             (like macOS) bundles no libawt: the whole AWT/Java2D/Swing/ImageIO subsystem is deferred to
+             run-time init so native-image never runs an AWT static initializer or stores an AWT object in
+             the image heap during the build. The app never actually calls AWT on Linux (overlay no-op,
+             icons disabled, keystrokes via X11 XTEST, tray via D-Bus). The os-windows profile overrides
+             this with the non-headless windowing variant (Windows keeps quarkus-awt + headless Java2D).
+             The leading comma joins this onto the preceding arg; keep it as a single comma-separated list. -->
+        <native.awt.args>,--initialize-at-run-time=java.awt,--initialize-at-run-time=javax.swing,--initialize-at-run-time=sun.awt,--initialize-at-run-time=sun.lwawt,--initialize-at-run-time=sun.java2d,--initialize-at-run-time=sun.font,--initialize-at-run-time=javax.imageio,--initialize-at-run-time=com.sun.imageio,--initialize-at-run-time=com.getpcpanel.overlay.OverlayRenderer</native.awt.args>
         <!-- Platform-specific native-image args, appended to the list above. Empty by default
              (Linux/macOS); the os-windows profile injects the GUI-subsystem linker flags. The
              leading comma joins it to the preceding arg; keep it empty (not blank lines) elsewhere. -->
@@ -124,10 +125,10 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-vertx</artifactId>
         </dependency>
-        <!-- quarkus-awt is added per-OS in the os-non-mac profile below: its native build step
-             unconditionally fails on macOS ("MacOS AWT integration is not ready"), and GraalVM has
-             no libawt on macOS at all. The macOS build is therefore AWT-free (overlay/icons disabled,
-             keystrokes via CoreGraphics JNA); Windows and Linux keep full AWT support. -->
+        <!-- quarkus-awt is added only on Windows (see the os-windows-awt profile below): its native
+             build step unconditionally fails on macOS ("MacOS AWT integration is not ready") and GraalVM
+             has no libawt on macOS or Linux. Windows keeps headless Java2D (Win32 overlay + icon
+             extraction); macOS and Linux are AWT-free (overlay/icons disabled, keystrokes/tray via JNA/D-Bus). -->
 
         <!-- Frontend via Quinoa -->
         <dependency>
@@ -454,17 +455,23 @@
             </activation>
             <properties>
                 <native.platform.linker.args>,-H:+UnlockExperimentalVMOptions,-H:NativeLinkerOption=/SUBSYSTEM:WINDOWS,-H:NativeLinkerOption=/ENTRY:mainCRTStartup,-H:-UnlockExperimentalVMOptions</native.platform.linker.args>
+                <!-- Windows still uses a few AWT windowing pieces (the SystemTray tray icon and the
+                     Swing JOptionPane migration prompt), so it runs non-headless and pins the AWT/Swing
+                     classes those touch. The headless overlay renderer and icon extraction (headless
+                     Java2D) work in both modes. The leading comma joins this onto the preceding arg. -->
+                <native.awt.args>,-J-Djava.awt.headless=false,--initialize-at-run-time=java.awt,--initialize-at-run-time=sun.awt,--initialize-at-run-time=sun.font.FontManagerFactory,--initialize-at-run-time=sun.font.FontFamily,--initialize-at-run-time=sun.java2d.Disposer,--initialize-at-run-time=sun.awt.windows,--initialize-at-run-time=sun.java2d.d3d,--initialize-at-run-time=sun.java2d.windows,--initialize-at-run-time=javax.swing.plaf.metal,--initialize-at-build-time=javax.swing.plaf.ColorUIResource,--initialize-at-build-time=java.awt.font.FontRenderContext,--initialize-at-build-time=sun.awt.SunHints,--initialize-at-build-time=sun.awt.SunHints$Value,--initialize-at-build-time=sun.awt.SunHints$LCDContrastKey,--initialize-at-build-time=sun.awt.SunHints$Key,--initialize-at-build-time=java.awt.Dimension,--initialize-at-build-time=java.awt.geom.Dimension2D</native.awt.args>
             </properties>
         </profile>
         <profile>
-            <!-- AWT support (quarkus-awt) on every OS except macOS. Maven OS activation supports the
-                 '!' negation, so this profile is active on Windows and Linux but not macOS. The macOS
-                 native image must not contain quarkus-awt (its build step hard-fails the macOS native
-                 build) and has no libawt to load, so AWT features are replaced by JNA there. -->
-            <id>os-non-mac</id>
+            <!-- AWT support (quarkus-awt) only on Windows, the one platform whose native image still
+                 uses headless Java2D (the Win32 overlay renderer and process-icon extraction). macOS and
+                 Linux have no libawt at all: their native images are AWT-free (overlay/icons disabled,
+                 keystrokes/clipboard/tray via JNA or D-Bus), and quarkus-awt's native build step would
+                 hard-fail on macOS. -->
+            <id>os-windows-awt</id>
             <activation>
                 <os>
-                    <family>!mac</family>
+                    <family>windows</family>
                 </os>
             </activation>
             <dependencies>
@@ -487,7 +494,7 @@
                 </os>
             </activation>
             <properties>
-                <native.awt.args>,--initialize-at-run-time=java.awt,--initialize-at-run-time=javax.swing,--initialize-at-run-time=sun.awt,--initialize-at-run-time=sun.lwawt,--initialize-at-run-time=sun.java2d,--initialize-at-run-time=sun.font,--initialize-at-run-time=javax.imageio,--initialize-at-run-time=com.sun.imageio,--initialize-at-run-time=com.getpcpanel.overlay.OverlayRenderer,--initialize-at-run-time=com.getpcpanel.overlay.VolumeOverlay</native.awt.args>
+                <native.awt.args>,--initialize-at-run-time=java.awt,--initialize-at-run-time=javax.swing,--initialize-at-run-time=sun.awt,--initialize-at-run-time=sun.lwawt,--initialize-at-run-time=sun.java2d,--initialize-at-run-time=sun.font,--initialize-at-run-time=javax.imageio,--initialize-at-run-time=com.sun.imageio,--initialize-at-run-time=com.getpcpanel.overlay.OverlayRenderer</native.awt.args>
             </properties>
         </profile>
     </profiles>

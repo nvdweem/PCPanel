@@ -26,19 +26,16 @@ import one.util.streamex.StreamEx;
 public class Overlay {
     private final SaveService save;
     private final IconService iconService;
-    // On Windows the Swing/AWT windowing toolkit is unsupported in the native image (it segfaults
-    // the native WToolkit event loop), so use a JNA layered window instead. macOS native images have
-    // no AWT/libawt at all, so the overlay is disabled there. Linux/JVM keep the Swing implementation.
+    // The AWT/Swing windowing toolkit is unsupported in the GraalVM native image (it segfaults the
+    // native WToolkit event loop), so the only on-screen overlay is the JNA layered window on Windows.
+    // Linux and macOS have no AWT-free overlay yet, so the overlay is disabled there.
     private final OverlayWindow overlay = createOverlay();
 
     private static OverlayWindow createOverlay() {
         if (Platform.isWindows()) {
             return new Win32VolumeOverlay();
         }
-        if (Platform.isMac()) {
-            return new NoOpOverlayWindow();
-        }
-        return new VolumeOverlay();
+        return new NoOpOverlayWindow();
     }
 
     public void updateSaveValues(@Observes SaveEvent event) {
@@ -48,8 +45,8 @@ public class Overlay {
 
     private void determinePosition() {
         var window = overlay.getScreenSize();
-        var x = window.width;
-        var y = window.height;
+        var x = window.width();
+        var y = window.height();
         var width = overlay.getWidth();
         var height = overlay.getHeight();
 
@@ -110,7 +107,10 @@ public class Overlay {
         return save.getProfile(event.serialNum()).map(profile -> {
             var data = event.cmd();
             var setting = event.vol() == null ? null : profile.getKnobSettings(event.knob());
-            return new CommandAndIcon(data, iconService.getImageFrom(data, setting));
+            // Icon decoding needs libawt (Windows only); elsewhere the overlay is a no-op that ignores
+            // the icon, so skip the BufferedImage lookup entirely to stay libawt-free.
+            var icon = Platform.isWindows() ? iconService.getImageFrom(data, setting) : null;
+            return new CommandAndIcon(data, icon);
         }).orElse(CommandAndIcon.DEFAULT);
     }
 

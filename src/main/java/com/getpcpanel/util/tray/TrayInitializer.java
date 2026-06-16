@@ -14,8 +14,10 @@ import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 
 /**
- * Picks the system tray implementation at runtime: the AWT tray works on Windows and X11,
- * Wayland sessions need the StatusNotifierItem D-Bus protocol instead.
+ * Picks the system tray implementation at runtime: Linux (both X11 and Wayland) uses the AWT-free
+ * StatusNotifierItem D-Bus tray; Windows uses the JNA {@link com.getpcpanel.util.tray.win.TrayServiceWin}
+ * (Win32 Shell_NotifyIcon), since {@code java.awt.SystemTray} is unreliable in the Windows native image.
+ * macOS has no tray yet (it would need a native NSStatusItem implementation).
  * The chosen bean's {@link ITrayService#init()} is invoked explicitly - the tray beans are lazy
  * {@code @ApplicationScoped} client proxies, so merely calling {@code Instance.get()} does not
  * create the instance (and would never run a {@code @PostConstruct}); a real method call does.
@@ -24,20 +26,20 @@ import lombok.extern.log4j.Log4j2;
 @ApplicationScoped
 public class TrayInitializer {
     @Inject @AwtTrayImpl Instance<ITrayService> awtTray;
-    @Inject Instance<TrayServiceWayland> waylandTray;
+    @Inject Instance<TrayServiceWayland> sniTray;
 
     void onStart(@Observes StartupEvent event) {
         if (isTrayDisabled()) {
             log.info("Tray disabled (disable.tray / PCPANEL_DISABLE_TRAY); running without a system tray icon");
             return;
         }
-        if (isWayland() && waylandTray.isResolvable()) {
-            log.debug("Initializing Wayland tray");
-            waylandTray.get().init();
-        } else if (!SystemUtils.IS_OS_MAC && awtTray.isResolvable()) {
-            // The AWT tray (java.awt.SystemTray) needs libawt, which the macOS native image lacks;
-            // macOS runs without a tray icon until a native (NSStatusItem/JNA) tray is added.
-            log.debug("Initializing AWT tray");
+        if (SystemUtils.IS_OS_LINUX && sniTray.isResolvable()) {
+            // StatusNotifierItem over D-Bus is the modern, AWT-free tray protocol; it works on both
+            // Wayland and X11 desktops that run an SNI host (KDE, GNOME+AppIndicator, etc.).
+            log.debug("Initializing StatusNotifierItem (D-Bus) tray");
+            sniTray.get().init();
+        } else if (SystemUtils.IS_OS_WINDOWS && awtTray.isResolvable()) {
+            log.debug("Initializing Windows (JNA Shell_NotifyIcon) tray");
             awtTray.get().init();
         } else {
             log.warn("No tray implementation available");
@@ -56,11 +58,5 @@ public class TrayInitializer {
         }
         var env = System.getenv("PCPANEL_DISABLE_TRAY");
         return StringUtils.isNotBlank(env) && !StringUtils.equalsAnyIgnoreCase(env, "0", "false", "no");
-    }
-
-    private static boolean isWayland() {
-        return SystemUtils.IS_OS_LINUX
-                && (StringUtils.isNotBlank(System.getenv("WAYLAND_DISPLAY"))
-                || StringUtils.equalsIgnoreCase(System.getenv("XDG_SESSION_TYPE"), "wayland"));
     }
 }
