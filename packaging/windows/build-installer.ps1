@@ -121,7 +121,8 @@ if (-not $dlls) {
 
 # ── 4. Inno Setup ────────────────────────────────────────────────────────────
 if (-not $InnoSetup) {
-    $InnoSetup = (Get-Command iscc.exe -ErrorAction SilentlyContinue).Source
+    $isccCmd = Get-Command iscc.exe -ErrorAction SilentlyContinue
+    if ($isccCmd) { $InnoSetup = $isccCmd.Source }
 }
 if (-not $InnoSetup) {
     $InnoSetup = @(
