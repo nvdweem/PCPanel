@@ -29,6 +29,13 @@ public interface WinUser32Ext extends StdCallLibrary {
 
     int LR_DEFAULTCOLOR = 0x0000;
 
+    int MB_YESNO = 0x00000004;
+    int MB_ICONQUESTION = 0x00000020;
+    int IDYES = 6;
+
+    /** Native Win32 message box (JNA's bundled {@code User32} omits it). Headless-safe, unlike Swing. */
+    int MessageBoxW(HWND hWnd, WString lpText, WString lpCaption, int uType);
+
     HANDLE CreatePopupMenu();
 
     boolean AppendMenuW(HANDLE hMenu, int uFlags, int uIDNewItem, WString lpNewItem);

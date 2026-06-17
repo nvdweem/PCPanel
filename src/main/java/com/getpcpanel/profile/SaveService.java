@@ -7,8 +7,6 @@ import java.nio.file.Files;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import javax.swing.JOptionPane;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -16,6 +14,8 @@ import com.getpcpanel.Json;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.util.Debouncer;
 import com.getpcpanel.util.FileUtil;
+import com.getpcpanel.util.tray.win.WinUser32Ext;
+import com.sun.jna.WString;
 
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
@@ -120,17 +120,30 @@ public class SaveService {
             return;
         }
         var oldFile = new File(localAppData, "PCPanel Software/save.json");
-        if (oldFile.exists()) {
-            var result = JOptionPane.showConfirmDialog(null, "No save file found, would you like to migrate from original PCPanel software?", "Migrate", JOptionPane.YES_NO_OPTION);
-            if (result == JOptionPane.YES_OPTION) {
-                try {
-                    Files.copy(oldFile.toPath(), saveFile.toPath());
-                } catch (IOException e) {
-                    log.error("Unable to copy old save file", e);
-                }
-                log.info("Migrated old save file to new one");
+        if (oldFile.exists() && confirmMigrate()) {
+            try {
+                Files.copy(oldFile.toPath(), saveFile.toPath());
+            } catch (IOException e) {
+                log.error("Unable to copy old save file", e);
             }
+            log.info("Migrated old save file to new one");
         }
+    }
+
+    /**
+     * Asks the user (Windows only) whether to migrate the original PCPanel software's save file.
+     *
+     * <p>Uses a native Win32 message box via JNA rather than {@code JOptionPane}. Swing's
+     * {@code JOptionPane} forces the AWT windowing toolkit ({@code headless=false}), which is
+     * unsupported in the GraalVM native image on Windows and breaks {@code libawt} loading for the
+     * whole process (headless Java2D, icons, the overlay). The message box keeps the exact yes/no UX
+     * without that cost. {@code LOCALAPPDATA} only exists on Windows, so this path is Windows-only.
+     */
+    private static boolean confirmMigrate() {
+        var result = WinUser32Ext.INSTANCE.MessageBoxW(null,
+                new WString("No save file found, would you like to migrate from original PCPanel software?"),
+                new WString("Migrate"), WinUser32Ext.MB_YESNO | WinUser32Ext.MB_ICONQUESTION);
+        return result == WinUser32Ext.IDYES;
     }
 
     public void save() {

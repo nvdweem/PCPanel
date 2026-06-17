@@ -455,11 +455,14 @@
             </activation>
             <properties>
                 <native.platform.linker.args>,-H:+UnlockExperimentalVMOptions,-H:NativeLinkerOption=/SUBSYSTEM:WINDOWS,-H:NativeLinkerOption=/ENTRY:mainCRTStartup,-H:-UnlockExperimentalVMOptions</native.platform.linker.args>
-                <!-- Windows still uses a few AWT windowing pieces (the SystemTray tray icon and the
-                     Swing JOptionPane migration prompt), so it runs non-headless and pins the AWT/Swing
-                     classes those touch. The headless overlay renderer and icon extraction (headless
-                     Java2D) work in both modes. The leading comma joins this onto the preceding arg. -->
-                <native.awt.args>,-J-Djava.awt.headless=false,--initialize-at-run-time=java.awt,--initialize-at-run-time=sun.awt,--initialize-at-run-time=sun.font.FontManagerFactory,--initialize-at-run-time=sun.font.FontFamily,--initialize-at-run-time=sun.java2d.Disposer,--initialize-at-run-time=sun.awt.windows,--initialize-at-run-time=sun.java2d.d3d,--initialize-at-run-time=sun.java2d.windows,--initialize-at-run-time=javax.swing.plaf.metal,--initialize-at-build-time=javax.swing.plaf.ColorUIResource,--initialize-at-build-time=java.awt.font.FontRenderContext,--initialize-at-build-time=sun.awt.SunHints,--initialize-at-build-time=sun.awt.SunHints$Value,--initialize-at-build-time=sun.awt.SunHints$LCDContrastKey,--initialize-at-build-time=sun.awt.SunHints$Key,--initialize-at-build-time=java.awt.Dimension,--initialize-at-build-time=java.awt.geom.Dimension2D</native.awt.args>
+                <!-- Windows runs HEADLESS Java2D. Both former reasons for non-headless AWT are gone:
+                     the tray icon is a JNA Win32 Shell_NotifyIcon (TrayServiceWin) and the migration
+                     prompt is a JNA User32 MessageBox (SaveService) - no Swing/SystemTray. headless=false
+                     pulled in the full windowing toolkit (sun.awt.windows.WToolkit), whose libawt load
+                     fails in the native image and bricks BufferedImage/ImageIO/icons/the overlay. Quarkus
+                     supports headless AWT on Windows native; headless Java2D (overlay renderer + icon
+                     extraction) is what we actually use. The leading comma joins this onto the preceding arg. -->
+                <native.awt.args>,-J-Djava.awt.headless=true,--initialize-at-run-time=java.awt,--initialize-at-run-time=sun.awt,--initialize-at-run-time=sun.font.FontManagerFactory,--initialize-at-run-time=sun.font.FontFamily,--initialize-at-run-time=sun.java2d.Disposer,--initialize-at-run-time=sun.java2d.d3d,--initialize-at-run-time=sun.java2d.windows,--initialize-at-build-time=java.awt.font.FontRenderContext,--initialize-at-build-time=sun.awt.SunHints,--initialize-at-build-time=sun.awt.SunHints$Value,--initialize-at-build-time=sun.awt.SunHints$LCDContrastKey,--initialize-at-build-time=sun.awt.SunHints$Key,--initialize-at-build-time=java.awt.Dimension,--initialize-at-build-time=java.awt.geom.Dimension2D</native.awt.args>
             </properties>
         </profile>
         <profile>
