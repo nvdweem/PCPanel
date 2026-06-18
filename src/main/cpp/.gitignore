@@ -1,3 +1,7 @@
 /SndCtrl/.vs/
 /SndCtrl/x64
 /SndCtrlTest/x64
+
+# CMake out-of-source build directories
+/build/
+/cmake-build-*/
