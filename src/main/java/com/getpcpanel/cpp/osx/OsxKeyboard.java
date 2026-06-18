@@ -106,7 +106,7 @@ public final class OsxKeyboard {
         }
     }
 
-    private static long modifierFlag(String mod) {
+    static long modifierFlag(String mod) {
         return switch (mod) {
             case "ctrl" -> FLAG_CONTROL;
             case "shift" -> FLAG_SHIFT;
@@ -116,7 +116,7 @@ public final class OsxKeyboard {
         };
     }
 
-    private static short keyCode(String token) {
+    static short keyCode(String token) {
         return KEY_CODES.getOrDefault(token.toUpperCase(), UNKNOWN);
     }
 

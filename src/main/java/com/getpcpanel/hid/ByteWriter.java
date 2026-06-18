@@ -44,9 +44,14 @@ class ByteWriter {
         if (hexColor != null) {
             try {
                 String hex = hexColor.startsWith("#") ? hexColor.substring(1) : hexColor;
-                r = Integer.parseInt(hex.substring(0, 2), 16) & 0xFF;
-                g = Integer.parseInt(hex.substring(2, 4), 16) & 0xFF;
-                b = Integer.parseInt(hex.substring(4, 6), 16) & 0xFF;
+                // Parse into temporaries and commit only if all three succeed, so a malformed string
+                // (e.g. "#ff") falls back to black rather than leaking a partially-parsed colour.
+                var pr = Integer.parseInt(hex.substring(0, 2), 16) & 0xFF;
+                var pg = Integer.parseInt(hex.substring(2, 4), 16) & 0xFF;
+                var pb = Integer.parseInt(hex.substring(4, 6), 16) & 0xFF;
+                r = pr;
+                g = pg;
+                b = pb;
             } catch (Exception ignored) {
             }
         }

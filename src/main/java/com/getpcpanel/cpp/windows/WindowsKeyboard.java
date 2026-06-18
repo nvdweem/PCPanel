@@ -78,7 +78,7 @@ public final class WindowsKeyboard {
         User32.INSTANCE.SendInput(new WinDef.DWORD(1), (WinUser.INPUT[]) input.toArray(1), input.size());
     }
 
-    private static int modifierVk(String mod) {
+    static int modifierVk(String mod) {
         return switch (mod) {
             case "ctrl" -> 0x11;                       // VK_CONTROL
             case "shift" -> 0x10;                       // VK_SHIFT
@@ -88,7 +88,7 @@ public final class WindowsKeyboard {
         };
     }
 
-    private static int keyVk(String token) {
+    static int keyVk(String token) {
         var t = token.toUpperCase();
         if (t.length() == 1) {
             var c = t.charAt(0);
