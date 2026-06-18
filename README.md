@@ -94,10 +94,35 @@ present during tests — the Windows JNA libraries on a Linux box, the macOS Cor
 libraries anywhere but a Mac — are kept by hand in
 `src/main/resources/META-INF/native-image/com.getpcpanel/pcpanel/proxy-config.json`.
 
-`ProxyRegistrationCoverageTest` is a safety net: it scans every JNA `Library` interface in the
-project and fails (on any OS, in a plain `mvn test`) if one is missing from the metadata, printing
-the exact entry to add. Run it before shipping a native build to catch a forgotten platform proxy
-regardless of which OS you build on — it is what would have caught the Linux keystroke regression.
+`ProxyRegistrationCoverageTest` is a safety net for *one* failure mode: it scans every JNA `Library`
+interface in the project and fails (on any OS, in a plain `mvn test`) if one is missing from the
+metadata, printing the exact entry to add. It catches a forgotten platform proxy regardless of which
+OS you build on — but it is a JVM test, so it sees nothing of how the code behaves under
+`native-image`. Passing it does **not** mean the native build works.
+
+# Verify the native image builds
+
+A plain `mvn test` runs on the JVM, where build-time-vs-run-time class initialization, image-heap
+constraints and reachability are all irrelevant — so an entire class of failures is invisible to it.
+The metadata generation above and `ProxyRegistrationCoverageTest` are necessary but **not
+sufficient**: neither compiles a native image, so neither can catch a class whose static initializer
+bakes a `--initialize-at-run-time` object into the build-time image heap (the June 2026 Wayland tray
+`IconPixmap` regression — `UnsupportedFeatureException: ... found in the image heap`), a missing
+reflection/resource entry the agent never recorded, or any other native-only break.
+
+**The only reliable check is to actually build the native image for your OS before pushing any change
+that touches native config, class-init timing, or JNA/D-Bus/AWT-adjacent code:**
+
+```shell
+# GraalVM CE 25 JDK required (JAVA_HOME must point at it). Native compilation is headless-safe,
+# so -DskipTests avoids needing a display; drop it to also run the AWT/Swing tests as CI does.
+./mvnw -B package -Pnative -DskipTests
+```
+
+A green `BUILD SUCCESS` with a `target/*-runner` (`.exe` on Windows) is the real confirmation. CI
+builds the native image for Windows, Linux and macOS, but it only runs **after** a push to `main`
+(there is no pull-request build), so a native break is not caught until it has already landed —
+building locally first is what keeps `main` green.
 
 
 ---
