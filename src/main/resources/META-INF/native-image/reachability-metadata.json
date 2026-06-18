@@ -3225,9 +3225,6 @@
       "type": "com.getpcpanel.sleepdetection.WindowsSystemEventService"
     },
     {
-      "type": "com.getpcpanel.spring.OsHelper"
-    },
-    {
       "type": "com.getpcpanel.util.AppEvents"
     },
     {
