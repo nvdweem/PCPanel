@@ -56,6 +56,13 @@ public final class LinuxKeyboard {
 
     /** AWT-VK-style token (the part after {@code VK_}) → X11 keysym. */
     private static final Map<String, Long> KEYSYMS = buildKeysyms();
+    /**
+     * Delay (ms) after remapping the spare keycode, before the synthetic KeyPress, so the target
+     * client can refresh its cached keymap (XKB) and decode the freshly-mapped keycode correctly.
+     * {@code XSync} only waits for the server, not the client — mirrors {@code xdotool type}'s
+     * default. Tunable via {@code -Dpcpanel.linux.typeDelayMs=} for slow setups.
+     */
+    private static final long TYPE_REMAP_SETTLE_MS = Long.getLong("pcpanel.linux.typeDelayMs", 12L);
     private static final Object LOCK = new Object();
     private static Pointer display;
     private static boolean displayResolved;
@@ -149,10 +156,27 @@ public final class LinuxKeyboard {
         }
         remapSpare(disp, keysym);
         X11.INSTANCE.XSync(disp, false); // let the server observe the new mapping before the key event
+        if (!settle(TYPE_REMAP_SETTLE_MS)) { // give the target client time to refresh its keymap
+            return;                          // interrupted — stop typing
+        }
         var code = spareKeycode & 0xFF;
         XTest.INSTANCE.XTestFakeKeyEvent(disp, code, true, new NativeLong(0));
         XTest.INSTANCE.XTestFakeKeyEvent(disp, code, false, new NativeLong(0));
         X11.INSTANCE.XSync(disp, false);
+    }
+
+    /** Sleeps {@code ms}; returns false (and re-sets the interrupt flag) if interrupted. */
+    private static boolean settle(long ms) {
+        if (ms <= 0) {
+            return true;
+        }
+        try {
+            Thread.sleep(ms);
+            return true;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
     }
 
     /** Binds {@code keysym} (or {@code NoSymbol} when 0) onto every level of the spare keycode. */
