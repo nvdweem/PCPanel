@@ -35,7 +35,7 @@ public final class Voicemeeter {
     @Inject
     Event<Object> eventBus;
 
-    private int version = -1;
+    private volatile int version = -1; // written by the scheduled poll thread, read by command/REST threads
     private volatile boolean hasFinishedConnection;
     private volatile boolean hasLoggedIn;
     private final VoicemeeterVersion[] versions = { VoicemeeterVersion.VOICEMEETER, VoicemeeterVersion.BANANA, VoicemeeterVersion.POTATO };
@@ -226,6 +226,7 @@ public final class Voicemeeter {
                 eventBus.fire(new VoiceMeeterConnectedEvent());
                 return true;
             } catch (Exception e) {
+                log.debug("Voicemeeter login failed: {}", e.getMessage());
                 return false;
             }
         }, false);

@@ -32,7 +32,8 @@ public final class VoicemeeterAPI {
             System.load(dllPath.getAbsolutePath());
             instance = Native.load("VoicemeeterRemote" + (is64bit ? "64" : ""), VoicemeeterInstance.class);
         } catch (Throwable t) {
-            log.error("Unable to load VoiceMeeter");
+            instance = null;
+            log.error("Unable to load VoiceMeeter from {}: {}", dllPath, t.getMessage());
         }
     }
 
@@ -41,7 +42,15 @@ public final class VoicemeeterAPI {
     }
 
     public void login() throws VoicemeeterException {
+        ensureLoaded();
         ensureNoError(instance.VBVMR_Login(), 0, 1);
+    }
+
+    /** Guards against a failed/absent {@link #init} so callers get a clear error instead of an NPE. */
+    private void ensureLoaded() throws VoicemeeterException {
+        if (instance == null) {
+            throw new VoicemeeterException("Voicemeeter library is not loaded");
+        }
     }
 
     public void logout() throws VoicemeeterException {
