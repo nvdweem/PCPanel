@@ -5,6 +5,7 @@ import java.util.Map;
 
 import com.sun.jna.Library;
 import com.sun.jna.Native;
+import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 
 import lombok.extern.log4j.Log4j2;
@@ -35,6 +36,10 @@ public final class OsxKeyboard {
 
         // void CGEventSetFlags(CGEventRef event, CGEventFlags flags)
         void CGEventSetFlags(Pointer event, long flags);
+
+        // void CGEventKeyboardSetUnicodeString(CGEventRef event, UniCharCount length, const UniChar *string)
+        // UniCharCount is unsigned long (8 bytes on LP64); UniChar is a UTF-16 code unit (unsigned short).
+        void CGEventKeyboardSetUnicodeString(Pointer event, NativeLong stringLength, short[] unicodeString);
 
         // void CGEventPost(CGEventTapLocation tap, CGEventRef event)
         void CGEventPost(int tap, Pointer event);
@@ -87,6 +92,47 @@ public final class OsxKeyboard {
             postKey(keyCode, flags);
         } catch (Throwable e) { // UnsatisfiedLinkError if the frameworks are somehow missing
             log.error("Unable to post macOS keystroke '{}'", input, e);
+        }
+    }
+
+    /**
+     * Types arbitrary text by posting each UTF-16 code unit as a CGEvent carrying a Unicode string,
+     * which is layout-independent. Newlines and tabs are sent as real Return/Tab key codes since the
+     * Unicode-string path does not synthesise them.
+     */
+    public static void typeText(String text) {
+        if (text == null || text.isEmpty()) {
+            return;
+        }
+        try {
+            for (var i = 0; i < text.length(); i++) {
+                var c = text.charAt(i);
+                switch (c) {
+                    case '\r' -> { /* ignore; '\n' drives the newline */ }
+                    case '\n' -> postKey((short) 0x24, 0); // kVK_Return
+                    case '\t' -> postKey((short) 0x30, 0); // kVK_Tab
+                    default -> postChar(c);
+                }
+            }
+        } catch (Throwable e) { // UnsatisfiedLinkError if the frameworks are somehow missing
+            log.error("Unable to type text on macOS", e);
+        }
+    }
+
+    private static void postChar(char c) {
+        var cg = CoreGraphics.INSTANCE;
+        var chars = new short[] { (short) c };
+        var down = cg.CGEventCreateKeyboardEvent(null, (short) 0, true);
+        if (down != null) {
+            cg.CGEventKeyboardSetUnicodeString(down, new NativeLong(1), chars);
+            cg.CGEventPost(K_CG_HID_EVENT_TAP, down);
+            CoreFoundation.INSTANCE.CFRelease(down);
+        }
+        var up = cg.CGEventCreateKeyboardEvent(null, (short) 0, false);
+        if (up != null) {
+            cg.CGEventKeyboardSetUnicodeString(up, new NativeLong(1), chars);
+            cg.CGEventPost(K_CG_HID_EVENT_TAP, up);
+            CoreFoundation.INSTANCE.CFRelease(up);
         }
     }
 

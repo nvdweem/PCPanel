@@ -25,7 +25,7 @@ public final class KeyMacro {
     }
 
     public static void executeKeyStroke(String input) {
-        if (input.contains("UNDEFINED"))
+        if (input == null || input.contains("UNDEFINED"))
             return;
         if (SystemUtils.IS_OS_MAC) {
             warnIfAccessibilityNotGranted();
@@ -34,6 +34,20 @@ public final class KeyMacro {
             WindowsKeyboard.executeKeyStroke(input);
         } else {
             LinuxKeyboard.executeKeyStroke(input);
+        }
+    }
+
+    /** Types {@code text} out character-by-character via the platform's native keyboard backend. */
+    public static void typeText(String text) {
+        if (text == null || text.isEmpty())
+            return;
+        if (SystemUtils.IS_OS_MAC) {
+            warnIfAccessibilityNotGranted();
+            OsxKeyboard.typeText(text);
+        } else if (SystemUtils.IS_OS_WINDOWS) {
+            WindowsKeyboard.typeText(text);
+        } else {
+            LinuxKeyboard.typeText(text);
         }
     }
 

@@ -34,6 +34,6 @@ class LinuxKeyboardNativeConfigTest {
     @Test
     @DisplayName("pressing PAUSE loads libX11 + libXtst so the agent records both JNA proxies")
     void loadsX11AndXTestForAgent() {
-        assertDoesNotThrow(() -> new CommandKeystroke("PAUSE").execute());
+        assertDoesNotThrow(() -> new CommandKeystroke(CommandKeystroke.KeystrokeType.KEY, "PAUSE", null).execute());
     }
 }

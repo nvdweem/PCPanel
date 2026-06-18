@@ -54,7 +54,7 @@ public final class CommandConverter {
             case "keystroke" -> {
                 if (StringUtils.isBlank(data[1]))
                     yield NOOP;
-                yield new CommandKeystroke(data[1]);
+                yield new CommandKeystroke(CommandKeystroke.KeystrokeType.KEY, data[1], null);
             }
             case "shortcut" -> new CommandShortcut(data[1]);
             case "media" -> VolumeButton.tryValueOf(data[1]).map(v -> new CommandMedia(v, false)).map(Command.class::cast).orElse(NOOP);

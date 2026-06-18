@@ -22,6 +22,9 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public final class WindowsKeyboard {
     private static final int KEYEVENTF_KEYUP = 0x0002;
+    private static final int KEYEVENTF_UNICODE = 0x0004;
+    private static final int VK_RETURN = 0x0D;
+    private static final int VK_TAB = 0x09;
 
     /** AWT-VK-style token (the part after {@code VK_}) → Win32 virtual-key code, for non-trivial keys. */
     private static final Map<String, Integer> KEY_CODES = buildKeyCodes();
@@ -64,6 +67,43 @@ public final class WindowsKeyboard {
                 }
             }
         }
+    }
+
+    /**
+     * Types arbitrary text by posting each character as a {@code KEYEVENTF_UNICODE} event, which is
+     * layout-independent (the scan code carries the UTF-16 code unit, so surrogate pairs for
+     * astral-plane characters are delivered as their two code units in order). Newlines and tabs are
+     * sent as real {@code VK_RETURN}/{@code VK_TAB} presses since the Unicode path does not produce them.
+     */
+    public static void typeText(String text) {
+        if (text == null || text.isEmpty()) {
+            return;
+        }
+        try {
+            for (var i = 0; i < text.length(); i++) {
+                var c = text.charAt(i);
+                switch (c) {
+                    case '\r' -> { /* ignore; '\n' drives the newline */ }
+                    case '\n' -> { sendVk(VK_RETURN, false); sendVk(VK_RETURN, true); }
+                    case '\t' -> { sendVk(VK_TAB, false); sendVk(VK_TAB, true); }
+                    default -> { sendUnicode(c, false); sendUnicode(c, true); }
+                }
+            }
+        } catch (Throwable e) { // UnsatisfiedLinkError if user32 is somehow missing
+            log.error("Unable to type text on Windows", e);
+        }
+    }
+
+    private static void sendUnicode(char c, boolean keyUp) {
+        var input = new WinUser.INPUT();
+        input.type = new WinDef.DWORD(WinUser.INPUT.INPUT_KEYBOARD);
+        input.input.setType("ki");
+        input.input.ki.wVk = new WinDef.WORD(0);
+        input.input.ki.wScan = new WinDef.WORD(c);
+        input.input.ki.time = new WinDef.DWORD(0);
+        input.input.ki.dwExtraInfo = new BaseTSD.ULONG_PTR(0);
+        input.input.ki.dwFlags = new WinDef.DWORD(KEYEVENTF_UNICODE | (keyUp ? KEYEVENTF_KEYUP : 0));
+        User32.INSTANCE.SendInput(new WinDef.DWORD(1), (WinUser.INPUT[]) input.toArray(1), input.size());
     }
 
     private static void sendVk(int vk, boolean keyUp) {
