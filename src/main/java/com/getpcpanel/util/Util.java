@@ -45,6 +45,11 @@ public final class Util {
             int b = Integer.parseInt(hex.substring(4, 6), 16);
             return new int[] { r, g, b };
         } catch (Exception e) {
+            // A blank value is a normal "no colour" sentinel; anything else is malformed persisted
+            // config that would otherwise silently fall back to black, so surface it.
+            if (StringUtils.isNotBlank(color)) {
+                log.warn("Ignoring malformed colour value '{}'", color);
+            }
             return null;
         }
     }
