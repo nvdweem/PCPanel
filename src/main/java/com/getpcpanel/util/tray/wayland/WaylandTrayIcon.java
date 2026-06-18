@@ -26,14 +26,30 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 final class WaylandTrayIcon {
     private static final String ICON_RESOURCE = "/assets/tray-icon.argb";
-    private static final List<IconPixmap> PIXMAP = load();
+
+    /**
+     * Loaded lazily on first use rather than in a static initializer: {@link IconPixmap} extends the
+     * D-Bus {@code Struct} type, which is {@code --initialize-at-run-time} in the native image, so
+     * building these instances eagerly would pin run-time-only objects into the build-time image heap
+     * and abort the native build (UnsupportedFeatureException). Deferring keeps construction at runtime.
+     */
+    private static volatile List<IconPixmap> pixmap;
 
     private WaylandTrayIcon() {
     }
 
     /** Returns the tray pixmap, or an empty list when no AWT-free icon source is available. */
     static List<IconPixmap> pixmap() {
-        return PIXMAP;
+        var result = pixmap;
+        if (result == null) {
+            synchronized (WaylandTrayIcon.class) {
+                result = pixmap;
+                if (result == null) {
+                    result = pixmap = load();
+                }
+            }
+        }
+        return result;
     }
 
     private static List<IconPixmap> load() {
