@@ -68,6 +68,10 @@ public class DeviceCommunicationHandler {
         writerThread = new Thread(this::writer, "HIDWriter " + device.getSerialNumber());
         readerThread.setDaemon(true);
         writerThread.setDaemon(true);
+        // Start the rolling-average worker here (not in its constructor) so it does not publish a
+        // reference to this not-yet-constructed handler, and so it only runs once the device is live.
+        rollingAverageSetter.setDaemon(true);
+        rollingAverageSetter.start();
         readerThread.start();
         writerThread.start();
     }
@@ -319,11 +323,7 @@ public class DeviceCommunicationHandler {
     private class RollingAverageSetter extends Thread {
         private final Map<Integer, Deque<Pair<Long, Integer>>> targets = new ConcurrentHashMap<>();
         @Setter private Integer rollWindowMs;
-        private boolean running = true;
-
-        public RollingAverageSetter() {
-            start();
-        }
+        private volatile boolean running = true;
 
         public void setKnob(KnobRotateEvent knob, Integer rollWindowMs) {
             this.rollWindowMs = rollWindowMs;
@@ -340,9 +340,9 @@ public class DeviceCommunicationHandler {
         @Override
         public void run() {
             while (running) {
-                synchronized (targets) {
-                    targets.forEach(this::handleRoll);
-                }
+                // targets is a ConcurrentHashMap and each knob's deque is guarded individually (see
+                // setKnob/handleRoll), so iterating here needs no map-wide lock — nothing else holds one.
+                targets.forEach(this::handleRoll);
 
                 try {
                     //noinspection BusyWait
