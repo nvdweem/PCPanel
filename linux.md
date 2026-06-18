@@ -81,6 +81,63 @@ still need to be installed on your system.
 If neither package works on your distribution, download the raw executable from the release (it sits inside the `.deb`
 under `/opt/pcpanel`) together with its `.so` libraries and run `./PCPanel`.
 
+## Settings and data location
+
+All user configuration — profiles (`profiles.json`), logs, and the single-instance lock file — is stored in one data
+directory. On Linux this follows the [XDG Base Directory spec](https://specifications.freedesktop.org/basedir-spec/) so it
+lands in a writable, persisted place on every kind of system (including sandboxed and immutable ones). The directory is
+resolved in this order:
+
+1. **`$PCPANEL_ROOT`** — if set, this exact path is used, on any platform. This is the escape hatch for read-only homes,
+   custom locations, or running two installs side by side.
+2. **Legacy `~/.pcpanel`** — if this directory already exists it keeps being used, so upgrades from older versions (and
+   older Flatpak builds) don't lose their profiles.
+3. **`$XDG_CONFIG_HOME/pcpanel`**, or **`~/.config/pcpanel`** when `XDG_CONFIG_HOME` is unset — the location for fresh
+   installs.
+
+Where this resolves per package:
+
+| Install            | Default settings directory                                              |
+| ------------------ | ----------------------------------------------------------------------- |
+| `.deb` / AppImage  | `~/.config/pcpanel` (or your `$XDG_CONFIG_HOME/pcpanel`)                 |
+| Flatpak            | `~/.var/app/com.getpcpanel.PCPanel/config/pcpanel` (inside the sandbox) |
+| Upgraded install   | `~/.pcpanel` is kept if it already exists                               |
+
+### Immutable distros (Silverblue, Kinoite, Bazzite, MicroOS, SteamOS, …)
+
+These work out of the box: only `/usr` is read-only — your `$HOME` and the XDG directories under it stay writable, so the
+AppImage and the Flatpak both persist settings normally. The **AppImage is the recommended download** for these systems: it
+needs nothing installed into the OS and runs without a sandbox, so USB HID access and the host tools (`pactl`,
+`xdotool`/`kdotool`) all work natively.
+
+### Flatpak settings persistence
+
+The Flatpak writes to its own sandbox home (`~/.var/app/com.getpcpanel.PCPanel/`), which Flatpak persists across runs and
+upgrades, so **no host-filesystem permission is needed** and settings are not lost on update. To **import profiles from a
+previous non-Flatpak install**, copy your old `profiles.json` into the sandbox directory:
+
+```shell
+mkdir -p ~/.var/app/com.getpcpanel.PCPanel/config/pcpanel
+cp ~/.pcpanel/profiles.json ~/.var/app/com.getpcpanel.PCPanel/config/pcpanel/
+```
+
+### If settings don't persist out of the box
+
+If your environment puts `$HOME` somewhere non-writable, or `user.home` is unset/wrong (some minimal kiosk or container
+setups), point the app at a writable directory explicitly with `PCPANEL_ROOT`:
+
+```shell
+# .deb / AppImage / manual run
+PCPANEL_ROOT="$HOME/.config/pcpanel" pcpanel
+
+# Flatpak: pass the env var and grant the sandbox access to that path
+flatpak override --user --env=PCPANEL_ROOT=/var/data/pcpanel \
+  --filesystem=/var/data/pcpanel:create com.getpcpanel.PCPanel
+```
+
+For autostart units (see below) add the same variable to the unit's environment (`Environment=PCPANEL_ROOT=…` for systemd,
+or an `env` prefix in the `Exec=` line for XDG autostart).
+
 ## Autostart on login
 
 There is no installer on Linux, so autostart is set up manually. Add the `quiet` argument so the main window stays

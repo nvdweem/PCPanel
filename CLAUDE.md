@@ -78,7 +78,13 @@ non-CDI code. On Linux many native calls degrade to a no-op `ISndCtrl`.
 
 **Persistence (`profile/`):** All user config (`Save` → devices/`Profile`s/command maps) is a single
 JSON file at `${pcpanel.root}/profiles.json` managed by `SaveService`. Custom Jackson deserializers
-(`CommandMapDeserializer`, `KnobSettingMapDeserializer`) handle the polymorphic command maps.
+(`CommandMapDeserializer`, `KnobSettingMapDeserializer`) handle the polymorphic command maps. The
+data dir is `~/.pcpanel` on Windows/macOS; on Linux it is resolved by `util/PcPanelRoot` to honor
+`$PCPANEL_ROOT`, then a pre-existing legacy `~/.pcpanel`, then `$XDG_CONFIG_HOME/pcpanel`
+(`~/.config/pcpanel`) — this is what makes the Flatpak (sandbox `$HOME` → `~/.var/app/<id>/config`)
+and immutable distros persist settings without a host grant. `PcPanelRoot.resolve()` is the single
+source of truth: `Main` publishes it as the `pcpanel.root` system property for the native image, and
+the non-CDI `FileChecker`/`HidDebug` call it directly. See `linux.md` for the user-facing details.
 
 **Frontend bridge (`rest/`):** JAX-RS resources under `/api` (`DeviceResource`, `CommandsResource`,
 `SettingsResource`, …) plus a single websocket `EventWebSocket` at `/ws/events`. The backend pushes
