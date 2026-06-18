@@ -25,6 +25,5 @@ import { WaveLinkIdLists } from '../wave-link-id-lists/wave-link-id-lists';
 })
 export class CommandWaveLinkChangeMuteComponent extends CommandComponent<CommandWaveLinkChangeMute> {
   protected waveLinkService = inject(WaveLinkService);
-  protected readonly commandTypes = ['Input', 'Channel', 'Mix', 'Output'] as const;
   protected readonly muteTypes = ['toggle', 'mute', 'unmute'] as const;
 }

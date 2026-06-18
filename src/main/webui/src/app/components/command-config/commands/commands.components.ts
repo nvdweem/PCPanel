@@ -366,7 +366,9 @@ function buildEmptyCommandVoiceMeeterAdvancedButton(): Required<CommandVoiceMeet
 function buildEmptyCommandWaveLinkChangeLevel(): Required<CommandWaveLinkChangeLevel> {
   return {
     _type: 'com.getpcpanel.wavelink.command.CommandWaveLinkChangeLevel',
-    commandType: 'Input',
+    // 'Input' (raw input-device level) is not controllable via the Wave Link API — Wave Link
+    // controls mics through channels — so new commands default to a working target.
+    commandType: 'Channel',
     id1: '',
     id2: '',
     dialParams: buildEmptyDialCommandParams(),
@@ -386,7 +388,8 @@ function buildEmptyCommandWaveLinkAddFocusToChannel(): Required<CommandWaveLinkA
 function buildEmptyCommandWaveLinkChangeMute(): Required<CommandWaveLinkChangeMute> {
   return {
     _type: 'com.getpcpanel.wavelink.command.CommandWaveLinkChangeMute',
-    commandType: 'Input',
+    // See buildEmptyCommandWaveLinkChangeLevel: 'Input' is not API-controllable in Wave Link.
+    commandType: 'Channel',
     id1: '',
     id2: '',
     muteType: 'toggle',

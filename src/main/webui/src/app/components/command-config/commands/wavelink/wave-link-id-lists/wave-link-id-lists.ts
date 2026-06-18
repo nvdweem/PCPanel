@@ -34,7 +34,10 @@ export class WaveLinkIdLists {
   field = input.required<FieldTree<Required<CommandWaveLinkChange>>>();
 
   protected waveLinkService = inject(WaveLinkService);
-  protected readonly commandTypes = ['Input', 'Channel', 'Mix', 'Output'] as const;
+  // 'Input' is intentionally not offered: raw input-device level/mute is not controllable through the
+  // Wave Link API (mics are controlled via channels), so selecting it silently did nothing. Existing
+  // saved 'Input' configs still render via the formState case below for backwards compatibility.
+  protected readonly commandTypes = ['Channel', 'Mix', 'Output'] as const;
 
   protected formState = computed<FormState>(() => {
     const ct = this.field().commandType().value();
