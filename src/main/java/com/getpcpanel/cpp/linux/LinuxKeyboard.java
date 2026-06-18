@@ -145,8 +145,8 @@ public final class LinuxKeyboard {
     @SuppressWarnings("java:S138") // long but flat lookup table
     private static Map<String, Long> buildKeysyms() {
         Map<String, Long> m = new HashMap<>();
-        // Function keys (XK_F1..XK_F12)
-        for (var i = 1; i <= 12; i++) {
+        // Function keys (XK_F1..XK_F24 are contiguous from 0xffbe)
+        for (var i = 1; i <= 24; i++) {
             m.put("F" + i, 0xffbeL + (i - 1));
         }
         // Control / navigation

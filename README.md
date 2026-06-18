@@ -66,6 +66,17 @@ injection (`LinuxKeyboard`) is covered by `LinuxKeyboardNativeConfigTest`.
 a single OS, otherwise a Linux run wipes the Windows-captured entries (and vice versa) — the
 committed metadata is the union across all platforms.
 
+The simplest path is the `native-config-gen` Maven profile, which attaches the agent in merge mode
+and enables the generation-only tests (those gated on `pcpanel.generate-native-config`, e.g. the
+keystroke test that synthesises an `F24` press to load `libX11`/`libXtst`). Run it with a GraalVM
+JDK on a host that has the relevant native libraries (and a live display, for keystrokes):
+
+```shell
+mvn -Pnative-config-gen test -Dquarkus.native.enabled=false
+```
+
+Equivalent raw invocations, if you need to tweak flags:
+
 ```shell
 # Merge mode (recommended): add what this run discovers, keep everything already captured.
 mvn test "-DargLine=-agentlib:native-image-agent=config-merge-dir=src/main/resources/META-INF/native-image/ -Djava.awt.headless=false"

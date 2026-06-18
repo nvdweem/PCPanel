@@ -500,5 +500,27 @@
                 <native.awt.args>,--initialize-at-run-time=java.awt,--initialize-at-run-time=javax.swing,--initialize-at-run-time=sun.awt,--initialize-at-run-time=sun.lwawt,--initialize-at-run-time=sun.java2d,--initialize-at-run-time=sun.font,--initialize-at-run-time=javax.imageio,--initialize-at-run-time=com.sun.imageio,--initialize-at-run-time=com.getpcpanel.overlay.OverlayRenderer</native.awt.args>
             </properties>
         </profile>
+        <profile>
+            <!-- Regenerate GraalVM reachability metadata via the tracing agent. Runs the test suite
+                 under -agentlib:native-image-agent in MERGE mode (keeps entries other platforms
+                 captured) and enables the generation-only tests gated on pcpanel.generate-native-config
+                 (e.g. LinuxKeyboardNativeConfigTest, which synthesises a real keystroke to load the
+                 X11/XTest JNA libraries). Use a GraalVM JDK on a host that has the relevant native
+                 libraries (and, for keystrokes, a live display):
+                   mvn -Pnative-config-gen test -Dquarkus.native.enabled=false
+                 Then strip any captured *Test infrastructure entries. See README. -->
+            <id>native-config-gen</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <argLine>-agentlib:native-image-agent=config-merge-dir=${project.basedir}/src/main/resources/META-INF/native-image/ -Djava.awt.headless=false -Dpcpanel.generate-native-config=true</argLine>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 </project>

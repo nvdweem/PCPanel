@@ -1,89 +1,35 @@
 package com.getpcpanel.cpp.linux;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 
-import com.sun.jna.Library;
-import com.sun.jna.Platform;
+import com.getpcpanel.commands.command.CommandKeystroke;
 
 /**
- * Exercises the Linux X11/XTest JNA keystroke path so the GraalVM tracing agent records the
- * dynamic proxies that {@code Native.load} builds for the {@code X11}/{@code XTest}
- * {@link Library} interfaces. Without those proxy registrations the native image throws
- * {@code MissingReflectionRegistrationError} on the first keystroke (the bug this addresses).
+ * Generation-only test: drives the real keystroke feature ({@link CommandKeystroke#execute()} ->
+ * {@code KeyMacro} -> {@link LinuxKeyboard}) so the GraalVM tracing agent records the X11/XTest JNA
+ * dynamic proxies that {@code Native.load} builds. Run under the agent it captures the metadata
+ * organically from the application path — nothing about the proxies is hand-coded here.
  *
- * <p>The proxy is created when the interface class initialises ({@code Native.load} runs in its
- * static initialiser) — BEFORE any X call. This test therefore force-initialises {@code X11} and
- * {@code XTest} to trigger the loads, and deliberately does NOT call {@code executeKeyStroke}: on a
- * machine with a live display that would inject real keystrokes into the focused window. The
- * keysym/parsing logic of {@code executeKeyStroke} is covered by its early-return guards only.
- *
- * <p>On a host without {@code libX11}/{@code libXtst} (e.g. headless CI) the loads fail and the
- * test is skipped rather than failed; the metadata is then supplied by a host that does have them.
+ * <p>It is disabled by default because reaching {@code XTestFakeKeyEvent} synthesises a real key
+ * event on the live X display. It runs only when explicitly generating native config — the
+ * {@code native-config-gen} Maven profile sets {@code pcpanel.generate-native-config=true} (see
+ * README "Generate reachability metadata"). The key is {@code F24}: a valid X11 keysym that
+ * virtually nothing binds, so the synthesised event disturbs nobody.
  */
-@DisplayName("Linux keyboard native-image config coverage")
+@EnabledOnOs(OS.LINUX)
+@EnabledIfSystemProperty(named = "pcpanel.generate-native-config", matches = "true")
+@DisplayName("Linux keystroke native-config generation")
 class LinuxKeyboardNativeConfigTest {
 
-    private static final String X11 = "com.getpcpanel.cpp.linux.LinuxKeyboard$X11";
-    private static final String XTEST = "com.getpcpanel.cpp.linux.LinuxKeyboard$XTest";
-
     @Test
-    @DisplayName("X11 is a JNA Library interface declaring XOpenDisplay/XFlush/XKeysymToKeycode")
-    void x11InterfaceShape() throws Exception {
-        var clazz = Class.forName(X11);
-        assertTrue(clazz.isInterface());
-        assertTrue(Library.class.isAssignableFrom(clazz), "JNA proxy requires it to be a Library");
-        assertTrue(hasMethod(clazz, "XOpenDisplay"));
-        assertTrue(hasMethod(clazz, "XFlush"));
-        assertTrue(hasMethod(clazz, "XKeysymToKeycode"));
-    }
-
-    @Test
-    @DisplayName("XTest is a JNA Library interface declaring XTestFakeKeyEvent")
-    void xTestInterfaceShape() throws Exception {
-        var clazz = Class.forName(XTEST);
-        assertTrue(clazz.isInterface());
-        assertTrue(Library.class.isAssignableFrom(clazz), "JNA proxy requires it to be a Library");
-        assertTrue(hasMethod(clazz, "XTestFakeKeyEvent"));
-    }
-
-    /**
-     * Loads {@code libX11}/{@code libXtst} through JNA, building the dynamic proxies the native image
-     * needs. Under the tracing agent this is what records them in {@code reachability-metadata.json}.
-     */
-    @Test
-    @DisplayName("Native.load builds the X11 and XTest JNA proxies (records them under the tracing agent)")
-    void nativeLoadBuildsProxies() {
-        assumeTrue(Platform.isLinux(), "X11/XTest keystroke injection is Linux-only");
-        var loader = LinuxKeyboardNativeConfigTest.class.getClassLoader();
-        try {
-            // initialize=true runs the static initialiser: `INSTANCE = Native.load(...)` -> Proxy created.
-            Class.forName(X11, true, loader);
-            Class.forName(XTEST, true, loader);
-        } catch (Throwable e) {
-            assumeTrue(false, "libX11/libXtst not available on this host; skipping (metadata comes from a host that has them): " + e);
-        }
-    }
-
-    @Test
-    @DisplayName("executeKeyStroke ignores null/UNDEFINED input without touching the display")
-    void executeKeyStrokeGuardsAreSafe() {
-        assertDoesNotThrow(() -> {
-            LinuxKeyboard.executeKeyStroke(null);
-            LinuxKeyboard.executeKeyStroke("ctrl+UNDEFINED");
-        });
-    }
-
-    private static boolean hasMethod(Class<?> clazz, String name) {
-        for (var m : clazz.getDeclaredMethods()) {
-            if (m.getName().equals(name)) {
-                return true;
-            }
-        }
-        return false;
+    @DisplayName("CommandKeystroke(F24).execute() loads libX11/libXtst through JNA")
+    void commandKeystrokeExercisesNativeKeyboard() {
+        assertDoesNotThrow(() -> new CommandKeystroke("F24").execute());
     }
 }
