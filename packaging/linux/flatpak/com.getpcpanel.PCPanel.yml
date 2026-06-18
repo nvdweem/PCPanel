@@ -34,8 +34,11 @@ finish-args:
   - --talk-name=org.freedesktop.Notifications
   # Run host tools (pactl/xdotool/kdotool) via flatpak-spawn --host
   - --talk-name=org.freedesktop.Flatpak
-  # Profile + migration from the legacy ~/.pcpanel location
-  - --filesystem=~/.pcpanel:create
+  # No host-filesystem grant for the profile store: inside the sandbox $HOME is the per-app
+  # ~/.var/app/com.getpcpanel.PCPanel/ directory, and PcPanelRoot resolves the data dir via
+  # $XDG_CONFIG_HOME (i.e. ~/.var/app/com.getpcpanel.PCPanel/config/pcpanel) which Flatpak persists
+  # across runs and upgrades automatically. To import profiles from a non-Flatpak install, copy the
+  # old profiles.json into that directory or set --env=PCPANEL_ROOT plus a --filesystem grant.
   - --env=PATH=/app/bin:/usr/bin
 
 modules:
