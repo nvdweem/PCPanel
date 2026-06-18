@@ -22,6 +22,9 @@ import lombok.extern.log4j.Log4j2;
  * suspend notice and a resume signal, and the per-session {@code Lock}/{@code Unlock} signals give
  * best-effort lock detection. dbus-java is the same stack the system tray already uses, so it works
  * in the GraalVM native image.
+ *
+ * <p>Display power off/on (monitors sleeping) is detected separately by {@link LinuxDisplayPowerMonitor}
+ * polling X11 DPMS, since logind has no monitor-power signal.
  */
 @Log4j2
 @Startup
@@ -32,9 +35,11 @@ public class LinuxSystemEventService {
     Event<Object> eventBus;
 
     private DBusConnection connection;
+    private final LinuxDisplayPowerMonitor displayPowerMonitor = new LinuxDisplayPowerMonitor(this::fire);
 
     @PostConstruct
     public void init() {
+        displayPowerMonitor.start();
         // Catch Throwable, not just Exception: in a native image a missing/unreachable class surfaces
         // as a LinkageError, and sleep detection is non-essential — it must never crash startup.
         try {
@@ -62,6 +67,7 @@ public class LinuxSystemEventService {
 
     @PreDestroy
     public void shutdown() {
+        displayPowerMonitor.stop();
         if (connection != null) {
             try {
                 connection.close();
