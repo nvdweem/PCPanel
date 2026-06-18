@@ -25,6 +25,8 @@ export interface CommandEndProgram extends Command, ButtonAction {
 export interface CommandKeystroke extends Command, ButtonAction {
     _type: "com.getpcpanel.commands.command.CommandKeystroke";
     keystroke: string;
+    text: string;
+    type: KeystrokeType;
 }
 
 export interface CommandMedia extends Command, ButtonAction {
@@ -599,6 +601,8 @@ export type DeviceType = "PCPANEL_RGB" | "PCPANEL_MINI" | "PCPANEL_PRO";
 export type DialControlMode = "NEG_12_TO_12" | "ZERO_TO_10" | "NEG_40_TO_12" | "NEG_60_TO_12" | "NEG_INF_TO_12" | "NEG_INF_TO_ZERO";
 
 export type DialType = "GAIN" | "AUDIBILITY" | "COMP" | "GATE" | "LIMIT" | "EQGAIN1" | "EQGAIN2" | "EQGAIN3" | "REVERB" | "DELAY" | "FX1" | "FX2" | "RETURNREVERB" | "RETURNDELAY" | "RETURNFX1" | "RETURNFX2";
+
+export type KeystrokeType = "KEY" | "TEXT";
 
 export type Kinds = "dial" | "button" | "dblbutton";
 

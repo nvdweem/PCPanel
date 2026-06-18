@@ -177,7 +177,9 @@ function buildEmptyCommandBrightness(): Required<CommandBrightness> {
 function buildEmptyCommandKeystroke(): Required<CommandKeystroke> {
   return {
     _type: 'com.getpcpanel.commands.command.CommandKeystroke',
+    type: 'KEY',
     keystroke: '',
+    text: '',
     overlayText: '',
   };
 }
