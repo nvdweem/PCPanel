@@ -164,12 +164,14 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
 
     @Override
     public void setInput(WaveLinkInputDevice device, WaveLinkControlAction action, Double value, Boolean mute) {
-        log.warn("setInputLevel not implemented yet");
+        // Wave Link has no API to control a raw input device directly — inputs are exposed through
+        // channels. The UI no longer offers the 'Input' target; this guards legacy saved configs.
+        log.warn("Wave Link 'Input' target is not supported (control inputs via their channel instead); ignoring {}", action);
     }
 
     @Override
     public void setInputAudioEffect(WaveLinkInputDevice device, WaveLinkEffect effect) {
-        log.warn("setInputAudioEffect not implemented yet");
+        log.warn("Wave Link 'Input' audio-effect control is not supported (control inputs via their channel instead); ignoring");
     }
 
     @Override
@@ -264,11 +266,11 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
 
     @Override
     public void close() {
-        var socket = websocket.join();
-        if (socket != null && (!socket.isInputClosed() || !socket.isOutputClosed())) {
-            socket.sendClose(WebSocket.NORMAL_CLOSURE, "Done");
-        }
         try {
+            var socket = websocket.join();
+            if (socket != null && (!socket.isInputClosed() || !socket.isOutputClosed())) {
+                socket.sendClose(WebSocket.NORMAL_CLOSURE, "Done");
+            }
         } catch (Exception e) {
             log.error("Error closing websocket", e);
         }

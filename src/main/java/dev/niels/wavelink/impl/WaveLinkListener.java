@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -32,6 +33,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @RequiredArgsConstructor
 public class WaveLinkListener implements Listener {
+    private static final long REQUEST_TIMEOUT_MS = 10_000;
     private final ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     private final Map<Long, PendingRequest> pendingRequests = new ConcurrentHashMap<>();
     private final WaveLinkClientImpl client;
@@ -156,6 +158,11 @@ public class WaveLinkListener implements Listener {
             message.setId(nextSendId++);
             pendingRequests.put(message.getId(), new PendingRequest(message, message.getResultClass(), result));
         }
+        // Time out the request if Wave Link never answers, and always drop the pending entry when it
+        // settles, so the pendingRequests map cannot grow without bound on a stalled connection.
+        var requestId = message.getId();
+        result.orTimeout(REQUEST_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+              .whenComplete((r, ex) -> pendingRequests.remove(requestId));
         var messageText = mapper.writeValueAsString(message);
         log.debug("Sending: {}", messageText);
         socket.sendText(messageText, true);
