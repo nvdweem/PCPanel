@@ -72,7 +72,45 @@ export abstract class PcpanelKnobDeviceBase {
   }
 
   protected label(i: number): string {
-    return truncate(this.dialLabels().get(i) ?? '—', 9);
+    return truncate(this.dialLabels().get(i) ?? '—', 18);
+  }
+
+  /** Full (untruncated) command label, for callers that shrink-to-fit instead of truncating. */
+  protected commandLabel(i: number): string {
+    return this.dialLabels().get(i) ?? '—';
+  }
+
+  /** Whether knob i has a command mapped (i.e. a real label, not the "—" placeholder). */
+  protected hasCommand(i: number): boolean {
+    const v = this.dialLabels().get(i);
+    return v != null && v !== '—';
+  }
+
+  /**
+   * Colour for the silk-screen device label ("VOLUME n"), which on the real
+   * hardware is back-lit by the same LED as the knob. Use the knob's ring
+   * colour when lit; fall back to a readable grey when that light is off
+   * (near-black), so the label stays legible in the editor.
+   */
+  protected labelColor(i: number): string {
+    const color = this.ringColor(i);
+    return this.isLightOff(color) ? '#9a9a9a' : color;
+  }
+
+  private isLightOff(color: string): boolean {
+    const rgb = this.parseColor(color);
+    if (!rgb) return false;
+    // Rec. 601 luma; treat a near-black (unlit) LED as "off".
+    return 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2] < 40;
+  }
+
+  private parseColor(color: string): [number, number, number] | null {
+    const s = color.trim().toLowerCase();
+    if (s === 'black') return [0, 0, 0];
+    const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/.exec(s);
+    if (!m) return null;
+    const h = m[1].length === 3 ? m[1].replace(/(.)/g, '$1$1') : m[1];
+    return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
   }
 
   /** Open the command/lighting dialog for a knob (which is also a press button). */
@@ -118,6 +156,10 @@ export abstract class PcpanelKnobDeviceBase {
 
   private formatCommands(cmds: Commands | null | undefined): string {
     if (!cmds?.commands?.length) return '—';
-    return cmds.commands.map((c: Command) => (c['_type'] ?? '').split('.').pop() ?? '?').join(', ');
+    // Drop the redundant "Command" prefix from each type name (e.g.
+    // CommandBrightness → Brightness) so the label fits the available space.
+    return cmds.commands
+      .map((c: Command) => ((c['_type'] ?? '').split('.').pop() ?? '?').replace(/^Command/, ''))
+      .join(', ');
   }
 }

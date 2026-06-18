@@ -90,7 +90,7 @@
   overflow: hidden;
 
   // The SVG components fill this area (maintaining aspect ratio via viewBox)
-  pcpanel-pcpanel-pro, app-pcpanel-mini, pcpanel-pcpanel-rgb {
+  pcpanel-pcpanel-pro, pcpanel-pcpanel-mini, pcpanel-pcpanel-rgb {
     flex: 1;
     min-height: 0;
     width: 100%;

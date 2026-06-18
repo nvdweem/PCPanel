@@ -26,14 +26,35 @@ export class PcpanelMiniComponent extends PcpanelKnobDeviceBase {
     [56.3, 133.4], [171.3, 133.4], [286.3, 133.4], [401.3, 133.4],
   ];
 
+  // Knob geometry. The body artwork is modelled around its local centre (30,30);
+  // RING_CENTER is the KNOB_RING_PATH bbox centre (measured via getBBox). Both the
+  // body and the ring are scaled up about the knob centre to match the hardware,
+  // where the lit tick ring sits well outside the chrome knob.
+  private readonly BODY_CENTER = 30;
+  private readonly BODY_SCALE = 1.2;
+  private readonly RING_CENTER: [number, number] = [35.54, 37.8];
+  private readonly RING_SCALE = 1.55;
+
   protected knobTransform(i: number): string {
     const [x, y] = this.KNOB_POS[i];
-    return `translate(${x},${y})`;
+    const s = this.BODY_SCALE;
+    const c = this.BODY_CENTER;
+    // Scale about the body centre so it stays at (x+30, y+30).
+    return `translate(${x + 30 - c * s},${y + 30 - c * s}) scale(${s})`;
+  }
+
+  /** X of a knob's centre (body circle is at local (30,30)); used to centre the label. */
+  protected knobCenterX(i: number): number {
+    return this.KNOB_POS[i][0] + 30;
   }
 
   protected knobRingTransform(i: number): string {
-    // lightPanes at x=65, y=82, prefWidth=450, 4 columns → each col = 112.5
-    const x = 65 + i * 112.5;
-    return `translate(${x}, 82)`;
+    const [x, y] = this.KNOB_POS[i];
+    const [rcx, rcy] = this.RING_CENTER;
+    const cx = x + 30;
+    const cy = y + 30;
+    // Concentric with the knob centre, scaled up so the lit ring clearly
+    // surrounds the chrome body with a visible gap (as on the hardware).
+    return `translate(${cx},${cy}) scale(${this.RING_SCALE}) translate(${-rcx},${-rcy})`;
   }
 }

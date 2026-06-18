@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+When you change anything described here, be sure to update this file. When you find key
+information, consider adding it here if it is relevant to the project's goals and
+functionality (not just the current task).
+
 ## What this is
 
 Third-party/community controller software for [PCPanel](https://getpcpanel.com) USB audio-control
@@ -113,7 +117,7 @@ Key constraints baked into those args, change with care:
 
 - `-J-XX:-UseCompressedOops` is required so `Unsafe.arrayIndexScale` matches the runtime (8-byte
   refs); omitting it segfaults jctools.
-- JNA, hid4java, jnativehook, dbus, AWT-dependent and Voicemeeter classes are
+- JNA, hid4java, jnativehook, dbus, AWT-dependent, and Voicemeeter classes are
   `--initialize-at-run-time`; certain AWT font/hint classes are `--initialize-at-build-time`.
 - **macOS has no `libawt` in the native image at all** (GraalVM/Quarkus reject AWT there:
   `quarkus-awt` is dropped via the `os-non-mac` profile, and the `os-mac` profile defers the whole
@@ -134,6 +138,17 @@ Visual Studio solution for `SndCtrl.dll` (audio control via Windows Core Audio) 
 harness (JNI access violations otherwise silently close the app). The built `SndCtrl.dll` is
 committed at `src/main/resources/SndCtrl.dll`. The one hardcoded setting is the JNI include dir
 under project properties → C/C++ → General → Additional Include Directories.
+
+## Git and worktrees
+
+- Unless specifically instructed we work in worktrees. When the user gives an instruction that
+  makes you doubt about their worktree intentions, ask first.
+- When you create a worktree, be sure that the upstream branch is the actual target branch. If
+  it's not clear what the target branch should be, ask.
+- The name of the worktree should not just be a random name. Make it a short description
+  of the task.
+- Never push unless instructed to do so. When you are instructed to push and go on, you must push, then do the
+  instructed work. You must not push when done with the instructed work.
 
 ## Conventions
 

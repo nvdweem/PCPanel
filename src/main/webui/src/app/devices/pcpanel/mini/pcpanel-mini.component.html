@@ -25,6 +25,13 @@
         <path [attr.fill]="ringColor(ki)" [class]="animClass()" [attr.d]="knobRingPath" opacity="0.9"/>
       </g>
     }
+
+    <!-- Silk-screen "VOLUME n" labels, back-lit by the same LED as each knob. -->
+    @for (ki of knobIndices; track ki) {
+      <text [attr.x]="knobCenterX(ki)" y="100" text-anchor="middle"
+            font-family="sans-serif" font-size="11" font-weight="500" letter-spacing="0.5"
+            [attr.fill]="labelColor(ki)" [class]="animClass()">VOLUME {{ ki + 1 }}</text>
+    }
   </g>
 
   <!-- ── Knobs ─────────────────────────────────────────────────────────── -->
@@ -38,9 +45,22 @@
         <rect x="28" y="42" width="4" height="10" fill="#3c3f42"/>
         <circle cx="30" cy="42" r="2" fill="#3c3f42" stroke="#2b2b2b" stroke-width="0.5"/>
       </g>
-      <text x="30" y="73" text-anchor="middle" font-size="8" fill="#9a9a9a" font-family="sans-serif">{{ label(ki) }}</text>
       <circle cx="30" cy="30" r="32" fill="transparent"/>
     </g>
+  }
+
+  <!-- ── Command labels: full name, shrunk to fit when long, in a pill ────── -->
+  @for (ki of knobIndices; track ki) {
+    @let lbl = commandLabel(ki);
+    @let estW = lbl.length * 4.2;
+    @let textW = estW > 96 ? 96 : estW;
+    @if (hasCommand(ki)) {
+      <rect [attr.x]="knobCenterX(ki) - (textW + 12) / 2" y="215"
+            [attr.width]="textW + 12" height="10" rx="3" fill="rgba(0,0,0,0.6)"/>
+    }
+    <text [attr.x]="knobCenterX(ki)" y="222" text-anchor="middle" font-size="7" font-family="sans-serif"
+          [attr.textLength]="estW > 96 ? 96 : null" lengthAdjust="spacingAndGlyphs"
+          [attr.fill]="hasCommand(ki) ? '#ededed' : '#9a9a9a'">{{ lbl }}</text>
   }
 
   <text x="300" y="255" text-anchor="middle" font-family="Arial,sans-serif" font-size="11"
