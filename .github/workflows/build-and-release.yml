@@ -125,7 +125,7 @@ jobs:
           if-no-files-found: error
 
   buildLinux:
-    name: Linux .deb + Flatpak
+    name: Linux .deb + AppImage
     runs-on: ubuntu-latest
     # Exposed so the pre-release job can flag when metadata generation degraded to committed metadata.
     outputs:
@@ -187,42 +187,6 @@ jobs:
           exe=$(ls target/*-runner | head -1)
           bash packaging/linux/appimage/build-appimage.sh "${{ steps.ver.outputs.version }}" "$exe" target
 
-      - name: Build Flatpak bundle (best-effort)
-        id: flatpak
-        continue-on-error: true
-        run: |
-          set -euxo pipefail
-          sudo apt-get update
-          sudo apt-get install -y flatpak flatpak-builder
-
-          flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
-          flatpak install --user -y flathub org.freedesktop.Platform//24.08 org.freedesktop.Sdk//24.08
-
-          # Stage everything the manifest references next to the manifest.
-          build=flatpak-build
-          mkdir -p "$build"
-          cp packaging/linux/flatpak/com.getpcpanel.PCPanel.yml "$build/"
-          cp packaging/linux/flatpak/pcpanel-launcher.sh "$build/"
-          cp packaging/linux/flatpak/host-spawn-wrapper.sh "$build/"
-          cp packaging/linux/com.getpcpanel.PCPanel.desktop "$build/"
-          cp packaging/linux/com.getpcpanel.PCPanel.metainfo.xml "$build/"
-          cp app-icon.png "$build/"
-
-          # Native executable + companion .so libraries as a flat tarball.
-          stage=$(mktemp -d)
-          cp "$(ls target/*-runner | head -1)" "$stage/PCPanel"
-          cp target/*.so "$stage/" 2>/dev/null || true
-          tar -czf "$build/pcpanel-native.tar.gz" -C "$stage" .
-
-          flatpak-builder --user --force-clean --install-deps-from=flathub \
-            --repo=flatpak-repo flatpak-builder-dir "$build/com.getpcpanel.PCPanel.yml"
-          flatpak build-bundle flatpak-repo \
-            "target/PCPanel-${{ steps.ver.outputs.version }}.flatpak" com.getpcpanel.PCPanel
-
-      - name: Report Flatpak result
-        if: steps.flatpak.outcome != 'success'
-        run: echo "::warning::Flatpak bundle failed to build; releasing .deb only."
-
       - name: Store .deb artifact
         uses: actions/upload-artifact@v7
         with:
@@ -237,11 +201,85 @@ jobs:
           path: ./target/*.AppImage
           if-no-files-found: error
 
+      # Hand the native binary + companion .so libraries to the buildFlatpak job, which runs inside
+      # the freedesktop SDK container. This is an inter-job hand-off, not a release asset — preRelease
+      # strips it before publishing.
+      - name: Upload native binary for the Flatpak job
+        uses: actions/upload-artifact@v7
+        with:
+          name: linux-native
+          path: |
+            target/*-runner
+            target/*.so
+          if-no-files-found: error
+
+  # Flatpak runs in its own job inside bilelmoussaoui/flatpak-github-actions:freedesktop-24.08, which
+  # already ships the freedesktop Platform + SDK. That removes the ~16 min `flatpak install` download
+  # the old host-based step paid on every run (the module itself is buildsystem: simple — no compile).
+  # Best-effort: the flatpak-builder step is continue-on-error so a failure never blocks the release.
+  buildFlatpak:
+    name: Linux Flatpak (best-effort)
+    needs: buildLinux
+    runs-on: ubuntu-latest
+    # Job-level continue-on-error: even a container-start failure (bad image, infra) must not fail the
+    # run or block the release. preRelease gates only on the required Windows/Linux jobs (see its `if`).
+    continue-on-error: true
+    container:
+      image: bilelmoussaoui/flatpak-github-actions:freedesktop-24.08
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Compute app version
+        id: ver
+        run: |
+          base=$(grep -oP '(?<=<project\.baseversion>)[^<]+' pom.xml | head -1)
+          echo "version=${base}.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+
+      - name: Download native binary
+        uses: actions/download-artifact@v8
+        with:
+          name: linux-native
+          path: native
+
+      - name: Stage manifest sources
+        run: |
+          set -euxo pipefail
+          # The manifest resolves its `sources: path:` entries relative to its own directory, so stage
+          # everything it references next to a copy of the manifest (mirrors the previous host step).
+          build=flatpak-build
+          mkdir -p "$build"
+          cp packaging/linux/flatpak/com.getpcpanel.PCPanel.yml "$build/"
+          cp packaging/linux/flatpak/pcpanel-launcher.sh "$build/"
+          cp packaging/linux/flatpak/host-spawn-wrapper.sh "$build/"
+          cp packaging/linux/com.getpcpanel.PCPanel.desktop "$build/"
+          cp packaging/linux/com.getpcpanel.PCPanel.metainfo.xml "$build/"
+          cp app-icon.png "$build/"
+          # Native executable + companion .so libraries as a flat tarball.
+          stage=$(mktemp -d)
+          cp "$(ls native/*-runner | head -1)" "$stage/PCPanel"
+          cp native/*.so "$stage/" 2>/dev/null || true
+          tar -czf "$build/pcpanel-native.tar.gz" -C "$stage" .
+
+      - name: Build Flatpak bundle
+        id: flatpak
+        continue-on-error: true
+        uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: PCPanel-${{ steps.ver.outputs.version }}.flatpak
+          manifest-path: flatpak-build/com.getpcpanel.PCPanel.yml
+          cache-key: flatpak-builder-${{ github.sha }}
+          arch: x86_64
+
+      - name: Report Flatpak result
+        if: steps.flatpak.outcome != 'success'
+        run: echo "::warning::Flatpak bundle failed to build; releasing .deb + AppImage only."
+
       - name: Store Flatpak artifact
         uses: actions/upload-artifact@v7
         with:
           name: linux-flatpak
-          path: ./target/*.flatpak
+          path: PCPanel-*.flatpak
           if-no-files-found: ignore
 
   buildMac:
@@ -343,8 +381,12 @@ jobs:
     needs:
       - buildWindows
       - buildLinux
+      - buildFlatpak
       - buildMac
     runs-on: ubuntu-latest
+    # Wait for every build (so a successful Flatpak/macOS artifact is ready to attach) but only require
+    # the Windows and Linux installers — Flatpak and macOS are best-effort and must never block a release.
+    if: ${{ !cancelled() && needs.buildWindows.result == 'success' && needs.buildLinux.result == 'success' }}
     steps:
       - name: Fetch Sources
         uses: actions/checkout@v6
@@ -419,5 +461,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # linux-native (raw runner + .so) is the buildLinux -> buildFlatpak hand-off, not a release
+          # asset; drop it so only the installers/bundles are published.
+          rm -f dist/*-runner dist/*.so
           gh release upload "$TAG_NAME" dist/*
           gh release edit "$TAG_NAME" --draft=false
