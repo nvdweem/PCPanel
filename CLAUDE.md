@@ -132,12 +132,31 @@ Key constraints baked into those args, change with care:
 - Reachability metadata lives under `src/main/resources/META-INF/native-image/`. Regenerate it with
   the tracing agent via `generate-native-configs.cmd` (Windows) or the commands in README.md.
 
-## Native C++ (`src/main/cpp/`, Windows only)
+## Native C++ (`src/main/cpp/`, Windows DLL)
 
-Visual Studio solution for `SndCtrl.dll` (audio control via Windows Core Audio) and a `SndCtrlTest`
-harness (JNI access violations otherwise silently close the app). The built `SndCtrl.dll` is
-committed at `src/main/resources/SndCtrl.dll`. The one hardcoded setting is the JNI include dir
-under project properties → C/C++ → General → Additional Include Directories.
+`SndCtrl.dll` (audio control via Windows Core Audio). The built DLL is committed at
+`src/main/resources/SndCtrl.dll`; the Maven/CI build only bundles it, it does not rebuild it.
+
+The sources are compiler-portable and build via **CMake** (`src/main/cpp/CMakeLists.txt`) with
+either MSVC or MinGW-w64 — including a **cross-compile from Linux** (no Visual Studio needed). See
+`src/main/cpp/README.md` for the full instructions; in short:
+`apt install g++-mingw-w64-x86-64 cmake`, then `cmake -B build -S src/main/cpp
+-DCMAKE_TOOLCHAIN_FILE=$PWD/src/main/cpp/mingw-w64-x86_64.toolchain.cmake -DWIN_JDK_HOME=<windows-jdk>
+&& cmake --build build`. It needs the **Windows** JNI headers (unzip any Windows JDK), not a Linux
+JDK's (whose `jni_md.h` would make `jlong` 32-bit and skip the `__declspec(dllexport)` exports).
+
+What used to make it Visual-Studio-only and how it was removed: ATL `CComPtr`/`CComQIPtr` →
+portable `comptr_compat.h` shim; `_bstr_t`/`<comdef.h>` → `WideCharToMultiByte`; `__uuidof` on the
+custom COM interfaces → explicit `__CRT_UUID_DECL` (guarded by `__MINGW32__`); MSVC's implicit
+transitive includes → explicit ones in `pch.h`. All MSVC-path behaviour is preserved (changes are
+`#ifdef`-guarded or behaviour-identical). The MinGW DLL statically links libstdc++/libgcc/winpthread
+so it has no extra runtime-DLL dependencies (it is ~1 MB stripped vs MSVC's ~70 KB — expected).
+
+The legacy Visual Studio solution (`SndCtrl.sln`/`.vcxproj`) and the `SndCtrlTest` harness (JNI
+access violations otherwise silently close the app) are still present and still work; the one
+hardcoded VS setting is the JNI include dir under project properties → C/C++ → General → Additional
+Include Directories. **There is no automated test for the DLL** — final verification needs the app
+running on Windows against PCPanel hardware.
 
 ## Git and worktrees
 
