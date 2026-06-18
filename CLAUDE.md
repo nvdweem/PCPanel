@@ -59,7 +59,8 @@ command shape, recompile so the frontend contract regenerates — don't edit the
 
 Quarkus CDI (Arc) app. Entry point is `com.getpcpanel.Main` (`@QuarkusMain`); beans are wired by
 injection, and cross-cutting communication uses the **CDI event bus** (`jakarta.enterprise.event.Event`
-fire + `@Observes`) heavily rather than direct calls.
+fire + `@Observes`) heavily rather than direct calls. `docs/events.md` catalogs the events with their
+firers and observers — keep it current when you add or remove an event.
 
 **Hardware path (`hid/`, `device/`):** `DeviceScanner` discovers HID devices via hid4java;
 `DeviceCommunicationHandler` (one per device, own thread + queue) reads knob/button input and writes
