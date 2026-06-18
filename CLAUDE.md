@@ -110,7 +110,10 @@ the copy in **`application.properties`**. Which one wins depends on how the buil
 the classpath where its `additional-build-args` **outranks** the pom property — so for CI,
 `application.properties` is authoritative. When `quarkus:build`/`quarkus:dev` is invoked directly,
 `process-resources` has not run, so the pom value is used. **Change both**, or you will get different
-native images locally vs. in CI. The OS-specific AWT init policy is shared between them via the
+native images locally vs. in CI — `NativeBuildArgsParityTest` enforces this and fails the build if the
+two `additional-build-args` lists drift apart (the per-OS `${native.awt.args}`/
+`${native.platform.linker.args}` placeholders are ignored since they are identical references in both).
+The OS-specific AWT init policy is shared between them via the
 Maven-filtered `${native.awt.args}` placeholder (default vs. the `os-mac` profile in `pom.xml`);
 `src/main/resources` has `<filtering>true</filtering>`, which is what makes that substitution work.
 Key constraints baked into those args, change with care:
