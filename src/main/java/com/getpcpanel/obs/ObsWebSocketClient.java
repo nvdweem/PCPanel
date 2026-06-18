@@ -43,6 +43,8 @@ public class ObsWebSocketClient implements WebSocket.Listener {
     // EventSubscriptions bit: Inputs (for InputMuteStateChanged)
     private static final int EVENT_SUB_INPUTS = 1 << 3;
 
+    private static final long REQUEST_TIMEOUT_MS = 5_000;
+
     private final ObjectMapper mapper;
     private final String password;
     private final Consumer<Boolean> onConnected;
@@ -185,7 +187,13 @@ public class ObsWebSocketClient implements WebSocket.Listener {
         }
     }
 
-    private JsonNode request(String type, ObjectNode fields) throws Exception {
+    /**
+     * Sends a request and returns a future for its response. The future is bounded by
+     * {@link #REQUEST_TIMEOUT_MS} and the pending entry is always removed when it settles (success,
+     * error, or timeout), so a non-responding OBS can never grow the {@link #pending} map without
+     * bound or leave a recycled request-id hanging.
+     */
+    private CompletableFuture<JsonNode> requestAsync(String type, ObjectNode fields) {
         var id = UUID.randomUUID().toString();
         var msg = mapper.createObjectNode();
         msg.put("op", OP_REQUEST);
@@ -197,8 +205,26 @@ public class ObsWebSocketClient implements WebSocket.Listener {
         }
         var future = new CompletableFuture<JsonNode>();
         pending.put(id, future);
+        future.whenComplete((resp, ex) -> pending.remove(id));
         send(msg);
-        return future.get(5, TimeUnit.SECONDS);
+        return future.orTimeout(REQUEST_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+    }
+
+    /** Blocking request used by read operations (called off the control-event thread, from REST/UI). */
+    private JsonNode request(String type, ObjectNode fields) throws Exception {
+        return requestAsync(type, fields).get(REQUEST_TIMEOUT_MS + 1_000, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Fire-and-forget request for write operations. These run on the command-dispatcher/HID thread,
+     * so they must never block it waiting on OBS — we send and log asynchronously instead.
+     */
+    private void fireAndForget(String type, ObjectNode fields) {
+        requestAsync(type, fields).whenComplete((resp, ex) -> {
+            if (ex != null) {
+                log.warn("OBS: {} failed: {}", type, ex.getMessage());
+            }
+        });
     }
 
     // --- High-level OBS operations ---
@@ -243,42 +269,26 @@ public class ObsWebSocketClient implements WebSocket.Listener {
 
     /** vol is 0–100; converted to OBS volume multiplier 0.0–1.0. */
     public void setSourceVolume(String sourceName, int vol) {
-        try {
-            var fields = mapper.createObjectNode()
-                    .put("inputName", sourceName)
-                    .put("inputVolumeMultiplier", vol / 100.0);
-            request("SetInputVolume", fields);
-        } catch (Exception e) {
-            log.warn("OBS: SetInputVolume failed: {}", e.getMessage());
-        }
+        var fields = mapper.createObjectNode()
+                .put("inputName", sourceName)
+                .put("inputVolumeMultiplier", vol / 100.0);
+        fireAndForget("SetInputVolume", fields);
     }
 
     public void toggleSourceMute(String sourceName) {
-        try {
-            var fields = mapper.createObjectNode().put("inputName", sourceName);
-            request("ToggleInputMute", fields);
-        } catch (Exception e) {
-            log.warn("OBS: ToggleInputMute failed: {}", e.getMessage());
-        }
+        var fields = mapper.createObjectNode().put("inputName", sourceName);
+        fireAndForget("ToggleInputMute", fields);
     }
 
     public void setSourceMute(String sourceName, boolean mute) {
-        try {
-            var fields = mapper.createObjectNode()
-                    .put("inputName", sourceName)
-                    .put("inputMuted", mute);
-            request("SetInputMute", fields);
-        } catch (Exception e) {
-            log.warn("OBS: SetInputMute failed: {}", e.getMessage());
-        }
+        var fields = mapper.createObjectNode()
+                .put("inputName", sourceName)
+                .put("inputMuted", mute);
+        fireAndForget("SetInputMute", fields);
     }
 
     public void setCurrentScene(String sceneName) {
-        try {
-            var fields = mapper.createObjectNode().put("sceneName", sceneName);
-            request("SetCurrentProgramScene", fields);
-        } catch (Exception e) {
-            log.warn("OBS: SetCurrentProgramScene failed: {}", e.getMessage());
-        }
+        var fields = mapper.createObjectNode().put("sceneName", sceneName);
+        fireAndForget("SetCurrentProgramScene", fields);
     }
 }
