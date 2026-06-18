@@ -1,13 +1,6 @@
 {
   "reflection": [
     {
-      "type": {
-        "proxy": [
-          "com.sun.jna.platform.win32.Psapi"
-        ]
-      }
-    },
-    {
       "type": "boolean[]"
     },
     {
@@ -490,6 +483,12 @@
     },
     {
       "type": "com.getpcpanel.cpp.MuteType"
+    },
+    {
+      "type": "com.getpcpanel.cpp.linux.LinuxKeyboard$X11"
+    },
+    {
+      "type": "com.getpcpanel.cpp.linux.LinuxKeyboard$XTest"
     },
     {
       "type": "com.getpcpanel.cpp.linux.pulseaudio.SndCtrlPulseAudioTest",
@@ -3202,9 +3201,6 @@
       "type": "com.getpcpanel.rest.wavelink.WaveLinkResource"
     },
     {
-      "type": "com.getpcpanel.rest.wavelink.dto.WaveLinkMixDto[]"
-    },
-    {
       "type": "com.getpcpanel.rest.wavelink.WaveLinkResource$quarkusrestinvoker$listAllDevices_98920131f1bddff6dc628ac5409344fdbe93b63b",
       "methods": [
         {
@@ -3214,16 +3210,19 @@
       ]
     },
     {
+      "type": "com.getpcpanel.rest.wavelink.dto.WaveLinkMixDto[]"
+    },
+    {
       "type": "com.getpcpanel.rest.wavelink.dto.WaveLinkResponseDto"
     },
     {
       "type": "com.getpcpanel.sleepdetection.SleepDetector"
     },
     {
-      "type": "com.getpcpanel.sleepdetection.WindowsSystemEventService"
+      "type": "com.getpcpanel.sleepdetection.SystemEvent"
     },
     {
-      "type": "com.getpcpanel.sleepdetection.SystemEvent"
+      "type": "com.getpcpanel.sleepdetection.WindowsSystemEventService"
     },
     {
       "type": "com.getpcpanel.spring.OsHelper"
@@ -4215,6 +4214,47 @@
       ]
     },
     {
+      "type": "com.sun.jna.platform.win32.WinUser$WNDCLASSEX",
+      "fields": [
+        {
+          "name": "cbClsExtra"
+        },
+        {
+          "name": "cbSize"
+        },
+        {
+          "name": "cbWndExtra"
+        },
+        {
+          "name": "hCursor"
+        },
+        {
+          "name": "hIcon"
+        },
+        {
+          "name": "hIconSm"
+        },
+        {
+          "name": "hInstance"
+        },
+        {
+          "name": "hbrBackground"
+        },
+        {
+          "name": "lpfnWndProc"
+        },
+        {
+          "name": "lpszClassName"
+        },
+        {
+          "name": "lpszMenuName"
+        },
+        {
+          "name": "style"
+        }
+      ]
+    },
+    {
       "type": "com.sun.jna.platform.win32.WinUser$WindowProc",
       "methods": [
         {
@@ -4226,23 +4266,6 @@
             "com.sun.jna.platform.win32.WinDef$LPARAM"
           ]
         }
-      ]
-    },
-    {
-      "type": "com.sun.jna.platform.win32.WinUser$WNDCLASSEX",
-      "fields": [
-        { "name": "cbClsExtra" },
-        { "name": "cbSize" },
-        { "name": "cbWndExtra" },
-        { "name": "hCursor" },
-        { "name": "hIcon" },
-        { "name": "hIconSm" },
-        { "name": "hInstance" },
-        { "name": "hbrBackground" },
-        { "name": "lpfnWndProc" },
-        { "name": "lpszClassName" },
-        { "name": "lpszMenuName" },
-        { "name": "style" }
       ]
     },
     {
@@ -11456,7 +11479,35 @@
     {
       "type": {
         "proxy": [
+          "com.getpcpanel.cpp.linux.LinuxKeyboard$X11"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "com.getpcpanel.cpp.linux.LinuxKeyboard$XTest"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
           "com.getpcpanel.iconextract.Shell32Extra"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "com.getpcpanel.util.tray.win.WinShell32"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
+          "com.getpcpanel.util.tray.win.WinUser32Ext"
         ]
       }
     },
@@ -11477,6 +11528,13 @@
     {
       "type": {
         "proxy": [
+          "com.sun.jna.platform.win32.Psapi"
+        ]
+      }
+    },
+    {
+      "type": {
+        "proxy": [
           "com.sun.jna.platform.win32.User32"
         ]
       }
@@ -11485,20 +11543,6 @@
       "type": {
         "proxy": [
           "org.hid4java.jna.HidApiLibrary"
-        ]
-      }
-    },
-    {
-      "type": {
-        "proxy": [
-          "com.getpcpanel.util.tray.win.WinShell32"
-        ]
-      }
-    },
-    {
-      "type": {
-        "proxy": [
-          "com.getpcpanel.util.tray.win.WinUser32Ext"
         ]
       }
     }
@@ -11661,13 +11705,13 @@
       "glob": "assets/32x32.png"
     },
     {
+      "glob": "assets/app-icon.ico"
+    },
+    {
       "glob": "assets/device.png"
     },
     {
       "glob": "assets/obs.png"
-    },
-    {
-      "glob": "assets/app-icon.ico"
     },
     {
       "glob": "assets/systemsounds.ico"
