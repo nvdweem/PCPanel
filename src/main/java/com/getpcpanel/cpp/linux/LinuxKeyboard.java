@@ -118,7 +118,7 @@ public final class LinuxKeyboard {
         return display;
     }
 
-    private static long modifierKeysym(String mod) {
+    static long modifierKeysym(String mod) {
         return switch (mod) {
             case "ctrl" -> 0xffe3L;                      // Control_L
             case "shift" -> 0xffe1L;                      // Shift_L
@@ -128,7 +128,7 @@ public final class LinuxKeyboard {
         };
     }
 
-    private static long keysym(String token) {
+    static long keysym(String token) {
         var t = token.toUpperCase();
         if (t.length() == 1) {
             var c = t.charAt(0);
