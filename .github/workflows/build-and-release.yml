@@ -63,6 +63,15 @@ jobs:
           "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           Write-Host "App version: $version"
 
+      # Regenerate reachability metadata for THIS OS before compiling, so the native build
+      # consumes proxy/reflection/JNI entries the tracing agent actually observed on Windows
+      # rather than relying solely on the committed union. Merge mode (the native-config-gen
+      # profile) keeps the other platforms' committed entries; process-resources then copies
+      # the refreshed files into target/classes for the package step below. See README.md.
+      - name: Generate native-image metadata
+        shell: pwsh
+        run: mvn -Pnative-config-gen test -Dquarkus.native.enabled=false --file pom.xml
+
       - name: Build native image (Windows)
         shell: pwsh
         run: mvn -B package -Pnative --file pom.xml
@@ -122,6 +131,12 @@ jobs:
 
       - name: Install xvfb
         run: sudo apt-get update && sudo apt-get install -y xvfb
+
+      # Regenerate reachability metadata for THIS OS before compiling (see the Windows job for the
+      # rationale). Runs under xvfb because the native-config-gen profile sets java.awt.headless=false
+      # and the generation-only keystroke test synthesises a key press that loads libX11/libXtst.
+      - name: Generate native-image metadata
+        run: xvfb-run -a mvn -Pnative-config-gen test -Dquarkus.native.enabled=false --file pom.xml
 
       - name: Build native image (Linux)
         # A unit test (VolumeOverlayNativeTest) constructs a Swing overlay window, which throws
@@ -234,6 +249,14 @@ jobs:
         run: |
           base=$(grep -oE '<project\.baseversion>[^<]+' pom.xml | head -1 | sed 's/<project\.baseversion>//')
           echo "version=${base}.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+
+      # Regenerate reachability metadata for THIS OS before compiling (see the Windows job for the
+      # rationale). Best-effort like the rest of the macOS leg: the headless runner makes the AWT
+      # generation tests fail, but merge mode persists whatever was captured before the failure, and
+      # a failure here must not block the Windows/Linux release.
+      - name: Generate native-image metadata
+        continue-on-error: true
+        run: mvn -Pnative-config-gen test -Dquarkus.native.enabled=false --file pom.xml
 
       # macOS detection (os.detected.name) resolves pcpanel.build.os to "osx", so the @MacBuild
       # beans are included automatically; no extra flags are needed.
