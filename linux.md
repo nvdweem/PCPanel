@@ -207,6 +207,47 @@ which can leave a stray 'JavaEmbeddedFrame'). Either:
 If the tray is disabled, the close button still only hides the application; starting it again shows
 the main window.
 
+## Development gotchas
+
+### `quarkus:dev` fails to start: `EMFILE: too many open files` (Watchpack)
+
+When running from source (`./mvnw quarkus:dev`), the Angular dev server's file watcher can fail to
+start with a flood of:
+
+```
+Watchpack Error (watcher): Error: EMFILE: too many open files, watch '…/node_modules/…'
+```
+
+Despite the message, this is usually **not** the per-process file-descriptor limit (`ulimit -n`)
+nor the inotify *watch* limit (`fs.inotify.max_user_watches`) — both are typically already high.
+The real cap is the per-user inotify **instance** limit, which defaults to `128`:
+
+```shell
+cat /proc/sys/fs/inotify/max_user_instances    # often 128
+```
+
+A busy desktop (browser, IDE/VS Code, file-manager windows, Spotify, the Plasma shell, …) can hold
+100+ inotify instances on its own, leaving too few for webpack/Watchpack, which grabs a burst on
+startup. A git worktree makes it worse (a second `node_modules` tree to watch). Raise the limit:
+
+```shell
+# Apply now (no reboot, nothing needs restarting):
+sudo sysctl fs.inotify.max_user_instances=1024
+
+# Persist across reboots:
+echo 'fs.inotify.max_user_instances=1024' | sudo tee /etc/sysctl.d/99-inotify.conf
+sudo sysctl --system
+```
+
+Then restart `quarkus:dev`. To see what is currently consuming instances:
+
+```shell
+for p in $(pgrep -u "$USER"); do
+  c=$(find /proc/$p/fd -lname 'anon_inode:inotify' 2>/dev/null | wc -l)
+  [ "$c" -gt 0 ] && echo "$c  $(tr '\0' ' ' </proc/$p/cmdline | cut -c1-60)"
+done | sort -rn | head
+```
+
 ## Active window volume
 
 To get the active window, the software uses either `xdotool` (probably available in app-stores) or `kdotool` (which might not).
