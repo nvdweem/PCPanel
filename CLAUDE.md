@@ -23,6 +23,10 @@ Boot + JavaFX to Quarkus + Angular, and ships as a **GraalVM native image** (see
 The toolchain is the Maven wrapper (`./mvnw` / `mvnw.cmd`). Java 25 is required (GraalVM CE 25 for
 native builds; the `JAVAFX_HOME` instructions in CONTRIBUTING.md are stale — JavaFX is gone).
 
+JDKs live under `~/.jdks` (IntelliJ's default). If `JAVA_HOME` is unset, point it at the GraalVM 25
+install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
+(`~/.jdks/liberica-full-21.x` is also present but too old — Java 25 is required).
+
 ```bash
 ./mvnw quarkus:dev          # dev mode: backend on :7654, Quinoa runs Angular dev server on :4200 with live reload
 ./mvnw clean package        # builds a NATIVE image by default (quarkus.native.enabled=true in pom)
