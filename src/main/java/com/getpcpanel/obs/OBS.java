@@ -5,6 +5,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.util.ReconnectBackoff;
 
 import io.quarkus.scheduler.Scheduled;
 import jakarta.annotation.PostConstruct;
@@ -25,6 +26,8 @@ import lombok.extern.log4j.Log4j2;
 @ApplicationScoped
 public final class OBS {
     private static final long CONNECT_TIMEOUT_MS = 5_000;
+    /** Spaces out reconnect attempts when OBS is down (base = the scheduled interval, capped at 5 min). */
+    private final ReconnectBackoff backoff = new ReconnectBackoff(30_000, 300_000);
 
     @Inject SaveService save;
     @Inject Event<OBSConnectEvent> connectEvent;
@@ -49,12 +52,20 @@ public final class OBS {
     public void reconnectIfNeeded() {
         var settings = save.get();
         if (!settings.isObsEnabled()) {
+            backoff.onSuccess(); // nothing to connect → keep the gate clear so enabling reconnects at once
             return;
         }
         if (client != null && client.isConnected()) {
+            backoff.onSuccess();
+            return;
+        }
+        if (!backoff.ready(System.currentTimeMillis())) {
             return;
         }
         connect(settings.getObsAddress(), parsePort(settings.getObsPort()), settings.getObsPassword());
+        // OBS authentication completes asynchronously, so we can't tell success here; record an attempt
+        // and let the next tick's isConnected() check clear the backoff once the handshake completes.
+        backoff.onFailure(System.currentTimeMillis());
     }
 
     private void connect(String host, int port, String password) {

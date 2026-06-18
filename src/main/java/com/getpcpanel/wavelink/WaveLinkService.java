@@ -7,6 +7,7 @@ import java.util.concurrent.CompletionException;
 
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
+import com.getpcpanel.util.ReconnectBackoff;
 import com.getpcpanel.volume.IFocusRedirector;
 
 import dev.niels.wavelink.IWaveLinkClientEventListener;
@@ -23,6 +24,8 @@ import one.util.streamex.StreamEx;
 @ApplicationScoped
 public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEventListener, IFocusRedirector {
     private final SaveService saveService;
+    /** Spaces out reconnect attempts when Wave Link is down (base = the scheduled interval, capped at 5 min). */
+    private final ReconnectBackoff backoff = new ReconnectBackoff(10_000, 300_000);
     private boolean wasEnabled;
 
     WaveLinkService() {
@@ -66,14 +69,18 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
     @Scheduled(every = "10s")
     public void checkConnection() {
         if (!isEnabled()) {
+            backoff.onSuccess(); // nothing to connect → keep the gate clear so enabling reconnects at once
             return;
         }
         if (isConnected()) {
+            backoff.onSuccess();
             log.debug("WaveLink connected, sending ping.");
             ping();
-        } else {
+        } else if (backoff.ready(System.currentTimeMillis())) {
             log.info("WaveLink not connected, connecting.");
             reconnect();
+            // reconnect() is async; record an attempt and let the next tick clear the backoff once connected.
+            backoff.onFailure(System.currentTimeMillis());
         }
     }
 
