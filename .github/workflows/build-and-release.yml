@@ -78,7 +78,9 @@ jobs:
         # missing proxies). The failure is surfaced as a warning here and in the pre-release notes.
         continue-on-error: true
         shell: pwsh
-        run: mvn -Pnative-config-gen test -Dquarkus.native.enabled=false --file pom.xml
+        # Quote the -D property: PowerShell otherwise splits -Dquarkus.native.enabled=false and Maven
+        # sees ".native.enabled=false" as a bogus lifecycle phase. (Bash on Linux/macOS needs no quotes.)
+        run: mvn -Pnative-config-gen test "-Dquarkus.native.enabled=false" --file pom.xml
 
       - name: Warn if metadata generation failed
         if: steps.gen.outcome == 'failure'
