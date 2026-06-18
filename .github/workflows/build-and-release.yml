@@ -38,6 +38,9 @@ jobs:
   buildWindows:
     name: Windows installer
     runs-on: windows-latest
+    # Exposed so the pre-release job can flag when metadata generation degraded to committed metadata.
+    outputs:
+      genStatus: ${{ steps.gen.outcome }}
     steps:
       - uses: actions/checkout@v6
 
@@ -69,8 +72,18 @@ jobs:
       # profile) keeps the other platforms' committed entries; process-resources then copies
       # the refreshed files into target/classes for the package step below. See README.md.
       - name: Generate native-image metadata
+        id: gen
+        # Non-blocking: a generation failure must never break the release. The build below then
+        # falls back to the committed metadata union (ProxyRegistrationCoverageTest still guards
+        # missing proxies). The failure is surfaced as a warning here and in the pre-release notes.
+        continue-on-error: true
         shell: pwsh
         run: mvn -Pnative-config-gen test -Dquarkus.native.enabled=false --file pom.xml
+
+      - name: Warn if metadata generation failed
+        if: steps.gen.outcome == 'failure'
+        shell: pwsh
+        run: Write-Output "::warning::Native-image metadata generation failed on Windows; the build used committed metadata (possibly stale)."
 
       - name: Build native image (Windows)
         shell: pwsh
@@ -112,6 +125,9 @@ jobs:
   buildLinux:
     name: Linux .deb + Flatpak
     runs-on: ubuntu-latest
+    # Exposed so the pre-release job can flag when metadata generation degraded to committed metadata.
+    outputs:
+      genStatus: ${{ steps.gen.outcome }}
     steps:
       - uses: actions/checkout@v6
 
@@ -136,7 +152,15 @@ jobs:
       # rationale). Runs under xvfb because the native-config-gen profile sets java.awt.headless=false
       # and the generation-only keystroke test synthesises a key press that loads libX11/libXtst.
       - name: Generate native-image metadata
+        id: gen
+        # Non-blocking (see the Windows job): a generation failure must never break the release;
+        # the build falls back to committed metadata and the failure is surfaced as a warning.
+        continue-on-error: true
         run: xvfb-run -a mvn -Pnative-config-gen test -Dquarkus.native.enabled=false --file pom.xml
+
+      - name: Warn if metadata generation failed
+        if: steps.gen.outcome == 'failure'
+        run: echo "::warning::Native-image metadata generation failed on Linux; the build used committed metadata (possibly stale)."
 
       - name: Build native image (Linux)
         # A unit test (VolumeOverlayNativeTest) constructs a Swing overlay window, which throws
@@ -255,8 +279,13 @@ jobs:
       # generation tests fail, but merge mode persists whatever was captured before the failure, and
       # a failure here must not block the Windows/Linux release.
       - name: Generate native-image metadata
+        id: gen
         continue-on-error: true
         run: mvn -Pnative-config-gen test -Dquarkus.native.enabled=false --file pom.xml
+
+      - name: Warn if metadata generation failed
+        if: steps.gen.outcome == 'failure'
+        run: echo "::warning::Native-image metadata generation failed on macOS (${{ matrix.runner }}); the build used committed metadata (possibly stale)."
 
       # macOS detection (os.detected.name) resolves pcpanel.build.os to "osx", so the @MacBuild
       # beans are included automatically; no extra flags are needed.
@@ -355,11 +384,28 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
+          WIN_GEN: ${{ needs.buildWindows.outputs.genStatus }}
+          LIN_GEN: ${{ needs.buildLinux.outputs.genStatus }}
         run: |
+          notes="$(sed '/##/Q' CHANGELOG.md)"
+          # The gen step is non-blocking, so a build can still succeed while its native-image
+          # metadata silently fell back to the committed (possibly stale) union. Flag that here
+          # so a degraded build is visible on the release page, not just buried in the run log.
+          warnings=""
+          if [ "$WIN_GEN" = "failure" ]; then
+            warnings="${warnings}- ⚠️ Windows: native-image metadata generation failed; built with committed metadata (possibly stale)."$'\n'
+          fi
+          if [ "$LIN_GEN" = "failure" ]; then
+            warnings="${warnings}- ⚠️ Linux: native-image metadata generation failed; built with committed metadata (possibly stale)."$'\n'
+          fi
+          if [ -n "$warnings" ]; then
+            notes="${notes}"$'\n\n'"### ⚠️ Build warnings"$'\n'"${warnings}"
+          fi
+          printf '%s' "$notes" > "$RUNNER_TEMP/release-notes.md"
           gh release create "$TAG_NAME" \
             --prerelease \
             --title "v${{ steps.project.outputs.version }} Pre-Release (${{ env.GITHUB_RUN_NUMBER }})" \
-            --notes "$(sed '/##/Q' CHANGELOG.md)"
+            --notes-file "$RUNNER_TEMP/release-notes.md"
 
       - name: Download all build artifacts
         uses: actions/download-artifact@v8
