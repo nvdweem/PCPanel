@@ -56,10 +56,37 @@ to
 
 # Generate reachability metadata
 
+The metadata is produced by running the test suite under the GraalVM tracing agent: whatever the
+tests exercise, the agent records (reflection, JNI, resources and the JNA/dbus dynamic proxies that
+`Native.load` builds). So a path is only covered if a test actually drives it — e.g. keystroke
+injection (`LinuxKeyboard`) is covered by `LinuxKeyboardNativeConfigTest`.
+
+`config-output-dir` **replaces** the metadata with only what the current run captured.
+`config-merge-dir` **merges** new findings into the existing files. Use *merge* when regenerating on
+a single OS, otherwise a Linux run wipes the Windows-captured entries (and vice versa) — the
+committed metadata is the union across all platforms.
+
 ```shell
+# Merge mode (recommended): add what this run discovers, keep everything already captured.
+mvn test "-DargLine=-agentlib:native-image-agent=config-merge-dir=src/main/resources/META-INF/native-image/ -Djava.awt.headless=false"
+
+# Replace mode: regenerate from scratch (only safe if this run exercises EVERY platform's paths).
 mvn test "-DargLine=-agentlib:native-image-agent=config-output-dir=src/main/resources/META-INF/native-image/ -Djava.awt.headless=false"
+
+# Quarkus: apply the captured agent configuration during the native build.
 mvn test "-DargLine=-Dnative -Dquarkus.native.agent-configuration-apply" -Dnative -Dquarkus.native.agent-configuration-apply
 ```
+
+After generating, strip any captured test-infrastructure entries (class names ending in `Test`,
+JUnit/Mockito internals). Proxies that the agent cannot observe because their native library is not
+present during tests — the Windows JNA libraries on a Linux box, the macOS CoreGraphics/CoreAudio
+libraries anywhere but a Mac — are kept by hand in
+`src/main/resources/META-INF/native-image/com.getpcpanel/pcpanel/proxy-config.json`.
+
+`ProxyRegistrationCoverageTest` is a safety net: it scans every JNA `Library` interface in the
+project and fails (on any OS, in a plain `mvn test`) if one is missing from the metadata, printing
+the exact entry to add. Run it before shipping a native build to catch a forgotten platform proxy
+regardless of which OS you build on — it is what would have caught the Linux keystroke regression.
 
 
 ---
