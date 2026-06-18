@@ -48,6 +48,10 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         "com.getpcpanel.util.tray.win.WinUser32Ext",
         // Desktop-lock detection helper (OpenInputDesktop/CloseDesktop): same reflective JNA mapping.
         "com.getpcpanel.sleepdetection.Win32Desktop",
+        // Display-power detection: the power-notify library and the window-procedure callback whose
+        // "callback" method JNA invokes reflectively from the native message dispatch.
+        "com.getpcpanel.sleepdetection.Win32PowerNotify",
+        "com.sun.jna.platform.win32.WinUser$WindowProc",
 })
 public final class JnaWin32ReflectionConfig {
     private JnaWin32ReflectionConfig() {
