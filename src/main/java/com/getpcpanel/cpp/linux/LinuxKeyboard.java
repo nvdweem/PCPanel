@@ -69,6 +69,10 @@ public final class LinuxKeyboard {
     private static byte spareKeycode;
     private static int keysymsPerKeycode;
     private static boolean spareResolved;
+    /** keysym → {keycode, level} on the current layout, so text can be typed with real keys (survives KDE/Wayland's XWayland input bridge, which a runtime remap does not). */
+    private static final Map<Long, int[]> LAYOUT = new HashMap<>();
+    private static byte shiftKeycode;
+    private static byte altGrKeycode;
 
     private LinuxKeyboard() {
     }
@@ -119,10 +123,12 @@ public final class LinuxKeyboard {
     }
 
     /**
-     * Types arbitrary text. Each character's X11 keysym is bound onto a spare (unused) keycode via
-     * {@code XChangeKeyboardMapping}, then pressed and released — the same layout-independent technique
-     * {@code xdotool type} uses. This lets us emit characters that aren't on the current keyboard layout
-     * at all. The spare keycode is restored to {@code NoSymbol} when done.
+     * Types arbitrary text. Each character is typed with a <em>real</em> key from the current layout
+     * (pressing Shift/AltGr for the right level) — the same mechanism single keystrokes use, which is
+     * what makes it survive KDE/KWin's XWayland→Wayland input bridge (a runtime {@code XChangeKeyboardMapping}
+     * remap does not, because the bridge translates keycodes through a keymap that ignores it). Characters
+     * not present on the current layout fall back to the {@code xdotool}-style spare-keycode remap, which
+     * still works on a plain X server (but generally not through the Wayland bridge).
      */
     public static void typeText(String input) {
         if (input == null || input.isEmpty()) {
@@ -135,13 +141,16 @@ public final class LinuxKeyboard {
                 return;
             }
             try {
-                resolveSpare(disp);
-                if (spareKeycode == 0 || keysymsPerKeycode == 0) {
-                    log.error("No spare X keycode available to type text");
+                resolveLayout(disp);
+                if (keysymsPerKeycode == 0) {
+                    log.error("No X keyboard mapping available to type text");
                     return;
                 }
-                input.codePoints().forEach(cp -> typeCodePoint(disp, cp));
-                remapSpare(disp, 0L); // release the spare keycode back to NoSymbol
+                var usedRemap = new boolean[1];
+                input.codePoints().forEach(cp -> usedRemap[0] |= typeCodePoint(disp, cp));
+                if (usedRemap[0]) {
+                    remapSpare(disp, 0L); // release the spare keycode back to NoSymbol
+                }
                 X11.INSTANCE.XSync(disp, false);
             } catch (Throwable e) { // UnsatisfiedLinkError if libX11/libXtst is missing
                 log.error("Unable to type text on Linux", e);
@@ -149,20 +158,56 @@ public final class LinuxKeyboard {
         }
     }
 
-    private static void typeCodePoint(Pointer disp, int cp) {
+    /** Types one code point; returns true if it fell back to the spare-keycode remap (so the caller restores it). */
+    private static boolean typeCodePoint(Pointer disp, int cp) {
         var keysym = keysymForCodePoint(cp);
         if (keysym == 0) {
-            return;
+            return false;
+        }
+        var loc = LAYOUT.get(keysym);
+        if (loc != null) {
+            typeViaKeycode(disp, (byte) loc[0], loc[1]); // real layout key + modifiers
+            return false;
+        }
+        return typeViaRemap(disp, keysym); // not on this layout — best-effort remap fallback
+    }
+
+    /** Presses a real layout keycode at the given shift level (level 1 ⇒ Shift, level ≥ 2 ⇒ AltGr). */
+    private static void typeViaKeycode(Pointer disp, byte keycode, int level) {
+        var shift = (level & 1) != 0 && shiftKeycode != 0;
+        var altGr = level >= 2 && altGrKeycode != 0;
+        if (shift) {
+            XTest.INSTANCE.XTestFakeKeyEvent(disp, shiftKeycode & 0xFF, true, new NativeLong(0));
+        }
+        if (altGr) {
+            XTest.INSTANCE.XTestFakeKeyEvent(disp, altGrKeycode & 0xFF, true, new NativeLong(0));
+        }
+        XTest.INSTANCE.XTestFakeKeyEvent(disp, keycode & 0xFF, true, new NativeLong(0));
+        XTest.INSTANCE.XTestFakeKeyEvent(disp, keycode & 0xFF, false, new NativeLong(0));
+        if (altGr) {
+            XTest.INSTANCE.XTestFakeKeyEvent(disp, altGrKeycode & 0xFF, false, new NativeLong(0));
+        }
+        if (shift) {
+            XTest.INSTANCE.XTestFakeKeyEvent(disp, shiftKeycode & 0xFF, false, new NativeLong(0));
+        }
+        X11.INSTANCE.XSync(disp, false);
+    }
+
+    /** Fallback for characters absent from the layout: bind the keysym onto the spare keycode and press it. */
+    private static boolean typeViaRemap(Pointer disp, long keysym) {
+        if (spareKeycode == 0) {
+            return false;
         }
         remapSpare(disp, keysym);
         X11.INSTANCE.XSync(disp, false); // let the server observe the new mapping before the key event
         if (!settle(TYPE_REMAP_SETTLE_MS)) { // give the target client time to refresh its keymap
-            return;                          // interrupted — stop typing
+            return true;                     // interrupted — stop typing (still restore the spare)
         }
         var code = spareKeycode & 0xFF;
         XTest.INSTANCE.XTestFakeKeyEvent(disp, code, true, new NativeLong(0));
         XTest.INSTANCE.XTestFakeKeyEvent(disp, code, false, new NativeLong(0));
         X11.INSTANCE.XSync(disp, false);
+        return true;
     }
 
     /** Sleeps {@code ms}; returns false (and re-sets the interrupt flag) if interrupted. */
@@ -198,8 +243,12 @@ public final class LinuxKeyboard {
         };
     }
 
-    /** Finds an unused keycode once (and the layout's keysyms-per-keycode stride) to repurpose for typing. */
-    private static void resolveSpare(Pointer disp) {
+    /**
+     * Reads the current keyboard mapping once and records, for typing text: the keysym → {keycode, level}
+     * table (so characters are typed with real keys), a spare/unused keycode for the remap fallback, the
+     * layout's keysyms-per-keycode stride, and the Shift/AltGr keycodes.
+     */
+    private static void resolveLayout(Pointer disp) {
         if (spareResolved) {
             return;
         }
@@ -227,20 +276,24 @@ public final class LinuxKeyboard {
             for (var kc = 0; kc < count; kc++) {
                 var empty = true;
                 for (var j = 0; j < keysymsPerKeycode; j++) {
-                    if (syms[kc * keysymsPerKeycode + j] != 0) {
+                    var sym = syms[kc * keysymsPerKeycode + j];
+                    if (sym != 0) {
                         empty = false;
-                        break;
+                        LAYOUT.putIfAbsent(sym, new int[] { lo + kc, j }); // first (lowest keycode/level) wins
                     }
                 }
-                if (empty) {
+                if (empty && spareKeycode == 0) {
                     spareKeycode = (byte) (lo + kc);
-                    return;
                 }
             }
-            spareKeycode = (byte) hi; // fall back to the last keycode if none are free
+            if (spareKeycode == 0) {
+                spareKeycode = (byte) hi; // no free keycode for the fallback; reuse the last one
+            }
         } finally {
             X11.INSTANCE.XFree(map);
         }
+        shiftKeycode = X11.INSTANCE.XKeysymToKeycode(disp, new NativeLong(0xffe1L)); // Shift_L
+        altGrKeycode = X11.INSTANCE.XKeysymToKeycode(disp, new NativeLong(0xfe03L)); // ISO_Level3_Shift (AltGr)
     }
 
     /** Presses the given keysym and returns the keycode used (0 if it has no keycode on this layout). */
