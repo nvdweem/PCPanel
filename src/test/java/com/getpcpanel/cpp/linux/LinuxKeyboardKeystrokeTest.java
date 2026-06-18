@@ -70,7 +70,7 @@ class LinuxKeyboardKeystrokeTest {
     @ParameterizedTest
     @ValueSource(strings = {
             "ENTER", "TAB", "SPACE", "BACK_SPACE", "ESCAPE", "ESC", "DELETE", "INSERT",
-            "HOME", "END", "PAGE_UP", "PAGE_DOWN", "LEFT", "UP", "RIGHT", "DOWN",
+            "HOME", "END", "PAGE_UP", "PAGE_DOWN", "LEFT", "UP", "RIGHT", "DOWN", "PAUSE",
             "MINUS", "EQUALS", "OPEN_BRACKET", "CLOSE_BRACKET", "BACK_SLASH", "SEMICOLON",
             "QUOTE", "COMMA", "PERIOD", "SLASH", "BACK_QUOTE",
     })

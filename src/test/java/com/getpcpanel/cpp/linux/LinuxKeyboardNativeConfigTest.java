@@ -11,23 +11,18 @@ import org.junit.jupiter.api.condition.OS;
 import com.getpcpanel.commands.command.CommandKeystroke;
 
 /**
- * Generation-only test: makes the GraalVM tracing agent record the X11 and XTest JNA dynamic
- * proxies that {@code Native.load} builds, so {@code reachability-metadata.json} can be regenerated
- * from a run rather than hand-edited.
+ * Generation-only test: drives the real keystroke feature so the GraalVM tracing agent records the
+ * X11 and XTest JNA dynamic proxies that {@code Native.load} builds, letting
+ * {@code reachability-metadata.json} be regenerated from a run instead of hand-edited.
  *
- * <p>Disabled by default; runs only under the {@code native-config-gen} Maven profile, which sets
- * {@code pcpanel.generate-native-config=true}. Two distinct loads are needed:
- * <ul>
- *   <li><b>libX11</b> — exercised through the real feature ({@link CommandKeystroke#execute()} ->
- *       {@code KeyMacro} -> {@link LinuxKeyboard}): opening the X display loads libX11. {@code F24}
- *       is used because it has no keycode on a typical keymap, so nothing is actually typed.</li>
- *   <li><b>libXtst</b> — that same property means the feature path never reaches
- *       {@code XTestFakeKeyEvent} (no keycode -> no XTest call), so it would NOT load libXtst. The
- *       only keystroke that does reach XTest is one the host can actually type, which would inject a
- *       real key. To capture the XTest proxy without injecting anything, libXtst is loaded directly
- *       by initialising the interface.</li>
- * </ul>
- * The guarantee that these proxies are <em>registered</em> comes from
+ * <p>Disabled by default; runs only under the {@code native-config-gen} Maven profile (which sets
+ * {@code pcpanel.generate-native-config=true}). It presses {@code PAUSE}: a key that has a real
+ * keycode on essentially every keymap — so the feature reaches {@code XTestFakeKeyEvent} and loads
+ * both libX11 (opening the display) and libXtst (synthesising the event), capturing both proxies
+ * through the genuine code path — yet does nothing in virtually any application, so the synthesised
+ * keypress is harmless. (F24 would be quieter still but has no keycode, so it never loads libXtst.)
+ *
+ * <p>That the proxies are actually <em>registered</em> is guaranteed by
  * {@link com.getpcpanel.cpp.ProxyRegistrationCoverageTest}; this test only makes the agent observe
  * them during generation.
  */
@@ -37,12 +32,8 @@ import com.getpcpanel.commands.command.CommandKeystroke;
 class LinuxKeyboardNativeConfigTest {
 
     @Test
-    @DisplayName("loads libX11 (via the feature) and libXtst so the agent records both JNA proxies")
+    @DisplayName("pressing PAUSE loads libX11 + libXtst so the agent records both JNA proxies")
     void loadsX11AndXTestForAgent() {
-        // libX11: real feature path opens the display. F24 has no keycode -> nothing is typed.
-        assertDoesNotThrow(() -> new CommandKeystroke("F24").execute());
-        // libXtst: load it directly (see class doc) so XTest is captured regardless of keymap.
-        assertDoesNotThrow(() -> Class.forName(
-                "com.getpcpanel.cpp.linux.LinuxKeyboard$XTest", true, getClass().getClassLoader()));
+        assertDoesNotThrow(() -> new CommandKeystroke("PAUSE").execute());
     }
 }

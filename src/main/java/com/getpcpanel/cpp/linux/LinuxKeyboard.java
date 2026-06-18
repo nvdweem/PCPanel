@@ -155,6 +155,7 @@ public final class LinuxKeyboard {
         m.put("DELETE", 0xffffL); m.put("INSERT", 0xff63L); m.put("HOME", 0xff50L); m.put("END", 0xff57L);
         m.put("PAGE_UP", 0xff55L); m.put("PAGE_DOWN", 0xff56L);
         m.put("LEFT", 0xff51L); m.put("UP", 0xff52L); m.put("RIGHT", 0xff53L); m.put("DOWN", 0xff54L);
+        m.put("PAUSE", 0xff13L);                       // XK_Pause
         // Punctuation (Latin-1 keysyms)
         m.put("MINUS", 0x2dL); m.put("EQUALS", 0x3dL); m.put("OPEN_BRACKET", 0x5bL);
         m.put("CLOSE_BRACKET", 0x5dL); m.put("BACK_SLASH", 0x5cL); m.put("SEMICOLON", 0x3bL);
