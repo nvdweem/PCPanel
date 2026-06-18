@@ -2,6 +2,7 @@ package com.getpcpanel.hid;
 
 import java.util.Optional;
 import java.util.ArrayList;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -31,12 +32,18 @@ import one.util.streamex.StreamEx;
 @ApplicationScoped
 public class DeviceScanner implements HidServicesListener {
     private final ConcurrentHashMap<String, DeviceCommunicationHandler> connectedDeviceMap = new ConcurrentHashMap<>();
+    // PCPanels that are attached but failed to open (transient on Linux/Flatpak at startup). The reconcile thread
+    // keeps retrying these; hid4java will not re-report a device that stays continuously plugged in, so without
+    // this retry a failed initial open left the device invisible until the app was restarted.
+    private final Set<String> failedToOpen = ConcurrentHashMap.newKeySet();
     private final AtomicBoolean shuttingDown = new AtomicBoolean(false);
     private static final long HANDLER_JOIN_TIMEOUT_MS = 1000;
+    private static final long RECONCILE_INTERVAL_MS = 3000;
     @Inject Event<Object> eventBus;
     @Inject DeviceCommunicationHandlerFactory deviceCommunicationHandlerFactory;
 
     private HidServices hidServices;
+    private Thread reconcileThread;
 
     public DeviceCommunicationHandler getConnectedDevice(String key) {
         return connectedDeviceMap.get(key);
@@ -66,7 +73,44 @@ public class DeviceScanner implements HidServicesListener {
             reconnectDevicesAfterRestart();
         }
 
+        startReconciliation();
         scheduleNoDeviceFoundCheck();
+    }
+
+    /**
+     * Retries opening PCPanels that are attached but failed to open. The hid4java fixed-interval scanner only fires
+     * {@link #hidDeviceAttached} for newly-appearing devices, so a panel that is continuously plugged in is never
+     * re-reported after a failed initial open. On Linux/Flatpak the first open right after startup can fail
+     * transiently (USB/udev/sandbox not settled yet), which previously left the device invisible until the app was
+     * restarted. This loop re-enumerates and retries while any open is outstanding, then goes idle.
+     */
+    private void startReconciliation() {
+        var t = new Thread(this::reconcileLoop, "pcpanel-device-reconcile");
+        t.setDaemon(true);
+        reconcileThread = t;
+        t.start();
+    }
+
+    private void reconcileLoop() {
+        while (!shuttingDown.get()) {
+            try {
+                Thread.sleep(RECONCILE_INTERVAL_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+            if (shuttingDown.get() || hidServices == null || failedToOpen.isEmpty()) {
+                continue;
+            }
+            try {
+                StreamEx.of(hidServices.getAttachedHidDevices())
+                        .mapToEntry(this::determineType).flatMapValues(Optional::stream)
+                        .filterKeys(d -> !connectedDeviceMap.containsKey(d.getSerialNumber()))
+                        .forKeyValue(this::foundPCPanel);
+            } catch (Exception e) {
+                log.debug("Device reconciliation scan failed", e);
+            }
+        }
     }
 
     /**
@@ -118,16 +162,23 @@ public class DeviceScanner implements HidServicesListener {
         var created = new DeviceCommunicationHandler[1];
         connectedDeviceMap.computeIfAbsent(key, k -> {
             if (!device.isOpen() && !device.open()) {
-                log.error("Unable to open device, it won't be possible to use the panel");
-                if (SystemUtils.IS_OS_MAC && !OsxPermissionHelper.isInputMonitoringGranted()) {
-                    log.error("macOS requires the Input Monitoring permission: " +
-                            "System Settings > Privacy & Security > Input Monitoring > enable PCPanel");
+                // Log once per device; the reconcile thread keeps retrying, so we don't want to spam every interval.
+                if (failedToOpen.add(k)) {
+                    log.error("Unable to open device {}, it won't be possible to use the panel yet; will keep retrying", k);
+                    if (SystemUtils.IS_OS_MAC && !OsxPermissionHelper.isInputMonitoringGranted()) {
+                        log.error("macOS requires the Input Monitoring permission: " +
+                                "System Settings > Privacy & Security > Input Monitoring > enable PCPanel");
+                    }
+                } else {
+                    log.debug("Retry to open device {} still failing", k);
                 }
                 return null;
             }
             return created[0] = deviceCommunicationHandlerFactory.build(k, device, deviceType);
         });
         if (created[0] != null) {
+            failedToOpen.remove(key);
+            log.info("Connected to PCPanel {} ({})", key, deviceType);
             created[0].start();
             fireEvent(new DeviceConnectedEvent(key, deviceType));
         }
@@ -136,12 +187,14 @@ public class DeviceScanner implements HidServicesListener {
     public void deviceRemoved(String key, HidDevice device) {
         if (key == null || device == null)
             throw new IllegalArgumentException("serialNum or device cannot be null serialNum: " + key + " device: " + device);
+        // Stop retrying a panel that has been unplugged (it may never have opened, so it is not in connectedDeviceMap).
+        failedToOpen.remove(key);
         if (connectedDeviceMap.remove(key) != null)
             fireEvent(new DeviceDisconnectedEvent(key));
     }
 
     private void foundPCPanel(HidDevice newPCPanel, DeviceType deviceType) {
-        log.info("FOUND PCPANEL : {}", newPCPanel);
+        log.debug("Found PCPanel: {}", newPCPanel);
         try {
             // Opening happens inside deviceAdded so it is done exactly once per device, even when the same
             // device is reported by both the reconnect scan and the hidDeviceAttached event.
@@ -191,6 +244,12 @@ public class DeviceScanner implements HidServicesListener {
         if (!shuttingDown.compareAndSet(false, true)) {
             return;
         }
+
+        if (reconcileThread != null) {
+            reconcileThread.interrupt();
+            reconcileThread = null;
+        }
+        failedToOpen.clear();
 
         var handlers = new ArrayList<>(connectedDeviceMap.values());
         connectedDeviceMap.clear();
