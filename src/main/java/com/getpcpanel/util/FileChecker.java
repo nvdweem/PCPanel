@@ -20,10 +20,10 @@ public class FileChecker extends Thread {
 
     // Resolved at call time (runtime), never cached in a static field: a static initializer runs at
     // native-image BUILD time, which would bake in the build machine's user.home (e.g. the CI runner's
-    // C:\Users\runneradmin). This is not a bean, so it deliberately uses the default root, not pcpanel.root.
-    @SuppressWarnings("AccessOfSystemProperties")
+    // C:\Users\runneradmin). This is not a bean, so it goes through PcPanelRoot directly (same root the
+    // pcpanel.root config property resolves to) rather than reading the config.
     private static File filesRoot() {
-        var root = new File(System.getProperty("user.home"), ".pcpanel");
+        var root = PcPanelRoot.resolve().toFile();
         if (!root.isDirectory()) {
             //noinspection ResultOfMethodCallIgnored
             root.mkdirs();

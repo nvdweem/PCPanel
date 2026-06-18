@@ -1,6 +1,5 @@
 package com.getpcpanel;
 
-import java.nio.file.Path;
 import java.util.Set;
 
 import org.eclipse.microprofile.config.ConfigProvider;
@@ -8,6 +7,7 @@ import org.eclipse.microprofile.config.ConfigProvider;
 import com.getpcpanel.hid.HidDebug;
 import com.getpcpanel.util.ConsoleSupport;
 import com.getpcpanel.util.FileChecker;
+import com.getpcpanel.util.PcPanelRoot;
 
 import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.QuarkusApplication;
@@ -34,17 +34,20 @@ public class Main implements QuarkusApplication {
     /**
      * In a GraalVM native image Quarkus expands {@code ${user.home}} during the build, so the build
      * machine's home directory (e.g. the CI runner's {@code C:\Users\runneradmin}) gets baked into
-     * {@code pcpanel.root} and {@code quarkus.log.file.path}. Re-resolve them from the real
-     * {@code user.home} at runtime and publish them as system properties (config ordinal 400) so they
-     * override the baked-in application.properties values (ordinal ~250) before Quarkus reads them.
-     * On the JVM {@code ${user.home}} is resolved at runtime already, so this is a native-image-only fix.
+     * {@code pcpanel.root} and {@code quarkus.log.file.path}. Re-resolve them at runtime via
+     * {@link PcPanelRoot} (which also applies the Linux XDG / Flatpak-sandbox location) and publish
+     * them as system properties (config ordinal 400) so they override the baked-in
+     * application.properties values (ordinal ~250) before Quarkus reads them. On the JVM
+     * {@code ${user.home}} is resolved at runtime already, so this is a native-image-only fix — and
+     * every shipped Linux artifact (Flatpak, AppImage, .deb) is a native image, so this is where the
+     * XDG-aware location takes effect for users.
      */
     @SuppressWarnings("AccessOfSystemProperties")
     private static void overrideBakedPathsForNativeImage() {
         if (!"runtime".equals(System.getProperty("org.graalvm.nativeimage.imagecode"))) {
             return;
         }
-        var root = Path.of(System.getProperty("user.home"), ".pcpanel");
+        var root = PcPanelRoot.resolve();
         System.setProperty("pcpanel.root", root.toString());
         System.setProperty("quarkus.log.file.path", root.resolve("logs").resolve("logging.log").toString());
     }

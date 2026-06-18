@@ -8,6 +8,8 @@ import org.hid4java.HidManager;
 import org.hid4java.HidServicesListener;
 import org.hid4java.event.HidServicesEvent;
 
+import com.getpcpanel.util.PcPanelRoot;
+
 import lombok.SneakyThrows;
 
 public class HidDebug {
@@ -15,7 +17,7 @@ public class HidDebug {
 
     @SneakyThrows
     public HidDebug() {
-        var outputFile = new File(System.getProperty("user.home") + "/.pcpanel/hid-debug.txt");
+        var outputFile = new File(PcPanelRoot.resolve().toFile(), "hid-debug.txt");
         outputFile.getParentFile().mkdirs();
         writer = new PrintWriter(new FileOutputStream(outputFile));
     }
