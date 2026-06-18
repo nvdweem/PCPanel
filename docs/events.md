@@ -71,7 +71,7 @@ up to date when you add or remove an event or an observer.
 
 | Event | Fired by | Observed by |
 |-------|----------|-------------|
-| `SystemEvent` (sleep/wake/lock) | `WindowsSystemEventService` / `LinuxSystemEventService` / `MacSystemEventService` | `SleepDetector` |
+| `SystemEvent` (sleep/wake/lock/display-off/display-on) | `WindowsSystemEventService` / `LinuxSystemEventService` / `MacSystemEventService` | `SleepDetector` |
 | `WindowFocusChangedEvent` | focus watchers | `DeviceHolder`, `ProfileWindowFocusService` |
 | `ShowMainEvent` | `FileChecker`, `StatusNotifierItemImpl`, `TrayServiceWin` | `ShowMainService` |
 | `NewVersionAvailableEvent` | `VersionChecker` | (UI/notification consumers) |

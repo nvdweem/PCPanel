@@ -5,6 +5,7 @@ import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.hid.OutputInterpreter;
 import com.getpcpanel.profile.dto.LightingConfig;
+import com.getpcpanel.sleepdetection.DarkReasonGate.Reason;
 
 import io.quarkus.runtime.ShutdownEvent;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -16,6 +17,9 @@ import lombok.extern.log4j.Log4j2;
 @ApplicationScoped
 public final class SleepDetector {
     private static final LightingConfig ALL_OFF = LightingConfig.createAllColor("#000000");
+
+    /** Collapses the overlapping dark reasons (suspend / lock / display-off) into off/relight transitions. */
+    private final DarkReasonGate gate = new DarkReasonGate(() -> onSuspended(false), this::onResumed);
 
     @Inject
     DeviceScanner deviceScanner;
@@ -30,8 +34,14 @@ public final class SleepDetector {
 
     public void onEvent(@Observes SystemEvent event) {
         switch (event.type()) {
-            case goingToSuspend, locked -> onSuspended(false);
-            case resumedFromSuspend, unlocked -> onResumed();
+            case goingToSuspend -> gate.add(Reason.suspend);
+            case locked -> gate.add(Reason.lock);
+            case displayOff -> gate.add(Reason.display);
+            case unlocked -> gate.clear(Reason.lock);
+            case displayOn -> gate.clear(Reason.display);
+            // A resume means the whole machine is awake again: clear every reason and relight, even
+            // on platforms whose callback-free detection never saw the matching goingToSuspend.
+            case resumedFromSuspend -> gate.reset();
             case logon, logoff -> { /* no lighting action */ }
         }
     }
