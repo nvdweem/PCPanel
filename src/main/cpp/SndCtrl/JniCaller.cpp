@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "JniCaller.h"
-#include <comdef.h>
+#include <vector>
 
 JavaVM* pJvm;
 std::string name("JNI Callback");
@@ -12,9 +12,20 @@ jstring JThread::jstr(const char* str) {
 }
 
 jstring JThread::jstr(const WCHAR* str) {
-    _bstr_t b(str);
-    const char* c = b;
-    return jstr(c);
+    // Convert the wide string to the system code page, matching the previous
+    // ATL _bstr_t(const wchar_t*) behaviour, then hand it to NewStringUTF. This
+    // drops the <comdef.h>/_bstr_t dependency (MSVC's COM support layer) so the
+    // DLL builds without Visual Studio.
+    if (str == nullptr) {
+        return jstr("");
+    }
+    int needed = WideCharToMultiByte(CP_ACP, 0, str, -1, nullptr, 0, nullptr, nullptr);
+    if (needed <= 0) {
+        return jstr("");
+    }
+    std::vector<char> buffer(needed);
+    WideCharToMultiByte(CP_ACP, 0, str, -1, buffer.data(), needed, nullptr, nullptr);
+    return jstr(buffer.data());
 }
 
 void JThread::jstr(jstring str) {

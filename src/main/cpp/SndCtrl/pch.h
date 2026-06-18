@@ -9,7 +9,19 @@
 
 // add headers that you want to pre-compile here
 #include "framework.h"
-#include <atlbase.h>
+#include <tchar.h>   // _T / TCHAR (transitively included by MSVC's headers)
+
+// Some COM headers below (policyconfig.h, audiopolicyconfigfactory.h) use the
+// `interface` keyword. MSVC and the Windows SDK define it; make sure it exists
+// for MinGW-w64 / GCC too.
+#ifndef interface
+#define interface struct
+#endif
+
+// CComPtr / CComQIPtr used to come from ATL (<atlbase.h>), which ships only
+// with Visual Studio. comptr_compat.h is a portable replacement so the DLL can
+// be built without Visual Studio (and cross-compiled on Linux). See cpp/README.md.
+#include "comptr_compat.h"
 #include <jni.h>
 
 #include <audioclient.h>
@@ -17,6 +29,14 @@
 #include <endpointvolume.h>
 #include <functional>
 #include <iostream>
+// Standard containers/utilities used across the project. MSVC pulled these in
+// transitively; MinGW/libstdc++ does not, so include them explicitly.
+#include <list>
+#include <memory>
+#include <string>
+#include <thread>
+#include <unordered_map>
+#include <vector>
 #include <mmdeviceapi.h>
 
 #include <functiondiscoverykeys_devpkey.h> // Must be after mmdeviceapi

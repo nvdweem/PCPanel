@@ -1,6 +1,17 @@
 #pragma once
 #include "pch.h"
 
+// This header uses the legacy SAL1 annotation __in, which MinGW does not ship
+// (it only has the SAL2 spelling _In_). Define it away locally — but NOT
+// globally: libstdc++ uses `__in` as an ordinary parameter name, so the macro
+// must be scoped to this header only and restored at the bottom. (pch.h, and
+// therefore every standard header, is already included by this point.)
+#ifndef _MSC_VER
+#pragma push_macro("__in")
+#undef __in
+#define __in
+#endif
+
 // ----------------------------------------------------------------------------
 // PolicyConfig.h
 // Undocumented COM-interface IPolicyConfig.
@@ -177,3 +188,16 @@ public:
         INT
     );  // not available on Windows 7, use method from IPolicyConfig
 };
+
+#if defined(__MINGW32__)
+// MSVC reads these IIDs/CLSIDs from the DECLSPEC_UUID above; GCC/MinGW does not,
+// so associate them explicitly to make __uuidof(...) resolve.
+__CRT_UUID_DECL(IPolicyConfig,            0xf8679f50, 0x850a, 0x41cf, 0x9c, 0x72, 0x43, 0x0f, 0x29, 0x02, 0x90, 0xc8)
+__CRT_UUID_DECL(CPolicyConfigClient,      0x870af99c, 0x171d, 0x4f9e, 0xaf, 0x0d, 0xe6, 0x3d, 0xf4, 0x0c, 0x2b, 0xc9)
+__CRT_UUID_DECL(IPolicyConfigVista,       0x568b9108, 0x44bf, 0x40b4, 0x90, 0x06, 0x86, 0xaf, 0xe5, 0xb5, 0xa6, 0x20)
+__CRT_UUID_DECL(CPolicyConfigVistaClient, 0x294935ce, 0xf637, 0x4e7c, 0xa4, 0x1b, 0xab, 0x25, 0x54, 0x60, 0xb8, 0x62)
+#endif
+
+#ifndef _MSC_VER
+#pragma pop_macro("__in")
+#endif

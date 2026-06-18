@@ -39,3 +39,10 @@ public:
     virtual HRESULT STDMETHODCALLTYPE GetPersistedDefaultAudioEndpoint(UINT processId, EDataFlow flow, int role, _Outptr_result_maybenull_ _Result_nullonfailure_ HSTRING* string);
     virtual HRESULT STDMETHODCALLTYPE ClearAllPersistedApplicationDefaultEndpoints();
 };
+
+#if defined(__MINGW32__)
+// MSVC reads these IIDs from the DECLSPEC_UUID above; GCC/MinGW does not, so
+// associate them explicitly to make __uuidof(...) resolve.
+__CRT_UUID_DECL(IAudioPolicyConfigFactory,       0xab3d4648, 0xe242, 0x459f, 0xb0, 0x2f, 0x54, 0x1c, 0x70, 0x30, 0x63, 0x24)
+__CRT_UUID_DECL(IAudioPolicyConfigFactoryLegacy, 0x2a59116d, 0x6c4f, 0x45e0, 0xa7, 0x4f, 0x70, 0x7e, 0x3f, 0xef, 0x92, 0x58)
+#endif

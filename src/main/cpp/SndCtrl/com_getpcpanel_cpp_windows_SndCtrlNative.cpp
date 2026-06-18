@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "com_getpcpanel_cpp_windows_SndCtrlNative.h"
 #include "JniCaller.h"
-#include "SndCtrl.h"
+#include "sndctrl.h"
 #include "helpers.h"
 #include <iostream>
 #include <psapi.h>
