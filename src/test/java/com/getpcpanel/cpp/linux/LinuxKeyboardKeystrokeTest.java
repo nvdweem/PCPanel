@@ -8,7 +8,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import com.getpcpanel.commands.command.CommandMedia.VolumeButton;
 
 /**
  * Functional tests for the Linux keystroke feature's pure string -> X11 keysym mapping (the part of
@@ -91,5 +94,22 @@ class LinuxKeyboardKeystrokeTest {
     @DisplayName("unrecognised keys resolve to 0 so executeKeyStroke skips them instead of injecting garbage")
     void unknownKeysAreZero(String token) {
         assertEquals(0L, LinuxKeyboard.keysym(token));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "mute, 0x1008FF12", "next, 0x1008FF17", "prev, 0x1008FF16",
+            "stop, 0x1008FF15", "playPause, 0x1008FF14",
+    })
+    @DisplayName("media buttons map to their XF86Audio* keysyms (Linux global-media regression guard)")
+    void mediaKeysMap(VolumeButton button, String expectedHex) {
+        assertEquals(Long.decode(expectedHex).longValue(), LinuxKeyboard.mediaKeysym(button));
+    }
+
+    @ParameterizedTest
+    @EnumSource(VolumeButton.class)
+    @DisplayName("every media button resolves to a non-zero keysym so none silently no-ops")
+    void everyMediaButtonResolves(VolumeButton button) {
+        assertNotEquals(0L, LinuxKeyboard.mediaKeysym(button), button + " should map to a keysym");
     }
 }

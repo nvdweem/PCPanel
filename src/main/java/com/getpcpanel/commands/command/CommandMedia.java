@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.util.CdiHelper;
 import com.getpcpanel.util.OsxMediaControl;
 import com.getpcpanel.cpp.ISndCtrl;
+import com.getpcpanel.cpp.linux.LinuxKeyboard;
 import com.getpcpanel.cpp.windows.SndCtrlWindows;
 import com.sun.jna.platform.win32.BaseTSD;
 import com.sun.jna.platform.win32.User32;
@@ -63,9 +64,16 @@ public class CommandMedia extends Command implements ButtonAction {
 
     @Override
     public void execute() {
+        // Branch before the Windows paths so the win32 JNA classes are never touched off Windows
+        // (instantiating WinUser.INPUT throws on Linux/macOS — see Structure.getFieldOrder).
         if (SystemUtils.IS_OS_MAC) {
-            // Branch before the Windows paths so the win32 JNA classes are never touched on macOS
             CdiHelper.getBean(OsxMediaControl.class).execute(button, spotify);
+            return;
+        }
+        if (!SystemUtils.IS_OS_WINDOWS) {
+            // Linux/X11: the desktop routes XF86Audio* keys to the active player (incl. Spotify via
+            // MPRIS), so the spotify flag collapses to the same global media key.
+            LinuxKeyboard.sendMediaKey(button);
             return;
         }
         if (spotify) {

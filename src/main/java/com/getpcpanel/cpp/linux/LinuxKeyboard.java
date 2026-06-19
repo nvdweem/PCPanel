@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.getpcpanel.commands.command.CommandMedia.VolumeButton;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
@@ -118,6 +119,32 @@ public final class LinuxKeyboard {
                     }
                 }
                 X11.INSTANCE.XFlush(disp);
+            }
+        }
+    }
+
+    /**
+     * Sends a multimedia key (play/pause, next, prev, stop, mute) via XTEST. The desktop environment
+     * binds these {@code XF86Audio*} keysyms and forwards them to the active media player (Spotify and
+     * others through MPRIS), which is why this is also the Linux path for the per-app "Spotify" media
+     * action — there is no portable way to target a specific player window the way Windows does.
+     */
+    public static void sendMediaKey(VolumeButton button) {
+        var keysym = mediaKeysym(button);
+        synchronized (LOCK) {
+            var disp = display();
+            if (disp == null) {
+                log.warn("No X display available; cannot send media key '{}'", button);
+                return;
+            }
+            try {
+                var keycode = sendKeysym(disp, keysym, true);
+                if (keycode != 0) {
+                    XTest.INSTANCE.XTestFakeKeyEvent(disp, keycode & 0xFF, false, new NativeLong(0));
+                }
+                X11.INSTANCE.XFlush(disp);
+            } catch (Throwable e) { // UnsatisfiedLinkError if libXtst is missing
+                log.error("Unable to send media key '{}'", button, e);
             }
         }
     }
@@ -317,6 +344,17 @@ public final class LinuxKeyboard {
             }
         }
         return display;
+    }
+
+    /** Maps a media button to its {@code XF86Audio*} X11 keysym. */
+    static long mediaKeysym(VolumeButton button) {
+        return switch (button) {
+            case mute -> 0x1008FF12L;       // XF86AudioMute
+            case next -> 0x1008FF17L;       // XF86AudioNext
+            case prev -> 0x1008FF16L;       // XF86AudioPrev
+            case stop -> 0x1008FF15L;       // XF86AudioStop
+            case playPause -> 0x1008FF14L;  // XF86AudioPlay
+        };
     }
 
     static long modifierKeysym(String mod) {
