@@ -1,8 +1,11 @@
 package com.getpcpanel.rest;
 
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.Base64;
 import java.util.List;
+
+import javax.annotation.Nullable;
 
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.iconextract.IIconService;
@@ -28,12 +31,26 @@ public class ProcessResource {
     @GET
     public List<ProcessDto> listProcesses() {
         return sndCtrl.getRunningApplications().stream()
-                      .map(app -> new ProcessDto(
-                              app.pid(),
-                              app.file().getAbsolutePath(),
-                              app.name(),
-                              encodeIcon(iconService.getIconForFile(32, 32, app.file()))))
+                      .map(this::toDto)
                       .toList();
+    }
+
+    private ProcessDto toDto(ISndCtrl.RunningApplication app) {
+        return new ProcessDto(app.pid(), app.file().getAbsolutePath(), app.name(), safeIcon(app.file()));
+    }
+
+    @Nullable
+    private String safeIcon(File file) {
+        // Icon extraction reaches Win32/GDI (IShellItemImageFactory, GetDIBits) and can throw for an
+        // individual process — a zero-size bitmap, an inaccessible image, etc. One bad process must not
+        // 500 the whole list (which would leave the UI's application picker empty until a page refresh),
+        // so degrade to a null icon for that entry.
+        try {
+            return encodeIcon(iconService.getIconForFile(32, 32, file));
+        } catch (Throwable t) {
+            log.debug("Failed to extract icon for {}", file, t);
+            return null;
+        }
     }
 
     static String encodeIcon(BufferedImage img) {
