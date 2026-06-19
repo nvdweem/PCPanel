@@ -1,0 +1,150 @@
+@if (snap(); as s) {
+  <div class="control-screen">
+    <!-- ── Context rail ──────────────────────────────────────────────────── -->
+    <aside class="rail">
+      <button class="back" (click)="back()">
+        <span class="pc-icon-btn sm"><pc-icon name="chevron-left" [size]="15"></pc-icon></span>
+        <span>Back to device</span>
+      </button>
+
+      <div class="micro-label">CONFIGURING</div>
+      <div class="config-card">
+        @if (isSlider()) {
+          <pc-fader [value]="valuePct()" [colors]="[ledColor()]" [height]="120" [width]="40"></pc-fader>
+        } @else {
+          <pc-knob [value]="valuePct()" [color]="ledColor()" [size]="120"></pc-knob>
+        }
+        <div class="cc-title">
+          <div class="cc-name">{{ title() }} · {{ controlTypeLabel() }}</div>
+        </div>
+        <div class="cc-stats">
+          <div class="stat"><div class="stat-val" [style.color]="ledColor()">{{ valuePct() }}%</div><div class="stat-label">VALUE</div></div>
+          <div class="stat"><div class="stat-val">{{ actionCount() }}</div><div class="stat-label">ACTIONS</div></div>
+        </div>
+      </div>
+
+      <span class="spacer"></span>
+
+      <div class="micro-label">CONTROL SETTINGS</div>
+      <div class="settings-block">
+        <div class="setting-row">
+          <span>Logarithmic scaling</span>
+          <pc-toggle [value]="knob().logarithmic" (valueChange)="setKnob('logarithmic', $event)"></pc-toggle>
+        </div>
+        <div class="trim">
+          <div class="pc-field">
+            <div class="pc-field-label">Trim min</div>
+            <input class="pc-field-input" type="number" min="0" max="100" [value]="knob().minTrim"
+                   (input)="setKnob('minTrim', +$any($event.target).value)">
+          </div>
+          <div class="pc-field">
+            <div class="pc-field-label">Trim max</div>
+            <input class="pc-field-input" type="number" min="0" max="100" [value]="knob().maxTrim"
+                   (input)="setKnob('maxTrim', +$any($event.target).value)">
+          </div>
+        </div>
+        <div class="setting-row overlay-icon">
+          <div>
+            <div class="oi-title">Overlay icon</div>
+            <div class="oi-sub">shown in the pop-up</div>
+          </div>
+          <button class="oi-pick" cdkOverlayOrigin #oi="cdkOverlayOrigin" (click)="iconPickerOpen.set(true)">
+            <span class="oi-tile">{{ (knob().overlayIcon || '?').charAt(0).toUpperCase() }}</span>
+            <pc-icon name="pencil" [size]="13"></pc-icon>
+          </button>
+          <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="oi" [cdkConnectedOverlayOpen]="iconPickerOpen()"
+                       [cdkConnectedOverlayHasBackdrop]="true" cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+                       [cdkConnectedOverlayWidth]="280" [cdkConnectedOverlayOffsetY]="6"
+                       (backdropClick)="iconPickerOpen.set(false)" (detach)="iconPickerOpen.set(false)">
+            <pc-app-picker [items]="processItems()" (picked)="setOverlayIcon($event)"></pc-app-picker>
+          </ng-template>
+        </div>
+      </div>
+
+      @if (!isSlider()) {
+        <div class="pc-hint">Knobs have three independent slots: turn, single-press, and double-press.</div>
+      }
+    </aside>
+
+    <!-- ── Main config ───────────────────────────────────────────────────── -->
+    <main class="config-main">
+      <div class="tabs">
+        @if (isSlider()) {
+          <span class="tab active">↻ Rotate</span>
+        } @else {
+          <button class="tab" [class.active]="activeSlot() === 'rotate'" (click)="setSlot('rotate')">↻ Rotate</button>
+          <button class="tab" [class.active]="activeSlot() === 'press'" (click)="setSlot('press')">Single press</button>
+          <button class="tab" [class.active]="activeSlot() === 'dblpress'" (click)="setSlot('dblpress')">Double press</button>
+        }
+      </div>
+
+      <div class="config-body">
+        <!-- Action list -->
+        <div class="action-list">
+          <div class="al-head">
+            <span class="micro-label">{{ activeSlot() === 'rotate' ? 'DIAL ACTIONS · 0–100%' : 'BUTTON ACTIONS · ON PRESS' }}</span>
+            <span class="hint-sm">drag to reorder</span>
+          </div>
+
+          @if (!activeCommands().length) {
+            <div class="al-empty">
+              <pc-icon name="plus" [size]="18"></pc-icon>
+              <span>No actions yet — add one from the right.</span>
+            </div>
+          }
+
+          <div cdkDropList (cdkDropListDropped)="drop($event)" class="al-items">
+            @for (cmd of activeCommands(); track $index) {
+              <div class="action-item" cdkDrag [class.expanded]="expanded() === $index">
+                <div class="ai-head" (click)="toggleExpand($index)">
+                  <span class="grip" cdkDragHandle (click)="$event.stopPropagation()"><pc-icon name="grip" [size]="14"></pc-icon></span>
+                  <span class="ai-icon"><pc-icon [name]="iconFor(cmd)" [size]="14"></pc-icon></span>
+                  <span class="ai-name">{{ labelFor(cmd) }}</span>
+                  <pc-icon [name]="expanded() === $index ? 'chevron-up' : 'chevron-down'" [size]="14" [strokeWidth]="2.5" class="chev"></pc-icon>
+                  <button class="del" (click)="$event.stopPropagation(); removeCommand($index)"><pc-icon name="trash" [size]="14"></pc-icon></button>
+                </div>
+                @if (expanded() === $index && defFor(cmd)) {
+                  <div class="ai-body">
+                    <pc-command-fields [def]="defFor(cmd)!" [command]="cmd" (commandChange)="updateCommand($index, $event)"
+                                       [showMapping]="activeSlot() === 'rotate'" [profiles]="s.profiles"></pc-command-fields>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Add column -->
+        <div class="add-col">
+          <button class="pc-btn primary add-btn" (click)="addOpen.set(!addOpen())">
+            <pc-icon name="plus" [size]="16" [strokeWidth]="2.4"></pc-icon> Add action
+          </button>
+          <div class="cat-label">
+            <pc-icon [name]="addOpen() ? 'chevron-up' : 'chevron-down'" [size]="12" [strokeWidth]="2.5"></pc-icon>
+            <span class="micro-label">CATEGORIZED MENU</span>
+          </div>
+          @if (addOpen()) {
+            <div class="add-menu">
+              <div class="filter">
+                <pc-icon name="search" [size]="13"></pc-icon>
+                <input class="filter-in" placeholder="Filter…" [value]="query()" (input)="query.set($any($event.target).value)">
+              </div>
+              @for (g of menuGroups(); track g.label) {
+                <div class="grp-label">{{ g.label }}</div>
+                @for (row of g.rows; track row.def.type) {
+                  <button class="add-row" [class.offline]="row.offline" (click)="addCommand(row.def)">
+                    @if (row.status) { <pc-status-dot [kind]="row.status" [size]="6"></pc-status-dot> }
+                    <span>{{ row.def.label }}</span>
+                    @if (row.offline) { <span class="off-tag">offline</span> }
+                  </button>
+                }
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </main>
+  </div>
+} @else {
+  <div class="loading-screen"><span class="micro-label">Loading control…</span></div>
+}
