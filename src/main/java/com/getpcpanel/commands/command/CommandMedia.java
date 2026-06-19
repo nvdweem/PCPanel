@@ -1,5 +1,6 @@
 package com.getpcpanel.commands.command;
 
+import java.util.Map;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
@@ -20,12 +21,14 @@ import com.sun.jna.ptr.IntByReference;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
+import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 /**
  * Spotify logic from <a href="https://github.com/moobsmc/spotify-controls/blob/master/Spotify.cpp">Spotify-Controls</a>
  */
 @Getter
+@Log4j2
 @ToString(callSuper = true)
 public class CommandMedia extends Command implements ButtonAction {
     private static final int WM_APPCOMMAND = 0x0319;
@@ -94,13 +97,21 @@ public class CommandMedia extends Command implements ButtonAction {
 
     private void executeSpotify() {
         var spotifyWnd = findSpotify();
+        if (spotifyWnd == null) {
+            log.warn("Spotify media command: no Spotify window found, nothing sent");
+            return;
+        }
         User32.INSTANCE.SendMessage(spotifyWnd, WM_APPCOMMAND, new WinDef.WPARAM(0), new WinDef.LPARAM(button.spotify));
     }
 
     private WinDef.HWND findSpotify() {
         var result = new WinDef.HWND[] { null };
-        var pidIsSpotify = StreamEx.of(CdiHelper.getBean(SndCtrlWindows.class).getRunningApplications()).mapToEntry(ISndCtrl.RunningApplication::pid, ra -> StringUtils.equalsIgnoreCase("spotify.exe", ra.file().getName())).distinctKeys().toMap();
+        var apps = CdiHelper.getBean(SndCtrlWindows.class).getRunningApplications();
+        var pidIsSpotify = StreamEx.of(apps).mapToEntry(ISndCtrl.RunningApplication::pid, ra -> StringUtils.equalsIgnoreCase("spotify.exe", ra.file().getName())).distinctKeys().toMap();
+        var spotifyPids = pidIsSpotify.entrySet().stream().filter(Map.Entry::getValue).map(Map.Entry::getKey).toList();
+        var windowsSeen = new int[] { 0 };
         User32.INSTANCE.EnumWindows((hWnd, data) -> {
+            windowsSeen[0]++;
             var target = new IntByReference();
             User32.INSTANCE.GetWindowThreadProcessId(hWnd, target);
 
@@ -110,6 +121,7 @@ public class CommandMedia extends Command implements ButtonAction {
             }
             return true;
         }, null);
+        log.info("findSpotify: {} running apps, spotify pids={}, windows enumerated={}, match={}", apps.size(), spotifyPids, windowsSeen[0], result[0]);
         return result[0];
     }
 }
