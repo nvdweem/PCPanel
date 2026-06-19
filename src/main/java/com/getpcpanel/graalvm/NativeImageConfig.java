@@ -250,6 +250,12 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         "com.getpcpanel.util.version.Version",
         "com.getpcpanel.util.version.Version$SemVer",
 
+        // MQTT button-click event payload (package-private record). Serialised by Jackson on every
+        // button press when MQTT is connected; without it the buttonPress observer throws
+        // MissingReflectionRegistrationError, which aborts the shared ButtonClickEvent notification and
+        // stops the command (e.g. CommandMedia) from ever running.
+        "com.getpcpanel.mqtt.MqttDeviceService$MqttEvent",
+
         // MQTT Home Assistant discovery records (package-private inner classes – referenced by name)
         "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantAvailability",
         "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantButtonConfig",
