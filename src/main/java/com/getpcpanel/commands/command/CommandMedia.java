@@ -121,7 +121,7 @@ public class CommandMedia extends Command implements ButtonAction {
             }
             return true;
         }, null);
-        log.info("findSpotify: {} running apps, spotify pids={}, windows enumerated={}, match={}", apps.size(), spotifyPids, windowsSeen[0], result[0]);
+        log.debug("findSpotify: {} running apps, spotify pids={}, windows enumerated={}, match={}", apps.size(), spotifyPids, windowsSeen[0], result[0]);
         return result[0];
     }
 }
