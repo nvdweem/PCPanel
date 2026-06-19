@@ -52,28 +52,23 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         // "callback" method JNA invokes reflectively from the native message dispatch.
         "com.getpcpanel.sleepdetection.Win32PowerNotify",
         "com.sun.jna.platform.win32.WinUser$WindowProc",
-        // SendInput keyboard synthesis (media keys in CommandMedia, keystrokes in WindowsKeyboard).
-        // JNA reads the INPUT struct + its INPUT_UNION and the union member structs reflectively to
-        // compute their layout; without their fields registered, Structure.getFieldOrder() is empty in
-        // the native image, so SendInput posts a zeroed INPUT and no key event is ever generated.
+        // SendInput keyboard synthesis (CommandMedia media keys, WindowsKeyboard keystrokes): JNA
+        // reflectively instantiates the INPUT union, its INPUT_UNION and every member struct to compute
+        // the layout, so each needs its fields and no-arg constructor reachable in the native image.
         "com.sun.jna.platform.win32.WinUser$INPUT",
         "com.sun.jna.platform.win32.WinUser$INPUT$INPUT_UNION",
         "com.sun.jna.platform.win32.WinUser$KEYBDINPUT",
         "com.sun.jna.platform.win32.WinUser$MOUSEINPUT",
         "com.sun.jna.platform.win32.WinUser$HARDWAREINPUT",
-        // EnumWindows callback used by CommandMedia's Spotify path to locate the Spotify window. Like
-        // the tray's WindowProc, the concrete callback type must be reflectively registered so JNA can
-        // build its CallbackProxy in the native image (CallbackProxy itself is already jniAccessible).
-        "com.sun.jna.platform.win32.WinUser$WNDENUMPROC",
-        // Field types of the INPUT union member structs (MOUSEINPUT/KEYBDINPUT/HARDWAREINPUT). To
-        // compute the union's size JNA instantiates every member and each member's field types via
-        // their no-arg constructor; WORD/DWORD above cover most, but LONG (MOUSEINPUT.dx/dy) and
-        // ULONG_PTR (dwExtraInfo) were missing, which aborted SendInput before any key was posted.
+        // Field types JNA instantiates while sizing the INPUT member structs (WORD/DWORD above cover the
+        // rest): LONG for MOUSEINPUT.dx/dy, ULONG_PTR for the dwExtraInfo fields.
         "com.sun.jna.platform.win32.WinDef$LONG",
         "com.sun.jna.platform.win32.BaseTSD$ULONG_PTR",
-        // JNA out-parameter pointer used by EnumProcesses/GetWindowThreadProcessId (CommandMedia's
-        // Spotify lookup and the /api/processes listing). JNA instantiates it reflectively to map the
-        // native argument, so its no-arg constructor must be registered.
+        // EnumWindows callback for CommandMedia's Spotify-window lookup; JNA builds its CallbackProxy
+        // from this concrete type reflectively (CallbackProxy itself is jniAccessible).
+        "com.sun.jna.platform.win32.WinUser$WNDENUMPROC",
+        // JNA out-parameter pointer for EnumProcesses/GetWindowThreadProcessId (the Spotify lookup and
+        // the /api/processes listing).
         "com.sun.jna.ptr.IntByReference",
 })
 public final class JnaWin32ReflectionConfig {
