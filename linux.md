@@ -192,6 +192,12 @@ System tray icons work on Wayland compositors that support the StatusNotifierIte
 
 The application auto-detects Wayland via `XDG_SESSION_TYPE` or `WAYLAND_DISPLAY` environment variables.
 
+**Media keys** (play/pause, next, previous, stop) are normally injected as `XF86Audio*` key events
+through the X server (native X11 or XWayland), which the desktop forwards to the active player. On a
+pure Wayland session with *no* X server reachable, PCPanel instead controls the active player directly
+over MPRIS on the session D-Bus (the same mechanism `playerctl` uses), so these keep working. The
+`mute` action is a system-volume key with no MPRIS equivalent, so it requires an X server.
+
 ## Notes
 
 ### Disabling the tray icon

@@ -128,25 +128,30 @@ public final class LinuxKeyboard {
      * binds these {@code XF86Audio*} keysyms and forwards them to the active media player (Spotify and
      * others through MPRIS), which is why this is also the Linux path for the per-app "Spotify" media
      * action — there is no portable way to target a specific player window the way Windows does.
+     *
+     * <p>On a pure Wayland session with no X server there is nothing to inject into, so this falls back
+     * to controlling the active player directly through MPRIS on the session D-Bus
+     * ({@link LinuxMprisMediaControl}).
      */
     public static void sendMediaKey(VolumeButton button) {
         var keysym = mediaKeysym(button);
         synchronized (LOCK) {
             var disp = display();
-            if (disp == null) {
-                log.warn("No X display available; cannot send media key '{}'", button);
+            if (disp != null) {
+                try {
+                    var keycode = sendKeysym(disp, keysym, true);
+                    if (keycode != 0) {
+                        XTest.INSTANCE.XTestFakeKeyEvent(disp, keycode & 0xFF, false, new NativeLong(0));
+                    }
+                    X11.INSTANCE.XFlush(disp);
+                } catch (Throwable e) { // UnsatisfiedLinkError if libXtst is missing
+                    log.error("Unable to send media key '{}'", button, e);
+                }
                 return;
             }
-            try {
-                var keycode = sendKeysym(disp, keysym, true);
-                if (keycode != 0) {
-                    XTest.INSTANCE.XTestFakeKeyEvent(disp, keycode & 0xFF, false, new NativeLong(0));
-                }
-                X11.INSTANCE.XFlush(disp);
-            } catch (Throwable e) { // UnsatisfiedLinkError if libXtst is missing
-                log.error("Unable to send media key '{}'", button, e);
-            }
         }
+        // No X server (pure Wayland) — fall back to MPRIS, outside the X lock since it never touches X.
+        LinuxMprisMediaControl.sendMediaKey(button);
     }
 
     /**

@@ -20,7 +20,9 @@
   {"interfaces": ["com.getpcpanel.util.tray.wayland.StatusNotifierWatcher"]},
   {"interfaces": ["com.getpcpanel.sleepdetection.Login1Manager"]},
   {"interfaces": ["com.getpcpanel.sleepdetection.Login1Session"]},
+  {"interfaces": ["com.getpcpanel.cpp.linux.MprisPlayer"]},
   {"interfaces": ["org.freedesktop.dbus.interfaces.DBus"]},
+  {"interfaces": ["org.freedesktop.dbus.interfaces.Properties"]},
 
   {"interfaces": ["com.getpcpanel.cpp.osx.CoreAudioLib"]},
   {"interfaces": ["com.getpcpanel.cpp.osx.OsxKeyboard$CoreGraphics"]},
