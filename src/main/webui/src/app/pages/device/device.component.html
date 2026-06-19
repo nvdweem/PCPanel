@@ -1,91 +1,100 @@
-@if (!device()) {
-  <div class="loading-center"><mat-spinner /></div>
-}
+@if (snap(); as s) {
+  <div class="device-screen">
+    <!-- ── Top bar ───────────────────────────────────────────────────────── -->
+    <header class="topbar">
+      <button class="pc-icon-btn sm" (click)="back()"><pc-icon name="chevron-left" [size]="15"></pc-icon></button>
+      <span class="dev-name">{{ s.displayName }}</span>
+      <span class="adv-tag mono">ADVANCED</span>
 
-@if (device(); as device) {
-  <div class="device-page">
-    <mat-toolbar class="page-toolbar">
-      <button mat-icon-button routerLink="/" aria-label="Back">
-        <mat-icon>arrow_back</mat-icon>
-      </button>
-
-      @if (!editingName()) {
-        <span class="device-title" (dblclick)="startEditName()">{{ device.displayName }}</span>
-      }
-      @if (editingName()) {
-        <mat-form-field appearance="outline" class="name-field">
-          <input matInput [ngModel]="newName()" (ngModelChange)="newName.set($event)" (keyup.enter)="saveName()" (keyup.escape)="cancelEditName()" />
-        </mat-form-field>
-        <button mat-icon-button (click)="saveName()"><mat-icon>check</mat-icon></button>
-        <button mat-icon-button (click)="cancelEditName()"><mat-icon>close</mat-icon></button>
-      }
-
-      <span class="device-subtitle">{{ friendlyType(device.deviceType) }} · {{ device.serial }}</span>
       <span class="spacer"></span>
-      <app-connection-status />
-      <button mat-stroked-button [routerLink]="['/lighting', device.serial]">
-        <mat-icon>light_mode</mat-icon> Lighting
-      </button>
-    </mat-toolbar>
 
-    <div class="page-body">
-      <section class="profiles-section">
-        <h3>Profiles</h3>
-        <div class="profile-list">
-          <mat-button-toggle-group [value]="device.currentProfile">
-            @for (p of device.profiles; track p) {
-              <mat-button-toggle [value]="p" (click)="switchProfile(p)">{{ p }}</mat-button-toggle>
-            }
-          </mat-button-toggle-group>
-          <button mat-stroked-button (click)="addProfile()">
-            <mat-icon>add</mat-icon> Add Profile
-          </button>
+      <span class="micro-label">PROFILE</span>
+      <div class="profile-chips">
+        @for (p of s.profiles; track p) {
+          <button class="prof-chip" [class.active]="p === currentProfile()" (click)="switchProfile(p)">{{ p }}</button>
+        }
+        <button class="prof-add" (click)="newProfileOpen.set(true)" title="New profile">
+          <pc-icon name="plus" [size]="14" [strokeWidth]="2.4"></pc-icon>
+        </button>
+      </div>
+    </header>
+
+    <!-- ── Body ──────────────────────────────────────────────────────────── -->
+    <div class="body">
+      <!-- KNOBS -->
+      <section class="sec">
+        <div class="micro-label">KNOBS · {{ knobCount() }} — each presses as a button</div>
+        <div class="knob-grid">
+          @for (i of knobIdx(); track i) {
+            <div class="pc-card knob-card" (click)="configure(i)">
+              <div class="kc-head">
+                <span class="mini-ring" [style.border-color]="knobColor(i)"
+                      [style.box-shadow]="'0 0 10px ' + knobColor(i) + '55'">
+                  <span class="mini-cap"></span>
+                </span>
+                <span class="k-label mono">K{{ i + 1 }}</span>
+                <span class="spacer"></span>
+                <button class="more" cdkOverlayOrigin #km="cdkOverlayOrigin"
+                        (click)="$event.stopPropagation(); toggleMenu('k' + i)">
+                  <pc-icon name="more-vertical" [size]="16"></pc-icon>
+                </button>
+                <pc-menu [origin]="km" [items]="knobMenuItems" [open]="openMenu() === 'k' + i"
+                         (openChange)="menuOpenChange('k' + i, $event)"
+                         (select)="onKnobMenu(i, $event)"></pc-menu>
+              </div>
+              <div class="slots">
+                @for (line of knobLines(i); track line.label) {
+                  <div class="slot-row">
+                    <span class="slot-lbl mono">{{ line.label }}</span>
+                    <span class="slot-txt"
+                          [class.rotate]="line.cls === 'rotate'"
+                          [class.press]="line.cls === 'press'"
+                          [class.dbl]="line.cls === 'dbl'">{{ line.text }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
         </div>
       </section>
 
-      @if (!device.currentProfile) {
-        <p class="hint">No profile selected. Create one above.</p>
-      }
-
-      @if (device.currentProfile) {
-        @if (device.analogCount > 0) {
-          <section>
-            <h3>Dials ({{ device.analogCount }})</h3>
-            <div class="control-grid">
-              @for (i of range(device.analogCount); track $index) {
-                <mat-card class="control-card" (click)="editDial(i)">
-                  <mat-card-header>
-                    <mat-card-subtitle>Dial {{ i + 1 }}</mat-card-subtitle>
-                  </mat-card-header>
-                  <mat-card-content>{{ getDialLabel(i) }}</mat-card-content>
-                  <mat-card-actions align="end">
-                    <button mat-icon-button><mat-icon>edit</mat-icon></button>
-                  </mat-card-actions>
-                </mat-card>
-              }
-            </div>
-          </section>
-        }
-
-        @if (device.buttonCount > 0) {
-          <section>
-            <h3>Buttons ({{ device.buttonCount }})</h3>
-            <div class="control-grid">
-              @for (i of range(device.buttonCount); track $index) {
-                <mat-card class="control-card" (click)="editButton(i)">
-                  <mat-card-header>
-                    <mat-card-subtitle>Button {{ i + 1 }}</mat-card-subtitle>
-                  </mat-card-header>
-                  <mat-card-content>{{ getButtonLabel(i) }}</mat-card-content>
-                  <mat-card-actions align="end">
-                    <button mat-icon-button><mat-icon>edit</mat-icon></button>
-                  </mat-card-actions>
-                </mat-card>
-              }
-            </div>
-          </section>
-        }
+      <!-- SLIDERS (Pro only) -->
+      @if (isPro()) {
+        <section class="sec">
+          <div class="micro-label">SLIDERS · 4 — Pro only</div>
+          <div class="slider-grid">
+            @for (j of sliderIdx(); track j) {
+              <div class="pc-card slider-card" (click)="configure(j + 5)">
+                <span class="led-swatch" [style.background]="sliderColor(j)"
+                      [style.box-shadow]="'0 0 10px ' + sliderColor(j) + '66'"></span>
+                <span class="s-label mono">S{{ j + 1 }}</span>
+                <span class="s-txt">{{ sliderRotateText(j) }}</span>
+                <button class="more" cdkOverlayOrigin #sm="cdkOverlayOrigin"
+                        (click)="$event.stopPropagation(); toggleMenu('s' + j)">
+                  <pc-icon name="more-vertical" [size]="16"></pc-icon>
+                </button>
+                <pc-menu [origin]="sm" [items]="sliderMenuItems" [open]="openMenu() === 's' + j"
+                         (openChange)="menuOpenChange('s' + j, $event)"
+                         (select)="onSliderMenu(j, $event)"></pc-menu>
+              </div>
+            }
+          </div>
+        </section>
       }
     </div>
   </div>
+
+  <!-- New profile modal -->
+  <pc-modal [open]="newProfileOpen()" heading="New profile" (dismiss)="newProfileOpen.set(false)">
+    <div class="np-body">
+      <input class="pc-input" placeholder="Profile name" [value]="newProfileName()"
+             (input)="newProfileName.set($any($event.target).value)" (keydown.enter)="createProfile()" autofocus>
+      <div class="np-actions">
+        <button class="pc-btn ghost" (click)="newProfileOpen.set(false)">Cancel</button>
+        <button class="pc-btn primary" (click)="createProfile()">Create</button>
+      </div>
+    </div>
+  </pc-modal>
+} @else {
+  <div class="loading-screen"><span class="micro-label">Loading device…</span></div>
 }

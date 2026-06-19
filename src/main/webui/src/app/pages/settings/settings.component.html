@@ -1,131 +1,405 @@
-<h2 mat-dialog-title>Settings</h2>
-<mat-dialog-content>
-  @if (loaded(settingsForm)) {
-    <mat-tab-group animationDuration="0">
-      <mat-tab label="General">
-        <div class="tab-content">
-          <mat-checkbox [formField]="settingsForm.mainUIIcons">Show app icons in main UI</mat-checkbox>
-          <mat-checkbox [formField]="settingsForm.startupVersionCheck">Check for updates on startup</mat-checkbox>
-          <mat-checkbox [formField]="settingsForm.forceVolume">Force volume (Linux)</mat-checkbox>
-          <mat-checkbox [formField]="settingsForm.preventClickWhenDblClick">Prevent single click when double-clicking</mat-checkbox>
-          <mat-form-field appearance="outline">
-            <mat-label>Double-click interval (ms)</mat-label>
-            <input matInput type="number" [formField]="settingsForm.dblClickInterval"/>
-          </mat-form-field>
-        </div>
-      </mat-tab>
-      <mat-tab label="OBS">
-        <div class="tab-content">
-          <mat-checkbox [formField]="settingsForm.obsEnabled">OBS enabled</mat-checkbox>
-          <mat-form-field appearance="outline">
-            <mat-label>WebSocket host</mat-label>
-            <input matInput [formField]="settingsForm.obsAddress"/></mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>WebSocket port</mat-label>
-            <input matInput [formField]="settingsForm.obsPort"/></mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Password</mat-label>
-            <input matInput type="password" [formField]="settingsForm.obsPassword"/></mat-form-field>
-        </div>
-      </mat-tab>
-      <mat-tab label="VoiceMeeter">
-        <div class="tab-content">
-          <mat-checkbox [formField]="settingsForm.voicemeeterEnabled">VoiceMeeter enabled</mat-checkbox>
-          <mat-form-field appearance="outline">
-            <mat-label>VoiceMeeter path</mat-label>
-            <input matInput [formField]="settingsForm.voicemeeterPath"/></mat-form-field>
-        </div>
-      </mat-tab>
-      <mat-tab label="Overlay">
-        <div class="tab-content" cdkScrollable>
-          <mat-checkbox [formField]="settingsForm.overlayEnabled">Enable overlay</mat-checkbox>
-          <mat-checkbox [formField]="settingsForm.overlayUseLog">Use logarithmic scale</mat-checkbox>
-          <mat-checkbox [formField]="settingsForm.overlayShowNumber">Show percentage number</mat-checkbox>
-          <mat-form-field appearance="outline">
-            <mat-label>Position</mat-label>
-            <mat-select [formField]="settingsForm.overlayPosition!">
-              <mat-option value="topLeft">Top Left</mat-option>
-              <mat-option value="topRight">Top Right</mat-option>
-              <mat-option value="bottomLeft">Bottom Left</mat-option>
-              <mat-option value="bottomRight">Bottom Right</mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field>
-            <mat-label>Rounded corners</mat-label>
-            <input matInput [formField]="settingsForm.overlayWindowCornerRounding" type="number">
-          </mat-form-field>
+@let s = local();
 
-          <app-color-picker alwaysShow [field]="settingsForm.overlayBackgroundColor">Background color</app-color-picker>
-          <app-color-picker alwaysShow [field]="settingsForm.overlayTextColor">Text color</app-color-picker>
-          <app-color-picker alwaysShow [field]="settingsForm.overlayBarColor">Bar color</app-color-picker>
-        </div>
-      </mat-tab>
-      <mat-tab label="MQTT">
-        <div class="tab-content">
-          <mat-checkbox [formField]="settingsForm.mqtt.enabled">Enabled</mat-checkbox>
-          <mat-form-field appearance="outline">
-            <mat-label>Base topic</mat-label>
-            <input matInput [formField]="settingsForm.mqtt.baseTopic"/>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Host</mat-label>
-            <input matInput [formField]="settingsForm.mqtt.host"/>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Port</mat-label>
-            <input matInput type="number" [formField]="settingsForm.mqtt.port"/>
-          </mat-form-field>
-          <mat-checkbox [formField]="settingsForm.mqtt.secure">Secure</mat-checkbox>
-          <mat-form-field appearance="outline">
-            <mat-label>Username</mat-label>
-            <input matInput [formField]="settingsForm.mqtt.username"/>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Password</mat-label>
-            <input matInput [formField]="settingsForm.mqtt.password"/>
-          </mat-form-field>
+<div class="settings">
+  <!-- ── Left tab rail ──────────────────────────────────────────────────────── -->
+  <aside class="rail">
+    <button class="back" (click)="back()">
+      <pc-icon name="chevron-left" [size]="15"></pc-icon> Back
+    </button>
 
-          <div>
-            <h2> Home Assistant </h2>
-            <mat-checkbox [formField]="settingsForm.mqtt.homeAssistant.enableDiscovery">Enable discovery</mat-checkbox>
-            <mat-checkbox [formField]="settingsForm.mqtt.homeAssistant.availability">Availability</mat-checkbox>
-            <mat-form-field appearance="outline">
-              <mat-label>Base topic</mat-label>
-              <input matInput [formField]="settingsForm.mqtt.homeAssistant.baseTopic"/>
-            </mat-form-field>
+    <div class="rail-title">Settings</div>
+
+    <nav class="tabs">
+      @for (tab of tabs; track tab.id) {
+        <button class="tab" [class.active]="activeTab() === tab.id" (click)="setTab(tab.id)">
+          @if (tab.integration) {
+            @if (tabStatus(tab); as st) {
+              <pc-status-dot [kind]="st" [size]="7"></pc-status-dot>
+            }
+          }
+          <span class="tab-label">{{ tab.label }}</span>
+        </button>
+      }
+    </nav>
+
+    <span class="spacer"></span>
+
+    <button class="pc-btn primary save-btn" (click)="save()" [disabled]="saving() || !s">
+      @if (saving()) {
+        <pc-spinner [size]="13" [thickness]="2"></pc-spinner> Saving…
+      } @else {
+        Save
+      }
+    </button>
+  </aside>
+
+  <!-- ── Right content ──────────────────────────────────────────────────────── -->
+  <main class="content">
+    @if (!s) {
+      <div class="loading"><pc-spinner [size]="24"></pc-spinner></div>
+    } @else {
+      @switch (activeTab()) {
+
+        <!-- ── GENERAL ─────────────────────────────────────────────────────── -->
+        @case ('general') {
+          <h2 class="page-title">General</h2>
+
+          <div class="pc-card pad stack">
+            <div class="row">
+              <div class="row-text"><div class="row-label">Show app icons in UI</div></div>
+              <pc-toggle [value]="s.mainUIIcons" (valueChange)="patch('mainUIIcons', $event)"></pc-toggle>
+            </div>
+            <div class="row">
+              <div class="row-text"><div class="row-label">Check for updates on startup</div></div>
+              <pc-toggle [value]="s.startupVersionCheck" (valueChange)="patch('startupVersionCheck', $event)"></pc-toggle>
+            </div>
+            <div class="row">
+              <div class="row-text"><div class="row-label">Double-click interval</div><div class="row-sub">milliseconds</div></div>
+              <div class="pc-field num-field">
+                <input class="pc-field-input" type="number" min="0" [value]="s.dblClickInterval ?? 0"
+                       (input)="patchNum('dblClickInterval', $any($event.target).value)">
+              </div>
+            </div>
           </div>
-        </div>
-      </mat-tab>
-      <mat-tab label="OSC">
-        <div class="tab-content">
-          <mat-form-field appearance="outline">
-            <mat-label>OSC listen port</mat-label>
-            <input matInput type="number" [formField]="settingsForm.oscListenPort" placeholder="e.g. 8000"/>
-            <mat-hint>Leave blank to disable OSC</mat-hint>
-          </mat-form-field>
-        </div>
-      </mat-tab>
-      <mat-tab label="Debug">
-        <div class="tab-content">
-          <mat-form-field appearance="outline">
-            <mat-label>Render devices as</mat-label>
-            <mat-select [value]="debug.deviceTypeOverride()"
-                        (selectionChange)="setDeviceTypeOverride($event.value)">
-              <mat-option value="">No override (use real type)</mat-option>
-              <mat-option value="PCPANEL_MINI">PCPanel Mini</mat-option>
-              <mat-option value="PCPANEL_RGB">PCPanel RGB</mat-option>
-              <mat-option value="PCPANEL_PRO">PCPanel Pro</mat-option>
-            </mat-select>
-            <mat-hint>Forces every connected device to render as the chosen type. A
-              connected Pro has enough controls to stand in for Mini/RGB. Applied
-              immediately; affects the UI only.</mat-hint>
-          </mat-form-field>
-        </div>
-      </mat-tab>
-    </mat-tab-group>
-  }
-</mat-dialog-content>
-<mat-dialog-actions>
-  <button matButton matDialogClose>Cancel</button>
-  <button matButton="filled" (click)="save()">Save</button>
-</mat-dialog-actions>
+
+          <div class="divider"></div>
+          <div class="micro-label section-label">INPUT WORKAROUNDS</div>
+
+          <div class="pc-card pad stack">
+            <div class="row">
+              <div class="row-text"><div class="row-label">Slider de-twitch delay</div><div class="row-sub">milliseconds</div></div>
+              <div class="pc-field num-field">
+                <input class="pc-field-input" type="number" min="0" [value]="s.preventSliderTwitchDelay ?? 0"
+                       (input)="patchNum('preventSliderTwitchDelay', $any($event.target).value)">
+              </div>
+            </div>
+            <div class="row">
+              <div class="row-text"><div class="row-label">Smoothing</div><div class="row-sub">rolling average window</div></div>
+              <div class="pc-field num-field">
+                <input class="pc-field-input" type="number" min="0" [value]="s.sliderRollingAverage ?? 0"
+                       (input)="patchNum('sliderRollingAverage', $any($event.target).value)">
+              </div>
+            </div>
+            <div class="row">
+              <div class="row-text"><div class="row-label">Send only on change</div><div class="row-sub">suppress unchanged values</div></div>
+              <pc-toggle [value]="sendOnlyOnChange()" (valueChange)="setSendOnlyOnChange($event)"></pc-toggle>
+            </div>
+            <div class="row">
+              <div class="row-text"><div class="row-label">Force volume</div></div>
+              <pc-toggle [value]="s.forceVolume" (valueChange)="patch('forceVolume', $event)"></pc-toggle>
+            </div>
+            <div class="row">
+              <div class="row-text"><div class="row-label">Prevent click when double-click</div></div>
+              <pc-toggle [value]="s.preventClickWhenDblClick" (valueChange)="patch('preventClickWhenDblClick', $event)"></pc-toggle>
+            </div>
+            <div class="row">
+              <div class="row-text"><div class="row-label">Workarounds only on sliders</div></div>
+              <pc-toggle [value]="s.workaroundsOnlySliders" (valueChange)="patch('workaroundsOnlySliders', $event)"></pc-toggle>
+            </div>
+          </div>
+        }
+
+        <!-- ── OBS STUDIO ──────────────────────────────────────────────────── -->
+        @case ('obs') {
+          <h2 class="page-title">
+            OBS Studio
+            @if (tabStatus(tabs[1]); as st) { <pc-status-dot [kind]="st" [size]="8"></pc-status-dot> }
+          </h2>
+
+          <div class="pc-card pad stack">
+            <div class="row">
+              <div class="row-text"><div class="row-label">Enable</div></div>
+              <pc-toggle [value]="s.obsEnabled" (valueChange)="patch('obsEnabled', $event)"></pc-toggle>
+            </div>
+
+            <div class="pc-field">
+              <div class="pc-field-label">Host</div>
+              <input class="pc-field-input" type="text" [value]="s.obsAddress ?? ''"
+                     (input)="patch('obsAddress', $any($event.target).value)">
+            </div>
+            <div class="pc-field">
+              <div class="pc-field-label">Port</div>
+              <input class="pc-field-input" type="text" [value]="s.obsPort ?? ''"
+                     (input)="patch('obsPort', $any($event.target).value)">
+            </div>
+            <div class="pc-field">
+              <div class="pc-field-label">Password</div>
+              <input class="pc-field-input" type="password" [value]="s.obsPassword ?? ''"
+                     (input)="patch('obsPassword', $any($event.target).value)">
+            </div>
+          </div>
+        }
+
+        <!-- ── VOICEMEETER ─────────────────────────────────────────────────── -->
+        @case ('voicemeeter') {
+          <h2 class="page-title">
+            Voicemeeter
+            @if (tabStatus(tabs[2]); as st) { <pc-status-dot [kind]="st" [size]="8"></pc-status-dot> }
+          </h2>
+
+          <div class="pc-card pad stack">
+            <div class="row">
+              <div class="row-text"><div class="row-label">Enable</div></div>
+              <pc-toggle [value]="s.voicemeeterEnabled" (valueChange)="patch('voicemeeterEnabled', $event)"></pc-toggle>
+            </div>
+            <div class="field-block">
+              <div class="micro-label">INSTALL PATH</div>
+              <input class="pc-input mono" type="text" placeholder="Voicemeeter install path"
+                     [value]="s.voicemeeterPath ?? ''" (input)="patch('voicemeeterPath', $any($event.target).value)">
+            </div>
+          </div>
+        }
+
+        <!-- ── WAVE LINK ───────────────────────────────────────────────────── -->
+        @case ('wavelink') {
+          <h2 class="page-title">
+            Wave Link
+            @if (tabStatus(tabs[3]); as st) { <pc-status-dot [kind]="st" [size]="8"></pc-status-dot> }
+          </h2>
+
+          <div class="pc-card pad stack">
+            @if (wavelinkEnabled.isLoading()) {
+              <div class="muted-row"><pc-spinner [size]="14" [thickness]="2"></pc-spinner> Loading…</div>
+            } @else {
+              <div class="row">
+                <div class="row-text">
+                  <div class="row-label">Enable</div>
+                  <div class="row-sub">Elgato Wave Link integration</div>
+                </div>
+                <pc-toggle [value]="wavelinkEnabled.value()?.enabled ?? false"
+                           (valueChange)="setWavelinkEnabled($event)"></pc-toggle>
+              </div>
+            }
+            @if (wavelinkEnabled.error()) {
+              <div class="muted-row err">Wave Link endpoint unavailable.</div>
+            }
+          </div>
+        }
+
+        <!-- ── OSC ─────────────────────────────────────────────────────────── -->
+        @case ('osc') {
+          <h2 class="page-title">OSC</h2>
+
+          <div class="pc-card pad stack">
+            <div class="row">
+              <div class="row-text"><div class="row-label">Listen port</div><div class="row-sub">incoming OSC messages</div></div>
+              <div class="pc-field num-field">
+                <input class="pc-field-input" type="number" min="0" [value]="s.oscListenPort ?? 0"
+                       (input)="patchNum('oscListenPort', $any($event.target).value)">
+              </div>
+            </div>
+          </div>
+
+          <div class="micro-label section-label">SEND TARGETS</div>
+          <div class="pc-card pad stack">
+            <div class="chips">
+              @for (c of s.oscConnections; track $index) {
+                <span class="pc-chip">
+                  <span class="mono">{{ c.host }}:{{ c.port }}</span>
+                  <span class="x" (click)="removeOscTarget($index)"><pc-icon name="x" [size]="13"></pc-icon></span>
+                </span>
+              }
+              @if (!s.oscConnections.length) {
+                <span class="empty-hint">No send targets yet.</span>
+              }
+            </div>
+
+            <div class="osc-add">
+              <input class="pc-input mono" placeholder="host" [value]="oscHost()"
+                     (input)="oscHost.set($any($event.target).value)">
+              <input class="pc-input mono port-in" placeholder="port" type="number" min="0" [value]="oscPort()"
+                     (input)="oscPort.set($any($event.target).value)" (keydown.enter)="addOscTarget()">
+              <button class="pc-btn ghost" (click)="addOscTarget()">
+                <pc-icon name="plus" [size]="14"></pc-icon> Add
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- ── MQTT ────────────────────────────────────────────────────────── -->
+        @case ('mqtt') {
+          <h2 class="page-title">MQTT</h2>
+
+          <div class="pc-card pad stack">
+            <div class="row">
+              <div class="row-text"><div class="row-label">Enabled</div></div>
+              <pc-toggle [value]="s.mqtt.enabled" (valueChange)="patchMqtt('enabled', $event)"></pc-toggle>
+            </div>
+
+            <div class="pc-field">
+              <div class="pc-field-label">Base topic</div>
+              <input class="pc-field-input" type="text" [value]="s.mqtt.baseTopic ?? ''"
+                     (input)="patchMqtt('baseTopic', $any($event.target).value)">
+            </div>
+
+            <div class="two-col">
+              <div class="pc-field">
+                <div class="pc-field-label">Host</div>
+                <input class="pc-field-input" type="text" [value]="s.mqtt.host ?? ''"
+                       (input)="patchMqtt('host', $any($event.target).value)">
+              </div>
+              <div class="pc-field">
+                <div class="pc-field-label">Port</div>
+                <input class="pc-field-input" type="number" min="0" [value]="s.mqtt.port ?? 0"
+                       (input)="patchMqttNum('port', $any($event.target).value)">
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="row-text"><div class="row-label">Secure</div><div class="row-sub">TLS / SSL</div></div>
+              <pc-toggle [value]="s.mqtt.secure" (valueChange)="patchMqtt('secure', $event)"></pc-toggle>
+            </div>
+
+            <div class="two-col">
+              <div class="pc-field">
+                <div class="pc-field-label">Username</div>
+                <input class="pc-field-input" type="text" [value]="s.mqtt.username ?? ''"
+                       (input)="patchMqtt('username', $any($event.target).value)">
+              </div>
+              <div class="pc-field">
+                <div class="pc-field-label">Password</div>
+                <input class="pc-field-input" type="password" [value]="s.mqtt.password ?? ''"
+                       (input)="patchMqtt('password', $any($event.target).value)">
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+          <div class="micro-label section-label">HOME ASSISTANT</div>
+
+          <div class="pc-card pad stack">
+            <div class="row">
+              <div class="row-text"><div class="row-label">Enable discovery</div><div class="row-sub">MQTT auto-discovery</div></div>
+              <pc-toggle [value]="s.mqtt.homeAssistant.enableDiscovery" (valueChange)="patchHa('enableDiscovery', $event)"></pc-toggle>
+            </div>
+            <div class="row">
+              <div class="row-text"><div class="row-label">Availability</div><div class="row-sub">publish online/offline</div></div>
+              <pc-toggle [value]="s.mqtt.homeAssistant.availability" (valueChange)="patchHa('availability', $event)"></pc-toggle>
+            </div>
+            <div class="pc-field">
+              <div class="pc-field-label">Base topic</div>
+              <input class="pc-field-input" type="text" [value]="s.mqtt.homeAssistant.baseTopic ?? ''"
+                     (input)="patchHa('baseTopic', $any($event.target).value)">
+            </div>
+          </div>
+        }
+
+        <!-- ── OVERLAY (showcase) ──────────────────────────────────────────── -->
+        @case ('overlay') {
+          <h2 class="page-title">Overlay</h2>
+
+          <div class="overlay-grid">
+            <!-- left column: controls -->
+            <div class="overlay-controls">
+              <div class="pc-card pad stack">
+                <div class="row">
+                  <div class="row-text"><div class="row-label">Enable</div><div class="row-sub">on-screen volume overlay</div></div>
+                  <pc-toggle [value]="s.overlayEnabled" (valueChange)="patch('overlayEnabled', $event)"></pc-toggle>
+                </div>
+              </div>
+
+              <div class="micro-label section-label">POSITION</div>
+              <div class="pos-grid">
+                @for (p of gridPositions; track p) {
+                  <button class="pos-cell" [class.active]="s.overlayPosition === p"
+                          [attr.aria-label]="p" (click)="patch('overlayPosition', p)">
+                    <span class="pos-dot"></span>
+                  </button>
+                }
+              </div>
+
+              <div class="micro-label section-label">SIZE &amp; SHAPE</div>
+              <div class="pc-card pad stack">
+                <div class="slider-row">
+                  <div class="sr-head"><span class="sr-label">Edge padding</span><span class="sr-val mono">{{ s.overlayPadding ?? 0 }}px</span></div>
+                  <pc-slider [value]="s.overlayPadding ?? 0" [min]="0" [max]="80"
+                             (valueChange)="patch('overlayPadding', $event)" (changeEnd)="patch('overlayPadding', $event)"></pc-slider>
+                </div>
+                <div class="slider-row">
+                  <div class="sr-head"><span class="sr-label">Corner rounding</span><span class="sr-val mono">{{ s.overlayWindowCornerRounding ?? 0 }}px</span></div>
+                  <pc-slider [value]="s.overlayWindowCornerRounding ?? 0" [min]="0" [max]="40"
+                             (valueChange)="patch('overlayWindowCornerRounding', $event)" (changeEnd)="patch('overlayWindowCornerRounding', $event)"></pc-slider>
+                </div>
+                <div class="slider-row">
+                  <div class="sr-head"><span class="sr-label">Bar height</span><span class="sr-val mono">{{ s.overlayBarHeight ?? 0 }}px</span></div>
+                  <pc-slider [value]="s.overlayBarHeight ?? 0" [min]="2" [max]="40"
+                             (valueChange)="patch('overlayBarHeight', $event)" (changeEnd)="patch('overlayBarHeight', $event)"></pc-slider>
+                </div>
+                <div class="slider-row">
+                  <div class="sr-head"><span class="sr-label">Bar rounding</span><span class="sr-val mono">{{ s.overlayBarCornerRounding ?? 0 }}px</span></div>
+                  <pc-slider [value]="s.overlayBarCornerRounding ?? 0" [min]="0" [max]="20"
+                             (valueChange)="patch('overlayBarCornerRounding', $event)" (changeEnd)="patch('overlayBarCornerRounding', $event)"></pc-slider>
+                </div>
+              </div>
+
+              <div class="micro-label section-label">BEHAVIOUR</div>
+              <div class="pc-card pad stack">
+                <div class="row">
+                  <div class="row-text"><div class="row-label">Show number</div></div>
+                  <pc-toggle [value]="s.overlayShowNumber" (valueChange)="patch('overlayShowNumber', $event)"></pc-toggle>
+                </div>
+                <div class="row">
+                  <div class="row-text"><div class="row-label">Scale</div><div class="row-sub">value mapping</div></div>
+                  <pc-segmented [options]="scaleOptions" [value]="s.overlayUseLog"
+                                (valueChange)="patch('overlayUseLog', !!$event)"></pc-segmented>
+                </div>
+              </div>
+
+              <div class="micro-label section-label">COLORS</div>
+              <div class="pc-card pad color-grid">
+                <div class="color-row">
+                  <span class="color-label">Background</span>
+                  <pc-color-picker [value]="s.overlayBackgroundColor" [alpha]="true"
+                                   (valueChange)="patch('overlayBackgroundColor', $event)"></pc-color-picker>
+                </div>
+                <div class="color-row">
+                  <span class="color-label">Text</span>
+                  <pc-color-picker [value]="s.overlayTextColor"
+                                   (valueChange)="patch('overlayTextColor', $event)"></pc-color-picker>
+                </div>
+                <div class="color-row">
+                  <span class="color-label">Bar</span>
+                  <pc-color-picker [value]="s.overlayBarColor"
+                                   (valueChange)="patch('overlayBarColor', $event)"></pc-color-picker>
+                </div>
+                <div class="color-row">
+                  <span class="color-label">Bar track</span>
+                  <pc-color-picker [value]="s.overlayBarBackgroundColor"
+                                   (valueChange)="patch('overlayBarBackgroundColor', $event)"></pc-color-picker>
+                </div>
+              </div>
+            </div>
+
+            <!-- right column: live preview -->
+            <div class="overlay-preview-col">
+              <div class="micro-label section-label">LIVE PREVIEW</div>
+              <div class="desktop">
+                <div class="ov-card"
+                     [style.background-color]="s.overlayBackgroundColor || '#14161B'"
+                     [style.border-radius.px]="s.overlayWindowCornerRounding ?? 12"
+                     [style.padding.px]="14">
+                  <div class="ov-top">
+                    <span class="ov-tile" [style.color]="s.overlayTextColor || '#E9EBF0'">A</span>
+                    <span class="ov-name" [style.color]="s.overlayTextColor || '#E9EBF0'">App Name</span>
+                    @if (s.overlayShowNumber) {
+                      <span class="ov-pct mono" [style.color]="s.overlayTextColor || '#E9EBF0'">55%</span>
+                    }
+                  </div>
+                  <div class="ov-bar-track"
+                       [style.background-color]="s.overlayBarBackgroundColor || '#23262E'"
+                       [style.height.px]="s.overlayBarHeight ?? 8"
+                       [style.border-radius.px]="s.overlayBarCornerRounding ?? 4">
+                    <div class="ov-bar-fill"
+                         [style.background-color]="s.overlayBarColor || '#FFB020'"
+                         [style.border-radius.px]="s.overlayBarCornerRounding ?? 4"
+                         [style.width.%]="55"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      }
+    }
+  </main>
+</div>

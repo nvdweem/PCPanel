@@ -1,45 +1,265 @@
-@if (loading()) { <div class="loading-center"><mat-spinner /></div> }
-@if (!loading()) {
-  <div class="lighting-page">
-    <mat-toolbar>
-      <button mat-icon-button (click)="goBack()" aria-label="Back"><mat-icon>arrow_back</mat-icon></button>
-      <span>Lighting</span>
-      <span class="spacer"></span>
-      <app-connection-status />
-    </mat-toolbar>
-    <div class="lighting-body">
-      <mat-card>
-        <mat-card-content>
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Mode</mat-label>
-            <mat-select [formField]="configForm.lightingMode">
-              <mat-option value="ALL_COLOR">All Color</mat-option>
-              <mat-option value="ALL_RAINBOW">Rainbow</mat-option>
-              <mat-option value="ALL_WAVE">Wave</mat-option>
-              <mat-option value="ALL_BREATH">Breath</mat-option>
-              <mat-option value="SINGLE_COLOR">Per-control Colors</mat-option>
-              <mat-option value="CUSTOM">Custom</mat-option>
-            </mat-select>
-          </mat-form-field>
-          @if (configModel().lightingMode === 'ALL_COLOR') {
-            <app-color-picker [field]="configForm.allColor" alwaysShow>Color</app-color-picker>
+@if (snapshot(); as snap) {
+  @if (config(); as cfg) {
+    <div class="lighting-screen">
+      <!-- ── Left controls ───────────────────────────────────────────────────── -->
+      <aside class="controls">
+        <div class="back-row">
+          <button class="pc-icon-btn sm" (click)="back()" title="Back"><pc-icon name="chevron-left" [size]="15"></pc-icon></button>
+          <span class="title">Lighting</span>
+        </div>
+
+        <!-- Global brightness -->
+        <div class="block">
+          <div class="label-row">
+            <span class="lbl">Global brightness</span>
+            <span class="val mono">{{ cfg.globalBrightness }}%</span>
+          </div>
+          <pc-slider [value]="cfg.globalBrightness" [min]="0" [max]="100"
+                     (valueChange)="set('globalBrightness', $event)" (changeEnd)="set('globalBrightness', $event)"></pc-slider>
+        </div>
+
+        <!-- Mode selector -->
+        <div class="block">
+          <span class="micro-label">MODE</span>
+          <div class="mode-grid">
+            @for (chip of modeChips; track chip.value) {
+              <button class="mode-chip" [class.span2]="chip.span2" [class.active]="cfg.lightingMode === chip.value"
+                      (click)="setMode(chip.value)">
+                @switch (chip.swatch) {
+                  @case ('solid') { <span class="swatch solid"></span> }
+                  @case ('rainbow') { <span class="swatch rainbow"></span> }
+                  @case ('wave') { <span class="swatch wave"></span> }
+                  @case ('breath') { <span class="swatch breath"></span> }
+                  @case ('custom') { <span class="swatch custom"><pc-icon [name]="gridIcon" [size]="13"></pc-icon></span> }
+                }
+                <span class="chip-lbl">{{ chip.label }}</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Parameters for the active global mode -->
+        @switch (cfg.lightingMode) {
+          @case ('ALL_COLOR') {
+            <div class="block">
+              <span class="micro-label">SOLID PARAMETERS</span>
+              <div class="param-row">
+                <span class="lbl">Color</span>
+                <pc-color-picker [value]="cfg.allColor" (valueChange)="set('allColor', $event)"></pc-color-picker>
+              </div>
+            </div>
           }
-          @if (configModel().lightingMode === 'ALL_RAINBOW') {
-            <div class="slider-row"><label>Phase Shift</label><mat-slider min="0" max="255" class="flex-slider"><input matSliderThumb [formField]="configForm.rainbowPhaseShift" /></mat-slider><span>{{ configModel().rainbowPhaseShift }}</span></div>
-            <div class="slider-row"><label>Brightness</label><mat-slider min="0" max="255" class="flex-slider"><input matSliderThumb [formField]="configForm.rainbowBrightness" /></mat-slider><span>{{ configModel().rainbowBrightness }}</span></div>
-            <div class="slider-row"><label>Speed</label><mat-slider min="0" max="255" class="flex-slider"><input matSliderThumb [formField]="configForm.rainbowSpeed" /></mat-slider><span>{{ configModel().rainbowSpeed }}</span></div>
+          @case ('ALL_RAINBOW') {
+            <div class="block">
+              <span class="micro-label">RAINBOW PARAMETERS</span>
+              <div class="param-row">
+                <span class="lbl">Phase shift</span><span class="raw mono">{{ cfg.rainbowPhaseShift }}</span>
+              </div>
+              <pc-slider [value]="cfg.rainbowPhaseShift" [min]="0" [max]="255"
+                         (valueChange)="set('rainbowPhaseShift', $event)" (changeEnd)="set('rainbowPhaseShift', $event)"></pc-slider>
+              <div class="param-row">
+                <span class="lbl">Speed</span><span class="raw mono">{{ cfg.rainbowSpeed }}</span>
+              </div>
+              <pc-slider [value]="cfg.rainbowSpeed" [min]="0" [max]="255"
+                         (valueChange)="set('rainbowSpeed', $event)" (changeEnd)="set('rainbowSpeed', $event)"></pc-slider>
+              <div class="param-row">
+                <span class="lbl">Brightness</span><span class="raw mono">{{ cfg.rainbowBrightness }}</span>
+              </div>
+              <pc-slider [value]="cfg.rainbowBrightness" [min]="0" [max]="255"
+                         (valueChange)="set('rainbowBrightness', $event)" (changeEnd)="set('rainbowBrightness', $event)"></pc-slider>
+              <div class="toggle-row">
+                <span class="lbl">Reverse direction</span>
+                <pc-toggle [value]="flagOn(cfg.rainbowReverse)" (valueChange)="setFlag('rainbowReverse', $event)"></pc-toggle>
+              </div>
+              <div class="seg-row">
+                <span class="lbl">Orientation</span>
+                <pc-segmented [options]="orientationOptions" [value]="orientation()" (valueChange)="setOrientation($event)"></pc-segmented>
+              </div>
+            </div>
           }
-          @if (configModel().lightingMode === 'ALL_BREATH') {
-            <div class="slider-row"><label>Brightness</label><mat-slider min="0" max="255" class="flex-slider"><input matSliderThumb [formField]="configForm.breathBrightness" /></mat-slider><span>{{ configModel().breathBrightness }}</span></div>
-            <div class="slider-row"><label>Speed</label><mat-slider min="0" max="255" class="flex-slider"><input matSliderThumb [formField]="configForm.breathSpeed" /></mat-slider><span>{{ configModel().breathSpeed }}</span></div>
+          @case ('ALL_WAVE') {
+            <div class="block">
+              <span class="micro-label">WAVE PARAMETERS</span>
+              <div class="param-row">
+                <span class="lbl">Hue</span><span class="raw mono">{{ cfg.waveHue }}</span>
+              </div>
+              <pc-slider [value]="cfg.waveHue" [min]="0" [max]="255"
+                         (valueChange)="set('waveHue', $event)" (changeEnd)="set('waveHue', $event)"></pc-slider>
+              <div class="param-row">
+                <span class="lbl">Speed</span><span class="raw mono">{{ cfg.waveSpeed }}</span>
+              </div>
+              <pc-slider [value]="cfg.waveSpeed" [min]="0" [max]="255"
+                         (valueChange)="set('waveSpeed', $event)" (changeEnd)="set('waveSpeed', $event)"></pc-slider>
+              <div class="param-row">
+                <span class="lbl">Brightness</span><span class="raw mono">{{ cfg.waveBrightness }}</span>
+              </div>
+              <pc-slider [value]="cfg.waveBrightness" [min]="0" [max]="255"
+                         (valueChange)="set('waveBrightness', $event)" (changeEnd)="set('waveBrightness', $event)"></pc-slider>
+              <div class="toggle-row">
+                <span class="lbl">Reverse</span>
+                <pc-toggle [value]="flagOn(cfg.waveReverse)" (valueChange)="setFlag('waveReverse', $event)"></pc-toggle>
+              </div>
+              <div class="toggle-row">
+                <span class="lbl">Bounce</span>
+                <pc-toggle [value]="flagOn(cfg.waveBounce)" (valueChange)="setFlag('waveBounce', $event)"></pc-toggle>
+              </div>
+            </div>
           }
-          <div class="slider-row"><label>Global Brightness</label><mat-slider min="0" max="100" class="flex-slider"><input matSliderThumb [formField]="configForm.globalBrightness" /></mat-slider><span>{{ configModel().globalBrightness }}%</span></div>
-        </mat-card-content>
-        <mat-card-actions>
-          <button mat-raised-button color="primary" (click)="save()" [disabled]="saving()">Save Lighting</button>
-          <button mat-stroked-button (click)="goBack()">Cancel</button>
-        </mat-card-actions>
-      </mat-card>
+          @case ('ALL_BREATH') {
+            <div class="block">
+              <span class="micro-label">BREATH PARAMETERS</span>
+              <div class="param-row">
+                <span class="lbl">Hue</span><span class="raw mono">{{ cfg.breathHue }}</span>
+              </div>
+              <pc-slider [value]="cfg.breathHue" [min]="0" [max]="255"
+                         (valueChange)="set('breathHue', $event)" (changeEnd)="set('breathHue', $event)"></pc-slider>
+              <div class="param-row">
+                <span class="lbl">Speed</span><span class="raw mono">{{ cfg.breathSpeed }}</span>
+              </div>
+              <pc-slider [value]="cfg.breathSpeed" [min]="0" [max]="255"
+                         (valueChange)="set('breathSpeed', $event)" (changeEnd)="set('breathSpeed', $event)"></pc-slider>
+              <div class="param-row">
+                <span class="lbl">Brightness</span><span class="raw mono">{{ cfg.breathBrightness }}</span>
+              </div>
+              <pc-slider [value]="cfg.breathBrightness" [min]="0" [max]="255"
+                         (valueChange)="set('breathBrightness', $event)" (changeEnd)="set('breathBrightness', $event)"></pc-slider>
+            </div>
+          }
+        }
+      </aside>
+
+      <!-- ── Right: preview + per-control options ─────────────────────────────── -->
+      <main class="preview-pane">
+        <header class="preview-head">
+          <pc-status-dot kind="ok" [size]="7" [glow]="true"></pc-status-dot>
+          <span class="head-lbl">Live preview — animating on device</span>
+        </header>
+
+        <section class="preview-stage" [class.with-custom]="isCustom()">
+          <div class="device-wrap">
+            <pc-device [serial]="serial()" [flat]="true"></pc-device>
+          </div>
+
+          @if (isCustom()) {
+            <div class="per-control">
+              <span class="micro-label section-label">PER-CONTROL OPTIONS (CUSTOM MODE)</span>
+              <div class="pc-grid">
+                <!-- Knobs -->
+                <div class="pc-card-group">
+                  <div class="grp-head">Knobs</div>
+                  @for (i of knobIndexes(); track i) {
+                    <div class="ctrl-row">
+                      <span class="led-swatch" [style.background]="knobAt(i).color1"></span>
+                      <span class="ctrl-name mono">K{{ i + 1 }}</span>
+                      <div class="ctrl-fields">
+                        <pc-select [options]="knobModeOptions" [value]="knobAt(i).mode" [block]="true"
+                                   (valueChange)="setKnob(i, 'mode', $any($event))"></pc-select>
+                        @if (knobAt(i).mode !== 'NONE') {
+                          <div class="color-line">
+                            <span class="mini-lbl">Color</span>
+                            <pc-color-picker [value]="knobAt(i).color1" [swatchSize]="24"
+                                             (valueChange)="setKnob(i, 'color1', $event)"></pc-color-picker>
+                          </div>
+                          @if (knobAt(i).mode === 'VOLUME_GRADIENT') {
+                            <div class="color-line">
+                              <span class="mini-lbl">Color 2</span>
+                              <pc-color-picker [value]="knobAt(i).color2" [swatchSize]="24"
+                                               (valueChange)="setKnob(i, 'color2', $event)"></pc-color-picker>
+                            </div>
+                          }
+                          <div class="color-line">
+                            <span class="mini-lbl">Muted</span>
+                            <pc-color-picker [value]="knobAt(i).muteOverrideColor || '#000000'" [swatchSize]="24"
+                                             (valueChange)="setKnob(i, 'muteOverrideColor', $event)"></pc-color-picker>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+
+                @if (isPro()) {
+                  <!-- Sliders -->
+                  <div class="pc-card-group">
+                    <div class="grp-head">Sliders</div>
+                    @for (j of sliderIndexes; track j) {
+                      <div class="ctrl-row">
+                        <span class="led-swatch" [style.background]="sliderAt(j).color1"></span>
+                        <span class="ctrl-name mono">S{{ j + 1 }}</span>
+                        <div class="ctrl-fields">
+                          <pc-select [options]="sliderModeOptions" [value]="sliderAt(j).mode" [block]="true"
+                                     (valueChange)="setSlider(j, 'mode', $any($event))"></pc-select>
+                          @if (sliderAt(j).mode !== 'NONE') {
+                            <div class="color-line">
+                              <span class="mini-lbl">Color</span>
+                              <pc-color-picker [value]="sliderAt(j).color1" [swatchSize]="24"
+                                               (valueChange)="setSlider(j, 'color1', $event)"></pc-color-picker>
+                            </div>
+                            @if (sliderAt(j).mode === 'STATIC_GRADIENT' || sliderAt(j).mode === 'VOLUME_GRADIENT') {
+                              <div class="color-line">
+                                <span class="mini-lbl">Color 2</span>
+                                <pc-color-picker [value]="sliderAt(j).color2" [swatchSize]="24"
+                                                 (valueChange)="setSlider(j, 'color2', $event)"></pc-color-picker>
+                              </div>
+                            }
+                            <div class="color-line">
+                              <span class="mini-lbl">Muted</span>
+                              <pc-color-picker [value]="sliderAt(j).muteOverrideColor || '#000000'" [swatchSize]="24"
+                                               (valueChange)="setSlider(j, 'muteOverrideColor', $event)"></pc-color-picker>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Slider labels -->
+                  <div class="pc-card-group">
+                    <div class="grp-head">Slider labels</div>
+                    @for (j of sliderIndexes; track j) {
+                      <div class="ctrl-row">
+                        <span class="led-swatch" [style.background]="sliderLabelAt(j).color"></span>
+                        <span class="ctrl-name mono">L{{ j + 1 }}</span>
+                        <div class="ctrl-fields">
+                          <pc-select [options]="sliderLabelModeOptions" [value]="sliderLabelAt(j).mode" [block]="true"
+                                     (valueChange)="setSliderLabel(j, 'mode', $any($event))"></pc-select>
+                          @if (sliderLabelAt(j).mode !== 'NONE') {
+                            <div class="color-line">
+                              <span class="mini-lbl">Color</span>
+                              <pc-color-picker [value]="sliderLabelAt(j).color" [swatchSize]="24"
+                                               (valueChange)="setSliderLabel(j, 'color', $event)"></pc-color-picker>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Logo -->
+                  <div class="pc-card-group">
+                    <div class="grp-head">Logo</div>
+                    <div class="ctrl-row">
+                      <span class="led-swatch" [style.background]="logo().color"></span>
+                      <span class="ctrl-name mono">LOGO</span>
+                      <div class="ctrl-fields">
+                        <pc-select [options]="logoModeOptions" [value]="logo().mode" [block]="true"
+                                   (valueChange)="setLogo('mode', $any($event))"></pc-select>
+                        @if (logo().mode === 'STATIC') {
+                          <div class="color-line">
+                            <span class="mini-lbl">Color</span>
+                            <pc-color-picker [value]="logo().color" [swatchSize]="24"
+                                             (valueChange)="setLogo('color', $event)"></pc-color-picker>
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </section>
+      </main>
     </div>
-  </div>
+  }
 }

@@ -1,67 +1,80 @@
-.device-page {
-  min-height: 100vh;
-  background: #25262a;
-  color: #e0e0e0;
+:host { display: block; height: 100vh; }
+
+.device-screen { display: flex; flex-direction: column; height: 100%; background: var(--canvas); color: var(--text-1); }
+.loading-screen { display: flex; align-items: center; justify-content: center; height: 100%; }
+
+/* ── Top bar ───────────────────────────────────────────────────────────────── */
+.topbar { height: 56px; flex: none; display: flex; align-items: center; gap: 14px; padding: 0 22px; border-bottom: 1px solid var(--line-soft); }
+.dev-name { font-family: var(--font-display); font-weight: 600; font-size: 16px; }
+.adv-tag {
+  font-size: 11px; color: var(--text-3); background: var(--panel); border: 1px solid var(--line);
+  padding: 3px 8px; border-radius: 5px; letter-spacing: 0.08em;
 }
 
-.page-toolbar {
-  gap: 8px;
-  .device-title { font-size: 1rem; cursor: pointer; &:hover { color: #ffc940; } }
-  .device-subtitle { font-size: 0.78rem; color: #9a9a9a; margin-left: 8px; }
-  .spacer { flex: 1; }
-  .name-field {
-    width: 240px;
-    .mat-mdc-form-field-subscript-wrapper { display: none; }
-  }
+.profile-chips { display: flex; align-items: center; gap: 8px; }
+.prof-chip {
+  font-size: 12.5px; font-weight: 500; padding: 6px 13px; border-radius: var(--r-pill);
+  background: transparent; border: 1px solid var(--line); color: var(--text-soft); cursor: pointer;
+  white-space: nowrap;
 }
-
-.page-body {
-  padding: 1.5rem 2rem;
-  max-width: 960px;
-  margin: 0 auto;
-
-  h3 {
-    font-size: 0.85rem;
-    color: #9a9a9a;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin: 1.5rem 0 0.75rem;
-  }
+.prof-chip:hover { border-color: var(--line-2); color: var(--text-1); }
+.prof-chip.active { background: var(--accent-tint); border-color: var(--accent-border); color: var(--accent-text); }
+.prof-add {
+  width: 30px; height: 30px; flex: none; border-radius: 7px; border: 1px dashed var(--line-2);
+  background: transparent; color: var(--text-2); cursor: pointer; display: flex; align-items: center; justify-content: center;
 }
+.prof-add:hover { border-color: var(--accent-border); color: var(--accent-text); }
 
-.profiles-section .profile-list {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+/* ── Body ──────────────────────────────────────────────────────────────────── */
+.body { flex: 1; overflow: auto; padding: 24px 26px; }
+.sec { margin-bottom: 30px; }
+.sec .micro-label { display: block; margin-bottom: 14px; }
+
+/* ── Knob cards ────────────────────────────────────────────────────────────── */
+.knob-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.knob-card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px;
+  cursor: pointer; transition: border-color 0.13s;
 }
+.knob-card:hover { border-color: var(--line-2); }
 
-.control-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 1rem;
+.kc-head { display: flex; align-items: center; gap: 11px; margin-bottom: 12px; }
+.mini-ring {
+  position: relative; width: 30px; height: 30px; flex: none; border-radius: 50%;
+  border: 2px solid var(--accent); box-sizing: border-box;
 }
-
-.control-card {
-  cursor: pointer;
-  background: #1c1d20 !important;
-  border: 1px solid #3b3c41;
-  transition: border-color 0.15s;
-  &:hover { border-color: #ffc940; }
-
-  mat-card-content {
-    font-size: 0.82rem;
-    color: #9a9a9a;
-    padding: 0 16px 8px;
-    min-height: 2rem;
-  }
+.mini-cap {
+  position: absolute; inset: 5px; border-radius: 50%;
+  background: radial-gradient(circle at 38% 30%, #3C424C, #1A1D23 72%);
 }
+.k-label { font-size: 12px; color: var(--text-soft); }
 
-.hint { color: #666; padding: 2rem; text-align: center; }
-
-.loading-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
+.more {
+  width: 26px; height: 26px; flex: none; border: none; background: transparent; color: var(--text-3);
+  cursor: pointer; border-radius: 6px; display: flex; align-items: center; justify-content: center;
 }
+.more:hover { background: var(--raised); color: var(--text-1); }
+
+.slots { display: flex; flex-direction: column; gap: 6px; }
+.slot-row { display: flex; align-items: baseline; gap: 8px; }
+.slot-lbl { width: 42px; flex: none; font-size: 9px; color: var(--text-3); letter-spacing: 0.04em; }
+.slot-txt { font-size: 12.5px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slot-txt.rotate { color: var(--text-1); }
+.slot-txt.press { color: var(--text-2); }
+.slot-txt.dbl { color: var(--text-3); }
+
+/* ── Slider cards ──────────────────────────────────────────────────────────── */
+.slider-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.slider-card {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px;
+  cursor: pointer; transition: border-color 0.13s;
+}
+.slider-card:hover { border-color: var(--line-2); }
+.led-swatch { width: 9px; height: 34px; flex: none; border-radius: 5px; }
+.s-label { font-size: 12px; color: var(--text-soft); flex: none; }
+.s-txt { font-size: 12.5px; color: var(--text-1); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── New profile modal ─────────────────────────────────────────────────────── */
+.np-body { width: 280px; }
+.np-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
