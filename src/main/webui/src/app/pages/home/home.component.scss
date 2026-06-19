@@ -1,165 +1,80 @@
-.home-container {
-  height: 100vh;
+:host { display: block; height: 100vh; }
+
+.home { display: flex; height: 100%; background: var(--canvas); color: var(--text-1); }
+
+/* ── Sidebar ──────────────────────────────────────────────────────────────── */
+.sidebar {
+  width: 248px; flex: none; background: var(--sidebar); border-right: 1px solid var(--line-soft);
+  display: flex; flex-direction: column;
 }
+.brand { height: 56px; display: flex; align-items: center; gap: 10px; padding: 0 18px; border-bottom: 1px solid var(--line-soft); }
+.logo-tile { width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(145deg, var(--accent), var(--accent-deep)); display: flex; align-items: center; justify-content: center; }
+.logo-ring { width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--accent-ink); }
+.brand-name { font-family: var(--font-display); font-weight: 600; font-size: 14px; }
 
-// ── Sidebar ──────────────────────────────────────────────────────────────────
-.device-sidenav {
-  width: 220px;
-  background: #1c1d20 !important;
-  border-right: 1px solid #3b3c41;
+.dev-head { display: flex; align-items: center; gap: 8px; padding: 18px 18px 10px; }
+.dev-head .count { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); }
+.chev { width: 22px; height: 22px; border: none; background: transparent; color: var(--text-2); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.chev:hover { background: #16181D; }
 
-  .sidebar-title {
-    font-size: 0.95rem;
-    font-weight: 600;
-    letter-spacing: 1px;
-    min-height: 48px;
-    border-bottom: 1px solid #3b3c41;
-  }
-
-  .sidebar-empty {
-    padding: 16px;
-    color: #666;
-    font-size: 0.85rem;
-    margin: 0;
-  }
+.dev-list { padding: 0 12px; display: flex; flex-direction: column; gap: 6px; }
+.dev-row {
+  display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: var(--r-lg);
+  background: transparent; border: 1px solid transparent; cursor: pointer; text-align: left; width: 100%;
 }
+.dev-row:hover { background: #16181D; }
+.dev-row.active { background: var(--accent-tint); border-color: var(--accent-border); }
+.dev-icon { width: 36px; height: 36px; border-radius: var(--r-md); background: var(--panel); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; flex: none; }
+.dev-row.active .dev-icon { border-color: var(--raised-line); }
+.dev-meta { display: flex; flex-direction: column; min-width: 0; }
+.dev-name { font-size: 13.5px; font-weight: 500; color: var(--text-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dev-row.active .dev-name { color: var(--accent-text); }
+.dev-type { font-size: 11px; color: var(--text-3); }
+.dev-empty { padding: 8px 16px; color: var(--text-3); font-size: 12.5px; }
 
-// ── Main content ──────────────────────────────────────────────────────────────
-.main-content {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: #25262a;
-}
+.integrations { padding: 14px 14px 4px; }
+.integrations .micro-label { display: block; padding: 0 4px 10px; }
+.int-list { display: flex; flex-direction: column; gap: 2px; }
+.int-row { display: flex; align-items: center; gap: 9px; padding: 7px 10px; border-radius: 8px; }
+.int-name { font-size: 12.5px; color: var(--text-soft); flex: 1; }
+.int-state { font-family: var(--font-mono); font-size: 9.5px; }
+.int-state.ok { color: var(--ok-text); }
+.int-state.warn { color: var(--warn-text); }
 
-.main-toolbar {
-  .toolbar-title {
-    font-size: 0.92rem;
-  }
+.foot { padding: 14px 18px; border-top: 1px solid var(--line-soft); }
+.ver { font-size: 10.5px; color: var(--text-3); }
 
-  .spacer {
-    flex: 1;
-  }
-}
+/* ── Main ─────────────────────────────────────────────────────────────────── */
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 
-// ── No device ─────────────────────────────────────────────────────────────────
-.no-device-center {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
+.topbar { height: 56px; display: flex; align-items: center; gap: 12px; padding: 0 22px; border-bottom: 1px solid var(--line-soft); }
+.name { font-family: var(--font-display); font-weight: 600; font-size: 16px; border-bottom: 1.5px dashed var(--raised-line); padding-bottom: 1px; cursor: text; }
+.name-input { font-size: 16px; }
+.pencil { border: none; background: transparent; color: var(--text-3); cursor: pointer; display: flex; padding: 2px; }
+.pencil:hover { color: var(--text-1); }
 
-  .no-device-icon {
-    font-size: 48px;
-    width: 48px;
-    height: 48px;
-    color: #444;
-  }
+.stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; min-height: 0; }
+.hint { font-size: 12.5px; color: var(--text-3); margin-top: 20px; text-align: center; }
 
-  .no-device-label {
-    color: #555;
-    font-size: 1rem;
-    letter-spacing: 2px;
-  }
+.loading { display: flex; align-items: center; gap: 18px; }
+.skeleton { display: flex; flex-direction: column; gap: 8px; }
+.skeleton span { display: block; height: 9px; border-radius: 5px; background: var(--raised); }
+.skeleton span:first-child { width: 160px; }
+.skeleton span:last-child { width: 110px; }
 
-  .no-device-sub {
-    color: #444;
-    font-size: 0.82rem;
-  }
-}
+.empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px; }
+.empty-icon { width: 60px; height: 60px; border-radius: 15px; background: var(--panel); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; color: var(--text-3); }
+.empty-title { font-size: 15px; font-weight: 500; }
+.empty-sub { font-size: 12.5px; color: var(--text-2); max-width: 34ch; line-height: 1.5; }
+.empty-scan { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--accent); }
 
-// ── Device area ───────────────────────────────────────────────────────────────
-.device-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
+/* ── Control strip ─────────────────────────────────────────────────────────── */
+.strip { height: 74px; display: flex; align-items: center; gap: 20px; padding: 0 24px; border-top: 1px solid var(--line-soft); background: #0D0E12; }
+.sun { color: var(--accent); }
+.bright { width: 200px; }
+.bright-val { font-size: 12.5px; color: var(--accent); min-width: 34px; }
+.amber { color: var(--accent); }
 
-// ── SVG device visual wrapper ─────────────────────────────────────────────────
-.device-visual-wrap {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  min-height: 0;
-  overflow: hidden;
-
-  // The SVG components fill this area (maintaining aspect ratio via viewBox)
-  pcpanel-pcpanel-pro, pcpanel-pcpanel-mini, pcpanel-pcpanel-rgb {
-    flex: 1;
-    min-height: 0;
-    width: 100%;
-    max-height: 100%;
-    display: block;
-  }
-}
-
-.hint-text {
-  color: #555;
-  font-size: 0.78rem;
-  text-align: center;
-  margin: 4px 0 0;
-}
-
-// ── Bottom bar ────────────────────────────────────────────────────────────────
-.bottom-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 8px 16px;
-  background: #1c1d20;
-  border-top: 1px solid #3b3c41;
-  flex-wrap: wrap;
-
-  .version-label {
-    font-size: 0.78rem;
-    color: #555;
-  }
-
-  .brightness-area {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    flex: 1;
-    min-width: 150px;
-    max-width: 240px;
-
-    .brightness-icon {
-      font-size: 18px;
-      width: 18px;
-      height: 18px;
-      color: #888;
-    }
-
-    .brightness-slider {
-      flex: 1;
-    }
-
-    .brightness-value {
-      font-size: 0.78rem;
-      color: #999;
-      min-width: 32px;
-      text-align: right;
-    }
-  }
-
-  .profile-area {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    .profile-field {
-      width: 160px;
-
-      ::ng-deep .mat-mdc-form-field-subscript-wrapper {
-        display: none;
-      }
-    }
-  }
-}
+/* ── New profile modal ──────────────────────────────────────────────────────── */
+.np-body { width: 280px; }
+.np-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }

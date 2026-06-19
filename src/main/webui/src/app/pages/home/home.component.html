@@ -1,95 +1,130 @@
-<mat-sidenav-container class="home-container">
-  <!-- ── Device list sidebar ──────────────────────────────────────────── -->
-  <mat-sidenav mode="side" opened class="device-sidenav">
-    <mat-toolbar class="sidebar-title">PCPanel</mat-toolbar>
-    @if (facade.deviceState.deviceCount() === 0) {
-      <p class="sidebar-empty">No devices connected</p>
-    }
-    <mat-nav-list>
-      @for (d of facade.deviceState.devices() | keyvalue; track d.key) {
-        @let device = d.value;
-        <mat-list-item
-            [activated]="facade.selectedSerial() === device.serial"
-            (click)="facade.selectDevice(device)">
-          <span matListItemTitle>{{ device.displayName }}</span>
-          <span matListItemLine>{{ facade.friendlyType(device.deviceType) }}</span>
-        </mat-list-item>
-      }
-    </mat-nav-list>
-  </mat-sidenav>
+<div class="home">
+  <!-- ── Sidebar ──────────────────────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo-tile"><span class="logo-ring"></span></span>
+      <span class="brand-name">PCPanel</span>
+    </div>
 
-  <!-- ── Main area ────────────────────────────────────────────────────── -->
-  <mat-sidenav-content class="main-content">
-    <mat-toolbar class="main-toolbar">
-      <span class="toolbar-title">{{ facade.selectedDevice()?.displayName }}</span>
+    <div class="dev-head">
+      <span class="micro-label">DEVICES</span>
+      <span class="count">{{ devices().length }}</span>
       <span class="spacer"></span>
-      <app-connection-status />
-      <button mat-icon-button (click)="openSettings()" aria-label="Settings" matTooltip="Settings">
-        <mat-icon>settings</mat-icon>
+      <button class="chev" (click)="devicesCollapsed.set(!devicesCollapsed())" title="Collapse device list">
+        <pc-icon [name]="devicesCollapsed() ? 'chevron-down' : 'chevron-up'" [size]="13"></pc-icon>
       </button>
-    </mat-toolbar>
+    </div>
 
-    <!-- No device selected -->
-    @if (!facade.selectedDevice()) {
-      <div class="no-device-center">
-        <mat-icon class="no-device-icon">devices</mat-icon>
-        <span class="no-device-label">NO DEVICES CONNECTED</span>
-        <span class="no-device-sub">Connect a PCPanel device via USB</span>
+    @if (!devicesCollapsed()) {
+      <div class="dev-list">
+        @for (d of devices(); track d.serial) {
+          <button class="dev-row" [class.active]="d.serial === selectedSerial()" (click)="select(d.serial)">
+            <span class="dev-icon">
+              <pc-status-dot [kind]="statusFor(d.serial)" [size]="7"></pc-status-dot>
+            </span>
+            <span class="dev-meta">
+              <span class="dev-name">{{ d.displayName }}</span>
+              <span class="dev-type">{{ d.deviceType === 'PCPANEL_PRO' ? 'PCPanel Pro' : d.deviceType === 'PCPANEL_MINI' ? 'PCPanel Mini' : 'PCPanel RGB' }}</span>
+            </span>
+          </button>
+        }
+        @if (!devices().length) {
+          <div class="dev-empty">No devices</div>
+        }
       </div>
     }
 
-    <!-- Device panel -->
-    @if (facade.selectedDevice(); as dev) {
+    <span class="spacer"></span>
 
-      <!-- SVG device visual - fills available space, click knobs/sliders to configure -->
-      <div class="device-area">
-        <div class="device-visual-wrap">
-          @if (facade.isPro()) {
-            <pcpanel-pcpanel-pro [serial]="dev.serial" />
-          }
-          @if (facade.isMini()) {
-            <pcpanel-pcpanel-mini [serial]="dev.serial" />
-          }
-          @if (facade.isRgb()) {
-            <pcpanel-pcpanel-rgb [serial]="dev.serial" />
-          }
-          <p class="hint-text">Click a dial or slider to configure it</p>
-        </div>
-
-        <!-- Bottom bar: brightness + profile selector + actions -->
-        <div class="bottom-bar">
-          <span class="version-label">PCPanel Editor</span>
-
-          @if (facade.lightingConfig(); as cfg) {
-            <div class="brightness-area">
-              <mat-icon class="brightness-icon">brightness_medium</mat-icon>
-              <mat-slider min="0" max="100" step="1" class="brightness-slider">
-                <input matSliderThumb
-                       [value]="cfg.globalBrightness"
-                       (valueChange)="facade.onBrightnessChange($event)" />
-              </mat-slider>
-              <span class="brightness-value">{{ cfg.globalBrightness }}%</span>
+    @if (integrationRows().length) {
+      <div class="integrations">
+        <span class="micro-label">INTEGRATIONS</span>
+        <div class="int-list">
+          @for (r of integrationRows(); track r.name) {
+            <div class="int-row">
+              @if (r.state === 'connecting' || r.state === 'reconnecting') {
+                <pc-status-dot [kind]="r.state" [size]="6"></pc-status-dot>
+              } @else {
+                <pc-status-dot [kind]="r.state === 'connected' ? 'ok' : 'error'" [size]="6"></pc-status-dot>
+              }
+              <span class="int-name">{{ r.name }}</span>
+              <span class="int-state" [class.ok]="r.state === 'connected'" [class.warn]="r.state !== 'connected'">{{ r.stateLabel }}</span>
             </div>
           }
-
-          <div class="profile-area">
-            <mat-form-field appearance="outline" class="profile-field">
-              <mat-label>Profile</mat-label>
-              <mat-select [value]="dev.currentProfile" (valueChange)="facade.switchProfile($event)">
-                @for (p of dev.profiles; track p) {
-                  <mat-option [value]="p">{{ p }}</mat-option>
-                }
-              </mat-select>
-            </mat-form-field>
-            <button mat-stroked-button [routerLink]="['/lighting', dev.serial]" matTooltip="Configure lighting">
-              <mat-icon>light_mode</mat-icon>
-            </button>
-            <button mat-raised-button color="primary" [routerLink]="['/device', dev.serial]" matTooltip="Advanced configuration">
-              Advanced
-            </button>
-          </div>
         </div>
       </div>
     }
-  </mat-sidenav-content>
-</mat-sidenav-container>
+
+    <div class="foot">
+      <div class="ver mono">PCPanel Editor · v2.0</div>
+    </div>
+  </aside>
+
+  <!-- ── Main ─────────────────────────────────────────────────────────────── -->
+  <main class="main">
+    <header class="topbar">
+      @if (selected()) {
+        @if (editingName()) {
+          <input class="pc-inline-name name-input" [value]="selected()!.displayName" autofocus
+                 (keydown.enter)="commitRename($any($event.target).value)"
+                 (blur)="commitRename($any($event.target).value)">
+        } @else {
+          <span class="name" (click)="startRename()">{{ selected()!.displayName }}</span>
+          <button class="pencil" (click)="startRename()"><pc-icon name="pencil" [size]="13"></pc-icon></button>
+        }
+      }
+      <span class="spacer"></span>
+      <pc-connection-badge [state]="connState()"></pc-connection-badge>
+      <button class="pc-icon-btn" (click)="openSettings()"><pc-icon name="settings" [size]="17" [strokeWidth]="1.8"></pc-icon></button>
+    </header>
+
+    <section class="stage">
+      @if (!ready()) {
+        <div class="loading">
+          <pc-spinner [size]="26"></pc-spinner>
+          <div class="skeleton"><span></span><span></span></div>
+        </div>
+      } @else if (!hasDevices()) {
+        <div class="empty">
+          <div class="empty-icon"><pc-icon name="usb" [size]="30" [strokeWidth]="1.5"></pc-icon></div>
+          <div class="empty-title">No PCPanel connected</div>
+          <div class="empty-sub">Plug a device in over USB — it's detected automatically.</div>
+          <div class="empty-scan mono"><pc-spinner [size]="11" [thickness]="2"></pc-spinner> scanning for devices…</div>
+        </div>
+      } @else if (selected()) {
+        <pc-device [serial]="selected()!.serial" [showLabels]="true" (controlClick)="onControlClick($event)"></pc-device>
+        <div class="hint">Click a knob or slider to configure it · press a knob for its button action · right-click for quick actions</div>
+      }
+    </section>
+
+    @if (selected()) {
+      <footer class="strip">
+        <pc-icon name="sun" [size]="17" [strokeWidth]="1.8" class="sun"></pc-icon>
+        <div class="bright">
+          <pc-slider [value]="brightness()" (valueChange)="onBrightnessInput($event)" (changeEnd)="commitBrightness($event)"></pc-slider>
+        </div>
+        <span class="bright-val mono">{{ brightness() }}%</span>
+        <span class="spacer"></span>
+        <pc-select microLabel="PROFILE" [options]="profileOptions()" [value]="currentProfile()"
+                   (valueChange)="switchProfile($any($event))" footerLabel="New profile"
+                   (footerAction)="newProfileOpen.set(true)"></pc-select>
+        <button class="pc-btn ghost" (click)="openLighting()">
+          <pc-icon name="ring" [size]="14" class="amber"></pc-icon> Lighting
+        </button>
+        <button class="pc-btn primary" (click)="openAdvanced()">Advanced</button>
+      </footer>
+    }
+  </main>
+
+  <!-- New profile modal -->
+  <pc-modal [open]="newProfileOpen()" heading="New profile" (dismiss)="newProfileOpen.set(false)">
+    <div class="np-body">
+      <input class="pc-input" placeholder="Profile name" [value]="newProfileName()"
+             (input)="newProfileName.set($any($event.target).value)" (keydown.enter)="createProfile()" autofocus>
+      <div class="np-actions">
+        <button class="pc-btn ghost" (click)="newProfileOpen.set(false)">Cancel</button>
+        <button class="pc-btn primary" (click)="createProfile()">Create</button>
+      </div>
+    </div>
+  </pc-modal>
+</div>

@@ -1,104 +1,226 @@
-@use '@angular/material' as mat;
+/* ============================================================================
+   PCPanel Editor — global design system
+   Dark-first, near-black neutrals + Tungsten amber accent.
+   All values mirror the "PCPanel Editor" design canvas (design tokens section).
+   ============================================================================ */
 
-// Apply Material Design 3 dark theme with amber primary
-html {
-  @include mat.theme((
-    color: (
-      theme-type: dark,
-      primary: mat.$yellow-palette,
-    ),
-    typography: Roboto,
-    density: 0,
-  ));
+:root {
+  /* ── Neutrals ─────────────────────────────────────────────────────────── */
+  --canvas:   #0B0C0F;   /* app background / deepest surface */
+  --panel:    #14161B;   /* card / panel background */
+  --raised:   #1B1E24;   /* raised chip / input fill on panel */
+  --input:    #0E0F12;   /* inset input / track background */
+  --line:     #23262E;   /* default borders / dividers */
+  --line-2:   #3A3F4B;   /* stronger border / dashed affordances */
+  --line-soft:#1A1D24;   /* faint structural divider */
+  --line-hair:#1E2129;   /* hairline inside cards */
+  --text-3:   #5F6671;   /* faint labels / disabled */
+  --text-2:   #9CA3AF;   /* secondary text */
+  --text-1:   #E9EBF0;   /* primary text */
+  --text-soft:#C7CCD4;   /* between text-1 and text-2 */
+  --sidebar:  #0E0F12;   /* sidebars / rails */
+  --raised-line: #2A2E37;/* border on raised chips / unlit ring */
+
+  /* ── Accent — Tungsten amber ──────────────────────────────────────────── */
+  --accent:        #FFB020;
+  --accent-2:      #FFC24D;  /* light end of accent gradient */
+  --accent-deep:   #E8870E;  /* gradient end */
+  --accent-press:  #C77E12;  /* pressed */
+  --accent-ink:    #1A1206;  /* text/glyph on top of amber fills */
+  --accent-text:   #FFD089;  /* amber text on dark (selected rows) */
+  --accent-text-2: #FFC861;  /* amber warning text */
+  --accent-tint:        rgba(255,176,32,0.10);
+  --accent-tint-soft:   rgba(255,176,32,0.06);
+  --accent-tint-strong: rgba(255,176,32,0.15);
+  --accent-border:      rgba(255,176,32,0.28);
+  --accent-border-2:    rgba(255,176,32,0.40);
+  --accent-glow:        rgba(255,176,32,0.35);
+
+  /* ── Semantic / status ────────────────────────────────────────────────── */
+  --ok:        #43C08A;   --ok-text:  #5EE0A6;
+  --warn:      #FFB020;   --warn-text:#FFC861;
+  --err:       #F25268;   --err-text: #FF8A9A;
+  --idle:      #5F6671;
+  --selected:  #FF4D4D;   /* selected control glow (device visual) */
+
+  /* ── Fonts ────────────────────────────────────────────────────────────── */
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-ui: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  /* ── Radius ───────────────────────────────────────────────────────────── */
+  --r-sm: 6px;
+  --r-md: 9px;
+  --r-lg: 12px;
+  --r-xl: 14px;
+  --r-chassis: 20px;
+  --r-pill: 999px;
+
+  /* ── Elevation ────────────────────────────────────────────────────────── */
+  --sh-flat: inset 0 1px 0 rgba(255,255,255,0.03);
+  --sh-card: 0 8px 22px rgba(0,0,0,0.5);
+  --sh-menu: 0 16px 40px rgba(0,0,0,0.6);
+  --sh-pop:  0 20px 50px rgba(0,0,0,0.6);
+  --sh-chassis: inset 0 1px 0 rgba(255,255,255,0.03), 0 18px 50px rgba(0,0,0,0.5);
+  --sh-screen: 0 30px 80px rgba(0,0,0,0.6);
 }
 
-*, *::before, *::after {
-  box-sizing: border-box;
-}
+/* ── Reset ────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
 
 html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  font-family: Roboto, 'Segoe UI', sans-serif;
-  background: #25262a;
-  color: #e0e0e0;
+  background: var(--canvas);
+  color: var(--text-1);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-// Ensure the app fills the viewport
-app-root {
-  display: block;
-  height: 100vh;
+app-root { display: block; height: 100vh; }
+
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; }
+input, textarea, select { font-family: inherit; }
+
+::selection { background: rgba(255,176,32,0.28); }
+
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: var(--canvas); }
+::-webkit-scrollbar-thumb { background: var(--raised-line); border-radius: 8px; border: 3px solid var(--canvas); }
+::-webkit-scrollbar-thumb:hover { background: var(--line-2); }
+
+/* ── Animations (live LED preview + UI motion) ───────────────────────────── */
+@keyframes pcp-spin { to { transform: rotate(360deg); } }
+@keyframes pcp-breathe { 0%,100% { opacity: 0.35; } 50% { opacity: 1; } }
+@keyframes pcp-wave { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+@keyframes pcp-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,176,32,0.5); } 70% { box-shadow: 0 0 0 8px rgba(255,176,32,0); } }
+@keyframes pcp-blink { 0%,49% { opacity: 1; } 50%,100% { opacity: 0.25; } }
+@keyframes pcp-toast-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* device-visual hue/brightness animation helpers (driven by CSS custom props) */
+@keyframes pcp-hue { from { filter: hue-rotate(0deg); } to { filter: hue-rotate(360deg); } }
+@keyframes pcp-hue-rev { from { filter: hue-rotate(0deg); } to { filter: hue-rotate(-360deg); } }
+@keyframes pcp-hue-bounce {
+  0% { filter: hue-rotate(0deg); } 25% { filter: hue-rotate(64.8deg); }
+  50% { filter: hue-rotate(0deg); } 75% { filter: hue-rotate(-64.8deg); } 100% { filter: hue-rotate(0deg); }
+}
+@keyframes pcp-breath-bright {
+  0%,100% { filter: brightness(var(--breath-min, 0.18)); } 50% { filter: brightness(1); }
 }
 
-// Override Material sidenav container background
-.mat-drawer-container {
-  background: #25262a !important;
+.anim-rainbow         { animation: pcp-hue         var(--anim-duration, 10s) infinite linear; }
+.anim-rainbow-reverse { animation: pcp-hue-rev     var(--anim-duration, 10s) infinite linear; }
+.anim-wave            { animation: pcp-hue         var(--anim-duration,  5s) infinite linear; }
+.anim-wave-reverse    { animation: pcp-hue-rev     var(--anim-duration,  5s) infinite linear; }
+.anim-wave-bounce     { animation: pcp-hue-bounce  var(--anim-duration,  5s) infinite linear; }
+.anim-breath          { animation: pcp-breath-bright var(--anim-duration, 3s) infinite ease-in-out; }
+
+/* ── Typography helpers ──────────────────────────────────────────────────── */
+.font-display { font-family: var(--font-display); }
+.font-mono { font-family: var(--font-mono); }
+
+.micro-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  color: var(--text-3);
+  text-transform: uppercase;
 }
 
-.mat-drawer {
-  background: #1c1d20 !important;
+.mono { font-family: var(--font-mono); }
+
+/* ── Generic helpers ─────────────────────────────────────────────────────── */
+.cur-p { cursor: pointer; }
+.spacer { flex: 1; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* CDK overlay base z so popovers float above app surfaces */
+.cdk-overlay-container { z-index: 1200; }
+
+/* ============================================================================
+   Shared component classes — buttons, inputs, fields, cards, chips
+   Used across screens so the fanned-out screens stay visually consistent.
+   ============================================================================ */
+
+/* Buttons */
+.pc-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font-family: var(--font-ui); font-size: 13px; font-weight: 500; cursor: pointer;
+  border-radius: var(--r-md); padding: 9px 15px; border: 1px solid var(--raised-line);
+  background: var(--panel); color: var(--text-soft); white-space: nowrap;
+  transition: border-color .12s, background .12s, color .12s;
+}
+.pc-btn:hover { border-color: var(--line-2); color: var(--text-1); }
+.pc-btn:disabled { opacity: .5; cursor: not-allowed; }
+.pc-btn.primary {
+  background: linear-gradient(145deg, var(--accent), var(--accent-deep)); color: var(--accent-ink);
+  border: none; font-weight: 600;
+}
+.pc-btn.primary:hover { filter: brightness(1.05); }
+.pc-btn.ghost { background: transparent; }
+.pc-btn.danger { background: var(--err); color: #1A0608; border: none; font-weight: 500; }
+.pc-btn.icon { padding: 0; width: 34px; height: 34px; }
+
+/* Inset icon button (toolbar gear, back chevron) */
+.pc-icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: var(--r-md);
+  border: 1px solid var(--line); background: transparent; color: var(--text-2); cursor: pointer;
+}
+.pc-icon-btn.sm { width: 30px; height: 30px; }
+.pc-icon-btn:hover { color: var(--text-1); background: #16181D; }
+
+/* Text inputs */
+.pc-input {
+  width: 100%; background: var(--input); border: 1px solid var(--raised-line);
+  border-radius: var(--r-sm); padding: 8px 11px; color: var(--text-1);
+  font-family: var(--font-ui); font-size: 13px; outline: none;
+}
+.pc-input:focus { border-color: var(--accent-border-2); }
+.pc-input.mono { font-family: var(--font-mono); }
+.pc-input::placeholder { color: var(--text-3); }
+
+/* Labeled inset field (HOST / PORT / PASSWORD style cards) */
+.pc-field { background: var(--input); border: 1px solid var(--raised-line); border-radius: 7px; padding: 7px 10px; }
+.pc-field-label { font-size: 9px; color: var(--text-3); letter-spacing: .04em; margin-bottom: 2px; text-transform: uppercase; }
+.pc-field .pc-field-input {
+  width: 100%; background: transparent; border: none; outline: none; color: var(--text-1);
+  font-family: var(--font-mono); font-size: 12px; padding: 0;
 }
 
-.mat-toolbar {
-  background: #1c1d20 !important;
-  border-bottom: 1px solid #3b3c41;
+/* Cards / panels */
+.pc-card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-xl); }
+.pc-card.pad { padding: 18px; }
+
+/* Chips */
+.pc-chip {
+  display: inline-flex; align-items: center; gap: 7px; background: var(--input);
+  border: 1px solid var(--raised-line); border-radius: 8px; padding: 6px 10px; font-size: 12.5px; color: var(--text-1);
+}
+.pc-chip.dashed { background: var(--input); border: 1px dashed var(--line-2); color: var(--text-2); cursor: pointer; }
+.pc-chip .x { display: inline-flex; cursor: pointer; color: var(--text-3); }
+.pc-chip .x:hover { color: var(--text-1); }
+
+/* Dashed "add" affordance */
+.pc-add-dashed {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: 1.5px dashed var(--line-2); border-radius: var(--r-md); color: var(--accent);
+  font-size: 12.5px; padding: 9px 12px; cursor: pointer; background: transparent;
 }
 
-// Breadcrumb link style
-.breadcrumb {
-  font-size: 0.85rem;
-  color: #9a9a9a;
-  margin-bottom: 1.5rem;
-
-  a {
-    color: #ffc940;
-    text-decoration: none;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
+/* Inline-editable name (dashed underline + pencil) */
+.pc-inline-name {
+  font-family: var(--font-display); font-weight: 600;
+  border-bottom: 1.5px dashed var(--line-2); padding-bottom: 1px; background: transparent;
+  border-top: none; border-left: none; border-right: none; color: var(--text-1); outline: none;
 }
 
-// Loading placeholder
-.loading-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  min-height: 200px;
-}
-
-.cur-p {
-  cursor: pointer;
-}
-
-mat-form-field, mat-checkbox {
-  width: 100%;
-}
-
-// Vertical tabs
-[matVertical] {
-  .mat-mdc-tab-group, &.mat-mdc-tab-group {
-    flex-direction: row;
-  }
-
-  .mat-mdc-tab-labels {
-    flex-direction: column;
-  }
-
-  .mat-mdc-ink-bar {
-    height: 100%;
-    left: 98% !important;
-  }
-
-  .mat-mdc-tab-body-wrapper {
-    flex: 1 1 auto;
-  }
-
-  .mat-mdc-tab-label-container {
-    border-bottom: 0;
-    border-right: 1px solid var(--mat-sys-surface-variant);
-  }
+/* Section hint (amber soft callout) */
+.pc-hint {
+  background: var(--accent-tint-soft); border: 1px solid rgba(255,176,32,0.18); border-radius: var(--r-md);
+  padding: 12px 14px; font-size: 12px; color: #C7A86B; line-height: 1.5;
 }
