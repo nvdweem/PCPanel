@@ -65,6 +65,16 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         // the tray's WindowProc, the concrete callback type must be reflectively registered so JNA can
         // build its CallbackProxy in the native image (CallbackProxy itself is already jniAccessible).
         "com.sun.jna.platform.win32.WinUser$WNDENUMPROC",
+        // Field types of the INPUT union member structs (MOUSEINPUT/KEYBDINPUT/HARDWAREINPUT). To
+        // compute the union's size JNA instantiates every member and each member's field types via
+        // their no-arg constructor; WORD/DWORD above cover most, but LONG (MOUSEINPUT.dx/dy) and
+        // ULONG_PTR (dwExtraInfo) were missing, which aborted SendInput before any key was posted.
+        "com.sun.jna.platform.win32.WinDef$LONG",
+        "com.sun.jna.platform.win32.BaseTSD$ULONG_PTR",
+        // JNA out-parameter pointer used by EnumProcesses/GetWindowThreadProcessId (CommandMedia's
+        // Spotify lookup and the /api/processes listing). JNA instantiates it reflectively to map the
+        // native argument, so its no-arg constructor must be registered.
+        "com.sun.jna.ptr.IntByReference",
 })
 public final class JnaWin32ReflectionConfig {
     private JnaWin32ReflectionConfig() {
