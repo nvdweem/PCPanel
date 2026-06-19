@@ -53,20 +53,20 @@
             <div class="block">
               <span class="micro-label">RAINBOW PARAMETERS</span>
               <div class="param-row">
-                <span class="lbl">Phase shift</span><span class="raw mono">{{ cfg.rainbowPhaseShift }}</span>
+                <span class="lbl">Phase shift</span><span class="raw mono">{{ u8(cfg.rainbowPhaseShift) }}</span>
               </div>
-              <pc-slider [value]="cfg.rainbowPhaseShift" [min]="0" [max]="255"
-                         (valueChange)="set('rainbowPhaseShift', $event)" (changeEnd)="set('rainbowPhaseShift', $event)"></pc-slider>
+              <pc-slider [value]="u8(cfg.rainbowPhaseShift)" [min]="0" [max]="255"
+                         (valueChange)="setByte('rainbowPhaseShift', $event)" (changeEnd)="setByte('rainbowPhaseShift', $event)"></pc-slider>
               <div class="param-row">
-                <span class="lbl">Speed</span><span class="raw mono">{{ cfg.rainbowSpeed }}</span>
+                <span class="lbl">Speed</span><span class="raw mono">{{ u8(cfg.rainbowSpeed) }}</span>
               </div>
-              <pc-slider [value]="cfg.rainbowSpeed" [min]="0" [max]="255"
-                         (valueChange)="set('rainbowSpeed', $event)" (changeEnd)="set('rainbowSpeed', $event)"></pc-slider>
+              <pc-slider [value]="u8(cfg.rainbowSpeed)" [min]="0" [max]="255"
+                         (valueChange)="setByte('rainbowSpeed', $event)" (changeEnd)="setByte('rainbowSpeed', $event)"></pc-slider>
               <div class="param-row">
-                <span class="lbl">Brightness</span><span class="raw mono">{{ cfg.rainbowBrightness }}</span>
+                <span class="lbl">Brightness</span><span class="raw mono">{{ u8(cfg.rainbowBrightness) }}</span>
               </div>
-              <pc-slider [value]="cfg.rainbowBrightness" [min]="0" [max]="255"
-                         (valueChange)="set('rainbowBrightness', $event)" (changeEnd)="set('rainbowBrightness', $event)"></pc-slider>
+              <pc-slider [value]="u8(cfg.rainbowBrightness)" [min]="0" [max]="255"
+                         (valueChange)="setByte('rainbowBrightness', $event)" (changeEnd)="setByte('rainbowBrightness', $event)"></pc-slider>
               <div class="toggle-row">
                 <span class="lbl">Reverse direction</span>
                 <pc-toggle [value]="flagOn(cfg.rainbowReverse)" (valueChange)="setFlag('rainbowReverse', $event)"></pc-toggle>
@@ -81,20 +81,20 @@
             <div class="block">
               <span class="micro-label">WAVE PARAMETERS</span>
               <div class="param-row">
-                <span class="lbl">Hue</span><span class="raw mono">{{ cfg.waveHue }}</span>
+                <span class="lbl">Hue</span><span class="raw mono">{{ u8(cfg.waveHue) }}</span>
               </div>
-              <pc-slider [value]="cfg.waveHue" [min]="0" [max]="255"
-                         (valueChange)="set('waveHue', $event)" (changeEnd)="set('waveHue', $event)"></pc-slider>
+              <pc-slider [value]="u8(cfg.waveHue)" [min]="0" [max]="255"
+                         (valueChange)="setByte('waveHue', $event)" (changeEnd)="setByte('waveHue', $event)"></pc-slider>
               <div class="param-row">
-                <span class="lbl">Speed</span><span class="raw mono">{{ cfg.waveSpeed }}</span>
+                <span class="lbl">Speed</span><span class="raw mono">{{ u8(cfg.waveSpeed) }}</span>
               </div>
-              <pc-slider [value]="cfg.waveSpeed" [min]="0" [max]="255"
-                         (valueChange)="set('waveSpeed', $event)" (changeEnd)="set('waveSpeed', $event)"></pc-slider>
+              <pc-slider [value]="u8(cfg.waveSpeed)" [min]="0" [max]="255"
+                         (valueChange)="setByte('waveSpeed', $event)" (changeEnd)="setByte('waveSpeed', $event)"></pc-slider>
               <div class="param-row">
-                <span class="lbl">Brightness</span><span class="raw mono">{{ cfg.waveBrightness }}</span>
+                <span class="lbl">Brightness</span><span class="raw mono">{{ u8(cfg.waveBrightness) }}</span>
               </div>
-              <pc-slider [value]="cfg.waveBrightness" [min]="0" [max]="255"
-                         (valueChange)="set('waveBrightness', $event)" (changeEnd)="set('waveBrightness', $event)"></pc-slider>
+              <pc-slider [value]="u8(cfg.waveBrightness)" [min]="0" [max]="255"
+                         (valueChange)="setByte('waveBrightness', $event)" (changeEnd)="setByte('waveBrightness', $event)"></pc-slider>
               <div class="toggle-row">
                 <span class="lbl">Reverse</span>
                 <pc-toggle [value]="flagOn(cfg.waveReverse)" (valueChange)="setFlag('waveReverse', $event)"></pc-toggle>
@@ -109,20 +109,20 @@
             <div class="block">
               <span class="micro-label">BREATH PARAMETERS</span>
               <div class="param-row">
-                <span class="lbl">Hue</span><span class="raw mono">{{ cfg.breathHue }}</span>
+                <span class="lbl">Hue</span><span class="raw mono">{{ u8(cfg.breathHue) }}</span>
               </div>
-              <pc-slider [value]="cfg.breathHue" [min]="0" [max]="255"
-                         (valueChange)="set('breathHue', $event)" (changeEnd)="set('breathHue', $event)"></pc-slider>
+              <pc-slider [value]="u8(cfg.breathHue)" [min]="0" [max]="255"
+                         (valueChange)="setByte('breathHue', $event)" (changeEnd)="setByte('breathHue', $event)"></pc-slider>
               <div class="param-row">
-                <span class="lbl">Speed</span><span class="raw mono">{{ cfg.breathSpeed }}</span>
+                <span class="lbl">Speed</span><span class="raw mono">{{ u8(cfg.breathSpeed) }}</span>
               </div>
-              <pc-slider [value]="cfg.breathSpeed" [min]="0" [max]="255"
-                         (valueChange)="set('breathSpeed', $event)" (changeEnd)="set('breathSpeed', $event)"></pc-slider>
+              <pc-slider [value]="u8(cfg.breathSpeed)" [min]="0" [max]="255"
+                         (valueChange)="setByte('breathSpeed', $event)" (changeEnd)="setByte('breathSpeed', $event)"></pc-slider>
               <div class="param-row">
-                <span class="lbl">Brightness</span><span class="raw mono">{{ cfg.breathBrightness }}</span>
+                <span class="lbl">Brightness</span><span class="raw mono">{{ u8(cfg.breathBrightness) }}</span>
               </div>
-              <pc-slider [value]="cfg.breathBrightness" [min]="0" [max]="255"
-                         (valueChange)="set('breathBrightness', $event)" (changeEnd)="set('breathBrightness', $event)"></pc-slider>
+              <pc-slider [value]="u8(cfg.breathBrightness)" [min]="0" [max]="255"
+                         (valueChange)="setByte('breathBrightness', $event)" (changeEnd)="setByte('breathBrightness', $event)"></pc-slider>
             </div>
           }
         }

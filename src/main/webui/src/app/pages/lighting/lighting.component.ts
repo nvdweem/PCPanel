@@ -118,6 +118,17 @@ export class LightingComponent {
 
   setMode(value: LightingMode): void { this.patch({ lightingMode: value }); }
 
+  /**
+   * Animation hue/speed/brightness/phase fields are signed bytes on the backend
+   * (-128..127) read as unsigned 0..255. The sliders present the unsigned value;
+   * `setByte` stores the signed representation Jackson will accept as a byte.
+   */
+  u8(v: number | undefined): number { return (((v ?? 0) % 256) + 256) % 256; }
+  setByte<K extends keyof LightingConfig>(key: K, unsigned: number): void {
+    const u = Math.max(0, Math.min(255, Math.round(unsigned)));
+    this.set(key, (u > 127 ? u - 256 : u) as LightingConfig[K]);
+  }
+
   /** 0|1 numeric flag helpers. */
   flagOn(v: number | undefined): boolean { return v === 1; }
   setFlag<K extends keyof LightingConfig>(key: K, on: boolean): void {
