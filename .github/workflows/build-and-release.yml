@@ -87,6 +87,9 @@ jobs:
         shell: pwsh
         run: Write-Output "::warning::Native-image metadata generation failed on Windows; the build used committed metadata (possibly stale)."
 
+      - name: Install rcedit
+        run: choco install rcedit --no-progress -y
+
       - name: Build native image (Windows)
         shell: pwsh
         run: mvn -B package -Pnative --file pom.xml
@@ -104,6 +107,9 @@ jobs:
           if (-not (Get-ChildItem "$dist/*.dll" -ErrorAction SilentlyContinue)) {
             Write-Warning "No companion DLLs found next to the executable - the installer may be incomplete."
           }
+          # native-image produces the exe without an icon; embed the app icon so the binary
+          # (and the installer's shortcuts, which reference it) show the PCPanel logo.
+          & packaging/windows/embed-icon.ps1 -ExePath "$dist/PCPanel.exe" -IconPath app-icon.ico
 
       - name: Install Inno Setup
         run: choco install innosetup --no-progress -y

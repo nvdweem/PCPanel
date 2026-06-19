@@ -119,6 +119,13 @@ if (-not $dlls) {
     Write-Warning "No companion DLLs found next to the executable - the installer may be incomplete."
 }
 
+# native-image emits the exe without an icon; embed the app icon so Explorer/taskbar
+# and the shortcuts (which point at the exe) show it. Same step CI runs.
+Write-Step "Embedding application icon"
+& (Join-Path $PSScriptRoot 'embed-icon.ps1') `
+    -ExePath (Join-Path $dist 'PCPanel.exe') `
+    -IconPath (Join-Path $repoRoot 'app-icon.ico')
+
 # ── 4. Inno Setup ────────────────────────────────────────────────────────────
 if (-not $InnoSetup) {
     $isccCmd = Get-Command iscc.exe -ErrorAction SilentlyContinue
