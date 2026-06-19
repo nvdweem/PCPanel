@@ -52,6 +52,19 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         // "callback" method JNA invokes reflectively from the native message dispatch.
         "com.getpcpanel.sleepdetection.Win32PowerNotify",
         "com.sun.jna.platform.win32.WinUser$WindowProc",
+        // SendInput keyboard synthesis (media keys in CommandMedia, keystrokes in WindowsKeyboard).
+        // JNA reads the INPUT struct + its INPUT_UNION and the union member structs reflectively to
+        // compute their layout; without their fields registered, Structure.getFieldOrder() is empty in
+        // the native image, so SendInput posts a zeroed INPUT and no key event is ever generated.
+        "com.sun.jna.platform.win32.WinUser$INPUT",
+        "com.sun.jna.platform.win32.WinUser$INPUT$INPUT_UNION",
+        "com.sun.jna.platform.win32.WinUser$KEYBDINPUT",
+        "com.sun.jna.platform.win32.WinUser$MOUSEINPUT",
+        "com.sun.jna.platform.win32.WinUser$HARDWAREINPUT",
+        // EnumWindows callback used by CommandMedia's Spotify path to locate the Spotify window. Like
+        // the tray's WindowProc, the concrete callback type must be reflectively registered so JNA can
+        // build its CallbackProxy in the native image (CallbackProxy itself is already jniAccessible).
+        "com.sun.jna.platform.win32.WinUser$WNDENUMPROC",
 })
 public final class JnaWin32ReflectionConfig {
     private JnaWin32ReflectionConfig() {
