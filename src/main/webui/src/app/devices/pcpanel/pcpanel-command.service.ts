@@ -89,15 +89,25 @@ export class PcpanelCommandService {
   }
 
   private patchKnobConfig(source: SingleKnobLightingConfig[], idx: number, value: SingleKnobLightingConfig): SingleKnobLightingConfig[] {
-    const next = [...(source ?? [])];
+    const length = Math.max(idx + 1, source?.length ?? 0);
+    const next = Array.from({length}, (_, i) => source?.[i] ?? this.emptyKnobLighting());
     next[idx] = {...value};
     return next;
   }
 
   private patchSliderConfig(source: SingleSliderLightingConfig[], idx: number, value: SingleSliderLightingConfig): SingleSliderLightingConfig[] {
-    const next = [...(source ?? [])];
+    const length = Math.max(idx + 1, source?.length ?? 0);
+    const next = Array.from({length}, (_, i) => source?.[i] ?? this.emptySliderLighting());
     next[idx] = {...value};
     return next;
+  }
+
+  private emptyKnobLighting(): SingleKnobLightingConfig {
+    return {mode: 'STATIC', color1: '#000000', color2: '#000000'};
+  }
+
+  private emptySliderLighting(): SingleSliderLightingConfig {
+    return {mode: 'STATIC', color1: '#000000', color2: '#000000', muteOverrideColor: '#000000', muteOverrideDeviceOrFollow: ''};
   }
 
   private patchIndividualColor(source: string[] | undefined, idx: number, color: string): string[] {
