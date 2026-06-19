@@ -42,6 +42,32 @@ class SndCtrlPulseAudioTest {
         assertFalse(SndCtrlPulseAudio.matches(session, "chrome"));
     }
 
+    /**
+     * Proton/Wine games expose their stream as {@code <game>.exe}, but the focused window's title is just the game
+     * name (e.g. window "Deadlock" vs stream "deadlock.exe"). Dropping a trailing .exe on both sides lets focus
+     * volume bind them, regardless of case (#96).
+     */
+    @Test
+    void matchesProtonGameByWindowNameIgnoringExeSuffix() {
+        var session = session(Map.of(
+                "application.process.id", "987",
+                "application.process.binary", "deadlock.exe",
+                "application.name", "deadlock.exe"));
+
+        assertTrue(SndCtrlPulseAudio.matches(session, "Deadlock"), "the window name must match the .exe stream");
+        assertTrue(SndCtrlPulseAudio.matches(session, "deadlock.exe"), "the raw .exe still matches");
+        assertTrue(SndCtrlPulseAudio.matches(session, "DEADLOCK"), "match is case-insensitive");
+        assertFalse(SndCtrlPulseAudio.matches(session, "deadlock2"), "a different name must not match");
+    }
+
+    /** A blank-once-normalized query (e.g. ".exe") must not match a metadata-sparse stream whose names are also blank. */
+    @Test
+    void emptyAfterStrippingExeNeverMatches() {
+        var sparse = session(Map.of("media.name", "audio-src"));
+
+        assertFalse(SndCtrlPulseAudio.matches(sparse, ".exe"), "an empty normalized query must not match a blank executable");
+    }
+
     /** Spotify Flatpak >= 1.2.86 exposes only media.name + portal app id; it must stay targetable (#92). */
     @Test
     void matchesSpotifyByPortalAppIdWhenProcessMetadataMissing() {

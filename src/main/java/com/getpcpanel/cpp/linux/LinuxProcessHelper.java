@@ -76,19 +76,49 @@ public class LinuxProcessHelper {
     }
 
     /**
-     * Resolves the active window once and exposes every identifier we can use to match it against a
-     * PulseAudio/PipeWire stream: the host process name (from {@code ps}) and, for Flatpak apps, the
-     * sandbox application id (from {@code /proc/<pid>/root/.flatpak-info}). The Flatpak id is needed
-     * because sandboxed apps report a sandbox-internal PID and often no process metadata to PipeWire,
-     * so the host process name never matches their stream - but the Flatpak id equals the stream's
-     * {@code pipewire.access.portal.app_id} (see #88).
+     * Resolves the focused window in a single tool invocation and exposes every identifier we can use to match
+     * it against a PulseAudio/PipeWire stream:
+     * <ul>
+     *   <li>the host process name (from {@code ps -o comm});</li>
+     *   <li>for Flatpak apps, the sandbox application id (from {@code /proc/<pid>/root/.flatpak-info}), which
+     *       equals the stream's {@code pipewire.access.portal.app_id} - sandboxed apps report a sandbox-internal
+     *       PID and often no process metadata to PipeWire, so the host process name never matches (see #88);</li>
+     *   <li>the window class and the window name (#96). Proton/Wine games are a problem case: their stream is
+     *       reported as {@code <game>.exe} but the host process name often does not match it - it may be a wrapper
+     *       (gamescope/reaper), in a different PID namespace, or {@code comm}-truncated to 15 chars for long names.
+     *       Raw-wine/Lutris games set the window class to the exe name; Steam overwrites it with
+     *       {@code steam_app_<id>} but leaves the window name as the game title (e.g. "Deadlock"), which matches
+     *       {@code deadlock.exe} once a trailing {@code .exe} is ignored (see {@code SndCtrlPulseAudio.matches}).</li>
+     * </ul>
+     * The pid/class/name come from one chained call (e.g. {@code getactivewindow getwindowpid getwindowclassname
+     * getwindowname}) so a per-knob-tick focus volume change spawns a single helper process, not three.
      */
     public Optional<ActiveWindow> getActiveWindow() {
-        var pid = getActiveProcessPid();
+        return getActiveWindow(Tool.KDoTool).or(() -> getActiveWindow(Tool.XDoTool));
+    }
+
+    private Optional<ActiveWindow> getActiveWindow(Tool tool) {
+        var command = tool.command();
+        if (!tool.available(command)) {
+            return Optional.empty();
+        }
+        List<String> lines;
+        try {
+            lines = linesFrom(command, "getactivewindow", "getwindowpid", "getwindowclassname", "getwindowname");
+        } catch (Exception e) {
+            log.error("Unable to resolve active window with {}", tool.tool, e);
+            return Optional.empty();
+        }
+        var pid = NumberUtils.toInt(line(lines, 0), -1);
         if (pid == -1) {
             return Optional.empty();
         }
-        return Optional.of(new ActiveWindow(pid, processName(pid), flatpakAppId(pid)));
+        return Optional.of(new ActiveWindow(pid, processName(pid), flatpakAppId(pid),
+                StringUtils.trimToNull(line(lines, 1)), StringUtils.trimToNull(line(lines, 2))));
+    }
+
+    private static @Nullable String line(List<String> lines, int index) {
+        return index < lines.size() ? lines.get(index) : null;
     }
 
     private @Nullable String processName(int pid) {
@@ -175,13 +205,14 @@ public class LinuxProcessHelper {
      * against; {@link #primaryIdentifier()} is the best single name for display / icon lookup,
      * preferring the Flatpak id so sandboxed apps resolve correctly.
      */
-    public record ActiveWindow(int pid, @Nullable String process, @Nullable String flatpakAppId) {
+    public record ActiveWindow(int pid, @Nullable String process, @Nullable String flatpakAppId, @Nullable String windowClass,
+                               @Nullable String windowName) {
         public Set<String> identifiers() {
-            return StreamEx.of(process, flatpakAppId).filter(StringUtils::isNotBlank).toSet();
+            return StreamEx.of(process, flatpakAppId, windowClass, windowName).filter(StringUtils::isNotBlank).toSet();
         }
 
         public @Nullable String primaryIdentifier() {
-            return StringUtils.firstNonBlank(flatpakAppId, process);
+            return StringUtils.firstNonBlank(flatpakAppId, process, windowClass, windowName);
         }
     }
 

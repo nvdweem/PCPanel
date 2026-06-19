@@ -196,10 +196,25 @@ public class SndCtrlPulseAudio implements ISndCtrl {
         todo.forEach(s -> cmd.muteSession(s.index(), mute));
     }
 
-    /** A session matches a binding query against its executable name, its title, or its portal app id (#88, #92). */
+    /**
+     * A session matches a binding query against its executable name, its title, or its portal app id (#88, #92).
+     * A trailing {@code .exe} is ignored on both sides: Proton/Wine streams are reported as {@code <game>.exe}
+     * while the focused window's title/class is just {@code <game>} (e.g. window "Deadlock" vs stream
+     * "deadlock.exe"), so dropping the suffix lets focus volume bind them (#96). The portal app id is never an
+     * executable, so it is matched verbatim.
+     */
     static boolean matches(PulseAudioAudioSession s, @Nullable String query) {
-        return StringUtils.isNotBlank(query)
-                && StringUtils.equalsAnyIgnoreCase(query, s.executable().getName(), s.title(), s.portalAppId());
+        if (StringUtils.isBlank(query)) {
+            return false;
+        }
+        var normalizedQuery = stripExe(query);
+        return (StringUtils.isNotBlank(normalizedQuery)
+                && StringUtils.equalsAnyIgnoreCase(normalizedQuery, stripExe(s.executable().getName()), stripExe(s.title())))
+                || StringUtils.equalsIgnoreCase(query, s.portalAppId());
+    }
+
+    private static String stripExe(@Nullable String value) {
+        return StringUtils.removeEndIgnoreCase(StringUtils.trimToEmpty(value), ".exe");
     }
 
     private static boolean matchesAny(PulseAudioAudioSession s, Collection<String> queries) {
