@@ -140,19 +140,25 @@ export class SettingsComponent {
     return 'idle'; // voicemeeter: no live REST signal
   }
 
-  /** OSC tab dot: green when the listener is bound, neutral when enabled-but-not-yet, hidden when off. */
-  readonly oscTabStatus = computed<StatusKind | null>(() => {
-    if (!this.local()?.oscEnabled) return null;
-    if (this.integrations.oscListening()) return 'ok';
-    return this.integrations.oscStatus.isLoading() ? 'connecting' : 'idle';
-  });
+  /** OSC tab dot: green when the listener is bound, else neutral (idle/connecting), like OBS. */
+  readonly oscTabStatus = computed<StatusKind>(() =>
+    this.integrations.oscListening() ? 'ok' : this.integrations.oscStatus.isLoading() ? 'connecting' : 'idle');
 
-  /** MQTT tab dot: green when the broker is connected, neutral when enabled-but-not, hidden when off. */
-  readonly mqttTabStatus = computed<StatusKind | null>(() => {
-    if (!this.local()?.mqtt?.enabled) return null;
-    if (this.integrations.mqttConnected()) return 'ok';
-    return this.integrations.mqttStatus.isLoading() ? 'connecting' : 'idle';
-  });
+  /** MQTT tab dot: green when the broker is connected, else neutral, like OBS. */
+  readonly mqttTabStatus = computed<StatusKind>(() =>
+    this.integrations.mqttConnected() ? 'ok' : this.integrations.mqttStatus.isLoading() ? 'connecting' : 'idle');
+
+  /** Status dot shown in the left tab rail for every integration tab (null = no dot). */
+  railStatus(id: TabId): StatusKind | null {
+    switch (id) {
+      case 'obs': return this.tabStatus('obs');
+      case 'voicemeeter': return this.platform.voicemeeterSupported() ? this.tabStatus('voicemeeter') : null;
+      case 'wavelink': return this.platform.waveLinkSupported() ? this.tabStatus('wavelink') : null;
+      case 'osc': return this.oscTabStatus();
+      case 'mqtt': return this.mqttTabStatus();
+      default: return null;
+    }
+  }
 
   setTab(id: TabId): void { this.activeTab.set(id); }
 

@@ -12,10 +12,8 @@
     <nav class="tabs">
       @for (tab of tabs(); track tab.id) {
         <button class="tab" [class.active]="activeTab() === tab.id" [class.unsupported]="tab.supported === false" (click)="setTab(tab.id)">
-          @if (tab.integration && tab.supported) {
-            @if (tabStatus(tab.integration); as st) {
-              <pc-status-dot [kind]="st" [size]="7"></pc-status-dot>
-            }
+          @if (railStatus(tab.id); as st) {
+            <pc-status-dot [kind]="st" [size]="7"></pc-status-dot>
           }
           <span class="tab-label">{{ tab.label }}</span>
         </button>
