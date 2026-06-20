@@ -11,6 +11,7 @@ import com.sun.jna.platform.win32.WinDef.HWND;
 import com.sun.jna.platform.win32.WinDef.LPARAM;
 import com.sun.jna.platform.win32.WinDef.LRESULT;
 import com.sun.jna.platform.win32.WinDef.WPARAM;
+import com.sun.jna.platform.win32.WinNT.HANDLE;
 import com.sun.jna.platform.win32.WinUser;
 import com.sun.jna.platform.win32.WinUser.MSG;
 import com.sun.jna.platform.win32.WinUser.WNDCLASSEX;
@@ -19,26 +20,36 @@ import com.sun.jna.platform.win32.WinUser.WindowProc;
 import lombok.extern.log4j.Log4j2;
 
 /**
- * Detects the console display being powered off/on on Windows and reports it as a
- * {@link SystemEventType#displayOff}/{@link SystemEventType#displayOn}. Covers everything the OS
- * itself drives the monitors with — the display idle-timeout, a manual "turn off display", and DPMS;
- * it cannot see a monitor switched off at its own power button (the OS is never told).
+ * Hosts the one hidden Windows window that receives {@code WM_POWERBROADCAST} and turns it into
+ * {@link SystemEventType} events for two cases the rest of the callback-free Windows detection cannot
+ * see:
  *
- * <p>Windows only delivers this as the {@code GUID_CONSOLE_DISPLAY_STATE} power setting via a
- * {@code WM_POWERBROADCAST} window message, so unlike the rest of the callback-free Windows detection
- * this needs a (message-only) window with a real window procedure. It runs its own message-pump
- * thread, mirroring the native {@code FocusListener}. The {@link WindowProc} reference is held in a
- * field so the GC never collects the live native callback.
+ * <ul>
+ *   <li>the console display being powered off/on — {@link SystemEventType#displayOff} /
+ *       {@link SystemEventType#displayOn} — via {@code GUID_CONSOLE_DISPLAY_STATE}. Covers everything
+ *       the OS drives the monitors with (idle-timeout, a manual "turn off display", DPMS); it cannot
+ *       see a monitor switched off at its own power button (the OS is never told);</li>
+ *   <li>the system being <em>about to</em> suspend — {@link SystemEventType#goingToSuspend} — via
+ *       {@code RegisterSuspendResumeNotification}. This is the advance notice Windows otherwise never
+ *       gives a background process; resume-from-suspend stays with the cross-platform
+ *       {@link SuspendResumeWatchdog}.</li>
+ * </ul>
+ *
+ * <p>Both arrive only as window messages, so unlike the rest of the Windows detection this needs a
+ * (message-only) window with a real window procedure. It runs its own message-pump thread, mirroring
+ * the native {@code FocusListener}. The {@link WindowProc} reference is held in a field so the GC never
+ * collects the live native callback.
  */
 @Log4j2
-public class WindowsDisplayPowerMonitor {
+public class WindowsPowerEventMonitor {
     // {6FE69556-704A-47A0-8F24-C28D936FDA47}
     private static final GUID GUID_CONSOLE_DISPLAY_STATE = new GUID("{6FE69556-704A-47A0-8F24-C28D936FDA47}");
-    private static final String WINDOW_CLASS = "PcPanelDisplayPowerMonitor";
+    private static final String WINDOW_CLASS = "PcPanelPowerEventMonitor";
 
     private static final int WM_DESTROY = 0x0002;
     private static final int WM_CLOSE = 0x0010;
     private static final int WM_POWERBROADCAST = 0x0218;
+    private static final int PBT_APMSUSPEND = 0x0004;
     private static final int PBT_POWERSETTINGCHANGE = 0x8013;
 
     // POWERBROADCAST_SETTING.Data[0] for GUID_CONSOLE_DISPLAY_STATE
@@ -52,14 +63,15 @@ public class WindowsDisplayPowerMonitor {
     private Thread thread;
     private volatile HWND hwnd;
     private WindowProc wndProc; // strong reference: a collected callback would crash the native dispatch
-    private com.sun.jna.platform.win32.WinNT.HANDLE notifyHandle;
+    private HANDLE displayNotifyHandle;
+    private HANDLE suspendNotifyHandle;
 
-    public WindowsDisplayPowerMonitor(Consumer<SystemEventType> sink) {
+    public WindowsPowerEventMonitor(Consumer<SystemEventType> sink) {
         this.sink = sink;
     }
 
     public void start() {
-        thread = new Thread(this::run, "windows-display-power-monitor");
+        thread = new Thread(this::run, "windows-power-event-monitor");
         thread.setDaemon(true);
         thread.start();
     }
@@ -71,7 +83,7 @@ public class WindowsDisplayPowerMonitor {
             try {
                 User32.INSTANCE.PostMessage(h, WM_CLOSE, new WPARAM(0), new LPARAM(0));
             } catch (Throwable e) { // NOSONAR - best-effort shutdown
-                log.debug("Failed to post WM_CLOSE to display-power window", e);
+                log.debug("Failed to post WM_CLOSE to power-event window", e);
             }
         }
         if (thread != null) {
@@ -82,9 +94,9 @@ public class WindowsDisplayPowerMonitor {
     private void run() {
         try {
             createWindowAndPump();
-        } catch (Throwable e) { // NOSONAR - display-power detection is non-essential, must never crash the app
-            log.warn("Windows display-power detection unavailable: {}", e.toString());
-            log.debug("display-power monitor failure", e);
+        } catch (Throwable e) { // NOSONAR - power-event detection is non-essential, must never crash the app
+            log.warn("Windows power-event detection unavailable: {}", e.toString());
+            log.debug("power-event monitor failure", e);
         }
     }
 
@@ -108,13 +120,21 @@ public class WindowsDisplayPowerMonitor {
             throw new IllegalStateException("CreateWindowEx failed (err=" + Kernel32.INSTANCE.GetLastError() + ")");
         }
 
-        notifyHandle = Win32PowerNotify.INSTANCE.RegisterPowerSettingNotification(
+        displayNotifyHandle = Win32PowerNotify.INSTANCE.RegisterPowerSettingNotification(
                 hwnd, GUID_CONSOLE_DISPLAY_STATE, Win32PowerNotify.DEVICE_NOTIFY_WINDOW_HANDLE);
-        if (notifyHandle == null) {
+        if (displayNotifyHandle == null) {
             throw new IllegalStateException("RegisterPowerSettingNotification failed (err=" + Kernel32.INSTANCE.GetLastError() + ")");
         }
 
-        log.info("Windows display-power detection started");
+        // Advance suspend notice is best-effort: if it can't be registered, display detection and the
+        // resume watchdog still work, so warn rather than abort the whole monitor.
+        suspendNotifyHandle = Win32PowerNotify.INSTANCE.RegisterSuspendResumeNotification(
+                hwnd, Win32PowerNotify.DEVICE_NOTIFY_WINDOW_HANDLE);
+        if (suspendNotifyHandle == null) {
+            log.warn("RegisterSuspendResumeNotification failed (err={}); no advance suspend notice", Kernel32.INSTANCE.GetLastError());
+        }
+
+        log.info("Windows power-event detection started");
 
         var msg = new MSG();
         // GetMessage returns >0 for a message, 0 on WM_QUIT, -1 on error.
@@ -127,9 +147,7 @@ public class WindowsDisplayPowerMonitor {
     private LRESULT windowProc(HWND hWnd, int uMsg, WPARAM wParam, LPARAM lParam) {
         switch (uMsg) {
             case WM_POWERBROADCAST -> {
-                if (wParam.intValue() == PBT_POWERSETTINGCHANGE) {
-                    handlePowerSettingChange(lParam);
-                }
+                handlePowerBroadcast(wParam, lParam);
                 return new LRESULT(1); // TRUE
             }
             case WM_CLOSE -> {
@@ -137,16 +155,21 @@ public class WindowsDisplayPowerMonitor {
                 return new LRESULT(0);
             }
             case WM_DESTROY -> {
-                if (notifyHandle != null) {
-                    Win32PowerNotify.INSTANCE.UnregisterPowerSettingNotification(notifyHandle);
-                    notifyHandle = null;
-                }
+                unregisterNotifications();
                 User32.INSTANCE.PostQuitMessage(0);
                 return new LRESULT(0);
             }
             default -> {
                 return User32.INSTANCE.DefWindowProc(hWnd, uMsg, wParam, lParam);
             }
+        }
+    }
+
+    private void handlePowerBroadcast(WPARAM wParam, LPARAM lParam) {
+        switch (wParam.intValue()) {
+            case PBT_APMSUSPEND -> sink.accept(SystemEventType.goingToSuspend);
+            case PBT_POWERSETTINGCHANGE -> handlePowerSettingChange(lParam);
+            default -> { /* other power events (resume, battery, …) are handled elsewhere or ignored */ }
         }
     }
 
@@ -166,5 +189,16 @@ public class WindowsDisplayPowerMonitor {
             sink.accept(SystemEventType.displayOn);
         }
         // state == 2 (dimmed) is left alone: the display is still on, just idle-dimming.
+    }
+
+    private void unregisterNotifications() {
+        if (displayNotifyHandle != null) {
+            Win32PowerNotify.INSTANCE.UnregisterPowerSettingNotification(displayNotifyHandle);
+            displayNotifyHandle = null;
+        }
+        if (suspendNotifyHandle != null) {
+            Win32PowerNotify.INSTANCE.UnregisterSuspendResumeNotification(suspendNotifyHandle);
+            suspendNotifyHandle = null;
+        }
     }
 }

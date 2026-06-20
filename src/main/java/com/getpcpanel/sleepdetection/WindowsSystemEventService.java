@@ -17,14 +17,14 @@ import lombok.extern.log4j.Log4j2;
  *   <li>resume-from-suspend via the cross-platform {@link SuspendResumeWatchdog} (downcall-only);</li>
  *   <li>lock/unlock by polling {@link Win32Desktop#OpenInputDesktop}, which fails while the secure
  *       lock-screen desktop is active (downcall-only);</li>
- *   <li>display power off/on via {@link WindowsDisplayPowerMonitor} ({@code GUID_CONSOLE_DISPLAY_STATE}).</li>
+ *   <li>display power off/on and advance {@link SystemEventType#goingToSuspend} notice via
+ *       {@link WindowsPowerEventMonitor}, the one window that listens for {@code WM_POWERBROADCAST}.</li>
  * </ul>
  *
- * <p>There is intentionally no {@link SystemEventType#goingToSuspend}: Windows gives no advance
- * suspend notice without a power window, but the watchdog restores lighting on the subsequent wake.
- * The display-power source <em>does</em> use a window-procedure {@link com.sun.jna.Callback}; that
- * once segfaulted the native image because of the non-headless AWT toolkit, which the Windows build
- * no longer initialises ({@code -Djava.awt.headless=true}).
+ * <p>The power-event source uses a window-procedure {@link com.sun.jna.Callback}; that once segfaulted
+ * the native image because of the non-headless AWT toolkit, which the Windows build no longer
+ * initialises ({@code -Djava.awt.headless=true}). Resume is left to the watchdog, so
+ * {@link WindowsPowerEventMonitor} only needs the suspend half of the suspend/resume notification.
  */
 @Log4j2
 @Startup
@@ -37,7 +37,7 @@ public class WindowsSystemEventService {
     Event<Object> eventBus;
 
     private final SuspendResumeWatchdog watchdog = new SuspendResumeWatchdog(this::fire);
-    private final WindowsDisplayPowerMonitor displayPowerMonitor = new WindowsDisplayPowerMonitor(this::fire);
+    private final WindowsPowerEventMonitor powerEventMonitor = new WindowsPowerEventMonitor(this::fire);
     private volatile boolean running;
     private Thread lockPoller;
 
@@ -45,7 +45,7 @@ public class WindowsSystemEventService {
     public void init() {
         running = true;
         watchdog.start();
-        displayPowerMonitor.start();
+        powerEventMonitor.start();
         lockPoller = new Thread(this::pollLockState, "windows-lock-poller");
         lockPoller.setDaemon(true);
         lockPoller.start();
@@ -56,7 +56,7 @@ public class WindowsSystemEventService {
     public void shutdown() {
         running = false;
         watchdog.stop();
-        displayPowerMonitor.stop();
+        powerEventMonitor.stop();
         if (lockPoller != null) {
             lockPoller.interrupt();
         }
