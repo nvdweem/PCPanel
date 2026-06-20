@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.getpcpanel.device.Device;
 import com.getpcpanel.device.DeviceType;
+import com.getpcpanel.device.descriptor.DeviceDescriptor;
 import com.getpcpanel.profile.DeviceSave;
 
 import one.util.streamex.StreamEx;
@@ -15,6 +16,7 @@ public record DeviceDto(
         int analogCount,
         int buttonCount,
         boolean hasLogoLed,
+        DeviceDescriptor descriptor,
         String currentProfile,
         List<String> profiles
 ) {
@@ -27,6 +29,7 @@ public record DeviceDto(
                 type.getAnalogCount(),
                 type.getButtonCount(),
                 type.isHasLogoLed(),
+                device.descriptor(),
                 deviceSave.getCurrentProfileName(),
                 StreamEx.of(deviceSave.getProfiles()).map(p -> p.getName()).toList()
         );

@@ -5,6 +5,7 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.commands.IconService;
+import com.getpcpanel.device.descriptor.DeviceDescriptor;
 import com.getpcpanel.hid.OutputInterpreter;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.LightingChangedToDefaultEvent;
@@ -25,16 +26,22 @@ public abstract class Device {
     private final IconService iconService;
     private final Event<Object> eventBus;
     @Getter protected String serialNumber;
+    private final DeviceDescriptor descriptor;
     protected DeviceSave save;
     private LightingConfig lightingConfig;
 
-    protected Device(SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, Event<Object> eventBus, String serialNum, DeviceSave deviceSave) {
+    protected Device(SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, Event<Object> eventBus, String serialNum, DeviceSave deviceSave, DeviceDescriptor descriptor) {
         this.saveService = saveService;
         this.outputInterpreter = outputInterpreter;
         this.iconService = iconService;
         this.eventBus = eventBus;
         serialNumber = serialNum;
         save = deviceSave;
+        this.descriptor = descriptor;
+    }
+
+    public DeviceDescriptor descriptor() {
+        return descriptor;
     }
 
     protected void postInit() {

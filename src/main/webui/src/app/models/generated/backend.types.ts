@@ -1,6 +1,25 @@
 /* tslint:disable */
 /* eslint-disable */
 
+export interface AnalogInputSpec {
+    hasButton: boolean;
+    id: string;
+    index: number;
+    kind: AnalogKind;
+    label: string;
+    lightOutputIndex?: number;
+    sourceMax: number;
+    sourceMin: number;
+}
+
+export interface AnalogOutputSpec {
+    id: string;
+    index: number;
+    label: string;
+    max: number;
+    min: number;
+}
+
 export interface ButtonAction {
     overlayText?: string;
 }
@@ -249,10 +268,22 @@ export interface DeviceActionParameters {
     device: string;
 }
 
+export interface DeviceDescriptor {
+    analogInputs: AnalogInputSpec[];
+    analogOutputs: AnalogOutputSpec[];
+    deviceKindId: string;
+    digitalInputs: DigitalInputSpec[];
+    displayName: string;
+    globalLighting?: GlobalLightingSpec;
+    lightOutputs: LightOutputSpec[];
+    providerId: string;
+}
+
 export interface DeviceDto {
     analogCount: number;
     buttonCount: number;
     currentProfile: string;
+    descriptor: DeviceDescriptor;
     deviceType: DeviceType;
     displayName: string;
     hasLogoLed: boolean;
@@ -274,6 +305,7 @@ export interface DeviceSnapshotDto extends WsEvent {
     buttonCount: number;
     currentProfile: string;
     currentProfileSnapshot: ProfileSnapshotDto;
+    descriptor: DeviceDescriptor;
     deviceType: string;
     dialColors: string[];
     displayName: string;
@@ -310,6 +342,21 @@ export interface DialValue {
 }
 
 export interface DialValueCalculator {
+}
+
+export interface DigitalInputSpec {
+    id: string;
+    index: number;
+    label: string;
+    standalone: boolean;
+}
+
+export interface GlobalLightingSpec {
+    brightnessMax: number;
+    brightnessMin: number;
+    firmwareAnimated: boolean;
+    hasGlobalBrightness: boolean;
+    supportedModes: string[];
 }
 
 export interface HomeAssistantSettings {
@@ -352,6 +399,15 @@ export interface LightingConfig {
 }
 
 export interface LightingConfigBuilder {
+}
+
+export interface LightOutputSpec {
+    colorModel: LightColorModel;
+    group: LightGroupKind;
+    id: string;
+    index: number;
+    label: string;
+    supportedElementModes: string[];
 }
 
 export interface MqttSettings {
@@ -594,6 +650,8 @@ export interface WsVisualColorsChangedEvent extends WsEvent {
     type: "visual_colors_changed";
 }
 
+export type AnalogKind = "KNOB" | "SLIDER" | "ENCODER";
+
 export type ButtonControlMode = "ENABLE" | "DISABLE" | "TOGGLE" | "STRING";
 
 export type ButtonType = "MONO" | "MUTE" | "SOLO" | "MC" | "EQ" | "A1" | "A2" | "A3" | "A4" | "A5" | "B1" | "B2" | "B3" | "SEL" | "MIXA" | "MIXB" | "REPEAT" | "COMPOSITE";
@@ -610,9 +668,15 @@ export type DialControlMode = "NEG_12_TO_12" | "ZERO_TO_10" | "NEG_40_TO_12" | "
 
 export type DialType = "GAIN" | "AUDIBILITY" | "COMP" | "GATE" | "LIMIT" | "EQGAIN1" | "EQGAIN2" | "EQGAIN3" | "REVERB" | "DELAY" | "FX1" | "FX2" | "RETURNREVERB" | "RETURNDELAY" | "RETURNFX1" | "RETURNFX2";
 
+export type DiscoveryMode = "AUTO" | "MANUAL";
+
 export type KeystrokeType = "KEY" | "TEXT";
 
 export type Kinds = "dial" | "button" | "dblbutton";
+
+export type LightColorModel = "NONE" | "MONOCHROME" | "RGB" | "SCALAR_0_254";
+
+export type LightGroupKind = "DIAL" | "SLIDER" | "SLIDER_LABEL" | "LOGO" | "GENERIC";
 
 export type LightingMode = "ALL_COLOR" | "ALL_RAINBOW" | "ALL_WAVE" | "ALL_BREATH" | "SINGLE_COLOR" | "CUSTOM";
 

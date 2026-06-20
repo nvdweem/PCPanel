@@ -21,12 +21,15 @@ import org.hid4java.HidDevice;
 
 import javax.annotation.Nullable;
 
-import com.getpcpanel.device.DeviceType;
+import com.getpcpanel.device.descriptor.AnalogInputSpec;
+import com.getpcpanel.device.descriptor.DeviceDescriptor;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.util.Util;
 
 import jakarta.enterprise.event.Event;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
+import one.util.streamex.StreamEx;
 
 @Log4j2
 public class DeviceCommunicationHandler {
@@ -43,7 +46,9 @@ public class DeviceCommunicationHandler {
 
     private static final int PACKET_LENGTH = 64;
     private static final int FIRST_NON_INITIAL_READS = 20; // Could have been 9 (dials/sliders of the pro) but take 20 to be safe
-    private final DeviceType deviceType;
+    private final DeviceDescriptor descriptor;
+    private final Map<Integer, AnalogInputSpec> analogByIndex;
+    private final int buttonCount;
     private int readUntilNotInitial = FIRST_NON_INITIAL_READS;
 
     private final BlockingQueue<byte[]> queue = new LinkedBlockingQueue<>();
@@ -54,13 +59,15 @@ public class DeviceCommunicationHandler {
     private Thread readerThread;
     private Thread writerThread;
 
-    public DeviceCommunicationHandler(DeviceScanner deviceScanner, SaveService saveService, Event<Object> eventBus, String key, HidDevice device, DeviceType deviceType) {
+    public DeviceCommunicationHandler(DeviceScanner deviceScanner, SaveService saveService, Event<Object> eventBus, String key, HidDevice device, DeviceDescriptor descriptor) {
         this.deviceScanner = deviceScanner;
         this.saveService = saveService;
         this.eventBus = eventBus;
         this.key = key;
         this.device = device;
-        this.deviceType = deviceType;
+        this.descriptor = descriptor;
+        this.analogByIndex = StreamEx.of(descriptor.analogInputs()).toMap(AnalogInputSpec::index, a -> a);
+        this.buttonCount = descriptor.digitalInputs().size();
     }
 
     public void start() {
@@ -189,7 +196,7 @@ public class DeviceCommunicationHandler {
     private void interpretInputData(boolean initial, byte[] data) {
         if (data[0] == INPUT_CODE_KNOB_CHANGE) {
             var knob = data[1] & 0xFF;
-            var value = data[2] & 0xFF;
+            var value = normalizeAnalog(knob, data[2] & 0xFF);
             try {
                 triggerOrDebounce(new KnobRotateEvent(key, knob, value, initial));
             } catch (Throwable ex) {
@@ -227,8 +234,21 @@ public class DeviceCommunicationHandler {
         }
     }
 
+    /**
+     * Normalizes a raw analog reading to the canonical 0-255 domain using the input's source range
+     * from the descriptor (PCPanel RGB reports 0-100; Mini/Pro report 0-255). This is the provider
+     * edge that replaces the old {@code if PCPANEL_RGB} remap in InputInterpreter.
+     */
+    private int normalizeAnalog(int index, int raw) {
+        var spec = analogByIndex.get(index);
+        if (spec == null || (spec.sourceMin() == 0 && spec.sourceMax() == 255)) {
+            return raw;
+        }
+        return Util.map(raw, spec.sourceMin(), spec.sourceMax(), 0, 255);
+    }
+
     private boolean applyWorkaround(int knob) {
-        return !saveService.get().isWorkaroundsOnlySliders() || knob >= deviceType.getButtonCount();
+        return !saveService.get().isWorkaroundsOnlySliders() || knob >= buttonCount;
     }
 
     private void triggerEvent(ButtonPressEvent o) {

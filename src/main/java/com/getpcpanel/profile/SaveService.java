@@ -74,7 +74,8 @@ public class SaveService {
 
     /**
      * Fire the initial SaveEvent after all beans are fully initialized.
-     * Using @Priority(1) to ensure this runs before DeviceScanner.onStart() (default priority ~2000).
+     * Using @Priority(1) to ensure this runs before DeviceProviderRegistry.onStart() (default priority),
+     * which starts the device providers and creates device saves on connect.
      */
     @Priority(1)
     public void onStart(@Observes StartupEvent ev) {

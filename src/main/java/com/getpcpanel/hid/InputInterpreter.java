@@ -1,7 +1,6 @@
 package com.getpcpanel.hid;
 
 import static com.getpcpanel.commands.Commands.hasCommands;
-import static com.getpcpanel.util.Util.map;
 import static java.util.Objects.requireNonNullElse;
 
 import java.io.IOException;
@@ -15,7 +14,6 @@ import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.commands.PCPanelControlEvent;
-import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.util.Debouncer;
 
@@ -38,9 +36,6 @@ public final class InputInterpreter {
         public void onKnobRotate(@Observes DeviceCommunicationHandler.KnobRotateEvent event) {
         devices.getDevice(event.serialNum()).ifPresent(device -> {
             var value = event.value();
-            if (device.deviceType() == DeviceType.PCPANEL_RGB) {
-                value = map(value, 0, 100, 0, 255);
-            }
             device.setKnobRotation(event.knob(), value);
             var settings = save.getProfile(event.serialNum()).map(p -> p.getKnobSettings(event.knob())).orElse(null);
             doDialAction(event.serialNum(), event.initial(), event.knob(), new DialValue(settings, value));

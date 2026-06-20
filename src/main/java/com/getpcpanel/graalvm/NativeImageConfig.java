@@ -43,6 +43,16 @@ import com.getpcpanel.commands.command.CommandVolumeFocusMute;
 import com.getpcpanel.commands.command.CommandVolumeProcess;
 import com.getpcpanel.commands.command.CommandVolumeProcessMute;
 import com.getpcpanel.commands.command.DialAction.DialCommandParams;
+import com.getpcpanel.device.descriptor.AnalogInputSpec;
+import com.getpcpanel.device.descriptor.AnalogKind;
+import com.getpcpanel.device.descriptor.AnalogOutputSpec;
+import com.getpcpanel.device.descriptor.DeviceDescriptor;
+import com.getpcpanel.device.descriptor.DigitalInputSpec;
+import com.getpcpanel.device.descriptor.DiscoveryMode;
+import com.getpcpanel.device.descriptor.GlobalLightingSpec;
+import com.getpcpanel.device.descriptor.LightColorModel;
+import com.getpcpanel.device.descriptor.LightGroupKind;
+import com.getpcpanel.device.descriptor.LightOutputSpec;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.Save;
@@ -207,6 +217,25 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         WaveLinkMix.class,
         WaveLinkOutput.class,
         WaveLinkOutputDevice.class,
+
+        // Device capability descriptor (serialised in DeviceDto / DeviceSnapshotDto, sent to the UI)
+        DeviceDescriptor.class,
+        AnalogInputSpec.class,
+        DigitalInputSpec.class,
+        LightOutputSpec.class,
+        AnalogOutputSpec.class,
+        GlobalLightingSpec.class,
+        AnalogKind.class,
+        LightColorModel.class,
+        LightGroupKind.class,
+        DiscoveryMode.class,
+        // Array forms of the descriptor's List<record> elements: Jackson serialising a List<record>
+        // over REST/WS in the native image needs the element's array type reachable too, and these
+        // records were not present when reachability-metadata.json was last traced.
+        AnalogInputSpec[].class,
+        DigitalInputSpec[].class,
+        LightOutputSpec[].class,
+        AnalogOutputSpec[].class,
 
         // Command support types serialised by Jackson
         Commands.class,

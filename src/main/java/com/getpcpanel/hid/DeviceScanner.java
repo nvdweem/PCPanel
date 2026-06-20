@@ -15,22 +15,29 @@ import org.hid4java.HidServicesSpecification;
 import org.hid4java.ScanMode;
 import org.hid4java.event.HidServicesEvent;
 
+import com.getpcpanel.device.DescriptorFactory;
 import com.getpcpanel.device.DeviceType;
+import com.getpcpanel.device.descriptor.DeviceDescriptor;
+import com.getpcpanel.device.descriptor.DiscoveryMode;
+import com.getpcpanel.device.provider.DeviceProvider;
 import com.getpcpanel.util.OsxPermissionHelper;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
-import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
-import io.quarkus.runtime.ShutdownEvent;
-import io.quarkus.runtime.StartupEvent;
 import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
+/**
+ * The PCPanel HID {@link DeviceProvider}: discovers PCPanel devices over hid4java by VID/PID, opens
+ * each exactly once, keeps retrying transient open failures, and fires a connect event carrying the
+ * device's {@link DeviceDescriptor}. Its lifecycle is driven by
+ * {@link com.getpcpanel.device.provider.DeviceProviderRegistry}.
+ */
 @Log4j2
 @ApplicationScoped
-public class DeviceScanner implements HidServicesListener {
+public class DeviceScanner implements HidServicesListener, DeviceProvider {
     private final ConcurrentHashMap<String, DeviceCommunicationHandler> connectedDeviceMap = new ConcurrentHashMap<>();
     // PCPanels that are attached but failed to open (transient on Linux/Flatpak at startup). The reconcile thread
     // keeps retrying these; hid4java will not re-report a device that stays continuously plugged in, so without
@@ -49,8 +56,18 @@ public class DeviceScanner implements HidServicesListener {
         return connectedDeviceMap.get(key);
     }
 
-    // Not @PostConstruct because the startup sequence needs to control when this runs
-    public void onStart(@Observes StartupEvent ev) {
+    @Override
+    public String id() {
+        return DescriptorFactory.PROVIDER_ID;
+    }
+
+    @Override
+    public DiscoveryMode discoveryMode() {
+        return DiscoveryMode.AUTO;
+    }
+
+    @Override
+    public void start() {
         try {
             init();
         } catch (Throwable e) {
@@ -58,7 +75,8 @@ public class DeviceScanner implements HidServicesListener {
         }
     }
 
-    public void onShutdown(@Observes ShutdownEvent event) {
+    @Override
+    public void stop() {
         close();
     }
 
@@ -154,6 +172,7 @@ public class DeviceScanner implements HidServicesListener {
     }
 
     public void deviceAdded(@NonNull String key, @NonNull HidDevice device, DeviceType deviceType) {
+        var descriptor = DescriptorFactory.forType(deviceType);
         // A device can be reported twice on startup: once by reconnectDevicesAfterRestart() and once by the
         // scanner's initial hidDeviceAttached event. Each carries a different HidDevice instance for the same
         // physical device. On Linux (libusb backend) opening an already-opened device fails, so the second
@@ -174,13 +193,13 @@ public class DeviceScanner implements HidServicesListener {
                 }
                 return null;
             }
-            return created[0] = deviceCommunicationHandlerFactory.build(k, device, deviceType);
+            return created[0] = deviceCommunicationHandlerFactory.build(k, device, descriptor);
         });
         if (created[0] != null) {
             failedToOpen.remove(key);
             log.info("Connected to PCPanel {} ({})", key, deviceType);
             created[0].start();
-            fireEvent(new DeviceConnectedEvent(key, deviceType));
+            fireEvent(new DeviceConnectedEvent(key, deviceType, descriptor));
         }
     }
 
@@ -278,7 +297,7 @@ public class DeviceScanner implements HidServicesListener {
         }
     }
 
-    public record DeviceConnectedEvent(String serialNum, DeviceType deviceType) {
+    public record DeviceConnectedEvent(String serialNum, DeviceType deviceType, DeviceDescriptor descriptor) {
     }
 
     public record DeviceDisconnectedEvent(String serialNum) {

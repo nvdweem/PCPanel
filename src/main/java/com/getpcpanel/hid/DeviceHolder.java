@@ -18,7 +18,6 @@ import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.cpp.windows.WindowFocusChangedEvent;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.device.DeviceFactory;
-import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.profile.SaveService;
 
 import lombok.RequiredArgsConstructor;
@@ -47,19 +46,10 @@ public class DeviceHolder {
 
     @Priority(1)
     public void deviceAdded(@Observes DeviceScanner.DeviceConnectedEvent event) {
-        Device device;
         var save = saveService.get();
         if (!save.getDevices().containsKey(event.serialNum()))
             save.createSaveForNewDevice(event.serialNum(), event.deviceType());
-        if (event.deviceType() == DeviceType.PCPANEL_RGB) {
-            device = deviceFactory.buildRgb(event.serialNum(), save.getDeviceSave(event.serialNum()));
-        } else if (event.deviceType() == DeviceType.PCPANEL_MINI) {
-            device = deviceFactory.buildMini(event.serialNum(), save.getDeviceSave(event.serialNum()));
-        } else if (event.deviceType() == DeviceType.PCPANEL_PRO) {
-            device = deviceFactory.buildPro(event.serialNum(), save.getDeviceSave(event.serialNum()));
-        } else {
-            throw new IllegalArgumentException("unknown devicetype: " + event.deviceType().name());
-        }
+        var device = deviceFactory.build(event.serialNum(), save.getDeviceSave(event.serialNum()), event.descriptor());
         devices.put(event.serialNum(), device);
         outputInterpreter.sendInit(event.serialNum());
         device.setLighting(device.lightingConfig(), true);

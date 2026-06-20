@@ -5,6 +5,7 @@ import java.util.stream.IntStream;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.getpcpanel.device.Device;
+import com.getpcpanel.device.descriptor.DeviceDescriptor;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.dto.LightingConfig;
@@ -28,6 +29,7 @@ public record DeviceSnapshotDto(
         int analogCount,
         int buttonCount,
         boolean hasLogoLed,
+        DeviceDescriptor descriptor,
         String currentProfile,
         List<String> profiles,
         // ── extra snapshot fields ────────────────────────────────────────────
@@ -63,6 +65,7 @@ public record DeviceSnapshotDto(
                 analogCount,
                 dt.getButtonCount(),
                 dt.isHasLogoLed(),
+                device.descriptor(),
                 deviceSave.getCurrentProfileName(),
                 StreamEx.of(deviceSave.getProfiles()).map(Profile::getName).toList(),
                 device.getSavedLightingConfig(),

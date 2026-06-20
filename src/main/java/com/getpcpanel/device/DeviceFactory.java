@@ -5,13 +5,12 @@ import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 
 import com.getpcpanel.commands.IconService;
+import com.getpcpanel.device.descriptor.DeviceDescriptor;
 import com.getpcpanel.hid.InputInterpreter;
 import com.getpcpanel.hid.OutputInterpreter;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.util.coloroverride.OverrideColorService;
-
-import lombok.RequiredArgsConstructor;
 
 @ApplicationScoped
 public class DeviceFactory {
@@ -22,15 +21,17 @@ public class DeviceFactory {
     @Inject OverrideColorService overrideColorService;
     @Inject Event<Object> eventBus;
 
-    public Device buildRgb(String serialNum, DeviceSave deviceSave) {
-        return new PCPanelRGBDevice(inputInterpreter, saveService, outputInterpreter, iconService, overrideColorService, eventBus, deviceSave, serialNum);
-    }
-
-    public Device buildMini(String serialNum, DeviceSave deviceSave) {
-        return new PCPanelMiniDevice(inputInterpreter, saveService, outputInterpreter, iconService, overrideColorService, eventBus, serialNum, deviceSave);
-    }
-
-    public Device buildPro(String serialNum, DeviceSave deviceSave) {
-        return new PCPanelProDevice(inputInterpreter, saveService, outputInterpreter, iconService, overrideColorService, eventBus, serialNum, deviceSave);
+    /**
+     * Builds a PCPanel device from its capability descriptor. The concrete subclass is chosen from
+     * the descriptor's device-kind (the PCPanel {@link DeviceType}); the subclasses are otherwise
+     * identical and exist only for the per-model {@link Device#deviceType()} value and array size.
+     */
+    public Device build(String serialNum, DeviceSave deviceSave, DeviceDescriptor descriptor) {
+        var type = DeviceType.valueOf(descriptor.deviceKindId());
+        return switch (type) {
+            case PCPANEL_RGB -> new PCPanelRGBDevice(inputInterpreter, saveService, outputInterpreter, iconService, overrideColorService, eventBus, deviceSave, serialNum, descriptor);
+            case PCPANEL_MINI -> new PCPanelMiniDevice(inputInterpreter, saveService, outputInterpreter, iconService, overrideColorService, eventBus, serialNum, deviceSave, descriptor);
+            case PCPANEL_PRO -> new PCPanelProDevice(inputInterpreter, saveService, outputInterpreter, iconService, overrideColorService, eventBus, serialNum, deviceSave, descriptor);
+        };
     }
 }

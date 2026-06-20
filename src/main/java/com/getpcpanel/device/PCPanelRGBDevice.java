@@ -1,6 +1,7 @@
 package com.getpcpanel.device;
 
 import com.getpcpanel.commands.IconService;
+import com.getpcpanel.device.descriptor.DeviceDescriptor;
 import com.getpcpanel.hid.InputInterpreter;
 import com.getpcpanel.hid.OutputInterpreter;
 import com.getpcpanel.profile.DeviceSave;
@@ -13,8 +14,8 @@ public class PCPanelRGBDevice extends Device {
     private final int[] knobRotations = new int[DeviceType.PCPANEL_RGB.getAnalogCount()];
 
     public PCPanelRGBDevice(InputInterpreter inputInterpreter, SaveService saveService, OutputInterpreter outputInterpreter,
-            IconService iconService, OverrideColorService overrideColorService, Event<Object> eventBus, DeviceSave deviceSave, String serialNum) {
-        super(saveService, outputInterpreter, iconService, eventBus, serialNum, deviceSave);
+            IconService iconService, OverrideColorService overrideColorService, Event<Object> eventBus, DeviceSave deviceSave, String serialNum, DeviceDescriptor descriptor) {
+        super(saveService, outputInterpreter, iconService, eventBus, serialNum, deviceSave, descriptor);
     }
 
     @Override public DeviceType deviceType() { return DeviceType.PCPANEL_RGB; }

@@ -308,6 +308,24 @@ Foundation. PCPanel keeps working identically; nothing user-visible changes.
 **Acceptance:** app builds (JVM), PCPanel devices connect/render/light/assign exactly as before,
 existing `profiles.json` loads unchanged.
 
+> **Implemented (2026-06-20).** Backend foundation landed: `device.descriptor.*` records/enums,
+> `device.provider.{DeviceProvider,DeviceProviderRegistry}`, `DescriptorFactory` (built-in PCPanel
+> descriptors), `DeviceScanner` is now the `pcpanel` provider, descriptor flows through
+> `DeviceConnectedEvent` + `DeviceDto`/`DeviceSnapshotDto` (additive — old fields kept), all new
+> types registered for native-image reflection (incl. element `[]` arrays), TS contract
+> regenerated. JVM build green.
+>
+> **One intentional behavior nuance for PCPanel RGB only:** analog normalization moved from
+> `InputInterpreter` to the provider edge (`DeviceCommunicationHandler.interpretInputData`), so the
+> `KnobRotateEvent` on the bus now carries the canonical 0–255 value for RGB instead of the raw
+> 0–100. This makes the bus consistent for all device types (a requirement for OSC/MQTT/WS to work
+> with Deej/MIDI later) and **fixes** two latent RGB inconsistencies: the live WS knob value now
+> matches the stored device snapshot (which already used 0–255), and OSC output for RGB now spans
+> the full 0.0–1.0 (it previously maxed out at 100/255 ≈ 0.39). Side effects for RGB-panel owners:
+> MQTT subscribers see 0–255 instead of 0–100, and the send-only-if-delta / twitch filters now
+> operate in 0–255 space (consistent with Mini/Pro, which always did). Mini/Pro are unaffected.
+> If strict no-change for RGB MQTT is required, normalize after the delta/debounce stage instead.
+
 ### Phase 2 — Persistence becomes self-identifying (§2.6)
 1. Add nullable `providerId`/`deviceKindId`/`capabilities` to `DeviceSave`; load-migration +
    connect-time back-fill; save-version bump + `.bak`.
