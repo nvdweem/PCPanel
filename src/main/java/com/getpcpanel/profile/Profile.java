@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -29,9 +30,18 @@ public class Profile {
     private String activationShortcut;
     private Map<Integer, OSCBinding> oscBinding = new HashMap<>(); // Button/dial to OSC binding
 
-    public Profile(String name, DeviceType dt) {
+    /**
+     * Builds a profile with its initial lighting from a supplier, decoupled from {@link DeviceType}.
+     */
+    public Profile(String name, Supplier<LightingConfig> defaultLighting) {
         this.name = name;
-        lightingConfig = LightingConfig.defaultLightingConfig(dt);
+        lightingConfig = defaultLighting.get();
+    }
+
+    /** @deprecated use {@link #Profile(String, Supplier)}; kept as a shim during the device-layer transition. */
+    @Deprecated
+    public Profile(String name, DeviceType dt) {
+        this(name, () -> LightingConfig.defaultLightingConfig(dt));
     }
 
     protected Profile() {

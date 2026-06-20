@@ -360,6 +360,13 @@ save/load.
 **Acceptance:** a Deej (or an Arduino emitting the protocol) drives per-app volume via the existing
 command layer, in both JVM and native builds.
 
+> **TDD (no hardware).** The maintainer owns neither a Deej nor a MIDI device, so Phases 4–5 are
+> built test-first: keep all protocol logic in pure, hardware-free units — a line parser
+> (`String → int[]` for Deej; `byte[]/ShortMessage → events` for MIDI), normalization, and the
+> dead-band/conditioning — behind a mockable `DeviceConnection`/transport seam, so the provider can
+> be driven end-to-end in unit tests by feeding canned serial lines / MIDI messages with no port or
+> hardware. Discovery (port enumeration / `MidiSystem`) stays a thin, separately-faked adapter.
+
 ### Phase 5 — MIDI provider
 1. `MidiProvider` via `javax.sound.midi` (`discoveryMode = AUTO`): enumerate
    `MidiSystem.getMidiDeviceInfo()`; CC→analog (0–127→0–255), NOTE_ON/OFF→button (vel 0

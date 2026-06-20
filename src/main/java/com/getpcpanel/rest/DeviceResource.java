@@ -38,6 +38,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 
 @Path("/api/devices")
@@ -52,16 +53,27 @@ public class DeviceResource {
     @GET
     public List<DeviceDto> listDevices() {
         var save = saveService.get();
-        return StreamEx.of(deviceHolder.all())
-                       .map(d -> DeviceDto.from(d, save.getDeviceSave(d.getSerialNumber())))
-                       .toList();
+        var live = StreamEx.of(deviceHolder.all())
+                           .map(d -> DeviceDto.from(d, save.getDeviceSave(d.getSerialNumber())))
+                           .toList();
+        var liveSerials = StreamEx.of(live).map(DeviceDto::serial).toSet();
+        // Union of live devices (connected=true) and persisted-but-offline devices (connected=false).
+        var offline = EntryStream.of(save.getDevices())
+                                 .filterKeys(serial -> !liveSerials.contains(serial))
+                                 .mapKeyValue((serial, ds) -> DeviceDto.from(serial, ds, ds.getCapabilities()))
+                                 .toList();
+        return StreamEx.of(live).append(offline).toList();
     }
 
     @GET
     @Path("/{serial}")
     public DeviceDto getDevice(@PathParam("serial") String serial) {
-        var device = deviceHolder.getDevice(serial).orElseThrow(NotFoundException::new);
-        return DeviceDto.from(device, saveService.get().getDeviceSave(serial));
+        return deviceHolder.getDevice(serial)
+                           .map(device -> DeviceDto.from(device, saveService.get().getDeviceSave(serial)))
+                           .orElseGet(() -> {
+                               var deviceSave = getDeviceSave(serial);
+                               return DeviceDto.from(serial, deviceSave, deviceSave.getCapabilities());
+                           });
     }
 
     @PUT
@@ -89,8 +101,7 @@ public class DeviceResource {
     @Consumes(MediaType.TEXT_PLAIN)
     public Response createProfile(@PathParam("serial") String serial, String name) {
         var deviceSave = getDeviceSave(serial);
-        var device = deviceHolder.getDevice(serial).orElseThrow(NotFoundException::new);
-        var profile = new Profile(name, device.deviceType());
+        var profile = new Profile(name, defaultLightingFor(deviceSave));
         deviceSave.getProfiles().add(profile);
         saveService.save();
         return Response.ok(ProfileDto.from(profile)).build();
@@ -263,9 +274,17 @@ public class DeviceResource {
     @GET
     @Path("/{serial}/lighting")
     public LightingConfig getLighting(@PathParam("serial") String serial) {
-        return deviceHolder.getDevice(serial)
-                           .map(Device::getSavedLightingConfig)
-                           .orElseThrow(NotFoundException::new);
+        var live = deviceHolder.getDevice(serial);
+        if (live.isPresent()) {
+            return live.get().getSavedLightingConfig();
+        }
+        // Disconnected: render the current (or first) profile's saved lighting from persistence
+        // without creating a profile — a GET must not mutate the saved state.
+        var deviceSave = getDeviceSave(serial);
+        return deviceSave.getProfile(deviceSave.getCurrentProfileName())
+                         .or(() -> deviceSave.getProfiles().stream().findFirst())
+                         .map(Profile::lightingConfig)
+                         .orElseGet(defaultLightingFor(deviceSave));
     }
 
     @PUT
@@ -280,6 +299,18 @@ public class DeviceResource {
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /**
+     * Default-lighting supplier for a device built from its persisted capability snapshot, so
+     * profile/lighting operations work without a live device. Falls back to a solid-color default
+     * when capabilities were never back-filled (e.g. a legacy save for a device never reconnected).
+     */
+    private static java.util.function.Supplier<LightingConfig> defaultLightingFor(DeviceSave deviceSave) {
+        var caps = deviceSave.getCapabilities();
+        return caps == null
+                ? () -> LightingConfig.createAllColor("#0065FF")
+                : () -> LightingConfig.defaultLightingConfig(caps);
+    }
 
     private DeviceSave getDeviceSave(String serial) {
         var save = saveService.get();

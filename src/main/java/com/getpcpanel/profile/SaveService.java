@@ -11,6 +11,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.Json;
+import com.getpcpanel.device.DescriptorFactory;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.util.Debouncer;
 import com.getpcpanel.util.FileUtil;
@@ -62,6 +63,11 @@ public class SaveService {
 
         try {
             save = json.read(FileUtils.readFileToString(saveFile, Charset.defaultCharset()), Save.class);
+            if (migrateProviderIds(save)) {
+                // Legacy DeviceSave entries had no provider identity. Treat this as an old-version
+                // read so the existing backup(.bak) + one-time rewrite path persists the migration.
+                encounterOldVersion("2.0");
+            }
             handleOldVersionEncountered();
             StreamEx.ofValues(save.getDevices()).forEach(d -> StreamEx.of(d.getProfiles()).findFirst(p -> p.isMainProfile()).ifPresent(p -> d.setCurrentProfile(p.getName())));
         } catch (Exception e) {
@@ -80,6 +86,25 @@ public class SaveService {
     @Priority(1)
     public void onStart(@Observes StartupEvent ev) {
         eventBus.fire(new SaveEvent(save, isNew));
+    }
+
+    /**
+     * Back-fills {@code providerId} for legacy {@link DeviceSave} entries that predate the
+     * self-identifying-device persistence (Phase 2). Such entries can only ever have been PCPanel
+     * devices, so a null {@code providerId} becomes {@code "pcpanel"}. {@code deviceKindId} and
+     * {@code capabilities} were never stored and cannot be guessed here — they are back-filled from
+     * the live descriptor at connect time. Pure (no I/O); returns {@code true} if anything changed
+     * so the caller can trigger the version-bump rewrite.
+     */
+    static boolean migrateProviderIds(Save save) {
+        var migrated = false;
+        for (var deviceSave : save.getDevices().values()) {
+            if (deviceSave.getProviderId() == null) {
+                deviceSave.setProviderId(DescriptorFactory.PROVIDER_ID);
+                migrated = true;
+            }
+        }
+        return migrated;
     }
 
     private void handleOldVersionEncountered() {

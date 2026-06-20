@@ -282,9 +282,10 @@ export interface DeviceDescriptor {
 export interface DeviceDto {
     analogCount: number;
     buttonCount: number;
+    connected: boolean;
     currentProfile: string;
-    descriptor: DeviceDescriptor;
-    deviceType: DeviceType;
+    descriptor?: DeviceDescriptor;
+    deviceType?: DeviceType;
     displayName: string;
     hasLogoLed: boolean;
     profiles: string[];

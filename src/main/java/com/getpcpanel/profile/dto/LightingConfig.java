@@ -5,6 +5,7 @@ import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.getpcpanel.device.DeviceType;
+import com.getpcpanel.device.descriptor.DeviceDescriptor;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -88,6 +89,23 @@ public class LightingConfig {
             return lc;
         }
         throw new IllegalArgumentException("unknown deviceType");
+    }
+
+    /**
+     * Default lighting for a device described by {@code descriptor}, decoupled from {@link DeviceType}.
+     * For the PCPanel provider the {@code deviceKindId} is a {@link DeviceType} name, so the existing
+     * per-model defaults are reused verbatim. Devices without global lighting (or an unknown kind)
+     * get a benign solid-color default rather than throwing.
+     */
+    public static LightingConfig defaultLightingConfig(DeviceDescriptor descriptor) {
+        if (descriptor.globalLighting() == null) {
+            return createAllColor("#0065FF");
+        }
+        try {
+            return defaultLightingConfig(DeviceType.valueOf(descriptor.deviceKindId()));
+        } catch (IllegalArgumentException e) {
+            return createAllColor("#0065FF");
+        }
     }
 
     public static LightingConfig createRainbowAnimation(byte phaseShift, byte brightness, byte speed, boolean reverse) {

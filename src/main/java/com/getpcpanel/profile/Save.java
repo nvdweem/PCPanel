@@ -9,6 +9,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.getpcpanel.device.DeviceType;
+import com.getpcpanel.device.descriptor.DeviceDescriptor;
 import com.getpcpanel.profile.dto.MqttSettings;
 import com.getpcpanel.profile.dto.OSCConnectionInfo;
 import com.getpcpanel.profile.dto.OverlayPosition;
@@ -66,6 +67,12 @@ public class Save {
         return devices.get(serialNum);
     }
 
+    public void createSaveForNewDevice(String serialNum, DeviceDescriptor descriptor) {
+        devices.put(serialNum, new DeviceSave(this, descriptor));
+    }
+
+    /** @deprecated use {@link #createSaveForNewDevice(String, DeviceDescriptor)}; kept as a shim during the device-layer transition. */
+    @Deprecated
     public void createSaveForNewDevice(String serialNum, DeviceType dt) {
         devices.put(serialNum, new DeviceSave(this, dt));
     }
