@@ -16,6 +16,9 @@ import { ToastService } from './toast.service';
           <div class="body">
             <div class="msg">{{ t.message }}</div>
             @if (t.sub) { <div class="sub">{{ t.sub }}</div> }
+            @if (t.href) {
+              <a class="action" [href]="t.href" target="_blank" rel="noopener">{{ t.action ?? 'Open' }}</a>
+            }
           </div>
           <button type="button" class="close" (click)="toasts.dismiss(t.id)">
             <pc-icon name="x" [size]="13"></pc-icon>
@@ -38,6 +41,8 @@ import { ToastService } from './toast.service';
     .body { flex: 1; min-width: 0; }
     .msg { font-size: 13.5px; color: var(--text-1); }
     .sub { font-size: 11.5px; color: var(--text-2); margin-top: 2px; }
+    .action { display: inline-block; margin-top: 6px; font-size: 12px; color: var(--accent-text, var(--accent)); text-decoration: none; font-weight: 600; }
+    .action:hover { text-decoration: underline; }
     .close { border: none; background: transparent; color: var(--text-3); cursor: pointer; display: flex; padding: 2px; }
     .close:hover { color: var(--text-1); }
   `],

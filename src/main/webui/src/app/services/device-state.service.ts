@@ -1,5 +1,6 @@
-import { computed, Injectable, OnDestroy, Signal, signal } from '@angular/core';
+import { computed, inject, Injectable, OnDestroy, Signal, signal } from '@angular/core';
 import { DeviceSnapshotDto, ProfileSnapshotDto, WsAssignmentChangedEvent, WsControlSettingChangedEvent, WsEvent, WsEventUnion } from '../models/generated/backend.types';
+import { ToastService } from '../ui/toast/toast.service';
 
 type DeviceMap = Record<string, DeviceSnapshotDto>;
 
@@ -12,10 +13,13 @@ type DeviceMap = Record<string, DeviceSnapshotDto>;
  */
 @Injectable({providedIn: 'root'})
 export class DeviceStateService implements OnDestroy {
+  private readonly toasts = inject(ToastService);
   private readonly _devices = signal<DeviceMap>({});
   private socket: WebSocket | null = null;
   private reconnectTimer?: ReturnType<typeof setTimeout>;
   private destroyed = false;
+  /** Version already announced this session, so reconnect replays don't re-toast it. */
+  private announcedVersion: string | null = null;
 
   /** All currently connected devices as a readonly signal. */
   readonly devices = this._devices.asReadonly();
@@ -135,6 +139,7 @@ export class DeviceStateService implements OnDestroy {
       case 'visual_colors_changed':
       case 'assignment_changed':
       case 'control_setting_changed':
+      case 'new_version_available':
         return true;
       case true:
         return false;
@@ -218,6 +223,19 @@ export class DeviceStateService implements OnDestroy {
           ...d,
           currentProfileSnapshot: applyKnobSetting(d.currentProfileSnapshot, event),
         })));
+        return true;
+
+      case 'new_version_available':
+        if (this.announcedVersion !== event.version) {
+          this.announcedVersion = event.version;
+          this.toasts.show('A new version is available', {
+            sub: event.version,
+            kind: 'info',
+            timeout: 0,
+            href: event.url,
+            action: 'Download',
+          });
+        }
         return true;
 
       case 'button_press':

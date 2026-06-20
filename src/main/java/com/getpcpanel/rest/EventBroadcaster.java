@@ -22,9 +22,11 @@ import com.getpcpanel.rest.model.ws.WsDeviceDisconnectedEvent;
 import com.getpcpanel.rest.model.ws.WsDeviceRenamedEvent;
 import com.getpcpanel.rest.model.ws.WsKnobEvent;
 import com.getpcpanel.rest.model.ws.WsLightingChangedEvent;
+import com.getpcpanel.rest.model.ws.WsNewVersionAvailableEvent;
 import com.getpcpanel.rest.model.ws.WsProfileSwitchedEvent;
 import com.getpcpanel.rest.model.ws.WsVisualColorsChangedEvent;
 import com.getpcpanel.util.AppShutdownState;
+import com.getpcpanel.util.version.VersionChecker.NewVersionAvailableEvent;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
@@ -38,6 +40,10 @@ public class EventBroadcaster {
     @Inject SaveService saveService;
     @Inject DeviceHolder deviceHolder;
     @Inject ProVisualColorsService proVisualColorsService;
+
+    // The version check runs once at startup and may complete before any browser opens the
+    // websocket. Cache the result so EventWebSocket can replay it to clients that connect later.
+    private volatile WsNewVersionAvailableEvent latestNewVersion;
 
     private boolean shouldSkipBroadcast() {
         return AppShutdownState.isShuttingDown();
@@ -108,6 +114,17 @@ public class EventBroadcaster {
 
     public void onSettingChanged(@Observes KnobSettingChangedEvent event) {
         broadcast(new WsControlSettingChangedEvent(event.serial(), event.index(), event.settings()));
+    }
+
+    public void onNewVersionAvailable(@Observes NewVersionAvailableEvent event) {
+        var ws = new WsNewVersionAvailableEvent(event.version().versionDisplay(), event.version().html_url());
+        latestNewVersion = ws;
+        broadcast(ws);
+    }
+
+    /** Latest new-version notice, or {@code null} if none was detected; replayed to new WS clients. */
+    public WsNewVersionAvailableEvent latestNewVersion() {
+        return latestNewVersion;
     }
 
     // ── CDI mutation events (fired by DeviceResource) ─────────────────────────

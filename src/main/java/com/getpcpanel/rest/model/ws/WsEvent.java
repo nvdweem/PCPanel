@@ -19,7 +19,8 @@ import com.getpcpanel.rest.model.dto.DeviceSnapshotDto;
         @Type(value = WsProfileSwitchedEvent.class, name = "profile_switched"),
         @Type(value = WsVisualColorsChangedEvent.class, name = "visual_colors_changed"),
         @Type(value = DeviceSnapshotDto.class, name = "device_snapshot"),
-        @Type(value = WsControlSettingChangedEvent.class, name = "control_setting_changed")
+        @Type(value = WsControlSettingChangedEvent.class, name = "control_setting_changed"),
+        @Type(value = WsNewVersionAvailableEvent.class, name = "new_version_available")
 })
 public interface WsEvent {
 }

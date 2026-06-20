@@ -26,6 +26,7 @@ public class EventWebSocket {
     @Inject DeviceHolder deviceHolder;
     @Inject SaveService saveService;
     @Inject ProVisualColorsService proVisualColorsService;
+    @Inject EventBroadcaster eventBroadcaster;
 
     @OnOpen
     public void onOpen(WebSocketConnection connection) {
@@ -62,6 +63,17 @@ public class EventWebSocket {
                 log.warn("Failed to send initial device_connected for {} to new WS connection {}", device.getSerialNumber(), connection.id(), e);
             }
         });
+
+        // Replay any new-version notice detected at startup, since the check may have finished
+        // before this client connected and one-shot broadcasts would otherwise be missed.
+        var newVersion = eventBroadcaster.latestNewVersion();
+        if (newVersion != null) {
+            try {
+                connection.sendTextAndAwait(objectMapper.writeValueAsString(newVersion));
+            } catch (Exception e) {
+                log.warn("Failed to send new-version notice to new WS connection {}", connection.id(), e);
+            }
+        }
     }
 
     public static void broadcast(Object event, ObjectMapper mapper) {

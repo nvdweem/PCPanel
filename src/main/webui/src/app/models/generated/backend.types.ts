@@ -629,7 +629,7 @@ export interface WsDeviceRenamedEvent extends WsEvent {
 }
 
 export interface WsEvent {
-    type: "device_snapshot" | "assignment_changed" | "button_press" | "control_setting_changed" | "device_connected" | "device_disconnected" | "device_renamed" | "knob_rotate" | "lighting_changed" | "profile_switched" | "visual_colors_changed";
+    type: "device_snapshot" | "assignment_changed" | "button_press" | "control_setting_changed" | "device_connected" | "device_disconnected" | "device_renamed" | "knob_rotate" | "lighting_changed" | "new_version_available" | "profile_switched" | "visual_colors_changed";
 }
 
 export interface WsKnobEvent extends WsEvent {
@@ -647,6 +647,12 @@ export interface WsLightingChangedEvent extends WsEvent {
     sliderColors: string[][];
     sliderLabelColors: string[];
     type: "lighting_changed";
+}
+
+export interface WsNewVersionAvailableEvent extends WsEvent {
+    type: "new_version_available";
+    url: string;
+    version: string;
 }
 
 export interface WsProfileSwitchedEvent extends WsEvent {
@@ -716,4 +722,4 @@ export type VolumeButton = "mute" | "next" | "prev" | "stop" | "playPause";
 
 export type WaveLinkCommandTarget = "Input" | "Channel" | "Mix" | "Output";
 
-export type WsEventUnion = WsAssignmentChangedEvent | WsButtonEvent | WsDeviceConnectedEvent | WsDeviceDisconnectedEvent | WsDeviceRenamedEvent | WsKnobEvent | WsLightingChangedEvent | WsProfileSwitchedEvent | WsVisualColorsChangedEvent | DeviceSnapshotDto | WsControlSettingChangedEvent;
+export type WsEventUnion = WsAssignmentChangedEvent | WsButtonEvent | WsDeviceConnectedEvent | WsDeviceDisconnectedEvent | WsDeviceRenamedEvent | WsKnobEvent | WsLightingChangedEvent | WsProfileSwitchedEvent | WsVisualColorsChangedEvent | DeviceSnapshotDto | WsControlSettingChangedEvent | WsNewVersionAvailableEvent;
