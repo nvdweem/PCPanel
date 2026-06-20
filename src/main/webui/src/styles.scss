@@ -185,6 +185,12 @@ input, textarea, select { font-family: inherit; }
 .pc-input.mono { font-family: var(--font-mono); }
 .pc-input::placeholder { color: var(--text-3); }
 
+/* Hide the native number spinners (Firefox renders them as ugly white arrows that can't be
+   styled). Keyboard ↑/↓ and the scroll wheel still adjust the value. */
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
 /* Labeled inset field (HOST / PORT / PASSWORD style cards) */
 .pc-field { background: var(--input); border: 1px solid var(--raised-line); border-radius: 7px; padding: 7px 10px; }
 .pc-field-label { font-size: 9px; color: var(--text-3); letter-spacing: .04em; margin-bottom: 2px; text-transform: uppercase; }
