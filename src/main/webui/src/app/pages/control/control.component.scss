@@ -16,6 +16,11 @@
 .stat { flex: 1; text-align: center; background: var(--input); border: 1px solid var(--line); border-radius: 8px; padding: 9px 0; }
 .stat-val { font-family: var(--font-mono); font-size: 15px; color: var(--text-1); }
 .stat-label { font-size: 10px; color: var(--text-3); margin-top: 2px; }
+/* Distinct, readable static colours so the three stats don't blend together
+   (independent of the LED colour, which can be off/black and is already shown above). */
+.stat.value .stat-val { color: #FFB020; }   /* amber */
+.stat.actual .stat-val { color: #28E0E0; }  /* cyan  */
+.stat.actions .stat-val { color: #3BE06A; } /* green */
 
 .settings-block { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
 .setting-row { display: flex; align-items: center; justify-content: space-between; background: #121419; border: 1px solid var(--line); border-radius: var(--r-md); padding: 10px 13px; font-size: 12.5px; color: var(--text-soft); }
