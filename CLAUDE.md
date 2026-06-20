@@ -220,10 +220,23 @@ running on Windows against PCPanel hardware.
 - Never push unless instructed to do so. When you are instructed to push and go on, you must push, then do the
   instructed work. You must not push when done with the instructed work.
 
+## MCP server (dev introspection + hardware-free test harness)
+
+There is an optional **MCP server** (`com.getpcpanel.mcp`, source root `src/mcp/java`) that exposes the
+running app's runtime state and a hardware-free test harness (synthetic input, virtual devices,
+audio-state read, log/error access). It is **off by default and never in the shipped build**. Run it in
+dev with `./mvnw quarkus:dev -Dpcpanel.mcp=true` — then reach the tools either as **plain REST** under
+`http://127.0.0.1:7654/api/mcp/*` (just `curl`, no MCP client — start at `GET /api/mcp`) or as an **MCP
+SSE** server at `http://127.0.0.1:7654/mcp/sse`. Two build-time gates: the Maven `mcp` profile
+(`-Dpcpanel.mcp=true`) compiles it in at all; `pcpanel.mcp.dev` (on in `%dev`) wires the dev tools.
+Full reference: [`docs/mcp-server.md`](docs/mcp-server.md).
+
 ## Conventions
 
 - Lombok is used throughout (`@Data`, `@Log4j2`, `@RequiredArgsConstructor`, etc.). `@Log4j2` is the
-  logging annotation (backed by jboss-logmanager).
+  logging annotation (backed by jboss-logmanager). Note the `cpp` package overrides this with
+  **fluent** accessors (`src/main/java/com/getpcpanel/cpp/lombok.config`): `AudioDevice`/`AudioSession`
+  use `name()`/`volume()`/`muted()`, not `getName()`.
 - Nullability annotated with `javax.annotation.@Nullable/@Nonnull` (JSR-305) — these feed the TS
   generator's optional-property detection.
 - `.editorconfig` defines formatting and a large set of IntelliJ inspection settings; follow it.
