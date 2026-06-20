@@ -195,12 +195,12 @@ public final class OutputInterpreter {
 
         for (var i = 0; i < sliderLabelConfigs.length; i++) {
             var sliderLabelConfig = overrideColorService.getSliderLabelOverride(deviceSerial, i).orElse(sliderLabelConfigs[i]);
+            sliderLabelData.mark();
             var ignored = switch (sliderLabelConfig.getMode()) {
                 case NONE -> sliderLabelData;
                 case STATIC -> {
                     var c1 = sliderLabelConfig.getColor();
-                    yield sliderLabelData.mark()
-                                         .append(1)
+                    yield sliderLabelData.append(1)
                                          .appendHex(c1);
                 }
             };
