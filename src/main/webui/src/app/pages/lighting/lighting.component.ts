@@ -124,7 +124,19 @@ export class LightingComponent {
     this.patch({ [key]: value } as Partial<LightingConfig>);
   }
 
-  setMode(value: LightingMode): void { this.patch({ lightingMode: value }); }
+  setMode(value: LightingMode): void {
+    const cur = this.config();
+    if (!cur || cur.lightingMode === value) { if (cur) this.patch({ lightingMode: value }); return; }
+    const next = { ...cur, lightingMode: value };
+    this.config.set(next);                       // update the editor UI immediately
+    if (this.saveTimer) clearTimeout(this.saveTimer);
+    // Clear every LED first so colours from the previous mode don't linger
+    // (e.g. CUSTOM 'off' entries don't re-send a colour), then apply the new mode.
+    const black: LightingConfig = { ...cur, lightingMode: 'ALL_COLOR', allColor: '#000000' };
+    const applyNew = () => this.deviceService.setLighting(this.serial(), normalizeLogo(next))
+      .subscribe({ error: () => this.toast.show('Could not save lighting', { kind: 'error' }) });
+    this.deviceService.setLighting(this.serial(), black).subscribe({ next: applyNew, error: applyNew });
+  }
 
   /**
    * Animation hue/speed/brightness/phase fields are signed bytes on the backend
