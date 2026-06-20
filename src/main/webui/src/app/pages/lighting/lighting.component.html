@@ -9,16 +9,6 @@
           <span class="title">Lighting</span>
         </div>
 
-        <!-- Global brightness -->
-        <div class="block">
-          <div class="label-row">
-            <span class="lbl">Global brightness</span>
-            <span class="val mono">{{ cfg.globalBrightness }}%</span>
-          </div>
-          <pc-slider [value]="cfg.globalBrightness" [min]="0" [max]="100"
-                     (valueChange)="set('globalBrightness', $event)" (changeEnd)="set('globalBrightness', $event)"></pc-slider>
-        </div>
-
         <!-- Mode selector -->
         <div class="block">
           <span class="micro-label">MODE</span>
@@ -234,7 +224,10 @@
       </main>
       </div>
 
-      <pc-bottom-bar [serial]="serial()" [showBrightness]="false" active="lighting"></pc-bottom-bar>
+      <pc-bottom-bar [serial]="serial()" active="lighting"
+                     [brightness]="cfg.globalBrightness"
+                     (brightnessChange)="set('globalBrightness', $event)"
+                     (brightnessCommit)="set('globalBrightness', $event)"></pc-bottom-bar>
     </div>
   }
 }

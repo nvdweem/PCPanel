@@ -10,8 +10,11 @@ import { ToastService } from '../toast/toast.service';
 /**
  * Shared bottom bar for the device-scoped screens (Home / Lighting / Advanced): global brightness,
  * an optional profile selector, and contextual navigation. The profile selector is only shown on
- * the main (Home) screen; the nav buttons hide the page you're already on. Brightness and profile
- * switching are handled here against the snapshot for `serial`.
+ * the main (Home) screen; the nav buttons hide the page you're already on.
+ *
+ * Brightness has two modes: uncontrolled (default) writes the device snapshot directly (Home /
+ * Advanced); controlled (bind `brightness` + listen to the outputs) lets the parent own it — the
+ * Lighting editor uses this so brightness flows through its local config instead of fighting it.
  */
 @Component({
   selector: 'pc-bottom-bar',
@@ -19,13 +22,11 @@ import { ToastService } from '../toast/toast.service';
   imports: [IconComponent, SliderComponent, SelectComponent],
   template: `
     <footer class="strip">
-      @if (showBrightness()) {
-        <pc-icon name="sun" [size]="17" [strokeWidth]="1.8" class="sun"></pc-icon>
-        <div class="bright">
-          <pc-slider [value]="brightness()" (valueChange)="onBrightnessInput($event)" (changeEnd)="commitBrightness($event)"></pc-slider>
-        </div>
-        <span class="bright-val mono">{{ brightness() }}%</span>
-      }
+      <pc-icon name="sun" [size]="17" [strokeWidth]="1.8" class="sun"></pc-icon>
+      <div class="bright">
+        <pc-slider [value]="level()" (valueChange)="onBrightnessInput($event)" (changeEnd)="commitBrightness($event)"></pc-slider>
+      </div>
+      <span class="bright-val mono">{{ level() }}%</span>
 
       <span class="spacer"></span>
 
@@ -62,25 +63,35 @@ export class BottomBarComponent {
   private readonly router = inject(Router);
 
   readonly serial = input.required<string>();
-  /** Show the global-brightness control (off on Lighting, which edits brightness in its own config). */
-  readonly showBrightness = input<boolean>(true);
   /** Show the profile selector (Home only). */
   readonly showProfile = input<boolean>(false);
   /** Current screen, so its own nav button is hidden. */
   readonly active = input<'home' | 'lighting' | 'advanced' | ''>('');
+  /** Controlled brightness value. When non-null the parent owns it (emits below, no device write). */
+  readonly brightness = input<number | null>(null);
   /** Fired when the user picks "New profile" in the selector footer. */
   readonly newProfile = output<void>();
+  /** Controlled-mode brightness: live drag and commit (changeEnd). */
+  readonly brightnessChange = output<number>();
+  readonly brightnessCommit = output<number>();
 
   private readonly snap = this.state.snapshotFor(this.serial);
   private readonly pendingBrightness = signal<number | null>(null);
+  private readonly controlled = computed(() => this.brightness() !== null);
 
-  readonly brightness = computed(() => this.pendingBrightness() ?? this.snap()?.lightingConfig?.globalBrightness ?? 0);
+  readonly level = computed(() => this.controlled()
+    ? (this.brightness() ?? 0)
+    : (this.pendingBrightness() ?? this.snap()?.lightingConfig?.globalBrightness ?? 0));
   readonly profileOptions = computed<SelectOption[]>(() => (this.snap()?.profiles ?? []).map(p => ({ value: p, label: p })));
   readonly currentProfile = computed(() => this.snap()?.currentProfile ?? '');
 
-  onBrightnessInput(v: number): void { this.pendingBrightness.set(v); }
+  onBrightnessInput(v: number): void {
+    if (this.controlled()) { this.brightnessChange.emit(v); return; }
+    this.pendingBrightness.set(v);
+  }
 
   commitBrightness(v: number): void {
+    if (this.controlled()) { this.brightnessCommit.emit(v); return; }
     const s = this.snap();
     if (!s) return;
     this.deviceService.setLighting(s.serial, { ...s.lightingConfig, globalBrightness: v })
