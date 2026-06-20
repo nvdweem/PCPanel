@@ -1,22 +1,16 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { DeviceStateService } from '../../services/device-state.service';
-import { DebugService } from '../../services/debug.service';
+import { DeviceCapabilitiesService } from '../../services/device-capabilities.service';
 import { IntegrationDataService } from '../../features/commands/integration-data.service';
 import { LightingConfig } from '../../models/generated/backend.types';
 import { PcKnobComponent } from './pc-knob.component';
 import { PcFaderComponent } from './pc-fader.component';
 import { PcLogoComponent } from './pc-logo.component';
 import { analogPct, controlVisual, knobColor, processNameOf, shortLabel } from './device-visual.util';
+import { ControlClick, ControlKind } from './control-click';
 
-export type ControlKind = 'dial' | 'slider' | 'logo';
-export interface ControlClick {
-  kind: ControlKind;
-  /** analog index: knob = i, Pro slider = i+5, logo = 0 */
-  index: number;
-  contextClicked: boolean;
-  event: Event;
-}
+export type { ControlClick, ControlKind } from './control-click';
 
 interface KnobVM { index: number; label: string; pct: number; color: string; off: boolean; selected: boolean; assign: string; anim: string; dur: string; bmin: number; }
 interface FaderVM { index: number; label: string; pct: number; colors: string[]; labelColor: string; off: boolean; selected: boolean; assign: string; anim: string; dur: string; bmin: number; }
@@ -72,7 +66,7 @@ function nearBlack(hex: string): boolean {
               </div>
             }
           </div>
-          @if (isPro()) {
+          @if (hasLogo()) {
             <div class="logo-wrap" role="button" tabindex="0" aria-label="Configure logo lighting"
                  (click)="emit('logo', 0, false, $event)" (contextmenu)="emit('logo', 0, true, $event)"
                  (keydown.enter)="emit('logo', 0, false, $event)" (keydown.space)="emit('logo', 0, false, $event); $event.preventDefault()">
@@ -139,7 +133,7 @@ function nearBlack(hex: string): boolean {
 })
 export class PcDeviceComponent {
   private readonly state = inject(DeviceStateService);
-  private readonly debug = inject(DebugService);
+  private readonly capsService = inject(DeviceCapabilitiesService);
   private readonly integrations = inject(IntegrationDataService);
 
   readonly serial = input.required<string>();
@@ -154,9 +148,11 @@ export class PcDeviceComponent {
   readonly controlClick = output<ControlClick>();
 
   readonly snap = this.state.snapshotFor(this.serial);
-  /** Debug device-type override (Settings → Debug) wins over the real type. */
-  readonly effectiveType = computed(() => this.debug.deviceTypeOverride() || this.snap()?.deviceType);
-  readonly isPro = computed(() => this.effectiveType() === 'PCPANEL_PRO');
+  private readonly caps = this.capsService.forSerial(this.serial);
+  /** "Pro layout" (has sliders + logo) — derived from the descriptor, not the enum.
+   *  The debug device-type override flows through the capabilities descriptor. */
+  readonly isPro = this.caps.isProLayout;
+  readonly hasLogo = this.caps.hasLogo;
 
   private readonly config = computed<LightingConfig | null>(() => this.snap()?.lightingConfig ?? null);
 
@@ -181,7 +177,7 @@ export class PcDeviceComponent {
   readonly knobs = computed<KnobVM[]>(() => {
     const s = this.snap();
     if (!s) return [];
-    const total = this.isPro() ? 5 : 4;
+    const total = this.caps.knobCount();
     const cfg = this.config();
     const out: KnobVM[] = [];
     for (let i = 0; i < total; i++) {
@@ -201,12 +197,12 @@ export class PcDeviceComponent {
 
   readonly faders = computed<FaderVM[]>(() => {
     const s = this.snap();
-    if (!s || !this.isPro()) return [];
+    const sliders = this.caps.sliders();
+    if (!s || !sliders.length) return [];
     const cfg = this.config();
-    const count = s.sliderColors?.length || 4;
     const out: FaderVM[] = [];
-    for (let j = 0; j < count; j++) {
-      const analogIdx = j + 5;
+    for (let j = 0; j < sliders.length; j++) {
+      const analogIdx = sliders[j].index;
       const segs = (s.sliderColors?.[j] ?? []).map(c => controlVisual(c, cfg, '#2A2E37').fill);
       const first = segs[0] ?? '#2A2E37';
       const vis = controlVisual(s.sliderColors?.[j]?.[0], cfg, '#2A2E37');

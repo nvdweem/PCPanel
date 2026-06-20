@@ -19,7 +19,7 @@
           </span>
           <span class="dev-meta">
             <span class="dev-name">{{ d.displayName }}</span>
-            <span class="dev-type">{{ d.deviceType === 'PCPANEL_PRO' ? 'PCPanel Pro' : d.deviceType === 'PCPANEL_MINI' ? 'PCPanel Mini' : 'PCPanel RGB' }}</span>
+            <span class="dev-type">{{ deviceTypeLabel(d) }}</span>
           </span>
         </button>
       }
@@ -82,7 +82,7 @@
           <div class="empty-scan mono"><pc-spinner [size]="11" [thickness]="2"></pc-spinner> scanning for devices…</div>
         </div>
       } @else if (selected()) {
-        <pc-device [serial]="selected()!.serial" [showLabels]="true" [showChips]="showAssignments()" (controlClick)="onControlClick($event)"></pc-device>
+        <pc-device-renderer [serial]="selected()!.serial" [showLabels]="true" [showChips]="showAssignments()" (controlClick)="onControlClick($event)"></pc-device-renderer>
         <div class="hint">Click a knob or slider to configure it · press a knob for its button action · right-click for quick actions</div>
       }
     </section>

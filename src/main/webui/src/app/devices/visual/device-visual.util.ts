@@ -3,9 +3,14 @@ import {
   ColorVisual, knobRingColor, lightingAnimClass, lightingAnimDuration, lightingBreathMin, resolveColorVisual,
 } from '../pcpanel/lighting-animation';
 
-/** Percent (0–100) for an analog value (0–255). */
-export function analogPct(value: number | undefined): number {
-  return Math.max(0, Math.min(100, ((value ?? 0) / 255) * 100));
+/** Percent (0–100) for an analog value within its source range.
+ *  Defaults to the canonical 0–255 domain (PCPanel Mini/Pro), which is what the
+ *  WS snapshot already normalizes to; pass a control's sourceMin/sourceMax to
+ *  render a device with a different raw range correctly. */
+export function analogPct(value: number | undefined, min = 0, max = 255): number {
+  const span = max - min;
+  if (span <= 0) return 0;
+  return Math.max(0, Math.min(100, (((value ?? 0) - min) / span) * 100));
 }
 
 /** Resolve a backend color (possibly a $RAINBOW!/$BREATH token) + the device's

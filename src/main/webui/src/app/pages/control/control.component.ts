@@ -6,7 +6,7 @@ import { DeviceStateService } from '../../services/device-state.service';
 import { DeviceService } from '../../services/device.service';
 import { IntegrationDataService } from '../../features/commands/integration-data.service';
 import { PlatformService } from '../../services/platform.service';
-import { DebugService } from '../../services/debug.service';
+import { DeviceCapabilitiesService } from '../../services/device-capabilities.service';
 import { Command, Commands, KnobSetting } from '../../models/generated/backend.types';
 import {
   AppPickerComponent, IconComponent, StatusDotComponent, ToggleComponent, ToastService,
@@ -43,7 +43,7 @@ export class ControlComponent {
   private readonly deviceService = inject(DeviceService);
   private readonly integrations = inject(IntegrationDataService);
   private readonly platform = inject(PlatformService);
-  private readonly debug = inject(DebugService);
+  private readonly capsService = inject(DeviceCapabilitiesService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
   private readonly location = inject(Location);
@@ -53,11 +53,13 @@ export class ControlComponent {
   readonly idx = computed(() => +this.index());
 
   readonly snap = this.state.snapshotFor(this.serial);
+  private readonly caps = this.capsService.forSerial(this.serial);
   readonly processItems = computed(() => this.integrations.processItems());
-  readonly isPro = computed(() => (this.debug.deviceTypeOverride() || this.snap()?.deviceType) === 'PCPANEL_PRO');
-  readonly knobCount = computed(() => this.isPro() ? 5 : 4);
-  readonly isSlider = computed(() => this.isPro() && this.idx() >= 5);
-  readonly sliderNum = computed(() => this.idx() - 5);   // S(n) for sliders
+  readonly isPro = this.caps.isProLayout;
+  readonly knobCount = this.caps.knobCount;
+  readonly isSlider = computed(() => this.caps.isSlider(this.idx()));
+  /** Position of this control among the device's sliders (S(n)), or -1 if it isn't one. */
+  readonly sliderNum = computed(() => this.caps.sliderNumber(this.idx()));
 
   readonly activeSlot = signal<Slot>('rotate');
   readonly expanded = signal<number>(0);
@@ -101,8 +103,13 @@ export class ControlComponent {
   // ── derived ──────────────────────────────────────────────────────────────
   readonly title = computed(() => this.isSlider() ? `S${this.sliderNum() + 1}` : `K${this.idx() + 1}`);
   readonly controlTypeLabel = computed(() => this.isSlider() ? 'Slider' : 'Knob');
-  readonly valuePct = computed(() => Math.round(analogPct(this.snap()?.analogValues?.[this.idx()])));
-  /** Output after logarithmic scaling (mirrors backend DialValueCalculator), as a %. */
+  readonly valuePct = computed(() =>
+    // The WS snapshot normalizes every provider's analog value to the canonical
+    // 0–255 domain at the backend edge, so display scales against 0–255 — NOT the
+    // descriptor's raw sourceMin/sourceMax (which is the pre-normalization range).
+    Math.round(analogPct(this.snap()?.analogValues?.[this.idx()])));
+  /** Output after logarithmic scaling (mirrors backend DialValueCalculator), as a %.
+   *  This is PCPanel firmware math in the canonical 0–255 domain. */
   readonly actualPct = computed(() => {
     const raw = this.snap()?.analogValues?.[this.idx()] ?? 0;        // 0–255
     const logged = (Math.round(Math.pow(1.04723275, raw / 2.55)) - 1) * 2.55;

@@ -122,14 +122,14 @@
         </div>
       </section>
 
-      <!-- SLIDERS (Pro only) -->
-      @if (isPro()) {
+      <!-- SLIDERS -->
+      @if (sliderCount()) {
         <section class="sec">
-          <div class="micro-label">SLIDERS · 4</div>
+          <div class="micro-label">SLIDERS · {{ sliderCount() }}</div>
           <div class="slider-grid">
             @for (j of sliderIdx(); track j) {
               <div class="pc-card slider-card" role="button" tabindex="0" [attr.aria-label]="'Configure slider ' + (j + 1)"
-                   (click)="configure(j + 5)" (keydown.enter)="configure(j + 5)" (keydown.space)="configure(j + 5); $event.preventDefault()">
+                   (click)="configure(sliderAnalogIdx(j))" (keydown.enter)="configure(sliderAnalogIdx(j))" (keydown.space)="configure(sliderAnalogIdx(j)); $event.preventDefault()">
                 <span class="led-swatch" [style.background]="sliderColor(j)"
                       [style.box-shadow]="'0 0 10px ' + sliderColor(j) + '66'"></span>
                 <span class="s-label mono">S{{ j + 1 }}</span>

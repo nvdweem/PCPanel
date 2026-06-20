@@ -128,7 +128,7 @@
 
         <section class="preview-stage" [class.with-custom]="isCustom()">
           <div class="device-wrap">
-            <pc-device [serial]="serial()" [flat]="true"></pc-device>
+            <pc-device-renderer [serial]="serial()" [flat]="true"></pc-device-renderer>
           </div>
 
           @if (isCustom()) {
@@ -161,7 +161,7 @@
                   <!-- Sliders -->
                   <div class="pc-card-group">
                     <div class="grp-head">Sliders</div>
-                    @for (j of sliderIndexes; track j) {
+                    @for (j of sliderIndexes(); track j) {
                       <div class="ctrl-row">
                         <span class="led-swatch" [style.background]="sliderAt(j).color1"></span>
                         <span class="ctrl-name mono">S{{ j + 1 }}</span>
@@ -183,7 +183,7 @@
                   <!-- Slider labels -->
                   <div class="pc-card-group">
                     <div class="grp-head">Slider labels</div>
-                    @for (j of sliderIndexes; track j) {
+                    @for (j of sliderIndexes(); track j) {
                       <div class="ctrl-row">
                         <span class="led-swatch" [style.background]="sliderLabelAt(j).color"></span>
                         <span class="ctrl-name mono">L{{ j + 1 }}</span>
@@ -202,6 +202,7 @@
                   </div>
 
                   <!-- Logo -->
+                  @if (hasLogo()) {
                   <div class="pc-card-group">
                     <div class="grp-head">Logo</div>
                     <div class="ctrl-row">
@@ -216,6 +217,7 @@
                       </div>
                     </div>
                   </div>
+                  }
                 }
               </div>
             </div>

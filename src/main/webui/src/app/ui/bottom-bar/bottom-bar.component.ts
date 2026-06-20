@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, output, si
 import { Router } from '@angular/router';
 import { DeviceStateService } from '../../services/device-state.service';
 import { DeviceService } from '../../services/device.service';
+import { DeviceCapabilitiesService } from '../../services/device-capabilities.service';
 import { IconComponent } from '../icon/icon.component';
 import { SliderComponent } from '../slider/slider.component';
 import { SelectComponent, SelectOption } from '../select/select.component';
@@ -22,11 +23,13 @@ import { ToastService } from '../toast/toast.service';
   imports: [IconComponent, SliderComponent, SelectComponent],
   template: `
     <footer class="strip">
-      <pc-icon name="sun" [size]="17" [strokeWidth]="1.8" class="sun"></pc-icon>
-      <div class="bright">
-        <pc-slider [value]="level()" (valueChange)="onBrightnessInput($event)" (changeEnd)="commitBrightness($event)"></pc-slider>
-      </div>
-      <span class="bright-val mono">{{ level() }}%</span>
+      @if (showBrightness()) {
+        <pc-icon name="sun" [size]="17" [strokeWidth]="1.8" class="sun"></pc-icon>
+        <div class="bright">
+          <pc-slider [value]="level()" (valueChange)="onBrightnessInput($event)" (changeEnd)="commitBrightness($event)"></pc-slider>
+        </div>
+        <span class="bright-val mono">{{ level() }}%</span>
+      }
 
       <span class="spacer"></span>
 
@@ -35,7 +38,7 @@ import { ToastService } from '../toast/toast.service';
                    (valueChange)="switchProfile($any($event))" footerLabel="New profile"
                    (footerAction)="newProfile.emit()"></pc-select>
       }
-      @if (active() !== 'lighting') {
+      @if (active() !== 'lighting' && hasLighting()) {
         <button class="pc-btn ghost" (click)="go('lighting')">
           <pc-icon name="ring" [size]="14" class="amber"></pc-icon> Lighting
         </button>
@@ -59,6 +62,7 @@ import { ToastService } from '../toast/toast.service';
 export class BottomBarComponent {
   private readonly state = inject(DeviceStateService);
   private readonly deviceService = inject(DeviceService);
+  private readonly capsService = inject(DeviceCapabilitiesService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
 
@@ -76,8 +80,14 @@ export class BottomBarComponent {
   readonly brightnessCommit = output<number>();
 
   private readonly snap = this.state.snapshotFor(this.serial);
+  private readonly caps = this.capsService.forSerial(this.serial);
   private readonly pendingBrightness = signal<number | null>(null);
   private readonly controlled = computed(() => this.brightness() !== null);
+
+  /** Brightness slider shown only when the device has a global brightness control. */
+  readonly showBrightness = this.caps.hasGlobalBrightness;
+  /** "Lighting" nav shown only when the device supports global lighting. */
+  readonly hasLighting = this.caps.hasGlobalLighting;
 
   readonly level = computed(() => this.controlled()
     ? (this.brightness() ?? 0)

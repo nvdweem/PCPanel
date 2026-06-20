@@ -6,9 +6,9 @@ import {
   BottomBarComponent, ColorPickerComponent, IconComponent, IconName, SegmentedComponent, SegmentOption, SelectComponent,
   SelectOption, SliderComponent, StatusDotComponent, ToastService, ToggleComponent,
 } from '../../ui';
-import { PcDeviceComponent } from '../../devices/visual/pc-device.component';
+import { DeviceRendererComponent } from '../../devices/visual/device-renderer.component';
 import { normalizeLogo } from '../../features/lighting/lighting-util';
-import { DebugService } from '../../services/debug.service';
+import { DeviceCapabilitiesService } from '../../services/device-capabilities.service';
 import {
   LightingConfig, LightingMode, SingleKnobLightingConfig, SingleLogoLightingConfig,
   SingleSliderLabelLightingConfig, SingleSliderLightingConfig, SINGLE_LOGO_MODE,
@@ -29,7 +29,7 @@ const isBlackHex = (c: string | undefined): boolean => !c || /^#?0{3,8}$/i.test(
   standalone: true,
   imports: [
     IconComponent, StatusDotComponent, SliderComponent, ToggleComponent, SegmentedComponent,
-    SelectComponent, ColorPickerComponent, PcDeviceComponent, BottomBarComponent,
+    SelectComponent, ColorPickerComponent, DeviceRendererComponent, BottomBarComponent,
   ],
   templateUrl: './lighting.component.html',
   styleUrl: './lighting.component.scss',
@@ -39,12 +39,13 @@ export class LightingComponent {
   private readonly state = inject(DeviceStateService);
   private readonly deviceService = inject(DeviceService);
   private readonly toast = inject(ToastService);
-  private readonly debug = inject(DebugService);
+  private readonly capsService = inject(DeviceCapabilitiesService);
   private readonly router = inject(Router);
 
   readonly serial = input.required<string>();
 
   readonly snapshot = this.state.snapshotFor(this.serial);
+  private readonly caps = this.capsService.forSerial(this.serial);
 
   /** Local editable copy, seeded once per serial from the snapshot. */
   readonly config = signal<LightingConfig | null>(null);
@@ -114,13 +115,17 @@ export class LightingComponent {
     });
   }
 
-  // ── device topology ────────────────────────────────────────────────────────
-  readonly isPro = computed(() => (this.debug.deviceTypeOverride() || this.snapshot()?.deviceType) === 'PCPANEL_PRO');
-  /** Vertical rainbow is a Mini-only hardware feature (Pro/RGB show white if mode 2 is sent). */
-  readonly isMini = computed(() => (this.debug.deviceTypeOverride() || this.snapshot()?.deviceType) === 'PCPANEL_MINI');
-  readonly knobCount = computed(() => this.isPro() ? 5 : 4);
+  // ── device topology (descriptor-derived) ────────────────────────────────────
+  /** "Pro layout": the device has sliders (+ slider labels + logo). */
+  readonly isPro = this.caps.isProLayout;
+  readonly hasLogo = this.caps.hasLogo;
+  readonly hasGlobalLighting = this.caps.hasGlobalLighting;
+  /** Vertical rainbow is a PCPanel Mini-only hardware feature (Pro/RGB show white if mode 2 is sent). */
+  readonly isMini = computed(() => this.caps.descriptor()?.deviceKindId === 'PCPANEL_MINI');
+  readonly knobCount = this.caps.knobCount;
   readonly knobIndexes = computed(() => Array.from({ length: this.knobCount() }, (_, i) => i));
-  readonly sliderIndexes = [0, 1, 2, 3];
+  /** Slider positions (0-based) for the per-control editor grid. */
+  readonly sliderIndexes = computed(() => Array.from({ length: this.caps.sliderCount() }, (_, j) => j));
 
   // ── derived ────────────────────────────────────────────────────────────────
   readonly mode = computed<LightingMode>(() => this.config()?.lightingMode ?? 'ALL_COLOR');
@@ -333,7 +338,7 @@ export class LightingComponent {
     const sliders = cfg.sliderConfigs ?? [];
     const labels = [...(cfg.sliderLabelConfigs ?? [])];
     let changed = false;
-    for (let i = 0; i < this.sliderIndexes.length; i++) {
+    for (let i = 0; i < this.caps.sliderCount(); i++) {
       if (!labels[i] || labels[i].mode === 'NONE') {
         labels[i] = { ...SLIDER_LABEL_DEFAULT, mode: 'STATIC', color: this.followColor(sliders[i]) };
         changed = true;

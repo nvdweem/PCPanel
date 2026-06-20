@@ -10,7 +10,9 @@ import {
   BottomBarComponent, ConnectionBadgeComponent, ConnState, IconComponent, ModalComponent,
   SpinnerComponent, StatusDotComponent, ToastService,
 } from '../../ui';
-import { PcDeviceComponent, ControlClick } from '../../devices/visual/pc-device.component';
+import { DeviceRendererComponent } from '../../devices/visual/device-renderer.component';
+import { ControlClick } from '../../devices/visual/control-click';
+import { DeviceSnapshotDto } from '../../models/generated/backend.types';
 
 interface IntegrationRow { name: string; dot: 'ok' | 'idle' | 'connecting'; stateLabel: string; connected: boolean; }
 
@@ -19,7 +21,7 @@ interface IntegrationRow { name: string; dot: 'ok' | 'idle' | 'connecting'; stat
   standalone: true,
   imports: [
     IconComponent, StatusDotComponent, ConnectionBadgeComponent, BottomBarComponent,
-    SpinnerComponent, ModalComponent, PcDeviceComponent,
+    SpinnerComponent, ModalComponent, DeviceRendererComponent,
   ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
@@ -76,6 +78,12 @@ export class HomeComponent {
     if (connected) return { name, dot: 'ok', stateLabel: 'connected', connected: true };
     if (loading) return { name, dot: 'connecting', stateLabel: 'connecting', connected: false };
     return { name, dot: 'idle', stateLabel: 'enabled', connected: false };
+  }
+
+  /** Human label for a device row: its descriptor displayName (falls back to a
+   *  friendly enum label for older snapshots without a descriptor). */
+  deviceTypeLabel(d: DeviceSnapshotDto): string {
+    return d.descriptor?.displayName || this.facade.friendlyType(d.deviceType);
   }
 
   // ── actions ────────────────────────────────────────────────────────────────

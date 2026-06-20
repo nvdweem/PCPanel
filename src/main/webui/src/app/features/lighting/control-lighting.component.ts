@@ -6,6 +6,7 @@ import {
 } from '../../models/generated/backend.types';
 import { ColorPickerComponent, SelectComponent, SelectOption, ToastService } from '../../ui';
 import { normalizeLogo } from './lighting-util';
+import { DeviceCapabilitiesService } from '../../services/device-capabilities.service';
 
 const BLACK = '#000000';
 const isBlackHex = (c: string | undefined): boolean => !c || /^#?0{3,8}$/i.test(c.trim());
@@ -79,13 +80,16 @@ export class ControlLightingComponent {
   private readonly state = inject(DeviceStateService);
   private readonly deviceService = inject(DeviceService);
   private readonly toast = inject(ToastService);
+  private readonly capsService = inject(DeviceCapabilitiesService);
 
   readonly serial = input.required<string>();
   readonly index = input.required<number>();      // analog index
   readonly isSlider = input<boolean>(false);
 
   private readonly snap = this.state.snapshotFor(this.serial);
-  private readonly sliderIdx = computed(() => this.index() - 5);
+  private readonly caps = this.capsService.forSerial(this.serial);
+  /** Position of this slider among the device's sliders (Pro idx 5 → 0). */
+  private readonly sliderIdx = computed(() => this.caps.sliderNumber(this.index()));
 
   readonly config = signal<LightingConfig | null>(null);
   private loadedKey = '';

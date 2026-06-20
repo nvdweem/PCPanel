@@ -7,7 +7,7 @@ import { DeviceService } from '../../services/device.service';
 import { IntegrationDataService } from '../../features/commands/integration-data.service';
 import { AppPickerComponent, BottomBarComponent, IconComponent, MenuComponent, MenuItem, ModalComponent, ToastService, ToggleComponent } from '../../ui';
 import { shortLabel } from '../../devices/visual/device-visual.util';
-import { DebugService } from '../../services/debug.service';
+import { DeviceCapabilitiesService } from '../../services/device-capabilities.service';
 import { Commands, ProfileSettingsDto } from '../../models/generated/backend.types';
 
 const EMPTY: Commands = { commands: [], type: 'allAtOnce' };
@@ -28,11 +28,12 @@ export class DeviceComponent {
   private readonly integrations = inject(IntegrationDataService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
-  private readonly debug = inject(DebugService);
+  private readonly capsService = inject(DeviceCapabilitiesService);
 
   readonly serial = input.required<string>();
 
   readonly snap = this.state.snapshotFor(this.serial);
+  private readonly caps = this.capsService.forSerial(this.serial);
 
   constructor() {
     // Load the current profile's activation settings whenever the active profile changes.
@@ -50,10 +51,14 @@ export class DeviceComponent {
     });
   }
 
-  readonly isPro = computed(() => (this.debug.deviceTypeOverride() || this.snap()?.deviceType) === 'PCPANEL_PRO');
-  readonly knobCount = computed(() => this.isPro() ? 5 : 4);
+  readonly isPro = this.caps.isProLayout;
+  readonly knobCount = this.caps.knobCount;
+  readonly sliderCount = this.caps.sliderCount;
   readonly knobIdx = computed(() => Array.from({ length: this.knobCount() }, (_, i) => i));
-  readonly sliderIdx = computed(() => this.isPro() ? [0, 1, 2, 3] : []);
+  /** Slider positions (0-based); the analog index is sliderAnalogIdx(j). */
+  readonly sliderIdx = computed(() => Array.from({ length: this.sliderCount() }, (_, j) => j));
+  /** Analog index of the j-th slider (Pro slider 0 → 5). */
+  sliderAnalogIdx(j: number): number { return this.caps.sliderIndexAt(j); }
 
   readonly currentProfile = computed(() => this.snap()?.currentProfile ?? '');
 
@@ -92,7 +97,7 @@ export class DeviceComponent {
 
   sliderRotateText(j: number): string {
     const p = this.snap()?.currentProfileSnapshot;
-    return this.slotText(p?.dialData?.[String(j + 5)]);
+    return this.slotText(p?.dialData?.[String(this.sliderAnalogIdx(j))]);
   }
 
   // ── menus ────────────────────────────────────────────────────────────────
@@ -122,8 +127,9 @@ export class DeviceComponent {
   }
 
   onSliderMenu(j: number, item: MenuItem): void {
-    if (item.value === 'configure') { this.configure(j + 5); return; }
-    if (item.value === 'clear') { this.clearControl(j + 5); }
+    const idx = this.sliderAnalogIdx(j);
+    if (item.value === 'configure') { this.configure(idx); return; }
+    if (item.value === 'clear') { this.clearControl(idx); }
   }
 
   // ── navigation ─────────────────────────────────────────────────────────────
