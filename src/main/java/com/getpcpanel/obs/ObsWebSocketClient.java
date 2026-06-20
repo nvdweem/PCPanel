@@ -50,7 +50,7 @@ public class ObsWebSocketClient implements WebSocket.Listener {
     private final Consumer<Boolean> onConnected;
     private final Consumer<OBSMuteEvent> onMuteChange;
 
-    private WebSocket webSocket;
+    private volatile WebSocket webSocket;
     private final ConcurrentHashMap<String, CompletableFuture<JsonNode>> pending = new ConcurrentHashMap<>();
     private final StringBuilder textBuffer = new StringBuilder();
     private volatile boolean connected = false;
@@ -83,6 +83,15 @@ public class ObsWebSocketClient implements WebSocket.Listener {
     }
 
     // --- WebSocket.Listener ---
+
+    @Override
+    public void onOpen(WebSocket ws) {
+        // OBS sends its HELLO immediately, so onText can fire (and call send()) before
+        // connect()'s buildAsync().get() returns and assigns this.webSocket. Capture it here,
+        // which the HTTP client always invokes before delivering any text.
+        webSocket = ws;
+        ws.request(1);
+    }
 
     @Override
     public CompletionStage<?> onText(WebSocket ws, CharSequence data, boolean last) {
