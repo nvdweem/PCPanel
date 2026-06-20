@@ -38,6 +38,7 @@
         <dbus-java.version>5.2.0</dbus-java.version>
         <lombok.version>1.18.44</lombok.version>
         <typescript-generator.version>4.0.0</typescript-generator.version>
+        <mcp-server.version>1.13.0</mcp-server.version>
 
         <!-- ── Native image: always build a native executable ─────────────── -->
         <!-- Use -Dquarkus.native.enabled=false to skip native (JVM-only build) -->
@@ -572,6 +573,53 @@
                         <configuration>
                             <argLine>-agentlib:native-image-agent=config-merge-dir=${project.basedir}/src/main/resources/META-INF/native-image/ -Djava.awt.headless=false -Dpcpanel.generate-native-config=true</argLine>
                         </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <!-- Dev-only MCP server (com.getpcpanel.mcp). A Model Context Protocol server that exposes the
+                 running app's runtime state and a hardware-free test harness to an agent. It is a DEVELOPER
+                 affordance: it is compiled from a separate source root (src/mcp/java) and pulls in the
+                 quarkus-mcp-server-sse extension ONLY when this profile is active, so the default build -
+                 including the shipped GraalVM native image - never contains it (no native-image args, no
+                 endpoint, nothing reaches end users). Enable it with -Dpcpanel.mcp=true, e.g.
+                 `mvnw quarkus:dev -Dpcpanel.mcp=true`. The individual dev tools are gated again at runtime by
+                 the build-time config flag `pcpanel.mcp.dev` (see application.properties), which is on in %dev. -->
+            <id>mcp</id>
+            <activation>
+                <property>
+                    <name>pcpanel.mcp</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>io.quarkiverse.mcp</groupId>
+                    <artifactId>quarkus-mcp-server-sse</artifactId>
+                    <version>${mcp-server.version}</version>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>build-helper-maven-plugin</artifactId>
+                        <version>3.6.0</version>
+                        <executions>
+                            <execution>
+                                <id>add-mcp-source</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>add-source</goal>
+                                </goals>
+                                <configuration>
+                                    <sources>
+                                        <source>src/mcp/java</source>
+                                    </sources>
+                                </configuration>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
