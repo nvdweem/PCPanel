@@ -88,7 +88,7 @@ public class EventBroadcaster {
         }
         deviceSave.getProfile(event.profileName()).ifPresent(profile -> {
             var colors = colorsFor(event.serial());
-            broadcast(new WsProfileSwitchedEvent(event.serial(), event.profileName(), ProfileSnapshotDto.from(profile), colors.dialColors(), colors.sliderLabelColors(), colors.sliderColors(), colors.logoColor()));
+            broadcast(new WsProfileSwitchedEvent(event.serial(), event.profileName(), ProfileSnapshotDto.from(profile), profile.lightingConfig(), colors.dialColors(), colors.sliderLabelColors(), colors.sliderColors(), colors.logoColor()));
         });
     }
 

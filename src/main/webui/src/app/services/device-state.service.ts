@@ -159,6 +159,7 @@ export class DeviceStateService implements OnDestroy {
           ...d,
           currentProfile: event.profileName,
           currentProfileSnapshot: event.profileSnapshot,
+          lightingConfig: event.lightingConfig,
           dialColors: event.dialColors,
           sliderLabelColors: event.sliderLabelColors,
           sliderColors: event.sliderColors,

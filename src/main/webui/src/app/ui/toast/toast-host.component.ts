@@ -25,7 +25,8 @@ import { ToastService } from './toast.service';
     </div>
   `,
   styles: [`
-    .host { position: fixed; right: 22px; bottom: 22px; z-index: 1400; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+    /* bottom clears the 74px main bottom-bar so toasts don't cover its buttons */
+    .host { position: fixed; right: 22px; bottom: 90px; z-index: 1400; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
     .toast {
       pointer-events: auto; display: flex; align-items: center; gap: 11px; min-width: 260px; max-width: 380px;
       background: var(--popover); border: 1px solid var(--raised-line); border-radius: var(--r-lg);

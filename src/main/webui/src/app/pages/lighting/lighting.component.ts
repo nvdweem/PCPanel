@@ -93,9 +93,10 @@ export class LightingComponent {
   constructor() {
     effect(() => {
       const s = this.snapshot();
-      const key = this.serial();
       if (!s) return;
-      // Seed once per serial; don't re-seed from WS echoes while editing.
+      // Re-seed per (serial, profile) — lighting is per-profile, so switching profiles must reload it.
+      // Same-profile WS echoes keep the key stable, so live edits aren't clobbered.
+      const key = `${this.serial()}:${s.currentProfile}`;
       if (key === this.loadedKey) return;
       this.loadedKey = key;
       untracked(() => {

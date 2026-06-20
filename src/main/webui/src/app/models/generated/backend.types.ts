@@ -575,6 +575,7 @@ export interface WsLightingChangedEvent extends WsEvent {
 
 export interface WsProfileSwitchedEvent extends WsEvent {
     dialColors: string[];
+    lightingConfig: LightingConfig;
     logoColor: string;
     profileName: string;
     profileSnapshot: ProfileSnapshotDto;
