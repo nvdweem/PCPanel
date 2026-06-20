@@ -24,6 +24,14 @@ import one.util.streamex.StreamEx;
 public class JSerialCommTransport implements SerialTransport {
     private static final int READ_TIMEOUT_MS = 100;
 
+    static {
+        // Pin jSerialComm to the os.arch-correct native lib BEFORE SerialPort's static initializer runs
+        // (it is triggered by the first SerialPort.* call below). Works around the 2.10.2 Windows loader
+        // picking the bundled ARM64 DLL on an x86-64 host. This is the only class that touches
+        // com.fazecast.jSerialComm, so this static block is the single, earliest entry point.
+        JSerialCommArchFix.apply();
+    }
+
     @Override
     public List<PortInfo> listPorts() {
         return StreamEx.of(SerialPort.getCommPorts())
