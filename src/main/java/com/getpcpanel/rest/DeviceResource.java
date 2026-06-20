@@ -1,5 +1,6 @@
 package com.getpcpanel.rest;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,6 +22,7 @@ import com.getpcpanel.rest.EventBroadcaster.KnobSettingChangedEvent;
 import com.getpcpanel.rest.model.dto.ControlAssignmentsUpdateDto;
 import com.getpcpanel.rest.model.dto.DeviceDto;
 import com.getpcpanel.rest.model.dto.ProfileDto;
+import com.getpcpanel.rest.model.dto.ProfileSettingsDto;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
@@ -116,6 +118,29 @@ public class DeviceResource {
                     saveService.save();
                     eventBus.fire(new ProfileSwitchedEvent(serial, name));
                 });
+        return Response.ok().build();
+    }
+
+    @GET
+    @Path("/{serial}/profiles/{name}/settings")
+    public ProfileSettingsDto getProfileSettings(@PathParam("serial") String serial, @PathParam("name") String name) {
+        return ProfileSettingsDto.from(getProfile(serial, name));
+    }
+
+    @PUT
+    @Path("/{serial}/profiles/{name}/settings")
+    public Response setProfileSettings(@PathParam("serial") String serial, @PathParam("name") String name, ProfileSettingsDto dto) {
+        var deviceSave = getDeviceSave(serial);
+        var profile = deviceSave.getProfile(name).orElseThrow(() -> new NotFoundException("Profile not found: " + name));
+        profile.setFocusBackOnLost(dto.focusBackOnLost());
+        profile.setActivateApplications(dto.activateApplications() == null ? new ArrayList<>() : new ArrayList<>(dto.activateApplications()));
+        // Exactly one profile may be the main profile.
+        if (dto.isMainProfile()) {
+            StreamEx.of(deviceSave.getProfiles()).forEach(p -> p.setMainProfile(p == profile));
+        } else {
+            profile.setMainProfile(false);
+        }
+        saveService.save();
         return Response.ok().build();
     }
 

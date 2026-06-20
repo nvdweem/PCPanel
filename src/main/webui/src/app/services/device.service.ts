@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Commands, ControlAssignmentsUpdateDto, DeviceDto, KnobSetting, LightingConfig, ProfileDto } from '../models/generated/backend.types';
+import { Commands, ControlAssignmentsUpdateDto, DeviceDto, KnobSetting, LightingConfig, ProfileDto, ProfileSettingsDto } from '../models/generated/backend.types';
 
 @Injectable({providedIn: 'root'})
 export class DeviceService {
@@ -37,6 +37,15 @@ export class DeviceService {
 
   switchProfile(serial: string, name: string): Observable<void> {
     return this.http.put<void>(`${this.base}/${serial}/profiles/current`, name, {headers: {'Content-Type': 'text/plain'}});
+  }
+
+  // Per-profile activation settings (auto-switch on app focus)
+  getProfileSettings(serial: string, name: string): Observable<ProfileSettingsDto> {
+    return this.http.get<ProfileSettingsDto>(`${this.base}/${serial}/profiles/${encodeURIComponent(name)}/settings`);
+  }
+
+  setProfileSettings(serial: string, name: string, settings: ProfileSettingsDto): Observable<void> {
+    return this.http.put<void>(`${this.base}/${serial}/profiles/${encodeURIComponent(name)}/settings`, settings);
   }
 
   // Button/dial commands

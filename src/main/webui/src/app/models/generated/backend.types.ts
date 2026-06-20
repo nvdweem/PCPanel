@@ -389,6 +389,13 @@ export interface ProfileDto {
     name: string;
 }
 
+export interface ProfileSettingsDto {
+    activateApplications: string[];
+    focusBackOnLost: boolean;
+    isMainProfile: boolean;
+    name: string;
+}
+
 export interface ProfileSnapshotDto {
     buttonData: { [index: string]: Commands };
     dblButtonData: { [index: string]: Commands };
