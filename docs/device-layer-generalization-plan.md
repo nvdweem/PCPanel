@@ -9,6 +9,21 @@
 
 ---
 
+## Implementation status (2026-06-20)
+
+| Phase | Status |
+| --- | --- |
+| 1. Descriptor + provider SPI (PCPanel as a provider) | ✅ done — JVM + native + visually validated |
+| 2. Self-identifying persistence | ✅ done — 285 tests |
+| 3. Descriptor-driven frontend | ✅ done — visually validated (PcDevice unchanged + generic renderer) |
+| 4 + 4b. Deej serial provider + add-device UI | ✅ done — **working in the Windows native image** (lists real COM ports); jSerialComm native issues fixed |
+| 5. MIDI provider (AUTO, learned indices) | ✅ logic done & unit-tested (356 tests); native build green + startup-safe. ⚠️ **native device enumeration is best-effort** — `javax.sound.midi` returns no devices in the native image (known GraalVM limitation); MIDI works in JVM/dev mode, shipped native likely needs a custom JNI Feature (+ CoreMidi4J on macOS) |
+| 6. Analog outputs / MIDI LED output, polymorphic lighting model, device templates | ⛔ not started — see §3 Phase 6. The polymorphic-lighting rewrite risks the validated PCPanel lighting; MIDI/analog output is hardware-gated; templates are partly covered by the learned-descriptor approach |
+
+All work is on branch `worktree-generalize-device-layer` (rebased onto `origin/main`), one commit per phase, each keeping the build green.
+
+---
+
 ## 0. Guiding principles
 
 1. **PCPanel stays zero-config and visually special.** Generalization adds a generic path; it must
