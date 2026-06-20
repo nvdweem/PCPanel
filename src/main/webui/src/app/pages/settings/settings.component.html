@@ -24,7 +24,7 @@
 
     <span class="spacer"></span>
 
-    <button class="pc-btn primary save-btn" (click)="save()" [disabled]="saving() || !s">
+    <button class="pc-btn primary save-btn" (click)="save()" [disabled]="saving() || !s || !dirty()">
       @if (saving()) {
         <pc-spinner [size]="13" [thickness]="2"></pc-spinner> Saving…
       } @else {
@@ -199,13 +199,13 @@
           <div class="micro-label section-label">SEND TARGETS</div>
           <div class="pc-card pad stack">
             <div class="chips">
-              @for (c of s.oscConnections; track $index) {
+              @for (c of s.oscConnections ?? []; track $index) {
                 <span class="pc-chip">
                   <span class="mono">{{ c.host }}:{{ c.port }}</span>
                   <span class="x" (click)="removeOscTarget($index)"><pc-icon name="x" [size]="13"></pc-icon></span>
                 </span>
               }
-              @if (!s.oscConnections.length) {
+              @if (!s.oscConnections?.length) {
                 <span class="empty-hint">No send targets yet.</span>
               }
             </div>

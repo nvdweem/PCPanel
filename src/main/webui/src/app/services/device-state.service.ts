@@ -42,6 +42,15 @@ export class DeviceStateService implements OnDestroy {
     });
   }
 
+  /**
+   * Optimistically update a device's profile list. The backend has no
+   * "profiles changed" WS event, so create/delete mutations patch the local
+   * snapshot directly to keep the UI in sync immediately.
+   */
+  patchProfiles(serial: string, fn: (profiles: string[]) => string[]): void {
+    this._devices.update(patch(serial, d => ({ ...d, profiles: fn(d.profiles ?? []) })));
+  }
+
   // Own the websocket lifecycle to avoid missing early events before subscription.
   private connect(): void {
     if (this.destroyed) return;

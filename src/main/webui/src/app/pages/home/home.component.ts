@@ -126,9 +126,12 @@ export class HomeComponent {
     this.newProfileName.set('');
     if (!serial || !name) return;
     this.deviceService.createProfile(serial, name).subscribe({
-      next: () => this.deviceService.switchProfile(serial, name).subscribe({
-        error: () => this.toast.show('Profile created, but switching to it failed', { kind: 'error' }),
-      }),
+      next: () => {
+        this.state.patchProfiles(serial, ps => ps.includes(name) ? ps : [...ps, name]);
+        this.deviceService.switchProfile(serial, name).subscribe({
+          error: () => this.toast.show('Profile created, but switching to it failed', { kind: 'error' }),
+        });
+      },
       error: () => this.toast.show('Could not create profile', { kind: 'error' }),
     });
   }

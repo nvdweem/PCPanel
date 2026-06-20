@@ -32,7 +32,8 @@
     "strictTemplates": true,
     "extendedDiagnostics": {
       "checks": {
-        "nullishCoalescingNotNullable": "suppress"
+        "nullishCoalescingNotNullable": "suppress",
+        "optionalChainNotNullable": "suppress"
       }
     }
   }

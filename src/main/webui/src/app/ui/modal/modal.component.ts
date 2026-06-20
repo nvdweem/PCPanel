@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, input, output } from '@angular/core';
 
 /**
  * Centered modal dialog. Controlled via [open]; projects content. Use the
@@ -39,5 +39,10 @@ export class ModalComponent {
 
   onScrim(_: MouseEvent): void {
     if (this.closeOnScrim()) this.dismiss.emit();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.open()) this.dismiss.emit();
   }
 }

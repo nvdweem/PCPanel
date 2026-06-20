@@ -185,7 +185,7 @@ export class SettingsComponent {
     const host = this.oscHost().trim();
     const port = this.num(this.oscPort());
     if (!host || port <= 0) return;
-    this.local.set({ ...cur, oscConnections: [...cur.oscConnections, { host, port }] });
+    this.local.set({ ...cur, oscConnections: [...(cur.oscConnections ?? []), { host, port }] });
     this.dirty.set(true);
     this.oscHost.set('');
     this.oscPort.set('');
@@ -194,7 +194,7 @@ export class SettingsComponent {
   removeOscTarget(i: number): void {
     const cur = this.local();
     if (!cur) return;
-    this.local.set({ ...cur, oscConnections: cur.oscConnections.filter((_, k) => k !== i) });
+    this.local.set({ ...cur, oscConnections: (cur.oscConnections ?? []).filter((_, k) => k !== i) });
     this.dirty.set(true);
   }
 

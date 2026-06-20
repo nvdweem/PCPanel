@@ -41,6 +41,10 @@ export class DeviceComponent {
 
   readonly newProfileOpen = signal(false);
   readonly newProfileName = signal('');
+  readonly manageOpen = signal(false);
+  readonly pendingDelete = signal<string | null>(null);
+
+  readonly profiles = computed(() => this.snap()?.profiles ?? []);
 
   // ── per-control assignment text ──────────────────────────────────────────
   private slotText(cmds: Commands | null | undefined): string {
@@ -136,10 +140,37 @@ export class DeviceComponent {
     this.newProfileName.set('');
     if (!name) return;
     this.deviceService.createProfile(serial, name).subscribe({
-      next: () => this.deviceService.switchProfile(serial, name).subscribe({
-        error: () => this.toast.show('Profile switch failed', { kind: 'error' }),
-      }),
+      next: () => {
+        this.state.patchProfiles(serial, ps => ps.includes(name) ? ps : [...ps, name]);
+        this.deviceService.switchProfile(serial, name).subscribe({
+          error: () => this.toast.show('Profile switch failed', { kind: 'error' }),
+        });
+      },
       error: () => this.toast.show('Could not create profile', { kind: 'error' }),
+    });
+  }
+
+  // ── profile management ──────────────────────────────────────────────────────
+  /** Active profile and last-remaining profile can't be deleted. */
+  canDelete(name: string): boolean {
+    return name !== this.currentProfile() && this.profiles().length > 1;
+  }
+
+  requestDelete(name: string): void {
+    if (this.canDelete(name)) this.pendingDelete.set(name);
+  }
+
+  confirmDelete(): void {
+    const serial = this.serial();
+    const name = this.pendingDelete();
+    this.pendingDelete.set(null);
+    if (!name) return;
+    this.deviceService.deleteProfile(serial, name).subscribe({
+      next: () => {
+        this.state.patchProfiles(serial, ps => ps.filter(p => p !== name));
+        this.toast.show(`Deleted profile "${name}"`, { kind: 'success' });
+      },
+      error: () => this.toast.show('Could not delete profile', { kind: 'error' }),
     });
   }
 }

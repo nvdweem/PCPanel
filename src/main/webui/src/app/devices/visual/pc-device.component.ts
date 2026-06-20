@@ -13,7 +13,7 @@ export interface ControlClick {
   /** analog index: knob = i, Pro slider = i+5, logo = 0 */
   index: number;
   contextClicked: boolean;
-  event: MouseEvent;
+  event: Event;
 }
 
 interface KnobVM { index: number; label: string; pct: number; color: string; off: boolean; selected: boolean; assign: string; anim: string; dur: string; bmin: number; }
@@ -54,7 +54,9 @@ function nearBlack(hex: string): boolean {
           </div>
           <div class="sliders">
             @for (f of faders(); track f.index) {
-              <div class="slot fader-slot" (click)="emit('slider', f.index, false, $event)" (contextmenu)="emit('slider', f.index, true, $event)">
+              <div class="slot fader-slot" role="button" tabindex="0" [attr.aria-label]="'Configure ' + f.label"
+                   (click)="emit('slider', f.index, false, $event)" (contextmenu)="emit('slider', f.index, true, $event)"
+                   (keydown.enter)="emit('slider', f.index, false, $event)" (keydown.space)="emit('slider', f.index, false, $event); $event.preventDefault()">
                 <span class="s-label" [style.color]="f.off ? 'var(--text-3)' : f.labelColor"
                       [style.text-shadow]="f.off ? 'none' : '0 0 9px ' + f.labelColor + 'AA'">{{ f.label }}</span>
                 <pc-fader [value]="f.pct" [colors]="f.colors" [off]="f.off" [selected]="f.selected"
@@ -64,7 +66,9 @@ function nearBlack(hex: string): boolean {
             }
           </div>
           @if (s.hasLogoLed) {
-            <div class="logo-wrap" (click)="emit('logo', 0, false, $event)" (contextmenu)="emit('logo', 0, true, $event)">
+            <div class="logo-wrap" role="button" tabindex="0" aria-label="Configure logo lighting"
+                 (click)="emit('logo', 0, false, $event)" (contextmenu)="emit('logo', 0, true, $event)"
+                 (keydown.enter)="emit('logo', 0, false, $event)" (keydown.space)="emit('logo', 0, false, $event); $event.preventDefault()">
               <pc-logo [color]="logo().color" [off]="logo().off" [animClass]="logo().anim"
                        [animDuration]="logo().dur" [breathMin]="logo().bmin"></pc-logo>
             </div>
@@ -81,7 +85,9 @@ function nearBlack(hex: string): boolean {
     }
 
     <ng-template #knobTpl let-k>
-      <div class="slot knob-slot" (click)="emit('dial', k.index, false, $event)" (contextmenu)="emit('dial', k.index, true, $event)">
+      <div class="slot knob-slot" role="button" tabindex="0" [attr.aria-label]="'Configure ' + k.label"
+           (click)="emit('dial', k.index, false, $event)" (contextmenu)="emit('dial', k.index, true, $event)"
+           (keydown.enter)="emit('dial', k.index, false, $event)" (keydown.space)="emit('dial', k.index, false, $event); $event.preventDefault()">
         <pc-knob [value]="k.pct" [color]="k.color" [off]="k.off" [selected]="k.selected" [size]="knobSize()"
                  [animClass]="k.anim" [animDuration]="k.dur" [breathMin]="k.bmin"></pc-knob>
         @if (showLabels()) { <span class="k-label">{{ k.label }}</span> }
@@ -103,7 +109,9 @@ function nearBlack(hex: string): boolean {
     .row.bottom { justify-content: space-between; width: 100%; }
     .row.mini-row { gap: 24px; }
     .sliders { display: flex; justify-content: center; gap: 30px; }
-    .slot { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; }
+    .slot { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; outline: none; border-radius: 10px; }
+    .slot:focus-visible, .logo-wrap:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-border-2); }
+    .logo-wrap { outline: none; border-radius: 10px; }
     .fader-slot { gap: 9px; }
     .k-label, .s-label { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.04em; color: #8A909B; }
     .chip {
@@ -186,7 +194,7 @@ export class PcDeviceComponent {
     return { color: vis.fill, off: nearBlack(vis.fill), anim: vis.animClass, dur: vis.animDuration, bmin: vis.breathMin };
   });
 
-  emit(kind: ControlKind, index: number, contextClicked: boolean, event: MouseEvent): void {
+  emit(kind: ControlKind, index: number, contextClicked: boolean, event: Event): void {
     if (contextClicked) event.preventDefault();
     this.controlClick.emit({ kind, index, contextClicked, event });
   }
