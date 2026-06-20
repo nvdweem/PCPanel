@@ -61,7 +61,6 @@ export class ControlComponent {
 
   readonly activeSlot = signal<Slot>('rotate');
   readonly expanded = signal<number>(0);
-  readonly railCollapsed = signal(false);
   readonly lightingMode = computed(() => this.snap()?.lightingConfig?.lightingMode ?? null);
   readonly isCustomLighting = computed(() => this.lightingMode() === 'CUSTOM');
   readonly lightingModeLabel = computed(() => ({

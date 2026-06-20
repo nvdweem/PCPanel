@@ -4,9 +4,7 @@
 
 /* ── Context rail ───────────────────────────────────────────────────────────── */
 .rail { width: 320px; flex: none; background: var(--sidebar); border-right: 1px solid var(--line-soft); display: flex; flex-direction: column; padding: 22px; overflow-y: auto; }
-.rail.collapsed { width: 48px; padding: 18px 0; align-items: center; }
-.rail-head { display: flex; align-items: center; margin-bottom: 24px; }
-.back { display: flex; align-items: center; gap: 10px; background: transparent; border: none; color: var(--text-2); cursor: pointer; font-size: 13px; }
+.back { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; background: transparent; border: none; color: var(--text-2); cursor: pointer; font-size: 13px; }
 .no-colors { font-size: 12px; color: var(--text-3); line-height: 1.5; background: #121419; border: 1px solid var(--line); border-radius: var(--r-md); padding: 12px 14px; }
 .no-colors a { display: inline-block; margin-top: 6px; color: var(--accent); }
 .back:hover { color: var(--text-1); }

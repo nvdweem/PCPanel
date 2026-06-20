@@ -41,7 +41,6 @@ export class HomeComponent {
   readonly selected = this.facade.selected;
   readonly selectedSerial = this.facade.selectedSerial;
 
-  readonly devicesCollapsed = signal(false);
   readonly editingName = signal(false);
   readonly pendingBrightness = signal<number | null>(null);
   readonly newProfileOpen = signal(false);

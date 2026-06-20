@@ -14,8 +14,6 @@
 
 .dev-head { display: flex; align-items: center; gap: 8px; padding: 18px 18px 10px; }
 .dev-head .count { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); }
-.chev { width: 22px; height: 22px; border: none; background: transparent; color: var(--text-2); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-.chev:hover { background: #16181D; }
 
 .dev-list { padding: 0 12px; display: flex; flex-direction: column; gap: 6px; }
 .dev-row {

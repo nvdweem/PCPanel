@@ -9,30 +9,24 @@
     <div class="dev-head">
       <span class="micro-label">DEVICES</span>
       <span class="count">{{ devices().length }}</span>
-      <span class="spacer"></span>
-      <button class="chev" (click)="devicesCollapsed.set(!devicesCollapsed())" title="Collapse device list">
-        <pc-icon [name]="devicesCollapsed() ? 'chevron-down' : 'chevron-up'" [size]="13"></pc-icon>
-      </button>
     </div>
 
-    @if (!devicesCollapsed()) {
-      <div class="dev-list">
-        @for (d of devices(); track d.serial) {
-          <button class="dev-row" [class.active]="d.serial === selectedSerial()" (click)="select(d.serial)">
-            <span class="dev-icon">
-              <pc-status-dot [kind]="statusFor(d.serial)" [size]="7"></pc-status-dot>
-            </span>
-            <span class="dev-meta">
-              <span class="dev-name">{{ d.displayName }}</span>
-              <span class="dev-type">{{ d.deviceType === 'PCPANEL_PRO' ? 'PCPanel Pro' : d.deviceType === 'PCPANEL_MINI' ? 'PCPanel Mini' : 'PCPanel RGB' }}</span>
-            </span>
-          </button>
-        }
-        @if (!devices().length) {
-          <div class="dev-empty">No devices</div>
-        }
-      </div>
-    }
+    <div class="dev-list">
+      @for (d of devices(); track d.serial) {
+        <button class="dev-row" [class.active]="d.serial === selectedSerial()" (click)="select(d.serial)">
+          <span class="dev-icon">
+            <pc-status-dot [kind]="statusFor(d.serial)" [size]="7"></pc-status-dot>
+          </span>
+          <span class="dev-meta">
+            <span class="dev-name">{{ d.displayName }}</span>
+            <span class="dev-type">{{ d.deviceType === 'PCPANEL_PRO' ? 'PCPanel Pro' : d.deviceType === 'PCPANEL_MINI' ? 'PCPanel Mini' : 'PCPanel RGB' }}</span>
+          </span>
+        </button>
+      }
+      @if (!devices().length) {
+        <div class="dev-empty">No devices</div>
+      }
+    </div>
 
     <span class="spacer"></span>
 

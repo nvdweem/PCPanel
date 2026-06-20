@@ -1,24 +1,11 @@
 @if (snap(); as s) {
   <div class="control-screen">
     <!-- ── Context rail ──────────────────────────────────────────────────── -->
-    @if (railCollapsed()) {
-      <aside class="rail collapsed">
-        <button class="pc-icon-btn sm" title="Expand panel" (click)="railCollapsed.set(false)">
-          <pc-icon name="chevron-right" [size]="15"></pc-icon>
-        </button>
-      </aside>
-    } @else {
     <aside class="rail">
-      <div class="rail-head">
-        <button class="back" (click)="back()">
-          <span class="pc-icon-btn sm"><pc-icon name="chevron-left" [size]="15"></pc-icon></span>
-          <span>Back</span>
-        </button>
-        <span class="spacer"></span>
-        <button class="pc-icon-btn sm" title="Collapse panel" (click)="railCollapsed.set(true)">
-          <pc-icon name="chevron-left" [size]="15"></pc-icon>
-        </button>
-      </div>
+      <button class="back" (click)="back()">
+        <span class="pc-icon-btn sm"><pc-icon name="chevron-left" [size]="15"></pc-icon></span>
+        <span>Back</span>
+      </button>
 
       <div class="micro-label">CONFIGURING</div>
       <div class="config-card">
@@ -93,7 +80,6 @@
         <div class="pc-hint">Knobs have three independent slots: turn, single-press, and double-press.</div>
       }
     </aside>
-    }
 
     <!-- ── Main config ───────────────────────────────────────────────────── -->
     <main class="config-main">
