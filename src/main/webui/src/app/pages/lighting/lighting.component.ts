@@ -203,6 +203,11 @@ export class LightingComponent {
     return arr;
   }
   sliderAt(i: number): SingleSliderLightingConfig { return this.config()?.sliderConfigs?.[i] ?? SLIDER_DEFAULT; }
+  /** The colour a "follow" label should mirror: the slider's colour, or black when the slider is off. */
+  private followColor(slider: SingleSliderLightingConfig | undefined): string {
+    if (!slider || slider.mode === 'NONE' || (slider.mode === 'STATIC' && isBlackHex(slider.color1))) return BLACK;
+    return slider.color1 || '#FFB020';
+  }
   sliderUiMode(i: number): string {
     const c = this.sliderAt(i);
     if (c.mode === 'NONE' || (c.mode === 'STATIC' && isBlackHex(c.color1))) return 'off';
@@ -247,14 +252,14 @@ export class LightingComponent {
   // ── per-control: slider labels (Off / Follow slider / Static) ─────────────────
   private padSliderLabels(len: number): SingleSliderLabelLightingConfig[] {
     const arr = [...(this.config()?.sliderLabelConfigs ?? [])];
-    // New labels default to "follow" — STATIC mirroring their slider's colour.
-    while (arr.length < len) arr.push({ ...SLIDER_LABEL_DEFAULT, mode: 'STATIC', color: this.sliderAt(arr.length).color1 || '#FFB020' });
+    // New labels default to "follow" — STATIC mirroring their slider's colour (black if the slider is off).
+    while (arr.length < len) arr.push({ ...SLIDER_LABEL_DEFAULT, mode: 'STATIC', color: this.followColor(this.sliderAt(arr.length)) });
     return arr;
   }
   sliderLabelAt(i: number): SingleSliderLabelLightingConfig {
     const c = this.config()?.sliderLabelConfigs?.[i];
     // Default (NONE / unset) follows the slider — the new UI only ever writes STATIC, so NONE = default.
-    if (!c || c.mode === 'NONE') return { ...SLIDER_LABEL_DEFAULT, mode: 'STATIC', color: this.sliderAt(i).color1 || '#FFB020' };
+    if (!c || c.mode === 'NONE') return { ...SLIDER_LABEL_DEFAULT, mode: 'STATIC', color: this.followColor(this.sliderAt(i)) };
     return c;
   }
   sliderLabelUiMode(i: number): string {
@@ -267,7 +272,7 @@ export class LightingComponent {
   setSliderLabelUiMode(i: number, ui: string): void {
     const arr = this.padSliderLabels(i + 1); const cur = arr[i];
     if (ui === 'off') arr[i] = { ...cur, mode: 'STATIC', color: BLACK };
-    else if (ui === 'follow') arr[i] = { ...cur, mode: 'STATIC', color: this.sliderAt(i).color1 || '#FFB020' };
+    else if (ui === 'follow') arr[i] = { ...cur, mode: 'STATIC', color: this.followColor(this.sliderAt(i)) };
     else arr[i] = { ...cur, mode: 'STATIC', color: isBlackHex(cur.color) ? '#FFB020' : cur.color };
     this.patch({ sliderLabelConfigs: arr });
   }
@@ -329,7 +334,7 @@ export class LightingComponent {
     let changed = false;
     for (let i = 0; i < this.sliderIndexes.length; i++) {
       if (!labels[i] || labels[i].mode === 'NONE') {
-        labels[i] = { ...SLIDER_LABEL_DEFAULT, mode: 'STATIC', color: sliders[i]?.color1 || '#FFB020' };
+        labels[i] = { ...SLIDER_LABEL_DEFAULT, mode: 'STATIC', color: this.followColor(sliders[i]) };
         changed = true;
       }
     }
