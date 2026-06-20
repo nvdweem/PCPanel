@@ -103,6 +103,12 @@ export class ControlComponent {
   readonly title = computed(() => this.isSlider() ? `S${this.sliderNum() + 1}` : `K${this.idx() + 1}`);
   readonly controlTypeLabel = computed(() => this.isSlider() ? 'Slider' : 'Knob');
   readonly valuePct = computed(() => Math.round(analogPct(this.snap()?.analogValues?.[this.idx()])));
+  /** Output after logarithmic scaling (mirrors backend DialValueCalculator), as a %. */
+  readonly actualPct = computed(() => {
+    const raw = this.snap()?.analogValues?.[this.idx()] ?? 0;        // 0–255
+    const logged = (Math.round(Math.pow(1.04723275, raw / 2.55)) - 1) * 2.55;
+    return Math.round(Math.max(0, Math.min(255, logged)) / 255 * 100);
+  });
   readonly ledColor = computed(() => {
     const s = this.snap();
     if (this.isSlider()) return s?.sliderColors?.[this.sliderNum()]?.[0] ?? '#FFB020';

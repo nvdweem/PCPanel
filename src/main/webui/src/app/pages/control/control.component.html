@@ -32,6 +32,9 @@
         </div>
         <div class="cc-stats">
           <div class="stat"><div class="stat-val" [style.color]="ledColor()">{{ valuePct() }}%</div><div class="stat-label">VALUE</div></div>
+          @if (knob().logarithmic) {
+            <div class="stat"><div class="stat-val">{{ actualPct() }}%</div><div class="stat-label">ACTUAL</div></div>
+          }
           <div class="stat"><div class="stat-val">{{ actionCount() }}</div><div class="stat-label">ACTIONS</div></div>
         </div>
       </div>
