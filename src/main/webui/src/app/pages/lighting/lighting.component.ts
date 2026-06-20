@@ -98,12 +98,25 @@ export class LightingComponent {
       // Seed once per serial; don't re-seed from WS echoes while editing.
       if (key === this.loadedKey) return;
       this.loadedKey = key;
-      untracked(() => this.config.set(clone(s.lightingConfig)));
+      untracked(() => {
+        const cfg = clone(s.lightingConfig);
+        // Correct a non-Mini device left in the unsupported vertical-rainbow state
+        // (its LEDs go white): force horizontal and push the fix once if it's live.
+        if (cfg && !this.isMini() && cfg.rainbowVertical !== 0) {
+          const wasLiveRainbow = cfg.lightingMode === 'ALL_RAINBOW';
+          this.config.set({ ...cfg, rainbowVertical: 0 });
+          if (wasLiveRainbow) this.flush();
+          return;
+        }
+        this.config.set(cfg);
+      });
     });
   }
 
   // ── device topology ────────────────────────────────────────────────────────
   readonly isPro = computed(() => (this.debug.deviceTypeOverride() || this.snapshot()?.deviceType) === 'PCPANEL_PRO');
+  /** Vertical rainbow is a Mini-only hardware feature (Pro/RGB show white if mode 2 is sent). */
+  readonly isMini = computed(() => (this.debug.deviceTypeOverride() || this.snapshot()?.deviceType) === 'PCPANEL_MINI');
   readonly knobCount = computed(() => this.isPro() ? 5 : 4);
   readonly knobIndexes = computed(() => Array.from({ length: this.knobCount() }, (_, i) => i));
   readonly sliderIndexes = [0, 1, 2, 3];
@@ -275,7 +288,9 @@ export class LightingComponent {
   private flush(): void {
     const cfg = this.config();
     if (!cfg) return;
-    this.deviceService.setLighting(this.serial(), normalizeLogo(cfg))
+    // Vertical rainbow is Mini-only; never emit mode 2 for Pro/RGB (it whites out the LEDs).
+    const safe = this.isMini() ? cfg : { ...cfg, rainbowVertical: 0 };
+    this.deviceService.setLighting(this.serial(), normalizeLogo(safe))
       .subscribe({ error: () => this.toast.show('Could not save lighting', { kind: 'error' }) });
   }
 

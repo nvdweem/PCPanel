@@ -68,10 +68,13 @@
                 <span class="lbl">Reverse direction</span>
                 <pc-toggle [value]="flagOn(cfg.rainbowReverse)" (valueChange)="setFlag('rainbowReverse', $event)"></pc-toggle>
               </div>
-              <div class="seg-row">
-                <span class="lbl">Orientation</span>
-                <pc-segmented [options]="orientationOptions" [value]="orientation()" (valueChange)="setOrientation($event)"></pc-segmented>
-              </div>
+              <!-- Vertical rainbow is a PCPanel Mini-only hardware feature; on Pro/RGB it is unsupported. -->
+              @if (isMini()) {
+                <div class="seg-row">
+                  <span class="lbl">Orientation</span>
+                  <pc-segmented [options]="orientationOptions" [value]="orientation()" (valueChange)="setOrientation($event)"></pc-segmented>
+                </div>
+              }
             </div>
           }
           @case ('ALL_WAVE') {

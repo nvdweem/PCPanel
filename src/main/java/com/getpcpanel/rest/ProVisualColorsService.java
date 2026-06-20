@@ -63,12 +63,15 @@ public class ProVisualColorsService {
             sliderLabelColors.add(rainbowColor(baseHue, reverse, i + PRO_DIAL_COUNT, PRO_DIAL_COUNT + PRO_SLIDER_COUNT, brightness));
         }
 
+        // Horizontal: hue varies across the faders (each fader is one hue, left→right).
+        // Vertical (Mini-only on hardware): hue varies down each fader's segments, the
+        // same gradient on every fader.
         var sliderColors = new ArrayList<List<String>>(PRO_SLIDER_COUNT);
         for (var s = 0; s < PRO_SLIDER_COUNT; s++) {
             var segmentColors = new ArrayList<String>(PRO_SLIDER_SEGMENT_COUNT);
             for (var seg = 0; seg < PRO_SLIDER_SEGMENT_COUNT; seg++) {
-                var idx = vertical ? seg : (s * PRO_SLIDER_SEGMENT_COUNT + seg);
-                var total = vertical ? PRO_SLIDER_SEGMENT_COUNT : (PRO_SLIDER_COUNT * PRO_SLIDER_SEGMENT_COUNT);
+                var idx = vertical ? seg : s;
+                var total = vertical ? PRO_SLIDER_SEGMENT_COUNT : PRO_SLIDER_COUNT;
                 segmentColors.add(rainbowColor(baseHue, reverse, idx, total, brightness));
             }
             sliderColors.add(List.copyOf(segmentColors));
