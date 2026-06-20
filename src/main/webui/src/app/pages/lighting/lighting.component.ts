@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { DeviceStateService } from '../../services/device-state.service';
 import { DeviceService } from '../../services/device.service';
 import {
-  ColorPickerComponent, IconComponent, IconName, SegmentedComponent, SegmentOption, SelectComponent,
+  BottomBarComponent, ColorPickerComponent, IconComponent, IconName, SegmentedComponent, SegmentOption, SelectComponent,
   SelectOption, SliderComponent, StatusDotComponent, ToastService, ToggleComponent,
 } from '../../ui';
 import { PcDeviceComponent } from '../../devices/visual/pc-device.component';
@@ -29,7 +29,7 @@ const isBlackHex = (c: string | undefined): boolean => !c || /^#?0{3,8}$/i.test(
   standalone: true,
   imports: [
     IconComponent, StatusDotComponent, SliderComponent, ToggleComponent, SegmentedComponent,
-    SelectComponent, ColorPickerComponent, PcDeviceComponent,
+    SelectComponent, ColorPickerComponent, PcDeviceComponent, BottomBarComponent,
   ],
   templateUrl: './lighting.component.html',
   styleUrl: './lighting.component.scss',

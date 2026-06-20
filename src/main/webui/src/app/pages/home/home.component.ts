@@ -7,8 +7,8 @@ import { SettingsService } from '../../services/settings.service';
 import { IntegrationDataService } from '../../features/commands/integration-data.service';
 import { PlatformService } from '../../services/platform.service';
 import {
-  ConnectionBadgeComponent, ConnState, IconComponent, ModalComponent,
-  SelectComponent, SelectOption, SliderComponent, SpinnerComponent, StatusDotComponent, ToastService,
+  BottomBarComponent, ConnectionBadgeComponent, ConnState, IconComponent, ModalComponent,
+  SpinnerComponent, StatusDotComponent, ToastService,
 } from '../../ui';
 import { PcDeviceComponent, ControlClick } from '../../devices/visual/pc-device.component';
 
@@ -18,7 +18,7 @@ interface IntegrationRow { name: string; dot: 'ok' | 'idle' | 'connecting'; stat
   selector: 'app-home',
   standalone: true,
   imports: [
-    IconComponent, StatusDotComponent, ConnectionBadgeComponent, SliderComponent, SelectComponent,
+    IconComponent, StatusDotComponent, ConnectionBadgeComponent, BottomBarComponent,
     SpinnerComponent, ModalComponent, PcDeviceComponent,
   ],
   templateUrl: './home.component.html',
@@ -42,7 +42,6 @@ export class HomeComponent {
   readonly selectedSerial = this.facade.selectedSerial;
 
   readonly editingName = signal(false);
-  readonly pendingBrightness = signal<number | null>(null);
   readonly newProfileOpen = signal(false);
   readonly newProfileName = signal('');
 
@@ -52,18 +51,11 @@ export class HomeComponent {
     return 'connected';
   });
 
-  readonly brightness = computed(() => this.pendingBrightness() ?? this.selected()?.lightingConfig?.globalBrightness ?? 0);
-
   /** "Show control assignments in UI" setting — gates the device-visual chips. */
   readonly showAssignments = computed(() => this.settings.settings.value()?.mainUIIcons ?? true);
 
   /** Actual running app version (from the backend), not a hardcoded string. */
   readonly appVersion = computed(() => this.platform.version());
-
-  readonly profileOptions = computed<SelectOption[]>(() =>
-    (this.selected()?.profiles ?? []).map(p => ({ value: p, label: p })));
-
-  readonly currentProfile = computed(() => this.selected()?.currentProfile ?? '');
 
   readonly integrationRows = computed<IntegrationRow[]>(() => {
     const s = this.settings.settings.value();
@@ -104,26 +96,6 @@ export class HomeComponent {
     this.deviceService.renameDevice(serial, name).subscribe({ error: () => this.toast.show('Rename failed', { kind: 'error' }) });
   }
 
-  onBrightnessInput(v: number): void { this.pendingBrightness.set(v); }
-
-  commitBrightness(v: number): void {
-    const sel = this.selected();
-    if (!sel) return;
-    this.deviceService.setLighting(sel.serial, { ...sel.lightingConfig, globalBrightness: v })
-      .subscribe({ error: () => this.toast.show('Could not set brightness', { kind: 'error' }) });
-    setTimeout(() => this.pendingBrightness.set(null), 500);
-  }
-
-  switchProfile(name: string): void {
-    const serial = this.selectedSerial();
-    if (!serial || name === this.currentProfile()) return;
-    this.deviceService.switchProfile(serial, name)
-      .subscribe({
-        next: () => this.toast.show(`Switched to ${name}`, { kind: 'success' }),
-        error: () => this.toast.show('Profile switch failed', { kind: 'error' }),
-      });
-  }
-
   createProfile(): void {
     const serial = this.selectedSerial();
     const name = this.newProfileName().trim();
@@ -148,7 +120,5 @@ export class HomeComponent {
     this.router.navigate(['/control', serial, e.index]);
   }
 
-  openLighting(): void { const s = this.selectedSerial(); if (s) this.router.navigate(['/lighting', s]); }
-  openAdvanced(): void { const s = this.selectedSerial(); if (s) this.router.navigate(['/device', s]); }
   openSettings(): void { this.router.navigate(['/settings']); }
 }

@@ -70,13 +70,6 @@
 .empty-sub { font-size: 12.5px; color: var(--text-2); max-width: 34ch; line-height: 1.5; }
 .empty-scan { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--accent); }
 
-/* ── Control strip ─────────────────────────────────────────────────────────── */
-.strip { height: 74px; display: flex; align-items: center; gap: 20px; padding: 0 24px; border-top: 1px solid var(--line-soft); background: #0D0E12; }
-.sun { color: var(--accent); }
-.bright { width: 200px; }
-.bright-val { font-size: 12.5px; color: var(--accent); min-width: 34px; }
-.amber { color: var(--accent); }
-
 /* ── New profile modal ──────────────────────────────────────────────────────── */
 .np-body { width: 280px; }
 .np-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }

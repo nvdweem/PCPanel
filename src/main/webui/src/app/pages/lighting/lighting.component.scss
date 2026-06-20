@@ -1,6 +1,7 @@
 :host { display: block; height: 100vh; }
 
-.lighting-screen { display: flex; height: 100%; background: var(--canvas); color: var(--text-1); }
+.lighting-screen { display: flex; flex-direction: column; height: 100%; background: var(--canvas); color: var(--text-1); }
+.lighting-body { flex: 1; display: flex; min-height: 0; }
 
 /* ── Left controls ──────────────────────────────────────────────────────────── */
 .controls {

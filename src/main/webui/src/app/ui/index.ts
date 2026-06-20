@@ -7,6 +7,7 @@ export { SpinnerComponent } from './spinner/spinner.component';
 export { SegmentedComponent } from './segmented/segmented.component';
 export type { SegmentOption } from './segmented/segmented.component';
 export { SliderComponent } from './slider/slider.component';
+export { BottomBarComponent } from './bottom-bar/bottom-bar.component';
 export { ConnectionBadgeComponent } from './connection-badge/connection-badge.component';
 export type { ConnState } from './connection-badge/connection-badge.component';
 export { SelectComponent } from './select/select.component';

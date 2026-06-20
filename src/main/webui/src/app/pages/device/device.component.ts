@@ -5,7 +5,7 @@ import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-
 import { DeviceStateService } from '../../services/device-state.service';
 import { DeviceService } from '../../services/device.service';
 import { IntegrationDataService } from '../../features/commands/integration-data.service';
-import { AppPickerComponent, IconComponent, MenuComponent, MenuItem, ModalComponent, ToastService, ToggleComponent } from '../../ui';
+import { AppPickerComponent, BottomBarComponent, IconComponent, MenuComponent, MenuItem, ModalComponent, ToastService, ToggleComponent } from '../../ui';
 import { shortLabel } from '../../devices/visual/device-visual.util';
 import { DebugService } from '../../services/debug.service';
 import { Commands, ProfileSettingsDto } from '../../models/generated/backend.types';
@@ -17,7 +17,7 @@ interface SlotLine { label: string; text: string; cls: string; }
 @Component({
   selector: 'app-device',
   standalone: true,
-  imports: [OverlayModule, DragDropModule, IconComponent, MenuComponent, ModalComponent, ToggleComponent, AppPickerComponent],
+  imports: [OverlayModule, DragDropModule, IconComponent, MenuComponent, ModalComponent, ToggleComponent, AppPickerComponent, BottomBarComponent],
   templateUrl: './device.component.html',
   styleUrl: './device.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

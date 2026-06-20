@@ -1,6 +1,7 @@
 @if (snapshot(); as snap) {
   @if (config(); as cfg) {
     <div class="lighting-screen">
+      <div class="lighting-body">
       <!-- ── Left controls ───────────────────────────────────────────────────── -->
       <aside class="controls">
         <div class="back-row">
@@ -231,6 +232,9 @@
           }
         </section>
       </main>
+      </div>
+
+      <pc-bottom-bar [serial]="serial()" [showBrightness]="false" active="lighting"></pc-bottom-bar>
     </div>
   }
 }

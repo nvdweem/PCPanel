@@ -88,21 +88,8 @@
     </section>
 
     @if (selected()) {
-      <footer class="strip">
-        <pc-icon name="sun" [size]="17" [strokeWidth]="1.8" class="sun"></pc-icon>
-        <div class="bright">
-          <pc-slider [value]="brightness()" (valueChange)="onBrightnessInput($event)" (changeEnd)="commitBrightness($event)"></pc-slider>
-        </div>
-        <span class="bright-val mono">{{ brightness() }}%</span>
-        <span class="spacer"></span>
-        <pc-select microLabel="PROFILE" [options]="profileOptions()" [value]="currentProfile()"
-                   (valueChange)="switchProfile($any($event))" footerLabel="New profile"
-                   (footerAction)="newProfileOpen.set(true)"></pc-select>
-        <button class="pc-btn ghost" (click)="openLighting()">
-          <pc-icon name="ring" [size]="14" class="amber"></pc-icon> Lighting
-        </button>
-        <button class="pc-btn primary" (click)="openAdvanced()">Advanced</button>
-      </footer>
+      <pc-bottom-bar [serial]="selected()!.serial" [showProfile]="true" active="home"
+                     (newProfile)="newProfileOpen.set(true)"></pc-bottom-bar>
     }
   </main>
 
