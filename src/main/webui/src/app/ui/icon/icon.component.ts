@@ -66,6 +66,9 @@ const PATHS: Record<string, string> = {
   standalone: true,
   template: `<span class="pc-icon" [innerHTML]="svg()"></span>`,
   styles: [`
+    /* inline-flex host (not the default inline) so the glyph isn't pushed up by the parent's
+       inherited line-height leading — keeps icons optically centred inside icon buttons. */
+    :host { display: inline-flex; line-height: 0; }
     .pc-icon { display: inline-flex; line-height: 0; }
     .pc-icon ::ng-deep svg { display: block; }
   `],

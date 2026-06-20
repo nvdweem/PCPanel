@@ -23,7 +23,7 @@ export type ConnState = 'connected' | 'connecting' | 'reconnecting' | 'error';
     .badge {
       display: inline-flex; align-items: center; gap: 7px;
       border-radius: var(--r-pill); padding: 6px 13px; font-size: 12.5px;
-      border: 1px solid var(--line);
+      border: 1px solid var(--line); cursor: pointer;
     }
     .badge[data-state="connected"] { background: rgba(67,192,138,0.1); border-color: rgba(67,192,138,0.35); color: var(--ok-text); }
     .badge[data-state="connecting"],

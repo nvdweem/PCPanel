@@ -66,6 +66,8 @@
 .pencil:hover { color: var(--text-1); }
 
 .stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; min-height: 0; }
+/* Size of the device on the main stage. 1 = native, 1.5 = 50% larger. Change this one value to taste. */
+.device-stage { zoom: 1.5; }
 .hint { font-size: 12.5px; color: var(--text-3); margin-top: 20px; text-align: center; }
 
 .loading { display: flex; align-items: center; gap: 18px; }
