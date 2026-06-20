@@ -50,7 +50,7 @@
 .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 
 .topbar { height: 56px; display: flex; align-items: center; gap: 12px; padding: 0 22px; border-bottom: 1px solid var(--line-soft); }
-.name { font-family: var(--font-display); font-weight: 600; font-size: 16px; border-bottom: 1.5px dashed var(--raised-line); padding-bottom: 1px; cursor: text; }
+.name { font-family: var(--font-display); font-weight: 600; font-size: 16px; border-bottom: 1.5px dashed var(--raised-line); padding-bottom: 1px; cursor: pointer; }
 .name-input { font-size: 16px; }
 .pencil { border: none; background: transparent; color: var(--text-3); cursor: pointer; display: flex; padding: 2px; }
 .pencil:hover { color: var(--text-1); }
