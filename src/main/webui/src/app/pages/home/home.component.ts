@@ -57,6 +57,9 @@ export class HomeComponent {
   /** "Show control assignments in UI" setting — gates the device-visual chips. */
   readonly showAssignments = computed(() => this.settings.settings.value()?.mainUIIcons ?? true);
 
+  /** Actual running app version (from the backend), not a hardcoded string. */
+  readonly appVersion = computed(() => this.platform.version());
+
   readonly profileOptions = computed<SelectOption[]>(() =>
     (this.selected()?.profiles ?? []).map(p => ({ value: p, label: p })));
 
