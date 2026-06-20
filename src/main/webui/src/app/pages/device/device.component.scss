@@ -16,11 +16,15 @@
 .profile-chips { display: flex; align-items: center; gap: 8px; }
 .prof-chips-list { display: flex; align-items: center; gap: 8px; }
 .prof-chip {
+  display: inline-flex; align-items: center; gap: 7px;
   font-size: 12.5px; font-weight: 500; padding: 6px 13px; border-radius: var(--r-pill);
   background: transparent; border: 1px solid var(--line); color: var(--text-soft); cursor: pointer;
   white-space: nowrap;
 }
 .prof-chip:hover { border-color: var(--line-2); color: var(--text-1); }
+/* clickable pencil postfix on the active chip → rename */
+.prof-edit { display: inline-flex; align-items: center; color: var(--accent-text); opacity: 0.7; cursor: pointer; margin-right: -3px; }
+.prof-edit:hover { opacity: 1; }
 .prof-chip.active { background: var(--accent-tint); border-color: var(--accent-border); color: var(--accent-text); }
 /* drag-to-reorder */
 .prof-chip.cdk-drag-preview { box-shadow: var(--shadow-2, 0 6px 18px rgba(0,0,0,0.4)); background: var(--panel); }

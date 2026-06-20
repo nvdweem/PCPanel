@@ -68,6 +68,8 @@ export class DeviceComponent {
   readonly newProfileOpen = signal(false);
   readonly newProfileName = signal('');
   readonly pendingDelete = signal<string | null>(null);
+  readonly renameOpen = signal(false);
+  readonly renameValue = signal('');
 
   readonly profiles = computed(() => this.snap()?.profiles ?? []);
 
@@ -184,6 +186,33 @@ export class DeviceComponent {
         });
       },
       error: () => this.toast.show('Could not create profile', { kind: 'error' }),
+    });
+  }
+
+  // ── rename ────────────────────────────────────────────────────────────────
+  openRename(): void {
+    const cur = this.currentProfile();
+    if (!cur) return;
+    this.renameValue.set(cur);
+    this.renameOpen.set(true);
+  }
+
+  commitRename(): void {
+    const serial = this.serial();
+    const oldName = this.currentProfile();
+    const newName = this.renameValue().trim();
+    this.renameOpen.set(false);
+    if (!serial || !oldName || !newName || newName === oldName) return;
+    if (this.profiles().includes(newName)) {
+      this.toast.show('A profile with that name already exists', { kind: 'error' });
+      return;
+    }
+    this.deviceService.renameProfile(serial, oldName, newName).subscribe({
+      next: () => {
+        this.state.patchProfileRename(serial, oldName, newName);
+        this.toast.show(`Renamed to ${newName}`, { kind: 'success' });
+      },
+      error: () => this.toast.show('Could not rename profile', { kind: 'error' }),
     });
   }
 

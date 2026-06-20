@@ -12,7 +12,16 @@
       <div class="profile-chips">
         <div class="prof-chips-list" cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="dropProfile($event)">
           @for (p of s.profiles; track p) {
-            <button class="prof-chip" cdkDrag [class.active]="p === currentProfile()" (click)="switchProfile(p)" title="Drag to reorder">{{ p }}</button>
+            <button class="prof-chip" cdkDrag [class.active]="p === currentProfile()" (click)="switchProfile(p)" title="Switch profile (drag to reorder)">
+              {{ p }}
+              @if (p === currentProfile()) {
+                <span class="prof-edit" role="button" tabindex="0" title="Rename profile" aria-label="Rename profile"
+                      (click)="$event.stopPropagation(); openRename()"
+                      (keydown.enter)="$event.stopPropagation(); openRename()">
+                  <pc-icon name="pencil" [size]="12"></pc-icon>
+                </span>
+              }
+            </button>
           }
         </div>
         <button class="prof-add" (click)="newProfileOpen.set(true)" title="New profile">
@@ -159,6 +168,18 @@
       <div class="np-actions">
         <button class="pc-btn ghost" (click)="newProfileOpen.set(false)">Cancel</button>
         <button class="pc-btn primary" (click)="createProfile()">Create</button>
+      </div>
+    </div>
+  </pc-modal>
+
+  <!-- Rename profile modal -->
+  <pc-modal [open]="renameOpen()" heading="Rename profile" (dismiss)="renameOpen.set(false)">
+    <div class="np-body">
+      <input class="pc-input" placeholder="Profile name" [value]="renameValue()"
+             (input)="renameValue.set($any($event.target).value)" (keydown.enter)="commitRename()" autofocus>
+      <div class="np-actions">
+        <button class="pc-btn ghost" (click)="renameOpen.set(false)">Cancel</button>
+        <button class="pc-btn primary" (click)="commitRename()">Rename</button>
       </div>
     </div>
   </pc-modal>
