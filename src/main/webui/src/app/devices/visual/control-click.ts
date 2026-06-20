@@ -8,5 +8,7 @@ export interface ControlClick {
   /** analog index: knob = i, Pro slider = i+5, logo = 0 */
   index: number;
   contextClicked: boolean;
+  /** when set, open this slot's tab instead of the default (from a press / double-press chip) */
+  slot?: 'press' | 'dblpress';
   event: Event;
 }

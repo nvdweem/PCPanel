@@ -3,7 +3,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { DeviceStateService } from '../../services/device-state.service';
 import { DeviceCapabilitiesService } from '../../services/device-capabilities.service';
 import { IntegrationDataService } from '../../features/commands/integration-data.service';
-import { LightingConfig } from '../../models/generated/backend.types';
+import { Commands, LightingConfig } from '../../models/generated/backend.types';
 import { PcKnobComponent } from './pc-knob.component';
 import { PcFaderComponent } from './pc-fader.component';
 import { PcLogoComponent } from './pc-logo.component';
@@ -12,14 +12,29 @@ import { ControlClick, ControlKind } from './control-click';
 
 export type { ControlClick, ControlKind } from './control-click';
 
-interface KnobVM { index: number; label: string; pct: number; color: string; off: boolean; selected: boolean; assign: string; anim: string; dur: string; bmin: number; }
-interface FaderVM { index: number; label: string; pct: number; colors: string[]; labelColor: string; off: boolean; selected: boolean; assign: string; anim: string; dur: string; bmin: number; }
+/** One assignment chip. `tag` marks a non-turn slot (P = single-press, PP = double-press);
+ *  the turn chip has no tag but may carry the controlled app icon. */
+interface ChipVM { tag?: string; icon?: string; label: string; slot?: 'press' | 'dblpress'; }
+interface KnobVM { index: number; label: string; pct: number; color: string; off: boolean; selected: boolean; chips: ChipVM[]; anim: string; dur: string; bmin: number; }
+interface FaderVM { index: number; label: string; pct: number; colors: string[]; labelColor: string; off: boolean; selected: boolean; chips: ChipVM[]; anim: string; dur: string; bmin: number; }
 
 function nearBlack(hex: string): boolean {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
   if (!m) return false;
   const n = parseInt(m[1], 16);
   return (0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255)) < 18;
+}
+
+/** The Wave Link channel id a command acts on (so its Elgato icon can be looked up), or undefined. */
+function wlChannelIdOf(cmd: Record<string, any>): string | undefined {
+  switch (cmd['_type']?.split('.').pop() ?? '') {
+    case 'CommandWaveLinkChannelEffect': return cmd['channelId'];
+    case 'CommandWaveLinkAddFocusToChannel': return cmd['id'];
+    case 'CommandWaveLinkChangeLevel':
+    case 'CommandWaveLinkChangeMute':
+      return cmd['commandType'] === 'Channel' || cmd['commandType'] === 'Mix' ? cmd['id1'] : undefined;
+    default: return undefined;
+  }
 }
 
 /**
@@ -57,11 +72,16 @@ function nearBlack(hex: string): boolean {
                       [style.text-shadow]="f.off ? 'none' : '0 0 9px ' + f.labelColor + 'AA'">{{ f.label }}</span>
                 <pc-fader [value]="f.pct" [colors]="f.colors" [off]="f.off" [selected]="f.selected"
                           [height]="faderHeight()" [animClass]="f.anim" [animDuration]="f.dur" [breathMin]="f.bmin"></pc-fader>
-                @if (showChips() && f.assign) {
-                  <span class="chip">
-                    @if (iconFor(f.index); as ic) { <img class="chip-ico" [src]="ic" alt=""> }
-                    <span class="chip-txt">{{ f.assign }}</span>
-                  </span>
+                @if (showChips() && f.chips.length) {
+                  <div class="chips">
+                    @for (c of f.chips; track $index) {
+                      <span class="chip" (click)="chipClick(f.index, c, $event)">
+                        @if (c.tag) { <span class="chip-tag">{{ c.tag }}</span> }
+                        @if (c.icon) { <img class="chip-ico" [src]="c.icon" alt=""> }
+                        <span class="chip-txt">{{ c.label }}</span>
+                      </span>
+                    }
+                  </div>
                 }
               </div>
             }
@@ -92,11 +112,16 @@ function nearBlack(hex: string): boolean {
         <pc-knob [value]="k.pct" [color]="k.color" [off]="k.off" [selected]="k.selected" [size]="knobSize()"
                  [animClass]="k.anim" [animDuration]="k.dur" [breathMin]="k.bmin"></pc-knob>
         @if (showLabels()) { <span class="k-label">{{ k.label }}</span> }
-        @if (showChips() && k.assign) {
-          <span class="chip">
-            @if (iconFor(k.index); as ic) { <img class="chip-ico" [src]="ic" alt=""> }
-            <span class="chip-txt">{{ k.assign }}</span>
-          </span>
+        @if (showChips() && k.chips.length) {
+          <div class="chips">
+            @for (c of k.chips; track $index) {
+              <span class="chip" (click)="chipClick(k.index, c, $event)">
+                @if (c.tag) { <span class="chip-tag">{{ c.tag }}</span> }
+                @if (c.icon) { <img class="chip-ico" [src]="c.icon" alt=""> }
+                <span class="chip-txt">{{ c.label }}</span>
+              </span>
+            }
+          </div>
         }
       </div>
     </ng-template>
@@ -118,15 +143,23 @@ function nearBlack(hex: string): boolean {
     .slot { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; outline: none; border-radius: 10px; }
     .slot:focus-visible, .logo-wrap:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent-border-2); }
     .logo-wrap { outline: none; border-radius: 10px; }
-    .fader-slot { gap: 9px; }
+    .fader-slot { gap: 9px; width: 65px; }
     .k-label, .s-label { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.04em; color: #8A909B; }
+    /* Zero width so a wide chip overflows symmetrically into the inter-control gaps
+       instead of widening the slot (and the whole chassis); height is still reserved. */
+    .chips { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 0; }
+    /* Sliders sit on a tighter pitch than knobs, so cap their chips at 90px. NOTE: this does not yet
+       visually clamp — a flex item ignores max-width when its container's inner width is 0 (the width:0
+       trick that stops chips widening the chassis), falling back to nowrap max-content. Revisit. */
+    .fader-slot .chip { max-width: 90px; }
     .chip {
       display: inline-flex; align-items: center; gap: 4px;
       font-family: var(--font-ui); font-size: 9.5px; color: var(--text-soft); background: var(--raised);
-      border: 1px solid var(--raised-line); padding: 2px 7px; border-radius: var(--r-pill); max-width: 66px;
+      border: 1px solid var(--raised-line); padding: 2px 7px; border-radius: var(--r-pill); max-width: 120px;
     }
+    .chip-tag { font-family: var(--font-mono); font-size: 8px; font-weight: 600; letter-spacing: 0.03em; color: var(--accent); flex: none; }
     .chip-ico { width: 12px; height: 12px; border-radius: 3px; object-fit: contain; flex: none; }
-    .chip-txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .chip-txt { font-size: 8.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
     .logo-wrap { cursor: pointer; }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -165,13 +198,63 @@ export class PcDeviceComponent {
     return m;
   });
 
-  /** Icon for a control's assignment: the per-control overlay icon if set,
-   *  otherwise the controlled app's process icon. Undefined if neither exists. */
-  iconFor(index: number): string | undefined {
-    const snap = this.snap();
-    const profile = snap?.currentProfileSnapshot;
-    const name = profile?.knobSettings?.[String(index)]?.overlayIcon || processNameOf(profile?.dialData?.[String(index)]);
+  /** App icon for a process / overlay-icon name, if one is known. */
+  private appIcon(name: string | undefined): string | undefined {
     return name ? this.processIconMap().get(name.toLowerCase()) : undefined;
+  }
+
+  /** The per-control overlay-icon override as an <img> src: a process name resolves to its app
+   *  icon; an already-image value (data-URI / URL / asset path) is used directly. */
+  private overlayIconSrc(overlay: string | undefined): string | undefined {
+    if (!overlay) return undefined;
+    if (overlay.startsWith('data:') || overlay.startsWith('http') || overlay.startsWith('/')) return overlay;
+    return this.appIcon(overlay);
+  }
+
+  /** Best icon for a slot's command, mirroring the Windows overlay: the controlled app's icon
+   *  for a process command, or the Elgato channel image for Wave Link. Returns undefined for
+   *  commands with no stable icon (e.g. focus-volume, whose icon tracks the live focused app
+   *  and so is deliberately left blank in this static preview). */
+  private commandIcon(cmds: Commands | null | undefined): string | undefined {
+    const cmd = cmds?.commands?.[0] as Record<string, any> | undefined;
+    if (!cmd) return undefined;
+    const appIc = this.appIcon(processNameOf(cmds));
+    if (appIc) return appIc;
+    const channelId = wlChannelIdOf(cmd);
+    if (channelId) return this.integrations.wlChannels().find(c => c.id === channelId)?.image || undefined;
+    return undefined;
+  }
+
+  /** Assignment chips for a knob: turn (dial), single-press and double-press, each shown only when
+   *  that slot has a command. Each carries the icon the overlay would show — the per-control
+   *  overlay-icon override wins, else the command's own app / Wave Link icon. */
+  private knobChips(i: number): ChipVM[] {
+    const prof = this.snap()?.currentProfileSnapshot;
+    const data = this.integrations;
+    const key = String(i);
+    const overlay = this.overlayIconSrc(prof?.knobSettings?.[key]?.overlayIcon);
+    const out: ChipVM[] = [];
+    const dial = prof?.dialData?.[key];
+    const turn = shortLabel(dial, data);
+    if (turn) out.push({ label: turn, icon: overlay ?? this.commandIcon(dial) });
+    const btn = prof?.buttonData?.[key];
+    const press = shortLabel(btn, data);
+    if (press) out.push({ tag: 'P', label: press, icon: overlay ?? this.commandIcon(btn), slot: 'press' });
+    const dblc = prof?.dblButtonData?.[key];
+    const dbl = shortLabel(dblc, data);
+    if (dbl) out.push({ tag: 'PP', label: dbl, icon: overlay ?? this.commandIcon(dblc), slot: 'dblpress' });
+    return out;
+  }
+
+  /** Sliders map only their analog movement, so just the single turn chip. */
+  private faderChips(analogIdx: number): ChipVM[] {
+    const prof = this.snap()?.currentProfileSnapshot;
+    const key = String(analogIdx);
+    const dial = prof?.dialData?.[key];
+    const turn = shortLabel(dial, this.integrations);
+    if (!turn) return [];
+    const overlay = this.overlayIconSrc(prof?.knobSettings?.[key]?.overlayIcon);
+    return [{ label: turn, icon: overlay ?? this.commandIcon(dial) }];
   }
 
   readonly knobs = computed<KnobVM[]>(() => {
@@ -188,7 +271,7 @@ export class PcDeviceComponent {
       out.push({
         index: i, label: `K${i + 1}`, pct: analogPct(s.analogValues?.[i]),
         color: vis.fill, off, selected,
-        assign: shortLabel(s.currentProfileSnapshot?.dialData?.[String(i)], this.integrations),
+        chips: this.knobChips(i),
         anim: vis.animClass, dur: vis.animDuration, bmin: vis.breathMin,
       });
     }
@@ -212,7 +295,7 @@ export class PcDeviceComponent {
         index: analogIdx, label: `S${j + 1}`, pct: analogPct(s.analogValues?.[analogIdx]),
         colors: segs.length ? segs : ['#2A2E37'], labelColor,
         off, selected: this.selectedKind() === 'slider' && this.selectedIndex() === analogIdx,
-        assign: shortLabel(s.currentProfileSnapshot?.dialData?.[String(analogIdx)], this.integrations),
+        chips: this.faderChips(analogIdx),
         anim: vis.animClass, dur: vis.animDuration, bmin: vis.breathMin,
       });
     }
@@ -229,5 +312,13 @@ export class PcDeviceComponent {
   emit(kind: ControlKind, index: number, contextClicked: boolean, event: Event): void {
     if (contextClicked) event.preventDefault();
     this.controlClick.emit({ kind, index, contextClicked, event });
+  }
+
+  /** A press / double-press chip opens the control on that slot's tab; the turn chip has no slot,
+   *  so it falls through to the control's own click (the default Rotate / Slide tab). */
+  chipClick(index: number, chip: ChipVM, event: Event): void {
+    if (!chip.slot) return;
+    event.stopPropagation();
+    this.controlClick.emit({ kind: 'dial', index, contextClicked: false, slot: chip.slot, event });
   }
 }

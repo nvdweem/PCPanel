@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, model } from '@angular/core';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CommandDef, FieldDef, LiveSource } from './command-catalog';
+import { mappingCurve } from './mapping-curve.util';
 import { IntegrationDataService } from './integration-data.service';
 import {
   AppPickerComponent, IconComponent, KeyRecorderComponent, SegmentedComponent,
@@ -135,9 +136,9 @@ type Cmd = Record<string, any>;
               <rect x="1" y="1" width="148" height="98" rx="8" fill="#0E0F12" stroke="#23262E"></rect>
               <line x1="18" y1="82" x2="132" y2="82" stroke="#2A2E37" stroke-width="1"></line>
               <line x1="18" y1="18" x2="18" y2="82" stroke="#2A2E37" stroke-width="1"></line>
-              <path [attr.d]="curvePath()" fill="none" stroke="#FFB020" stroke-width="2.5" stroke-linecap="round"></path>
-              <circle [attr.cx]="18" [attr.cy]="curveY0()" r="3.5" fill="#FFB020"></circle>
-              <circle [attr.cx]="132" [attr.cy]="curveY1()" r="3.5" fill="#FFB020"></circle>
+              <path [attr.d]="curve().path" fill="none" stroke="#FFB020" stroke-width="2.5" stroke-linecap="round"></path>
+              <circle [attr.cx]="18" [attr.cy]="curve().y0" r="3.5" fill="#FFB020"></circle>
+              <circle [attr.cx]="132" [attr.cy]="curve().y1" r="3.5" fill="#FFB020"></circle>
               <text x="14" y="95" font-family="monospace" font-size="8" fill="#5F6671">start</text>
               <text x="112" y="95" font-family="monospace" font-size="8" fill="#5F6671">end</text>
             </svg>
@@ -254,22 +255,12 @@ export class CommandFieldsComponent {
   // so the default (moveStart 0, moveEnd 0) reads as Start 0 / End 100 = full range.
   readonly startDisplay = computed(() => clamp(this.command()['dialParams']?.moveStart ?? 0));
   readonly endDisplay = computed(() => clamp(100 - (this.command()['dialParams']?.moveEnd ?? 0)));
-  private invert = computed(() => !!this.command()['dialParams']?.invert);
 
   setStart(v: number): void { this.setDial('moveStart', clamp(v)); }
   setEnd(v: number): void { this.setDial('moveEnd', clamp(100 - clamp(v))); }
 
-  // Transfer curve on a [0..100] input(x) → output(y) graph, clamped outside Start/End.
-  private xFor(pct: number): number { return 18 + (clamp(pct) / 100) * 114; }   // 18..132
-  private yFor(pct: number): number { return 82 - (clamp(pct) / 100) * 58; }    // 82(0%)..24(100%)
-  curveY0(): number { return this.invert() ? this.yFor(100) : this.yFor(0); }
-  curveY1(): number { return this.invert() ? this.yFor(0) : this.yFor(100); }
-  curvePath(): string {
-    const s = this.startDisplay(), e = Math.max(this.startDisplay() + 0.01, this.endDisplay());
-    const lo = this.invert() ? this.yFor(100) : this.yFor(0);
-    const hi = this.invert() ? this.yFor(0) : this.yFor(100);
-    return `M 18 ${lo} L ${this.xFor(s)} ${lo} L ${this.xFor(e)} ${hi} L 132 ${hi}`;
-  }
+  // Transfer curve on the 150x100 graph (x 18..132, y 82(0%)..24(100%)), via the shared mapping math.
+  readonly curve = computed(() => mappingCurve(this.command()['dialParams'], { x0: 18, x1: 132, yBottom: 82, yTop: 24 }));
 }
 
 function clamp(v: number): number { return Math.max(0, Math.min(100, v ?? 0)); }

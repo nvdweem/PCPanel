@@ -553,6 +553,7 @@ export interface WaveLinkChannelDto {
     apps: WaveLinkAppDto[];
     effects: WaveLinkEffectDto[];
     id: string;
+    image?: string;
     mixes: WaveLinkMixDto[];
     name?: string;
     type?: string;

@@ -151,7 +151,7 @@ export class HomeComponent {
     const serial = this.selectedSerial();
     if (!serial) return;
     if (e.kind === 'logo') { this.router.navigate(['/lighting', serial]); return; }
-    this.router.navigate(['/control', serial, e.index]);
+    this.router.navigate(['/control', serial, e.index], e.slot ? { queryParams: { slot: e.slot } } : {});
   }
 
   openSettings(): void { this.router.navigate(['/settings']); }

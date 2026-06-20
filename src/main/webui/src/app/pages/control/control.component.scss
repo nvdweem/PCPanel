@@ -53,6 +53,7 @@
 .grip { color: var(--text-3); cursor: grab; display: flex; }
 .ai-icon { width: 26px; height: 26px; border-radius: 7px; background: var(--accent-tint-strong); display: flex; align-items: center; justify-content: center; color: var(--accent); flex: none; }
 .ai-name { font-size: 14px; font-weight: 500; flex: 1; }
+.ai-map { flex: none; display: flex; }
 .chev { color: var(--text-2); }
 .action-item.expanded .chev { color: var(--accent); }
 .del { border: none; background: transparent; color: var(--err-text); cursor: pointer; display: flex; padding: 2px; }

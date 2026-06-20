@@ -15,6 +15,8 @@ import { PcKnobComponent } from '../../devices/visual/pc-knob.component';
 import { PcFaderComponent } from '../../devices/visual/pc-fader.component';
 import { CommandDef, CommandKind, COMMANDS, COMMAND_BY_TYPE, categoryLabel } from '../../features/commands/command-catalog';
 import { CommandFieldsComponent } from '../../features/commands/command-fields.component';
+import { MappingPreviewComponent } from '../../features/commands/mapping-preview.component';
+import { DialParams } from '../../features/commands/mapping-curve.util';
 import { ControlLightingComponent } from '../../features/lighting/control-lighting.component';
 import { analogPct, describeCommand } from '../../devices/visual/device-visual.util';
 import { OverlayModule } from '@angular/cdk/overlay';
@@ -32,7 +34,7 @@ const EMPTY_KNOB: KnobSetting = { minTrim: 0, maxTrim: 100, logarithmic: false, 
   imports: [
     DragDropModule, OverlayModule, RouterLink, IconComponent, ToggleComponent,
     StatusDotComponent, AppPickerComponent, PcKnobComponent, PcFaderComponent, CommandFieldsComponent,
-    ControlLightingComponent,
+    ControlLightingComponent, MappingPreviewComponent,
   ],
   templateUrl: './control.component.html',
   styleUrl: './control.component.scss',
@@ -51,6 +53,7 @@ export class ControlComponent {
   readonly serial = input.required<string>();
   readonly index = input.required<string>();           // analog index as string
   readonly idx = computed(() => +this.index());
+  readonly slot = input<string>('');                   // optional ?slot= query param: open that tab
 
   readonly snap = this.state.snapshotFor(this.serial);
   private readonly caps = this.capsService.forSerial(this.serial);
@@ -94,7 +97,8 @@ export class ControlComponent {
         this.press.set(clone(snapProfile?.buttonData?.[String(i)]) ?? { commands: [], type: 'allAtOnce' });
         this.dblpress.set(clone(snapProfile?.dblButtonData?.[String(i)]) ?? { commands: [], type: 'allAtOnce' });
         this.knob.set({ ...EMPTY_KNOB, ...(snapProfile?.knobSettings?.[String(i)] ?? {}) });
-        this.activeSlot.set('rotate');
+        const want = this.slot();
+        this.activeSlot.set(want === 'press' || want === 'dblpress' ? want : 'rotate');
         this.expanded.set(0);
       });
     });
@@ -196,6 +200,19 @@ export class ControlComponent {
   }
 
   toggleExpand(i: number): void { this.expanded.set(this.expanded() === i ? -1 : i); }
+
+  // The whole header row is both a drag handle and a click target; the browser fires a
+  // click after a real drag, so swallow that one so reordering doesn't also toggle expand.
+  private dragging = false;
+  onDragStarted(): void { this.dragging = true; }
+  onDragEnded(): void { setTimeout(() => (this.dragging = false)); }
+  onHeadClick(i: number): void { if (this.dragging) return; this.toggleExpand(i); }
+
+  /** dialParams to preview in the action header — rotate slot only, and only for
+   *  commands that actually map a range (those carry a dialParams object). */
+  mapParams(cmd: Command): DialParams | null {
+    return this.activeSlot() === 'rotate' ? ((cmd as Record<string, any>)['dialParams'] ?? null) : null;
+  }
 
   drop(ev: CdkDragDrop<Command[]>): void {
     const sig = this.currentSlotSignal();

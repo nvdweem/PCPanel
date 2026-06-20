@@ -110,10 +110,14 @@
 
           <div cdkDropList (cdkDropListDropped)="drop($event)" class="al-items">
             @for (cmd of activeCommands(); track $index) {
-              <div class="action-item" cdkDrag [class.expanded]="expanded() === $index">
-                <div class="ai-head" (click)="toggleExpand($index)">
-                  <span class="grip" cdkDragHandle (click)="$event.stopPropagation()"><pc-icon name="grip" [size]="14"></pc-icon></span>
+              <div class="action-item" cdkDrag [class.expanded]="expanded() === $index"
+                   (cdkDragStarted)="onDragStarted()" (cdkDragEnded)="onDragEnded()">
+                <div class="ai-head" cdkDragHandle (click)="onHeadClick($index)">
+                  <span class="grip"><pc-icon name="grip" [size]="14"></pc-icon></span>
                   <span class="ai-icon"><pc-icon [name]="iconFor(cmd)" [size]="14"></pc-icon></span>
+                  @if (mapParams(cmd); as mp) {
+                    <pc-mapping-preview class="ai-map" [dialParams]="mp"></pc-mapping-preview>
+                  }
                   <span class="ai-name">{{ labelFor(cmd) }}</span>
                   <pc-icon [name]="expanded() === $index ? 'chevron-up' : 'chevron-down'" [size]="14" [strokeWidth]="2.5" class="chev"></pc-icon>
                   <button class="del" (click)="$event.stopPropagation(); removeCommand($index)"><pc-icon name="trash" [size]="14"></pc-icon></button>
