@@ -140,6 +140,20 @@ export class SettingsComponent {
     return 'idle'; // voicemeeter: no live REST signal
   }
 
+  /** OSC tab dot: green when the listener is bound, neutral when enabled-but-not-yet, hidden when off. */
+  readonly oscTabStatus = computed<StatusKind | null>(() => {
+    if (!this.local()?.oscEnabled) return null;
+    if (this.integrations.oscListening()) return 'ok';
+    return this.integrations.oscStatus.isLoading() ? 'connecting' : 'idle';
+  });
+
+  /** MQTT tab dot: green when the broker is connected, neutral when enabled-but-not, hidden when off. */
+  readonly mqttTabStatus = computed<StatusKind | null>(() => {
+    if (!this.local()?.mqtt?.enabled) return null;
+    if (this.integrations.mqttConnected()) return 'ok';
+    return this.integrations.mqttStatus.isLoading() ? 'connecting' : 'idle';
+  });
+
   setTab(id: TabId): void { this.activeTab.set(id); }
 
   // ── generic field updates (immutable) ───────────────────────────────────────

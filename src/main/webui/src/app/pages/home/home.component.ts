@@ -80,7 +80,8 @@ export class HomeComponent {
     if (this.platform.waveLinkSupported() && this.integrations.waveLinkSettings.value()?.enabled) {
       rows.push(this.row('Wave Link', this.integrations.waveLinkConnected(), this.integrations.waveLink.isLoading()));
     }
-    if (s.mqtt?.enabled) rows.push(this.row('MQTT', false, false)); // no live signal
+    if (s.oscEnabled) rows.push(this.row('OSC', this.integrations.oscListening(), this.integrations.oscStatus.isLoading()));
+    if (s.mqtt?.enabled) rows.push(this.row('MQTT', this.integrations.mqttConnected(), this.integrations.mqttStatus.isLoading()));
     return rows;
   });
 

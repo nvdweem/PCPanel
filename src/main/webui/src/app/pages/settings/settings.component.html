@@ -88,7 +88,10 @@
               <pc-toggle [value]="sendOnlyOnChange()" (valueChange)="setSendOnlyOnChange($event)"></pc-toggle>
             </div>
             <div class="row">
-              <div class="row-text"><div class="row-label">Force volume</div></div>
+              <div class="row-text">
+                <div class="row-label">Force volume</div>
+                <div class="row-sub">Linux only — keep re-applying the knob's volume when an app re-opens its audio session, not just when it first appears. Fixes apps that reset their own volume.</div>
+              </div>
               <pc-toggle [value]="s.forceVolume" (valueChange)="patch('forceVolume', $event)"></pc-toggle>
             </div>
             <div class="row">
@@ -187,13 +190,23 @@
 
         <!-- ── OSC ─────────────────────────────────────────────────────────── -->
         @case ('osc') {
-          <h2 class="page-title">OSC</h2>
+          <h2 class="page-title">
+            OSC
+            @if (oscTabStatus(); as st) { <pc-status-dot [kind]="st" [size]="8"></pc-status-dot> }
+          </h2>
 
           <div class="pc-card pad stack">
             <div class="row">
+              <div class="row-text">
+                <div class="row-label">Enable</div>
+                <div class="row-sub">Listen for and send OSC messages</div>
+              </div>
+              <pc-toggle [value]="s.oscEnabled" (valueChange)="patch('oscEnabled', $event)"></pc-toggle>
+            </div>
+            <div class="row" [class.disabled-block]="!s.oscEnabled">
               <div class="row-text"><div class="row-label">Listen port</div><div class="row-sub">incoming OSC messages</div></div>
               <div class="pc-field num-field">
-                <input class="pc-field-input" type="number" min="0" [value]="s.oscListenPort ?? 0"
+                <input class="pc-field-input" type="number" min="0" [value]="s.oscListenPort ?? 0" [disabled]="!s.oscEnabled"
                        (input)="patchNum('oscListenPort', $any($event.target).value)">
               </div>
             </div>
@@ -227,7 +240,10 @@
 
         <!-- ── MQTT ────────────────────────────────────────────────────────── -->
         @case ('mqtt') {
-          <h2 class="page-title">MQTT</h2>
+          <h2 class="page-title">
+            MQTT
+            @if (mqttTabStatus(); as st) { <pc-status-dot [kind]="st" [size]="8"></pc-status-dot> }
+          </h2>
 
           <div class="pc-card pad stack">
             <div class="row">

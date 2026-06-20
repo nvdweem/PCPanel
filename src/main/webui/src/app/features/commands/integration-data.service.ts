@@ -28,6 +28,10 @@ export class IntegrationDataService {
   readonly vmBasic = httpResource<VoiceMeeterParams[]>(() => '/api/voicemeeter/basic');
   readonly vmAdvanced = httpResource<VoiceMeeterParams[]>(() => '/api/voicemeeter/advanced');
 
+  // OSC / MQTT live status (the backend only reports a positive state when actually connected/listening)
+  readonly oscStatus = httpResource<{ enabled: boolean; listening: boolean }>(() => '/api/osc/status');
+  readonly mqttStatus = httpResource<{ connected: boolean }>(() => '/api/settings/mqtt/status');
+
   // Wave Link
   readonly waveLink = httpResource<WaveLinkResponseDto>(() => '/api/wavelink/devices');
   readonly waveLinkSettings = httpResource<{ enabled: boolean }>(() => '/api/settings/wavelink');
@@ -47,6 +51,10 @@ export class IntegrationDataService {
     this.wlChannels().length > 0 || this.wlInputs().length > 0 || this.wlMixes().length > 0 || this.wlOutputs().length > 0);
   /** No live Voicemeeter signal exists (REST stub) — connection state is unknown. */
   readonly voicemeeterConnected = computed(() => false);
+  /** OSC is "connected" when its listen socket is actually bound. */
+  readonly oscListening = computed(() => this.oscStatus.value()?.listening ?? false);
+  /** MQTT broker connection state (Paho client). */
+  readonly mqttConnected = computed(() => this.mqttStatus.value()?.connected ?? false);
 
   /** Process list as picker items (deduped, with real icons when present). */
   readonly processItems = computed<PickerItem[]>(() => {
@@ -79,5 +87,7 @@ export class IntegrationDataService {
     this.vmAdvanced.reload();
     this.waveLink.reload();
     this.waveLinkSettings.reload();
+    this.oscStatus.reload();
+    this.mqttStatus.reload();
   }
 }
