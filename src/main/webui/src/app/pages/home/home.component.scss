@@ -38,7 +38,12 @@
 .int-state { font-family: var(--font-mono); font-size: 9.5px; color: var(--text-3); }
 .int-state.ok { color: var(--ok-text); }
 
-.foot { padding: 14px 18px; border-top: 1px solid var(--line-soft); }
+/* Bottom-left footer — aligned to the main bottom bar (.strip, 74px) so they read as one
+   continuous bar. min-height (not height) so it can grow for the update notification it also hosts. */
+.foot {
+  min-height: 74px; flex: none; display: flex; flex-direction: column; justify-content: center; gap: 5px;
+  padding: 12px 18px; border-top: 1px solid var(--line-soft); background: #0D0E12;
+}
 .ver { font-size: 10.5px; color: var(--text-3); }
 
 /* ── Main ─────────────────────────────────────────────────────────────────── */
