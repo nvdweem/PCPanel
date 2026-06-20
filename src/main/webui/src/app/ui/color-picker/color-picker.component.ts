@@ -14,9 +14,14 @@ const LED_PALETTE = ['#FF4D4D', '#3BE06A', '#3B6BFF', '#FF36C8', '#28E0E0', '#F2
   standalone: true,
   imports: [OverlayModule],
   template: `
-    <button type="button" class="swatch" cdkOverlayOrigin #t="cdkOverlayOrigin"
-            [style.background]="value()" [style.width.px]="swatchSize()" [style.height.px]="swatchSize()"
-            (click)="open.set(!open())"></button>
+    <button type="button" [class]="label() ? 'cp-block' : 'swatch'" cdkOverlayOrigin #t="cdkOverlayOrigin"
+            [style.width.px]="label() ? null : swatchSize()" [style.height.px]="label() ? null : swatchSize()"
+            [style.background]="label() ? null : value()" (click)="open.set(!open())">
+      @if (label()) {
+        <span class="cp-label">{{ label() }}</span>
+        <span class="cp-swatch" [style.background]="value()"></span>
+      }
+    </button>
 
     <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="t" [cdkConnectedOverlayOpen]="open()"
                  [cdkConnectedOverlayHasBackdrop]="true" cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
@@ -63,6 +68,15 @@ const LED_PALETTE = ['#FF4D4D', '#3BE06A', '#3B6BFF', '#FF36C8', '#28E0E0', '#F2
       border: 1px solid var(--raised-line); border-radius: var(--r-sm); cursor: pointer; padding: 0;
       box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2);
     }
+    /* Labeled block: the whole outlined row is clickable */
+    .cp-block {
+      display: flex; align-items: center; justify-content: space-between; width: 100%;
+      background: #121419; border: 1px solid var(--line); border-radius: var(--r-sm);
+      padding: 8px 11px; cursor: pointer; color: var(--text-2); font-family: var(--font-ui); font-size: 11.5px;
+    }
+    .cp-block:hover { border-color: var(--line-2); }
+    .cp-swatch { width: 22px; height: 22px; border-radius: 5px; border: 1px solid var(--raised-line); flex: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2); }
+    :host:has(.cp-block) { display: flex; width: 100%; }
     .panel {
       background: var(--popover); border: 1px solid var(--raised-line); border-radius: var(--r-lg);
       padding: 14px; box-shadow: var(--sh-pop); width: 280px;
@@ -105,6 +119,8 @@ export class ColorPickerComponent {
   readonly alpha = input<boolean>(false);
   readonly swatchSize = input<number>(30);
   readonly presets = input<string[]>(LED_PALETTE);
+  /** When set, render a full-width labeled block (the whole row opens the picker). */
+  readonly label = input<string>('');
   readonly open = model<boolean>(false);
 
   private readonly sv = viewChild<ElementRef<HTMLElement>>('sv');

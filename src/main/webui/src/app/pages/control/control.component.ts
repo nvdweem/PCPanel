@@ -64,6 +64,10 @@ export class ControlComponent {
   readonly railCollapsed = signal(false);
   readonly lightingMode = computed(() => this.snap()?.lightingConfig?.lightingMode ?? null);
   readonly isCustomLighting = computed(() => this.lightingMode() === 'CUSTOM');
+  readonly lightingModeLabel = computed(() => ({
+    ALL_COLOR: 'Solid color', ALL_RAINBOW: 'Rainbow', ALL_WAVE: 'Wave',
+    ALL_BREATH: 'Breath', SINGLE_COLOR: 'Per-LED color', CUSTOM: 'Per-control',
+  }[this.lightingMode() ?? ''] ?? 'a global'));
   readonly query = signal('');
   readonly addOpen = signal(false);
   readonly iconPickerOpen = signal(false);

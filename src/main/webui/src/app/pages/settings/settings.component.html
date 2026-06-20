@@ -353,26 +353,14 @@
 
               <div class="micro-label section-label">COLORS</div>
               <div class="pc-card pad color-grid">
-                <div class="color-row">
-                  <span class="color-label">Background</span>
-                  <pc-color-picker [value]="s.overlayBackgroundColor" [alpha]="true"
-                                   (valueChange)="patch('overlayBackgroundColor', $event)"></pc-color-picker>
-                </div>
-                <div class="color-row">
-                  <span class="color-label">Text</span>
-                  <pc-color-picker [value]="s.overlayTextColor"
-                                   (valueChange)="patch('overlayTextColor', $event)"></pc-color-picker>
-                </div>
-                <div class="color-row">
-                  <span class="color-label">Bar</span>
-                  <pc-color-picker [value]="s.overlayBarColor"
-                                   (valueChange)="patch('overlayBarColor', $event)"></pc-color-picker>
-                </div>
-                <div class="color-row">
-                  <span class="color-label">Bar track</span>
-                  <pc-color-picker [value]="s.overlayBarBackgroundColor"
-                                   (valueChange)="patch('overlayBarBackgroundColor', $event)"></pc-color-picker>
-                </div>
+                <pc-color-picker label="Background" [value]="s.overlayBackgroundColor" [alpha]="true"
+                                 (valueChange)="patch('overlayBackgroundColor', $event)"></pc-color-picker>
+                <pc-color-picker label="Text" [value]="s.overlayTextColor"
+                                 (valueChange)="patch('overlayTextColor', $event)"></pc-color-picker>
+                <pc-color-picker label="Bar" [value]="s.overlayBarColor"
+                                 (valueChange)="patch('overlayBarColor', $event)"></pc-color-picker>
+                <pc-color-picker label="Bar track" [value]="s.overlayBarBackgroundColor"
+                                 (valueChange)="patch('overlayBarBackgroundColor', $event)"></pc-color-picker>
               </div>
             </div>
 

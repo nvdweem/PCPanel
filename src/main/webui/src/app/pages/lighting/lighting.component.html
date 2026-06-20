@@ -43,10 +43,7 @@
           @case ('ALL_COLOR') {
             <div class="block">
               <span class="micro-label">SOLID PARAMETERS</span>
-              <div class="param-row">
-                <span class="lbl">Color</span>
-                <pc-color-picker [value]="cfg.allColor" (valueChange)="set('allColor', $event)"></pc-color-picker>
-              </div>
+              <pc-color-picker label="Color" [value]="cfg.allColor" (valueChange)="set('allColor', $event)"></pc-color-picker>
             </div>
           }
           @case ('ALL_RAINBOW') {
@@ -155,23 +152,11 @@
                         <pc-select [options]="knobModeOptions" [value]="knobUiMode(i)" [block]="true"
                                    (valueChange)="setKnobUiMode(i, $any($event))"></pc-select>
                         @if (knobUiMode(i) !== 'off') {
-                          <div class="color-line">
-                            <span class="mini-lbl">Color</span>
-                            <pc-color-picker [value]="knobAt(i).color1" [swatchSize]="24"
-                                             (valueChange)="setKnob(i, 'color1', $event)"></pc-color-picker>
-                          </div>
+                          <pc-color-picker label="Color" [value]="knobAt(i).color1" (valueChange)="setKnob(i, 'color1', $event)"></pc-color-picker>
                           @if (knobUiMode(i) === 'gradient') {
-                            <div class="color-line">
-                              <span class="mini-lbl">Color 2</span>
-                              <pc-color-picker [value]="knobAt(i).color2" [swatchSize]="24"
-                                               (valueChange)="setKnob(i, 'color2', $event)"></pc-color-picker>
-                            </div>
+                            <pc-color-picker label="Color 2" [value]="knobAt(i).color2" (valueChange)="setKnob(i, 'color2', $event)"></pc-color-picker>
                           }
-                          <div class="color-line">
-                            <span class="mini-lbl">Muted</span>
-                            <pc-color-picker [value]="knobAt(i).muteOverrideColor || '#000000'" [swatchSize]="24"
-                                             (valueChange)="setKnob(i, 'muteOverrideColor', $event)"></pc-color-picker>
-                          </div>
+                          <pc-color-picker label="Muted" [value]="knobAt(i).muteOverrideColor || '#000000'" (valueChange)="setKnob(i, 'muteOverrideColor', $event)"></pc-color-picker>
                         }
                       </div>
                     </div>
@@ -190,23 +175,11 @@
                           <pc-select [options]="sliderModeOptions" [value]="sliderUiMode(j)" [block]="true"
                                      (valueChange)="setSliderUiMode(j, $any($event))"></pc-select>
                           @if (sliderUiMode(j) !== 'off') {
-                            <div class="color-line">
-                              <span class="mini-lbl">Color</span>
-                              <pc-color-picker [value]="sliderAt(j).color1" [swatchSize]="24"
-                                               (valueChange)="setSlider(j, 'color1', $event)"></pc-color-picker>
-                            </div>
+                            <pc-color-picker label="Color" [value]="sliderAt(j).color1" (valueChange)="setSlider(j, 'color1', $event)"></pc-color-picker>
                             @if (sliderUiMode(j) === 'static-gradient' || sliderUiMode(j) === 'gradient') {
-                              <div class="color-line">
-                                <span class="mini-lbl">Color 2</span>
-                                <pc-color-picker [value]="sliderAt(j).color2" [swatchSize]="24"
-                                                 (valueChange)="setSlider(j, 'color2', $event)"></pc-color-picker>
-                              </div>
+                              <pc-color-picker label="Color 2" [value]="sliderAt(j).color2" (valueChange)="setSlider(j, 'color2', $event)"></pc-color-picker>
                             }
-                            <div class="color-line">
-                              <span class="mini-lbl">Muted</span>
-                              <pc-color-picker [value]="sliderAt(j).muteOverrideColor || '#000000'" [swatchSize]="24"
-                                               (valueChange)="setSlider(j, 'muteOverrideColor', $event)"></pc-color-picker>
-                            </div>
+                            <pc-color-picker label="Muted" [value]="sliderAt(j).muteOverrideColor || '#000000'" (valueChange)="setSlider(j, 'muteOverrideColor', $event)"></pc-color-picker>
                           }
                         </div>
                       </div>
@@ -224,18 +197,10 @@
                           <pc-select [options]="sliderLabelModeOptions" [value]="sliderLabelUiMode(j)" [block]="true"
                                      (valueChange)="setSliderLabelUiMode(j, $any($event))"></pc-select>
                           @if (sliderLabelUiMode(j) === 'static') {
-                            <div class="color-line">
-                              <span class="mini-lbl">Color</span>
-                              <pc-color-picker [value]="sliderLabelAt(j).color" [swatchSize]="24"
-                                               (valueChange)="setSliderLabel(j, 'color', $event)"></pc-color-picker>
-                            </div>
+                            <pc-color-picker label="Color" [value]="sliderLabelAt(j).color" (valueChange)="setSliderLabel(j, 'color', $event)"></pc-color-picker>
                           }
                           @if (sliderLabelUiMode(j) !== 'off') {
-                            <div class="color-line">
-                              <span class="mini-lbl">Muted</span>
-                              <pc-color-picker [value]="sliderLabelAt(j).muteOverrideColor || '#000000'" [swatchSize]="24"
-                                               (valueChange)="setSliderLabel(j, 'muteOverrideColor', $event)"></pc-color-picker>
-                            </div>
+                            <pc-color-picker label="Muted" [value]="sliderLabelAt(j).muteOverrideColor || '#000000'" (valueChange)="setSliderLabel(j, 'muteOverrideColor', $event)"></pc-color-picker>
                           }
                         </div>
                       </div>
@@ -252,11 +217,7 @@
                         <pc-select [options]="logoModeOptions" [value]="logo().mode" [block]="true"
                                    (valueChange)="setLogoMode($any($event))"></pc-select>
                         @if (logo().mode === 'STATIC') {
-                          <div class="color-line">
-                            <span class="mini-lbl">Color</span>
-                            <pc-color-picker [value]="logo().color" [swatchSize]="24"
-                                             (valueChange)="setLogo('color', $event)"></pc-color-picker>
-                          </div>
+                          <pc-color-picker label="Color" [value]="logo().color" (valueChange)="setLogo('color', $event)"></pc-color-picker>
                         }
                       </div>
                     </div>

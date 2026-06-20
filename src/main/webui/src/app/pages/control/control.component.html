@@ -42,7 +42,8 @@
         <pc-control-lighting [serial]="s.serial" [index]="idx()" [isSlider]="isSlider()"></pc-control-lighting>
       } @else {
         <div class="no-colors">
-          No per-control colors — the device is in <strong>{{ lightingMode() }}</strong> mode.
+          Per-control colors need <strong>Per-control</strong> lighting — this device is set to
+          <strong>{{ lightingModeLabel() }}</strong>.
           <a [routerLink]="['/lighting', s.serial]">Open lighting editor →</a>
         </div>
       }

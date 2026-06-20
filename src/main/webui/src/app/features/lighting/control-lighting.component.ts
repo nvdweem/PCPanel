@@ -33,11 +33,11 @@ const LABEL_DEFAULT: SingleSliderLabelLightingConfig = { mode: 'STATIC', color: 
             <pc-select [options]="knobModes" [value]="knobUi()" [block]="true" (valueChange)="setKnobUi($any($event))"></pc-select>
           </div>
           @if (knobUi() !== 'off') {
-            <div class="cline"><span class="lbl">Color</span><pc-color-picker [value]="knob().color1" [swatchSize]="22" (valueChange)="setKnob('color1', $event)"></pc-color-picker></div>
+            <pc-color-picker label="Color" [value]="knob().color1" (valueChange)="setKnob('color1', $event)"></pc-color-picker>
             @if (knobUi() === 'gradient') {
-              <div class="cline"><span class="lbl">Color 2</span><pc-color-picker [value]="knob().color2" [swatchSize]="22" (valueChange)="setKnob('color2', $event)"></pc-color-picker></div>
+              <pc-color-picker label="Color 2" [value]="knob().color2" (valueChange)="setKnob('color2', $event)"></pc-color-picker>
             }
-            <div class="cline"><span class="lbl">Muted</span><pc-color-picker [value]="knob().muteOverrideColor || '#000000'" [swatchSize]="22" (valueChange)="setKnob('muteOverrideColor', $event)"></pc-color-picker></div>
+            <pc-color-picker label="Muted" [value]="knob().muteOverrideColor || '#000000'" (valueChange)="setKnob('muteOverrideColor', $event)"></pc-color-picker>
           }
         } @else {
           <!-- Slider -->
@@ -46,21 +46,21 @@ const LABEL_DEFAULT: SingleSliderLabelLightingConfig = { mode: 'STATIC', color: 
             <pc-select [options]="sliderModes" [value]="sliderUi()" [block]="true" (valueChange)="setSliderUi($any($event))"></pc-select>
           </div>
           @if (sliderUi() !== 'off') {
-            <div class="cline"><span class="lbl">Color</span><pc-color-picker [value]="slider().color1" [swatchSize]="22" (valueChange)="setSlider('color1', $event)"></pc-color-picker></div>
+            <pc-color-picker label="Color" [value]="slider().color1" (valueChange)="setSlider('color1', $event)"></pc-color-picker>
             @if (sliderUi() === 'static-gradient' || sliderUi() === 'gradient') {
-              <div class="cline"><span class="lbl">Color 2</span><pc-color-picker [value]="slider().color2" [swatchSize]="22" (valueChange)="setSlider('color2', $event)"></pc-color-picker></div>
+              <pc-color-picker label="Color 2" [value]="slider().color2" (valueChange)="setSlider('color2', $event)"></pc-color-picker>
             }
-            <div class="cline"><span class="lbl">Muted</span><pc-color-picker [value]="slider().muteOverrideColor || '#000000'" [swatchSize]="22" (valueChange)="setSlider('muteOverrideColor', $event)"></pc-color-picker></div>
+            <pc-color-picker label="Muted" [value]="slider().muteOverrideColor || '#000000'" (valueChange)="setSlider('muteOverrideColor', $event)"></pc-color-picker>
           }
           <div class="grp-label">LABEL</div>
           <div class="row">
             <pc-select [options]="labelModes" [value]="labelUi()" [block]="true" (valueChange)="setLabelUi($any($event))"></pc-select>
           </div>
           @if (labelUi() === 'static') {
-            <div class="cline"><span class="lbl">Color</span><pc-color-picker [value]="label().color" [swatchSize]="22" (valueChange)="setLabel('color', $event)"></pc-color-picker></div>
+            <pc-color-picker label="Color" [value]="label().color" (valueChange)="setLabel('color', $event)"></pc-color-picker>
           }
           @if (labelUi() !== 'off') {
-            <div class="cline"><span class="lbl">Muted</span><pc-color-picker [value]="label().muteOverrideColor || '#000000'" [swatchSize]="22" (valueChange)="setLabel('muteOverrideColor', $event)"></pc-color-picker></div>
+            <pc-color-picker label="Muted" [value]="label().muteOverrideColor || '#000000'" (valueChange)="setLabel('muteOverrideColor', $event)"></pc-color-picker>
           }
         }
       </div>
