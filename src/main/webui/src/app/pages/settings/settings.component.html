@@ -46,7 +46,10 @@
 
           <div class="pc-card pad stack">
             <div class="row">
-              <div class="row-text"><div class="row-label">Show app icons in UI</div></div>
+              <div class="row-text">
+                <div class="row-label">Show control assignments in UI</div>
+                <div class="row-sub">Show each control's assignment (with its app/assigned icon) on the device view</div>
+              </div>
               <pc-toggle [value]="s.mainUIIcons" (valueChange)="patch('mainUIIcons', $event)"></pc-toggle>
             </div>
             <div class="row">

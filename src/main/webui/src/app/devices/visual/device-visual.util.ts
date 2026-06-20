@@ -60,6 +60,12 @@ function mediaLabel(b: string): string {
   return ({ mute: 'Mute', next: 'Next', prev: 'Prev', stop: 'Stop', playPause: 'Play/Pause' } as Record<string, string>)[b] ?? 'Media';
 }
 
+/** The process name a control's first command targets (for app-icon lookup), if any. */
+export function processNameOf(cmds: Commands | null | undefined): string | undefined {
+  const pn = (cmds?.commands?.[0] as any)?.processName;
+  return Array.isArray(pn) && pn.length ? String(pn[0]) : undefined;
+}
+
 /** Short human label for a control's command list (for chips / labels). */
 export function shortLabel(cmds: Commands | null | undefined): string {
   const first = cmds?.commands?.[0];

@@ -88,7 +88,7 @@
           <div class="empty-scan mono"><pc-spinner [size]="11" [thickness]="2"></pc-spinner> scanning for devices…</div>
         </div>
       } @else if (selected()) {
-        <pc-device [serial]="selected()!.serial" [showLabels]="true" [showChips]="true" (controlClick)="onControlClick($event)"></pc-device>
+        <pc-device [serial]="selected()!.serial" [showLabels]="true" [showChips]="showAssignments()" (controlClick)="onControlClick($event)"></pc-device>
         <div class="hint">Click a knob or slider to configure it · press a knob for its button action · right-click for quick actions</div>
       }
     </section>

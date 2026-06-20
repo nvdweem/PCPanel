@@ -2,11 +2,12 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, output } f
 import { NgTemplateOutlet } from '@angular/common';
 import { DeviceStateService } from '../../services/device-state.service';
 import { DebugService } from '../../services/debug.service';
+import { IntegrationDataService } from '../../features/commands/integration-data.service';
 import { LightingConfig } from '../../models/generated/backend.types';
 import { PcKnobComponent } from './pc-knob.component';
 import { PcFaderComponent } from './pc-fader.component';
 import { PcLogoComponent } from './pc-logo.component';
-import { analogPct, controlVisual, knobColor, shortLabel } from './device-visual.util';
+import { analogPct, controlVisual, knobColor, processNameOf, shortLabel } from './device-visual.util';
 
 export type ControlKind = 'dial' | 'slider' | 'logo';
 export interface ControlClick {
@@ -62,7 +63,12 @@ function nearBlack(hex: string): boolean {
                       [style.text-shadow]="f.off ? 'none' : '0 0 9px ' + f.labelColor + 'AA'">{{ f.label }}</span>
                 <pc-fader [value]="f.pct" [colors]="f.colors" [off]="f.off" [selected]="f.selected"
                           [height]="faderHeight()" [animClass]="f.anim" [animDuration]="f.dur" [breathMin]="f.bmin"></pc-fader>
-                @if (showChips() && f.assign) { <span class="chip">{{ f.assign }}</span> }
+                @if (showChips() && f.assign) {
+                  <span class="chip">
+                    @if (iconFor(f.index); as ic) { <img class="chip-ico" [src]="ic" alt=""> }
+                    <span class="chip-txt">{{ f.assign }}</span>
+                  </span>
+                }
               </div>
             }
           </div>
@@ -92,7 +98,12 @@ function nearBlack(hex: string): boolean {
         <pc-knob [value]="k.pct" [color]="k.color" [off]="k.off" [selected]="k.selected" [size]="knobSize()"
                  [animClass]="k.anim" [animDuration]="k.dur" [breathMin]="k.bmin"></pc-knob>
         @if (showLabels()) { <span class="k-label">{{ k.label }}</span> }
-        @if (showChips() && k.assign) { <span class="chip">{{ k.assign }}</span> }
+        @if (showChips() && k.assign) {
+          <span class="chip">
+            @if (iconFor(k.index); as ic) { <img class="chip-ico" [src]="ic" alt=""> }
+            <span class="chip-txt">{{ k.assign }}</span>
+          </span>
+        }
       </div>
     </ng-template>
   `,
@@ -116,10 +127,12 @@ function nearBlack(hex: string): boolean {
     .fader-slot { gap: 9px; }
     .k-label, .s-label { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.04em; color: #8A909B; }
     .chip {
+      display: inline-flex; align-items: center; gap: 4px;
       font-family: var(--font-ui); font-size: 9.5px; color: var(--text-soft); background: var(--raised);
-      border: 1px solid var(--raised-line); padding: 2px 7px; border-radius: var(--r-pill);
-      max-width: 58px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      border: 1px solid var(--raised-line); padding: 2px 7px; border-radius: var(--r-pill); max-width: 66px;
     }
+    .chip-ico { width: 12px; height: 12px; border-radius: 3px; object-fit: contain; flex: none; }
+    .chip-txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .logo-wrap { cursor: pointer; }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -127,6 +140,7 @@ function nearBlack(hex: string): boolean {
 export class PcDeviceComponent {
   private readonly state = inject(DeviceStateService);
   private readonly debug = inject(DebugService);
+  private readonly integrations = inject(IntegrationDataService);
 
   readonly serial = input.required<string>();
   readonly showLabels = input<boolean>(true);
@@ -145,6 +159,24 @@ export class PcDeviceComponent {
   readonly isPro = computed(() => this.effectiveType() === 'PCPANEL_PRO');
 
   private readonly config = computed<LightingConfig | null>(() => this.snap()?.lightingConfig ?? null);
+
+  /** process-name (lowercased) → icon data-URI, for assignment chips. */
+  private readonly processIconMap = computed(() => {
+    const m = new Map<string, string>();
+    for (const p of this.integrations.processes.value() ?? []) {
+      if (p.name && p.icon) m.set(p.name.toLowerCase(), p.icon);
+    }
+    return m;
+  });
+
+  /** Icon for a control's assignment: the per-control overlay icon if set,
+   *  otherwise the controlled app's process icon. Undefined if neither exists. */
+  iconFor(index: number): string | undefined {
+    const snap = this.snap();
+    const profile = snap?.currentProfileSnapshot;
+    const name = profile?.knobSettings?.[String(index)]?.overlayIcon || processNameOf(profile?.dialData?.[String(index)]);
+    return name ? this.processIconMap().get(name.toLowerCase()) : undefined;
+  }
 
   readonly knobs = computed<KnobVM[]>(() => {
     const s = this.snap();

@@ -55,6 +55,9 @@ export class HomeComponent {
 
   readonly brightness = computed(() => this.pendingBrightness() ?? this.selected()?.lightingConfig?.globalBrightness ?? 0);
 
+  /** "Show control assignments in UI" setting — gates the device-visual chips. */
+  readonly showAssignments = computed(() => this.settings.settings.value()?.mainUIIcons ?? true);
+
   readonly profileOptions = computed<SelectOption[]>(() =>
     (this.selected()?.profiles ?? []).map(p => ({ value: p, label: p })));
 
