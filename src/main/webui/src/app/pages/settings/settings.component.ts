@@ -3,26 +3,24 @@ import { Router } from '@angular/router';
 import { HttpClient, httpResource } from '@angular/common/http';
 import { SettingsService } from '../../services/settings.service';
 import { IntegrationDataService } from '../../features/commands/integration-data.service';
+import { PlatformService } from '../../services/platform.service';
 import {
   OverlayPosition, SettingsDto,
 } from '../../models/generated/backend.types';
 import {
-  ColorPickerComponent, IconComponent, SegmentedComponent, SegmentOption,
+  ColorPickerComponent, IconComponent, ModalComponent, SegmentedComponent, SegmentOption,
   SliderComponent, SpinnerComponent, StatusDotComponent, StatusKind, ToastService, ToggleComponent,
 } from '../../ui';
 
 type TabId = 'general' | 'obs' | 'voicemeeter' | 'wavelink' | 'osc' | 'mqtt' | 'overlay';
 interface TabDef { id: TabId; label: string; integration?: 'obs' | 'voicemeeter' | 'wavelink'; }
 
-/** A resource-shaped object as used across the integration httpResources. */
-interface ResLike { value: () => unknown; error: () => unknown; isLoading: () => boolean; }
-
 @Component({
   selector: 'app-settings',
   standalone: true,
   imports: [
     IconComponent, StatusDotComponent, SpinnerComponent, ToggleComponent,
-    SegmentedComponent, SliderComponent, ColorPickerComponent,
+    SegmentedComponent, SliderComponent, ColorPickerComponent, ModalComponent,
   ],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.scss',
@@ -34,11 +32,13 @@ export class SettingsComponent {
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
   private readonly http = inject(HttpClient);
+  private readonly platform = inject(PlatformService);
 
   readonly settings = this.settingsService.settings;
 
   readonly activeTab = signal<TabId>('general');
   readonly saving = signal(false);
+  readonly confirmLeaveOpen = signal(false);
 
   /** Local editable copy, seeded once from the resource (or when not dirty). */
   readonly local = signal<SettingsDto | null>(null);
@@ -48,7 +48,7 @@ export class SettingsComponent {
   readonly oscHost = signal('');
   readonly oscPort = signal('');
 
-  readonly tabs: TabDef[] = [
+  private readonly allTabs: TabDef[] = [
     { id: 'general', label: 'General' },
     { id: 'obs', label: 'OBS Studio', integration: 'obs' },
     { id: 'voicemeeter', label: 'Voicemeeter', integration: 'voicemeeter' },
@@ -57,6 +57,11 @@ export class SettingsComponent {
     { id: 'mqtt', label: 'MQTT' },
     { id: 'overlay', label: 'Overlay' },
   ];
+
+  /** Tabs visible on this host (Voicemeeter = Windows; Wave Link = Windows/macOS). */
+  readonly tabs = computed(() => this.allTabs.filter(t =>
+    t.id === 'voicemeeter' ? this.platform.voicemeeterSupported()
+      : t.id === 'wavelink' ? this.platform.waveLinkSupported() : true));
 
   readonly scaleOptions: SegmentOption<boolean>[] = [
     { value: true, label: 'Log' },
@@ -73,6 +78,22 @@ export class SettingsComponent {
   // Separate tiny Wave Link enable resource (not part of SettingsDto).
   readonly wavelinkEnabled = httpResource<{ enabled: boolean }>(() => '/api/settings/wavelink');
 
+  /** Position the overlay live-preview card per overlayPosition + (scaled) padding. */
+  readonly overlayPreviewStyle = computed<Record<string, string>>(() => {
+    const pos = this.local()?.overlayPosition ?? 'bottomRight';
+    const pad = Math.max(6, Math.min(36, Math.round((this.local()?.overlayPadding ?? 16) * 0.6))) + 'px';
+    const st: Record<string, string> = {};
+    const tf: string[] = [];
+    if (pos.startsWith('top')) st['top'] = pad;
+    else if (pos.startsWith('bottom')) st['bottom'] = pad;
+    else { st['top'] = '50%'; tf.push('translateY(-50%)'); }
+    if (pos.endsWith('Left')) st['left'] = pad;
+    else if (pos.endsWith('Right')) st['right'] = pad;
+    else { st['left'] = '50%'; tf.push('translateX(-50%)'); }
+    if (tf.length) st['transform'] = tf.join(' ');
+    return st;
+  });
+
   constructor() {
     // Seed the editable copy the first time real settings arrive, or whenever the
     // server snapshot changes while we are not mid-edit (e.g. after a reload).
@@ -84,17 +105,25 @@ export class SettingsComponent {
         this.local.set(structuredClone(v));
       });
     });
+    // If the active tab gets hidden by the platform, fall back to General.
+    effect(() => {
+      const visible = this.tabs();
+      const active = this.activeTab();
+      if (!visible.some(t => t.id === active)) untracked(() => this.activeTab.set('general'));
+    });
   }
 
   // ── status dots for integration tabs ───────────────────────────────────────
-  tabStatus(tab: TabDef): StatusKind | null {
-    if (!tab.integration) return null;
-    const res: ResLike = tab.integration === 'obs' ? this.integrations.obsScenes
-      : tab.integration === 'voicemeeter' ? this.integrations.vmAdvanced
-        : this.integrations.waveLink;
-    if (res.isLoading()) return 'connecting';
-    if (res.error()) return 'error';
-    return res.value() ? 'ok' : 'idle';
+  tabStatus(integration: 'obs' | 'voicemeeter' | 'wavelink' | undefined): StatusKind | null {
+    if (!integration) return null;
+    // Honest state: green only with positive evidence of a live connection.
+    if (integration === 'obs') {
+      return this.integrations.obsConnected() ? 'ok' : this.integrations.obsScenes.isLoading() ? 'connecting' : 'idle';
+    }
+    if (integration === 'wavelink') {
+      return this.integrations.waveLinkConnected() ? 'ok' : this.integrations.waveLink.isLoading() ? 'connecting' : 'idle';
+    }
+    return 'idle'; // voicemeeter: no live REST signal
   }
 
   setTab(id: TabId): void { this.activeTab.set(id); }
@@ -171,6 +200,7 @@ export class SettingsComponent {
       next: () => {
         this.wavelinkEnabled.reload();
         this.integrations.waveLink.reload();
+        this.integrations.waveLinkSettings.reload(); // keep Home's integration list in sync
         this.toast.show(on ? 'Wave Link enabled' : 'Wave Link disabled', { kind: 'success' });
       },
       error: () => this.toast.show('Could not update Wave Link', { kind: 'error' }),
@@ -197,5 +227,17 @@ export class SettingsComponent {
     });
   }
 
-  back(): void { this.router.navigate(['/']); }
+  // ── leave guard ──────────────────────────────────────────────────────────────
+  back(): void {
+    if (this.dirty()) { this.confirmLeaveOpen.set(true); return; }
+    this.router.navigate(['/']);
+  }
+
+  leaveWithoutSaving(): void {
+    this.confirmLeaveOpen.set(false);
+    this.dirty.set(false);
+    this.router.navigate(['/']);
+  }
+
+  stayHere(): void { this.confirmLeaveOpen.set(false); }
 }

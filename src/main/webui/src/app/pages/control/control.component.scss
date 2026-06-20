@@ -4,7 +4,11 @@
 
 /* ── Context rail ───────────────────────────────────────────────────────────── */
 .rail { width: 320px; flex: none; background: var(--sidebar); border-right: 1px solid var(--line-soft); display: flex; flex-direction: column; padding: 22px; overflow-y: auto; }
-.back { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; background: transparent; border: none; color: var(--text-2); cursor: pointer; font-size: 13px; }
+.rail.collapsed { width: 48px; padding: 18px 0; align-items: center; }
+.rail-head { display: flex; align-items: center; margin-bottom: 24px; }
+.back { display: flex; align-items: center; gap: 10px; background: transparent; border: none; color: var(--text-2); cursor: pointer; font-size: 13px; }
+.no-colors { font-size: 12px; color: var(--text-3); line-height: 1.5; background: #121419; border: 1px solid var(--line); border-radius: var(--r-md); padding: 12px 14px; }
+.no-colors a { display: inline-block; margin-top: 6px; color: var(--accent); }
 .back:hover { color: var(--text-1); }
 .rail .micro-label { margin-bottom: 16px; }
 
@@ -52,10 +56,11 @@
 .ai-body { padding: 16px; }
 
 /* ── Add column ─────────────────────────────────────────────────────────────── */
-.add-col { width: 260px; flex: none; }
+.add-col { width: 260px; flex: none; position: relative; z-index: 50; }
+.add-backdrop { position: fixed; inset: 0; z-index: 40; }
 .add-btn { width: 100%; padding: 11px; margin-bottom: 10px; }
 .cat-label { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; padding-left: 2px; color: var(--text-3); }
-.add-menu { background: #16181D; border: 1px solid var(--raised-line); border-radius: var(--r-lg); padding: 8px; box-shadow: var(--sh-pop); }
+.add-menu { position: relative; z-index: 50; background: var(--popover); border: 1px solid var(--raised-line); border-radius: var(--r-lg); padding: 8px; box-shadow: var(--sh-pop); }
 .filter { display: flex; align-items: center; gap: 8px; background: var(--input); border: 1px solid var(--line); border-radius: 8px; padding: 8px 11px; margin-bottom: 6px; color: var(--text-3); }
 .filter-in { flex: 1; min-width: 0; background: transparent; border: none; outline: none; color: var(--text-1); font-size: 12px; }
 .grp-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em; color: var(--text-3); padding: 8px 9px 3px; }

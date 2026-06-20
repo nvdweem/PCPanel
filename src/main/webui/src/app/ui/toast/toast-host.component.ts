@@ -28,7 +28,7 @@ import { ToastService } from './toast.service';
     .host { position: fixed; right: 22px; bottom: 22px; z-index: 1400; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
     .toast {
       pointer-events: auto; display: flex; align-items: center; gap: 11px; min-width: 260px; max-width: 380px;
-      background: #16181D; border: 1px solid var(--raised-line); border-radius: var(--r-lg);
+      background: var(--popover); border: 1px solid var(--raised-line); border-radius: var(--r-lg);
       padding: 11px 14px; box-shadow: var(--sh-menu); animation: pcp-toast-in .22s ease;
     }
     .toast[data-kind="success"] { background: rgba(59,224,106,0.08); border-color: rgba(59,224,106,0.3); }

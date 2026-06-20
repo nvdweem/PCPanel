@@ -30,10 +30,23 @@ export class IntegrationDataService {
 
   // Wave Link
   readonly waveLink = httpResource<WaveLinkResponseDto>(() => '/api/wavelink/devices');
+  readonly waveLinkSettings = httpResource<{ enabled: boolean }>(() => '/api/settings/wavelink');
   readonly wlChannels = computed(() => this.waveLink.value()?.channels ?? []);
   readonly wlInputs = computed(() => this.waveLink.value()?.inputs ?? []);
   readonly wlMixes = computed(() => this.waveLink.value()?.mixes ?? []);
   readonly wlOutputs = computed(() => this.waveLink.value()?.outputs ?? []);
+
+  // ── Honest connection state (frontend-only) ─────────────────────────────────
+  // The backend endpoints return data ONLY when the integration is actually
+  // connected (empty otherwise), so non-empty data is a reliable "connected"
+  // signal for OBS and Wave Link. Voicemeeter's REST endpoint is a stub that
+  // always returns [], so there is no live signal — we never claim it connected.
+  readonly obsConnected = computed(() =>
+    (this.obsScenes.value()?.length ?? 0) > 0 || (this.obsSources.value()?.length ?? 0) > 0);
+  readonly waveLinkConnected = computed(() =>
+    this.wlChannels().length > 0 || this.wlInputs().length > 0 || this.wlMixes().length > 0 || this.wlOutputs().length > 0);
+  /** No live Voicemeeter signal exists (REST stub) — connection state is unknown. */
+  readonly voicemeeterConnected = computed(() => false);
 
   /** Process list as picker items (deduped, with real icons when present). */
   readonly processItems = computed<PickerItem[]>(() => {
@@ -65,5 +78,6 @@ export class IntegrationDataService {
     this.vmBasic.reload();
     this.vmAdvanced.reload();
     this.waveLink.reload();
+    this.waveLinkSettings.reload();
   }
 }

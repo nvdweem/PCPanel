@@ -7,10 +7,10 @@ import {
   SelectOption, SliderComponent, StatusDotComponent, ToastService, ToggleComponent,
 } from '../../ui';
 import { PcDeviceComponent } from '../../devices/visual/pc-device.component';
+import { normalizeLogo } from '../../features/lighting/lighting-util';
 import {
   LightingConfig, LightingMode, SingleKnobLightingConfig, SingleLogoLightingConfig,
-  SingleSliderLabelLightingConfig, SingleSliderLightingConfig, SINGLE_KNOB_MODE, SINGLE_LOGO_MODE,
-  SINGLE_SLIDER_LABEL_MODE, SINGLE_SLIDER_MODE,
+  SingleSliderLabelLightingConfig, SingleSliderLightingConfig, SINGLE_LOGO_MODE,
 } from '../../models/generated/backend.types';
 
 interface ModeChip { value: LightingMode; label: string; swatch: 'solid' | 'rainbow' | 'wave' | 'breath' | 'custom'; span2?: boolean; }
@@ -18,7 +18,10 @@ interface ModeChip { value: LightingMode; label: string; swatch: 'solid' | 'rain
 const KNOB_DEFAULT: SingleKnobLightingConfig = { mode: 'STATIC', color1: '#FFB020', color2: '#000000' };
 const SLIDER_DEFAULT: SingleSliderLightingConfig = { mode: 'STATIC', color1: '#FFB020', color2: '#000000', muteOverrideColor: '#000000', muteOverrideDeviceOrFollow: '' };
 const SLIDER_LABEL_DEFAULT: SingleSliderLabelLightingConfig = { mode: 'STATIC', color: '#FFB020', muteOverrideColor: '#000000', muteOverrideDeviceOrFollow: '' };
-const LOGO_DEFAULT: SingleLogoLightingConfig = { mode: 'STATIC', color: '#FFB020', brightness: 255, hue: 0, speed: 128 };
+// brightness/speed/hue are signed bytes (-128..127, read unsigned). -1 = full brightness.
+const LOGO_DEFAULT: SingleLogoLightingConfig = { mode: 'STATIC', color: '#FFB020', brightness: -1, hue: 0, speed: 32 };
+const BLACK = '#000000';
+const isBlackHex = (c: string | undefined): boolean => !c || /^#?0{3,8}$/i.test(c.trim());
 
 @Component({
   selector: 'app-lighting',
@@ -60,20 +63,23 @@ export class LightingComponent {
     { value: 'v', label: 'Vertical' },
   ];
 
-  readonly knobModeOptions: SelectOption<SINGLE_KNOB_MODE>[] = [
-    { value: 'NONE', label: 'Off' },
-    { value: 'STATIC', label: 'Static color' },
-    { value: 'VOLUME_GRADIENT', label: 'Volume gradient' },
+  // UI modes — "Off" maps to STATIC black (NONE leaves the LED's last color on the
+  // device); "Follow slider" mirrors the slider's color into its label.
+  readonly knobModeOptions: SelectOption[] = [
+    { value: 'off', label: 'Off' },
+    { value: 'static', label: 'Static color' },
+    { value: 'gradient', label: 'Volume gradient' },
   ];
-  readonly sliderModeOptions: SelectOption<SINGLE_SLIDER_MODE>[] = [
-    { value: 'NONE', label: 'Off' },
-    { value: 'STATIC', label: 'Static color' },
-    { value: 'STATIC_GRADIENT', label: 'Static gradient' },
-    { value: 'VOLUME_GRADIENT', label: 'Volume gradient' },
+  readonly sliderModeOptions: SelectOption[] = [
+    { value: 'off', label: 'Off' },
+    { value: 'static', label: 'Static color' },
+    { value: 'static-gradient', label: 'Static gradient' },
+    { value: 'gradient', label: 'Volume gradient' },
   ];
-  readonly sliderLabelModeOptions: SelectOption<SINGLE_SLIDER_LABEL_MODE>[] = [
-    { value: 'NONE', label: 'Off' },
-    { value: 'STATIC', label: 'Static color' },
+  readonly sliderLabelModeOptions: SelectOption[] = [
+    { value: 'off', label: 'Off' },
+    { value: 'follow', label: 'Follow slider' },
+    { value: 'static', label: 'Static color' },
   ];
   readonly logoModeOptions: SelectOption<SINGLE_LOGO_MODE>[] = [
     { value: 'NONE', label: 'Off' },
@@ -145,6 +151,18 @@ export class LightingComponent {
     return arr;
   }
   knobAt(i: number): SingleKnobLightingConfig { return this.config()?.knobConfigs?.[i] ?? KNOB_DEFAULT; }
+  knobUiMode(i: number): string {
+    const c = this.knobAt(i);
+    if (c.mode === 'NONE' || (c.mode === 'STATIC' && isBlackHex(c.color1))) return 'off';
+    return c.mode === 'VOLUME_GRADIENT' ? 'gradient' : 'static';
+  }
+  setKnobUiMode(i: number, ui: string): void {
+    const arr = this.padKnobs(i + 1); const cur = arr[i];
+    if (ui === 'off') arr[i] = { ...cur, mode: 'STATIC', color1: BLACK, color2: BLACK };
+    else if (ui === 'gradient') arr[i] = { ...cur, mode: 'VOLUME_GRADIENT', color1: isBlackHex(cur.color1) ? '#FFB020' : cur.color1, color2: isBlackHex(cur.color2) ? '#3B6BFF' : cur.color2 };
+    else arr[i] = { ...cur, mode: 'STATIC', color1: isBlackHex(cur.color1) ? '#FFB020' : cur.color1 };
+    this.patch({ knobConfigs: arr });
+  }
   setKnob<K extends keyof SingleKnobLightingConfig>(i: number, key: K, value: SingleKnobLightingConfig[K]): void {
     const arr = this.padKnobs(i + 1);
     arr[i] = { ...arr[i], [key]: value };
@@ -158,19 +176,58 @@ export class LightingComponent {
     return arr;
   }
   sliderAt(i: number): SingleSliderLightingConfig { return this.config()?.sliderConfigs?.[i] ?? SLIDER_DEFAULT; }
-  setSlider<K extends keyof SingleSliderLightingConfig>(i: number, key: K, value: SingleSliderLightingConfig[K]): void {
-    const arr = this.padSliders(i + 1);
-    arr[i] = { ...arr[i], [key]: value };
+  sliderUiMode(i: number): string {
+    const c = this.sliderAt(i);
+    if (c.mode === 'NONE' || (c.mode === 'STATIC' && isBlackHex(c.color1))) return 'off';
+    return c.mode === 'STATIC_GRADIENT' ? 'static-gradient' : c.mode === 'VOLUME_GRADIENT' ? 'gradient' : 'static';
+  }
+  setSliderUiMode(i: number, ui: string): void {
+    const arr = this.padSliders(i + 1); const cur = arr[i];
+    const c1 = isBlackHex(cur.color1) ? '#FFB020' : cur.color1;
+    const c2 = isBlackHex(cur.color2) ? '#3B6BFF' : cur.color2;
+    if (ui === 'off') arr[i] = { ...cur, mode: 'STATIC', color1: BLACK, color2: BLACK };
+    else if (ui === 'static-gradient') arr[i] = { ...cur, mode: 'STATIC_GRADIENT', color1: c1, color2: c2 };
+    else if (ui === 'gradient') arr[i] = { ...cur, mode: 'VOLUME_GRADIENT', color1: c1, color2: c2 };
+    else arr[i] = { ...cur, mode: 'STATIC', color1: c1 };
     this.patch({ sliderConfigs: arr });
   }
+  setSlider<K extends keyof SingleSliderLightingConfig>(i: number, key: K, value: SingleSliderLightingConfig[K]): void {
+    const sArr = this.padSliders(i + 1);
+    sArr[i] = { ...sArr[i], [key]: value };
+    const part: Partial<LightingConfig> = { sliderConfigs: sArr };
+    // Keep a following label in sync with its slider's primary colour.
+    if (key === 'color1' && this.sliderLabelUiMode(i) === 'follow') {
+      const lArr = this.padSliderLabels(i + 1);
+      lArr[i] = { ...lArr[i], mode: 'STATIC', color: value as string };
+      part.sliderLabelConfigs = lArr;
+    }
+    this.patch(part);
+  }
 
-  // ── per-control: slider labels ───────────────────────────────────────────────
+  // ── per-control: slider labels (Off / Follow slider / Static) ─────────────────
   private padSliderLabels(len: number): SingleSliderLabelLightingConfig[] {
     const arr = [...(this.config()?.sliderLabelConfigs ?? [])];
-    while (arr.length < len) arr.push({ ...SLIDER_LABEL_DEFAULT });
+    // New labels default to "follow" — STATIC mirroring their slider's colour.
+    while (arr.length < len) arr.push({ ...SLIDER_LABEL_DEFAULT, mode: 'STATIC', color: this.sliderAt(arr.length).color1 || '#FFB020' });
     return arr;
   }
-  sliderLabelAt(i: number): SingleSliderLabelLightingConfig { return this.config()?.sliderLabelConfigs?.[i] ?? SLIDER_LABEL_DEFAULT; }
+  sliderLabelAt(i: number): SingleSliderLabelLightingConfig {
+    return this.config()?.sliderLabelConfigs?.[i] ?? { ...SLIDER_LABEL_DEFAULT, mode: 'STATIC', color: this.sliderAt(i).color1 || '#FFB020' };
+  }
+  sliderLabelUiMode(i: number): string {
+    const c = this.config()?.sliderLabelConfigs?.[i];
+    if (!c || c.mode === 'NONE') return i < (this.config()?.sliderLabelConfigs?.length ?? 0) ? 'off' : 'follow';
+    if (c.mode === 'STATIC' && isBlackHex(c.color)) return 'off';
+    if (c.mode === 'STATIC' && c.color === this.sliderAt(i).color1) return 'follow';
+    return 'static';
+  }
+  setSliderLabelUiMode(i: number, ui: string): void {
+    const arr = this.padSliderLabels(i + 1); const cur = arr[i];
+    if (ui === 'off') arr[i] = { ...cur, mode: 'STATIC', color: BLACK };
+    else if (ui === 'follow') arr[i] = { ...cur, mode: 'STATIC', color: this.sliderAt(i).color1 || '#FFB020' };
+    else arr[i] = { ...cur, mode: 'STATIC', color: isBlackHex(cur.color) ? '#FFB020' : cur.color };
+    this.patch({ sliderLabelConfigs: arr });
+  }
   setSliderLabel<K extends keyof SingleSliderLabelLightingConfig>(i: number, key: K, value: SingleSliderLabelLightingConfig[K]): void {
     const arr = this.padSliderLabels(i + 1);
     arr[i] = { ...arr[i], [key]: value };
@@ -179,6 +236,14 @@ export class LightingComponent {
 
   // ── per-control: logo ─────────────────────────────────────────────────────────
   readonly logo = computed<SingleLogoLightingConfig>(() => this.config()?.logoConfig ?? LOGO_DEFAULT);
+  setLogoMode(mode: SINGLE_LOGO_MODE): void {
+    const cur = this.config()?.logoConfig ?? LOGO_DEFAULT;
+    // Ensure brightness/speed are lit for animated modes (signed byte -1 = full).
+    const next: SingleLogoLightingConfig = mode === 'NONE'
+      ? { ...cur, mode }
+      : { ...cur, mode, color: cur.color || '#FFB020', brightness: cur.brightness || -1, speed: cur.speed || 32 };
+    this.patch({ logoConfig: next });
+  }
   setLogo<K extends keyof SingleLogoLightingConfig>(key: K, value: SingleLogoLightingConfig[K]): void {
     const cur = this.config()?.logoConfig ?? LOGO_DEFAULT;
     this.patch({ logoConfig: { ...cur, [key]: value } });
@@ -196,7 +261,7 @@ export class LightingComponent {
   private flush(): void {
     const cfg = this.config();
     if (!cfg) return;
-    this.deviceService.setLighting(this.serial(), cfg)
+    this.deviceService.setLighting(this.serial(), normalizeLogo(cfg))
       .subscribe({ error: () => this.toast.show('Could not save lighting', { kind: 'error' }) });
   }
 

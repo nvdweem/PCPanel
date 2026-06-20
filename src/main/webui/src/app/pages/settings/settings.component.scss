@@ -99,6 +99,11 @@
 .color-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .color-label { font-size: 13px; color: var(--text-soft); }
 
+/* Leave-without-saving modal */
+.leave-body { width: 320px; }
+.leave-msg { font-size: 12.5px; color: var(--text-2); line-height: 1.5; margin: 0 0 16px; }
+.leave-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
 /* Live preview */
 .desktop {
   position: relative; height: 280px; border-radius: var(--r-lg); overflow: hidden;
@@ -108,7 +113,7 @@
   display: flex; align-items: center; justify-content: center; padding: 22px;
 }
 .ov-card {
-  width: 220px; box-shadow: var(--sh-pop); display: flex; flex-direction: column; gap: 12px;
+  position: absolute; width: 196px; box-shadow: var(--sh-pop); display: flex; flex-direction: column; gap: 12px;
 }
 .ov-top { display: flex; align-items: center; gap: 10px; }
 .ov-tile {

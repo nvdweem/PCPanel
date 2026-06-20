@@ -136,12 +136,12 @@ type Cmd = Record<string, any>;
                 <div class="pc-field">
                   <div class="pc-field-label">Start</div>
                   <input class="pc-field-input" type="number" min="0" max="100"
-                         [value]="command()['dialParams'].moveStart ?? 0" (input)="setDial('moveStart', +$any($event.target).value)">
+                         [value]="startDisplay()" (input)="setStart(+$any($event.target).value)">
                 </div>
                 <div class="pc-field">
                   <div class="pc-field-label">End</div>
                   <input class="pc-field-input" type="number" min="0" max="100"
-                         [value]="command()['dialParams'].moveEnd ?? 100" (input)="setDial('moveEnd', +$any($event.target).value)">
+                         [value]="endDisplay()" (input)="setEnd(+$any($event.target).value)">
                 </div>
               </div>
             </div>
@@ -217,16 +217,28 @@ export class CommandFieldsComponent {
     return (res.value() ?? []).map(d => ({ value: d.id, label: d.name }));
   }
 
-  // ── mapping curve ──────────────────────────────────────────────────────────
-  private start = computed(() => clamp(this.command()['dialParams']?.moveStart ?? 0));
-  private end = computed(() => clamp(this.command()['dialParams']?.moveEnd ?? 100));
+  // ── input mapping (Start/End as displayed positions 0..100) ──────────────────
+  // Backend stores moveStart (position from bottom) and moveEnd (amount trimmed
+  // from the top). The user-facing "End" is the end *position* = 100 - moveEnd,
+  // so the default (moveStart 0, moveEnd 0) reads as Start 0 / End 100 = full range.
+  readonly startDisplay = computed(() => clamp(this.command()['dialParams']?.moveStart ?? 0));
+  readonly endDisplay = computed(() => clamp(100 - (this.command()['dialParams']?.moveEnd ?? 0)));
   private invert = computed(() => !!this.command()['dialParams']?.invert);
 
-  // y: 82 (bottom, 0%) → 24 (top, 100%)
-  private yFor(pct: number): number { return 82 - (pct / 100) * 58; }
-  curveY0(): number { return this.invert() ? this.yFor(this.end()) : this.yFor(this.start()); }
-  curveY1(): number { return this.invert() ? this.yFor(this.start()) : this.yFor(this.end()); }
-  curvePath(): string { return `M 18 ${this.curveY0()} L 132 ${this.curveY1()}`; }
+  setStart(v: number): void { this.setDial('moveStart', clamp(v)); }
+  setEnd(v: number): void { this.setDial('moveEnd', clamp(100 - clamp(v))); }
+
+  // Transfer curve on a [0..100] input(x) → output(y) graph, clamped outside Start/End.
+  private xFor(pct: number): number { return 18 + (clamp(pct) / 100) * 114; }   // 18..132
+  private yFor(pct: number): number { return 82 - (clamp(pct) / 100) * 58; }    // 82(0%)..24(100%)
+  curveY0(): number { return this.invert() ? this.yFor(100) : this.yFor(0); }
+  curveY1(): number { return this.invert() ? this.yFor(0) : this.yFor(100); }
+  curvePath(): string {
+    const s = this.startDisplay(), e = Math.max(this.startDisplay() + 0.01, this.endDisplay());
+    const lo = this.invert() ? this.yFor(100) : this.yFor(0);
+    const hi = this.invert() ? this.yFor(0) : this.yFor(100);
+    return `M 18 ${lo} L ${this.xFor(s)} ${lo} L ${this.xFor(e)} ${hi} L 132 ${hi}`;
+  }
 }
 
 function clamp(v: number): number { return Math.max(0, Math.min(100, v ?? 0)); }

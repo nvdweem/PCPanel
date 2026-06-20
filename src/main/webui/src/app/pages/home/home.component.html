@@ -42,13 +42,9 @@
         <div class="int-list">
           @for (r of integrationRows(); track r.name) {
             <div class="int-row">
-              @if (r.state === 'connecting' || r.state === 'reconnecting') {
-                <pc-status-dot [kind]="r.state" [size]="6"></pc-status-dot>
-              } @else {
-                <pc-status-dot [kind]="r.state === 'connected' ? 'ok' : 'error'" [size]="6"></pc-status-dot>
-              }
+              <pc-status-dot [kind]="r.dot" [size]="6"></pc-status-dot>
               <span class="int-name">{{ r.name }}</span>
-              <span class="int-state" [class.ok]="r.state === 'connected'" [class.warn]="r.state !== 'connected'">{{ r.stateLabel }}</span>
+              <span class="int-state" [class.ok]="r.connected">{{ r.stateLabel }}</span>
             </div>
           }
         </div>

@@ -10,10 +10,10 @@
     <div class="rail-title">Settings</div>
 
     <nav class="tabs">
-      @for (tab of tabs; track tab.id) {
+      @for (tab of tabs(); track tab.id) {
         <button class="tab" [class.active]="activeTab() === tab.id" (click)="setTab(tab.id)">
           @if (tab.integration) {
-            @if (tabStatus(tab); as st) {
+            @if (tabStatus(tab.integration); as st) {
               <pc-status-dot [kind]="st" [size]="7"></pc-status-dot>
             }
           }
@@ -103,7 +103,7 @@
         @case ('obs') {
           <h2 class="page-title">
             OBS Studio
-            @if (tabStatus(tabs[1]); as st) { <pc-status-dot [kind]="st" [size]="8"></pc-status-dot> }
+            @if (tabStatus('obs'); as st) { <pc-status-dot [kind]="st" [size]="8"></pc-status-dot> }
           </h2>
 
           <div class="pc-card pad stack">
@@ -134,7 +134,7 @@
         @case ('voicemeeter') {
           <h2 class="page-title">
             Voicemeeter
-            @if (tabStatus(tabs[2]); as st) { <pc-status-dot [kind]="st" [size]="8"></pc-status-dot> }
+            @if (tabStatus('voicemeeter'); as st) { <pc-status-dot [kind]="st" [size]="8"></pc-status-dot> }
           </h2>
 
           <div class="pc-card pad stack">
@@ -154,7 +154,7 @@
         @case ('wavelink') {
           <h2 class="page-title">
             Wave Link
-            @if (tabStatus(tabs[3]); as st) { <pc-status-dot [kind]="st" [size]="8"></pc-status-dot> }
+            @if (tabStatus('wavelink'); as st) { <pc-status-dot [kind]="st" [size]="8"></pc-status-dot> }
           </h2>
 
           <div class="pc-card pad stack">
@@ -375,6 +375,7 @@
               <div class="micro-label section-label">LIVE PREVIEW</div>
               <div class="desktop">
                 <div class="ov-card"
+                     [style]="overlayPreviewStyle()"
                      [style.background-color]="s.overlayBackgroundColor || '#14161B'"
                      [style.border-radius.px]="s.overlayWindowCornerRounding ?? 12"
                      [style.padding.px]="14">
@@ -402,4 +403,14 @@
       }
     }
   </main>
+
+  <pc-modal [open]="confirmLeaveOpen()" heading="Leave without saving?" (dismiss)="stayHere()">
+    <div class="leave-body">
+      <p class="leave-msg">You have unsaved changes. They'll be lost if you leave now.</p>
+      <div class="leave-actions">
+        <button class="pc-btn ghost" (click)="stayHere()">Stay here</button>
+        <button class="pc-btn danger" (click)="leaveWithoutSaving()">Proceed without saving</button>
+      </div>
+    </div>
+  </pc-modal>
 </div>

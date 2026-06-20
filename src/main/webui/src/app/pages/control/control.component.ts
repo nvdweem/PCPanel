@@ -1,9 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { Router } from '@angular/router';
+import { Location } from '@angular/common';
+import { Router, RouterLink } from '@angular/router';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { DeviceStateService } from '../../services/device-state.service';
 import { DeviceService } from '../../services/device.service';
 import { IntegrationDataService } from '../../features/commands/integration-data.service';
+import { PlatformService } from '../../services/platform.service';
 import { Command, Commands, KnobSetting } from '../../models/generated/backend.types';
 import {
   AppPickerComponent, IconComponent, StatusDotComponent, ToggleComponent, ToastService,
@@ -12,12 +14,13 @@ import { PcKnobComponent } from '../../devices/visual/pc-knob.component';
 import { PcFaderComponent } from '../../devices/visual/pc-fader.component';
 import { CommandDef, CommandKind, COMMANDS, COMMAND_BY_TYPE, categoryLabel } from '../../features/commands/command-catalog';
 import { CommandFieldsComponent } from '../../features/commands/command-fields.component';
+import { ControlLightingComponent } from '../../features/lighting/control-lighting.component';
 import { analogPct } from '../../devices/visual/device-visual.util';
 import { OverlayModule } from '@angular/cdk/overlay';
 
 type Slot = 'rotate' | 'press' | 'dblpress';
 
-interface MenuRow { def: CommandDef; status?: 'ok' | 'error' | 'connecting'; offline: boolean; }
+interface MenuRow { def: CommandDef; status?: 'ok' | 'idle' | 'connecting'; offline: boolean; }
 
 const EMPTY: Commands = { commands: [], type: 'allAtOnce' };
 const EMPTY_KNOB: KnobSetting = { minTrim: 0, maxTrim: 100, logarithmic: false, overlayIcon: '', buttonDebounce: 0 };
@@ -26,8 +29,9 @@ const EMPTY_KNOB: KnobSetting = { minTrim: 0, maxTrim: 100, logarithmic: false, 
   selector: 'app-control',
   standalone: true,
   imports: [
-    DragDropModule, OverlayModule, IconComponent, ToggleComponent,
+    DragDropModule, OverlayModule, RouterLink, IconComponent, ToggleComponent,
     StatusDotComponent, AppPickerComponent, PcKnobComponent, PcFaderComponent, CommandFieldsComponent,
+    ControlLightingComponent,
   ],
   templateUrl: './control.component.html',
   styleUrl: './control.component.scss',
@@ -37,8 +41,10 @@ export class ControlComponent {
   private readonly state = inject(DeviceStateService);
   private readonly deviceService = inject(DeviceService);
   private readonly integrations = inject(IntegrationDataService);
+  private readonly platform = inject(PlatformService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
+  private readonly location = inject(Location);
 
   readonly serial = input.required<string>();
   readonly index = input.required<string>();           // analog index as string
@@ -53,6 +59,9 @@ export class ControlComponent {
 
   readonly activeSlot = signal<Slot>('rotate');
   readonly expanded = signal<number>(0);
+  readonly railCollapsed = signal(false);
+  readonly lightingMode = computed(() => this.snap()?.lightingConfig?.lightingMode ?? null);
+  readonly isCustomLighting = computed(() => this.lightingMode() === 'CUSTOM');
   readonly query = signal('');
   readonly addOpen = signal(false);
   readonly iconPickerOpen = signal(false);
@@ -102,7 +111,10 @@ export class ControlComponent {
   readonly menuGroups = computed(() => {
     const kind = this.slotKind();
     const q = this.query().trim().toLowerCase();
-    const defs = COMMANDS.filter(d => d.kinds.includes(kind) && (!q || d.label.toLowerCase().includes(q)));
+    const defs = COMMANDS.filter(d =>
+      d.kinds.includes(kind)
+      && (!q || d.label.toLowerCase().includes(q))
+      && this.platformAllows(d));
     const cats: ('audio' | 'system' | 'integration')[] = ['audio', 'system', 'integration'];
     return cats.map(cat => ({
       label: categoryLabel(cat),
@@ -110,13 +122,21 @@ export class ControlComponent {
     })).filter(g => g.rows.length);
   });
 
+  /** Hide platform-specific integration commands on unsupported hosts. */
+  private platformAllows(def: CommandDef): boolean {
+    if (def.integration === 'voicemeeter') return this.platform.voicemeeterSupported();
+    if (def.integration === 'wavelink') return this.platform.waveLinkSupported();
+    return true;
+  }
+
   private toMenuRow(def: CommandDef): MenuRow {
     if (!def.integration) return { def, offline: false };
-    const res = def.integration === 'obs' ? this.integrations.obsScenes
-      : def.integration === 'voicemeeter' ? this.integrations.vmAdvanced : this.integrations.waveLink;
-    const offline = !!res.error() || (!res.isLoading() && !res.value());
-    const status = res.isLoading() ? 'connecting' as const : offline ? 'error' as const : 'ok' as const;
-    return { def, status, offline };
+    // Honest status: green only with positive evidence; Voicemeeter has no live signal.
+    if (def.integration === 'voicemeeter') return { def, status: 'idle', offline: false };
+    const connected = def.integration === 'obs' ? this.integrations.obsConnected() : this.integrations.waveLinkConnected();
+    const loading = def.integration === 'obs' ? this.integrations.obsScenes.isLoading() : this.integrations.waveLink.isLoading();
+    if (loading) return { def, status: 'connecting', offline: false };
+    return { def, status: connected ? 'ok' : 'idle', offline: !connected };
   }
 
   defFor(cmd: Command): CommandDef | undefined { return COMMAND_BY_TYPE.get(cmd._type); }
@@ -193,7 +213,11 @@ export class ControlComponent {
     }).subscribe({ error: () => this.toast.show('Could not save assignment', { kind: 'error' }) });
   }
 
-  back(): void { this.router.navigate(['/device', this.serial()]); }
+  /** Return to wherever we came from (Home or Advanced), not always Advanced. */
+  back(): void {
+    if (history.length > 1) this.location.back();
+    else this.router.navigate(['/']);
+  }
 }
 
 function clone<T>(v: T | undefined): T | undefined {

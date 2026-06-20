@@ -79,6 +79,7 @@ export class DeviceComponent {
 
   readonly sliderMenuItems: MenuItem[] = [
     { label: 'Configure', icon: 'sliders', value: 'configure' },
+    { label: 'Clear control', icon: 'eraser', value: 'clear', danger: true, separatorBefore: true },
   ];
 
   toggleMenu(key: string): void {
@@ -97,7 +98,8 @@ export class DeviceComponent {
   }
 
   onSliderMenu(j: number, item: MenuItem): void {
-    if (item.value === 'configure') { this.configure(j + 5); }
+    if (item.value === 'configure') { this.configure(j + 5); return; }
+    if (item.value === 'clear') { this.clearControl(j + 5); }
   }
 
   // ── navigation ─────────────────────────────────────────────────────────────

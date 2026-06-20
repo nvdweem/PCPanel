@@ -37,9 +37,8 @@
 .int-list { display: flex; flex-direction: column; gap: 2px; }
 .int-row { display: flex; align-items: center; gap: 9px; padding: 7px 10px; border-radius: 8px; }
 .int-name { font-size: 12.5px; color: var(--text-soft); flex: 1; }
-.int-state { font-family: var(--font-mono); font-size: 9.5px; }
+.int-state { font-family: var(--font-mono); font-size: 9.5px; color: var(--text-3); }
 .int-state.ok { color: var(--ok-text); }
-.int-state.warn { color: var(--warn-text); }
 
 .foot { padding: 14px 18px; border-top: 1px solid var(--line-soft); }
 .ver { font-size: 10.5px; color: var(--text-3); }

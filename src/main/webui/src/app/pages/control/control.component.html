@@ -1,11 +1,24 @@
 @if (snap(); as s) {
   <div class="control-screen">
     <!-- ── Context rail ──────────────────────────────────────────────────── -->
+    @if (railCollapsed()) {
+      <aside class="rail collapsed">
+        <button class="pc-icon-btn sm" title="Expand panel" (click)="railCollapsed.set(false)">
+          <pc-icon name="chevron-right" [size]="15"></pc-icon>
+        </button>
+      </aside>
+    } @else {
     <aside class="rail">
-      <button class="back" (click)="back()">
-        <span class="pc-icon-btn sm"><pc-icon name="chevron-left" [size]="15"></pc-icon></span>
-        <span>Back to device</span>
-      </button>
+      <div class="rail-head">
+        <button class="back" (click)="back()">
+          <span class="pc-icon-btn sm"><pc-icon name="chevron-left" [size]="15"></pc-icon></span>
+          <span>Back</span>
+        </button>
+        <span class="spacer"></span>
+        <button class="pc-icon-btn sm" title="Collapse panel" (click)="railCollapsed.set(true)">
+          <pc-icon name="chevron-left" [size]="15"></pc-icon>
+        </button>
+      </div>
 
       <div class="micro-label">CONFIGURING</div>
       <div class="config-card">
@@ -22,6 +35,17 @@
           <div class="stat"><div class="stat-val">{{ actionCount() }}</div><div class="stat-label">ACTIONS</div></div>
         </div>
       </div>
+
+      <!-- Per-control LED color (only meaningful in CUSTOM lighting mode) -->
+      <div class="micro-label">PER-CONTROL COLOR</div>
+      @if (isCustomLighting()) {
+        <pc-control-lighting [serial]="s.serial" [index]="idx()" [isSlider]="isSlider()"></pc-control-lighting>
+      } @else {
+        <div class="no-colors">
+          No per-control colors — the device is in <strong>{{ lightingMode() }}</strong> mode.
+          <a [routerLink]="['/lighting', s.serial]">Open lighting editor →</a>
+        </div>
+      }
 
       <span class="spacer"></span>
 
@@ -65,12 +89,13 @@
         <div class="pc-hint">Knobs have three independent slots: turn, single-press, and double-press.</div>
       }
     </aside>
+    }
 
     <!-- ── Main config ───────────────────────────────────────────────────── -->
     <main class="config-main">
       <div class="tabs">
         @if (isSlider()) {
-          <span class="tab active">↻ Rotate</span>
+          <span class="tab active">↕ Slide</span>
         } @else {
           <button class="tab" [class.active]="activeSlot() === 'rotate'" (click)="setSlot('rotate')">↻ Rotate</button>
           <button class="tab" [class.active]="activeSlot() === 'press'" (click)="setSlot('press')">Single press</button>
@@ -82,7 +107,7 @@
         <!-- Action list -->
         <div class="action-list">
           <div class="al-head">
-            <span class="micro-label">{{ activeSlot() === 'rotate' ? 'DIAL ACTIONS · 0–100%' : 'BUTTON ACTIONS · ON PRESS' }}</span>
+            <span class="micro-label">{{ activeSlot() !== 'rotate' ? 'BUTTON ACTIONS · ON PRESS' : isSlider() ? 'FADER ACTIONS · 0–100%' : 'DIAL ACTIONS · 0–100%' }}</span>
             <span class="hint-sm">drag to reorder</span>
           </div>
 
@@ -124,6 +149,7 @@
             <span class="micro-label">CATEGORIZED MENU</span>
           </div>
           @if (addOpen()) {
+            <div class="add-backdrop" (click)="addOpen.set(false)"></div>
             <div class="add-menu">
               <div class="filter">
                 <pc-icon name="search" [size]="13"></pc-icon>

@@ -5,13 +5,14 @@ import { SelectedDeviceService } from '../../services/selected-device.service';
 import { DeviceService } from '../../services/device.service';
 import { SettingsService } from '../../services/settings.service';
 import { IntegrationDataService } from '../../features/commands/integration-data.service';
+import { PlatformService } from '../../services/platform.service';
 import {
   ConnectionBadgeComponent, ConnState, IconComponent, ModalComponent,
   SelectComponent, SelectOption, SliderComponent, SpinnerComponent, StatusDotComponent, ToastService,
 } from '../../ui';
 import { PcDeviceComponent, ControlClick } from '../../devices/visual/pc-device.component';
 
-interface IntegrationRow { name: string; state: 'connected' | 'connecting' | 'reconnecting' | 'error'; stateLabel: string; }
+interface IntegrationRow { name: string; dot: 'ok' | 'idle' | 'connecting'; stateLabel: string; connected: boolean; }
 
 @Component({
   selector: 'app-home',
@@ -30,6 +31,7 @@ export class HomeComponent {
   private readonly deviceService = inject(DeviceService);
   private readonly settings = inject(SettingsService);
   private readonly integrations = inject(IntegrationDataService);
+  private readonly platform = inject(PlatformService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
 
@@ -62,19 +64,21 @@ export class HomeComponent {
     const s = this.settings.settings.value();
     if (!s) return [];
     const rows: IntegrationRow[] = [];
-    if (s.obsEnabled) rows.push(this.row('OBS Studio', this.integrations.obsScenes));
-    if (s.voicemeeterEnabled) rows.push(this.row('Voicemeeter', this.integrations.vmAdvanced));
-    // Wave Link surfaces when its endpoint responds at all.
-    const wl = this.integrations.waveLink;
-    if (wl.value() || wl.error()) rows.push(this.row('Wave Link', wl));
+    // Green "connected" only with positive evidence of a live connection; otherwise
+    // an enabled integration is shown neutrally as "enabled" (never a false green).
+    if (s.obsEnabled) rows.push(this.row('OBS Studio', this.integrations.obsConnected(), this.integrations.obsScenes.isLoading()));
+    if (s.voicemeeterEnabled && this.platform.voicemeeterSupported()) rows.push(this.row('Voicemeeter', false, false)); // no live signal (REST stub)
+    if (this.platform.waveLinkSupported() && this.integrations.waveLinkSettings.value()?.enabled) {
+      rows.push(this.row('Wave Link', this.integrations.waveLinkConnected(), this.integrations.waveLink.isLoading()));
+    }
+    if (s.mqtt?.enabled) rows.push(this.row('MQTT', false, false)); // no live signal
     return rows;
   });
 
-  private row(name: string, res: { value: () => unknown; error: () => unknown; isLoading: () => boolean }): IntegrationRow {
-    if (res.isLoading()) return { name, state: 'connecting', stateLabel: 'connecting' };
-    if (res.error()) return { name, state: 'reconnecting', stateLabel: 'retrying' };
-    if (res.value()) return { name, state: 'connected', stateLabel: 'connected' };
-    return { name, state: 'error', stateLabel: 'offline' };
+  private row(name: string, connected: boolean, loading: boolean): IntegrationRow {
+    if (connected) return { name, dot: 'ok', stateLabel: 'connected', connected: true };
+    if (loading) return { name, dot: 'connecting', stateLabel: 'connecting', connected: false };
+    return { name, dot: 'idle', stateLabel: 'enabled', connected: false };
   }
 
   // ── actions ────────────────────────────────────────────────────────────────
@@ -122,7 +126,9 @@ export class HomeComponent {
     this.newProfileName.set('');
     if (!serial || !name) return;
     this.deviceService.createProfile(serial, name).subscribe({
-      next: () => this.deviceService.switchProfile(serial, name).subscribe(),
+      next: () => this.deviceService.switchProfile(serial, name).subscribe({
+        error: () => this.toast.show('Profile created, but switching to it failed', { kind: 'error' }),
+      }),
       error: () => this.toast.show('Could not create profile', { kind: 'error' }),
     });
   }

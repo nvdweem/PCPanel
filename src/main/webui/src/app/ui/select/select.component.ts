@@ -62,7 +62,7 @@ export interface SelectOption<T = string> {
     .val { flex: 1; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     pc-icon { color: var(--text-2); }
     .panel {
-      background: #16181D; border: 1px solid var(--raised-line); border-radius: var(--r-lg);
+      background: var(--popover); border: 1px solid var(--raised-line); border-radius: var(--r-lg);
       padding: 6px; box-shadow: var(--sh-pop); min-width: 160px; max-height: 320px; overflow-y: auto;
     }
     .opt {

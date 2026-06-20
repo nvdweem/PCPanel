@@ -23,7 +23,7 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
       background: rgba(0,0,0,0.55); backdrop-filter: blur(2px); padding: 24px;
     }
     .card {
-      background: #16181D; border: 1px solid var(--raised-line); border-radius: var(--r-lg);
+      background: var(--popover); border: 1px solid var(--raised-line); border-radius: var(--r-lg);
       padding: 18px; box-shadow: 0 24px 60px rgba(0,0,0,0.7); max-width: 100%;
     }
     .title { font-family: var(--font-display); font-weight: 600; font-size: 15px; margin-bottom: 6px; }

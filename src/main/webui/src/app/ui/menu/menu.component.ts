@@ -36,7 +36,7 @@ export interface MenuItem {
   `,
   styles: [`
     .menu {
-      background: #16181D; border: 1px solid var(--raised-line); border-radius: var(--r-md);
+      background: var(--popover); border: 1px solid var(--raised-line); border-radius: var(--r-md);
       padding: 5px; box-shadow: var(--sh-menu);
     }
     .item {

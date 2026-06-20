@@ -64,7 +64,7 @@ const LED_PALETTE = ['#FF4D4D', '#3BE06A', '#3B6BFF', '#FF36C8', '#28E0E0', '#F2
       box-shadow: inset 0 0 0 1px rgba(0,0,0,0.2);
     }
     .panel {
-      background: #16181D; border: 1px solid var(--raised-line); border-radius: var(--r-lg);
+      background: var(--popover); border: 1px solid var(--raised-line); border-radius: var(--r-lg);
       padding: 14px; box-shadow: var(--sh-pop); width: 280px;
     }
     .row { display: flex; gap: 16px; }
