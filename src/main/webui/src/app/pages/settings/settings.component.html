@@ -426,12 +426,13 @@
     }
   </main>
 
-  <pc-modal [open]="confirmLeaveOpen()" heading="Leave without saving?" (dismiss)="stayHere()">
+  <pc-modal [open]="confirmLeaveOpen()" heading="Unsaved changes" [width]="440" (dismiss)="stayHere()">
     <div class="leave-body">
-      <p class="leave-msg">You have unsaved changes. They'll be lost if you leave now.</p>
+      <p class="leave-msg">You have unsaved changes. What would you like to do?</p>
       <div class="leave-actions">
         <button class="pc-btn ghost" (click)="stayHere()">Stay here</button>
         <button class="pc-btn danger" (click)="leaveWithoutSaving()">Proceed without saving</button>
+        <button class="pc-btn primary" [disabled]="saving()" (click)="saveAndLeave()">Save &amp; proceed</button>
       </div>
     </div>
   </pc-modal>

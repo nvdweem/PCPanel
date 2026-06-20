@@ -222,7 +222,7 @@ export class SettingsComponent {
   }
 
   // ── save ────────────────────────────────────────────────────────────────────
-  save(): void {
+  save(thenLeave = false): void {
     const dto = this.local();
     if (!dto || this.saving()) return;
     this.saving.set(true);
@@ -230,9 +230,11 @@ export class SettingsComponent {
       next: () => {
         this.saving.set(false);
         this.dirty.set(false);
+        this.confirmLeaveOpen.set(false);
         this.settings.reload();
         this.integrations.reload();
         this.toast.show('Settings saved', { kind: 'success' });
+        if (thenLeave) this.router.navigate(['/']);
       },
       error: () => {
         this.saving.set(false);
@@ -246,6 +248,8 @@ export class SettingsComponent {
     if (this.dirty()) { this.confirmLeaveOpen.set(true); return; }
     this.router.navigate(['/']);
   }
+
+  saveAndLeave(): void { this.save(true); }
 
   leaveWithoutSaving(): void {
     this.confirmLeaveOpen.set(false);

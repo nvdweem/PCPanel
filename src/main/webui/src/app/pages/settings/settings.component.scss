@@ -105,9 +105,9 @@
 .disabled-block { opacity: 0.55; pointer-events: none; }
 
 /* Leave-without-saving modal */
-.leave-body { width: 320px; }
+.leave-body { width: 400px; }
 .leave-msg { font-size: 12.5px; color: var(--text-2); line-height: 1.5; margin: 0 0 16px; }
-.leave-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.leave-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
 
 /* Live preview */
 .desktop {
