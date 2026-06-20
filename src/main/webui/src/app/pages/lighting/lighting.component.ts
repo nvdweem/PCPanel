@@ -146,7 +146,7 @@ export class LightingComponent {
     // Clear every LED first so colours from the previous mode don't linger
     // (e.g. CUSTOM 'off' entries don't re-send a colour), then apply the new mode.
     const black: LightingConfig = { ...cur, lightingMode: 'ALL_COLOR', allColor: '#000000' };
-    const applyNew = () => this.deviceService.setLighting(this.serial(), normalizeLogo(next))
+    const applyNew = () => this.deviceService.setLighting(this.serial(), this.normalize(next))
       .subscribe({ error: () => this.toast.show('Could not save lighting', { kind: 'error' }) });
     this.deviceService.setLighting(this.serial(), black).subscribe({ next: applyNew, error: applyNew });
   }
@@ -252,11 +252,14 @@ export class LightingComponent {
     return arr;
   }
   sliderLabelAt(i: number): SingleSliderLabelLightingConfig {
-    return this.config()?.sliderLabelConfigs?.[i] ?? { ...SLIDER_LABEL_DEFAULT, mode: 'STATIC', color: this.sliderAt(i).color1 || '#FFB020' };
+    const c = this.config()?.sliderLabelConfigs?.[i];
+    // Default (NONE / unset) follows the slider — the new UI only ever writes STATIC, so NONE = default.
+    if (!c || c.mode === 'NONE') return { ...SLIDER_LABEL_DEFAULT, mode: 'STATIC', color: this.sliderAt(i).color1 || '#FFB020' };
+    return c;
   }
   sliderLabelUiMode(i: number): string {
     const c = this.config()?.sliderLabelConfigs?.[i];
-    if (!c || c.mode === 'NONE') return i < (this.config()?.sliderLabelConfigs?.length ?? 0) ? 'off' : 'follow';
+    if (!c || c.mode === 'NONE') return 'follow';   // default = follow the slider
     if (c.mode === 'STATIC' && isBlackHex(c.color)) return 'off';
     if (c.mode === 'STATIC' && c.color === this.sliderAt(i).color1) return 'follow';
     return 'static';
@@ -301,10 +304,36 @@ export class LightingComponent {
   private flush(): void {
     const cfg = this.config();
     if (!cfg) return;
-    // Vertical rainbow is Mini-only; never emit mode 2 for Pro/RGB (it whites out the LEDs).
-    const safe = this.isMini() ? cfg : { ...cfg, rainbowVertical: 0 };
-    this.deviceService.setLighting(this.serial(), normalizeLogo(safe))
+    this.deviceService.setLighting(this.serial(), this.normalize(cfg))
       .subscribe({ error: () => this.toast.show('Could not save lighting', { kind: 'error' }) });
+  }
+
+  /** Apply all save-time normalizations: logo defaults, Mini-only vertical rainbow, follow-labels. */
+  private normalize(cfg: LightingConfig): LightingConfig {
+    let out = normalizeLogo(cfg);
+    // Vertical rainbow is Mini-only; never emit mode 2 for Pro/RGB (it whites out the LEDs).
+    if (!this.isMini()) out = { ...out, rainbowVertical: 0 };
+    return this.withDefaultFollowingLabels(out);
+  }
+
+  /**
+   * Slider labels default to "follow the slider": persist any unset/NONE label (Pro CUSTOM mode)
+   * as STATIC mirroring its slider's colour, so the physical device follows too — not just the
+   * editor. Explicit "off" is STATIC black and explicit colours are STATIC custom, so neither is
+   * touched (the new UI never writes NONE).
+   */
+  private withDefaultFollowingLabels(cfg: LightingConfig): LightingConfig {
+    if (!this.isPro() || cfg.lightingMode !== 'CUSTOM') return cfg;
+    const sliders = cfg.sliderConfigs ?? [];
+    const labels = [...(cfg.sliderLabelConfigs ?? [])];
+    let changed = false;
+    for (let i = 0; i < this.sliderIndexes.length; i++) {
+      if (!labels[i] || labels[i].mode === 'NONE') {
+        labels[i] = { ...SLIDER_LABEL_DEFAULT, mode: 'STATIC', color: sliders[i]?.color1 || '#FFB020' };
+        changed = true;
+      }
+    }
+    return changed ? { ...cfg, sliderLabelConfigs: labels } : cfg;
   }
 
   back(): void { this.router.navigate(['/']); }
