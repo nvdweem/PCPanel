@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { OverlayModule } from '@angular/cdk/overlay';
+import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { DeviceStateService } from '../../services/device-state.service';
 import { DeviceService } from '../../services/device.service';
 import { IntegrationDataService } from '../../features/commands/integration-data.service';
@@ -16,7 +17,7 @@ interface SlotLine { label: string; text: string; cls: string; }
 @Component({
   selector: 'app-device',
   standalone: true,
-  imports: [OverlayModule, IconComponent, MenuComponent, ModalComponent, ToggleComponent, AppPickerComponent],
+  imports: [OverlayModule, DragDropModule, IconComponent, MenuComponent, ModalComponent, ToggleComponent, AppPickerComponent],
   templateUrl: './device.component.html',
   styleUrl: './device.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -141,6 +142,17 @@ export class DeviceComponent {
       button: { ...EMPTY },
       dblButton: { ...EMPTY },
     }).subscribe({ error: () => this.toast.show('Could not clear control', { kind: 'error' }) });
+  }
+
+  /** Drag-reorder the profile chips; persist the new order (no WS echo for this). */
+  dropProfile(ev: CdkDragDrop<string[]>): void {
+    if (ev.previousIndex === ev.currentIndex) return;
+    const serial = this.serial();
+    const order = [...this.profiles()];
+    moveItemInArray(order, ev.previousIndex, ev.currentIndex);
+    this.state.patchProfiles(serial, () => order);          // optimistic
+    this.deviceService.reorderProfiles(serial, order)
+      .subscribe({ error: () => this.toast.show('Could not reorder profiles', { kind: 'error' }) });
   }
 
   switchProfile(name: string): void {

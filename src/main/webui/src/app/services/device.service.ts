@@ -39,6 +39,10 @@ export class DeviceService {
     return this.http.put<void>(`${this.base}/${serial}/profiles/current`, name, {headers: {'Content-Type': 'text/plain'}});
   }
 
+  reorderProfiles(serial: string, order: string[]): Observable<void> {
+    return this.http.put<void>(`${this.base}/${serial}/profiles/order`, order);
+  }
+
   // Per-profile activation settings (auto-switch on app focus)
   getProfileSettings(serial: string, name: string): Observable<ProfileSettingsDto> {
     return this.http.get<ProfileSettingsDto>(`${this.base}/${serial}/profiles/${encodeURIComponent(name)}/settings`);

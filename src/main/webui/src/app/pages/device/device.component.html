@@ -10,9 +10,11 @@
 
       <span class="micro-label">PROFILE</span>
       <div class="profile-chips">
-        @for (p of s.profiles; track p) {
-          <button class="prof-chip" [class.active]="p === currentProfile()" (click)="switchProfile(p)">{{ p }}</button>
-        }
+        <div class="prof-chips-list" cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="dropProfile($event)">
+          @for (p of s.profiles; track p) {
+            <button class="prof-chip" cdkDrag [class.active]="p === currentProfile()" (click)="switchProfile(p)" title="Drag to reorder">{{ p }}</button>
+          }
+        </div>
         <button class="prof-add" (click)="newProfileOpen.set(true)" title="New profile">
           <pc-icon name="plus" [size]="14" [strokeWidth]="2.4"></pc-icon>
         </button>

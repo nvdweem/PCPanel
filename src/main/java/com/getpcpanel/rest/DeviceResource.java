@@ -121,6 +121,31 @@ public class DeviceResource {
         return Response.ok().build();
     }
 
+    @PUT
+    @Path("/{serial}/profiles/order")
+    public Response reorderProfiles(@PathParam("serial") String serial, List<String> order) {
+        var deviceSave = getDeviceSave(serial);
+        var current = deviceSave.getProfiles();
+        var byName = StreamEx.of(current).toMap(Profile::getName, p -> p, (a, b) -> a);
+        var reordered = new ArrayList<Profile>(current.size());
+        for (var name : order) {
+            var p = byName.get(name);
+            if (p != null && !reordered.contains(p)) {
+                reordered.add(p);
+            }
+        }
+        // Keep any profiles the client didn't mention (in their original order) so none are ever dropped.
+        for (var p : current) {
+            if (!reordered.contains(p)) {
+                reordered.add(p);
+            }
+        }
+        current.clear();
+        current.addAll(reordered);
+        saveService.save();
+        return Response.ok().build();
+    }
+
     @GET
     @Path("/{serial}/profiles/{name}/settings")
     public ProfileSettingsDto getProfileSettings(@PathParam("serial") String serial, @PathParam("name") String name) {
