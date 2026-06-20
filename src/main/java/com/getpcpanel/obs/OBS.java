@@ -5,13 +5,14 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.util.ReconnectBackoff;
 
 import io.quarkus.scheduler.Scheduled;
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 
@@ -35,9 +36,28 @@ public final class OBS {
     @Inject ObjectMapper objectMapper;
 
     private ObsWebSocketClient client;
+    /** Last-applied OBS config (enabled + address/port/password), so an unrelated save never drops a healthy connection. */
+    private String appliedConfig;
 
-    @PostConstruct
-    public void init() {
+    /**
+     * Apply OBS connection changes the moment settings are saved — including the initial SaveEvent
+     * fired at startup, which is what makes OBS connect on launch. Without observing SaveEvent the
+     * bean is only created lazily on the first scheduled tick, so the initial connection (and any
+     * enable/host/port/password change) would be delayed by up to one 30s interval. The scheduler
+     * still owns periodic reconnect when OBS drops.
+     */
+    public void settingsChanged(@Observes SaveEvent event) {
+        var settings = event.save();
+        var config = settings.isObsEnabled() + "|" + settings.getObsAddress() + "|" + settings.getObsPort() + "|" + settings.getObsPassword();
+        if (config.equals(appliedConfig)) {
+            return;
+        }
+        appliedConfig = config;
+        if (client != null) {
+            client.disconnect();
+            client = null;
+        }
+        backoff.onSuccess(); // clear the gate so the new settings connect immediately
         reconnectIfNeeded();
     }
 
