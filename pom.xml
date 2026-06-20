@@ -198,11 +198,16 @@
             <version>0.7.0</version>
         </dependency>
 
-        <!-- Serial port access (Deej provider). Self-bundles native libs as classpath resources. -->
+        <!-- Serial port access (Deej provider). Self-bundles native libs as classpath resources.
+             Pinned to 2.10.2: the last release before jSerialComm bundled its Android USB-serial
+             driver (added in 2.10.3). That mobile code references android.* SDK classes that are not
+             on a desktop classpath, which Quarkus's strict link-at-build-time native setting turns
+             into a hard native-image failure even though the Android path is dead for a desktop app.
+             We never run on Android, so we use the last Android-free version rather than stub it. -->
         <dependency>
             <groupId>com.fazecast</groupId>
             <artifactId>jSerialComm</artifactId>
-            <version>2.11.4</version>
+            <version>2.10.2</version>
         </dependency>
 
         <!-- Stream utilities -->
@@ -477,6 +482,42 @@
                      extraction) is what we actually use. The leading comma joins this onto the preceding arg. -->
                 <native.awt.args>,-J-Djava.awt.headless=true,--initialize-at-run-time=java.awt,--initialize-at-run-time=sun.awt,--initialize-at-run-time=sun.font.FontManagerFactory,--initialize-at-run-time=sun.font.FontFamily,--initialize-at-run-time=sun.java2d.Disposer,--initialize-at-run-time=sun.java2d.d3d,--initialize-at-run-time=sun.java2d.windows,--initialize-at-build-time=java.awt.font.FontRenderContext,--initialize-at-build-time=sun.awt.SunHints,--initialize-at-build-time=sun.awt.SunHints$Value,--initialize-at-build-time=sun.awt.SunHints$LCDContrastKey,--initialize-at-build-time=sun.awt.SunHints$Key,--initialize-at-build-time=java.awt.Dimension,--initialize-at-build-time=java.awt.geom.Dimension2D</native.awt.args>
             </properties>
+            <build>
+                <plugins>
+                    <!-- jSerialComm cannot self-extract its bundled native lib inside a GraalVM native
+                         image (it locates the jar via CodeSource, which is null there), so place the
+                         Windows native lib next to the runner.exe. java.library.path includes the
+                         executable's own directory, so SerialPort's System.loadLibrary("jSerialComm")
+                         finds it - the same "companion DLL next to the binary" model as SndCtrl.dll.
+                         build-installer.ps1 bundles target\*.dll into the installer. -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>bundle-jserialcomm-native-windows</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>unpack</goal>
+                                </goals>
+                                <configuration>
+                                    <artifactItems>
+                                        <artifactItem>
+                                            <groupId>com.fazecast</groupId>
+                                            <artifactId>jSerialComm</artifactId>
+                                            <includes>Windows/x86_64/jSerialComm.dll</includes>
+                                            <outputDirectory>${project.build.directory}</outputDirectory>
+                                            <fileMappers>
+                                                <org.codehaus.plexus.components.io.filemappers.FlattenFileMapper/>
+                                            </fileMappers>
+                                        </artifactItem>
+                                    </artifactItems>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
         <profile>
             <!-- AWT support (quarkus-awt) only on Windows, the one platform whose native image still
