@@ -9,6 +9,10 @@
     <div class="dev-head">
       <span class="micro-label">DEVICES</span>
       <span class="count">{{ devices().length }}</span>
+      <span class="spacer"></span>
+      <button class="add-dev" title="Add a device" aria-label="Add a device" (click)="openAddDevice()">
+        <pc-icon name="plus" [size]="14" [strokeWidth]="2.2"></pc-icon>
+      </button>
     </div>
 
     <div class="dev-list">
@@ -64,6 +68,11 @@
         }
       }
       <span class="spacer"></span>
+      @if (selectedRemovable()) {
+        <button class="pc-btn ghost danger-text" (click)="removeSelected()" title="Remove this device">
+          <pc-icon name="trash" [size]="14"></pc-icon> Remove
+        </button>
+      }
       <pc-connection-badge [state]="connState()"></pc-connection-badge>
       <button class="pc-icon-btn" (click)="openSettings()"><pc-icon name="settings" [size]="17" [strokeWidth]="1.8"></pc-icon></button>
     </header>
@@ -104,4 +113,7 @@
       </div>
     </div>
   </pc-modal>
+
+  <!-- Add device (Deej / serial) modal -->
+  <app-add-device-modal [open]="addDeviceOpen()" (dismiss)="addDeviceOpen.set(false)"></app-add-device-modal>
 </div>

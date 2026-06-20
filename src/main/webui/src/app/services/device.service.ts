@@ -1,13 +1,27 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Commands, ControlAssignmentsUpdateDto, DeviceDto, KnobSetting, LightingConfig, ProfileDto, ProfileSettingsDto } from '../models/generated/backend.types';
+import { AddDeejDeviceDto, Commands, ControlAssignmentsUpdateDto, DeviceDto, KnobSetting, LightingConfig, ProfileDto, ProfileSettingsDto, SerialPortDto } from '../models/generated/backend.types';
 
 @Injectable({providedIn: 'root'})
 export class DeviceService {
   private readonly base = '/api/devices';
+  private readonly serialBase = '/api/serial';
 
   constructor(private http: HttpClient) {
+  }
+
+  // Serial / Deej (manual-add provider)
+  listSerialPorts(): Observable<SerialPortDto[]> {
+    return this.http.get<SerialPortDto[]>(`${this.serialBase}/ports`);
+  }
+
+  addDeej(req: AddDeejDeviceDto): Observable<string> {
+    return this.http.post(`${this.serialBase}/deej`, req, {responseType: 'text'});
+  }
+
+  removeDeej(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.serialBase}/deej/${encodeURIComponent(id)}`);
   }
 
   listDevices(): Observable<DeviceDto[]> {

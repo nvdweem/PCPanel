@@ -14,6 +14,16 @@
 
 .dev-head { display: flex; align-items: center; gap: 8px; padding: 18px 18px 10px; }
 .dev-head .count { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); }
+.dev-head .spacer { flex: 1; }
+.add-dev {
+  display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;
+  border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--panel);
+  color: var(--text-2); cursor: pointer; padding: 0;
+}
+.add-dev:hover { color: var(--text-1); border-color: var(--line-2); }
+
+.danger-text { color: var(--err-text); }
+.danger-text:hover { color: var(--err-text); }
 
 .dev-list { padding: 0 12px; display: flex; flex-direction: column; gap: 6px; }
 .dev-row {

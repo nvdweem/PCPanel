@@ -10,6 +10,7 @@ import {
   BottomBarComponent, ConnectionBadgeComponent, ConnState, IconComponent, ModalComponent,
   SpinnerComponent, StatusDotComponent, ToastService,
 } from '../../ui';
+import { AddDeviceModalComponent } from './add-device-modal.component';
 import { DeviceRendererComponent } from '../../devices/visual/device-renderer.component';
 import { ControlClick } from '../../devices/visual/control-click';
 import { DeviceSnapshotDto } from '../../models/generated/backend.types';
@@ -21,7 +22,7 @@ interface IntegrationRow { name: string; dot: 'ok' | 'idle' | 'connecting'; stat
   standalone: true,
   imports: [
     IconComponent, StatusDotComponent, ConnectionBadgeComponent, BottomBarComponent,
-    SpinnerComponent, ModalComponent, DeviceRendererComponent,
+    SpinnerComponent, ModalComponent, DeviceRendererComponent, AddDeviceModalComponent,
   ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
@@ -46,6 +47,15 @@ export class HomeComponent {
   readonly editingName = signal(false);
   readonly newProfileOpen = signal(false);
   readonly newProfileName = signal('');
+  readonly addDeviceOpen = signal(false);
+
+  /** Whether the selected device can be removed from the UI: only manual-add
+   *  (non-PCPanel/HID) providers like Deej. PCPanel devices are auto-detected
+   *  over USB and are never removable here. */
+  readonly selectedRemovable = computed(() => {
+    const d = this.selected();
+    return !!d && !this.isPcPanel(d);
+  });
 
   readonly connState = computed<ConnState>(() => {
     if (this.state.reconnecting()) return 'reconnecting';
@@ -86,8 +96,23 @@ export class HomeComponent {
     return d.descriptor?.displayName || this.facade.friendlyType(d.deviceType);
   }
 
+  private isPcPanel(d: DeviceSnapshotDto): boolean {
+    return (d.descriptor?.providerId ?? 'pcpanel') === 'pcpanel';
+  }
+
   // ── actions ────────────────────────────────────────────────────────────────
   select(serial: string): void { this.facade.select(serial); }
+
+  openAddDevice(): void { this.addDeviceOpen.set(true); }
+
+  removeSelected(): void {
+    const d = this.selected();
+    if (!d || this.isPcPanel(d)) return;
+    this.deviceService.removeDeej(d.serial).subscribe({
+      next: () => this.toast.show('Device removed', { kind: 'success' }),
+      error: () => this.toast.show('Could not remove device', { kind: 'error' }),
+    });
+  }
 
   statusFor(serial: string): 'ok' | 'idle' {
     // Every device in the live map is connected; offline ones are removed.
