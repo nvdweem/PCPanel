@@ -418,6 +418,12 @@ export interface LightOutputSpec {
     supportedElementModes: string[];
 }
 
+export interface MidiDeviceDto {
+    connected: boolean;
+    id: string;
+    name: string;
+}
+
 export interface MqttSettings {
     baseTopic: string;
     enabled: boolean;

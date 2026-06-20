@@ -74,6 +74,7 @@ import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
 import com.getpcpanel.profile.dto.SingleSliderLightingConfig.SINGLE_SLIDER_MODE;
 import com.getpcpanel.profile.dto.WaveLinkSettings;
 import com.getpcpanel.rest.model.dto.AddDeejDeviceDto;
+import com.getpcpanel.rest.model.dto.MidiDeviceDto;
 import com.getpcpanel.rest.model.dto.SerialPortDto;
 import com.getpcpanel.wavelink.command.CommandWaveLink;
 import com.getpcpanel.wavelink.command.CommandWaveLinkAddFocusToChannel;
@@ -242,6 +243,9 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         // Serial (Deej) REST DTOs serialised by Jackson
         SerialPortDto.class,
         AddDeejDeviceDto.class,
+
+        // MIDI REST DTO serialised by Jackson
+        MidiDeviceDto.class,
 
         // Command support types serialised by Jackson
         Commands.class,
