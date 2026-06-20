@@ -6,6 +6,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import com.getpcpanel.platform.WindowsBuild;
+import com.getpcpanel.util.OpenFolderEvent;
+import com.getpcpanel.util.PcPanelRoot;
 import com.getpcpanel.util.ShowMainEvent;
 import com.getpcpanel.util.tray.ITrayService;
 import com.getpcpanel.util.tray.awt.AwtTrayImpl;
@@ -56,6 +58,7 @@ public class TrayServiceWin implements ITrayService, WindowProc {
     private static final int TRAY_ID = 1;
     private static final int MENU_OPEN = 1;
     private static final int MENU_EXIT = 2;
+    private static final int MENU_LOGS = 3;
     private static final int IDI_APPLICATION = 32512;
 
     // Mouse messages delivered in the low word of the callback's lParam (NOTIFYICON_VERSION 0).
@@ -170,6 +173,7 @@ public class TrayServiceWin implements ITrayService, WindowProc {
         }
         try {
             ext.AppendMenuW(menu, WinUser32Ext.MF_STRING, MENU_OPEN, new WString("Open PCPanel"));
+            ext.AppendMenuW(menu, WinUser32Ext.MF_STRING, MENU_LOGS, new WString("Open logs folder"));
             ext.AppendMenuW(menu, WinUser32Ext.MF_STRING, MENU_EXIT, new WString("Exit"));
             ext.SetMenuDefaultItem(menu, MENU_OPEN, 0);
 
@@ -183,6 +187,7 @@ public class TrayServiceWin implements ITrayService, WindowProc {
             user32.PostMessage(hWnd, WM_NULL, new WPARAM(0), new LPARAM(0));
             switch (cmd) {
                 case MENU_OPEN -> eventBus.fire(new ShowMainEvent());
+                case MENU_LOGS -> eventBus.fire(new OpenFolderEvent(PcPanelRoot.resolve().resolve("logs").toString()));
                 case MENU_EXIT -> {
                     //noinspection CallToSystemExit
                     System.exit(0);
