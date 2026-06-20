@@ -6,6 +6,7 @@ import { DeviceStateService } from '../../services/device-state.service';
 import { DeviceService } from '../../services/device.service';
 import { IntegrationDataService } from '../../features/commands/integration-data.service';
 import { PlatformService } from '../../services/platform.service';
+import { DebugService } from '../../services/debug.service';
 import { Command, Commands, KnobSetting } from '../../models/generated/backend.types';
 import {
   AppPickerComponent, IconComponent, StatusDotComponent, ToggleComponent, ToastService,
@@ -42,6 +43,7 @@ export class ControlComponent {
   private readonly deviceService = inject(DeviceService);
   private readonly integrations = inject(IntegrationDataService);
   private readonly platform = inject(PlatformService);
+  private readonly debug = inject(DebugService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
   private readonly location = inject(Location);
@@ -52,7 +54,7 @@ export class ControlComponent {
 
   readonly snap = this.state.snapshotFor(this.serial);
   readonly processItems = computed(() => this.integrations.processItems());
-  readonly isPro = computed(() => this.snap()?.deviceType === 'PCPANEL_PRO');
+  readonly isPro = computed(() => (this.debug.deviceTypeOverride() || this.snap()?.deviceType) === 'PCPANEL_PRO');
   readonly knobCount = computed(() => this.isPro() ? 5 : 4);
   readonly isSlider = computed(() => this.isPro() && this.idx() >= 5);
   readonly sliderNum = computed(() => this.idx() - 5);   // S(n) for sliders

@@ -4,15 +4,16 @@ import { HttpClient, httpResource } from '@angular/common/http';
 import { SettingsService } from '../../services/settings.service';
 import { IntegrationDataService } from '../../features/commands/integration-data.service';
 import { PlatformService } from '../../services/platform.service';
+import { DebugService, DeviceTypeOverride } from '../../services/debug.service';
 import {
   OverlayPosition, SettingsDto,
 } from '../../models/generated/backend.types';
 import {
   ColorPickerComponent, IconComponent, ModalComponent, SegmentedComponent, SegmentOption,
-  SliderComponent, SpinnerComponent, StatusDotComponent, StatusKind, ToastService, ToggleComponent,
+  SelectComponent, SelectOption, SliderComponent, SpinnerComponent, StatusDotComponent, StatusKind, ToastService, ToggleComponent,
 } from '../../ui';
 
-type TabId = 'general' | 'obs' | 'voicemeeter' | 'wavelink' | 'osc' | 'mqtt' | 'overlay';
+type TabId = 'general' | 'obs' | 'voicemeeter' | 'wavelink' | 'osc' | 'mqtt' | 'overlay' | 'debug';
 interface TabDef { id: TabId; label: string; integration?: 'obs' | 'voicemeeter' | 'wavelink'; supported?: boolean; }
 
 @Component({
@@ -20,7 +21,7 @@ interface TabDef { id: TabId; label: string; integration?: 'obs' | 'voicemeeter'
   standalone: true,
   imports: [
     IconComponent, StatusDotComponent, SpinnerComponent, ToggleComponent,
-    SegmentedComponent, SliderComponent, ColorPickerComponent, ModalComponent,
+    SegmentedComponent, SliderComponent, ColorPickerComponent, ModalComponent, SelectComponent,
   ],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.scss',
@@ -33,6 +34,14 @@ export class SettingsComponent {
   private readonly router = inject(Router);
   private readonly http = inject(HttpClient);
   readonly platform = inject(PlatformService);
+  readonly debug = inject(DebugService);
+
+  readonly deviceOverrideOptions: SelectOption<DeviceTypeOverride>[] = [
+    { value: '', label: 'Off — show real device' },
+    { value: 'PCPANEL_PRO', label: 'PCPanel Pro' },
+    { value: 'PCPANEL_RGB', label: 'PCPanel RGB' },
+    { value: 'PCPANEL_MINI', label: 'PCPanel Mini' },
+  ];
 
   readonly settings = this.settingsService.settings;
 
@@ -56,6 +65,7 @@ export class SettingsComponent {
     { id: 'osc', label: 'OSC' },
     { id: 'mqtt', label: 'MQTT' },
     { id: 'overlay', label: 'Overlay' },
+    { id: 'debug', label: 'Debug' },
   ];
 
   /** All tabs shown; platform-specific ones flagged unsupported (shown disabled). */

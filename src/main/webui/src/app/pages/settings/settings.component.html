@@ -406,6 +406,22 @@
             </div>
           </div>
         }
+
+        <!-- ── DEBUG ───────────────────────────────────────────────────────── -->
+        @case ('debug') {
+          <h2 class="page-title">Debug</h2>
+          <div class="pc-hint platform-note">Frontend-only — affects how devices render in this UI. The backend and the physical device are untouched.</div>
+          <div class="pc-card pad stack">
+            <div class="row">
+              <div class="row-text">
+                <div class="row-label">Render devices as</div>
+                <div class="row-sub">Show any connected device as this type — preview Mini / RGB / Pro from a single device.</div>
+              </div>
+              <pc-select [options]="deviceOverrideOptions" [value]="debug.deviceTypeOverride()"
+                         (valueChange)="debug.setDeviceTypeOverride($any($event))"></pc-select>
+            </div>
+          </div>
+        }
       }
     }
   </main>

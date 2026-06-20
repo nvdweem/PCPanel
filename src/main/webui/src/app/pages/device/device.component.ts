@@ -5,6 +5,7 @@ import { DeviceStateService } from '../../services/device-state.service';
 import { DeviceService } from '../../services/device.service';
 import { IconComponent, MenuComponent, MenuItem, ModalComponent, ToastService } from '../../ui';
 import { shortLabel } from '../../devices/visual/device-visual.util';
+import { DebugService } from '../../services/debug.service';
 import { Commands } from '../../models/generated/backend.types';
 
 const EMPTY: Commands = { commands: [], type: 'allAtOnce' };
@@ -24,12 +25,13 @@ export class DeviceComponent {
   private readonly deviceService = inject(DeviceService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
+  private readonly debug = inject(DebugService);
 
   readonly serial = input.required<string>();
 
   readonly snap = this.state.snapshotFor(this.serial);
 
-  readonly isPro = computed(() => this.snap()?.deviceType === 'PCPANEL_PRO');
+  readonly isPro = computed(() => (this.debug.deviceTypeOverride() || this.snap()?.deviceType) === 'PCPANEL_PRO');
   readonly knobCount = computed(() => this.isPro() ? 5 : 4);
   readonly knobIdx = computed(() => Array.from({ length: this.knobCount() }, (_, i) => i));
   readonly sliderIdx = computed(() => this.isPro() ? [0, 1, 2, 3] : []);

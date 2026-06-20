@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { DeviceStateService } from '../../services/device-state.service';
+import { DebugService } from '../../services/debug.service';
 import { LightingConfig } from '../../models/generated/backend.types';
 import { PcKnobComponent } from './pc-knob.component';
 import { PcFaderComponent } from './pc-fader.component';
@@ -65,7 +66,7 @@ function nearBlack(hex: string): boolean {
               </div>
             }
           </div>
-          @if (s.hasLogoLed) {
+          @if (isPro()) {
             <div class="logo-wrap" role="button" tabindex="0" aria-label="Configure logo lighting"
                  (click)="emit('logo', 0, false, $event)" (contextmenu)="emit('logo', 0, true, $event)"
                  (keydown.enter)="emit('logo', 0, false, $event)" (keydown.space)="emit('logo', 0, false, $event); $event.preventDefault()">
@@ -125,6 +126,7 @@ function nearBlack(hex: string): boolean {
 })
 export class PcDeviceComponent {
   private readonly state = inject(DeviceStateService);
+  private readonly debug = inject(DebugService);
 
   readonly serial = input.required<string>();
   readonly showLabels = input<boolean>(true);
@@ -138,7 +140,9 @@ export class PcDeviceComponent {
   readonly controlClick = output<ControlClick>();
 
   readonly snap = this.state.snapshotFor(this.serial);
-  readonly isPro = computed(() => this.snap()?.deviceType === 'PCPANEL_PRO');
+  /** Debug device-type override (Settings → Debug) wins over the real type. */
+  readonly effectiveType = computed(() => this.debug.deviceTypeOverride() || this.snap()?.deviceType);
+  readonly isPro = computed(() => this.effectiveType() === 'PCPANEL_PRO');
 
   private readonly config = computed<LightingConfig | null>(() => this.snap()?.lightingConfig ?? null);
 

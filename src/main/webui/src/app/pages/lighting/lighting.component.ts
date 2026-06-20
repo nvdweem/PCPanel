@@ -8,6 +8,7 @@ import {
 } from '../../ui';
 import { PcDeviceComponent } from '../../devices/visual/pc-device.component';
 import { normalizeLogo } from '../../features/lighting/lighting-util';
+import { DebugService } from '../../services/debug.service';
 import {
   LightingConfig, LightingMode, SingleKnobLightingConfig, SingleLogoLightingConfig,
   SingleSliderLabelLightingConfig, SingleSliderLightingConfig, SINGLE_LOGO_MODE,
@@ -38,6 +39,7 @@ export class LightingComponent {
   private readonly state = inject(DeviceStateService);
   private readonly deviceService = inject(DeviceService);
   private readonly toast = inject(ToastService);
+  private readonly debug = inject(DebugService);
   private readonly router = inject(Router);
 
   readonly serial = input.required<string>();
@@ -101,7 +103,7 @@ export class LightingComponent {
   }
 
   // ── device topology ────────────────────────────────────────────────────────
-  readonly isPro = computed(() => this.snapshot()?.deviceType === 'PCPANEL_PRO');
+  readonly isPro = computed(() => (this.debug.deviceTypeOverride() || this.snapshot()?.deviceType) === 'PCPANEL_PRO');
   readonly knobCount = computed(() => this.isPro() ? 5 : 4);
   readonly knobIndexes = computed(() => Array.from({ length: this.knobCount() }, (_, i) => i));
   readonly sliderIndexes = [0, 1, 2, 3];
