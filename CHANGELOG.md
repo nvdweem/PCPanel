@@ -5,6 +5,9 @@
 > **⚠️ 2.0 is an early pre-release and is NOT stable.** It may fail to start at all, and you should expect bugs and breaking changes. Do not rely on it. Back up your profiles before upgrading.
 
 - The entire user interface has been rebuilt from the ground up with a brand-new design — a custom dark theme replacing the old windows, covering the device view, action assignment, lighting and settings.
+- The app now supports controllers beyond PCPanel through a generalized device layer. PCPanel hardware works exactly as before (and with zero setup), while other devices can be added and bound to the same actions through the same UI.
+    - **Deej** — add the open-source Arduino serial volume mixer by its serial port; its sliders map to the same actions as PCPanel dials (no buttons/lights).
+    - MIDI controller support is in progress.
 - Java 25 is now required to run the software. The installer will include it.
 - #87 - Experimental macOS support (community contributed by Choaterboater, ported to the new Quarkus build). Device volume/mute/default-device switching via Core Audio, keystrokes, shortcuts and Music/Spotify media control. Per-application volume is not possible on stock macOS. See the [macOS instructions](mac.md).
 - Profiles are now saved on application exit, so a change made right before quitting is no longer lost.

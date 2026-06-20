@@ -53,8 +53,20 @@ a live preview that animates on the hardware as you edit:
 
 ### Supported hardware
 
-The PCPanel **Mini**, **Pro** and **RGB** are all supported. No drivers are required — the device is
-a standard USB HID peripheral.
+The PCPanel **Mini**, **Pro** and **RGB** are all supported out of the box, with zero setup — just
+plug in over USB (no drivers required; the device is a standard USB HID peripheral).
+
+The app is no longer PCPanel-only. A generalized **device layer** lets other controllers drive the
+same actions through the same UI, described by their capabilities (which knobs/sliders/buttons they
+have, their value ranges, and any lights):
+
+- **Deej** — the open-source Arduino [serial volume mixer](https://github.com/omriharel/deej). Add it
+  by choosing its serial port; each slider binds to the same actions as a PCPanel dial. (Deej is
+  sliders only — no buttons or lights.)
+- **MIDI controllers** *(in progress)* — faders, knobs and pads from a standard MIDI device.
+
+PCPanel hardware keeps its tailored, zero-configuration experience; PCPanel simply becomes one of
+several device "providers".
 
 ## Download & install
 
