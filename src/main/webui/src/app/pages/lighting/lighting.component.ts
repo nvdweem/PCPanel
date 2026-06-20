@@ -210,25 +210,38 @@ export class LightingComponent {
   }
   setSliderUiMode(i: number, ui: string): void {
     const arr = this.padSliders(i + 1); const cur = arr[i];
+    const oldColor1 = cur.color1;
     const c1 = isBlackHex(cur.color1) ? '#FFB020' : cur.color1;
     const c2 = isBlackHex(cur.color2) ? '#3B6BFF' : cur.color2;
     if (ui === 'off') arr[i] = { ...cur, mode: 'STATIC', color1: BLACK, color2: BLACK };
     else if (ui === 'static-gradient') arr[i] = { ...cur, mode: 'STATIC_GRADIENT', color1: c1, color2: c2 };
     else if (ui === 'gradient') arr[i] = { ...cur, mode: 'VOLUME_GRADIENT', color1: c1, color2: c2 };
     else arr[i] = { ...cur, mode: 'STATIC', color1: c1 };
-    this.patch({ sliderConfigs: arr });
+    this.patch(this.withFollowingLabel({ sliderConfigs: arr }, i, oldColor1, arr[i].color1));
   }
   setSlider<K extends keyof SingleSliderLightingConfig>(i: number, key: K, value: SingleSliderLightingConfig[K]): void {
     const sArr = this.padSliders(i + 1);
+    const oldColor1 = sArr[i].color1;
     sArr[i] = { ...sArr[i], [key]: value };
-    const part: Partial<LightingConfig> = { sliderConfigs: sArr };
-    // Keep a following label in sync with its slider's primary colour.
-    if (key === 'color1' && this.sliderLabelUiMode(i) === 'follow') {
-      const lArr = this.padSliderLabels(i + 1);
-      lArr[i] = { ...lArr[i], mode: 'STATIC', color: value as string };
+    let part: Partial<LightingConfig> = { sliderConfigs: sArr };
+    if (key === 'color1') part = this.withFollowingLabel(part, i, oldColor1, value as string);
+    this.patch(part);
+  }
+
+  /**
+   * A persisted label "follows" its slider when it's a STATIC colour equal to the slider's colour.
+   * When the slider's primary colour changes (mode switch or colour edit), keep such a label in sync.
+   * (Labels with no persisted config already follow live via sliderLabelAt().)
+   */
+  private withFollowingLabel(part: Partial<LightingConfig>, i: number, oldColor1: string, newColor1: string): Partial<LightingConfig> {
+    const labels = this.config()?.sliderLabelConfigs;
+    const lbl = labels?.[i];
+    if (lbl && lbl.mode === 'STATIC' && (lbl.color ?? '') === (oldColor1 ?? '')) {
+      const lArr = [...labels!];
+      lArr[i] = { ...lbl, color: newColor1 };
       part.sliderLabelConfigs = lArr;
     }
-    this.patch(part);
+    return part;
   }
 
   // ── per-control: slider labels (Off / Follow slider / Static) ─────────────────
