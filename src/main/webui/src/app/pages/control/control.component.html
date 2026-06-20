@@ -158,10 +158,11 @@
               @for (g of menuGroups(); track g.label) {
                 <div class="grp-label">{{ g.label }}</div>
                 @for (row of g.rows; track row.def.type) {
-                  <button class="add-row" [class.offline]="row.offline" (click)="addCommand(row.def)">
+                  <button class="add-row" [class.offline]="row.offline || row.unsupported" [disabled]="row.unsupported" (click)="addCommand(row.def)">
                     @if (row.status) { <pc-status-dot [kind]="row.status" [size]="6"></pc-status-dot> }
                     <span>{{ row.def.label }}</span>
-                    @if (row.offline) { <span class="off-tag">offline</span> }
+                    @if (row.unsupported) { <span class="off-tag">unavailable</span> }
+                    @else if (row.offline) { <span class="off-tag">offline</span> }
                   </button>
                 }
               }

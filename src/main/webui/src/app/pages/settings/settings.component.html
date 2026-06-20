@@ -11,8 +11,8 @@
 
     <nav class="tabs">
       @for (tab of tabs(); track tab.id) {
-        <button class="tab" [class.active]="activeTab() === tab.id" (click)="setTab(tab.id)">
-          @if (tab.integration) {
+        <button class="tab" [class.active]="activeTab() === tab.id" [class.unsupported]="tab.supported === false" (click)="setTab(tab.id)">
+          @if (tab.integration && tab.supported) {
             @if (tabStatus(tab.integration); as st) {
               <pc-status-dot [kind]="st" [size]="7"></pc-status-dot>
             }
@@ -134,17 +134,20 @@
         @case ('voicemeeter') {
           <h2 class="page-title">
             Voicemeeter
-            @if (tabStatus('voicemeeter'); as st) { <pc-status-dot [kind]="st" [size]="8"></pc-status-dot> }
+            @if (platform.voicemeeterSupported() && tabStatus('voicemeeter'); as st) { <pc-status-dot [kind]="st" [size]="8"></pc-status-dot> }
           </h2>
 
-          <div class="pc-card pad stack">
+          @if (!platform.voicemeeterSupported()) {
+            <div class="pc-hint platform-note">{{ platformNote('voicemeeter') }} These settings are shown for reference and can't be used on this host.</div>
+          }
+          <div class="pc-card pad stack" [class.disabled-block]="!platform.voicemeeterSupported()">
             <div class="row">
               <div class="row-text"><div class="row-label">Enable</div></div>
-              <pc-toggle [value]="s.voicemeeterEnabled" (valueChange)="patch('voicemeeterEnabled', $event)"></pc-toggle>
+              <pc-toggle [value]="s.voicemeeterEnabled" [disabled]="!platform.voicemeeterSupported()" (valueChange)="patch('voicemeeterEnabled', $event)"></pc-toggle>
             </div>
             <div class="field-block">
               <div class="micro-label">INSTALL PATH</div>
-              <input class="pc-input mono" type="text" placeholder="Voicemeeter install path"
+              <input class="pc-input mono" type="text" placeholder="Voicemeeter install path" [disabled]="!platform.voicemeeterSupported()"
                      [value]="s.voicemeeterPath ?? ''" (input)="patch('voicemeeterPath', $any($event.target).value)">
             </div>
           </div>
@@ -154,11 +157,14 @@
         @case ('wavelink') {
           <h2 class="page-title">
             Wave Link
-            @if (tabStatus('wavelink'); as st) { <pc-status-dot [kind]="st" [size]="8"></pc-status-dot> }
+            @if (platform.waveLinkSupported() && tabStatus('wavelink'); as st) { <pc-status-dot [kind]="st" [size]="8"></pc-status-dot> }
           </h2>
 
-          <div class="pc-card pad stack">
-            @if (wavelinkEnabled.isLoading()) {
+          @if (!platform.waveLinkSupported()) {
+            <div class="pc-hint platform-note">{{ platformNote('wavelink') }} These settings are shown for reference and can't be used on this host.</div>
+          }
+          <div class="pc-card pad stack" [class.disabled-block]="!platform.waveLinkSupported()">
+            @if (platform.waveLinkSupported() && wavelinkEnabled.isLoading()) {
               <div class="muted-row"><pc-spinner [size]="14" [thickness]="2"></pc-spinner> Loading…</div>
             } @else {
               <div class="row">
@@ -166,7 +172,7 @@
                   <div class="row-label">Enable</div>
                   <div class="row-sub">Elgato Wave Link integration</div>
                 </div>
-                <pc-toggle [value]="wavelinkEnabled.value()?.enabled ?? false"
+                <pc-toggle [value]="wavelinkEnabled.value()?.enabled ?? false" [disabled]="!platform.waveLinkSupported()"
                            (valueChange)="setWavelinkEnabled($event)"></pc-toggle>
               </div>
             }

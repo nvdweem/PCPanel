@@ -13,7 +13,7 @@ import {
 } from '../../ui';
 
 type TabId = 'general' | 'obs' | 'voicemeeter' | 'wavelink' | 'osc' | 'mqtt' | 'overlay';
-interface TabDef { id: TabId; label: string; integration?: 'obs' | 'voicemeeter' | 'wavelink'; }
+interface TabDef { id: TabId; label: string; integration?: 'obs' | 'voicemeeter' | 'wavelink'; supported?: boolean; }
 
 @Component({
   selector: 'app-settings',
@@ -32,7 +32,7 @@ export class SettingsComponent {
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
   private readonly http = inject(HttpClient);
-  private readonly platform = inject(PlatformService);
+  readonly platform = inject(PlatformService);
 
   readonly settings = this.settingsService.settings;
 
@@ -58,10 +58,20 @@ export class SettingsComponent {
     { id: 'overlay', label: 'Overlay' },
   ];
 
-  /** Tabs visible on this host (Voicemeeter = Windows; Wave Link = Windows/macOS). */
-  readonly tabs = computed(() => this.allTabs.filter(t =>
-    t.id === 'voicemeeter' ? this.platform.voicemeeterSupported()
-      : t.id === 'wavelink' ? this.platform.waveLinkSupported() : true));
+  /** All tabs shown; platform-specific ones flagged unsupported (shown disabled). */
+  readonly tabs = computed<TabDef[]>(() => this.allTabs.map(t => ({ ...t, supported: this.tabSupported(t.id) })));
+
+  tabSupported(id: TabId): boolean {
+    if (id === 'voicemeeter') return this.platform.voicemeeterSupported();
+    if (id === 'wavelink') return this.platform.waveLinkSupported();
+    return true;
+  }
+
+  platformNote(id: TabId): string {
+    if (id === 'voicemeeter') return 'Voicemeeter is only available on Windows.';
+    if (id === 'wavelink') return 'Elgato Wave Link is only available on Windows and macOS.';
+    return '';
+  }
 
   readonly scaleOptions: SegmentOption<boolean>[] = [
     { value: true, label: 'Log' },
@@ -104,12 +114,6 @@ export class SettingsComponent {
         if (this.local() && this.dirty()) return;
         this.local.set(structuredClone(v));
       });
-    });
-    // If the active tab gets hidden by the platform, fall back to General.
-    effect(() => {
-      const visible = this.tabs();
-      const active = this.activeTab();
-      if (!visible.some(t => t.id === active)) untracked(() => this.activeTab.set('general'));
     });
   }
 

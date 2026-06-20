@@ -20,7 +20,7 @@ import { OverlayModule } from '@angular/cdk/overlay';
 
 type Slot = 'rotate' | 'press' | 'dblpress';
 
-interface MenuRow { def: CommandDef; status?: 'ok' | 'idle' | 'connecting'; offline: boolean; }
+interface MenuRow { def: CommandDef; status?: 'ok' | 'idle' | 'connecting'; offline: boolean; unsupported?: boolean; }
 
 const EMPTY: Commands = { commands: [], type: 'allAtOnce' };
 const EMPTY_KNOB: KnobSetting = { minTrim: 0, maxTrim: 100, logarithmic: false, overlayIcon: '', buttonDebounce: 0 };
@@ -111,10 +111,7 @@ export class ControlComponent {
   readonly menuGroups = computed(() => {
     const kind = this.slotKind();
     const q = this.query().trim().toLowerCase();
-    const defs = COMMANDS.filter(d =>
-      d.kinds.includes(kind)
-      && (!q || d.label.toLowerCase().includes(q))
-      && this.platformAllows(d));
+    const defs = COMMANDS.filter(d => d.kinds.includes(kind) && (!q || d.label.toLowerCase().includes(q)));
     const cats: ('audio' | 'system' | 'integration')[] = ['audio', 'system', 'integration'];
     return cats.map(cat => ({
       label: categoryLabel(cat),
@@ -122,8 +119,8 @@ export class ControlComponent {
     })).filter(g => g.rows.length);
   });
 
-  /** Hide platform-specific integration commands on unsupported hosts. */
-  private platformAllows(def: CommandDef): boolean {
+  /** Whether a command's integration can run on this host. */
+  private platformOk(def: CommandDef): boolean {
     if (def.integration === 'voicemeeter') return this.platform.voicemeeterSupported();
     if (def.integration === 'wavelink') return this.platform.waveLinkSupported();
     return true;
@@ -131,6 +128,7 @@ export class ControlComponent {
 
   private toMenuRow(def: CommandDef): MenuRow {
     if (!def.integration) return { def, offline: false };
+    if (!this.platformOk(def)) return { def, status: 'idle', offline: false, unsupported: true };
     // Honest status: green only with positive evidence; Voicemeeter has no live signal.
     if (def.integration === 'voicemeeter') return { def, status: 'idle', offline: false };
     const connected = def.integration === 'obs' ? this.integrations.obsConnected() : this.integrations.waveLinkConnected();

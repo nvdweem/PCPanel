@@ -67,4 +67,6 @@
 .add-row { display: flex; align-items: center; gap: 7px; width: 100%; text-align: left; border: none; background: transparent; color: var(--text-soft); font-size: 12.5px; padding: 7px 9px; border-radius: var(--r-sm); cursor: pointer; }
 .add-row:hover { background: var(--accent-tint-soft); color: var(--accent-text); }
 .add-row.offline { color: var(--text-3); }
+.add-row:disabled { cursor: not-allowed; }
+.add-row:disabled:hover { background: transparent; color: var(--text-3); }
 .off-tag { font-size: 9px; color: var(--text-3); margin-left: auto; }

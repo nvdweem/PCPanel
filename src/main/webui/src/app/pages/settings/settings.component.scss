@@ -99,6 +99,11 @@
 .color-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .color-label { font-size: 13px; color: var(--text-soft); }
 
+/* Platform-unsupported integrations: shown but disabled */
+.tab.unsupported .tab-label { color: var(--text-3); }
+.platform-note { margin-bottom: 16px; }
+.disabled-block { opacity: 0.55; pointer-events: none; }
+
 /* Leave-without-saving modal */
 .leave-body { width: 320px; }
 .leave-msg { font-size: 12.5px; color: var(--text-2); line-height: 1.5; margin: 0 0 16px; }
