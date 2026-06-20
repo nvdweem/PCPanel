@@ -162,8 +162,9 @@ public class SetMuteOverrideService implements IOverrideColorProviderProvider {
                 continue;
             }
             var device = deviceOpt.get();
-            var deviceSave = idDeviceSave.getValue();
-            var profile = deviceSave.ensureCurrentProfile(device.deviceType());
+            // currentProfile() defaults lighting from the descriptor, so it is safe for devices with
+            // no DeviceType (Deej); ensureCurrentProfile(DeviceType) would throw on a null type.
+            var profile = device.currentProfile();
             var mayBeChangedLC = device.lightingConfig();
             if (mayBeChangedLC.lightingMode() != LightingMode.CUSTOM) {
                 continue;

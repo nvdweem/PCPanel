@@ -132,6 +132,9 @@ public class MqttDeviceService {
     }
 
     private void initialize(Device device) {
+        if (device.deviceType() == null) {
+            return; // MQTT device/HA-discovery registration is PCPanel-shaped (logo + button counts); generic devices are not exposed yet.
+        }
         if (initializedDevices.contains(device)) {
             return;
         }

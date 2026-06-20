@@ -2,6 +2,7 @@ package com.getpcpanel.profile;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -33,6 +34,13 @@ public class DeviceSave {
     @Nullable private String providerId;
     @Nullable private String deviceKindId;
     @Nullable private DeviceDescriptor capabilities;
+
+    /**
+     * Provider-specific connection parameters needed to reconnect a manually-added device on
+     * startup (e.g. a Deej device's {@code port} and {@code baud}). Nullable and default-absent so
+     * legacy saves and auto-discovered (PCPanel/HID) devices carry nothing extra.
+     */
+    @Nullable private Map<String, String> providerConfig;
 
     /**
      * Builds a fresh save for a device described by {@code descriptor}. The display-name base is

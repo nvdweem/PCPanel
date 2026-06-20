@@ -16,6 +16,7 @@ import jakarta.inject.Inject;
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.cpp.windows.WindowFocusChangedEvent;
+import com.getpcpanel.device.DescriptorFactory;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.device.DeviceFactory;
 import com.getpcpanel.device.descriptor.DeviceDescriptor;
@@ -58,10 +59,20 @@ public class DeviceHolder {
         if (backfillIdentity(deviceSave, event.descriptor())) {
             saveService.save();
         }
-        var device = deviceFactory.build(event.serialNum(), deviceSave, event.descriptor());
+        var descriptor = event.descriptor();
+        var isPcPanel = DescriptorFactory.PROVIDER_ID.equals(descriptor.providerId());
+        // Route construction by provider: PCPanel keeps its model subclasses (path byte-for-byte
+        // unchanged); everything else gets a descriptor-only GenericDevice. The HID-only post-connect
+        // steps (init packet + push lighting) run only for a lighting-capable PCPanel/HID device; a
+        // lightless device (Deej) has no output channel and skips both.
+        var device = isPcPanel
+                ? deviceFactory.build(event.serialNum(), deviceSave, descriptor)
+                : deviceFactory.buildGeneric(event.serialNum(), deviceSave, descriptor);
         devices.put(event.serialNum(), device);
-        outputInterpreter.sendInit(event.serialNum());
-        device.setLighting(device.lightingConfig(), true);
+        if (isPcPanel && descriptor.globalLighting() != null) {
+            outputInterpreter.sendInit(event.serialNum());
+            device.setLighting(device.lightingConfig(), true);
+        }
         eventBus.fire(new DeviceFullyConnectedEvent(device));
     }
 

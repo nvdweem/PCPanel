@@ -73,6 +73,8 @@ import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig.SINGLE_SLIDER_
 import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
 import com.getpcpanel.profile.dto.SingleSliderLightingConfig.SINGLE_SLIDER_MODE;
 import com.getpcpanel.profile.dto.WaveLinkSettings;
+import com.getpcpanel.rest.model.dto.AddDeejDeviceDto;
+import com.getpcpanel.rest.model.dto.SerialPortDto;
 import com.getpcpanel.wavelink.command.CommandWaveLink;
 import com.getpcpanel.wavelink.command.CommandWaveLinkAddFocusToChannel;
 import com.getpcpanel.wavelink.command.CommandWaveLinkChange;
@@ -236,6 +238,10 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         DigitalInputSpec[].class,
         LightOutputSpec[].class,
         AnalogOutputSpec[].class,
+
+        // Serial (Deej) REST DTOs serialised by Jackson
+        SerialPortDto.class,
+        AddDeejDeviceDto.class,
 
         // Command support types serialised by Jackson
         Commands.class,

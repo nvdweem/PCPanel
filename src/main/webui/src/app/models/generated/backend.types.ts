@@ -1,6 +1,13 @@
 /* tslint:disable */
 /* eslint-disable */
 
+export interface AddDeejDeviceDto {
+    baud?: number;
+    name?: string;
+    noiseReduction?: string;
+    port: string;
+}
+
 export interface AnalogInputSpec {
     hasButton: boolean;
     id: string;
@@ -459,6 +466,11 @@ export interface ProfileSnapshotDto {
     dialData: { [index: string]: Commands };
     knobSettings: { [index: string]: KnobSetting };
     name: string;
+}
+
+export interface SerialPortDto {
+    description: string;
+    port: string;
 }
 
 export interface SettingsDto {

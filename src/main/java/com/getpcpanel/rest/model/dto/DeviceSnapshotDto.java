@@ -50,8 +50,14 @@ public record DeviceSnapshotDto(
 
     public static DeviceSnapshotDto from(Device device, DeviceSave deviceSave, ProVisualColorsService proVisualColorsService) {
         var dt = device.deviceType();
+        var descriptor = device.descriptor();
         var profile = device.currentProfile();
-        var analogCount = dt.getAnalogCount();
+        // PCPanel devices report counts/kind from the legacy enum (unchanged); descriptor-only
+        // devices (Deej, generic) have no DeviceType, so derive everything from the descriptor.
+        var analogCount = dt != null ? dt.getAnalogCount() : descriptor.analogInputs().size();
+        var buttonCount = dt != null ? dt.getButtonCount() : descriptor.digitalInputs().size();
+        var deviceTypeName = dt != null ? dt.name() : descriptor.deviceKindId();
+        var hasLogoLed = dt != null && dt.isHasLogoLed();
         var visualColors = proVisualColorsService.resolve(device);
 
         var knobValues = IntStream.range(0, analogCount)
@@ -61,11 +67,11 @@ public record DeviceSnapshotDto(
         return new DeviceSnapshotDto(
                 device.getSerialNumber(),
                 device.getDisplayName(),
-                dt.name(),
+                deviceTypeName,
                 analogCount,
-                dt.getButtonCount(),
-                dt.isHasLogoLed(),
-                device.descriptor(),
+                buttonCount,
+                hasLogoLed,
+                descriptor,
                 deviceSave.getCurrentProfileName(),
                 StreamEx.of(deviceSave.getProfiles()).map(Profile::getName).toList(),
                 device.getSavedLightingConfig(),

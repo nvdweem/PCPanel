@@ -26,14 +26,22 @@ public record DeviceDto(
 ) {
     public static DeviceDto from(Device device, DeviceSave deviceSave) {
         var type = device.deviceType();
+        var descriptor = device.descriptor();
+        // PCPanel devices report counts from the legacy enum (unchanged); descriptor-only devices
+        // (Deej, generic) have no DeviceType, so derive counts from the descriptor instead.
+        var analogCount = type != null ? type.getAnalogCount() : descriptor.analogInputs().size();
+        var buttonCount = type != null ? type.getButtonCount() : descriptor.digitalInputs().size();
+        var hasLogoLed = type != null
+                ? type.isHasLogoLed()
+                : StreamEx.of(descriptor.lightOutputs()).anyMatch(l -> l.group() == LightGroupKind.LOGO);
         return new DeviceDto(
                 device.getSerialNumber(),
                 device.getDisplayName(),
                 type,
-                type.getAnalogCount(),
-                type.getButtonCount(),
-                type.isHasLogoLed(),
-                device.descriptor(),
+                analogCount,
+                buttonCount,
+                hasLogoLed,
+                descriptor,
                 true,
                 deviceSave.getCurrentProfileName(),
                 StreamEx.of(deviceSave.getProfiles()).map(p -> p.getName()).toList()

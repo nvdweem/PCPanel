@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.Json;
 import com.getpcpanel.device.DescriptorFactory;
+import com.getpcpanel.device.Device;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.util.Debouncer;
 import com.getpcpanel.util.FileUtil;
@@ -195,7 +196,9 @@ public class SaveService {
     }
 
     public Optional<Profile> getProfile(String serialNum) {
-        return devices.getDevice(serialNum).map(device -> get().getDeviceSave(serialNum).ensureCurrentProfile(device.deviceType()));
+        // Route through the device so the current-profile default lighting comes from the device's
+        // descriptor (works for descriptor-only devices like Deej that have no DeviceType).
+        return devices.getDevice(serialNum).map(Device::currentProfile);
     }
 
     public record SaveEvent(Save save, boolean isNew) {

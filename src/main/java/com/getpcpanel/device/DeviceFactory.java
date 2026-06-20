@@ -34,4 +34,12 @@ public class DeviceFactory {
             case PCPANEL_PRO -> new PCPanelProDevice(inputInterpreter, saveService, outputInterpreter, iconService, overrideColorService, eventBus, serialNum, deviceSave, descriptor);
         };
     }
+
+    /**
+     * Builds a descriptor-only {@link GenericDevice} (no {@link DeviceType}, no buttons, no lights)
+     * for any non-PCPanel provider such as Deej.
+     */
+    public Device buildGeneric(String serialNum, DeviceSave deviceSave, DeviceDescriptor descriptor) {
+        return new GenericDevice(saveService, outputInterpreter, iconService, eventBus, serialNum, deviceSave, descriptor);
+    }
 }

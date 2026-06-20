@@ -46,7 +46,7 @@
         <!-- Include all charsets so JNA/Cp1252 (Windows native encoding) is available -->
         <quarkus.native.add-all-charsets>true</quarkus.native.add-all-charsets>
         <!-- Bundle all native DLLs/SOs: SndCtrl.dll (root), hidapi (win32-x86-64/), jnidispatch (com/sun/jna/...) plus runtime icon assets -->
-        <quarkus.native.resources.includes>SndCtrl.dll,**/*.dll,**/*.so,**/*.dylib,assets/**</quarkus.native.resources.includes>
+        <quarkus.native.resources.includes>SndCtrl.dll,**/*.dll,**/*.so,**/*.dylib,**/*.jnilib,assets/**</quarkus.native.resources.includes>
         <!-- JNA, hid4java, jnativehook, and AWT-dependent classes must initialise at run time -->
         <!-- Disable compressed oops in build JVM so Unsafe.arrayIndexScale(Object[].class) = 8, matching native image runtime.
              Without this, jctools stores scale=4 (compressed oops) but native image uses 8-byte refs → segfault. -->
@@ -60,7 +60,7 @@
             --initialize-at-run-time=com.getpcpanel.cpp.linux.LinuxKeyboard$XTest,
             --initialize-at-run-time=com.getpcpanel.overlay.OverlayRenderer,
             --trace-object-instantiation=java.security.SecureRandom,
-            -J-XX:-UseCompressedOops,--initialize-at-run-time=com.sun.jna,--initialize-at-run-time=org.hid4java,--initialize-at-run-time=com.github.kwhat.jnativehook,--initialize-at-run-time=com.getpcpanel.commands.KeyMacro,--initialize-at-run-time=com.getpcpanel.iconextract.Shell32Extra,--initialize-at-run-time=com.getpcpanel.util.tray.win.WinShell32,--initialize-at-run-time=com.getpcpanel.util.tray.win.WinUser32Ext,--initialize-at-run-time=com.getpcpanel.sleepdetection.Win32Desktop,--initialize-at-run-time=com.getpcpanel.sleepdetection.Win32PowerNotify,--initialize-at-run-time=com.getpcpanel.sleepdetection.WindowsPowerEventMonitor,--initialize-at-run-time=com.getpcpanel.sleepdetection.LinuxX11$LibX11,--initialize-at-run-time=com.getpcpanel.sleepdetection.LinuxX11$LibXext,--initialize-at-run-time=com.getpcpanel.cpp.osx.CoreAudioLib,--initialize-at-run-time=com.getpcpanel.cpp.osx.CoreAudioLib$AudioObjectPropertyAddress,--initialize-at-run-time=com.getpcpanel.cpp.osx.CoreAudioLib$AudioObjectPropertyListenerProc,--initialize-at-run-time=com.getpcpanel.cpp.osx.OsxKeyboard$CoreGraphics,--initialize-at-run-time=com.getpcpanel.cpp.osx.OsxKeyboard$CoreFoundation,--initialize-at-run-time=com.getpcpanel.util.OsxPermissionHelper,--initialize-at-run-time=com.getpcpanel.util.OsxPermissionHelper$ApplicationServicesLib,--initialize-at-run-time=com.getpcpanel.util.OsxPermissionHelper$IOKitLib,--initialize-at-run-time=org.freedesktop.dbus,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOINFO,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOBUFFER,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_INTERFACE${native.awt.args}${native.platform.linker.args}
+            -J-XX:-UseCompressedOops,--initialize-at-run-time=com.sun.jna,--initialize-at-run-time=org.hid4java,--initialize-at-run-time=com.fazecast.jSerialComm,--initialize-at-run-time=com.github.kwhat.jnativehook,--initialize-at-run-time=com.getpcpanel.commands.KeyMacro,--initialize-at-run-time=com.getpcpanel.iconextract.Shell32Extra,--initialize-at-run-time=com.getpcpanel.util.tray.win.WinShell32,--initialize-at-run-time=com.getpcpanel.util.tray.win.WinUser32Ext,--initialize-at-run-time=com.getpcpanel.sleepdetection.Win32Desktop,--initialize-at-run-time=com.getpcpanel.sleepdetection.Win32PowerNotify,--initialize-at-run-time=com.getpcpanel.sleepdetection.WindowsPowerEventMonitor,--initialize-at-run-time=com.getpcpanel.sleepdetection.LinuxX11$LibX11,--initialize-at-run-time=com.getpcpanel.sleepdetection.LinuxX11$LibXext,--initialize-at-run-time=com.getpcpanel.cpp.osx.CoreAudioLib,--initialize-at-run-time=com.getpcpanel.cpp.osx.CoreAudioLib$AudioObjectPropertyAddress,--initialize-at-run-time=com.getpcpanel.cpp.osx.CoreAudioLib$AudioObjectPropertyListenerProc,--initialize-at-run-time=com.getpcpanel.cpp.osx.OsxKeyboard$CoreGraphics,--initialize-at-run-time=com.getpcpanel.cpp.osx.OsxKeyboard$CoreFoundation,--initialize-at-run-time=com.getpcpanel.util.OsxPermissionHelper,--initialize-at-run-time=com.getpcpanel.util.OsxPermissionHelper$ApplicationServicesLib,--initialize-at-run-time=com.getpcpanel.util.OsxPermissionHelper$IOKitLib,--initialize-at-run-time=org.freedesktop.dbus,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOINFO,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOBUFFER,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_INTERFACE${native.awt.args}${native.platform.linker.args}
         </quarkus.native.additional-build-args>
         <!-- AWT/Java2D native-image initialization policy. This default value is the Linux build, which
              (like macOS) bundles no libawt: the whole AWT/Java2D/Swing/ImageIO subsystem is deferred to
@@ -196,6 +196,13 @@
             <groupId>org.hid4java</groupId>
             <artifactId>hid4java</artifactId>
             <version>0.7.0</version>
+        </dependency>
+
+        <!-- Serial port access (Deej provider). Self-bundles native libs as classpath resources. -->
+        <dependency>
+            <groupId>com.fazecast</groupId>
+            <artifactId>jSerialComm</artifactId>
+            <version>2.11.4</version>
         </dependency>
 
         <!-- Stream utilities -->

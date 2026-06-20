@@ -49,6 +49,9 @@ public final class SleepDetector {
     private void onSuspended(boolean shutdown) {
         Runnable r = () -> {
             for (var device : devices.values()) {
+                if (device.deviceType() == null) {
+                    continue; // Non-PCPanel devices (e.g. Deej) have no HID lighting channel to switch off.
+                }
                 log.debug("Pause: {}", device.getSerialNumber());
                 outputInterpreter.sendLightingConfig(device.getSerialNumber(), device.deviceType(), ALL_OFF, true);
                 if (shutdown) {
@@ -80,6 +83,9 @@ public final class SleepDetector {
 
     private void onResumed() {
         for (var device : devices.values()) {
+            if (device.deviceType() == null) {
+                continue; // Non-PCPanel devices (e.g. Deej) have no HID lighting channel to restore.
+            }
             log.info("RESUME: {}", device.getSerialNumber());
             outputInterpreter.sendLightingConfig(device.getSerialNumber(), device.deviceType(), device.lightingConfig(), true);
         }

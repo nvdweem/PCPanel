@@ -99,17 +99,26 @@ public abstract class Device {
         doSetLighting(config, true);
     }
 
+    /** Default lighting for this device, resolved from the descriptor (no {@link DeviceType} needed). */
+    private LightingConfig defaultLighting() {
+        return LightingConfig.defaultLightingConfig(descriptor);
+    }
+
     private void doSetLighting(LightingConfig config, boolean priority) {
         lightingConfig = config;
+        // Lightless devices (e.g. Deej) carry no global lighting; never touch the HID output path.
+        if (descriptor.globalLighting() == null) {
+            return;
+        }
         if (config == null) {
-            config = LightingConfig.defaultLightingConfig(deviceType());
+            config = defaultLighting();
             saveService.save();
         }
         try {
             outputInterpreter.sendLightingConfig(serialNumber, deviceType(), config, priority);
         } catch (Exception e) {
             log.error("Unable to send lighting config", e);
-            setLighting(LightingConfig.defaultLightingConfig(deviceType()), priority);
+            setLighting(defaultLighting(), priority);
         }
     }
 
@@ -119,7 +128,16 @@ public abstract class Device {
     public void saveChanged() {
     }
 
-    public abstract DeviceType deviceType();
+    /**
+     * The legacy PCPanel hardware-model enum, or {@code null} for descriptor-only devices (Deej,
+     * future generic/MIDI devices) that have no {@link DeviceType}. PCPanel subclasses override it;
+     * the rest of {@link Device} no longer requires it (profile/lighting defaults flow through the
+     * {@link DeviceDescriptor}).
+     */
+    @Nullable
+    public DeviceType deviceType() {
+        return null;
+    }
 
     public abstract void setKnobRotation(int paramInt1, int paramInt2);
 
@@ -140,6 +158,6 @@ public abstract class Device {
     }
 
     public Profile currentProfile() {
-        return save.ensureCurrentProfile(deviceType());
+        return save.ensureCurrentProfile(this::defaultLighting);
     }
 }

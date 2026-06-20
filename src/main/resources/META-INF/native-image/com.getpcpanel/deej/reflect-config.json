@@ -1,0 +1,11 @@
+[
+  {
+    "name": "[Lcom.fazecast.jSerialComm.SerialPort;"
+  },
+  {
+    "name": "com.fazecast.jSerialComm.SerialPort",
+    "allDeclaredFields": true,
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  }
+]
