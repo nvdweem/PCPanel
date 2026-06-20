@@ -77,6 +77,22 @@ firers and observers — keep it current when you add or remove an event.
 RGB/output. `Device` subclasses (`PCPanelMini/Pro/RGB`) model each hardware variant. Physical input
 becomes a `PCPanelControlEvent` / `ButtonClickEvent` on the event bus.
 
+**Device providers (`device/provider/`, `device/descriptor/`):** the device layer is generalized so
+PCPanel is one `DeviceProvider` among several — providers are `@ApplicationScoped` beans discovered via
+`Instance<DeviceProvider>` (NOT build-time stereotypes; every build contains all of them).
+`DeviceScanner` is the `"pcpanel"` HID provider; `DeejSerialProvider` (serial, jSerialComm) and
+`MidiProvider` (`javax.sound.midi`) are external providers. A device is described by a data
+`DeviceDescriptor` (analog/digital inputs with source ranges, light/analog outputs, capabilities)
+rather than the `DeviceType` enum, which is now PCPanel-provider-internal. Each provider normalizes
+its raw analog values to the canonical **0–255** internal domain at its edge (PCPanel RGB 0–100, Deej
+0–1023, MIDI 0–127 → 0–255), so `DialValueCalculator`/`KnobSetting`/commands are untouched. Non-PCPanel
+devices use a lightless `GenericDevice` — `Device.deviceType()` is nullable, so guard PCPanel/HID-only
+paths (lighting, `OutputInterpreter.sendInit`) against `deviceType() == null`. `DeviceSave` persists
+`providerId`/`deviceKindId`/`capabilities` (back-filled at connect; legacy saves default to
+`pcpanel`). The Angular UI renders any device from its descriptor (`DeviceRendererComponent` →
+`PcDeviceComponent` for PCPanel, else `GenericDeviceComponent`). Full design + per-phase status:
+`docs/device-layer-generalization-plan.md`.
+
 **Command model (`commands/`):** A user's per-dial/button configuration is a `Commands` (list of
 `Command` subclasses in `commands/command/` — e.g. `CommandVolumeProcess`, `CommandKeystroke`,
 `CommandObs`, `CommandMedia`). `CommandDispatcher` maps incoming control events to the configured
@@ -153,6 +169,19 @@ Key constraints baked into those args, change with care:
   Don't rely on tracing for this: register them explicitly on the response DTO with
   `@RegisterForReflection(targets = { Foo.class, Foo[].class, ... })`, listing every nested element
   record and its `[].class` form (see `rest/wavelink/dto/WaveLinkResponseDto`).
+- **jSerialComm (the Deej serial provider) is pinned to 2.10.2** — the last release before it bundled
+  an Android USB-serial driver (2.10.3+), whose `android.*` references fail the native build under
+  `--link-at-build-time` (we never run on Android). It also can't self-extract its bundled native lib
+  in a native image (it locates the jar via `CodeSource`, null there), so the Windows lib is placed
+  next to the runner exe via `maven-dependency-plugin` (os-windows profile) and loaded from
+  `java.library.path` — the same companion-DLL model as `SndCtrl.dll`. Linux/macOS would need their
+  `.so`/`.jnilib` next to the binary too.
+- **`javax.sound.midi` (the MIDI provider) does not enumerate devices in the native image** (known
+  GraalVM limitation): the image links and startup is safe — every `MidiSystem` call is
+  `Throwable`-guarded so a missing MIDI subsystem can't crash startup or affect PCPanel/Deej — but
+  `getMidiDeviceInfo()` returns empty in native. MIDI input works in JVM/dev mode only until a custom
+  JNI `Feature` (and CoreMidi4J on macOS) is added. `com.sun.media.sound` and
+  `javax.sound.midi.MidiSystem` are `--initialize-at-run-time`.
 
 ## Native C++ (`src/main/cpp/`, Windows DLL)
 
