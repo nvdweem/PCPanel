@@ -16,7 +16,7 @@ import { PcFaderComponent } from '../../devices/visual/pc-fader.component';
 import { CommandDef, CommandKind, COMMANDS, COMMAND_BY_TYPE, categoryLabel } from '../../features/commands/command-catalog';
 import { CommandFieldsComponent } from '../../features/commands/command-fields.component';
 import { ControlLightingComponent } from '../../features/lighting/control-lighting.component';
-import { analogPct } from '../../devices/visual/device-visual.util';
+import { analogPct, describeCommand } from '../../devices/visual/device-visual.util';
 import { OverlayModule } from '@angular/cdk/overlay';
 
 type Slot = 'rotate' | 'press' | 'dblpress';
@@ -156,7 +156,11 @@ export class ControlComponent {
   }
 
   defFor(cmd: Command): CommandDef | undefined { return COMMAND_BY_TYPE.get(cmd._type); }
-  labelFor(cmd: Command): string { return this.defFor(cmd)?.label ?? cmd._type.split('.').pop() ?? '?'; }
+  labelFor(cmd: Command): string {
+    // Prefer a label that names the actual target ("Music — Wave Link"); fall back to the generic
+    // catalog label for commands with nothing meaningful to name yet.
+    return describeCommand(cmd, this.integrations) || this.defFor(cmd)?.label || cmd._type.split('.').pop() || '?';
+  }
   iconFor(cmd: Command) { return this.defFor(cmd)?.icon ?? 'zap'; }
 
   // ── slot helpers ───────────────────────────────────────────────────────────

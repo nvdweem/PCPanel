@@ -109,9 +109,9 @@ function nearBlack(hex: string): boolean {
       display: flex; flex-direction: column; align-items: center; gap: 24px;
     }
     .chassis.flat { box-shadow: 0 18px 50px rgba(0,0,0,0.5); }
-    .pro-knobs { display: flex; flex-direction: column; align-items: center; gap: 22px; width: 236px; }
+    .pro-knobs { display: flex; flex-direction: column; align-items: center; gap: 22px; width: 100%; }
     .row { display: flex; }
-    .row.top { justify-content: center; gap: 31px; width: 100%; }
+    .row.top { justify-content: space-evenly; width: 100%; }
     .row.bottom { justify-content: space-between; width: 100%; }
     .row.mini-row { gap: 24px; }
     .sliders { display: flex; justify-content: center; gap: 30px; }
@@ -188,7 +188,7 @@ export class PcDeviceComponent {
       out.push({
         index: i, label: `K${i + 1}`, pct: analogPct(s.analogValues?.[i]),
         color: vis.fill, off, selected,
-        assign: shortLabel(s.currentProfileSnapshot?.dialData?.[String(i)]),
+        assign: shortLabel(s.currentProfileSnapshot?.dialData?.[String(i)], this.integrations),
         anim: vis.animClass, dur: vis.animDuration, bmin: vis.breathMin,
       });
     }
@@ -212,7 +212,7 @@ export class PcDeviceComponent {
         index: analogIdx, label: `S${j + 1}`, pct: analogPct(s.analogValues?.[analogIdx]),
         colors: segs.length ? segs : ['#2A2E37'], labelColor,
         off, selected: this.selectedKind() === 'slider' && this.selectedIndex() === analogIdx,
-        assign: shortLabel(s.currentProfileSnapshot?.dialData?.[String(analogIdx)]),
+        assign: shortLabel(s.currentProfileSnapshot?.dialData?.[String(analogIdx)], this.integrations),
         anim: vis.animClass, dur: vis.animDuration, bmin: vis.breathMin,
       });
     }

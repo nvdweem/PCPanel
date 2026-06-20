@@ -1,4 +1,5 @@
 import { Command, Commands, LightingConfig } from '../../models/generated/backend.types';
+import { IntegrationDataService } from '../../features/commands/integration-data.service';
 import {
   ColorVisual, knobRingColor, lightingAnimClass, lightingAnimDuration, lightingBreathMin, resolveColorVisual,
 } from '../pcpanel/lighting-animation';
@@ -58,11 +59,55 @@ function firstName(arr: unknown): string | undefined {
   return Array.isArray(arr) && arr.length ? String(arr[0]) : undefined;
 }
 function mutePrefix(c: Command): string {
-  const t = (c as any).muteType;
-  return t === 'unmute' ? 'Unmute ' : t === 'mute' ? 'Mute ' : 'Mute ';
+  return mutePrefixOf((c as any).muteType);
+}
+function mutePrefixOf(t: string | undefined): string {
+  return t === 'unmute' ? 'Unmute ' : 'Mute ';
 }
 function mediaLabel(b: string): string {
   return ({ mute: 'Mute', next: 'Next', prev: 'Prev', stop: 'Stop', playPause: 'Play/Pause' } as Record<string, string>)[b] ?? 'Media';
+}
+
+function typeNameOf(cmd: Command): string {
+  return (cmd._type?.split('.').pop() ?? '').replace(/^Command/, '');
+}
+function wlNameOf(data: IntegrationDataService, id: string | undefined): string | undefined {
+  if (!id) return undefined;
+  const all = [...data.wlChannels(), ...data.wlInputs(), ...data.wlMixes(), ...data.wlOutputs()];
+  return all.find(x => x.id === id)?.name || undefined;
+}
+function deviceNameOf(data: IntegrationDataService, id: string | undefined): string | undefined {
+  if (!id) return undefined;
+  return (data.audioDevices.value() ?? []).find(d => d.id === id)?.name || undefined;
+}
+
+/**
+ * Descriptive label for a configured command that names its actual target — e.g. the Wave Link
+ * channel, OBS source, audio device or app it acts on ("Music — Wave Link", "Mic — OBS"). Names
+ * that are only known to the backend (Wave Link ids, audio-device ids) are resolved through the
+ * live {@link IntegrationDataService} lists. Returns '' for commands that have no meaningful target
+ * to name, so callers can fall back to a generic label.
+ */
+export function describeCommand(cmd: Command | undefined, data: IntegrationDataService): string {
+  if (!cmd) return '';
+  const c = cmd as any;
+  switch (typeNameOf(cmd)) {
+    case 'VolumeProcess': { const n = firstName(c.processName); return n ? `${n} — Volume` : ''; }
+    case 'VolumeProcessMute': { const n = firstName(c.processName); return n ? `${mutePrefix(cmd)}${n}` : ''; }
+    case 'VolumeDevice': { const n = deviceNameOf(data, c.deviceId); return n ? `${n} — Volume` : ''; }
+    case 'VolumeDeviceMute': { const n = deviceNameOf(data, c.deviceId); return n ? `${mutePrefix(cmd)}${n}` : ''; }
+    case 'VolumeDefaultDevice': { const n = deviceNameOf(data, c.deviceId); return n ? `${n} — Default device` : ''; }
+    case 'ObsSetSourceVolume': return c.sourceName ? `${c.sourceName} — OBS` : '';
+    case 'ObsSetScene': return c.scene ? `${c.scene} — OBS` : '';
+    case 'ObsMuteSource': return c.source ? `${mutePrefixOf(c.type)}${c.source} — OBS` : '';
+    case 'VoiceMeeterAdvanced':
+    case 'VoiceMeeterAdvancedButton': return c.fullParam ? `${c.fullParam} — Voicemeeter` : '';
+    case 'WaveLinkChangeLevel': { const n = wlNameOf(data, c.id1); return n ? `${n} — Wave Link` : ''; }
+    case 'WaveLinkChangeMute': { const n = wlNameOf(data, c.id1); return n ? `${mutePrefix(cmd)}${n} — Wave Link` : ''; }
+    case 'WaveLinkMainOutput': { const n = wlNameOf(data, c.id) || c.name; return n ? `${n} — Wave Link` : ''; }
+    case 'WaveLinkAddFocusToChannel': { const n = wlNameOf(data, c.id) || c.name; return n ? `Add focus → ${n} — Wave Link` : ''; }
+    default: return '';
+  }
 }
 
 /** The process name a control's first command targets (for app-icon lookup), if any. */
@@ -71,10 +116,15 @@ export function processNameOf(cmds: Commands | null | undefined): string | undef
   return Array.isArray(pn) && pn.length ? String(pn[0]) : undefined;
 }
 
-/** Short human label for a control's command list (for chips / labels). */
-export function shortLabel(cmds: Commands | null | undefined): string {
+/** Short human label for a control's command list (for chips / labels). When the live integration
+ *  data is supplied, the named-target form ("Music — Wave Link") is preferred. */
+export function shortLabel(cmds: Commands | null | undefined, data?: IntegrationDataService): string {
   const first = cmds?.commands?.[0];
   if (!first) return '';
+  if (data) {
+    const described = describeCommand(first, data);
+    if (described) return described;
+  }
   const typeName = (first._type?.split('.').pop() ?? '').replace(/^Command/, '');
   const fn = SHORT[`Command${typeName}`];
   const label = fn?.(first);
