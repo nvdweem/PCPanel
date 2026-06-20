@@ -51,6 +51,15 @@ export class DeviceStateService implements OnDestroy {
     this._devices.update(patch(serial, d => ({ ...d, profiles: fn(d.profiles ?? []) })));
   }
 
+  /** Optimistically reflect a profile rename: update the list and the current-profile pointer. */
+  patchProfileRename(serial: string, oldName: string, newName: string): void {
+    this._devices.update(patch(serial, d => ({
+      ...d,
+      profiles: (d.profiles ?? []).map(p => p === oldName ? newName : p),
+      currentProfile: d.currentProfile === oldName ? newName : d.currentProfile,
+    })));
+  }
+
   // Own the websocket lifecycle to avoid missing early events before subscription.
   private connect(): void {
     if (this.destroyed) return;

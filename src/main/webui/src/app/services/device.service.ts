@@ -49,6 +49,10 @@ export class DeviceService {
     return this.http.delete<void>(`${this.base}/${serial}/profiles/${name}`);
   }
 
+  renameProfile(serial: string, oldName: string, newName: string): Observable<void> {
+    return this.http.put<void>(`${this.base}/${serial}/profiles/${encodeURIComponent(oldName)}/rename`, newName, {headers: {'Content-Type': 'text/plain'}});
+  }
+
   switchProfile(serial: string, name: string): Observable<void> {
     return this.http.put<void>(`${this.base}/${serial}/profiles/current`, name, {headers: {'Content-Type': 'text/plain'}});
   }

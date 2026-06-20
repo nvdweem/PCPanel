@@ -117,6 +117,31 @@ public class DeviceResource {
     }
 
     @PUT
+    @Path("/{serial}/profiles/{name}/rename")
+    @Consumes(MediaType.TEXT_PLAIN)
+    public Response renameProfile(@PathParam("serial") String serial, @PathParam("name") String name, String newName) {
+        var trimmed = newName == null ? "" : newName.trim();
+        if (trimmed.isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+        var deviceSave = getDeviceSave(serial);
+        var profile = deviceSave.getProfile(name).orElseThrow(() -> new NotFoundException("Profile not found: " + name));
+        if (name.equals(trimmed)) {
+            return Response.ok().build();
+        }
+        if (deviceSave.getProfile(trimmed).isPresent()) {
+            return Response.status(Response.Status.CONFLICT).build();
+        }
+        profile.setName(trimmed);
+        // Keep the current-profile pointer valid when the active profile is the one renamed.
+        if (name.equals(deviceSave.getCurrentProfileName())) {
+            deviceSave.setCurrentProfileName(trimmed);
+        }
+        saveService.save();
+        return Response.ok().build();
+    }
+
+    @PUT
     @Path("/{serial}/profiles/current")
     @Consumes(MediaType.TEXT_PLAIN)
     public Response switchProfile(@PathParam("serial") String serial, String name) {
