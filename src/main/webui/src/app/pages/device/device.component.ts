@@ -1,12 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { DeviceStateService } from '../../services/device-state.service';
 import { DeviceService } from '../../services/device.service';
-import { IconComponent, MenuComponent, MenuItem, ModalComponent, ToastService } from '../../ui';
+import { IntegrationDataService } from '../../features/commands/integration-data.service';
+import { AppPickerComponent, IconComponent, MenuComponent, MenuItem, ModalComponent, ToastService, ToggleComponent } from '../../ui';
 import { shortLabel } from '../../devices/visual/device-visual.util';
 import { DebugService } from '../../services/debug.service';
-import { Commands } from '../../models/generated/backend.types';
+import { Commands, ProfileSettingsDto } from '../../models/generated/backend.types';
 
 const EMPTY: Commands = { commands: [], type: 'allAtOnce' };
 
@@ -15,7 +16,7 @@ interface SlotLine { label: string; text: string; cls: string; }
 @Component({
   selector: 'app-device',
   standalone: true,
-  imports: [OverlayModule, IconComponent, MenuComponent, ModalComponent],
+  imports: [OverlayModule, IconComponent, MenuComponent, ModalComponent, ToggleComponent, AppPickerComponent],
   templateUrl: './device.component.html',
   styleUrl: './device.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -23,6 +24,7 @@ interface SlotLine { label: string; text: string; cls: string; }
 export class DeviceComponent {
   private readonly state = inject(DeviceStateService);
   private readonly deviceService = inject(DeviceService);
+  private readonly integrations = inject(IntegrationDataService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
   private readonly debug = inject(DebugService);
@@ -30,6 +32,22 @@ export class DeviceComponent {
   readonly serial = input.required<string>();
 
   readonly snap = this.state.snapshotFor(this.serial);
+
+  constructor() {
+    // Load the current profile's activation settings whenever the active profile changes.
+    effect(() => {
+      const serial = this.serial();
+      const profile = this.currentProfile();
+      if (!serial || !profile) return;
+      const key = `${serial}:${profile}`;
+      if (key === this.settingsKey) return;
+      this.settingsKey = key;
+      this.deviceService.getProfileSettings(serial, profile).subscribe({
+        next: s => this.profileSettings.set(s),
+        error: () => this.profileSettings.set(null),
+      });
+    });
+  }
 
   readonly isPro = computed(() => (this.debug.deviceTypeOverride() || this.snap()?.deviceType) === 'PCPANEL_PRO');
   readonly knobCount = computed(() => this.isPro() ? 5 : 4);
@@ -43,7 +61,6 @@ export class DeviceComponent {
 
   readonly newProfileOpen = signal(false);
   readonly newProfileName = signal('');
-  readonly manageOpen = signal(false);
   readonly pendingDelete = signal<string | null>(null);
 
   readonly profiles = computed(() => this.snap()?.profiles ?? []);
@@ -153,26 +170,75 @@ export class DeviceComponent {
   }
 
   // ── profile management ──────────────────────────────────────────────────────
-  /** Active profile and last-remaining profile can't be deleted. */
-  canDelete(name: string): boolean {
-    return name !== this.currentProfile() && this.profiles().length > 1;
-  }
+  /** Any profile can be deleted (incl. the active one) except the last remaining one. */
+  readonly canDelete = computed(() => this.profiles().length > 1);
 
   requestDelete(name: string): void {
-    if (this.canDelete(name)) this.pendingDelete.set(name);
+    if (this.canDelete()) this.pendingDelete.set(name);
   }
+
+  deleteCurrent(): void { this.requestDelete(this.currentProfile()); }
 
   confirmDelete(): void {
     const serial = this.serial();
     const name = this.pendingDelete();
     this.pendingDelete.set(null);
     if (!name) return;
-    this.deviceService.deleteProfile(serial, name).subscribe({
-      next: () => {
-        this.state.patchProfiles(serial, ps => ps.filter(p => p !== name));
-        this.toast.show(`Deleted profile "${name}"`, { kind: 'success' });
-      },
-      error: () => this.toast.show('Could not delete profile', { kind: 'error' }),
-    });
+    const profiles = this.profiles();
+    if (profiles.length <= 1) return;                 // never delete the last profile
+
+    const remove = () => {
+      this.deviceService.deleteProfile(serial, name).subscribe({
+        next: () => {
+          this.state.patchProfiles(serial, ps => ps.filter(p => p !== name));
+          this.toast.show(`Deleted profile "${name}"`, { kind: 'success' });
+        },
+        error: () => this.toast.show('Could not delete profile', { kind: 'error' }),
+      });
+    };
+
+    // Deleting the active profile: switch to the next one first, then remove it.
+    if (name === this.currentProfile()) {
+      const i = profiles.indexOf(name);
+      const next = profiles[i + 1] ?? profiles[i - 1];
+      this.deviceService.switchProfile(serial, next).subscribe({
+        next: remove,
+        error: () => this.toast.show('Could not switch profile', { kind: 'error' }),
+      });
+      return;
+    }
+    remove();
   }
+
+  // ── per-profile activation settings ──────────────────────────────────────────
+  readonly profileSettings = signal<ProfileSettingsDto | null>(null);
+  private settingsKey = '';
+  readonly appPickerOpen = signal(false);
+  readonly newApp = signal('');
+  readonly processItems = computed(() => this.integrations.processItems());
+
+  private saveSettings(next: ProfileSettingsDto): void {
+    this.profileSettings.set(next);
+    this.deviceService.setProfileSettings(this.serial(), next.name, next)
+      .subscribe({ error: () => this.toast.show('Could not save profile settings', { kind: 'error' }) });
+  }
+
+  setMain(on: boolean): void { const s = this.profileSettings(); if (s) this.saveSettings({ ...s, isMainProfile: on }); }
+  setFocusBack(on: boolean): void { const s = this.profileSettings(); if (s) this.saveSettings({ ...s, focusBackOnLost: on }); }
+
+  addApp(name: string): void {
+    const s = this.profileSettings();
+    const n = name.trim();
+    if (!s || !n || s.activateApplications.some(a => a.toLowerCase() === n.toLowerCase())) return;
+    this.saveSettings({ ...s, activateApplications: [...s.activateApplications, n] });
+  }
+
+  removeApp(name: string): void {
+    const s = this.profileSettings();
+    if (!s) return;
+    this.saveSettings({ ...s, activateApplications: s.activateApplications.filter(a => a !== name) });
+  }
+
+  addManual(): void { this.addApp(this.newApp()); this.newApp.set(''); }
+  onAppPicked(name: string): void { this.appPickerOpen.set(false); this.addApp(name); }
 }

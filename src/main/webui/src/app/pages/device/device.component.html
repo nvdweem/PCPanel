@@ -16,14 +16,72 @@
         <button class="prof-add" (click)="newProfileOpen.set(true)" title="New profile">
           <pc-icon name="plus" [size]="14" [strokeWidth]="2.4"></pc-icon>
         </button>
-        <button class="prof-add" (click)="manageOpen.set(true)" title="Manage profiles">
-          <pc-icon name="settings" [size]="14"></pc-icon>
+        <button class="prof-del" (click)="deleteCurrent()" [disabled]="!canDelete()"
+                [title]="canDelete() ? 'Delete the current profile' : 'Can\'t delete the last profile'">
+          <pc-icon name="trash" [size]="14"></pc-icon>
         </button>
       </div>
     </header>
 
     <!-- ── Body ──────────────────────────────────────────────────────────── -->
     <div class="body">
+      <!-- PROFILE SETTINGS (per-profile activation) -->
+      @if (profileSettings(); as ps) {
+        <section class="sec">
+          <div class="micro-label">PROFILE “{{ ps.name }}” · ACTIVATION</div>
+          <div class="pc-card ps-card">
+            <div class="ps-row">
+              <div class="ps-text">
+                <div class="ps-title">Main profile</div>
+                <div class="ps-sub">The fallback profile when no app-specific profile is active.</div>
+              </div>
+              <pc-toggle [value]="ps.isMainProfile" (valueChange)="setMain($event)"></pc-toggle>
+            </div>
+
+            <div class="ps-divider"></div>
+
+            <div class="ps-block">
+              <div class="ps-title">Activate when these apps are focused</div>
+              <div class="ps-sub">Switch to this profile automatically when one of these apps comes to the foreground.</div>
+              <div class="ps-apps">
+                @for (app of ps.activateApplications; track app) {
+                  <span class="ps-chip">
+                    {{ app }}
+                    <button class="ps-chip-x" (click)="removeApp(app)" title="Remove"><pc-icon name="x" [size]="11"></pc-icon></button>
+                  </span>
+                }
+                @if (!ps.activateApplications.length) {
+                  <span class="ps-empty">No apps — this profile is only activated manually.</span>
+                }
+              </div>
+              <div class="ps-add">
+                <button class="pc-btn ghost ps-pick" cdkOverlayOrigin #ap="cdkOverlayOrigin" (click)="appPickerOpen.set(true)">
+                  <pc-icon name="plus" [size]="13"></pc-icon> Add app
+                </button>
+                <input class="pc-input ps-manual" placeholder="or type an executable name…" [value]="newApp()"
+                       (input)="newApp.set($any($event.target).value)" (keydown.enter)="addManual()">
+                <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="ap" [cdkConnectedOverlayOpen]="appPickerOpen()"
+                             [cdkConnectedOverlayHasBackdrop]="true" cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+                             [cdkConnectedOverlayWidth]="300" [cdkConnectedOverlayOffsetY]="6"
+                             (backdropClick)="appPickerOpen.set(false)" (detach)="appPickerOpen.set(false)">
+                  <pc-app-picker [items]="processItems()" (picked)="onAppPicked($event)"></pc-app-picker>
+                </ng-template>
+              </div>
+            </div>
+
+            <div class="ps-divider"></div>
+
+            <div class="ps-row">
+              <div class="ps-text">
+                <div class="ps-title">Return to main profile when focus is lost</div>
+                <div class="ps-sub">When a triggering app loses focus, switch back to the main profile.</div>
+              </div>
+              <pc-toggle [value]="ps.focusBackOnLost" (valueChange)="setFocusBack($event)"></pc-toggle>
+            </div>
+          </div>
+        </section>
+      }
+
       <!-- KNOBS -->
       <section class="sec">
         <div class="micro-label">KNOBS · {{ knobCount() }} — each presses as a button</div>
@@ -65,7 +123,7 @@
       <!-- SLIDERS (Pro only) -->
       @if (isPro()) {
         <section class="sec">
-          <div class="micro-label">SLIDERS · 4 — Pro only</div>
+          <div class="micro-label">SLIDERS · 4</div>
           <div class="slider-grid">
             @for (j of sliderIdx(); track j) {
               <div class="pc-card slider-card" role="button" tabindex="0" [attr.aria-label]="'Configure slider ' + (j + 1)"
@@ -98,31 +156,6 @@
         <button class="pc-btn ghost" (click)="newProfileOpen.set(false)">Cancel</button>
         <button class="pc-btn primary" (click)="createProfile()">Create</button>
       </div>
-    </div>
-  </pc-modal>
-
-  <!-- Manage profiles modal -->
-  <pc-modal [open]="manageOpen()" heading="Manage profiles" [width]="380" (dismiss)="manageOpen.set(false)">
-    <div class="manage-body">
-      <div class="manage-list">
-        @for (p of profiles(); track p) {
-          <div class="manage-row" [class.active]="p === currentProfile()">
-            <span class="mp-name">{{ p }}</span>
-            @if (p === currentProfile()) { <span class="mp-tag">active</span> }
-            <span class="spacer"></span>
-            @if (p !== currentProfile()) {
-              <button class="mp-switch" (click)="switchProfile(p)">Switch</button>
-            }
-            <button class="mp-del" [disabled]="!canDelete(p)" (click)="requestDelete(p)"
-                    [title]="canDelete(p) ? 'Delete profile' : 'Can\'t delete the active or last profile'">
-              <pc-icon name="trash" [size]="14"></pc-icon>
-            </button>
-          </div>
-        }
-      </div>
-      <button class="pc-add-dashed mp-create" (click)="manageOpen.set(false); newProfileOpen.set(true)">
-        <pc-icon name="plus" [size]="14"></pc-icon> Create profile
-      </button>
     </div>
   </pc-modal>
 

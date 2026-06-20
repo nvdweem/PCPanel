@@ -26,11 +26,41 @@
   background: transparent; color: var(--text-2); cursor: pointer; display: flex; align-items: center; justify-content: center;
 }
 .prof-add:hover { border-color: var(--accent-border); color: var(--accent-text); }
+.prof-del {
+  width: 30px; height: 30px; flex: none; border-radius: 7px; border: 1px dashed var(--line-2);
+  background: transparent; color: var(--text-2); cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.prof-del:hover:not(:disabled) { border-color: var(--err-border, var(--err-text)); color: var(--err-text); }
+.prof-del:disabled { opacity: .4; cursor: not-allowed; }
 
 /* ── Body ──────────────────────────────────────────────────────────────────── */
 .body { flex: 1; overflow: auto; padding: 24px 26px; }
 .sec { margin-bottom: 30px; }
 .sec .micro-label { display: block; margin-bottom: 14px; }
+
+/* ── Per-profile activation card ─────────────────────────────────────────────── */
+.ps-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 4px 16px; }
+.ps-row { display: flex; align-items: center; gap: 16px; padding: 14px 0; }
+.ps-text { flex: 1; min-width: 0; }
+.ps-title { font-size: 13.5px; color: var(--text-1); }
+.ps-sub { font-size: 12px; color: var(--text-3); margin-top: 3px; line-height: 1.45; }
+.ps-divider { height: 1px; background: var(--line-hair, var(--line)); }
+.ps-block { padding: 14px 0; }
+.ps-block .ps-sub { margin-bottom: 11px; }
+.ps-apps { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 11px; }
+.ps-chip {
+  display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--text-1);
+  background: var(--accent-tint); border: 1px solid var(--accent-border); border-radius: var(--r-pill); padding: 4px 6px 4px 11px;
+}
+.ps-chip-x {
+  display: flex; border: none; background: transparent; color: var(--accent-text); cursor: pointer; padding: 2px;
+  border-radius: 50%; line-height: 0;
+}
+.ps-chip-x:hover { background: rgba(255,255,255,0.08); color: var(--text-1); }
+.ps-empty { font-size: 12px; color: var(--text-3); font-style: italic; }
+.ps-add { display: flex; align-items: center; gap: 10px; }
+.ps-pick { flex: none; }
+.ps-manual { flex: 1; min-width: 0; }
 
 /* ── Knob cards ────────────────────────────────────────────────────────────── */
 .knob-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
@@ -81,16 +111,3 @@
 .np-body { width: 280px; }
 .np-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
 .del-msg { font-size: 12.5px; color: var(--text-2); line-height: 1.5; margin: 0; }
-
-/* Manage profiles modal */
-.manage-body { display: flex; flex-direction: column; gap: 8px; }
-.manage-list { display: flex; flex-direction: column; gap: 6px; }
-.manage-row { display: flex; align-items: center; gap: 10px; background: var(--input); border: 1px solid var(--line); border-radius: var(--r-md); padding: 9px 12px; }
-.manage-row.active { border-color: var(--accent-border); }
-.mp-name { font-size: 13px; }
-.mp-tag { font-family: var(--font-mono); font-size: 9.5px; color: var(--accent-ink); background: var(--accent); padding: 2px 6px; border-radius: var(--r-pill); font-weight: 600; }
-.mp-switch { font-size: 11.5px; color: var(--text-2); background: transparent; border: 1px solid var(--line-2); border-radius: var(--r-sm); padding: 4px 9px; cursor: pointer; }
-.mp-switch:hover { color: var(--text-1); border-color: var(--text-3); }
-.mp-del { border: none; background: transparent; color: var(--err-text); cursor: pointer; display: flex; padding: 3px; }
-.mp-del:disabled { color: var(--text-3); opacity: .5; cursor: not-allowed; }
-.mp-create { width: 100%; margin-top: 4px; }
