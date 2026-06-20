@@ -24,6 +24,7 @@ export type FieldDef =
   | { kind: 'device'; key: string; label: string; filter?: 'output' | 'input' | 'all' }
   | { kind: 'mute'; key: string; label: string }
   | { kind: 'keystroke' }                       // CommandKeystroke: KEY/TEXT toggle + combo/text
+  | { kind: 'wavelink-target' }                 // id1 (+id2 for Mix), with the source driven by commandType
   | { kind: 'devices-list'; key: string; label: string };  // cycle list of device ids
 
 export interface CommandDef {
@@ -210,17 +211,23 @@ export const COMMANDS: CommandDef[] = [
     fields: [
       {
         kind: 'select', key: 'commandType', label: 'Target', options: [
-          { value: 'Channel', label: 'Channel' }, { value: 'Mix', label: 'Mix' }, { value: 'Output', label: 'Output' },
+          { value: 'Channel', label: 'Channel' }, { value: 'Input', label: 'Input' },
+          { value: 'Mix', label: 'Mix' }, { value: 'Output', label: 'Output' },
         ],
       },
-      { kind: 'select-live', key: 'id1', label: 'Channel', source: 'wl-channels' },
+      { kind: 'wavelink-target' },
     ],
   },
   {
     type: WL + 'CommandWaveLinkChangeMute', label: 'Wave Link — mute', category: 'integration', integration: 'wavelink', kinds: ['button'], icon: 'mic-off',
     buildEmpty: () => ({ _type: WL + 'CommandWaveLinkChangeMute', commandType: 'Channel', id1: '', id2: '', muteType: 'toggle', overlayText: '' }),
     fields: [
-      { kind: 'select-live', key: 'id1', label: 'Channel', source: 'wl-channels' },
+      {
+        kind: 'select', key: 'commandType', label: 'Target', options: [
+          { value: 'Channel', label: 'Channel' }, { value: 'Mix', label: 'Mix' }, { value: 'Output', label: 'Output' },
+        ],
+      },
+      { kind: 'wavelink-target' },
       { kind: 'mute', key: 'muteType', label: 'Action' },
     ],
   },

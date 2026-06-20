@@ -98,6 +98,20 @@ type Cmd = Record<string, any>;
                              placeholder="Search devices…"></pc-app-picker>
             </div>
           }
+          @case ('wavelink-target') {
+            <div class="field-block">
+              <div class="flabel">{{ wlPrimaryLabel() }}</div>
+              <pc-select [block]="true" [options]="liveOptions(wlPrimarySource())" [value]="val('id1')"
+                         placeholder="—" (valueChange)="set('id1', $event)"></pc-select>
+            </div>
+            @if (val('commandType') === 'Mix') {
+              <div class="field-block">
+                <div class="flabel">Mix</div>
+                <pc-select [block]="true" [options]="liveOptions('wl-mixes')" [value]="val('id2')"
+                           placeholder="—" (valueChange)="set('id2', $event)"></pc-select>
+              </div>
+            }
+          }
           @case ('keystroke') {
             <div class="field-block">
               <div class="flabel">Mode</div>
@@ -209,6 +223,23 @@ export class CommandFieldsComponent {
       case 'wl-outputs': return wlOpts(this.data.wlOutputs());
       case 'profiles': return this.profiles().map(p => ({ value: p, label: p }));
       default: return [];
+    }
+  }
+
+  // ── Wave Link target: id1's list (and its label) follow the chosen commandType.
+  //    Mix additionally needs a mix (id2), handled in the template. Channel/Input/Output use id1 only.
+  wlPrimarySource(): LiveSource {
+    switch (this.val('commandType')) {
+      case 'Input': return 'wl-inputs';
+      case 'Output': return 'wl-outputs';
+      default: return 'wl-channels';   // Channel and Mix both pick a channel first
+    }
+  }
+  wlPrimaryLabel(): string {
+    switch (this.val('commandType')) {
+      case 'Input': return 'Input';
+      case 'Output': return 'Output';
+      default: return 'Channel';
     }
   }
 
