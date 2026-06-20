@@ -1,129 +1,112 @@
-# Third party PCPanel Software
+# PCPanel — Community Edition
 
-Third party/community managed controller software for the [PCPanel](https://getpcpanel.com) devices.
+Turn the knobs, sliders and buttons on your [PCPanel](https://getpcpanel.com) into physical
+controls for everything on your PC: per-app volume, your microphone, OBS scenes, media playback,
+keyboard shortcuts and more.
 
-**This software is not affiliated with PCPanel Software**, the original software can be found [here](https://www.getpcpanel.com/download).
-This project aims to add features and fix bugs that are requested by the community. The version numbering is disconnected from the original
-software, this project started counting at version 1.0 which was essentially a branch of the official 2.2.1 release.
+This is **third-party, community-maintained** software for PCPanel hardware. It is a drop-in
+alternative to the official app that adds features and bug fixes requested by the community.
 
-To see all changes since the original software, see the [changelog](CHANGELOG.md).
+> **Not affiliated with PCPanel / getpcpanel.com.** The original, official software lives
+> [here](https://www.getpcpanel.com/download). This project's version numbering is independent —
+> it started at 1.0 from a fork of the official 2.2.1 release.
 
-Development focus is mainly targeted at Windows but some effort is put into making the software run on Linux and macOS.
+![The PCPanel configuration window — the on-screen layout mirrors the physical device](docs/images/main-window.png)
 
-# Download
+<!-- Optional future hero shot: a photo of the PCPanel hardware on a desk next to this window,
+     to drive home "physical knobs ↔ on-screen controls". Place at docs/images/hero.png. -->
 
-The installer can be found by clicking the latest release on the right side of the page. When development is ongoing there will
-also be a 'snapshot' release which can be found by opening the [releases](https://github.com/nvdweem/PCPanel/releases) page.
+## What it does
 
-Once on the release page there will be a changelog and a list of assets. The Windows installer is the `PCPanel-<version>-setup.exe`,
-the Linux installer is the `.deb` file (a Flatpak bundle is also provided as a best-effort alternative) and the macOS installer is the
-architecture-specific `PCPanel-<version>-<arch>.dmg`. The application is now a native executable, so a separate Java installation is
-no longer required.
+A PCPanel is a small USB desk controller with knobs, sliders and buttons — many with RGB lighting.
+On its own the hardware does nothing; this app is the brain that decides what each control should do.
 
-The 'Source code' artifact is probably not needed for anybody.
+You bind each knob, slider and button to an action, and the app translates physical movement into
+real changes on your system in real time:
 
-# Installation
+- **Per-application volume** — give Discord, Spotify, your game and your browser each their own
+  physical knob. Mute with a button press.
+- **Device & default-output control** — set the volume of any output/input device, toggle mute, or
+  flip the Windows default playback device from a button.
+- **"Focused app" volume** — one knob that always controls whatever window you're currently using.
+- **Media & keyboard** — play/pause/skip, send any keystroke or shortcut combo, launch or close a
+  program.
+- **RGB lighting** — pick colors per control, with effects, and a global brightness knob.
+- **Profiles** — keep different mappings for gaming, streaming and work, and switch between them
+  from a button (or have them switch automatically).
+- **Integrations** — drive **OBS** (scenes, source mute, source volume), **Voicemeeter**, Elgato
+  **Wave Link**, and send/receive **OSC** and **MQTT** for stream-deck and home-automation setups.
 
-## Windows
+An optional on-screen **overlay** briefly shows the level as you turn a knob, and the app lives in
+the **system tray** so it stays out of your way.
 
-Run the `PCPanel-<version>-setup.exe` installer, and you should be good to go. It is a per-user install, so it needs no
-administrator rights and installs into your user profile (`%LOCALAPPDATA%`). The installer can run the application when it
-finishes and offers to add the application to start automatically when you sign in to Windows — optionally with
-administrator privileges (set up as a scheduled task), which is needed if you want PCPanel to control apps that run elevated.
+Click any control to configure it. Each knob has independent **turn**, **single-press** and
+**double-press** slots, an input-mapping curve, and per-control color — and you pick an action from a
+categorized menu covering audio, system and every integration:
 
-## Linux
+![Configuring a knob: binding it to an action, with the action-type menu on the right](docs/images/bind-control.png)
 
-Installing on Linux is a bit harder, see [Linux instructions](linux.md).
+Light the device however you like — solid, rainbow, wave, breath, or fully per-control colors — with
+a live preview that animates on the hardware as you edit:
 
-## macOS
+![Lighting configuration with live device preview](docs/images/lighting.png)
 
-macOS support is experimental and community-contributed, see [macOS instructions](mac.md). Device
-volume, mute and default-device switching work, but per-application volume is not possible on stock macOS.
+### Supported hardware
 
-# Issues / Feature requests
+The PCPanel **Mini**, **Pro** and **RGB** are all supported. No drivers are required — the device is
+a standard USB HID peripheral.
 
-If you encounter any issues with the software, or you have an idea for improvements please create an
-issue on the [issue tracker](https://github.com/nvdweem/PCPanel/issues). For issues, try to be as
-complete as possible in the description. The issue templates should indicate what information is needed.
+## Download & install
 
-# Migration
+Grab the latest installer from the [**Releases**](https://github.com/nvdweem/PCPanel/releases) page.
+The newest stable release is pinned at the top; in-progress development builds are published as
+`snapshot` pre-releases on the same page. Each release lists a changelog and a set of download assets.
 
-The first startup will check for the profile from the original software and ask to migrate. If this doesn't work, or you want to migrate manually again later, you will need to
-manually copy the settings file:
-`%localappdata%\PCPanel Software\save.json`
-to
-`%userprofile%\.pcpanel\profiles.json`
+The app ships as a self-contained native executable — **no Java installation is required.**
 
-# Generate reachability metadata
+| Platform | Asset | Notes |
+|----------|-------|-------|
+| **Windows** | `PCPanel-<version>-setup.exe` | Recommended. See below. |
+| **Linux** | `pcpanel_<version>_amd64.deb` (or Flatpak / AppImage) | Best-effort — see [linux.md](linux.md). |
+| **macOS** | `PCPanel-<version>-<arch>.dmg` | Experimental — see [mac.md](mac.md). Pick `aarch64` for Apple Silicon, `x86_64` for Intel. |
 
-The metadata is produced by running the test suite under the GraalVM tracing agent: whatever the
-tests exercise, the agent records (reflection, JNI, resources and the JNA/dbus dynamic proxies that
-`Native.load` builds). So a path is only covered if a test actually drives it — e.g. keystroke
-injection (`LinuxKeyboard`) is covered by `LinuxKeyboardNativeConfigTest`.
+> The `Source code` asset attached to releases is not needed to run the app.
 
-`config-output-dir` **replaces** the metadata with only what the current run captured.
-`config-merge-dir` **merges** new findings into the existing files. Use *merge* when regenerating on
-a single OS, otherwise a Linux run wipes the Windows-captured entries (and vice versa) — the
-committed metadata is the union across all platforms.
+### Windows
 
-The simplest path is the `native-config-gen` Maven profile, which attaches the agent in merge mode
-and enables the generation-only tests (those gated on `pcpanel.generate-native-config`, e.g. the
-keystroke test that synthesises an `F24` press to load `libX11`/`libXtst`). Run it with a GraalVM
-JDK on a host that has the relevant native libraries (and a live display, for keystrokes):
+Run `PCPanel-<version>-setup.exe`. It's a **per-user install** — no administrator rights needed; it
+installs into your user profile (`%LOCALAPPDATA%`). The installer can launch the app when it finishes
+and offers to start PCPanel automatically when you sign in to Windows. You can optionally grant it
+administrator privileges at login (set up as a scheduled task), which is required if you want PCPanel
+to control the volume of apps that run elevated.
 
-```shell
-mvn -Pnative-config-gen test -Dquarkus.native.enabled=false
+### Linux
+
+Linux is best-effort. Device access needs udev rules and a couple of helper packages; the `.deb`
+handles most of this for you. Full instructions, including autostart and Wayland tray setup, are in
+[linux.md](linux.md).
+
+### macOS
+
+macOS support is experimental and community-contributed. Device volume, mute and default-device
+switching work; per-application volume is not possible on stock macOS. The app is unsigned, so
+Gatekeeper needs a one-time workaround. See [mac.md](mac.md) for installation and required
+permissions.
+
+## Migrating from the official app
+
+On first launch the app looks for a profile from the official software and offers to import it. If
+that doesn't happen automatically, or you want to redo it later, copy the settings file manually:
+
+```text
+from:  %localappdata%\PCPanel Software\save.json
+to:    %userprofile%\.pcpanel\profiles.json
 ```
 
-Equivalent raw invocations, if you need to tweak flags:
+## Help & feedback
 
-```shell
-# Merge mode (recommended): add what this run discovers, keep everything already captured.
-mvn test "-DargLine=-agentlib:native-image-agent=config-merge-dir=src/main/resources/META-INF/native-image/ -Djava.awt.headless=false"
-
-# Replace mode: regenerate from scratch (only safe if this run exercises EVERY platform's paths).
-mvn test "-DargLine=-agentlib:native-image-agent=config-output-dir=src/main/resources/META-INF/native-image/ -Djava.awt.headless=false"
-
-# Quarkus: apply the captured agent configuration during the native build.
-mvn test "-DargLine=-Dnative -Dquarkus.native.agent-configuration-apply" -Dnative -Dquarkus.native.agent-configuration-apply
-```
-
-After generating, strip any captured test-infrastructure entries (class names ending in `Test`,
-JUnit/Mockito internals). Proxies that the agent cannot observe because their native library is not
-present during tests — the Windows JNA libraries on a Linux box, the macOS CoreGraphics/CoreAudio
-libraries anywhere but a Mac — are kept by hand in
-`src/main/resources/META-INF/native-image/com.getpcpanel/pcpanel/proxy-config.json`.
-
-`ProxyRegistrationCoverageTest` is a safety net for *one* failure mode: it scans every JNA `Library`
-interface in the project and fails (on any OS, in a plain `mvn test`) if one is missing from the
-metadata, printing the exact entry to add. It catches a forgotten platform proxy regardless of which
-OS you build on — but it is a JVM test, so it sees nothing of how the code behaves under
-`native-image`. Passing it does **not** mean the native build works.
-
-# Verify the native image builds
-
-A plain `mvn test` runs on the JVM, where build-time-vs-run-time class initialization, image-heap
-constraints and reachability are all irrelevant — so an entire class of failures is invisible to it.
-The metadata generation above and `ProxyRegistrationCoverageTest` are necessary but **not
-sufficient**: neither compiles a native image, so neither can catch a class whose static initializer
-bakes a `--initialize-at-run-time` object into the build-time image heap (the June 2026 Wayland tray
-`IconPixmap` regression — `UnsupportedFeatureException: ... found in the image heap`), a missing
-reflection/resource entry the agent never recorded, or any other native-only break.
-
-**The only reliable check is to actually build the native image for your OS before pushing any change
-that touches native config, class-init timing, or JNA/D-Bus/AWT-adjacent code:**
-
-```shell
-# GraalVM CE 25 JDK required (JAVA_HOME must point at it). Native compilation is headless-safe,
-# so -DskipTests avoids needing a display; drop it to also run the AWT/Swing tests as CI does.
-./mvnw -B package -Pnative -DskipTests
-```
-
-A green `BUILD SUCCESS` with a `target/*-runner` (`.exe` on Windows) is the real confirmation. CI
-builds the native image for Windows, Linux and macOS, but it only runs **after** a push to `main`
-(there is no pull-request build), so a native break is not caught until it has already landed —
-building locally first is what keeps `main` green.
-
-
----
-Build template from [wiverson](https://github.com/wiverson/maven-jpackage-template)
+- **Something broken, or an idea for a feature?** Open an issue on the
+  [issue tracker](https://github.com/nvdweem/PCPanel/issues). The issue templates list the
+  information that helps most — please be as complete as you can.
+- **Want to hack on it?** See [CONTRIBUTING.md](CONTRIBUTING.md) for build and development setup.
+</content>

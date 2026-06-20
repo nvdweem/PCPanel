@@ -1,64 +1,145 @@
-# PCPanel contribution
+# Contributing to PCPanel
 
-This repository is based on the decompiled source code of the original app. The parts that couldn't be decompiled (dll's and sndctrl.exe)
-have been replaced with custom native implementations. The source code for those parts are either Java-JNA implementations or in the
-`src/main/cpp` directory.
+Thanks for your interest in hacking on PCPanel! This document covers how the project is built and
+how to get a development environment running. For what the app *does* and how to install it as a
+user, see the [README](README.md).
 
-## Running in IntelliJ
+> **History:** the project began as the decompiled source of the official app, with the parts that
+> couldn't be decompiled (the `SndCtrl.dll` / `sndctrl.exe` audio layer) rewritten as custom native
+> implementations. It was later migrated from **Spring Boot + JavaFX** to **Quarkus + Angular** and
+> now ships as a **GraalVM native image**. (If you find docs that still mention JavaFX, jpackage,
+> Wix or Liberica JDK, they are stale — please fix them.)
 
-1. Import the project
-1. Either
-    1. Install JavaFX manually:
-        1. Install JavaFX [Windows](https://download2.gluonhq.com/openjfx/18.0.2/openjfx-18.0.2_windows-x64_bin-sdk.zip), [Linux](https://download2.gluonhq.com/openjfx/18.0.2/openjfx-18.0.2_linux-x64_bin-sdk.zip)
-        1. Setup the `JAVAFX_HOME` environment variable to the `javafx-sdk-x.y.z` directory
-    1. Use [Liberica JDK](https://bell-sw.com/pages/downloads/) (Full JDK option, minimal version 17). It has JavaFX included.
-1. Use the `PCPanel` run configuration
+## Tech stack
 
-For Linux you will also need to do the steps from the [Linux instructions](linux.md) Installation step.
+- **Backend:** [Quarkus](https://quarkus.io/) on **Java 25**, CDI (Arc) beans wired by injection,
+  cross-cutting communication over the CDI event bus.
+- **Frontend:** **Angular 21** in `src/main/webui`, served into a local browser by the
+  [Quinoa](https://docs.quarkiverse.io/quarkus-quinoa/dev/) extension. There is no separate window
+  framework — the "UI" is the browser served by the backend.
+- **Hardware:** USB HID via [hid4java](https://github.com/gary-rowe/hid4java).
+- **OS audio:** a platform-specific native layer — `SndCtrl.dll` (Windows Core Audio, JNI; source in
+  `src/main/cpp/`) and JNA/PulseAudio on Linux.
+- **Packaging:** GraalVM native image, wrapped into per-platform installers in CI.
 
-## Other IDE's
+A deeper tour of the architecture (hardware path, command model, persistence, the REST/WebSocket
+bridge, integrations) lives in [CLAUDE.md](CLAUDE.md).
 
-Probably the same, for the run configuration the important part is the VM options:
+## Prerequisites
 
-`--module-path="${JAVAFX_HOME}\lib" --add-modules=javafx.controls,javafx.fxml --add-exports javafx.controls/com.sun.javafx.scene.control.skin.resources=ALL-UNNAMED --add-exports javafx.base/com.sun.javafx.event=ALL-UNNAMED`
+- **Java 25.** A standard JDK 25 is enough for JVM-mode development. **Native** builds require
+  **GraalVM CE 25**.
+- The Maven wrapper (`./mvnw` / `mvnw.cmd`) — no separate Maven install needed.
+- **Node.js** is only needed if you want to run the Angular dev server standalone; otherwise Quinoa
+  manages it for you during `quarkus:dev`.
+- **Windows native code** (optional): Visual Studio, to rebuild `SndCtrl.dll` (see below).
 
-Adding the `skipfilecheck` command line argument ensures that you can debug while having the installed version running at the same time
-(otherwise starting in the IDE will open the installed version).
+Development focus is Windows; Linux is best-effort. On Linux you'll also need the device-access setup
+from [linux.md](linux.md).
 
-It's also possible to change the `application.properties` (or create an `application-default.properties` so it doesn't get committed) with the following:
+## Build & run
+
+The toolchain is the Maven wrapper.
+
+```bash
+./mvnw quarkus:dev          # dev mode: backend on :7654, Quinoa runs the Angular dev server on :4200 with live reload
+./mvnw clean package -Dquarkus.native.enabled=false   # JVM-only jar — fast, no GraalVM needed
+./mvnw clean package        # builds a NATIVE image by default (requires GraalVM)
+./mvnw test                 # unit tests (surefire)
+./mvnw test -Dtest=ClassName#method                   # a single test
+./mvnw verify -Pnative      # native build + integration tests against the runner binary
+```
+
+- For day-to-day work, **`quarkus:dev`** is what you want: live reload on both backend and frontend.
+- `package` produces a native executable at `target/*-runner` (Linux) / `target/*-runner.exe`
+  (Windows). The native image is **not** self-contained — it loads companion `*.dll`/`*.so`
+  libraries from its own directory, so any artifact must bundle them alongside the executable.
+
+### Running alongside an installed copy
+
+Pass the **`skipfilecheck`** argument when launching from your IDE — otherwise starting a second
+instance just focuses the already-installed one. To keep your real profile safe while testing, point
+the app at a separate data directory by setting `pcpanel.root=${user.home}/.pcpaneldev/` (the `dev`
+profile already does this). You can also create an uncommitted `application-default.properties` with:
 
 ```properties
-application.root=${user.home}/.pcpaneldev/
+pcpanel.root=${user.home}/.pcpaneldev/
 ```
 
-This will make the application use a different directory for the settings and profiles so that you don't overwrite your non-development profile while testing.
+### IDE setup
 
-## Build installer
+Import the project as a Maven project with a Java 25 SDK and use the **`PCPanel`** run configuration.
+No special VM options are required anymore (the JavaFX module flags from the old setup are obsolete).
+Add `skipfilecheck` to the program arguments so you can debug while the installed version is running.
 
-1. Install [Liberica JDK](https://bell-sw.com/pages/downloads/). The Full JDK option is required, at least version 17.
-    - Verify by opening a fresh Terminal/Command Prompt and typing `java --version`.
-1. Install [Apache Maven 3.6.3](http://maven.apache.org/install.html) or later and make sure it's on your path.
-    - Verify this by opening a fresh Terminal/Command Prompt and typing `mvn --version`.
-1. install [Wix 3 binaries](https://github.com/wixtoolset/wix3/releases/).
-    - Windows only, not needed for Linux
-    - Installing Wix via the installer should be sufficient for jpackage to find it.
-1. Final step: run `mvn clean install`
+## Frontend (`src/main/webui`)
 
-## Native code (Windows only)
+Normally you don't run the frontend directly — `quarkus:dev` proxies it. To run it standalone:
 
-There is a visual studio solution in the `src/main/cpp` directory. The solution seems to have a single setting that has a hardcoded path
-which is the JNI include directory.
+```bash
+cd src/main/webui
+npm install
+npm start          # serves :4200, proxies /api + /ws to :7654
+```
 
-This can be changed by clicking the project properties and changing `Configuration properties > C/C++ > General > Additional Include Directories`.
+**TypeScript types are generated from Java, not hand-written.** The `typescript-generator-maven-plugin`
+(in the `compile` phase) writes `src/app/models/generated/backend.types.ts` from
+`com.getpcpanel.rest.model.**`, the command classes, and any `**.dto.**`. When you change a DTO or
+command shape, **recompile** so the contract regenerates — don't edit the generated file by hand.
 
-The SndCtrlTest project is there because Access Violations within JNI just close the application.
-Running it with the Test code might actually show the error.
+## Native C++ (`src/main/cpp/`, Windows only)
 
-An `EnableFullDump.reg` registry file is included to enable full dumps when the application crashes. This can be used to debug the native code.
+A Visual Studio solution builds `SndCtrl.dll` (audio control via Windows Core Audio) and a
+`SndCtrlTest` harness. The built DLL is committed at `src/main/resources/SndCtrl.dll`.
 
-## Native build stuff
+- The one machine-specific setting is the JNI include directory: project properties →
+  `C/C++ → General → Additional Include Directories`. Point it at your JDK's `include` folder.
+- `SndCtrlTest` exists because JNI access violations otherwise silently close the app — running the
+  test harness surfaces the actual error.
+- An `EnableFullDump.reg` file is included to enable full crash dumps for debugging the native code.
+
+## GraalVM native image
+
+The native image config is the most fragile part of the build. It lives in **two** places that must
+be kept in sync — the `quarkus.native.*` properties in `pom.xml` and the copy in
+`application.properties` — because which one wins depends on how the build is invoked. **Change both,**
+or you'll get different images locally vs. in CI. The full set of constraints (compressed-oops flag,
+`--initialize-at-run-time` classes, platform linker flags, macOS having no `libawt`) is documented in
+[CLAUDE.md](CLAUDE.md) — read that section before touching native config.
+
+Reachability metadata lives under `src/main/resources/META-INF/native-image/`. Regenerate it with the
+tracing agent:
 
 ```shell
-java.exe -agentlib:native-image-agent=config-output-dir=native-image
-         -jar target/pcpanel-1.8-SNAPSHOT-native-image-source-jar/pcpanel-1.8-SNAPSHOT-runner.jar
+mvn test "-DargLine=-agentlib:native-image-agent=config-output-dir=src/main/resources/META-INF/native-image/ -Djava.awt.headless=false"
+mvn test "-DargLine=-Dnative -Dquarkus.native.agent-configuration-apply" -Dnative -Dquarkus.native.agent-configuration-apply
 ```
+
+On Windows you can use `generate-native-configs.cmd`.
+
+## Releasing
+
+`<project.baseversion>` in `pom.xml` is the version source of truth (artifacts are
+`<baseversion>.<build>`). Bump it with `packaging/bump-version.sh <version>` (which also updates the
+AppStream metadata), then push a `releases/<version>` branch to trigger a release build. CI
+(`.github/workflows/build-and-release.yml`) builds the native image on Windows and Linux, wraps it in
+the platform installers (`packaging/`) and publishes a per-branch pre-release.
+
+## Coding conventions
+
+- **Lombok** is used throughout (`@Data`, `@Log4j2`, `@RequiredArgsConstructor`, …). `@Log4j2` is the
+  logging annotation.
+- Nullability is annotated with `javax.annotation.@Nullable` / `@Nonnull` (JSR-305) — these feed the
+  TS generator's optional-property detection.
+- Comments describe the **current** state and purpose of the code, not how it changed — that belongs
+  in the commit message.
+- `.editorconfig` defines formatting and a large set of IntelliJ inspection settings; please follow it.
+- Make small, focused commits (one logical change each) as you go, rather than one large commit at the
+  end.
+
+## Submitting changes
+
+Open a pull request against `main` with a clear description of the change and the motivation. If your
+change affects behavior users will notice, mention it so it can make the changelog. Bug reports and
+feature requests are welcome on the [issue tracker](https://github.com/nvdweem/PCPanel/issues).
+</content>
