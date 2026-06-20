@@ -1,5 +1,8 @@
 package com.getpcpanel.rest;
 
+import java.util.Map;
+
+import com.getpcpanel.mqtt.MqttService;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.dto.MqttSettings;
 import com.getpcpanel.profile.dto.WaveLinkSettings;
@@ -21,6 +24,7 @@ import jakarta.ws.rs.core.Response;
 @Consumes(MediaType.APPLICATION_JSON)
 public class SettingsResource {
     @Inject SaveService saveService;
+    @Inject MqttService mqttService;
 
     @GET
     public SettingsDto getSettings() {
@@ -47,6 +51,12 @@ public class SettingsResource {
         saveService.get().setMqtt(settings);
         saveService.save();
         return Response.ok().build();
+    }
+
+    @GET
+    @Path("/mqtt/status")
+    public Map<String, Boolean> getMqttStatus() {
+        return Map.of("connected", mqttService.isConnected());
     }
 
     @GET

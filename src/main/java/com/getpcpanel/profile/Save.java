@@ -44,6 +44,7 @@ public class Save {
     @Nullable private Integer sliderRollingAverage;
     @Nullable private Integer sendOnlyIfDelta;
     private boolean workaroundsOnlySliders;
+    private boolean oscEnabled;
     private Integer oscListenPort;
     private List<OSCConnectionInfo> oscConnections;
     private MqttSettings mqtt;

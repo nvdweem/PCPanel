@@ -489,6 +489,7 @@ export interface SettingsDto {
     obsPassword: string;
     obsPort: string;
     oscConnections: OSCConnectionInfo[];
+    oscEnabled: boolean;
     oscListenPort: number;
     overlayBackgroundColor: string;
     overlayBarBackgroundColor: string;

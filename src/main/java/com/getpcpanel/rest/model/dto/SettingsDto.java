@@ -37,6 +37,7 @@ public class SettingsDto {
     private String voicemeeterPath;
 
     // OSC
+    private boolean oscEnabled;
     private Integer oscListenPort;
     private List<OSCConnectionInfo> oscConnections;
 
@@ -72,6 +73,7 @@ public class SettingsDto {
         dto.obsPassword = save.getObsPassword();
         dto.voicemeeterEnabled = save.isVoicemeeterEnabled();
         dto.voicemeeterPath = save.getVoicemeeterPath();
+        dto.oscEnabled = save.isOscEnabled();
         dto.oscListenPort = save.getOscListenPort();
         dto.oscConnections = save.getOscConnections();
         dto.overlayEnabled = save.isOverlayEnabled();
@@ -106,6 +108,7 @@ public class SettingsDto {
         save.setObsPassword(obsPassword);
         save.setVoicemeeterEnabled(voicemeeterEnabled);
         save.setVoicemeeterPath(voicemeeterPath);
+        save.setOscEnabled(oscEnabled);
         save.setOscListenPort(oscListenPort);
         save.setOscConnections(oscConnections);
         save.setOverlayEnabled(overlayEnabled);

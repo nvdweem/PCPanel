@@ -41,7 +41,13 @@ public class OSCService {
     private List<OSCPortOut> ports = List.of();
     private Integer prevListenPort;
     private List<OSCConnectionInfo> prevOscConnections;
+    @Getter private boolean listening;
     @Getter private final Set<String> addresses = new HashSet<>();
+
+    /** Whether OSC is turned on in the user's settings (gates both the listener and the send targets). */
+    public boolean isEnabled() {
+        return saveService.get().isOscEnabled();
+    }
 
     public void saveChanged(@Observes SaveService.SaveEvent event) {
         log.trace("Save changed, restarting OSC");
@@ -50,6 +56,12 @@ public class OSCService {
     }
 
     private void initSend() {
+        // When OSC is disabled, drop any send targets so dial/button events never go out.
+        if (!isEnabled()) {
+            prevOscConnections = null;
+            ports = List.of();
+            return;
+        }
         if (Objects.equals(prevOscConnections, saveService.get().getOscConnections()) || saveService.get().getOscConnections() == null) {
             return;
         }
@@ -58,8 +70,11 @@ public class OSCService {
     }
 
     private void initListen() {
-        if (saveService.get().getOscListenPort() == null) {
+        // When OSC is disabled (or no listen port is set), tear the listener down and stay down.
+        if (!isEnabled() || saveService.get().getOscListenPort() == null) {
             stopPortIn();
+            prevListenPort = null;
+            return;
         }
         if (Objects.equals(prevListenPort, saveService.get().getOscListenPort())) {
             return;
@@ -80,6 +95,7 @@ public class OSCService {
                 }
             });
             portIn.startListening();
+            listening = true;
         } catch (IOException e) {
             log.error("Unable to start OSC listener", e);
         }
@@ -98,7 +114,9 @@ public class OSCService {
     private void stopPortIn() {
         if (portIn != null) {
             portIn.stopListening();
+            portIn = null;
         }
+        listening = false;
     }
 
     public void dialAction(@Observes KnobRotateEvent dial) {
