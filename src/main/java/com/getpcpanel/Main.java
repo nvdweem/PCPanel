@@ -1,5 +1,7 @@
 package com.getpcpanel;
 
+import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Set;
 
 import org.eclipse.microprofile.config.ConfigProvider;
@@ -20,6 +22,7 @@ public class Main implements QuarkusApplication {
 
     static void main(String... args) {
         overrideBakedPathsForNativeImage();
+        redirectWorkingDirectoryForNativeImage();
         var argSet = Set.of(args);
         if (argSet.contains(ConsoleSupport.CONSOLE_ARG)) {
             ConsoleSupport.attachConsole(); // Open a console before Quarkus boots so its logs are captured too.
@@ -50,6 +53,30 @@ public class Main implements QuarkusApplication {
         var root = PcPanelRoot.resolve();
         System.setProperty("pcpanel.root", root.toString());
         System.setProperty("quarkus.log.file.path", root.resolve("logs").resolve("logging.log").toString());
+    }
+
+    /**
+     * When the native image is launched from the Windows {@code Run} registry key or a logon
+     * scheduled task, the process inherits {@code C:\Windows\System32} as its working directory.
+     * Quarkus scans {@code <user.dir>/config} for extra config files during boot (SmallRye's
+     * {@code ConfigDiagnostic#configFilesFromLocations}), and listing the protected
+     * {@code System32\config} directory throws {@link java.nio.file.AccessDeniedException}, which is
+     * not swallowed and aborts the whole startup — so the app silently never launches on login, even
+     * though a manual launch (whose working directory is the install folder) starts fine. Point
+     * {@code user.dir} at the executable's own directory, which has no {@code config} subfolder, so
+     * the scan finds nothing and is skipped. Resolving the path from {@link ProcessHandle} keeps this
+     * pure-JDK and correct regardless of how the process was started.
+     */
+    @SuppressWarnings("AccessOfSystemProperties")
+    private static void redirectWorkingDirectoryForNativeImage() {
+        if (!"runtime".equals(System.getProperty("org.graalvm.nativeimage.imagecode"))) {
+            return;
+        }
+        ProcessHandle.current().info().command()
+                     .map(Path::of)
+                     .map(Path::getParent)
+                     .filter(Objects::nonNull)
+                     .ifPresent(dir -> System.setProperty("user.dir", dir.toString()));
     }
 
     @Override
