@@ -13,8 +13,11 @@ import com.getpcpanel.volume.IFocusRedirector;
 import dev.niels.wavelink.IWaveLinkClientEventListener;
 import dev.niels.wavelink.WaveLinkClient;
 import dev.niels.wavelink.impl.model.WaveLinkChannel;
+import dev.niels.wavelink.impl.model.WaveLinkMix;
+import dev.niels.wavelink.impl.model.WaveLinkOutputDevice;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
@@ -27,6 +30,8 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
     /** Spaces out reconnect attempts when Wave Link is down (base = the scheduled interval, capped at 5 min). */
     private final ReconnectBackoff backoff = new ReconnectBackoff(10_000, 300_000);
     private boolean wasEnabled;
+    @Inject
+    Event<WaveLinkChangedEvent> changedEvent;
 
     WaveLinkService() {
         super(false);
@@ -87,6 +92,44 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
     @Override
     public void connectionClosed() {
         log.info("WaveLink connection closed.");
+        fireChanged();
+    }
+
+    // Wave Link state (incl. mute) changed: notify observers (e.g. the mute-colour layer) to re-read state.
+    @Override
+    public void channelChanged(WaveLinkChannel channel) {
+        fireChanged();
+    }
+
+    @Override
+    public void channelsChanged() {
+        fireChanged();
+    }
+
+    @Override
+    public void mixChanged(WaveLinkMix mix) {
+        fireChanged();
+    }
+
+    @Override
+    public void mixesChanged() {
+        fireChanged();
+    }
+
+    @Override
+    public void outputDeviceChanged(WaveLinkOutputDevice outputDevice) {
+        fireChanged();
+    }
+
+    @Override
+    public void outputDevicesChanged() {
+        fireChanged();
+    }
+
+    private void fireChanged() {
+        if (changedEvent != null) {
+            changedEvent.fire(new WaveLinkChangedEvent());
+        }
     }
 
     /**

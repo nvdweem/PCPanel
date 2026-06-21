@@ -31,17 +31,17 @@ up to date when you add or remove an event or an observer.
 |-------|----------|-------------|
 | `DeviceScanner.DeviceConnectedEvent` | `DeviceScanner` | `DeviceHolder` |
 | `DeviceScanner.DeviceDisconnectedEvent` | `DeviceScanner` | `DeviceHolder`, `EventBroadcaster` (→ UI) |
-| `DeviceHolder.DeviceFullyConnectedEvent` | `DeviceHolder` | `EventBroadcaster` (→ UI), `SetMuteOverrideService`, `MqttDeviceService` |
+| `DeviceHolder.DeviceFullyConnectedEvent` | `DeviceHolder` | `EventBroadcaster` (→ UI), `MuteColorService`, `MqttDeviceService` |
 
 ## Profile & configuration
 
 | Event | Fired by | Observed by |
 |-------|----------|-------------|
 | `SaveService.SaveEvent` | `SaveService` (on load and after saves) | `DeviceHolder`, `Overlay`, `MqttService`, `MqttDeviceService`, `OSCService`, `WaveLinkService`, `ShortcutHook` |
-| `ProfileSwitchedEvent` | `Device`, `DeviceResource` | `EventBroadcaster` (→ UI) |
+| `ProfileSwitchedEvent` | `Device`, `DeviceResource` | `EventBroadcaster` (→ UI), `MuteColorService` |
 | `LightingChangedEvent` (`EventBroadcaster.LightingChangedEvent`) | `DeviceResource` | `EventBroadcaster` (→ UI) |
-| `LightingChangedToDefaultEvent` | `Device`, `DeviceResource` | `SetMuteOverrideService`, `VoiceMeeterMuteService` |
-| `VisualColorsChangedEvent` (`EventBroadcaster.…`) | `DeviceResource` / `CommandsResource` | `EventBroadcaster` (→ UI) |
+| `LightingChangedToDefaultEvent` | `Device`, `DeviceResource` | `MuteColorService`, `VoiceMeeterMuteService` |
+| `VisualColorsChangedEvent` (`EventBroadcaster.…`) | `DeviceResource` / `CommandsResource` / `MuteColorService` | `EventBroadcaster` (→ UI) |
 | `KnobSettingChangedEvent` (`EventBroadcaster.…`) | `DeviceResource` | `EventBroadcaster` (→ UI) |
 | `AssignmentChangedEvent` (`EventBroadcaster.…`) | `DeviceResource`, `CommandsResource` | `EventBroadcaster` (→ UI) |
 | `DeviceRenamedEvent` (`EventBroadcaster.…`) | `DeviceResource` | `EventBroadcaster` (→ UI) |
@@ -51,8 +51,8 @@ up to date when you add or remove an event or an observer.
 
 | Event | Fired by | Observed by |
 |-------|----------|-------------|
-| `AudioDeviceEvent` | `AudioDevice` / `OsxAudioDevice` | `SetMuteOverrideService` |
-| `AudioSessionEvent` | `AudioSession` / `WindowsAudioDevice` | `SetMuteOverrideService`, `LinuxNewSessionVolumeService` |
+| `AudioDeviceEvent` | `AudioDevice` / `OsxAudioDevice` | `MuteColorService` |
+| `AudioSessionEvent` | `AudioSession` / `WindowsAudioDevice` | `MuteColorService`, `LinuxNewSessionVolumeService` |
 | `LinuxDeviceChangedEvent` | `PulseAudioEventListener` | `SndCtrlPulseAudio` |
 | `LinuxSessionChangedEvent` | `PulseAudioEventListener` | `SndCtrlPulseAudio` |
 
@@ -60,11 +60,13 @@ up to date when you add or remove an event or an observer.
 
 | Event | Fired by | Observed by |
 |-------|----------|-------------|
-| `OBSConnectEvent` | `OBS` | `SetMuteOverrideService`, `ObsConnectedVolumeService` |
-| `OBSMuteEvent` | `OBS` (from the websocket client callback) | `SetMuteOverrideService` |
+| `OBSConnectEvent` | `OBS` | `MuteColorService`, `ObsConnectedVolumeService` |
+| `OBSMuteEvent` | `OBS` (from the websocket client callback) | `MuteColorService` |
 | `VoiceMeeterConnectedEvent` | `Voicemeeter` | `VoiceMeeterConnectedVolumeService` |
 | `VoiceMeeterDirtyEvent` | `Voicemeeter` | `VoiceMeeterMuteService` |
-| `VoiceMeeterMuteEvent` | `VoiceMeeterMuteService` | `SetMuteOverrideService` |
+| `VoiceMeeterMuteEvent` | `VoiceMeeterMuteService` | `VoiceMeeterMuteResolver` (mute-colour) |
+| `WaveLinkChangedEvent` | `WaveLinkService` (Wave Link state incl. mute changed) | `MuteColorService` |
+| `MuteOverridesDirtyEvent` | mute-colour resolvers (e.g. `VoiceMeeterMuteResolver` after caching a mute change) | `MuteColorService` |
 | `MqttStatusEvent` | `MqttService` | `MqttDeviceService` |
 
 ## System & UI
