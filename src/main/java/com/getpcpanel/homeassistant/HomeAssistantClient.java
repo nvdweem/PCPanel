@@ -9,6 +9,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.getpcpanel.homeassistant.dto.HomeAssistantServer;
+import com.getpcpanel.util.SharedHttpClient;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
@@ -23,7 +24,6 @@ import lombok.extern.log4j.Log4j2;
  */
 @Log4j2
 public class HomeAssistantClient {
-    private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
 
     @Getter private final HomeAssistantServer server;
@@ -53,7 +53,7 @@ public class HomeAssistantClient {
             return false;
         }
         try {
-            var resp = HTTP.send(request("/api/").GET().build(), HttpResponse.BodyHandlers.ofString());
+            var resp = SharedHttpClient.get().send(request("/api/").GET().build(), HttpResponse.BodyHandlers.ofString());
             return isSuccess(resp.statusCode());
         } catch (Exception e) {
             log.debug("Home Assistant ping failed for {}: {}", baseUrl, e.getMessage());
@@ -65,7 +65,7 @@ public class HomeAssistantClient {
     public boolean callService(String domain, String service, Map<String, Object> data) {
         try {
             var body = mapper.writeValueAsString(data == null ? Map.of() : data);
-            var resp = HTTP.send(request("/api/services/" + domain + "/" + service)
+            var resp = SharedHttpClient.get().send(request("/api/services/" + domain + "/" + service)
                     .POST(HttpRequest.BodyPublishers.ofString(body)).build(), HttpResponse.BodyHandlers.ofString());
             if (!isSuccess(resp.statusCode())) {
                 log.warn("Home Assistant service {}.{} returned HTTP {}: {}", domain, service, resp.statusCode(), resp.body());
