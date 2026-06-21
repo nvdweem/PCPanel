@@ -20,6 +20,8 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class ProVisualColorsService {
     private static final String BLACK = "#000000";
+    /** Marker for a volume-gradient knob colour the frontend interpolates per live value: {@code $VOLGRAD!<c1>!<c2>}. */
+    private static final String VOLGRAD_TOKEN = "$VOLGRAD!";
     private static final int PRO_DIAL_COUNT = 5;
     private static final int PRO_SLIDER_COUNT = 4;
     private static final int PRO_SLIDER_SEGMENT_COUNT = 5;
@@ -152,13 +154,17 @@ public class ProVisualColorsService {
         return new ProVisualColors(List.copyOf(dialColors), List.copyOf(sliderLabelColors), List.copyOf(sliderColors), logoColor);
     }
 
-    private String resolveDialColor(SingleKnobLightingConfig config) {
+    String resolveDialColor(SingleKnobLightingConfig config) {
         if (config == null || config.getMode() == null) {
             return BLACK;
         }
         return switch (config.getMode()) {
             case NONE -> BLACK;
-            case STATIC, VOLUME_GRADIENT -> firstColor(config.getColor1(), config.getColor2());
+            case STATIC -> firstColor(config.getColor1(), config.getColor2());
+            // A volume-gradient knob shows a single LED colour interpolated between color1 (at value 0)
+            // and color2 (at value 100). The live knob value lives only on the frontend (a knob turn
+            // pushes a value event, not recomputed colours), so emit a token the UI resolves per value.
+            case VOLUME_GRADIENT -> VOLGRAD_TOKEN + colorOrDefault(config.getColor1()) + "!" + colorOrDefault(config.getColor2());
         };
     }
 

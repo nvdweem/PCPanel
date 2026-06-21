@@ -8,6 +8,7 @@ import { PcKnobComponent } from './pc-knob.component';
 import { PcFaderComponent } from './pc-fader.component';
 import { PcLogoComponent } from './pc-logo.component';
 import { analogPct, controlVisual, knobColor, processNameOf, shortLabel } from './device-visual.util';
+import { resolveVolGrad } from '../pcpanel/lighting-animation';
 import { ControlClick, ControlKind } from './control-click';
 
 export type { ControlClick, ControlKind } from './control-click';
@@ -264,12 +265,16 @@ export class PcDeviceComponent {
     const cfg = this.config();
     const out: KnobVM[] = [];
     for (let i = 0; i < total; i++) {
-      const color = knobColor(s.dialColors, i, total, cfg, '#2A2E37');
+      const pct = analogPct(s.analogValues?.[i]);
+      // A volume-gradient knob's colour is a $VOLGRAD! token resolved against the live value here;
+      // a plain colour (static / mute-override) passes through unchanged.
+      const raw = knobColor(s.dialColors, i, total, cfg, '#2A2E37');
+      const color = resolveVolGrad(raw, pct) ?? raw;
       const vis = controlVisual(color, cfg, '#2A2E37');
       const off = nearBlack(vis.fill);
       const selected = this.selectedKind() === 'dial' && this.selectedIndex() === i;
       out.push({
-        index: i, label: `K${i + 1}`, pct: analogPct(s.analogValues?.[i]),
+        index: i, label: `K${i + 1}`, pct,
         color: vis.fill, off, selected,
         chips: this.knobChips(i),
         anim: vis.animClass, dur: vis.animDuration, bmin: vis.breathMin,

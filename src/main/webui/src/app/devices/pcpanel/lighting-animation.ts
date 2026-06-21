@@ -87,11 +87,50 @@ export function knobRingColor(config: LightingConfig | null | undefined, index: 
     case 'CUSTOM': {
       const knob = config.knobConfigs?.[index];
       if (!knob || knob.mode === 'NONE') return '#000000';
+      // A volume-gradient knob's colour depends on the live value; emit a token the caller resolves
+      // per value via resolveVolGrad (Mini/RGB have no backend-precomputed dialColors).
+      if (knob.mode === 'VOLUME_GRADIENT') return volGradToken(knob.color1, knob.color2);
       return knob.color1 || fallback;
     }
     default:
       return fallback;
   }
+}
+
+// ── Volume-gradient knob colour (interpolated per live value) ─────────────────
+// A volume-gradient knob shows one LED colour: color1 at value 0, color2 at value 100, mixed between.
+// The backend (Pro) and knobRingColor (Mini/RGB) emit a `$VOLGRAD!<c1>!<c2>` token because the live
+// value isn't known where colours are resolved; the device view interpolates it against the knob value.
+
+export const TOKEN_VOLGRAD = '$VOLGRAD!';
+
+function parseHex(c: string): [number, number, number] | null {
+  const m = /^#?([0-9a-f]{6})$/i.exec((c || '').trim());
+  if (!m) return null;
+  const n = parseInt(m[1], 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+/** Linear RGB interpolation between two hex colours; t is clamped to 0–1. */
+export function lerpHex(a: string, b: string, t: number): string {
+  const ca = parseHex(a);
+  const cb = parseHex(b);
+  if (!ca || !cb) return ca ? a : (cb ? b : '#000000');
+  const k = clamp01(t);
+  return `#${toHex(ca[0] + (cb[0] - ca[0]) * k)}${toHex(ca[1] + (cb[1] - ca[1]) * k)}${toHex(ca[2] + (cb[2] - ca[2]) * k)}`;
+}
+
+/** Build a volume-gradient token (Mini/RGB path, where colours aren't precomputed by the backend). */
+export function volGradToken(c1: string | null | undefined, c2: string | null | undefined): string {
+  return `${TOKEN_VOLGRAD}${c1 || '#000000'}!${c2 || '#000000'}`;
+}
+
+/** Resolve a `$VOLGRAD!<c1>!<c2>` token to its interpolated colour at value `pct` (0–100), or null
+ *  when `color` is a plain colour (pass-through). */
+export function resolveVolGrad(color: string | null | undefined, pct: number): string | null {
+  if (!color || !color.startsWith(TOKEN_VOLGRAD)) return null;
+  const parts = color.slice(TOKEN_VOLGRAD.length).split('!');
+  return lerpHex(parts[0] || '#000000', parts[1] || '#000000', pct / 100);
 }
 
 // ── CSS animation helpers (drives class + custom-property bindings) ───────────
