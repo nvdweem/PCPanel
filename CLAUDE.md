@@ -124,9 +124,23 @@ fans CDI events out to connected clients. There is no separate window framework 
 browser served by Quinoa.
 
 **Integrations:** `obs/` (OBS websocket), `voicemeeter/` (JNA), `wavelink/` + `dev/niels/wavelink/`
-(Elgato Wave Link RPC client), `osc/`, `mqtt/` (Eclipse Paho mqttv5). `overlay/` draws an on-screen
-volume overlay (Win32 native overlay on Windows). `util/tray/` is the system tray (Wayland uses the
-D-Bus StatusNotifierItem protocol via dbus-java).
+(Elgato Wave Link RPC client), `osc/`, `mqtt/` (Eclipse Paho mqttv5), `homeassistant/`. `overlay/`
+draws an on-screen volume overlay (Win32 native overlay on Windows). `util/tray/` is the system tray
+(Wayland uses the D-Bus StatusNotifierItem protocol via dbus-java).
+
+`homeassistant/` is *outbound* control (the app drives Home Assistant), distinct from the MQTT
+auto-discovery in `mqtt/` (which lets Home Assistant discover the app). It holds both its own command
+types (`homeassistant/command/`, kept off the big `commands/command/` pile per the action-package
+convention — Jackson `Id.CLASS` makes location irrelevant, but the typescript-generator needs the
+`com.getpcpanel.homeassistant.command.**` classPattern in `pom.xml`) and a minimal REST client
+(`HomeAssistantClient`, JDK `HttpClient`, no extra dependency). Multiple servers are configured in
+settings (`Save.homeAssistantServers`); a command with a blank server id auto-resolves to the only
+configured server (the UI also auto-selects it). **Actions are authored as pasted HA "action" YAML**
+(the format HA's Developer Tools → Actions page produces) rather than hand-built pickers — the UI
+links out to that page on the configured server. `HaActionYaml` (snakeyaml, `SafeConstructor`) parses
+the YAML into the `domain.service` + flat body the REST API wants. The dial command additionally maps
+the 0..1 dial position to a number via min/max or an `exp4j` formula (variable `x`) and substitutes it
+for the `{{ value }}` token in the YAML before sending.
 
 ## GraalVM native image — important
 

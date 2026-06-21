@@ -15,6 +15,11 @@
     - Input devices not yet supported (I don't have one so can't debug)
     - Dials/sliders allow changing volume for Channels, Mixes and Output devices
     - Buttons allow setting mute state, changing the main output, add the focus app to a mix and/or toggle effects
+- Added support for Home Assistant — control your smart home from your dials and buttons
+    - Configure one or more servers (base URL + long-lived access token) on the Home Assistant settings page; actions pick the server automatically when there's only one
+    - Actions are pasted as YAML straight from Home Assistant's Developer Tools → Actions page (with a link to open it), so anything Home Assistant can do is available
+    - Buttons perform any action; dials map their position into the action — use `{{ value }}` with a min/max range or a translate formula (e.g. a light's brightness or color temperature)
+    - Configurable debounce so a moving dial doesn't flood Home Assistant: the first move is sent instantly, then at most one update per the configured interval, and the final value is always sent
 - Attempts to improve Wayland tray support (now works on Ubuntu)
 - #74 - (Linux) New audio sessions should trigger initial volume setting
 - #74 - (Linux) New setting 'Force application volume to panel volume', this tries to reset the volume when an application changes it. This seems to solve for instance Firefox from going back to 100% when playing a new song.

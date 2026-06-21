@@ -35,7 +35,9 @@ real changes on your system in real time:
 - **Profiles** — keep different mappings for gaming, streaming and work, and switch between them
   from a button (or have them switch automatically).
 - **Integrations** — drive **OBS** (scenes, source mute, source volume), **Voicemeeter**, Elgato
-  **Wave Link**, and send/receive **OSC** and **MQTT** for stream-deck and home-automation setups.
+  **Wave Link** and **Home Assistant** (run any action from a button, or map a dial to a value such
+  as a light's brightness or color temperature), and send/receive **OSC** and **MQTT** for
+  stream-deck and home-automation setups.
 
 An optional on-screen **overlay** briefly shows the level as you turn a knob, and the app lives in
 the **system tray** so it stays out of your way.
