@@ -7,6 +7,7 @@ import {
   SelectOption, SliderComponent, StatusDotComponent, ToastService, ToggleComponent,
 } from '../../ui';
 import { DeviceRendererComponent } from '../../devices/visual/device-renderer.component';
+import { MuteOverrideFieldComponent } from '../../features/lighting/mute-override-field.component';
 import { normalizeLogo } from '../../features/lighting/lighting-util';
 import { DeviceCapabilitiesService } from '../../services/device-capabilities.service';
 import {
@@ -17,8 +18,8 @@ import {
 interface ModeChip { value: LightingMode; label: string; swatch: 'solid' | 'rainbow' | 'wave' | 'breath' | 'custom'; span2?: boolean; }
 
 const KNOB_DEFAULT: SingleKnobLightingConfig = { mode: 'STATIC', color1: '#FFB020', color2: '#000000' };
-const SLIDER_DEFAULT: SingleSliderLightingConfig = { mode: 'STATIC', color1: '#FFB020', color2: '#000000', muteOverrideColor: '#000000', muteOverrideDeviceOrFollow: '' };
-const SLIDER_LABEL_DEFAULT: SingleSliderLabelLightingConfig = { mode: 'STATIC', color: '#FFB020', muteOverrideColor: '#000000', muteOverrideDeviceOrFollow: '' };
+const SLIDER_DEFAULT: SingleSliderLightingConfig = { mode: 'STATIC', color1: '#FFB020', color2: '#000000', muteOverrideColor: '', muteOverrideDeviceOrFollow: '' };
+const SLIDER_LABEL_DEFAULT: SingleSliderLabelLightingConfig = { mode: 'STATIC', color: '#FFB020', muteOverrideColor: '', muteOverrideDeviceOrFollow: '' };
 // brightness/speed/hue are signed bytes (-128..127, read unsigned). -1 = full brightness.
 const LOGO_DEFAULT: SingleLogoLightingConfig = { mode: 'STATIC', color: '#FFB020', brightness: -1, hue: 0, speed: 32 };
 const BLACK = '#000000';
@@ -29,7 +30,7 @@ const isBlackHex = (c: string | undefined): boolean => !c || /^#?0{3,8}$/i.test(
   standalone: true,
   imports: [
     IconComponent, StatusDotComponent, SliderComponent, ToggleComponent, SegmentedComponent,
-    SelectComponent, ColorPickerComponent, DeviceRendererComponent, BottomBarComponent,
+    SelectComponent, ColorPickerComponent, DeviceRendererComponent, BottomBarComponent, MuteOverrideFieldComponent,
   ],
   templateUrl: './lighting.component.html',
   styleUrl: './lighting.component.scss',

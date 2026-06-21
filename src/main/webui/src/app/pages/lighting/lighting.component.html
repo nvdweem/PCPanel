@@ -150,7 +150,7 @@
                           @if (knobUiMode(i) === 'gradient') {
                             <pc-color-picker label="Color 2" [value]="knobAt(i).color2" (valueChange)="setKnob(i, 'color2', $event)"></pc-color-picker>
                           }
-                          <pc-color-picker label="Muted" [value]="knobAt(i).muteOverrideColor || '#000000'" (valueChange)="setKnob(i, 'muteOverrideColor', $event)"></pc-color-picker>
+                          <pc-mute-override-field [color]="knobAt(i).muteOverrideColor" (colorChange)="setKnob(i, 'muteOverrideColor', $event)"></pc-mute-override-field>
                         }
                       </div>
                     </div>
@@ -173,7 +173,7 @@
                             @if (sliderUiMode(j) === 'static-gradient' || sliderUiMode(j) === 'gradient') {
                               <pc-color-picker label="Color 2" [value]="sliderAt(j).color2" (valueChange)="setSlider(j, 'color2', $event)"></pc-color-picker>
                             }
-                            <pc-color-picker label="Muted" [value]="sliderAt(j).muteOverrideColor || '#000000'" (valueChange)="setSlider(j, 'muteOverrideColor', $event)"></pc-color-picker>
+                            <pc-mute-override-field [color]="sliderAt(j).muteOverrideColor" (colorChange)="setSlider(j, 'muteOverrideColor', $event)"></pc-mute-override-field>
                           }
                         </div>
                       </div>
@@ -194,7 +194,7 @@
                             <pc-color-picker label="Color" [value]="sliderLabelAt(j).color" (valueChange)="setSliderLabel(j, 'color', $event)"></pc-color-picker>
                           }
                           @if (sliderLabelUiMode(j) !== 'off') {
-                            <pc-color-picker label="Muted" [value]="sliderLabelAt(j).muteOverrideColor || '#000000'" (valueChange)="setSliderLabel(j, 'muteOverrideColor', $event)"></pc-color-picker>
+                            <pc-mute-override-field [color]="sliderLabelAt(j).muteOverrideColor" (colorChange)="setSliderLabel(j, 'muteOverrideColor', $event)"></pc-mute-override-field>
                           }
                         </div>
                       </div>
