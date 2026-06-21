@@ -1,7 +1,9 @@
-import { computed, inject, Injectable } from '@angular/core';
+import { computed, Injectable } from '@angular/core';
 import { httpResource } from '@angular/common/http';
 import { AudioDevice, AudioSession } from '../../models/models';
-import { ProcessDto, WaveLinkResponseDto } from '../../models/generated/backend.types';
+import {
+  HomeAssistantServerStatus, ProcessDto, WaveLinkResponseDto,
+} from '../../models/generated/backend.types';
 import { PickerItem } from '../../ui';
 
 export interface VoiceMeeterParams { name: string; params: string[]; }
@@ -39,6 +41,11 @@ export class IntegrationDataService {
   readonly wlInputs = computed(() => this.waveLink.value()?.inputs ?? []);
   readonly wlMixes = computed(() => this.waveLink.value()?.mixes ?? []);
   readonly wlOutputs = computed(() => this.waveLink.value()?.outputs ?? []);
+
+  // Home Assistant (servers carry their url so the action editor can link to HA's action builder)
+  readonly haServers = httpResource<HomeAssistantServerStatus[]>(() => '/api/homeassistant/servers');
+  readonly haStatus = httpResource<{ connected: boolean }>(() => '/api/homeassistant/status');
+  readonly haConnected = computed(() => this.haStatus.value()?.connected ?? false);
 
   // ── Honest connection state (frontend-only) ─────────────────────────────────
   // The backend endpoints return data ONLY when the integration is actually
@@ -89,5 +96,7 @@ export class IntegrationDataService {
     this.waveLinkSettings.reload();
     this.oscStatus.reload();
     this.mqttStatus.reload();
+    this.haServers.reload();
+    this.haStatus.reload();
   }
 }

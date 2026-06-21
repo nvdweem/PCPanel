@@ -153,8 +153,12 @@ export class ControlComponent {
     if (!this.platformOk(def)) return { def, status: 'idle', offline: false, unsupported: true };
     // Honest status: green only with positive evidence; Voicemeeter has no live signal.
     if (def.integration === 'voicemeeter') return { def, status: 'idle', offline: false };
-    const connected = def.integration === 'obs' ? this.integrations.obsConnected() : this.integrations.waveLinkConnected();
-    const loading = def.integration === 'obs' ? this.integrations.obsScenes.isLoading() : this.integrations.waveLink.isLoading();
+    const connected = def.integration === 'obs' ? this.integrations.obsConnected()
+      : def.integration === 'homeassistant' ? this.integrations.haConnected()
+        : this.integrations.waveLinkConnected();
+    const loading = def.integration === 'obs' ? this.integrations.obsScenes.isLoading()
+      : def.integration === 'homeassistant' ? this.integrations.haStatus.isLoading()
+        : this.integrations.waveLink.isLoading();
     if (loading) return { def, status: 'connecting', offline: false };
     return { def, status: connected ? 'ok' : 'idle', offline: !connected };
   }

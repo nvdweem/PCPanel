@@ -43,6 +43,11 @@ import com.getpcpanel.commands.command.CommandVolumeFocusMute;
 import com.getpcpanel.commands.command.CommandVolumeProcess;
 import com.getpcpanel.commands.command.CommandVolumeProcessMute;
 import com.getpcpanel.commands.command.DialAction.DialCommandParams;
+import com.getpcpanel.homeassistant.command.CommandHomeAssistant;
+import com.getpcpanel.homeassistant.command.CommandHomeAssistantAction;
+import com.getpcpanel.homeassistant.command.CommandHomeAssistantValue;
+import com.getpcpanel.homeassistant.dto.HomeAssistantServer;
+import com.getpcpanel.homeassistant.dto.HomeAssistantServerStatus;
 import com.getpcpanel.device.descriptor.AnalogInputSpec;
 import com.getpcpanel.device.descriptor.AnalogKind;
 import com.getpcpanel.device.descriptor.AnalogOutputSpec;
@@ -175,6 +180,11 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         CommandVolumeProcess.class,
         CommandVolumeProcessMute.class,
 
+        // Home Assistant command hierarchy (also extends Command → ID.CLASS polymorphism)
+        CommandHomeAssistant.class,
+        CommandHomeAssistantValue.class,
+        CommandHomeAssistantAction.class,
+
         // WaveLink command hierarchy (also extends Command → ID.CLASS polymorphism)
         CommandWaveLink.class,
         CommandWaveLinkAddFocusToChannel.class,
@@ -246,6 +256,13 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 
         // MIDI REST DTO serialised by Jackson
         MidiDeviceDto.class,
+
+        // Home Assistant: server config persisted in the save file + REST DTOs (List<record> needs the
+        // element AND its array type reachable for Jackson serialisation in the native image).
+        HomeAssistantServer.class,
+        HomeAssistantServer[].class,
+        HomeAssistantServerStatus.class,
+        HomeAssistantServerStatus[].class,
 
         // Command support types serialised by Jackson
         Commands.class,

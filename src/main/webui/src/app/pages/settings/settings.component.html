@@ -307,6 +307,95 @@
           </div>
         }
 
+        <!-- ── HOME ASSISTANT ──────────────────────────────────────────────── -->
+        @case ('homeassistant') {
+          <h2 class="page-title">
+            Home Assistant
+            @if (haTabStatus(); as st) { <pc-status-dot [kind]="st" [size]="8"></pc-status-dot> }
+          </h2>
+          <p class="page-sub">Connect to one or more Home Assistant servers to control them from your dials and
+            buttons. With a single server, actions select it automatically.</p>
+
+          <div class="micro-label section-label">RATE LIMIT</div>
+          <div class="pc-card pad stack">
+            <div class="row">
+              <div class="row-text">
+                <div class="row-label">Debounce (ms)</div>
+                <div class="row-sub">Dials emit many events while moving. 0 = off. Otherwise the first move is sent
+                  instantly, then at most one update per this many ms, and the final value is always sent.</div>
+              </div>
+              <div class="pc-field num-field">
+                <input class="pc-field-input" type="number" min="0" step="10" [value]="s.homeAssistantDebounceMs ?? 0"
+                       (input)="patchNum('homeAssistantDebounceMs', $any($event.target).value)">
+              </div>
+            </div>
+          </div>
+
+          <div class="micro-label section-label">SERVERS</div>
+          <div class="stack">
+            @for (srv of s.homeAssistantServers ?? []; track srv.id) {
+              <div class="pc-card pad stack">
+                <div class="row">
+                  <div class="row-text">
+                    <div class="row-label">{{ srv.name || 'Unnamed server' }}</div>
+                    <div class="row-sub">{{ haServerConnected(srv.id) ? 'Connected' : 'Not connected' }}</div>
+                  </div>
+                  <div class="ha-row-actions">
+                    <pc-status-dot [kind]="haServerConnected(srv.id) ? 'ok' : 'idle'" [size]="8"></pc-status-dot>
+                    <button class="pc-btn ghost" (click)="removeHaServer($index)">
+                      <pc-icon name="x" [size]="14"></pc-icon> Remove
+                    </button>
+                  </div>
+                </div>
+                <div class="pc-field">
+                  <div class="pc-field-label">Name</div>
+                  <input class="pc-field-input" type="text" [value]="srv.name ?? ''"
+                         (input)="patchHaServer($index, 'name', $any($event.target).value)">
+                </div>
+                <div class="pc-field">
+                  <div class="pc-field-label">Base URL</div>
+                  <input class="pc-field-input mono" type="text" placeholder="http://homeassistant.local:8123"
+                         [value]="srv.url ?? ''" (input)="patchHaServer($index, 'url', $any($event.target).value)">
+                </div>
+                <div class="pc-field">
+                  <div class="pc-field-label">Access token</div>
+                  <input class="pc-field-input mono" type="password" placeholder="long-lived access token"
+                         [value]="srv.token ?? ''" (input)="patchHaServer($index, 'token', $any($event.target).value)">
+                </div>
+              </div>
+            }
+            @if (!s.homeAssistantServers?.length) {
+              <span class="empty-hint">No servers yet. Add one below.</span>
+            }
+          </div>
+
+          <div class="micro-label section-label">ADD SERVER</div>
+          <div class="pc-card pad stack">
+            <div class="pc-field">
+              <div class="pc-field-label">Name</div>
+              <input class="pc-field-input" type="text" placeholder="e.g. Home" [value]="haName()"
+                     (input)="haName.set($any($event.target).value)">
+            </div>
+            <div class="pc-field">
+              <div class="pc-field-label">Base URL</div>
+              <input class="pc-field-input mono" type="text" placeholder="http://homeassistant.local:8123"
+                     [value]="haUrl()" (input)="haUrl.set($any($event.target).value)">
+            </div>
+            <div class="pc-field">
+              <div class="pc-field-label">Access token</div>
+              <input class="pc-field-input mono" type="password" placeholder="long-lived access token"
+                     [value]="haToken()" (input)="haToken.set($any($event.target).value)">
+            </div>
+            <div>
+              <button class="pc-btn ghost" (click)="addHaServer()">
+                <pc-icon name="plus" [size]="14"></pc-icon> Add server
+              </button>
+            </div>
+          </div>
+          <p class="page-sub">Create a long-lived access token in Home Assistant under your profile →
+            Security → Long-lived access tokens. Connection status updates after you save.</p>
+        }
+
         <!-- ── OVERLAY (showcase) ──────────────────────────────────────────── -->
         @case ('overlay') {
           <h2 class="page-title">Overlay</h2>

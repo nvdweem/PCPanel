@@ -9,13 +9,15 @@ import { IconName } from '../../ui';
  */
 export type CommandCategory = 'audio' | 'system' | 'integration';
 export type CommandKind = 'dial' | 'button';
-export type Integration = 'obs' | 'voicemeeter' | 'wavelink';
+export type Integration = 'obs' | 'voicemeeter' | 'wavelink' | 'homeassistant';
 export type LiveSource =
   | 'obs-scenes' | 'obs-sources' | 'vm-advanced'
-  | 'wl-channels' | 'wl-inputs' | 'wl-mixes' | 'wl-outputs' | 'profiles';
+  | 'wl-channels' | 'wl-inputs' | 'wl-mixes' | 'wl-outputs' | 'profiles'
+  | 'ha-servers';
 
 export type FieldDef =
   | { kind: 'text'; key: string; label: string; placeholder?: string; mono?: boolean }
+  | { kind: 'textarea'; key: string; label: string; placeholder?: string; rows?: number }
   | { kind: 'number'; key: string; label: string; min?: number; max?: number }
   | { kind: 'toggle'; key: string; label: string }
   | { kind: 'select'; key: string; label: string; options: { value: string; label: string }[] }
@@ -25,6 +27,7 @@ export type FieldDef =
   | { kind: 'mute'; key: string; label: string }
   | { kind: 'keystroke' }                       // CommandKeystroke: KEY/TEXT toggle + combo/text
   | { kind: 'wavelink-target' }                 // id1 (+id2 for Mix), with the source driven by commandType
+  | { kind: 'ha-help'; withValue?: boolean }    // links to HA's action builder + server config (+ {{ value }} hint)
   | { kind: 'devices-list'; key: string; label: string };  // cycle list of device ids
 
 export interface CommandDef {
@@ -40,6 +43,7 @@ export interface CommandDef {
 
 const P = 'com.getpcpanel.commands.command.';
 const WL = 'com.getpcpanel.wavelink.command.';
+const HA = 'com.getpcpanel.homeassistant.command.';
 
 const MUTE_OPTS = [
   { value: 'toggle', label: 'Toggle' }, { value: 'mute', label: 'Mute' }, { value: 'unmute', label: 'Unmute' },
@@ -240,6 +244,27 @@ export const COMMANDS: CommandDef[] = [
     type: WL + 'CommandWaveLinkAddFocusToChannel', label: 'Wave Link — add focused app', category: 'integration', integration: 'wavelink', kinds: ['button'], icon: 'plus',
     buildEmpty: () => ({ _type: WL + 'CommandWaveLinkAddFocusToChannel', id: '', name: '', overlayText: '' }),
     fields: [{ kind: 'select-live', key: 'id', label: 'Channel', source: 'wl-channels' }],
+  },
+  {
+    type: HA + 'CommandHomeAssistantValue', label: 'Home Assistant — set value', category: 'integration', integration: 'homeassistant', kinds: ['dial'], icon: 'sliders',
+    buildEmpty: () => ({ _type: HA + 'CommandHomeAssistantValue', server: '', action: '', min: 0, max: 100, formula: '', dialParams: dialParams(), invert: false }),
+    fields: [
+      { kind: 'select-live', key: 'server', label: 'Server', source: 'ha-servers' },
+      { kind: 'textarea', key: 'action', label: 'Action (paste YAML from Home Assistant)', rows: 6, placeholder: 'action: light.turn_on\ntarget:\n  entity_id: light.living_room\ndata:\n  brightness: {{ value }}' },
+      { kind: 'ha-help', withValue: true },
+      { kind: 'number', key: 'min', label: 'Value at 0% (no formula)' },
+      { kind: 'number', key: 'max', label: 'Value at 100% (no formula)' },
+      { kind: 'text', key: 'formula', label: 'Translate formula (optional)', placeholder: 'x is 0..1 — e.g. x*255 or 2000+x*4000', mono: true },
+    ],
+  },
+  {
+    type: HA + 'CommandHomeAssistantAction', label: 'Home Assistant — perform action', category: 'integration', integration: 'homeassistant', kinds: ['button'], icon: 'zap',
+    buildEmpty: () => ({ _type: HA + 'CommandHomeAssistantAction', server: '', action: '', overlayText: '' }),
+    fields: [
+      { kind: 'select-live', key: 'server', label: 'Server', source: 'ha-servers' },
+      { kind: 'textarea', key: 'action', label: 'Action (paste YAML from Home Assistant)', rows: 6, placeholder: 'action: light.toggle\ntarget:\n  entity_id: light.living_room' },
+      { kind: 'ha-help' },
+    ],
   },
 ];
 

@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
+import com.getpcpanel.homeassistant.dto.HomeAssistantServer;
 import com.getpcpanel.profile.Save;
 import com.getpcpanel.profile.dto.MqttSettings;
 import com.getpcpanel.profile.dto.OSCConnectionInfo;
@@ -56,6 +57,10 @@ public class SettingsDto {
     @Nullable private Integer overlayPadding;
     private MqttSettings mqtt;
 
+    // Home Assistant
+    private List<HomeAssistantServer> homeAssistantServers;
+    @Nullable private Integer homeAssistantDebounceMs;
+
     public static SettingsDto from(Save save) {
         var dto = new SettingsDto();
         dto.mainUIIcons = save.isMainUIIcons();
@@ -89,6 +94,8 @@ public class SettingsDto {
         dto.overlayPosition = save.getOverlayPosition();
         dto.overlayPadding = save.getOverlayPadding();
         dto.mqtt = save.getMqtt();
+        dto.homeAssistantServers = save.getHomeAssistantServers();
+        dto.homeAssistantDebounceMs = save.getHomeAssistantDebounceMs();
         return dto;
     }
 
@@ -124,5 +131,7 @@ public class SettingsDto {
         save.setOverlayPosition(overlayPosition);
         save.setOverlayPadding(overlayPadding);
         save.setMqtt(mqtt);
+        save.setHomeAssistantServers(homeAssistantServers);
+        save.setHomeAssistantDebounceMs(homeAssistantDebounceMs);
     }
 }

@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal, untracked } from '@angular/core';
-import { Router } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, effect, HostListener, inject, signal, untracked } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient, httpResource } from '@angular/common/http';
 import { SettingsService } from '../../services/settings.service';
 import { IntegrationDataService } from '../../features/commands/integration-data.service';
@@ -13,7 +13,7 @@ import {
   SelectComponent, SelectOption, SliderComponent, SpinnerComponent, StatusDotComponent, StatusKind, ToastService, ToggleComponent,
 } from '../../ui';
 
-type TabId = 'general' | 'obs' | 'voicemeeter' | 'wavelink' | 'osc' | 'mqtt' | 'overlay' | 'debug';
+type TabId = 'general' | 'obs' | 'voicemeeter' | 'wavelink' | 'osc' | 'mqtt' | 'homeassistant' | 'overlay' | 'debug';
 interface TabDef { id: TabId; label: string; integration?: 'obs' | 'voicemeeter' | 'wavelink'; supported?: boolean; }
 
 @Component({
@@ -32,6 +32,7 @@ export class SettingsComponent {
   private readonly integrations = inject(IntegrationDataService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly http = inject(HttpClient);
   readonly platform = inject(PlatformService);
   readonly debug = inject(DebugService);
@@ -57,6 +58,11 @@ export class SettingsComponent {
   readonly oscHost = signal('');
   readonly oscPort = signal('');
 
+  // Home Assistant add-form fields
+  readonly haName = signal('');
+  readonly haUrl = signal('');
+  readonly haToken = signal('');
+
   private readonly allTabs: TabDef[] = [
     { id: 'general', label: 'General' },
     { id: 'obs', label: 'OBS Studio', integration: 'obs' },
@@ -64,6 +70,7 @@ export class SettingsComponent {
     { id: 'wavelink', label: 'Wave Link', integration: 'wavelink' },
     { id: 'osc', label: 'OSC' },
     { id: 'mqtt', label: 'MQTT' },
+    { id: 'homeassistant', label: 'Home Assistant' },
     { id: 'overlay', label: 'Overlay' },
     { id: 'debug', label: 'Debug' },
   ];
@@ -125,6 +132,19 @@ export class SettingsComponent {
         this.local.set(structuredClone(v));
       });
     });
+
+    // Deep-link support: /settings?tab=homeassistant (used by the action editor's "Manage servers").
+    const tab = this.route.snapshot.queryParamMap.get('tab') as TabId | null;
+    if (tab && this.allTabs.some(t => t.id === tab)) this.activeTab.set(tab);
+  }
+
+  /** Browser refresh / tab close: warn if there are unsaved edits (in-app nav is guarded by back()). */
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload(e: BeforeUnloadEvent): void {
+    if (this.dirty()) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
   }
 
   // ── status dots for integration tabs ───────────────────────────────────────
@@ -148,6 +168,10 @@ export class SettingsComponent {
   readonly mqttTabStatus = computed<StatusKind>(() =>
     this.integrations.mqttConnected() ? 'ok' : this.integrations.mqttStatus.isLoading() ? 'connecting' : 'idle');
 
+  /** Home Assistant tab dot: green when any configured server is reachable. */
+  readonly haTabStatus = computed<StatusKind>(() =>
+    this.integrations.haConnected() ? 'ok' : this.integrations.haStatus.isLoading() ? 'connecting' : 'idle');
+
   /** Status dot shown in the left tab rail for every integration tab (null = no dot). */
   railStatus(id: TabId): StatusKind | null {
     switch (id) {
@@ -156,6 +180,7 @@ export class SettingsComponent {
       case 'wavelink': return this.platform.waveLinkSupported() ? this.tabStatus('wavelink') : null;
       case 'osc': return this.oscTabStatus();
       case 'mqtt': return this.mqttTabStatus();
+      case 'homeassistant': return this.haTabStatus();
       default: return null;
     }
   }
@@ -226,6 +251,46 @@ export class SettingsComponent {
     if (!cur) return;
     this.local.set({ ...cur, oscConnections: (cur.oscConnections ?? []).filter((_, k) => k !== i) });
     this.dirty.set(true);
+  }
+
+  // ── Home Assistant servers ───────────────────────────────────────────────────
+  private newServerId(): string {
+    const c = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto;
+    return c?.randomUUID ? c.randomUUID() : `ha-${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
+  }
+
+  addHaServer(): void {
+    const cur = this.local();
+    if (!cur) return;
+    const name = this.haName().trim();
+    const url = this.haUrl().trim();
+    if (!name || !url) return;
+    const server = { id: this.newServerId(), name, url, token: this.haToken().trim() };
+    this.local.set({ ...cur, homeAssistantServers: [...(cur.homeAssistantServers ?? []), server] });
+    this.dirty.set(true);
+    this.haName.set('');
+    this.haUrl.set('');
+    this.haToken.set('');
+  }
+
+  removeHaServer(i: number): void {
+    const cur = this.local();
+    if (!cur) return;
+    this.local.set({ ...cur, homeAssistantServers: (cur.homeAssistantServers ?? []).filter((_, k) => k !== i) });
+    this.dirty.set(true);
+  }
+
+  patchHaServer(i: number, key: 'name' | 'url' | 'token', value: string): void {
+    const cur = this.local();
+    if (!cur) return;
+    const list = (cur.homeAssistantServers ?? []).map((s, k) => (k === i ? { ...s, [key]: value } : s));
+    this.local.set({ ...cur, homeAssistantServers: list });
+    this.dirty.set(true);
+  }
+
+  /** Live connection state for a saved server, from the status endpoint (null while unsaved/unknown). */
+  haServerConnected(id: string): boolean {
+    return (this.integrations.haServers.value() ?? []).some(s => s.id === id && s.connected);
   }
 
   // ── Wave Link separate enable toggle ────────────────────────────────────────

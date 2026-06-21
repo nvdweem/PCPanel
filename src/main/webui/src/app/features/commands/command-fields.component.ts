@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, model } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, model } from '@angular/core';
 import { OverlayModule } from '@angular/cdk/overlay';
+import { RouterLink } from '@angular/router';
 import { CommandDef, FieldDef, LiveSource } from './command-catalog';
 import { mappingCurve } from './mapping-curve.util';
 import { IntegrationDataService } from './integration-data.service';
@@ -18,7 +19,7 @@ type Cmd = Record<string, any>;
 @Component({
   selector: 'pc-command-fields',
   standalone: true,
-  imports: [OverlayModule, IconComponent, ToggleComponent, SelectComponent, AppPickerComponent, KeyRecorderComponent, SegmentedComponent],
+  imports: [OverlayModule, RouterLink, IconComponent, ToggleComponent, SelectComponent, AppPickerComponent, KeyRecorderComponent, SegmentedComponent],
   template: `
     <div class="fields">
       @for (f of def().fields; track f.kind + ($any(f).key || '')) {
@@ -28,6 +29,28 @@ type Cmd = Record<string, any>;
               <div class="flabel">{{ $any(f).label }}</div>
               <input class="pc-input" [class.mono]="$any(f).mono" [placeholder]="$any(f).placeholder || ''"
                      [value]="val($any(f).key)" (input)="set($any(f).key, $any($event.target).value)">
+            </div>
+          }
+          @case ('textarea') {
+            <div class="field-block">
+              <div class="flabel">{{ $any(f).label }}</div>
+              <textarea class="pc-input mono ta" [attr.rows]="$any(f).rows || 3" [placeholder]="$any(f).placeholder || ''"
+                        [value]="val($any(f).key)" (input)="set($any(f).key, $any($event.target).value)"></textarea>
+            </div>
+          }
+          @case ('ha-help') {
+            <div class="ha-help">
+              @if (haBuildUrl(); as url) {
+                <a class="ha-link" [href]="url" target="_blank" rel="noopener">
+                  <pc-icon name="external-link" [size]="13"></pc-icon> Build this action in Home Assistant
+                </a>
+              }
+              <a class="ha-link" routerLink="/settings" [queryParams]="{ tab: 'homeassistant' }">
+                <pc-icon name="settings" [size]="13"></pc-icon> Manage servers
+              </a>
+              @if ($any(f).withValue) {
+                <div class="ha-hint">Use <code>{{ valueToken }}</code> where the mapped dial value should go.</div>
+              }
             </div>
           }
           @case ('number') {
@@ -176,6 +199,12 @@ type Cmd = Record<string, any>;
     .row-between { display: flex; align-items: center; justify-content: space-between; }
     .rlabel { font-size: 12.5px; color: var(--text-soft); }
     .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    textarea.ta { resize: vertical; min-height: 60px; font-family: var(--font-mono, monospace); white-space: pre; }
+    .ha-help { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: -6px; }
+    .ha-link { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--accent, #FFB020); text-decoration: none; }
+    .ha-link:hover { text-decoration: underline; }
+    .ha-hint { flex-basis: 100%; font-size: 11.5px; color: var(--text-3); }
+    .ha-hint code { font-family: var(--font-mono, monospace); color: var(--text-2); }
     .mapping { border-top: 1px solid var(--line-hair); padding-top: 16px; }
     .map-row { display: flex; gap: 18px; align-items: flex-start; }
     .map-controls { flex: 1; display: flex; flex-direction: column; gap: 11px; padding-top: 8px; }
@@ -199,6 +228,27 @@ export class CommandFieldsComponent {
     { value: 'toggle', label: 'Toggle' }, { value: 'mute', label: 'Mute' }, { value: 'unmute', label: 'Unmute' },
   ];
   readonly keyModes = [{ value: 'KEY', label: 'Key combo' }, { value: 'TEXT', label: 'Type text' }];
+  /** Rendered literally in the help text (interpolating a string avoids Angular parsing the braces). */
+  readonly valueToken = '{{ value }}';
+
+  // Auto-select the only configured Home Assistant server when an action has none chosen yet, so
+  // single-server setups never have to pick. With several servers the user must choose explicitly.
+  private readonly _haAutoServer = effect(() => {
+    if (this.def().integration !== 'homeassistant') return;
+    const servers = this.data.haServers.value() ?? [];
+    if (!this.command()['server'] && servers.length === 1) {
+      this.set('server', servers[0].id);
+    }
+  });
+
+  /** The selected server's Developer Tools → Actions page (single server auto-resolves), or null. */
+  readonly haBuildUrl = computed<string | null>(() => {
+    const servers = this.data.haServers.value() ?? [];
+    const sel = this.command()['server'];
+    const srv = servers.find(s => s.id === sel) ?? (servers.length === 1 ? servers[0] : undefined);
+    if (!srv?.url) return null;
+    return srv.url.replace(/\/+$/, '') + '/config/developer-tools/action';
+  });
 
   val(key: string): any { return this.command()[key]; }
   asArray(key: string): string[] { const v = this.command()[key]; return Array.isArray(v) ? v : []; }
@@ -223,6 +273,7 @@ export class CommandFieldsComponent {
       case 'wl-mixes': return wlOpts(this.data.wlMixes());
       case 'wl-outputs': return wlOpts(this.data.wlOutputs());
       case 'profiles': return this.profiles().map(p => ({ value: p, label: p }));
+      case 'ha-servers': return (this.data.haServers.value() ?? []).map(s => ({ value: s.id, label: s.name }));
       default: return [];
     }
   }

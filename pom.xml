@@ -273,6 +273,23 @@
             <version>1.2.5</version>
         </dependency>
 
+        <!-- Expression evaluator for the Home Assistant dial "translate formula" — pure Java, no
+             reflection/native code, so it is native-image-safe out of the box. -->
+        <dependency>
+            <groupId>net.objecthunter</groupId>
+            <artifactId>exp4j</artifactId>
+            <version>0.4.8</version>
+        </dependency>
+
+        <!-- Parse the Home Assistant action YAML the user pastes (HA's native authoring format) into
+             the JSON body its REST API expects. Loaded with SafeConstructor (scalars/maps/lists only),
+             so no arbitrary-type reflection. -->
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>2.3</version>
+        </dependency>
+
         <!-- D-Bus support for Linux Wayland system tray (StatusNotifierItem protocol) -->
         <dependency>
             <groupId>com.github.hypfvieh</groupId>
@@ -358,6 +375,7 @@
                         <classPattern>com.getpcpanel.commands.Commands</classPattern>
                         <classPattern>com.getpcpanel.commands.command.**</classPattern>
                         <classPattern>com.getpcpanel.wavelink.command.**</classPattern>
+                        <classPattern>com.getpcpanel.homeassistant.command.**</classPattern>
                         <classPattern>com.getpcpanel.device.descriptor.**</classPattern>
                         <classPattern>**.dto.**</classPattern>
                     </classPatterns>

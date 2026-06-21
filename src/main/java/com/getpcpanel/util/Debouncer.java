@@ -56,12 +56,57 @@ public class Debouncer {
         }
     }
 
+    /**
+     * Leading + trailing throttle: runs the first call for {@code key} immediately, then gates to at
+     * most one run per {@code delay} window, and always runs the most recent call once the window
+     * elapses (so the final value is never dropped). Ideal for high-frequency analog input that would
+     * otherwise flood a downstream service.
+     */
+    public void throttleLeading(Object key, Runnable runnable, long delay, TimeUnit unit) {
+        var throttle = throttles.computeIfAbsent(key, k -> new Throttle());
+        var windowNanos = unit.toNanos(delay);
+        Runnable leading = null;
+        synchronized (throttle) {
+            var now = System.nanoTime();
+            if (!throttle.scheduled && (!throttle.hasRun || now - throttle.lastRunNanos >= windowNanos)) {
+                throttle.hasRun = true;
+                throttle.lastRunNanos = now;
+                leading = runnable;                 // run outside the lock (it may do I/O)
+            } else {
+                throttle.latest = runnable;          // remember the newest; flush it at the window edge
+                if (!throttle.scheduled) {
+                    throttle.scheduled = true;
+                    var remaining = Math.max(0, throttle.lastRunNanos + windowNanos - now);
+                    scheduler.schedule(() -> flushLeading(throttle), remaining, TimeUnit.NANOSECONDS);
+                }
+            }
+        }
+        if (leading != null) {
+            leading.run();
+        }
+    }
+
     private void flush(Throttle throttle) {
         Runnable toRun;
         synchronized (throttle) {
             toRun = throttle.latest;
             throttle.latest = null;
             throttle.scheduled = false;
+        }
+        if (toRun != null) {
+            toRun.run();
+        }
+    }
+
+    private void flushLeading(Throttle throttle) {
+        Runnable toRun;
+        synchronized (throttle) {
+            toRun = throttle.latest;
+            throttle.latest = null;
+            throttle.scheduled = false;
+            if (toRun != null) {
+                throttle.lastRunNanos = System.nanoTime();
+            }
         }
         if (toRun != null) {
             toRun.run();
@@ -76,5 +121,7 @@ public class Debouncer {
     private static final class Throttle {
         private Runnable latest;
         private boolean scheduled;
+        private boolean hasRun;        // leading+trailing only: whether a leading run has happened
+        private long lastRunNanos;     // leading+trailing only: timestamp of the last actual run
     }
 }
