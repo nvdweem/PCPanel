@@ -4,15 +4,15 @@ import { DeviceService } from '../../services/device.service';
 import {
   LightingConfig, SingleKnobLightingConfig, SingleSliderLabelLightingConfig, SingleSliderLightingConfig,
 } from '../../models/generated/backend.types';
-import { ColorPickerComponent, SelectComponent, SelectOption, ToastService } from '../../ui';
+import { ColorPickerComponent, SelectComponent, SelectOption, ToastService, ToggleComponent } from '../../ui';
 import { normalizeLogo } from './lighting-util';
 import { DeviceCapabilitiesService } from '../../services/device-capabilities.service';
 
 const BLACK = '#000000';
 const isBlackHex = (c: string | undefined): boolean => !c || /^#?0{3,8}$/i.test(c.trim());
 const KNOB_DEFAULT: SingleKnobLightingConfig = { mode: 'STATIC', color1: '#FFB020', color2: '#000000' };
-const SLIDER_DEFAULT: SingleSliderLightingConfig = { mode: 'STATIC', color1: '#FFB020', color2: '#000000', muteOverrideColor: '#000000', muteOverrideDeviceOrFollow: '' };
-const LABEL_DEFAULT: SingleSliderLabelLightingConfig = { mode: 'STATIC', color: '#FFB020', muteOverrideColor: '#000000', muteOverrideDeviceOrFollow: '' };
+const SLIDER_DEFAULT: SingleSliderLightingConfig = { mode: 'STATIC', color1: '#FFB020', color2: '#000000', muteOverrideColor: '', muteOverrideDeviceOrFollow: '' };
+const LABEL_DEFAULT: SingleSliderLabelLightingConfig = { mode: 'STATIC', color: '#FFB020', muteOverrideColor: '', muteOverrideDeviceOrFollow: '' };
 
 /**
  * Per-control lighting editor for a SINGLE control (knob, or slider + its label),
@@ -24,7 +24,7 @@ const LABEL_DEFAULT: SingleSliderLabelLightingConfig = { mode: 'STATIC', color: 
 @Component({
   selector: 'pc-control-lighting',
   standalone: true,
-  imports: [SelectComponent, ColorPickerComponent],
+  imports: [SelectComponent, ColorPickerComponent, ToggleComponent],
   template: `
     @if (config(); as cfg) {
       <div class="cl">
@@ -38,7 +38,13 @@ const LABEL_DEFAULT: SingleSliderLabelLightingConfig = { mode: 'STATIC', color: 
             @if (knobUi() === 'gradient') {
               <pc-color-picker label="Color 2" [value]="knob().color2" (valueChange)="setKnob('color2', $event)"></pc-color-picker>
             }
-            <pc-color-picker label="Muted" [value]="knob().muteOverrideColor || '#000000'" (valueChange)="setKnob('muteOverrideColor', $event)"></pc-color-picker>
+            <div class="mute-row">
+              <span class="mute-lbl">Change colour when muted</span>
+              <pc-toggle [value]="muteOn(knob().muteOverrideColor)" (valueChange)="setKnobMute($event)"></pc-toggle>
+            </div>
+            @if (muteOn(knob().muteOverrideColor)) {
+              <pc-color-picker label="Muted colour" [value]="knob().muteOverrideColor || '#FF0000'" (valueChange)="setKnob('muteOverrideColor', $event)"></pc-color-picker>
+            }
           }
         } @else {
           <!-- Slider -->
@@ -51,7 +57,13 @@ const LABEL_DEFAULT: SingleSliderLabelLightingConfig = { mode: 'STATIC', color: 
             @if (sliderUi() === 'static-gradient' || sliderUi() === 'gradient') {
               <pc-color-picker label="Color 2" [value]="slider().color2" (valueChange)="setSlider('color2', $event)"></pc-color-picker>
             }
-            <pc-color-picker label="Muted" [value]="slider().muteOverrideColor || '#000000'" (valueChange)="setSlider('muteOverrideColor', $event)"></pc-color-picker>
+            <div class="mute-row">
+              <span class="mute-lbl">Change colour when muted</span>
+              <pc-toggle [value]="muteOn(slider().muteOverrideColor)" (valueChange)="setSliderMute($event)"></pc-toggle>
+            </div>
+            @if (muteOn(slider().muteOverrideColor)) {
+              <pc-color-picker label="Muted colour" [value]="slider().muteOverrideColor || '#FF0000'" (valueChange)="setSlider('muteOverrideColor', $event)"></pc-color-picker>
+            }
           }
           <div class="grp-label">LABEL</div>
           <div class="row">
@@ -61,7 +73,13 @@ const LABEL_DEFAULT: SingleSliderLabelLightingConfig = { mode: 'STATIC', color: 
             <pc-color-picker label="Color" [value]="label().color" (valueChange)="setLabel('color', $event)"></pc-color-picker>
           }
           @if (labelUi() !== 'off') {
-            <pc-color-picker label="Muted" [value]="label().muteOverrideColor || '#000000'" (valueChange)="setLabel('muteOverrideColor', $event)"></pc-color-picker>
+            <div class="mute-row">
+              <span class="mute-lbl">Change colour when muted</span>
+              <pc-toggle [value]="muteOn(label().muteOverrideColor)" (valueChange)="setLabelMute($event)"></pc-toggle>
+            </div>
+            @if (muteOn(label().muteOverrideColor)) {
+              <pc-color-picker label="Muted colour" [value]="label().muteOverrideColor || '#FF0000'" (valueChange)="setLabel('muteOverrideColor', $event)"></pc-color-picker>
+            }
           }
         }
       </div>
@@ -70,6 +88,8 @@ const LABEL_DEFAULT: SingleSliderLabelLightingConfig = { mode: 'STATIC', color: 
   styles: [`
     .cl { display: flex; flex-direction: column; gap: 8px; }
     .row { display: flex; }
+    .mute-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .mute-lbl { font-size: 11.5px; color: var(--text-2); }
     .grp-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: .12em; color: var(--text-3); margin-top: 4px; }
     .cline { display: flex; align-items: center; justify-content: space-between; background: #121419; border: 1px solid var(--line); border-radius: var(--r-sm); padding: 6px 10px; }
     .lbl { font-size: 11.5px; color: var(--text-2); }
@@ -115,6 +135,20 @@ export class ControlLightingComponent {
       untracked(() => this.config.set(JSON.parse(JSON.stringify(s.lightingConfig))));
     });
   }
+
+  // ── mute override (explicit on/off; a blank colour means "don't change when muted") ──────────
+  /** Whether a control's "change colour when muted" override is active (a non-black colour is set). */
+  muteOn(color: string | undefined): boolean {
+    return !!color && !isBlackHex(color);
+  }
+  /** Enabling defaults to red (or keeps an existing non-black colour); disabling clears the colour. */
+  private muteColorFor(on: boolean, current: string | undefined): string {
+    if (!on) return '';
+    return current && !isBlackHex(current) ? current : '#FF0000';
+  }
+  setKnobMute(on: boolean): void { this.setKnob('muteOverrideColor', this.muteColorFor(on, this.knob().muteOverrideColor)); }
+  setSliderMute(on: boolean): void { this.setSlider('muteOverrideColor', this.muteColorFor(on, this.slider().muteOverrideColor)); }
+  setLabelMute(on: boolean): void { this.setLabel('muteOverrideColor', this.muteColorFor(on, this.label().muteOverrideColor)); }
 
   private patch(part: Partial<LightingConfig>): void {
     const cur = this.config();
