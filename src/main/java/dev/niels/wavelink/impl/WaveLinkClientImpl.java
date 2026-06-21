@@ -314,6 +314,15 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
         trigger(e -> event.accept(e, entry));
     }
 
+    /**
+     * Dev/test hook: inject a channel state into the model and fire {@code channelChanged} through the
+     * normal listener path, exactly as an incoming Wave Link update would. Lets the MCP test harness
+     * simulate a channel mute without the real Wave Link app running.
+     */
+    public void simulateChannelState(WaveLinkChannel channel) {
+        updateEntry(IWaveLinkClientEventListener::channelChanged, channels, channel);
+    }
+
     void updateInputDevices(List<WaveLinkInputDevice> waveLinkInputDevices) {
         updateEntries(IWaveLinkClientEventListener::inputDevicesChanged, inputDevices, waveLinkInputDevices);
     }

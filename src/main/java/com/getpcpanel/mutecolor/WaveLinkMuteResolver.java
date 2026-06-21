@@ -12,8 +12,12 @@ import jakarta.inject.Inject;
 /** Mute state of a Wave Link volume control ({@link CommandWaveLinkChangeLevel}) — channel, mix or output. */
 @ApplicationScoped
 public class WaveLinkMuteResolver implements MuteStateResolver {
+    private final WaveLinkService waveLink;
+
     @Inject
-    WaveLinkService waveLink;
+    public WaveLinkMuteResolver(WaveLinkService waveLink) {
+        this.waveLink = waveLink;
+    }
 
     @Override
     public Optional<Boolean> resolve(Commands command, String target) {
@@ -21,9 +25,12 @@ public class WaveLinkMuteResolver implements MuteStateResolver {
             return Optional.empty();
         }
         var cmd = command.getCommand(CommandWaveLinkChangeLevel.class).orElse(null);
-        if (cmd == null || !waveLink.isConnected() || cmd.getId1() == null) {
+        if (cmd == null || cmd.getId1() == null) {
             return Optional.empty();
         }
+        // No isConnected() gate: when Wave Link is down the lookups return a blank entry whose mute is
+        // null, which maps to empty (unknown) anyway — and gating on it risks suppressing a real mute
+        // if the flag lags the channel push.
         return switch (cmd.getCommandType()) {
             case Channel -> Optional.ofNullable(waveLink.getChannelFromId(cmd.getId1()).isMuted());
             case Mix -> {

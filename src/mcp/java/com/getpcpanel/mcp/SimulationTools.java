@@ -17,6 +17,9 @@ import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.hid.DeviceScanner.DeviceConnectedEvent;
 import com.getpcpanel.hid.DeviceScanner.DeviceDisconnectedEvent;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.wavelink.WaveLinkService;
+
+import dev.niels.wavelink.impl.model.WaveLinkChannel;
 
 import io.quarkus.arc.properties.IfBuildProperty;
 import io.quarkiverse.mcp.server.Tool;
@@ -40,6 +43,7 @@ public class SimulationTools {
     @Inject DeviceHolder deviceHolder;
     @Inject SaveService saveService;
     @Inject ObjectMapper objectMapper;
+    @Inject WaveLinkService waveLink;
 
     @Tool(description = "Drive an analog control (knob/slider) as if the hardware moved it: fires the "
             + "same KnobRotateEvent the input layer fires. value is the canonical 0-255 domain "
@@ -160,6 +164,19 @@ public class SimulationTools {
             return new Ack(false, "No device (live or persisted) with serial '" + serial + "'");
         }
         return new Ack(true, "Removed device '" + serial + "'" + (purged ? " and purged its saved config" : ""));
+    }
+
+    @Tool(description = "Simulate a Wave Link channel state update (incl. mute) through the REAL listener "
+            + "path - injects the channel into the live Wave Link model and fires channelChanged, exactly "
+            + "as an incoming Wave Link push would. Drives the mute-override colour for any control bound "
+            + "to this channel's volume. channelId must match the id the control's command targets. Then "
+            + "poll pcpanel_get_device for the control's colour, or pcpanel_recent_logs for the decision.")
+    public Ack pcpanel_simulate_wavelink_mute(
+            @ToolArg(description = "Wave Link channel id (must match the bound command's id1)") String channelId,
+            @ToolArg(description = "Channel display name (cosmetic, e.g. 'Music')") String name,
+            @ToolArg(description = "true = muted, false = unmuted") boolean muted) {
+        waveLink.simulateChannelState(new WaveLinkChannel(channelId, name, null, null, null, muted, null, null, null));
+        return new Ack(true, "Injected Wave Link channel '" + channelId + "' (" + name + ") muted=" + muted);
     }
 
     public record Ack(boolean ok, String message) {

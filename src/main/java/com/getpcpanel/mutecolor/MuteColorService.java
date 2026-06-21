@@ -1,6 +1,7 @@
 package com.getpcpanel.mutecolor;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
@@ -116,6 +117,7 @@ public class MuteColorService implements IOverrideColorProviderProvider {
     }
 
     public synchronized void recomputeAll() {
+        log.debug("Mute-colour recompute triggered");
         for (var serial : saveService.get().getDevices().keySet()) {
             devices.getDevice(serial).ifPresent(device -> recomputeDevice(serial, device));
         }
@@ -135,9 +137,11 @@ public class MuteColorService implements IOverrideColorProviderProvider {
         // overrides in the holder is harmless (never read) and they are corrected on the next recompute
         // that a profile/lighting switch triggers.
         if (lc == null || lc.lightingMode() != LightingMode.CUSTOM) {
+            log.debug("Device {} not in CUSTOM lighting (mode={}); no mute overrides applied", serial, lc == null ? null : lc.lightingMode());
             return;
         }
-        if (applyOverrides(serial, lc, profile)) {
+        if (applyOverrides(serial, lc, profile.getDialData())) {
+            log.debug("Mute overrides changed for {}; re-rendering", serial);
             try {
                 device.setLighting(lc, true);
             } catch (Exception e) {
@@ -147,14 +151,16 @@ public class MuteColorService implements IOverrideColorProviderProvider {
         }
     }
 
-    private boolean applyOverrides(String serial, LightingConfig lc, Profile profile) {
+    /** Applies/clears overrides for one device's controls from its lighting config + dial assignments;
+     *  returns whether any control's override colour changed. Package-visible for unit testing. */
+    boolean applyOverrides(String serial, LightingConfig lc, Map<Integer, Commands> dialData) {
         var knobConfigs = lc.knobConfigs();
         var sliderConfigs = lc.sliderConfigs();
         var labelConfigs = lc.sliderLabelConfigs();
         var knobLen = knobConfigs.length;
         var changed = false;
 
-        for (var entry : profile.getDialData().entrySet()) {
+        for (var entry : dialData.entrySet()) {
             var idx = entry.getKey();
             var command = entry.getValue();
             if (idx < knobLen) {
@@ -233,9 +239,12 @@ public class MuteColorService implements IOverrideColorProviderProvider {
         for (var resolver : resolvers) {
             var result = resolver.resolve(command, normalized);
             if (result.isPresent()) {
+                log.debug("Mute target '{}' resolved by {} -> {}", normalized, resolver.getClass().getSimpleName(), result.get());
                 return result.get();
             }
         }
+        var first = command.getCommands().isEmpty() ? "none" : command.getCommands().get(0).getClass().getSimpleName();
+        log.debug("No resolver claimed mute target '{}' (command={}); treating as not muted", normalized, first);
         return false;
     }
 

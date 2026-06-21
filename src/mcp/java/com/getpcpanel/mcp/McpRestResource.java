@@ -132,6 +132,11 @@ public class McpRestResource {
         return simulation.pcpanel_simulate_midi(r.serial(), r.status(), r.data1(), r.data2());
     }
 
+    @POST @Path("/simulate/wavelink-mute")
+    public SimulationTools.Ack simulateWaveLinkMute(WaveLinkMuteRequest r) {
+        return simulation.pcpanel_simulate_wavelink_mute(r.channelId(), r.name(), r.muted());
+    }
+
     @POST @Path("/virtual-device")
     @SneakyThrows
     public SimulationTools.Ack createVirtualDevice(CreateVirtualDeviceRequest r) {
@@ -162,5 +167,8 @@ public class McpRestResource {
     }
 
     public record CreateVirtualDeviceRequest(String serial, DeviceDescriptor descriptor) {
+    }
+
+    public record WaveLinkMuteRequest(String channelId, String name, boolean muted) {
     }
 }

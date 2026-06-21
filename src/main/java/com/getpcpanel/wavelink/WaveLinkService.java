@@ -98,6 +98,7 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
     // Wave Link state (incl. mute) changed: notify observers (e.g. the mute-colour layer) to re-read state.
     @Override
     public void channelChanged(WaveLinkChannel channel) {
+        log.debug("WaveLink channelChanged id={} name={} muted={}", channel.id(), channel.name(), channel.isMuted());
         fireChanged();
     }
 
