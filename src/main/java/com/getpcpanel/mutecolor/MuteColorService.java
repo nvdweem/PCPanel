@@ -13,6 +13,7 @@ import com.getpcpanel.device.Device;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.obs.OBSConnectEvent;
 import com.getpcpanel.obs.OBSMuteEvent;
+import com.getpcpanel.profile.BaseLayerService;
 import com.getpcpanel.profile.LightingChangedToDefaultEvent;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.ProfileSwitchedEvent;
@@ -65,6 +66,8 @@ public class MuteColorService implements IOverrideColorProviderProvider {
     DeviceHolder devices;
     @Inject
     SaveService saveService;
+    @Inject
+    BaseLayerService baseLayer;
     @Inject
     @All
     List<MuteStateResolver> resolvers;
@@ -140,7 +143,11 @@ public class MuteColorService implements IOverrideColorProviderProvider {
             log.debug("Device {} not in CUSTOM lighting (mode={}); no mute overrides applied", serial, lc == null ? null : lc.lightingMode());
             return;
         }
-        if (applyOverrides(serial, lc, profile.getDialData())) {
+        // Resolve over the base-layer-merged view so a control configured only in the base layer (its
+        // command and its muted colour) still gets a mute override. The re-send below merges on output.
+        var effectiveLc = baseLayer.effectiveLighting(serial, lc);
+        var effectiveDialData = baseLayer.effectiveDialData(serial, profile);
+        if (applyOverrides(serial, effectiveLc, effectiveDialData)) {
             log.debug("Mute overrides changed for {}; re-rendering", serial);
             try {
                 device.setLighting(lc, true);

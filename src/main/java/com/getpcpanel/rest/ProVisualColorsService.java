@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.getpcpanel.device.Device;
 import com.getpcpanel.device.DeviceType;
+import com.getpcpanel.profile.BaseLayerService;
 import com.getpcpanel.profile.dto.LightingConfig;
 import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
 import com.getpcpanel.profile.dto.SingleLogoLightingConfig;
@@ -28,6 +29,8 @@ public class ProVisualColorsService {
 
     @Inject
     OverrideColorService overrideColorService;
+    @Inject
+    BaseLayerService baseLayer;
 
     public ProVisualColors resolve(Device device) {
         if (device == null || device.deviceType() != DeviceType.PCPANEL_PRO) {
@@ -38,6 +41,8 @@ public class ProVisualColorsService {
         if (config == null || config.lightingMode() == null) {
             return ProVisualColors.defaultForPro();
         }
+        // Preview the same base-layer fallback the hardware shows (no-op outside CUSTOM mode / no base).
+        config = baseLayer.effectiveLighting(device.getSerialNumber(), config);
 
         return switch (config.lightingMode()) {
             case ALL_COLOR -> monochrome(colorOrDefault(config.allColor()));

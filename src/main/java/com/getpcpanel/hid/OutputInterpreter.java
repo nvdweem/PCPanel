@@ -3,6 +3,7 @@ package com.getpcpanel.hid;
 import java.util.Arrays;
 
 import com.getpcpanel.device.DeviceType;
+import com.getpcpanel.profile.BaseLayerService;
 import com.getpcpanel.profile.dto.LightingConfig;
 import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
 import com.getpcpanel.profile.dto.SingleLogoLightingConfig;
@@ -21,6 +22,8 @@ public final class OutputInterpreter {
     DeviceScanner deviceScanner;
     @Inject
     OverrideColorService overrideColorService;
+    @Inject
+    BaseLayerService baseLayer;
 
     private static final byte[] OUTPUT_CODE_INIT = { 1 };
     private static final byte ANIMATION_RAINBOW_HORIZONTAL = 1;
@@ -76,6 +79,8 @@ public final class OutputInterpreter {
         if (dt == null) {
             throw new IllegalArgumentException("Empty device type");
         }
+        // Fill any per-control "off" slots from the device's base layer (no-op outside CUSTOM mode / no base).
+        config = baseLayer.effectiveLighting(serialNumber, config);
         switch (dt) {
             case PCPANEL_RGB -> sendLightingConfigRGB(serialNumber, config, priority);
             case PCPANEL_MINI -> sendLightingConfigMini(serialNumber, config);

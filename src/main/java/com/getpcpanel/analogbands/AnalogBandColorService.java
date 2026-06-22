@@ -9,6 +9,7 @@ import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.command.CommandAnalogBands;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.hid.DeviceHolder;
+import com.getpcpanel.profile.BaseLayerService;
 import com.getpcpanel.profile.LightingChangedToDefaultEvent;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.ProfileSwitchedEvent;
@@ -57,6 +58,8 @@ public class AnalogBandColorService implements IOverrideColorProviderProvider {
     @Inject
     SaveService saveService;
     @Inject
+    BaseLayerService baseLayer;
+    @Inject
     Event<VisualColorsChangedEvent> visualColorsChanged;
 
     private final ColorOverrideHolder holder = new ColorOverrideHolder();
@@ -99,7 +102,10 @@ public class AnalogBandColorService implements IOverrideColorProviderProvider {
             if (lc == null || lc.lightingMode() != LightingMode.CUSTOM) {
                 return;
             }
-            if (applyOverrides(serial, lc, profile.getDialData())) {
+            // Include base-layer controls so a stepped switch defined only in the base layer also lights.
+            var effectiveLc = baseLayer.effectiveLighting(serial, lc);
+            var effectiveDialData = baseLayer.effectiveDialData(serial, profile);
+            if (applyOverrides(serial, effectiveLc, effectiveDialData)) {
                 try {
                     device.setLighting(lc, true);
                 } catch (Exception e) {
