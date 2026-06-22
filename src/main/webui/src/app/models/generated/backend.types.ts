@@ -506,6 +506,7 @@ export interface ProfileDto {
 export interface ProfileSettingsDto {
     activateApplications: string[];
     focusBackOnLost: boolean;
+    isBaseLayer: boolean;
     isMainProfile: boolean;
     name: string;
 }

@@ -271,6 +271,7 @@ export class DeviceComponent {
   }
 
   setMain(on: boolean): void { const s = this.profileSettings(); if (s) this.saveSettings({ ...s, isMainProfile: on }); }
+  setBaseLayer(on: boolean): void { const s = this.profileSettings(); if (s) this.saveSettings({ ...s, isBaseLayer: on }); }
   setFocusBack(on: boolean): void { const s = this.profileSettings(); if (s) this.saveSettings({ ...s, focusBackOnLost: on }); }
 
   addApp(name: string): void {

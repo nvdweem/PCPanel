@@ -1319,6 +1319,9 @@
       "type": "com.getpcpanel.profile.Profile",
       "fields": [
         {
+          "name": "isBaseLayer"
+        },
+        {
           "name": "isMainProfile"
         }
       ],
@@ -1364,6 +1367,10 @@
           "parameterTypes": []
         },
         {
+          "name": "isBaseLayer",
+          "parameterTypes": []
+        },
+        {
           "name": "isFocusBackOnLost",
           "parameterTypes": []
         },
@@ -1375,6 +1382,12 @@
           "name": "setActivateApplications",
           "parameterTypes": [
             "java.util.List"
+          ]
+        },
+        {
+          "name": "setBaseLayer",
+          "parameterTypes": [
+            "boolean"
           ]
         },
         {

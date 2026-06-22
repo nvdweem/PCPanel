@@ -19,6 +19,7 @@ import com.getpcpanel.rest.EventBroadcaster.AssignmentChangedEvent.Kinds;
 import com.getpcpanel.rest.EventBroadcaster.DeviceRenamedEvent;
 import com.getpcpanel.rest.EventBroadcaster.LightingChangedEvent;
 import com.getpcpanel.rest.EventBroadcaster.KnobSettingChangedEvent;
+import com.getpcpanel.rest.EventBroadcaster.VisualColorsChangedEvent;
 import com.getpcpanel.rest.model.dto.ControlAssignmentsUpdateDto;
 import com.getpcpanel.rest.model.dto.DeviceDto;
 import com.getpcpanel.rest.model.dto.ProfileDto;
@@ -201,7 +202,20 @@ public class DeviceResource {
         } else {
             profile.setMainProfile(false);
         }
+        // Exactly one profile may be the base layer (the fallback for unconfigured/unlit controls).
+        var baseLayerChanged = profile.isBaseLayer() != dto.isBaseLayer();
+        if (dto.isBaseLayer()) {
+            StreamEx.of(deviceSave.getProfiles()).forEach(p -> p.setBaseLayer(p == profile));
+        } else {
+            profile.setBaseLayer(false);
+        }
         saveService.save();
+        // Changing the base layer alters how the active profile renders, so re-apply lighting and refresh.
+        if (baseLayerChanged) {
+            deviceHolder.getDevice(serial).ifPresent(device -> device.setLighting(device.getSavedLightingConfig(), true));
+            eventBus.fire(new LightingChangedToDefaultEvent(serial));
+            eventBus.fire(new VisualColorsChangedEvent(serial));
+        }
         return Response.ok().build();
     }
 
