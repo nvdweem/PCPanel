@@ -91,7 +91,7 @@ type Cmd = Record<string, any>;
           @case ('device') {
             <div class="field-block">
               <div class="flabel">{{ $any(f).label }}</div>
-              <pc-select [block]="true" [options]="deviceOptions($any(f).filter)" [value]="val($any(f).key)"
+              <pc-select [block]="true" [options]="deviceOptions($any(f).filter, $any(f).defaultLabel)" [value]="val($any(f).key)"
                          placeholder="—" (valueChange)="set($any(f).key, $event)"></pc-select>
             </div>
           }
@@ -346,9 +346,11 @@ export class CommandFieldsComponent {
     }
   }
 
-  deviceOptions(filter: 'output' | 'input' | 'all' | undefined): SelectOption[] {
+  deviceOptions(filter: 'output' | 'input' | 'all' | undefined, defaultLabel?: string): SelectOption[] {
     const res = filter === 'output' ? this.data.outputDevices : filter === 'input' ? this.data.inputDevices : this.data.audioDevices;
-    return (res.value() ?? []).map(d => ({ value: d.id, label: d.name }));
+    const opts = (res.value() ?? []).map(d => ({ value: d.id, label: d.name }));
+    // For commands where a blank device means "use the default device", make that explicitly selectable.
+    return defaultLabel ? [{ value: '', label: defaultLabel }, ...opts] : opts;
   }
 
   // ── input mapping (Start/End as displayed positions 0..100) ──────────────────
