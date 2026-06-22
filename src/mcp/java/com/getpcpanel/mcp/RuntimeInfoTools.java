@@ -64,7 +64,24 @@ public class RuntimeInfoTools {
                         // Voicemeeter exposes no isConnected(); a cached non-null version means it has
                         // completed a login at least once - the best available connectivity proxy.
                         integration(voicemeeter, save.isVoicemeeterEnabled(), b -> b.getVersion() != null),
-                        integration(mqtt, save.getMqtt().enabled(), MqttService::isConnected)));
+                        integration(mqtt, save.getMqtt().enabled(), MqttService::isConnected)),
+                waveLinkFocus());
+    }
+
+    /** Diagnostic: what Wave Link reports as the focused app, and the channel the focus-volume logic resolves it to. */
+    private WaveLinkFocus waveLinkFocus() {
+        if (!waveLink.isResolvable()) {
+            return new WaveLinkFocus(null, null, null, java.util.Map.of());
+        }
+        try {
+            var wl = waveLink.get();
+            var app = wl.getLastFocusApp();
+            return new WaveLinkFocus(app == null ? null : app.id(), app == null ? null : app.name(),
+                    wl.findChannelIdForFocusApp().orElse(null), wl.focusIdentitySnapshot());
+        } catch (RuntimeException e) {
+            log.debug("Wave Link focus probe failed: {}", e.getMessage());
+            return new WaveLinkFocus(null, null, null, java.util.Map.of());
+        }
     }
 
     private static String safeId(DeviceProvider p) {
@@ -104,10 +121,17 @@ public class RuntimeInfoTools {
             String pcpanelRoot,
             int httpPort,
             List<ProviderInfo> providersLoaded,
-            Integrations integrations) {
+            Integrations integrations,
+            WaveLinkFocus waveLinkFocus) {
     }
 
     public record ProviderInfo(String id, String discoveryMode) {
+    }
+
+    /** Wave Link's currently focused app (as it reports it), the channel focus-volume resolves it to, and
+     *  the learned OS-process → Wave Link app-name map that bridges executables to Wave Link's app names. */
+    public record WaveLinkFocus(String focusAppId, String focusAppName, String resolvedChannelId,
+            java.util.Map<String, String> learnedIdentities) {
     }
 
     public record Integrations(IntegrationStatus obs, IntegrationStatus waveLink, IntegrationStatus voicemeeter,

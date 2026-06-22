@@ -1,17 +1,24 @@
 package com.getpcpanel.wavelink;
 
 import java.net.ConnectException;
-import java.util.Collection;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.lang3.StringUtils;
+
+import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.util.ReconnectBackoff;
 import com.getpcpanel.volume.IFocusRedirector;
 
+import jakarta.enterprise.inject.Instance;
+
 import dev.niels.wavelink.IWaveLinkClientEventListener;
 import dev.niels.wavelink.WaveLinkClient;
+import dev.niels.wavelink.impl.model.WaveLinkApp;
 import dev.niels.wavelink.impl.model.WaveLinkChannel;
 import dev.niels.wavelink.impl.model.WaveLinkMix;
 import dev.niels.wavelink.impl.model.WaveLinkOutputDevice;
@@ -34,6 +41,19 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
     Event<WaveLinkChangedEvent> changedEvent;
     @Inject
     WaveLinkAppCache appCache;
+    @Inject
+    Instance<ISndCtrl> sndCtrl;
+
+    /**
+     * Bridges OS process → Wave Link app identity. Wave Link names apps by a friendly name ("Microsoft
+     * Edge") that rarely matches the OS executable ("msedge.exe"), so the OS-focused process can't be
+     * matched to channel membership by name alone. Whenever Wave Link pushes a focus change we learn the
+     * pairing — at that moment the OS foreground IS the app Wave Link just named — keyed by the
+     * normalised executable. The focus-volume decision then maps the focused process to its Wave Link
+     * identity and looks that up in the live channels, so adding/removing the app from a channel switches
+     * control immediately. Keyed in-memory; rebuilt as Wave Link reports focus.
+     */
+    private final Map<String, WaveLinkApp> focusIdentityByProcess = new ConcurrentHashMap<>();
 
     WaveLinkService() {
         super(false);
@@ -41,19 +61,18 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
     }
 
     /**
-     * Routes the focused-app volume to Wave Link when the focused app is one Wave Link controls,
-     * returning {@code true} to stop the coordinator from also changing the app's OS volume.
+     * Routes the focused-app volume to Wave Link when the focused app is one Wave Link currently
+     * controls, returning {@code true} to stop the coordinator from also changing the app's OS volume.
      *
-     * <p>While connected the live channels are authoritative: resolve the focused app to a channel
-     * (by Wave Link's own focus, then by matching the OS process against channel membership) and set
-     * its level. Any app we successfully route is remembered in {@link WaveLinkAppCache}. When not yet
-     * connected — notably the startup race (#2), where the initial focus-volume trigger fires before
-     * Wave Link is up — we defer to that cache so a known Wave-Link app's OS volume is never touched.
+     * <p>While connected the live channels are authoritative (so adding/removing the app from a channel
+     * switches control immediately); when not yet connected — notably the startup race where the initial
+     * focus-volume trigger fires before Wave Link is up — we defer to {@link WaveLinkAppCache} so a known
+     * Wave-Link app's OS volume is never touched.
      */
     @Override
     public boolean handleFocusVolumeRequest(String targetProcess, float volume) {
         if (isConnected()) {
-            var channelId = findChannelIdForFocusApp().or(() -> findChannelIdForProcess(targetProcess));
+            var channelId = resolveChannelForFocusApp(targetProcess);
             if (channelId.isPresent()) {
                 setChannelLevel(channelId.get(), volume);
                 if (appCache != null) {
@@ -70,13 +89,54 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
     @Override
     public boolean controlsFocusApp(String targetProcess) {
         if (isConnected()) {
-            return findChannelIdForFocusApp().or(() -> findChannelIdForProcess(targetProcess)).isPresent();
+            return resolveChannelForFocusApp(targetProcess).isPresent();
         }
         return controlledWhileDisconnected(targetProcess);
     }
 
     private boolean controlledWhileDisconnected(String targetProcess) {
         return appCache != null && appCache.isControlled(targetProcess);
+    }
+
+    /** Learns the OS-process → Wave Link app identity each time Wave Link reports a focus change. */
+    @Override
+    public void focusedAppChanged(WaveLinkApp app) {
+        if (sndCtrl != null && sndCtrl.isResolvable()) {
+            learnFocusIdentity(app, sndCtrl.get().getFocusApplication());
+        }
+    }
+
+    /** Read-only snapshot of the learned OS-process → Wave Link app-name map (diagnostic). */
+    public Map<String, String> focusIdentitySnapshot() {
+        return StreamEx.of(focusIdentityByProcess.entrySet()).toMap(Map.Entry::getKey, e -> e.getValue().name());
+    }
+
+    /** Records that {@code osFocusPath} (the OS-focused executable) is the Wave Link app {@code app}. */
+    void learnFocusIdentity(WaveLinkApp app, String osFocusPath) {
+        if (app == null || app.isEmpty()) {
+            return;
+        }
+        var key = WaveLinkAppCache.normalize(osFocusPath);
+        if (!key.isBlank()) {
+            focusIdentityByProcess.put(key, app);
+        }
+    }
+
+    /**
+     * The live channel that controls {@code targetProcess}'s volume, if any. Resolved against the
+     * current channels (so it reflects add/remove immediately): first via the learned Wave Link identity
+     * for this process (bridges the exe-vs-friendly-name gap, e.g. msedge.exe → "Microsoft Edge"), then
+     * by directly matching the executable name against channel apps for apps whose names happen to match.
+     */
+    private Optional<String> resolveChannelForFocusApp(String targetProcess) {
+        var identity = focusIdentityByProcess.get(WaveLinkAppCache.normalize(targetProcess));
+        if (identity != null) {
+            var channel = findChannelIdForApp(identity);
+            if (channel.isPresent()) {
+                return channel;
+            }
+        }
+        return findChannelIdForProcess(targetProcess);
     }
 
     /** Finds the channel whose membership includes the given OS process (matched by executable name). */
@@ -89,6 +149,17 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
                        .filter(channel -> StreamEx.of(channel.apps())
                                                   .anyMatch(app -> key.equals(WaveLinkAppCache.normalize(app.id()))
                                                           || key.equals(WaveLinkAppCache.normalize(app.name()))))
+                       .map(WaveLinkChannel::id)
+                       .findFirst();
+    }
+
+    /** Finds the channel whose membership includes an app matching {@code identity} (by id or name). */
+    private Optional<String> findChannelIdForApp(WaveLinkApp identity) {
+        if (identity == null || identity.isEmpty()) {
+            return Optional.empty();
+        }
+        return StreamEx.ofValues(getChannels())
+                       .filter(channel -> StreamEx.of(channel.apps()).anyMatch(app -> appsMatch(identity, app)))
                        .map(WaveLinkChannel::id)
                        .findFirst();
     }
@@ -198,15 +269,18 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
      * focused app is not assigned to any channel.
      */
     public Optional<String> findChannelIdForFocusApp() {
-        var focusApp = getLastFocusApp();
-        if (focusApp.isEmpty()) {
-            return Optional.empty();
-        }
-        return StreamEx.ofValues(getChannels())
-                       .mapToEntry(WaveLinkChannel::apps).flatMapValues(Collection::stream)
-                       .filterValues(app -> focusApp.id().equals(app.id()))
-                       .keys()
-                       .map(WaveLinkChannel::id).findFirst();
+        return findChannelIdForApp(getLastFocusApp());
+    }
+
+    /**
+     * Whether Wave Link's focused app and a channel's app are the same. Matched on id <em>or</em> name
+     * (case-insensitive): the focused-app push and the channel membership don't always carry the same
+     * identifier for the same app (e.g. an exe path vs a display name), so an id-only compare misses
+     * apps like a browser whose Wave Link name differs from its executable.
+     */
+    private static boolean appsMatch(WaveLinkApp a, WaveLinkApp b) {
+        return (StringUtils.isNotBlank(a.id()) && StringUtils.equalsIgnoreCase(a.id(), b.id()))
+                || (StringUtils.isNotBlank(a.name()) && StringUtils.equalsIgnoreCase(a.name(), b.name()));
     }
 
     @Override
