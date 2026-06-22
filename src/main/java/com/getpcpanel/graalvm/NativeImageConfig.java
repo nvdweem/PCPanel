@@ -11,7 +11,9 @@ import org.hid4java.jna.WideStringBuffer;
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.CommandsType;
 import com.getpcpanel.commands.DeviceSet;
+import com.getpcpanel.commands.command.AnalogBand;
 import com.getpcpanel.commands.command.Command;
+import com.getpcpanel.commands.command.CommandAnalogBands;
 import com.getpcpanel.commands.command.CommandBrightness;
 import com.getpcpanel.commands.command.CommandEndProgram;
 import com.getpcpanel.commands.command.CommandKeystroke;
@@ -149,6 +151,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 
         // Command type hierarchy
         Command.class,
+        CommandAnalogBands.class,
         CommandBrightness.class,
         CommandEndProgram.class,
         CommandKeystroke.class,
@@ -268,7 +271,11 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         Commands.class,
         CommandsType.class,
         DeviceSet.class,
+        DeviceSet[].class, // CommandVolumeApplicationDeviceToggle.devices is a List<DeviceSet>
         DialCommandParams.class,
+        // CommandAnalogBands.bands is a List<AnalogBand>; Jackson needs the record and its array form
+        AnalogBand.class,
+        AnalogBand[].class,
 
         // Profile / save model classes (Jackson deserialization of user save file)
         Save.class,
