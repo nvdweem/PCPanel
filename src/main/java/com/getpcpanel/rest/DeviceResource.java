@@ -378,6 +378,12 @@ public class DeviceResource {
             changed = true;
         }
 
+        if (update.releaseButton() != null) {
+            profile.setReleaseButtonData(index, update.releaseButton());
+            eventBus.fire(new AssignmentChangedEvent(serial, Kinds.releasebutton, index, update.releaseButton()));
+            changed = true;
+        }
+
         if (update.knobSetting() != null) {
             var knob = profile.getKnobSettings(index);
             knob.setMinTrim(update.knobSetting().getMinTrim());

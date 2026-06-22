@@ -44,8 +44,22 @@ public final class InputInterpreter {
 
         public void onButtonPress(@Observes DeviceCommunicationHandler.ButtonPressEvent event) throws IOException {
         devices.getDevice(event.serialNum()).ifPresent(device -> device.setButtonPressed(event.button(), event.pressed()));
-        if (event.pressed())
+        if (event.pressed()) {
             doClickAction(event.serialNum(), event.button());
+        } else {
+            doReleaseAction(event.serialNum(), event.button());
+        }
+    }
+
+    /**
+     * Fires the button's release commands on button-up (push-to-talk). Release has no double-click
+     * notion, so it dispatches directly rather than through the click/debounce path.
+     */
+    private void doReleaseAction(String serialNum, int button) {
+        save.getProfile(serialNum)
+            .map(p -> p.getReleaseButtonData(button))
+            .filter(data -> hasCommands(data))
+            .ifPresent(data -> eventBus.fire(new PCPanelControlEvent(serialNum, button, data, false, null)));
     }
 
     private void doDialAction(String serialNum, boolean initial, int knob, DialValue v) {

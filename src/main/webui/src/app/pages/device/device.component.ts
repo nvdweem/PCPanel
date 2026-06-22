@@ -82,11 +82,16 @@ export class DeviceComponent {
   knobLines(i: number): SlotLine[] {
     const p = this.snap()?.currentProfileSnapshot;
     const key = String(i);
-    return [
+    const lines: SlotLine[] = [
       { label: 'ROTATE', text: this.slotText(p?.dialData?.[key]), cls: 'rotate' },
       { label: 'PRESS', text: this.slotText(p?.buttonData?.[key]), cls: 'press' },
       { label: '2× PRESS', text: this.slotText(p?.dblButtonData?.[key]), cls: 'dbl' },
     ];
+    // Release (push-to-talk) is opt-in and uncommon, so only surface it once something is bound.
+    if (p?.releaseButtonData?.[key]?.commands?.length) {
+      lines.push({ label: 'RELEASE', text: this.slotText(p.releaseButtonData[key]), cls: 'release' });
+    }
+    return lines;
   }
 
   knobColor(i: number): string {
@@ -149,6 +154,7 @@ export class DeviceComponent {
       analog: { ...EMPTY },
       button: { ...EMPTY },
       dblButton: { ...EMPTY },
+      releaseButton: { ...EMPTY },
     }).subscribe({ error: () => this.toast.show('Could not clear control', { kind: 'error' }) });
   }
 

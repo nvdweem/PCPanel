@@ -90,6 +90,7 @@
           <button class="tab" [class.active]="activeSlot() === 'rotate'" (click)="setSlot('rotate')">↻ Rotate</button>
           <button class="tab" [class.active]="activeSlot() === 'press'" (click)="setSlot('press')">Single press</button>
           <button class="tab" [class.active]="activeSlot() === 'dblpress'" (click)="setSlot('dblpress')">Double press</button>
+          <button class="tab" [class.active]="activeSlot() === 'release'" (click)="setSlot('release')">On release</button>
         }
       </div>
 
@@ -97,7 +98,7 @@
         <!-- Action list -->
         <div class="action-list">
           <div class="al-head">
-            <span class="micro-label">{{ activeSlot() !== 'rotate' ? 'BUTTON ACTIONS · ON PRESS' : isSlider() ? 'FADER ACTIONS · 0–100%' : 'DIAL ACTIONS · 0–100%' }}</span>
+            <span class="micro-label">{{ activeSlot() === 'release' ? 'BUTTON ACTIONS · ON RELEASE' : activeSlot() !== 'rotate' ? 'BUTTON ACTIONS · ON PRESS' : isSlider() ? 'FADER ACTIONS · 0–100%' : 'DIAL ACTIONS · 0–100%' }}</span>
             <span class="hint-sm">drag to reorder</span>
           </div>
 

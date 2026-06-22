@@ -315,6 +315,7 @@ export interface ControlAssignmentsUpdateDto {
     button?: Commands;
     dblButton?: Commands;
     knobSetting?: KnobSetting;
+    releaseButton?: Commands;
 }
 
 export interface DeviceAction {
@@ -535,6 +536,7 @@ export interface ProfileSnapshotDto {
     dialData: { [index: string]: Commands };
     knobSettings: { [index: string]: KnobSetting };
     name: string;
+    releaseButtonData: { [index: string]: Commands };
 }
 
 export interface SerialPortDto {
@@ -764,7 +766,7 @@ export type DiscoveryMode = "AUTO" | "MANUAL";
 
 export type KeystrokeType = "KEY" | "TEXT";
 
-export type Kinds = "dial" | "button" | "dblbutton";
+export type Kinds = "dial" | "button" | "dblbutton" | "releasebutton";
 
 export type LightColorModel = "NONE" | "MONOCHROME" | "RGB" | "SCALAR_0_254";
 

@@ -22,6 +22,7 @@ public class Profile {
     @JsonProperty("isMainProfile") private boolean isMainProfile;
     @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Commands> buttonData = new HashMap<>();
     @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Commands> dblButtonData = new HashMap<>();
+    @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Commands> releaseButtonData = new HashMap<>();
     @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Commands> dialData = new HashMap<>();
     @JsonDeserialize(using = KnobSettingMapDeserializer.class) private Map<Integer, KnobSetting> knobSettings = new HashMap<>();
     private LightingConfig lightingConfig;
@@ -77,6 +78,15 @@ public class Profile {
 
     public void setDblButtonData(int button, Commands data) {
         dblButtonData.put(button, data);
+    }
+
+    /** Commands run when the button is released (push-to-talk); null when nothing is bound. */
+    public Commands getReleaseButtonData(int button) {
+        return releaseButtonData.get(button);
+    }
+
+    public void setReleaseButtonData(int button, Commands data) {
+        releaseButtonData.put(button, data);
     }
 
     public Commands getDialData(int dial) {

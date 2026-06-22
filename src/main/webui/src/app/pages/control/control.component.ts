@@ -21,7 +21,7 @@ import { ControlLightingComponent } from '../../features/lighting/control-lighti
 import { analogPct, describeCommand } from '../../devices/visual/device-visual.util';
 import { OverlayModule } from '@angular/cdk/overlay';
 
-type Slot = 'rotate' | 'press' | 'dblpress';
+type Slot = 'rotate' | 'press' | 'dblpress' | 'release';
 
 interface MenuRow { def: CommandDef; status?: 'ok' | 'idle' | 'connecting'; offline: boolean; unsupported?: boolean; }
 
@@ -80,6 +80,7 @@ export class ControlComponent {
   readonly rotate = signal<Commands>(EMPTY);
   readonly press = signal<Commands>(EMPTY);
   readonly dblpress = signal<Commands>(EMPTY);
+  readonly release = signal<Commands>(EMPTY);
   readonly knob = signal<KnobSetting>(EMPTY_KNOB);
   private loadedKey = '';
   private saveTimer?: ReturnType<typeof setTimeout>;
@@ -96,9 +97,10 @@ export class ControlComponent {
         this.rotate.set(clone(snapProfile?.dialData?.[String(i)]) ?? { commands: [], type: 'allAtOnce' });
         this.press.set(clone(snapProfile?.buttonData?.[String(i)]) ?? { commands: [], type: 'allAtOnce' });
         this.dblpress.set(clone(snapProfile?.dblButtonData?.[String(i)]) ?? { commands: [], type: 'allAtOnce' });
+        this.release.set(clone(snapProfile?.releaseButtonData?.[String(i)]) ?? { commands: [], type: 'allAtOnce' });
         this.knob.set({ ...EMPTY_KNOB, ...(snapProfile?.knobSettings?.[String(i)] ?? {}) });
         const want = this.slot();
-        this.activeSlot.set(want === 'press' || want === 'dblpress' ? want : 'rotate');
+        this.activeSlot.set(want === 'press' || want === 'dblpress' || want === 'release' ? want : 'rotate');
         this.expanded.set(0);
       });
     });
@@ -124,7 +126,7 @@ export class ControlComponent {
     if (this.isSlider()) return s?.sliderColors?.[this.sliderNum()]?.[0] ?? '#FFB020';
     return s?.dialColors?.[this.idx()] ?? '#FFB020';
   });
-  readonly actionCount = computed(() => this.rotate().commands.length + this.press().commands.length + this.dblpress().commands.length);
+  readonly actionCount = computed(() => this.rotate().commands.length + this.press().commands.length + this.dblpress().commands.length + this.release().commands.length);
 
   readonly slotKind = computed<CommandKind>(() => this.activeSlot() === 'rotate' ? 'dial' : 'button');
 
@@ -173,7 +175,12 @@ export class ControlComponent {
 
   // ── slot helpers ───────────────────────────────────────────────────────────
   currentSlotSignal() {
-    return this.activeSlot() === 'rotate' ? this.rotate : this.activeSlot() === 'press' ? this.press : this.dblpress;
+    switch (this.activeSlot()) {
+      case 'rotate': return this.rotate;
+      case 'press': return this.press;
+      case 'dblpress': return this.dblpress;
+      case 'release': return this.release;
+    }
   }
 
   setSlot(slot: Slot): void { this.activeSlot.set(slot); this.expanded.set(0); }
@@ -250,6 +257,7 @@ export class ControlComponent {
       analog: this.rotate(),
       button: this.press(),
       dblButton: this.dblpress(),
+      releaseButton: this.release(),
       knobSetting: this.knob(),
     }).subscribe({ error: () => this.toast.show('Could not save assignment', { kind: 'error' }) });
   }
