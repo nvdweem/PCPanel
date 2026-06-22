@@ -77,13 +77,16 @@ void AudioSession::Mute(bool muted) {
 }
 
 basic_string<TCHAR> AudioSession::GetProductName() {
-    DWORD	dwHandle;
-    DWORD	dwFileVersionInfoSize = GetFileVersionInfoSize(name.c_str(), &dwHandle);
-    LPVOID	lpData = (LPVOID)new BYTE[dwFileVersionInfoSize];
-    LPVOID	lpInfo;
-    UINT	unInfoLen;
-    if (GetFileVersionInfo(name.c_str(), dwHandle, dwFileVersionInfoSize, lpData)) {
-        if (VerQueryValue(lpData, _T("\\StringFileInfo\\040904B0\\ProductName"), &lpInfo, &unInfoLen))
+    DWORD dwHandle = 0;
+    DWORD dwFileVersionInfoSize = GetFileVersionInfoSize(name.c_str(), &dwHandle);
+    if (dwFileVersionInfoSize == 0) {
+        return _T(""); // No version info (or name is not a readable file path).
+    }
+    std::vector<BYTE> data(dwFileVersionInfoSize);
+    LPVOID lpInfo;
+    UINT unInfoLen;
+    if (GetFileVersionInfo(name.c_str(), dwHandle, dwFileVersionInfoSize, data.data())) {
+        if (VerQueryValue(data.data(), _T("\\StringFileInfo\\040904B0\\ProductName"), &lpInfo, &unInfoLen))
             return wstring((LPCTSTR)lpInfo);
     }
     return _T("");

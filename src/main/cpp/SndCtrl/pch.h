@@ -33,6 +33,7 @@
 // transitively; MinGW/libstdc++ does not, so include them explicitly.
 #include <list>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <unordered_map>

@@ -28,8 +28,13 @@ SndCtrl::SndCtrl(JNIEnv* env, jobject obj) :
 
     cpEnumerator = cpEnumeratorL;
 
-    cpDeviceListener.Set(new DeviceListener(*this, cpEnumerator));
-    InitDevices();
+    // Without an enumerator there is nothing to listen to or enumerate; registering the listener and
+    // InitDevices would dereference a null enumerator. Focus tracking and the policy factory are
+    // independent, so still set those up.
+    if (cpEnumerator) {
+        cpDeviceListener.Set(new DeviceListener(*this, cpEnumerator));
+        InitDevices();
+    }
 
     pFocusListener = make_unique<FocusListener>(pJni);
     BuildAudioPolicyConfigFactory();
@@ -63,6 +68,7 @@ void SndCtrl::InitDevices() {
 }
 
 void SndCtrl::DeviceAdded(CComPtr<IMMDevice> cpDevice) {
+    std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
     auto nameAndId = DeviceNameId(*cpDevice);
     wstring deviceId(nameAndId.id.get());
 
@@ -91,21 +97,20 @@ void SndCtrl::DeviceAdded(CComPtr<IMMDevice> cpDevice) {
 }
 
 void SndCtrl::DeviceRemoved(wstring deviceId) {
-    thread detacher([&, deviceId]() {
-        devices.erase(deviceId);
-        JThread thread;
-        if (*thread) {
-            auto deviceIdStr = thread.jstr(deviceId.c_str());
-            pJni->CallVoid(thread, "deviceRemoved", "(Ljava/lang/String;)V",
-                deviceIdStr
-            );
-            thread.jstr(deviceIdStr);
-        }
-    });
-    detacher.detach();
+    std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
+    devices.erase(deviceId);
+    JThread thread;
+    if (*thread) {
+        auto deviceIdStr = thread.jstr(deviceId.c_str());
+        pJni->CallVoid(thread, "deviceRemoved", "(Ljava/lang/String;)V",
+            deviceIdStr
+        );
+        thread.jstr(deviceIdStr);
+    }
 }
 
 void SndCtrl::SetDeviceVolume(wstring deviceId, float volume) {
+    std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
     auto found = devices.find(deviceId);
     if (found != devices.end()) {
         found->second->SetVolume(volume);
@@ -113,6 +118,7 @@ void SndCtrl::SetDeviceVolume(wstring deviceId, float volume) {
 }
 
 void SndCtrl::MuteDevice(wstring deviceId, bool muted) {
+    std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
     auto found = devices.find(deviceId);
     if (found != devices.end()) {
         found->second->Mute(muted);
@@ -120,6 +126,7 @@ void SndCtrl::MuteDevice(wstring deviceId, bool muted) {
 }
 
 void SndCtrl::SetProcessVolume(wstring deviceId, int pid, float volume) {
+    std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
     auto found = devices.find(deviceId);
     if (found != devices.end()) {
         found->second->SetProcessVolume(pid, volume);
@@ -127,6 +134,7 @@ void SndCtrl::SetProcessVolume(wstring deviceId, int pid, float volume) {
 }
 
 void SndCtrl::MuteProcess(wstring deviceId, int pid, bool muted) {
+    std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
     auto found = devices.find(deviceId);
     if (found != devices.end()) {
         found->second->MuteProcess(pid, muted);
@@ -134,6 +142,7 @@ void SndCtrl::MuteProcess(wstring deviceId, int pid, bool muted) {
 }
 
 void SndCtrl::SetFocusVolume(float volume) {
+    std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
     auto pid = GetFocusProcessId();
     bool found = false;
     for (auto& entry : devices) {
@@ -162,6 +171,7 @@ void SndCtrl::SetFocusVolume(float volume) {
 }
 
 void SndCtrl::UpdateDefaultDevice(wstring id, EDataFlow dataFlow, ERole role) {
+    std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
     auto device = devices.find(id);
     if (device != devices.end()) {
         device->second->SetDefault(dataFlow, role);
@@ -203,16 +213,18 @@ SDeviceNameId SndCtrl::DeviceNameId(IMMDevice& device) {
         cout << "Unable to get device id" << endl;
     }
 
-    IPropertyStore* pProps = NULL;
-    device.OpenPropertyStore(STGM_READ, &pProps);
-    auto props = CComPtr<IPropertyStore>(pProps);
-
     PROPVARIANT varName;
     PropVariantInit(&varName);
 
-    // Get the endpoint's friendly-name property.
-    if (pProps->GetValue(PKEY_Device_FriendlyName, &varName) != S_OK) {
-        cout << "Unable to get name for " << pwszID << endl;
+    // OpenPropertyStore can fail (e.g. a device disappearing mid-enumeration); guard the null store
+    // rather than dereferencing it. Writing into the CComPtr out-param adopts the single reference it
+    // returns without an extra AddRef.
+    CComPtr<IPropertyStore> props;
+    if (SUCCEEDED(device.OpenPropertyStore(STGM_READ, &props)) && props) {
+        // Get the endpoint's friendly-name property.
+        if (props->GetValue(PKEY_Device_FriendlyName, &varName) != S_OK) {
+            cout << "Unable to get name for " << pwszID << endl;
+        }
     }
 
     return SDeviceNameId{ co_ptr<WCHAR>(varName.pwszVal), co_ptr<WCHAR>(pwszID) };

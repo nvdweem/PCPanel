@@ -39,6 +39,7 @@ void AudioDevice::Mute(bool muted) {
 }
 
 bool AudioDevice::SetProcessVolume(int pid, float volume) {
+    std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
     auto entry = sessions.find(pid);
     if (entry != sessions.end()) {
         for (auto& sess : entry->second) {
@@ -50,6 +51,7 @@ bool AudioDevice::SetProcessVolume(int pid, float volume) {
 }
 
 bool AudioDevice::MuteProcess(int pid, bool muted) {
+    std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
     auto entry = sessions.find(pid);
     if (entry != sessions.end()) {
         for (auto& sess : entry->second) {
@@ -72,23 +74,42 @@ void AudioDevice::SetDefault(EDataFlow dataFlow, ERole role) {
 }
 
 void AudioDevice::SessionRemoved(AudioSession& session) {
-    JThread thread;
     auto pid = session.GetPid();
-    jlong pointer = reinterpret_cast<std::uintptr_t>(&session);
-    jni.CallVoid(thread, "removeSession", "(JI)V", pointer, pid);
+    std::unique_ptr<AudioSession> removed;
+    {
+        std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
 
-    auto entry = sessions.find(pid);
-    if (entry == sessions.end()) {
-        auto& list = entry->second;
-        list.remove_if([&session](auto& pU) {return pU.get() == &session; });
-        if (list.empty()) {
-            sessions.erase(pid);
-            cout << "Clear session " << pid << endl;
+        JThread thread;
+        jlong pointer = reinterpret_cast<std::uintptr_t>(&session);
+        jni.CallVoid(thread, "removeSession", "(JI)V", pointer, pid);
+
+        auto entry = sessions.find(pid);
+        if (entry != sessions.end()) {
+            auto& list = entry->second;
+            for (auto it = list.begin(); it != list.end(); ++it) {
+                if (it->get() == &session) {
+                    removed = std::move(*it); // take ownership out of the map; destroy it below
+                    list.erase(it);
+                    break;
+                }
+            }
+            if (list.empty()) {
+                sessions.erase(pid);
+            }
         }
+    }
+
+    // Destroy the session (which calls UnregisterAudioSessionNotification) off this COM event
+    // callback: unregistering an IAudioSessionEvents sink from inside that same sink's OnStateChanged
+    // can deadlock WASAPI. The detached thread owns only the extracted session, so it has no
+    // dependency on this AudioDevice's lifetime.
+    if (removed) {
+        std::thread([r = std::move(removed)]() mutable { r.reset(); }).detach();
     }
 }
 
 void AudioDevice::SessionAdded(CComPtr<IAudioSessionControl> session) {
+    std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
     auto ptr = make_unique<AudioSession>(session);
     auto pid = ptr->GetPid();
     auto raw = ptr.get();

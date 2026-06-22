@@ -30,18 +30,18 @@ std::wstring str(JNIEnv* env, jstring string) {
  * Signature: (Ljava/lang/Object;)V
  */
 JNIEXPORT void JNICALL Java_com_getpcpanel_cpp_windows_SndCtrlNative_start(JNIEnv* env, jclass, jobject obj) {
-    // Build SndCtrl on a dedicated thread instead of inline. Its constructor enumerates every audio
-    // endpoint (InitDevices) with synchronous COM calls that can block indefinitely on an endpoint
-    // that is slow or stuck re-initialising -- e.g. a virtual device right after the machine resumes
-    // from sleep. Done inline, that froze this JNI call and with it the @PostConstruct of the
-    // @ApplicationScoped ISndCtrl bean, so every thread that later touched audio blocked on Arc's
-    // bean-creation lock and the web worker pool drained -- the whole UI hung. Returning immediately
-    // keeps the bean usable; a stuck endpoint now only delays the audio thread, not the app.
+    // Build SndCtrl on a dedicated thread so this JNI call returns immediately. Its constructor
+    // enumerates every audio endpoint (InitDevices) with synchronous COM calls that can block
+    // indefinitely on an endpoint that is slow or stuck re-initialising (e.g. a virtual device right
+    // after the machine resumes from sleep). Running that inline would block the @PostConstruct of the
+    // @ApplicationScoped ISndCtrl bean, so a stuck endpoint would hang every thread that touches audio
+    // (via Arc's bean-creation lock) and drain the web worker pool. Off-thread, a stuck endpoint only
+    // delays the audio thread.
     //
-    // The thread owns the COM apartment for the lifetime of the process and pumps its message queue,
-    // which is what STA COM (CoInitialize in SndCtrl's constructor) needs to deliver the endpoint and
-    // session change notifications. obj is promoted to a global ref because the local ref is only
-    // valid on this (returning) frame; SndCtrl takes its own global ref, so we drop ours afterwards.
+    // The thread owns the COM apartment for the process lifetime and pumps its message queue, which
+    // STA COM (CoInitialize in SndCtrl's constructor) needs to deliver endpoint/session change
+    // notifications. obj is promoted to a global ref because the local ref is only valid on this
+    // returning frame; SndCtrl takes its own global ref, so we drop ours afterwards.
     jobject globalObj = env->NewGlobalRef(obj);
     std::thread([globalObj]() {
         JThread thread; // attaches this thread to the JVM for its whole lifetime
