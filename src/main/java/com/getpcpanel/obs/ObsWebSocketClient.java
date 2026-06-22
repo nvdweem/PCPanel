@@ -300,4 +300,12 @@ public class ObsWebSocketClient implements WebSocket.Listener {
         var fields = mapper.createObjectNode().put("sceneName", sceneName);
         fireAndForget("SetCurrentProgramScene", fields);
     }
+
+    /**
+     * Sends a no-payload OBS request (streaming/recording/virtual-cam/replay-buffer toggles, etc.).
+     * Fire-and-forget, so it never blocks the command thread.
+     */
+    public void performAction(String requestType) {
+        fireAndForget(requestType, null);
+    }
 }

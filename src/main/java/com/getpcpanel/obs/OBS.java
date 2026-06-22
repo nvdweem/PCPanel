@@ -153,6 +153,13 @@ public final class OBS {
         }
     }
 
+    /** Performs a no-payload OBS request (e.g. {@code StartStream}, {@code ToggleRecord}, {@code StartVirtualCam}). */
+    public void performAction(String requestType) {
+        if (isConnected()) {
+            client.performAction(requestType);
+        }
+    }
+
     /** Returns null on success, or an error message on failure. */
     public String test(String address, int port, String password, long timeout) {
         var tester = new ObsWebSocketClient(objectMapper, password, c -> {}, e -> {});
