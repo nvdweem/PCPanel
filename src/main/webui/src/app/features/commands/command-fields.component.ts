@@ -6,7 +6,7 @@ import { CommandPickerComponent } from './command-picker.component';
 import { mappingCurve } from './mapping-curve.util';
 import { IntegrationDataService } from './integration-data.service';
 import {
-  AppPickerComponent, ColorPickerComponent, IconComponent, KeyRecorderComponent, SegmentedComponent,
+  AppPickerComponent, ColorPickerComponent, IconComponent, IconName, KeyRecorderComponent, SegmentedComponent,
   SelectComponent, SelectOption, ToggleComponent,
 } from '../../ui';
 
@@ -152,35 +152,49 @@ type Cmd = Record<string, any>;
           }
           @case ('analog-bands') {
             <div class="bands">
-              <div class="bands-hint">Split the travel into positions. Entering a position runs its action once; moving within it does nothing. Leave gaps between positions for a dead zone.</div>
-              @for (b of bands(); track $index) {
+              <div class="bands-hint">Split the travel into positions. Entering a position runs its actions once; moving within it does nothing. Leave gaps between positions for a dead zone.</div>
+              @for (b of bands(); track $index; let bi = $index) {
                 <div class="band">
                   <div class="band-head">
-                    <span class="band-no" [style.background]="b.color || '#3A3F4A'">{{ $index + 1 }}</span>
+                    <span class="band-no" [style.background]="b.color || '#3A3F4A'">{{ bi + 1 }}</span>
                     <span class="band-range">{{ b.start }}–{{ b.end }}%</span>
-                    <span class="band-action-label">{{ bandActionLabel(b) }}</span>
-                    <button class="band-del" (click)="removeBand($index)"><pc-icon name="trash" [size]="13"></pc-icon></button>
+                    <span class="band-action-label">{{ bandSummary(b) }}</span>
+                    <button class="band-del" (click)="removeBand(bi)"><pc-icon name="trash" [size]="13"></pc-icon></button>
                   </div>
                   <div class="band-grid">
                     <div class="pc-field">
                       <div class="pc-field-label">From %</div>
-                      <input class="pc-field-input" type="number" min="0" max="100" [value]="b.start" (input)="setBand($index, 'start', +$any($event.target).value)">
+                      <input class="pc-field-input" type="number" min="0" max="100" [value]="b.start" (input)="setBand(bi, 'start', +$any($event.target).value)">
                     </div>
                     <div class="pc-field">
                       <div class="pc-field-label">To %</div>
-                      <input class="pc-field-input" type="number" min="0" max="100" [value]="b.end" (input)="setBand($index, 'end', +$any($event.target).value)">
+                      <input class="pc-field-input" type="number" min="0" max="100" [value]="b.end" (input)="setBand(bi, 'end', +$any($event.target).value)">
                     </div>
                   </div>
-                  <pc-color-picker label="Feedback colour" [value]="b.color || '#FFB020'" (valueChange)="setBand($index, 'color', $event)"></pc-color-picker>
+                  <pc-color-picker label="Feedback colour" [value]="b.color || '#FFB020'" (valueChange)="setBand(bi, 'color', $event)"></pc-color-picker>
                   <div class="field-block">
-                    <div class="flabel">Action when entering this position</div>
-                    <pc-command-picker kind="button" [triggerLabel]="bandActionLabel(b)" (pick)="setBandCmdDef($index, $event)"></pc-command-picker>
+                    <div class="flabel">Actions when entering this position</div>
+                    @if (bandCmds(b).length) {
+                      <div class="band-actions">
+                        @for (cmd of bandCmds(b); track $index; let ci = $index) {
+                          <div class="band-action-item" [class.expanded]="bandExpanded() === bandKey(bi, ci)">
+                            <div class="bai-head" (click)="toggleBandAction(bi, ci)">
+                              <pc-icon class="bai-icon" [name]="bandCmdIcon(cmd)" [size]="13"></pc-icon>
+                              <span class="bai-name">{{ bandCmdLabel(cmd) }}</span>
+                              <pc-icon class="bai-chev" [name]="bandExpanded() === bandKey(bi, ci) ? 'chevron-up' : 'chevron-down'" [size]="13"></pc-icon>
+                              <button class="bai-del" (click)="$event.stopPropagation(); removeBandCmd(bi, ci)"><pc-icon name="trash" [size]="12"></pc-icon></button>
+                            </div>
+                            @if (bandExpanded() === bandKey(bi, ci) && bandCmdDef(cmd); as cdef) {
+                              <div class="bai-body">
+                                <pc-command-fields [def]="cdef" [command]="cmd" (commandChange)="setBandCmd(bi, ci, $event)" [profiles]="profiles()"></pc-command-fields>
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
+                    <pc-command-picker kind="button" triggerLabel="Add action" variant="subtle" (pick)="addBandCmd(bi, $event)"></pc-command-picker>
                   </div>
-                  @if (bandDef(b); as bdef) {
-                    <div class="band-action">
-                      <pc-command-fields [def]="bdef" [command]="bandCmd(b)!" (commandChange)="setBandCmd($index, $event)" [profiles]="profiles()"></pc-command-fields>
-                    </div>
-                  }
                 </div>
               }
               <button class="pc-btn add-band" (click)="addBand()"><pc-icon name="plus" [size]="14"></pc-icon> Add position</button>
@@ -260,7 +274,16 @@ type Cmd = Record<string, any>;
     .band-del:hover { color: var(--danger, #FF453A); }
     .band-grid { display: flex; gap: 8px; }
     .band-grid .pc-field { flex: 1; }
-    .band-action { border-top: 1px solid var(--line-hair); padding-top: 12px; }
+    .band-actions { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+    .band-action-item { border: 1px solid var(--line); border-radius: 8px; background: var(--raised, #1B1E25); overflow: hidden; }
+    .band-action-item.expanded { border-color: var(--accent, #FFB020); }
+    .bai-head { display: flex; align-items: center; gap: 9px; padding: 10px 12px; cursor: pointer; }
+    .bai-icon { color: var(--accent, #FFB020); flex: none; }
+    .bai-name { flex: 1; font-size: 13px; font-weight: 500; color: var(--text-1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .bai-chev { color: var(--text-3); flex: none; }
+    .bai-del { background: none; border: none; color: var(--text-3); cursor: pointer; padding: 2px; display: inline-flex; flex: none; }
+    .bai-del:hover { color: var(--danger, #FF453A); }
+    .bai-body { padding: 12px; border-top: 1px solid var(--line-hair); background: var(--surface-1, #15171C); }
     .add-band { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -367,19 +390,39 @@ export class CommandFieldsComponent {
   readonly curve = computed(() => mappingCurve(this.command()['dialParams'], { x0: 18, x1: 132, yBottom: 82, yTop: 24 }));
 
   // ── stepped-switch bands ─────────────────────────────────────────────────────
-  // A band's action is stored as a one-command Commands ({ commands: [cmd], type }); only button-kind
-  // commands make sense as a discrete trigger fired on entering a position, and they are chosen through
-  // the shared CommandPickerComponent (same categorized + filterable menu as the control page).
+  // Each band holds a Commands list ({ commands: [...], type }); a position can run any number of
+  // button-kind actions on entry, chosen through the shared CommandPickerComponent (same categorized +
+  // filterable menu as the control page) and edited inline, mirroring the control page's action list.
   private readonly bandPalette = ['#FF3B30', '#34C759', '#0A84FF', '#FFD60A', '#AF52DE', '#FF9F0A', '#5AC8FA', '#FF2D55'];
 
+  /** Which band action's editor is expanded, keyed "{bandIndex}:{cmdIndex}"; null = all collapsed. */
+  readonly bandExpanded = model<string | null>(null);
+
   bands(): any[] { const b = this.command()['bands']; return Array.isArray(b) ? b : []; }
-  bandCmd(b: any): Cmd | null { return b?.commands?.commands?.[0] ?? null; }
-  bandDef(b: any): CommandDef | undefined { const t = this.bandCmd(b)?.['_type']; return t ? COMMAND_BY_TYPE.get(t) : undefined; }
-  bandActionLabel(b: any): string { return this.bandDef(b)?.label ?? 'Set action'; }
+  bandCmds(b: any): Cmd[] { const c = b?.commands?.commands; return Array.isArray(c) ? c : []; }
+  bandCmdDef(cmd: Cmd): CommandDef | undefined { const t = cmd?.['_type']; return t ? COMMAND_BY_TYPE.get(t) : undefined; }
+  bandCmdLabel(cmd: Cmd): string { return this.bandCmdDef(cmd)?.label ?? String(cmd?.['_type'] ?? '').split('.').pop() ?? 'Action'; }
+  bandCmdIcon(cmd: Cmd): IconName { return this.bandCmdDef(cmd)?.icon ?? 'zap'; }
+  bandKey(bandIdx: number, cmdIdx: number): string { return bandIdx + ':' + cmdIdx; }
+
+  bandSummary(b: any): string {
+    const n = this.bandCmds(b).length;
+    return n === 0 ? 'No actions' : n === 1 ? this.bandCmdLabel(this.bandCmds(b)[0]) : n + ' actions';
+  }
+
+  toggleBandAction(bandIdx: number, cmdIdx: number): void {
+    const key = this.bandKey(bandIdx, cmdIdx);
+    this.bandExpanded.set(this.bandExpanded() === key ? null : key);
+  }
 
   private updateBand(i: number, patch: Record<string, any>): void {
     const bands = this.bands().map((b, k) => k === i ? { ...b, ...patch } : b);
     this.set('bands', bands);
+  }
+
+  private setBandCmds(i: number, cmds: Cmd[]): void {
+    const type = this.bands()[i]?.commands?.type ?? 'allAtOnce';
+    this.updateBand(i, { commands: { commands: cmds, type } });
   }
 
   setBand(i: number, key: 'start' | 'end' | 'color', value: any): void {
@@ -400,13 +443,19 @@ export class CommandFieldsComponent {
     this.set('bands', [...bands, { start, end, color, commands: { commands: [], type: 'allAtOnce' } }]);
   }
 
-  /** Chosen from the shared command picker — replace the band's action with a fresh instance of that type. */
-  setBandCmdDef(i: number, def: CommandDef): void {
-    this.updateBand(i, { commands: { commands: [def.buildEmpty()], type: 'allAtOnce' } });
+  /** Append a fresh instance of the chosen command type to band i's actions, and expand it for editing. */
+  addBandCmd(i: number, def: CommandDef): void {
+    const cmds = [...this.bandCmds(this.bands()[i]), def.buildEmpty() as Cmd];
+    this.setBandCmds(i, cmds);
+    this.bandExpanded.set(this.bandKey(i, cmds.length - 1));
   }
 
-  setBandCmd(i: number, cmd: Cmd): void {
-    this.updateBand(i, { commands: { commands: [cmd], type: 'allAtOnce' } });
+  removeBandCmd(i: number, j: number): void {
+    this.setBandCmds(i, this.bandCmds(this.bands()[i]).filter((_, k) => k !== j));
+  }
+
+  setBandCmd(i: number, j: number, cmd: Cmd): void {
+    this.setBandCmds(i, this.bandCmds(this.bands()[i]).map((c, k) => k === j ? cmd : c));
   }
 }
 

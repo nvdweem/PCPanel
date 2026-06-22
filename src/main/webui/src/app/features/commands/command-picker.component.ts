@@ -1,60 +1,75 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
-import { CommandCategory, CommandDef, CommandKind, COMMANDS, categoryLabel } from './command-catalog';
+import { OverlayModule } from '@angular/cdk/overlay';
+import { A11yModule } from '@angular/cdk/a11y';
+import { CommandCategory, CommandDef, CommandKind, COMMANDS, categoryLabel, Integration } from './command-catalog';
 import { IntegrationDataService } from './integration-data.service';
 import { PlatformService } from '../../services/platform.service';
 import { IconComponent, StatusDotComponent } from '../../ui';
 
-interface MenuRow { def: CommandDef; status?: 'ok' | 'idle' | 'connecting'; offline: boolean; unsupported?: boolean; }
+type Status = 'ok' | 'idle' | 'connecting';
+interface PickerGroup { label: string; status?: Status; statusText?: string; offline: boolean; unsupported?: boolean; rows: CommandDef[]; }
 
 /**
- * The single categorized + filterable command picker, shared by every place that lets the user choose
- * a command (the control page's "Add action" and the stepped-switch band editor). It owns the filter
- * box, the category grouping, and the per-integration live status dots / offline tags, and emits the
+ * The single filterable command picker, shared by every place that lets the user choose a command (the
+ * control page's "Add action" and the stepped-switch band editor). Generic commands are grouped by
+ * category (Audio, Device & System); integration commands are grouped by integration (OBS, Voicemeeter,
+ * Wave Link, Home Assistant) with the live connection status shown once on the group header. Emits the
  * chosen {@link CommandDef}. Reusing it keeps those affordances (and their behaviour) in one place.
  */
 @Component({
   selector: 'pc-command-picker',
   standalone: true,
-  imports: [IconComponent, StatusDotComponent],
+  imports: [OverlayModule, A11yModule, IconComponent, StatusDotComponent],
   template: `
-    <button class="pc-btn primary trigger" (click)="open.set(!open())">
-      <pc-icon name="plus" [size]="16" [strokeWidth]="2.4"></pc-icon> {{ triggerLabel() }}
+    <button #trigBtn class="pc-btn trigger" [class.primary]="variant() === 'primary'" [class.subtle]="variant() === 'subtle'"
+            cdkOverlayOrigin #trig="cdkOverlayOrigin" (click)="toggle(trigBtn)">
+      <pc-icon name="plus" [size]="variant() === 'subtle' ? 13 : 16" [strokeWidth]="2.4"></pc-icon> {{ triggerLabel() }}
     </button>
-    @if (open()) {
-      <div class="backdrop" (click)="open.set(false)"></div>
-      <div class="menu">
+    <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="trig" [cdkConnectedOverlayOpen]="open()"
+                 [cdkConnectedOverlayHasBackdrop]="true" cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+                 [cdkConnectedOverlayWidth]="menuWidth()" [cdkConnectedOverlayOffsetY]="6"
+                 (backdropClick)="open.set(false)" (detach)="open.set(false)">
+      <div class="menu" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
         <div class="filter">
           <pc-icon name="search" [size]="13"></pc-icon>
-          <input class="filter-in" placeholder="Filter…" [value]="query()" (input)="query.set($any($event.target).value)" autofocus>
+          <input class="filter-in" placeholder="Filter…" [value]="query()" (input)="query.set($any($event.target).value)">
         </div>
         @for (g of menuGroups(); track g.label) {
-          <div class="grp-label">{{ g.label }}</div>
-          @for (row of g.rows; track row.def.type) {
-            <button class="row" [class.offline]="row.offline || row.unsupported" [disabled]="row.unsupported" (click)="choose(row.def)">
-              @if (row.status) { <pc-status-dot [kind]="row.status" [size]="6"></pc-status-dot> }
-              <span>{{ row.def.label }}</span>
-              @if (row.unsupported) { <span class="off-tag">unavailable</span> }
-              @else if (row.offline) { <span class="off-tag">offline</span> }
+          <div class="grp-label">
+            @if (g.status) { <pc-status-dot [kind]="g.status" [size]="6"></pc-status-dot> }
+            <span class="grp-name">{{ g.label }}</span>
+            @if (g.statusText) { <span class="grp-status">{{ g.statusText }}</span> }
+          </div>
+          @for (def of g.rows; track def.type) {
+            <button class="row" [class.offline]="g.offline || g.unsupported" [disabled]="g.unsupported" (click)="choose(def)">
+              <span>{{ def.label }}</span>
             </button>
           }
         }
       </div>
-    }
+    </ng-template>
   `,
   styles: [`
-    :host { display: block; position: relative; }
-    .trigger { width: 100%; padding: 11px; }
-    .backdrop { position: fixed; inset: 0; z-index: 40; }
-    .menu { position: absolute; top: calc(100% + 8px); left: 0; right: 0; z-index: 50; background: var(--popover); border: 1px solid var(--raised-line); border-radius: var(--r-lg); padding: 8px; box-shadow: var(--sh-pop); max-height: 360px; overflow: auto; }
+    :host { display: block; }
+    .trigger { padding: 11px; }
+    .trigger.primary { width: 100%; }
+    /* Subtle variant: a small, low-emphasis "+ Add action" used inside dense editors (stepped-switch
+       bands) so the actions themselves stay the focus, not the add button. */
+    .trigger.subtle { width: auto; padding: 6px 10px; background: transparent; border: 1px dashed var(--line); color: var(--text-2); font-size: 12px; box-shadow: none; }
+    .trigger.subtle:hover { border-color: var(--accent, #FFB020); color: var(--text-1); }
+    /* Rendered in the global cdk-overlay container, so it is never clipped by a scrolling/overflow
+       ancestor (e.g. a nested .ai-body action body). Width is matched to the trigger via the overlay. */
+    .menu { width: 100%; box-sizing: border-box; background: var(--popover); border: 1px solid var(--raised-line); border-radius: var(--r-lg); padding: 8px; box-shadow: var(--sh-pop); max-height: 360px; overflow: auto; }
     .filter { display: flex; align-items: center; gap: 8px; background: var(--input); border: 1px solid var(--line); border-radius: 8px; padding: 8px 11px; margin-bottom: 6px; color: var(--text-3); }
     .filter-in { flex: 1; min-width: 0; background: transparent; border: none; outline: none; color: var(--text-1); font-size: 12px; }
-    .grp-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em; color: var(--text-3); padding: 8px 9px 3px; }
-    .row { display: flex; align-items: center; gap: 7px; width: 100%; text-align: left; border: none; background: transparent; color: var(--text-soft); font-size: 12.5px; padding: 7px 9px; border-radius: var(--r-sm); cursor: pointer; }
+    .grp-label { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em; color: var(--text-3); padding: 10px 9px 3px; }
+    .grp-name { text-transform: uppercase; }
+    .grp-status { margin-left: auto; letter-spacing: 0.06em; text-transform: uppercase; }
+    .row { display: flex; align-items: center; gap: 7px; width: 100%; text-align: left; border: none; background: transparent; color: var(--text-soft); font-size: 12.5px; padding: 7px 9px 7px 18px; border-radius: var(--r-sm); cursor: pointer; }
     .row:hover { background: var(--accent-tint-soft); color: var(--accent-text); }
     .row.offline { color: var(--text-3); }
     .row:disabled { cursor: not-allowed; }
     .row:disabled:hover { background: transparent; color: var(--text-3); }
-    .off-tag { font-size: 9px; color: var(--text-3); margin-left: auto; }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -65,20 +80,47 @@ export class CommandPickerComponent {
   /** Which control slot the picker is choosing for: 'dial' (rotate) or 'button' (press / band action). */
   readonly kind = input.required<CommandKind>();
   readonly triggerLabel = input<string>('Add action');
+  /** 'primary' = the prominent full-width CTA (control page); 'subtle' = a small dashed button (band editor). */
+  readonly variant = input<'primary' | 'subtle'>('primary');
   readonly pick = output<CommandDef>();
 
   readonly query = signal('');
   readonly open = signal(false);
+  /** Overlay width, matched to the trigger so the dropdown lines up under the button. */
+  readonly menuWidth = signal(300);
 
-  readonly menuGroups = computed(() => {
+  /** Toggle the picker, sizing the overlay to the trigger button's current width. */
+  toggle(trigger: HTMLElement): void {
+    if (!this.open()) {
+      this.menuWidth.set(Math.max(240, Math.round(trigger.getBoundingClientRect().width)));
+    }
+    this.open.set(!this.open());
+  }
+
+  /** Integration groups, in display order; each gets its own status-chip header. */
+  private static readonly INTEGRATIONS: { id: Integration; label: string }[] = [
+    { id: 'obs', label: 'OBS' },
+    { id: 'voicemeeter', label: 'Voicemeeter' },
+    { id: 'wavelink', label: 'Wave Link' },
+    { id: 'homeassistant', label: 'Home Assistant' },
+  ];
+
+  readonly menuGroups = computed<PickerGroup[]>(() => {
     const kind = this.kind();
     const q = this.query().trim().toLowerCase();
-    const defs = COMMANDS.filter(d => d.kinds.includes(kind) && (!q || d.label.toLowerCase().includes(q)));
-    const cats: CommandCategory[] = ['audio', 'system', 'integration'];
-    return cats.map(cat => ({
-      label: categoryLabel(cat),
-      rows: defs.filter(d => d.category === cat).map(d => this.toMenuRow(d)),
-    })).filter(g => g.rows.length);
+    const match = (d: CommandDef) => d.kinds.includes(kind) && (!q || d.label.toLowerCase().includes(q));
+    const groups: PickerGroup[] = [];
+    // Generic command categories first — no integration, so no status chip.
+    for (const cat of ['audio', 'system'] as CommandCategory[]) {
+      const rows = COMMANDS.filter(d => d.category === cat && match(d));
+      if (rows.length) groups.push({ label: categoryLabel(cat), offline: false, rows });
+    }
+    // Then one group per integration, with the live connection status on the group header.
+    for (const ig of CommandPickerComponent.INTEGRATIONS) {
+      const rows = COMMANDS.filter(d => d.category === 'integration' && d.integration === ig.id && match(d));
+      if (rows.length) groups.push({ label: ig.label, rows, ...this.integrationStatus(ig.id) });
+    }
+    return groups;
   });
 
   choose(def: CommandDef): void {
@@ -87,25 +129,22 @@ export class CommandPickerComponent {
     this.query.set('');
   }
 
-  /** Whether a command's integration can run on this host. */
-  private platformOk(def: CommandDef): boolean {
-    if (def.integration === 'voicemeeter') return this.platform.voicemeeterSupported();
-    if (def.integration === 'wavelink') return this.platform.waveLinkSupported();
-    return true;
-  }
-
-  private toMenuRow(def: CommandDef): MenuRow {
-    if (!def.integration) return { def, offline: false };
-    if (!this.platformOk(def)) return { def, status: 'idle', offline: false, unsupported: true };
-    // Honest status: green only with positive evidence; Voicemeeter has no live signal.
-    if (def.integration === 'voicemeeter') return { def, status: 'idle', offline: false };
-    const connected = def.integration === 'obs' ? this.integrations.obsConnected()
-      : def.integration === 'homeassistant' ? this.integrations.haConnected()
+  /** Live connection status for an integration, shown once on its group header. */
+  private integrationStatus(integration: Integration): { status?: Status; statusText?: string; offline: boolean; unsupported?: boolean } {
+    if (integration === 'voicemeeter') {
+      // Voicemeeter has no live connection signal; show it as available without a connected/offline claim.
+      return this.platform.voicemeeterSupported() ? { offline: false } : { offline: false, unsupported: true, statusText: 'unavailable' };
+    }
+    if (integration === 'wavelink' && !this.platform.waveLinkSupported()) {
+      return { offline: false, unsupported: true, statusText: 'unavailable' };
+    }
+    const connected = integration === 'obs' ? this.integrations.obsConnected()
+      : integration === 'homeassistant' ? this.integrations.haConnected()
         : this.integrations.waveLinkConnected();
-    const loading = def.integration === 'obs' ? this.integrations.obsScenes.isLoading()
-      : def.integration === 'homeassistant' ? this.integrations.haStatus.isLoading()
+    const loading = integration === 'obs' ? this.integrations.obsScenes.isLoading()
+      : integration === 'homeassistant' ? this.integrations.haStatus.isLoading()
         : this.integrations.waveLink.isLoading();
-    if (loading) return { def, status: 'connecting', offline: false };
-    return { def, status: connected ? 'ok' : 'idle', offline: !connected };
+    if (loading) return { status: 'connecting', statusText: 'connecting…', offline: false };
+    return connected ? { status: 'ok', statusText: 'connected', offline: false } : { status: 'idle', statusText: 'not connected', offline: true };
   }
 }
