@@ -7,8 +7,11 @@ import javax.annotation.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.getpcpanel.analogbands.AnalogBandColorService;
+import com.getpcpanel.analogbands.BandTransition;
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.PCPanelControlEvent;
+import com.getpcpanel.util.CdiHelper;
 
 import lombok.Getter;
 import lombok.ToString;
@@ -48,6 +51,10 @@ public class CommandAnalogBands extends Command implements DialAction {
     @Override
     public void execute(DialActionParameters context) {
         var transition = advance(context.dial().value(), context.initial());
+        if (transition.changed()) {
+            // The selected position moved: refresh the per-position LED feedback for this device.
+            CdiHelper.getBean(AnalogBandColorService.class).refresh(context.device());
+        }
         if (transition.fire()) {
             var commands = bands.get(transition.band()).commands();
             new PCPanelControlEvent(context.device(), 0, commands, false, context.dial()).buildRunnable().run();
@@ -55,20 +62,23 @@ public class CommandAnalogBands extends Command implements DialAction {
     }
 
     /**
-     * Feeds a raw 0-255 reading and updates the selected position. Returns the resulting position and
-     * whether the entered band's commands should fire (a fresh, non-empty band reached by an actual
-     * movement — not the initial sync on connect). Package-visible and free of side effects for testing.
+     * Feeds a raw 0-255 reading and updates the selected position. Returns the resulting position,
+     * whether the selected position changed, and whether the entered band's commands should fire (a
+     * fresh, non-empty band reached by an actual movement — not the initial sync on connect).
+     * Free of side effects (beyond advancing the selected position), so it is also the unit-test seam.
      */
-    BandTransition advance(int raw, boolean initial) {
+    public BandTransition advance(int raw, boolean initial) {
         var band = bandIndexFor(raw);
         if (band == -1 || band == currentBand) {
             // In a gap, or still resting on the same position: nothing changes.
-            return new BandTransition(currentBand, false);
+            return new BandTransition(currentBand, false, false);
         }
         currentBand = band;
         var fire = !initial && Commands.hasCommands(bands.get(band).commands());
-        return new BandTransition(band, fire);
+        return new BandTransition(band, true, fire);
     }
+
+    // (BandTransition lives in the analogbands package so it stays out of the generated TS contract.)
 
     /** Index of the band whose range contains the given raw 0-255 value, or -1 when it falls in a gap. */
     int bandIndexFor(int raw) {
@@ -102,8 +112,5 @@ public class CommandAnalogBands extends Command implements DialAction {
     @Override
     public String buildLabel() {
         return bands.size() + (bands.size() == 1 ? " position" : " positions");
-    }
-
-    record BandTransition(int band, boolean fire) {
     }
 }
