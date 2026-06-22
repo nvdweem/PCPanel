@@ -16,6 +16,7 @@ import com.getpcpanel.hid.DeviceCommunicationHandler.KnobRotateEvent;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.hid.DeviceScanner.DeviceConnectedEvent;
 import com.getpcpanel.hid.DeviceScanner.DeviceDisconnectedEvent;
+import com.getpcpanel.obs.OBS;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.wavelink.WaveLinkService;
 
@@ -44,6 +45,7 @@ public class SimulationTools {
     @Inject SaveService saveService;
     @Inject ObjectMapper objectMapper;
     @Inject WaveLinkService waveLink;
+    @Inject OBS obs;
 
     @Tool(description = "Drive an analog control (knob/slider) as if the hardware moved it: fires the "
             + "same KnobRotateEvent the input layer fires. value is the canonical 0-255 domain "
@@ -177,6 +179,18 @@ public class SimulationTools {
             @ToolArg(description = "true = muted, false = unmuted") boolean muted) {
         waveLink.simulateChannelState(new WaveLinkChannel(channelId, name, null, null, null, muted, null, null, null));
         return new Ack(true, "Injected Wave Link channel '" + channelId + "' (" + name + ") muted=" + muted);
+    }
+
+    @Tool(description = "Simulate an OBS source mute state without a real OBS connection: records the "
+            + "source's mute state and fires OBSMuteEvent through the normal path, exactly as OBS's "
+            + "InputMuteStateChanged would. Drives the mute-override colour for any control bound to this "
+            + "OBS source (volume dial or mute button). The source name must match the control's command. "
+            + "Then poll pcpanel_get_device for the control's resolved colour.")
+    public Ack pcpanel_simulate_obs_mute(
+            @ToolArg(description = "OBS source/input name (must match the bound command's source)") String source,
+            @ToolArg(description = "true = muted, false = unmuted") boolean muted) {
+        obs.simulateSourceMute(source, muted);
+        return new Ack(true, "Simulated OBS source '" + source + "' muted=" + muted);
     }
 
     public record Ack(boolean ok, String message) {

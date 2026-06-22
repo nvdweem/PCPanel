@@ -80,9 +80,12 @@ dependency, no endpoint, nothing reaches end users.
 | `pcpanel_simulate_button` · `POST /api/mcp/simulate/button` | fire `ButtonPressEvent` (a press also runs the configured click action). |
 | `pcpanel_simulate_deej_line` · `POST /api/mcp/simulate/deej` | run a raw Deej line (`"0\|512\|1023"`) through the real `DeejProtocol` parse + normalize, then fire per slider. |
 | `pcpanel_simulate_midi` · `POST /api/mcp/simulate/midi` | run a raw MIDI message through `MidiProtocol` decode + normalize, then fire. |
+| `pcpanel_simulate_wavelink_mute` · `POST /api/mcp/simulate/wavelink-mute` | inject a Wave Link channel state (incl. mute) through the real listener path; drives the mute-override colour for a control bound to that channel. `channelId` must match the bound command's `id1`. |
+| `pcpanel_simulate_obs_mute` · `POST /api/mcp/simulate/obs-mute` | report an OBS source as muted/unmuted and fire `OBSMuteEvent` through the real path, without a live OBS connection; drives the mute-override colour for a control bound to that OBS source (volume dial or mute button). |
 | `pcpanel_create_virtual_device` · `POST /api/mcp/virtual-device` | register a synthetic device from a `DeviceDescriptor` JSON with no hardware (use a non-`pcpanel` providerId + null `globalLighting`, e.g. a fake Deej). It appears in `list_devices` and renders in the UI. |
 | `pcpanel_remove_virtual_device` · `DELETE /api/mcp/virtual-device/{serial}` | disconnect it and purge its persisted entry. |
 | `pcpanel_get_audio_state` · `GET /api/mcp/audio-state?filter=` | per-device + per-process volume/mute, defaults, focused app. |
+| `pcpanel_focus_volume_target` · `GET /api/mcp/focus-volume-target?application=` | inspect the focused-app volume **deferral decision**: the redirector that would claim a given app's focus volume (e.g. `WaveLinkService`) or null when the OS controls it. Side-effect-free — does not change any volume. Use it to assert focus volume defers to Wave Link for a Wave-Link-managed app and hits the OS otherwise. |
 
 Event dispatch is async in places, so the simulation/virtual-device tools return promptly with an
 ack — **poll** `pcpanel_get_audio_state` / `pcpanel_get_device` for the effect rather than expecting a

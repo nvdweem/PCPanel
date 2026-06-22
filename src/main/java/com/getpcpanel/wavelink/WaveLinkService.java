@@ -64,6 +64,18 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
             return false; // connected but the focused app is in no channel → let the OS handle its volume
         }
         // Not connected yet: defer to Wave Link for apps we have previously seen it control.
+        return controlledWhileDisconnected(targetProcess);
+    }
+
+    @Override
+    public boolean controlsFocusApp(String targetProcess) {
+        if (isConnected()) {
+            return findChannelIdForFocusApp().or(() -> findChannelIdForProcess(targetProcess)).isPresent();
+        }
+        return controlledWhileDisconnected(targetProcess);
+    }
+
+    private boolean controlledWhileDisconnected(String targetProcess) {
         return appCache != null && appCache.isControlled(targetProcess);
     }
 

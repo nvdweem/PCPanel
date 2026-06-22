@@ -23,7 +23,9 @@ public class ObsMuteResolver implements MuteStateResolver {
 
     @Override
     public Optional<Boolean> resolve(Commands command, String target) {
-        if (!FOLLOW.equals(target) || !obs.isConnected()) {
+        // No isConnected() gate: getSourcesWithMuteState() is empty when OBS is down, so the loop below
+        // resolves to empty anyway — and not gating lets the dev mute simulation drive this resolver.
+        if (!FOLLOW.equals(target)) {
             return Optional.empty();
         }
         var sourceName = command.getCommand(CommandObsSetSourceVolume.class).map(CommandObsSetSourceVolume::getSourceName)

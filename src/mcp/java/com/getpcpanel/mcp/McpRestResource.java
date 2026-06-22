@@ -61,10 +61,13 @@ public class McpRestResource {
                         "GET  /api/mcp/logs?level=&limit=&contains=",
                         "GET  /api/mcp/last-error",
                         "GET  /api/mcp/audio-state?filter=",
+                        "GET  /api/mcp/focus-volume-target?application=",
                         "POST /api/mcp/simulate/analog   {serial,index,value}",
                         "POST /api/mcp/simulate/button   {serial,index,pressed}",
                         "POST /api/mcp/simulate/deej     {serial,line}",
                         "POST /api/mcp/simulate/midi     {serial,status,data1,data2}",
+                        "POST /api/mcp/simulate/wavelink-mute {channelId,name,muted}",
+                        "POST /api/mcp/simulate/obs-mute {source,muted}",
                         "POST /api/mcp/virtual-device    {serial,descriptor}",
                         "DELETE /api/mcp/virtual-device/{serial}"));
     }
@@ -117,6 +120,11 @@ public class McpRestResource {
         return audio.pcpanel_get_audio_state(filter);
     }
 
+    @GET @Path("/focus-volume-target")
+    public AudioTools.FocusVolumeTarget focusVolumeTarget(@QueryParam("application") String application) {
+        return audio.pcpanel_focus_volume_target(application);
+    }
+
     // ── Simulation + virtual devices ───────────────────────────────────────────
 
     @POST @Path("/simulate/analog")
@@ -142,6 +150,11 @@ public class McpRestResource {
     @POST @Path("/simulate/wavelink-mute")
     public SimulationTools.Ack simulateWaveLinkMute(WaveLinkMuteRequest r) {
         return simulation.pcpanel_simulate_wavelink_mute(r.channelId(), r.name(), r.muted());
+    }
+
+    @POST @Path("/simulate/obs-mute")
+    public SimulationTools.Ack simulateObsMute(ObsMuteRequest r) {
+        return simulation.pcpanel_simulate_obs_mute(r.source(), r.muted());
     }
 
     @POST @Path("/virtual-device")
@@ -177,5 +190,8 @@ public class McpRestResource {
     }
 
     public record WaveLinkMuteRequest(String channelId, String name, boolean muted) {
+    }
+
+    public record ObsMuteRequest(String source, boolean muted) {
     }
 }

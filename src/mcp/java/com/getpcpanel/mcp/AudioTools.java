@@ -9,6 +9,7 @@ import jakarta.inject.Inject;
 import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.cpp.ISndCtrl;
+import com.getpcpanel.volume.VolumeCoordinatorService;
 
 import io.quarkus.arc.properties.IfBuildProperty;
 import io.quarkiverse.mcp.server.Tool;
@@ -25,6 +26,7 @@ import one.util.streamex.StreamEx;
 @IfBuildProperty(name = McpDevTool.FLAG, stringValue = "true")
 public class AudioTools {
     @Inject Instance<ISndCtrl> sndCtrl;
+    @Inject VolumeCoordinatorService volumeCoordinator;
 
     @Tool(description = "Current OS audio state: output/input devices and per-process sessions with "
             + "their volume (0.0-1.0) and mute, plus the default player/recorder and focused app. "
@@ -53,6 +55,17 @@ public class AudioTools {
                 devices, sessions);
     }
 
+    @Tool(description = "Inspect where a given focused application's volume would go: returns the "
+            + "redirector that claims it (e.g. WaveLinkService) or null when the OS controls it directly. "
+            + "Side-effect-free - evaluates the deferral decision without changing any volume. Use it to "
+            + "assert focused-app volume defers to Wave Link for a Wave-Link-managed app and hits the OS "
+            + "otherwise. Pass the application as the OS focus path (e.g. C:\\\\...\\\\firefox.exe).")
+    public FocusVolumeTarget pcpanel_focus_volume_target(
+            @ToolArg(description = "Focused application, as ISndCtrl.getFocusApplication() reports it (full exe path)") String application) {
+        var handler = volumeCoordinator.focusVolumeTarget(application).orElse(null);
+        return new FocusVolumeTarget(application, handler, handler != null);
+    }
+
     private static boolean matches(String filter, String value) {
         return StringUtils.isEmpty(filter) || (value != null && StringUtils.containsIgnoreCase(value, filter));
     }
@@ -70,5 +83,9 @@ public class AudioTools {
     }
 
     public record SessionVolume(int pid, String executable, String title, float volume, boolean muted) {
+    }
+
+    /** {@code handledBy} = redirector class that claims this app's focus volume, or null when the OS does. */
+    public record FocusVolumeTarget(String application, String handledBy, boolean defersToIntegration) {
     }
 }

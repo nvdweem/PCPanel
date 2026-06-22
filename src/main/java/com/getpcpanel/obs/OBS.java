@@ -38,6 +38,8 @@ public final class OBS {
     private ObsWebSocketClient client;
     /** Last-applied OBS config (enabled + address/port/password), so an unrelated save never drops a healthy connection. */
     private String appliedConfig;
+    /** Dev/test override: when non-null, the source mute state reported to the mute-colour layer (see {@link #simulateSourceMute}). */
+    private volatile Map<String, Boolean> simulatedMuteState;
 
     /**
      * Apply OBS connection changes the moment settings are saved — including the initial SaveEvent
@@ -122,7 +124,26 @@ public final class OBS {
     }
 
     public Map<String, Boolean> getSourcesWithMuteState() {
+        var simulated = simulatedMuteState;
+        if (simulated != null) {
+            return simulated;
+        }
         return isConnected() ? client.getSourcesWithMuteState() : Map.of();
+    }
+
+    /**
+     * Dev/test hook: report {@code source} as muted/unmuted and fire {@link OBSMuteEvent} through the
+     * normal path, exactly as an OBS {@code InputMuteStateChanged} event would — so the mute-override
+     * colour can be exercised without a real OBS connection. Mirrors Wave Link's channel-state sim.
+     */
+    public void simulateSourceMute(String source, boolean muted) {
+        var state = simulatedMuteState;
+        if (state == null) {
+            state = new java.util.concurrent.ConcurrentHashMap<>();
+            simulatedMuteState = state;
+        }
+        state.put(source, muted);
+        muteEvent.fire(new OBSMuteEvent(source, muted));
     }
 
     public List<String> getScenes() {
