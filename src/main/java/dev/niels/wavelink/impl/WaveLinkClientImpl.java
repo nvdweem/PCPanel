@@ -282,7 +282,7 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
 
     void onCommand(WaveLinkJsonRpcCommand<?, ?> message) {
         if (message instanceof WaveLinkChannelChangedCommand channelChanged) {
-            updateEntry(IWaveLinkClientEventListener::channelChanged, channels, restoreImage(channelChanged.getParams()));
+            updateEntry(IWaveLinkClientEventListener::channelChanged, channels, mergeWithCached(channelChanged.getParams()));
         } else if (message instanceof WaveLinkChannelsChangedCommand channelsChanged) {
             updateEntries(IWaveLinkClientEventListener::channelsChanged, channels, channelsChanged.getParams().channels());
         } else if (message instanceof WaveLinkOutputDeviceChangedCommand deviceChanged) {
@@ -350,13 +350,24 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
         trigger(IWaveLinkClientEventListener::initialized);
     }
 
-    private WaveLinkChannel restoreImage(WaveLinkChannel params) {
+    /**
+     * Merges a single-channel {@code channelChanged} push with the cached channel. A {@code channelChanged}
+     * push omits the (heavy) image blob, so the cached image is kept. The app membership IS carried by
+     * membership-change pushes (add/remove an app), so it must be taken from the push — otherwise the
+     * membership would never update while connected (the original bug: focus-volume kept controlling an
+     * app's channel after it was removed). Only when a push carries no apps at all (e.g. a level/mute
+     * change) is the cached list kept, so such a push can never wipe the membership.
+     */
+    private WaveLinkChannel mergeWithCached(WaveLinkChannel params) {
         var existing = channels.get(params.id());
         if (existing == null) {
             return params;
         }
-        return params.withImage(existing.image())
-                     .withApps(existing.apps());
+        var merged = params.withImage(existing.image());
+        if (params.apps() == null || params.apps().isEmpty()) {
+            merged = merged.withApps(existing.apps());
+        }
+        return merged;
     }
 
     private int getWaveLinkPort() {
