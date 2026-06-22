@@ -14,17 +14,23 @@ import com.getpcpanel.commands.DeviceSet;
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandBrightness;
 import com.getpcpanel.commands.command.CommandEndProgram;
+import com.getpcpanel.commands.command.CommandHttpRequest;
 import com.getpcpanel.commands.command.CommandKeystroke;
 import com.getpcpanel.commands.command.CommandMedia;
 import com.getpcpanel.commands.command.CommandMedia.VolumeButton;
+import com.getpcpanel.commands.command.CommandMqttPublish;
 import com.getpcpanel.commands.command.CommandNoOp;
 import com.getpcpanel.commands.command.CommandObs;
+import com.getpcpanel.commands.command.CommandObsAction;
+import com.getpcpanel.commands.command.CommandObsAction.ObsActionType;
 import com.getpcpanel.commands.command.CommandObsMuteSource;
 import com.getpcpanel.commands.command.CommandObsSetScene;
 import com.getpcpanel.commands.command.CommandObsSetSourceVolume;
+import com.getpcpanel.commands.command.CommandOscSend;
 import com.getpcpanel.commands.command.CommandProfile;
 import com.getpcpanel.commands.command.CommandRun;
 import com.getpcpanel.commands.command.CommandShortcut;
+import com.getpcpanel.commands.command.CommandValueOutput;
 import com.getpcpanel.commands.command.CommandVoiceMeeter;
 import com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced;
 import com.getpcpanel.commands.command.CommandVoiceMeeterAdvancedButton;
@@ -156,12 +162,20 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         VolumeButton.class,
         CommandNoOp.class,
         CommandObs.class,
+        CommandObsAction.class,
+        ObsActionType.class,
         CommandObsMuteSource.class,
         CommandObsSetScene.class,
         CommandObsSetSourceVolume.class,
         CommandProfile.class,
         CommandRun.class,
         CommandShortcut.class,
+
+        // Generic output commands (HTTP / MQTT / OSC) — also extend Command → ID.CLASS polymorphism
+        CommandValueOutput.class,
+        CommandHttpRequest.class,
+        CommandMqttPublish.class,
+        CommandOscSend.class,
         CommandVoiceMeeter.class,
         CommandVoiceMeeterAdvanced.class,
         CommandVoiceMeeterAdvancedButton.class,
