@@ -255,13 +255,10 @@ public class MuteColorService implements IOverrideColorProviderProvider {
         return false;
     }
 
-    /** A blank or all-zero ("black") muted colour means the control has no mute override configured. */
+    /** Only a blank/absent muted colour means "no mute override configured". Off is its own state (the
+     *  UI toggle clears the colour to blank), so an explicit colour — including black — is honoured. */
     private static boolean isOff(String color) {
-        if (StringUtils.isBlank(color)) {
-            return true;
-        }
-        var hex = StringUtils.removeStart(color.trim(), "#");
-        return StringUtils.containsOnly(hex, '0');
+        return StringUtils.isBlank(color);
     }
 
     @Override

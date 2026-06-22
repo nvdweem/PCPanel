@@ -70,6 +70,20 @@ class MuteColorServiceTest {
     }
 
     @Test
+    void blackIsAUsableMuteColourNotTreatedAsOff() {
+        var service = serviceWithMuteState(true);
+        var lc = proCustomWithSliderMuteColor("#000000");
+        var dialData = Map.of(5, waveLinkChannelVolume("music"));
+
+        var changed = service.applyOverrides("serial", lc, dialData);
+
+        assertTrue(changed, "black is an explicit colour, not the off state");
+        var override = service.getOverrideColorProvider().getSliderOverride("serial", 0);
+        assertTrue(override.isPresent(), "a muted channel with a black mute colour gets a (black) override");
+        assertEquals("#000000", override.get().getColor1());
+    }
+
+    @Test
     void unmutingClearsAPreviouslyAppliedOverride() {
         var service = new MuteColorService();
         var lc = proCustomWithSliderMuteColor("#FF0000");

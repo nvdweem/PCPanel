@@ -64,6 +64,15 @@ class AnalogBandColorServiceTest {
     }
 
     @Test
+    void blackIsAUsableBandColourNotTreatedAsOff() {
+        var service = new AnalogBandColorService();
+        var changed = service.applyOverrides("serial", proCustom(), Map.of(2, steppedSwitchOn("#000000")));
+
+        assertTrue(changed, "black is an explicit feedback colour, not the off state");
+        assertEquals("#000000", service.getOverrideColorProvider().getDialOverride("serial", 2).orElseThrow().getColor1());
+    }
+
+    @Test
     void positionWithoutColourAppliesNoOverride() {
         var service = new AnalogBandColorService();
         var changed = service.applyOverrides("serial", proCustom(), Map.of(2, steppedSwitchOn(null)));

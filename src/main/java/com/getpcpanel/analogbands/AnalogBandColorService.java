@@ -180,13 +180,9 @@ public class AnalogBandColorService implements IOverrideColorProviderProvider {
         return true;
     }
 
-    /** A blank or all-zero ("black") colour means no feedback colour is configured for this position. */
+    /** Only a blank/absent colour means no feedback colour for this position; black (#000000) is honoured. */
     private static boolean isOff(String color) {
-        if (StringUtils.isBlank(color)) {
-            return true;
-        }
-        var hex = StringUtils.removeStart(color.trim(), "#");
-        return StringUtils.containsOnly(hex, '0');
+        return StringUtils.isBlank(color);
     }
 
     @Override
