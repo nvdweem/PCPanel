@@ -51,6 +51,12 @@ export class ControlComponent {
   readonly index = input.required<string>();           // analog index as string
   readonly idx = computed(() => +this.index());
   readonly slot = input<string>('');                   // optional ?slot= query param: open that tab
+  readonly editProfile = input<string>('', { alias: 'profile' }); // optional ?profile=: edit this profile (e.g. the base layer) instead of the active one
+
+  /** The profile actually being edited: the ?profile= override, else the device's active profile. */
+  readonly targetProfile = computed(() => this.editProfile() || this.snap()?.currentProfile || '');
+  /** True when editing a profile other than the active one (so the UI can flag it). */
+  readonly editingOtherProfile = computed(() => !!this.editProfile() && this.editProfile() !== (this.snap()?.currentProfile ?? ''));
 
   readonly snap = this.state.snapshotFor(this.serial);
   private readonly caps = this.capsService.forSerial(this.serial);
@@ -83,10 +89,12 @@ export class ControlComponent {
     effect(() => {
       const s = this.snap();
       const i = this.idx();
-      const key = `${this.serial()}:${i}`;
+      const editing = this.editProfile();
+      const key = `${this.serial()}:${i}:${editing}`;
       if (!s || key === this.loadedKey) return;
       this.loadedKey = key;
-      const snapProfile = s.currentProfileSnapshot;
+      // Seed from the profile being edited: the base-layer snapshot when ?profile= targets it, else the active one.
+      const snapProfile = editing && s.baseLayerSnapshot?.name === editing ? s.baseLayerSnapshot : s.currentProfileSnapshot;
       untracked(() => {
         this.rotate.set(clone(snapProfile?.dialData?.[String(i)]) ?? { commands: [], type: 'allAtOnce' });
         this.press.set(clone(snapProfile?.buttonData?.[String(i)]) ?? { commands: [], type: 'allAtOnce' });
@@ -206,7 +214,8 @@ export class ControlComponent {
   private flush(): void {
     const s = this.snap();
     if (!s) return;
-    this.deviceService.setControlAssignments(s.serial, s.currentProfile, this.idx(), {
+    // Save to the profile being edited (the active one, or the base layer when reached via its chip).
+    this.deviceService.setControlAssignments(s.serial, this.targetProfile(), this.idx(), {
       analog: this.rotate(),
       button: this.press(),
       dblButton: this.dblpress(),

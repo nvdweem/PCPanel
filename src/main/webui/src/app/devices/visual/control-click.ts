@@ -10,5 +10,7 @@ export interface ControlClick {
   contextClicked: boolean;
   /** when set, open this slot's tab instead of the default (from a press / double-press chip) */
   slot?: 'press' | 'dblpress';
+  /** when set, edit this profile instead of the active one (from a base-layer fallback chip) */
+  profile?: string;
   event: Event;
 }

@@ -340,6 +340,7 @@ export interface DeviceSet {
 export interface DeviceSnapshotDto extends WsEvent {
     analogCount: number;
     analogValues: number[];
+    baseLayerSnapshot?: ProfileSnapshotDto;
     buttonCount: number;
     currentProfile: string;
     currentProfileSnapshot: ProfileSnapshotDto;
@@ -642,6 +643,7 @@ export interface WsAssignmentChangedEvent extends WsEvent {
     commands: Commands;
     index: number;
     kind: Kinds;
+    profile: string;
     serial: string;
     type: "assignment_changed";
 }
@@ -655,6 +657,7 @@ export interface WsButtonEvent extends WsEvent {
 
 export interface WsControlSettingChangedEvent extends WsEvent {
     index: number;
+    profile: string;
     serial: string;
     settings: KnobSetting;
     type: "control_setting_changed";
@@ -704,6 +707,7 @@ export interface WsNewVersionAvailableEvent extends WsEvent {
 }
 
 export interface WsProfileSwitchedEvent extends WsEvent {
+    baseLayerSnapshot?: ProfileSnapshotDto;
     dialColors: string[];
     lightingConfig: LightingConfig;
     logoColor: string;

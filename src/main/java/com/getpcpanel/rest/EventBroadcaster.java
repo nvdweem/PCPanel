@@ -7,6 +7,7 @@ import com.getpcpanel.hid.DeviceCommunicationHandler.KnobRotateEvent;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.hid.DeviceHolder.DeviceFullyConnectedEvent;
 import com.getpcpanel.hid.DeviceScanner.DeviceDisconnectedEvent;
+import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.ProfileSwitchedEvent;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.dto.KnobSetting;
@@ -94,7 +95,10 @@ public class EventBroadcaster {
         }
         deviceSave.getProfile(event.profileName()).ifPresent(profile -> {
             var colors = colorsFor(event.serial());
-            broadcast(new WsProfileSwitchedEvent(event.serial(), event.profileName(), ProfileSnapshotDto.from(profile), profile.lightingConfig(), colors.dialColors(), colors.sliderLabelColors(), colors.sliderColors(), colors.logoColor()));
+            var baseLayer = deviceSave.getProfiles().stream().filter(Profile::isBaseLayer).filter(b -> b != profile).findFirst().orElse(null);
+            broadcast(new WsProfileSwitchedEvent(event.serial(), event.profileName(), ProfileSnapshotDto.from(profile),
+                    baseLayer == null ? null : ProfileSnapshotDto.from(baseLayer),
+                    profile.lightingConfig(), colors.dialColors(), colors.sliderLabelColors(), colors.sliderColors(), colors.logoColor()));
         });
     }
 
@@ -109,11 +113,11 @@ public class EventBroadcaster {
     }
 
     public void onAssignmentChanged(@Observes AssignmentChangedEvent event) {
-        broadcast(new WsAssignmentChangedEvent(event.serial(), event.kind(), event.index(), event.commands()));
+        broadcast(new WsAssignmentChangedEvent(event.serial(), event.profile(), event.kind(), event.index(), event.commands()));
     }
 
     public void onSettingChanged(@Observes KnobSettingChangedEvent event) {
-        broadcast(new WsControlSettingChangedEvent(event.serial(), event.index(), event.settings()));
+        broadcast(new WsControlSettingChangedEvent(event.serial(), event.profile(), event.index(), event.settings()));
     }
 
     public void onNewVersionAvailable(@Observes NewVersionAvailableEvent event) {
@@ -138,10 +142,10 @@ public class EventBroadcaster {
     public record VisualColorsChangedEvent(String serial) {
     }
 
-    public record KnobSettingChangedEvent(String serial, int index, KnobSetting settings) {
+    public record KnobSettingChangedEvent(String serial, String profile, int index, KnobSetting settings) {
     }
 
-    public record AssignmentChangedEvent(String serial, Kinds kind, int index, Commands commands) {
+    public record AssignmentChangedEvent(String serial, String profile, Kinds kind, int index, Commands commands) {
         public enum Kinds {
             dial, button, dblbutton
         }

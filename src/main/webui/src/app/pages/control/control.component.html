@@ -83,6 +83,11 @@
 
     <!-- ── Main config ───────────────────────────────────────────────────── -->
     <main class="config-main">
+      @if (editingOtherProfile()) {
+        <div class="edit-banner">
+          Editing the <strong>base layer</strong> profile “{{ targetProfile() }}” — the fallback used when “{{ s.currentProfile }}” leaves this control empty.
+        </div>
+      }
       <div class="tabs">
         @if (isSlider()) {
           <span class="tab active">↕ Slide</span>

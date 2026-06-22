@@ -210,10 +210,12 @@ public class DeviceResource {
             profile.setBaseLayer(false);
         }
         saveService.save();
-        // Changing the base layer alters how the active profile renders, so re-apply lighting and refresh.
+        // Changing the base layer alters how the active profile renders AND which fallbacks the UI shows.
+        // Re-apply lighting and re-broadcast the active profile (the snapshot now carries the new
+        // base-layer snapshot); the profile-switched observers also recompute mute / band colours.
         if (baseLayerChanged) {
             deviceHolder.getDevice(serial).ifPresent(device -> device.setLighting(device.getSavedLightingConfig(), true));
-            eventBus.fire(new LightingChangedToDefaultEvent(serial));
+            eventBus.fire(new ProfileSwitchedEvent(serial, deviceSave.getCurrentProfileName()));
             eventBus.fire(new VisualColorsChangedEvent(serial));
         }
         return Response.ok().build();
@@ -237,7 +239,7 @@ public class DeviceResource {
             Commands commands) {
         getProfile(serial, profileName).setButtonData(index, commands);
         saveService.save();
-        eventBus.fire(new AssignmentChangedEvent(serial, Kinds.button, index, commands));
+        eventBus.fire(new AssignmentChangedEvent(serial, profileName, Kinds.button, index, commands));
         return Response.ok().build();
     }
 
@@ -258,7 +260,7 @@ public class DeviceResource {
             Commands commands) {
         getProfile(serial, profileName).setDblButtonData(index, commands);
         saveService.save();
-        eventBus.fire(new AssignmentChangedEvent(serial, Kinds.dblbutton, index, commands));
+        eventBus.fire(new AssignmentChangedEvent(serial, profileName, Kinds.dblbutton, index, commands));
         return Response.ok().build();
     }
 
@@ -279,7 +281,7 @@ public class DeviceResource {
             Commands commands) {
         getProfile(serial, profileName).setDialData(index, commands);
         saveService.save();
-        eventBus.fire(new AssignmentChangedEvent(serial, Kinds.dial, index, commands));
+        eventBus.fire(new AssignmentChangedEvent(serial, profileName, Kinds.dial, index, commands));
         return Response.ok().build();
     }
 
@@ -304,7 +306,7 @@ public class DeviceResource {
         knob.setOverlayIcon(settings.getOverlayIcon());
         knob.setButtonDebounce(settings.getButtonDebounce());
         saveService.save();
-        eventBus.fire(new KnobSettingChangedEvent(serial, index, knob));
+        eventBus.fire(new KnobSettingChangedEvent(serial, profileName, index, knob));
         return Response.ok().build();
     }
 
@@ -376,19 +378,19 @@ public class DeviceResource {
 
         if (update.analog() != null) {
             profile.setDialData(index, update.analog());
-            eventBus.fire(new AssignmentChangedEvent(serial, Kinds.dial, index, update.analog()));
+            eventBus.fire(new AssignmentChangedEvent(serial, profileName, Kinds.dial, index, update.analog()));
             changed = true;
         }
 
         if (update.button() != null) {
             profile.setButtonData(index, update.button());
-            eventBus.fire(new AssignmentChangedEvent(serial, Kinds.button, index, update.button()));
+            eventBus.fire(new AssignmentChangedEvent(serial, profileName, Kinds.button, index, update.button()));
             changed = true;
         }
 
         if (update.dblButton() != null) {
             profile.setDblButtonData(index, update.dblButton());
-            eventBus.fire(new AssignmentChangedEvent(serial, Kinds.dblbutton, index, update.dblButton()));
+            eventBus.fire(new AssignmentChangedEvent(serial, profileName, Kinds.dblbutton, index, update.dblButton()));
             changed = true;
         }
 
@@ -399,7 +401,7 @@ public class DeviceResource {
             knob.setLogarithmic(update.knobSetting().isLogarithmic());
             knob.setOverlayIcon(update.knobSetting().getOverlayIcon());
             knob.setButtonDebounce(update.knobSetting().getButtonDebounce());
-            eventBus.fire(new KnobSettingChangedEvent(serial, index, knob));
+            eventBus.fire(new KnobSettingChangedEvent(serial, profileName, index, knob));
             changed = true;
         }
 
