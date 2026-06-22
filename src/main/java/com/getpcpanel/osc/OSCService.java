@@ -149,6 +149,30 @@ public class OSCService {
         });
     }
 
+    /**
+     * Send a single float argument to {@code address} on every configured OSC send target. Used by the
+     * generic OSC-send command. No-op when OSC is disabled, no targets are configured, or the address is blank.
+     */
+    public void send(String address, float value) {
+        if (!isEnabled() || ports.isEmpty() || address == null || address.isBlank()) {
+            return;
+        }
+        OSCMessage message;
+        try {
+            message = new OSCMessage(address, List.of(value));
+        } catch (Exception e) {
+            log.error("Invalid OSC address {}", address, e);
+            return;
+        }
+        ports.forEach(port -> {
+            try {
+                port.send(message);
+            } catch (Exception e) {
+                log.error("Error sending OSC message", e);
+            }
+        });
+    }
+
     private void send(@Nonnull OSCBinding target, String defaultTarget, float val) {
         var message = buildMessage(target, defaultTarget, determineValue(target, val));
         ports.forEach(port -> {
