@@ -13,7 +13,9 @@ import jakarta.inject.Inject;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.context.ApplicationScoped;
 
+import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.PCPanelControlEvent;
+import com.getpcpanel.profile.BaseLayerService;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.util.Debouncer;
 
@@ -25,6 +27,8 @@ import lombok.extern.log4j.Log4j2;
 public final class InputInterpreter {
     @Inject
     SaveService save;
+    @Inject
+    BaseLayerService baseLayer;
     @Inject
     DeviceHolder devices;
     @Inject
@@ -49,7 +53,10 @@ public final class InputInterpreter {
     }
 
     private void doDialAction(String serialNum, boolean initial, int knob, DialValue v) {
-        save.getProfile(serialNum).map(p -> p.getDialData(knob)).ifPresent(data -> eventBus.fire(new PCPanelControlEvent(serialNum, knob, data, initial, v)));
+        save.getProfile(serialNum)
+            .map(p -> baseLayer.effectiveDial(serialNum, p, knob))
+            .filter(Commands::hasCommands)
+            .ifPresent(data -> eventBus.fire(new PCPanelControlEvent(serialNum, knob, data, initial, v)));
     }
 
     void doClickAction(String serialNum, int button) {
@@ -67,7 +74,7 @@ public final class InputInterpreter {
     }
 
     private boolean hasDblClickAction(String serialNum, int button) {
-        return save.getProfile(serialNum).map(p -> p.getDblButtonData(button)).filter(d -> hasCommands(d)).isPresent();
+        return save.getProfile(serialNum).map(p -> baseLayer.effectiveDblButton(serialNum, p, button)).filter(d -> hasCommands(d)).isPresent();
     }
 
     private void determineClick(ClickId clickId, long timeDiff) {
@@ -93,8 +100,8 @@ public final class InputInterpreter {
 
         public void onButtonPress(@Observes ButtonClickEvent event) {
         save.getProfile(event.serialNum()).ifPresent(profile -> {
-            var click = profile.getButtonData(event.button());
-            var dblClick = profile.getDblButtonData(event.button());
+            var click = baseLayer.effectiveButton(event.serialNum(), profile, event.button());
+            var dblClick = baseLayer.effectiveDblButton(event.serialNum(), profile, event.button());
 
             if (event.dblClick() && hasCommands(dblClick)) {
                 eventBus.fire(new PCPanelControlEvent(event.serialNum(), event.button(), dblClick, false, null));

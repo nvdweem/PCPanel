@@ -18,6 +18,7 @@ import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandVolumeProcessMute;
 import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.device.DeviceType;
+import com.getpcpanel.profile.BaseLayerService;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.Save;
 import com.getpcpanel.profile.SaveService;
@@ -66,6 +67,7 @@ class InputInterpreterTest {
     private static InputInterpreter interpreter(Profile profile, CapturingEventBus events) {
         var sut = new InputInterpreter();
         sut.save = new FixedSaveService(profile);
+        sut.baseLayer = new BaseLayerService(); // no device save -> no base layer, dispatch behaves as the active profile alone
         sut.eventBus = events;
         sut.debouncer = new Debouncer();
         return sut;

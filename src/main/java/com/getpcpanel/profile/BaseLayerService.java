@@ -46,6 +46,9 @@ public class BaseLayerService {
 
     /** The device's base-layer profile, if one is flagged. */
     public Optional<Profile> baseLayer(String serial) {
+        if (saveService == null) {
+            return Optional.empty();
+        }
         var save = saveService.get();
         if (save == null) {
             return Optional.empty();
