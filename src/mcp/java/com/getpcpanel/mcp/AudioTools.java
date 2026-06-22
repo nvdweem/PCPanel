@@ -63,7 +63,7 @@ public class AudioTools {
     public FocusVolumeTarget pcpanel_focus_volume_target(
             @ToolArg(description = "Focused application, as ISndCtrl.getFocusApplication() reports it (full exe path)") String application) {
         var handler = volumeCoordinator.focusVolumeTarget(application).orElse(null);
-        return new FocusVolumeTarget(application, handler, handler != null);
+        return new FocusVolumeTarget(application, handler, handler != null, volumeCoordinator.wouldSkipFocusVolume(application));
     }
 
     private static boolean matches(String filter, String value) {
@@ -86,6 +86,6 @@ public class AudioTools {
     }
 
     /** {@code handledBy} = redirector class that claims this app's focus volume, or null when the OS does. */
-    public record FocusVolumeTarget(String application, String handledBy, boolean defersToIntegration) {
+    public record FocusVolumeTarget(String application, String handledBy, boolean defersToIntegration, boolean skipped) {
     }
 }

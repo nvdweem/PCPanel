@@ -587,6 +587,7 @@ export interface SettingsDto {
     preventClickWhenDblClick: boolean;
     preventSliderTwitchDelay?: number;
     sendOnlyIfDelta?: number;
+    skipControlledFocusApps: boolean;
     sliderRollingAverage?: number;
     startupVersionCheck: boolean;
     voicemeeterEnabled: boolean;

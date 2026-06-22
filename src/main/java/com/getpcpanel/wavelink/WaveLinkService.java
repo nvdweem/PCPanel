@@ -110,6 +110,12 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
         return saveService == null || saveService.get().getWaveLink().focusVolumeRedirect();
     }
 
+    /** Whether Wave Link currently controls the app (it is in a channel), regardless of the focus-redirect setting. */
+    @Override
+    public boolean managesFocusApp(String targetProcess) {
+        return isConnected() && resolveChannelForFocusApp(targetProcess).isPresent();
+    }
+
     private boolean controlledWhileDisconnected(String targetProcess) {
         return appCache != null && appCache.isControlled(targetProcess);
     }

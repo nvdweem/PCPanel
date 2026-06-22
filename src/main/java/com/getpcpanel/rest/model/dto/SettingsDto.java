@@ -22,6 +22,7 @@ public class SettingsDto {
     private boolean forceVolume;
     private Long dblClickInterval;
     private boolean preventClickWhenDblClick;
+    private boolean skipControlledFocusApps;
     @Nullable private Integer preventSliderTwitchDelay;
     @Nullable private Integer sliderRollingAverage;
     @Nullable private Integer sendOnlyIfDelta;
@@ -68,6 +69,7 @@ public class SettingsDto {
         dto.forceVolume = save.isForceVolume();
         dto.dblClickInterval = save.getDblClickInterval();
         dto.preventClickWhenDblClick = save.isPreventClickWhenDblClick();
+        dto.skipControlledFocusApps = save.isSkipControlledFocusApps();
         dto.preventSliderTwitchDelay = save.getPreventSliderTwitchDelay();
         dto.sliderRollingAverage = save.getSliderRollingAverage();
         dto.sendOnlyIfDelta = save.getSendOnlyIfDelta();
@@ -105,6 +107,7 @@ public class SettingsDto {
         save.setForceVolume(forceVolume);
         save.setDblClickInterval(dblClickInterval);
         save.setPreventClickWhenDblClick(preventClickWhenDblClick);
+        save.setSkipControlledFocusApps(skipControlledFocusApps);
         save.setPreventSliderTwitchDelay(preventSliderTwitchDelay);
         save.setSliderRollingAverage(sliderRollingAverage);
         save.setSendOnlyIfDelta(sendOnlyIfDelta);

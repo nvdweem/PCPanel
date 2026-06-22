@@ -11,4 +11,13 @@ public interface IFocusRedirector {
     default boolean controlsFocusApp(String targetProcess) {
         return false;
     }
+
+    /**
+     * Whether this integration already manages {@code targetProcess}'s volume in general, independent of
+     * the focus-redirect setting (e.g. the app is in a Wave Link channel). Used by the "skip otherwise
+     * controlled applications" option so focus volume leaves such an app alone.
+     */
+    default boolean managesFocusApp(String targetProcess) {
+        return false;
+    }
 }

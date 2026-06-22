@@ -35,6 +35,9 @@ public class Save {
     private boolean forceVolume; // Linux only
     private Long dblClickInterval = 500L;
     private boolean preventClickWhenDblClick = true;
+    /** When set, focused-app volume does nothing for apps already controlled elsewhere (a per-app
+     *  volume command on another control, or a Wave Link channel). */
+    private boolean skipControlledFocusApps;
     private boolean obsEnabled;
     private String obsAddress = "localhost";
     private String obsPort = "4455";

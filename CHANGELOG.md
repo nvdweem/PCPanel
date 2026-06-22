@@ -28,6 +28,7 @@
     - Actions are pasted as YAML straight from Home Assistant's Developer Tools → Actions page (with a link to open it), so anything Home Assistant can do is available
     - Buttons perform any action; dials map their position into the action — use `{{ value }}` with a min/max range or a translate formula (e.g. a light's brightness or color temperature)
     - Configurable debounce so a moving dial doesn't flood Home Assistant: the first move is sent instantly, then at most one update per the configured interval, and the final value is always sent
+- New General setting **Focus volume skips controlled apps** (off by default): when the focused app is already controlled elsewhere — an App-volume action on another control, or a Wave Link channel — the focused-app volume dial leaves it alone instead of fighting that dedicated control.
 - **Push-to-talk** — buttons can now run a separate set of actions when *released*, not just when pressed (e.g. unmute on press, mute on release). Configure it under the new "On release" tab when editing a button.
 - New generic output actions for dials and buttons, so you can drive almost anything:
     - **HTTP request** (URL, method, headers, body), **MQTT publish** (topic + payload, reusing the MQTT connection) and **OSC send** (address).
