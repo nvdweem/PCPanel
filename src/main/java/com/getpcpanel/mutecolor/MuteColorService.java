@@ -1,5 +1,7 @@
 package com.getpcpanel.mutecolor;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -7,6 +9,7 @@ import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.commands.Commands;
+import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.cpp.AudioDeviceEvent;
 import com.getpcpanel.cpp.AudioSessionEvent;
 import com.getpcpanel.device.Device;
@@ -146,8 +149,8 @@ public class MuteColorService implements IOverrideColorProviderProvider {
         // Resolve over the base-layer-merged view so a control configured only in the base layer (its
         // command and its muted colour) still gets a mute override. The re-send below merges on output.
         var effectiveLc = baseLayer.effectiveLighting(serial, lc);
-        var effectiveDialData = baseLayer.effectiveDialData(serial, profile);
-        if (applyOverrides(serial, effectiveLc, effectiveDialData)) {
+        var commandsByControl = controlCommandsForMute(serial, profile);
+        if (applyOverrides(serial, effectiveLc, commandsByControl)) {
             log.debug("Mute overrides changed for {}; re-rendering", serial);
             try {
                 device.setLighting(lc, true);
@@ -158,8 +161,32 @@ public class MuteColorService implements IOverrideColorProviderProvider {
         }
     }
 
-    /** Applies/clears overrides for one device's controls from its lighting config + dial assignments;
-     *  returns whether any control's override colour changed. Package-visible for unit testing. */
+    /**
+     * Per-control command list the mute-override colour follows: the control's volume dial merged with
+     * its mute button (same control index), so a control configured with an OBS/Wave Link mute
+     * <em>button</em> drives its LED just like a volume dial does. Base-layer fallbacks are honoured for
+     * each half (dial via {@code effectiveDialData}, button via {@code effectiveButton}).
+     */
+    private Map<Integer, Commands> controlCommandsForMute(String serial, Profile profile) {
+        var merged = new HashMap<>(baseLayer.effectiveDialData(serial, profile));
+        for (var idx : profile.getButtonData().keySet()) {
+            var button = baseLayer.effectiveButton(serial, profile, idx);
+            if (Commands.hasCommands(button)) {
+                merged.merge(idx, button, MuteColorService::concat);
+            }
+        }
+        return merged;
+    }
+
+    private static Commands concat(Commands dial, Commands button) {
+        var all = new ArrayList<Command>(dial.getCommands());
+        all.addAll(button.getCommands());
+        return new Commands(all, dial.getType());
+    }
+
+    /** Applies/clears overrides for one device's controls from its lighting config + per-control
+     *  (dial + mute-button) assignments; returns whether any control's override colour changed.
+     *  Package-visible for unit testing. */
     boolean applyOverrides(String serial, LightingConfig lc, Map<Integer, Commands> dialData) {
         var knobConfigs = lc.knobConfigs();
         var sliderConfigs = lc.sliderConfigs();

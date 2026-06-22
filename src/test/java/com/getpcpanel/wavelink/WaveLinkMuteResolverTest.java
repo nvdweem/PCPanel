@@ -10,9 +10,11 @@ import org.junit.jupiter.api.Test;
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.CommandsType;
 import com.getpcpanel.commands.command.Command;
+import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.mutecolor.MuteStateResolver;
 import com.getpcpanel.mutecolor.WaveLinkMuteResolver;
 import com.getpcpanel.wavelink.command.CommandWaveLinkChangeLevel;
+import com.getpcpanel.wavelink.command.CommandWaveLinkChangeMute;
 import com.getpcpanel.wavelink.command.WaveLinkCommandTarget;
 
 import dev.niels.wavelink.impl.model.WaveLinkChannel;
@@ -26,6 +28,11 @@ import dev.niels.wavelink.impl.model.WaveLinkChannel;
 class WaveLinkMuteResolverTest {
     private static Commands channelVolume(String channelId) {
         Command cmd = new CommandWaveLinkChangeLevel(WaveLinkCommandTarget.Channel, channelId, null, null);
+        return new Commands(List.of(cmd), CommandsType.allAtOnce);
+    }
+
+    private static Commands channelMuteButton(String channelId) {
+        Command cmd = new CommandWaveLinkChangeMute(WaveLinkCommandTarget.Channel, channelId, null, MuteType.toggle);
         return new Commands(List.of(cmd), CommandsType.allAtOnce);
     }
 
@@ -44,6 +51,14 @@ class WaveLinkMuteResolverTest {
     void mutedChannelResolvesTrue() {
         var resolver = new WaveLinkMuteResolver(waveLinkWithChannel("music", true));
         assertEquals(Optional.of(true), resolver.resolve(channelVolume("music"), MuteStateResolver.FOLLOW));
+    }
+
+    @Test
+    void mutedChannelViaMuteButtonResolvesTrue() {
+        // A control whose turn command is the Wave Link mute *button* (not the level dial) must also
+        // drive the mute-override colour — both carry the same CommandWaveLinkChange target.
+        var resolver = new WaveLinkMuteResolver(waveLinkWithChannel("music", true));
+        assertEquals(Optional.of(true), resolver.resolve(channelMuteButton("music"), MuteStateResolver.FOLLOW));
     }
 
     @Test
