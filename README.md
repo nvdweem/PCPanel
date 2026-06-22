@@ -31,9 +31,12 @@ real changes on your system in real time:
 - **"Focused app" volume** — one knob that always controls whatever window you're currently using.
 - **Media & keyboard** — play/pause/skip, send any keystroke or shortcut combo, launch or close a
   program.
-- **RGB lighting** — pick colors per control, with effects, and a global brightness knob.
+- **RGB lighting** — pick colors per control, with effects, and a global brightness knob whose
+  level follows the dial across every profile.
 - **Profiles** — keep different mappings for gaming, streaming and work, and switch between them
-  from a button (or have them switch automatically).
+  from a button, automatically on app focus, or by turning a single dial through its ranges (a
+  "stepped switch"). A **base layer** profile supplies fallback actions, lighting and mute colors
+  for any control your other profiles leave unset.
 - **Integrations** — drive **OBS** (scenes, source mute, source volume), **Voicemeeter**, Elgato
   **Wave Link** and **Home Assistant** (run any action from a button, or map a dial to a value such
   as a light's brightness or color temperature), and send/receive **OSC** and **MQTT** for

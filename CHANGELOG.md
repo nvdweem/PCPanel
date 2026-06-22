@@ -8,6 +8,12 @@
 - The app now supports controllers beyond PCPanel through a generalized device layer. PCPanel hardware works exactly as before (and with zero setup), while other devices can be added and bound to the same actions through the same UI.
     - **Deej** — add the open-source Arduino serial volume mixer by its serial port; its sliders map to the same actions as PCPanel dials (no buttons/lights).
     - MIDI controller support is in progress.
+- Turn a dial or slider into a multi-position **stepped switch**: split its travel into ranges, give each range its own action and its own LED feedback colour. The action fires the moment you move *into* a range (moving within a range does nothing), and gaps between ranges act as dead-zones. Put a *Switch profile* action on each position to flip between many profiles from a single dial.
+- New per-device **base layer**: mark one profile as the fallback used for any control the active profile leaves unconfigured or unlit — actions, lighting and mute colours included. Inherited actions appear on the on-screen device as a dashed chip you can click to edit in place. Combined with a stepped switch on the base layer, a single profile-selector dial keeps working in every profile.
+- A **Brightness** dial now controls the global LED brightness as a live runtime value: it wins over each profile's saved brightness and stays put across profile switches, so you configure it once (in any profile) and it governs everywhere. When more than one is configured, the best is chosen automatically.
+- The per-control "change colour when muted" option is now an explicit on/off toggle, so black (`#000000`) is a usable muted colour instead of being treated as "off".
+- Restored **System Sounds** as a target for the App volume and App mute actions (it had gone missing from the app picker).
+- The Device volume and Device mute actions now offer a selectable **Default device** option, so an empty choice is shown and selectable as the default output device.
 - Java 25 is now required to run the software. The installer will include it.
 - #87 - Experimental macOS support (community contributed by Choaterboater, ported to the new Quarkus build). Device volume/mute/default-device switching via Core Audio, keystrokes, shortcuts and Music/Spotify media control. Per-application volume is not possible on stock macOS. See the [macOS instructions](mac.md).
 - Profiles are now saved on application exit, so a change made right before quitting is no longer lost.
