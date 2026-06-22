@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, model } from '@angular/core';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { RouterLink } from '@angular/router';
-import { CommandDef, FieldDef, LiveSource } from './command-catalog';
+import { CommandDef, COMMANDS, COMMAND_BY_TYPE, FieldDef, LiveSource } from './command-catalog';
 import { mappingCurve } from './mapping-curve.util';
 import { IntegrationDataService } from './integration-data.service';
 import {
-  AppPickerComponent, IconComponent, KeyRecorderComponent, SegmentedComponent,
+  AppPickerComponent, ColorPickerComponent, IconComponent, KeyRecorderComponent, SegmentedComponent,
   SelectComponent, SelectOption, ToggleComponent,
 } from '../../ui';
 
@@ -19,7 +19,8 @@ type Cmd = Record<string, any>;
 @Component({
   selector: 'pc-command-fields',
   standalone: true,
-  imports: [OverlayModule, RouterLink, IconComponent, ToggleComponent, SelectComponent, AppPickerComponent, KeyRecorderComponent, SegmentedComponent],
+  // Self-referenced (CommandFieldsComponent) so each stepped-switch band can host a nested action editor.
+  imports: [OverlayModule, RouterLink, IconComponent, ToggleComponent, SelectComponent, AppPickerComponent, KeyRecorderComponent, SegmentedComponent, ColorPickerComponent, CommandFieldsComponent],
   template: `
     <div class="fields">
       @for (f of def().fields; track f.kind + ($any(f).key || '')) {
@@ -148,6 +149,43 @@ type Cmd = Record<string, any>;
               }
             </div>
           }
+          @case ('analog-bands') {
+            <div class="bands">
+              <div class="bands-hint">Split the travel into positions. Entering a position runs its action once; moving within it does nothing. Leave gaps between positions for a dead zone.</div>
+              @for (b of bands(); track $index) {
+                <div class="band">
+                  <div class="band-head">
+                    <span class="band-no" [style.background]="b.color || '#3A3F4A'">{{ $index + 1 }}</span>
+                    <span class="band-range">{{ b.start }}–{{ b.end }}%</span>
+                    <span class="band-action-label">{{ bandActionLabel(b) }}</span>
+                    <button class="band-del" (click)="removeBand($index)"><pc-icon name="trash" [size]="13"></pc-icon></button>
+                  </div>
+                  <div class="band-grid">
+                    <div class="pc-field">
+                      <div class="pc-field-label">From %</div>
+                      <input class="pc-field-input" type="number" min="0" max="100" [value]="b.start" (input)="setBand($index, 'start', +$any($event.target).value)">
+                    </div>
+                    <div class="pc-field">
+                      <div class="pc-field-label">To %</div>
+                      <input class="pc-field-input" type="number" min="0" max="100" [value]="b.end" (input)="setBand($index, 'end', +$any($event.target).value)">
+                    </div>
+                  </div>
+                  <pc-color-picker label="Feedback colour" [value]="b.color || '#FFB020'" (valueChange)="setBand($index, 'color', $event)"></pc-color-picker>
+                  <div class="field-block">
+                    <div class="flabel">Action when entering this position</div>
+                    <pc-select [block]="true" [options]="bandActionOptions" [value]="bandCmdType(b)" placeholder="— none —"
+                               (valueChange)="setBandCmdType($index, $event)"></pc-select>
+                  </div>
+                  @if (bandDef(b); as bdef) {
+                    <div class="band-action">
+                      <pc-command-fields [def]="bdef" [command]="bandCmd(b)!" (commandChange)="setBandCmd($index, $event)" [profiles]="profiles()"></pc-command-fields>
+                    </div>
+                  }
+                </div>
+              }
+              <button class="pc-btn add-band" (click)="addBand()"><pc-icon name="plus" [size]="14"></pc-icon> Add position</button>
+            </div>
+          }
         }
       }
 
@@ -211,6 +249,19 @@ type Cmd = Record<string, any>;
     .map-fields { display: flex; gap: 8px; }
     .map-fields .pc-field { flex: 1; }
     .no-fields { font-size: 12.5px; color: var(--text-3); }
+    .bands { display: flex; flex-direction: column; gap: 12px; }
+    .bands-hint { font-size: 11.5px; color: var(--text-3); line-height: 1.45; }
+    .band { display: flex; flex-direction: column; gap: 12px; padding: 12px; border: 1px solid var(--line-hair); border-radius: 10px; background: var(--surface-1, #15171C); }
+    .band-head { display: flex; align-items: center; gap: 10px; }
+    .band-no { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 6px; font-size: 11.5px; font-weight: 600; color: #000; flex: none; }
+    .band-range { font-family: var(--font-mono, monospace); font-size: 11.5px; color: var(--text-2); }
+    .band-action-label { flex: 1; font-size: 12px; color: var(--text-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .band-del { background: none; border: none; color: var(--text-3); cursor: pointer; padding: 2px; display: inline-flex; }
+    .band-del:hover { color: var(--danger, #FF453A); }
+    .band-grid { display: flex; gap: 8px; }
+    .band-grid .pc-field { flex: 1; }
+    .band-action { border-top: 1px solid var(--line-hair); padding-top: 12px; }
+    .add-band { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -312,6 +363,51 @@ export class CommandFieldsComponent {
 
   // Transfer curve on the 150x100 graph (x 18..132, y 82(0%)..24(100%)), via the shared mapping math.
   readonly curve = computed(() => mappingCurve(this.command()['dialParams'], { x0: 18, x1: 132, yBottom: 82, yTop: 24 }));
+
+  // ── stepped-switch bands ─────────────────────────────────────────────────────
+  // A band's action is stored as a one-command Commands ({ commands: [cmd], type }); only button-kind
+  // commands make sense as a discrete trigger fired on entering a position.
+  readonly bandActionOptions: SelectOption[] = COMMANDS.filter(c => c.kinds.includes('button')).map(c => ({ value: c.type, label: c.label }));
+  private readonly bandPalette = ['#FF3B30', '#34C759', '#0A84FF', '#FFD60A', '#AF52DE', '#FF9F0A', '#5AC8FA', '#FF2D55'];
+
+  bands(): any[] { const b = this.command()['bands']; return Array.isArray(b) ? b : []; }
+  bandCmd(b: any): Cmd | null { return b?.commands?.commands?.[0] ?? null; }
+  bandCmdType(b: any): string { return this.bandCmd(b)?.['_type'] ?? ''; }
+  bandDef(b: any): CommandDef | undefined { const t = this.bandCmdType(b); return t ? COMMAND_BY_TYPE.get(t) : undefined; }
+  bandActionLabel(b: any): string { return this.bandDef(b)?.label ?? 'no action'; }
+
+  private updateBand(i: number, patch: Record<string, any>): void {
+    const bands = this.bands().map((b, k) => k === i ? { ...b, ...patch } : b);
+    this.set('bands', bands);
+  }
+
+  setBand(i: number, key: 'start' | 'end' | 'color', value: any): void {
+    this.updateBand(i, { [key]: key === 'color' ? value : clamp(value) });
+  }
+
+  removeBand(i: number): void {
+    this.set('bands', this.bands().filter((_, k) => k !== i));
+  }
+
+  addBand(): void {
+    const bands = this.bands();
+    const last = bands[bands.length - 1];
+    const start = last ? clamp(last.end) : 0;
+    const end = clamp(start + (bands.length ? 20 : 33));
+    const color = this.bandPalette[bands.length % this.bandPalette.length];
+    this.set('bands', [...bands, { start, end, color, commands: { commands: [], type: 'allAtOnce' } }]);
+  }
+
+  setBandCmdType(i: number, type: string | undefined): void {
+    if (!type) { this.updateBand(i, { commands: { commands: [], type: 'allAtOnce' } }); return; }
+    const def = COMMAND_BY_TYPE.get(type);
+    const cmd = def ? def.buildEmpty() : { _type: type };
+    this.updateBand(i, { commands: { commands: [cmd], type: 'allAtOnce' } });
+  }
+
+  setBandCmd(i: number, cmd: Cmd): void {
+    this.updateBand(i, { commands: { commands: [cmd], type: 'allAtOnce' } });
+  }
 }
 
 function clamp(v: number): number { return Math.max(0, Math.min(100, v ?? 0)); }
