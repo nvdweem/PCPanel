@@ -158,9 +158,11 @@ public class SndCtrlWindows implements ISndCtrl {
     @Override
     public void muteProcesses(Set<String> fileName, MuteType mute) {
         var lcFileNames = StreamEx.of(fileName).map(String::toLowerCase).toImmutableSet();
+        var systemSounds = lcFileNames.contains(AudioSession.SYSTEM.toLowerCase());
         synchronized (devices) {
             StreamEx.ofValues(devices).flatCollection(d -> d.getSessions().values())
-                    .filter(s -> s.executable() != null && (lcFileNames.contains(s.executable().getName().toLowerCase()) || lcFileNames.contains(s.executable().getAbsolutePath().toLowerCase())))
+                    .filter(s -> (systemSounds && s.isSystemSounds())
+                            || (s.executable() != null && (lcFileNames.contains(s.executable().getName().toLowerCase()) || lcFileNames.contains(s.executable().getAbsolutePath().toLowerCase()))))
                     .forEach(s -> muteProcess(s, mute));
         }
     }
