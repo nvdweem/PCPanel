@@ -63,6 +63,7 @@ dependency, no endpoint, nothing reaches end users.
 | `pcpanel_runtime_info` · `GET /api/mcp/runtime-info` | version, build (`native`\|`jvm`), OS, data root, HTTP port, loaded device providers, integration status (OBS/WaveLink/Voicemeeter/MQTT). |
 | `pcpanel_list_devices` · `GET /api/mcp/devices` | live + persisted-offline devices, each with its capability descriptor. |
 | `pcpanel_get_device` · `GET /api/mcp/devices/{serial}` | full snapshot: descriptor, current profile + assignments, live analog values, lighting, visual colors. |
+| `pcpanel_debug_resolve` · `GET /api/mcp/debug/resolve/{serial}` | the **resolved** per-control view of the base-layer + stepped-switch logic: per control, which profile its command and lighting came from (`active`\|`baseLayer`\|`none`), and a stepped switch's (`CommandAnalogBands`) live selected band + feedback colour. Works for offline persisted devices too — use it to assert base-layer fallback and stepped-switch transitions after `simulate_analog`/`_button`. |
 | `pcpanel_list_serial_ports` · `GET /api/mcp/serial-ports` | serial ports; `available:false` + error string instead of throwing. |
 | `pcpanel_list_midi_devices` · `GET /api/mcp/midi-devices` | MIDI inputs; `midiSubsystemAvailable:false` + note makes the "empty in native image" case explicit. |
 

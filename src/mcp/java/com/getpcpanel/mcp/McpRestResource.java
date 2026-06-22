@@ -40,6 +40,7 @@ import lombok.SneakyThrows;
 public class McpRestResource {
     @Inject RuntimeInfoTools runtimeInfo;
     @Inject DeviceIntrospectionTools devices;
+    @Inject DebugResolveTools debug;
     @Inject LogTools logs;
     @Inject AudioTools audio;
     @Inject SimulationTools simulation;
@@ -54,6 +55,7 @@ public class McpRestResource {
                         "GET  /api/mcp/runtime-info",
                         "GET  /api/mcp/devices",
                         "GET  /api/mcp/devices/{serial}",
+                        "GET  /api/mcp/debug/resolve/{serial}",
                         "GET  /api/mcp/serial-ports",
                         "GET  /api/mcp/midi-devices",
                         "GET  /api/mcp/logs?level=&limit=&contains=",
@@ -82,6 +84,11 @@ public class McpRestResource {
     @GET @Path("/devices/{serial}")
     public DeviceIntrospectionTools.DeviceSnapshot getDevice(@PathParam("serial") String serial) {
         return devices.pcpanel_get_device(serial);
+    }
+
+    @GET @Path("/debug/resolve/{serial}")
+    public DebugResolveTools.DebugResolve debugResolve(@PathParam("serial") String serial) {
+        return debug.pcpanel_debug_resolve(serial);
     }
 
     @GET @Path("/serial-ports")
