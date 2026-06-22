@@ -32,20 +32,53 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
     private boolean wasEnabled;
     @Inject
     Event<WaveLinkChangedEvent> changedEvent;
+    @Inject
+    WaveLinkAppCache appCache;
 
     WaveLinkService() {
         super(false);
         saveService = null;
     }
 
+    /**
+     * Routes the focused-app volume to Wave Link when the focused app is one Wave Link controls,
+     * returning {@code true} to stop the coordinator from also changing the app's OS volume.
+     *
+     * <p>While connected the live channels are authoritative: resolve the focused app to a channel
+     * (by Wave Link's own focus, then by matching the OS process against channel membership) and set
+     * its level. Any app we successfully route is remembered in {@link WaveLinkAppCache}. When not yet
+     * connected — notably the startup race (#2), where the initial focus-volume trigger fires before
+     * Wave Link is up — we defer to that cache so a known Wave-Link app's OS volume is never touched.
+     */
     @Override
     public boolean handleFocusVolumeRequest(String targetProcess, float volume) {
-        var channelId = findChannelIdForFocusApp();
-        if (channelId.isPresent()) {
-            setChannelLevel(channelId.get(), volume);
-            return true;
+        if (isConnected()) {
+            var channelId = findChannelIdForFocusApp().or(() -> findChannelIdForProcess(targetProcess));
+            if (channelId.isPresent()) {
+                setChannelLevel(channelId.get(), volume);
+                if (appCache != null) {
+                    appCache.learn(targetProcess);
+                }
+                return true;
+            }
+            return false; // connected but the focused app is in no channel → let the OS handle its volume
         }
-        return false;
+        // Not connected yet: defer to Wave Link for apps we have previously seen it control.
+        return appCache != null && appCache.isControlled(targetProcess);
+    }
+
+    /** Finds the channel whose membership includes the given OS process (matched by executable name). */
+    private Optional<String> findChannelIdForProcess(String targetProcess) {
+        var key = WaveLinkAppCache.normalize(targetProcess);
+        if (key.isBlank()) {
+            return Optional.empty();
+        }
+        return StreamEx.ofValues(getChannels())
+                       .filter(channel -> StreamEx.of(channel.apps())
+                                                  .anyMatch(app -> key.equals(WaveLinkAppCache.normalize(app.id()))
+                                                          || key.equals(WaveLinkAppCache.normalize(app.name()))))
+                       .map(WaveLinkChannel::id)
+                       .findFirst();
     }
 
     @Inject
@@ -99,12 +132,20 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
     @Override
     public void channelChanged(WaveLinkChannel channel) {
         log.debug("WaveLink channelChanged id={} name={} muted={}", channel.id(), channel.name(), channel.isMuted());
+        syncAppCache();
         fireChanged();
     }
 
     @Override
     public void channelsChanged() {
+        syncAppCache();
         fireChanged();
+    }
+
+    private void syncAppCache() {
+        if (appCache != null) {
+            appCache.syncFromChannels(getChannels().values());
+        }
     }
 
     @Override
