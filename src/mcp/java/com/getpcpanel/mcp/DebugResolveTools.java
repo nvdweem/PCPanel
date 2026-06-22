@@ -15,6 +15,7 @@ import com.getpcpanel.commands.command.AnalogBand;
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandAnalogBands;
 import com.getpcpanel.device.Device;
+import com.getpcpanel.hid.BrightnessService;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.profile.BaseLayerService;
 import com.getpcpanel.profile.DeviceSave;
@@ -49,6 +50,7 @@ public class DebugResolveTools {
     @Inject DeviceHolder deviceHolder;
     @Inject SaveService saveService;
     @Inject BaseLayerService baseLayer;
+    @Inject BrightnessService brightnessService;
 
     @Tool(description = "Resolve a device's controls through the base-layer + stepped-switch logic: per "
             + "control, which profile its command and lighting came from (active|baseLayer|none), and for "
@@ -58,12 +60,15 @@ public class DebugResolveTools {
     public DebugResolve pcpanel_debug_resolve(@ToolArg(description = "Device serial / id") String serial) {
         var deviceSave = saveService.get() == null ? null : saveService.get().getDevices().get(serial);
         if (deviceSave == null) {
-            return new DebugResolve(false, "No device (live or persisted) with serial '" + serial + "'", serial, null, null, List.of());
+            return new DebugResolve(false, "No device (live or persisted) with serial '" + serial + "'", serial, null, null, null, List.of());
         }
         var active = activeProfile(serial, deviceSave);
         if (active == null) {
-            return new DebugResolve(false, "Device '" + serial + "' has no profiles", serial, null, null, List.of());
+            return new DebugResolve(false, "Device '" + serial + "' has no profiles", serial, null, null, null, List.of());
         }
+        // Runtime global brightness driven by a brightness dial (any profile), or null when none is configured.
+        var rb = brightnessService.runtimeBrightness(serial);
+        Integer runtimeBrightness = rb.isPresent() ? rb.getAsInt() : null;
         var base = baseLayer.baseLayer(serial).filter(b -> b != active).orElse(null);
         var effectiveLc = baseLayer.effectiveLighting(serial, active.lightingConfig());
         var knobLen = effectiveLc == null ? 0 : effectiveLc.knobConfigs().length;
@@ -80,7 +85,7 @@ public class DebugResolveTools {
             var cmd = commandResolution(nonEmpty(active.getButtonData(idx)), base == null ? null : nonEmpty(base.getButtonData(idx)));
             controls.add(new ControlResolution(idx, "button", cmd, null, null));
         }
-        return new DebugResolve(true, null, serial, active.getName(), base == null ? null : base.getName(), controls);
+        return new DebugResolve(true, null, serial, active.getName(), base == null ? null : base.getName(), runtimeBrightness, controls);
     }
 
     private Profile activeProfile(String serial, DeviceSave deviceSave) {
@@ -180,7 +185,8 @@ public class DebugResolveTools {
         return keys;
     }
 
-    public record DebugResolve(boolean found, String error, String serial, String activeProfile, String baseLayer, List<ControlResolution> controls) {
+    public record DebugResolve(boolean found, String error, String serial, String activeProfile, String baseLayer,
+                               Integer runtimeBrightness, List<ControlResolution> controls) {
     }
 
     public record ControlResolution(int index, String kind, CommandResolution command, @Nullable SteppedSwitch steppedSwitch, @Nullable LightResolution light) {
