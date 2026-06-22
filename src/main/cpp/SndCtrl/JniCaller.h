@@ -39,6 +39,10 @@ public:
         return pEnv;
     }
 
+    JNIEnv* raw() {
+        return pEnv;
+    }
+
     bool operator*() {
         if (error) {
             cout << "Env has error :(";
