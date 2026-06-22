@@ -14,8 +14,9 @@ import { ControlClick, ControlKind } from './control-click';
 export type { ControlClick, ControlKind } from './control-click';
 
 /** One assignment chip. `tag` marks a non-turn slot (P = single-press, PP = double-press);
- *  the turn chip has no tag but may carry the controlled app icon. */
-interface ChipVM { tag?: string; icon?: string; label: string; slot?: 'press' | 'dblpress'; }
+ *  the turn chip has no tag but may carry the controlled app icon. `baseLayer` marks a fallback
+ *  inherited from the device's base-layer profile (the active profile has nothing on this slot). */
+interface ChipVM { tag?: string; icon?: string; label: string; slot?: 'press' | 'dblpress'; baseLayer?: boolean; }
 interface KnobVM { index: number; label: string; pct: number; color: string; off: boolean; selected: boolean; chips: ChipVM[]; anim: string; dur: string; bmin: number; }
 interface FaderVM { index: number; label: string; pct: number; colors: string[]; labelColor: string; off: boolean; selected: boolean; chips: ChipVM[]; anim: string; dur: string; bmin: number; }
 
@@ -76,7 +77,7 @@ function wlChannelIdOf(cmd: Record<string, any>): string | undefined {
                 @if (showChips() && f.chips.length) {
                   <div class="chips">
                     @for (c of f.chips; track $index) {
-                      <span class="chip" (click)="chipClick(f.index, c, $event)">
+                      <span class="chip" [class.base]="c.baseLayer" [attr.title]="c.baseLayer ? 'From base layer — click to edit there' : null" (click)="chipClick(f.index, c, $event)">
                         @if (c.tag) { <span class="chip-tag">{{ c.tag }}</span> }
                         @if (c.icon) { <img class="chip-ico" [src]="c.icon" alt=""> }
                         <span class="chip-txt">{{ c.label }}</span>
@@ -116,7 +117,7 @@ function wlChannelIdOf(cmd: Record<string, any>): string | undefined {
         @if (showChips() && k.chips.length) {
           <div class="chips">
             @for (c of k.chips; track $index) {
-              <span class="chip" (click)="chipClick(k.index, c, $event)">
+              <span class="chip" [class.base]="c.baseLayer" [attr.title]="c.baseLayer ? 'From base layer — click to edit there' : null" (click)="chipClick(k.index, c, $event)">
                 @if (c.tag) { <span class="chip-tag">{{ c.tag }}</span> }
                 @if (c.icon) { <img class="chip-ico" [src]="c.icon" alt=""> }
                 <span class="chip-txt">{{ c.label }}</span>
@@ -158,6 +159,9 @@ function wlChannelIdOf(cmd: Record<string, any>): string | undefined {
       font-family: var(--font-ui); font-size: 9.5px; color: var(--text-soft); background: var(--raised);
       border: 1px solid var(--raised-line); padding: 2px 7px; border-radius: var(--r-pill); max-width: 120px;
     }
+    /* Inherited-from-base-layer chips read as secondary: dashed outline, dimmed, italic label. */
+    .chip.base { border-style: dashed; border-color: var(--line-2); background: transparent; opacity: 0.8; }
+    .chip.base .chip-txt { font-style: italic; color: var(--text-3); }
     .chip-tag { font-family: var(--font-mono); font-size: 8px; font-weight: 600; letter-spacing: 0.03em; color: var(--accent); flex: none; }
     .chip-ico { width: 12px; height: 12px; border-radius: 3px; object-fit: contain; flex: none; }
     .chip-txt { font-size: 8.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
@@ -226,36 +230,52 @@ export class PcDeviceComponent {
     return undefined;
   }
 
-  /** Assignment chips for a knob: turn (dial), single-press and double-press, each shown only when
-   *  that slot has a command. Each carries the icon the overlay would show — the per-control
-   *  overlay-icon override wins, else the command's own app / Wave Link icon. */
+  /** One slot's chip: the active profile's command, or — when the active profile leaves the slot
+   *  blank — the base-layer fallback (flagged so it renders distinctly and edits the base layer).
+   *  Each carries the icon the overlay would show (per-control overlay-icon override wins). */
+  private slotChip(active: Commands | undefined, base: Commands | undefined,
+                   opts: { tag?: string; slot?: 'press' | 'dblpress'; activeOverlay?: string; baseOverlay?: string }): ChipVM | null {
+    const data = this.integrations;
+    const activeLabel = shortLabel(active, data);
+    if (activeLabel) {
+      return { tag: opts.tag, label: activeLabel, icon: opts.activeOverlay ?? this.commandIcon(active), slot: opts.slot };
+    }
+    const baseLabel = shortLabel(base, data);
+    if (baseLabel) {
+      return { tag: opts.tag, label: baseLabel, icon: opts.baseOverlay ?? this.commandIcon(base), slot: opts.slot, baseLayer: true };
+    }
+    return null;
+  }
+
+  /** Assignment chips for a knob: turn (dial), single-press and double-press, each shown when the
+   *  active profile OR the base layer has a command for that slot. */
   private knobChips(i: number): ChipVM[] {
     const prof = this.snap()?.currentProfileSnapshot;
-    const data = this.integrations;
+    const base = this.snap()?.baseLayerSnapshot;
     const key = String(i);
-    const overlay = this.overlayIconSrc(prof?.knobSettings?.[key]?.overlayIcon);
+    const activeOverlay = this.overlayIconSrc(prof?.knobSettings?.[key]?.overlayIcon);
+    const baseOverlay = this.overlayIconSrc(base?.knobSettings?.[key]?.overlayIcon);
     const out: ChipVM[] = [];
-    const dial = prof?.dialData?.[key];
-    const turn = shortLabel(dial, data);
-    if (turn) out.push({ label: turn, icon: overlay ?? this.commandIcon(dial) });
-    const btn = prof?.buttonData?.[key];
-    const press = shortLabel(btn, data);
-    if (press) out.push({ tag: 'P', label: press, icon: overlay ?? this.commandIcon(btn), slot: 'press' });
-    const dblc = prof?.dblButtonData?.[key];
-    const dbl = shortLabel(dblc, data);
-    if (dbl) out.push({ tag: 'PP', label: dbl, icon: overlay ?? this.commandIcon(dblc), slot: 'dblpress' });
+    const push = (active: Commands | undefined, baseCmd: Commands | undefined, tag?: string, slot?: 'press' | 'dblpress') => {
+      const chip = this.slotChip(active, baseCmd, { tag, slot, activeOverlay, baseOverlay });
+      if (chip) out.push(chip);
+    };
+    push(prof?.dialData?.[key], base?.dialData?.[key]);
+    push(prof?.buttonData?.[key], base?.buttonData?.[key], 'P', 'press');
+    push(prof?.dblButtonData?.[key], base?.dblButtonData?.[key], 'PP', 'dblpress');
     return out;
   }
 
-  /** Sliders map only their analog movement, so just the single turn chip. */
+  /** Sliders map only their analog movement, so just the single turn chip (active or base-layer). */
   private faderChips(analogIdx: number): ChipVM[] {
     const prof = this.snap()?.currentProfileSnapshot;
+    const base = this.snap()?.baseLayerSnapshot;
     const key = String(analogIdx);
-    const dial = prof?.dialData?.[key];
-    const turn = shortLabel(dial, this.integrations);
-    if (!turn) return [];
-    const overlay = this.overlayIconSrc(prof?.knobSettings?.[key]?.overlayIcon);
-    return [{ label: turn, icon: overlay ?? this.commandIcon(dial) }];
+    const chip = this.slotChip(prof?.dialData?.[key], base?.dialData?.[key], {
+      activeOverlay: this.overlayIconSrc(prof?.knobSettings?.[key]?.overlayIcon),
+      baseOverlay: this.overlayIconSrc(base?.knobSettings?.[key]?.overlayIcon),
+    });
+    return chip ? [chip] : [];
   }
 
   readonly knobs = computed<KnobVM[]>(() => {
@@ -319,11 +339,16 @@ export class PcDeviceComponent {
     this.controlClick.emit({ kind, index, contextClicked, event });
   }
 
-  /** A press / double-press chip opens the control on that slot's tab; the turn chip has no slot,
-   *  so it falls through to the control's own click (the default Rotate / Slide tab). */
+  /** A press / double-press chip opens the control on that slot's tab; a base-layer chip opens that
+   *  command in the base-layer profile. An active turn chip has neither, so it falls through to the
+   *  control's own click (configure the active profile on the default Rotate / Slide tab). */
   chipClick(index: number, chip: ChipVM, event: Event): void {
-    if (!chip.slot) return;
+    if (!chip.slot && !chip.baseLayer) return;
     event.stopPropagation();
-    this.controlClick.emit({ kind: 'dial', index, contextClicked: false, slot: chip.slot, event });
+    this.controlClick.emit({
+      kind: 'dial', index, contextClicked: false, slot: chip.slot,
+      profile: chip.baseLayer ? this.snap()?.baseLayerSnapshot?.name : undefined,
+      event,
+    });
   }
 }

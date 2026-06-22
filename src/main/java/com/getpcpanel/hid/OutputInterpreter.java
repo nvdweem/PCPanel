@@ -3,6 +3,7 @@ package com.getpcpanel.hid;
 import java.util.Arrays;
 
 import com.getpcpanel.device.DeviceType;
+import com.getpcpanel.profile.BaseLayerService;
 import com.getpcpanel.profile.dto.LightingConfig;
 import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
 import com.getpcpanel.profile.dto.SingleLogoLightingConfig;
@@ -21,6 +22,10 @@ public final class OutputInterpreter {
     DeviceScanner deviceScanner;
     @Inject
     OverrideColorService overrideColorService;
+    @Inject
+    BaseLayerService baseLayer;
+    @Inject
+    BrightnessService brightnessService;
 
     private static final byte[] OUTPUT_CODE_INIT = { 1 };
     private static final byte ANIMATION_RAINBOW_HORIZONTAL = 1;
@@ -75,6 +80,14 @@ public final class OutputInterpreter {
     public void sendLightingConfig(String serialNumber, DeviceType dt, LightingConfig config, boolean priority) {
         if (dt == null) {
             throw new IllegalArgumentException("Empty device type");
+        }
+        // Fill any per-control "off" slots from the device's base layer (no-op outside CUSTOM mode / no base).
+        config = baseLayer.effectiveLighting(serialNumber, config);
+        // A brightness dial (in any profile) drives a runtime global brightness that wins over the saved value.
+        var runtimeBrightness = brightnessService.runtimeBrightness(serialNumber);
+        if (runtimeBrightness.isPresent()) {
+            config = config.deepCopy();
+            config.setGlobalBrightness(runtimeBrightness.getAsInt());
         }
         switch (dt) {
             case PCPANEL_RGB -> sendLightingConfigRGB(serialNumber, config, priority);

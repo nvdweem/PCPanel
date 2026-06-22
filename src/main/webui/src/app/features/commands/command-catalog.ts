@@ -23,12 +23,13 @@ export type FieldDef =
   | { kind: 'select'; key: string; label: string; options: { value: string; label: string }[] }
   | { kind: 'select-live'; key: string; label: string; source: LiveSource }
   | { kind: 'apps'; key: string; label: string }
-  | { kind: 'device'; key: string; label: string; filter?: 'output' | 'input' | 'all' }
+  | { kind: 'device'; key: string; label: string; filter?: 'output' | 'input' | 'all'; defaultLabel?: string }  // defaultLabel: adds a selectable empty option (e.g. "Default device") for commands where blank = the default
   | { kind: 'mute'; key: string; label: string }
   | { kind: 'keystroke' }                       // CommandKeystroke: KEY/TEXT toggle + combo/text
   | { kind: 'wavelink-target' }                 // id1 (+id2 for Mix), with the source driven by commandType
   | { kind: 'ha-help'; withValue?: boolean }    // links to HA's action builder + server config (+ {{ value }} hint)
-  | { kind: 'devices-list'; key: string; label: string };  // cycle list of device ids
+  | { kind: 'devices-list'; key: string; label: string }  // cycle list of device ids
+  | { kind: 'analog-bands' };                   // CommandAnalogBands: ordered ranges, each with a colour + nested action
 
 export interface CommandDef {
   type: string;
@@ -82,7 +83,7 @@ export const COMMANDS: CommandDef[] = [
     type: P + 'CommandVolumeDevice', label: 'Device volume', category: 'audio', kinds: ['dial'], icon: 'volume',
     buildEmpty: () => ({ _type: P + 'CommandVolumeDevice', deviceId: '', unMuteOnVolumeChange: false, dialParams: dialParams(), invert: false }),
     fields: [
-      { kind: 'device', key: 'deviceId', label: 'Audio device', filter: 'all' },
+      { kind: 'device', key: 'deviceId', label: 'Audio device', filter: 'all', defaultLabel: 'Default device' },
       { kind: 'toggle', key: 'unMuteOnVolumeChange', label: 'Unmute on volume change' },
     ],
   },
@@ -90,7 +91,7 @@ export const COMMANDS: CommandDef[] = [
     type: P + 'CommandVolumeDeviceMute', label: 'Device mute', category: 'audio', kinds: ['button'], icon: 'volume-x',
     buildEmpty: () => ({ _type: P + 'CommandVolumeDeviceMute', deviceId: '', muteType: 'toggle', overlayText: '' }),
     fields: [
-      { kind: 'device', key: 'deviceId', label: 'Audio device', filter: 'all' },
+      { kind: 'device', key: 'deviceId', label: 'Audio device', filter: 'all', defaultLabel: 'Default device' },
       { kind: 'mute', key: 'muteType', label: 'Action' },
     ],
   },
@@ -125,6 +126,11 @@ export const COMMANDS: CommandDef[] = [
     type: P + 'CommandProfile', label: 'Switch profile', category: 'system', kinds: ['button'], icon: 'refresh',
     buildEmpty: () => ({ _type: P + 'CommandProfile', profile: '' }),
     fields: [{ kind: 'select-live', key: 'profile', label: 'Profile', source: 'profiles' }],
+  },
+  {
+    type: P + 'CommandAnalogBands', label: 'Stepped switch (ranges)', category: 'system', kinds: ['dial'], icon: 'sliders',
+    buildEmpty: () => ({ _type: P + 'CommandAnalogBands', bands: [] }),
+    fields: [{ kind: 'analog-bands' }],
   },
   {
     type: P + 'CommandRun', label: 'Run command', category: 'system', kinds: ['button'], icon: 'zap',

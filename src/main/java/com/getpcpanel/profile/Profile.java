@@ -20,6 +20,12 @@ import lombok.Data;
 public class Profile {
     private String name;
     @JsonProperty("isMainProfile") private boolean isMainProfile;
+    /**
+     * Marks this profile as the device's "base layer": a fallback consulted for any control the active
+     * profile leaves unconfigured (no command) or unlit (per-control lighting NONE), mute-colours
+     * included. At most one profile per device should carry this flag.
+     */
+    @JsonProperty("isBaseLayer") private boolean isBaseLayer;
     @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Commands> buttonData = new HashMap<>();
     @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Commands> dblButtonData = new HashMap<>();
     @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Commands> releaseButtonData = new HashMap<>();

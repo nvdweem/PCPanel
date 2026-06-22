@@ -19,6 +19,7 @@ import com.getpcpanel.rest.EventBroadcaster.AssignmentChangedEvent.Kinds;
 import com.getpcpanel.rest.EventBroadcaster.DeviceRenamedEvent;
 import com.getpcpanel.rest.EventBroadcaster.LightingChangedEvent;
 import com.getpcpanel.rest.EventBroadcaster.KnobSettingChangedEvent;
+import com.getpcpanel.rest.EventBroadcaster.VisualColorsChangedEvent;
 import com.getpcpanel.rest.model.dto.ControlAssignmentsUpdateDto;
 import com.getpcpanel.rest.model.dto.DeviceDto;
 import com.getpcpanel.rest.model.dto.ProfileDto;
@@ -201,7 +202,22 @@ public class DeviceResource {
         } else {
             profile.setMainProfile(false);
         }
+        // Exactly one profile may be the base layer (the fallback for unconfigured/unlit controls).
+        var baseLayerChanged = profile.isBaseLayer() != dto.isBaseLayer();
+        if (dto.isBaseLayer()) {
+            StreamEx.of(deviceSave.getProfiles()).forEach(p -> p.setBaseLayer(p == profile));
+        } else {
+            profile.setBaseLayer(false);
+        }
         saveService.save();
+        // Changing the base layer alters how the active profile renders AND which fallbacks the UI shows.
+        // Re-apply lighting and re-broadcast the active profile (the snapshot now carries the new
+        // base-layer snapshot); the profile-switched observers also recompute mute / band colours.
+        if (baseLayerChanged) {
+            deviceHolder.getDevice(serial).ifPresent(device -> device.setLighting(device.getSavedLightingConfig(), true));
+            eventBus.fire(new ProfileSwitchedEvent(serial, deviceSave.getCurrentProfileName()));
+            eventBus.fire(new VisualColorsChangedEvent(serial));
+        }
         return Response.ok().build();
     }
 
@@ -223,7 +239,7 @@ public class DeviceResource {
             Commands commands) {
         getProfile(serial, profileName).setButtonData(index, commands);
         saveService.save();
-        eventBus.fire(new AssignmentChangedEvent(serial, Kinds.button, index, commands));
+        eventBus.fire(new AssignmentChangedEvent(serial, profileName, Kinds.button, index, commands));
         return Response.ok().build();
     }
 
@@ -244,7 +260,7 @@ public class DeviceResource {
             Commands commands) {
         getProfile(serial, profileName).setDblButtonData(index, commands);
         saveService.save();
-        eventBus.fire(new AssignmentChangedEvent(serial, Kinds.dblbutton, index, commands));
+        eventBus.fire(new AssignmentChangedEvent(serial, profileName, Kinds.dblbutton, index, commands));
         return Response.ok().build();
     }
 
@@ -265,7 +281,7 @@ public class DeviceResource {
             Commands commands) {
         getProfile(serial, profileName).setDialData(index, commands);
         saveService.save();
-        eventBus.fire(new AssignmentChangedEvent(serial, Kinds.dial, index, commands));
+        eventBus.fire(new AssignmentChangedEvent(serial, profileName, Kinds.dial, index, commands));
         return Response.ok().build();
     }
 
@@ -290,7 +306,7 @@ public class DeviceResource {
         knob.setOverlayIcon(settings.getOverlayIcon());
         knob.setButtonDebounce(settings.getButtonDebounce());
         saveService.save();
-        eventBus.fire(new KnobSettingChangedEvent(serial, index, knob));
+        eventBus.fire(new KnobSettingChangedEvent(serial, profileName, index, knob));
         return Response.ok().build();
     }
 
@@ -362,25 +378,25 @@ public class DeviceResource {
 
         if (update.analog() != null) {
             profile.setDialData(index, update.analog());
-            eventBus.fire(new AssignmentChangedEvent(serial, Kinds.dial, index, update.analog()));
+            eventBus.fire(new AssignmentChangedEvent(serial, profileName, Kinds.dial, index, update.analog()));
             changed = true;
         }
 
         if (update.button() != null) {
             profile.setButtonData(index, update.button());
-            eventBus.fire(new AssignmentChangedEvent(serial, Kinds.button, index, update.button()));
+            eventBus.fire(new AssignmentChangedEvent(serial, profileName, Kinds.button, index, update.button()));
             changed = true;
         }
 
         if (update.dblButton() != null) {
             profile.setDblButtonData(index, update.dblButton());
-            eventBus.fire(new AssignmentChangedEvent(serial, Kinds.dblbutton, index, update.dblButton()));
+            eventBus.fire(new AssignmentChangedEvent(serial, profileName, Kinds.dblbutton, index, update.dblButton()));
             changed = true;
         }
 
         if (update.releaseButton() != null) {
             profile.setReleaseButtonData(index, update.releaseButton());
-            eventBus.fire(new AssignmentChangedEvent(serial, Kinds.releasebutton, index, update.releaseButton()));
+            eventBus.fire(new AssignmentChangedEvent(serial, profileName, Kinds.releasebutton, index, update.releaseButton()));
             changed = true;
         }
 
@@ -391,7 +407,7 @@ public class DeviceResource {
             knob.setLogarithmic(update.knobSetting().isLogarithmic());
             knob.setOverlayIcon(update.knobSetting().getOverlayIcon());
             knob.setButtonDebounce(update.knobSetting().getButtonDebounce());
-            eventBus.fire(new KnobSettingChangedEvent(serial, index, knob));
+            eventBus.fire(new KnobSettingChangedEvent(serial, profileName, index, knob));
             changed = true;
         }
 

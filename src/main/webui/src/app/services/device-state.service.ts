@@ -173,6 +173,7 @@ export class DeviceStateService implements OnDestroy {
           ...d,
           currentProfile: event.profileName,
           currentProfileSnapshot: event.profileSnapshot,
+          baseLayerSnapshot: event.baseLayerSnapshot,
           lightingConfig: event.lightingConfig,
           dialColors: event.dialColors,
           sliderLabelColors: event.sliderLabelColors,
@@ -203,9 +204,13 @@ export class DeviceStateService implements OnDestroy {
         return true;
 
       case 'assignment_changed':
+        // Patch whichever snapshot the change belongs to: the active profile and/or the base layer
+        // (a base-layer command can be edited in place from its fallback chip).
         this._devices.update(patch(event.serial, d => ({
           ...d,
-          currentProfileSnapshot: applyAssignment(d.currentProfileSnapshot, event),
+          currentProfileSnapshot: event.profile === d.currentProfile ? applyAssignment(d.currentProfileSnapshot, event) : d.currentProfileSnapshot,
+          baseLayerSnapshot: d.baseLayerSnapshot && event.profile === d.baseLayerSnapshot.name
+            ? applyAssignment(d.baseLayerSnapshot, event) : d.baseLayerSnapshot,
         })));
         return true;
 
@@ -221,7 +226,9 @@ export class DeviceStateService implements OnDestroy {
       case 'control_setting_changed':
         this._devices.update(patch(event.serial, d => ({
           ...d,
-          currentProfileSnapshot: applyKnobSetting(d.currentProfileSnapshot, event),
+          currentProfileSnapshot: event.profile === d.currentProfile ? applyKnobSetting(d.currentProfileSnapshot, event) : d.currentProfileSnapshot,
+          baseLayerSnapshot: d.baseLayerSnapshot && event.profile === d.baseLayerSnapshot.name
+            ? applyKnobSetting(d.baseLayerSnapshot, event) : d.baseLayerSnapshot,
         })));
         return true;
 

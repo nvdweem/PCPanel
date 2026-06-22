@@ -83,6 +83,11 @@
 
     <!-- ── Main config ───────────────────────────────────────────────────── -->
     <main class="config-main">
+      @if (editingOtherProfile()) {
+        <div class="edit-banner">
+          Editing the <strong>base layer</strong> profile “{{ targetProfile() }}” — the fallback used when “{{ s.currentProfile }}” leaves this control empty.
+        </div>
+      }
       <div class="tabs">
         @if (isSlider()) {
           <span class="tab active">↕ Slide</span>
@@ -136,33 +141,7 @@
 
         <!-- Add column -->
         <div class="add-col">
-          <button class="pc-btn primary add-btn" (click)="addOpen.set(!addOpen())">
-            <pc-icon name="plus" [size]="16" [strokeWidth]="2.4"></pc-icon> Add action
-          </button>
-          <div class="cat-label">
-            <pc-icon [name]="addOpen() ? 'chevron-up' : 'chevron-down'" [size]="12" [strokeWidth]="2.5"></pc-icon>
-            <span class="micro-label">CATEGORIZED MENU</span>
-          </div>
-          @if (addOpen()) {
-            <div class="add-backdrop" (click)="addOpen.set(false)"></div>
-            <div class="add-menu">
-              <div class="filter">
-                <pc-icon name="search" [size]="13"></pc-icon>
-                <input class="filter-in" placeholder="Filter…" [value]="query()" (input)="query.set($any($event.target).value)">
-              </div>
-              @for (g of menuGroups(); track g.label) {
-                <div class="grp-label">{{ g.label }}</div>
-                @for (row of g.rows; track row.def.type) {
-                  <button class="add-row" [class.offline]="row.offline || row.unsupported" [disabled]="row.unsupported" (click)="addCommand(row.def)">
-                    @if (row.status) { <pc-status-dot [kind]="row.status" [size]="6"></pc-status-dot> }
-                    <span>{{ row.def.label }}</span>
-                    @if (row.unsupported) { <span class="off-tag">unavailable</span> }
-                    @else if (row.offline) { <span class="off-tag">offline</span> }
-                  </button>
-                }
-              }
-            </div>
-          }
+          <pc-command-picker [kind]="slotKind()" (pick)="addCommand($event)"></pc-command-picker>
         </div>
       </div>
     </main>

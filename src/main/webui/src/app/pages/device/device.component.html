@@ -51,6 +51,16 @@
 
             <div class="ps-divider"></div>
 
+            <div class="ps-row">
+              <div class="ps-text">
+                <div class="ps-title">Base layer</div>
+                <div class="ps-sub">Fallback for any control other profiles leave unconfigured or unlit — actions and mute colours included.</div>
+              </div>
+              <pc-toggle [value]="ps.isBaseLayer" (valueChange)="setBaseLayer($event)"></pc-toggle>
+            </div>
+
+            <div class="ps-divider"></div>
+
             <div class="ps-block">
               <div class="ps-title">Activate when these apps are focused</div>
               <div class="ps-sub">Switch to this profile automatically when one of these apps comes to the foreground.</div>

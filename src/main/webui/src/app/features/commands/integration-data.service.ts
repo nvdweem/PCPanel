@@ -8,6 +8,9 @@ import { PickerItem } from '../../ui';
 
 export interface VoiceMeeterParams { name: string; params: string[]; }
 
+/** The name the backend matches for the Windows System Sounds audio session (AudioSession.SYSTEM). */
+const SYSTEM_SOUNDS = 'System Sounds';
+
 /**
  * Live data sources for the command editor's dropdowns and pickers. Wraps the
  * backend integration endpoints as reactive httpResources so the action forms
@@ -63,7 +66,9 @@ export class IntegrationDataService {
   /** MQTT broker connection state (Paho client). */
   readonly mqttConnected = computed(() => this.mqttStatus.value()?.connected ?? false);
 
-  /** Process list as picker items (deduped, with real icons when present). */
+  /** Process list as picker items (deduped, with real icons when present). System Sounds is an audio
+   *  session rather than a process, so /api/processes never lists it — it is pinned on top explicitly
+   *  so app-volume / app-mute can target it (the backend matches the "System Sounds" name). */
   readonly processItems = computed<PickerItem[]>(() => {
     const seen = new Set<string>();
     const out: PickerItem[] = [];
@@ -72,7 +77,10 @@ export class IntegrationDataService {
       seen.add(p.name);
       out.push({ key: p.name, label: p.name, icon: p.icon ?? null });
     }
-    return out.sort((a, b) => a.label.localeCompare(b.label));
+    out.sort((a, b) => a.label.localeCompare(b.label));
+    const sysIcon = (this.sessions.value() ?? []).find(s => s.title === SYSTEM_SOUNDS)?.icon ?? null;
+    out.unshift({ key: SYSTEM_SOUNDS, label: SYSTEM_SOUNDS, icon: sysIcon });
+    return out;
   });
 
   /** Audio devices as picker items, tagged OUTPUT/INPUT. */

@@ -3,6 +3,8 @@ package com.getpcpanel.rest.model.dto;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import javax.annotation.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.device.descriptor.DeviceDescriptor;
@@ -35,6 +37,9 @@ public record DeviceSnapshotDto(
         // ── extra snapshot fields ────────────────────────────────────────────
         LightingConfig lightingConfig,
         ProfileSnapshotDto currentProfileSnapshot,
+        // The device's base-layer profile assignments (null when none is flagged, or it is the active
+        // profile). Lets the UI show base-layer fallbacks per slot and edit them in place.
+        @Nullable ProfileSnapshotDto baseLayerSnapshot,
         List<Integer> analogValues,
         List<String> dialColors,
         List<String> sliderLabelColors,
@@ -59,6 +64,9 @@ public record DeviceSnapshotDto(
         var deviceTypeName = dt != null ? dt.name() : descriptor.deviceKindId();
         var hasLogoLed = dt != null && dt.isHasLogoLed();
         var visualColors = proVisualColorsService.resolve(device);
+        // The base layer fills in for controls the active profile leaves blank; surface it so the UI
+        // can show those fallbacks (and edit them). Skip it when the base layer IS the active profile.
+        var baseLayer = StreamEx.of(deviceSave.getProfiles()).findFirst(Profile::isBaseLayer).filter(b -> b != profile).orElse(null);
 
         var knobValues = IntStream.range(0, analogCount)
                                   .mapToObj(device::getKnobRotation)
@@ -76,6 +84,7 @@ public record DeviceSnapshotDto(
                 StreamEx.of(deviceSave.getProfiles()).map(Profile::getName).toList(),
                 device.getSavedLightingConfig(),
                 ProfileSnapshotDto.from(profile),
+                baseLayer == null ? null : ProfileSnapshotDto.from(baseLayer),
                 knobValues,
                 visualColors.dialColors(),
                 visualColors.sliderLabelColors(),

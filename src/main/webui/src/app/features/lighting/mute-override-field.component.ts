@@ -1,15 +1,17 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { ColorPickerComponent, ToggleComponent } from '../../ui';
 
-const isBlackHex = (c: string | undefined): boolean => !c || /^#?0{3,8}$/i.test(c.trim());
+/** Off is its own state: only a blank/absent colour means off, so black (#000000) is a usable mute colour. */
+const isOff = (c: string | undefined): boolean => !c || !c.trim();
 
 /**
  * The per-control "change colour when muted" editor — an explicit on/off toggle plus a colour picker
  * shown only when enabled. This is the single source of truth for mute-override editing, used by both
  * the per-control rail editor and the full lighting page, so the two can never diverge.
  *
- * A blank colour means "off" (the backend treats blank/black as no override); enabling defaults to red
- * rather than a confusing black swatch. Binds via `[color]` / `(colorChange)`.
+ * Enabled/disabled is a separate state from the colour: a blank colour means off, while any explicit
+ * colour — including black — is honoured. Enabling defaults to red rather than a confusing black swatch.
+ * Binds via `[color]` / `(colorChange)`.
  */
 @Component({
   selector: 'pc-mute-override-field',
@@ -36,14 +38,11 @@ export class MuteOverrideFieldComponent {
   /** Emits the new muted colour: a hex when enabled, '' when disabled. */
   readonly colorChange = output<string>();
 
-  readonly on = computed(() => {
-    const c = this.color();
-    return !!c && !isBlackHex(c);
-  });
+  readonly on = computed(() => !isOff(this.color()));
 
-  /** Enabling defaults to red (or keeps an existing non-black colour); disabling clears the colour. */
+  /** Enabling keeps an existing colour (incl. black) or defaults to red; disabling clears the colour. */
   setEnabled(enabled: boolean): void {
     const cur = this.color();
-    this.colorChange.emit(enabled ? (cur && !isBlackHex(cur) ? cur : '#FF0000') : '');
+    this.colorChange.emit(enabled ? (isOff(cur) ? '#FF0000' : cur!) : '');
   }
 }
