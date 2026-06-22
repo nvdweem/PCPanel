@@ -8,7 +8,7 @@
 - The app now supports controllers beyond PCPanel through a generalized device layer. PCPanel hardware works exactly as before (and with zero setup), while other devices can be added and bound to the same actions through the same UI.
     - **Deej** — add the open-source Arduino serial volume mixer by its serial port; its sliders map to the same actions as PCPanel dials (no buttons/lights).
     - MIDI controller support is in progress.
-- Turn a dial or slider into a multi-position **stepped switch**: split its travel into ranges, give each range its own action and its own LED feedback colour. The action fires the moment you move *into* a range (moving within a range does nothing), and gaps between ranges act as dead-zones. Put a *Switch profile* action on each position to flip between many profiles from a single dial.
+- Turn a dial or slider into a multi-position **stepped switch**: split its travel into ranges, give each range its own actions (any number) and its own LED feedback colour. The actions fire the moment you move *into* a range (moving within a range does nothing), and gaps between ranges act as dead-zones. Put a *Switch profile* action on each position to flip between many profiles from a single dial.
 - New per-device **base layer**: mark one profile as the fallback used for any control the active profile leaves unconfigured or unlit — actions, lighting and mute colours included. Inherited actions appear on the on-screen device as a dashed chip you can click to edit in place. Combined with a stepped switch on the base layer, a single profile-selector dial keeps working in every profile.
 - A **Brightness** dial now controls the global LED brightness as a live runtime value: it wins over each profile's saved brightness and stays put across profile switches, so you configure it once (in any profile) and it governs everywhere. When more than one is configured, the best is chosen automatically.
 - The per-control "change colour when muted" option is now an explicit on/off toggle, so black (`#000000`) is a usable muted colour instead of being treated as "off".
@@ -21,11 +21,19 @@
     - Input devices not yet supported (I don't have one so can't debug)
     - Dials/sliders allow changing volume for Channels, Mixes and Output devices
     - Buttons allow setting mute state, changing the main output, add the focus app to a mix and/or toggle effects
+    - **Focus-control Wave Link** (on by default, toggleable on the Wave Link settings page): when an app Wave Link controls has focus, the *Focused-app volume* dial controls that app's Wave Link channel instead of its OS volume — and it switches live the moment you add or remove the app from a channel.
+    - Optional **Set volume of controlled apps**: when a Wave-Link-controlled app has focus, pin its OS volume to a configurable percentage (default 100%) so Wave Link does the real mixing — e.g. an app you'd dropped to 50% jumps back up once Wave Link controls it.
 - Added support for Home Assistant — control your smart home from your dials and buttons
     - Configure one or more servers (base URL + long-lived access token) on the Home Assistant settings page; actions pick the server automatically when there's only one
     - Actions are pasted as YAML straight from Home Assistant's Developer Tools → Actions page (with a link to open it), so anything Home Assistant can do is available
     - Buttons perform any action; dials map their position into the action — use `{{ value }}` with a min/max range or a translate formula (e.g. a light's brightness or color temperature)
     - Configurable debounce so a moving dial doesn't flood Home Assistant: the first move is sent instantly, then at most one update per the configured interval, and the final value is always sent
+- **Push-to-talk** — buttons can now run a separate set of actions when *released*, not just when pressed (e.g. unmute on press, mute on release). Configure it under the new "On release" tab when editing a button.
+- New generic output actions for dials and buttons, so you can drive almost anything:
+    - **HTTP request** (URL, method, headers, body), **MQTT publish** (topic + payload, reusing the MQTT connection) and **OSC send** (address).
+    - On a dial the position maps into the message via `{{ value }}` with a min/max range or a translate formula; on a button it sends at full scale — the same value model as the Home Assistant action.
+- Expanded **OBS** actions: start/stop/toggle streaming, recording (including pause/resume), virtual camera and replay buffer — alongside the existing scene switch, source mute and source volume.
+- The per-control **mute colour** now follows OBS and Wave Link *mute buttons* too, not just their volume dials: a button that mutes an OBS source or a Wave Link channel lights its control in the muted colour while that target is muted.
 - Attempts to improve Wayland tray support (now works on Ubuntu)
 - #74 - (Linux) New audio sessions should trigger initial volume setting
 - #74 - (Linux) New setting 'Force application volume to panel volume', this tries to reset the volume when an application changes it. This seems to solve for instance Firefox from going back to 100% when playing a new song.

@@ -37,16 +37,19 @@ real changes on your system in real time:
   from a button, automatically on app focus, or by turning a single dial through its ranges (a
   "stepped switch"). A **base layer** profile supplies fallback actions, lighting and mute colors
   for any control your other profiles leave unset.
-- **Integrations** — drive **OBS** (scenes, source mute, source volume), **Voicemeeter**, Elgato
-  **Wave Link** and **Home Assistant** (run any action from a button, or map a dial to a value such
-  as a light's brightness or color temperature), and send/receive **OSC** and **MQTT** for
-  stream-deck and home-automation setups.
+- **Integrations** — drive **OBS** (scenes, source mute/volume, and streaming, recording, virtual
+  camera and replay-buffer controls), **Voicemeeter**, Elgato **Wave Link** (incl. routing the
+  focused app's volume to its Wave Link channel) and **Home Assistant** (run any action from a
+  button, or map a dial to a value such as a light's brightness or color temperature). Send to
+  anything with generic **HTTP request**, **MQTT publish** and **OSC send** actions — a dial maps its
+  position into the request via `{{ value }}`.
 
 An optional on-screen **overlay** briefly shows the level as you turn a knob, and the app lives in
 the **system tray** so it stays out of your way.
 
-Click any control to configure it. Each knob has independent **turn**, **single-press** and
-**double-press** slots, an input-mapping curve, and per-control color — and you pick an action from a
+Click any control to configure it. Each knob has independent **turn**, **single-press**,
+**double-press** and **on-release** slots (the last makes push-to-talk easy — unmute on press, mute
+on release), an input-mapping curve, and per-control color — and you pick an action from a
 categorized menu covering audio, system and every integration:
 
 ![Configuring a knob: binding it to an action, with the action-type menu on the right](docs/images/bind-control.png)
