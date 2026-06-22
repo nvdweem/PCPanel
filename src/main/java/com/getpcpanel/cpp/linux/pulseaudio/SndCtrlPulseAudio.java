@@ -173,18 +173,30 @@ public class SndCtrlPulseAudio implements ISndCtrl {
 
     @Override
     public void setFocusVolume(float volume) {
-        var candidates = processHelper.getActiveWindow().map(ActiveWindow::identifiers).orElseGet(Set::of);
-        if (candidates.isEmpty()) {
+        var window = processHelper.getActiveWindow().orElse(null);
+        if (window == null) {
             return;
         }
         Set<PulseAudioAudioSession> todo;
         synchronized (sessions) {
-            todo = allSessions().filter(s -> matchesAny(s, candidates)).toSet();
+            todo = allSessions().filter(s -> matchesWindow(s, window)).toSet();
         }
         todo.forEach(s -> {
             s.setVolumeNoTrigger(volume); // Prevent sending the volume when 'force volume' is enabled
             cmd.setSessionVolume(s.index(), volume);
         });
+    }
+
+    /**
+     * A stream belongs to the focused window if its producing process is the window's process, or one of the
+     * window's identifiers matches its name. The pid check is the robust path for Proton/Wine games, where the
+     * name never lines up: the window's process is reported as {@code MainThrd} and the stream's binary as
+     * {@code wine64-preloader}, yet the stream's {@code application.process.id} equals the window pid (#96). The
+     * name check ({@link #matchesAny}) remains the fallback for cases where the two pids live in different
+     * namespaces. Both pids must be real (>0) so two metadata-less entries can't collide on a sentinel.
+     */
+    static boolean matchesWindow(PulseAudioAudioSession s, ActiveWindow window) {
+        return (s.pid() > 0 && s.pid() == window.pid()) || matchesAny(s, window.identifiers());
     }
 
     @Override
