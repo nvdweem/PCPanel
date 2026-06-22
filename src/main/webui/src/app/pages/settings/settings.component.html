@@ -168,7 +168,7 @@
             <div class="pc-hint platform-note">{{ platformNote('wavelink') }} These settings are shown for reference and can't be used on this host.</div>
           }
           <div class="pc-card pad stack" [class.disabled-block]="!platform.waveLinkSupported()">
-            @if (platform.waveLinkSupported() && wavelinkEnabled.isLoading()) {
+            @if (platform.waveLinkSupported() && wavelinkSettings.isLoading()) {
               <div class="muted-row"><pc-spinner [size]="14" [thickness]="2"></pc-spinner> Loading…</div>
             } @else {
               <div class="row">
@@ -176,11 +176,36 @@
                   <div class="row-label">Enable</div>
                   <div class="row-sub">Elgato Wave Link integration</div>
                 </div>
-                <pc-toggle [value]="wavelinkEnabled.value()?.enabled ?? false" [disabled]="!platform.waveLinkSupported()"
+                <pc-toggle [value]="wavelinkSettings.value()?.enabled ?? false" [disabled]="!platform.waveLinkSupported()"
                            (valueChange)="setWavelinkEnabled($event)"></pc-toggle>
               </div>
+              @if (wavelinkSettings.value()?.enabled) {
+                <div class="row">
+                  <div class="row-text">
+                    <div class="row-label">Focus-control Wave Link</div>
+                    <div class="row-sub">When a Wave-Link-controlled app has focus, the focused-app volume dial controls its Wave Link channel instead of the OS volume.</div>
+                  </div>
+                  <pc-toggle [value]="wavelinkSettings.value()?.focusVolumeRedirect ?? true"
+                             (valueChange)="setWavelinkFocusRedirect($event)"></pc-toggle>
+                </div>
+                <div class="row">
+                  <div class="row-text">
+                    <div class="row-label">Set volume of controlled apps</div>
+                    <div class="row-sub">When an app becomes Wave-Link-controlled, pin its OS volume to this level (Wave Link then does the real control).</div>
+                  </div>
+                  <div class="row-control">
+                    <input class="pc-field-input pct" type="number" min="0" max="100"
+                           [value]="wavelinkSettings.value()?.controlledVolumePercent ?? 100"
+                           [disabled]="!wavelinkSettings.value()?.enforceControlledVolume"
+                           (change)="setWavelinkControlledPercent(+$any($event.target).value)">
+                    <span class="pct-sign">%</span>
+                    <pc-toggle [value]="wavelinkSettings.value()?.enforceControlledVolume ?? false"
+                               (valueChange)="setWavelinkEnforceVolume($event)"></pc-toggle>
+                  </div>
+                </div>
+              }
             }
-            @if (wavelinkEnabled.error()) {
+            @if (wavelinkSettings.error()) {
               <div class="muted-row err">Wave Link endpoint unavailable.</div>
             }
           </div>

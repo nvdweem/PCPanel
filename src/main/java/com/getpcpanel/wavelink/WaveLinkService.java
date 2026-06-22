@@ -5,12 +5,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.getpcpanel.cpp.AudioSession;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
+import com.getpcpanel.util.Debouncer;
 import com.getpcpanel.util.ReconnectBackoff;
 import com.getpcpanel.volume.IFocusRedirector;
 
@@ -43,6 +46,8 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
     WaveLinkAppCache appCache;
     @Inject
     Instance<ISndCtrl> sndCtrl;
+    @Inject
+    Debouncer debouncer;
 
     /**
      * Bridges OS process → Wave Link app identity. Wave Link names apps by a friendly name ("Microsoft
@@ -71,6 +76,9 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
      */
     @Override
     public boolean handleFocusVolumeRequest(String targetProcess, float volume) {
+        if (!focusRedirectEnabled()) {
+            return false; // feature off → the OS controls focus volume normally
+        }
         if (isConnected()) {
             var channelId = resolveChannelForFocusApp(targetProcess);
             if (channelId.isPresent()) {
@@ -88,10 +96,18 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
 
     @Override
     public boolean controlsFocusApp(String targetProcess) {
+        if (!focusRedirectEnabled()) {
+            return false;
+        }
         if (isConnected()) {
             return resolveChannelForFocusApp(targetProcess).isPresent();
         }
         return controlledWhileDisconnected(targetProcess);
+    }
+
+    /** Whether the focus-control feature (route a focused Wave-Link app's volume to Wave Link) is on. */
+    private boolean focusRedirectEnabled() {
+        return saveService == null || saveService.get().getWaveLink().focusVolumeRedirect();
     }
 
     private boolean controlledWhileDisconnected(String targetProcess) {
@@ -103,6 +119,38 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
     public void focusedAppChanged(WaveLinkApp app) {
         if (sndCtrl != null && sndCtrl.isResolvable()) {
             learnFocusIdentity(app, sndCtrl.get().getFocusApplication());
+        }
+        enforceFocusedControlledVolume(); // a controlled app just gained focus → pin its OS volume
+    }
+
+    /**
+     * Pins the focused app's OS volume to the configured percent when it is Wave-Link-controlled and the
+     * "set controlled volume" setting is on — so e.g. an app left at 50% jumps to 100% once Wave Link
+     * controls it (Wave Link then does the real mixing). Scoped to the focused app, where we can address
+     * the OS volume directly ({@code setFocusVolume}) without mapping Wave Link's name to a process. Only
+     * sets when the current volume actually differs, to avoid needless churn on repeated Wave Link events.
+     */
+    void enforceFocusedControlledVolume() {
+        if (saveService == null || sndCtrl == null || !sndCtrl.isResolvable() || !isConnected()) {
+            return;
+        }
+        var settings = saveService.get().getWaveLink();
+        if (!settings.enforceControlledVolume()) {
+            return;
+        }
+        var snd = sndCtrl.get();
+        var focus = snd.getFocusApplication();
+        if (StringUtils.isBlank(focus) || resolveChannelForFocusApp(focus).isEmpty()) {
+            return; // nothing focused, or the focused app is not Wave-Link-controlled
+        }
+        var target = Math.max(0, Math.min(100, settings.controlledVolumePercent())) / 100f;
+        var key = WaveLinkAppCache.normalize(focus);
+        var current = StreamEx.of(snd.getAllSessions())
+                              .filter(s -> s.executable() != null && key.equals(WaveLinkAppCache.normalize(s.executable().getName())))
+                              .map(AudioSession::volume)
+                              .findFirst().orElse(-1f);
+        if (Math.abs(current - target) > 0.01f) {
+            snd.setFocusVolume(target);
         }
     }
 
@@ -258,7 +306,14 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
         if (changedEvent != null) {
             changedEvent.fire(new WaveLinkChangedEvent());
         }
+        // Channel membership may have changed (an app added/removed). Re-pin the focused app's volume if
+        // it is now controlled — debounced so a burst of level/mute pushes coalesces into one check.
+        if (debouncer != null) {
+            debouncer.debounce(ENFORCE_VOLUME_KEY, this::enforceFocusedControlledVolume, 250, TimeUnit.MILLISECONDS);
+        }
     }
+
+    private static final String ENFORCE_VOLUME_KEY = "wavelink-enforce-controlled-volume";
 
     /**
      * Returns the WaveLink channel ID that the current WaveLink-focused application is assigned to,

@@ -669,7 +669,10 @@ export interface WaveLinkResponseDto {
 }
 
 export interface WaveLinkSettings {
+    controlledVolumePercent?: number;
     enabled: boolean;
+    enforceControlledVolume: boolean;
+    focusVolumeRedirect?: boolean;
 }
 
 export interface WsAssignmentChangedEvent extends WsEvent {

@@ -6,7 +6,7 @@ import { IntegrationDataService } from '../../features/commands/integration-data
 import { PlatformService } from '../../services/platform.service';
 import { DebugService, DeviceTypeOverride } from '../../services/debug.service';
 import {
-  OverlayPosition, SettingsDto,
+  OverlayPosition, SettingsDto, WaveLinkSettings,
 } from '../../models/generated/backend.types';
 import {
   ColorPickerComponent, IconComponent, ModalComponent, SegmentedComponent, SegmentOption,
@@ -102,8 +102,8 @@ export class SettingsComponent {
     'bottomLeft', 'bottomMiddle', 'bottomRight',
   ];
 
-  // Separate tiny Wave Link enable resource (not part of SettingsDto).
-  readonly wavelinkEnabled = httpResource<{ enabled: boolean }>(() => '/api/settings/wavelink');
+  // Wave Link settings (not part of SettingsDto): enable + focus-control + controlled-volume options.
+  readonly wavelinkSettings = httpResource<WaveLinkSettings>(() => '/api/settings/wavelink');
 
   /** Position the overlay live-preview card per overlayPosition + (scaled) padding. */
   readonly overlayPreviewStyle = computed<Record<string, string>>(() => {
@@ -293,17 +293,27 @@ export class SettingsComponent {
     return (this.integrations.haServers.value() ?? []).some(s => s.id === id && s.connected);
   }
 
-  // ── Wave Link separate enable toggle ────────────────────────────────────────
-  setWavelinkEnabled(on: boolean): void {
-    this.http.put<void>('/api/settings/wavelink', { enabled: on }).subscribe({
+  // ── Wave Link settings ──────────────────────────────────────────────────────
+  /** Merge one field into the current Wave Link settings and persist the whole object (the PUT replaces it). */
+  private saveWavelink(patch: Partial<WaveLinkSettings>, successMsg?: string): void {
+    const cur: WaveLinkSettings = this.wavelinkSettings.value()
+      ?? { enabled: false, focusVolumeRedirect: true, enforceControlledVolume: false, controlledVolumePercent: 100 };
+    this.http.put<void>('/api/settings/wavelink', { ...cur, ...patch }).subscribe({
       next: () => {
-        this.wavelinkEnabled.reload();
+        this.wavelinkSettings.reload();
         this.integrations.waveLink.reload();
         this.integrations.waveLinkSettings.reload(); // keep Home's integration list in sync
-        this.toast.show(on ? 'Wave Link enabled' : 'Wave Link disabled', { kind: 'success' });
+        if (successMsg) this.toast.show(successMsg, { kind: 'success' });
       },
       error: () => this.toast.show('Could not update Wave Link', { kind: 'error' }),
     });
+  }
+
+  setWavelinkEnabled(on: boolean): void { this.saveWavelink({ enabled: on }, on ? 'Wave Link enabled' : 'Wave Link disabled'); }
+  setWavelinkFocusRedirect(on: boolean): void { this.saveWavelink({ focusVolumeRedirect: on }); }
+  setWavelinkEnforceVolume(on: boolean): void { this.saveWavelink({ enforceControlledVolume: on }); }
+  setWavelinkControlledPercent(pct: number): void {
+    this.saveWavelink({ controlledVolumePercent: Math.max(0, Math.min(100, Math.round(pct || 0))) });
   }
 
   // ── save ────────────────────────────────────────────────────────────────────
