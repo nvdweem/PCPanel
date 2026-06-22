@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import com.getpcpanel.cpp.linux.LinuxProcessHelper.ActiveWindow;
 import com.getpcpanel.cpp.linux.pulseaudio.PulseAudioWrapper.PulseAudioTarget;
 
 class SndCtrlPulseAudioTest {
@@ -58,6 +59,40 @@ class SndCtrlPulseAudioTest {
         assertTrue(SndCtrlPulseAudio.matches(session, "deadlock.exe"), "the raw .exe still matches");
         assertTrue(SndCtrlPulseAudio.matches(session, "DEADLOCK"), "match is case-insensitive");
         assertFalse(SndCtrlPulseAudio.matches(session, "deadlock2"), "a different name must not match");
+    }
+
+    /**
+     * Real Deadlock (Proton) data: the window's process is "MainThrd" and the stream's binary is
+     * "wine64-preloader", so no name lines up - but the stream's application.process.id equals the window pid.
+     * The pid path must bind it, and must do so even if the title were decorated/unmatchable (#96).
+     */
+    @Test
+    void matchesProtonGameByPidWhenNamesDoNotLineUp() {
+        var deadlock = session(Map.of(
+                "application.process.id", "1158977",
+                "application.process.binary", "wine64-preloader",
+                "application.name", "deadlock.exe"));
+
+        // process "MainThrd" / class "steam_app_1422450" / name "Deadlock", as captured from the focused window.
+        var window = new ActiveWindow(1158977, "MainThrd", null, "steam_app_1422450", "Deadlock");
+        assertTrue(SndCtrlPulseAudio.matchesWindow(deadlock, window), "the window pid must bind the stream by application.process.id");
+
+        // Even a window whose name does not match still binds when the pid agrees (decorated-title resilience).
+        var decorated = new ActiveWindow(1158977, "MainThrd", null, "steam_app_1422450", "Deadlock - Main Menu");
+        assertTrue(SndCtrlPulseAudio.matchesWindow(deadlock, decorated), "pid match is independent of the window title");
+
+        // A different window (different pid, non-matching names) must not touch this stream.
+        var other = new ActiveWindow(4242, "firefox", null, "firefox_firefox", "Some Page - Firefox");
+        assertFalse(SndCtrlPulseAudio.matchesWindow(deadlock, other), "an unrelated window must not match");
+    }
+
+    /** Both pids must be real: a metadata-sparse stream (pid -1) must not match a window via a sentinel pid. */
+    @Test
+    void pidMatchRequiresRealPids() {
+        var sparse = session(Map.of("media.name", "audio-src")); // no application.process.id -> pid -1
+        var window = new ActiveWindow(-1, null, null, null, null);
+
+        assertFalse(SndCtrlPulseAudio.matchesWindow(sparse, window), "sentinel pids (-1) must never collide");
     }
 
     /** A blank-once-normalized query (e.g. ".exe") must not match a metadata-sparse stream whose names are also blank. */
