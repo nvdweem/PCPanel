@@ -10,7 +10,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.getpcpanel.util.PcPanelRoot;
+import com.getpcpanel.util.FileUtil;
 
 import dev.niels.wavelink.impl.model.WaveLinkChannel;
 import jakarta.annotation.PostConstruct;
@@ -32,8 +32,11 @@ import one.util.streamex.StreamEx;
  * app's OS volume. While Wave Link is connected its live channels are authoritative; the cache is just
  * the fallback for the not-yet-connected window.
  *
- * <p>Entries are normalised to the lowercased executable basename (e.g. {@code msedge.exe}) so the
- * full focus-app path from {@code ISndCtrl.getFocusApplication()} matches the Wave Link app id/name.
+ * <p>Entries are normalised to the lowercased executable name without directory or extension (e.g.
+ * {@code firefox}) so the full focus-app path from {@code ISndCtrl.getFocusApplication()}
+ * ({@code …\firefox.exe}) matches the Wave Link app id/name ({@code Firefox}), which carries no
+ * extension. Apps whose Wave Link name differs from the executable (Wave Link's {@code Microsoft Edge}
+ * vs {@code msedge.exe}) are bridged by {@link #learn} from a successful live correlation.
  */
 @Log4j2
 @ApplicationScoped
@@ -41,6 +44,7 @@ public class WaveLinkAppCache {
     private static final String FILE = "wavelink-controlled-apps.json";
 
     @Inject ObjectMapper mapper;
+    @Inject FileUtil fileUtil;
 
     private final Set<String> controlled = ConcurrentHashMap.newKeySet();
 
@@ -78,11 +82,12 @@ public class WaveLinkAppCache {
     }
 
     private void add(Set<String> tokens) {
-        tokens.remove("");
-        if (tokens.isEmpty() || controlled.containsAll(tokens)) {
+        // Don't mutate the caller's set (learn() passes an immutable Set.of); only persist on real growth.
+        var fresh = StreamEx.of(tokens).remove(String::isBlank).remove(controlled::contains).toSet();
+        if (fresh.isEmpty()) {
             return;
         }
-        controlled.addAll(tokens);
+        controlled.addAll(fresh);
         persist();
     }
 
@@ -96,17 +101,29 @@ public class WaveLinkAppCache {
         }
     }
 
-    private static Path path() {
-        return PcPanelRoot.resolve().resolve(FILE);
+    private Path path() {
+        // Resolve against the configured data root (same as profiles.json) so the cache sits next to
+        // the settings in every configuration — including dev (~/.pcpaneldev) and PCPANEL_ROOT overrides.
+        return fileUtil.getFile(FILE).toPath();
     }
 
-    /** Lowercased executable basename, so a full path and a bare exe/app name compare equal. */
+    /**
+     * Lowercased executable name without directory or trailing extension, so a full focus-app path
+     * ({@code C:\…\firefox.exe}) and a bare Wave Link app name ({@code Firefox}) compare equal.
+     */
     static String normalize(String pathOrName) {
         if (pathOrName == null) {
             return "";
         }
         var s = pathOrName.trim().toLowerCase(Locale.ROOT);
         var slash = Math.max(s.lastIndexOf('/'), s.lastIndexOf('\\'));
-        return slash >= 0 ? s.substring(slash + 1) : s;
+        if (slash >= 0) {
+            s = s.substring(slash + 1);
+        }
+        var dot = s.lastIndexOf('.');
+        if (dot > 0) { // keep leading-dot names intact; strip a real trailing extension (.exe, .app, …)
+            s = s.substring(0, dot);
+        }
+        return s;
     }
 }

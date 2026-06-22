@@ -114,6 +114,9 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
             backoff.onSuccess();
             log.debug("WaveLink connected, sending ping.");
             ping();
+            // Keep the controlled-app cache current even when no channelChanged event fires after the
+            // initial channel load, so the set is persisted for the next startup's focus-volume race.
+            syncAppCache();
         } else if (backoff.ready(System.currentTimeMillis())) {
             log.info("WaveLink not connected, connecting.");
             reconnect();
