@@ -22,7 +22,9 @@ env:
 on:
   push:
     branches:
-      - main
+      # Disabled: do not build/publish on every push to main. Trigger manually via
+      # workflow_dispatch (Actions tab → "Build & Release" → "Run workflow") instead.
+      # - main
       - releases/**
   workflow_dispatch:
 
