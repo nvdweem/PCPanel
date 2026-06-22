@@ -60,17 +60,5 @@
 .ai-body { padding: 16px; }
 
 /* ── Add column ─────────────────────────────────────────────────────────────── */
+/* The categorized + filterable command menu now lives in CommandPickerComponent. */
 .add-col { width: 260px; flex: none; position: relative; z-index: 50; }
-.add-backdrop { position: fixed; inset: 0; z-index: 40; }
-.add-btn { width: 100%; padding: 11px; margin-bottom: 10px; }
-.cat-label { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; padding-left: 2px; color: var(--text-3); }
-.add-menu { position: relative; z-index: 50; background: var(--popover); border: 1px solid var(--raised-line); border-radius: var(--r-lg); padding: 8px; box-shadow: var(--sh-pop); }
-.filter { display: flex; align-items: center; gap: 8px; background: var(--input); border: 1px solid var(--line); border-radius: 8px; padding: 8px 11px; margin-bottom: 6px; color: var(--text-3); }
-.filter-in { flex: 1; min-width: 0; background: transparent; border: none; outline: none; color: var(--text-1); font-size: 12px; }
-.grp-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em; color: var(--text-3); padding: 8px 9px 3px; }
-.add-row { display: flex; align-items: center; gap: 7px; width: 100%; text-align: left; border: none; background: transparent; color: var(--text-soft); font-size: 12.5px; padding: 7px 9px; border-radius: var(--r-sm); cursor: pointer; }
-.add-row:hover { background: var(--accent-tint-soft); color: var(--accent-text); }
-.add-row.offline { color: var(--text-3); }
-.add-row:disabled { cursor: not-allowed; }
-.add-row:disabled:hover { background: transparent; color: var(--text-3); }
-.off-tag { font-size: 9px; color: var(--text-3); margin-left: auto; }

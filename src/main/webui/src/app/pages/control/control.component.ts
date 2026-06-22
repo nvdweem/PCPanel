@@ -5,16 +5,16 @@ import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-
 import { DeviceStateService } from '../../services/device-state.service';
 import { DeviceService } from '../../services/device.service';
 import { IntegrationDataService } from '../../features/commands/integration-data.service';
-import { PlatformService } from '../../services/platform.service';
 import { DeviceCapabilitiesService } from '../../services/device-capabilities.service';
 import { Command, Commands, KnobSetting } from '../../models/generated/backend.types';
 import {
-  AppPickerComponent, IconComponent, StatusDotComponent, ToggleComponent, ToastService,
+  AppPickerComponent, IconComponent, ToggleComponent, ToastService,
 } from '../../ui';
 import { PcKnobComponent } from '../../devices/visual/pc-knob.component';
 import { PcFaderComponent } from '../../devices/visual/pc-fader.component';
-import { CommandDef, CommandKind, COMMANDS, COMMAND_BY_TYPE, categoryLabel } from '../../features/commands/command-catalog';
+import { CommandDef, CommandKind, COMMAND_BY_TYPE } from '../../features/commands/command-catalog';
 import { CommandFieldsComponent } from '../../features/commands/command-fields.component';
+import { CommandPickerComponent } from '../../features/commands/command-picker.component';
 import { MappingPreviewComponent } from '../../features/commands/mapping-preview.component';
 import { DialParams } from '../../features/commands/mapping-curve.util';
 import { ControlLightingComponent } from '../../features/lighting/control-lighting.component';
@@ -22,8 +22,6 @@ import { analogPct, describeCommand } from '../../devices/visual/device-visual.u
 import { OverlayModule } from '@angular/cdk/overlay';
 
 type Slot = 'rotate' | 'press' | 'dblpress';
-
-interface MenuRow { def: CommandDef; status?: 'ok' | 'idle' | 'connecting'; offline: boolean; unsupported?: boolean; }
 
 const EMPTY: Commands = { commands: [], type: 'allAtOnce' };
 const EMPTY_KNOB: KnobSetting = { minTrim: 0, maxTrim: 100, logarithmic: false, overlayIcon: '', buttonDebounce: 0 };
@@ -33,8 +31,8 @@ const EMPTY_KNOB: KnobSetting = { minTrim: 0, maxTrim: 100, logarithmic: false, 
   standalone: true,
   imports: [
     DragDropModule, OverlayModule, RouterLink, IconComponent, ToggleComponent,
-    StatusDotComponent, AppPickerComponent, PcKnobComponent, PcFaderComponent, CommandFieldsComponent,
-    ControlLightingComponent, MappingPreviewComponent,
+    AppPickerComponent, PcKnobComponent, PcFaderComponent, CommandFieldsComponent,
+    ControlLightingComponent, MappingPreviewComponent, CommandPickerComponent,
   ],
   templateUrl: './control.component.html',
   styleUrl: './control.component.scss',
@@ -44,7 +42,6 @@ export class ControlComponent {
   private readonly state = inject(DeviceStateService);
   private readonly deviceService = inject(DeviceService);
   private readonly integrations = inject(IntegrationDataService);
-  private readonly platform = inject(PlatformService);
   private readonly capsService = inject(DeviceCapabilitiesService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
@@ -72,8 +69,6 @@ export class ControlComponent {
     ALL_COLOR: 'Solid color', ALL_RAINBOW: 'Rainbow', ALL_WAVE: 'Wave',
     ALL_BREATH: 'Breath', SINGLE_COLOR: 'Per-LED color', CUSTOM: 'Per-control',
   }[this.lightingMode() ?? ''] ?? 'a global'));
-  readonly query = signal('');
-  readonly addOpen = signal(false);
   readonly iconPickerOpen = signal(false);
 
   // Local editable state, seeded once per (serial,index).
@@ -130,39 +125,6 @@ export class ControlComponent {
 
   readonly activeCommands = computed<Command[]>(() => this.currentSlotSignal()().commands);
 
-  readonly menuGroups = computed(() => {
-    const kind = this.slotKind();
-    const q = this.query().trim().toLowerCase();
-    const defs = COMMANDS.filter(d => d.kinds.includes(kind) && (!q || d.label.toLowerCase().includes(q)));
-    const cats: ('audio' | 'system' | 'integration')[] = ['audio', 'system', 'integration'];
-    return cats.map(cat => ({
-      label: categoryLabel(cat),
-      rows: defs.filter(d => d.category === cat).map(d => this.toMenuRow(d)),
-    })).filter(g => g.rows.length);
-  });
-
-  /** Whether a command's integration can run on this host. */
-  private platformOk(def: CommandDef): boolean {
-    if (def.integration === 'voicemeeter') return this.platform.voicemeeterSupported();
-    if (def.integration === 'wavelink') return this.platform.waveLinkSupported();
-    return true;
-  }
-
-  private toMenuRow(def: CommandDef): MenuRow {
-    if (!def.integration) return { def, offline: false };
-    if (!this.platformOk(def)) return { def, status: 'idle', offline: false, unsupported: true };
-    // Honest status: green only with positive evidence; Voicemeeter has no live signal.
-    if (def.integration === 'voicemeeter') return { def, status: 'idle', offline: false };
-    const connected = def.integration === 'obs' ? this.integrations.obsConnected()
-      : def.integration === 'homeassistant' ? this.integrations.haConnected()
-        : this.integrations.waveLinkConnected();
-    const loading = def.integration === 'obs' ? this.integrations.obsScenes.isLoading()
-      : def.integration === 'homeassistant' ? this.integrations.haStatus.isLoading()
-        : this.integrations.waveLink.isLoading();
-    if (loading) return { def, status: 'connecting', offline: false };
-    return { def, status: connected ? 'ok' : 'idle', offline: !connected };
-  }
-
   defFor(cmd: Command): CommandDef | undefined { return COMMAND_BY_TYPE.get(cmd._type); }
   labelFor(cmd: Command): string {
     // Prefer a label that names the actual target ("Music — Wave Link"); fall back to the generic
@@ -184,8 +146,6 @@ export class ControlComponent {
     const next = { ...sig(), commands: [...sig().commands, def.buildEmpty() as Command] };
     sig.set(next);
     this.expanded.set(next.commands.length - 1);
-    this.addOpen.set(false);
-    this.query.set('');
     this.save();
   }
 

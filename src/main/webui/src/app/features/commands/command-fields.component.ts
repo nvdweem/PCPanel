@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, model } from '@angular/core';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { RouterLink } from '@angular/router';
-import { CommandDef, COMMANDS, COMMAND_BY_TYPE, FieldDef, LiveSource } from './command-catalog';
+import { CommandDef, COMMAND_BY_TYPE, FieldDef, LiveSource } from './command-catalog';
+import { CommandPickerComponent } from './command-picker.component';
 import { mappingCurve } from './mapping-curve.util';
 import { IntegrationDataService } from './integration-data.service';
 import {
@@ -20,7 +21,7 @@ type Cmd = Record<string, any>;
   selector: 'pc-command-fields',
   standalone: true,
   // Self-referenced (CommandFieldsComponent) so each stepped-switch band can host a nested action editor.
-  imports: [OverlayModule, RouterLink, IconComponent, ToggleComponent, SelectComponent, AppPickerComponent, KeyRecorderComponent, SegmentedComponent, ColorPickerComponent, CommandFieldsComponent],
+  imports: [OverlayModule, RouterLink, IconComponent, ToggleComponent, SelectComponent, AppPickerComponent, KeyRecorderComponent, SegmentedComponent, ColorPickerComponent, CommandFieldsComponent, CommandPickerComponent],
   template: `
     <div class="fields">
       @for (f of def().fields; track f.kind + ($any(f).key || '')) {
@@ -173,8 +174,7 @@ type Cmd = Record<string, any>;
                   <pc-color-picker label="Feedback colour" [value]="b.color || '#FFB020'" (valueChange)="setBand($index, 'color', $event)"></pc-color-picker>
                   <div class="field-block">
                     <div class="flabel">Action when entering this position</div>
-                    <pc-select [block]="true" [options]="bandActionOptions" [value]="bandCmdType(b)" placeholder="— none —"
-                               (valueChange)="setBandCmdType($index, $event)"></pc-select>
+                    <pc-command-picker kind="button" [triggerLabel]="bandActionLabel(b)" (pick)="setBandCmdDef($index, $event)"></pc-command-picker>
                   </div>
                   @if (bandDef(b); as bdef) {
                     <div class="band-action">
@@ -368,15 +368,14 @@ export class CommandFieldsComponent {
 
   // ── stepped-switch bands ─────────────────────────────────────────────────────
   // A band's action is stored as a one-command Commands ({ commands: [cmd], type }); only button-kind
-  // commands make sense as a discrete trigger fired on entering a position.
-  readonly bandActionOptions: SelectOption[] = COMMANDS.filter(c => c.kinds.includes('button')).map(c => ({ value: c.type, label: c.label }));
+  // commands make sense as a discrete trigger fired on entering a position, and they are chosen through
+  // the shared CommandPickerComponent (same categorized + filterable menu as the control page).
   private readonly bandPalette = ['#FF3B30', '#34C759', '#0A84FF', '#FFD60A', '#AF52DE', '#FF9F0A', '#5AC8FA', '#FF2D55'];
 
   bands(): any[] { const b = this.command()['bands']; return Array.isArray(b) ? b : []; }
   bandCmd(b: any): Cmd | null { return b?.commands?.commands?.[0] ?? null; }
-  bandCmdType(b: any): string { return this.bandCmd(b)?.['_type'] ?? ''; }
-  bandDef(b: any): CommandDef | undefined { const t = this.bandCmdType(b); return t ? COMMAND_BY_TYPE.get(t) : undefined; }
-  bandActionLabel(b: any): string { return this.bandDef(b)?.label ?? 'no action'; }
+  bandDef(b: any): CommandDef | undefined { const t = this.bandCmd(b)?.['_type']; return t ? COMMAND_BY_TYPE.get(t) : undefined; }
+  bandActionLabel(b: any): string { return this.bandDef(b)?.label ?? 'Set action'; }
 
   private updateBand(i: number, patch: Record<string, any>): void {
     const bands = this.bands().map((b, k) => k === i ? { ...b, ...patch } : b);
@@ -394,17 +393,16 @@ export class CommandFieldsComponent {
   addBand(): void {
     const bands = this.bands();
     const last = bands[bands.length - 1];
+    // Contiguous, consistent-width positions: 0–33, 33–66, 66–100, … (snap the final one to 100).
     const start = last ? clamp(last.end) : 0;
-    const end = clamp(start + (bands.length ? 20 : 33));
+    const end = start + 33 >= 100 - 33 ? 100 : start + 33;
     const color = this.bandPalette[bands.length % this.bandPalette.length];
     this.set('bands', [...bands, { start, end, color, commands: { commands: [], type: 'allAtOnce' } }]);
   }
 
-  setBandCmdType(i: number, type: string | undefined): void {
-    if (!type) { this.updateBand(i, { commands: { commands: [], type: 'allAtOnce' } }); return; }
-    const def = COMMAND_BY_TYPE.get(type);
-    const cmd = def ? def.buildEmpty() : { _type: type };
-    this.updateBand(i, { commands: { commands: [cmd], type: 'allAtOnce' } });
+  /** Chosen from the shared command picker — replace the band's action with a fresh instance of that type. */
+  setBandCmdDef(i: number, def: CommandDef): void {
+    this.updateBand(i, { commands: { commands: [def.buildEmpty()], type: 'allAtOnce' } });
   }
 
   setBandCmd(i: number, cmd: Cmd): void {
