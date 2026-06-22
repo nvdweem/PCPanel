@@ -183,6 +183,13 @@ Key constraints baked into those args, change with care:
   Don't rely on tracing for this: register them explicitly on the response DTO with
   `@RegisterForReflection(targets = { Foo.class, Foo[].class, ... })`, listing every nested element
   record and its `[].class` form (see `rest/wavelink/dto/WaveLinkResponseDto`).
+- **Discovery guards catch the above automatically — keep them green.** `ReflectionRegistrationCoverageTest`
+  walks the Jackson `Command` hierarchy's serialised property graph and fails if any concrete subtype, or
+  any concrete project record/class it reaches (plus the `Foo[]` array form for `List`/`Set` of a concrete
+  element), is missing from the `@RegisterForReflection`/reachability-metadata registrations — so a new
+  command or a record nested in one can't ship unregistered. `ProxyRegistrationCoverageTest` does the same
+  for JNA `Library` proxies. Both run on every OS/JVM build, so the platform that forgot a registration
+  need not be the one running the test. When one fails, add the named type to `NativeImageConfig`.
 - **jSerialComm (the Deej serial provider) is pinned to 2.10.2** — the last release before it bundled
   an Android USB-serial driver (2.10.3+), whose `android.*` references fail the native build under
   `--link-at-build-time` (we never run on Android). It also can't self-extract its bundled native lib
@@ -225,6 +232,11 @@ running on Windows against PCPanel hardware.
 
 ## Git and worktrees
 
+- **ALWAYS work on a recent REMOTE branch unless explicitly instructed otherwise.** Before starting
+  new work, `git fetch` and base the worktree/branch on `origin/main` (or the named remote target) —
+  never on the local `main`, which is frequently rebased/reset and lags origin. Judge "behind/ahead"
+  with `git rev-list --left-right --count origin/main...HEAD`. Looking at a stale local checkout
+  makes code already on `origin/main` appear missing and sends you debugging the wrong tree.
 - Unless specifically instructed we work in worktrees. When the user gives an instruction that
   makes you doubt about their worktree intentions, ask first.
 - When you create a worktree, be sure that the upstream branch is the actual target branch. If
