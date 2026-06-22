@@ -32,7 +32,7 @@ export interface ButtonAction {
 }
 
 export interface Command {
-    _type: "com.getpcpanel.commands.command.CommandBrightness" | "com.getpcpanel.commands.command.CommandEndProgram" | "com.getpcpanel.commands.command.CommandKeystroke" | "com.getpcpanel.commands.command.CommandMedia" | "com.getpcpanel.commands.command.CommandNoOp" | "com.getpcpanel.commands.command.CommandObs" | "com.getpcpanel.commands.command.CommandObsMuteSource" | "com.getpcpanel.commands.command.CommandObsSetScene" | "com.getpcpanel.commands.command.CommandObsSetSourceVolume" | "com.getpcpanel.commands.command.CommandProfile" | "com.getpcpanel.commands.command.CommandRun" | "com.getpcpanel.commands.command.CommandShortcut" | "com.getpcpanel.commands.command.CommandVoiceMeeter" | "com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced" | "com.getpcpanel.commands.command.CommandVoiceMeeterAdvancedButton" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasic" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton" | "com.getpcpanel.commands.command.CommandVolume" | "com.getpcpanel.commands.command.CommandVolumeApplicationDeviceToggle" | "com.getpcpanel.commands.command.CommandVolumeDefaultDevice" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceAdvanced" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggle" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggleAdvanced" | "com.getpcpanel.commands.command.CommandVolumeDevice" | "com.getpcpanel.commands.command.CommandVolumeDeviceMute" | "com.getpcpanel.commands.command.CommandVolumeFocus" | "com.getpcpanel.commands.command.CommandVolumeFocusMute" | "com.getpcpanel.commands.command.CommandVolumeProcess" | "com.getpcpanel.commands.command.CommandVolumeProcessMute" | "com.getpcpanel.homeassistant.command.CommandHomeAssistant" | "com.getpcpanel.homeassistant.command.CommandHomeAssistantAction" | "com.getpcpanel.homeassistant.command.CommandHomeAssistantValue" | "com.getpcpanel.wavelink.command.CommandWaveLink" | "com.getpcpanel.wavelink.command.CommandWaveLinkAddFocusToChannel" | "com.getpcpanel.wavelink.command.CommandWaveLinkChange" | "com.getpcpanel.wavelink.command.CommandWaveLinkChangeLevel" | "com.getpcpanel.wavelink.command.CommandWaveLinkChangeMute" | "com.getpcpanel.wavelink.command.CommandWaveLinkChannelEffect" | "com.getpcpanel.wavelink.command.CommandWaveLinkMainOutput";
+    _type: "com.getpcpanel.commands.command.CommandBrightness" | "com.getpcpanel.commands.command.CommandEndProgram" | "com.getpcpanel.commands.command.CommandKeystroke" | "com.getpcpanel.commands.command.CommandMedia" | "com.getpcpanel.commands.command.CommandNoOp" | "com.getpcpanel.commands.command.CommandObs" | "com.getpcpanel.commands.command.CommandObsAction" | "com.getpcpanel.commands.command.CommandObsMuteSource" | "com.getpcpanel.commands.command.CommandObsSetScene" | "com.getpcpanel.commands.command.CommandObsSetSourceVolume" | "com.getpcpanel.commands.command.CommandProfile" | "com.getpcpanel.commands.command.CommandRun" | "com.getpcpanel.commands.command.CommandShortcut" | "com.getpcpanel.commands.command.CommandValueOutput" | "com.getpcpanel.commands.command.CommandHttpRequest" | "com.getpcpanel.commands.command.CommandMqttPublish" | "com.getpcpanel.commands.command.CommandOscSend" | "com.getpcpanel.commands.command.CommandVoiceMeeter" | "com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced" | "com.getpcpanel.commands.command.CommandVoiceMeeterAdvancedButton" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasic" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton" | "com.getpcpanel.commands.command.CommandVolume" | "com.getpcpanel.commands.command.CommandVolumeApplicationDeviceToggle" | "com.getpcpanel.commands.command.CommandVolumeDefaultDevice" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceAdvanced" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggle" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggleAdvanced" | "com.getpcpanel.commands.command.CommandVolumeDevice" | "com.getpcpanel.commands.command.CommandVolumeDeviceMute" | "com.getpcpanel.commands.command.CommandVolumeFocus" | "com.getpcpanel.commands.command.CommandVolumeFocusMute" | "com.getpcpanel.commands.command.CommandVolumeProcess" | "com.getpcpanel.commands.command.CommandVolumeProcessMute" | "com.getpcpanel.homeassistant.command.CommandHomeAssistant" | "com.getpcpanel.homeassistant.command.CommandHomeAssistantAction" | "com.getpcpanel.homeassistant.command.CommandHomeAssistantValue" | "com.getpcpanel.wavelink.command.CommandWaveLink" | "com.getpcpanel.wavelink.command.CommandWaveLinkAddFocusToChannel" | "com.getpcpanel.wavelink.command.CommandWaveLinkChange" | "com.getpcpanel.wavelink.command.CommandWaveLinkChangeLevel" | "com.getpcpanel.wavelink.command.CommandWaveLinkChangeMute" | "com.getpcpanel.wavelink.command.CommandWaveLinkChannelEffect" | "com.getpcpanel.wavelink.command.CommandWaveLinkMainOutput";
 }
 
 export interface CommandBrightness extends Command, DialAction {
@@ -66,6 +66,14 @@ export interface CommandHomeAssistantValue extends CommandHomeAssistant, DialAct
     min?: number;
 }
 
+export interface CommandHttpRequest extends CommandValueOutput {
+    _type: "com.getpcpanel.commands.command.CommandHttpRequest";
+    body?: string;
+    headers?: string;
+    method: string;
+    url: string;
+}
+
 export interface CommandKeystroke extends Command, ButtonAction {
     _type: "com.getpcpanel.commands.command.CommandKeystroke";
     keystroke: string;
@@ -79,12 +87,23 @@ export interface CommandMedia extends Command, ButtonAction {
     spotify: boolean;
 }
 
+export interface CommandMqttPublish extends CommandValueOutput {
+    _type: "com.getpcpanel.commands.command.CommandMqttPublish";
+    payload: string;
+    topic: string;
+}
+
 export interface CommandNoOp extends Command, ButtonAction, DialAction {
     _type: "com.getpcpanel.commands.command.CommandNoOp";
 }
 
 export interface CommandObs extends Command {
-    _type: "com.getpcpanel.commands.command.CommandObs" | "com.getpcpanel.commands.command.CommandObsMuteSource" | "com.getpcpanel.commands.command.CommandObsSetScene" | "com.getpcpanel.commands.command.CommandObsSetSourceVolume";
+    _type: "com.getpcpanel.commands.command.CommandObs" | "com.getpcpanel.commands.command.CommandObsAction" | "com.getpcpanel.commands.command.CommandObsMuteSource" | "com.getpcpanel.commands.command.CommandObsSetScene" | "com.getpcpanel.commands.command.CommandObsSetSourceVolume";
+}
+
+export interface CommandObsAction extends CommandObs, ButtonAction {
+    _type: "com.getpcpanel.commands.command.CommandObsAction";
+    action: ObsActionType;
 }
 
 export interface CommandObsMuteSource extends CommandObs, ButtonAction {
@@ -101,6 +120,11 @@ export interface CommandObsSetScene extends CommandObs, ButtonAction {
 export interface CommandObsSetSourceVolume extends CommandObs, DialAction {
     _type: "com.getpcpanel.commands.command.CommandObsSetSourceVolume";
     sourceName: string;
+}
+
+export interface CommandOscSend extends CommandValueOutput {
+    _type: "com.getpcpanel.commands.command.CommandOscSend";
+    address: string;
 }
 
 export interface CommandProfile extends Command, DeviceAction {
@@ -128,6 +152,13 @@ export interface CommandType {
     command: string;
     kind: Kinds;
     name: string;
+}
+
+export interface CommandValueOutput extends Command, DialAction, ButtonAction {
+    _type: "com.getpcpanel.commands.command.CommandValueOutput" | "com.getpcpanel.commands.command.CommandHttpRequest" | "com.getpcpanel.commands.command.CommandMqttPublish" | "com.getpcpanel.commands.command.CommandOscSend";
+    formula?: string;
+    max?: number;
+    min?: number;
 }
 
 export interface CommandVoiceMeeter extends Command {
@@ -742,6 +773,8 @@ export type LightGroupKind = "DIAL" | "SLIDER" | "SLIDER_LABEL" | "LOGO" | "GENE
 export type LightingMode = "ALL_COLOR" | "ALL_RAINBOW" | "ALL_WAVE" | "ALL_BREATH" | "SINGLE_COLOR" | "CUSTOM";
 
 export type MuteType = "mute" | "unmute" | "toggle";
+
+export type ObsActionType = "START_STREAM" | "STOP_STREAM" | "TOGGLE_STREAM" | "START_RECORD" | "STOP_RECORD" | "TOGGLE_RECORD" | "TOGGLE_RECORD_PAUSE" | "START_VIRTUAL_CAM" | "STOP_VIRTUAL_CAM" | "TOGGLE_VIRTUAL_CAM" | "TOGGLE_REPLAY_BUFFER" | "SAVE_REPLAY_BUFFER";
 
 export type OverlayPosition = "topLeft" | "topMiddle" | "topRight" | "middleLeft" | "middleMiddle" | "middleRight" | "bottomLeft" | "bottomMiddle" | "bottomRight";
 

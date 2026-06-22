@@ -266,6 +266,64 @@ export const COMMANDS: CommandDef[] = [
       { kind: 'ha-help' },
     ],
   },
+  {
+    type: P + 'CommandObsAction', label: 'OBS — stream / record', category: 'integration', integration: 'obs', kinds: ['button'], icon: 'film',
+    buildEmpty: () => ({ _type: P + 'CommandObsAction', action: 'TOGGLE_STREAM', overlayText: '' }),
+    fields: [
+      {
+        kind: 'select', key: 'action', label: 'Action', options: [
+          { value: 'START_STREAM', label: 'Start streaming' }, { value: 'STOP_STREAM', label: 'Stop streaming' }, { value: 'TOGGLE_STREAM', label: 'Toggle streaming' },
+          { value: 'START_RECORD', label: 'Start recording' }, { value: 'STOP_RECORD', label: 'Stop recording' }, { value: 'TOGGLE_RECORD', label: 'Toggle recording' },
+          { value: 'TOGGLE_RECORD_PAUSE', label: 'Pause / resume recording' },
+          { value: 'START_VIRTUAL_CAM', label: 'Start virtual camera' }, { value: 'STOP_VIRTUAL_CAM', label: 'Stop virtual camera' }, { value: 'TOGGLE_VIRTUAL_CAM', label: 'Toggle virtual camera' },
+          { value: 'TOGGLE_REPLAY_BUFFER', label: 'Toggle replay buffer' }, { value: 'SAVE_REPLAY_BUFFER', label: 'Save replay buffer' },
+        ],
+      },
+    ],
+  },
+
+  // ── GENERIC OUTPUTS (HTTP / MQTT / OSC) ─────────────────────────────────────
+  // On a dial the position maps (min/max or formula) to the number that replaces {{ value }};
+  // on a button the value is resolved at full scale (the configured max).
+  {
+    type: P + 'CommandHttpRequest', label: 'HTTP request', category: 'integration', kinds: ['dial', 'button'], icon: 'zap',
+    buildEmpty: () => ({ _type: P + 'CommandHttpRequest', url: '', method: 'GET', headers: '', body: '', min: 0, max: 100, formula: '', dialParams: dialParams(), invert: false }),
+    fields: [
+      { kind: 'text', key: 'url', label: 'URL', placeholder: 'https://host/path?v={{ value }}', mono: true },
+      {
+        kind: 'select', key: 'method', label: 'Method', options: [
+          { value: 'GET', label: 'GET' }, { value: 'POST', label: 'POST' }, { value: 'PUT', label: 'PUT' },
+          { value: 'PATCH', label: 'PATCH' }, { value: 'DELETE', label: 'DELETE' },
+        ],
+      },
+      { kind: 'textarea', key: 'headers', label: 'Headers (one Name: Value per line)', rows: 3, placeholder: 'Content-Type: application/json\nAuthorization: Bearer …' },
+      { kind: 'textarea', key: 'body', label: 'Body', rows: 4, placeholder: '{ "value": {{ value }} }' },
+      { kind: 'number', key: 'min', label: 'Value at 0% (no formula)' },
+      { kind: 'number', key: 'max', label: 'Value at 100% (no formula)' },
+      { kind: 'text', key: 'formula', label: 'Translate formula (optional)', placeholder: 'x is 0..1 — e.g. x*255 or 2000+x*4000', mono: true },
+    ],
+  },
+  {
+    type: P + 'CommandMqttPublish', label: 'MQTT publish', category: 'integration', kinds: ['dial', 'button'], icon: 'zap',
+    buildEmpty: () => ({ _type: P + 'CommandMqttPublish', topic: '', payload: '', min: 0, max: 100, formula: '', dialParams: dialParams(), invert: false }),
+    fields: [
+      { kind: 'text', key: 'topic', label: 'Topic', placeholder: 'home/livingroom/light', mono: true },
+      { kind: 'textarea', key: 'payload', label: 'Payload', rows: 3, placeholder: '{{ value }} or e.g. {"brightness": {{ value }}}' },
+      { kind: 'number', key: 'min', label: 'Value at 0% (no formula)' },
+      { kind: 'number', key: 'max', label: 'Value at 100% (no formula)' },
+      { kind: 'text', key: 'formula', label: 'Translate formula (optional)', placeholder: 'x is 0..1 — e.g. x*255', mono: true },
+    ],
+  },
+  {
+    type: P + 'CommandOscSend', label: 'OSC send', category: 'integration', kinds: ['dial', 'button'], icon: 'sliders',
+    buildEmpty: () => ({ _type: P + 'CommandOscSend', address: '', min: 0, max: 100, formula: '', dialParams: dialParams(), invert: false }),
+    fields: [
+      { kind: 'text', key: 'address', label: 'OSC address', placeholder: '/track/1/volume', mono: true },
+      { kind: 'number', key: 'min', label: 'Value at 0% (no formula)' },
+      { kind: 'number', key: 'max', label: 'Value at 100% (no formula)' },
+      { kind: 'text', key: 'formula', label: 'Translate formula (optional)', placeholder: 'x is 0..1 — e.g. x or x*127', mono: true },
+    ],
+  },
 ];
 
 export const COMMAND_BY_TYPE = new Map(COMMANDS.map(c => [c.type, c]));

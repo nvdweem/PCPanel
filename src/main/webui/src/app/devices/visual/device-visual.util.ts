@@ -51,6 +51,10 @@ const SHORT: Record<string, (c: Command) => string | undefined> = {
   CommandObsSetScene: () => 'OBS scene',
   CommandObsMuteSource: () => 'OBS mute',
   CommandObsSetSourceVolume: () => 'OBS vol',
+  CommandObsAction: () => 'OBS',
+  CommandHttpRequest: c => httpLabel(c),
+  CommandMqttPublish: () => 'MQTT',
+  CommandOscSend: () => 'OSC',
   CommandVolumeDefaultDevice: () => 'Default device',
   CommandVolumeDefaultDeviceToggle: () => 'Cycle device',
 };
@@ -66,6 +70,18 @@ function mutePrefixOf(t: string | undefined): string {
 }
 function mediaLabel(b: string): string {
   return ({ mute: 'Mute', next: 'Next', prev: 'Prev', stop: 'Stop', playPause: 'Play/Pause' } as Record<string, string>)[b] ?? 'Media';
+}
+function httpLabel(c: Command): string {
+  const m = (c as any).method;
+  return m ? `HTTP ${String(m).toUpperCase()}` : 'HTTP';
+}
+function obsActionLabel(action: string): string {
+  return ({
+    START_STREAM: 'Start stream', STOP_STREAM: 'Stop stream', TOGGLE_STREAM: 'Toggle stream',
+    START_RECORD: 'Start record', STOP_RECORD: 'Stop record', TOGGLE_RECORD: 'Toggle record',
+    TOGGLE_RECORD_PAUSE: 'Pause record', START_VIRTUAL_CAM: 'Start virtual cam', STOP_VIRTUAL_CAM: 'Stop virtual cam',
+    TOGGLE_VIRTUAL_CAM: 'Toggle virtual cam', TOGGLE_REPLAY_BUFFER: 'Toggle replay', SAVE_REPLAY_BUFFER: 'Save replay',
+  } as Record<string, string>)[action] ?? 'Action';
 }
 
 function typeNameOf(cmd: Command): string {
@@ -100,6 +116,10 @@ export function describeCommand(cmd: Command | undefined, data: IntegrationDataS
     case 'ObsSetSourceVolume': return c.sourceName ? `${c.sourceName} — OBS` : '';
     case 'ObsSetScene': return c.scene ? `${c.scene} — OBS` : '';
     case 'ObsMuteSource': return c.source ? `${mutePrefixOf(c.type)}${c.source} — OBS` : '';
+    case 'ObsAction': return c.action ? `${obsActionLabel(c.action)} — OBS` : '';
+    case 'HttpRequest': return c.url ? `${httpLabel(cmd)} ${c.url}` : '';
+    case 'MqttPublish': return c.topic ? `${c.topic} — MQTT` : '';
+    case 'OscSend': return c.address ? `${c.address} — OSC` : '';
     case 'VoiceMeeterAdvanced':
     case 'VoiceMeeterAdvancedButton': return c.fullParam ? `${c.fullParam} — Voicemeeter` : '';
     case 'WaveLinkChangeLevel': { const n = wlNameOf(data, c.id1); return n ? `${n} — Wave Link` : ''; }
