@@ -5,13 +5,17 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.commands.Commands;
+import com.getpcpanel.commands.command.CommandObsMuteSource;
 import com.getpcpanel.commands.command.CommandObsSetSourceVolume;
 import com.getpcpanel.obs.OBS;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-/** Mute state of an OBS source volume control ({@link CommandObsSetSourceVolume}). */
+/**
+ * Mute state of an OBS source, followed by either an OBS source-volume dial
+ * ({@link CommandObsSetSourceVolume}) or an OBS mute-source button ({@link CommandObsMuteSource}).
+ */
 @ApplicationScoped
 public class ObsMuteResolver implements MuteStateResolver {
     @Inject
@@ -19,14 +23,15 @@ public class ObsMuteResolver implements MuteStateResolver {
 
     @Override
     public Optional<Boolean> resolve(Commands command, String target) {
-        if (!FOLLOW.equals(target)) {
+        if (!FOLLOW.equals(target) || !obs.isConnected()) {
             return Optional.empty();
         }
-        var cmd = command.getCommand(CommandObsSetSourceVolume.class).orElse(null);
-        if (cmd == null || !obs.isConnected()) {
+        var sourceName = command.getCommand(CommandObsSetSourceVolume.class).map(CommandObsSetSourceVolume::getSourceName)
+                .or(() -> command.getCommand(CommandObsMuteSource.class).map(CommandObsMuteSource::getSource))
+                .orElse(null);
+        if (sourceName == null) {
             return Optional.empty();
         }
-        var sourceName = cmd.getSourceName();
         for (var entry : obs.getSourcesWithMuteState().entrySet()) {
             if (StringUtils.containsIgnoreCase(sourceName, entry.getKey()) || StringUtils.equalsIgnoreCase(sourceName, entry.getKey())) {
                 return Optional.of(entry.getValue());

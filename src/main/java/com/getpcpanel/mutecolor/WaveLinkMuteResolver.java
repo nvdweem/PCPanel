@@ -4,12 +4,17 @@ import java.util.Optional;
 
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.wavelink.WaveLinkService;
-import com.getpcpanel.wavelink.command.CommandWaveLinkChangeLevel;
+import com.getpcpanel.wavelink.command.CommandWaveLinkChange;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-/** Mute state of a Wave Link volume control ({@link CommandWaveLinkChangeLevel}) — channel, mix or output. */
+/**
+ * Mute state of a Wave Link control — channel, mix or output — followed by either a level dial
+ * ({@code CommandWaveLinkChangeLevel}) or a mute button ({@code CommandWaveLinkChangeMute}). Both
+ * carry the same {@link CommandWaveLinkChange} target (command type + id1/id2), so either drives the
+ * mute-override colour.
+ */
 @ApplicationScoped
 public class WaveLinkMuteResolver implements MuteStateResolver {
     private final WaveLinkService waveLink;
@@ -24,7 +29,7 @@ public class WaveLinkMuteResolver implements MuteStateResolver {
         if (!FOLLOW.equals(target)) {
             return Optional.empty();
         }
-        var cmd = command.getCommand(CommandWaveLinkChangeLevel.class).orElse(null);
+        var cmd = command.getCommand(CommandWaveLinkChange.class).orElse(null);
         if (cmd == null || cmd.getId1() == null) {
             return Optional.empty();
         }
