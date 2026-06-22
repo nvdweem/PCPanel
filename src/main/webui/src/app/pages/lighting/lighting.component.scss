@@ -5,7 +5,7 @@
 
 /* ── Left controls ──────────────────────────────────────────────────────────── */
 .controls {
-  width: 380px; flex: none; background: var(--sidebar); border-right: 1px solid var(--line-soft);
+  width: var(--rail-width); flex: none; background: var(--sidebar); border-right: 1px solid var(--line-soft);
   padding: 24px; display: flex; flex-direction: column; gap: 22px; overflow: auto;
 }
 

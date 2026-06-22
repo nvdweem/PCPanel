@@ -4,7 +4,7 @@
 
 /* ── Sidebar ──────────────────────────────────────────────────────────────── */
 .sidebar {
-  width: 248px; flex: none; background: var(--sidebar); border-right: 1px solid var(--line-soft);
+  width: var(--rail-width); flex: none; background: var(--sidebar); border-right: 1px solid var(--line-soft);
   display: flex; flex-direction: column;
 }
 .brand { height: 56px; display: flex; align-items: center; gap: 10px; padding: 0 18px; border-bottom: 1px solid var(--line-soft); }
