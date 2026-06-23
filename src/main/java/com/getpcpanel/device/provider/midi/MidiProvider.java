@@ -28,6 +28,7 @@ import com.getpcpanel.hid.DeviceScanner;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.SaveService;
 
+import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
@@ -120,13 +121,38 @@ public class MidiProvider implements DeviceProvider {
     public record DetectedMidi(String id, String name, boolean connected) {
     }
 
+    /** Polls for MIDI hot-plug/unplug. javax.sound.midi has no device-change callback, so AUTO discovery
+     *  is a periodic enumerate-and-reconcile (cheap; in the native image it enumerates nothing, so it is a
+     *  no-op there). Guarded so a broken/again-broken MIDI backend never escapes onto the scheduler. */
+    @Scheduled(every = "5s")
+    void periodicRescan() {
+        try {
+            rescan();
+        } catch (Throwable t) {
+            log.debug("MIDI periodic rescan failed: {}", t.getMessage());
+        }
+    }
+
     /**
-     * Enumerates MIDI inputs and opens every one not already connected. Idempotent and safe to call
-     * periodically. Also reconnects persisted MIDI devices (so their learned control indices and the
-     * profile bound to them survive a restart) once they reappear.
+     * Enumerates MIDI inputs and reconciles the connected set against them: opens any input not already
+     * connected (also reconnecting persisted devices so their learned indices + bound profile survive a
+     * restart), and disconnects any device that has disappeared (unplugged) so the UI updates and a
+     * re-plug reopens it. Idempotent and safe to call periodically.
      */
     public synchronized void rescan() {
-        for (var info : listInputs()) {
+        List<MidiDeviceInfo> inputs;
+        try {
+            inputs = transport.listInputs();
+        } catch (Throwable t) {
+            // Couldn't enumerate (MIDI unavailable, or a transient backend error): do nothing. Crucially,
+            // do NOT reconcile here — treating an errored empty list as "everything unplugged" would
+            // spuriously disconnect healthy devices.
+            log.warn("MIDI unavailable (cannot list inputs): {}", t.getMessage());
+            return;
+        }
+        var present = new HashSet<String>();
+        for (var info : inputs) {
+            present.add(info.id());
             var deviceId = deviceIdFor(info.id());
             if (devices.containsKey(deviceId)) {
                 continue;
@@ -135,6 +161,15 @@ public class MidiProvider implements DeviceProvider {
                 connect(info.id(), info.name());
             } catch (Throwable t) {
                 log.warn("Unable to open MIDI device {}: {}", info.name(), t.getMessage());
+            }
+        }
+        // Reconcile: any connected device no longer enumerated was unplugged — close it (fires the
+        // disconnect) and drop it so detected() stops reporting it connected and a re-plug reopens it.
+        for (var entry : new ArrayList<>(devices.entrySet())) {
+            if (!present.contains(entry.getValue().midiId)) {
+                log.info("MIDI device {} disappeared; disconnecting", entry.getValue().name);
+                entry.getValue().close();
+                devices.remove(entry.getKey(), entry.getValue());
             }
         }
     }
@@ -251,6 +286,8 @@ public class MidiProvider implements DeviceProvider {
             var grew = ensureControl(e.kind(), id, idx);
             if (grew) {
                 // The descriptor changed: re-notify so the UI re-renders and persist the new mapping.
+                // DeviceHolder rebuilds the GenericDevice on this event but now carries prior knob
+                // rotations forward, so previously-learned controls keep their cached position.
                 eventBus.fire(new DeviceScanner.DeviceConnectedEvent(deviceId, null, descriptor()));
                 persist();
             }

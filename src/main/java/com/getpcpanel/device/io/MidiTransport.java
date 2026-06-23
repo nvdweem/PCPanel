@@ -23,8 +23,11 @@ public interface MidiTransport {
 
     /**
      * Opens the input device identified by {@code id} and delivers each inbound channel-voice message
-     * (status, data1, data2) to {@code onMessage}. {@code onError} is invoked once if the device
-     * fails or closes unexpectedly. Returns an open {@link MidiConnection}.
+     * (status, data1, data2) to {@code onMessage}. {@code onError} <em>may</em> be invoked if the device
+     * surfaces an error, but it is best-effort and backend-dependent — the {@code javax.sound.midi}
+     * backend has no loss-of-device callback and never fires it, so the provider detects unplug by
+     * periodic enumerate-and-reconcile rather than relying on {@code onError}. Returns an open
+     * {@link MidiConnection}.
      */
     MidiConnection open(String id, Consumer<MidiMessage> onMessage, Consumer<Throwable> onError);
 
