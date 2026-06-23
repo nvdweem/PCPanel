@@ -18,6 +18,7 @@ import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.profile.dto.OverlayPosition;
+import com.getpcpanel.volume.VolumeCoordinatorService;
 import com.sun.jna.Platform;
 
 import jakarta.annotation.Nonnull;
@@ -36,6 +37,7 @@ public class Overlay {
     private final SaveService save;
     private final IconService iconService;
     private final Instance<ISndCtrl> sndCtrl;
+    private final VolumeCoordinatorService volumeCoordinator;
     // The AWT/Swing windowing toolkit is unsupported in the GraalVM native image (it segfaults the
     // native WToolkit event loop), so neither overlay uses it: Windows draws a JNA layered window and
     // Linux/Wayland asks the desktop to draw it over D-Bus (KDE volume OSD, else a notification).
@@ -107,7 +109,7 @@ public class Overlay {
             // is disabled in the UI) — always report the real linear level.
             var useLog = save.get().isOverlayUseLog() && !Platform.isLinux();
             var value = vol == null ? -1 : useLog ? vol.getValue(null, 0, 1) : vol.value() / 255f;
-            showDebounced(value, () -> determineIconImage(event), command -> true);
+            showDebounced(value, () -> determineIconImage(event), this::shouldShow);
         } catch (Throwable t) {
             log.warn("Overlay failed to handle control event; ignoring (hardware control is unaffected)", t);
         }
@@ -121,6 +123,21 @@ public class Overlay {
         if (hasOverlay(cai.command) && pred.test(cai.command)) {
             overlay.show(new OverlayContent(value, cai.icon, cai.name, null));
         }
+    }
+
+    /**
+     * Whether the overlay should be shown for this control. Suppresses it when a focus-volume dial is
+     * moved while the focused app is being skipped ("skip controlled apps" left it alone): the dial isn't
+     * actually changing anything, so a progress overlay would falsely imply it is. Other commands (and a
+     * focus-volume dial that really does control the OS / Wave Link) still show normally.
+     */
+    private boolean shouldShow(Commands commands) {
+        var controlsFocusVolume = StreamEx.of(commands.getCommands()).anyMatch(c -> c instanceof CommandVolumeFocus);
+        if (!controlsFocusVolume) {
+            return true;
+        }
+        var app = sndCtrl.isResolvable() ? sndCtrl.get().getFocusApplication() : null;
+        return app == null || !volumeCoordinator.wouldSkipFocusVolume(app);
     }
 
     private boolean hasOverlay(Commands commands) {
