@@ -109,6 +109,16 @@ public class WaveLinkAppCache {
         return key.isBlank() ? null : identities.get(key);
     }
 
+    /** Read-only snapshot of the persisted normalised-exe → Wave Link app-name map (diagnostic). */
+    public Map<String, String> identitySnapshot() {
+        return StreamEx.of(identities.entrySet()).toMap(Map.Entry::getKey, e -> e.getValue().name());
+    }
+
+    /** The normalised key an OS-process path resolves to (diagnostic; matches the identity/cache keys). */
+    public static String normalizeKey(String pathOrName) {
+        return normalize(pathOrName);
+    }
+
     /**
      * Record (and persist) the OS-process → Wave Link app pairing learned from a live focus correlation,
      * so the focused app can be matched to its Wave Link channel across restarts and before the first
