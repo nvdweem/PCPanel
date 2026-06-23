@@ -176,8 +176,8 @@ export class SettingsComponent {
   railStatus(id: TabId): StatusKind | null {
     switch (id) {
       case 'obs': return this.tabStatus('obs');
-      case 'voicemeeter': return this.platform.voicemeeterSupported() ? this.tabStatus('voicemeeter') : null;
-      case 'wavelink': return this.platform.waveLinkSupported() ? this.tabStatus('wavelink') : null;
+      case 'voicemeeter': return this.platform.voicemeeterSupported() ? this.tabStatus('voicemeeter') : 'disabled';
+      case 'wavelink': return this.platform.waveLinkSupported() ? this.tabStatus('wavelink') : 'disabled';
       case 'osc': return this.oscTabStatus();
       case 'mqtt': return this.mqttTabStatus();
       case 'homeassistant': return this.haTabStatus();

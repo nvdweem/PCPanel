@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
-export type StatusKind = 'ok' | 'warn' | 'error' | 'idle' | 'connecting' | 'reconnecting';
+export type StatusKind = 'ok' | 'warn' | 'error' | 'idle' | 'disabled' | 'connecting' | 'reconnecting';
 
 /** Small status dot used in device rows, integration lists and settings tabs. */
 @Component({
@@ -10,9 +10,9 @@ export type StatusKind = 'ok' | 'warn' | 'error' | 'idle' | 'connecting' | 'reco
     @if (kind() === 'connecting' || kind() === 'reconnecting') {
       <span class="dot spin" [style.width.px]="size() + 4" [style.height.px]="size() + 4"></span>
     } @else {
-      <span class="dot" [class.glow]="glow()"
+      <span class="dot" [class.glow]="glowOn()"
             [style.width.px]="size()" [style.height.px]="size()"
-            [style.background]="color()" [style.box-shadow]="glow() ? '0 0 6px ' + color() : 'none'"></span>
+            [style.background]="color()" [style.box-shadow]="glowOn() ? '0 0 6px ' + color() : 'none'"></span>
     }
   `,
   styles: [`
@@ -30,11 +30,15 @@ export class StatusDotComponent {
   readonly size = input<number>(7);
   readonly glow = input<boolean>(true);
 
+  /** Disabled dots stay flat — a glow would draw attention to an inactive item. */
+  readonly glowOn = computed(() => this.glow() && this.kind() !== 'disabled');
+
   readonly color = computed(() => {
     switch (this.kind()) {
       case 'ok': return 'var(--ok)';
       case 'warn': return 'var(--warn)';
       case 'error': return 'var(--err)';
+      case 'disabled': return 'var(--line-2)'; // dimmer than idle: platform-unsupported / inactive
       default: return 'var(--idle)';
     }
   });
