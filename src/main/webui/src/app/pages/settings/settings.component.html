@@ -432,10 +432,6 @@
         @case ('overlay') {
           <h2 class="page-title">Overlay</h2>
 
-          @if (!overlayStylingSupported()) {
-            <div class="pc-hint platform-note">On Linux the overlay uses your desktop's native volume OSD (KDE Plasma), which controls its position, size and colours — so those options below are disabled here. Enable, Show number and Scale still apply. Other Linux desktops have no overlay.</div>
-          }
-
           <div class="overlay-grid">
             <!-- left column: controls -->
             <div class="overlay-controls">
@@ -445,6 +441,10 @@
                   <pc-toggle [value]="s.overlayEnabled" (valueChange)="patch('overlayEnabled', $event)"></pc-toggle>
                 </div>
               </div>
+
+              @if (!overlayStylingSupported()) {
+                <div class="pc-hint platform-note">On Linux the overlay uses your desktop's native volume OSD (KDE Plasma), which owns its position, size, number and colours — so the options below are disabled. Enable and Scale still apply. Other Linux desktops have no overlay.</div>
+              }
 
               <div class="micro-label section-label">POSITION</div>
               <div class="pos-grid" [class.disabled-block]="!overlayStylingSupported()">
@@ -482,9 +482,9 @@
 
               <div class="micro-label section-label">BEHAVIOUR</div>
               <div class="pc-card pad stack">
-                <div class="row">
+                <div class="row" [class.disabled-block]="!overlayStylingSupported()">
                   <div class="row-text"><div class="row-label">Show number</div></div>
-                  <pc-toggle [value]="s.overlayShowNumber" (valueChange)="patch('overlayShowNumber', $event)"></pc-toggle>
+                  <pc-toggle [value]="s.overlayShowNumber" [disabled]="!overlayStylingSupported()" (valueChange)="patch('overlayShowNumber', $event)"></pc-toggle>
                 </div>
                 <div class="row">
                   <div class="row-text"><div class="row-label">Scale</div><div class="row-sub">value mapping</div></div>
