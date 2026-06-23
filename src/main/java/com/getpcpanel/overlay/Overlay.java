@@ -94,7 +94,11 @@ public class Overlay {
         // AWT/Java2D, which is fragile in the native image, so isolate it: on any failure, log and move on.
         try {
             var vol = event.vol();
-            var value = vol == null ? -1 : save.get().isOverlayUseLog() ? vol.getValue(null, 0, 1) : vol.value() / 255f;
+            // The log/linear scale only shapes our own custom-rendered bar (Windows). On Linux the
+            // desktop's native OSD shows the true volume, so the scale doesn't apply there (the setting
+            // is disabled in the UI) — always report the real linear level.
+            var useLog = save.get().isOverlayUseLog() && !Platform.isLinux();
+            var value = vol == null ? -1 : useLog ? vol.getValue(null, 0, 1) : vol.value() / 255f;
             showDebounced(value, () -> determineIconImage(event), command -> true);
         } catch (Throwable t) {
             log.warn("Overlay failed to handle control event; ignoring (hardware control is unaffected)", t);

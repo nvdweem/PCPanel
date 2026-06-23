@@ -7,10 +7,10 @@ export interface SegmentOption<T = string> { value: T; label: string; }
   selector: 'pc-segmented',
   standalone: true,
   template: `
-    <div class="seg" role="tablist">
+    <div class="seg" role="tablist" [class.disabled]="disabled()">
       @for (opt of options(); track opt.value) {
         <button type="button" role="tab" class="seg-item" [class.active]="opt.value === value()"
-                [attr.aria-selected]="opt.value === value()" (click)="value.set(opt.value)">
+                [disabled]="disabled()" [attr.aria-selected]="opt.value === value()" (click)="select(opt.value)">
           {{ opt.label }}
         </button>
       }
@@ -28,10 +28,17 @@ export interface SegmentOption<T = string> { value: T; label: string; }
     }
     .seg-item:hover { color: var(--text-1); }
     .seg-item.active { background: var(--line); color: var(--text-1); }
+    .seg.disabled { opacity: .5; pointer-events: none; }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SegmentedComponent<T = string> {
   readonly options = input.required<SegmentOption<T>[]>();
   readonly value = model<T>();
+  readonly disabled = input<boolean>(false);
+
+  select(v: T): void {
+    if (this.disabled()) return;
+    this.value.set(v);
+  }
 }

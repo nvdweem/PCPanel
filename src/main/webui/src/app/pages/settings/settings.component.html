@@ -443,7 +443,7 @@
               </div>
 
               @if (!overlayStylingSupported()) {
-                <div class="pc-hint platform-note">On Linux the overlay uses your desktop's native volume OSD (KDE Plasma), which owns its position, size, number and colours — so the options below are disabled. Enable and Scale still apply. Other Linux desktops have no overlay.</div>
+                <div class="pc-hint platform-note">On Linux the overlay uses your desktop's native volume OSD (KDE Plasma), which owns its appearance and shows the true volume — so the options below don't apply and are disabled. Only Enable applies. Other Linux desktops have no overlay.</div>
               }
 
               <div class="micro-label section-label">POSITION</div>
@@ -481,27 +481,27 @@
               </div>
 
               <div class="micro-label section-label">BEHAVIOUR</div>
-              <div class="pc-card pad stack">
-                <div class="row" [class.disabled-block]="!overlayStylingSupported()">
+              <div class="pc-card pad stack" [class.disabled-block]="!overlayStylingSupported()">
+                <div class="row">
                   <div class="row-text"><div class="row-label">Show number</div></div>
                   <pc-toggle [value]="s.overlayShowNumber" [disabled]="!overlayStylingSupported()" (valueChange)="patch('overlayShowNumber', $event)"></pc-toggle>
                 </div>
                 <div class="row">
                   <div class="row-text"><div class="row-label">Scale</div><div class="row-sub">value mapping</div></div>
-                  <pc-segmented [options]="scaleOptions" [value]="s.overlayUseLog"
+                  <pc-segmented [options]="scaleOptions" [value]="s.overlayUseLog" [disabled]="!overlayStylingSupported()"
                                 (valueChange)="patch('overlayUseLog', !!$event)"></pc-segmented>
                 </div>
               </div>
 
               <div class="micro-label section-label">COLORS</div>
               <div class="pc-card pad color-grid" [class.disabled-block]="!overlayStylingSupported()">
-                <pc-color-picker label="Background" [value]="s.overlayBackgroundColor" [alpha]="true"
+                <pc-color-picker label="Background" [value]="s.overlayBackgroundColor" [alpha]="true" [disabled]="!overlayStylingSupported()"
                                  (valueChange)="patch('overlayBackgroundColor', $event)"></pc-color-picker>
-                <pc-color-picker label="Text" [value]="s.overlayTextColor"
+                <pc-color-picker label="Text" [value]="s.overlayTextColor" [disabled]="!overlayStylingSupported()"
                                  (valueChange)="patch('overlayTextColor', $event)"></pc-color-picker>
-                <pc-color-picker label="Bar" [value]="s.overlayBarColor"
+                <pc-color-picker label="Bar" [value]="s.overlayBarColor" [disabled]="!overlayStylingSupported()"
                                  (valueChange)="patch('overlayBarColor', $event)"></pc-color-picker>
-                <pc-color-picker label="Bar track" [value]="s.overlayBarBackgroundColor"
+                <pc-color-picker label="Bar track" [value]="s.overlayBarBackgroundColor" [disabled]="!overlayStylingSupported()"
                                  (valueChange)="patch('overlayBarBackgroundColor', $event)"></pc-color-picker>
               </div>
             </div>
