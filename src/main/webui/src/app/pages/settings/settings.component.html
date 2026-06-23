@@ -51,6 +51,13 @@
               <pc-toggle [value]="s.mainUIIcons" (valueChange)="patch('mainUIIcons', $event)"></pc-toggle>
             </div>
             <div class="row">
+              <div class="row-text">
+                <div class="row-label">Focus volume skips controlled apps</div>
+                <div class="row-sub">When the focused app is already controlled elsewhere — an App-volume action on another control, or a Wave Link channel — the focused-app volume dial leaves it alone.</div>
+              </div>
+              <pc-toggle [value]="s.skipControlledFocusApps" (valueChange)="patch('skipControlledFocusApps', $event)"></pc-toggle>
+            </div>
+            <div class="row">
               <div class="row-text"><div class="row-label">Check for updates on startup</div></div>
               <pc-toggle [value]="s.startupVersionCheck" (valueChange)="patch('startupVersionCheck', $event)"></pc-toggle>
             </div>
@@ -95,13 +102,6 @@
             <div class="row">
               <div class="row-text"><div class="row-label">Prevent click when double-click</div></div>
               <pc-toggle [value]="s.preventClickWhenDblClick" (valueChange)="patch('preventClickWhenDblClick', $event)"></pc-toggle>
-            </div>
-            <div class="row">
-              <div class="row-text">
-                <div class="row-label">Focus volume skips controlled apps</div>
-                <div class="row-sub">When the focused app is already controlled elsewhere — an App-volume action on another control, or a Wave Link channel — the focused-app volume dial leaves it alone.</div>
-              </div>
-              <pc-toggle [value]="s.skipControlledFocusApps" (valueChange)="patch('skipControlledFocusApps', $event)"></pc-toggle>
             </div>
             <div class="row">
               <div class="row-text"><div class="row-label">Workarounds only on sliders</div></div>
