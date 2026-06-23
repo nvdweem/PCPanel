@@ -47,10 +47,20 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
   `mvn -B package -Pnative`, wraps it in installers (Windows Inno Setup `.exe`, Linux `.deb` /
   AppImage / Flatpak — see `packaging/`), and publishes a per-branch pre-release. The native image is
   NOT self-contained: it loads companion `*.dll`/`*.so` libraries from its own directory, so every
-  artifact must bundle them alongside the executable.
+  artifact must bundle them alongside the executable. The Linux artifacts also bundle **`kdotool`**
+  (Apache-2.0) next to the executable — it resolves the focused window on KDE Plasma (Wayland and X11)
+  for focus volume. `packaging/linux/fetch-kdotool.sh` pins the version + sha256 and is cache-keyed in
+  CI on its own hash (download once per pin). `LinuxProcessHelper` prefers a `kdotool` sibling of its
+  own binary over the `PATH` lookup; `xdotool` is only an optional non-KDE-X11 fallback (kdotool covers
+  X11, so the two are never both required). Inside the Flatpak, kdotool runs in the sandbox and drives
+  the host KWin over D-Bus (`--talk-name=org.kde.KWin`); `kdotool-wrapper.sh` points its `TMPDIR` at the
+  host-visible app home so KWin can read the temp KWin script kdotool generates.
 - **Releasing:** `<project.baseversion>` in `pom.xml` is the version source of truth (artifacts are
   `<baseversion>.<build>`). Bump it with `packaging/bump-version.sh <version>` (also updates the
-  AppStream metadata), then push a `releases/<version>` branch to trigger a pre-release build.
+  AppStream metadata), then push a `releases/<version>` branch to trigger a pre-release build. CI bakes
+  the same `<baseversion>.<build>` into the app via `-Dquarkus.application.version=` on `mvn package`, so
+  the UI footer reports the build number for official builds (local/dev stays at `<project.version>`,
+  i.e. `-SNAPSHOT`).
 - **Run two instances side by side:** pass the `skipfilecheck` arg (otherwise launching a second
   instance just focuses the already-installed one — see `Main`/`FileChecker`). For a separate dev
   data dir, set `pcpanel.root=${user.home}/.pcpaneldev/` (dev profile already does this).

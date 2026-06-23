@@ -39,6 +39,9 @@
 - #74 - (Linux) New audio sessions should trigger initial volume setting
 - #74 - (Linux) New setting 'Force application volume to panel volume', this tries to reset the volume when an application changes it. This seems to solve for instance Firefox from going back to 100% when playing a new song.
 - #74 - (Linux) Allow using [kdotool](https://github.com/jinliu/kdotool) for getting the active window on Wayland and control its volume, see linux instructions for more information
+- #88 - (Linux) Focus volume now works for sandboxed (Flatpak) apps. Flatpak apps report a sandbox-internal PID to PipeWire that never matched the host PID from KWin, so the focused-app knob silently did nothing; it now also matches the focused window's app id (`pipewire.access.portal.app_id`) across the sandbox boundary.
+- (Linux) `kdotool` is now **bundled** with the `.deb`, AppImage and Flatpak, so focus volume works out of the box on KDE Plasma (Wayland and X11) without installing anything. Inside the Flatpak it runs in the sandbox and drives the host KWin over D-Bus. `kdotool` covers X11 too, so `xdotool` is no longer needed alongside it. If no window tool is available the app now logs a clear warning and shows a desktop notification instead of failing silently.
+- (Linux) The version shown in the UI now includes the build number for official GitHub builds (e.g. `v2.0.123`) instead of just `v2.0-SNAPSHOT`.
 
 ## [1.7.1]
 

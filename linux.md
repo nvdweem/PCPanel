@@ -4,7 +4,10 @@ Note: The software is not actively being developed for Linux, but attempts are b
 stay/become more Linux compatible. If there are any issues please report them via an issue.
 
 Due to there being a lot of Linux distributions there are bound to be features that won't work.
-Wayland focus volume is starting to become possible again, install kdotool for that.
+Focus volume on KDE Plasma (both Wayland and X11) needs `kdotool`, which is now **bundled** with the
+`.deb`, AppImage and Flatpak — so it works out of the box without installing anything extra. If you run
+the raw executable, or focus volume can't find a window tool, the app logs a clear warning (and shows a
+desktop notification) pointing you at `kdotool`.
 
 ## Preparation
 
@@ -38,7 +41,10 @@ The software depends on:
   declares it under `Depends:` so it is installed automatically; for a manual/AppImage install make
   sure it is present (`apt-get install libusb-1.0-0`). It is part of the Flatpak runtime already.
 - `pulseaudio-utils` (the `pactl` command) — for volume control.
-- `xdotool` (X11) or `kdotool` (Wayland) — to get the currently active window for focus volume.
+- `kdotool` — to get the currently active window for focus volume on KDE Plasma (Wayland **and** X11).
+  This is **bundled** with the `.deb`, AppImage and Flatpak, so you normally don't install it yourself.
+  `kdotool` covers X11 too, so `xdotool` is not needed alongside it; `xdotool` only helps on non-KDE X11
+  desktops (GNOME/XFCE on X11) and is purely optional.
 
 If there are no tray extensions available, the application will still hide when closed. To show
 the main window, just run the application again.
@@ -60,7 +66,8 @@ Download the `.deb` file and install with your package manager or via terminal:
    ```
 
 This installs the executable to `/opt/pcpanel`, adds a `pcpanel` command on your `PATH`, a desktop entry, and the udev rules.
-`pulseaudio-utils` (`pactl`) and `xdotool` are pulled in as recommended packages for volume control and focus detection.
+`pulseaudio-utils` (`pactl`) is recommended for volume control; `kdotool` (for focus volume) is **bundled** next to the
+executable, so it works without a system install. `xdotool` is only *suggested* (the non-KDE-X11 fallback).
 
 ### Flatpak (best-effort)
 
@@ -72,9 +79,10 @@ makes some features harder; it is provided on a best-effort basis.
    flatpak run com.getpcpanel.PCPanel
    ```
 
-The sandbox is granted USB device access, audio (PulseAudio/PipeWire), network, X11/Wayland and tray permissions. Volume
-control (`pactl`) and focus detection (`xdotool`/`kdotool`) are forwarded to the host via `flatpak-spawn`, so those host tools
-still need to be installed on your system.
+The sandbox is granted USB device access, audio (PulseAudio/PipeWire), network, X11/Wayland and tray permissions. `kdotool`
+for focus volume is **bundled inside the sandbox** and talks to the host KWin over D-Bus (`--talk-name=org.kde.KWin`), so KDE
+Plasma focus volume works without a host-installed kdotool. Volume control (`pactl`) and the optional non-KDE-X11 fallback
+(`xdotool`) are still forwarded to the host via `flatpak-spawn`, so those host tools need to be present for their features.
 
 ### Other
 
@@ -107,8 +115,8 @@ Where this resolves per package:
 
 These work out of the box: only `/usr` is read-only — your `$HOME` and the XDG directories under it stay writable, so the
 AppImage and the Flatpak both persist settings normally. The **AppImage is the recommended download** for these systems: it
-needs nothing installed into the OS and runs without a sandbox, so USB HID access and the host tools (`pactl`,
-`xdotool`/`kdotool`) all work natively.
+needs nothing installed into the OS and runs without a sandbox, so USB HID access works natively, the bundled `kdotool` drives
+focus volume out of the box, and only `pactl` (volume control) is expected on the host.
 
 ### Flatpak settings persistence
 
@@ -256,9 +264,12 @@ done | sort -rn | head
 
 ## Active window volume
 
-To get the active window, the software uses either `xdotool` (probably available in app-stores) or `kdotool` (which might not).
+To get the active window, the software uses `kdotool` (KDE Plasma, Wayland **and** X11). It is **bundled** with the `.deb`,
+AppImage and Flatpak, so this normally needs no setup. The app looks for a `kdotool` next to its own executable first, then on
+your `PATH`. On non-KDE X11 desktops it falls back to `xdotool` if that is installed. If neither is available it logs a clear
+warning and shows a desktop notification when you use a focus-volume feature.
 
-For me, the installation instructions for `kdotool` were:
+If you run from source (or want a newer/own build), you can install `kdotool` yourself. For me, the instructions were:
 
 I also needed to update rust (due to compile errors in `cargo install`), so I included `rustup`.
 
