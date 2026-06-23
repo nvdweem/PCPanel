@@ -271,10 +271,16 @@ public class MuteColorService implements IOverrideColorProviderProvider {
     private boolean resolveMuted(Commands command, String target) {
         var normalized = StringUtils.isBlank(target) ? MuteStateResolver.FOLLOW : target;
         for (var resolver : resolvers) {
-            var result = resolver.resolve(command, normalized);
-            if (result.isPresent()) {
-                log.debug("Mute target '{}' resolved by {} -> {}", normalized, resolver.getClass().getSimpleName(), result.get());
-                return result.get();
+            try {
+                var result = resolver.resolve(command, normalized);
+                if (result.isPresent()) {
+                    log.debug("Mute target '{}' resolved by {} -> {}", normalized, resolver.getClass().getSimpleName(), result.get());
+                    return result.get();
+                }
+            } catch (RuntimeException e) {
+                // A single misbehaving resolver must not abort recomputeAll() for every device, nor
+                // propagate onto the (often native audio / websocket) thread that fired the event.
+                log.warn("Mute resolver {} failed for target '{}'; treating as not muted", resolver.getClass().getSimpleName(), normalized, e);
             }
         }
         var first = command.getCommands().isEmpty() ? "none" : command.getCommands().get(0).getClass().getSimpleName();

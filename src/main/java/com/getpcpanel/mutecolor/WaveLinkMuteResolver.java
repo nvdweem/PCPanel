@@ -2,6 +2,8 @@ package com.getpcpanel.mutecolor;
 
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.wavelink.WaveLinkService;
 import com.getpcpanel.wavelink.command.CommandWaveLinkChange;
@@ -39,6 +41,12 @@ public class WaveLinkMuteResolver implements MuteStateResolver {
         return switch (cmd.getCommandType()) {
             case Channel -> Optional.ofNullable(waveLink.getChannelFromId(cmd.getId1()).isMuted());
             case Mix -> {
+                if (StringUtils.isBlank(cmd.getId2())) {
+                    // getMixFromId(null) would hit ConcurrentHashMap.getOrDefault(null, …) and NPE; a
+                    // partially-configured Mix command legitimately has no mix id yet (the command's own
+                    // execute() guards the same way), so treat it as "mute unknown".
+                    yield Optional.empty();
+                }
                 var channel = waveLink.getChannelFromId(cmd.getId1());
                 var mix = channel.findMix(cmd.getId2()).orElseGet(() -> waveLink.getMixFromId(cmd.getId2()));
                 yield Optional.ofNullable(mix.isMuted());
