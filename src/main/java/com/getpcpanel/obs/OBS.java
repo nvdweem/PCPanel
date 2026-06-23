@@ -40,6 +40,9 @@ public final class OBS {
     private String appliedConfig;
     /** Dev/test override: when non-null, the source mute state reported to the mute-colour layer (see {@link #simulateSourceMute}). */
     private volatile Map<String, Boolean> simulatedMuteState;
+    /** Cached source-&gt;muted state, fed by the on-connect snapshot + every InputMuteStateChanged push, so
+     *  the mute-colour layer reads it without a blocking OBS round-trip (see {@link #getSourcesWithMuteState}). */
+    private final Map<String, Boolean> muteStateCache = new java.util.concurrent.ConcurrentHashMap<>();
 
     /**
      * Apply OBS connection changes the moment settings are saved — including the initial SaveEvent
@@ -99,12 +102,47 @@ public final class OBS {
                 client.disconnect();
             }
             client = new ObsWebSocketClient(objectMapper, password,
-                    connected -> connectEvent.fire(new OBSConnectEvent(connected)),
-                    event -> muteEvent.fire(event));
+                    this::onConnectionChanged,
+                    event -> {
+                        muteStateCache.put(event.input(), event.muted());
+                        muteEvent.fire(event);
+                    });
             client.connect(host, port, CONNECT_TIMEOUT_MS);
             log.info("OBS: connecting to {}:{}", host, port);
         } catch (Exception e) {
             log.debug("OBS: connection attempt failed: {}", e.getMessage());
+        }
+    }
+
+    /** Connection-state callback from the websocket client (its own thread). */
+    private void onConnectionChanged(boolean connected) {
+        connectEvent.fire(new OBSConnectEvent(connected));
+        if (connected) {
+            var c = client;
+            if (c != null) {
+                // Snapshot the initial mute state OFF the websocket thread: getSourcesWithMuteState() is a
+                // blocking request-response, which would deadlock if run on the ws read thread and froze the
+                // audio-event thread when it used to run there (the bug this whole cache fixes).
+                java.util.concurrent.CompletableFuture.runAsync(() -> primeMuteCache(c));
+            }
+        } else {
+            muteStateCache.clear();
+        }
+    }
+
+    /** One-time initial mute-state snapshot after connect; then InputMuteStateChanged keeps the cache fresh. */
+    private void primeMuteCache(ObsWebSocketClient c) {
+        try {
+            var snapshot = c.getSourcesWithMuteState();
+            muteStateCache.keySet().retainAll(snapshot.keySet());
+            snapshot.forEach((source, muted) -> {
+                muteStateCache.put(source, muted);
+                // Now the state is known, drive a mute-colour recompute (the connect-time recompute likely
+                // ran before this async snapshot landed).
+                muteEvent.fire(new OBSMuteEvent(source, muted));
+            });
+        } catch (RuntimeException e) {
+            log.debug("OBS: initial mute-state snapshot failed: {}", e.getMessage());
         }
     }
 
@@ -131,7 +169,9 @@ public final class OBS {
         if (simulated != null) {
             return simulated;
         }
-        return isConnected() ? client.getSourcesWithMuteState() : Map.of();
+        // Read the cache, never a live OBS round-trip: this is called from the mute-colour recompute that
+        // runs on native-audio / Wave Link / VoiceMeeter event threads, which must never block on OBS.
+        return isConnected() ? Map.copyOf(muteStateCache) : Map.of();
     }
 
     /**
