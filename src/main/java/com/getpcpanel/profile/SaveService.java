@@ -112,8 +112,15 @@ public class SaveService {
         if (StringUtils.isBlank(oldVersionEncountered)) {
             return;
         }
-        backup();
-        writeToFile(); // write file only, SaveEvent will be fired from onStart()
+        try {
+            backup();
+            writeToFile(); // write file only, SaveEvent will be fired from onStart()
+        } finally {
+            // Clear the static flag once consumed; otherwise a second load() in the same JVM would see a
+            // stale value and write a spurious backup for a save that did not actually need migrating.
+            // (Reset after backup(), which reads it for the .bak filename.)
+            oldVersionEncountered = null;
+        }
     }
 
     private synchronized void writeToFile() { // Synchronized: a pending debounced save may run concurrently with the shutdown write
