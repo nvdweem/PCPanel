@@ -106,7 +106,7 @@ public class DeejSerialProvider implements DeviceProvider {
                     var baud = parseBaud(cfg.get(CFG_BAUD));
                     var noise = NoiseReduction.fromString(cfg.get(CFG_NOISE));
                     try {
-                        connect(port, baud, noise, false);
+                        connect(port, baud, noise, false, null);
                     } catch (Exception e) {
                         log.warn("Unable to reconnect persisted Deej device on {}: {}", port, e.getMessage());
                     }
@@ -118,10 +118,13 @@ public class DeejSerialProvider implements DeviceProvider {
      * params so the device is reconnected on the next startup. Returns the stable device id.
      */
     public synchronized String addManual(String portName, @Nullable Integer baud, @Nullable String noiseLevel) {
+        return addManual(portName, baud, noiseLevel, null);
+    }
+
+    public synchronized String addManual(String portName, @Nullable Integer baud, @Nullable String noiseLevel, @Nullable String name) {
         var resolvedBaud = baud == null ? DEFAULT_BAUD : baud;
         var noise = NoiseReduction.fromString(noiseLevel);
-        var id = connect(portName, resolvedBaud, noise, true);
-        return id;
+        return connect(portName, resolvedBaud, noise, true, name);
     }
 
     public synchronized void removeManual(String deviceId) {
@@ -138,7 +141,7 @@ public class DeejSerialProvider implements DeviceProvider {
         }
     }
 
-    private String connect(String portName, int baud, NoiseReduction noise, boolean persist) {
+    private String connect(String portName, int baud, NoiseReduction noise, boolean persist, @Nullable String name) {
         var deviceId = deviceIdFor(portName);
         // Replace any existing connection to the same port.
         var existing = devices.remove(deviceId);
@@ -156,12 +159,12 @@ public class DeejSerialProvider implements DeviceProvider {
             throw e;
         }
         if (persist) {
-            persist(deviceId, portName, baud, noise);
+            persist(deviceId, portName, baud, noise, name);
         }
         return deviceId;
     }
 
-    private void persist(String deviceId, String portName, int baud, NoiseReduction noise) {
+    private void persist(String deviceId, String portName, int baud, NoiseReduction noise, @Nullable String name) {
         var save = saveService.get();
         if (save == null) {
             return;
@@ -169,6 +172,11 @@ public class DeejSerialProvider implements DeviceProvider {
         var ds = save.getDeviceSave(deviceId);
         if (ds == null) {
             ds = new DeviceSave(save, PROVIDER_ID, () -> com.getpcpanel.profile.dto.LightingConfig.createAllColor("#0065FF"));
+            // Apply the user-chosen name only for a freshly-added device, so reconnecting (or a blank name)
+            // never stomps a name the user later set via the rename endpoint.
+            if (name != null && !name.isBlank()) {
+                ds.setDisplayName(name.trim());
+            }
             save.getDevices().put(deviceId, ds);
         }
         ds.setProviderId(PROVIDER_ID);

@@ -49,7 +49,7 @@ public class SerialResource {
     @POST
     @Path("/deej")
     public Response addDeej(AddDeejDeviceDto request) {
-        var id = deej().addManual(request.port(), request.baud(), request.noiseReduction());
+        var id = deej().addManual(request.port(), request.baud(), request.noiseReduction(), request.name());
         return Response.ok(id).build();
     }
 
