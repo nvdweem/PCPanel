@@ -51,6 +51,10 @@
     "allDeclaredMethods": true
   },
   {
+    "name": "com.getpcpanel.overlay.KdeOsdService",
+    "allDeclaredMethods": true
+  },
+  {
     "name": "com.getpcpanel.util.tray.wayland.StatusNotifierItem",
     "allDeclaredMethods": true
   },

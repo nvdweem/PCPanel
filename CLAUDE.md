@@ -138,9 +138,11 @@ browser served by Quinoa.
 **Integrations:** `obs/` (OBS websocket), `voicemeeter/` (JNA), `wavelink/` + `dev/niels/wavelink/`
 (Elgato Wave Link RPC client), `osc/`, `mqtt/` (Eclipse Paho mqttv5), `homeassistant/`. `overlay/`
 draws an on-screen volume overlay: a Win32 JNA layered window on Windows (`Win32VolumeOverlay`) and a
-freedesktop D-Bus notification OSD on Linux/Wayland (`LinuxNotifyOverlay` → `org.freedesktop.Notifications`,
-compositor-agnostic and AWT-free; the daemon owns placement/styling so those `Save` settings don't apply
-there). macOS stays a no-op. Selection is the runtime `Platform` check in `Overlay.createOverlay()`.
+desktop-drawn OSD over D-Bus on Linux/Wayland (`LinuxOverlay`, AWT-free) — KDE Plasma's native volume
+OSD (`org.kde.osdService.volumeChanged`, the same real-time bar as Plasma's own volume keys) when
+plasmashell is on the bus, else a `org.freedesktop.Notifications` notification as a degraded fallback.
+The desktop owns placement/styling, so those `Save` settings don't apply on Linux (the settings UI greys
+them out). macOS stays a no-op. Selection is the runtime `Platform` check in `Overlay.createOverlay()`.
 `util/tray/` is the system tray (Wayland uses the D-Bus StatusNotifierItem protocol via dbus-java).
 
 `homeassistant/` is *outbound* control (the app drives Home Assistant), distinct from the MQTT

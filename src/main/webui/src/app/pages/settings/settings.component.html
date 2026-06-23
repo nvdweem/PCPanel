@@ -433,7 +433,7 @@
           <h2 class="page-title">Overlay</h2>
 
           @if (!overlayStylingSupported()) {
-            <div class="pc-hint platform-note">On Linux the overlay is shown as a system notification, so your desktop's notification daemon controls its position, size and colours. Those options below are disabled here — but Enable, Show number and Scale still apply.</div>
+            <div class="pc-hint platform-note">On Linux the overlay is drawn by your desktop (KDE's native volume OSD, or a notification on other desktops), so the desktop controls its position, size and colours. Those options below are disabled here — but Enable, Show number and Scale still apply.</div>
           }
 
           <div class="overlay-grid">
@@ -510,7 +510,7 @@
             <div class="overlay-preview-col">
               <div class="micro-label section-label">LIVE PREVIEW</div>
               @if (!overlayStylingSupported()) {
-                <div class="pc-hint platform-note">Preview only — on Linux the real overlay is styled by your notification daemon.</div>
+                <div class="pc-hint platform-note">Preview only — on Linux the real overlay is drawn and styled by your desktop.</div>
               }
               <div class="desktop" [class.disabled-block]="!overlayStylingSupported()">
                 <div class="ov-card"

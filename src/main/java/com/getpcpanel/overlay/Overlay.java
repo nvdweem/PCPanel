@@ -30,7 +30,8 @@ public class Overlay {
     private final IconService iconService;
     // The AWT/Swing windowing toolkit is unsupported in the GraalVM native image (it segfaults the
     // native WToolkit event loop), so neither overlay uses it: Windows draws a JNA layered window and
-    // Linux/Wayland draws a freedesktop D-Bus notification. macOS still has no AWT-free overlay.
+    // Linux/Wayland asks the desktop to draw it over D-Bus (KDE volume OSD, else a notification).
+    // macOS still has no AWT-free overlay.
     private final OverlayWindow overlay = createOverlay();
 
     private static OverlayWindow createOverlay() {
@@ -38,7 +39,7 @@ public class Overlay {
             return new Win32VolumeOverlay();
         }
         if (Platform.isLinux()) {
-            return new LinuxNotifyOverlay();
+            return new LinuxOverlay();
         }
         return new NoOpOverlayWindow();
     }
