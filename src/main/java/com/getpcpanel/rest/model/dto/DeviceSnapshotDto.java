@@ -8,6 +8,7 @@ import javax.annotation.Nullable;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.device.descriptor.DeviceDescriptor;
+import com.getpcpanel.device.descriptor.LightGroupKind;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.dto.LightingConfig;
@@ -62,7 +63,10 @@ public record DeviceSnapshotDto(
         var analogCount = dt != null ? dt.getAnalogCount() : descriptor.analogInputs().size();
         var buttonCount = dt != null ? dt.getButtonCount() : descriptor.digitalInputs().size();
         var deviceTypeName = dt != null ? dt.name() : descriptor.deviceKindId();
-        var hasLogoLed = dt != null && dt.isHasLogoLed();
+        // Mirror DeviceDto.from: a descriptor-only device (no DeviceType) derives logo-LED presence from
+        // its descriptor's light outputs, so REST and WS snapshots agree for a future lit generic device.
+        var hasLogoLed = dt != null ? dt.isHasLogoLed()
+                : StreamEx.of(descriptor.lightOutputs()).anyMatch(l -> l.group() == LightGroupKind.LOGO);
         var visualColors = proVisualColorsService.resolve(device);
         // The base layer fills in for controls the active profile leaves blank; surface it so the UI
         // can show those fallbacks (and edit them). Skip it when the base layer IS the active profile.
