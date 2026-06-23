@@ -49,11 +49,19 @@ public class HomeAssistantClient {
 
     /** {@code GET /api/} — succeeds only with a reachable server and a valid token. */
     public boolean ping() {
+        return ping(REQUEST_TIMEOUT);
+    }
+
+    /**
+     * {@code GET /api/} with an explicit timeout. The UI status poll uses a short one so a dead server
+     * can't pin a REST worker thread for the full 10s service-call timeout.
+     */
+    public boolean ping(Duration timeout) {
         if (baseUrl.isEmpty()) {
             return false;
         }
         try {
-            var resp = SharedHttpClient.get().send(request("/api/").GET().build(), HttpResponse.BodyHandlers.ofString());
+            var resp = SharedHttpClient.get().send(request("/api/").timeout(timeout).GET().build(), HttpResponse.BodyHandlers.ofString());
             return isSuccess(resp.statusCode());
         } catch (Exception e) {
             log.debug("Home Assistant ping failed for {}: {}", baseUrl, e.getMessage());
@@ -61,16 +69,24 @@ public class HomeAssistantClient {
         }
     }
 
-    /** {@code POST /api/services/{domain}/{service}} with {@code data} as the JSON body. */
+    /**
+     * {@code POST /api/services/{domain}/{service}} with {@code data} as the JSON body. Sent
+     * asynchronously (fire-and-forget) so it never blocks the single command-handler thread — a slow or
+     * unreachable HA server must not stall volume knobs, keystrokes, etc. for every device. Mirrors
+     * {@code CommandHttpRequest}. Failures are logged, not surfaced (callers ignore the result).
+     */
     public boolean callService(String domain, String service, Map<String, Object> data) {
         try {
             var body = mapper.writeValueAsString(data == null ? Map.of() : data);
-            var resp = SharedHttpClient.get().send(request("/api/services/" + domain + "/" + service)
-                    .POST(HttpRequest.BodyPublishers.ofString(body)).build(), HttpResponse.BodyHandlers.ofString());
-            if (!isSuccess(resp.statusCode())) {
-                log.warn("Home Assistant service {}.{} returned HTTP {}: {}", domain, service, resp.statusCode(), resp.body());
-                return false;
-            }
+            SharedHttpClient.get().sendAsync(request("/api/services/" + domain + "/" + service)
+                            .POST(HttpRequest.BodyPublishers.ofString(body)).build(), HttpResponse.BodyHandlers.ofString())
+                    .whenComplete((resp, ex) -> {
+                        if (ex != null) {
+                            log.warn("Home Assistant service call {}.{} failed: {}", domain, service, ex.getMessage());
+                        } else if (!isSuccess(resp.statusCode())) {
+                            log.warn("Home Assistant service {}.{} returned HTTP {}: {}", domain, service, resp.statusCode(), resp.body());
+                        }
+                    });
             return true;
         } catch (Exception e) {
             log.warn("Home Assistant service call {}.{} failed: {}", domain, service, e.getMessage());

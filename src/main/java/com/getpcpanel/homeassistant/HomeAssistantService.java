@@ -33,6 +33,9 @@ import lombok.extern.log4j.Log4j2;
 public class HomeAssistantService {
     /** How long a ping result is reused before the server is probed again. */
     private static final long STATUS_TTL_MS = 5_000L;
+    /** Short timeout for the UI status probe so an unreachable server can't pin a REST worker thread for
+     *  the full 10s service-call timeout (and N dead servers don't add up to N*10s). */
+    private static final java.time.Duration STATUS_PING_TIMEOUT = java.time.Duration.ofSeconds(2);
 
     @Inject SaveService saveService;
     @Inject ObjectMapper objectMapper;
@@ -133,7 +136,7 @@ public class HomeAssistantService {
         if (cached != null && cached.expiry() > now) {
             return cached.connected();
         }
-        var connected = client.ping();
+        var connected = client.ping(STATUS_PING_TIMEOUT);
         statusCache.put(id, new CachedStatus(connected, now + STATUS_TTL_MS));
         return connected;
     }
