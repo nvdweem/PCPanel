@@ -3,11 +3,17 @@ package com.getpcpanel.wavelink;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.File;
+import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.getpcpanel.util.FileUtil;
 
 import dev.niels.wavelink.impl.model.WaveLinkApp;
 import dev.niels.wavelink.impl.model.WaveLinkChannel;
@@ -56,6 +62,42 @@ class WaveLinkFocusResolutionTest {
         // Removed again → back to the OS immediately.
         channels.clear();
         assertFalse(wl.controlsFocusApp(edgePath));
+    }
+
+    private static WaveLinkAppCache cacheIn(Path dir) {
+        var cache = new WaveLinkAppCache();
+        cache.mapper = new ObjectMapper();
+        cache.fileUtil = new FileUtil() {
+            @Override
+            public File getFile(String file) {
+                return dir.resolve(file).toFile();
+            }
+        };
+        return cache;
+    }
+
+    @Test
+    void defersViaPersistedIdentity_withoutLearningThisSession(@TempDir Path dir) {
+        var edge = new WaveLinkApp("Microsoft Edge", "Microsoft Edge");
+        var edgePath = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
+        // A previous session persisted the msedge.exe → "Microsoft Edge" pairing.
+        cacheIn(dir).learnIdentity(edgePath, edge);
+
+        // Fresh session: cache reloaded from disk, Wave Link connected with Edge in a channel, but no live
+        // focus change has been correlated yet this session (the in-memory identity map starts empty).
+        var cache = cacheIn(dir);
+        cache.load();
+        var channels = new LinkedHashMap<String, WaveLinkChannel>();
+        channels.put("browsers", channel("browsers", "Browsers", edge));
+        var wl = connectedWith(channels);
+        wl.appCache = cache;
+
+        assertTrue(wl.managesFocusApp(edgePath), "persisted identity bridges msedge.exe to its live channel");
+        assertTrue(wl.controlsFocusApp(edgePath), "redirect resolves the channel from launch, before any focus change");
+
+        // Still resolved live: removing Edge from every channel stops control immediately.
+        channels.clear();
+        assertFalse(wl.managesFocusApp(edgePath));
     }
 
     @Test

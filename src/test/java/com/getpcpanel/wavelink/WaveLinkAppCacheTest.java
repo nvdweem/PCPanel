@@ -2,6 +2,7 @@ package com.getpcpanel.wavelink;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
@@ -67,5 +68,34 @@ class WaveLinkAppCacheTest {
         var reloaded = cacheIn(dir);
         reloaded.load(); // mimics @PostConstruct on a fresh process/session
         assertTrue(reloaded.isControlled("C:\\other\\spotify.exe"), "controlled set survives a restart");
+    }
+
+    @Test
+    void identity_bridgesExeToWaveLinkApp_pathAndCaseInsensitive(@TempDir Path dir) {
+        var cache = cacheIn(dir);
+        var edgePath = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
+        assertNull(cache.identity(edgePath));
+        cache.learnIdentity(edgePath, new WaveLinkApp("Microsoft Edge", "Microsoft Edge"));
+        assertEquals("Microsoft Edge", cache.identity("D:\\elsewhere\\MSEDGE.EXE").name());
+        assertNull(cache.identity("C:\\x\\chrome.exe"));
+    }
+
+    @Test
+    void identity_survivesRestart(@TempDir Path dir) {
+        var edge = new WaveLinkApp("Microsoft Edge", "Microsoft Edge");
+        cacheIn(dir).learnIdentity("C:\\...\\msedge.exe", edge);
+        var reloaded = cacheIn(dir);
+        reloaded.load(); // mimics @PostConstruct on a fresh process/session
+        // The exe→friendly-name pairing is available before any focus change of the new session, so the
+        // focused app can be resolved to its live Wave Link channel from launch.
+        assertEquals(edge, reloaded.identity("X:\\Edge\\msedge.exe"));
+    }
+
+    @Test
+    void learnIdentity_ignoresBlankAndEmptyApp(@TempDir Path dir) {
+        var cache = cacheIn(dir);
+        cache.learnIdentity("   ", new WaveLinkApp("Microsoft Edge", "Microsoft Edge"));
+        cache.learnIdentity("C:\\x\\msedge.exe", WaveLinkApp.EMPTY);
+        assertNull(cache.identity("C:\\x\\msedge.exe"));
     }
 }

@@ -9,6 +9,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 
+import javax.annotation.Nullable;
+
 import com.getpcpanel.cpp.AudioSession;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.profile.SaveService;
@@ -182,17 +184,38 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
         var key = WaveLinkAppCache.normalize(osFocusPath);
         if (!key.isBlank()) {
             focusIdentityByProcess.put(key, app);
+            if (appCache != null) {
+                // Persist the pairing so the next launch can bridge this process to its Wave Link app
+                // before any focus change re-learns it (the in-memory map starts empty each session).
+                appCache.learnIdentity(osFocusPath, app);
+            }
         }
     }
 
     /**
+     * The Wave Link app identity for {@code targetProcess}: the one learned live this session if present,
+     * otherwise the persisted pairing from a previous session. Bridges the exe-vs-friendly-name gap
+     * (msedge.exe → "Microsoft Edge") that name-only matching against channel membership can't.
+     */
+    @Nullable
+    private WaveLinkApp identityFor(String targetProcess) {
+        var live = focusIdentityByProcess.get(WaveLinkAppCache.normalize(targetProcess));
+        if (live != null) {
+            return live;
+        }
+        return appCache == null ? null : appCache.identity(targetProcess);
+    }
+
+    /**
      * The live channel that controls {@code targetProcess}'s volume, if any. Resolved against the
-     * current channels (so it reflects add/remove immediately): first via the learned Wave Link identity
-     * for this process (bridges the exe-vs-friendly-name gap, e.g. msedge.exe → "Microsoft Edge"), then
-     * by directly matching the executable name against channel apps for apps whose names happen to match.
+     * current channels (so it reflects add/remove immediately): first via the Wave Link identity for this
+     * process — learned live this session or {@linkplain WaveLinkAppCache#identity persisted from a
+     * previous one} — which bridges the exe-vs-friendly-name gap (e.g. msedge.exe → "Microsoft Edge"),
+     * then by directly matching the executable name against channel apps for apps whose names happen to
+     * match.
      */
     private Optional<String> resolveChannelForFocusApp(String targetProcess) {
-        var identity = focusIdentityByProcess.get(WaveLinkAppCache.normalize(targetProcess));
+        var identity = identityFor(targetProcess);
         if (identity != null) {
             var channel = findChannelIdForApp(identity);
             if (channel.isPresent()) {
