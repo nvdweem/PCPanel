@@ -193,6 +193,14 @@ Key constraints baked into those args, change with care:
   Don't rely on tracing for this: register them explicitly on the response DTO with
   `@RegisterForReflection(targets = { Foo.class, Foo[].class, ... })`, listing every nested element
   record and its `[].class` form (see `rest/wavelink/dto/WaveLinkResponseDto`).
+- A serialised field of a JDK type Jackson handles via a **built-in `StdSerializer`** needs that
+  serializer class registered too — e.g. a `java.io.File` field uses
+  `com.fasterxml.jackson.databind.ser.std.FileSerializer`, whose no-arg ctor must be reflectively
+  instantiable or the endpoint 500s with "FileSerializer has no default constructor" once the value is
+  non-null (`/api/audio/applications` → `ISndCtrl.RunningApplication.file`; works in JVM/dev). Register
+  the serializer by name in `NativeImageConfig.classNames`. The coverage tests don't catch this (it is
+  Jackson-internal, not a project type), so the reliable check is to **run the native binary and curl the
+  list/DTO REST endpoints** — JVM/dev mode never reproduces it.
 - **Discovery guards catch the above automatically — keep them green.** `ReflectionRegistrationCoverageTest`
   walks the Jackson `Command` hierarchy's serialised property graph and fails if any concrete subtype, or
   any concrete project record/class it reaches (plus the `Foo[]` array form for `List`/`Set` of a concrete
