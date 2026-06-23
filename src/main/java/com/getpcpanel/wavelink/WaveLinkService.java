@@ -124,9 +124,18 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
     @Override
     public void focusedAppChanged(WaveLinkApp app) {
         if (sndCtrl != null && sndCtrl.isResolvable()) {
+            // Sampled inline (not debounced): the OS foreground IS the app Wave Link just named, at this
+            // instant — deferring it would let focus drift and corrupt the identity pairing.
             learnFocusIdentity(app, sndCtrl.get().getFocusApplication());
         }
-        enforceFocusedControlledVolume(); // a controlled app just gained focus → pin its OS volume
+        // Debounce the enforce off the Wave Link websocket callback thread (matching fireChanged): on
+        // Linux it spawns external processes to resolve the focused window, which must not block the
+        // listener thread that gates further Wave Link message delivery.
+        if (debouncer != null) {
+            debouncer.debounce(ENFORCE_VOLUME_KEY, this::enforceFocusedControlledVolume, 250, TimeUnit.MILLISECONDS);
+        } else {
+            enforceFocusedControlledVolume(); // a controlled app just gained focus → pin its OS volume
+        }
     }
 
     /**
