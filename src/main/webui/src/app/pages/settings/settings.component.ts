@@ -90,6 +90,14 @@ export class SettingsComponent {
     return '';
   }
 
+  /**
+   * On Linux the overlay is drawn as a system notification (the notification daemon owns its
+   * appearance and placement), so the position/size/colour settings have no effect there and are
+   * shown disabled. Enable / Show number / Scale still apply. Defaults to supported until the
+   * backend platform answers, so the controls aren't briefly greyed out on load.
+   */
+  readonly overlayStylingSupported = computed(() => this.platform.os() !== 'linux');
+
   readonly scaleOptions: SegmentOption<boolean>[] = [
     { value: true, label: 'Log' },
     { value: false, label: 'Linear' },

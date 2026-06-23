@@ -432,6 +432,10 @@
         @case ('overlay') {
           <h2 class="page-title">Overlay</h2>
 
+          @if (!overlayStylingSupported()) {
+            <div class="pc-hint platform-note">On Linux the overlay is shown as a system notification, so your desktop's notification daemon controls its position, size and colours. Those options below are disabled here — but Enable, Show number and Scale still apply.</div>
+          }
+
           <div class="overlay-grid">
             <!-- left column: controls -->
             <div class="overlay-controls">
@@ -443,9 +447,9 @@
               </div>
 
               <div class="micro-label section-label">POSITION</div>
-              <div class="pos-grid">
+              <div class="pos-grid" [class.disabled-block]="!overlayStylingSupported()">
                 @for (p of gridPositions; track p) {
-                  <button class="pos-cell" [class.active]="s.overlayPosition === p"
+                  <button class="pos-cell" [class.active]="s.overlayPosition === p" [disabled]="!overlayStylingSupported()"
                           [attr.aria-label]="p" (click)="patch('overlayPosition', p)">
                     <span class="pos-dot"></span>
                   </button>
@@ -453,25 +457,25 @@
               </div>
 
               <div class="micro-label section-label">SIZE &amp; SHAPE</div>
-              <div class="pc-card pad stack">
+              <div class="pc-card pad stack" [class.disabled-block]="!overlayStylingSupported()">
                 <div class="slider-row">
                   <div class="sr-head"><span class="sr-label">Edge padding</span><span class="sr-val mono">{{ s.overlayPadding ?? 0 }}px</span></div>
-                  <pc-slider [value]="s.overlayPadding ?? 0" [min]="0" [max]="80"
+                  <pc-slider [value]="s.overlayPadding ?? 0" [min]="0" [max]="80" [disabled]="!overlayStylingSupported()"
                              (valueChange)="patch('overlayPadding', $event)" (changeEnd)="patch('overlayPadding', $event)"></pc-slider>
                 </div>
                 <div class="slider-row">
                   <div class="sr-head"><span class="sr-label">Corner rounding</span><span class="sr-val mono">{{ s.overlayWindowCornerRounding ?? 0 }}px</span></div>
-                  <pc-slider [value]="s.overlayWindowCornerRounding ?? 0" [min]="0" [max]="40"
+                  <pc-slider [value]="s.overlayWindowCornerRounding ?? 0" [min]="0" [max]="40" [disabled]="!overlayStylingSupported()"
                              (valueChange)="patch('overlayWindowCornerRounding', $event)" (changeEnd)="patch('overlayWindowCornerRounding', $event)"></pc-slider>
                 </div>
                 <div class="slider-row">
                   <div class="sr-head"><span class="sr-label">Bar height</span><span class="sr-val mono">{{ s.overlayBarHeight ?? 0 }}px</span></div>
-                  <pc-slider [value]="s.overlayBarHeight ?? 0" [min]="2" [max]="40"
+                  <pc-slider [value]="s.overlayBarHeight ?? 0" [min]="2" [max]="40" [disabled]="!overlayStylingSupported()"
                              (valueChange)="patch('overlayBarHeight', $event)" (changeEnd)="patch('overlayBarHeight', $event)"></pc-slider>
                 </div>
                 <div class="slider-row">
                   <div class="sr-head"><span class="sr-label">Bar rounding</span><span class="sr-val mono">{{ s.overlayBarCornerRounding ?? 0 }}px</span></div>
-                  <pc-slider [value]="s.overlayBarCornerRounding ?? 0" [min]="0" [max]="20"
+                  <pc-slider [value]="s.overlayBarCornerRounding ?? 0" [min]="0" [max]="20" [disabled]="!overlayStylingSupported()"
                              (valueChange)="patch('overlayBarCornerRounding', $event)" (changeEnd)="patch('overlayBarCornerRounding', $event)"></pc-slider>
                 </div>
               </div>
@@ -490,7 +494,7 @@
               </div>
 
               <div class="micro-label section-label">COLORS</div>
-              <div class="pc-card pad color-grid">
+              <div class="pc-card pad color-grid" [class.disabled-block]="!overlayStylingSupported()">
                 <pc-color-picker label="Background" [value]="s.overlayBackgroundColor" [alpha]="true"
                                  (valueChange)="patch('overlayBackgroundColor', $event)"></pc-color-picker>
                 <pc-color-picker label="Text" [value]="s.overlayTextColor"
@@ -505,7 +509,10 @@
             <!-- right column: live preview -->
             <div class="overlay-preview-col">
               <div class="micro-label section-label">LIVE PREVIEW</div>
-              <div class="desktop">
+              @if (!overlayStylingSupported()) {
+                <div class="pc-hint platform-note">Preview only — on Linux the real overlay is styled by your notification daemon.</div>
+              }
+              <div class="desktop" [class.disabled-block]="!overlayStylingSupported()">
                 <div class="ov-card"
                      [style]="overlayPreviewStyle()"
                      [style.background-color]="s.overlayBackgroundColor || '#14161B'"
