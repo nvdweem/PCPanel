@@ -31,7 +31,8 @@ public final class CommandWaveLinkChangeLevel extends CommandWaveLinkChange impl
 
     @Override
     public String buildLabel() {
-        return "Set " + getCommandType();
+        var name = targetName();
+        return name != null ? name + " — Wave Link" : "Set " + getCommandType();
     }
 
     @Override

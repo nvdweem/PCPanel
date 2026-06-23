@@ -122,6 +122,31 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
         return appCache != null && appCache.isControlled(targetProcess);
     }
 
+    /** Display name of any Wave Link target (channel / input / mix / output) by its id, or null when unknown. */
+    @Nullable
+    public String nameForId(@Nullable String id) {
+        if (StringUtils.isBlank(id)) {
+            return null;
+        }
+        var channel = getChannels().get(id);
+        if (channel != null && StringUtils.isNotBlank(channel.name())) {
+            return channel.name();
+        }
+        var input = getInputDevices().get(id);
+        if (input != null && StringUtils.isNotBlank(input.name())) {
+            return input.name();
+        }
+        var mix = getMixes().get(id);
+        if (mix != null && StringUtils.isNotBlank(mix.name())) {
+            return mix.name();
+        }
+        var output = getOutputDevices().get(id);
+        if (output != null && StringUtils.isNotBlank(output.name())) {
+            return output.name();
+        }
+        return null;
+    }
+
     /** Learns the OS-process → Wave Link app identity each time Wave Link reports a focus change. */
     @Override
     public void focusedAppChanged(WaveLinkApp app) {

@@ -1,6 +1,8 @@
 package com.getpcpanel.wavelink;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
@@ -98,6 +100,17 @@ class WaveLinkFocusResolutionTest {
         // Still resolved live: removing Edge from every channel stops control immediately.
         channels.clear();
         assertFalse(wl.managesFocusApp(edgePath));
+    }
+
+    @Test
+    void nameForId_resolvesTargetDisplayName() {
+        var channels = new LinkedHashMap<String, WaveLinkChannel>();
+        channels.put("PCM_OUT_00_V_14_SD8", channel("PCM_OUT_00_V_14_SD8", "Browsers"));
+        var wl = connectedWith(channels);
+        // This is what makes the overlay/UI show "Browsers — Wave Link" instead of "Set Channel".
+        assertEquals("Browsers", wl.nameForId("PCM_OUT_00_V_14_SD8"));
+        assertNull(wl.nameForId("unknown-id"));
+        assertNull(wl.nameForId(null));
     }
 
     @Test

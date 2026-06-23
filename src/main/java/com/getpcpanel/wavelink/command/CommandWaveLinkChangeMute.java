@@ -31,7 +31,8 @@ public final class CommandWaveLinkChangeMute extends CommandWaveLinkChange imple
 
     @Override
     public String buildLabel() {
-        return "(Un)Mute " + getCommandType();
+        var name = targetName();
+        return name != null ? "(Un)Mute " + name + " — Wave Link" : "(Un)Mute " + getCommandType();
     }
 
     @Override
