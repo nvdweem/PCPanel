@@ -137,3 +137,5 @@
 .ov-pct { font-size: 12.5px; }
 .ov-bar-track { width: 100%; overflow: hidden; }
 .ov-bar-fill { height: 100%; }
+// Backend-rendered overlay preview (the real OverlayRenderer → PNG), positioned by overlayPreviewStyle().
+.ov-img { position: absolute; max-width: calc(100% - 24px); height: auto; box-shadow: var(--sh-pop); }

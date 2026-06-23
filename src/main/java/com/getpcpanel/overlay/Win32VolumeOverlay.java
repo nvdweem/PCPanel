@@ -103,6 +103,7 @@ public class Win32VolumeOverlay implements OverlayWindow {
     public void setStyles(Save save) {
         synchronized (lock) {
             height = renderer.setStyles(save);
+            width = renderer.width();
         }
     }
 

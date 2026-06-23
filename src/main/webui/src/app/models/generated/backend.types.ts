@@ -578,6 +578,7 @@ export interface SettingsDto {
     overlayBarCornerRounding?: number;
     overlayBarFollowsLight: boolean;
     overlayBarHeight?: number;
+    overlayContentPadding?: number;
     overlayElementGap?: number;
     overlayEnabled: boolean;
     overlayIconSize?: number;
@@ -587,8 +588,8 @@ export interface SettingsDto {
     overlayShowNumber: boolean;
     overlayTextColor: string;
     overlayTextSize?: number;
-    overlayTwoLine: boolean;
     overlayUseLog: boolean;
+    overlayWidth?: number;
     overlayWindowCornerRounding: number;
     preventClickWhenDblClick: boolean;
     preventSliderTwitchDelay?: number;

@@ -43,12 +43,14 @@ class OverlayRenderer {
     private String name = "";
     private Color lightColor;            // parsed control light colour, or null when none/unavailable
     private boolean showNumber = true;
-    private boolean twoLine = true;
+    // Showing the app name drives the whole layout: on → two rows (name + bar), off → a compact single row.
     private boolean showAppName = true;
     private boolean barFollowsLight;
     private int textSize = Save.DEFAULT_OVERLAY_TEXT_SIZE;
     private int iconSize = ICON_SIZE;
     private int elementGap = CONTENT_PADDING;
+    private int contentPadding = CONTENT_PADDING;
+    private int width = WIDTH;
     private int windowCornerRadius = DEFAULT_CORNER_RADIUS;
     private int barHeight = DEFAULT_BAR_HEIGHT;
     private int barCornerRadius = DEFAULT_BAR_CORNER_RADIUS;
@@ -79,12 +81,13 @@ class OverlayRenderer {
      */
     int setStyles(Save save) {
         showNumber = save.isOverlayShowNumber();
-        twoLine = save.isOverlayTwoLine();
         showAppName = save.isOverlayShowAppName();
         barFollowsLight = save.isOverlayBarFollowsLight();
         textSize = Math.clamp(save.getOverlayTextSize(), 6, 48);
         iconSize = Math.clamp(save.getOverlayIconSize(), 0, 96);
         elementGap = Math.max(0, save.getOverlayElementGap());
+        contentPadding = Math.max(0, save.getOverlayContentPadding());
+        width = Math.clamp(save.getOverlayWidth(), 120, 800);
         backgroundColor = parseColor(save.getOverlayBackgroundColor(), DEFAULT_BG_COLOR);
         textColor = parseColor(save.getOverlayTextColor(), DEFAULT_TEXT_COLOR);
         barColor = parseColor(save.getOverlayBarColor(), DEFAULT_BAR_COLOR);
@@ -95,9 +98,13 @@ class OverlayRenderer {
         return computeHeight();
     }
 
+    int width() {
+        return width;
+    }
+
     int computeHeight() {
-        var pad = CONTENT_PADDING;
-        if (twoLine) {
+        var pad = contentPadding;
+        if (showAppName) {
             var topRow = Math.max(iconSize, textSize + 4);
             return pad * 2 + topRow + elementGap + barHeight;
         }
@@ -132,7 +139,7 @@ class OverlayRenderer {
         g2.setPaint(gloss);
         g2.fill(new RoundRectangle2D.Float(0, 0, w, h / 2f, windowArc, windowArc));
 
-        if (twoLine) {
+        if (showAppName) {
             renderTwoLine(g2, w, h);
         } else {
             renderOneLine(g2, w, h);
@@ -141,7 +148,7 @@ class OverlayRenderer {
 
     /** [icon] [name] [percent] on the top row, full-width bar beneath. Matches the settings preview. */
     private void renderTwoLine(Graphics2D g2, int w, int h) {
-        var pad = CONTENT_PADDING;
+        var pad = contentPadding;
         var topRow = Math.max(iconSize, textSize + 4);
         var rowTop = pad;
 
@@ -167,7 +174,7 @@ class OverlayRenderer {
         }
 
         // App name fills the space between the icon and the value, ellipsised if needed.
-        if (showAppName && !name.isBlank()) {
+        if (!name.isBlank()) {
             var nameRight = (showNumber ? valueLeft - elementGap : valueRight);
             var avail = nameRight - x;
             if (avail > 4) {
@@ -182,7 +189,7 @@ class OverlayRenderer {
 
     /** [icon] [bar] [percent] on a single row (compact). */
     private void renderOneLine(Graphics2D g2, int w, int h) {
-        var pad = CONTENT_PADDING;
+        var pad = contentPadding;
         var x = pad;
         if (icon != null && iconSize > 0) {
             g2.drawImage(icon, x, (h - iconSize) / 2, iconSize, iconSize, null);

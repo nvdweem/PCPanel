@@ -54,6 +54,11 @@ export class SettingsComponent {
   readonly local = signal<SettingsDto | null>(null);
   readonly dirty = signal(false);
 
+  /** Object-URL of the backend-rendered overlay preview (the real renderer → PNG), or null. */
+  readonly overlayPreviewUrl = signal<string | null>(null);
+  private previewObjUrl: string | null = null;
+  private previewTimer: ReturnType<typeof setTimeout> | null = null;
+
   // OSC add-form fields
   readonly oscHost = signal('');
   readonly oscPort = signal('');
@@ -144,6 +149,33 @@ export class SettingsComponent {
     // Deep-link support: /settings?tab=homeassistant (used by the action editor's "Manage servers").
     const tab = this.route.snapshot.queryParamMap.get('tab') as TabId | null;
     if (tab && this.allTabs.some(t => t.id === tab)) this.activeTab.set(tab);
+
+    // Live overlay preview: render the real overlay on the backend from the (possibly unsaved) settings,
+    // debounced so dragging a slider doesn't fire a request per tick. Guarantees the preview can't drift
+    // from what the on-screen overlay actually draws.
+    effect(() => {
+      const s = this.local();
+      const onOverlay = this.activeTab() === 'overlay';
+      const supported = this.overlayStylingSupported();
+      if (!s || !onOverlay || !supported) return;
+      untracked(() => this.scheduleOverlayPreview(s));
+    });
+  }
+
+  private scheduleOverlayPreview(s: SettingsDto): void {
+    if (this.previewTimer) clearTimeout(this.previewTimer);
+    this.previewTimer = setTimeout(() => {
+      this.http.post('/api/overlay/preview', s, { responseType: 'blob' }).subscribe({
+        next: blob => this.setPreviewUrl(blob.size ? URL.createObjectURL(blob) : null),
+        error: () => this.setPreviewUrl(null),
+      });
+    }, 100);
+  }
+
+  private setPreviewUrl(url: string | null): void {
+    if (this.previewObjUrl) URL.revokeObjectURL(this.previewObjUrl);
+    this.previewObjUrl = url;
+    this.overlayPreviewUrl.set(url);
   }
 
   /** Browser refresh / tab close: warn if there are unsaved edits (in-app nav is guarded by back()). */

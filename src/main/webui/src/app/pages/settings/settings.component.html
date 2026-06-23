@@ -456,39 +456,42 @@
                 }
               </div>
 
-              <div class="micro-label section-label">SIZE &amp; SHAPE</div>
               <div class="pc-card pad stack" [class.disabled-block]="!overlayStylingSupported()">
                 <div class="slider-row">
                   <div class="sr-head"><span class="sr-label">Edge padding</span><span class="sr-val mono">{{ s.overlayPadding ?? 0 }}px</span></div>
                   <pc-slider [value]="s.overlayPadding ?? 0" [min]="0" [max]="80" [disabled]="!overlayStylingSupported()"
                              (valueChange)="patch('overlayPadding', $event)" (changeEnd)="patch('overlayPadding', $event)"></pc-slider>
                 </div>
-                <div class="slider-row">
-                  <div class="sr-head"><span class="sr-label">Corner rounding</span><span class="sr-val mono">{{ s.overlayWindowCornerRounding ?? 0 }}px</span></div>
-                  <pc-slider [value]="s.overlayWindowCornerRounding ?? 0" [min]="0" [max]="40" [disabled]="!overlayStylingSupported()"
-                             (valueChange)="patch('overlayWindowCornerRounding', $event)" (changeEnd)="patch('overlayWindowCornerRounding', $event)"></pc-slider>
+              </div>
+
+              <div class="micro-label section-label">DISPLAY</div>
+              <div class="pc-card pad stack" [class.disabled-block]="!overlayStylingSupported()">
+                <div class="row">
+                  <div class="row-text"><div class="row-label">Show app name</div><div class="row-sub">name of the controlled target on its own row (off = compact single row)</div></div>
+                  <pc-toggle [value]="s.overlayShowAppName" [disabled]="!overlayStylingSupported()" (valueChange)="patch('overlayShowAppName', $event)"></pc-toggle>
                 </div>
-                <div class="slider-row">
-                  <div class="sr-head"><span class="sr-label">Bar height</span><span class="sr-val mono">{{ s.overlayBarHeight ?? 0 }}px</span></div>
-                  <pc-slider [value]="s.overlayBarHeight ?? 0" [min]="2" [max]="40" [disabled]="!overlayStylingSupported()"
-                             (valueChange)="patch('overlayBarHeight', $event)" (changeEnd)="patch('overlayBarHeight', $event)"></pc-slider>
+                <div class="row">
+                  <div class="row-text"><div class="row-label">Show number</div><div class="row-sub">the percentage value</div></div>
+                  <pc-toggle [value]="s.overlayShowNumber" [disabled]="!overlayStylingSupported()" (valueChange)="patch('overlayShowNumber', $event)"></pc-toggle>
                 </div>
-                <div class="slider-row">
-                  <div class="sr-head"><span class="sr-label">Bar rounding</span><span class="sr-val mono">{{ s.overlayBarCornerRounding ?? 0 }}px</span></div>
-                  <pc-slider [value]="s.overlayBarCornerRounding ?? 0" [min]="0" [max]="20" [disabled]="!overlayStylingSupported()"
-                             (valueChange)="patch('overlayBarCornerRounding', $event)" (changeEnd)="patch('overlayBarCornerRounding', $event)"></pc-slider>
+                <div class="row">
+                  <div class="row-text"><div class="row-label">Scale</div><div class="row-sub">value mapping</div></div>
+                  <pc-segmented [options]="scaleOptions" [value]="s.overlayUseLog" [disabled]="!overlayStylingSupported()"
+                                (valueChange)="patch('overlayUseLog', !!$event)"></pc-segmented>
                 </div>
               </div>
 
-              <div class="micro-label section-label">LAYOUT</div>
+              <div class="micro-label section-label">SIZE</div>
               <div class="pc-card pad stack" [class.disabled-block]="!overlayStylingSupported()">
-                <div class="row">
-                  <div class="row-text"><div class="row-label">Two lines</div><div class="row-sub">name + bar on separate rows (off = compact single row)</div></div>
-                  <pc-toggle [value]="s.overlayTwoLine" [disabled]="!overlayStylingSupported()" (valueChange)="patch('overlayTwoLine', $event)"></pc-toggle>
+                <div class="slider-row">
+                  <div class="sr-head"><span class="sr-label">Width</span><span class="sr-val mono">{{ s.overlayWidth ?? 340 }}px</span></div>
+                  <pc-slider [value]="s.overlayWidth ?? 340" [min]="120" [max]="700" [disabled]="!overlayStylingSupported()"
+                             (valueChange)="patch('overlayWidth', $event)" (changeEnd)="patch('overlayWidth', $event)"></pc-slider>
                 </div>
-                <div class="row">
-                  <div class="row-text"><div class="row-label">Show app name</div><div class="row-sub">name of the controlled target</div></div>
-                  <pc-toggle [value]="s.overlayShowAppName" [disabled]="!overlayStylingSupported()" (valueChange)="patch('overlayShowAppName', $event)"></pc-toggle>
+                <div class="slider-row">
+                  <div class="sr-head"><span class="sr-label">Padding</span><span class="sr-val mono">{{ s.overlayContentPadding ?? 10 }}px</span></div>
+                  <pc-slider [value]="s.overlayContentPadding ?? 10" [min]="0" [max]="40" [disabled]="!overlayStylingSupported()"
+                             (valueChange)="patch('overlayContentPadding', $event)" (changeEnd)="patch('overlayContentPadding', $event)"></pc-slider>
                 </div>
                 <div class="slider-row">
                   <div class="sr-head"><span class="sr-label">Text size</span><span class="sr-val mono">{{ s.overlayTextSize ?? 14 }}px</span></div>
@@ -505,18 +508,24 @@
                   <pc-slider [value]="s.overlayElementGap ?? 10" [min]="0" [max]="40" [disabled]="!overlayStylingSupported()"
                              (valueChange)="patch('overlayElementGap', $event)" (changeEnd)="patch('overlayElementGap', $event)"></pc-slider>
                 </div>
+                <div class="slider-row">
+                  <div class="sr-head"><span class="sr-label">Bar height</span><span class="sr-val mono">{{ s.overlayBarHeight ?? 0 }}px</span></div>
+                  <pc-slider [value]="s.overlayBarHeight ?? 0" [min]="2" [max]="40" [disabled]="!overlayStylingSupported()"
+                             (valueChange)="patch('overlayBarHeight', $event)" (changeEnd)="patch('overlayBarHeight', $event)"></pc-slider>
+                </div>
               </div>
 
-              <div class="micro-label section-label">BEHAVIOUR</div>
+              <div class="micro-label section-label">SHAPE</div>
               <div class="pc-card pad stack" [class.disabled-block]="!overlayStylingSupported()">
-                <div class="row">
-                  <div class="row-text"><div class="row-label">Show number</div></div>
-                  <pc-toggle [value]="s.overlayShowNumber" [disabled]="!overlayStylingSupported()" (valueChange)="patch('overlayShowNumber', $event)"></pc-toggle>
+                <div class="slider-row">
+                  <div class="sr-head"><span class="sr-label">Corner rounding</span><span class="sr-val mono">{{ s.overlayWindowCornerRounding ?? 0 }}px</span></div>
+                  <pc-slider [value]="s.overlayWindowCornerRounding ?? 0" [min]="0" [max]="40" [disabled]="!overlayStylingSupported()"
+                             (valueChange)="patch('overlayWindowCornerRounding', $event)" (changeEnd)="patch('overlayWindowCornerRounding', $event)"></pc-slider>
                 </div>
-                <div class="row">
-                  <div class="row-text"><div class="row-label">Scale</div><div class="row-sub">value mapping</div></div>
-                  <pc-segmented [options]="scaleOptions" [value]="s.overlayUseLog" [disabled]="!overlayStylingSupported()"
-                                (valueChange)="patch('overlayUseLog', !!$event)"></pc-segmented>
+                <div class="slider-row">
+                  <div class="sr-head"><span class="sr-label">Bar rounding</span><span class="sr-val mono">{{ s.overlayBarCornerRounding ?? 0 }}px</span></div>
+                  <pc-slider [value]="s.overlayBarCornerRounding ?? 0" [min]="0" [max]="20" [disabled]="!overlayStylingSupported()"
+                             (valueChange)="patch('overlayBarCornerRounding', $event)" (changeEnd)="patch('overlayBarCornerRounding', $event)"></pc-slider>
                 </div>
               </div>
 
@@ -540,54 +549,11 @@
                 <div class="pc-hint platform-note">Preview only — on Linux the real overlay is drawn and styled by your desktop.</div>
               }
               <div class="desktop" [class.disabled-block]="!overlayStylingSupported()">
-                <div class="ov-card"
-                     [style]="overlayPreviewStyle()"
-                     [style.background-color]="s.overlayBackgroundColor || '#14161B'"
-                     [style.border-radius.px]="s.overlayWindowCornerRounding ?? 12"
-                     [style.gap.px]="s.overlayElementGap ?? 10"
-                     [style.padding.px]="10">
-                  @if (s.overlayTwoLine) {
-                    <div class="ov-top" [style.gap.px]="s.overlayElementGap ?? 10">
-                      @if ((s.overlayIconSize ?? 32) > 0) {
-                        <span class="ov-tile" [style.width.px]="s.overlayIconSize ?? 32" [style.height.px]="s.overlayIconSize ?? 32"></span>
-                      }
-                      @if (s.overlayShowAppName) {
-                        <span class="ov-name" [style.color]="s.overlayTextColor || '#E9EBF0'" [style.font-size.px]="s.overlayTextSize ?? 14">Microsoft Edge</span>
-                      }
-                      @if (s.overlayShowNumber) {
-                        <span class="ov-pct mono" [style.color]="s.overlayTextColor || '#E9EBF0'" [style.font-size.px]="s.overlayTextSize ?? 14"
-                              [style.margin-left]="s.overlayShowAppName ? '' : 'auto'">65%</span>
-                      }
-                    </div>
-                    <div class="ov-bar-track"
-                         [style.background-color]="s.overlayBarBackgroundColor || '#23262E'"
-                         [style.height.px]="s.overlayBarHeight ?? 8"
-                         [style.border-radius.px]="s.overlayBarCornerRounding ?? 4">
-                      <div class="ov-bar-fill"
-                           [style.background-color]="s.overlayBarColor || '#FFB020'"
-                           [style.border-radius.px]="s.overlayBarCornerRounding ?? 4"
-                           [style.width.%]="65"></div>
-                    </div>
-                  } @else {
-                    <div class="ov-top" [style.gap.px]="s.overlayElementGap ?? 10">
-                      @if ((s.overlayIconSize ?? 32) > 0) {
-                        <span class="ov-tile" [style.width.px]="s.overlayIconSize ?? 32" [style.height.px]="s.overlayIconSize ?? 32"></span>
-                      }
-                      <div class="ov-bar-track" style="flex:1;min-width:0"
-                           [style.background-color]="s.overlayBarBackgroundColor || '#23262E'"
-                           [style.height.px]="s.overlayBarHeight ?? 8"
-                           [style.border-radius.px]="s.overlayBarCornerRounding ?? 4">
-                        <div class="ov-bar-fill"
-                             [style.background-color]="s.overlayBarColor || '#FFB020'"
-                             [style.border-radius.px]="s.overlayBarCornerRounding ?? 4"
-                             [style.width.%]="65"></div>
-                      </div>
-                      @if (s.overlayShowNumber) {
-                        <span class="ov-pct mono" [style.color]="s.overlayTextColor || '#E9EBF0'" [style.font-size.px]="s.overlayTextSize ?? 14">65%</span>
-                      }
-                    </div>
-                  }
-                </div>
+                @if (overlayPreviewUrl(); as url) {
+                  <img class="ov-img" [src]="url" [style]="overlayPreviewStyle()" alt="overlay preview" />
+                } @else if (overlayStylingSupported()) {
+                  <div class="pc-hint" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%)">Rendering preview…</div>
+                }
               </div>
             </div>
           </div>

@@ -31,6 +31,8 @@ public class Save {
     public static final int DEFAULT_OVERLAY_TEXT_SIZE = 14;
     public static final int DEFAULT_OVERLAY_ICON_SIZE = 32;
     public static final int DEFAULT_OVERLAY_ELEMENT_GAP = 10;
+    public static final int DEFAULT_OVERLAY_WIDTH = 340;
+    public static final int DEFAULT_OVERLAY_CONTENT_PADDING = 10;
     private static final OverlayPosition DEFAULT_OVERLAY_POSITION = OverlayPosition.topLeft;
     private Map<String, DeviceSave> devices = new ConcurrentHashMap<>();
     private boolean mainUIIcons;
@@ -73,15 +75,29 @@ public class Save {
     @Nullable private Integer overlayBarCornerRounding = 0;
     @Nullable private OverlayPosition overlayPosition = DEFAULT_OVERLAY_POSITION;
     @Nullable private Integer overlayPadding = DEFAULT_OVERLAY_PADDING;
-    /** Two-line layout: [icon] [app name] [percent] on top, full-width bar below (vs. a single row). */
-    private boolean overlayTwoLine = true;
-    /** Show the controlled-target name (focused app / process / channel / device) on the overlay. */
+    /**
+     * Show the controlled-target name (focused app / process / channel / device) on the overlay. This
+     * also drives the layout: on → two rows ([icon] [name] [percent] over a full-width bar), off → a
+     * compact single row ([icon] [bar] [percent]).
+     */
     private boolean overlayShowAppName = true;
     @Nullable private Integer overlayTextSize = DEFAULT_OVERLAY_TEXT_SIZE;
     @Nullable private Integer overlayIconSize = DEFAULT_OVERLAY_ICON_SIZE;
     @Nullable private Integer overlayElementGap = DEFAULT_OVERLAY_ELEMENT_GAP;
+    /** Overall overlay window width in px. */
+    @Nullable private Integer overlayWidth = DEFAULT_OVERLAY_WIDTH;
+    /** Inner padding between the overlay's edges and its content in px (shrinks the whole overlay). */
+    @Nullable private Integer overlayContentPadding = DEFAULT_OVERLAY_CONTENT_PADDING;
     /** Use the control's current light colour as the bar colour (falls back to the bar colour). */
     private boolean overlayBarFollowsLight;
+
+    public int getOverlayWidth() {
+        return overlayWidth == null ? DEFAULT_OVERLAY_WIDTH : overlayWidth;
+    }
+
+    public int getOverlayContentPadding() {
+        return overlayContentPadding == null ? DEFAULT_OVERLAY_CONTENT_PADDING : overlayContentPadding;
+    }
 
     public int getOverlayTextSize() {
         return overlayTextSize == null ? DEFAULT_OVERLAY_TEXT_SIZE : overlayTextSize;

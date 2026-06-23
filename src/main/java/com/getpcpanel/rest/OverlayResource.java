@@ -1,10 +1,14 @@
 package com.getpcpanel.rest;
 
 import com.getpcpanel.overlay.Overlay;
+import com.getpcpanel.overlay.OverlayPreviewRenderer;
+import com.getpcpanel.profile.Save;
+import com.getpcpanel.rest.model.dto.SettingsDto;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -23,6 +27,25 @@ public class OverlayResource {
         System.out.println("Overlay!");
         overlay.show(0);
         return Response.ok().build();
+    }
+
+    /**
+     * The real overlay rendered to a PNG using the posted (possibly unsaved) settings, so the settings
+     * page can show a pixel-identical live preview instead of a hand-maintained CSS mock. 204 when
+     * rendering isn't available (non-Windows). The body is the same SettingsDto the settings form edits.
+     */
+    @POST
+    @Path("/preview")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces("image/png")
+    public Response preview(SettingsDto settings) {
+        var save = new Save();
+        settings.applyTo(save);
+        var png = OverlayPreviewRenderer.renderPng(save, 65, "Microsoft Edge");
+        if (png == null) {
+            return Response.noContent().build();
+        }
+        return Response.ok(png).header("Cache-Control", "no-store").build();
     }
 
     @POST

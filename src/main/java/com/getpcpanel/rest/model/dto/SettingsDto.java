@@ -56,11 +56,12 @@ public class SettingsDto {
     @Nullable private Integer overlayBarCornerRounding;
     @Nullable private OverlayPosition overlayPosition;
     @Nullable private Integer overlayPadding;
-    private boolean overlayTwoLine;
     private boolean overlayShowAppName;
     @Nullable private Integer overlayTextSize;
     @Nullable private Integer overlayIconSize;
     @Nullable private Integer overlayElementGap;
+    @Nullable private Integer overlayWidth;
+    @Nullable private Integer overlayContentPadding;
     private boolean overlayBarFollowsLight;
     private MqttSettings mqtt;
 
@@ -101,11 +102,12 @@ public class SettingsDto {
         dto.overlayBarCornerRounding = save.getOverlayBarCornerRounding();
         dto.overlayPosition = save.getOverlayPosition();
         dto.overlayPadding = save.getOverlayPadding();
-        dto.overlayTwoLine = save.isOverlayTwoLine();
         dto.overlayShowAppName = save.isOverlayShowAppName();
         dto.overlayTextSize = save.getOverlayTextSize();
         dto.overlayIconSize = save.getOverlayIconSize();
         dto.overlayElementGap = save.getOverlayElementGap();
+        dto.overlayWidth = save.getOverlayWidth();
+        dto.overlayContentPadding = save.getOverlayContentPadding();
         dto.overlayBarFollowsLight = save.isOverlayBarFollowsLight();
         dto.mqtt = save.getMqtt();
         dto.homeAssistantServers = save.getHomeAssistantServers();
@@ -145,11 +147,12 @@ public class SettingsDto {
         save.setOverlayBarCornerRounding(overlayBarCornerRounding);
         save.setOverlayPosition(overlayPosition);
         save.setOverlayPadding(overlayPadding);
-        save.setOverlayTwoLine(overlayTwoLine);
         save.setOverlayShowAppName(overlayShowAppName);
         save.setOverlayTextSize(overlayTextSize);
         save.setOverlayIconSize(overlayIconSize);
         save.setOverlayElementGap(overlayElementGap);
+        save.setOverlayWidth(overlayWidth);
+        save.setOverlayContentPadding(overlayContentPadding);
         save.setOverlayBarFollowsLight(overlayBarFollowsLight);
         save.setMqtt(mqtt);
         save.setHomeAssistantServers(homeAssistantServers);
