@@ -30,9 +30,11 @@ import lombok.extern.log4j.Log4j2;
  *       the OS drives the monitors with (idle-timeout, a manual "turn off display", DPMS); it cannot
  *       see a monitor switched off at its own power button (the OS is never told);</li>
  *   <li>the system being <em>about to</em> suspend — {@link SystemEventType#goingToSuspend} — via
- *       {@code RegisterSuspendResumeNotification}. This is the advance notice Windows otherwise never
- *       gives a background process; resume-from-suspend stays with the cross-platform
- *       {@link SuspendResumeWatchdog}.</li>
+ *       {@code RegisterSuspendResumeNotification}, plus resuming ({@link SystemEventType#resumedFromSuspend}).
+ *       The suspend half is the advance notice Windows otherwise never gives a background process;
+ *       handling the resume half here makes resume prompt even for a short suspend (the cross-platform
+ *       {@link SuspendResumeWatchdog} only notices a resume after the wall clock jumps past its
+ *       threshold, so it stays as a fallback).</li>
  * </ul>
  *
  * <p>Both arrive only as window messages, so unlike the rest of the Windows detection this needs a
@@ -50,6 +52,8 @@ public class WindowsPowerEventMonitor {
     private static final int WM_CLOSE = 0x0010;
     private static final int WM_POWERBROADCAST = 0x0218;
     private static final int PBT_APMSUSPEND = 0x0004;
+    private static final int PBT_APMRESUMESUSPEND = 0x0007;
+    private static final int PBT_APMRESUMEAUTOMATIC = 0x0012;
     private static final int PBT_POWERSETTINGCHANGE = 0x8013;
 
     // POWERBROADCAST_SETTING.Data[0] for GUID_CONSOLE_DISPLAY_STATE
@@ -168,8 +172,12 @@ public class WindowsPowerEventMonitor {
     private void handlePowerBroadcast(WPARAM wParam, LPARAM lParam) {
         switch (wParam.intValue()) {
             case PBT_APMSUSPEND -> sink.accept(SystemEventType.goingToSuspend);
+            // RegisterSuspendResumeNotification already delivers the resume broadcasts to this window.
+            // Route them to a prompt resume so a short suspend (<~11s, below the SuspendResumeWatchdog's
+            // wall-clock threshold) still clears the suspend gate — otherwise the panels stay dark.
+            case PBT_APMRESUMESUSPEND, PBT_APMRESUMEAUTOMATIC -> sink.accept(SystemEventType.resumedFromSuspend);
             case PBT_POWERSETTINGCHANGE -> handlePowerSettingChange(lParam);
-            default -> { /* other power events (resume, battery, …) are handled elsewhere or ignored */ }
+            default -> { /* other power events (battery, low-power, …) are ignored */ }
         }
     }
 
