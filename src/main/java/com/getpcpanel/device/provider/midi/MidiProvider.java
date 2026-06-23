@@ -194,7 +194,11 @@ public class MidiProvider implements DeviceProvider {
             this.index = index;
         }
 
-        void open() {
+        // synchronized on the same monitor as handle(): transport.open() wires the receiver, after which
+        // the javax.sound.midi receiver thread can call handle() (which mutates analog/digital/known) at
+        // any moment. Without this lock, rehydrateFromPersisted() + the initial descriptor()/fire would
+        // race a concurrent handle() on those non-thread-safe collections.
+        synchronized void open() {
             connection = transport.open(midiId, this::onMessage, this::onError);
             // Fire connect immediately with an (initially empty, possibly rehydrated) descriptor so
             // DeviceHolder builds the device; the descriptor then grows as controls arrive.

@@ -16,49 +16,52 @@ import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig;
 import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
 
 public class ColorOverrideHolder implements IOverrideColorProvider {
+    // All access is synchronized on this holder: the per-device OverrideColors hold plain HashMaps that
+    // the mute-colour recompute mutates (setX) while the HID output / UI colour threads read them (getX).
+    // The new recompute-on-every-audio-event path makes that read/write race frequent, so serialize it.
     private final Map<String, OverrideColors> overrides = Collections.synchronizedMap(new HashMap<>());
 
-    public void setDialOverride(String deviceSerial, int dial, @Nullable SingleKnobLightingConfig config) {
+    public synchronized void setDialOverride(String deviceSerial, int dial, @Nullable SingleKnobLightingConfig config) {
         overrides.computeIfAbsent(deviceSerial, s -> new OverrideColors())
                 .dials.put(dial, config);
     }
 
-    public void setSliderOverride(String deviceSerial, int slider, @Nullable SingleSliderLightingConfig config) {
+    public synchronized void setSliderOverride(String deviceSerial, int slider, @Nullable SingleSliderLightingConfig config) {
         overrides.computeIfAbsent(deviceSerial, s -> new OverrideColors())
                 .sliders.put(slider, config);
     }
 
-    public void setSliderLabelOverride(String deviceSerial, int slider, @Nullable SingleSliderLabelLightingConfig config) {
+    public synchronized void setSliderLabelOverride(String deviceSerial, int slider, @Nullable SingleSliderLabelLightingConfig config) {
         overrides.computeIfAbsent(deviceSerial, s -> new OverrideColors())
                 .sliderLabels.put(slider, config);
     }
 
-    public void setLogoOverride(String deviceSerial, @Nullable SingleLogoLightingConfig config) {
+    public synchronized void setLogoOverride(String deviceSerial, @Nullable SingleLogoLightingConfig config) {
         overrides.computeIfAbsent(deviceSerial, s -> new OverrideColors())
                 .logo.set(config);
     }
 
-    public void clearAllOverrides() {
+    public synchronized void clearAllOverrides() {
         overrides.clear();
     }
 
     @Override
-    public Optional<SingleKnobLightingConfig> getDialOverride(String deviceSerial, int dial) {
+    public synchronized Optional<SingleKnobLightingConfig> getDialOverride(String deviceSerial, int dial) {
         return Optional.ofNullable(overrides.getOrDefault(deviceSerial, OverrideColors.EMPTY).dials.get(dial));
     }
 
     @Override
-    public Optional<SingleSliderLightingConfig> getSliderOverride(String deviceSerial, int slider) {
+    public synchronized Optional<SingleSliderLightingConfig> getSliderOverride(String deviceSerial, int slider) {
         return Optional.ofNullable(overrides.getOrDefault(deviceSerial, OverrideColors.EMPTY).sliders.get(slider));
     }
 
     @Override
-    public Optional<SingleSliderLabelLightingConfig> getSliderLabelOverride(String deviceSerial, int slider) {
+    public synchronized Optional<SingleSliderLabelLightingConfig> getSliderLabelOverride(String deviceSerial, int slider) {
         return Optional.ofNullable(overrides.getOrDefault(deviceSerial, OverrideColors.EMPTY).sliderLabels.get(slider));
     }
 
     @Override
-    public Optional<SingleLogoLightingConfig> getLogoOverride(String deviceSerial) {
+    public synchronized Optional<SingleLogoLightingConfig> getLogoOverride(String deviceSerial) {
         return Optional.ofNullable(overrides.getOrDefault(deviceSerial, OverrideColors.EMPTY).logo.get());
     }
 

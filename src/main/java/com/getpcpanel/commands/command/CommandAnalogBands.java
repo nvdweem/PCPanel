@@ -40,8 +40,10 @@ public class CommandAnalogBands extends Command implements DialAction {
 
     private final List<AnalogBand> bands;
 
-    /** The band the control currently rests on, or -1 before the first reading / while in a gap with no prior position. */
-    @JsonIgnore private int currentBand = -1;
+    /** The band the control currently rests on, or -1 before the first reading / while in a gap with no prior position.
+     *  volatile: written by advance() on the command-handler thread, read by getCurrentColor() from CDI observer
+     *  threads (profile-switch / lighting-edit refresh); a single int needs only visibility, not atomicity. */
+    @JsonIgnore private volatile int currentBand = -1;
 
     @JsonCreator
     public CommandAnalogBands(@Nullable @JsonProperty("bands") List<AnalogBand> bands) {

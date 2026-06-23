@@ -48,7 +48,10 @@ public final class OBS {
      * enable/host/port/password change) would be delayed by up to one 30s interval. The scheduler
      * still owns periodic reconnect when OBS drops.
      */
-    public void settingsChanged(@Observes SaveEvent event) {
+    // synchronized: the SaveEvent observer (REST/Debouncer thread) and the @Scheduled tick (scheduler
+    // thread) both mutate `client`/`appliedConfig` via connect(). Without serialization the two connect()
+    // calls interleave and one freshly-created, open websocket client is overwritten and leaked.
+    public synchronized void settingsChanged(@Observes SaveEvent event) {
         var settings = event.save();
         var config = settings.isObsEnabled() + "|" + settings.getObsAddress() + "|" + settings.getObsPort() + "|" + settings.getObsPassword();
         if (config.equals(appliedConfig)) {
@@ -64,14 +67,14 @@ public final class OBS {
     }
 
     @PreDestroy
-    public void destroy() {
+    public synchronized void destroy() {
         if (client != null) {
             client.disconnect();
         }
     }
 
     @Scheduled(every = "30s")
-    public void reconnectIfNeeded() {
+    public synchronized void reconnectIfNeeded() {
         var settings = save.get();
         if (!settings.isObsEnabled()) {
             backoff.onSuccess(); // nothing to connect → keep the gate clear so enabling reconnects at once
@@ -90,7 +93,7 @@ public final class OBS {
         backoff.onFailure(System.currentTimeMillis());
     }
 
-    private void connect(String host, int port, String password) {
+    private synchronized void connect(String host, int port, String password) {
         try {
             if (client != null) {
                 client.disconnect();
