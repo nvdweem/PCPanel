@@ -47,6 +47,10 @@
     "allDeclaredMethods": true
   },
   {
+    "name": "com.getpcpanel.overlay.FreedesktopNotifications",
+    "allDeclaredMethods": true
+  },
+  {
     "name": "com.getpcpanel.util.tray.wayland.StatusNotifierItem",
     "allDeclaredMethods": true
   },
