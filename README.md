@@ -84,11 +84,11 @@ The newest stable release is pinned at the top; in-progress development builds a
 
 The app ships as a self-contained native executable — **no Java installation is required.**
 
-| Platform | Asset | Notes |
-|----------|-------|-------|
-| **Windows** | `PCPanel-<version>-setup.exe` | Recommended. See below. |
-| **Linux** | `pcpanel_<version>_amd64.deb` (or Flatpak / AppImage) | Best-effort — see [linux.md](linux.md). |
-| **macOS** | `PCPanel-<version>-<arch>.dmg` | Experimental — see [mac.md](mac.md). Pick `aarch64` for Apple Silicon, `x86_64` for Intel. |
+| Platform    | Asset                                                 | Notes                                                                                      |
+|-------------|-------------------------------------------------------|--------------------------------------------------------------------------------------------|
+| **Windows** | `PCPanel-<version>-setup.exe`                         | Recommended. See below.                                                                    |
+| **Linux**   | `pcpanel_<version>_amd64.deb` (or Flatpak / AppImage) | Best-effort — see [linux.md](linux.md).                                                    |
+| **macOS**   | `PCPanel-<version>-<arch>.dmg`                        | Experimental — see [mac.md](mac.md). Pick `aarch64` for Apple Silicon, `x86_64` for Intel. |
 
 > The `Source code` asset attached to releases is not needed to run the app.
 
@@ -129,4 +129,8 @@ to:    %userprofile%\.pcpanel\profiles.json
   [issue tracker](https://github.com/nvdweem/PCPanel/issues). The issue templates list the
   information that helps most — please be as complete as you can.
 - **Want to hack on it?** See [CONTRIBUTING.md](CONTRIBUTING.md) for build and development setup.
-</content>
+
+## License
+
+Bundled third-party components keep their own licenses (for example, `kdotool`, shipped with the
+Linux artifacts, is Apache-2.0).
