@@ -1,6 +1,5 @@
 package com.getpcpanel.overlay;
 
-import java.awt.Image;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
@@ -61,8 +60,8 @@ public class LinuxOverlay implements OverlayWindow {
     private boolean disabled;           // no supported desktop, or too many consecutive failures
 
     @Override
-    public void show(float value, Image icon) {
-        pendingValue = value;
+    public void show(OverlayContent content) {
+        pendingValue = content.value();
         // Coalesce bursts: while a send is queued/in-flight, just update pendingValue. One more flush
         // is scheduled so the latest value is always delivered, without a task per knob tick. Because
         // each flush sends the newest value, the OSD tracks the knob in real time.

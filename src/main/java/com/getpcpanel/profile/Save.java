@@ -28,6 +28,9 @@ public class Save {
     public static final String DEFAULT_OVERLAY_BAR_BACKGROUND_COLOR = "rgb(249, 249, 249)";
     public static final int DEFAULT_OVERLAY_BAR_HEIGHT = 18;
     public static final int DEFAULT_OVERLAY_PADDING = 10;
+    public static final int DEFAULT_OVERLAY_TEXT_SIZE = 14;
+    public static final int DEFAULT_OVERLAY_ICON_SIZE = 32;
+    public static final int DEFAULT_OVERLAY_ELEMENT_GAP = 10;
     private static final OverlayPosition DEFAULT_OVERLAY_POSITION = OverlayPosition.topLeft;
     private Map<String, DeviceSave> devices = new ConcurrentHashMap<>();
     private boolean mainUIIcons;
@@ -70,6 +73,27 @@ public class Save {
     @Nullable private Integer overlayBarCornerRounding = 0;
     @Nullable private OverlayPosition overlayPosition = DEFAULT_OVERLAY_POSITION;
     @Nullable private Integer overlayPadding = DEFAULT_OVERLAY_PADDING;
+    /** Two-line layout: [icon] [app name] [percent] on top, full-width bar below (vs. a single row). */
+    private boolean overlayTwoLine = true;
+    /** Show the controlled-target name (focused app / process / channel / device) on the overlay. */
+    private boolean overlayShowAppName = true;
+    @Nullable private Integer overlayTextSize = DEFAULT_OVERLAY_TEXT_SIZE;
+    @Nullable private Integer overlayIconSize = DEFAULT_OVERLAY_ICON_SIZE;
+    @Nullable private Integer overlayElementGap = DEFAULT_OVERLAY_ELEMENT_GAP;
+    /** Use the control's current light colour as the bar colour (falls back to the bar colour). */
+    private boolean overlayBarFollowsLight;
+
+    public int getOverlayTextSize() {
+        return overlayTextSize == null ? DEFAULT_OVERLAY_TEXT_SIZE : overlayTextSize;
+    }
+
+    public int getOverlayIconSize() {
+        return overlayIconSize == null ? DEFAULT_OVERLAY_ICON_SIZE : overlayIconSize;
+    }
+
+    public int getOverlayElementGap() {
+        return overlayElementGap == null ? DEFAULT_OVERLAY_ELEMENT_GAP : overlayElementGap;
+    }
 
     public DeviceSave getDeviceSave(String serialNum) {
         return devices.get(serialNum);

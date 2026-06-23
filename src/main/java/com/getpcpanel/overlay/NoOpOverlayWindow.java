@@ -1,7 +1,5 @@
 package com.getpcpanel.overlay;
 
-import java.awt.Image;
-
 import com.getpcpanel.profile.Save;
 
 /**
@@ -14,7 +12,7 @@ import com.getpcpanel.profile.Save;
  */
 public class NoOpOverlayWindow implements OverlayWindow {
     @Override
-    public void show(float value, Image icon) {
+    public void show(OverlayContent content) {
         // no overlay on macOS
     }
 

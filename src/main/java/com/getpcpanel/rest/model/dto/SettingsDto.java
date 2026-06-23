@@ -56,6 +56,12 @@ public class SettingsDto {
     @Nullable private Integer overlayBarCornerRounding;
     @Nullable private OverlayPosition overlayPosition;
     @Nullable private Integer overlayPadding;
+    private boolean overlayTwoLine;
+    private boolean overlayShowAppName;
+    @Nullable private Integer overlayTextSize;
+    @Nullable private Integer overlayIconSize;
+    @Nullable private Integer overlayElementGap;
+    private boolean overlayBarFollowsLight;
     private MqttSettings mqtt;
 
     // Home Assistant
@@ -95,6 +101,12 @@ public class SettingsDto {
         dto.overlayBarCornerRounding = save.getOverlayBarCornerRounding();
         dto.overlayPosition = save.getOverlayPosition();
         dto.overlayPadding = save.getOverlayPadding();
+        dto.overlayTwoLine = save.isOverlayTwoLine();
+        dto.overlayShowAppName = save.isOverlayShowAppName();
+        dto.overlayTextSize = save.getOverlayTextSize();
+        dto.overlayIconSize = save.getOverlayIconSize();
+        dto.overlayElementGap = save.getOverlayElementGap();
+        dto.overlayBarFollowsLight = save.isOverlayBarFollowsLight();
         dto.mqtt = save.getMqtt();
         dto.homeAssistantServers = save.getHomeAssistantServers();
         dto.homeAssistantDebounceMs = save.getHomeAssistantDebounceMs();
@@ -133,6 +145,12 @@ public class SettingsDto {
         save.setOverlayBarCornerRounding(overlayBarCornerRounding);
         save.setOverlayPosition(overlayPosition);
         save.setOverlayPadding(overlayPadding);
+        save.setOverlayTwoLine(overlayTwoLine);
+        save.setOverlayShowAppName(overlayShowAppName);
+        save.setOverlayTextSize(overlayTextSize);
+        save.setOverlayIconSize(overlayIconSize);
+        save.setOverlayElementGap(overlayElementGap);
+        save.setOverlayBarFollowsLight(overlayBarFollowsLight);
         save.setMqtt(mqtt);
         save.setHomeAssistantServers(homeAssistantServers);
         save.setHomeAssistantDebounceMs(homeAssistantDebounceMs);

@@ -29,7 +29,6 @@ class OverlayRenderer {
     private static final int ICON_SIZE = 36;
     private static final int DEFAULT_BAR_HEIGHT = 10;
     private static final int DEFAULT_BAR_CORNER_RADIUS = DEFAULT_BAR_HEIGHT;
-    private static final int VALUE_LABEL_WIDTH = 36;
     private static final int VALUE_GAP = 8;
     private static final Pattern RGB_PATTERN = Pattern.compile("rgba?\\(([^)]+)\\)", Pattern.CASE_INSENSITIVE);
     private static final Pattern COLOR_COMPONENT_SEPARATOR = Pattern.compile("\\s*,\\s*");
@@ -41,7 +40,15 @@ class OverlayRenderer {
 
     private int value;
     private Image icon;
+    private String name = "";
+    private Color lightColor;            // parsed control light colour, or null when none/unavailable
     private boolean showNumber = true;
+    private boolean twoLine = true;
+    private boolean showAppName = true;
+    private boolean barFollowsLight;
+    private int textSize = Save.DEFAULT_OVERLAY_TEXT_SIZE;
+    private int iconSize = ICON_SIZE;
+    private int elementGap = CONTENT_PADDING;
     private int windowCornerRadius = DEFAULT_CORNER_RADIUS;
     private int barHeight = DEFAULT_BAR_HEIGHT;
     private int barCornerRadius = DEFAULT_BAR_CORNER_RADIUS;
@@ -58,11 +65,26 @@ class OverlayRenderer {
         this.icon = icon;
     }
 
+    void setName(String name) {
+        this.name = name == null ? "" : name;
+    }
+
+    /** The control's current light colour as a CSS/hex string, or {@code null}/blank when there is none. */
+    void setLightColor(String css) {
+        this.lightColor = css == null || css.isBlank() ? null : parseColor(css, null);
+    }
+
     /**
      * Applies the persisted overlay styling and returns the resulting window height.
      */
     int setStyles(Save save) {
         showNumber = save.isOverlayShowNumber();
+        twoLine = save.isOverlayTwoLine();
+        showAppName = save.isOverlayShowAppName();
+        barFollowsLight = save.isOverlayBarFollowsLight();
+        textSize = Math.clamp(save.getOverlayTextSize(), 6, 48);
+        iconSize = Math.clamp(save.getOverlayIconSize(), 0, 96);
+        elementGap = Math.max(0, save.getOverlayElementGap());
         backgroundColor = parseColor(save.getOverlayBackgroundColor(), DEFAULT_BG_COLOR);
         textColor = parseColor(save.getOverlayTextColor(), DEFAULT_TEXT_COLOR);
         barColor = parseColor(save.getOverlayBarColor(), DEFAULT_BAR_COLOR);
@@ -74,7 +96,25 @@ class OverlayRenderer {
     }
 
     int computeHeight() {
-        return Math.max(DEFAULT_HEIGHT, CONTENT_PADDING * 2 + Math.max(ICON_SIZE, barHeight));
+        var pad = CONTENT_PADDING;
+        if (twoLine) {
+            var topRow = Math.max(iconSize, textSize + 4);
+            return pad * 2 + topRow + elementGap + barHeight;
+        }
+        return Math.max(DEFAULT_HEIGHT, pad * 2 + Math.max(Math.max(iconSize, textSize + 4), barHeight));
+    }
+
+    /** The bar colour actually used: the control's light when "follow light" is on and one is available. */
+    private Color effectiveBarColor() {
+        return barFollowsLight && lightColor != null ? lightColor : barColor;
+    }
+
+    private String valueLabel() {
+        return value + "%";
+    }
+
+    private void applyFont(Graphics2D g2, int size) {
+        g2.setFont(new Font("Segoe UI", Font.BOLD, size));
     }
 
     void render(Graphics2D g2, int w, int h) {
@@ -82,68 +122,125 @@ class OverlayRenderer {
         g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
 
         var windowArc = Math.min(windowCornerRadius, Math.min(w, h));
-        var barArc = Math.min(barCornerRadius, barHeight);
 
-        // ── Background pill ──────────────────────────────────────────
+        // ── Background pill + glass shimmer ──────────────────────────
         g2.setColor(backgroundColor);
         g2.fill(new RoundRectangle2D.Float(0, 0, w, h, windowArc, windowArc));
-
-        // Subtle top highlight (glass shimmer)
         var gloss = new GradientPaint(
                 0, 0, withAlpha(Color.WHITE, Math.clamp(backgroundColor.getAlpha() / 4, 18, 60)),
                 0, h / 2f, withAlpha(Color.WHITE, 0));
         g2.setPaint(gloss);
         g2.fill(new RoundRectangle2D.Float(0, 0, w, h / 2f, windowArc, windowArc));
 
-        // ── Icon area ────────────────────────────────────────────────
-        var iconX = CONTENT_PADDING + 2;
-        var iconY = (h - ICON_SIZE) / 2;
-        if (icon != null) {
-            g2.drawImage(icon, iconX, iconY, ICON_SIZE, ICON_SIZE, null);
+        if (twoLine) {
+            renderTwoLine(g2, w, h);
+        } else {
+            renderOneLine(g2, w, h);
+        }
+    }
+
+    /** [icon] [name] [percent] on the top row, full-width bar beneath. Matches the settings preview. */
+    private void renderTwoLine(Graphics2D g2, int w, int h) {
+        var pad = CONTENT_PADDING;
+        var topRow = Math.max(iconSize, textSize + 4);
+        var rowTop = pad;
+
+        var x = pad;
+        if (icon != null && iconSize > 0) {
+            g2.drawImage(icon, x, rowTop + (topRow - iconSize) / 2, iconSize, iconSize, null);
+            x += iconSize + elementGap;
         }
 
-        // ── Layout constants ─────────────────────────────────────────
-        var afterIcon = iconX + ICON_SIZE + CONTENT_PADDING;
-        var valueWidth = showNumber ? VALUE_LABEL_WIDTH : 0;
-        var barEndX = w - CONTENT_PADDING - valueWidth - (showNumber ? VALUE_GAP : 0);
+        applyFont(g2, textSize);
+        var fm = g2.getFontMetrics();
+        var textBaseline = rowTop + (topRow + fm.getAscent() - fm.getDescent()) / 2;
+
+        // Value label sits at the right edge.
+        var valueRight = w - pad;
+        var valueLeft = valueRight;
+        if (showNumber) {
+            var label = valueLabel();
+            var lw = fm.stringWidth(label);
+            valueLeft = valueRight - lw;
+            g2.setColor(textColor);
+            g2.drawString(label, valueLeft, textBaseline);
+        }
+
+        // App name fills the space between the icon and the value, ellipsised if needed.
+        if (showAppName && !name.isBlank()) {
+            var nameRight = (showNumber ? valueLeft - elementGap : valueRight);
+            var avail = nameRight - x;
+            if (avail > 4) {
+                g2.setColor(textColor);
+                g2.drawString(ellipsize(fm, name, avail), x, textBaseline);
+            }
+        }
+
+        var barY = rowTop + topRow + elementGap;
+        drawBar(g2, pad, barY, w - 2 * pad);
+    }
+
+    /** [icon] [bar] [percent] on a single row (compact). */
+    private void renderOneLine(Graphics2D g2, int w, int h) {
+        var pad = CONTENT_PADDING;
+        var x = pad;
+        if (icon != null && iconSize > 0) {
+            g2.drawImage(icon, x, (h - iconSize) / 2, iconSize, iconSize, null);
+            x += iconSize + elementGap;
+        }
+
+        applyFont(g2, textSize);
+        var fm = g2.getFontMetrics();
+        var valueWidth = showNumber ? fm.stringWidth("100%") : 0;
+        var barEndX = w - pad - (showNumber ? valueWidth + VALUE_GAP : 0);
         var barY = (h - barHeight) / 2;
-        var barWidth = barEndX - afterIcon;
+        drawBar(g2, x, barY, barEndX - x);
 
-        // ── Progress bar track ───────────────────────────────────────
+        if (showNumber) {
+            var label = valueLabel();
+            var labelX = w - pad - (valueWidth + fm.stringWidth(label)) / 2;
+            var labelY = (h + fm.getAscent() - fm.getDescent()) / 2;
+            g2.setColor(textColor);
+            g2.drawString(label, labelX, labelY);
+        }
+    }
+
+    /** Draws the progress-bar track + gradient fill + leading cap at the given position/width. */
+    private void drawBar(Graphics2D g2, int x, int y, int barWidth) {
+        if (barWidth <= 0) {
+            return;
+        }
+        var barArc = Math.min(barCornerRadius, barHeight);
+        var bar = effectiveBarColor();
+
         g2.setColor(barTrackColor);
-        g2.fill(new RoundRectangle2D.Float(afterIcon, barY, barWidth, barHeight, barArc, barArc));
+        g2.fill(new RoundRectangle2D.Float(x, y, barWidth, barHeight, barArc, barArc));
 
-        // ── Progress bar fill ────────────────────────────────────────
         var fillWidth = Math.round(barWidth * (value / 100f));
         if (fillWidth > 0) {
             var fillGrad = new GradientPaint(
-                    afterIcon, 0, scaleColor(barColor, 1.15f),
-                    afterIcon + fillWidth, 0, scaleColor(barColor, 0.82f));
+                    x, 0, scaleColor(bar, 1.15f),
+                    x + fillWidth, 0, scaleColor(bar, 0.82f));
             g2.setPaint(fillGrad);
-            g2.fill(new RoundRectangle2D.Float(afterIcon, barY, fillWidth, barHeight, barArc, barArc));
+            g2.fill(new RoundRectangle2D.Float(x, y, fillWidth, barHeight, barArc, barArc));
 
-            // Bright leading cap
             if (fillWidth >= barHeight) {
-                g2.setColor(withAlpha(scaleColor(barColor, 1.35f), Math.clamp(barColor.getAlpha(), 120, 220)));
-                var capX = afterIcon + fillWidth - barHeight;
-                g2.fill(new Ellipse2D.Float(capX, barY, barHeight, barHeight));
+                g2.setColor(withAlpha(scaleColor(bar, 1.35f), Math.clamp(bar.getAlpha(), 120, 220)));
+                g2.fill(new Ellipse2D.Float(x + fillWidth - barHeight, y, barHeight, barHeight));
             }
         }
+    }
 
-        // ── Value label ──────────────────────────────────────────────
-        if (showNumber) {
-            g2.setColor(textColor);
-            g2.setFont(new Font("SF Pro Display", Font.BOLD, 16));
-            // Fallback font chain
-            if (!g2.getFont().getFamily().equals("SF Pro Display")) {
-                g2.setFont(new Font("Segoe UI", Font.BOLD, 16));
-            }
-            var label = String.valueOf(value);
-            var fm = g2.getFontMetrics();
-            var labelX = w - CONTENT_PADDING - valueWidth + (valueWidth - fm.stringWidth(label)) / 2;
-            var labelY = (h + fm.getAscent() - fm.getDescent()) / 2;
-            g2.drawString(label, labelX, labelY);
+    private static String ellipsize(java.awt.FontMetrics fm, String text, int maxWidth) {
+        if (fm.stringWidth(text) <= maxWidth) {
+            return text;
         }
+        var ellipsis = "…";
+        var end = text.length();
+        while (end > 0 && fm.stringWidth(text.substring(0, end) + ellipsis) > maxWidth) {
+            end--;
+        }
+        return end <= 0 ? ellipsis : text.substring(0, end) + ellipsis;
     }
 
     static Color parseColor(String value, Color fallback) {

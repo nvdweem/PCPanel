@@ -1,14 +1,20 @@
 package com.getpcpanel.overlay;
 
 import java.awt.Image;
+import java.io.File;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+
+import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.IconService;
 import com.getpcpanel.commands.PCPanelControlEvent;
 import com.getpcpanel.commands.command.ButtonAction;
+import com.getpcpanel.commands.command.Command;
+import com.getpcpanel.commands.command.CommandVolumeFocus;
 import com.getpcpanel.commands.command.DialAction;
+import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.profile.dto.OverlayPosition;
@@ -17,6 +23,7 @@ import com.sun.jna.Platform;
 import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.event.Observes;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -28,6 +35,7 @@ import one.util.streamex.StreamEx;
 public class Overlay {
     private final SaveService save;
     private final IconService iconService;
+    private final Instance<ISndCtrl> sndCtrl;
     // The AWT/Swing windowing toolkit is unsupported in the GraalVM native image (it segfaults the
     // native WToolkit event loop), so neither overlay uses it: Windows draws a JNA layered window and
     // Linux/Wayland asks the desktop to draw it over D-Bus (KDE volume OSD, else a notification).
@@ -111,7 +119,7 @@ public class Overlay {
         }
         var cai = pre.get();
         if (hasOverlay(cai.command) && pred.test(cai.command)) {
-            overlay.show(value, cai.icon);
+            overlay.show(new OverlayContent(value, cai.icon, cai.name, null));
         }
     }
 
@@ -129,11 +137,29 @@ public class Overlay {
             // Icon decoding needs libawt (Windows only); elsewhere the overlay is a no-op that ignores
             // the icon, so skip the BufferedImage lookup entirely to stay libawt-free.
             var icon = Platform.isWindows() ? iconService.getImageFrom(data, setting) : null;
-            return new CommandAndIcon(data, icon);
+            return new CommandAndIcon(data, icon, targetName(data));
         }).orElse(CommandAndIcon.DEFAULT);
     }
 
-    private record CommandAndIcon(Commands command, Image icon) {
-        static final CommandAndIcon DEFAULT = new CommandAndIcon(Commands.EMPTY, null);
+    /** A best-effort name of what the control affects, for the overlay's app-name line. */
+    private String targetName(Commands commands) {
+        return StreamEx.of(commands.getCommands())
+                       .map(this::nameOf)
+                       .findFirst(StringUtils::isNotBlank)
+                       .orElse("");
+    }
+
+    private String nameOf(Command command) {
+        if (command instanceof CommandVolumeFocus) {
+            // Focus volume targets the foreground app; Wave Link's friendly name isn't available here, so
+            // use the executable's base name without its extension (e.g. msedge.exe → msedge).
+            var app = sndCtrl.isResolvable() ? sndCtrl.get().getFocusApplication() : null;
+            return app == null ? "" : StringUtils.removeEndIgnoreCase(new File(app).getName(), ".exe");
+        }
+        return command.buildLabel();
+    }
+
+    private record CommandAndIcon(Commands command, Image icon, String name) {
+        static final CommandAndIcon DEFAULT = new CommandAndIcon(Commands.EMPTY, null, "");
     }
 }

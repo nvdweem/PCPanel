@@ -576,12 +576,18 @@ export interface SettingsDto {
     overlayBarBackgroundColor: string;
     overlayBarColor: string;
     overlayBarCornerRounding?: number;
+    overlayBarFollowsLight: boolean;
     overlayBarHeight?: number;
+    overlayElementGap?: number;
     overlayEnabled: boolean;
+    overlayIconSize?: number;
     overlayPadding?: number;
     overlayPosition?: OverlayPosition;
+    overlayShowAppName: boolean;
     overlayShowNumber: boolean;
     overlayTextColor: string;
+    overlayTextSize?: number;
+    overlayTwoLine: boolean;
     overlayUseLog: boolean;
     overlayWindowCornerRounding: number;
     preventClickWhenDblClick: boolean;

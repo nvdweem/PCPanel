@@ -1,6 +1,5 @@
 package com.getpcpanel.overlay;
 
-import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.util.concurrent.Executors;
@@ -86,10 +85,12 @@ public class Win32VolumeOverlay implements OverlayWindow {
     private ScheduledFuture<?> dismissFuture;
 
     @Override
-    public void show(float value, Image icon) {
+    public void show(OverlayContent content) {
         synchronized (lock) {
-            renderer.setValue(Math.round(value * 100f));
-            renderer.setIcon(icon);
+            renderer.setValue(Math.round(content.value() * 100f));
+            renderer.setIcon(content.icon());
+            renderer.setName(content.name());
+            renderer.setLightColor(content.lightColorCss());
         }
         pendingHide = false;
         pendingShow = true;

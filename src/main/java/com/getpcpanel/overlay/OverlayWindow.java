@@ -1,7 +1,5 @@
 package com.getpcpanel.overlay;
 
-import java.awt.Image;
-
 import com.getpcpanel.profile.Save;
 
 /**
@@ -19,8 +17,8 @@ import com.getpcpanel.profile.Save;
  * Implementations are responsible for marshalling work onto their own UI thread.
  */
 public interface OverlayWindow {
-    /** Render the overlay for the given value (0..1) and icon and make it visible (auto-hides). */
-    void show(float value, Image icon);
+    /** Render the overlay for the given content and make it visible (auto-hides). */
+    void show(OverlayContent content);
 
     /** Apply persisted styling (colors, sizes, number visibility). */
     void setStyles(Save save);

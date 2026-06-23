@@ -35,11 +35,11 @@ public class OverlayDemoTrigger {
         try {
             for (var cycle = 0; cycle < 4; cycle++) {
                 for (var v = 0; v <= 100; v += 5) {
-                    overlay.show(v / 100f, null);
+                    overlay.show(new OverlayContent(v / 100f, null, "Demo App", null));
                     Thread.sleep(80);
                 }
                 for (var v = 100; v >= 0; v -= 5) {
-                    overlay.show(v / 100f, null);
+                    overlay.show(new OverlayContent(v / 100f, null, "Demo App", null));
                     Thread.sleep(80);
                 }
             }
