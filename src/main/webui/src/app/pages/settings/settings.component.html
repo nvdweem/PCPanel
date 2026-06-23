@@ -480,6 +480,33 @@
                 </div>
               </div>
 
+              <div class="micro-label section-label">LAYOUT</div>
+              <div class="pc-card pad stack" [class.disabled-block]="!overlayStylingSupported()">
+                <div class="row">
+                  <div class="row-text"><div class="row-label">Two lines</div><div class="row-sub">name + bar on separate rows (off = compact single row)</div></div>
+                  <pc-toggle [value]="s.overlayTwoLine" [disabled]="!overlayStylingSupported()" (valueChange)="patch('overlayTwoLine', $event)"></pc-toggle>
+                </div>
+                <div class="row">
+                  <div class="row-text"><div class="row-label">Show app name</div><div class="row-sub">name of the controlled target</div></div>
+                  <pc-toggle [value]="s.overlayShowAppName" [disabled]="!overlayStylingSupported()" (valueChange)="patch('overlayShowAppName', $event)"></pc-toggle>
+                </div>
+                <div class="slider-row">
+                  <div class="sr-head"><span class="sr-label">Text size</span><span class="sr-val mono">{{ s.overlayTextSize ?? 14 }}px</span></div>
+                  <pc-slider [value]="s.overlayTextSize ?? 14" [min]="6" [max]="48" [disabled]="!overlayStylingSupported()"
+                             (valueChange)="patch('overlayTextSize', $event)" (changeEnd)="patch('overlayTextSize', $event)"></pc-slider>
+                </div>
+                <div class="slider-row">
+                  <div class="sr-head"><span class="sr-label">Icon size</span><span class="sr-val mono">{{ s.overlayIconSize ?? 32 }}px</span></div>
+                  <pc-slider [value]="s.overlayIconSize ?? 32" [min]="0" [max]="96" [disabled]="!overlayStylingSupported()"
+                             (valueChange)="patch('overlayIconSize', $event)" (changeEnd)="patch('overlayIconSize', $event)"></pc-slider>
+                </div>
+                <div class="slider-row">
+                  <div class="sr-head"><span class="sr-label">Element spacing</span><span class="sr-val mono">{{ s.overlayElementGap ?? 10 }}px</span></div>
+                  <pc-slider [value]="s.overlayElementGap ?? 10" [min]="0" [max]="40" [disabled]="!overlayStylingSupported()"
+                             (valueChange)="patch('overlayElementGap', $event)" (changeEnd)="patch('overlayElementGap', $event)"></pc-slider>
+                </div>
+              </div>
+
               <div class="micro-label section-label">BEHAVIOUR</div>
               <div class="pc-card pad stack" [class.disabled-block]="!overlayStylingSupported()">
                 <div class="row">
@@ -517,23 +544,49 @@
                      [style]="overlayPreviewStyle()"
                      [style.background-color]="s.overlayBackgroundColor || '#14161B'"
                      [style.border-radius.px]="s.overlayWindowCornerRounding ?? 12"
-                     [style.padding.px]="14">
-                  <div class="ov-top">
-                    <span class="ov-tile" [style.color]="s.overlayTextColor || '#E9EBF0'">A</span>
-                    <span class="ov-name" [style.color]="s.overlayTextColor || '#E9EBF0'">App Name</span>
-                    @if (s.overlayShowNumber) {
-                      <span class="ov-pct mono" [style.color]="s.overlayTextColor || '#E9EBF0'">55%</span>
-                    }
-                  </div>
-                  <div class="ov-bar-track"
-                       [style.background-color]="s.overlayBarBackgroundColor || '#23262E'"
-                       [style.height.px]="s.overlayBarHeight ?? 8"
-                       [style.border-radius.px]="s.overlayBarCornerRounding ?? 4">
-                    <div class="ov-bar-fill"
-                         [style.background-color]="s.overlayBarColor || '#FFB020'"
-                         [style.border-radius.px]="s.overlayBarCornerRounding ?? 4"
-                         [style.width.%]="55"></div>
-                  </div>
+                     [style.gap.px]="s.overlayElementGap ?? 10"
+                     [style.padding.px]="10">
+                  @if (s.overlayTwoLine) {
+                    <div class="ov-top" [style.gap.px]="s.overlayElementGap ?? 10">
+                      @if ((s.overlayIconSize ?? 32) > 0) {
+                        <span class="ov-tile" [style.width.px]="s.overlayIconSize ?? 32" [style.height.px]="s.overlayIconSize ?? 32"></span>
+                      }
+                      @if (s.overlayShowAppName) {
+                        <span class="ov-name" [style.color]="s.overlayTextColor || '#E9EBF0'" [style.font-size.px]="s.overlayTextSize ?? 14">Microsoft Edge</span>
+                      }
+                      @if (s.overlayShowNumber) {
+                        <span class="ov-pct mono" [style.color]="s.overlayTextColor || '#E9EBF0'" [style.font-size.px]="s.overlayTextSize ?? 14"
+                              [style.margin-left]="s.overlayShowAppName ? '' : 'auto'">65%</span>
+                      }
+                    </div>
+                    <div class="ov-bar-track"
+                         [style.background-color]="s.overlayBarBackgroundColor || '#23262E'"
+                         [style.height.px]="s.overlayBarHeight ?? 8"
+                         [style.border-radius.px]="s.overlayBarCornerRounding ?? 4">
+                      <div class="ov-bar-fill"
+                           [style.background-color]="s.overlayBarColor || '#FFB020'"
+                           [style.border-radius.px]="s.overlayBarCornerRounding ?? 4"
+                           [style.width.%]="65"></div>
+                    </div>
+                  } @else {
+                    <div class="ov-top" [style.gap.px]="s.overlayElementGap ?? 10">
+                      @if ((s.overlayIconSize ?? 32) > 0) {
+                        <span class="ov-tile" [style.width.px]="s.overlayIconSize ?? 32" [style.height.px]="s.overlayIconSize ?? 32"></span>
+                      }
+                      <div class="ov-bar-track" style="flex:1;min-width:0"
+                           [style.background-color]="s.overlayBarBackgroundColor || '#23262E'"
+                           [style.height.px]="s.overlayBarHeight ?? 8"
+                           [style.border-radius.px]="s.overlayBarCornerRounding ?? 4">
+                        <div class="ov-bar-fill"
+                             [style.background-color]="s.overlayBarColor || '#FFB020'"
+                             [style.border-radius.px]="s.overlayBarCornerRounding ?? 4"
+                             [style.width.%]="65"></div>
+                      </div>
+                      @if (s.overlayShowNumber) {
+                        <span class="ov-pct mono" [style.color]="s.overlayTextColor || '#E9EBF0'" [style.font-size.px]="s.overlayTextSize ?? 14">65%</span>
+                      }
+                    </div>
+                  }
                 </div>
               </div>
             </div>
