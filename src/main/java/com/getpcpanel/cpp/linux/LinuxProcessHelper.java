@@ -1,10 +1,12 @@
 package com.getpcpanel.cpp.linux;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -45,9 +47,13 @@ public class LinuxProcessHelper {
     }
 
     public int getActiveProcessPid() {
-        return getActiveProcessPid(Tool.KDoTool)
+        var pid = getActiveProcessPid(Tool.KDoTool)
                 .or(() -> getActiveProcessPid(Tool.XDoTool))
                 .orElse(-1);
+        if (pid == -1 && !anyActiveWindowToolAvailable()) {
+            warnNoActiveWindowTool();
+        }
+        return pid;
     }
 
     private Optional<Integer> getActiveProcessPid(Tool tool) {
@@ -94,7 +100,11 @@ public class LinuxProcessHelper {
      * getwindowname}) so a per-knob-tick focus volume change spawns a single helper process, not three.
      */
     public Optional<ActiveWindow> getActiveWindow() {
-        return getActiveWindow(Tool.KDoTool).or(() -> getActiveWindow(Tool.XDoTool));
+        var result = getActiveWindow(Tool.KDoTool).or(() -> getActiveWindow(Tool.XDoTool));
+        if (result.isEmpty() && !anyActiveWindowToolAvailable()) {
+            warnNoActiveWindowTool();
+        }
+        return result;
     }
 
     private Optional<ActiveWindow> getActiveWindow(Tool tool) {
@@ -185,6 +195,66 @@ public class LinuxProcessHelper {
         return full;
     }
 
+    private boolean anyActiveWindowToolAvailable() {
+        return Tool.KDoTool.available(Tool.KDoTool.command()) || Tool.XDoTool.available(Tool.XDoTool.command());
+    }
+
+    private static final long WARN_LOG_INTERVAL_MS = 5L * 60 * 1000;
+    private volatile long lastNoToolWarnAt;
+    private volatile boolean desktopNotified;
+
+    /**
+     * Focus volume and the other focused-window features need an active-window helper. On KDE Plasma
+     * (Wayland or X11) that is kdotool, which we now bundle next to the executable in every Linux build,
+     * so this should normally never fire - but a user running from source, on an unsupported CPU arch, or
+     * with a broken {@code linux.commands.kdotool} override can still end up with nothing available. Make
+     * that visible instead of failing silently (the long-standing #88 "the knob just does nothing"
+     * complaint): a throttled log line, plus a best-effort desktop notification the first time it happens.
+     */
+    private void warnNoActiveWindowTool() {
+        var now = System.currentTimeMillis();
+        if (now - lastNoToolWarnAt > WARN_LOG_INTERVAL_MS) {
+            lastNoToolWarnAt = now;
+            log.warn("No active-window tool available - focus volume and focused-app features cannot work. "
+                    + "Install 'kdotool' (it handles both Wayland and X11 on KDE Plasma; xdotool is not needed "
+                    + "alongside it). It ships bundled with the .deb/AppImage/Flatpak, so seeing this usually "
+                    + "means a PATH/override issue or an unsupported setup. See linux.md.");
+        }
+        if (!desktopNotified) {
+            desktopNotified = true;
+            sendDesktopNotification("PCPanel: focus control unavailable",
+                    "Install kdotool to control the focused application's volume on KDE Plasma (Wayland/X11).");
+        }
+    }
+
+    /** Best-effort desktop popup via notify-send. A missing notify-send is fine - the log line remains the signal. */
+    private void sendDesktopNotification(String title, String body) {
+        try {
+            processHelper.builder(hostCmd("notify-send", "-a", "PCPanel", title, body))
+                         .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+                         .redirectError(ProcessBuilder.Redirect.DISCARD)
+                         .start();
+        } catch (Exception e) {
+            log.debug("Could not show desktop notification (notify-send missing?)", e);
+        }
+    }
+
+    /**
+     * Resolves a tool bundled next to our own executable (the .deb/AppImage/Flatpak ship kdotool there,
+     * beside the companion {@code *.so} libraries), or {@code null} when there is no such sibling - e.g.
+     * in dev mode where the running executable is the JVM, not the PCPanel binary.
+     */
+    private static @Nullable String bundledSibling(String name) {
+        return ProcessHandle.current().info().command()
+                            .map(Path::of)
+                            .map(Path::getParent)
+                            .filter(Objects::nonNull)
+                            .map(dir -> dir.resolve(name))
+                            .filter(Files::isExecutable)
+                            .map(Path::toString)
+                            .orElse(null);
+    }
+
     private @Nullable String lineFrom(String... cmd) throws IOException {
         var lines = linesFrom(cmd);
         if (lines.isEmpty()) {
@@ -227,14 +297,16 @@ public class LinuxProcessHelper {
             this.tool = tool;
         }
 
-        @PostConstruct
-        public void bla() {
-            log.error("Post construct");
-        }
-
         private String command() {
-            var configured = ConfigProvider.getConfig().getOptionalValue("linux.commands." + tool, String.class).orElse(tool);
-            return resolveHomeRelativePath(configured);
+            var configured = resolveHomeRelativePath(
+                    ConfigProvider.getConfig().getOptionalValue("linux.commands." + tool, String.class).orElse(tool));
+            // An explicit path override (contains a path separator, e.g. ~/.cargo/bin/kdotool) is honored
+            // verbatim. For a bare command name, prefer a copy bundled next to our own executable over the
+            // bare PATH lookup, so focus volume works out of the box on KDE without a system-wide install.
+            if (configured.indexOf(File.separatorChar) >= 0) {
+                return configured;
+            }
+            return Optional.ofNullable(bundledSibling(configured)).orElse(configured);
         }
 
         private boolean available(String command) {
