@@ -7,8 +7,9 @@
 #
 # Focused-window detection: kdotool (Apache-2.0) is bundled inside the sandbox and talks to the host
 # KWin over D-Bus (--talk-name=org.kde.KWin), so "focus volume" works on KDE Plasma (Wayland/X11)
-# without a host-installed kdotool. kdotool writes its KWin script to a temp file whose path KWin must
-# read, so kdotool-wrapper.sh points its TMPDIR at the host-visible app home (see that script). See #88.
+# without a host-installed kdotool. kdotool writes its KWin script to a temp file whose path the host
+# KWin must read, so kdotool-wrapper.sh points its TMPDIR at the host-visible per-app cache dir
+# (XDG_CACHE_HOME = ~/.var/app/<id>/cache, identity-mapped into the sandbox); see that script. See #88.
 #
 # Known limitations (the app is primarily developed for Windows):
 #   * Volume control still relies on host pactl (forwarded via flatpak-spawn --host); xdotool (only
@@ -41,8 +42,9 @@ finish-args:
   - --talk-name=org.freedesktop.Flatpak
   # Bundled kdotool drives the host KWin's scripting API to resolve the focused window
   - --talk-name=org.kde.KWin
-  # No host-filesystem grant for the profile store: inside the sandbox $HOME is the per-app
-  # ~/.var/app/com.getpcpanel.PCPanel/ directory, and PcPanelRoot resolves the data dir via
+  # No host-filesystem grant for the profile store: the host-backed per-app dir
+  # ~/.var/app/com.getpcpanel.PCPanel/ is the persisted store ($HOME itself is an unbacked sandbox
+  # overlay at /home/<user>), and PcPanelRoot resolves the data dir via
   # $XDG_CONFIG_HOME (i.e. ~/.var/app/com.getpcpanel.PCPanel/config/pcpanel) which Flatpak persists
   # across runs and upgrades automatically. To import profiles from a non-Flatpak install, copy the
   # old profiles.json into that directory or set --env=PCPANEL_ROOT plus a --filesystem grant.

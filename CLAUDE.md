@@ -54,7 +54,9 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
   own binary over the `PATH` lookup; `xdotool` is only an optional non-KDE-X11 fallback (kdotool covers
   X11, so the two are never both required). Inside the Flatpak, kdotool runs in the sandbox and drives
   the host KWin over D-Bus (`--talk-name=org.kde.KWin`); `kdotool-wrapper.sh` points its `TMPDIR` at the
-  host-visible app home so KWin can read the temp KWin script kdotool generates.
+  host-visible per-app cache dir (`XDG_CACHE_HOME` = `~/.var/app/<id>/cache`, identity-mapped into the
+  sandbox — *not* `$HOME`, which is an unbacked overlay) so the host KWin can read the temp KWin script
+  kdotool generates.
 - **Releasing:** `<project.baseversion>` in `pom.xml` is the version source of truth (artifacts are
   `<baseversion>.<build>`). Bump it with `packaging/bump-version.sh <version>` (also updates the
   AppStream metadata), then push a `releases/<version>` branch to trigger a pre-release build. CI bakes
