@@ -49,6 +49,13 @@ for lib in "$EXE_DIR"/*.so "$EXE_DIR"/*.so.*; do
 done
 shopt -u nullglob
 
+# Bundle kdotool (Apache-2.0) next to the executable so "focus volume" works out of the box on KDE
+# Plasma (Wayland and X11) - the recommended AppImage runs unsandboxed, so the bundled kdotool reaches
+# the host KWin directly. LinuxProcessHelper prefers a kdotool sibling of its own binary over PATH.
+# No-op on non-x86_64 (no upstream prebuilt binary).
+bash "$PKG_LINUX/fetch-kdotool.sh" "$APPDIR/usr/bin" || \
+    echo ">> WARNING: could not bundle kdotool; focus volume will need a system kdotool/xdotool" >&2
+
 # AppRun launcher.
 install -m 0755 "$PKG_LINUX/appimage/AppRun" "$APPDIR/AppRun"
 

@@ -5,10 +5,15 @@
 # does not belong in a Flatpak SDK build. CI assembles `pcpanel-native.tar.gz`
 # (PCPanel executable + companion *.so libraries) next to this manifest before building.
 #
+# Focused-window detection: kdotool (Apache-2.0) is bundled inside the sandbox and talks to the host
+# KWin over D-Bus (--talk-name=org.kde.KWin), so "focus volume" works on KDE Plasma (Wayland/X11)
+# without a host-installed kdotool. kdotool writes its KWin script to a temp file whose path KWin must
+# read, so kdotool-wrapper.sh points its TMPDIR at the host-visible app home (see that script). See #88.
+#
 # Known limitations (the app is primarily developed for Windows):
-#   * Volume control and focused-window detection rely on host tools (pactl, xdotool,
-#     kdotool). They are forwarded to the host with flatpak-spawn, which needs the host
-#     binaries installed and the org.freedesktop.Flatpak talk permission below.
+#   * Volume control still relies on host pactl (forwarded via flatpak-spawn --host); xdotool (only
+#     useful on non-KDE X11) is likewise forwarded to the host if present. Both need the
+#     org.freedesktop.Flatpak talk permission below.
 #   * Autostart on login is not configured here; enable it via your desktop's autostart
 #     settings or `flatpak run` from a user systemd unit.
 app-id: com.getpcpanel.PCPanel
@@ -32,8 +37,10 @@ finish-args:
   # System tray (StatusNotifierItem)
   - --talk-name=org.kde.StatusNotifierWatcher
   - --talk-name=org.freedesktop.Notifications
-  # Run host tools (pactl/xdotool/kdotool) via flatpak-spawn --host
+  # Run remaining host tools (pactl/xdotool) via flatpak-spawn --host
   - --talk-name=org.freedesktop.Flatpak
+  # Bundled kdotool drives the host KWin's scripting API to resolve the focused window
+  - --talk-name=org.kde.KWin
   # No host-filesystem grant for the profile store: inside the sandbox $HOME is the per-app
   # ~/.var/app/com.getpcpanel.PCPanel/ directory, and PcPanelRoot resolves the data dir via
   # $XDG_CONFIG_HOME (i.e. ~/.var/app/com.getpcpanel.PCPanel/config/pcpanel) which Flatpak persists
@@ -50,11 +57,15 @@ modules:
       - install -m 0755 PCPanel /app/pcpanel/PCPanel
       - install -d /app/bin
       - 'for so in *.so *.so.*; do [ -e "$so" ] && install -m 0644 "$so" /app/pcpanel/ || true; done'
-      # Launcher + host-tool shims.
+      # Launcher + host-tool shims (pactl/xdotool are forwarded to the host).
       - install -m 0755 pcpanel-launcher.sh /app/bin/pcpanel
       - install -m 0755 host-spawn-wrapper.sh /app/bin/pactl
       - install -m 0755 host-spawn-wrapper.sh /app/bin/xdotool
-      - install -m 0755 host-spawn-wrapper.sh /app/bin/kdotool
+      # kdotool runs inside the sandbox (talks to the host KWin over D-Bus); the wrapper gives it a
+      # host-visible TMPDIR so KWin can read its generated script. Apache-2.0 license shipped alongside.
+      - install -m 0755 kdotool /app/pcpanel/kdotool
+      - install -m 0755 kdotool-wrapper.sh /app/bin/kdotool
+      - install -Dm 0644 kdotool-LICENSE /app/share/licenses/com.getpcpanel.PCPanel/kdotool-LICENSE
       # Desktop integration.
       - install -Dm 0644 com.getpcpanel.PCPanel.desktop /app/share/applications/com.getpcpanel.PCPanel.desktop
       - install -Dm 0644 com.getpcpanel.PCPanel.metainfo.xml /app/share/metainfo/com.getpcpanel.PCPanel.metainfo.xml
@@ -67,6 +78,14 @@ modules:
         path: pcpanel-launcher.sh
       - type: file
         path: host-spawn-wrapper.sh
+      - type: file
+        path: kdotool-wrapper.sh
+      # kdotool binary + its Apache-2.0 license, fetched by CI (packaging/linux/fetch-kdotool.sh)
+      # into the manifest's staging dir before the build.
+      - type: file
+        path: kdotool
+      - type: file
+        path: kdotool-LICENSE
       - type: file
         path: com.getpcpanel.PCPanel.desktop
       - type: file
