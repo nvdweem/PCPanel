@@ -1,7 +1,7 @@
 import { computed, Injectable } from '@angular/core';
 import { httpResource } from '@angular/common/http';
 
-interface PlatformInfo { os: string; voicemeeter: boolean; waveLink: boolean; version: string; }
+interface PlatformInfo { os: string; voicemeeter: boolean; waveLink: boolean; version: string; branch?: string | null; }
 
 /**
  * Platform capabilities reported by the BACKEND (the machine the device + native
@@ -16,6 +16,8 @@ export class PlatformService {
   readonly os = computed(() => this.info.value()?.os ?? '');
   /** Running app version reported by the backend (e.g. "2.0-SNAPSHOT"); avoids hardcoding it. */
   readonly version = computed(() => this.info.value()?.version ?? '');
+  /** Git branch of a local (SNAPSHOT) build, so several dev instances can be told apart; '' for releases. */
+  readonly branch = computed(() => this.info.value()?.branch ?? '');
   /** Default true until the backend answers, so supported integrations aren't hidden on load. */
   readonly voicemeeterSupported = computed(() => this.info.value()?.voicemeeter ?? true);
   readonly waveLinkSupported = computed(() => this.info.value()?.waveLink ?? true);

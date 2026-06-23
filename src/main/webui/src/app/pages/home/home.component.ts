@@ -69,6 +69,9 @@ export class HomeComponent {
   /** Actual running app version (from the backend), not a hardcoded string. */
   readonly appVersion = computed(() => this.platform.version());
 
+  /** Git branch for local (SNAPSHOT) builds — shown in the footer so running instances are distinguishable. */
+  readonly buildBranch = computed(() => this.platform.branch());
+
   readonly integrationRows = computed<IntegrationRow[]>(() => {
     const s = this.settings.settings.value();
     if (!s) return [];
