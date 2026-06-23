@@ -122,7 +122,9 @@ export class SettingsComponent {
   readonly overlayFonts = httpResource<string[]>(() => '/api/overlay/fonts');
   readonly fontOptions = computed<SelectOption<string>[]>(() => {
     const fonts = this.overlayFonts.value() ?? [];
-    return [{ value: '', label: 'Default (Segoe UI)' }, ...fonts.map(f => ({ value: f, label: f }))];
+    // Render each option's label in its own family so the picker previews the font (the local browser
+    // has the same system fonts the backend enumerates).
+    return [{ value: '', label: 'Default (Segoe UI)', font: 'Segoe UI' }, ...fonts.map(f => ({ value: f, label: f, font: f }))];
   });
 
   /** Position the overlay live-preview card per overlayPosition + (scaled) padding. */

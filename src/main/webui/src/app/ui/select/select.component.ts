@@ -10,6 +10,7 @@ export interface SelectOption<T = string> {
   badge?: string;       // e.g. "MAIN"
   hint?: string;        // e.g. "auto", "offline"
   disabled?: boolean;
+  font?: string;        // render this option's label in the given font-family (e.g. a font picker)
 }
 
 /** Dropdown select built on the CDK overlay. Optional leading micro-label and footer action. */
@@ -21,7 +22,7 @@ export interface SelectOption<T = string> {
     <button type="button" class="trigger" [class.block]="block()" cdkOverlayOrigin #trigger="cdkOverlayOrigin"
             (click)="open.set(!open())">
       @if (microLabel()) { <span class="micro-label">{{ microLabel() }}</span> }
-      <span class="val">{{ selectedLabel() }}</span>
+      <span class="val" [style.font-family]="selectedFont()">{{ selectedLabel() }}</span>
       <pc-icon name="chevron-down" [size]="13" [strokeWidth]="2.5"></pc-icon>
     </button>
 
@@ -34,7 +35,7 @@ export interface SelectOption<T = string> {
           <button type="button" class="opt" [class.selected]="opt.value === value()" [disabled]="opt.disabled"
                   (click)="pick(opt)">
             @if (opt.status) { <pc-status-dot [kind]="opt.status" [size]="7"></pc-status-dot> }
-            <span class="opt-label">{{ opt.label }}</span>
+            <span class="opt-label" [style.font-family]="opt.font">{{ opt.label }}</span>
             @if (opt.hint) { <span class="hint">{{ opt.hint }}</span> }
             @if (opt.badge) { <span class="badge">{{ opt.badge }}</span> }
           </button>
@@ -100,6 +101,11 @@ export class SelectComponent<T = string> {
     const v = this.value();
     const found = this.options().find(o => o.value === v);
     return found?.label ?? this.placeholder();
+  });
+
+  readonly selectedFont = computed(() => {
+    const v = this.value();
+    return this.options().find(o => o.value === v)?.font;
   });
 
   pick(opt: SelectOption<T>): void {
