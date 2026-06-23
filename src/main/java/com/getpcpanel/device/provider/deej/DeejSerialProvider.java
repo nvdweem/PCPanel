@@ -126,14 +126,16 @@ public class DeejSerialProvider implements DeviceProvider {
 
     public synchronized void removeManual(String deviceId) {
         var device = devices.remove(deviceId);
-        if (device != null) {
-            device.close();
-        }
+        // close() already fires the disconnect for a connected device; only fire the fallback ourselves
+        // when it didn't (never-connected device, or no such device) so we emit exactly one event.
+        var firedByClose = device != null && device.close();
         var save = saveService.get();
         if (save != null && save.getDevices().remove(deviceId) != null) {
             saveService.save();
         }
-        eventBus.fire(new DeviceScanner.DeviceDisconnectedEvent(deviceId));
+        if (!firedByClose) {
+            eventBus.fire(new DeviceScanner.DeviceDisconnectedEvent(deviceId));
+        }
     }
 
     private String connect(String portName, int baud, NoiseReduction noise, boolean persist) {
@@ -144,8 +146,15 @@ public class DeejSerialProvider implements DeviceProvider {
             existing.close();
         }
         var device = new DeejDevice(deviceId, portName, baud, noise);
+        // Register before open() so the reader thread's onError() can find and remove this entry, but
+        // undo the registration if open() fails (busy/unplugged port) so a dead device isn't left behind.
         devices.put(deviceId, device);
-        device.open();
+        try {
+            device.open();
+        } catch (RuntimeException e) {
+            devices.remove(deviceId, device);
+            throw e;
+        }
         if (persist) {
             persist(deviceId, portName, baud, noise);
         }
@@ -201,7 +210,10 @@ public class DeejSerialProvider implements DeviceProvider {
         private final NoiseReduction noise;
         @Nullable private volatile SerialConnection connection;
         @Nullable private int[] lastRaw; // null until the first valid line learns the slider count
-        private volatile boolean connectedFired;
+        // AtomicBoolean (not a plain volatile): close() is reachable concurrently from the serial reader
+        // thread (onError) and a caller thread (removeManual/stop/connect-replace); the CAS makes the
+        // "fire disconnect exactly once" decision atomic.
+        private final java.util.concurrent.atomic.AtomicBoolean connectedFired = new java.util.concurrent.atomic.AtomicBoolean(false);
 
         DeejDevice(String deviceId, String portName, int baud, NoiseReduction noise) {
             this.deviceId = deviceId;
@@ -234,7 +246,7 @@ public class DeejSerialProvider implements DeviceProvider {
         private synchronized void learn(int[] values) {
             lastRaw = values.clone();
             var descriptor = buildDescriptor(deviceId, values.length);
-            connectedFired = true;
+            connectedFired.set(true);
             // Fire connect first so DeviceHolder builds the device, then emit the initial values so
             // the command layer/UI reflect the starting slider positions.
             eventBus.fire(new DeviceScanner.DeviceConnectedEvent(deviceId, null, descriptor));
@@ -263,7 +275,9 @@ public class DeejSerialProvider implements DeviceProvider {
             devices.remove(deviceId, this);
         }
 
-        void close() {
+        /** Closes the port and fires a single disconnect event iff this device had connected. Returns
+         *  whether it fired the disconnect, so callers don't double-fire. */
+        boolean close() {
             var c = connection;
             connection = null;
             if (c != null) {
@@ -273,10 +287,11 @@ public class DeejSerialProvider implements DeviceProvider {
                     log.debug("Error closing Deej connection {}", portName, e);
                 }
             }
-            if (connectedFired) {
-                connectedFired = false;
+            if (connectedFired.compareAndSet(true, false)) {
                 eventBus.fire(new DeviceScanner.DeviceDisconnectedEvent(deviceId));
+                return true;
             }
+            return false;
         }
     }
 }
