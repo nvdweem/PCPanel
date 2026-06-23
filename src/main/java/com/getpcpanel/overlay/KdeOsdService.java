@@ -10,8 +10,8 @@ import org.freedesktop.dbus.interfaces.DBusInterface;
  * time, and it auto-hides — exactly the behaviour wanted for the volume overlay, rendered natively by
  * the compositor (so it works on Wayland without any client-side window placement or AWT).
  *
- * <p>Used by {@link LinuxOverlay} as the primary overlay on KDE; other desktops fall back to a
- * {@link FreedesktopNotifications} notification.
+ * <p>Used by {@link LinuxOverlay}, which is the Linux overlay on KDE; other desktops have no overlay
+ * (see {@link LinuxOverlay} for why a notification fallback was rejected).
  */
 @DBusInterfaceName("org.kde.osdService")
 public interface KdeOsdService extends DBusInterface {

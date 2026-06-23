@@ -47,10 +47,6 @@
     "allDeclaredMethods": true
   },
   {
-    "name": "com.getpcpanel.overlay.FreedesktopNotifications",
-    "allDeclaredMethods": true
-  },
-  {
     "name": "com.getpcpanel.overlay.KdeOsdService",
     "allDeclaredMethods": true
   },
