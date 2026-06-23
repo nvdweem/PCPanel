@@ -107,7 +107,8 @@ jobs:
         run: |
           $dist = "target/windows-dist"
           New-Item -ItemType Directory -Force -Path $dist | Out-Null
-          Copy-Item (Get-ChildItem target/*-runner.exe | Select-Object -First 1).FullName "$dist/PCPanel.exe"
+          $runner = Get-ChildItem target/*-runner.exe | Select-Object -First 1
+          Copy-Item $runner.FullName "$dist/PCPanel.exe"
           # native-image drops the companion DLLs next to the runner in target/.
           Copy-Item target/*.dll $dist/ -ErrorAction SilentlyContinue
           Write-Host "Distribution contents:"
@@ -115,9 +116,32 @@ jobs:
           if (-not (Get-ChildItem "$dist/*.dll" -ErrorAction SilentlyContinue)) {
             Write-Warning "No companion DLLs found next to the executable - the installer may be incomplete."
           }
+          # GraalVM's java.dll/jvm.dll shims import the JVM/JNI symbols from the exe by its build-time
+          # name; renaming the exe to PCPanel.exe (above) breaks that, so awt.dll can't load at runtime.
+          # Rewrite the shim import name to match the renamed exe.
+          & packaging/windows/patch-shim-imports.ps1 -DistDir $dist -OldName $runner.Name -NewName "PCPanel.exe"
           # native-image produces the exe without an icon; embed the app icon so the binary
           # (and the installer's shortcuts, which reference it) show the PCPanel logo.
           & packaging/windows/embed-icon.ps1 -ExePath "$dist/PCPanel.exe" -IconPath app-icon.ico
+
+      - name: Smoke-test the assembled exe (AWT loads)
+        shell: pwsh
+        # The native IT runs the un-renamed runner, so it cannot see breakage introduced by the
+        # rename/DLL-copy/icon-embed packaging. Run the EXACT shipped exe and assert the overlay font
+        # list is non-empty (a broken AWT image returns []), failing the build before it ships.
+        run: |
+          $exe = (Resolve-Path target/windows-dist/PCPanel.exe).Path
+          $p = Start-Process $exe -ArgumentList "skipfilecheck","-Dquarkus.http.port=7799" -PassThru -RedirectStandardOutput smoke.out -RedirectStandardError smoke.err
+          $up = $false
+          for ($i = 0; $i -lt 60; $i++) { try { if ((Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 http://127.0.0.1:7799/q/health).StatusCode -eq 200) { $up = $true; break } } catch {}; Start-Sleep 1 }
+          $count = -1
+          if ($up) { try { $count = @(Invoke-RestMethod -TimeoutSec 5 http://127.0.0.1:7799/api/overlay/fonts).Count } catch { Write-Host "fonts request failed: $_" } }
+          try { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } catch {}
+          Write-Host "Assembled PCPanel.exe font count: $count"
+          if ($count -lt 1) {
+            if (Test-Path smoke.out) { Get-Content smoke.out | Select-Object -Last 40 | ForEach-Object { Write-Host $_ } }
+            throw "Assembled PCPanel.exe failed to load AWT (font count=$count) - the shipped installer would have a dead overlay and font picker."
+          }
 
       - name: Install Inno Setup
         run: choco install innosetup --no-progress -y

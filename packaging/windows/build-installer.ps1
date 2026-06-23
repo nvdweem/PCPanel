@@ -121,6 +121,11 @@ if (-not $dlls) {
     Write-Warning "No companion DLLs found next to the executable - the installer may be incomplete."
 }
 
+# GraalVM's java.dll/jvm.dll shims import the JVM/JNI symbols from the exe by its build-time name;
+# renaming it to PCPanel.exe breaks that, so awt.dll can't load (dead overlay + fonts). Rewrite the
+# shim import name to match. Same step CI runs.
+& (Join-Path $PSScriptRoot 'patch-shim-imports.ps1') -DistDir $dist -OldName $runner.Name -NewName 'PCPanel.exe'
+
 # native-image emits the exe without an icon; embed the app icon so Explorer/taskbar
 # and the shortcuts (which point at the exe) show it. Same step CI runs.
 Write-Step "Embedding application icon"
