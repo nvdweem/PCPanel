@@ -65,13 +65,13 @@ export class SettingsComponent {
 
   private readonly allTabs: TabDef[] = [
     { id: 'general', label: 'General' },
+    { id: 'overlay', label: 'Overlay' },
     { id: 'obs', label: 'OBS Studio', integration: 'obs' },
     { id: 'voicemeeter', label: 'Voicemeeter', integration: 'voicemeeter' },
     { id: 'wavelink', label: 'Wave Link', integration: 'wavelink' },
     { id: 'osc', label: 'OSC' },
     { id: 'mqtt', label: 'MQTT' },
     { id: 'homeassistant', label: 'Home Assistant' },
-    { id: 'overlay', label: 'Overlay' },
     { id: 'debug', label: 'Debug' },
   ];
 
