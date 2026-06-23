@@ -30,18 +30,21 @@ public class VolumeCoordinatorService {
         var application = sndCtrl.getFocusApplication();
         var floatValue = (float) value;
 
-        // A redirector (e.g. Wave Link with focus-control on) gets first claim on the focused app.
+        // "Skip controlled apps" takes precedence: if the focused app is already controlled elsewhere (a
+        // per-app command, or a Wave Link channel — e.g. the user has a dedicated slider for that Wave Link
+        // mix), leave it ENTIRELY alone — don't redirect it to Wave Link, don't change its OS volume. This
+        // is checked before the redirector chain so the dedicated control isn't fought by the focus dial.
+        if (saveService.get().isSkipControlledFocusApps() && isOtherwiseControlled(application)) {
+            log.debug("Focus volume left {} untouched: already controlled elsewhere", application);
+            return;
+        }
+        // Otherwise a redirector (e.g. Wave Link with focus-control on) gets first claim on the focused app.
         var handler = StreamEx.of(focusRedirectors.handlesStream())
                               .findFirst(fr -> fr.get().handleFocusVolumeRequest(application, floatValue));
         if (handler.isPresent()) {
             // DEBUG, not TRACE: the native image's build-time min-level is DEBUG, so TRACE can never be
             // enabled at runtime. These short-circuits explain a "focus volume does nothing" report (#88).
             log.debug("Focus volume request for {} handled by {} (not applied to OS volume)", application, handler.get().get().getClass().getSimpleName());
-            return;
-        }
-        // Optionally leave apps already controlled elsewhere (a per-app command, or Wave Link) untouched.
-        if (saveService.get().isSkipControlledFocusApps() && isOtherwiseControlled(application)) {
-            log.debug("Focus volume left {} untouched: already controlled elsewhere", application);
             return;
         }
         log.debug("Focus volume: resolving OS audio stream for focused app {}", application);
@@ -104,13 +107,13 @@ public class VolumeCoordinatorService {
     }
 
     /**
-     * Whether focus volume would leave {@code application} untouched because the "skip otherwise
-     * controlled" option is on, no redirector claims it, and it is already controlled elsewhere.
-     * Side-effect-free — for the dev test harness.
+     * Whether focus volume would leave {@code application} untouched because the "skip controlled apps"
+     * option is on and it is already controlled elsewhere. This takes precedence over the redirector
+     * chain, so it holds even when a redirector (e.g. Wave Link) would otherwise claim the app.
+     * Side-effect-free — for the diagnostics endpoint and the dev test harness.
      */
     public boolean wouldSkipFocusVolume(String application) {
         return saveService.get().isSkipControlledFocusApps()
-                && focusVolumeTarget(application).isEmpty()
                 && isOtherwiseControlled(application);
     }
 }
