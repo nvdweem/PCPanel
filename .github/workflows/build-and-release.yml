@@ -134,13 +134,29 @@ jobs:
           $p = Start-Process $exe -ArgumentList "skipfilecheck","-Dquarkus.http.port=7799" -PassThru -RedirectStandardOutput smoke.out -RedirectStandardError smoke.err
           $up = $false
           for ($i = 0; $i -lt 60; $i++) { try { if ((Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 http://127.0.0.1:7799/q/health).StatusCode -eq 200) { $up = $true; break } } catch {}; Start-Sleep 1 }
-          $count = -1
-          if ($up) { try { $count = @(Invoke-RestMethod -TimeoutSec 5 http://127.0.0.1:7799/api/overlay/fonts).Count } catch { Write-Host "fonts request failed: $_" } }
+          # Poll the font list: a broken AWT image returns [] (count 0), a working one returns the system
+          # fonts (~100+). Retry because the first call cold-loads awt.dll and Java2D, which can lag the
+          # health check; measure from the parsed body (not @(Invoke-RestMethod).Count, which collapses a
+          # null/empty response to 1 and masked a broken build once already).
+          $count = 0; $rawLen = 0
+          if ($up) {
+            for ($i = 0; $i -lt 30; $i++) {
+              try {
+                $raw = (Invoke-WebRequest -UseBasicParsing -TimeoutSec 10 http://127.0.0.1:7799/api/overlay/fonts).Content
+                $rawLen = $raw.Length
+                $count = @([string[]]($raw | ConvertFrom-Json)).Count
+                if ($count -gt 0) { break }
+              } catch { Write-Host "fonts attempt ${i}: $_" }
+              Start-Sleep 1
+            }
+          }
+          $log = "$env:USERPROFILE\.pcpanel\logs\logging.log"
+          if (Test-Path $log) { Select-String -Path $log -Pattern 'UnsatisfiedLink|Can.t load library|Could not enumerate' | Select-Object -First 3 | ForEach-Object { Write-Host "LOG> $($_.Line)" } }
           try { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } catch {}
-          Write-Host "Assembled PCPanel.exe font count: $count"
-          if ($count -lt 1) {
+          Write-Host "Assembled PCPanel.exe font families: $count (raw body $rawLen bytes)"
+          if ($count -lt 10) {
             if (Test-Path smoke.out) { Get-Content smoke.out | Select-Object -Last 40 | ForEach-Object { Write-Host $_ } }
-            throw "Assembled PCPanel.exe failed to load AWT (font count=$count) - the shipped installer would have a dead overlay and font picker."
+            throw "Assembled PCPanel.exe enumerated only $count font families - AWT did not load; the shipped installer would have a dead overlay and font picker."
           }
 
       - name: Install Inno Setup
