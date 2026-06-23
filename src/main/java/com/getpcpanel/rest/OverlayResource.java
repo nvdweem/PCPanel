@@ -1,9 +1,14 @@
 package com.getpcpanel.rest;
 
+import java.awt.GraphicsEnvironment;
+import java.util.Arrays;
+import java.util.List;
+
 import com.getpcpanel.overlay.Overlay;
 import com.getpcpanel.overlay.OverlayPreviewRenderer;
 import com.getpcpanel.profile.Save;
 import com.getpcpanel.rest.model.dto.SettingsDto;
+import com.sun.jna.Platform;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -15,7 +20,9 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import lombok.extern.log4j.Log4j2;
 
+@Log4j2
 @Path("/api/overlay")
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
@@ -27,6 +34,22 @@ public class OverlayResource {
         System.out.println("Overlay!");
         overlay.show(0);
         return Response.ok().build();
+    }
+
+    /** Font families the JVM/Java2D can actually render, so the overlay font picker only offers valid ones. */
+    @GET
+    @Path("/fonts")
+    public List<String> fonts() {
+        if (!Platform.isWindows()) {
+            return List.of(); // overlay text only renders on Windows (headless Java2D)
+        }
+        try {
+            return Arrays.stream(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames())
+                         .sorted(String.CASE_INSENSITIVE_ORDER).toList();
+        } catch (Throwable t) {
+            log.warn("Could not enumerate fonts", t);
+            return List.of();
+        }
     }
 
     /**

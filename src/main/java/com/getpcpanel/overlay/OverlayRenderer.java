@@ -41,11 +41,13 @@ class OverlayRenderer {
     private int value;
     private Image icon;
     private String name = "";
-    private Color lightColor;            // parsed control light colour, or null when none/unavailable
+    private Color barColorOverride;      // bar colour sourced from the control's light, or null to use barColor
     private boolean showNumber = true;
+    private boolean showIcon = true;
     // Showing the app name drives the whole layout: on → two rows (name + bar), off → a compact single row.
     private boolean showAppName = true;
-    private boolean barFollowsLight;
+    private boolean fontBold = true;
+    private String fontFamily = "Segoe UI";
     private int textSize = Save.DEFAULT_OVERLAY_TEXT_SIZE;
     private int iconSize = ICON_SIZE;
     private int elementGap = CONTENT_PADDING;
@@ -71,9 +73,12 @@ class OverlayRenderer {
         this.name = name == null ? "" : name;
     }
 
-    /** The control's current light colour as a CSS/hex string, or {@code null}/blank when there is none. */
-    void setLightColor(String css) {
-        this.lightColor = css == null || css.isBlank() ? null : parseColor(css, null);
+    /**
+     * Overrides the bar colour with the control's current light colour (a CSS/hex string), or clears the
+     * override when {@code null}/blank so the configured bar colour is used.
+     */
+    void setBarColorOverride(String css) {
+        this.barColorOverride = css == null || css.isBlank() ? null : parseColor(css, null);
     }
 
     /**
@@ -81,8 +86,11 @@ class OverlayRenderer {
      */
     int setStyles(Save save) {
         showNumber = save.isOverlayShowNumber();
+        showIcon = save.isOverlayShowIcon();
         showAppName = save.isOverlayShowAppName();
-        barFollowsLight = save.isOverlayBarFollowsLight();
+        fontBold = save.isOverlayFontBold();
+        var family = save.getOverlayFontFamily();
+        fontFamily = family == null || family.isBlank() ? "Segoe UI" : family;
         textSize = Math.clamp(save.getOverlayTextSize(), 6, 48);
         iconSize = Math.clamp(save.getOverlayIconSize(), 0, 96);
         elementGap = Math.max(0, save.getOverlayElementGap());
@@ -104,16 +112,17 @@ class OverlayRenderer {
 
     int computeHeight() {
         var pad = contentPadding;
+        var effIcon = showIcon ? iconSize : 0;
         if (showAppName) {
-            var topRow = Math.max(iconSize, textSize + 4);
+            var topRow = Math.max(effIcon, textSize + 4);
             return pad * 2 + topRow + elementGap + barHeight;
         }
-        return Math.max(DEFAULT_HEIGHT, pad * 2 + Math.max(Math.max(iconSize, textSize + 4), barHeight));
+        return Math.max(DEFAULT_HEIGHT, pad * 2 + Math.max(Math.max(effIcon, textSize + 4), barHeight));
     }
 
-    /** The bar colour actually used: the control's light when "follow light" is on and one is available. */
+    /** The bar colour actually used: the control-light override when present, otherwise the configured one. */
     private Color effectiveBarColor() {
-        return barFollowsLight && lightColor != null ? lightColor : barColor;
+        return barColorOverride != null ? barColorOverride : barColor;
     }
 
     private String valueLabel() {
@@ -121,7 +130,7 @@ class OverlayRenderer {
     }
 
     private void applyFont(Graphics2D g2, int size) {
-        g2.setFont(new Font("Segoe UI", Font.BOLD, size));
+        g2.setFont(new Font(fontFamily, fontBold ? Font.BOLD : Font.PLAIN, size));
     }
 
     void render(Graphics2D g2, int w, int h) {
@@ -153,7 +162,7 @@ class OverlayRenderer {
         var rowTop = pad;
 
         var x = pad;
-        if (icon != null && iconSize > 0) {
+        if (showIcon && icon != null && iconSize > 0) {
             g2.drawImage(icon, x, rowTop + (topRow - iconSize) / 2, iconSize, iconSize, null);
             x += iconSize + elementGap;
         }
@@ -191,7 +200,7 @@ class OverlayRenderer {
     private void renderOneLine(Graphics2D g2, int w, int h) {
         var pad = contentPadding;
         var x = pad;
-        if (icon != null && iconSize > 0) {
+        if (showIcon && icon != null && iconSize > 0) {
             g2.drawImage(icon, x, (h - iconSize) / 2, iconSize, iconSize, null);
             x += iconSize + elementGap;
         }

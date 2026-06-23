@@ -66,6 +66,8 @@ public class Save {
     private boolean overlayEnabled;
     private boolean overlayUseLog;
     private boolean overlayShowNumber;
+    /** Show the controlled-target's icon on the overlay (the bar is always shown). */
+    private boolean overlayShowIcon = true;
     private String overlayBackgroundColor = DEFAULT_OVERLAY_BG_COLOR;
     private String overlayTextColor = DEFAULT_OVERLAY_TEXT_COLOR;
     private String overlayBarColor = DEFAULT_OVERLAY_BAR_COLOR;
@@ -90,6 +92,10 @@ public class Save {
     @Nullable private Integer overlayContentPadding = DEFAULT_OVERLAY_CONTENT_PADDING;
     /** Use the control's current light colour as the bar colour (falls back to the bar colour). */
     private boolean overlayBarFollowsLight;
+    /** Overlay text font family; null/blank = the default ("Segoe UI"). Must be a family the JVM has. */
+    @Nullable private String overlayFontFamily;
+    /** Render the overlay text bold. */
+    private boolean overlayFontBold = true;
 
     public int getOverlayWidth() {
         return overlayWidth == null ? DEFAULT_OVERLAY_WIDTH : overlayWidth;

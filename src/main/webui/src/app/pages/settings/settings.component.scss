@@ -76,7 +76,7 @@
 .osc-add .pc-btn { flex: none; gap: 6px; }
 
 /* ── Overlay tab ───────────────────────────────────────────────────────────── */
-.overlay-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 32px; align-items: start; }
+.overlay-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; align-items: start; }
 .overlay-controls { min-width: 0; }
 .overlay-preview-col { position: sticky; top: 0; }
 

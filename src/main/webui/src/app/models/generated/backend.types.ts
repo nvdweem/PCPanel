@@ -581,10 +581,13 @@ export interface SettingsDto {
     overlayContentPadding?: number;
     overlayElementGap?: number;
     overlayEnabled: boolean;
+    overlayFontBold: boolean;
+    overlayFontFamily?: string;
     overlayIconSize?: number;
     overlayPadding?: number;
     overlayPosition?: OverlayPosition;
     overlayShowAppName: boolean;
+    overlayShowIcon: boolean;
     overlayShowNumber: boolean;
     overlayTextColor: string;
     overlayTextSize?: number;

@@ -55,18 +55,21 @@ public final class OverlayPreviewRenderer {
         }
     }
 
-    /** A neutral rounded-square stand-in for the app icon, sized like the real one. */
+    /** A clearly-visible rounded-square stand-in for the app icon, sized like the real one. */
     private static BufferedImage sampleIcon(int size) {
         if (size <= 0) {
             return null;
         }
         var img = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
         var g = img.createGraphics();
+        g.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
         var arc = Math.max(4, size / 4);
-        g.setColor(new Color(255, 255, 255, 28));
+        g.setColor(new Color(120, 170, 235));
         g.fillRoundRect(0, 0, size, size, arc, arc);
-        g.setColor(new Color(255, 255, 255, 40));
-        g.drawRoundRect(0, 0, size - 1, size - 1, arc, arc);
+        // a small inner glyph so it reads as an icon
+        g.setColor(new Color(255, 255, 255, 220));
+        var inset = Math.max(2, size / 4);
+        g.fillOval(inset, inset, size - 2 * inset, size - 2 * inset);
         g.dispose();
         return img;
     }

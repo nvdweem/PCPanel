@@ -62,7 +62,10 @@ public class SettingsDto {
     @Nullable private Integer overlayElementGap;
     @Nullable private Integer overlayWidth;
     @Nullable private Integer overlayContentPadding;
+    private boolean overlayShowIcon;
     private boolean overlayBarFollowsLight;
+    @Nullable private String overlayFontFamily;
+    private boolean overlayFontBold;
     private MqttSettings mqtt;
 
     // Home Assistant
@@ -108,7 +111,10 @@ public class SettingsDto {
         dto.overlayElementGap = save.getOverlayElementGap();
         dto.overlayWidth = save.getOverlayWidth();
         dto.overlayContentPadding = save.getOverlayContentPadding();
+        dto.overlayShowIcon = save.isOverlayShowIcon();
         dto.overlayBarFollowsLight = save.isOverlayBarFollowsLight();
+        dto.overlayFontFamily = save.getOverlayFontFamily();
+        dto.overlayFontBold = save.isOverlayFontBold();
         dto.mqtt = save.getMqtt();
         dto.homeAssistantServers = save.getHomeAssistantServers();
         dto.homeAssistantDebounceMs = save.getHomeAssistantDebounceMs();
@@ -153,7 +159,10 @@ public class SettingsDto {
         save.setOverlayElementGap(overlayElementGap);
         save.setOverlayWidth(overlayWidth);
         save.setOverlayContentPadding(overlayContentPadding);
+        save.setOverlayShowIcon(overlayShowIcon);
         save.setOverlayBarFollowsLight(overlayBarFollowsLight);
+        save.setOverlayFontFamily(overlayFontFamily);
+        save.setOverlayFontBold(overlayFontBold);
         save.setMqtt(mqtt);
         save.setHomeAssistantServers(homeAssistantServers);
         save.setHomeAssistantDebounceMs(homeAssistantDebounceMs);

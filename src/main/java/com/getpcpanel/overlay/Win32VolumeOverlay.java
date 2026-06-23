@@ -90,7 +90,7 @@ public class Win32VolumeOverlay implements OverlayWindow {
             renderer.setValue(Math.round(content.value() * 100f));
             renderer.setIcon(content.icon());
             renderer.setName(content.name());
-            renderer.setLightColor(content.lightColorCss());
+            renderer.setBarColorOverride(content.barColorCss());
         }
         pendingHide = false;
         pendingShow = true;

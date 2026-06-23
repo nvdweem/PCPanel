@@ -15,9 +15,13 @@ import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandVolumeFocus;
 import com.getpcpanel.commands.command.DialAction;
 import com.getpcpanel.cpp.ISndCtrl;
+import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.profile.dto.OverlayPosition;
+import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
+import com.getpcpanel.profile.dto.SingleKnobLightingConfig.SINGLE_KNOB_MODE;
+import com.getpcpanel.util.coloroverride.OverrideColorService;
 import com.getpcpanel.volume.VolumeCoordinatorService;
 import com.sun.jna.Platform;
 
@@ -38,6 +42,8 @@ public class Overlay {
     private final IconService iconService;
     private final Instance<ISndCtrl> sndCtrl;
     private final VolumeCoordinatorService volumeCoordinator;
+    private final DeviceHolder deviceHolder;
+    private final OverrideColorService overrideColorService;
     // The AWT/Swing windowing toolkit is unsupported in the GraalVM native image (it segfaults the
     // native WToolkit event loop), so neither overlay uses it: Windows draws a JNA layered window and
     // Linux/Wayland asks the desktop to draw it over D-Bus (KDE volume OSD, else a notification).
@@ -121,7 +127,7 @@ public class Overlay {
         }
         var cai = pre.get();
         if (hasOverlay(cai.command) && pred.test(cai.command)) {
-            overlay.show(new OverlayContent(value, cai.icon, cai.name, null));
+            overlay.show(new OverlayContent(value, cai.icon, cai.name, cai.barColorCss));
         }
     }
 
@@ -154,8 +160,48 @@ public class Overlay {
             // Icon decoding needs libawt (Windows only); elsewhere the overlay is a no-op that ignores
             // the icon, so skip the BufferedImage lookup entirely to stay libawt-free.
             var icon = Platform.isWindows() ? iconService.getImageFrom(data, setting) : null;
-            return new CommandAndIcon(data, icon, targetName(data));
+            return new CommandAndIcon(data, icon, targetName(data), barColorFromLight(event));
         }).orElse(CommandAndIcon.DEFAULT);
+    }
+
+    /** The bar colour to use, sourced from the dial's current light, when "bar follows light" is on; else null. */
+    @Nullable
+    private String barColorFromLight(PCPanelControlEvent event) {
+        if (!save.get().isOverlayBarFollowsLight() || event.source() != PCPanelControlEvent.Source.DIAL) {
+            return null;
+        }
+        var device = deviceHolder.getDevice(event.serialNum()).orElse(null);
+        if (device == null) {
+            return null;
+        }
+        var lighting = device.lightingConfig();
+        if (lighting == null) {
+            return null;
+        }
+        // Mute/other overrides win — same precedence the hardware LED uses.
+        var override = overrideColorService.getDialOverride(event.serialNum(), event.knob()).orElse(null);
+        if (override != null) {
+            return staticColor(override);
+        }
+        var knob = event.knob();
+        return switch (lighting.lightingMode()) {
+            case ALL_COLOR -> lighting.allColor();
+            case SINGLE_COLOR -> atIndex(lighting.individualColors(), knob);
+            case CUSTOM -> knob >= 0 && knob < lighting.knobConfigs().length ? staticColor(lighting.knobConfigs()[knob]) : null;
+            // Animated modes have no single colour; fall back to the configured bar colour.
+            case ALL_RAINBOW, ALL_WAVE, ALL_BREATH -> null;
+        };
+    }
+
+    /** The base colour of a static/gradient knob config, or null when the knob light is off. */
+    @Nullable
+    private static String staticColor(SingleKnobLightingConfig config) {
+        return config.getMode() == SINGLE_KNOB_MODE.NONE ? null : config.getColor1();
+    }
+
+    @Nullable
+    private static String atIndex(@Nullable String[] colors, int index) {
+        return colors != null && index >= 0 && index < colors.length ? colors[index] : null;
     }
 
     /** A best-effort name of what the control affects, for the overlay's app-name line. */
@@ -176,7 +222,7 @@ public class Overlay {
         return command.buildLabel();
     }
 
-    private record CommandAndIcon(Commands command, Image icon, String name) {
-        static final CommandAndIcon DEFAULT = new CommandAndIcon(Commands.EMPTY, null, "");
+    private record CommandAndIcon(Commands command, Image icon, String name, @Nullable String barColorCss) {
+        static final CommandAndIcon DEFAULT = new CommandAndIcon(Commands.EMPTY, null, "", null);
     }
 }

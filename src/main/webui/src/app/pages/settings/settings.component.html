@@ -471,6 +471,10 @@
                   <pc-toggle [value]="s.overlayShowAppName" [disabled]="!overlayStylingSupported()" (valueChange)="patch('overlayShowAppName', $event)"></pc-toggle>
                 </div>
                 <div class="row">
+                  <div class="row-text"><div class="row-label">Show icon</div><div class="row-sub">the controlled target's icon</div></div>
+                  <pc-toggle [value]="s.overlayShowIcon" [disabled]="!overlayStylingSupported()" (valueChange)="patch('overlayShowIcon', $event)"></pc-toggle>
+                </div>
+                <div class="row">
                   <div class="row-text"><div class="row-label">Show number</div><div class="row-sub">the percentage value</div></div>
                   <pc-toggle [value]="s.overlayShowNumber" [disabled]="!overlayStylingSupported()" (valueChange)="patch('overlayShowNumber', $event)"></pc-toggle>
                 </div>
@@ -529,6 +533,19 @@
                 </div>
               </div>
 
+              <div class="micro-label section-label">FONT</div>
+              <div class="pc-card pad stack" [class.disabled-block]="!overlayStylingSupported()">
+                <div class="row">
+                  <div class="row-text"><div class="row-label">Family</div><div class="row-sub">fonts your system has</div></div>
+                  <pc-select [options]="fontOptions()" [value]="s.overlayFontFamily ?? ''"
+                             (valueChange)="patch('overlayFontFamily', $any($event))"></pc-select>
+                </div>
+                <div class="row">
+                  <div class="row-text"><div class="row-label">Bold</div></div>
+                  <pc-toggle [value]="s.overlayFontBold" [disabled]="!overlayStylingSupported()" (valueChange)="patch('overlayFontBold', $event)"></pc-toggle>
+                </div>
+              </div>
+
               <div class="micro-label section-label">COLORS</div>
               <div class="pc-card pad color-grid" [class.disabled-block]="!overlayStylingSupported()">
                 <pc-color-picker label="Background" [value]="s.overlayBackgroundColor" [alpha]="true" [disabled]="!overlayStylingSupported()"
@@ -539,6 +556,12 @@
                                  (valueChange)="patch('overlayBarColor', $event)"></pc-color-picker>
                 <pc-color-picker label="Bar track" [value]="s.overlayBarBackgroundColor" [disabled]="!overlayStylingSupported()"
                                  (valueChange)="patch('overlayBarBackgroundColor', $event)"></pc-color-picker>
+              </div>
+              <div class="pc-card pad stack" [class.disabled-block]="!overlayStylingSupported()">
+                <div class="row">
+                  <div class="row-text"><div class="row-label">Bar follows control light</div><div class="row-sub">use the dial's current light colour as the bar; falls back to the Bar colour above when the light is off or animated</div></div>
+                  <pc-toggle [value]="s.overlayBarFollowsLight" [disabled]="!overlayStylingSupported()" (valueChange)="patch('overlayBarFollowsLight', $event)"></pc-toggle>
+                </div>
               </div>
             </div>
 

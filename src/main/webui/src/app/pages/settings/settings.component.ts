@@ -118,6 +118,13 @@ export class SettingsComponent {
   // Wave Link settings (not part of SettingsDto): enable + focus-control + controlled-volume options.
   readonly wavelinkSettings = httpResource<WaveLinkSettings>(() => '/api/settings/wavelink');
 
+  // Font families the backend (Java2D) can actually render — the overlay font picker only offers these.
+  readonly overlayFonts = httpResource<string[]>(() => '/api/overlay/fonts');
+  readonly fontOptions = computed<SelectOption<string>[]>(() => {
+    const fonts = this.overlayFonts.value() ?? [];
+    return [{ value: '', label: 'Default (Segoe UI)' }, ...fonts.map(f => ({ value: f, label: f }))];
+  });
+
   /** Position the overlay live-preview card per overlayPosition + (scaled) padding. */
   readonly overlayPreviewStyle = computed<Record<string, string>>(() => {
     const pos = this.local()?.overlayPosition ?? 'bottomRight';
