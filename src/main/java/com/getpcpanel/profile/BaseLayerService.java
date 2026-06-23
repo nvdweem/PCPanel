@@ -80,6 +80,11 @@ public class BaseLayerService {
         return effectiveDblButton(active, fallbackFor(serial, active), button);
     }
 
+    @Nullable
+    public Commands effectiveReleaseButton(String serial, Profile active, int button) {
+        return effectiveReleaseButton(active, fallbackFor(serial, active), button);
+    }
+
     public Map<Integer, Commands> effectiveDialData(String serial, Profile active) {
         return effectiveDialData(active, fallbackFor(serial, active));
     }
@@ -123,10 +128,22 @@ public class BaseLayerService {
         return Commands.hasCommands(fallback) ? fallback : own;
     }
 
+    @Nullable
+    static Commands effectiveReleaseButton(Profile active, @Nullable Profile base, int button) {
+        var own = active.getReleaseButtonData(button);
+        if (Commands.hasCommands(own) || base == null) {
+            return own;
+        }
+        var fallback = base.getReleaseButtonData(button);
+        return Commands.hasCommands(fallback) ? fallback : own;
+    }
+
     /** Active dial assignments with the base layer merged underneath (active wins per control). */
     static Map<Integer, Commands> effectiveDialData(Profile active, @Nullable Profile base) {
         if (base == null) {
-            return active.getDialData();
+            // Defensive copy: both branches must return a caller-owned map. Returning the Profile's live
+            // backing map here would let a mutating caller corrupt the persisted profile's dialData.
+            return new LinkedHashMap<>(active.getDialData());
         }
         var merged = new LinkedHashMap<>(base.getDialData());
         active.getDialData().forEach((k, v) -> {

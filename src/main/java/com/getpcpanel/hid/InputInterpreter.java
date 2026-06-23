@@ -61,7 +61,7 @@ public final class InputInterpreter {
      */
     private void doReleaseAction(String serialNum, int button) {
         save.getProfile(serialNum)
-            .map(p -> p.getReleaseButtonData(button))
+            .map(p -> baseLayer.effectiveReleaseButton(serialNum, p, button))
             .filter(data -> hasCommands(data))
             .ifPresent(data -> eventBus.fire(new PCPanelControlEvent(serialNum, button, data, false, null)));
     }
