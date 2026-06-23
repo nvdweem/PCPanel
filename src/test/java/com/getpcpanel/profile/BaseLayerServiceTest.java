@@ -52,6 +52,26 @@ class BaseLayerServiceTest {
     }
 
     @Test
+    void releaseButtonFallsBackToBaseWhenActiveHasNoCommand() {
+        var active = profile("active");
+        var base = profile("base");
+        base.setReleaseButtonData(0, cmds("baseProfile"));
+
+        assertEquals("baseProfile", profileNameOf(BaseLayerService.effectiveReleaseButton(active, base, 0)),
+                "a push-to-talk release on the base layer must still fire from another profile");
+    }
+
+    @Test
+    void activeReleaseButtonWinsOverBase() {
+        var active = profile("active");
+        var base = profile("base");
+        active.setReleaseButtonData(0, cmds("activeProfile"));
+        base.setReleaseButtonData(0, cmds("baseProfile"));
+
+        assertEquals("activeProfile", profileNameOf(BaseLayerService.effectiveReleaseButton(active, base, 0)));
+    }
+
+    @Test
     void effectiveDialDataMergesBaseUnderActive() {
         var active = profile("active");
         var base = profile("base");

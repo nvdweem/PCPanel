@@ -259,6 +259,44 @@ class MidiProviderTest {
         assertTrue(detected.get(0).connected());
     }
 
+    @Test
+    void unpluggedDeviceIsDisconnectedOnRescan() {
+        startAndOpenOne();
+        events.clear();
+
+        transport.removeInput("nanoKONTROL"); // user unplugs the controller
+        provider.rescan();
+
+        assertNotNull(events.first(DeviceDisconnectedEvent.class), "an unplugged MIDI device must disconnect on rescan");
+        assertTrue(provider.detected().isEmpty(), "and no longer be reported as connected");
+    }
+
+    @Test
+    void rescanReopensAReconnectedDevice() {
+        startAndOpenOne();
+        transport.removeInput("nanoKONTROL");
+        provider.rescan(); // disconnect the unplugged device
+        events.clear();
+
+        transport.addInput("nanoKONTROL", "Korg"); // plug it back in
+        provider.rescan();
+
+        assertNotNull(events.first(DeviceConnectedEvent.class), "re-plugging a previously-unplugged device reopens it");
+    }
+
+    @Test
+    void transientListingFailureDoesNotDisconnectHealthyDevices() {
+        startAndOpenOne();
+        events.clear();
+
+        transport.failListing = true; // a transient backend hiccup: enumeration throws
+        provider.rescan();
+
+        assertNull(events.first(DeviceDisconnectedEvent.class), "a failed enumeration must not be treated as 'all unplugged'");
+        transport.failListing = false;
+        assertFalse(provider.detected().isEmpty(), "the device is still there once enumeration recovers");
+    }
+
     // ── Fakes ────────────────────────────────────────────────────────────────
 
     /** An in-memory MIDI transport: captures the consumers so the test can feed canned messages. */
@@ -270,6 +308,10 @@ class MidiProviderTest {
 
         void addInput(String id, String vendor) {
             inputs.add(new MidiDeviceInfo(id, id));
+        }
+
+        void removeInput(String id) {
+            inputs.removeIf(i -> i.id().equals(id));
         }
 
         @Override
