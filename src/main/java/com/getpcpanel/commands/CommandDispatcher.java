@@ -24,7 +24,11 @@ public final class CommandDispatcher {
     }
 
     public void onCommand(@Observes PCPanelControlEvent event) {
-        map.put(event.serialNum() + event.knob(), event.buildRunnable());
+        // Key by source too (not just serial+knob): a button's press and release share the same knob
+        // index, so without the discriminator a quick tap could have the release overwrite the still-
+        // pending press in this coalescing map and the press would be lost. The separators also remove
+        // the latent serial/knob concatenation ambiguity (e.g. "AB"+1 vs "A"+"B1").
+        map.put(event.serialNum() + '|' + event.source() + '|' + event.knob(), event.buildRunnable());
         handler.doNotify();
     }
 

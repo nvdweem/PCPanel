@@ -59,7 +59,9 @@ public class CommandAnalogBands extends Command implements DialAction {
         }
         if (transition.fire()) {
             var commands = bands.get(transition.band()).commands();
-            new PCPanelControlEvent(context.device(), 0, commands, false, context.dial()).buildRunnable().run();
+            // Built and run inline (never goes through the dispatcher map), so the source is only for
+            // consistency — this is the per-position action of a stepped dial/slider.
+            new PCPanelControlEvent(context.device(), 0, commands, false, context.dial(), PCPanelControlEvent.Source.DIAL).buildRunnable().run();
         }
     }
 

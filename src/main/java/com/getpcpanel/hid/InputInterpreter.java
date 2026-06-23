@@ -63,14 +63,14 @@ public final class InputInterpreter {
         save.getProfile(serialNum)
             .map(p -> baseLayer.effectiveReleaseButton(serialNum, p, button))
             .filter(data -> hasCommands(data))
-            .ifPresent(data -> eventBus.fire(new PCPanelControlEvent(serialNum, button, data, false, null)));
+            .ifPresent(data -> eventBus.fire(new PCPanelControlEvent(serialNum, button, data, false, null, PCPanelControlEvent.Source.RELEASE)));
     }
 
     private void doDialAction(String serialNum, boolean initial, int knob, DialValue v) {
         save.getProfile(serialNum)
             .map(p -> baseLayer.effectiveDial(serialNum, p, knob))
             .filter(Commands::hasCommands)
-            .ifPresent(data -> eventBus.fire(new PCPanelControlEvent(serialNum, knob, data, initial, v)));
+            .ifPresent(data -> eventBus.fire(new PCPanelControlEvent(serialNum, knob, data, initial, v, PCPanelControlEvent.Source.DIAL)));
     }
 
     void doClickAction(String serialNum, int button) {
@@ -118,9 +118,9 @@ public final class InputInterpreter {
             var dblClick = baseLayer.effectiveDblButton(event.serialNum(), profile, event.button());
 
             if (event.dblClick() && hasCommands(dblClick)) {
-                eventBus.fire(new PCPanelControlEvent(event.serialNum(), event.button(), dblClick, false, null));
+                eventBus.fire(new PCPanelControlEvent(event.serialNum(), event.button(), dblClick, false, null, PCPanelControlEvent.Source.PRESS));
             } else if (!event.dblClick() && hasCommands(click)) {
-                eventBus.fire(new PCPanelControlEvent(event.serialNum(), event.button(), click, false, null));
+                eventBus.fire(new PCPanelControlEvent(event.serialNum(), event.button(), click, false, null, PCPanelControlEvent.Source.PRESS));
             }
         });
     }

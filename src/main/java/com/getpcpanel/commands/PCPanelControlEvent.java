@@ -6,7 +6,14 @@ import com.getpcpanel.hid.DialValue;
 
 import one.util.streamex.StreamEx;
 
-public record PCPanelControlEvent(String serialNum, int knob, Commands cmd, boolean initial, @Nullable DialValue vol) {
+public record PCPanelControlEvent(String serialNum, int knob, Commands cmd, boolean initial, @Nullable DialValue vol, Source source) {
+    /** What produced this event. {@link CommandDispatcher} folds it into its map key so a button's
+     *  press and release — which share the same {@code knob} index — never overwrite each other on a
+     *  quick tap (the press would otherwise be dropped). */
+    public enum Source {
+        DIAL, PRESS, RELEASE
+    }
+
     public Runnable buildRunnable() {
         return switch (cmd.getType()) {
             case allAtOnce -> () -> StreamEx.of(cmd.getCommands()).map(c -> c.toRunnable(initial, serialNum, vol)).forEach(Runnable::run);
