@@ -15,12 +15,16 @@ import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandVolumeFocus;
 import com.getpcpanel.commands.command.DialAction;
 import com.getpcpanel.cpp.ISndCtrl;
+import com.getpcpanel.device.Device;
+import com.getpcpanel.device.descriptor.AnalogKind;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
+import com.getpcpanel.profile.dto.LightingConfig;
 import com.getpcpanel.profile.dto.OverlayPosition;
 import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
 import com.getpcpanel.profile.dto.SingleKnobLightingConfig.SINGLE_KNOB_MODE;
+import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
 import com.getpcpanel.util.coloroverride.OverrideColorService;
 import com.getpcpanel.volume.VolumeCoordinatorService;
 import com.sun.jna.Platform;
@@ -164,32 +168,61 @@ public class Overlay {
         }).orElse(CommandAndIcon.DEFAULT);
     }
 
-    /** The bar colour to use, sourced from the dial's current light, when "bar follows light" is on; else null. */
+    /** The bar colour to use, sourced from the moved control's current light, when "bar follows light"
+     *  is on; else null. Handles both knobs and sliders (a moved slider also reports source DIAL, but its
+     *  index lives in the combined analog space — 5..8 on a Pro — and its light lives in a separate
+     *  config array). Animated modes (rainbow/wave/breath) have no single colour and fall back to null. */
     @Nullable
     private String barColorFromLight(PCPanelControlEvent event) {
         if (!save.get().isOverlayBarFollowsLight() || event.source() != PCPanelControlEvent.Source.DIAL) {
             return null;
         }
         var device = deviceHolder.getDevice(event.serialNum()).orElse(null);
-        if (device == null) {
+        if (device == null || device.lightingConfig() == null) {
+            return null;
+        }
+        var spec = StreamEx.of(device.descriptor().analogInputs()).findFirst(a -> a.index() == event.knob()).orElse(null);
+        if (spec == null) {
             return null;
         }
         var lighting = device.lightingConfig();
-        if (lighting == null) {
-            return null;
-        }
-        // Mute/other overrides win — same precedence the hardware LED uses.
-        var override = overrideColorService.getDialOverride(event.serialNum(), event.knob()).orElse(null);
+        // The lighting config arrays are indexed per-kind (knob 0.., slider 0..), not by the combined index.
+        var ordinal = analogOrdinal(device, event.knob(), spec.kind());
+        return spec.kind() == AnalogKind.SLIDER
+                ? sliderLight(event.serialNum(), lighting, ordinal)
+                : knobLight(event.serialNum(), lighting, event.knob(), ordinal);
+    }
+
+    /** Position of {@code combinedIndex} among analog inputs of the same {@code kind} (its config-array index). */
+    private static int analogOrdinal(Device device, int combinedIndex, AnalogKind kind) {
+        return (int) StreamEx.of(device.descriptor().analogInputs())
+                             .filter(a -> a.kind() == kind && a.index() < combinedIndex).count();
+    }
+
+    @Nullable
+    private String knobLight(String serial, LightingConfig lighting, int combinedIndex, int ordinal) {
+        var override = overrideColorService.getDialOverride(serial, ordinal).orElse(null); // mute/other overrides win
         if (override != null) {
             return staticColor(override);
         }
-        var knob = event.knob();
         return switch (lighting.lightingMode()) {
             case ALL_COLOR -> lighting.allColor();
-            case SINGLE_COLOR -> atIndex(lighting.individualColors(), knob);
-            case CUSTOM -> knob >= 0 && knob < lighting.knobConfigs().length ? staticColor(lighting.knobConfigs()[knob]) : null;
-            // Animated modes have no single colour; fall back to the configured bar colour.
+            case SINGLE_COLOR -> atIndex(lighting.individualColors(), combinedIndex);
+            case CUSTOM -> ordinal < lighting.knobConfigs().length ? staticColor(lighting.knobConfigs()[ordinal]) : null;
             case ALL_RAINBOW, ALL_WAVE, ALL_BREATH -> null;
+        };
+    }
+
+    @Nullable
+    private String sliderLight(String serial, LightingConfig lighting, int ordinal) {
+        var override = overrideColorService.getSliderOverride(serial, ordinal).orElse(null);
+        if (override != null) {
+            return sliderStaticColor(override);
+        }
+        return switch (lighting.lightingMode()) {
+            case ALL_COLOR -> lighting.allColor();
+            case CUSTOM -> ordinal < lighting.sliderConfigs().length ? sliderStaticColor(lighting.sliderConfigs()[ordinal]) : null;
+            case SINGLE_COLOR, ALL_RAINBOW, ALL_WAVE, ALL_BREATH -> null;
         };
     }
 
@@ -197,6 +230,12 @@ public class Overlay {
     @Nullable
     private static String staticColor(SingleKnobLightingConfig config) {
         return config.getMode() == SINGLE_KNOB_MODE.NONE ? null : config.getColor1();
+    }
+
+    /** The base colour of a static/gradient slider config, or null when the slider light is off. */
+    @Nullable
+    private static String sliderStaticColor(SingleSliderLightingConfig config) {
+        return config.getMode() == SingleSliderLightingConfig.SINGLE_SLIDER_MODE.NONE ? null : config.getColor1();
     }
 
     @Nullable
