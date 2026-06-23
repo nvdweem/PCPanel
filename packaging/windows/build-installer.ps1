@@ -93,7 +93,9 @@ if (-not $SkipBuild) {
     $env:JAVA_HOME = $JavaHome
     Write-Step "Building native image with JAVA_HOME=$JavaHome"
 
-    $mvnArgs = @('-B', 'package', '-Pnative', '--file', (Join-Path $repoRoot 'pom.xml'))
+    # `verify` (not `package`) so the native integration tests run against the produced binary, exactly
+    # as CI does — NativeTestIT catches a native image whose awt.dll won't load before it ships.
+    $mvnArgs = @('-B', 'verify', '-Pnative', '--file', (Join-Path $repoRoot 'pom.xml'))
     if ($SkipTests) { $mvnArgs += '-DskipTests' }
     & (Join-Path $repoRoot 'mvnw.cmd') @mvnArgs
     if ($LASTEXITCODE -ne 0) { throw "Maven native build failed (exit $LASTEXITCODE)" }
