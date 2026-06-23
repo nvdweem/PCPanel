@@ -19,7 +19,7 @@ public class PCPanelProDevice extends Device {
     }
 
     @Override public DeviceType deviceType() { return DeviceType.PCPANEL_PRO; }
-    @Override public void setKnobRotation(int knob, int rotation) { knobRotations[knob] = rotation; }
+    @Override public void setKnobRotation(int knob, int rotation) { knobRotations[knob] = rotation; markKnobSeen(knob); }
     @Override public int getKnobRotation(int knob) { return knobRotations[knob]; }
     @Override public void setButtonPressed(int button, boolean pressed) {}
 }

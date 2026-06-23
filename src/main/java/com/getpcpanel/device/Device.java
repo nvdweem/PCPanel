@@ -139,9 +139,24 @@ public abstract class Device {
         return null;
     }
 
+    // Analog indices that have reported at least one real value. getKnobRotation defaults to 0 before the
+    // first read, which is indistinguishable from a genuine 0 — so callers that must not act on that
+    // not-yet-known 0 (e.g. a brightness dial driving global brightness at connect time) check this first.
+    private final java.util.Set<Integer> knobsSeen = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
     public abstract void setKnobRotation(int paramInt1, int paramInt2);
 
     public abstract int getKnobRotation(int knob);
+
+    /** Whether {@code knob} has reported a real value yet (vs. the default-0 it reads before any input). */
+    public boolean hasKnobRotation(int knob) {
+        return knobsSeen.contains(knob);
+    }
+
+    /** Subclasses call this from setKnobRotation once a real value has been stored for {@code knob}. */
+    protected void markKnobSeen(int knob) {
+        knobsSeen.add(knob);
+    }
 
     public abstract void setButtonPressed(int paramInt, boolean paramBoolean);
 

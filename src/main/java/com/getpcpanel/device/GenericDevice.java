@@ -31,6 +31,7 @@ public class GenericDevice extends Device {
     public void setKnobRotation(int knob, int rotation) {
         if (knob >= 0 && knob < rotations.length) {
             rotations[knob] = rotation;
+            markKnobSeen(knob);
         }
     }
 

@@ -7,6 +7,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import javax.annotation.Nullable;
+
 import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
@@ -68,6 +70,10 @@ public class DeviceHolder {
         var device = isPcPanel
                 ? deviceFactory.build(event.serialNum(), deviceSave, descriptor)
                 : deviceFactory.buildGeneric(event.serialNum(), deviceSave, descriptor);
+        // A descriptor-only device (MIDI/Deej) grows its descriptor as new controls are learned, which
+        // re-fires DeviceConnectedEvent and rebuilds the device here with a zeroed rotation array. Carry
+        // the previously-learned knob positions forward so prior controls don't snap back to 0.
+        carryKnobRotationsForward(devices.get(event.serialNum()), device, descriptor);
         devices.put(event.serialNum(), device);
         if (isPcPanel && descriptor.globalLighting() != null) {
             outputInterpreter.sendInit(event.serialNum());
@@ -96,6 +102,25 @@ public class DeviceHolder {
             changed = true;
         }
         return changed;
+    }
+
+    /**
+     * Copies already-known analog knob positions from a device being replaced to its rebuilt successor
+     * (same serial). Generic devices grow their descriptor as controls are learned, each grow rebuilding
+     * the device with a fresh zeroed rotation array; without this, previously-learned controls would snap
+     * back to 0 until physically moved again. Only genuinely-read indices (per {@code hasKnobRotation})
+     * are carried, so a not-yet-read control stays unread on the successor too.
+     */
+    private static void carryKnobRotationsForward(@Nullable Device previous, Device next, DeviceDescriptor descriptor) {
+        if (previous == null || previous == next) {
+            return;
+        }
+        for (var input : descriptor.analogInputs()) {
+            var i = input.index();
+            if (previous.hasKnobRotation(i)) {
+                next.setKnobRotation(i, previous.getKnobRotation(i));
+            }
+        }
     }
 
     public void onDeviceDisconnected(@Observes DeviceScanner.DeviceDisconnectedEvent event) {

@@ -52,6 +52,12 @@ public class BrightnessService {
         if (control == null || device == null) {
             return OptionalInt.empty();
         }
+        if (!device.hasKnobRotation(control.index())) {
+            // The dial hasn't reported a real position yet (e.g. lighting pushed synchronously on connect,
+            // before the first knob read). Fall back to the saved globalBrightness instead of reading the
+            // default 0, which would send the whole device dark until the first read lands.
+            return OptionalInt.empty();
+        }
         var raw = device.getKnobRotation(control.index());
         var value = new DialValueCalculator(control.knobSetting()).calcValue(control.command(), raw, 0f, 100f);
         return OptionalInt.of(Math.round(value));
