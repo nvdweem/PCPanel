@@ -313,6 +313,12 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         OSCBinding.class,
         OverlayPosition.class,
 }, classNames = {
+        // Jackson selects FileSerializer at runtime to serialise a java.io.File field (e.g.
+        // ISndCtrl.RunningApplication.file, returned by GET /api/audio/applications). Its no-arg
+        // constructor must be reflectively instantiable, or the endpoint 500s in the native image with
+        // "FileSerializer has no default constructor" the moment the list is non-empty (works in JVM/dev).
+        "com.fasterxml.jackson.databind.ser.std.FileSerializer",
+
         // Eclipse Paho instantiates its logger reflectively in LoggerFactory.getLogger().
         "org.eclipse.paho.mqttv5.client.logging.JSR47Logger",
         // Paho resolves the transport for a URI scheme (tcp/ssl/ws/wss) through a ServiceLoader of
