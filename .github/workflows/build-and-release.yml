@@ -94,7 +94,9 @@ jobs:
 
       - name: Build native image (Windows)
         shell: pwsh
-        run: mvn -B package -Pnative --file pom.xml
+        # Bake the build-numbered version (<baseversion>.<run>) into the app so the UI footer reports it
+        # instead of the bare ${project.version} (2.0-SNAPSHOT). Quote the -D so PowerShell doesn't split it.
+        run: mvn -B package -Pnative "-Dquarkus.application.version=${{ steps.ver.outputs.version }}" --file pom.xml
 
       - name: Assemble distribution (exe + companion DLLs)
         shell: pwsh
@@ -176,7 +178,18 @@ jobs:
         # A unit test (VolumeOverlayNativeTest) constructs a Swing overlay window, which throws
         # HeadlessException on the display-less runner. Run the whole build under a virtual X server
         # so the AWT/Swing tests have a display; native-image compilation itself is headless-safe.
-        run: xvfb-run -a mvn -B package -Pnative --file pom.xml
+        # Bake the build-numbered version (<baseversion>.<run>) into the app so the UI footer reports it
+        # instead of the bare ${project.version} (2.0-SNAPSHOT). The Flatpak job reuses this binary, so it
+        # inherits the same version.
+        run: xvfb-run -a mvn -B package -Pnative -Dquarkus.application.version=${{ steps.ver.outputs.version }} --file pom.xml
+
+      # Cache the bundled kdotool download (Apache-2.0) across runs; the key changes only when
+      # fetch-kdotool.sh (which pins the version + sha256) changes, so it is downloaded once per pin.
+      - name: Cache kdotool
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pcpanel-kdotool
+          key: kdotool-${{ hashFiles('packaging/linux/fetch-kdotool.sh') }}
 
       - name: Build .deb
         run: |
@@ -250,6 +263,13 @@ jobs:
           name: linux-native
           path: native
 
+      # Same cache as the buildLinux job: kdotool is downloaded once per pin (see fetch-kdotool.sh).
+      - name: Cache kdotool
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pcpanel-kdotool
+          key: kdotool-${{ hashFiles('packaging/linux/fetch-kdotool.sh') }}
+
       - name: Stage manifest sources
         run: |
           set -euxo pipefail
@@ -260,9 +280,12 @@ jobs:
           cp packaging/linux/flatpak/com.getpcpanel.PCPanel.yml "$build/"
           cp packaging/linux/flatpak/pcpanel-launcher.sh "$build/"
           cp packaging/linux/flatpak/host-spawn-wrapper.sh "$build/"
+          cp packaging/linux/flatpak/kdotool-wrapper.sh "$build/"
           cp packaging/linux/com.getpcpanel.PCPanel.desktop "$build/"
           cp packaging/linux/com.getpcpanel.PCPanel.metainfo.xml "$build/"
           cp app-icon.png "$build/"
+          # kdotool binary + Apache-2.0 license bundled inside the sandbox (see manifest).
+          bash packaging/linux/fetch-kdotool.sh "$build"
           # Native executable + companion .so libraries as a flat tarball.
           stage=$(mktemp -d)
           cp "$(ls native/*-runner | head -1)" "$stage/PCPanel"
@@ -340,7 +363,9 @@ jobs:
       - name: Build native image (macOS)
         id: build
         continue-on-error: true
-        run: mvn -B package -Pnative --file pom.xml
+        # Bake the build-numbered version (<baseversion>.<run>) into the app so the UI footer reports it
+        # instead of the bare ${project.version} (2.0-SNAPSHOT).
+        run: mvn -B package -Pnative -Dquarkus.application.version=${{ steps.ver.outputs.version }} --file pom.xml
 
       - name: Assemble .app and .dmg
         id: package
