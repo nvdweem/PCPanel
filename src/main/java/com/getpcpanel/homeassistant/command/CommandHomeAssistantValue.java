@@ -53,9 +53,11 @@ public class CommandHomeAssistantValue extends CommandHomeAssistant implements D
         var x = context.dial().getValue(this, 0f, 1f); // normalised 0..1, honouring trim/invert/range
         var yaml = ValueInterpolator.interpolate(action, ValueInterpolator.translate(x, min, max, formula));
         // A moving dial fires a stream of events; the throttle (configurable on the HA settings page)
-        // sends the first instantly, gates the middle, and guarantees the final value. Keyed by this
-        // command instance so each control throttles independently.
-        service().callActionThrottled(this, server, yaml);
+        // sends the first instantly, gates the middle, and guarantees the final value. Keyed by a stable
+        // value (server + action) rather than `this`: a fresh command instance is deserialised on every
+        // profile edit/reload, so an identity key would strand a dead entry in the shared Debouncer map.
+        // (A plain String, not a record — a nested record here would be scraped into the generated TS.)
+        service().callActionThrottled("ha " + server + ' ' + action, server, yaml);
     }
 
     @Override
