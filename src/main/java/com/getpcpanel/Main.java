@@ -21,6 +21,7 @@ public class Main implements QuarkusApplication {
     private static final String SKIP_FILE_CHECK_PROPERTY = "pcpanel.skip-file-check";
 
     static void main(String... args) {
+        forceHeadlessAwt();
         overrideBakedPathsForNativeImage();
         redirectWorkingDirectoryForNativeImage();
         var argSet = Set.of(args);
@@ -32,6 +33,25 @@ public class Main implements QuarkusApplication {
             return;
         }
         Quarkus.run(Main.class, args);
+    }
+
+    /**
+     * Run the AWT/Java2D subsystem headless. The app never opens an AWT/Swing window on any platform —
+     * it only uses <em>headless</em> Java2D (the Win32 layered-window overlay renderer and process-icon
+     * extraction on Windows). The full windowing toolkit ({@code sun.awt.windows.WToolkit}) cannot load
+     * its {@code libawt} in the GraalVM native image, so the first {@code BufferedImage} use there fails
+     * with {@code NoClassDefFoundError: Could not initialize class java.awt.image.BufferedImage},
+     * silently disabling the overlay and process icons.
+     *
+     * <p>This must be set at <em>runtime</em>: {@code java.awt} is {@code --initialize-at-run-time}, so it
+     * reads {@code java.awt.headless} when first touched at run time. The {@code -J-Djava.awt.headless=true}
+     * native-image build argument only sets the property on the image <em>builder</em> JVM, not on the
+     * produced executable, so it does not make the running image headless. Setting it here — before any
+     * AWT class is loaded — does, and is harmless on the JVM/dev and on macOS (no AWT in the image).
+     */
+    @SuppressWarnings("AccessOfSystemProperties")
+    private static void forceHeadlessAwt() {
+        System.setProperty("java.awt.headless", "true");
     }
 
     /**
