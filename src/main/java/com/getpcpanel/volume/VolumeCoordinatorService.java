@@ -34,14 +34,17 @@ public class VolumeCoordinatorService {
         var handler = StreamEx.of(focusRedirectors.handlesStream())
                               .findFirst(fr -> fr.get().handleFocusVolumeRequest(application, floatValue));
         if (handler.isPresent()) {
-            log.trace("Focus volume request for {} handled by {}", application, handler.get().get().getClass().getSimpleName());
+            // DEBUG, not TRACE: the native image's build-time min-level is DEBUG, so TRACE can never be
+            // enabled at runtime. These short-circuits explain a "focus volume does nothing" report (#88).
+            log.debug("Focus volume request for {} handled by {} (not applied to OS volume)", application, handler.get().get().getClass().getSimpleName());
             return;
         }
         // Optionally leave apps already controlled elsewhere (a per-app command, or Wave Link) untouched.
         if (saveService.get().isSkipControlledFocusApps() && isOtherwiseControlled(application)) {
-            log.trace("Focus volume left {} untouched: already controlled elsewhere", application);
+            log.debug("Focus volume left {} untouched: already controlled elsewhere", application);
             return;
         }
+        log.debug("Focus volume: resolving OS audio stream for focused app {}", application);
         sndCtrl.setFocusVolume(floatValue);
     }
 

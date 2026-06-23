@@ -175,16 +175,44 @@ public class SndCtrlPulseAudio implements ISndCtrl {
     public void setFocusVolume(float volume) {
         var window = processHelper.getActiveWindow().orElse(null);
         if (window == null) {
+            log.debug("Focus volume: no active window resolved (no window tool available, or nothing focused)");
             return;
         }
         Set<PulseAudioAudioSession> todo;
         synchronized (sessions) {
             todo = allSessions().filter(s -> matchesWindow(s, window)).toSet();
         }
+        if (log.isDebugEnabled()) {
+            logFocusMatch(window, todo);
+        }
         todo.forEach(s -> {
             s.setVolumeNoTrigger(volume); // Prevent sending the volume when 'force volume' is enabled
             cmd.setSessionVolume(s.index(), volume);
         });
+    }
+
+    /**
+     * Logs both sides of the focus-volume match so a "the knob does nothing" report (#88) is debuggable
+     * from a single log: the identifiers resolved for the focused window, and every candidate stream with
+     * its match keys (pid / portal app id / title / executable) and whether it matched. Enable with
+     * {@code quarkus.log.category."com.getpcpanel".level=DEBUG} (or the env var
+     * {@code QUARKUS_LOG_CATEGORY__COM_GETPCPANEL__LEVEL=DEBUG}).
+     */
+    private void logFocusMatch(ActiveWindow window, Set<PulseAudioAudioSession> matched) {
+        Set<PulseAudioAudioSession> all;
+        synchronized (sessions) {
+            all = new HashSet<>(sessions);
+        }
+        log.debug("Focus volume: window pid={} process={} flatpakAppId={} windowClass={} windowName={}; match identifiers={}",
+                window.pid(), window.process(), window.flatpakAppId(), window.windowClass(), window.windowName(), window.identifiers());
+        for (var s : all) {
+            log.debug("  candidate stream idx={} pid={} portalAppId={} title={} executable={} -> {}",
+                    s.index(), s.pid(), s.portalAppId(), s.title(), s.executable().getName(),
+                    matched.contains(s) ? "MATCH" : "no match");
+        }
+        if (matched.isEmpty()) {
+            log.debug("Focus volume: NO stream matched the focused window (pid={}) - nothing controlled; see candidates above", window.pid());
+        }
     }
 
     /**

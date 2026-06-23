@@ -286,3 +286,23 @@ source ~/.bashrc
 
 Not sure if a restart is needed after that. I ended up adding an option to point to the executable by adding this VM argument:
 `-Dlinux.commands.kdotool=~/.cargo/bin/kdotool`
+
+### Debugging focus volume ("the knob does nothing")
+
+If focus volume doesn't control an app, turn on debug logging to see exactly how the app matches the
+focused window to an audio stream. Set this environment variable before launching (it raises the log
+level for the app at runtime — verified to work in the shipped native build):
+
+```shell
+# AppImage / raw executable
+QUARKUS_LOG_CATEGORY__COM_GETPCPANEL__LEVEL=DEBUG ./PCPanel-*.AppImage
+
+# Flatpak
+flatpak run --env=QUARKUS_LOG_CATEGORY__COM_GETPCPANEL__LEVEL=DEBUG com.getpcpanel.PCPanel
+```
+
+Then turn a focus-volume dial and look in the log (`<data dir>/logs/logging.log`, see above) for
+`Focus volume:` lines. They print the identifiers resolved for the focused window
+(`pid / process / flatpakAppId / windowClass / windowName`) and every candidate audio stream with its
+match keys (`pid / portalAppId / title / executable`) and whether it matched — which makes it obvious
+whether the window resolved to the right app id and which stream (if any) was controlled.
