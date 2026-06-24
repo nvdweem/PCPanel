@@ -1,3 +1,6 @@
+/*
+ * Adapted from Voicemeeter-JNA-Interface by mattco98 — https://github.com/mattco98/Voicemeeter-JNA-Interface
+ */
 package com.getpcpanel.voicemeeter;
 
 import lombok.Getter;

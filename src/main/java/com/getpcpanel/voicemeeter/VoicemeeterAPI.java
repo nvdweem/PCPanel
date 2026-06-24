@@ -1,3 +1,7 @@
+/*
+ * Wraps the VB-Audio Voicemeeter Remote API.
+ * Adapted from Voicemeeter-JNA-Interface by mattco98 — https://github.com/mattco98/Voicemeeter-JNA-Interface
+ */
 package com.getpcpanel.voicemeeter;
 
 import java.io.File;
