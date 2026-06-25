@@ -251,6 +251,12 @@ public class DeviceScanner implements HidServicesListener, DeviceProvider {
         }
     }
 
+    @Override
+    public void hidDataReceived(HidServicesEvent event) {
+        // Unused: PCPanel reads its devices directly via DeviceCommunicationHandler rather than through
+        // hid4java's auto-data-read. Required because hid4java 0.8 made this an abstract listener method.
+    }
+
     private Optional<DeviceType> determineType(HidDevice device) {
         for (var deviceType : DeviceType.ALL) {
             if (device.isVidPidSerial(deviceType.getVid(), deviceType.getPid(), null))

@@ -1,5 +1,6 @@
 [
   {"interfaces": ["org.hid4java.jna.HidApiLibrary"]},
+  {"interfaces": ["org.hid4java.jna.DarwinHidApiLibrary"]},
   {"interfaces": ["org.hid4java.jna.HidrawHidApiLibrary"]},
   {"interfaces": ["org.hid4java.jna.LibusbHidApiLibrary"]},
   {"interfaces": ["com.getpcpanel.voicemeeter.VoicemeeterInstance"]},

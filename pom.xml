@@ -196,7 +196,9 @@
         <dependency>
             <groupId>org.hid4java</groupId>
             <artifactId>hid4java</artifactId>
-            <version>0.7.0</version>
+            <!-- 0.8.0 bundles a darwin-aarch64 libhidapi.dylib; 0.7.0 shipped only the x86_64 darwin
+                 lib, so HID device scanning failed on Apple Silicon ("incompatible architecture"). -->
+            <version>0.8.0</version>
         </dependency>
 
         <!-- Serial port access (Deej provider). Self-bundles native libs as classpath resources.

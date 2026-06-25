@@ -1,5 +1,6 @@
 package com.getpcpanel.graalvm;
 
+import org.hid4java.jna.DarwinHidApiLibrary;
 import org.hid4java.jna.HidApi;
 import org.hid4java.jna.HidApiLibrary;
 import org.hid4java.jna.HidDeviceInfoStructure;
@@ -146,6 +147,10 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         // hid4java JNA library + structure classes (JNA needs reflection to instantiate structures)
         HidApi.class,
         HidApiLibrary.class,
+        // hid4java 0.8 loads hidapi on macOS through this platform-specific Library (Native.load creates
+        // a JNA proxy — also registered in proxy-config.json). Without it HID scanning fails in the
+        // native image on macOS.
+        DarwinHidApiLibrary.class,
         HidDeviceInfoStructure.class,
         HidDeviceStructure.class,
         HidrawHidApiLibrary.class,
