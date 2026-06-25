@@ -1,6 +1,5 @@
-# TEMPORARY debug workflow: validates the issue-#101 macOS sign + launch-and-serve smoke +
-# dmg packaging on a single arm64 runner (push-triggered on this branch only), without
-# spending Windows/Linux/Flatpak or publishing a pre-release. DELETE before merge.
+# TEMPORARY debug workflow: arm64-only macOS sign + smoke + dmg validation (push-triggered on
+# this branch only). No Windows/Linux, no pre-release. DELETE before merge.
 name: macOS smoke (debug)
 'on':
   push:
@@ -50,7 +49,37 @@ jobs:
       run: "set -euxo pipefail\napp=\"target/PCPanel.app\"\nbin=\"$app/Contents/MacOS/PCPanel\"\n\n# --- Sign (ad-hoc; the issue-#101 fix) -------------------------------------------------\n# We have no Apple Developer ID, so this is an *ad-hoc* signature (`--sign -`): it does not\n# pass notarization, but it produces a structurally VALID signature, which is what macOS\n# actually requires to launch. On Apple Silicon the kernel refuses to run any Mach-O without\n# at least an ad-hoc signature (unsigned arm64 code is SIGKILLed at exec). GraalVM's linker\n# already ad-hoc-signs the runner binary, so it carries a bundle CodeDirectory that reserves\n# a slot for a sealed-resources manifest — but nothing ever signed the *bundle*, so\n# `Contents/_CodeSignature/CodeResources` was missing. That half-signed state is precisely\n# the \"code has no resources but signature indicates they must be present\" / \"PCPanel is\n# damaged\" failure (issue #101), and removing the quarantine xattr cannot fix it. Signing the\n# bundle generates the CodeResources manifest and makes the quarantine workaround work again.\n#\n# All bundle mutation (binary, dylibs, icon, Info.plist) happened in the assemble step —\n# touching any bundled file after signing would invalidate the seal. We sign inside-out\n# (every nested Mach-O first, the bundle last); `--deep` signing is deprecated by Apple and\n# is NOT used here. No entitlements are passed: the cs.* entitlements only take effect under\n# the Hardened Runtime, which an ad-hoc signature does not enable, so they would be inert.\nxattr -cr \"$app\"\nfind \"$app/Contents\" -type f \\( -name '*.dylib' -o -name '*.jnilib' -o -name '*.so' \\) \\\n  -exec codesign --force --sign - --timestamp=none {} +\ncodesign --force --sign - --timestamp=none \"$app\"\n\n# --- Smoke test: the app must actually START and DO WORK -------------------------------\n# This is the primary gate, and it is deliberately general: boot the bundled binary, wait for\n# the embedded HTTP server, then exercise real REST endpoints. Reaching those endpoints with\n# HTTP 200 proves the native image boots, Quarkus starts, the server binds, and backend state\n# round-trips through JSON (so it also guards the native-image serialization footguns called\n# out in CLAUDE.md — List<DTO> array reflection, FileSerializer). Code signing is verified as\n# a *side effect*: an invalidly signed bundle is SIGKILLed at exec, so the server never comes\n# up and this fails — which is why this test still catches a signing regression even if the\n# `codesign --verify` bonus check below is removed.\n\"$bin\" skipfilecheck quiet >pcpanel-smoke.log 2>&1 &\npid=$!\ntrap 'kill -KILL \"$pid\" 2>/dev/null || true; wait \"$pid\" 2>/dev/null || true' EXIT\n\nbase=\"http://127.0.0.1:7654\"\nup=0\nfor _ in $(seq 1 60); do\n  if ! kill -0 \"$pid\" 2>/dev/null; then\n    echo \"FAIL: the app process exited during startup (code-signature rejection or a crash)\"\n    cat pcpanel-smoke.log || true\n    exit 1\n  fi\n  if curl -fsS -o /dev/null \"$base/api/devices\"; then up=1; break; fi\n  sleep 2\ndone\nif [ \"$up\" != 1 ]; then\n  echo \"FAIL: app did not serve $base/api/devices within the timeout\"\n  cat pcpanel-smoke.log || true\n  exit 1\nfi\n\n# Do real work against the running app — each must return HTTP 200 with a JSON body.\nfor ep in /api/devices /api/audio/devices /api/audio/applications; do\n  code=$(curl -s -o /tmp/resp.json -w '%{http_code}' \"$base$ep\")\n  echo \"GET $ep -> $code\"\n  if [ \"$code\" != 200 ]; then\n    echo \"FAIL: $ep returned $code (a 5xx here usually means a native-image reflection gap)\"\n    head -c 2000 /tmp/resp.json || true; echo; cat pcpanel-smoke.log || true\n    exit 1\n  fi\ndone\necho \"Smoke test OK: the signed app booted and served its REST API.\"\n\n# --- Bonus: explicit signature confirmation (a benefit, not the primary gate) ----------\ncodesign --verify --deep --strict --verbose=4 \"$app\"\ncodesign --display --verbose=4 \"$app\" || true\n"
     - name: Create .dmg
       if: steps.assemble.outcome == 'success'
-      run: "set -euxo pipefail\narch=$(uname -m)   # arm64 or x86_64\n# Free workspace disk before imaging. hdiutil needs scratch space roughly the size of the\n# bundle to build the compressed image, and the runner volume is tight after a native build —\n# without this, `hdiutil create` fails with \"No space left on device\". The signed\n# PCPanel.app already contains its own copy of the runner binary, so the standalone native\n# runner and the intermediate build jars left in target/ are dead weight here and safe to drop\n# (only the .dmg is uploaded afterwards).\ndf -h . || true\nrm -f target/*-runner target/*-runner.jar target/*.jar || true\nrm -rf target/quarkus-app target/classes target/generated-sources || true\ndf -h . || true\nhdiutil create -volname PCPanel -srcfolder \"target/PCPanel.app\" -ov -format UDZO \\\n  \"target/PCPanel-${{ steps.ver.outputs.version }}-${arch}.dmg\"\n"
+      run: 'set -euxo pipefail
+
+        arch=$(uname -m)   # arm64 or x86_64
+
+        app="target/PCPanel.app"
+
+        dmg="target/PCPanel-${{ steps.ver.outputs.version }}-${arch}.dmg"
+
+        # NB: the host volume has plenty of free space — the earlier "hdiutil: create failed - No
+
+        # space left on device" was hdiutil AUTO-SIZING the temporary image from the source folder
+
+        # and coming up just short for the large (signed) runner binary, so the copy overflowed the
+
+        # image itself. Size it explicitly instead: build a writable image at bundle-size + headroom,
+
+        # then convert to the compressed read-only UDZO we ship.
+
+        appkb=$(du -sk "$app" | awk ''{print $1}'')
+
+        sizemb=$(( appkb / 1024 + 300 ))
+
+        hdiutil create -volname PCPanel -srcfolder "$app" -ov -format UDRW -size "${sizemb}m" target/PCPanel-rw.dmg
+
+        hdiutil convert target/PCPanel-rw.dmg -format UDZO -ov -o "$dmg"
+
+        rm -f target/PCPanel-rw.dmg
+
+        ls -lh "$dmg"
+
+        '
     - name: Store .dmg artifact
       uses: actions/upload-artifact@v7
       with:

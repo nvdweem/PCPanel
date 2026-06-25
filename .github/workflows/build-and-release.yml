@@ -536,18 +536,19 @@ jobs:
         run: |
           set -euxo pipefail
           arch=$(uname -m)   # arm64 or x86_64
-          # Free workspace disk before imaging. hdiutil needs scratch space roughly the size of the
-          # bundle to build the compressed image, and the runner volume is tight after a native build —
-          # without this, `hdiutil create` fails with "No space left on device". The signed
-          # PCPanel.app already contains its own copy of the runner binary, so the standalone native
-          # runner and the intermediate build jars left in target/ are dead weight here and safe to drop
-          # (only the .dmg is uploaded afterwards).
-          df -h . || true
-          rm -f target/*-runner target/*-runner.jar target/*.jar || true
-          rm -rf target/quarkus-app target/classes target/generated-sources || true
-          df -h . || true
-          hdiutil create -volname PCPanel -srcfolder "target/PCPanel.app" -ov -format UDZO \
-            "target/PCPanel-${{ steps.ver.outputs.version }}-${arch}.dmg"
+          app="target/PCPanel.app"
+          dmg="target/PCPanel-${{ steps.ver.outputs.version }}-${arch}.dmg"
+          # NB: the host volume has plenty of free space — the earlier "hdiutil: create failed - No
+          # space left on device" was hdiutil AUTO-SIZING the temporary image from the source folder
+          # and coming up just short for the large (signed) runner binary, so the copy overflowed the
+          # image itself. Size it explicitly instead: build a writable image at bundle-size + headroom,
+          # then convert to the compressed read-only UDZO we ship.
+          appkb=$(du -sk "$app" | awk '{print $1}')
+          sizemb=$(( appkb / 1024 + 300 ))
+          hdiutil create -volname PCPanel -srcfolder "$app" -ov -format UDRW -size "${sizemb}m" target/PCPanel-rw.dmg
+          hdiutil convert target/PCPanel-rw.dmg -format UDZO -ov -o "$dmg"
+          rm -f target/PCPanel-rw.dmg
+          ls -lh "$dmg"
 
       - name: Store .dmg artifact
         uses: actions/upload-artifact@v7
