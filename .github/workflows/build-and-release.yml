@@ -11,9 +11,10 @@
 #   Windows : per-user Inno Setup installer (no admin, installs under %LOCALAPPDATA%,
 #             optional autostart on sign-in, launches after install)
 #   Linux   : .deb (standard) + AppImage + best-effort Flatpak bundle
-#   macOS   : best-effort .app bundled into an architecture-specific .dmg (unsigned).
-#             The macOS build is experimental and runs continue-on-error so it never
-#             blocks the Windows/Linux release if a runner image changes.
+#   macOS   : best-effort .app bundled into an architecture-specific .dmg, ad-hoc signed
+#             (valid signature, but not notarized — no Apple Developer ID). The macOS build
+#             is experimental and runs continue-on-error so it never blocks the Windows/Linux
+#             release if a runner image changes.
 
 name: Build & Release
 env:
@@ -411,12 +412,15 @@ jobs:
         # instead of the bare ${project.version} (2.0-SNAPSHOT).
         run: mvn -B package -Pnative -Dquarkus.application.version=${{ steps.ver.outputs.version }} --file pom.xml
 
-      - name: Assemble .app and .dmg
-        id: package
+      - name: Assemble .app bundle
+        id: assemble
+        # Tolerated like the rest of the macOS leg: if the native build above failed there is no
+        # runner binary to wrap, so this step fails and the sign/verify/dmg steps below are skipped,
+        # the job stays green, and the Windows/Linux release is never blocked. A *signing* regression,
+        # by contrast, fails the dedicated (non-continue-on-error) step below and turns the job red.
         continue-on-error: true
         run: |
           set -euxo pipefail
-          arch=$(uname -m)   # arm64 or x86_64
           exe=$(ls target/*-runner | head -1)
           app="target/PCPanel.app"
           mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
@@ -443,8 +447,119 @@ jobs:
           </dict>
           </plist>
           PLIST
-          hdiutil create -volname PCPanel -srcfolder "$app" -ov -format UDZO \
-            "target/PCPanel-${{ steps.ver.outputs.version }}-${arch}.dmg"
+
+      - name: Sign and smoke-test the .app bundle
+        # Runs only when assembly produced a bundle, so a tolerated native-build failure doesn't turn
+        # the job red. Intentionally NOT continue-on-error: if the assembled app can't be signed or
+        # won't actually run, this job MUST go red so the regression is caught. That failure still does
+        # not block the release — preRelease gates only on the Windows/Linux jobs (its `if` uses
+        # !cancelled()).
+        if: steps.assemble.outcome == 'success'
+        run: |
+          set -euxo pipefail
+          app="target/PCPanel.app"
+          bin="$app/Contents/MacOS/PCPanel"
+
+          # --- Sign (ad-hoc; the issue-#101 fix) -------------------------------------------------
+          # We have no Apple Developer ID, so this is an *ad-hoc* signature (`--sign -`): it does not
+          # pass notarization, but it produces a structurally VALID signature, which is what macOS
+          # actually requires to launch. On Apple Silicon the kernel refuses to run any Mach-O without
+          # at least an ad-hoc signature (unsigned arm64 code is SIGKILLed at exec). GraalVM's linker
+          # already ad-hoc-signs the runner binary, so it carries a bundle CodeDirectory that reserves
+          # a slot for a sealed-resources manifest — but nothing ever signed the *bundle*, so
+          # `Contents/_CodeSignature/CodeResources` was missing. That half-signed state is precisely
+          # the "code has no resources but signature indicates they must be present" / "PCPanel is
+          # damaged" failure (issue #101), and removing the quarantine xattr cannot fix it. Signing the
+          # bundle generates the CodeResources manifest and makes the quarantine workaround work again.
+          #
+          # All bundle mutation (binary, dylibs, icon, Info.plist) happened in the assemble step —
+          # touching any bundled file after signing would invalidate the seal. We sign inside-out
+          # (every nested Mach-O first, the bundle last); `--deep` signing is deprecated by Apple and
+          # is NOT used here. No entitlements are passed: the cs.* entitlements only take effect under
+          # the Hardened Runtime, which an ad-hoc signature does not enable, so they would be inert.
+          xattr -cr "$app"
+          find "$app/Contents" -type f \( -name '*.dylib' -o -name '*.jnilib' -o -name '*.so' \) \
+            -exec codesign --force --sign - --timestamp=none {} +
+          codesign --force --sign - --timestamp=none "$app"
+
+          # --- Smoke test: the app must actually START and DO WORK -------------------------------
+          # This is the primary gate, and it is deliberately general: boot the bundled binary, wait for
+          # the embedded HTTP server, then exercise real REST endpoints. Reaching those endpoints with
+          # HTTP 200 proves the native image boots, Quarkus starts, the server binds, and backend state
+          # round-trips through JSON (so it also guards the native-image serialization footguns called
+          # out in CLAUDE.md — List<DTO> array reflection, FileSerializer). Code signing is verified as
+          # a *side effect*: an invalidly signed bundle is SIGKILLed at exec, so the server never comes
+          # up and this fails — which is why this test still catches a signing regression even if the
+          # `codesign --verify` bonus check below is removed.
+          "$bin" skipfilecheck quiet >pcpanel-smoke.log 2>&1 &
+          pid=$!
+          trap 'kill -KILL "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true' EXIT
+
+          base="http://127.0.0.1:7654"
+          up=0
+          for _ in $(seq 1 60); do
+            if ! kill -0 "$pid" 2>/dev/null; then
+              echo "FAIL: the app process exited during startup (code-signature rejection or a crash)"
+              cat pcpanel-smoke.log || true
+              exit 1
+            fi
+            if curl -fsS -o /dev/null "$base/api/devices"; then up=1; break; fi
+            sleep 2
+          done
+          if [ "$up" != 1 ]; then
+            echo "FAIL: app did not serve $base/api/devices within the timeout"
+            cat pcpanel-smoke.log || true
+            exit 1
+          fi
+
+          # Do real work against the running app — each must return HTTP 200 with a JSON body.
+          for ep in /api/devices /api/audio/devices /api/audio/applications; do
+            code=$(curl -s -o /tmp/resp.json -w '%{http_code}' "$base$ep")
+            echo "GET $ep -> $code"
+            if [ "$code" != 200 ]; then
+              echo "FAIL: $ep returned $code (a 5xx here usually means a native-image reflection gap)"
+              head -c 2000 /tmp/resp.json || true; echo; cat pcpanel-smoke.log || true
+              exit 1
+            fi
+          done
+          echo "Smoke test OK: the signed app booted and served its REST API."
+
+          # HID device scanning must initialize: hid4java loads the platform hidapi native via JNA, and
+          # on Apple Silicon that regressed when only an x86_64 hidapi was bundled (arm64 dlopen failed).
+          # Fail if the startup log still reports the HID init failure, so a hidapi arch/registration
+          # regression is caught (no physical device is needed — hid_init initializes the subsystem).
+          if grep -q "Failed to initialize HID services" pcpanel-smoke.log; then
+            echo "FAIL: HID services did not initialize — hidapi native arch/load problem"
+            grep -A3 "Failed to initialize HID services" pcpanel-smoke.log || true
+            exit 1
+          fi
+          echo "HID services initialized OK."
+
+          # --- Bonus: explicit signature confirmation (a benefit, not the primary gate) ----------
+          codesign --verify --deep --strict --verbose=4 "$app"
+          codesign --display --verbose=4 "$app" || true
+
+      - name: Create .dmg
+        # An `if:` without a status function is ANDed with success(), so this is skipped automatically
+        # if the sign/verify step failed — we never package an unverified bundle. Gating on assembly
+        # also cleanly skips it when the native build was the thing that failed.
+        if: steps.assemble.outcome == 'success'
+        run: |
+          set -euxo pipefail
+          arch=$(uname -m)   # arm64 or x86_64
+          app="target/PCPanel.app"
+          dmg="target/PCPanel-${{ steps.ver.outputs.version }}-${arch}.dmg"
+          # NB: the host volume has plenty of free space — the earlier "hdiutil: create failed - No
+          # space left on device" was hdiutil AUTO-SIZING the temporary image from the source folder
+          # and coming up just short for the large (signed) runner binary, so the copy overflowed the
+          # image itself. Size it explicitly instead: build a writable image at bundle-size + headroom,
+          # then convert to the compressed read-only UDZO we ship.
+          appkb=$(du -sk "$app" | awk '{print $1}')
+          sizemb=$(( appkb / 1024 + 300 ))
+          hdiutil create -volname PCPanel -srcfolder "$app" -ov -format UDRW -size "${sizemb}m" target/PCPanel-rw.dmg
+          hdiutil convert target/PCPanel-rw.dmg -format UDZO -ov -o "$dmg"
+          rm -f target/PCPanel-rw.dmg
+          ls -lh "$dmg"
 
       - name: Store .dmg artifact
         uses: actions/upload-artifact@v7

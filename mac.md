@@ -13,11 +13,19 @@ architecture-specific: download the `aarch64` `.dmg` for Apple Silicon (M1 and n
 
 1. Download the `PCPanel-<version>-<arch>.dmg` for your architecture and drag `PCPanel.app` to
    `/Applications`.
-2. The app is **not signed or notarized**, so macOS Gatekeeper will refuse to open it on first launch.
-   Work around it with one of:
-   - Right-click `PCPanel.app` → **Open** → **Open** in the dialog, or
-   - System Settings → Privacy & Security → scroll down → **Open Anyway**, or
-   - From a terminal: `xattr -dr com.apple.quarantine /Applications/PCPanel.app`
+2. The app is **ad-hoc signed but not notarized** (it has a valid signature, just not one tied to a
+   paid Apple Developer ID), so macOS Gatekeeper will still refuse to open it on first launch with a
+   "developer cannot be verified" warning. Work around it with one of:
+   - From a terminal: `xattr -dr com.apple.quarantine /Applications/PCPanel.app` (then launch), or
+   - System Settings → Privacy & Security → scroll down → **Open Anyway** (macOS 15 Sequoia and
+     macOS 26 Tahoe require this route — there is a short time window and an admin-password prompt).
+   - On older macOS, right-click `PCPanel.app` → **Open** → **Open** in the dialog also worked, but
+     Apple removed that shortcut in macOS 15.
+
+   Note: the ad-hoc signature is what makes the quarantine-removal workaround actually function on
+   macOS 26 — earlier builds were *unsigned* on Intel and *half-signed* on Apple Silicon (a valid
+   binary signature but no sealed bundle manifest), which macOS 26 reports as "PCPanel is damaged
+   and can't be opened" and which removing the quarantine flag could not fix (see issue #101).
 
 ## Permissions
 
@@ -30,8 +38,9 @@ macOS guards the APIs PCPanel needs behind privacy (TCC) permissions. Grant them
 | **Accessibility**    | Sending keystroke / shortcut mappings                   | Privacy & Security → Accessibility |
 | **Automation**       | Controlling Music.app / Spotify from the Media button   | Privacy & Security → Automation (prompted on first use) |
 
-Because the app is unsigned, macOS may forget these grants after an update; re-add PCPanel if a feature
-stops working after upgrading. PCPanel logs a hint when it detects a missing permission.
+Because the app is only ad-hoc signed (its signature is regenerated on every build, so its identity
+changes), macOS may forget these grants after an update; re-add PCPanel if a feature stops working
+after upgrading. PCPanel logs a hint when it detects a missing permission.
 
 ## What works
 
@@ -101,3 +110,10 @@ mvn -B package -Pnative
 The native executable and its companion `.dylib` files end up under `target/`. The CI workflow
 (`.github/workflows/build-and-release.yml`) wraps them into `PCPanel.app` and a `.dmg`; the macOS job is
 best-effort and may need tweaking for a given runner image.
+
+The CI job ad-hoc signs the assembled bundle (`codesign --sign -`) as its final packaging step —
+without a valid signature the bundle is reported as "damaged" and will not launch on Apple Silicon
+(macOS requires at least an ad-hoc signature to run arm64 code). If you assemble a bundle by hand, do
+the same: sign every nested `.dylib` first, then the bundle last (not `--deep`), e.g.
+`codesign --force --sign - --timestamp=none PCPanel.app`, and verify with
+`codesign --verify --deep --strict PCPanel.app`. No entitlements are needed for an ad-hoc signature.

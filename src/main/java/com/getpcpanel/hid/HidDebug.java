@@ -49,8 +49,10 @@ public class HidDebug {
             @Override public void hidFailure(HidServicesEvent event) {
                 write("Hid failure: " + event);
             }
-            // Note: PR #87 also added a hidDataReceived(...) override, but that listener method only
-            // exists in hid4java 0.8+. 2.0 is still on 0.7.0; restore it together with the hid4java bump.
+
+            @Override public void hidDataReceived(HidServicesEvent event) {
+                write("Data received: " + event);
+            }
         };
     }
 
