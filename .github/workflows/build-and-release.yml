@@ -11,9 +11,10 @@
 #   Windows : per-user Inno Setup installer (no admin, installs under %LOCALAPPDATA%,
 #             optional autostart on sign-in, launches after install)
 #   Linux   : .deb (standard) + AppImage + best-effort Flatpak bundle
-#   macOS   : best-effort .app bundled into an architecture-specific .dmg (unsigned).
-#             The macOS build is experimental and runs continue-on-error so it never
-#             blocks the Windows/Linux release if a runner image changes.
+#   macOS   : best-effort .app bundled into an architecture-specific .dmg, ad-hoc signed
+#             (valid signature, but not notarized — no Apple Developer ID). The macOS build
+#             is experimental and runs continue-on-error so it never blocks the Windows/Linux
+#             release if a runner image changes.
 
 name: Build & Release
 env:
@@ -443,6 +444,34 @@ jobs:
           </dict>
           </plist>
           PLIST
+          # Code-sign the assembled bundle. We have no Apple Developer ID, so this is an *ad-hoc*
+          # signature (`--sign -`): it does not pass notarization, but it produces a structurally
+          # VALID signature, which is what macOS actually requires to launch.
+          #
+          # Why this step is mandatory (see issue #101): on Apple Silicon the kernel refuses to run
+          # any Mach-O without at least an ad-hoc signature (unsigned arm64 code is SIGKILLed at
+          # exec). GraalVM's linker already ad-hoc-signs the runner binary, so it carries a bundle
+          # CodeDirectory that reserves a slot for a sealed-resources manifest — but nothing ever
+          # signed the *bundle*, so `Contents/_CodeSignature/CodeResources` was missing. That
+          # half-signed state is precisely the "code has no resources but signature indicates they
+          # must be present" / "PCPanel is damaged" failure, and it is NOT fixable by removing the
+          # quarantine xattr (the documented mac.md workaround). Signing the bundle generates the
+          # CodeResources manifest and makes the quarantine-removal workaround function again.
+          #
+          # ALL bundle mutation (binary, dylibs, icon, Info.plist) must happen BEFORE this point —
+          # touching any bundled file after signing invalidates the seal. We sign inside-out (every
+          # nested Mach-O first, the bundle last); `--deep` signing is deprecated by Apple and is NOT
+          # used here. No entitlements are passed: the cs.* entitlements only take effect under the
+          # Hardened Runtime, which an ad-hoc signature does not enable, so they would be inert. They
+          # would only matter if this app is ever notarized with a real Developer ID.
+          xattr -cr "$app"
+          find "$app/Contents" -type f \( -name '*.dylib' -o -name '*.jnilib' -o -name '*.so' \) \
+            -exec codesign --force --sign - --timestamp=none {} +
+          codesign --force --sign - --timestamp=none "$app"
+          # Fail the step if the seal is not structurally valid (better to ship no .dmg than a
+          # "damaged" one). `--deep --strict` verification is the correct, non-deprecated use of --deep.
+          codesign --verify --deep --strict --verbose=4 "$app"
+          codesign -dvvv "$app" || true
           hdiutil create -volname PCPanel -srcfolder "$app" -ov -format UDZO \
             "target/PCPanel-${{ steps.ver.outputs.version }}-${arch}.dmg"
 
