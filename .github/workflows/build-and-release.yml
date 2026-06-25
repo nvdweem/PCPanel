@@ -524,6 +524,17 @@ jobs:
           done
           echo "Smoke test OK: the signed app booted and served its REST API."
 
+          # HID device scanning must initialize: hid4java loads the platform hidapi native via JNA, and
+          # on Apple Silicon that regressed when only an x86_64 hidapi was bundled (arm64 dlopen failed).
+          # Fail if the startup log still reports the HID init failure, so a hidapi arch/registration
+          # regression is caught (no physical device is needed — hid_init initializes the subsystem).
+          if grep -q "Failed to initialize HID services" pcpanel-smoke.log; then
+            echo "FAIL: HID services did not initialize — hidapi native arch/load problem"
+            grep -A3 "Failed to initialize HID services" pcpanel-smoke.log || true
+            exit 1
+          fi
+          echo "HID services initialized OK."
+
           # --- Bonus: explicit signature confirmation (a benefit, not the primary gate) ----------
           codesign --verify --deep --strict --verbose=4 "$app"
           codesign --display --verbose=4 "$app" || true
