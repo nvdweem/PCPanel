@@ -3,6 +3,9 @@
 # pre-release. DELETE once the smoke test is confirmed green; not intended to be merged.
 name: macOS smoke (debug)
 'on':
+  push:
+    branches:
+      - worktree-macos-signing-fix
   workflow_dispatch: null
 env:
   JAVA_VERSION: '25'
