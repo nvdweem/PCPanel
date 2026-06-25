@@ -344,6 +344,33 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantDevice",
         "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantLightConfig",
         "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantNumberConfig",
+
+        // macOS CoreAudio path (GET /api/audio/*, default-device switching). JNA reflectively
+        // instantiates these Structures (no-arg constructor + field access). The CoreFoundation class
+        // initializer itself builds a CFTypeID, so the whole jna-platform CoreFoundation inner-class
+        // set must be reachable or the audio endpoints 500 in the native image with
+        // MissingReflectionRegistrationError / "CFTypeID requires a public no-arg constructor" — even
+        // though it works in JVM/dev. (The CoreFoundation JNA *proxy* is registered separately in
+        // proxy-config.json.) Registering the full set avoids whack-a-mole across rebuilds.
+        "com.sun.jna.platform.mac.CoreFoundation",
+        "com.sun.jna.platform.mac.CoreFoundation$CFAllocatorRef",
+        "com.sun.jna.platform.mac.CoreFoundation$CFArrayRef",
+        "com.sun.jna.platform.mac.CoreFoundation$CFBooleanRef",
+        "com.sun.jna.platform.mac.CoreFoundation$CFDataRef",
+        "com.sun.jna.platform.mac.CoreFoundation$CFDictionaryRef",
+        "com.sun.jna.platform.mac.CoreFoundation$CFDictionaryRef$ByReference",
+        "com.sun.jna.platform.mac.CoreFoundation$CFIndex",
+        "com.sun.jna.platform.mac.CoreFoundation$CFMutableDictionaryRef",
+        "com.sun.jna.platform.mac.CoreFoundation$CFNumberRef",
+        "com.sun.jna.platform.mac.CoreFoundation$CFNumberType",
+        "com.sun.jna.platform.mac.CoreFoundation$CFStringRef",
+        "com.sun.jna.platform.mac.CoreFoundation$CFStringRef$ByReference",
+        "com.sun.jna.platform.mac.CoreFoundation$CFTypeID",
+        "com.sun.jna.platform.mac.CoreFoundation$CFTypeRef",
+        // Project CoreAudio JNA binding: the property-address Structure (instantiated per call) and the
+        // change-listener Callback (used for default-device/volume notifications).
+        "com.getpcpanel.cpp.osx.CoreAudioLib$AudioObjectPropertyAddress",
+        "com.getpcpanel.cpp.osx.CoreAudioLib$AudioObjectPropertyListenerProc",
 })
 public class NativeImageConfig {
     private NativeImageConfig() {
