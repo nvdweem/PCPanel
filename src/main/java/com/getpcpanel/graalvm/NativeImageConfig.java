@@ -52,6 +52,13 @@ import com.getpcpanel.commands.command.CommandVolumeFocusMute;
 import com.getpcpanel.commands.command.CommandVolumeProcess;
 import com.getpcpanel.commands.command.CommandVolumeProcessMute;
 import com.getpcpanel.commands.command.DialAction.DialCommandParams;
+import com.getpcpanel.discord.command.CommandDiscord;
+import com.getpcpanel.discord.command.CommandDiscordSelfDeafen;
+import com.getpcpanel.discord.command.CommandDiscordSelfInputVolume;
+import com.getpcpanel.discord.command.CommandDiscordSelfMute;
+import com.getpcpanel.discord.command.CommandDiscordSelfOutputVolume;
+import com.getpcpanel.discord.command.CommandDiscordUserMute;
+import com.getpcpanel.discord.command.CommandDiscordUserVolume;
 import com.getpcpanel.homeassistant.command.CommandHomeAssistant;
 import com.getpcpanel.homeassistant.command.CommandHomeAssistantAction;
 import com.getpcpanel.homeassistant.command.CommandHomeAssistantValue;
@@ -70,6 +77,9 @@ import com.getpcpanel.device.descriptor.LightOutputSpec;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.Save;
+import com.getpcpanel.profile.dto.DiscordAuth;
+import com.getpcpanel.profile.dto.DiscordSeenUser;
+import com.getpcpanel.profile.dto.DiscordSettings;
 import com.getpcpanel.profile.dto.KnobSetting;
 import com.getpcpanel.profile.dto.LightingConfig;
 import com.getpcpanel.profile.dto.LightingConfig.LightingMode;
@@ -218,6 +228,15 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         CommandWaveLinkMainOutput.class,
         WaveLinkCommandTarget.class,
 
+        // Discord command hierarchy (also extends Command → ID.CLASS polymorphism)
+        CommandDiscord.class,
+        CommandDiscordSelfMute.class,
+        CommandDiscordSelfDeafen.class,
+        CommandDiscordUserMute.class,
+        CommandDiscordSelfInputVolume.class,
+        CommandDiscordSelfOutputVolume.class,
+        CommandDiscordUserVolume.class,
+
         // WaveLink RPC protocol classes (Jackson @JsonSubTypes / @JsonTypeInfo)
         JsonRpcMessage.class,
         JsonRpcResponse.class,
@@ -318,6 +337,12 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         MqttSettings.class,
         HomeAssistantSettings.class,
         WaveLinkSettings.class,
+        // Discord config + machine-managed auth/roster persisted in the save file (List<record> needs the
+        // element AND its array type reachable for Jackson in the native image).
+        DiscordSettings.class,
+        DiscordAuth.class,
+        DiscordSeenUser.class,
+        DiscordSeenUser[].class,
         OSCConnectionInfo.class,
         OSCBinding.class,
         OverlayPosition.class,
