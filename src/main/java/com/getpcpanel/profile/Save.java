@@ -11,6 +11,9 @@ import javax.annotation.Nullable;
 import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.device.descriptor.DeviceDescriptor;
 import com.getpcpanel.homeassistant.dto.HomeAssistantServer;
+import com.getpcpanel.profile.dto.DiscordAuth;
+import com.getpcpanel.profile.dto.DiscordSeenUser;
+import com.getpcpanel.profile.dto.DiscordSettings;
 import com.getpcpanel.profile.dto.MqttSettings;
 import com.getpcpanel.profile.dto.OSCConnectionInfo;
 import com.getpcpanel.profile.dto.OverlayPosition;
@@ -64,6 +67,12 @@ public class Save {
     @Nullable private List<HomeAssistantServer> homeAssistantServers;
     /** Leading+trailing throttle window (ms) for analog Home Assistant sends; null/0 = disabled. */
     @Nullable private Integer homeAssistantDebounceMs;
+    /** Discord integration config (client id/secret/enabled). User-editable; tokens live in {@link #discordAuth}. */
+    @Nullable private DiscordSettings discord;
+    /** Machine-managed Discord OAuth tokens — kept apart from {@link #discord} so a config save never clears them. */
+    @Nullable private DiscordAuth discordAuth;
+    /** Discord users seen in a voice channel, so the command editor can target a username while not in a call. */
+    @Nullable private List<DiscordSeenUser> discordSeenUsers;
 
     // Overlay
     private boolean overlayEnabled;
@@ -181,5 +190,15 @@ public class Save {
     @Nonnull
     public List<HomeAssistantServer> getHomeAssistantServers() {
         return Objects.requireNonNullElseGet(homeAssistantServers, List::of);
+    }
+
+    @Nonnull
+    public DiscordSettings getDiscord() {
+        return Objects.requireNonNullElse(discord, DiscordSettings.DEFAULT);
+    }
+
+    @Nonnull
+    public List<DiscordSeenUser> getDiscordSeenUsers() {
+        return Objects.requireNonNullElseGet(discordSeenUsers, List::of);
     }
 }
