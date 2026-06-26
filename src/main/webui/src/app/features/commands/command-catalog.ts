@@ -9,10 +9,11 @@ import { IconName } from '../../ui';
  */
 export type CommandCategory = 'audio' | 'system' | 'integration';
 export type CommandKind = 'dial' | 'button';
-export type Integration = 'obs' | 'voicemeeter' | 'wavelink' | 'homeassistant';
+export type Integration = 'obs' | 'voicemeeter' | 'wavelink' | 'discord' | 'homeassistant';
 export type LiveSource =
   | 'obs-scenes' | 'obs-sources' | 'vm-advanced'
   | 'wl-channels' | 'wl-inputs' | 'wl-mixes' | 'wl-outputs' | 'profiles'
+  | 'discord-users'
   | 'ha-servers';
 
 export type FieldDef =
@@ -44,6 +45,7 @@ export interface CommandDef {
 
 const P = 'com.getpcpanel.commands.command.';
 const WL = 'com.getpcpanel.wavelink.command.';
+const DC = 'com.getpcpanel.discord.command.';
 const HA = 'com.getpcpanel.homeassistant.command.';
 
 const MUTE_OPTS = [
@@ -306,6 +308,39 @@ export const COMMANDS: CommandDef[] = [
     type: WL + 'CommandWaveLinkAddFocusToChannel', label: 'Wave Link — add focused app', category: 'integration', integration: 'wavelink', kinds: ['button'], icon: 'plus',
     buildEmpty: () => ({ _type: WL + 'CommandWaveLinkAddFocusToChannel', id: '', name: '', overlayText: '' }),
     fields: [{ kind: 'select-live', key: 'id', label: 'Channel', source: 'wl-channels' }],
+  },
+  {
+    type: DC + 'CommandDiscordSelfMute', label: 'Discord — mute self', category: 'integration', integration: 'discord', kinds: ['button'], icon: 'mic-off',
+    buildEmpty: () => ({ _type: DC + 'CommandDiscordSelfMute', muteType: 'toggle', overlayText: '' }),
+    fields: [{ kind: 'mute', key: 'muteType', label: 'Action' }],
+  },
+  {
+    type: DC + 'CommandDiscordSelfDeafen', label: 'Discord — deafen self', category: 'integration', integration: 'discord', kinds: ['button'], icon: 'volume-x',
+    buildEmpty: () => ({ _type: DC + 'CommandDiscordSelfDeafen', muteType: 'toggle', overlayText: '' }),
+    fields: [{ kind: 'mute', key: 'muteType', label: 'Action' }],
+  },
+  {
+    type: DC + 'CommandDiscordUserMute', label: 'Discord — mute user', category: 'integration', integration: 'discord', kinds: ['button'], icon: 'mic-off',
+    buildEmpty: () => ({ _type: DC + 'CommandDiscordUserMute', username: '', muteType: 'toggle', overlayText: '' }),
+    fields: [
+      { kind: 'select-live', key: 'username', label: 'User', source: 'discord-users' },
+      { kind: 'mute', key: 'muteType', label: 'Action' },
+    ],
+  },
+  {
+    type: DC + 'CommandDiscordSelfInputVolume', label: 'Discord — mic volume', category: 'integration', integration: 'discord', kinds: ['dial'], icon: 'mic',
+    buildEmpty: () => ({ _type: DC + 'CommandDiscordSelfInputVolume', dialParams: dialParams(), invert: false }),
+    fields: [],
+  },
+  {
+    type: DC + 'CommandDiscordSelfOutputVolume', label: 'Discord — output volume', category: 'integration', integration: 'discord', kinds: ['dial'], icon: 'volume',
+    buildEmpty: () => ({ _type: DC + 'CommandDiscordSelfOutputVolume', dialParams: dialParams(), invert: false }),
+    fields: [],
+  },
+  {
+    type: DC + 'CommandDiscordUserVolume', label: 'Discord — user volume', category: 'integration', integration: 'discord', kinds: ['dial'], icon: 'volume',
+    buildEmpty: () => ({ _type: DC + 'CommandDiscordUserVolume', username: '', dialParams: dialParams(), invert: false }),
+    fields: [{ kind: 'select-live', key: 'username', label: 'User', source: 'discord-users' }],
   },
   {
     type: HA + 'CommandHomeAssistantValue', label: 'Home Assistant — set value', category: 'integration', integration: 'homeassistant', kinds: ['dial'], icon: 'sliders',

@@ -102,6 +102,7 @@ export class CommandPickerComponent {
     { id: 'obs', label: 'OBS' },
     { id: 'voicemeeter', label: 'Voicemeeter' },
     { id: 'wavelink', label: 'Wave Link' },
+    { id: 'discord', label: 'Discord' },
     { id: 'homeassistant', label: 'Home Assistant' },
   ];
 
@@ -140,10 +141,12 @@ export class CommandPickerComponent {
     }
     const connected = integration === 'obs' ? this.integrations.obsConnected()
       : integration === 'homeassistant' ? this.integrations.haConnected()
-        : this.integrations.waveLinkConnected();
+        : integration === 'discord' ? this.integrations.discordConnected()
+          : this.integrations.waveLinkConnected();
     const loading = integration === 'obs' ? this.integrations.obsScenes.isLoading()
       : integration === 'homeassistant' ? this.integrations.haStatus.isLoading()
-        : this.integrations.waveLink.isLoading();
+        : integration === 'discord' ? this.integrations.discordStatus.isLoading()
+          : this.integrations.waveLink.isLoading();
     if (loading) return { status: 'connecting', statusText: 'connecting…', offline: false };
     return connected ? { status: 'ok', statusText: 'connected', offline: false } : { status: 'idle', statusText: 'not connected', offline: true };
   }

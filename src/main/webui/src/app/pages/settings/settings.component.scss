@@ -152,3 +152,6 @@
 .ov-bar-fill { height: 100%; }
 // Backend-rendered overlay preview (the real OverlayRenderer → PNG), positioned by overlayPreviewStyle().
 .ov-img { position: absolute; max-width: calc(100% - 24px); height: auto; box-shadow: var(--sh-pop); }
+
+// Discord: Save + Connect & Authorize buttons side by side.
+.discord-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }

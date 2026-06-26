@@ -240,6 +240,90 @@
           </div>
         }
 
+        <!-- ── DISCORD ─────────────────────────────────────────────────────── -->
+        @case ('discord') {
+          <h2 class="page-title">
+            Discord
+            @if (discordTabStatus(); as st) { <pc-status-dot [kind]="st" [size]="8"></pc-status-dot> }
+          </h2>
+          <p class="page-sub">Control Discord voice from your dials and buttons: mute/deafen yourself, set
+            your mic and output volume, and locally mute or change the volume of other people in your call.
+            Voice control needs your own (free) Discord application, because Discord only grants the voice
+            scopes to an app's owner.</p>
+
+          @if (discordDraft(); as d) {
+            <div class="pc-card pad stack">
+              <div class="row">
+                <div class="row-text">
+                  <div class="row-label">Enable</div>
+                  <div class="row-sub">Discord integration</div>
+                </div>
+                <pc-toggle [value]="d.enabled" (valueChange)="patchDiscord('enabled', $event)"></pc-toggle>
+              </div>
+
+              <div class="pc-field">
+                <div class="pc-field-label">Client ID</div>
+                <input class="pc-field-input mono" type="text" placeholder="your Discord application's client id"
+                       [value]="d.clientId ?? ''" (input)="patchDiscord('clientId', $any($event.target).value)">
+              </div>
+              <div class="pc-field">
+                <div class="pc-field-label">Client secret</div>
+                <input class="pc-field-input mono" type="password" placeholder="your Discord application's client secret"
+                       [value]="d.clientSecret ?? ''" (input)="patchDiscord('clientSecret', $any($event.target).value)">
+              </div>
+              <div class="pc-field">
+                <div class="pc-field-label">Redirect URI</div>
+                <input class="pc-field-input mono" type="text" placeholder="http://localhost"
+                       [value]="d.redirectUri ?? ''" (input)="patchDiscord('redirectUri', $any($event.target).value)">
+              </div>
+
+              <div class="discord-actions">
+                <button class="pc-btn ghost" [disabled]="!discordDirty()" (click)="saveDiscord()">Save</button>
+                <button class="pc-btn primary" [disabled]="discordAuthorizing() || !d.clientId || !d.clientSecret" (click)="authorizeDiscord()">
+                  @if (discordAuthorizing()) {
+                    <pc-spinner [size]="13" [thickness]="2"></pc-spinner> Authorizing…
+                  } @else {
+                    Connect &amp; Authorize
+                  }
+                </button>
+              </div>
+
+              @if (discordStatusValue(); as st) {
+                <div class="row">
+                  <div class="row-text">
+                    <div class="row-label">Status</div>
+                    <div class="row-sub">
+                      @if (st.authenticated) { Connected as {{ st.user }} — voice control is active. }
+                      @else if (st.authorized) { Authorized as {{ st.user }} — waiting for Discord to be running. }
+                      @else if (st.connected) { Discord is running but not authorized yet — click Connect &amp; Authorize. }
+                      @else { Not connected. Start Discord, then Connect &amp; Authorize. }
+                    </div>
+                  </div>
+                  <pc-status-dot [kind]="st.authenticated ? 'ok' : st.authorized ? 'connecting' : 'idle'" [size]="8"></pc-status-dot>
+                </div>
+              }
+            </div>
+
+            @if (discordUsersValue().length) {
+              <div class="micro-label section-label">SEEN USERS</div>
+              <div class="pc-card pad stack">
+                <div class="chips">
+                  @for (u of discordUsersValue(); track u.id) {
+                    <span class="pc-chip">{{ u.displayName }}@if (u.inVoice) { <span class="mono"> · in call</span> }</span>
+                  }
+                </div>
+                <div class="row-sub">Commands target a user by username; this list is built from people seen in your voice channels.</div>
+              </div>
+            }
+          }
+
+          <p class="page-sub">Set up: open the
+            <a href="https://discord.com/developers/applications" target="_blank" rel="noopener">Discord Developer Portal</a>,
+            create an application, copy its <strong>Client ID</strong> and (under OAuth2) its
+            <strong>Client Secret</strong>, and add an OAuth2 redirect of <code>http://localhost</code>. Paste
+            them above and click Connect &amp; Authorize, then approve the popup inside Discord.</p>
+        }
+
         <!-- ── OSC ─────────────────────────────────────────────────────────── -->
         @case ('osc') {
           <h2 class="page-title">

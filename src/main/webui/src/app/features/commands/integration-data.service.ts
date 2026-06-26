@@ -2,7 +2,7 @@ import { computed, Injectable } from '@angular/core';
 import { httpResource } from '@angular/common/http';
 import { AudioDevice, AudioSession } from '../../models/models';
 import {
-  HomeAssistantServerStatus, ProcessDto, WaveLinkResponseDto,
+  DiscordStatusDto, DiscordUserDto, HomeAssistantServerStatus, ProcessDto, WaveLinkResponseDto,
 } from '../../models/generated/backend.types';
 import { PickerItem } from '../../ui';
 
@@ -44,6 +44,12 @@ export class IntegrationDataService {
   readonly wlInputs = computed(() => this.waveLink.value()?.inputs ?? []);
   readonly wlMixes = computed(() => this.waveLink.value()?.mixes ?? []);
   readonly wlOutputs = computed(() => this.waveLink.value()?.outputs ?? []);
+
+  // Discord (users = current voice-channel members + persisted "seen users" roster)
+  readonly discordUsers = httpResource<DiscordUserDto[]>(() => '/api/discord/users');
+  readonly discordStatus = httpResource<DiscordStatusDto>(() => '/api/discord/status');
+  /** Green only when authenticated — that's when the voice commands actually work. */
+  readonly discordConnected = computed(() => this.discordStatus.value()?.authenticated ?? false);
 
   // Home Assistant (servers carry their url so the action editor can link to HA's action builder)
   readonly haServers = httpResource<HomeAssistantServerStatus[]>(() => '/api/homeassistant/servers');
@@ -102,6 +108,8 @@ export class IntegrationDataService {
     this.vmAdvanced.reload();
     this.waveLink.reload();
     this.waveLinkSettings.reload();
+    this.discordUsers.reload();
+    this.discordStatus.reload();
     this.oscStatus.reload();
     this.mqttStatus.reload();
     this.haServers.reload();

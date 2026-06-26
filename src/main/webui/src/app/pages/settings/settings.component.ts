@@ -6,14 +6,14 @@ import { IntegrationDataService } from '../../features/commands/integration-data
 import { PlatformService } from '../../services/platform.service';
 import { DebugService, DeviceTypeOverride, OsOverride } from '../../services/debug.service';
 import {
-  OverlayPosition, SettingsDto, WaveLinkSettings,
+  DiscordSettings, OverlayPosition, SettingsDto, WaveLinkSettings,
 } from '../../models/generated/backend.types';
 import {
   ColorPickerComponent, IconComponent, ModalComponent, SegmentedComponent, SegmentOption,
   SelectComponent, SelectOption, SliderComponent, SpinnerComponent, StatusDotComponent, StatusKind, ToastService, ToggleComponent,
 } from '../../ui';
 
-type TabId = 'general' | 'obs' | 'voicemeeter' | 'wavelink' | 'osc' | 'mqtt' | 'homeassistant' | 'overlay' | 'debug';
+type TabId = 'general' | 'obs' | 'voicemeeter' | 'wavelink' | 'discord' | 'osc' | 'mqtt' | 'homeassistant' | 'overlay' | 'debug';
 interface TabDef { id: TabId; label: string; integration?: 'obs' | 'voicemeeter' | 'wavelink'; supported?: boolean; }
 
 @Component({
@@ -85,6 +85,7 @@ export class SettingsComponent {
     { id: 'obs', label: 'OBS Studio', integration: 'obs' },
     { id: 'voicemeeter', label: 'Voicemeeter', integration: 'voicemeeter' },
     { id: 'wavelink', label: 'Wave Link', integration: 'wavelink' },
+    { id: 'discord', label: 'Discord' },
     { id: 'osc', label: 'OSC' },
     { id: 'mqtt', label: 'MQTT' },
     { id: 'homeassistant', label: 'Home Assistant' },
@@ -129,6 +130,18 @@ export class SettingsComponent {
   // Wave Link settings (not part of SettingsDto): enable + focus-control + controlled-volume options.
   readonly wavelinkSettings = httpResource<WaveLinkSettings>(() => '/api/settings/wavelink');
 
+  // Discord settings (not part of SettingsDto): enable + client id/secret. Edited in a local draft and
+  // saved explicitly (credentials shouldn't PUT on every keystroke); status comes from the live endpoint.
+  readonly discordSettings = httpResource<DiscordSettings>(() => '/api/settings/discord');
+  readonly discordDraft = signal<DiscordSettings | null>(null);
+  readonly discordDirty = signal(false);
+  readonly discordAuthorizing = signal(false);
+  readonly discordTabStatus = computed<StatusKind>(() =>
+    this.integrations.discordConnected() ? 'ok' : this.integrations.discordStatus.isLoading() ? 'connecting' : 'idle');
+  // Exposed for the template (the injected integrations service is private).
+  readonly discordStatusValue = computed(() => this.integrations.discordStatus.value());
+  readonly discordUsersValue = computed(() => this.integrations.discordUsers.value() ?? []);
+
   // Font families the backend (Java2D) can actually render — the overlay font picker only offers these.
   readonly overlayFonts = httpResource<string[]>(() => '/api/overlay/fonts');
   readonly fontOptions = computed<SelectOption<string>[]>(() => {
@@ -169,6 +182,15 @@ export class SettingsComponent {
     // Deep-link support: /settings?tab=homeassistant (used by the action editor's "Manage servers").
     const tab = this.route.snapshot.queryParamMap.get('tab') as TabId | null;
     if (tab && this.allTabs.some(t => t.id === tab)) this.activeTab.set(tab);
+
+    // Seed the Discord credential draft from the server, unless the user is mid-edit.
+    effect(() => {
+      const v = this.discordSettings.value();
+      if (!v) return;
+      untracked(() => {
+        if (!this.discordDirty()) this.discordDraft.set({ ...v });
+      });
+    });
 
     // Live overlay preview: render the real overlay on the backend from the (possibly unsaved) settings,
     // debounced so dragging a slider doesn't fire a request per tick. Guarantees the preview can't drift
@@ -238,6 +260,7 @@ export class SettingsComponent {
       case 'obs': return this.tabStatus('obs');
       case 'voicemeeter': return this.platform.voicemeeterSupported() ? this.tabStatus('voicemeeter') : 'disabled';
       case 'wavelink': return this.platform.waveLinkSupported() ? this.tabStatus('wavelink') : 'disabled';
+      case 'discord': return this.discordTabStatus();
       case 'osc': return this.oscTabStatus();
       case 'mqtt': return this.mqttTabStatus();
       case 'homeassistant': return this.haTabStatus();
@@ -374,6 +397,58 @@ export class SettingsComponent {
   setWavelinkEnforceVolume(on: boolean): void { this.saveWavelink({ enforceControlledVolume: on }); }
   setWavelinkControlledPercent(pct: number): void {
     this.saveWavelink({ controlledVolumePercent: Math.max(0, Math.min(100, Math.round(pct || 0))) });
+  }
+
+  // ── Discord settings ─────────────────────────────────────────────────────────
+  patchDiscord<K extends keyof DiscordSettings>(key: K, value: DiscordSettings[K]): void {
+    const cur = this.discordDraft();
+    if (!cur) return;
+    this.discordDraft.set({ ...cur, [key]: value });
+    this.discordDirty.set(true);
+  }
+
+  saveDiscord(): void {
+    const dto = this.discordDraft();
+    if (!dto) return;
+    this.http.put<void>('/api/settings/discord', dto).subscribe({
+      next: () => {
+        this.discordDirty.set(false);
+        this.discordSettings.reload();
+        this.integrations.discordStatus.reload();
+        this.toast.show('Discord settings saved', { kind: 'success' });
+      },
+      error: () => this.toast.show('Could not save Discord settings', { kind: 'error' }),
+    });
+  }
+
+  /** Persist any edited credentials, then run the IPC authorize flow (Discord shows a consent popup). */
+  authorizeDiscord(): void {
+    const dto = this.discordDraft();
+    if (!dto || this.discordAuthorizing()) return;
+    this.discordAuthorizing.set(true);
+    this.http.put<void>('/api/settings/discord', dto).subscribe({
+      next: () => {
+        this.discordDirty.set(false);
+        this.discordSettings.reload();
+        this.http.post('/api/discord/authorize', {}).subscribe({
+          next: () => {
+            this.discordAuthorizing.set(false);
+            this.integrations.discordStatus.reload();
+            this.integrations.discordUsers.reload();
+            this.toast.show('Discord connected', { kind: 'success' });
+          },
+          error: () => {
+            this.discordAuthorizing.set(false);
+            this.integrations.discordStatus.reload();
+            this.toast.show('Discord authorization failed — approve the popup in Discord and check the Client ID/Secret', { kind: 'error' });
+          },
+        });
+      },
+      error: () => {
+        this.discordAuthorizing.set(false);
+        this.toast.show('Could not save Discord settings', { kind: 'error' });
+      },
+    });
   }
 
   // ── save ────────────────────────────────────────────────────────────────────

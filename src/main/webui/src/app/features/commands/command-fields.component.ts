@@ -346,6 +346,9 @@ export class CommandFieldsComponent {
       case 'wl-inputs': return wlOpts(this.data.wlInputs());
       case 'wl-mixes': return wlOpts(this.data.wlMixes());
       case 'wl-outputs': return wlOpts(this.data.wlOutputs());
+      case 'discord-users': return (this.data.discordUsers.value() ?? []).map(u => ({
+        value: u.username, label: u.inVoice ? `${u.displayName} (in call)` : u.displayName,
+      }));
       case 'profiles': return this.profiles().map(p => ({ value: p, label: p }));
       case 'ha-servers': return (this.data.haServers.value() ?? []).map(s => ({ value: s.id, label: s.name }));
       default: return [];
