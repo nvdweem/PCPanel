@@ -9,8 +9,9 @@ import org.freedesktop.dbus.types.UInt32;
 import org.freedesktop.dbus.types.Variant;
 
 import com.getpcpanel.util.AppEvents;
+import com.getpcpanel.util.CdiHelper;
+import com.getpcpanel.util.FileUtil;
 import com.getpcpanel.util.OpenFolderEvent;
-import com.getpcpanel.util.PcPanelRoot;
 import com.getpcpanel.util.ShowMainEvent;
 
 import io.quarkus.runtime.Quarkus;
@@ -19,9 +20,9 @@ import lombok.extern.log4j.Log4j2;
 
 /**
  * The tray context menu shown on right-click. Mirrors the Windows tray: <b>Open PCPanel</b> (opens the
- * UI), <b>Open logs folder</b> (reveals the data dir's {@code logs/} in the file manager) and <b>Quit</b>
- * (shuts the app down, like the in-UI Quit button). Exported at {@code /MenuBar}, which the
- * StatusNotifierItem advertises via its {@code Menu} property.
+ * UI), <b>Open settings folder</b> (reveals the data dir holding {@code profiles.json}), <b>Open logs
+ * folder</b> (its {@code logs/} subdir) and <b>Quit</b> (shuts the app down, like the in-UI Quit button).
+ * Exported at {@code /MenuBar}, which the StatusNotifierItem advertises via its {@code Menu} property.
  */
 @Log4j2
 @RegisterForReflection
@@ -73,11 +74,11 @@ public class DBusMenuImpl implements DBusMenu {
             }
             case ID_SETTINGS -> {
                 log.debug("Open settings folder selected from the tray menu");
-                AppEvents.fire(new OpenFolderEvent(PcPanelRoot.resolve().toString()));
+                AppEvents.fire(new OpenFolderEvent(settingsRoot().getRoot().toString()));
             }
             case ID_LOGS -> {
                 log.debug("Open logs folder selected from the tray menu");
-                AppEvents.fire(new OpenFolderEvent(PcPanelRoot.resolve().resolve("logs").toString()));
+                AppEvents.fire(new OpenFolderEvent(settingsRoot().getFile("logs").toString()));
             }
             default -> {
                 log.debug("Open selected from the tray menu");
@@ -89,6 +90,16 @@ public class DBusMenuImpl implements DBusMenu {
     @Override
     public boolean AboutToShow(int id) {
         return false;
+    }
+
+    /**
+     * The live data directory ({@code profiles.json} + {@code logs/}). Resolved through {@link FileUtil}
+     * (the {@code pcpanel.root} config the rest of the app reads), not {@code PcPanelRoot.resolve()} - in
+     * dev mode the configured root ({@code ~/.pcpaneldev}) differs from the bare XDG/legacy resolution, so
+     * the latter would open a folder that does not hold the running app's settings.
+     */
+    private static FileUtil settingsRoot() {
+        return CdiHelper.getBean(FileUtil.class);
     }
 
     private static String label(int id) {

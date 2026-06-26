@@ -6,8 +6,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import com.getpcpanel.platform.WindowsBuild;
+import com.getpcpanel.util.FileUtil;
 import com.getpcpanel.util.OpenFolderEvent;
-import com.getpcpanel.util.PcPanelRoot;
 import com.getpcpanel.util.ShowMainEvent;
 import com.getpcpanel.util.tray.ITrayService;
 import com.getpcpanel.util.tray.awt.AwtTrayImpl;
@@ -70,6 +70,7 @@ public class TrayServiceWin implements ITrayService, WindowProc {
     private static final int WM_NULL = 0x0000;
 
     @Inject Event<Object> eventBus;
+    @Inject FileUtil fileUtil;
 
     private volatile WinShell32.NOTIFYICONDATA nid;
     private volatile int taskbarCreatedMsg;
@@ -189,8 +190,8 @@ public class TrayServiceWin implements ITrayService, WindowProc {
             user32.PostMessage(hWnd, WM_NULL, new WPARAM(0), new LPARAM(0));
             switch (cmd) {
                 case MENU_OPEN -> eventBus.fire(new ShowMainEvent());
-                case MENU_SETTINGS -> eventBus.fire(new OpenFolderEvent(PcPanelRoot.resolve().toString()));
-                case MENU_LOGS -> eventBus.fire(new OpenFolderEvent(PcPanelRoot.resolve().resolve("logs").toString()));
+                case MENU_SETTINGS -> eventBus.fire(new OpenFolderEvent(fileUtil.getRoot().toString()));
+                case MENU_LOGS -> eventBus.fire(new OpenFolderEvent(fileUtil.getFile("logs").toString()));
                 case MENU_EXIT -> {
                     //noinspection CallToSystemExit
                     System.exit(0);
