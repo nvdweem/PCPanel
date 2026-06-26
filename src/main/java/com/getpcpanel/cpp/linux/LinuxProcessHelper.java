@@ -100,11 +100,31 @@ public class LinuxProcessHelper {
      * getwindowname}) so a per-knob-tick focus volume change spawns a single helper process, not three.
      */
     public Optional<ActiveWindow> getActiveWindow() {
+        // Resolving the focused window spawns a helper process (kdotool/xdotool) plus `ps` - ~40ms total. A
+        // single focus-volume knob tick resolves it up to three times (the overlay's show/skip check, the
+        // redirector/skip decision, and the actual stream match), and a fast slider sweep fires dozens of
+        // ticks; one of those resolutions runs synchronously on the HID input thread, so the per-tick cost
+        // throttles event delivery and the volume crawls behind the slider instead of snapping to it. The
+        // focused window cannot meaningfully change within such a burst, so cache the resolution for a brief
+        // window: every resolution during the burst then reuses a single helper call. The TTL is short enough
+        // that a genuine focus change is reflected on the next tick.
+        var now = System.nanoTime();
+        var cached = activeWindowCache;
+        if (cached != null && now - cached.at() < ACTIVE_WINDOW_CACHE_NANOS) {
+            return Optional.of(cached.window());
+        }
         var result = getActiveWindow(Tool.KDoTool).or(() -> getActiveWindow(Tool.XDoTool));
         if (result.isEmpty() && !anyActiveWindowToolAvailable()) {
             warnNoActiveWindowTool();
         }
+        result.ifPresent(window -> activeWindowCache = new CachedActiveWindow(window, now));
         return result;
+    }
+
+    private static final long ACTIVE_WINDOW_CACHE_NANOS = java.util.concurrent.TimeUnit.MILLISECONDS.toNanos(200);
+    private volatile CachedActiveWindow activeWindowCache;
+
+    private record CachedActiveWindow(ActiveWindow window, long at) {
     }
 
     private Optional<ActiveWindow> getActiveWindow(Tool tool) {
