@@ -89,6 +89,7 @@ import com.getpcpanel.profile.dto.SingleSliderLightingConfig.SINGLE_SLIDER_MODE;
 import com.getpcpanel.profile.dto.WaveLinkSettings;
 import com.getpcpanel.rest.model.dto.AddDeejDeviceDto;
 import com.getpcpanel.rest.model.dto.MidiDeviceDto;
+import com.getpcpanel.rest.model.dto.OnboardingDto;
 import com.getpcpanel.rest.model.dto.SerialPortDto;
 import com.getpcpanel.wavelink.command.CommandWaveLink;
 import com.getpcpanel.wavelink.command.CommandWaveLinkAddFocusToChannel;
@@ -278,6 +279,9 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 
         // MIDI REST DTO serialised by Jackson
         MidiDeviceDto.class,
+
+        // Onboarding hint REST DTO (GET /api/system/onboarding), serialised by Jackson
+        OnboardingDto.class,
 
         // Home Assistant: server config persisted in the save file + REST DTOs (List<record> needs the
         // element AND its array type reachable for Jackson serialisation in the native image).

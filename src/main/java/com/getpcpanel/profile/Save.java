@@ -36,6 +36,9 @@ public class Save {
     private static final OverlayPosition DEFAULT_OVERLAY_POSITION = OverlayPosition.topLeft;
     private Map<String, DeviceSave> devices = new ConcurrentHashMap<>();
     private boolean mainUIIcons;
+    /** Open the UI in the default browser every time the app starts. Default off — PCPanel runs in the
+     *  tray and the UI is opened on demand; a first run and an installer launch open it regardless. */
+    private boolean openBrowserOnStartup;
     private boolean startupVersionCheck = true;
     private boolean forceVolume; // Linux only
     private Long dblClickInterval = 500L;

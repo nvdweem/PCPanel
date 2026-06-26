@@ -19,6 +19,7 @@ import io.quarkus.runtime.annotations.QuarkusMain;
 public class Main implements QuarkusApplication {
     private static final String SKIP_FILE_CHECK_ARG = "skipfilecheck";
     private static final String SKIP_FILE_CHECK_PROPERTY = "pcpanel.skip-file-check";
+    private static final String POST_INSTALL_PROPERTY = "pcpanel.postinstall";
 
     static void main(String... args) {
         forceHeadlessAwt();
@@ -32,6 +33,7 @@ public class Main implements QuarkusApplication {
             new HidDebug().execute();
             return;
         }
+        markPostInstallLaunch(argSet);
         Quarkus.run(Main.class, args);
     }
 
@@ -52,6 +54,20 @@ public class Main implements QuarkusApplication {
     @SuppressWarnings("AccessOfSystemProperties")
     private static void forceHeadlessAwt() {
         System.setProperty("java.awt.headless", "true");
+    }
+
+    /**
+     * The Windows installer launches the app once with {@code /postinstall} when it finishes (it does
+     * NOT set up OS auto-start). Surface that as the {@value #POST_INSTALL_PROPERTY} system property so a
+     * CDI bean can read it via config and show the post-install dialog + open the browser. Accept the
+     * bare {@code postinstall} too, so a non-Windows manual launch can trigger the same flow. Done before
+     * {@code Quarkus.run} so the property is in the config at boot.
+     */
+    @SuppressWarnings("AccessOfSystemProperties")
+    private static void markPostInstallLaunch(Set<String> argSet) {
+        if (argSet.contains("/postinstall") || argSet.contains("postinstall")) {
+            System.setProperty(POST_INSTALL_PROPERTY, "true");
+        }
     }
 
     /**

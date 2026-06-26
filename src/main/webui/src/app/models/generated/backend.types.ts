@@ -512,6 +512,12 @@ export interface MqttSettings {
     username: string;
 }
 
+export interface OnboardingDto {
+    changelogUrl: string;
+    intent: string;
+    version: string;
+}
+
 export interface OSCBinding {
     address: string;
     max: number;
@@ -569,6 +575,7 @@ export interface SettingsDto {
     obsEnabled: boolean;
     obsPassword: string;
     obsPort: string;
+    openBrowserOnStartup: boolean;
     oscConnections: OSCConnectionInfo[];
     oscEnabled: boolean;
     oscListenPort: number;

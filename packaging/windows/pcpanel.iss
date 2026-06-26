@@ -90,8 +90,11 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
     Flags: uninsdeletevalue; Tasks: startup; Check: not WizardIsTaskSelected('startup\admin')
 
 [Run]
-; Offer to launch the app right after installation finishes.
-Filename: "{app}\{#MyAppExeName}"; Description: "Launch {#MyAppName} now"; \
+; Offer to launch the app right after installation finishes. The /postinstall argument tells the app
+; this launch came straight from the installer, so it opens the UI in the browser and shows the
+; post-install/update dialog (changelog + the "open in browser on startup" option). It does NOT set up
+; OS auto-start — this is a one-shot launch.
+Filename: "{app}\{#MyAppExeName}"; Parameters: "/postinstall"; Description: "Launch {#MyAppName} now"; \
     Flags: nowait postinstall skipifsilent
 
 [UninstallRun]

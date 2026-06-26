@@ -1,11 +1,16 @@
 package com.getpcpanel.rest;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
+import com.getpcpanel.rest.model.dto.OnboardingDto;
+import com.getpcpanel.util.StartupOnboarding;
 
 import io.quarkus.runtime.Quarkus;
 import lombok.extern.log4j.Log4j2;
@@ -21,6 +26,25 @@ import lombok.extern.log4j.Log4j2;
 @ApplicationScoped
 @Produces(MediaType.APPLICATION_JSON)
 public class SystemResource {
+    @Inject StartupOnboarding onboarding;
+
+    /**
+     * One-time onboarding hint for the UI (which welcome/update dialog to show, the version, and the
+     * changelog link). The UI fetches this once on load.
+     */
+    @GET
+    @Path("/onboarding")
+    public OnboardingDto onboarding() {
+        return onboarding.info();
+    }
+
+    /** Mark the onboarding dialog as shown so it does not reappear on refresh. */
+    @POST
+    @Path("/onboarding/ack")
+    public Response acknowledgeOnboarding() {
+        onboarding.acknowledge();
+        return Response.noContent().build();
+    }
 
     /**
      * Shuts the application down. Uses {@link Quarkus#asyncExit()} so this request can return its

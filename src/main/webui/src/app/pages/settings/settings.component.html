@@ -52,6 +52,13 @@
             </div>
             <div class="row">
               <div class="row-text">
+                <div class="row-label">Open in browser when PCPanel starts</div>
+                <div class="row-sub">Opens this page in your default browser each time the app starts. Off by default — PCPanel runs in the system tray; click the tray icon any time to reopen this page (on macOS there's no tray yet, so reopen it at this URL).</div>
+              </div>
+              <pc-toggle [value]="s.openBrowserOnStartup" (valueChange)="patch('openBrowserOnStartup', $event)"></pc-toggle>
+            </div>
+            <div class="row">
+              <div class="row-text">
                 <div class="row-label">Focus volume skips controlled apps</div>
                 <div class="row-sub">When the focused app is already controlled elsewhere — an App-volume action on another control, or a Wave Link channel — the focused-app volume dial leaves it alone.</div>
               </div>

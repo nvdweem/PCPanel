@@ -49,6 +49,12 @@ public class SaveService {
         return save;
     }
 
+    /** True when this run started from a blank {@link Save} — no save file existed (a first run) or the
+     *  existing one could not be read. Drives the first-run onboarding (open browser + welcome dialog). */
+    public boolean isNewSave() {
+        return isNew;
+    }
+
     @PostConstruct
     public void load() {
         var saveFile = fileUtil.getFile(saveFileName);
