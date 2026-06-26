@@ -175,7 +175,7 @@ public class DeviceScanner implements HidServicesListener, DeviceProvider {
         var descriptor = DescriptorFactory.forType(deviceType);
         // A device can be reported twice on startup: once by reconnectDevicesAfterRestart() and once by the
         // scanner's initial hidDeviceAttached event. Each carries a different HidDevice instance for the same
-        // physical device. On Linux (libusb backend) opening an already-opened device fails, so the second
+        // physical device. On Linux opening an already-opened device fails, so the second
         // handler would run on an unopened device ("Device has not been opened"). Register atomically per key so
         // only the first event opens the device and creates a handler.
         var created = new DeviceCommunicationHandler[1];
@@ -188,16 +188,14 @@ public class DeviceScanner implements HidServicesListener, DeviceProvider {
                         log.error("macOS requires the Input Monitoring permission: " +
                                 "System Settings > Privacy & Security > Input Monitoring > enable PCPanel");
                     } else if (SystemUtils.IS_OS_LINUX) {
-                        // The device is visible but the hidraw node it opens (/dev/hidrawN) is root:root 0600
-                        // unless a hidraw-subsystem udev rule grants the logged-in user access. The .deb
-                        // installs that rule; Flatpak/AppImage/manual users add it themselves (even the
-                        // Flatpak, since --device=all exposes the node but can't change its host ACL). NOTE:
-                        // a usb-subsystem rule alone is NOT enough since the HID backend moved from libusb to
-                        // hidraw — a rule that worked before this version must gain its hidraw lines (#107).
-                        log.error("Linux needs a HIDRAW udev access rule for the PCPanel device — it is detected but " +
-                                "cannot be opened. A usb-only rule (from an older version) is no longer sufficient: add the " +
-                                "KERNEL==\"hidraw*\", SUBSYSTEM==\"hidraw\", ATTRS{idVendor}==... lines (see linux.md / " +
-                                "70-pcpanel.rules), then run 'sudo udevadm control --reload-rules && sudo udevadm trigger'.");
+                        // The device is visible but the hidraw node it opens (/dev/hidrawN) is root-owned unless a
+                        // hidraw udev rule grants the logged-in user access. The .deb installs that rule;
+                        // AppImage/Flatpak/manual installs add it themselves (the Flatpak too — --device=all exposes
+                        // the node but cannot change its host ACL).
+                        log.error("Linux needs a hidraw udev access rule for the PCPanel device — it is detected but " +
+                                "cannot be opened. Add the KERNEL==\"hidraw*\", SUBSYSTEM==\"hidraw\", ATTRS{idVendor}==... " +
+                                "lines (see linux.md / 70-pcpanel.rules), then run 'sudo udevadm control --reload-rules " +
+                                "&& sudo udevadm trigger'.");
                     }
                 } else {
                     log.debug("Retry to open device {} still failing", k);

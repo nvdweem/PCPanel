@@ -16,7 +16,7 @@ installing the Debian package the steps below are handled for you. **Every other
 the Flatpak — needs you to add the udev rule yourself.** This includes the Flatpak: `--device=all` lets the sandbox *see* the
 device node, but the node is still owned `root:root` with mode `0600` on the host, and only a `uaccess` udev rule grants your
 logged-in user permission to open it. Without it the log repeats `Unable to open device … will keep retrying` and the UI shows
-the "No PCPanel connected" empty state even though the device was detected (see #107). Set the access up yourself:
+the "No PCPanel connected" empty state even though the device was detected. Set the access up yourself:
 
 1. Allow the software to access the device:
    ```shell
@@ -24,24 +24,17 @@ the "No PCPanel connected" empty state even though the device was detected (see 
    ```
 1. Add the following lines:
    ```properties
-   # hidraw access — this is what the app actually opens (/dev/hidrawN). REQUIRED.
    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="eb52", TAG+="uaccess"
    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="a3c4", TAG+="uaccess"
    KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="a3c5", TAG+="uaccess"
-   # usb access — kept for the libusb backend / libusb tooling.
-   SUBSYSTEM=="usb", ATTRS{idVendor}=="04D8", ATTRS{idProduct}=="eb52", TAG+="uaccess"
-   SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="a3c4", TAG+="uaccess"
-   SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="a3c5", TAG+="uaccess"
    ```
-   > **Upgrading from an older version?** Earlier builds only needed the three `SUBSYSTEM=="usb"` lines,
-   > because the bundled HID library used the libusb backend. It now uses the **hidraw** backend (opening
-   > `/dev/hidrawN`), so the three `hidraw` lines are required — without them the device is detected but
-   > never opens (`Unable to open device …`). Add the hidraw lines to your existing rules file.
+   These grant your user access to the device's hidraw node (`/dev/hidrawN`). Without them the device is
+   detected but never opens (`Unable to open device …` in the log).
 1. Then run
    ```shell
    sudo udevadm control --reload-rules && sudo udevadm trigger
    ```
-   (A replug is no longer needed — `udevadm trigger` re-applies the rule to the already-connected device.)
+   (`udevadm trigger` applies the rule to the already-connected device, so a replug is not needed.)
 1. (Optional) Make the software startup automatically. When making the application startup automatically you can add the `quiet` parameter to not show the main window on startup.
 
 If it still doesn't work, try restarting your computer (logging out is not enough).

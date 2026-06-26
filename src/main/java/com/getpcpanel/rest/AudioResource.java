@@ -62,10 +62,10 @@ public class AudioResource {
     /**
      * Diagnostic probe that exercises the volume/mute <em>write</em> path on the default output device.
      * The read endpoints above (devices/sessions/applications) only cover enumeration, so they cannot
-     * catch a native-image registration gap on the settable path — e.g. {@code ByteByReference} being
-     * unregistered made every macOS volume/mute action throw at runtime while {@code /api/audio/devices}
-     * stayed 200 (#105). This re-applies the device's <em>current</em> volume and mute state (a no-op
-     * for the user) but still routes through {@code setDeviceVolume}/{@code muteDevice} →
+     * catch a native-image registration gap on the settable path: an unregistered JNA pointer type there
+     * throws on the first volume/mute write while {@code /api/audio/devices} keeps returning 200 (#105).
+     * This re-applies the device's <em>current</em> volume and mute state (a no-op for the user) but
+     * still routes through {@code setDeviceVolume}/{@code muteDevice} →
      * {@code CoreAudioWrapper.isSettable} → {@code new ByteByReference()}, so the CI smoke test reproduces
      * that class of bug. Any missing registration makes this 500; a runner with no default device returns
      * {@code exercised:false} (200), which the smoke treats leniently.

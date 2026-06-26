@@ -1,17 +1,9 @@
 # udev rules granting the logged-in user access to PCPanel devices.
 # Installed to /usr/lib/udev/rules.d/70-pcpanel.rules by the .deb package.
-# After install: `sudo udevadm control --reload-rules && sudo udevadm trigger` (replug not required).
+# After install: `sudo udevadm control --reload-rules && sudo udevadm trigger`.
 #
-# Two subsystems are tagged on purpose:
-#   - hidraw: hid4java/hidapi uses the hidraw backend on Linux (it opens /dev/hidrawN). This is the rule
-#     that matters now. NOTE: hid4java <= 0.7.0 defaulted to the libusb backend (opening /dev/bus/usb),
-#     so the usb rules below used to be enough; 0.8.0 switched the default to hidraw, whose node is
-#     root:root 0600 and is NOT covered by a usb-subsystem rule — without the hidraw rule the device is
-#     detected but never opens.
-#   - usb: kept for the libusb backend (HidApi.useLibUsbVariant) and libusb-based tooling.
+# The app opens the device's hidraw node (/dev/hidrawN), which is root-owned unless a hidraw uaccess
+# rule grants the logged-in user access.
 KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="eb52", TAG+="uaccess"
 KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="a3c4", TAG+="uaccess"
 KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="a3c5", TAG+="uaccess"
-SUBSYSTEM=="usb", ATTRS{idVendor}=="04D8", ATTRS{idProduct}=="eb52", TAG+="uaccess"
-SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="a3c4", TAG+="uaccess"
-SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="a3c5", TAG+="uaccess"
