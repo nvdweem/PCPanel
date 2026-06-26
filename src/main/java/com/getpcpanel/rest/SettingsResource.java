@@ -4,6 +4,7 @@ import java.util.Map;
 
 import com.getpcpanel.mqtt.MqttService;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.profile.dto.DiscordSettings;
 import com.getpcpanel.profile.dto.MqttSettings;
 import com.getpcpanel.profile.dto.WaveLinkSettings;
 import com.getpcpanel.rest.model.dto.SettingsDto;
@@ -69,6 +70,20 @@ public class SettingsResource {
     @Path("/wavelink")
     public Response updateWaveLinkSettings(WaveLinkSettings settings) {
         saveService.get().setWaveLink(settings);
+        saveService.save();
+        return Response.ok().build();
+    }
+
+    @GET
+    @Path("/discord")
+    public DiscordSettings getDiscordSettings() {
+        return saveService.get().getDiscord();
+    }
+
+    @PUT
+    @Path("/discord")
+    public Response updateDiscordSettings(DiscordSettings settings) {
+        saveService.get().setDiscord(settings);
         saveService.save();
         return Response.ok().build();
     }
