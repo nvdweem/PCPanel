@@ -88,6 +88,16 @@
 .empty-title { font-size: 15px; font-weight: 500; }
 .empty-sub { font-size: 12.5px; color: var(--text-2); max-width: 34ch; line-height: 1.5; }
 .empty-scan { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--accent); }
+.empty-hint {
+  margin-top: 6px; max-width: 44ch; padding: 14px 16px; text-align: left;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-lg);
+  display: flex; flex-direction: column; gap: 7px;
+}
+.empty-hint-title { font-size: 12.5px; font-weight: 600; color: var(--text-1); }
+.empty-hint-body { font-size: 12px; color: var(--text-2); line-height: 1.55; }
+.empty-hint-body strong { color: var(--text-1); font-weight: 600; }
+.empty-hint-link { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--accent); text-decoration: none; }
+.empty-hint-link:hover { text-decoration: underline; }
 
 /* ── New profile modal ──────────────────────────────────────────────────────── */
 .np-body { width: 280px; }

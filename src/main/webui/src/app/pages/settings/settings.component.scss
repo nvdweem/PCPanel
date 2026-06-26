@@ -116,6 +116,18 @@
 .leave-msg { font-size: 12.5px; color: var(--text-2); line-height: 1.5; margin: 0 0 16px; }
 .leave-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
 
+/* Post-quit overlay: covers the UI once the backend is shutting down / stopped */
+.quit-overlay {
+  position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(3px);
+}
+.quit-card {
+  display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center;
+  padding: 32px 40px; max-width: 360px;
+}
+.quit-title { font-size: 16px; font-weight: 600; color: var(--text-1); }
+.quit-sub { font-size: 12.5px; color: var(--text-2); line-height: 1.5; }
+
 /* Live preview */
 .desktop {
   position: relative; height: 280px; border-radius: var(--r-lg); overflow: hidden;

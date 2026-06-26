@@ -92,6 +92,20 @@
           <div class="empty-title">No PCPanel connected</div>
           <div class="empty-sub">Plug a device in over USB — it's detected automatically.</div>
           <div class="empty-scan mono"><pc-spinner [size]="11" [thickness]="2"></pc-spinner> scanning for devices…</div>
+
+          @if (os() === 'linux') {
+            <div class="empty-hint">
+              <div class="empty-hint-title">Plugged in but not showing up?</div>
+              <div class="empty-hint-body">Linux needs a one-time udev rule so PCPanel can open the device — without it the device is detected but won't connect. The <strong>.deb</strong> installs it automatically; for the <strong>Flatpak</strong> or <strong>AppImage</strong> you have to add the rule yourself, then unplug and replug the device.</div>
+              <a class="empty-hint-link" href="https://github.com/nvdweem/PCPanel/blob/main/linux.md" target="_blank" rel="noopener noreferrer">Linux setup guide <pc-icon name="external-link" [size]="12"></pc-icon></a>
+            </div>
+          }
+          @if (os() === 'mac') {
+            <div class="empty-hint">
+              <div class="empty-hint-title">Plugged in but not showing up?</div>
+              <div class="empty-hint-body">macOS needs the <strong>Input Monitoring</strong> permission: System Settings → Privacy &amp; Security → Input Monitoring → enable PCPanel, then quit and reopen PCPanel. Also click <strong>Allow</strong> on the USB-device prompt the first time you plug it in.</div>
+            </div>
+          }
         </div>
       } @else if (selected()) {
         <div class="device-stage">

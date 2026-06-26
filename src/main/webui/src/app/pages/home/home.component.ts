@@ -41,6 +41,8 @@ export class HomeComponent {
   readonly ready = this.state.ready;
   readonly devices = this.facade.devices;
   readonly hasDevices = this.facade.hasDevices;
+  /** Backend host OS — drives the platform-specific "plugged in but not showing up?" hint. */
+  readonly os = this.platform.os;
   readonly selected = this.facade.selected;
   readonly selectedSerial = this.facade.selectedSerial;
 

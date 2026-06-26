@@ -108,6 +108,21 @@
               <pc-toggle [value]="s.workaroundsOnlySliders" (valueChange)="patch('workaroundsOnlySliders', $event)"></pc-toggle>
             </div>
           </div>
+
+          <div class="divider"></div>
+          <div class="micro-label section-label">APPLICATION</div>
+
+          <div class="pc-card pad stack">
+            <div class="row">
+              <div class="row-text">
+                <div class="row-label">Quit PCPanel</div>
+                <div class="row-sub">Stops the background app — your knobs, sliders and buttons won't do anything until you start it again. PCPanel keeps running in the tray (Windows/Linux); on macOS this is the way to quit it without a terminal.</div>
+              </div>
+              <button class="pc-btn danger" (click)="quitConfirmOpen.set(true)">
+                <pc-icon name="log-out" [size]="14"></pc-icon> Quit
+              </button>
+            </div>
+          </div>
         }
 
         <!-- ── OBS STUDIO ──────────────────────────────────────────────────── -->
@@ -611,4 +626,28 @@
       </div>
     </div>
   </pc-modal>
+
+  <pc-modal [open]="quitConfirmOpen()" heading="Quit PCPanel?" [width]="440" (dismiss)="quitConfirmOpen.set(false)">
+    <div class="leave-body">
+      <p class="leave-msg">PCPanel will stop running. Your knobs, sliders and buttons won't do anything until you start it again.</p>
+      <div class="leave-actions">
+        <button class="pc-btn ghost" (click)="quitConfirmOpen.set(false)">Cancel</button>
+        <button class="pc-btn danger" (click)="quitApp()">Quit PCPanel</button>
+      </div>
+    </div>
+  </pc-modal>
+
+  @if (quitState() !== 'idle') {
+    <div class="quit-overlay">
+      <div class="quit-card">
+        @if (quitState() === 'quitting') {
+          <pc-spinner [size]="26"></pc-spinner>
+          <div class="quit-title">Stopping PCPanel…</div>
+        } @else {
+          <div class="quit-title">PCPanel has stopped</div>
+          <div class="quit-sub">You can close this tab. Start PCPanel again to keep using your device.</div>
+        }
+      </div>
+    </div>
+  }
 </div>

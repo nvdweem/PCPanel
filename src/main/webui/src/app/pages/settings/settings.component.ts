@@ -50,6 +50,10 @@ export class SettingsComponent {
   readonly saving = signal(false);
   readonly confirmLeaveOpen = signal(false);
 
+  readonly quitConfirmOpen = signal(false);
+  /** Drives the Quit button and the post-shutdown overlay: idle → quitting → stopped. */
+  readonly quitState = signal<'idle' | 'quitting' | 'stopped'>('idle');
+
   /** Local editable copy, seeded once from the resource (or when not dirty). */
   readonly local = signal<SettingsDto | null>(null);
   readonly dirty = signal(false);
@@ -402,4 +406,18 @@ export class SettingsComponent {
   }
 
   stayHere(): void { this.confirmLeaveOpen.set(false); }
+
+  // ── quit ──────────────────────────────────────────────────────────────────────
+  /** Ask the backend to shut down. The server stops right after replying, so a completed POST and a
+   *  network error (the socket dropping as it goes down) both mean "shutting down" — show the stopped
+   *  overlay either way. */
+  quitApp(): void {
+    if (this.quitState() !== 'idle') return;
+    this.quitConfirmOpen.set(false);
+    this.quitState.set('quitting');
+    this.http.post('/api/system/quit', {}).subscribe({
+      next: () => this.quitState.set('stopped'),
+      error: () => this.quitState.set('stopped'),
+    });
+  }
 }
