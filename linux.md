@@ -24,15 +24,24 @@ the "No PCPanel connected" empty state even though the device was detected (see 
    ```
 1. Add the following lines:
    ```properties
+   # hidraw access — this is what the app actually opens (/dev/hidrawN). REQUIRED.
+   KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="eb52", TAG+="uaccess"
+   KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="a3c4", TAG+="uaccess"
+   KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="a3c5", TAG+="uaccess"
+   # usb access — kept for the libusb backend / libusb tooling.
    SUBSYSTEM=="usb", ATTRS{idVendor}=="04D8", ATTRS{idProduct}=="eb52", TAG+="uaccess"
    SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="a3c4", TAG+="uaccess"
    SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="a3c5", TAG+="uaccess"
    ```
+   > **Upgrading from an older version?** Earlier builds only needed the three `SUBSYSTEM=="usb"` lines,
+   > because the bundled HID library used the libusb backend. It now uses the **hidraw** backend (opening
+   > `/dev/hidrawN`), so the three `hidraw` lines are required — without them the device is detected but
+   > never opens (`Unable to open device …`). Add the hidraw lines to your existing rules file.
 1. Then run
    ```shell
-   sudo udevadm control --reload-rules
+   sudo udevadm control --reload-rules && sudo udevadm trigger
    ```
-1. Disconnect and re-connect each of your devices (udev rules are applied whenever a device is connected).
+   (A replug is no longer needed — `udevadm trigger` re-applies the rule to the already-connected device.)
 1. (Optional) Make the software startup automatically. When making the application startup automatically you can add the `quiet` parameter to not show the main window on startup.
 
 If it still doesn't work, try restarting your computer (logging out is not enough).
