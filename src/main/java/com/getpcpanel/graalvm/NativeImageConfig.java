@@ -376,6 +376,19 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         // change-listener Callback (used for default-device/volume notifications).
         "com.getpcpanel.cpp.osx.CoreAudioLib$AudioObjectPropertyAddress",
         "com.getpcpanel.cpp.osx.CoreAudioLib$AudioObjectPropertyListenerProc",
+
+        // JNA by-reference pointer types that appear in project Library method signatures. JNA
+        // reflectively instantiates these via their public no-arg constructor when marshalling the
+        // call, so each must be registered or the call throws IllegalArgumentException /
+        // MissingReflectionRegistrationError in the native image (works fine in JVM/dev).
+        //   - ByteByReference: CoreAudioLib.AudioObjectIsPropertySettable — reached by every macOS
+        //     volume/mute write via CoreAudioWrapper.isSettable() (#105).
+        //   - ShortByReference: LinuxX11.LibXext.DPMSInfo — the Linux display-power (DPMS) sleep check.
+        // IntByReference and PointerByReference are registered elsewhere (JnaWin32ReflectionConfig /
+        // reachability-metadata.json). JnaPointerRegistrationCoverageTest guards this set so a new
+        // ByReference type in a Library signature can't ship unregistered.
+        "com.sun.jna.ptr.ByteByReference",
+        "com.sun.jna.ptr.ShortByReference",
 })
 public class NativeImageConfig {
     private NativeImageConfig() {
