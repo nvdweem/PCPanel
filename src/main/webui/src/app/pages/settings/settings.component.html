@@ -617,6 +617,36 @@
               <pc-select [options]="deviceOverrideOptions" [value]="debug.deviceTypeOverride()"
                          (valueChange)="debug.setDeviceTypeOverride($any($event))"></pc-select>
             </div>
+            <div class="row">
+              <div class="row-text">
+                <div class="row-label">Force "no device connected" state</div>
+                <div class="row-sub">Show the empty state (and its platform help) on the home screen even with a device plugged in.</div>
+              </div>
+              <pc-toggle [value]="debug.forceNoDevice()" (valueChange)="debug.setForceNoDevice($event)"></pc-toggle>
+            </div>
+            <div class="row">
+              <div class="row-text">
+                <div class="row-label">Show help for OS</div>
+                <div class="row-sub">Preview the no-device troubleshooting help as shown on a given OS (e.g. the macOS Input Monitoring or Linux udev hint).</div>
+              </div>
+              <pc-select [options]="osOverrideOptions" [value]="debug.osOverride()"
+                         (valueChange)="debug.setOsOverride($any($event))"></pc-select>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+          <div class="micro-label section-label">ONBOARDING DIALOGS</div>
+          <div class="pc-card pad stack">
+            <div class="row">
+              <div class="row-text">
+                <div class="row-label">Preview a dialog</div>
+                <div class="row-sub">Open the first-run welcome or the post-install/update dialog without restarting.</div>
+              </div>
+              <div class="ob-preview-actions">
+                <button class="pc-btn ghost" (click)="debug.previewOnboarding('new-user')">Welcome</button>
+                <button class="pc-btn ghost" (click)="debug.previewOnboarding('post-install')">Update</button>
+              </div>
+            </div>
           </div>
         }
       }

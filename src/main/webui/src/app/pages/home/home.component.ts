@@ -6,6 +6,7 @@ import { DeviceService } from '../../services/device.service';
 import { SettingsService } from '../../services/settings.service';
 import { IntegrationDataService } from '../../features/commands/integration-data.service';
 import { PlatformService } from '../../services/platform.service';
+import { DebugService } from '../../services/debug.service';
 import {
   BottomBarComponent, ConnectionBadgeComponent, ConnState, IconComponent, ModalComponent,
   SpinnerComponent, StatusDotComponent, ToastService,
@@ -35,14 +36,16 @@ export class HomeComponent {
   private readonly settings = inject(SettingsService);
   private readonly integrations = inject(IntegrationDataService);
   private readonly platform = inject(PlatformService);
+  private readonly debug = inject(DebugService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
 
   readonly ready = this.state.ready;
   readonly devices = this.facade.devices;
-  readonly hasDevices = this.facade.hasDevices;
-  /** Backend host OS — drives the platform-specific "plugged in but not showing up?" hint. */
-  readonly os = this.platform.os;
+  /** Real device presence, unless the debug "force no-device state" toggle overrides it to empty. */
+  readonly hasDevices = computed(() => !this.debug.forceNoDevice() && this.facade.hasDevices());
+  /** Backend host OS (or the debug OS override) — drives the platform-specific "not showing up?" hint. */
+  readonly os = computed(() => this.debug.osOverride() || this.platform.os());
   readonly selected = this.facade.selected;
   readonly selectedSerial = this.facade.selectedSerial;
 

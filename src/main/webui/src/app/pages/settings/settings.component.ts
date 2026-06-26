@@ -4,7 +4,7 @@ import { HttpClient, httpResource } from '@angular/common/http';
 import { SettingsService } from '../../services/settings.service';
 import { IntegrationDataService } from '../../features/commands/integration-data.service';
 import { PlatformService } from '../../services/platform.service';
-import { DebugService, DeviceTypeOverride } from '../../services/debug.service';
+import { DebugService, DeviceTypeOverride, OsOverride } from '../../services/debug.service';
 import {
   OverlayPosition, SettingsDto, WaveLinkSettings,
 } from '../../models/generated/backend.types';
@@ -42,6 +42,13 @@ export class SettingsComponent {
     { value: 'PCPANEL_PRO', label: 'PCPanel Pro' },
     { value: 'PCPANEL_RGB', label: 'PCPanel RGB' },
     { value: 'PCPANEL_MINI', label: 'PCPanel Mini' },
+  ];
+
+  readonly osOverrideOptions: SelectOption<OsOverride>[] = [
+    { value: '', label: 'Real OS' },
+    { value: 'windows', label: 'Windows' },
+    { value: 'mac', label: 'macOS' },
+    { value: 'linux', label: 'Linux' },
   ];
 
   readonly settings = this.settingsService.settings;

@@ -125,6 +125,7 @@
   display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center;
   padding: 32px 40px; max-width: 360px;
 }
+.ob-preview-actions { display: flex; gap: 8px; }
 .quit-title { font-size: 16px; font-weight: 600; color: var(--text-1); }
 .quit-sub { font-size: 12.5px; color: var(--text-2); line-height: 1.5; }
 

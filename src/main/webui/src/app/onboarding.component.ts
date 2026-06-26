@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { OnboardingService } from './services/onboarding.service';
 import { SettingsService } from './services/settings.service';
 import { PlatformService } from './services/platform.service';
+import { DebugService } from './services/debug.service';
 import { IconComponent, ModalComponent, ToggleComponent } from './ui';
 
 const GITHUB_URL = 'https://github.com/nvdweem/PCPanel';
@@ -77,6 +78,7 @@ export class OnboardingComponent {
   private readonly onboarding = inject(OnboardingService);
   private readonly settings = inject(SettingsService);
   private readonly platform = inject(PlatformService);
+  private readonly debug = inject(DebugService);
 
   readonly githubUrl = GITHUB_URL;
   private readonly dismissed = signal(false);
@@ -86,8 +88,11 @@ export class OnboardingComponent {
   readonly changelogUrl = computed(() => this.info()?.changelogUrl ?? '');
   readonly openOnStartup = computed(() => this.settings.settings.value()?.openBrowserOnStartup ?? false);
 
-  /** Which dialog to show, or null once dismissed / when there's nothing to show. */
+  /** Which dialog to show, or null. A Debug-page preview wins; otherwise the backend onboarding intent
+   *  (until dismissed). */
   readonly view = computed<'new-user' | 'post-install' | null>(() => {
+    const preview = this.debug.onboardingPreview();
+    if (preview === 'new-user' || preview === 'post-install') return preview;
     if (this.dismissed()) return null;
     const intent = this.info()?.intent;
     return intent === 'new-user' || intent === 'post-install' ? intent : null;
@@ -111,6 +116,11 @@ export class OnboardingComponent {
   }
 
   dismiss(): void {
+    // A Debug-page preview just closes (don't acknowledge the real backend intent).
+    if (this.debug.onboardingPreview()) {
+      this.debug.previewOnboarding('');
+      return;
+    }
     this.dismissed.set(true);
     this.onboarding.ack();
   }
