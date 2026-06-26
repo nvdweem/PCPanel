@@ -21,7 +21,7 @@ let nextOptionId = 0;
 class ManagedOption<T> implements Highlightable {
   readonly id = `pc-opt-${nextOptionId++}`;
   active = false;
-  constructor(readonly opt: SelectOption<T>) {}
+  constructor(public opt: SelectOption<T>) {}
   get disabled(): boolean { return !!this.opt.disabled; }
   getLabel(): string { return this.opt.label; }
   setActiveStyles(): void { this.active = true; }
@@ -141,9 +141,30 @@ export class SelectComponent<T = string> {
   /** Show the filter field for long lists. */
   readonly showFilter = computed(() => this.options().length > 10);
 
-  /** One stable wrapper per option, reused across filtering so the key manager can preserve the active
-   *  item by reference when the visible list shrinks/grows. Recreated only when the options input changes. */
-  private readonly allItems = computed<ManagedOption<T>[]>(() => this.options().map(o => new ManagedOption(o)));
+  /** One stable wrapper per option value, reused across change-detection cycles. This is load-bearing:
+   *  callers often pass `[options]` from a method (e.g. a device list) that returns a NEW array every CD,
+   *  so without reuse the wrappers — and their `@for` track ids — would churn each cycle, destroying and
+   *  recreating the option DOM mid-click and dropping the click (the cause of the device dropdown that
+   *  "did nothing"). Reuse keeps DOM nodes stable and lets the key manager preserve the active item. */
+  private readonly wrappers = new Map<T, ManagedOption<T>>();
+  private readonly allItems = computed<ManagedOption<T>[]>(() => {
+    const seen = new Set<T>();
+    const result = this.options().map(o => {
+      seen.add(o.value);
+      const existing = this.wrappers.get(o.value);
+      if (existing) {
+        existing.opt = o; // refresh label/status/etc. without changing identity
+        return existing;
+      }
+      const created = new ManagedOption(o);
+      this.wrappers.set(o.value, created);
+      return created;
+    });
+    for (const key of this.wrappers.keys()) {
+      if (!seen.has(key)) this.wrappers.delete(key);
+    }
+    return result;
+  });
 
   readonly items = computed<ManagedOption<T>[]>(() => {
     const q = this.filter().trim().toLowerCase();
