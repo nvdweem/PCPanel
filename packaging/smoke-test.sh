@@ -22,6 +22,8 @@
 #                       e.g. /api/audio/* on a CI runner with no audio server, where Linux audio
 #                       degrades to a no-op ISndCtrl by design.
 #   --require-hid       Fail if the startup log reports "Failed to initialize HID services".
+#   --quit-check        After the endpoint checks, POST /api/system/quit and assert the process exits
+#                       (verifies the in-UI Quit button actually shuts the app down). Runs last.
 #   --boot-timeout N    Seconds to wait for the server (default 120).
 #
 # Defaults to --require /api/devices when no --require is given.
@@ -33,6 +35,7 @@ shift
 port=7654
 boot_timeout=120
 require_hid=0
+quit_check=0
 require=()
 lenient=()
 
@@ -42,6 +45,7 @@ while [ $# -gt 0 ]; do
     --require)      require+=("$2"); shift 2 ;;
     --lenient)      lenient+=("$2"); shift 2 ;;
     --require-hid)  require_hid=1; shift ;;
+    --quit-check)   quit_check=1; shift ;;
     --boot-timeout) boot_timeout=$2; shift 2 ;;
     *) echo "smoke-test.sh: unknown argument '$1'" >&2; exit 2 ;;
   esac
@@ -106,6 +110,24 @@ if [ "$require_hid" = 1 ]; then
     exit 1
   fi
   echo "HID services initialized OK."
+fi
+
+# Quit check runs last: it shuts the app down. Verifies the in-UI Quit button (POST /api/system/quit ->
+# Quarkus.asyncExit) actually terminates the process in the packaged build.
+if [ "$quit_check" = 1 ]; then
+  echo "Quit check: POST /api/system/quit and expect the process to exit"
+  curl -fsS -o /dev/null -X POST "${base}/api/system/quit" 2>/dev/null || true
+  exited=0
+  for _ in $(seq 1 20); do
+    if ! kill -0 "$pid" 2>/dev/null; then exited=1; break; fi
+    sleep 0.5
+  done
+  if [ "$exited" != 1 ]; then
+    echo "FAIL: app did not exit within 10s of POST /api/system/quit"
+    dump_log
+    exit 1
+  fi
+  echo "Quit OK: the app shut down on request."
 fi
 
 echo "Smoke test OK: the app booted and served its REST API."

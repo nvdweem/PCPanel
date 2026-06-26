@@ -165,6 +165,14 @@ jobs:
               } catch { $endpointFail = "$ep threw $($_.Exception.Message)" }
             }
           } else { $endpointFail = 'server never became ready' }
+          # Verify the in-UI Quit button actually shuts the exe down (POST /api/system/quit ->
+          # Quarkus.asyncExit). Stop-Process below is only a fallback if quit didn't terminate it.
+          $quitFail = $null
+          if ($up -and -not $endpointFail) {
+            try { Invoke-WebRequest -UseBasicParsing -TimeoutSec 10 -Method Post "http://127.0.0.1:7799/api/system/quit" | Out-Null } catch {}
+            if ($p.WaitForExit(10000)) { Write-Host "Quit OK: PCPanel.exe shut down on request." }
+            else { $quitFail = 'process did not exit within 10s of POST /api/system/quit' }
+          }
           $log = "$env:USERPROFILE\.pcpanel\logs\logging.log"
           if (Test-Path $log) { Select-String -Path $log -Pattern 'UnsatisfiedLink|Can.t load library|Could not enumerate' | Select-Object -First 3 | ForEach-Object { Write-Host "LOG> $($_.Line)" } }
           try { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } catch {}
@@ -176,6 +184,10 @@ jobs:
           if ($endpointFail) {
             if (Test-Path smoke.out) { Get-Content smoke.out | Select-Object -Last 40 | ForEach-Object { Write-Host $_ } }
             throw "Assembled PCPanel.exe REST smoke failed: $endpointFail (a 5xx usually means a native-image reflection/registration gap)."
+          }
+          if ($quitFail) {
+            if (Test-Path smoke.out) { Get-Content smoke.out | Select-Object -Last 40 | ForEach-Object { Write-Host $_ } }
+            throw "Assembled PCPanel.exe quit check failed: $quitFail"
           }
 
       - name: Install Inno Setup
@@ -258,7 +270,8 @@ jobs:
           exe=$(ls target/*-runner | head -1)
           bash packaging/smoke-test.sh "$exe" --port 7766 \
             --require /api/devices \
-            --lenient /api/audio/devices --lenient /api/audio/applications --lenient /api/audio/selftest
+            --lenient /api/audio/devices --lenient /api/audio/applications --lenient /api/audio/selftest \
+            --quit-check
 
       # Cache the bundled kdotool download (Apache-2.0) across runs; the key changes only when
       # fetch-kdotool.sh (which pins the version + sha256) changes, so it is downloaded once per pin.
@@ -530,7 +543,7 @@ jobs:
           bash packaging/smoke-test.sh "$bin" --port 7654 \
             --require /api/devices --require /api/audio/devices --require /api/audio/applications \
             --require /api/audio/selftest \
-            --require-hid
+            --require-hid --quit-check
 
           # --- Bonus: explicit signature confirmation (a benefit, not the primary gate) ----------
           codesign --verify --deep --strict --verbose=4 "$app"
