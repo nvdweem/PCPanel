@@ -2,6 +2,7 @@ package dev.niels.wavelink;
 
 import dev.niels.wavelink.impl.model.WaveLinkApp;
 import dev.niels.wavelink.impl.model.WaveLinkChannel;
+import dev.niels.wavelink.impl.model.WaveLinkInputDevice;
 import dev.niels.wavelink.impl.model.WaveLinkMix;
 import dev.niels.wavelink.impl.model.WaveLinkOutputDevice;
 
@@ -19,6 +20,9 @@ public interface IWaveLinkClientEventListener {
     }
 
     default void inputDevicesChanged() {
+    }
+
+    default void inputDeviceChanged(WaveLinkInputDevice inputDevice) {
     }
 
     default void channelChanged(WaveLinkChannel channel) {

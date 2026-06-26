@@ -12,7 +12,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 /**
- * Mute state of a Wave Link control — channel, mix or output — followed by either a level dial
+ * Mute state of a Wave Link control — channel, input, mix or output — followed by either a level dial
  * ({@code CommandWaveLinkChangeLevel}) or a mute button ({@code CommandWaveLinkChangeMute}). Both
  * carry the same {@link CommandWaveLinkChange} target (command type + id1/id2), so either drives the
  * mute-override colour.
@@ -57,7 +57,12 @@ public class WaveLinkMuteResolver implements MuteStateResolver {
                         ? Optional.empty()
                         : Optional.ofNullable(output.outputs().get(0).isMuted());
             }
-            case Input -> Optional.empty(); // Wave Link input mute is not exposed by the API
+            case Input -> {
+                var input = waveLink.getInputFromId(cmd.getId1());
+                yield input.inputs() == null || input.inputs().isEmpty()
+                        ? Optional.empty()
+                        : Optional.ofNullable(input.inputs().get(0).isMuted());
+            }
         };
     }
 }

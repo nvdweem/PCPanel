@@ -8,7 +8,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.commands.command.DialAction;
 
-import dev.niels.wavelink.impl.model.WaveLinkControlAction;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
@@ -48,7 +47,7 @@ public final class CommandWaveLinkChangeLevel extends CommandWaveLinkChange impl
         }
         var value = (double) context.dial().getValue(this, 0, 1);
         switch (getCommandType()) {
-            case Input -> service.setInputLevel(getId1(), WaveLinkControlAction.OutputVolume, value);
+            case Input -> service.setInputLevel(getId1(), value);
             case Channel -> service.setChannelLevel(getId1(), value);
             case Mix -> service.setChannelLevel(getId1(), getId2(), value);
             case Output -> service.setOutputLevel(getId1(), value);

@@ -20,6 +20,7 @@ import lombok.Setter;
         @Type(value = WaveLinkChannelChangedCommand.class, name = "channelChanged"),
         @Type(value = WaveLinkChannelsChangedCommand.class, name = "channelsChanged"),
         @Type(value = WaveLinkOutputDeviceChangedCommand.class, name = "outputDeviceChanged"),
+        @Type(value = WaveLinkInputDeviceChangedCommand.class, name = "inputDeviceChanged"),
         @Type(value = WaveLinkMixChangedCommand.class, name = "mixChanged"),
         @Type(value = WaveLinkFocusedAppChangedCommand.class, name = "focusedAppChanged"),
 
@@ -36,6 +37,7 @@ import lombok.Setter;
         @Type(value = WaveLinkSetChannelCommand.class, name = "setChannel"),
         @Type(value = WaveLinkSetMixCommand.class, name = "setMix"),
         @Type(value = WaveLinkSetOutputDeviceCommand.class, name = "setOutputDevice"),
+        @Type(value = WaveLinkSetInputDeviceCommand.class, name = "setInputDevice"),
 })
 @Getter
 @Setter

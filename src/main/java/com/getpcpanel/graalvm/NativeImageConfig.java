@@ -104,7 +104,6 @@ import com.getpcpanel.wavelink.command.WaveLinkCommandTarget;
 
 import dev.niels.wavelink.impl.model.WaveLinkApp;
 import dev.niels.wavelink.impl.model.WaveLinkChannel;
-import dev.niels.wavelink.impl.model.WaveLinkControlAction;
 import dev.niels.wavelink.impl.model.WaveLinkEffect;
 import dev.niels.wavelink.impl.model.WaveLinkGain;
 import dev.niels.wavelink.impl.model.WaveLinkImage;
@@ -126,10 +125,12 @@ import dev.niels.wavelink.impl.rpc.WaveLinkGetChannels;
 import dev.niels.wavelink.impl.rpc.WaveLinkGetInputDevices;
 import dev.niels.wavelink.impl.rpc.WaveLinkGetMixes;
 import dev.niels.wavelink.impl.rpc.WaveLinkGetOutputDevices;
+import dev.niels.wavelink.impl.rpc.WaveLinkInputDeviceChangedCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkJsonRpcCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkMixChangedCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkOutputDeviceChangedCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkSetChannelCommand;
+import dev.niels.wavelink.impl.rpc.WaveLinkSetInputDeviceCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkSetMixCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkSetOutputDeviceCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkSetSubscription;
@@ -230,6 +231,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         WaveLinkFocusedAppChangedCommand.class,
         WaveLinkMixChangedCommand.class,
         WaveLinkOutputDeviceChangedCommand.class,
+        WaveLinkInputDeviceChangedCommand.class,
         WaveLinkGetApplicationInfo.class,
         WaveLinkGetChannels.class,
         WaveLinkGetInputDevices.class,
@@ -238,6 +240,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         WaveLinkSetChannelCommand.class,
         WaveLinkSetMixCommand.class,
         WaveLinkSetOutputDeviceCommand.class,
+        WaveLinkSetInputDeviceCommand.class,
         WaveLinkSetSubscription.class,
         WaveLinkAddToChannelCommand.class,
         WaveLinkUnknownCommand.class,
@@ -245,7 +248,6 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         // WaveLink model classes (deserialised from WaveLink JSON API)
         WaveLinkApp.class,
         WaveLinkChannel.class,
-        WaveLinkControlAction.class,
         WaveLinkEffect.class,
         WaveLinkGain.class,
         WaveLinkImage.class,

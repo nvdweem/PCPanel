@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.commands.command.ButtonAction;
 import com.getpcpanel.cpp.MuteType;
 
+import dev.niels.wavelink.impl.model.WaveLinkInputDevice;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
@@ -48,7 +49,10 @@ public final class CommandWaveLinkChangeMute extends CommandWaveLinkChange imple
         }
 
         switch (getCommandType()) {
-            case Input -> log.warn("Input mute not supported yet");
+            case Input -> {
+                var device = service.getInputFromId(getId1());
+                service.setInputMute(getId1(), muteType.convert(currentInputMuted(device)));
+            }
             case Channel -> {
                 var channel = service.getChannelFromId(getId1());
                 service.setChannelMute(getId1(), muteType.convert(channel.isMuted()));
@@ -72,5 +76,10 @@ public final class CommandWaveLinkChangeMute extends CommandWaveLinkChange imple
                 }
             }
         }
+    }
+
+    /** Current mute state of an input device, taken from its first input (a mic exposes a single input). */
+    private static boolean currentInputMuted(WaveLinkInputDevice device) {
+        return device.inputs() != null && !device.inputs().isEmpty() && Boolean.TRUE.equals(device.inputs().get(0).isMuted());
     }
 }
