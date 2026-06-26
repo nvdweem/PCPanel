@@ -42,6 +42,13 @@
 - #88 - (Linux) Focus volume now works for sandboxed (Flatpak) apps. Flatpak apps report a sandbox-internal PID to PipeWire that never matched the host PID from KWin, so the focused-app knob silently did nothing; it now also matches the focused window's app id (`pipewire.access.portal.app_id`) across the sandbox boundary.
 - (Linux) `kdotool` is now **bundled** with the `.deb`, AppImage and Flatpak, so focus volume works out of the box on KDE Plasma (Wayland and X11) without installing anything. Inside the Flatpak it runs in the sandbox and drives the host KWin over D-Bus. `kdotool` covers X11 too, so `xdotool` is no longer needed alongside it. If no window tool is available the app now logs a clear warning and shows a desktop notification instead of failing silently.
 - (Linux) The version shown in the UI now includes the build number for official GitHub builds (e.g. `v2.0.123`) instead of just `v2.0-SNAPSHOT`.
+- There is now a **Quit** button in the settings (General tab), so you can stop the app from the UI on any platform instead of killing it from a terminal — handy on macOS, which has no tray icon yet (#104).
+- When no device is connected the UI shows a clear "No PCPanel connected" state with platform-specific help (the Linux device-access rule, the macOS Input Monitoring permission) instead of an endless spinner (#104).
+- First run now opens the UI in your browser with a short welcome and a link to the setup instructions, and there's a new General setting to **open the UI in the browser whenever the app starts** (off by default — it otherwise just sits in the tray). On Windows the browser also opens once right after installing.
+- #105 - (macOS) Fixed every Core Audio volume and mute action failing with a JNA reflection error in the packaged app (`ByteByReference` was not registered for the native image).
+- #100 - (Linux) The Wayland tray no longer quits the app on a right or middle click (use the new Quit button instead); any tray click now just opens the UI.
+- #107 - (Linux) Fixed the system tray not appearing in the Flatpak — the sandbox was missing permission to own its tray name.
+- #107 - (Linux) Fixed devices being detected but never opening. The bundled HID library now uses the **hidraw** backend, which needs a `hidraw` udev access rule. The `.deb` installs it automatically; AppImage/Flatpak/manual installs must add the new `hidraw` lines to their rule (see [linux.md](linux.md)) — a usb-only rule from an older version is no longer enough.
 
 ## [1.7.1]
 
