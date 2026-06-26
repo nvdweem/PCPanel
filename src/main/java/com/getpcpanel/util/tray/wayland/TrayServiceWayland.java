@@ -7,7 +7,6 @@ import org.freedesktop.dbus.connections.impl.DBusConnection;
 import org.freedesktop.dbus.connections.impl.DBusConnectionBuilder;
 import org.freedesktop.dbus.exceptions.DBusException;
 import org.freedesktop.dbus.exceptions.DBusExecutionException;
-import org.freedesktop.dbus.interfaces.DBusInterface;
 
 import com.getpcpanel.platform.LinuxBuild;
 import com.getpcpanel.util.tray.ITrayService;
@@ -60,8 +59,7 @@ public class TrayServiceWayland implements ITrayService {
         if (wellKnownName == null) {
             return; // no usable SNI bus name → no tray (already logged); don't export a half-registered item
         }
-        DBusInterface menuBarObject = () -> "/MenuBar";
-        connection.exportObject("/MenuBar", menuBarObject);
+        connection.exportObject(new DBusMenuImpl()); // the right-click menu at /MenuBar
         connection.exportObject(new StatusNotifierItemImpl());
         registerWithWatcher(wellKnownName);
     }

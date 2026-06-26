@@ -46,7 +46,8 @@
 - When no device is connected the UI shows a clear "No PCPanel connected" state with platform-specific help (the Linux device-access rule, the macOS Input Monitoring permission) instead of an endless spinner (#104).
 - First run now opens the UI in your browser with a short welcome and a link to the setup instructions, and there's a new General setting to **open the UI in the browser whenever the app starts** (off by default — it otherwise just sits in the tray). On Windows the browser also opens once right after installing.
 - #105 - (macOS) Fixed every Core Audio volume and mute action failing with a JNA reflection error in the packaged app (`ByteByReference` was not registered for the native image).
-- #100 - (Linux) The Wayland tray no longer quits the app on a right or middle click (use the new Quit button instead); any tray click now just opens the UI.
+- #100 - (Linux) The Wayland tray now has a proper right-click menu — **Open PCPanel**, **Open logs folder** and **Quit** — matching the Windows tray, instead of quitting the app on a right or middle click.
+- #106 - (macOS) Fixed the audio device dropdown ignoring clicks: picking a device now actually selects it. The option list could rebuild mid-click and drop the click; it no longer does (also fixes the Wave Link channel/mix dropdowns).
 - #107 - (Linux) Fixed the system tray not appearing in the Flatpak — the sandbox was missing permission to own its tray name.
 - #107 - (Linux) Fixed devices being detected but never opening. The bundled HID library now uses the **hidraw** backend, which needs a `hidraw` udev access rule. The `.deb` installs it automatically; AppImage/Flatpak/manual installs must add the new `hidraw` lines to their rule (see [linux.md](linux.md)) — a usb-only rule from an older version is no longer enough.
 
