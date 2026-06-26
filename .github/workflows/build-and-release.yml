@@ -157,7 +157,7 @@ jobs:
           # FileSerializer, JNA proxy/pointer registration) on the primary platform.
           $endpointFail = $null
           if ($up) {
-            foreach ($ep in '/api/devices','/api/audio/devices','/api/audio/applications') {
+            foreach ($ep in '/api/devices','/api/audio/devices','/api/audio/applications','/api/audio/selftest') {
               try {
                 $code = (Invoke-WebRequest -UseBasicParsing -TimeoutSec 10 "http://127.0.0.1:7799$ep").StatusCode
                 Write-Host "GET $ep -> $code"
@@ -258,7 +258,7 @@ jobs:
           exe=$(ls target/*-runner | head -1)
           bash packaging/smoke-test.sh "$exe" --port 7766 \
             --require /api/devices \
-            --lenient /api/audio/devices --lenient /api/audio/applications
+            --lenient /api/audio/devices --lenient /api/audio/applications --lenient /api/audio/selftest
 
       # Cache the bundled kdotool download (Apache-2.0) across runs; the key changes only when
       # fetch-kdotool.sh (which pins the version + sha256) changes, so it is downloaded once per pin.
@@ -524,8 +524,12 @@ jobs:
           # side effect: an invalidly signed bundle is SIGKILLed at exec, so the server never comes up
           # and this fails — which is why this still catches a signing regression even without the
           # `codesign --verify` bonus check below.
+          # /api/audio/selftest re-applies the default device's current volume/mute (a no-op) to drive
+          # the settable WRITE path (isSettable → ByteByReference), which the read endpoints miss — this
+          # is what reproduces #105 at runtime on macOS.
           bash packaging/smoke-test.sh "$bin" --port 7654 \
             --require /api/devices --require /api/audio/devices --require /api/audio/applications \
+            --require /api/audio/selftest \
             --require-hid
 
           # --- Bonus: explicit signature confirmation (a benefit, not the primary gate) ----------
