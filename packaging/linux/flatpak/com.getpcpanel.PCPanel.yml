@@ -40,7 +40,12 @@ finish-args:
   # watcher. --talk-name alone is not enough: without --own-name the sandbox's xdg-dbus-proxy denies
   # RequestName, so requestBusName fails with ServiceUnknown and NO tray icon ever appears in the
   # Flatpak (#107). --own-name lets the app claim its SNI name; --talk-name reaches the watcher.
-  - --own-name=org.kde.StatusNotifierItem-*
+  # This is the one *exact* name the app claims (TrayServiceWayland uses a fixed suffix, not a per-pid
+  # one) — no wildcard. The earlier `org.kde.StatusNotifierItem-*` was rejected at `flatpak
+  # build-finish` ("Invalid dbus name"): flatpak's only wildcard is the dot-suffix `.*`, so `-*` is
+  # parsed as a literal name and `*` is not a legal bus-name character. Granting the exact name (rather
+  # than widening to `org.kde.*`) keeps the sandbox from owning the whole org.kde subtree.
+  - --own-name=org.kde.StatusNotifierItem-PCPanel
   - --talk-name=org.kde.StatusNotifierWatcher
   - --talk-name=org.freedesktop.Notifications
   # Run remaining host tools (pactl/xdotool) via flatpak-spawn --host

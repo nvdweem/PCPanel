@@ -55,7 +55,7 @@ public class TrayServiceWayland implements ITrayService {
     }
 
     private void registerIcon() throws DBusException {
-        var wellKnownName = requestSniBus(1);
+        var wellKnownName = requestSniBus();
         if (wellKnownName == null) {
             return; // no usable SNI bus name → no tray (already logged); don't export a half-registered item
         }
@@ -64,8 +64,15 @@ public class TrayServiceWayland implements ITrayService {
         registerWithWatcher(wellKnownName);
     }
 
-    private @Nullable String requestSniBus(int id) {
-        var wkn = SNI_BUS_NAME + "-" + ProcessHandle.current().pid() + "-" + id;
+    private @Nullable String requestSniBus() {
+        // A fixed, app-specific name rather than the per-pid org.kde.StatusNotifierItem-<pid>-<id> the
+        // SNI spec suggests. That lets the Flatpak grant ownership of this one *exact* name instead of
+        // the whole org.kde.* subtree: flatpak's only D-Bus wildcard is the dot-suffix `.*`, which can
+        // never target a hyphen-delimited per-pid tail (it is all one final name element). PCPanel is
+        // single-instance (FileChecker), so the per-pid uniqueness buys nothing here; D-Bus releases the
+        // name automatically when the process exits. Keep the conventional org.kde.StatusNotifierItem-
+        // prefix so SNI hosts recognise it exactly as before.
+        var wkn = SNI_BUS_NAME + "-PCPanel";
         try {
             connection.requestBusName(wkn);
             return wkn;
