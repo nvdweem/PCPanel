@@ -20,8 +20,8 @@ import lombok.extern.log4j.Log4j2;
 
 /**
  * The tray context menu shown on right-click. Mirrors the Windows tray: <b>Open PCPanel</b> (opens the
- * UI), <b>Open settings folder</b> (reveals the data dir holding {@code profiles.json}), <b>Open logs
- * folder</b> (its {@code logs/} subdir) and <b>Quit</b> (shuts the app down, like the in-UI Quit button).
+ * UI), <b>Open settings folder</b> (reveals the data dir holding {@code profiles.json}, with the
+ * {@code logs/} subdir inside it) and <b>Quit</b> (shuts the app down, like the in-UI Quit button).
  * Exported at {@code /MenuBar}, which the StatusNotifierItem advertises via its {@code Menu} property.
  */
 @Log4j2
@@ -29,9 +29,8 @@ import lombok.extern.log4j.Log4j2;
 public class DBusMenuImpl implements DBusMenu {
     private static final int ID_OPEN = 1;
     private static final int ID_SETTINGS = 2;
-    private static final int ID_LOGS = 3;
-    private static final int ID_QUIT = 4;
-    private static final int[] ITEM_IDS = {ID_OPEN, ID_SETTINGS, ID_LOGS, ID_QUIT};
+    private static final int ID_QUIT = 3;
+    private static final int[] ITEM_IDS = {ID_OPEN, ID_SETTINGS, ID_QUIT};
 
     @Override
     public String getObjectPath() {
@@ -76,10 +75,6 @@ public class DBusMenuImpl implements DBusMenu {
                 log.debug("Open settings folder selected from the tray menu");
                 AppEvents.fire(new OpenFolderEvent(settingsRoot().getRoot().toString()));
             }
-            case ID_LOGS -> {
-                log.debug("Open logs folder selected from the tray menu");
-                AppEvents.fire(new OpenFolderEvent(settingsRoot().getFile("logs").toString()));
-            }
             default -> {
                 log.debug("Open selected from the tray menu");
                 AppEvents.fire(new ShowMainEvent());
@@ -105,7 +100,6 @@ public class DBusMenuImpl implements DBusMenu {
     private static String label(int id) {
         return switch (id) {
             case ID_SETTINGS -> "Open settings folder";
-            case ID_LOGS -> "Open logs folder";
             case ID_QUIT -> "Quit";
             default -> "Open PCPanel";
         };

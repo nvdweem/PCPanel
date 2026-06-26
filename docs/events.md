@@ -76,7 +76,7 @@ up to date when you add or remove an event or an observer.
 | `SystemEvent` (sleep/wake/lock/display-off/display-on) | `WindowsSystemEventService` / `LinuxSystemEventService` / `MacSystemEventService` | `SleepDetector` |
 | `WindowFocusChangedEvent` | focus watchers | `DeviceHolder`, `ProfileWindowFocusService` |
 | `ShowMainEvent` | `FileChecker`, `StatusNotifierItemImpl`, `TrayServiceWin` | `ShowMainService` |
-| `OpenFolderEvent` | `TrayServiceWin` (tray "Open logs folder") | `ShowMainService` (reveals the folder in the OS file manager) |
+| `OpenFolderEvent` | `TrayServiceWin`, `DBusMenuImpl` (tray "Open settings folder") | `ShowMainService` (reveals the folder in the OS file manager) |
 | `NewVersionAvailableEvent` | `VersionChecker` | (UI/notification consumers) |
 
 ---

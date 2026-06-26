@@ -58,8 +58,7 @@ public class TrayServiceWin implements ITrayService, WindowProc {
     private static final int TRAY_ID = 1;
     private static final int MENU_OPEN = 1;
     private static final int MENU_EXIT = 2;
-    private static final int MENU_LOGS = 3;
-    private static final int MENU_SETTINGS = 4;
+    private static final int MENU_SETTINGS = 3;
     private static final int IDI_APPLICATION = 32512;
 
     // Mouse messages delivered in the low word of the callback's lParam (NOTIFYICON_VERSION 0).
@@ -176,7 +175,6 @@ public class TrayServiceWin implements ITrayService, WindowProc {
         try {
             ext.AppendMenuW(menu, WinUser32Ext.MF_STRING, MENU_OPEN, new WString("Open PCPanel"));
             ext.AppendMenuW(menu, WinUser32Ext.MF_STRING, MENU_SETTINGS, new WString("Open settings folder"));
-            ext.AppendMenuW(menu, WinUser32Ext.MF_STRING, MENU_LOGS, new WString("Open logs folder"));
             ext.AppendMenuW(menu, WinUser32Ext.MF_STRING, MENU_EXIT, new WString("Exit"));
             ext.SetMenuDefaultItem(menu, MENU_OPEN, 0);
 
@@ -191,7 +189,6 @@ public class TrayServiceWin implements ITrayService, WindowProc {
             switch (cmd) {
                 case MENU_OPEN -> eventBus.fire(new ShowMainEvent());
                 case MENU_SETTINGS -> eventBus.fire(new OpenFolderEvent(fileUtil.getRoot().toString()));
-                case MENU_LOGS -> eventBus.fire(new OpenFolderEvent(fileUtil.getFile("logs").toString()));
                 case MENU_EXIT -> {
                     //noinspection CallToSystemExit
                     System.exit(0);
