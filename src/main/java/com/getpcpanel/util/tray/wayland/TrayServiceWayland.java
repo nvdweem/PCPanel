@@ -12,7 +12,7 @@ import org.freedesktop.dbus.interfaces.DBusInterface;
 import com.getpcpanel.platform.LinuxBuild;
 import com.getpcpanel.util.tray.ITrayService;
 
-import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
@@ -56,24 +56,28 @@ public class TrayServiceWayland implements ITrayService {
     }
 
     private void registerIcon() throws DBusException {
-        DBusInterface menuBarObject = () -> "/MenuBar";
-        var statusNotifierItem = new StatusNotifierItemImpl();
-
         var wellKnownName = requestSniBus(1);
+        if (wellKnownName == null) {
+            return; // no usable SNI bus name → no tray (already logged); don't export a half-registered item
+        }
+        DBusInterface menuBarObject = () -> "/MenuBar";
         connection.exportObject("/MenuBar", menuBarObject);
-        connection.exportObject(statusNotifierItem);
+        connection.exportObject(new StatusNotifierItemImpl());
         registerWithWatcher(wellKnownName);
     }
 
-    private @Nonnull String requestSniBus(int id) {
-        var wkn = SNI_BUS_NAME;
+    private @Nullable String requestSniBus(int id) {
+        var wkn = SNI_BUS_NAME + "-" + ProcessHandle.current().pid() + "-" + id;
         try {
-            wkn += "-" + ProcessHandle.current().pid() + "-" + id;
             connection.requestBusName(wkn);
             return wkn;
-        } catch (DBusException e) {
-            log.error("Could not request well-known bus name", e);
-            return "error";
+        } catch (DBusException | DBusExecutionException e) {
+            // Owning the SNI name fails when the connected session bus has no working name service - on
+            // the Flatpak that is a missing --own-name grant (#107), and in Distrobox/headless sessions
+            // there is simply no bus. Either way the tray is non-essential: degrade to "no tray" with a
+            // concise one-liner instead of a multi-line ERROR stack trace.
+            log.warn("Could not claim the tray's D-Bus name; running without a tray icon ({})", e.getMessage());
+            return null;
         }
     }
 

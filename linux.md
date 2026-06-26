@@ -12,8 +12,11 @@ desktop notification) pointing you at `kdotool`.
 ## Preparation
 
 The `.deb` package installs the udev rules (`/usr/lib/udev/rules.d/70-pcpanel.rules`) and reloads them automatically, so when
-installing the Debian package the steps below are handled for you. If you run the executable manually (or use the Flatpak),
-set the device access up yourself:
+installing the Debian package the steps below are handled for you. **Every other install — AppImage, the raw executable, and
+the Flatpak — needs you to add the udev rule yourself.** This includes the Flatpak: `--device=all` lets the sandbox *see* the
+device node, but the node is still owned `root:root` with mode `0600` on the host, and only a `uaccess` udev rule grants your
+logged-in user permission to open it. Without it the log repeats `Unable to open device … will keep retrying` and the UI shows
+the "No PCPanel connected" empty state even though the device was detected (see #107). Set the access up yourself:
 
 1. Allow the software to access the device:
    ```shell
@@ -78,6 +81,10 @@ makes some features harder; it is provided on a best-effort basis.
    flatpak install --user PCPanel-[version].flatpak
    flatpak run com.getpcpanel.PCPanel
    ```
+
+> **Device access:** the Flatpak still needs the host udev rule from [Preparation](#preparation) above — the sandbox can see
+> the device but cannot grant itself permission to open it. If the device is detected but never connects (`Unable to open
+> device …` in the log), that rule is missing.
 
 The sandbox is granted USB device access, audio (PulseAudio/PipeWire), network, X11/Wayland and tray permissions. `kdotool`
 for focus volume is **bundled inside the sandbox** and talks to the host KWin over D-Bus (`--talk-name=org.kde.KWin`), so KDE

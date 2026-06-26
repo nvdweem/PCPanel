@@ -187,6 +187,14 @@ public class DeviceScanner implements HidServicesListener, DeviceProvider {
                     if (SystemUtils.IS_OS_MAC && !OsxPermissionHelper.isInputMonitoringGranted()) {
                         log.error("macOS requires the Input Monitoring permission: " +
                                 "System Settings > Privacy & Security > Input Monitoring > enable PCPanel");
+                    } else if (SystemUtils.IS_OS_LINUX) {
+                        // The device is visible but the hidraw node is root-owned 0600 unless a udev rule
+                        // grants the logged-in user access. The .deb installs that rule; Flatpak/AppImage
+                        // users must add it themselves — even the Flatpak, since --device=all exposes the
+                        // node but cannot change its host ACL (#107).
+                        log.error("Linux needs a udev access rule for the PCPanel device. The .deb installs it " +
+                                "automatically; for the Flatpak or AppImage add /etc/udev/rules.d/70-pcpanel.rules " +
+                                "(see linux.md), run 'sudo udevadm control --reload-rules', then unplug and replug the device.");
                     }
                 } else {
                     log.debug("Retry to open device {} still failing", k);
