@@ -67,9 +67,9 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         // EnumWindows callback for CommandMedia's Spotify-window lookup; JNA builds its CallbackProxy
         // from this concrete type reflectively (CallbackProxy itself is jniAccessible).
         "com.sun.jna.platform.win32.WinUser$WNDENUMPROC",
-        // JNA out-parameter pointer for EnumProcesses/GetWindowThreadProcessId (the Spotify lookup and
-        // the /api/processes listing).
-        "com.sun.jna.ptr.IntByReference",
+        // NB: IntByReference (the JNA out-parameter for EnumProcesses/GetWindowThreadProcessId here, and
+        // for CoreAudio/X11/keyboard on macOS/Linux) is registered centrally in NativeImageConfig, not
+        // here — it is cross-platform, so it must not depend on this Windows-named config.
 })
 public final class JnaWin32ReflectionConfig {
     private JnaWin32ReflectionConfig() {

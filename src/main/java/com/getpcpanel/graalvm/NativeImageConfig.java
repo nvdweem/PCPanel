@@ -388,11 +388,17 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         //   - ByteByReference: CoreAudioLib.AudioObjectIsPropertySettable — reached by every macOS
         //     volume/mute write via CoreAudioWrapper.isSettable() (#105).
         //   - ShortByReference: LinuxX11.LibXext.DPMSInfo — the Linux display-power (DPMS) sleep check.
-        // IntByReference and PointerByReference are registered elsewhere (JnaWin32ReflectionConfig /
-        // reachability-metadata.json). JnaPointerRegistrationCoverageTest guards this set so a new
-        // ByReference type in a Library signature can't ship unregistered.
+        //   - IntByReference: cross-platform — CoreAudioLib.AudioObjectGetPropertyData(Size) (macOS),
+        //     LinuxX11.DPMSInfo/DPMSQueryExtension and LinuxKeyboard.XDisplayKeycodes/XGetKeyboardMapping
+        //     (Linux), and the Windows EnumProcesses/GetWindowThreadProcessId lookup. Registered here (not
+        //     in the Windows-only-named JnaWin32ReflectionConfig) so a future platform-gate of that class
+        //     can't silently drop it on macOS/Linux.
+        // PointerByReference is registered via reachability-metadata.json.
+        // JnaPointerRegistrationCoverageTest guards this set so a new ByReference type in a Library
+        // signature can't ship unregistered.
         "com.sun.jna.ptr.ByteByReference",
         "com.sun.jna.ptr.ShortByReference",
+        "com.sun.jna.ptr.IntByReference",
 })
 public class NativeImageConfig {
     private NativeImageConfig() {
