@@ -27,9 +27,10 @@ import lombok.extern.log4j.Log4j2;
 @RegisterForReflection
 public class DBusMenuImpl implements DBusMenu {
     private static final int ID_OPEN = 1;
-    private static final int ID_LOGS = 2;
-    private static final int ID_QUIT = 3;
-    private static final int[] ITEM_IDS = {ID_OPEN, ID_LOGS, ID_QUIT};
+    private static final int ID_SETTINGS = 2;
+    private static final int ID_LOGS = 3;
+    private static final int ID_QUIT = 4;
+    private static final int[] ITEM_IDS = {ID_OPEN, ID_SETTINGS, ID_LOGS, ID_QUIT};
 
     @Override
     public String getObjectPath() {
@@ -70,6 +71,10 @@ public class DBusMenuImpl implements DBusMenu {
                 log.info("Quit selected from the tray menu; shutting down");
                 Quarkus.asyncExit(0);
             }
+            case ID_SETTINGS -> {
+                log.debug("Open settings folder selected from the tray menu");
+                AppEvents.fire(new OpenFolderEvent(PcPanelRoot.resolve().toString()));
+            }
             case ID_LOGS -> {
                 log.debug("Open logs folder selected from the tray menu");
                 AppEvents.fire(new OpenFolderEvent(PcPanelRoot.resolve().resolve("logs").toString()));
@@ -88,6 +93,7 @@ public class DBusMenuImpl implements DBusMenu {
 
     private static String label(int id) {
         return switch (id) {
+            case ID_SETTINGS -> "Open settings folder";
             case ID_LOGS -> "Open logs folder";
             case ID_QUIT -> "Quit";
             default -> "Open PCPanel";
