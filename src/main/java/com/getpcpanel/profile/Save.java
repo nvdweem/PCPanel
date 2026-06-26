@@ -11,6 +11,7 @@ import javax.annotation.Nullable;
 import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.device.descriptor.DeviceDescriptor;
 import com.getpcpanel.homeassistant.dto.HomeAssistantServer;
+import com.getpcpanel.profile.dto.FocusVolumeOverride;
 import com.getpcpanel.profile.dto.MqttSettings;
 import com.getpcpanel.profile.dto.OSCConnectionInfo;
 import com.getpcpanel.profile.dto.OverlayPosition;
@@ -46,6 +47,9 @@ public class Save {
     /** When set, focused-app volume does nothing for apps already controlled elsewhere (a per-app
      *  volume command on another control, or a Wave Link channel). */
     private boolean skipControlledFocusApps;
+    /** Focus-volume redirection rules: when a source app has focus, the focus dial drives the rule's
+     *  targets instead of (or alongside) the source. See {@link FocusVolumeOverride}. */
+    @Nullable private List<FocusVolumeOverride> focusVolumeOverrides;
     private boolean obsEnabled;
     private String obsAddress = "localhost";
     private String obsPort = "4455";
@@ -181,5 +185,10 @@ public class Save {
     @Nonnull
     public List<HomeAssistantServer> getHomeAssistantServers() {
         return Objects.requireNonNullElseGet(homeAssistantServers, List::of);
+    }
+
+    @Nonnull
+    public List<FocusVolumeOverride> getFocusVolumeOverrides() {
+        return Objects.requireNonNullElseGet(focusVolumeOverrides, List::of);
     }
 }

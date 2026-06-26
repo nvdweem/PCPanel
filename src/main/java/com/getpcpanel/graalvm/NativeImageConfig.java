@@ -70,6 +70,8 @@ import com.getpcpanel.device.descriptor.LightOutputSpec;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.Save;
+import com.getpcpanel.profile.dto.FocusVolumeOverride;
+import com.getpcpanel.profile.dto.FocusVolumeTarget;
 import com.getpcpanel.profile.dto.KnobSetting;
 import com.getpcpanel.profile.dto.LightingConfig;
 import com.getpcpanel.profile.dto.LightingConfig.LightingMode;
@@ -321,6 +323,14 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         OSCConnectionInfo.class,
         OSCBinding.class,
         OverlayPosition.class,
+
+        // Focus-volume override rules persisted in the save file + sent in SettingsDto. Each is a List on
+        // its container (Save.focusVolumeOverrides, FocusVolumeOverride.targets), so Jackson needs the
+        // element record AND its array form reachable for native serialisation.
+        FocusVolumeOverride.class,
+        FocusVolumeOverride[].class,
+        FocusVolumeTarget.class,
+        FocusVolumeTarget[].class,
 }, classNames = {
         // Jackson selects FileSerializer at runtime to serialise a java.io.File field (e.g.
         // ISndCtrl.RunningApplication.file, returned by GET /api/audio/applications). Its no-arg

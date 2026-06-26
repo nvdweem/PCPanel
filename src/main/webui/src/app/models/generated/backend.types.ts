@@ -422,6 +422,16 @@ export interface DigitalInputSpec {
     standalone: boolean;
 }
 
+export interface FocusVolumeOverride {
+    includeSource: boolean;
+    sources: string[];
+    targets: FocusVolumeTarget[];
+}
+
+export interface FocusVolumeTarget {
+    command: Command;
+}
+
 export interface GlobalLightingSpec {
     brightnessMax: number;
     brightnessMin: number;
@@ -566,6 +576,7 @@ export interface SerialPortDto {
 
 export interface SettingsDto {
     dblClickInterval: number;
+    focusVolumeOverrides: FocusVolumeOverride[];
     forceVolume: boolean;
     homeAssistantDebounceMs?: number;
     homeAssistantServers: HomeAssistantServer[];
