@@ -19,14 +19,17 @@ public class StatusNotifierItemImpl implements StatusNotifierItem {
 
     @Override
     public void ContextMenu(int x, int y) {
+        // Previously this quit the app on right-click — a footgun (the maintainer agreed it is not a
+        // normal way to quit, #100). Quitting now lives in the web UI (Settings → Quit), so any tray
+        // click just opens the UI. A proper Open/Quit dbusmenu is the remaining follow-up for #100.
         log.debug("Tray ContextMenu (right-click) at {},{}", x, y);
-        // Headless Quarkus app — exit on right-click confirmed by user via the web UI
-        System.exit(0);
+        AppEvents.fire(new ShowMainEvent());
     }
 
     @Override
     public void SecondaryActivate(int x, int y) {
-        ContextMenu(x, y);
+        log.debug("Tray SecondaryActivate (middle-click) at {},{}", x, y);
+        AppEvents.fire(new ShowMainEvent());
     }
 
     @Override
