@@ -1,5 +1,6 @@
 package com.getpcpanel.cpp.linux.pulseaudio;
 
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,7 +21,6 @@ import com.getpcpanel.platform.LinuxBuild;
 import com.getpcpanel.util.ProcessHelper;
 
 import lombok.Builder;
-import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
@@ -127,24 +127,50 @@ public class PulseAudioWrapper {
         return ret;
     }
 
-    @SneakyThrows
     private synchronized void pactl(String... cmd) {
         var fullCmd = new String[cmd.length + 1];
         fullCmd[0] = "pactl";
         System.arraycopy(cmd, 0, fullCmd, 1, cmd.length);
         log.debug("Executing: {}", String.join(" ", fullCmd));
-        var process = processHelper.builder(fullCmd).start();
+        try {
+            var process = processHelper.builder(fullCmd).start();
 
-        if (log.isTraceEnabled()) {
-            var lines = IOUtils.readLines(process.getInputStream(), Charset.defaultCharset());
-            log.trace("Response: \n{}", String.join("\n", lines));
+            if (log.isTraceEnabled()) {
+                var lines = IOUtils.readLines(process.getInputStream(), Charset.defaultCharset());
+                log.trace("Response: \n{}", String.join("\n", lines));
+            }
+        } catch (IOException e) {
+            // A missing or non-functional pactl (no PulseAudio/PipeWire - e.g. a headless box or a CI
+            // runner) must not abort the volume operation. Degrade to a no-op; the read paths return
+            // empty so nothing was targeted anyway.
+            onPactlUnavailable(e);
         }
     }
 
-    @SneakyThrows
     private List<String> runAndRead(ProcessBuilder pb) {
-        var process = pb.start();
-        return IOUtils.readLines(process.getInputStream(), Charset.defaultCharset());
+        try {
+            var process = pb.start();
+            return IOUtils.readLines(process.getInputStream(), Charset.defaultCharset());
+        } catch (IOException e) {
+            // pactl missing/unrunnable: report no devices/sessions rather than crashing. On Linux audio
+            // control is best-effort, so its absence degrades to a no-op ISndCtrl - the app still starts
+            // and serves the UI (a system without PulseAudio/PipeWire, or CI without pactl installed).
+            onPactlUnavailable(e);
+            return List.of();
+        }
+    }
+
+    private volatile boolean pactlUnavailableLogged;
+
+    /** Warn once that pactl is unavailable (so a per-event write path can't spam the log), then debug. */
+    private void onPactlUnavailable(IOException e) {
+        if (!pactlUnavailableLogged) {
+            pactlUnavailableLogged = true;
+            log.warn("pactl (PulseAudio/PipeWire) is unavailable - Linux audio control is disabled. "
+                    + "Install pulseaudio-utils (it provides pactl) to control volume: {}", e.getMessage());
+        } else {
+            log.debug("pactl invocation failed", e);
+        }
     }
 
     private String idxOrDefaultDevice(int idx) {
