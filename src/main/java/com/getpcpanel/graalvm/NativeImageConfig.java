@@ -372,6 +372,10 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         "com.sun.jna.platform.mac.CoreFoundation$CFStringRef$ByReference",
         "com.sun.jna.platform.mac.CoreFoundation$CFTypeID",
         "com.sun.jna.platform.mac.CoreFoundation$CFTypeRef",
+        // JNA pointer types used by CoreAudioWrapper (JNA reflectively instantiates these when
+        // marshalling native call arguments — e.g. AudioObjectIsPropertySettable's ByteByReference out-param).
+        "com.sun.jna.ptr.ByteByReference",
+        "com.sun.jna.ptr.IntByReference",
         // Project CoreAudio JNA binding: the property-address Structure (instantiated per call) and the
         // change-listener Callback (used for default-device/volume notifications).
         "com.getpcpanel.cpp.osx.CoreAudioLib$AudioObjectPropertyAddress",
