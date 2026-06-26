@@ -21,7 +21,7 @@ let nextOptionId = 0;
 class ManagedOption<T> implements Highlightable {
   readonly id = `pc-opt-${nextOptionId++}`;
   active = false;
-  constructor(readonly opt: SelectOption<T>) {}
+  constructor(public opt: SelectOption<T>) {}
   get disabled(): boolean { return !!this.opt.disabled; }
   getLabel(): string { return this.opt.label; }
   setActiveStyles(): void { this.active = true; }
@@ -141,9 +141,23 @@ export class SelectComponent<T = string> {
   /** Show the filter field for long lists. */
   readonly showFilter = computed(() => this.options().length > 10);
 
-  /** One stable wrapper per option, reused across filtering so the key manager can preserve the active
-   *  item by reference when the visible list shrinks/grows. Recreated only when the options input changes. */
-  private readonly allItems = computed<ManagedOption<T>[]>(() => this.options().map(o => new ManagedOption(o)));
+  /** One stable wrapper per option value, reused across recomputes so the key manager can preserve the
+   *  active item by reference when the visible list shrinks/grows. Wrapper identity (and thus its `id`,
+   *  the @for track key) must stay stable even when `options` is a fresh array each change-detection —
+   *  which it is whenever the binding is a method call (e.g. the audio-device picker). Otherwise the
+   *  option DOM is destroyed and recreated every cycle, swallowing clicks mid-press. */
+  private wrapperCache = new Map<T, ManagedOption<T>>();
+  private readonly allItems = computed<ManagedOption<T>[]>(() => {
+    const next = new Map<T, ManagedOption<T>>();
+    const items = this.options().map(o => {
+      const wrapper = this.wrapperCache.get(o.value) ?? new ManagedOption(o);
+      wrapper.opt = o;   // keep label/status/etc. fresh for the same value
+      next.set(o.value, wrapper);
+      return wrapper;
+    });
+    this.wrapperCache = next;
+    return items;
+  });
 
   readonly items = computed<ManagedOption<T>[]>(() => {
     const q = this.filter().trim().toLowerCase();
