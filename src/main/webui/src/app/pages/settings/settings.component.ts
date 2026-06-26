@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, HostListener, inject, signal, untracked } from '@angular/core';
+import { OverlayModule } from '@angular/cdk/overlay';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient, httpResource } from '@angular/common/http';
 import { SettingsService } from '../../services/settings.service';
@@ -6,14 +7,19 @@ import { IntegrationDataService } from '../../features/commands/integration-data
 import { PlatformService } from '../../services/platform.service';
 import { DebugService, DeviceTypeOverride, OsOverride } from '../../services/debug.service';
 import {
-  OverlayPosition, SettingsDto, WaveLinkSettings,
+  FocusVolumeOverride, FocusVolumeTarget, OverlayPosition, SettingsDto, WaveLinkSettings,
 } from '../../models/generated/backend.types';
 import {
-  ColorPickerComponent, IconComponent, ModalComponent, SegmentedComponent, SegmentOption,
+  AppPickerComponent,
+  ColorPickerComponent, IconComponent, IconName, ModalComponent, SegmentedComponent, SegmentOption,
   SelectComponent, SelectOption, SliderComponent, SpinnerComponent, StatusDotComponent, StatusKind, ToastService, ToggleComponent,
 } from '../../ui';
+import { CommandPickerComponent } from '../../features/commands/command-picker.component';
+import { CommandFieldsComponent } from '../../features/commands/command-fields.component';
+import { COMMAND_BY_TYPE, CommandDef } from '../../features/commands/command-catalog';
 
-type TabId = 'general' | 'obs' | 'voicemeeter' | 'wavelink' | 'osc' | 'mqtt' | 'homeassistant' | 'overlay' | 'debug';
+type Cmd = Record<string, any>;
+type TabId = 'general' | 'focusoverride' | 'obs' | 'voicemeeter' | 'wavelink' | 'osc' | 'mqtt' | 'homeassistant' | 'overlay' | 'debug';
 interface TabDef { id: TabId; label: string; integration?: 'obs' | 'voicemeeter' | 'wavelink'; supported?: boolean; }
 
 @Component({
@@ -22,6 +28,7 @@ interface TabDef { id: TabId; label: string; integration?: 'obs' | 'voicemeeter'
   imports: [
     IconComponent, StatusDotComponent, SpinnerComponent, ToggleComponent,
     SegmentedComponent, SliderComponent, ColorPickerComponent, ModalComponent, SelectComponent,
+    OverlayModule, AppPickerComponent, CommandPickerComponent, CommandFieldsComponent,
   ],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.scss',
@@ -81,6 +88,7 @@ export class SettingsComponent {
 
   private readonly allTabs: TabDef[] = [
     { id: 'general', label: 'General' },
+    { id: 'focusoverride', label: 'Focus Override' },
     { id: 'overlay', label: 'Overlay' },
     { id: 'obs', label: 'OBS Studio', integration: 'obs' },
     { id: 'voicemeeter', label: 'Voicemeeter', integration: 'voicemeeter' },
@@ -375,6 +383,75 @@ export class SettingsComponent {
   setWavelinkControlledPercent(pct: number): void {
     this.saveWavelink({ controlledVolumePercent: Math.max(0, Math.min(100, Math.round(pct || 0))) });
   }
+
+  // ── Focus Volume overrides ───────────────────────────────────────────────────
+  // Each override is a rule: when one of its source apps has focus, the focused-app volume dial drives
+  // the rule's targets (any volume command — process / device / Wave Link / OBS / …) instead. The target
+  // editors reuse the same command picker + field editor as the control page, so a target can be anything
+  // the app can set a volume on.
+
+  /** Source apps available to pick (running processes), shared with the command editor's app picker. */
+  readonly processItems = computed(() => this.integrations.processItems());
+  /** Which target's editor is expanded, keyed "{ruleIdx}:{targetIdx}"; null = all collapsed. */
+  readonly fvExpanded = signal<string | null>(null);
+  /** Which rule's "add source app" picker overlay is open (rule index), or null. */
+  readonly fvAppsOpen = signal<number | null>(null);
+
+  fvOverrides(): FocusVolumeOverride[] { return this.local()?.focusVolumeOverrides ?? []; }
+  fvTargets(rule: FocusVolumeOverride): FocusVolumeTarget[] { return rule?.targets ?? []; }
+  fvKey(ri: number, ti: number): string { return ri + ':' + ti; }
+
+  private setFvOverrides(list: FocusVolumeOverride[]): void { this.patch('focusVolumeOverrides', list); }
+
+  private updateFvRule(i: number, patch: Partial<FocusVolumeOverride>): void {
+    this.setFvOverrides(this.fvOverrides().map((r, k) => (k === i ? { ...r, ...patch } : r)));
+  }
+
+  addFvRule(): void {
+    this.setFvOverrides([...this.fvOverrides(), { sources: [], targets: [], includeSource: false }]);
+  }
+
+  removeFvRule(i: number): void {
+    this.setFvOverrides(this.fvOverrides().filter((_, k) => k !== i));
+  }
+
+  setFvSources(i: number, sources: string[]): void { this.updateFvRule(i, { sources }); }
+  setFvIncludeSource(i: number, on: boolean): void { this.updateFvRule(i, { includeSource: on }); }
+
+  removeFvSource(i: number, app: string): void {
+    this.setFvSources(i, (this.fvOverrides()[i]?.sources ?? []).filter(s => s !== app));
+  }
+
+  private setFvTargets(i: number, targets: FocusVolumeTarget[]): void { this.updateFvRule(i, { targets }); }
+
+  /** Append a fresh instance of the chosen command type to rule i's targets, and expand it for editing. */
+  addFvTarget(i: number, def: CommandDef): void {
+    const targets = [...this.fvTargets(this.fvOverrides()[i]), { command: def.buildEmpty() as Cmd } as FocusVolumeTarget];
+    this.setFvTargets(i, targets);
+    this.fvExpanded.set(this.fvKey(i, targets.length - 1));
+  }
+
+  removeFvTarget(i: number, j: number): void {
+    this.setFvTargets(i, this.fvTargets(this.fvOverrides()[i]).filter((_, k) => k !== j));
+  }
+
+  setFvTargetCommand(i: number, j: number, command: Cmd): void {
+    this.setFvTargets(i, this.fvTargets(this.fvOverrides()[i]).map((t, k) => (k === j ? { command } as FocusVolumeTarget : t)));
+  }
+
+  toggleFvTarget(i: number, j: number): void {
+    const key = this.fvKey(i, j);
+    this.fvExpanded.set(this.fvExpanded() === key ? null : key);
+  }
+
+  fvTargetDef(t: FocusVolumeTarget): CommandDef | undefined {
+    const type = (t?.command as Cmd)?.['_type'];
+    return type ? COMMAND_BY_TYPE.get(type) : undefined;
+  }
+  fvTargetLabel(t: FocusVolumeTarget): string {
+    return this.fvTargetDef(t)?.label ?? String((t?.command as Cmd)?.['_type'] ?? '').split('.').pop() ?? 'Target';
+  }
+  fvTargetIcon(t: FocusVolumeTarget): IconName { return this.fvTargetDef(t)?.icon ?? 'volume'; }
 
   // ── save ────────────────────────────────────────────────────────────────────
   save(thenLeave = false): void {

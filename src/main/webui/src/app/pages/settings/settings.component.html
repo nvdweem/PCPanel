@@ -132,6 +132,84 @@
           </div>
         }
 
+        <!-- ── FOCUS OVERRIDE ──────────────────────────────────────────────── -->
+        @case ('focusoverride') {
+          <h2 class="page-title">Focus Volume Override</h2>
+          <p class="page-sub">Redirect the <strong>Focused-app volume</strong> dial for specific apps. When a
+            source app has focus, the dial controls the targets you choose instead. Useful for apps whose
+            audio actually plays through a helper process (e.g. Steam → SteamWebHelper), or to control
+            several apps at once (e.g. every browser).</p>
+
+          @for (rule of fvOverrides(); track $index; let ri = $index) {
+            <div class="pc-card pad stack fv-rule">
+              <div class="fv-rule-head">
+                <span class="fv-rule-no">{{ ri + 1 }}</span>
+                <span class="fv-rule-title">Override</span>
+                <button class="fv-del" (click)="removeFvRule(ri)" title="Remove override"><pc-icon name="trash" [size]="14"></pc-icon></button>
+              </div>
+
+              <div class="field-block">
+                <div class="flabel">When one of these apps is focused</div>
+                <div class="chips">
+                  @for (app of rule.sources; track app) {
+                    <span class="pc-chip">{{ app }}<span class="x" (click)="removeFvSource(ri, app)"><pc-icon name="x" [size]="11" [strokeWidth]="2.5"></pc-icon></span></span>
+                  }
+                  <button class="pc-chip dashed" cdkOverlayOrigin #so="cdkOverlayOrigin" (click)="fvAppsOpen.set(ri)">
+                    <pc-icon name="plus" [size]="12"></pc-icon> add app
+                  </button>
+                  <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="so" [cdkConnectedOverlayOpen]="fvAppsOpen() === ri"
+                               [cdkConnectedOverlayHasBackdrop]="true" cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+                               [cdkConnectedOverlayWidth]="300" [cdkConnectedOverlayOffsetY]="6"
+                               (backdropClick)="fvAppsOpen.set(null)" (detach)="fvAppsOpen.set(null)">
+                    <pc-app-picker [items]="processItems()" [multi]="true"
+                                   [value]="rule.sources ?? []" (valueChange)="setFvSources(ri, $event)"></pc-app-picker>
+                  </ng-template>
+                </div>
+              </div>
+
+              <div class="field-block">
+                <div class="flabel">Control these targets</div>
+                @if (fvTargets(rule).length) {
+                  <div class="fv-targets">
+                    @for (t of fvTargets(rule); track $index; let ti = $index) {
+                      <div class="fv-target" [class.expanded]="fvExpanded() === fvKey(ri, ti)">
+                        <div class="fv-t-head" (click)="toggleFvTarget(ri, ti)">
+                          <pc-icon class="fv-t-icon" [name]="fvTargetIcon(t)" [size]="13"></pc-icon>
+                          <span class="fv-t-name">{{ fvTargetLabel(t) }}</span>
+                          <pc-icon class="fv-t-chev" [name]="fvExpanded() === fvKey(ri, ti) ? 'chevron-up' : 'chevron-down'" [size]="13"></pc-icon>
+                          <button class="fv-t-del" (click)="$event.stopPropagation(); removeFvTarget(ri, ti)"><pc-icon name="trash" [size]="12"></pc-icon></button>
+                        </div>
+                        @if (fvExpanded() === fvKey(ri, ti) && fvTargetDef(t); as cdef) {
+                          <div class="fv-t-body">
+                            <pc-command-fields [def]="cdef" [command]="$any(t.command)" (commandChange)="setFvTargetCommand(ri, ti, $event)" [showMapping]="true"></pc-command-fields>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <span class="empty-hint">No targets yet.</span>
+                }
+                <pc-command-picker kind="dial" triggerLabel="Add target" variant="subtle" (pick)="addFvTarget(ri, $event)"></pc-command-picker>
+              </div>
+
+              <div class="row">
+                <div class="row-text">
+                  <div class="row-label">Also control the source app</div>
+                  <div class="row-sub">When on, the dial also changes the focused source app's own volume. Leave off for apps that don't play audio themselves (e.g. Steam).</div>
+                </div>
+                <pc-toggle [value]="rule.includeSource" (valueChange)="setFvIncludeSource(ri, $event)"></pc-toggle>
+              </div>
+            </div>
+          }
+
+          @if (!fvOverrides().length) {
+            <div class="pc-card pad"><span class="empty-hint">No focus overrides yet. Add one to redirect focus volume for specific apps.</span></div>
+          }
+
+          <button class="pc-btn ghost" (click)="addFvRule()"><pc-icon name="plus" [size]="14"></pc-icon> Add override</button>
+        }
+
         <!-- ── OBS STUDIO ──────────────────────────────────────────────────── -->
         @case ('obs') {
           <h2 class="page-title">
