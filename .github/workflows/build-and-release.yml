@@ -151,6 +151,20 @@ jobs:
               Start-Sleep 1
             }
           }
+          # Beyond the AWT/fonts check, exercise the real REST API on the same running exe (#102): on
+          # Windows audio and HID fully work, so these must return 200. A 5xx here is the "compiles
+          # fine, 500s at runtime" native-image class (missing List<DTO> array reflection,
+          # FileSerializer, JNA proxy/pointer registration) on the primary platform.
+          $endpointFail = $null
+          if ($up) {
+            foreach ($ep in '/api/devices','/api/audio/devices','/api/audio/applications') {
+              try {
+                $code = (Invoke-WebRequest -UseBasicParsing -TimeoutSec 10 "http://127.0.0.1:7799$ep").StatusCode
+                Write-Host "GET $ep -> $code"
+                if ($code -ne 200) { $endpointFail = "$ep returned $code" }
+              } catch { $endpointFail = "$ep threw $($_.Exception.Message)" }
+            }
+          } else { $endpointFail = 'server never became ready' }
           $log = "$env:USERPROFILE\.pcpanel\logs\logging.log"
           if (Test-Path $log) { Select-String -Path $log -Pattern 'UnsatisfiedLink|Can.t load library|Could not enumerate' | Select-Object -First 3 | ForEach-Object { Write-Host "LOG> $($_.Line)" } }
           try { Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue } catch {}
@@ -158,6 +172,10 @@ jobs:
           if ($count -lt 10) {
             if (Test-Path smoke.out) { Get-Content smoke.out | Select-Object -Last 40 | ForEach-Object { Write-Host $_ } }
             throw "Assembled PCPanel.exe enumerated only $count font families - AWT did not load; the shipped installer would have a dead overlay and font picker."
+          }
+          if ($endpointFail) {
+            if (Test-Path smoke.out) { Get-Content smoke.out | Select-Object -Last 40 | ForEach-Object { Write-Host $_ } }
+            throw "Assembled PCPanel.exe REST smoke failed: $endpointFail (a 5xx usually means a native-image reflection/registration gap)."
           }
 
       - name: Install Inno Setup
@@ -227,6 +245,20 @@ jobs:
         # instead of the bare ${project.version} (2.0-SNAPSHOT). The Flatpak job reuses this binary, so it
         # inherits the same version.
         run: xvfb-run -a mvn -B package -Pnative -Dquarkus.application.version=${{ steps.ver.outputs.version }} --file pom.xml
+
+      - name: Smoke-test the native binary (boots and serves)
+        # Boot the freshly built runner and assert the REST API answers — the same cheap, high-value
+        # check the macOS job runs, which catches the "compiles fine, 500s at runtime" native-image
+        # class (#102). /api/devices is required (HID + device layer must serialize). /api/audio/* is
+        # lenient: the CI runner has no PulseAudio and Linux audio degrades to a no-op ISndCtrl by
+        # design, so a non-200 there warns rather than fails. Mirrors the macOS intent — NOT
+        # continue-on-error (a real runtime regression turns this job red), but preRelease gates on the
+        # job outcome and a red Linux job is meaningful since Linux is a shipped platform.
+        run: |
+          exe=$(ls target/*-runner | head -1)
+          bash packaging/smoke-test.sh "$exe" --port 7766 \
+            --require /api/devices \
+            --lenient /api/audio/devices --lenient /api/audio/applications
 
       # Cache the bundled kdotool download (Apache-2.0) across runs; the key changes only when
       # fetch-kdotool.sh (which pins the version + sha256) changes, so it is downloaded once per pin.
@@ -483,57 +515,18 @@ jobs:
           codesign --force --sign - --timestamp=none "$app"
 
           # --- Smoke test: the app must actually START and DO WORK -------------------------------
-          # This is the primary gate, and it is deliberately general: boot the bundled binary, wait for
-          # the embedded HTTP server, then exercise real REST endpoints. Reaching those endpoints with
-          # HTTP 200 proves the native image boots, Quarkus starts, the server binds, and backend state
-          # round-trips through JSON (so it also guards the native-image serialization footguns called
-          # out in CLAUDE.md — List<DTO> array reflection, FileSerializer). Code signing is verified as
-          # a *side effect*: an invalidly signed bundle is SIGKILLed at exec, so the server never comes
-          # up and this fails — which is why this test still catches a signing regression even if the
-          # `codesign --verify` bonus check below is removed.
-          "$bin" skipfilecheck quiet >pcpanel-smoke.log 2>&1 &
-          pid=$!
-          trap 'kill -KILL "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true' EXIT
-
-          base="http://127.0.0.1:7654"
-          up=0
-          for _ in $(seq 1 60); do
-            if ! kill -0 "$pid" 2>/dev/null; then
-              echo "FAIL: the app process exited during startup (code-signature rejection or a crash)"
-              cat pcpanel-smoke.log || true
-              exit 1
-            fi
-            if curl -fsS -o /dev/null "$base/api/devices"; then up=1; break; fi
-            sleep 2
-          done
-          if [ "$up" != 1 ]; then
-            echo "FAIL: app did not serve $base/api/devices within the timeout"
-            cat pcpanel-smoke.log || true
-            exit 1
-          fi
-
-          # Do real work against the running app — each must return HTTP 200 with a JSON body.
-          for ep in /api/devices /api/audio/devices /api/audio/applications; do
-            code=$(curl -s -o /tmp/resp.json -w '%{http_code}' "$base$ep")
-            echo "GET $ep -> $code"
-            if [ "$code" != 200 ]; then
-              echo "FAIL: $ep returned $code (a 5xx here usually means a native-image reflection gap)"
-              head -c 2000 /tmp/resp.json || true; echo; cat pcpanel-smoke.log || true
-              exit 1
-            fi
-          done
-          echo "Smoke test OK: the signed app booted and served its REST API."
-
-          # HID device scanning must initialize: hid4java loads the platform hidapi native via JNA, and
-          # on Apple Silicon that regressed when only an x86_64 hidapi was bundled (arm64 dlopen failed).
-          # Fail if the startup log still reports the HID init failure, so a hidapi arch/registration
-          # regression is caught (no physical device is needed — hid_init initializes the subsystem).
-          if grep -q "Failed to initialize HID services" pcpanel-smoke.log; then
-            echo "FAIL: HID services did not initialize — hidapi native arch/load problem"
-            grep -A3 "Failed to initialize HID services" pcpanel-smoke.log || true
-            exit 1
-          fi
-          echo "HID services initialized OK."
+          # This is the primary gate (shared with the Linux job via packaging/smoke-test.sh): boot the
+          # bundled binary, wait for the embedded HTTP server, then exercise real REST endpoints.
+          # Reaching them with HTTP 200 proves the native image boots, Quarkus starts, the server binds,
+          # and backend state round-trips through JSON (so it also guards the native-image serialization
+          # footguns called out in CLAUDE.md — List<DTO> array reflection, FileSerializer). On macOS
+          # audio and HID fully work, so /api/audio/* are *required* here. Code signing is verified as a
+          # side effect: an invalidly signed bundle is SIGKILLed at exec, so the server never comes up
+          # and this fails — which is why this still catches a signing regression even without the
+          # `codesign --verify` bonus check below.
+          bash packaging/smoke-test.sh "$bin" --port 7654 \
+            --require /api/devices --require /api/audio/devices --require /api/audio/applications \
+            --require-hid
 
           # --- Bonus: explicit signature confirmation (a benefit, not the primary gate) ----------
           codesign --verify --deep --strict --verbose=4 "$app"
