@@ -32,9 +32,8 @@ public class VolumeCoordinatorService {
         var floatValue = (float) value;
 
         // Explicit Focus Override rules (issue #49) win over everything: the user has deliberately
-        // redirected this app's focus dial to specific targets. handle() returns true when it fully owns
-        // the request (don't also touch the source); with "include source" on it returns false so the
-        // source's own volume still flows through the normal pipeline below.
+        // redirected this app's focus dial to specific targets (and, with "include source" on, the source
+        // app itself). A matched rule fully owns the request, so don't run the normal pipeline below.
         if (focusOverride.handle(application, floatValue, device)) {
             log.debug("Focus volume for {} handled by an override rule", application);
             return;
