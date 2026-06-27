@@ -174,8 +174,10 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
                 })
                 .thenApply(this::storeToken)
                 .thenCompose(token -> {
-                    log.info("Discord authorize: authenticating the RPC connection…");
-                    return authenticate(token);
+                    log.info("Discord authorize: reconnecting to authenticate on a clean socket…");
+                    // Discord stops servicing the pipe that handled AUTHORIZE (writes block, no reply), so
+                    // AUTHENTICATE must run on a fresh handshake — not the authorize connection.
+                    return connect().thenCompose(x -> authenticate(token));
                 })
                 .thenCompose(self -> initVoiceState().thenApply(v -> self))
                 .whenComplete((self, e) -> {
