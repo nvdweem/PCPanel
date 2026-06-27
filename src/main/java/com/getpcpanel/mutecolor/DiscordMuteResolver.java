@@ -4,8 +4,11 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.discord.DiscordService;
+import com.getpcpanel.discord.command.CommandDiscordMute;
 import com.getpcpanel.discord.command.CommandDiscordSelfDeafen;
 import com.getpcpanel.discord.command.CommandDiscordSelfMute;
 import com.getpcpanel.discord.command.CommandDiscordUserMute;
@@ -35,11 +38,19 @@ public class DiscordMuteResolver implements MuteStateResolver {
         if (!FOLLOW.equals(target) || !discord.isAuthenticated()) {
             return Optional.empty();
         }
-        if (command.getCommand(CommandDiscordSelfMute.class).isPresent()) {
-            return Optional.of(discord.getVoiceSettings().mute());
+        var mute = command.getCommand(CommandDiscordMute.class).orElse(null);
+        if (mute != null) {
+            var t = mute.getTarget();
+            return StringUtils.isBlank(t) || CommandDiscordMute.SELF.equals(t)
+                    ? Optional.of(discord.getVoiceSettings().mute())
+                    : resolveUserMute(t);
         }
         if (command.getCommand(CommandDiscordSelfDeafen.class).isPresent()) {
             return Optional.of(discord.getVoiceSettings().deaf());
+        }
+        // Legacy commands kept so saves made before the mute/volume consolidation still drive the LED colour.
+        if (command.getCommand(CommandDiscordSelfMute.class).isPresent()) {
+            return Optional.of(discord.getVoiceSettings().mute());
         }
         var userMute = command.getCommand(CommandDiscordUserMute.class).orElse(null);
         return userMute == null ? Optional.empty() : resolveUserMute(userMute.getUsername());

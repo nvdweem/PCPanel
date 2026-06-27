@@ -399,12 +399,21 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
 
     /** Set own mic volume from a 0..1 dial fraction (mapped to Discord's 0-100 input range), optionally self-unmuting. */
     public void applyInputVolume(float fraction, boolean unmute) {
-        setInputVolume(fraction * 100f, unmute);
+        // Clear mute as its OWN frame, sent BEFORE the volume frame: Discord drops a mute/deaf change that
+        // follows a volume change in a separate frame, and ignores a `mute` field folded into the volume
+        // frame itself. Only when actually muted, so dial ticks don't spam it.
+        if (unmute && getVoiceSettings().mute()) {
+            setSelfMute(false);
+        }
+        setInputVolume(fraction * 100f);
     }
 
     /** Set own output volume from a 0..1 dial fraction (mapped to Discord's 0-200 output range), optionally self-undeafening. */
     public void applyOutputVolume(float fraction, boolean undeafen) {
-        setOutputVolume(fraction * 200f, undeafen);
+        if (undeafen && getVoiceSettings().deaf()) {
+            setSelfDeaf(false);
+        }
+        setOutputVolume(fraction * 200f);
     }
 
     /** Set how loudly you hear {@code username} from a 0..1 dial fraction (mapped to Discord's 0-200 range). */
@@ -423,10 +432,12 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
             log.warn("Discord 'user volume' can't target yourself — that's how loud you hear someone else. Use the mic or output volume target instead.");
             return false;
         }
-        setUserVolume(id, fraction * 200f);
-        if (unmute) {
+        // Clear the local mute first (before the volume frame) for the same reason as self-volume, and only
+        // when actually muted so a moving dial doesn't re-send unmute every tick.
+        if (unmute && isUserMuted(id)) {
             setUserMute(id, false);
         }
+        setUserVolume(id, fraction * 200f);
         return true;
     }
 
@@ -445,6 +456,10 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
         var current = getVoiceUsers().stream().filter(u -> id.equals(u.id())).findFirst().map(DiscordVoiceUser::mute).orElse(false);
         setUserMute(id, type.convert(current));
         return true;
+    }
+
+    private boolean isUserMuted(String userId) {
+        return getVoiceUsers().stream().filter(u -> userId.equals(u.id())).findFirst().map(DiscordVoiceUser::mute).orElse(false);
     }
 
     /** Whether {@code userId} is the locally authenticated user (self-targeting the per-user voice commands is invalid). */

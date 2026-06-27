@@ -465,33 +465,13 @@ public abstract class DiscordRpcClientImpl implements IDiscordRpcClient {
 
     @Override
     public void setInputVolume(float volume) {
-        setInputVolume(volume, false);
-    }
-
-    /** Set input volume and, when {@code unmuteSelf}, clear self-mute in the same frame. */
-    public void setInputVolume(float volume, boolean unmuteSelf) {
-        var node = mapper.createObjectNode();
-        node.set("input", mapper.createObjectNode().put("volume", (int) clamp(volume, 0, 100)));
-        if (unmuteSelf) {
-            node.put("mute", false);
-        }
-        send("SET_VOICE_SETTINGS", node)
+        send("SET_VOICE_SETTINGS", mapper.createObjectNode().set("input", mapper.createObjectNode().put("volume", (int) clamp(volume, 0, 100))))
                 .thenAccept(d -> setVoiceSettings(parseVoiceSettings(d))).exceptionally(logVoiceError());
     }
 
     @Override
     public void setOutputVolume(float volume) {
-        setOutputVolume(volume, false);
-    }
-
-    /** Set output volume and, when {@code undeafenSelf}, clear self-deafen in the same frame. */
-    public void setOutputVolume(float volume, boolean undeafenSelf) {
-        var node = mapper.createObjectNode();
-        node.set("output", mapper.createObjectNode().put("volume", (int) clamp(volume, 0, 200)));
-        if (undeafenSelf) {
-            node.put("deaf", false);
-        }
-        send("SET_VOICE_SETTINGS", node)
+        send("SET_VOICE_SETTINGS", mapper.createObjectNode().set("output", mapper.createObjectNode().put("volume", (int) clamp(volume, 0, 200))))
                 .thenAccept(d -> setVoiceSettings(parseVoiceSettings(d))).exceptionally(logVoiceError());
     }
 
