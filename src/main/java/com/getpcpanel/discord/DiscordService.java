@@ -1,7 +1,6 @@
 package com.getpcpanel.discord;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -53,6 +52,8 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
     private static final List<String> CORE_SCOPES = List.of("rpc", "rpc.voice.read", "rpc.voice.write", "rpc.screenshare.write");
     private static final List<String> SCOPES = List.of("rpc", "rpc.voice.read", "rpc.voice.write", "rpc.screenshare.write", "relationships.read");
     private static final String SEEN_USERS_KEY = "discord-seen-users";
+    /** Cap on the persisted "people you've targeted" roster, so it can't grow without bound. */
+    private static final int MAX_SEEN_USERS = 100;
     /** Refresh the access token this far before its stated expiry. */
     private static final long TOKEN_REFRESH_MARGIN_MS = 60_000;
 
@@ -339,7 +340,6 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
 
     @Override
     public void voiceUsersChanged(List<DiscordVoiceUser> users) {
-        learnSeenUsers(users);
         fireChanged();
     }
 
@@ -361,28 +361,31 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
 
     // ── seen-users roster ────────────────────────────────────────────────────────
 
-    private void learnSeenUsers(Collection<DiscordVoiceUser> users) {
-        if (saveService == null || users.isEmpty()) {
+    /**
+     * Persists a single user you've actually targeted with a command, so their username stays pickable when
+     * they're offline. Deliberately NOT every member of every channel you join — that would bloat the roster
+     * with thousands of strangers from busy servers. Friends come from {@link #loadFriends()} separately and
+     * are never persisted here. Capped (LRU: least-recently-targeted drops first) as a safety net.
+     */
+    private void rememberSeenUser(@Nullable DiscordVoiceUser u) {
+        if (saveService == null || u == null || u.id() == null || StringUtils.isBlank(u.username()) || isSelf(u.id())) {
             return;
         }
         var current = new LinkedHashMap<String, DiscordSeenUser>();
-        for (var u : saveService.get().getDiscordSeenUsers()) {
-            current.put(u.id(), u);
+        for (var s : saveService.get().getDiscordSeenUsers()) {
+            current.put(s.id(), s);
         }
-        var changed = false;
-        for (var u : users) {
-            if (u.id() == null || StringUtils.isBlank(u.username()) || isSelf(u.id())) {
-                continue; // never list yourself as a targetable "seen user" — the per-user commands can't target you
-            }
-            var entry = new DiscordSeenUser(u.id(), u.username(), u.displayName());
-            if (!entry.equals(current.get(u.id()))) {
-                current.put(u.id(), entry);
-                changed = true;
-            }
+        var entry = new DiscordSeenUser(u.id(), u.username(), u.displayName());
+        var previous = current.remove(u.id()); // remove+put = move to most-recent end
+        current.put(u.id(), entry);
+        var changed = !entry.equals(previous);
+        while (current.size() > MAX_SEEN_USERS) { // trim the oldest (also self-heals any pre-existing bloat)
+            current.remove(current.keySet().iterator().next());
+            changed = true;
         }
         if (changed) {
             saveService.get().setDiscordSeenUsers(new ArrayList<>(current.values()));
-            // Persist off the IPC read thread, coalescing a burst of voice-state pushes into one write.
+            // Persist off the IPC read thread, coalescing a burst into one write.
             if (debouncer != null) {
                 debouncer.debounce(SEEN_USERS_KEY, saveService::save, 2, TimeUnit.SECONDS);
             } else {
@@ -500,6 +503,7 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
             log.warn("Discord 'user volume' can't target yourself — that's how loud you hear someone else. Use the mic or output volume target instead.");
             return false;
         }
+        rememberTargeted(id);
         // Clear the local mute first (before the volume frame) for the same reason as self-volume, and only
         // when actually muted so a moving dial doesn't re-send unmute every tick.
         if (unmute && isUserMuted(id)) {
@@ -521,9 +525,15 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
             toggleSelfMute(type);
             return true;
         }
+        rememberTargeted(id);
         var current = getVoiceUsers().stream().filter(u -> id.equals(u.id())).findFirst().map(DiscordVoiceUser::mute).orElse(false);
         setUserMute(id, type.convert(current));
         return true;
+    }
+
+    /** Persist a user you've just targeted (if they're a live channel member) so they stay pickable offline. */
+    private void rememberTargeted(String id) {
+        getVoiceUsers().stream().filter(u -> id.equals(u.id())).findFirst().ifPresent(this::rememberSeenUser);
     }
 
     private boolean isUserMuted(String userId) {
