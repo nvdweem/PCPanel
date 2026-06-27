@@ -76,6 +76,8 @@ export class HomeComponent {
 
   /** Git branch for local (SNAPSHOT) builds — shown in the footer so running instances are distinguishable. */
   readonly buildBranch = computed(() => this.platform.branch());
+  /** Short HEAD commit for local builds — shown next to the branch so the exact running build is identifiable. */
+  readonly buildCommit = computed(() => this.platform.commit());
 
   readonly integrationRows = computed<IntegrationRow[]>(() => {
     const s = this.settings.settings.value();
