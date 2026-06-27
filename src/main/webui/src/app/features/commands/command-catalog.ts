@@ -13,7 +13,7 @@ export type Integration = 'obs' | 'voicemeeter' | 'wavelink' | 'discord' | 'home
 export type LiveSource =
   | 'obs-scenes' | 'obs-sources' | 'vm-advanced'
   | 'wl-channels' | 'wl-inputs' | 'wl-mixes' | 'wl-outputs' | 'profiles'
-  | 'discord-users' | 'discord-channels'
+  | 'discord-users' | 'discord-channels' | 'discord-mute-targets' | 'discord-volume-targets'
   | 'ha-servers';
 
 export type FieldDef =
@@ -310,9 +310,12 @@ export const COMMANDS: CommandDef[] = [
     fields: [{ kind: 'select-live', key: 'id', label: 'Channel', source: 'wl-channels' }],
   },
   {
-    type: DC + 'CommandDiscordSelfMute', label: 'Discord — mute self', category: 'integration', integration: 'discord', kinds: ['button'], icon: 'mic-off',
-    buildEmpty: () => ({ _type: DC + 'CommandDiscordSelfMute', muteType: 'toggle', overlayText: '' }),
-    fields: [{ kind: 'mute', key: 'muteType', label: 'Action' }],
+    type: DC + 'CommandDiscordMute', label: 'Discord — mute', category: 'integration', integration: 'discord', kinds: ['button'], icon: 'mic-off',
+    buildEmpty: () => ({ _type: DC + 'CommandDiscordMute', target: 'self', muteType: 'toggle', overlayText: '' }),
+    fields: [
+      { kind: 'select-live', key: 'target', label: 'Target', source: 'discord-mute-targets' },
+      { kind: 'mute', key: 'muteType', label: 'Action' },
+    ],
   },
   {
     type: DC + 'CommandDiscordSelfDeafen', label: 'Discord — deafen self', category: 'integration', integration: 'discord', kinds: ['button'], icon: 'volume-x',
@@ -320,27 +323,12 @@ export const COMMANDS: CommandDef[] = [
     fields: [{ kind: 'mute', key: 'muteType', label: 'Action' }],
   },
   {
-    type: DC + 'CommandDiscordUserMute', label: 'Discord — mute user', category: 'integration', integration: 'discord', kinds: ['button'], icon: 'mic-off',
-    buildEmpty: () => ({ _type: DC + 'CommandDiscordUserMute', username: '', muteType: 'toggle', overlayText: '' }),
+    type: DC + 'CommandDiscordVolume', label: 'Discord — volume', category: 'integration', integration: 'discord', kinds: ['dial'], icon: 'volume',
+    buildEmpty: () => ({ _type: DC + 'CommandDiscordVolume', target: 'mic', clearMuteOnChange: false, dialParams: dialParams(), invert: false }),
     fields: [
-      { kind: 'select-live', key: 'username', label: 'User', source: 'discord-users' },
-      { kind: 'mute', key: 'muteType', label: 'Action' },
+      { kind: 'select-live', key: 'target', label: 'Target', source: 'discord-volume-targets' },
+      { kind: 'toggle', key: 'clearMuteOnChange', label: 'Unmute/undeafen when changed' },
     ],
-  },
-  {
-    type: DC + 'CommandDiscordSelfInputVolume', label: 'Discord — mic volume', category: 'integration', integration: 'discord', kinds: ['dial'], icon: 'mic',
-    buildEmpty: () => ({ _type: DC + 'CommandDiscordSelfInputVolume', unmuteOnChange: false, dialParams: dialParams(), invert: false }),
-    fields: [{ kind: 'toggle', key: 'unmuteOnChange', label: 'Unmute when changed' }],
-  },
-  {
-    type: DC + 'CommandDiscordSelfOutputVolume', label: 'Discord — output volume', category: 'integration', integration: 'discord', kinds: ['dial'], icon: 'volume',
-    buildEmpty: () => ({ _type: DC + 'CommandDiscordSelfOutputVolume', undeafenOnChange: false, dialParams: dialParams(), invert: false }),
-    fields: [{ kind: 'toggle', key: 'undeafenOnChange', label: 'Undeafen when changed' }],
-  },
-  {
-    type: DC + 'CommandDiscordUserVolume', label: 'Discord — user volume', category: 'integration', integration: 'discord', kinds: ['dial'], icon: 'volume',
-    buildEmpty: () => ({ _type: DC + 'CommandDiscordUserVolume', username: '', dialParams: dialParams(), invert: false }),
-    fields: [{ kind: 'select-live', key: 'username', label: 'User', source: 'discord-users' }],
   },
   {
     type: DC + 'CommandDiscordJoinVoice', label: 'Discord — join voice', category: 'integration', integration: 'discord', kinds: ['button'], icon: 'plug',

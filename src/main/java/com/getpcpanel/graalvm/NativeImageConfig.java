@@ -55,6 +55,8 @@ import com.getpcpanel.commands.command.DialAction.DialCommandParams;
 import com.getpcpanel.discord.command.CommandDiscord;
 import com.getpcpanel.discord.command.CommandDiscordJoinVoice;
 import com.getpcpanel.discord.command.CommandDiscordLeaveVoice;
+import com.getpcpanel.discord.command.CommandDiscordMute;
+import com.getpcpanel.discord.command.CommandDiscordVolume;
 import com.getpcpanel.discord.command.CommandDiscordSelfDeafen;
 import com.getpcpanel.discord.command.CommandDiscordSelfInputVolume;
 import com.getpcpanel.discord.command.CommandDiscordSelfMute;
@@ -232,6 +234,8 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 
         // Discord command hierarchy (also extends Command → ID.CLASS polymorphism)
         CommandDiscord.class,
+        CommandDiscordMute.class,
+        CommandDiscordVolume.class,
         CommandDiscordSelfMute.class,
         CommandDiscordSelfDeafen.class,
         CommandDiscordUserMute.class,

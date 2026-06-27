@@ -352,10 +352,20 @@ export class CommandFieldsComponent {
       case 'discord-channels': return (this.data.discordChannels.value() ?? []).map(c => ({
         value: c.id, label: c.guildName ? `${c.name} — ${c.guildName}` : c.name,
       }));
+      case 'discord-mute-targets': return [{ value: 'self', label: 'Self (your mic)' }, ...this.discordUserOpts()];
+      case 'discord-volume-targets': return [
+        { value: 'mic', label: 'Your mic' }, { value: 'output', label: 'Your output' }, ...this.discordUserOpts(),
+      ];
       case 'profiles': return this.profiles().map(p => ({ value: p, label: p }));
       case 'ha-servers': return (this.data.haServers.value() ?? []).map(s => ({ value: s.id, label: s.name }));
       default: return [];
     }
+  }
+
+  private discordUserOpts(): SelectOption[] {
+    return (this.data.discordUsers.value() ?? []).map(u => ({
+      value: u.username, label: u.inVoice ? `${u.displayName} (in call)` : u.displayName,
+    }));
   }
 
   // ── Wave Link target: id1's list (and its label) follow the chosen commandType.

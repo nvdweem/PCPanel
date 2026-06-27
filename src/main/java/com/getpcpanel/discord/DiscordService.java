@@ -409,16 +409,24 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
 
     /** Set how loudly you hear {@code username} from a 0..1 dial fraction (mapped to Discord's 0-200 range). */
     public boolean applyUserVolume(String username, float fraction) {
+        return applyUserVolume(username, fraction, false);
+    }
+
+    /** As {@link #applyUserVolume(String, float)}, additionally locally-unmuting the user when {@code unmute}. */
+    public boolean applyUserVolume(String username, float fraction, boolean unmute) {
         var id = resolveUserId(username);
         if (id == null) {
             log.warn("Discord user '{}' not found (not in your voice channel / not seen yet)", username);
             return false;
         }
         if (isSelf(id)) {
-            log.warn("Discord 'user volume' can't target yourself — that's how loud you hear someone else. Use 'Mic Volume' (your input) or 'Output Volume' (how loud you hear others) instead.");
+            log.warn("Discord 'user volume' can't target yourself — that's how loud you hear someone else. Use the mic or output volume target instead.");
             return false;
         }
         setUserVolume(id, fraction * 200f);
+        if (unmute) {
+            setUserMute(id, false);
+        }
         return true;
     }
 
