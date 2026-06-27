@@ -22,6 +22,7 @@ import com.getpcpanel.platform.IProcessHelper;
 import com.getpcpanel.platform.LinuxBuild;
 import com.getpcpanel.util.ProcessHelper;
 
+import io.quarkus.arc.Unremovable;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -31,6 +32,7 @@ import one.util.streamex.StreamEx;
 
 @Log4j2
 @ApplicationScoped
+@Unremovable // resolved via CdiHelper.getBean(IProcessHelper) for screen share — keep even if no @Inject point remains
 @LinuxBuild
 public class LinuxProcessHelper implements IProcessHelper {
     @Inject

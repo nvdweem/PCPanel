@@ -19,6 +19,7 @@ import com.getpcpanel.platform.IProcessHelper;
 import com.getpcpanel.platform.MacBuild;
 import com.getpcpanel.util.ProcessHelper;
 
+import io.quarkus.arc.Unremovable;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -28,6 +29,7 @@ import lombok.extern.log4j.Log4j2;
  */
 @Log4j2
 @ApplicationScoped
+@Unremovable // resolved via CdiHelper.getBean(IProcessHelper) for screen share — keep even if no @Inject point remains
 @MacBuild
 @RequiredArgsConstructor
 public class OsxProcessHelper implements IProcessHelper {
