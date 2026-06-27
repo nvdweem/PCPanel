@@ -135,6 +135,17 @@ device/state snapshots (DTOs in `rest/model/`) to the Angular UI over the socket
 fans CDI events out to connected clients. There is no separate window framework — the "UI" is the
 browser served by Quinoa.
 
+**Web-exposure security model:** the API is unauthenticated, so it must stay reachable only from the
+local machine. Two layers enforce this: `quarkus.http.host=127.0.0.1` keeps other hosts off, and
+`LocalHttpGuard` (a `@Observes Router` Vert.x filter, lowest order) rejects any request whose `Host`
+or `Origin` header is not loopback — defeating DNS rebinding and cross-site WebSocket hijacking from a
+website the user visits. `EventWebSocket.onOpen` re-checks the handshake with the same
+`LocalHttpGuard` helpers as a second layer. Loopback `Origin` is accepted on any port (so dev's
+`:4200` Quinoa proxy works); absent `Origin` is allowed (non-browser clients) with the `Host` check as
+the backstop. Toggle with `pcpanel.http.local-only` (default true). This does **not** authenticate
+*local* callers — defending against other processes on the same machine would need a token and is out
+of scope.
+
 **Integrations:** `obs/` (OBS websocket), `voicemeeter/` (JNA), `wavelink/` + `dev/niels/wavelink/`
 (Elgato Wave Link RPC client), `osc/`, `mqtt/` (Eclipse Paho mqttv5), `homeassistant/`. `overlay/`
 draws an on-screen volume overlay: a Win32 JNA layered window on Windows (`Win32VolumeOverlay`) and a

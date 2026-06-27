@@ -34,6 +34,12 @@ public class EventWebSocket {
             log.debug("Ignoring websocket connection {} because shutdown is in progress", connection.id());
             return;
         }
+        var handshake = connection.handshakeRequest();
+        if (!LocalHttpGuard.hostAllowed(handshake.header("Host")) || !LocalHttpGuard.originAllowed(handshake.header("Origin"))) {
+            log.debug("Rejecting non-local websocket connection {} (Host={}, Origin={})", connection.id(), handshake.header("Host"), handshake.header("Origin"));
+            connection.closeAndAwait();
+            return;
+        }
         connections.add(connection);
         log.debug("WebSocket client connected: {} (total connections: {})", connection.id(), connections.size());
         sendInitialSnapshots(connection);
