@@ -479,6 +479,20 @@ export class SettingsComponent {
     });
   }
 
+  /** Remove the stored authorization and disconnect, so the user can re-authorize cleanly. Keeps the client id/secret. */
+  signOutDiscord(): void {
+    this.http.post('/api/discord/sign-out', {}).subscribe({
+      next: () => {
+        this.discordAuthorizing.set(false);
+        this.integrations.discordStatus.reload();
+        this.integrations.discordUsers.reload();
+        this.discordConnOpen.set(true); // reveal the credential fields so they can re-authorize at once
+        this.toast.show('Discord credentials removed — you can authorize again', { kind: 'info' });
+      },
+      error: () => this.toast.show('Could not remove Discord credentials', { kind: 'error' }),
+    });
+  }
+
   // ── save ────────────────────────────────────────────────────────────────────
   save(thenLeave = false): void {
     const dto = this.local();

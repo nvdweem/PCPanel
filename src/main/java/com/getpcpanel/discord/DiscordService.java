@@ -45,8 +45,13 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @ApplicationScoped
 public class DiscordService extends DiscordRpcClient implements IDiscordRpcListener {
-    private static final List<String> SCOPES = List.of(
-            "rpc", "rpc.voice.read", "rpc.voice.write", "rpc.screenshare.write", "relationships.read");
+    // The rpc.* scopes are owner-gated, so a self-registered app gets them without approval. relationships.read
+    // (for the friends list) is NOT owner-gated: since 2026-01-21 it needs the app to accept the Discord Social
+    // SDK Terms (https://discord.com/developers/applications/select/social-sdk/getting-started) — until then
+    // Discord rejects the AUTHORIZE with invalid_scope. So we REQUEST it but fall back to CORE_SCOPES if it's
+    // refused, so a missing acceptance never breaks the (critical) voice authorization.
+    private static final List<String> CORE_SCOPES = List.of("rpc", "rpc.voice.read", "rpc.voice.write", "rpc.screenshare.write");
+    private static final List<String> SCOPES = List.of("rpc", "rpc.voice.read", "rpc.voice.write", "rpc.screenshare.write", "relationships.read");
     private static final String SEEN_USERS_KEY = "discord-seen-users";
     /** Refresh the access token this far before its stated expiry. */
     private static final long TOKEN_REFRESH_MARGIN_MS = 60_000;
@@ -59,7 +64,7 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
     @Nullable private String lastClientId;
     /** Why the last authorize attempt failed (surfaced to the UI so the user isn't left guessing). */
     @Nullable private volatile String lastAuthError;
-    /** The user's Discord friends, so their usernames are pickable as command targets before any shared call. */
+    /** The user's Discord friends (empty unless relationships.read was granted), pickable as command targets. */
     private volatile List<DiscordSeenUser> friends = List.of();
 
     @Inject Event<DiscordChangedEvent> changedEvent;
@@ -154,6 +159,11 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
             lastAuthError = "Set the Discord Client ID and Client Secret first";
             return CompletableFuture.failedFuture(new IllegalStateException(lastAuthError));
         }
+        // Hold the same gate the health-check honours, so a scheduled authenticateWithStoredToken can't fire
+        // AUTHENTICATE on the connection mid-authorize ("Already authenticating"), and a double-click is a no-op.
+        if (!authInProgress.compareAndSet(false, true)) {
+            return CompletableFuture.failedFuture(new IllegalStateException("Discord authorization already in progress"));
+        }
         setClientId(cfg.clientId());
         lastAuthError = null;
         log.info("Discord authorize: connecting to Discord…");
@@ -166,7 +176,7 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
         return connect()
                 .thenCompose(x -> {
                     log.info("Discord authorize: requesting consent — APPROVE THE POPUP INSIDE DISCORD…");
-                    return authorize(SCOPES);
+                    return authorizeWithFriendsFallback();
                 })
                 .thenCompose(code -> {
                     log.info("Discord authorize: exchanging code for an access token…");
@@ -181,6 +191,7 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
                 })
                 .thenCompose(self -> initVoiceState().thenCompose(v -> loadFriends()).thenApply(v -> self))
                 .whenComplete((self, e) -> {
+                    authInProgress.set(false);
                     if (e != null) {
                         lastAuthError = rootMessage(e);
                         log.warn("Discord authorization failed: {}", lastAuthError, e);
@@ -190,6 +201,42 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
                     }
                     fireChanged();
                 });
+    }
+
+    /** AUTHORIZE with the friends scope, retrying voice-only on a fresh connection if Discord refuses it. */
+    private CompletableFuture<String> authorizeWithFriendsFallback() {
+        return authorize(SCOPES).handle((code, err) -> {
+            if (err == null) {
+                return CompletableFuture.completedFuture(code);
+            }
+            if (isInvalidScope(err)) {
+                log.info("Discord refused relationships.read (accept the Social SDK Terms for your app to enable the friends list) — re-authorizing voice-only.");
+                return connect().thenCompose(x -> authorize(CORE_SCOPES));
+            }
+            return CompletableFuture.<String>failedFuture(err);
+        }).thenCompose(f -> f);
+    }
+
+    private static boolean isInvalidScope(Throwable e) {
+        var msg = rootMessage(e);
+        return msg != null && msg.contains("invalid_scope");
+    }
+
+    /**
+     * Removes the stored authorization and drops the live connection — the user can then re-authorize from a
+     * clean slate (the client id/secret are kept). Fixes the "have to click authorize several times" flakiness:
+     * re-authorizing on top of a live, already-authenticated session races the health-check and Discord's own
+     * "already authenticating" guard.
+     */
+    public void signOut() {
+        if (saveService != null) {
+            saveService.get().setDiscordAuth(null);
+            saveService.save();
+        }
+        lastAuthError = null;
+        disconnect(); // clears authenticated state + voice users; the health-check stays idle with no stored token
+        friends = List.of();
+        fireChanged();
     }
 
     private void authenticateWithStoredToken() {

@@ -275,6 +275,11 @@
                 @if (st.lastError && !st.authenticated) {
                   <div class="pc-hint err">{{ st.lastError }}</div>
                 }
+                @if (st.authorized) {
+                  <div class="discord-actions">
+                    <button type="button" class="pc-btn ghost" (click)="signOutDiscord()">Remove credentials</button>
+                  </div>
+                }
               }
 
               @if (connected) {

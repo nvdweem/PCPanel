@@ -57,4 +57,12 @@ public class DiscordResource {
         discordService.authorizeInteractive(); // fire-and-forget; progress is logged + status is polled
         return Response.accepted().build();
     }
+
+    /** Removes the stored authorization and disconnects, so the user can re-authorize from a clean slate. */
+    @POST
+    @Path("/sign-out")
+    public Response signOut() {
+        discordService.signOut();
+        return Response.noContent().build();
+    }
 }
