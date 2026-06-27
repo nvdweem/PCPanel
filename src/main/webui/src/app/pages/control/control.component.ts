@@ -135,6 +135,10 @@ export class ControlComponent {
 
   readonly activeCommands = computed<Command[]>(() => this.currentSlotSignal()().commands);
 
+  /** The all-at-once / in-sequence mode applies to the press/double/release slots (a dial runs its
+   *  mapped value). Always shown there, regardless of how many actions exist, so users discover it. */
+  readonly showSeqToggle = computed(() => this.activeSlot() !== 'rotate');
+
   defFor(cmd: Command): CommandDef | undefined { return COMMAND_BY_TYPE.get(cmd._type); }
   labelFor(cmd: Command): string {
     // Prefer a label that names the actual target ("Music — Wave Link"); fall back to the generic
@@ -154,6 +158,13 @@ export class ControlComponent {
   }
 
   setSlot(slot: Slot): void { this.activeSlot.set(slot); this.expanded.set(0); }
+
+  /** Flip the active slot between firing every action at once and firing one per press (rotating). */
+  toggleSlotMode(): void {
+    const sig = this.currentSlotSignal();
+    sig.set({ ...sig(), type: sig().type === 'sequential' ? 'allAtOnce' : 'sequential' });
+    this.save();
+  }
 
   // ── mutations ────────────────────────────────────────────────────────────
   addCommand(def: CommandDef): void {
