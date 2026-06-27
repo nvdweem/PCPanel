@@ -482,6 +482,7 @@ export interface DiscordStatusDto {
     authorized: boolean;
     connected: boolean;
     enabled: boolean;
+    lastError?: string;
     user?: string;
 }
 

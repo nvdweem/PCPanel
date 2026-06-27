@@ -59,6 +59,8 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
     private final AtomicBoolean authInProgress = new AtomicBoolean(false);
     private boolean wasEnabled;
     @Nullable private String lastClientId;
+    /** Why the last authorize attempt failed (surfaced to the UI so the user isn't left guessing). */
+    @Nullable private volatile String lastAuthError;
 
     @Inject Event<DiscordChangedEvent> changedEvent;
     @Inject Debouncer debouncer;
@@ -149,19 +151,35 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
     public CompletableFuture<DiscordUser> authorizeInteractive() {
         var cfg = settings();
         if (StringUtils.isAnyBlank(cfg.clientId(), cfg.clientSecret())) {
-            return CompletableFuture.failedFuture(new IllegalStateException("Set the Discord Client ID and Client Secret first"));
+            lastAuthError = "Set the Discord Client ID and Client Secret first";
+            return CompletableFuture.failedFuture(new IllegalStateException(lastAuthError));
         }
         setClientId(cfg.clientId());
+        lastAuthError = null;
+        log.info("Discord authorize: connecting to Discord…");
         var connected = isConnected() ? CompletableFuture.completedFuture(getSelfUser()) : connect();
         return connected
-                .thenCompose(x -> authorize(SCOPES))
-                .thenCompose(code -> DiscordOAuth.exchangeCode(cfg.clientId(), cfg.clientSecret(), cfg.redirectUri(), code))
+                .thenCompose(x -> {
+                    log.info("Discord authorize: requesting consent — APPROVE THE POPUP INSIDE DISCORD…");
+                    return authorize(SCOPES);
+                })
+                .thenCompose(code -> {
+                    log.info("Discord authorize: exchanging code for an access token…");
+                    return DiscordOAuth.exchangeCode(cfg.clientId(), cfg.clientSecret(), cfg.redirectUri(), code);
+                })
                 .thenApply(this::storeToken)
-                .thenCompose(this::authenticate)
+                .thenCompose(token -> {
+                    log.info("Discord authorize: authenticating the RPC connection…");
+                    return authenticate(token);
+                })
                 .thenCompose(self -> initVoiceState().thenApply(v -> self))
                 .whenComplete((self, e) -> {
                     if (e != null) {
-                        log.warn("Discord authorization failed", e);
+                        lastAuthError = rootMessage(e);
+                        log.warn("Discord authorization failed: {}", lastAuthError, e);
+                    } else {
+                        lastAuthError = null;
+                        log.info("Discord authorized as {}", self == null ? "?" : self.displayName());
                     }
                     fireChanged();
                 });
@@ -320,6 +338,20 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
         }
         var auth = saveService.get().getDiscordAuth();
         return auth != null && auth.hasToken();
+    }
+
+    /** Why the last authorize attempt failed (null once authorized or never attempted). */
+    @Nullable
+    public String getLastAuthError() {
+        return lastAuthError;
+    }
+
+    private static String rootMessage(Throwable e) {
+        var cause = e;
+        while ((cause instanceof CompletionException || cause instanceof java.util.concurrent.ExecutionException) && cause.getCause() != null) {
+            cause = cause.getCause();
+        }
+        return cause.getMessage() == null ? cause.getClass().getSimpleName() : cause.getMessage();
     }
 
     /** Best display name for status: the live authenticated user, else the name stored at authorization time. */

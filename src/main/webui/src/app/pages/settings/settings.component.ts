@@ -6,7 +6,7 @@ import { IntegrationDataService } from '../../features/commands/integration-data
 import { PlatformService } from '../../services/platform.service';
 import { DebugService, DeviceTypeOverride, OsOverride } from '../../services/debug.service';
 import {
-  DiscordSettings, OverlayPosition, SettingsDto, WaveLinkSettings,
+  DiscordSettings, DiscordStatusDto, OverlayPosition, SettingsDto, WaveLinkSettings,
 } from '../../models/generated/backend.types';
 import {
   ColorPickerComponent, IconComponent, ModalComponent, SegmentedComponent, SegmentOption,
@@ -421,10 +421,17 @@ export class SettingsComponent {
     });
   }
 
-  /** Persist any edited credentials, then run the IPC authorize flow (Discord shows a consent popup). */
+  /**
+   * Persist the credentials and start the authorize flow. The backend returns immediately (the flow waits
+   * for you to approve a consent popup inside Discord), so we poll the status until it reports authenticated.
+   */
   authorizeDiscord(): void {
-    const dto = this.discordDraft();
-    if (!dto || this.discordAuthorizing()) return;
+    const cur = this.discordDraft();
+    if (!cur || this.discordAuthorizing()) return;
+    // Authorizing implies enabling — persisting the token fires a settings event, and leaving Discord
+    // disabled there would tear down the very connection we're authorizing.
+    const dto: DiscordSettings = { ...cur, enabled: true };
+    this.discordDraft.set(dto);
     this.discordAuthorizing.set(true);
     this.http.put<void>('/api/settings/discord', dto).subscribe({
       next: () => {
@@ -432,21 +439,41 @@ export class SettingsComponent {
         this.discordSettings.reload();
         this.http.post('/api/discord/authorize', {}).subscribe({
           next: () => {
-            this.discordAuthorizing.set(false);
-            this.integrations.discordStatus.reload();
-            this.integrations.discordUsers.reload();
-            this.toast.show('Discord connected', { kind: 'success' });
+            this.toast.show('Approve the “PCPanel” popup inside Discord…', { kind: 'info' });
+            this.pollDiscordAuth(0);
           },
           error: () => {
             this.discordAuthorizing.set(false);
-            this.integrations.discordStatus.reload();
-            this.toast.show('Discord authorization failed — approve the popup in Discord and check the Client ID/Secret', { kind: 'error' });
+            this.toast.show('Could not start Discord authorization', { kind: 'error' });
           },
         });
       },
       error: () => {
         this.discordAuthorizing.set(false);
         this.toast.show('Could not save Discord settings', { kind: 'error' });
+      },
+    });
+  }
+
+  /** Poll status (~every 1.5s, up to ~2 min) until authenticated, while the user approves the Discord popup. */
+  private pollDiscordAuth(attempt: number): void {
+    this.http.get<DiscordStatusDto>('/api/discord/status').subscribe({
+      next: st => {
+        this.integrations.discordStatus.reload();
+        if (st.authenticated) {
+          this.discordAuthorizing.set(false);
+          this.integrations.discordUsers.reload();
+          this.toast.show('Discord connected', { kind: 'success' });
+        } else if (attempt >= 80) {
+          this.discordAuthorizing.set(false);
+          this.toast.show('Discord not authorized yet — approve the popup in Discord, then try again', { kind: 'warn' });
+        } else {
+          setTimeout(() => this.pollDiscordAuth(attempt + 1), 1500);
+        }
+      },
+      error: () => {
+        if (attempt >= 80) this.discordAuthorizing.set(false);
+        else setTimeout(() => this.pollDiscordAuth(attempt + 1), 1500);
       },
     });
   }

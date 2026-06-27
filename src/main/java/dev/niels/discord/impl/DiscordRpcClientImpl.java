@@ -49,6 +49,10 @@ public abstract class DiscordRpcClientImpl implements IDiscordRpcClient {
     private static final int OP_PING = 3;
     private static final int OP_PONG = 4;
     private static final long REQUEST_TIMEOUT_MS = 10_000;
+    /** AUTHORIZE blocks on the user clicking the consent popup inside Discord, so it gets a long window. */
+    private static final long AUTHORIZE_TIMEOUT_MS = 120_000;
+    /** If Discord never answers the handshake with READY, fail fast rather than hang the connect future. */
+    private static final long HANDSHAKE_TIMEOUT_MS = 15_000;
     private static final String[] VOICE_STATE_EVENTS = { "VOICE_STATE_CREATE", "VOICE_STATE_UPDATE", "VOICE_STATE_DELETE" };
 
     private final ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -86,6 +90,13 @@ public abstract class DiscordRpcClientImpl implements IDiscordRpcClient {
         connection = conn;
         var future = new CompletableFuture<DiscordUser>();
         readyFuture = future;
+        // Fail fast (and drop the dead connection) if Discord never sends READY, so the authorize/connect
+        // chain can't hang waiting on a handshake that was silently dropped.
+        future.orTimeout(HANDSHAKE_TIMEOUT_MS, TimeUnit.MILLISECONDS).whenComplete((u, e) -> {
+            if (e != null) {
+                disconnect();
+            }
+        });
         try {
             // Send the handshake BEFORE starting the read thread. A blocking read concurrent with the
             // very first write on the same pipe can delay the handshake past Discord's timeout —
@@ -192,6 +203,10 @@ public abstract class DiscordRpcClientImpl implements IDiscordRpcClient {
     }
 
     private CompletableFuture<JsonNode> request(String cmd, @Nullable String evt, @Nullable ObjectNode args) {
+        return request(cmd, evt, args, REQUEST_TIMEOUT_MS);
+    }
+
+    private CompletableFuture<JsonNode> request(String cmd, @Nullable String evt, @Nullable ObjectNode args, long timeoutMs) {
         var conn = connection;
         var future = new CompletableFuture<JsonNode>();
         if (conn == null || !conn.isOpen()) {
@@ -209,7 +224,7 @@ public abstract class DiscordRpcClientImpl implements IDiscordRpcClient {
         }
         node.put("nonce", nonce);
         pending.put(nonce, future);
-        future.orTimeout(REQUEST_TIMEOUT_MS, TimeUnit.MILLISECONDS).whenComplete((r, e) -> pending.remove(nonce));
+        future.orTimeout(timeoutMs, TimeUnit.MILLISECONDS).whenComplete((r, e) -> pending.remove(nonce));
         try {
             conn.writeFrame(OP_FRAME, mapper.writeValueAsBytes(node));
         } catch (IOException e) {
@@ -287,7 +302,7 @@ public abstract class DiscordRpcClientImpl implements IDiscordRpcClient {
         args.put("client_id", clientId);
         var arr = args.putArray("scopes");
         scopes.forEach(arr::add);
-        return send("AUTHORIZE", args).thenApply(data -> text(data, "code"));
+        return request("AUTHORIZE", null, args, AUTHORIZE_TIMEOUT_MS).thenApply(data -> text(data, "code"));
     }
 
     /** Sends AUTHENTICATE with a previously-obtained access token; marks the connection authenticated on success. */

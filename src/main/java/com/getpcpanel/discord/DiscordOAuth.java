@@ -5,6 +5,7 @@ import java.net.URLEncoder;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -54,6 +55,7 @@ final class DiscordOAuth {
                        .collect(Collectors.joining("&"));
         var request = HttpRequest.newBuilder(URI.create(TOKEN_URL))
                                  .header("Content-Type", "application/x-www-form-urlencoded")
+                                 .timeout(Duration.ofSeconds(15))
                                  .POST(HttpRequest.BodyPublishers.ofString(body))
                                  .build();
         return SharedHttpClient.get().sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenApply(DiscordOAuth::parse);

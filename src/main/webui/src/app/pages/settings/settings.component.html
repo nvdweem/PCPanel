@@ -288,6 +288,10 @@
                 </button>
               </div>
 
+              @if (discordAuthorizing()) {
+                <div class="pc-hint">Switch to Discord and approve the <strong>“PCPanel”</strong> consent popup. This page updates automatically once you do.</div>
+              }
+
               @if (discordStatusValue(); as st) {
                 <div class="row">
                   <div class="row-text">
@@ -301,6 +305,9 @@
                   </div>
                   <pc-status-dot [kind]="st.authenticated ? 'ok' : st.authorized ? 'connecting' : 'idle'" [size]="8"></pc-status-dot>
                 </div>
+                @if (st.lastError && !st.authenticated) {
+                  <div class="pc-hint err">Last attempt failed: {{ st.lastError }}</div>
+                }
               }
             </div>
 
