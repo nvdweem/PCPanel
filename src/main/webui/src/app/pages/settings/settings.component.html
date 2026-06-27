@@ -157,6 +157,10 @@
                   <button class="pc-chip dashed" cdkOverlayOrigin #so="cdkOverlayOrigin" (click)="fvAppsOpen.set(ri)">
                     <pc-icon name="plus" [size]="12"></pc-icon> add app
                   </button>
+                  <button class="pc-chip dashed" [disabled]="fvDetecting() !== null" (click)="detectFocusedSource(ri)">
+                    <pc-icon name="search" [size]="12"></pc-icon>
+                    @if (fvDetecting() === ri) { focus a window… {{ fvDetectCountdown() }} } @else { detect focused app }
+                  </button>
                   <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="so" [cdkConnectedOverlayOpen]="fvAppsOpen() === ri"
                                [cdkConnectedOverlayHasBackdrop]="true" cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
                                [cdkConnectedOverlayWidth]="300" [cdkConnectedOverlayOffsetY]="6"
@@ -165,6 +169,9 @@
                                    [value]="rule.sources ?? []" (valueChange)="setFvSources(ri, $event)"></pc-app-picker>
                   </ng-template>
                 </div>
+                <div class="row-sub fv-hint">The source must match the process Windows reports as focused — which isn't always
+                  the launcher. Steam's window is owned by <code>steamwebhelper.exe</code>; Electron/Discord apps use a helper too.
+                  Use <strong>detect focused app</strong> and alt-tab to the window to capture the exact name.</div>
               </div>
 
               <div class="field-block">

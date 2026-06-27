@@ -401,6 +401,11 @@ export class SettingsComponent {
   /** Which rule's "add source app" picker overlay is open (rule index), or null. */
   readonly fvAppsOpen = signal<number | null>(null);
 
+  /** While a rule's "detect focused app" countdown is running: its rule index, else null. */
+  readonly fvDetecting = signal<number | null>(null);
+  /** Seconds left on the detect countdown (gives you time to alt-tab to the target window). */
+  readonly fvDetectCountdown = signal(0);
+
   fvOverrides(): FocusVolumeOverride[] { return this.local()?.focusVolumeOverrides ?? []; }
   fvTargets(rule: FocusVolumeOverride): FocusVolumeTarget[] { return rule?.targets ?? []; }
   fvKey(ri: number, ti: number): string { return ri + ':' + ti; }
@@ -421,6 +426,40 @@ export class SettingsComponent {
 
   setFvSources(i: number, sources: string[]): void { this.updateFvRule(i, { sources }); }
   setFvIncludeSource(i: number, on: boolean): void { this.updateFvRule(i, { includeSource: on }); }
+
+  /**
+   * Capture whichever app the OS reports as focused after a short countdown, and add its exe name as a
+   * source. This is the reliable way to get the right source: the focused process isn't always the one
+   * you'd guess — Steam's window is owned by steamwebhelper.exe, Electron/Discord by a helper, etc. The
+   * countdown gives you time to alt-tab to the target window (focusing this UI would just capture the
+   * browser).
+   */
+  detectFocusedSource(ruleIndex: number): void {
+    if (this.fvDetecting() !== null) return;
+    this.fvDetecting.set(ruleIndex);
+    let n = 3;
+    this.fvDetectCountdown.set(n);
+    const tick = (): void => {
+      n -= 1;
+      if (n > 0) { this.fvDetectCountdown.set(n); setTimeout(tick, 1000); return; }
+      this.http.get<{ liveFocusApplication?: string | null }>('/api/focus-volume/diagnostics').subscribe({
+        next: r => {
+          const app = r.liveFocusApplication;
+          const base = app ? app.split(/[\\/]/).pop() ?? '' : '';
+          const cur = this.fvOverrides()[ruleIndex];
+          if (base && cur && !(cur.sources ?? []).some(s => s.toLowerCase() === base.toLowerCase())) {
+            this.setFvSources(ruleIndex, [...(cur.sources ?? []), base]);
+            this.toast.show(`Added focused app: ${base}`, { kind: 'success' });
+          } else if (!base) {
+            this.toast.show('Could not read the focused app', { kind: 'error' });
+          }
+          this.fvDetecting.set(null);
+        },
+        error: () => { this.toast.show('Could not read the focused app', { kind: 'error' }); this.fvDetecting.set(null); },
+      });
+    };
+    setTimeout(tick, 1000);
+  }
 
   removeFvSource(i: number, app: string): void {
     this.setFvSources(i, (this.fvOverrides()[i]?.sources ?? []).filter(s => s !== app));

@@ -77,6 +77,9 @@
 
 /* ── Focus override tab ──────────────────────────────────────────────────────── */
 .flabel { font-size: 11.5px; color: var(--text-2); }
+.fv-hint { margin-top: 8px; line-height: 1.5; }
+.fv-hint code { font-family: var(--font-mono, monospace); color: var(--text-2); }
+.pc-chip.dashed:disabled { opacity: 0.6; cursor: default; }
 .fv-rule-head { display: flex; align-items: center; gap: 10px; }
 .fv-rule-no { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 6px; font-size: 11.5px; font-weight: 600; color: #000; background: var(--accent, #FFB020); flex: none; }
 .fv-rule-title { flex: 1; font-size: 13px; font-weight: 500; color: var(--text-1); text-transform: uppercase; letter-spacing: 0.06em; }
