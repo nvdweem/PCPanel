@@ -28,6 +28,13 @@
     - Actions are pasted as YAML straight from Home Assistant's Developer Tools → Actions page (with a link to open it), so anything Home Assistant can do is available
     - Buttons perform any action; dials map their position into the action — use `{{ value }}` with a min/max range or a translate formula (e.g. a light's brightness or color temperature)
     - Configurable debounce so a moving dial doesn't flood Home Assistant: the first move is sent instantly, then at most one update per the configured interval, and the final value is always sent
+- Added support for **Discord** — control your Discord voice state from your dials and buttons. Discord only grants voice control to an application's owner, so each user registers their own free Discord app once and pastes its Client ID + Secret on the Discord settings page (a step-by-step setup checklist is shown in-app); it connects over Discord's local IPC — no bot, no token in the cloud.
+    - **Mute & deafen** buttons — mute/unmute or deafen/undeafen yourself, or locally mute another member (only changes what *you* hear). One Mute command with a target picker: yourself or any user.
+    - **Volume** dials — your microphone, your output (how loud you hear everyone), or how loud you hear a specific member, each with an optional *unmute/undeafen when changed*.
+    - **Join / leave** a voice channel from a button (pick from your servers' voice channels).
+    - **Screen share** and **toggle camera** buttons — share via Discord's own picker ("Choose in Discord"), the focused window, or a specific app. Per-window sharing by PID is best-effort (it uses an undocumented Discord RPC command); the picker mode is reliable.
+    - The per-control **mute colour** follows your Discord self-mute, self-deafen and a user's local-mute state — including when you toggle it in Discord directly.
+    - Target pickers are searchable and list the members you've controlled plus, optionally, your **Discord friends** (needs the Social SDK Terms accepted for your app).
 - New General setting **Focus volume skips controlled apps** (off by default): when the focused app is already controlled elsewhere — an App-volume action on another control, or a Wave Link channel — the focused-app volume dial leaves it alone instead of fighting that dedicated control.
 - **Push-to-talk** — buttons can now run a separate set of actions when *released*, not just when pressed (e.g. unmute on press, mute on release). Configure it under the new "On release" tab when editing a button.
 - New generic output actions for dials and buttons, so you can drive almost anything:

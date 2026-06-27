@@ -1,8 +1,8 @@
 # PCPanel — Community Edition
 
 Turn the knobs, sliders and buttons on your [PCPanel](https://getpcpanel.com) into physical
-controls for everything on your PC: per-app volume, your microphone, OBS scenes, media playback,
-keyboard shortcuts and more.
+controls for everything on your PC: per-app volume, your microphone, Discord voice, OBS scenes,
+media playback, keyboard shortcuts and more.
 
 This is **third-party, community-maintained** software for PCPanel hardware. It is a drop-in
 alternative to the official app that adds features and bug fixes requested by the community.
@@ -43,6 +43,10 @@ real changes on your system in real time:
   button, or map a dial to a value such as a light's brightness or color temperature). Send to
   anything with generic **HTTP request**, **MQTT publish** and **OSC send** actions — a dial maps its
   position into the request via `{{ value }}`.
+- **Discord voice** — mute/deafen yourself or locally mute another member, set your mic or output
+  volume (or how loud you hear a specific person), join or leave a voice channel, share your screen
+  and toggle your camera — all from your knobs and buttons, with the mute colour following your live
+  Discord state. You register your own free Discord app once (the settings page walks you through it).
 
 An optional on-screen **overlay** briefly shows the level as you turn a knob, and the app lives in
 the **system tray** so it stays out of your way.
