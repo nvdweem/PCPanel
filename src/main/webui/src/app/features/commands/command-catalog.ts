@@ -16,7 +16,9 @@ export type LiveSource =
   | 'discord-users' | 'discord-channels' | 'discord-mute-targets' | 'discord-volume-targets'
   | 'ha-servers';
 
-export type FieldDef =
+// `showWhen` hides a field unless another field's current value matches — e.g. a process picker shown
+// only for the "specific app" mode. Intersected onto every variant so it stays optional everywhere.
+export type FieldDef = (
   | { kind: 'text'; key: string; label: string; placeholder?: string; mono?: boolean }
   | { kind: 'textarea'; key: string; label: string; placeholder?: string; rows?: number }
   | { kind: 'number'; key: string; label: string; min?: number; max?: number }
@@ -30,7 +32,8 @@ export type FieldDef =
   | { kind: 'wavelink-target' }                 // id1 (+id2 for Mix), with the source driven by commandType
   | { kind: 'ha-help'; withValue?: boolean }    // links to HA's action builder + server config (+ {{ value }} hint)
   | { kind: 'devices-list'; key: string; label: string }  // cycle list of device ids
-  | { kind: 'analog-bands' };                   // CommandAnalogBands: ordered ranges, each with a colour + nested action
+  | { kind: 'analog-bands' }                    // CommandAnalogBands: ordered ranges, each with a colour + nested action
+) & { showWhen?: { key: string; equals: string } };
 
 export interface CommandDef {
   type: string;
@@ -328,6 +331,18 @@ export const COMMANDS: CommandDef[] = [
     fields: [
       { kind: 'select-live', key: 'target', label: 'Target', source: 'discord-volume-targets' },
       { kind: 'toggle', key: 'clearMuteOnChange', label: 'Unmute/undeafen when changed' },
+    ],
+  },
+  {
+    type: DC + 'CommandDiscordScreenShare', label: 'Discord — screen share', category: 'integration', integration: 'discord', kinds: ['button'], icon: 'monitor',
+    buildEmpty: () => ({ _type: DC + 'CommandDiscordScreenShare', mode: 'SCREEN', processName: [], overlayText: '' }),
+    fields: [
+      {
+        kind: 'select', key: 'mode', label: 'Share', options: [
+          { value: 'SCREEN', label: 'Screen' }, { value: 'PROCESS', label: 'Specific app' }, { value: 'FOCUS', label: 'Focused app' },
+        ],
+      },
+      { kind: 'apps', key: 'processName', label: 'App', showWhen: { key: 'mode', equals: 'PROCESS' } },
     ],
   },
   {

@@ -14,7 +14,7 @@ import lombok.ToString;
 @Getter
 @ToString(callSuper = true)
 public abstract sealed class CommandDiscord extends Command
-        permits CommandDiscordMute, CommandDiscordVolume,
+        permits CommandDiscordMute, CommandDiscordVolume, CommandDiscordScreenShare,
         CommandDiscordSelfMute, CommandDiscordSelfDeafen, CommandDiscordUserMute,
         CommandDiscordSelfInputVolume, CommandDiscordSelfOutputVolume, CommandDiscordUserVolume,
         CommandDiscordJoinVoice, CommandDiscordLeaveVoice {

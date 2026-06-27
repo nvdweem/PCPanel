@@ -433,6 +433,26 @@ public abstract class DiscordRpcClientImpl implements IDiscordRpcClient {
         });
     }
 
+    /** The user's friends (GET_RELATIONSHIPS, type 1 = FRIEND), so their usernames are targetable before any call. */
+    public CompletableFuture<List<DiscordUser>> getRelationships() {
+        return send("GET_RELATIONSHIPS", null).thenApply(data -> {
+            var rels = data == null ? null : data.get("relationships");
+            if (rels == null || !rels.isArray()) {
+                return List.<DiscordUser>of();
+            }
+            var out = new ArrayList<DiscordUser>();
+            for (var rel : rels) {
+                if (rel.path("type").asInt(-1) == 1) { // FRIEND
+                    var u = parseUser(rel.get("user"));
+                    if (u != null && u.id() != null && StringUtils.isNotBlank(u.username())) {
+                        out.add(u);
+                    }
+                }
+            }
+            return out;
+        });
+    }
+
     private List<DiscordVoiceChannel> parseVoiceChannels(@Nullable JsonNode data, String guildId, @Nullable String guildName) {
         var out = new ArrayList<DiscordVoiceChannel>();
         var channels = data == null ? null : data.get("channels");
@@ -447,6 +467,17 @@ public abstract class DiscordRpcClientImpl implements IDiscordRpcClient {
             }
         }
         return out;
+    }
+
+    /** Toggles screen sharing: a non-null {@code pid} shares that window directly, null opens Discord's share picker. */
+    public CompletableFuture<Void> toggleScreenShare(@Nullable Integer pid) {
+        var args = mapper.createObjectNode();
+        if (pid == null) {
+            args.putNull("pid");
+        } else {
+            args.put("pid", pid);
+        }
+        return send("TOGGLE_SCREENSHARE", args).thenApply(d -> null);
     }
 
     // ── voice control ───────────────────────────────────────────────────────────

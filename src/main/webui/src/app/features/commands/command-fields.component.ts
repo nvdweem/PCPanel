@@ -24,7 +24,7 @@ type Cmd = Record<string, any>;
   imports: [OverlayModule, RouterLink, IconComponent, ToggleComponent, SelectComponent, AppPickerComponent, KeyRecorderComponent, SegmentedComponent, ColorPickerComponent, CommandFieldsComponent, CommandPickerComponent],
   template: `
     <div class="fields">
-      @for (f of def().fields; track f.kind + ($any(f).key || '')) {
+      @for (f of visibleFields(); track f.kind + ($any(f).key || '')) {
         @switch (f.kind) {
           @case ('text') {
             <div class="field-block">
@@ -323,6 +323,14 @@ export class CommandFieldsComponent {
     if (!srv?.url) return null;
     return srv.url.replace(/\/+$/, '') + '/config/developer-tools/action';
   });
+
+  /** Fields whose optional `showWhen` condition (another field equals a value) is met — hides irrelevant inputs. */
+  visibleFields(): FieldDef[] {
+    return this.def().fields.filter(f => {
+      const w = (f as any).showWhen as { key: string; equals: string } | undefined;
+      return !w || this.val(w.key) === w.equals;
+    });
+  }
 
   val(key: string): any { return this.command()[key]; }
   asArray(key: string): string[] { const v = this.command()[key]; return Array.isArray(v) ? v : []; }

@@ -41,15 +41,12 @@ import lombok.extern.log4j.Log4j2;
  * authorize/authenticate handshake, refreshes and persists the token, and tracks the current voice
  * channel's members plus a persistent "seen users" roster. State changes fire a {@link DiscordChangedEvent}
  * so the UI re-reads live data.
- *
- * <p>Note: starting/stopping screen share (Go Live) is intentionally absent — Discord exposes no RPC
- * command for it, so it cannot be controlled this way (a Keystroke action bound to a Discord keybind is
- * the only workaround).
  */
 @Log4j2
 @ApplicationScoped
 public class DiscordService extends DiscordRpcClient implements IDiscordRpcListener {
-    private static final List<String> SCOPES = List.of("rpc", "rpc.voice.read", "rpc.voice.write");
+    private static final List<String> SCOPES = List.of(
+            "rpc", "rpc.voice.read", "rpc.voice.write", "rpc.screenshare.write", "relationships.read");
     private static final String SEEN_USERS_KEY = "discord-seen-users";
     /** Refresh the access token this far before its stated expiry. */
     private static final long TOKEN_REFRESH_MARGIN_MS = 60_000;
@@ -62,6 +59,8 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
     @Nullable private String lastClientId;
     /** Why the last authorize attempt failed (surfaced to the UI so the user isn't left guessing). */
     @Nullable private volatile String lastAuthError;
+    /** The user's Discord friends, so their usernames are pickable as command targets before any shared call. */
+    private volatile List<DiscordSeenUser> friends = List.of();
 
     @Inject Event<DiscordChangedEvent> changedEvent;
     @Inject Debouncer debouncer;
@@ -180,7 +179,7 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
                     // AUTHENTICATE must run on a fresh handshake — not the authorize connection.
                     return connect().thenCompose(x -> authenticate(token));
                 })
-                .thenCompose(self -> initVoiceState().thenApply(v -> self))
+                .thenCompose(self -> initVoiceState().thenCompose(v -> loadFriends()).thenApply(v -> self))
                 .whenComplete((self, e) -> {
                     if (e != null) {
                         lastAuthError = rootMessage(e);
@@ -205,6 +204,7 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
         ensureFreshToken(auth)
                 .thenCompose(this::authenticate)
                 .thenCompose(self -> initVoiceState())
+                .thenCompose(v -> loadFriends())
                 .whenComplete((v, e) -> {
                     authInProgress.set(false);
                     if (e != null) {
@@ -346,6 +346,27 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
 
     public List<DiscordSeenUser> getSeenUsers() {
         return saveService == null ? List.of() : saveService.get().getDiscordSeenUsers();
+    }
+
+    /** Loads the friend list (best-effort — needs the relationships.read scope; a failure just leaves it empty). */
+    private CompletableFuture<Void> loadFriends() {
+        return getRelationships()
+                .thenAccept(list -> {
+                    friends = list.stream()
+                            .filter(u -> !isSelf(u.id()))
+                            .map(u -> new DiscordSeenUser(u.id(), u.username(), u.displayName()))
+                            .toList();
+                    fireChanged();
+                })
+                .exceptionally(e -> {
+                    log.debug("Discord friend list unavailable (relationships.read not granted?): {}", rootMessage(e));
+                    return null;
+                });
+    }
+
+    /** The user's friends, targetable by username before any shared call. */
+    public List<DiscordSeenUser> getFriends() {
+        return friends;
     }
 
     /** Whether a usable OAuth token is stored (the user has authorized at least once), regardless of the live connection. */
