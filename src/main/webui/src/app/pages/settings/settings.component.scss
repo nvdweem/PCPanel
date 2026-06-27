@@ -156,3 +156,13 @@
 // Discord: Save + Connect & Authorize buttons side by side.
 .discord-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .pc-hint.err { color: var(--err-text); }
+
+// Discord: the numbered setup checklist.
+.discord-steps {
+  margin: 4px 0 0; padding-left: 18px;
+  font-size: 11px; color: var(--text-3); line-height: 1.55;
+  li { margin: 2px 0; }
+  code { font-size: 10.5px; padding: 1px 4px; border-radius: 4px; background: var(--surface-2, #1b1e25); color: var(--text-2); }
+  strong { color: var(--text-2); font-weight: 600; }
+  a { color: var(--accent, #ffb020); text-decoration: none; &:hover { text-decoration: underline; } }
+}

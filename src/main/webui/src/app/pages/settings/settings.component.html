@@ -313,9 +313,18 @@
                     }
                   </button>
                 </div>
-                <p class="row-sub">Create an app in the
-                  <a href="https://discord.com/developers/applications" target="_blank" rel="noopener">Discord Developer Portal</a>,
-                  add an OAuth2 redirect of <code>http://localhost</code>, and paste its Client ID + Secret.</p>
+                <ol class="discord-steps">
+                  <li>Create an app in the
+                    <a href="https://discord.com/developers/applications" target="_blank" rel="noopener">Discord Developer Portal</a>.</li>
+                  <li>Open its <strong>OAuth2</strong> page; copy the <strong>Client ID</strong> and <strong>Client Secret</strong> into the fields above.</li>
+                  <li>On that page, under <strong>Redirects</strong>, add <code>{{ d.redirectUri || 'http://localhost' }}</code>
+                    (must match the Redirect URI above) and save in Discord.</li>
+                  <li>Click <strong>Save</strong> here, then <strong>Connect &amp; Authorize</strong> and approve the popup in Discord
+                    (scroll down in it to reach the Authorize button).</li>
+                  <li>To pull in your friends list, accept the
+                    <a href="https://discord.com/developers/applications/select/social-sdk/getting-started" target="_blank" rel="noopener">Social SDK Terms</a>
+                    for your app, then Remove credentials and authorize again.</li>
+                </ol>
               }
 
               @if (discordAuthorizing()) {
