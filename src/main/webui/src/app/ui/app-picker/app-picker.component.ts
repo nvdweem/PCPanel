@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input, model, output, signal } from '@angular/core';
+import { afterNextRender, ChangeDetectionStrategy, Component, computed, ElementRef, input, model, output, signal, viewChild } from '@angular/core';
 import { IconComponent } from '../icon/icon.component';
 
 export interface PickerItem {
@@ -21,7 +21,7 @@ export interface PickerItem {
     <div class="picker">
       <div class="head">
         <pc-icon name="search" [size]="15"></pc-icon>
-        <input class="q" [value]="query()" (input)="query.set($any($event.target).value)"
+        <input #q class="q" [value]="query()" (input)="query.set($any($event.target).value)"
                [placeholder]="placeholder()" spellcheck="false">
         @if (multi() && value().length) {
           <span class="count">{{ value().length }} selected</span>
@@ -82,6 +82,12 @@ export class AppPickerComponent {
   readonly picked = output<string>();
 
   readonly query = signal('');
+
+  /** Focus the filter as soon as the picker renders, so you can type immediately when it pops open. */
+  private readonly filterInput = viewChild<ElementRef<HTMLInputElement>>('q');
+  constructor() {
+    afterNextRender(() => this.filterInput()?.nativeElement.focus());
+  }
 
   readonly filtered = computed(() => {
     const q = this.query().trim().toLowerCase();
