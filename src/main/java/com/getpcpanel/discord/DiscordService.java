@@ -205,8 +205,17 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
                 .whenComplete((v, e) -> {
                     authInProgress.set(false);
                     if (e != null) {
-                        log.warn("Discord authentication with stored token failed; re-authorization may be needed", e);
                         clearAuthIfRejected(e);
+                        if (isConnected() && !isAuthenticated()) {
+                            // The connection accepted the AUTHENTICATE write but Discord never answered — a
+                            // half-dead pipe (it stops servicing the socket after an AUTHORIZE/redirect). Drop it
+                            // so the next health-check reconnects fresh and re-authenticates on a live socket,
+                            // rather than retrying forever against a pipe Discord has stopped reading.
+                            log.warn("Discord authentication failed; dropping the stale connection to retry fresh", e);
+                            disconnect();
+                        } else {
+                            log.warn("Discord authentication with stored token failed; re-authorization may be needed", e);
+                        }
                     }
                     fireChanged();
                 });
