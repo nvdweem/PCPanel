@@ -2,7 +2,7 @@ package com.getpcpanel.cpp.windows;
 
 import java.util.OptionalInt;
 
-import com.getpcpanel.cpp.FocusProcessService;
+import com.getpcpanel.cpp.IProcessHelper;
 import com.getpcpanel.platform.WindowsBuild;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.ptr.IntByReference;
@@ -14,7 +14,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @ApplicationScoped
 @WindowsBuild
-public class FocusProcessWindows implements FocusProcessService {
+public class WindowsProcessHelper implements IProcessHelper {
     @Override
     public OptionalInt foregroundPid() {
         try {

@@ -1,6 +1,7 @@
 package com.getpcpanel.discord.command;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.OptionalInt;
 
 import org.apache.commons.lang3.StringUtils;
@@ -10,7 +11,7 @@ import javax.annotation.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.commands.command.ButtonAction;
-import com.getpcpanel.cpp.FocusProcessService;
+import com.getpcpanel.cpp.IProcessHelper;
 import com.getpcpanel.discord.DiscordService;
 import com.getpcpanel.util.CdiHelper;
 
@@ -19,9 +20,9 @@ import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
 
 /**
- * Toggle Discord screen sharing. {@link Mode#SCREEN} shares via Discord's own share picker; {@link Mode#PROCESS}
- * and {@link Mode#FOCUS} share a specific window directly, resolving the chosen / focused window to its PID via
- * {@link FocusProcessService}. Toggling again stops the share.
+ * Toggle Discord screen sharing. {@link Mode#SCREEN} shares via Discord's own share picker; {@link Mode#FOCUS}
+ * shares the foreground window (its PID from {@link IProcessHelper}); {@link Mode#PROCESS} shares a named app
+ * (its PID resolved from the running process list). Toggling again stops the share.
  */
 @Getter
 @Log4j2
@@ -63,10 +64,9 @@ public final class CommandDiscordScreenShare extends CommandDiscord implements B
             share(service, null); // null PID → Discord shows its own "what to share" picker
             return;
         }
-        var pids = CdiHelper.getBean(FocusProcessService.class);
         var pid = mode == Mode.FOCUS
-                ? pids.foregroundPid()
-                : pids.pidForExecutable(processName.stream().filter(StringUtils::isNotBlank).findFirst().orElse(""));
+                ? CdiHelper.getBean(IProcessHelper.class).foregroundPid()
+                : pidForExecutable(processName.stream().filter(StringUtils::isNotBlank).findFirst().orElse(""));
         if (pid.isEmpty()) {
             log.warn("Discord screen share: couldn't resolve a PID for {} — nothing to share",
                     mode == Mode.FOCUS ? "the focused window" : processName);
@@ -80,5 +80,32 @@ public final class CommandDiscordScreenShare extends CommandDiscord implements B
             log.warn("Discord screen share failed", e);
             return null;
         });
+    }
+
+    /** PID of a live process whose executable base name matches {@code executable} (cross-platform via ProcessHandle). */
+    private static OptionalInt pidForExecutable(String executable) {
+        var target = baseName(executable);
+        if (target == null) {
+            return OptionalInt.empty();
+        }
+        return ProcessHandle.allProcesses()
+                .filter(p -> p.info().command().map(CommandDiscordScreenShare::baseName).map(target::equals).orElse(false))
+                .mapToInt(p -> (int) p.pid())
+                .findFirst();
+    }
+
+    /** Lowercased executable name without directory or extension, so a full path and a bare name compare equal. */
+    @Nullable
+    private static String baseName(String s) {
+        if (StringUtils.isBlank(s)) {
+            return null;
+        }
+        var name = s.replace('\\', '/');
+        name = name.substring(name.lastIndexOf('/') + 1);
+        var dot = name.lastIndexOf('.');
+        if (dot > 0) {
+            name = name.substring(0, dot);
+        }
+        return name.toLowerCase(Locale.ROOT);
     }
 }

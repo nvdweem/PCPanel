@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalInt;
 import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
@@ -14,6 +15,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
+import com.getpcpanel.cpp.IProcessHelper;
 import com.getpcpanel.platform.MacBuild;
 import com.getpcpanel.util.ProcessHelper;
 
@@ -28,7 +30,7 @@ import lombok.extern.log4j.Log4j2;
 @ApplicationScoped
 @MacBuild
 @RequiredArgsConstructor
-public class OsxProcessHelper {
+public class OsxProcessHelper implements IProcessHelper {
     private static final Pattern KEY_VALUE = Pattern.compile("\"(\\w+)\"\\s*=\\s*\"?(.*?)\"?\\s*$");
     private static final Pattern APP_HEADER = Pattern.compile("^\\s*\\d+\\)\\s+\"(.*)\"\\s+ASN:.*");
     private static final Pattern EXECUTABLE_PATH = Pattern.compile("executable path=\"(.*)\"");
@@ -44,6 +46,12 @@ public class OsxProcessHelper {
         public boolean foreground() {
             return "Foreground".equals(type);
         }
+    }
+
+    @Override
+    public OptionalInt foregroundPid() {
+        var app = getFrontmostApp();
+        return app != null && app.pid() > 0 ? OptionalInt.of(app.pid()) : OptionalInt.empty();
     }
 
     public @Nullable FrontmostApp getFrontmostApp() {

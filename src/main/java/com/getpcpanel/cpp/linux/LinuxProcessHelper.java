@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
@@ -17,6 +18,7 @@ import org.eclipse.microprofile.config.ConfigProvider;
 
 import javax.annotation.Nullable;
 
+import com.getpcpanel.cpp.IProcessHelper;
 import com.getpcpanel.platform.LinuxBuild;
 import com.getpcpanel.util.ProcessHelper;
 
@@ -30,9 +32,15 @@ import one.util.streamex.StreamEx;
 @Log4j2
 @ApplicationScoped
 @LinuxBuild
-public class LinuxProcessHelper {
+public class LinuxProcessHelper implements IProcessHelper {
     @Inject
     ProcessHelper processHelper;
+
+    @Override
+    public OptionalInt foregroundPid() {
+        var pid = getActiveProcessPid();
+        return pid > 0 ? OptionalInt.of(pid) : OptionalInt.empty();
+    }
 
     @PostConstruct
     void logResolvedTools() {
