@@ -8,6 +8,9 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -40,6 +43,13 @@ import lombok.extern.log4j.Log4j2;
  * {@code evt:"ERROR"}); server pushes are DISPATCH frames with an {@code evt} and no matching nonce.
  * Bodies are handled as Jackson trees (no per-message DTOs) to keep the native image free of extra
  * reflection registrations.
+ *
+ * <p>Threading: the Windows pipe is a {@code RandomAccessFile} whose reads and closes are blocking and
+ * <em>not</em> interruptible — a {@code close()} stalls until a pending {@code readFully} returns, and a
+ * write to a half-dead pipe blocks until its OS buffer drains. So every write goes through the
+ * connection's own single writer thread, and closing is handed to a throwaway thread; a caller (HTTP
+ * request, scheduler tick, command dispatch, or the read thread) is therefore never the one that blocks.
+ * A {@link Channel} bundles a transport with its writer so a reconnect swaps both atomically.
  */
 @Log4j2
 public abstract class DiscordRpcClientImpl implements IDiscordRpcClient {
@@ -61,12 +71,21 @@ public abstract class DiscordRpcClientImpl implements IDiscordRpcClient {
     private final ConcurrentHashMap<String, DiscordVoiceUser> voiceUsers = new ConcurrentHashMap<>();
 
     protected volatile String clientId;
-    private volatile DiscordIpcConnection connection;
+    @Nullable private volatile Channel channel;
     private volatile boolean authenticated;
     @Nullable private volatile DiscordUser selfUser;
     @Nullable private volatile String currentChannelId;
     private volatile DiscordVoiceSettings voiceSettings = DiscordVoiceSettings.EMPTY;
     @Nullable private CompletableFuture<DiscordUser> readyFuture;
+
+    /**
+     * A live transport plus the dedicated single-thread writer that owns every write to it. Bundling the
+     * two means a reconnect swaps them together (a write can never target a different connection's writer)
+     * and that a connection abandoned because its blocking write/close never returned takes its stuck
+     * threads down with it — bounded to one writer + one closer per disconnect, all daemon threads.
+     */
+    private record Channel(DiscordIpcConnection conn, ExecutorService writer) {
+    }
 
     protected DiscordRpcClientImpl() {
     }
@@ -87,7 +106,13 @@ public abstract class DiscordRpcClientImpl implements IDiscordRpcClient {
         if (conn == null) {
             return CompletableFuture.failedFuture(new IOException("No Discord IPC endpoint found (is Discord running?)"));
         }
-        connection = conn;
+        var writer = Executors.newSingleThreadExecutor(r -> {
+            var t = new Thread(r, "discord-ipc-write");
+            t.setDaemon(true);
+            return t;
+        });
+        var ch = new Channel(conn, writer);
+        channel = ch;
         var future = new CompletableFuture<DiscordUser>();
         readyFuture = future;
         // Fail fast (and drop the dead connection) if Discord never sends READY, so the authorize/connect
@@ -98,39 +123,56 @@ public abstract class DiscordRpcClientImpl implements IDiscordRpcClient {
             }
         });
         try {
-            // Send the handshake BEFORE starting the read thread. A blocking read concurrent with the
-            // very first write on the same pipe can delay the handshake past Discord's timeout —
-            // RandomAccessFile shares one file pointer across read and write — which Discord answers with
-            // a "Handshake timeout" close instead of processing it. Writing it first matches the
-            // single-threaded ordering Discord accepts; later command writes can safely race the reads.
+            // The handshake is the ONE write done synchronously — on a brand-new pipe Discord drains at once,
+            // and it must go out BEFORE the read thread starts: a blocking read concurrent with the very
+            // first write on the same pipe can delay the handshake past Discord's timeout (RandomAccessFile
+            // shares one file pointer across read and write), which Discord answers with a "Handshake
+            // timeout" close. Every later write goes through the connection's writer thread instead.
             conn.writeFrame(OP_HANDSHAKE, mapper.writeValueAsBytes(mapper.createObjectNode().put("v", 1).put("client_id", clientId)));
         } catch (IOException e) {
-            connection = null;
-            conn.close();
+            channel = null;
+            closeDetached(ch);
             future.completeExceptionally(e);
             return future;
         }
-        var thread = new Thread(() -> readLoop(conn), "discord-ipc-read");
+        var thread = new Thread(() -> readLoop(ch), "discord-ipc-read");
         thread.setDaemon(true);
         thread.start();
         return future;
     }
 
     public synchronized void disconnect() {
-        var conn = connection;
-        connection = null;
+        var ch = channel;
+        channel = null;
         authenticated = false;
         voiceUsers.clear();
         currentChannelId = null;
-        if (conn != null) {
-            conn.close(); // the read thread sees isOpen()==false / a read error and exits, firing onConnectionDropped
+        if (ch != null) {
+            closeDetached(ch); // never block the caller: on Windows close() stalls until a pending read returns
         }
+    }
+
+    /**
+     * Closes a transport and stops its writer without blocking the caller. On Windows
+     * {@code RandomAccessFile.close()} blocks until a pending blocking {@code readFully} returns (CloseHandle
+     * waits on the in-flight ReadFile), so closing on the calling thread — an HTTP request, the scheduler, or
+     * the read thread — would stall it and everything waiting on this client's monitor with it. The close
+     * runs on a throwaway daemon thread; if the OS never unblocks the read, only that thread (and the idle
+     * writer) linger, bounded to one per disconnect.
+     */
+    private static void closeDetached(Channel ch) {
+        var t = new Thread(() -> {
+            ch.writer().shutdownNow();
+            ch.conn().close();
+        }, "discord-ipc-close");
+        t.setDaemon(true);
+        t.start();
     }
 
     @Override
     public boolean isConnected() {
-        var c = connection;
-        return c != null && c.isOpen();
+        var ch = channel;
+        return ch != null && ch.conn().isOpen();
     }
 
     @Override
@@ -138,21 +180,40 @@ public abstract class DiscordRpcClientImpl implements IDiscordRpcClient {
         return authenticated && isConnected();
     }
 
-    /** Best-effort keep-alive; drops the connection on write failure so the next health-check reconnects. */
+    /** Best-effort keep-alive; a failed write drops the connection (via {@link #writeFrame}) so the next health-check reconnects. */
     public void ping() {
-        var c = connection;
-        if (c == null) {
-            return;
-        }
-        try {
-            c.writeFrame(OP_PING, "{}".getBytes(StandardCharsets.UTF_8));
-        } catch (IOException e) {
-            log.debug("Discord ping failed", e);
-            disconnect();
-        }
+        writeFrame(OP_PING, "{}".getBytes(StandardCharsets.UTF_8));
     }
 
-    private void readLoop(DiscordIpcConnection conn) {
+    /**
+     * Enqueues one framed message on the current connection's writer thread and returns at once — the caller
+     * never blocks on the pipe. The returned future completes when the bytes are written, or fails if there
+     * is no live connection or the write errors (which also drops the connection so the next check reconnects).
+     */
+    private CompletableFuture<Void> writeFrame(int opcode, byte[] payload) {
+        var ch = channel;
+        if (ch == null || !ch.conn().isOpen()) {
+            return CompletableFuture.failedFuture(new IOException("Discord IPC not connected"));
+        }
+        var done = new CompletableFuture<Void>();
+        try {
+            ch.writer().execute(() -> {
+                try {
+                    ch.conn().writeFrame(opcode, payload);
+                    done.complete(null);
+                } catch (IOException e) {
+                    done.completeExceptionally(e);
+                    disconnect(); // a failed write means the pipe is gone — drop it so the next check reconnects
+                }
+            });
+        } catch (RejectedExecutionException e) {
+            done.completeExceptionally(new IOException("Discord IPC writer stopped", e));
+        }
+        return done;
+    }
+
+    private void readLoop(Channel ch) {
+        var conn = ch.conn();
         try {
             while (conn.isOpen()) {
                 dispatch(conn, conn.readFrame());
@@ -162,14 +223,15 @@ public abstract class DiscordRpcClientImpl implements IDiscordRpcClient {
         } catch (RuntimeException e) {
             log.warn("Discord IPC read loop error", e);
         } finally {
-            onConnectionDropped(conn);
+            onConnectionDropped(ch);
         }
     }
 
-    private synchronized void onConnectionDropped(DiscordIpcConnection conn) {
-        conn.close();
-        if (connection == conn) { // only react if this thread still owns the live connection
-            connection = null;
+    private synchronized void onConnectionDropped(Channel ch) {
+        ch.writer().shutdownNow();
+        ch.conn().close(); // the read has already ended here, so this close does not block
+        if (channel == ch) { // only react if this thread still owns the live connection
+            channel = null;
             authenticated = false;
             voiceUsers.clear();
             currentChannelId = null;
@@ -207,9 +269,8 @@ public abstract class DiscordRpcClientImpl implements IDiscordRpcClient {
     }
 
     private CompletableFuture<JsonNode> request(String cmd, @Nullable String evt, @Nullable ObjectNode args, long timeoutMs) {
-        var conn = connection;
         var future = new CompletableFuture<JsonNode>();
-        if (conn == null || !conn.isOpen()) {
+        if (!isConnected()) {
             future.completeExceptionally(new IOException("Discord IPC not connected"));
             return future;
         }
@@ -223,27 +284,33 @@ public abstract class DiscordRpcClientImpl implements IDiscordRpcClient {
             node.set("args", args);
         }
         node.put("nonce", nonce);
+        byte[] bytes;
+        try {
+            bytes = mapper.writeValueAsBytes(node);
+        } catch (IOException e) {
+            future.completeExceptionally(e);
+            return future;
+        }
         pending.put(nonce, future);
         future.orTimeout(timeoutMs, TimeUnit.MILLISECONDS).whenComplete((r, e) -> pending.remove(nonce));
-        try {
-            conn.writeFrame(OP_FRAME, mapper.writeValueAsBytes(node));
-        } catch (IOException e) {
+        writeFrame(OP_FRAME, bytes).exceptionally(e -> {
             pending.remove(nonce);
             future.completeExceptionally(e);
-        }
+            return null;
+        });
         return future;
     }
 
     private void dispatch(DiscordIpcConnection conn, DiscordIpcConnection.Frame frame) throws IOException {
         switch (frame.opcode()) {
             case OP_FRAME -> handleFrame(mapper.readTree(frame.body()));
-            case OP_PING -> conn.writeFrame(OP_PONG, frame.body());
+            case OP_PING -> writeFrame(OP_PONG, frame.body()); // answered via the writer thread, never inline on the read thread
             case OP_PONG -> { /* keep-alive ack */ }
             case OP_CLOSE -> {
                 var node = mapper.readTree(frame.body());
                 log.info("Discord IPC closed by server: {}", node);
                 trigger(l -> l.onError(new DiscordRpcException(node)));
-                conn.close(); // ends the read loop, which fires connectionClosed
+                conn.close(); // ends the read loop, which fires connectionClosed; safe here — no read is in flight
             }
             default -> log.debug("Unhandled Discord opcode {}", frame.opcode());
         }

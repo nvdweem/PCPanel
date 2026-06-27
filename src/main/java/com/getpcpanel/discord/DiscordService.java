@@ -157,8 +157,13 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
         setClientId(cfg.clientId());
         lastAuthError = null;
         log.info("Discord authorize: connecting to Discord…");
-        var connected = isConnected() ? CompletableFuture.completedFuture(getSelfUser()) : connect();
-        return connected
+        // Always (re)connect with a fresh handshake rather than reusing the live connection. Discord renders
+        // the consent popup for an AUTHORIZE that directly follows a handshake; sent down a long-idle
+        // connection (whose Windows pipe can still read as open after Discord dropped it) the AUTHORIZE is
+        // silently swallowed — no popup, then a 120s timeout. A fresh connect also keeps the chain off the
+        // HTTP request thread (the ready future isn't pre-completed), so POST /authorize returns at once
+        // instead of blocking on the pipe write.
+        return connect()
                 .thenCompose(x -> {
                     log.info("Discord authorize: requesting consent — APPROVE THE POPUP INSIDE DISCORD…");
                     return authorize(SCOPES);

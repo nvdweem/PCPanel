@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.SocketChannel;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.annotation.Nullable;
 
@@ -19,6 +20,7 @@ import javax.annotation.Nullable;
 final class UnixSocketConnection implements DiscordIpcConnection {
     private final SocketChannel channel;
     private volatile boolean open = true;
+    private final AtomicBoolean closing = new AtomicBoolean(false);
 
     private UnixSocketConnection(SocketChannel channel) {
         this.channel = channel;
@@ -74,12 +76,16 @@ final class UnixSocketConnection implements DiscordIpcConnection {
     }
 
     @Override
-    public synchronized void close() {
+    public void close() {
         open = false;
-        try {
-            channel.close();
-        } catch (IOException ignored) {
-            // Already-closed channel can throw; nothing to do.
+        // Closing a SocketChannel interrupts a blocking read (unlike the Windows pipe), so this does not
+        // stall; the CAS guard just keeps a redundant second close() a harmless no-op, matching the pipe.
+        if (closing.compareAndSet(false, true)) {
+            try {
+                channel.close();
+            } catch (IOException ignored) {
+                // Already-closed channel can throw; nothing to do.
+            }
         }
     }
 }

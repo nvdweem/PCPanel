@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.annotation.Nullable;
 
@@ -16,6 +17,7 @@ import javax.annotation.Nullable;
 final class WindowsPipeConnection implements DiscordIpcConnection {
     private final RandomAccessFile pipe;
     private volatile boolean open = true;
+    private final AtomicBoolean closing = new AtomicBoolean(false);
 
     private WindowsPipeConnection(RandomAccessFile pipe) {
         this.pipe = pipe;
@@ -59,12 +61,19 @@ final class WindowsPipeConnection implements DiscordIpcConnection {
     }
 
     @Override
-    public synchronized void close() {
+    public void close() {
         open = false;
-        try {
-            pipe.close();
-        } catch (IOException ignored) {
-            // Closing a broken pipe can throw; nothing useful to do.
+        // Close the handle at most once. A blocking readFully on the read thread makes the first
+        // RandomAccessFile.close() stall in native close0 while it holds the FileDescriptor's close lock;
+        // a second close() would block on that same lock. The CAS guard turns every call after the first
+        // into a no-op so no thread (the read thread reaching onConnectionDropped, say) can be trapped there.
+        // Not synchronized for the same reason — the guard, not a monitor, is what makes this safe to race.
+        if (closing.compareAndSet(false, true)) {
+            try {
+                pipe.close();
+            } catch (IOException ignored) {
+                // Closing a broken pipe can throw; nothing useful to do.
+            }
         }
     }
 }
