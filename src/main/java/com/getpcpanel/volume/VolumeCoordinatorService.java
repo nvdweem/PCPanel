@@ -24,11 +24,21 @@ import one.util.streamex.StreamEx;
 public class VolumeCoordinatorService {
     @Inject ISndCtrl sndCtrl;
     @Inject Instance<IFocusRedirector> focusRedirectors;
+    @Inject FocusVolumeOverrideService focusOverride;
     @Inject SaveService saveService;
 
-    public void setFocusVolume(double value) {
+    public void setFocusVolume(double value, String device) {
         var application = sndCtrl.getFocusApplication();
         var floatValue = (float) value;
+
+        // Explicit Focus Override rules (issue #49) win over everything: the user has deliberately
+        // redirected this app's focus dial to specific targets. handle() returns true when it fully owns
+        // the request (don't also touch the source); with "include source" on it returns false so the
+        // source's own volume still flows through the normal pipeline below.
+        if (focusOverride.handle(application, floatValue, device)) {
+            log.debug("Focus volume for {} handled by an override rule", application);
+            return;
+        }
 
         // "Skip controlled apps" takes precedence: if the focused app is already controlled elsewhere (a
         // per-app command, or a Wave Link channel — e.g. the user has a dedicated slider for that Wave Link
@@ -101,6 +111,10 @@ public class VolumeCoordinatorService {
      * volume. Used by the dev test harness to inspect where focused-app volume goes.
      */
     public Optional<String> focusVolumeTarget(String application) {
+        // An override rule wins over the redirector chain (see setFocusVolume), so report it first.
+        if (focusOverride.controls(application)) {
+            return Optional.of(FocusVolumeOverrideService.class.getSimpleName());
+        }
         return StreamEx.of(focusRedirectors.handlesStream())
                 .findFirst(fr -> fr.get().controlsFocusApp(application))
                 .map(fr -> fr.get().getClass().getSimpleName());

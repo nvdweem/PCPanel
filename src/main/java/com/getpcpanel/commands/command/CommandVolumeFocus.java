@@ -20,7 +20,7 @@ public class CommandVolumeFocus extends CommandVolume implements DialAction {
 
     @Override
     public void execute(DialActionParameters context) {
-        CdiHelper.getBean(VolumeCoordinatorService.class).setFocusVolume(context.dial().getValue(this, 0, 1));
+        CdiHelper.getBean(VolumeCoordinatorService.class).setFocusVolume(context.dial().getValue(this, 0, 1), context.device());
     }
 
     @Override
