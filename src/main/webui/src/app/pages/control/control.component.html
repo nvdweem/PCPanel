@@ -103,7 +103,16 @@
         <!-- Action list -->
         <div class="action-list">
           <div class="al-head">
-            <span class="micro-label">{{ activeSlot() === 'release' ? 'BUTTON ACTIONS · ON RELEASE' : activeSlot() !== 'rotate' ? 'BUTTON ACTIONS · ON PRESS' : isSlider() ? 'FADER ACTIONS · 0–100%' : 'DIAL ACTIONS · 0–100%' }}</span>
+            <span class="al-head-left">
+              <span class="micro-label">{{ activeSlot() === 'release' ? 'BUTTON ACTIONS · ON RELEASE' : activeSlot() !== 'rotate' ? 'BUTTON ACTIONS · ON PRESS' : isSlider() ? 'FADER ACTIONS · 0–100%' : 'DIAL ACTIONS · 0–100%' }}</span>
+              @if (showSeqToggle()) {
+                <button class="seq-toggle" (click)="toggleSlotMode()"
+                        [title]="currentSlotSignal()().type === 'sequential' ? 'One action per press, advancing each time. Click to run every action at once.' : 'Every action runs on each press. Click to advance one action per press instead.'">
+                  <span class="dash">—</span>{{ currentSlotSignal()().type === 'sequential' ? 'in sequence' : 'all at once' }}
+                  <pc-icon name="pencil" [size]="12"></pc-icon>
+                </button>
+              }
+            </span>
             <span class="hint-sm">drag to reorder</span>
           </div>
 
