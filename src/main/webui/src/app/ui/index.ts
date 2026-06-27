@@ -18,6 +18,7 @@ export { ModalComponent } from './modal/modal.component';
 export { ColorPickerComponent } from './color-picker/color-picker.component';
 export { AppPickerComponent } from './app-picker/app-picker.component';
 export type { PickerItem } from './app-picker/app-picker.component';
+export { AutofocusDirective } from './autofocus.directive';
 export { KeyRecorderComponent } from './key-recorder/key-recorder.component';
 export { ToastService } from './toast/toast.service';
 export type { Toast, ToastKind } from './toast/toast.service';

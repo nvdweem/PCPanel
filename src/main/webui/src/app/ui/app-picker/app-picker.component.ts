@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, model, output, signal } from '@angular/core';
 import { IconComponent } from '../icon/icon.component';
+import { AutofocusDirective } from '../autofocus.directive';
 
 export interface PickerItem {
   key: string;
@@ -16,12 +17,12 @@ export interface PickerItem {
 @Component({
   selector: 'pc-app-picker',
   standalone: true,
-  imports: [IconComponent],
+  imports: [IconComponent, AutofocusDirective],
   template: `
     <div class="picker">
       <div class="head">
         <pc-icon name="search" [size]="15"></pc-icon>
-        <input class="q" [value]="query()" (input)="query.set($any($event.target).value)"
+        <input class="q" pcAutofocus [value]="query()" (input)="query.set($any($event.target).value)"
                [placeholder]="placeholder()" spellcheck="false">
         @if (multi() && value().length) {
           <span class="count">{{ value().length }} selected</span>

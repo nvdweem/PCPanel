@@ -25,7 +25,7 @@ export type FieldDef = (
   | { kind: 'toggle'; key: string; label: string }
   | { kind: 'select'; key: string; label: string; options: { value: string; label: string }[] }
   | { kind: 'select-live'; key: string; label: string; source: LiveSource; searchable?: boolean }
-  | { kind: 'apps'; key: string; label: string }
+  | { kind: 'apps'; key: string; label: string; single?: boolean }  // single: pick exactly one app (still stored as a 1-element array)
   | { kind: 'device'; key: string; label: string; filter?: 'output' | 'input' | 'all'; defaultLabel?: string }  // defaultLabel: adds a selectable empty option (e.g. "Default device") for commands where blank = the default
   | { kind: 'mute'; key: string; label: string }
   | { kind: 'keystroke' }                       // CommandKeystroke: KEY/TEXT toggle + combo/text
@@ -342,7 +342,7 @@ export const COMMANDS: CommandDef[] = [
           { value: 'SCREEN', label: 'Choose in Discord' }, { value: 'PROCESS', label: 'Specific app' }, { value: 'FOCUS', label: 'Focused app' },
         ],
       },
-      { kind: 'apps', key: 'processName', label: 'App', showWhen: { key: 'mode', equals: 'PROCESS' } },
+      { kind: 'apps', key: 'processName', label: 'App', single: true, showWhen: { key: 'mode', equals: 'PROCESS' } },
     ],
   },
   {

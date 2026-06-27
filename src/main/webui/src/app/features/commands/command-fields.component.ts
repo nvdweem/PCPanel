@@ -104,14 +104,15 @@ type Cmd = Record<string, any>;
                   <span class="pc-chip">{{ p }}<span class="x" (click)="removeFromArray($any(f).key, p)"><pc-icon name="x" [size]="11" [strokeWidth]="2.5"></pc-icon></span></span>
                 }
                 <button class="pc-chip dashed" cdkOverlayOrigin #ao="cdkOverlayOrigin" (click)="appsOpen.set($any(f).key)">
-                  <pc-icon name="plus" [size]="12"></pc-icon> add app
+                  <pc-icon name="plus" [size]="12"></pc-icon> {{ $any(f).single ? 'choose app' : 'add app' }}
                 </button>
                 <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="ao" [cdkConnectedOverlayOpen]="appsOpen() === $any(f).key"
                              [cdkConnectedOverlayHasBackdrop]="true" cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
                              [cdkConnectedOverlayWidth]="300" [cdkConnectedOverlayOffsetY]="6"
                              (backdropClick)="appsOpen.set(null)" (detach)="appsOpen.set(null)">
-                  <pc-app-picker [items]="data.processItems()" [multi]="true"
-                                 [value]="asArray($any(f).key)" (valueChange)="set($any(f).key, $event)"></pc-app-picker>
+                  <pc-app-picker [items]="data.processItems()" [multi]="!$any(f).single"
+                                 [value]="asArray($any(f).key)" (valueChange)="set($any(f).key, $event)"
+                                 (picked)="appsOpen.set(null)"></pc-app-picker>
                 </ng-template>
               </div>
             </div>
