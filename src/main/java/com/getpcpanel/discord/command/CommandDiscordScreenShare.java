@@ -81,6 +81,7 @@ public final class CommandDiscordScreenShare extends CommandDiscord implements B
             return null;
         }
         return CdiHelper.getBean(ISndCtrl.class).getRunningApplications().stream()
+                .filter(a -> a.pid() > 0) // Linux/PulseAudio reports pid 0 (no real PID) — treat as unresolved, not a bogus target
                 .filter(a -> key.equals(baseName(a.file() == null ? a.name() : a.file().getName())))
                 .map(ISndCtrl.RunningApplication::pid)
                 .findFirst().orElse(null);
