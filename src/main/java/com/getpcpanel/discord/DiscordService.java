@@ -49,8 +49,8 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
     // SDK Terms (https://discord.com/developers/applications/select/social-sdk/getting-started) — until then
     // Discord rejects the AUTHORIZE with invalid_scope. So we REQUEST it but fall back to CORE_SCOPES if it's
     // refused, so a missing acceptance never breaks the (critical) voice authorization.
-    private static final List<String> CORE_SCOPES = List.of("rpc", "rpc.voice.read", "rpc.voice.write", "rpc.screenshare.write");
-    private static final List<String> SCOPES = List.of("rpc", "rpc.voice.read", "rpc.voice.write", "rpc.screenshare.write", "relationships.read");
+    private static final List<String> CORE_SCOPES = List.of("rpc", "rpc.voice.read", "rpc.voice.write", "rpc.screenshare.write", "rpc.video.write");
+    private static final List<String> SCOPES = List.of("rpc", "rpc.voice.read", "rpc.voice.write", "rpc.screenshare.write", "rpc.video.write", "relationships.read");
     private static final String SEEN_USERS_KEY = "discord-seen-users";
     /** Cap on the persisted "people you've targeted" roster, so it can't grow without bound. */
     private static final int MAX_SEEN_USERS = 100;

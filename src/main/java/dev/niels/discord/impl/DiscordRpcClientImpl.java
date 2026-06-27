@@ -478,6 +478,11 @@ public abstract class DiscordRpcClientImpl implements IDiscordRpcClient {
         return send("TOGGLE_SCREENSHARE", args).thenApply(d -> null);
     }
 
+    /** Toggles your camera (video) on/off in the current call. */
+    public CompletableFuture<Void> toggleVideo() {
+        return send("TOGGLE_VIDEO", null).thenApply(d -> null);
+    }
+
     // ── voice control ───────────────────────────────────────────────────────────
 
     @Override

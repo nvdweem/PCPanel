@@ -57,6 +57,7 @@ import com.getpcpanel.discord.command.CommandDiscordJoinVoice;
 import com.getpcpanel.discord.command.CommandDiscordLeaveVoice;
 import com.getpcpanel.discord.command.CommandDiscordMute;
 import com.getpcpanel.discord.command.CommandDiscordScreenShare;
+import com.getpcpanel.discord.command.CommandDiscordToggleVideo;
 import com.getpcpanel.discord.command.CommandDiscordVolume;
 import com.getpcpanel.discord.command.CommandDiscordSelfDeafen;
 import com.getpcpanel.discord.command.CommandDiscordSelfInputVolume;
@@ -238,6 +239,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         CommandDiscordMute.class,
         CommandDiscordVolume.class,
         CommandDiscordScreenShare.class,
+        CommandDiscordToggleVideo.class,
         CommandDiscordSelfMute.class,
         CommandDiscordSelfDeafen.class,
         CommandDiscordUserMute.class,

@@ -339,11 +339,16 @@ export const COMMANDS: CommandDef[] = [
     fields: [
       {
         kind: 'select', key: 'mode', label: 'Share', options: [
-          { value: 'SCREEN', label: 'Screen' }, { value: 'PROCESS', label: 'Specific app' }, { value: 'FOCUS', label: 'Focused app' },
+          { value: 'SCREEN', label: 'Choose in Discord' }, { value: 'PROCESS', label: 'Specific app' }, { value: 'FOCUS', label: 'Focused app' },
         ],
       },
       { kind: 'apps', key: 'processName', label: 'App', showWhen: { key: 'mode', equals: 'PROCESS' } },
     ],
+  },
+  {
+    type: DC + 'CommandDiscordToggleVideo', label: 'Discord — toggle camera', category: 'integration', integration: 'discord', kinds: ['button'], icon: 'film',
+    buildEmpty: () => ({ _type: DC + 'CommandDiscordToggleVideo', overlayText: '' }),
+    fields: [],
   },
   {
     type: DC + 'CommandDiscordJoinVoice', label: 'Discord — join voice', category: 'integration', integration: 'discord', kinds: ['button'], icon: 'plug',

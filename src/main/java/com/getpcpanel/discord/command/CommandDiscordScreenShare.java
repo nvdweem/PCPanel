@@ -47,7 +47,7 @@ public final class CommandDiscordScreenShare extends CommandDiscord implements B
     @Override
     public String buildLabel() {
         return switch (mode) {
-            case SCREEN -> "Discord — share screen";
+            case SCREEN -> "Discord — screen share (choose in Discord)";
             case FOCUS -> "Discord — share focused app";
             case PROCESS -> "Discord — share " + processName.stream().findFirst().orElse("app");
         };
@@ -76,9 +76,14 @@ public final class CommandDiscordScreenShare extends CommandDiscord implements B
     }
 
     private void share(DiscordService service, @Nullable Integer pid) {
-        service.toggleScreenShare(pid).exceptionally(e -> {
-            log.warn("Discord screen share failed", e);
-            return null;
+        var what = pid == null ? "choose in Discord" : "pid=" + pid;
+        log.info("Discord screen share: sending TOGGLE_SCREENSHARE ({})", what);
+        service.toggleScreenShare(pid).whenComplete((v, e) -> {
+            if (e != null) {
+                log.warn("Discord screen share failed ({})", what, e);
+            } else {
+                log.info("Discord screen share: Discord accepted TOGGLE_SCREENSHARE ({})", what);
+            }
         });
     }
 
