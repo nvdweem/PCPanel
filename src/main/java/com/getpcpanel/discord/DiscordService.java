@@ -397,14 +397,14 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
         setSelfDeaf(type.convert(getVoiceSettings().deaf()));
     }
 
-    /** Set own mic volume from a 0..1 dial fraction (mapped to Discord's 0-100 input range). */
-    public void applyInputVolume(float fraction) {
-        setInputVolume(fraction * 100f);
+    /** Set own mic volume from a 0..1 dial fraction (mapped to Discord's 0-100 input range), optionally self-unmuting. */
+    public void applyInputVolume(float fraction, boolean unmute) {
+        setInputVolume(fraction * 100f, unmute);
     }
 
-    /** Set own output volume from a 0..1 dial fraction (mapped to Discord's 0-200 output range). */
-    public void applyOutputVolume(float fraction) {
-        setOutputVolume(fraction * 200f);
+    /** Set own output volume from a 0..1 dial fraction (mapped to Discord's 0-200 output range), optionally self-undeafening. */
+    public void applyOutputVolume(float fraction, boolean undeafen) {
+        setOutputVolume(fraction * 200f, undeafen);
     }
 
     /** Set how loudly you hear {@code username} from a 0..1 dial fraction (mapped to Discord's 0-200 range). */

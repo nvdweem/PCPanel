@@ -16,10 +16,14 @@ import lombok.extern.log4j.Log4j2;
 @ToString(callSuper = true)
 public final class CommandDiscordSelfInputVolume extends CommandDiscord implements DialAction {
     @Nullable private final DialCommandParams dialParams;
+    private final boolean unmuteOnChange;
 
     @JsonCreator
-    public CommandDiscordSelfInputVolume(@JsonProperty("dialParams") @Nullable DialCommandParams dialParams) {
+    public CommandDiscordSelfInputVolume(
+            @JsonProperty("dialParams") @Nullable DialCommandParams dialParams,
+            @JsonProperty("unmuteOnChange") boolean unmuteOnChange) {
         this.dialParams = dialParams;
+        this.unmuteOnChange = unmuteOnChange;
     }
 
     @Override
@@ -34,6 +38,6 @@ public final class CommandDiscordSelfInputVolume extends CommandDiscord implemen
             log.warn("Not sending command, Discord not connected/authenticated");
             return;
         }
-        service.applyInputVolume(context.dial().getValue(this, 0, 1));
+        service.applyInputVolume(context.dial().getValue(this, 0, 1), unmuteOnChange);
     }
 }

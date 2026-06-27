@@ -141,6 +141,7 @@ export class SettingsComponent {
   // Exposed for the template (the injected integrations service is private).
   readonly discordStatusValue = computed(() => this.integrations.discordStatus.value());
   readonly discordUsersValue = computed(() => this.integrations.discordUsers.value() ?? []);
+  readonly discordConnOpen = signal(false); // expander for the client id/secret/uri once connected
 
   // Font families the backend (Java2D) can actually render — the overlay font picker only offers these.
   readonly overlayFonts = httpResource<string[]>(() => '/api/overlay/fonts');

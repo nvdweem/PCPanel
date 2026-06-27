@@ -75,6 +75,7 @@ export interface CommandDiscordSelfDeafen extends CommandDiscord, ButtonAction {
 
 export interface CommandDiscordSelfInputVolume extends CommandDiscord, DialAction {
     _type: "com.getpcpanel.discord.command.CommandDiscordSelfInputVolume";
+    unmuteOnChange: boolean;
 }
 
 export interface CommandDiscordSelfMute extends CommandDiscord, ButtonAction {
@@ -84,6 +85,7 @@ export interface CommandDiscordSelfMute extends CommandDiscord, ButtonAction {
 
 export interface CommandDiscordSelfOutputVolume extends CommandDiscord, DialAction {
     _type: "com.getpcpanel.discord.command.CommandDiscordSelfOutputVolume";
+    undeafenOnChange: boolean;
 }
 
 export interface CommandDiscordUserMute extends CommandDiscord, ButtonAction {

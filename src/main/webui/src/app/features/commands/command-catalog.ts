@@ -329,13 +329,13 @@ export const COMMANDS: CommandDef[] = [
   },
   {
     type: DC + 'CommandDiscordSelfInputVolume', label: 'Discord — mic volume', category: 'integration', integration: 'discord', kinds: ['dial'], icon: 'mic',
-    buildEmpty: () => ({ _type: DC + 'CommandDiscordSelfInputVolume', dialParams: dialParams(), invert: false }),
-    fields: [],
+    buildEmpty: () => ({ _type: DC + 'CommandDiscordSelfInputVolume', unmuteOnChange: false, dialParams: dialParams(), invert: false }),
+    fields: [{ kind: 'toggle', key: 'unmuteOnChange', label: 'Unmute when changed' }],
   },
   {
     type: DC + 'CommandDiscordSelfOutputVolume', label: 'Discord — output volume', category: 'integration', integration: 'discord', kinds: ['dial'], icon: 'volume',
-    buildEmpty: () => ({ _type: DC + 'CommandDiscordSelfOutputVolume', dialParams: dialParams(), invert: false }),
-    fields: [],
+    buildEmpty: () => ({ _type: DC + 'CommandDiscordSelfOutputVolume', undeafenOnChange: false, dialParams: dialParams(), invert: false }),
+    fields: [{ kind: 'toggle', key: 'undeafenOnChange', label: 'Undeafen when changed' }],
   },
   {
     type: DC + 'CommandDiscordUserVolume', label: 'Discord — user volume', category: 'integration', integration: 'discord', kinds: ['dial'], icon: 'volume',
