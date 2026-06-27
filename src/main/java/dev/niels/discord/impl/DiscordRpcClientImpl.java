@@ -472,9 +472,7 @@ public abstract class DiscordRpcClientImpl implements IDiscordRpcClient {
     /** Toggles screen sharing: a non-null {@code pid} shares that window directly, null opens Discord's share picker. */
     public CompletableFuture<Void> toggleScreenShare(@Nullable Integer pid) {
         var args = mapper.createObjectNode();
-        if (pid == null) {
-            args.putNull("pid");
-        } else {
+        if (pid != null) {
             args.put("pid", pid);
         }
         return send("TOGGLE_SCREENSHARE", args).thenApply(d -> null);
