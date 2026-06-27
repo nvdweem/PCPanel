@@ -142,4 +142,19 @@ the platform installers (`packaging/`) and publishes a per-branch pre-release.
 Open a pull request against `main` with a clear description of the change and the motivation. If your
 change affects behavior users will notice, mention it so it can make the changelog. Bug reports and
 feature requests are welcome on the [issue tracker](https://github.com/nvdweem/PCPanel/issues).
-</content>
+
+## AI-assisted contributions
+
+AI tooling is welcome here — but **be transparent about it.** In the pull request description, state
+how the change was produced:
+
+- **How much AI was used** — from "wrote it by hand, AI only reviewed" through "AI-assisted edits" to
+  "fully AI-generated." If a PR is generated entirely by an AI agent with no human writing or editing
+  the code, say so explicitly (e.g. "This PR is fully AI-generated").
+- **How much you reviewed yourself** — did you read every line, run the app, run the tests, verify the
+  behavior on hardware? Or are you submitting AI output you have not fully checked? Both are fine to
+  submit, but the reviewer needs to know which one it is so they can weigh how closely to scrutinize it.
+
+Reviewers rely on this to calibrate trust. An honest "AI-generated, lightly reviewed" is far more
+useful than silence — undisclosed AI output that turns out to be wrong erodes trust in every future
+contribution.

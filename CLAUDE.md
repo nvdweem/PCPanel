@@ -310,4 +310,19 @@ Full reference: [`docs/mcp-server.md`](docs/mcp-server.md).
 
 - Make small, clean intermediate commits as work progresses (one logical change per commit) rather
   than one large commit at the end.
+- **Commit your work without being asked.** Once a logical change is complete, commit it — don't stop
+  to ask "should I commit?". Committing is the default expectation; only *pushing* needs explicit
+  permission.
 - Never `git push` until the user explicitly asks for it.
+
+## AI-generated contributions — disclosure
+
+When you (an AI agent) prepare a pull request for this repo, **disclose the AI involvement in the PR
+body** — this is required, see the "AI-assisted contributions" section in
+[CONTRIBUTING.md](CONTRIBUTING.md). Specifically:
+
+- State how much of the change is AI-generated, and how much was reviewed by a human vs. only by the
+  AI, so reviewers can calibrate scrutiny.
+- Whenever creating a pull request, include this line verbatim in the PR body:
+
+  > This pull request was made by an AI without any human intervention
