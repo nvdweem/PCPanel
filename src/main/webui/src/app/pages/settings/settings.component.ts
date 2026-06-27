@@ -390,6 +390,10 @@ export class SettingsComponent {
   // editors reuse the same command picker + field editor as the control page, so a target can be anything
   // the app can set a volume on.
 
+  /** Command types not offered as override targets: Brightness reads the live control position rather than
+   *  a fed value, so a synthesized focus value can't drive it (it stays available on the control page). */
+  readonly focusTargetExclude = ['com.getpcpanel.commands.command.CommandBrightness'];
+
   /** Source apps available to pick (running processes), shared with the command editor's app picker. */
   readonly processItems = computed(() => this.integrations.processItems());
   /** Which target's editor is expanded, keyed "{ruleIdx}:{targetIdx}"; null = all collapsed. */

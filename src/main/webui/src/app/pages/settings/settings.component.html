@@ -190,7 +190,7 @@
                 } @else {
                   <span class="empty-hint">No targets yet.</span>
                 }
-                <pc-command-picker kind="dial" triggerLabel="Add target" variant="subtle" (pick)="addFvTarget(ri, $event)"></pc-command-picker>
+                <pc-command-picker kind="dial" [exclude]="focusTargetExclude" triggerLabel="Add target" variant="subtle" (pick)="addFvTarget(ri, $event)"></pc-command-picker>
               </div>
 
               <div class="row">
