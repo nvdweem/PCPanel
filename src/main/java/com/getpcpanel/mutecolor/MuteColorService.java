@@ -13,6 +13,7 @@ import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.cpp.AudioDeviceEvent;
 import com.getpcpanel.cpp.AudioSessionEvent;
 import com.getpcpanel.device.Device;
+import com.getpcpanel.discord.DiscordChangedEvent;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.obs.OBSConnectEvent;
 import com.getpcpanel.obs.OBSMuteEvent;
@@ -115,6 +116,10 @@ public class MuteColorService implements IOverrideColorProviderProvider {
     }
 
     public void onWaveLink(@Observes WaveLinkChangedEvent event) {
+        recomputeAll();
+    }
+
+    public void onDiscord(@Observes DiscordChangedEvent event) {
         recomputeAll();
     }
 

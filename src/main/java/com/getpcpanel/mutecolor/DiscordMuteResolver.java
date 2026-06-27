@@ -1,0 +1,59 @@
+package com.getpcpanel.mutecolor;
+
+import java.util.Optional;
+
+import javax.annotation.Nullable;
+
+import com.getpcpanel.commands.Commands;
+import com.getpcpanel.discord.DiscordService;
+import com.getpcpanel.discord.command.CommandDiscordSelfDeafen;
+import com.getpcpanel.discord.command.CommandDiscordSelfMute;
+import com.getpcpanel.discord.command.CommandDiscordUserMute;
+
+import dev.niels.discord.model.DiscordVoiceUser;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
+/**
+ * Mute state of the Discord target a control's button drives, so its LED can show the mute-override
+ * colour: self-mute follows your mic mute, self-deafen follows your deafen, and user-mute follows that
+ * user's local mute. Discord pushes state as a {@code DiscordChangedEvent}, which {@link MuteColorService}
+ * observes to recompute — so the colour tracks the live state however it changed (a dial, a button, or the
+ * Discord client itself).
+ */
+@ApplicationScoped
+public class DiscordMuteResolver implements MuteStateResolver {
+    private final DiscordService discord;
+
+    @Inject
+    public DiscordMuteResolver(DiscordService discord) {
+        this.discord = discord;
+    }
+
+    @Override
+    public Optional<Boolean> resolve(Commands command, String target) {
+        if (!FOLLOW.equals(target) || !discord.isAuthenticated()) {
+            return Optional.empty();
+        }
+        if (command.getCommand(CommandDiscordSelfMute.class).isPresent()) {
+            return Optional.of(discord.getVoiceSettings().mute());
+        }
+        if (command.getCommand(CommandDiscordSelfDeafen.class).isPresent()) {
+            return Optional.of(discord.getVoiceSettings().deaf());
+        }
+        var userMute = command.getCommand(CommandDiscordUserMute.class).orElse(null);
+        return userMute == null ? Optional.empty() : resolveUserMute(userMute.getUsername());
+    }
+
+    private Optional<Boolean> resolveUserMute(@Nullable String username) {
+        var id = discord.resolveUserId(username);
+        if (id == null) {
+            return Optional.empty();
+        }
+        var self = discord.getSelfUser();
+        if (self != null && id.equals(self.id())) {
+            return Optional.of(discord.getVoiceSettings().mute()); // user-mute of yourself behaves as self-mute
+        }
+        return discord.getVoiceUsers().stream().filter(u -> id.equals(u.id())).findFirst().map(DiscordVoiceUser::mute);
+    }
+}
