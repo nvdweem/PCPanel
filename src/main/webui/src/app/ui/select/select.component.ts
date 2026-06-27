@@ -132,14 +132,17 @@ export class SelectComponent<T = string> {
   readonly footerLabel = input<string>('');
   readonly footerAction = output<void>();
 
+  /** Force the filter field on even for short lists (for pickers that are expected to grow, e.g. Discord targets). */
+  readonly searchable = input<boolean>(false);
+
   readonly open = model<boolean>(false);
   readonly filter = signal('');
 
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly injector = inject(Injector);
 
-  /** Show the filter field for long lists. */
-  readonly showFilter = computed(() => this.options().length > 10);
+  /** Show the filter field for long lists, or whenever the caller opts in via [searchable]. */
+  readonly showFilter = computed(() => this.searchable() || this.options().length > 10);
 
   /** One stable wrapper per option value, reused across change-detection cycles. This is load-bearing:
    *  callers often pass `[options]` from a method (e.g. a device list) that returns a NEW array every CD,

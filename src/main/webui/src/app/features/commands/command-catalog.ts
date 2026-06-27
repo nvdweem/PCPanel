@@ -24,7 +24,7 @@ export type FieldDef = (
   | { kind: 'number'; key: string; label: string; min?: number; max?: number }
   | { kind: 'toggle'; key: string; label: string }
   | { kind: 'select'; key: string; label: string; options: { value: string; label: string }[] }
-  | { kind: 'select-live'; key: string; label: string; source: LiveSource }
+  | { kind: 'select-live'; key: string; label: string; source: LiveSource; searchable?: boolean }
   | { kind: 'apps'; key: string; label: string }
   | { kind: 'device'; key: string; label: string; filter?: 'output' | 'input' | 'all'; defaultLabel?: string }  // defaultLabel: adds a selectable empty option (e.g. "Default device") for commands where blank = the default
   | { kind: 'mute'; key: string; label: string }
@@ -316,7 +316,7 @@ export const COMMANDS: CommandDef[] = [
     type: DC + 'CommandDiscordMute', label: 'Discord — mute', category: 'integration', integration: 'discord', kinds: ['button'], icon: 'mic-off',
     buildEmpty: () => ({ _type: DC + 'CommandDiscordMute', target: 'self', muteType: 'toggle', overlayText: '' }),
     fields: [
-      { kind: 'select-live', key: 'target', label: 'Target', source: 'discord-mute-targets' },
+      { kind: 'select-live', key: 'target', label: 'Target', source: 'discord-mute-targets', searchable: true },
       { kind: 'mute', key: 'muteType', label: 'Action' },
     ],
   },
@@ -329,7 +329,7 @@ export const COMMANDS: CommandDef[] = [
     type: DC + 'CommandDiscordVolume', label: 'Discord — volume', category: 'integration', integration: 'discord', kinds: ['dial'], icon: 'volume',
     buildEmpty: () => ({ _type: DC + 'CommandDiscordVolume', target: 'mic', clearMuteOnChange: false, dialParams: dialParams(), invert: false }),
     fields: [
-      { kind: 'select-live', key: 'target', label: 'Target', source: 'discord-volume-targets' },
+      { kind: 'select-live', key: 'target', label: 'Target', source: 'discord-volume-targets', searchable: true },
       { kind: 'toggle', key: 'clearMuteOnChange', label: 'Unmute/undeafen when changed' },
     ],
   },

@@ -518,6 +518,7 @@ export interface DiscordStatusDto {
 
 export interface DiscordUserDto {
     displayName: string;
+    friend: boolean;
     id: string;
     inVoice: boolean;
     username: string;

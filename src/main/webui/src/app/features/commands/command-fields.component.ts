@@ -86,7 +86,7 @@ type Cmd = Record<string, any>;
             <div class="field-block">
               <div class="flabel">{{ $any(f).label }}</div>
               <pc-select [block]="true" [options]="liveOptions($any(f).source)" [value]="val($any(f).key)"
-                         placeholder="—" (valueChange)="set($any(f).key, $event)"></pc-select>
+                         [searchable]="!!$any(f).searchable" placeholder="—" (valueChange)="set($any(f).key, $event)"></pc-select>
             </div>
           }
           @case ('device') {
@@ -370,8 +370,13 @@ export class CommandFieldsComponent {
     }
   }
 
+  /** User targets ordered friends-first (by name), then everyone else (by name) — appended after the fixed options. */
   private discordUserOpts(): SelectOption[] {
-    return (this.data.discordUsers.value() ?? []).map(u => ({
+    const byName = (a: { displayName: string }, b: { displayName: string }) => a.displayName.localeCompare(b.displayName);
+    const users = this.data.discordUsers.value() ?? [];
+    const friends = users.filter(u => u.friend).sort(byName);
+    const others = users.filter(u => !u.friend).sort(byName);
+    return [...friends, ...others].map(u => ({
       value: u.username, label: u.inVoice ? `${u.displayName} (in call)` : u.displayName,
     }));
   }
