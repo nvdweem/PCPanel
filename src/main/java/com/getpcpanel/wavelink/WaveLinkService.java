@@ -28,6 +28,7 @@ import dev.niels.wavelink.impl.model.WaveLinkChannel;
 import dev.niels.wavelink.impl.model.WaveLinkInputDevice;
 import dev.niels.wavelink.impl.model.WaveLinkMix;
 import dev.niels.wavelink.impl.model.WaveLinkOutputDevice;
+import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
@@ -286,6 +287,16 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
 
     public boolean isEnabled() {
         return saveService.get().getWaveLink().enabled();
+    }
+
+    /**
+     * Tears down the Wave Link connection on shutdown — which, in dev mode, fires on every live-reload
+     * restart. Without this the client's websocket/HttpClient worker threads survive into the next
+     * container and keep invoking listener callbacks against the now-dead classloader, throwing
+     * ClassCastException (e.g. {@code DeviceHolder cannot be cast to DeviceHolder}) on each push.
+     */
+    void onShutdown(@Observes ShutdownEvent event) {
+        disconnect();
     }
 
     public void settingsChanged(@Observes SaveEvent event) {
