@@ -79,6 +79,9 @@ export class CommandPickerComponent {
 
   /** Which control slot the picker is choosing for: 'dial' (rotate) or 'button' (press / band action). */
   readonly kind = input.required<CommandKind>();
+  /** Command types to hide here (e.g. Focus Override can't target Brightness — it reads the live control
+   *  position, not a fed value — so it's excluded there while staying available on the control page). */
+  readonly exclude = input<string[]>([]);
   readonly triggerLabel = input<string>('Add action');
   /** 'primary' = the prominent full-width CTA (control page); 'subtle' = a small dashed button (band editor). */
   readonly variant = input<'primary' | 'subtle'>('primary');
@@ -109,7 +112,8 @@ export class CommandPickerComponent {
   readonly menuGroups = computed<PickerGroup[]>(() => {
     const kind = this.kind();
     const q = this.query().trim().toLowerCase();
-    const match = (d: CommandDef) => d.kinds.includes(kind) && (!q || d.label.toLowerCase().includes(q));
+    const excluded = new Set(this.exclude());
+    const match = (d: CommandDef) => d.kinds.includes(kind) && !excluded.has(d.type) && (!q || d.label.toLowerCase().includes(q));
     const groups: PickerGroup[] = [];
     // Generic command categories first — no integration, so no status chip.
     for (const cat of ['audio', 'system'] as CommandCategory[]) {

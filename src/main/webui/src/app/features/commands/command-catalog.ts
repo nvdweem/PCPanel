@@ -295,7 +295,8 @@ export const COMMANDS: CommandDef[] = [
     fields: [
       {
         kind: 'select', key: 'commandType', label: 'Target', options: [
-          { value: 'Channel', label: 'Channel' }, { value: 'Mix', label: 'Mix' }, { value: 'Output', label: 'Output' },
+          { value: 'Channel', label: 'Channel' }, { value: 'Input', label: 'Input' },
+          { value: 'Mix', label: 'Mix' }, { value: 'Output', label: 'Output' },
         ],
       },
       { kind: 'wavelink-target' },

@@ -8,7 +8,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import dev.niels.wavelink.impl.model.WaveLinkChannel;
-import dev.niels.wavelink.impl.model.WaveLinkControlAction;
 import dev.niels.wavelink.impl.model.WaveLinkEffect;
 import dev.niels.wavelink.impl.model.WaveLinkInputDevice;
 import dev.niels.wavelink.impl.model.WaveLinkMix;
@@ -58,21 +57,23 @@ public interface IWaveLinkClient {
         return getMixes().getOrDefault(id, new WaveLinkMix(id, null, null, null, null));
     }
 
-    default void setInputLevel(String deviceId, WaveLinkControlAction action, double value) {
-        setInputLevel(getInputFromId(deviceId), action, value);
+    default void setInputLevel(String deviceId, double value) {
+        setInputLevel(getInputFromId(deviceId), value);
     }
 
-    default void setInputLevel(WaveLinkInputDevice device, WaveLinkControlAction action, double value) {
-        setInput(device, action, value, null);
+    default void setInputLevel(WaveLinkInputDevice device, double value) {
+        setInput(device, value, null);
     }
 
-    default void setInputMute(WaveLinkInputDevice device, WaveLinkControlAction action, boolean mute) {
-        setInput(device, action, null, mute);
+    default void setInputMute(String deviceId, boolean mute) {
+        setInputMute(getInputFromId(deviceId), mute);
     }
 
-    void setInput(WaveLinkInputDevice device, WaveLinkControlAction action, @Nullable Double value, @Nullable Boolean mute);
+    default void setInputMute(WaveLinkInputDevice device, boolean mute) {
+        setInput(device, null, mute);
+    }
 
-    void setInputAudioEffect(WaveLinkInputDevice device, WaveLinkEffect effect);
+    void setInput(WaveLinkInputDevice device, @Nullable Double value, @Nullable Boolean mute);
 
     default void setChannelLevel(String channelId, double value) {
         setChannel(channelId, null, value, null);

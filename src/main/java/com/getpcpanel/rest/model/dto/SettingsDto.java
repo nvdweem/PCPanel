@@ -6,6 +6,7 @@ import javax.annotation.Nullable;
 
 import com.getpcpanel.homeassistant.dto.HomeAssistantServer;
 import com.getpcpanel.profile.Save;
+import com.getpcpanel.profile.dto.FocusVolumeOverride;
 import com.getpcpanel.profile.dto.MqttSettings;
 import com.getpcpanel.profile.dto.OSCConnectionInfo;
 import com.getpcpanel.profile.dto.OverlayPosition;
@@ -24,6 +25,7 @@ public class SettingsDto {
     private Long dblClickInterval;
     private boolean preventClickWhenDblClick;
     private boolean skipControlledFocusApps;
+    private List<FocusVolumeOverride> focusVolumeOverrides;
     @Nullable private Integer preventSliderTwitchDelay;
     @Nullable private Integer sliderRollingAverage;
     @Nullable private Integer sendOnlyIfDelta;
@@ -82,6 +84,7 @@ public class SettingsDto {
         dto.dblClickInterval = save.getDblClickInterval();
         dto.preventClickWhenDblClick = save.isPreventClickWhenDblClick();
         dto.skipControlledFocusApps = save.isSkipControlledFocusApps();
+        dto.focusVolumeOverrides = save.getFocusVolumeOverrides();
         dto.preventSliderTwitchDelay = save.getPreventSliderTwitchDelay();
         dto.sliderRollingAverage = save.getSliderRollingAverage();
         dto.sendOnlyIfDelta = save.getSendOnlyIfDelta();
@@ -131,6 +134,7 @@ public class SettingsDto {
         save.setDblClickInterval(dblClickInterval);
         save.setPreventClickWhenDblClick(preventClickWhenDblClick);
         save.setSkipControlledFocusApps(skipControlledFocusApps);
+        save.setFocusVolumeOverrides(focusVolumeOverrides);
         save.setPreventSliderTwitchDelay(preventSliderTwitchDelay);
         save.setSliderRollingAverage(sliderRollingAverage);
         save.setSendOnlyIfDelta(sendOnlyIfDelta);

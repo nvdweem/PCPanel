@@ -31,52 +31,106 @@ public class PlatformResource {
 
     /** Resolved once at startup; only set for local (SNAPSHOT) builds, else null. */
     @Nullable private String branch;
+    /** Short HEAD commit of a local build, so the running build is identifiable in the UI; null for releases. */
+    @Nullable private String commit;
 
-    public record PlatformInfo(String os, boolean voicemeeter, boolean waveLink, String version, @Nullable String branch) {
+    public record PlatformInfo(String os, boolean voicemeeter, boolean waveLink, String version, @Nullable String branch, @Nullable String commit) {
     }
 
     @PostConstruct
     void init() {
-        // Show the git branch only for local/unreleased (SNAPSHOT) builds, so several dev instances
-        // (e.g. one per worktree) can be told apart in the UI. Released builds carry a concrete
-        // version and report no branch.
-        branch = version != null && version.contains("SNAPSHOT") ? detectLocalBranch() : null;
+        // Show the git branch + commit only for local/unreleased (SNAPSHOT) builds, so several dev
+        // instances (e.g. one per worktree) can be told apart in the UI and the exact running build is
+        // identifiable. Released builds carry a concrete version and report neither.
+        if (version != null && version.contains("SNAPSHOT")) {
+            branch = detectLocalBranch();
+            commit = detectLocalCommit();
+        }
     }
 
     @GET
     public PlatformInfo get() {
         var os = SystemUtils.IS_OS_WINDOWS ? "windows" : SystemUtils.IS_OS_MAC ? "mac" : SystemUtils.IS_OS_LINUX ? "linux" : "other";
-        return new PlatformInfo(os, SystemUtils.IS_OS_WINDOWS, SystemUtils.IS_OS_WINDOWS || SystemUtils.IS_OS_MAC, version, branch);
+        return new PlatformInfo(os, SystemUtils.IS_OS_WINDOWS, SystemUtils.IS_OS_WINDOWS || SystemUtils.IS_OS_MAC, version, branch, commit);
     }
 
     /**
-     * Reads the current git branch from the working directory's {@code .git}, handling the worktree
-     * case where {@code .git} is a file pointing at the real gitdir. Returns null when not in a git
-     * checkout (e.g. an installed build) or on any error — this is a best-effort dev convenience.
+     * The working directory's git directory, handling the worktree case where {@code .git} is a file
+     * pointing at the real gitdir. Null when not in a git checkout (e.g. an installed build).
      */
     @Nullable
-    private static String detectLocalBranch() {
+    private static Path gitDir() {
         try {
             var git = Path.of(".git");
             if (!Files.exists(git)) {
                 return null;
             }
-            Path gitDir;
             if (Files.isDirectory(git)) {
-                gitDir = git;
-            } else {
-                var pointer = Files.readString(git).trim(); // "gitdir: <path>"
-                gitDir = Path.of(pointer.startsWith("gitdir:") ? pointer.substring("gitdir:".length()).trim() : pointer);
+                return git;
             }
+            var pointer = Files.readString(git).trim(); // "gitdir: <path>"
+            return Path.of(pointer.startsWith("gitdir:") ? pointer.substring("gitdir:".length()).trim() : pointer);
+        } catch (Exception e) { // NOSONAR - best-effort dev convenience, never fatal
+            log.debug("Could not locate git dir for build label", e);
+            return null;
+        }
+    }
+
+    /** Current git branch (or short sha when detached); null outside a checkout. Best-effort. */
+    @Nullable
+    private static String detectLocalBranch() {
+        var gitDir = gitDir();
+        if (gitDir == null) {
+            return null;
+        }
+        try {
             var head = Files.readString(gitDir.resolve("HEAD")).trim();
             if (head.startsWith("ref:")) {
                 var ref = head.substring(4).trim(); // refs/heads/<branch> — keep slashes in the branch name
                 return ref.startsWith("refs/heads/") ? ref.substring("refs/heads/".length()) : ref;
             }
-            return head.length() >= 7 ? head.substring(0, 7) : head; // detached HEAD → short sha
-        } catch (Exception e) { // NOSONAR - branch label is a best-effort dev convenience, never fatal
+            return shortSha(head); // detached HEAD → short sha
+        } catch (Exception e) { // NOSONAR - best-effort dev convenience, never fatal
             log.debug("Could not determine git branch for build label", e);
             return null;
         }
+    }
+
+    /**
+     * Short HEAD commit. Resolved from the per-worktree reflog ({@code logs/HEAD}), whose last entry's
+     * new-oid is the current commit — this is correct for linked worktrees, where {@code refs/heads/*}
+     * live in the shared common dir and may be packed. Null outside a checkout. Best-effort.
+     */
+    @Nullable
+    private static String detectLocalCommit() {
+        var gitDir = gitDir();
+        if (gitDir == null) {
+            return null;
+        }
+        try {
+            var head = Files.readString(gitDir.resolve("HEAD")).trim();
+            if (!head.startsWith("ref:")) {
+                return shortSha(head); // detached HEAD is already the commit
+            }
+            var log = gitDir.resolve("logs/HEAD");
+            if (Files.exists(log)) {
+                var lines = Files.readAllLines(log);
+                for (var i = lines.size() - 1; i >= 0; i--) {
+                    var parts = lines.get(i).split("\\s+");
+                    if (parts.length >= 2 && parts[1].length() >= 7) {
+                        return shortSha(parts[1]); // "<old> <new> <author> ..." → new-oid
+                    }
+                }
+            }
+            return null;
+        } catch (Exception e) { // NOSONAR - best-effort dev convenience, never fatal
+            log.debug("Could not determine git commit for build label", e);
+            return null;
+        }
+    }
+
+    @Nullable
+    private static String shortSha(String sha) {
+        return sha.length() >= 7 ? sha.substring(0, 7) : sha.isBlank() ? null : sha;
     }
 }

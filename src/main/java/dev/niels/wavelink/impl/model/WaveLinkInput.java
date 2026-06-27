@@ -5,6 +5,9 @@ import javax.annotation.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
+import lombok.With;
+
+@With
 @JsonInclude(Include.NON_NULL)
 public record WaveLinkInput(
         String id,
@@ -12,4 +15,7 @@ public record WaveLinkInput(
         @Nullable WaveLinkGain gain,
         @Nullable Boolean isMuted
 ) implements WithId {
+    public WaveLinkInput blank() {
+        return new WaveLinkInput(id, null, null, null);
+    }
 }

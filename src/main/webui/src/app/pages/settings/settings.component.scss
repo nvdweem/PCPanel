@@ -75,6 +75,27 @@
 .osc-add .port-in { flex: none; width: 96px; }
 .osc-add .pc-btn { flex: none; gap: 6px; }
 
+/* ── Focus override tab ──────────────────────────────────────────────────────── */
+.flabel { font-size: 11.5px; color: var(--text-2); }
+.fv-hint { margin-top: 8px; line-height: 1.5; }
+.fv-hint code { font-family: var(--font-mono, monospace); color: var(--text-2); }
+.pc-chip.dashed:disabled { opacity: 0.6; cursor: default; }
+.fv-rule-head { display: flex; align-items: center; gap: 10px; }
+.fv-rule-no { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 6px; font-size: 11.5px; font-weight: 600; color: #000; background: var(--accent, #FFB020); flex: none; }
+.fv-rule-title { flex: 1; font-size: 13px; font-weight: 500; color: var(--text-1); text-transform: uppercase; letter-spacing: 0.06em; }
+.fv-del { background: none; border: none; color: var(--text-3); cursor: pointer; padding: 2px; display: inline-flex; }
+.fv-del:hover { color: var(--danger, #FF453A); }
+.fv-targets { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.fv-target { border: 1px solid var(--line); border-radius: 8px; background: var(--raised, #1B1E25); overflow: hidden; }
+.fv-target.expanded { border-color: var(--accent, #FFB020); }
+.fv-t-head { display: flex; align-items: center; gap: 9px; padding: 10px 12px; cursor: pointer; }
+.fv-t-icon { color: var(--accent, #FFB020); flex: none; }
+.fv-t-name { flex: 1; font-size: 13px; font-weight: 500; color: var(--text-1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fv-t-chev { color: var(--text-3); flex: none; }
+.fv-t-del { background: none; border: none; color: var(--text-3); cursor: pointer; padding: 2px; display: inline-flex; flex: none; }
+.fv-t-del:hover { color: var(--danger, #FF453A); }
+.fv-t-body { padding: 12px; border-top: 1px solid var(--line-hair); background: var(--surface-1, #15171C); }
+
 /* ── Overlay tab ───────────────────────────────────────────────────────────── */
 .overlay-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; align-items: start; }
 .overlay-controls { min-width: 0; }

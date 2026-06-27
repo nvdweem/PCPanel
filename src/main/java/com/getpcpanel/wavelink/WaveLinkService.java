@@ -25,6 +25,7 @@ import dev.niels.wavelink.IWaveLinkClientEventListener;
 import dev.niels.wavelink.WaveLinkClient;
 import dev.niels.wavelink.impl.model.WaveLinkApp;
 import dev.niels.wavelink.impl.model.WaveLinkChannel;
+import dev.niels.wavelink.impl.model.WaveLinkInputDevice;
 import dev.niels.wavelink.impl.model.WaveLinkMix;
 import dev.niels.wavelink.impl.model.WaveLinkOutputDevice;
 import io.quarkus.scheduler.Scheduled;
@@ -362,6 +363,17 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
 
     @Override
     public void outputDevicesChanged() {
+        fireChanged();
+    }
+
+    // Input state (gain/mute) changed: notify observers (e.g. the mute-colour layer) to re-read state.
+    @Override
+    public void inputDeviceChanged(WaveLinkInputDevice inputDevice) {
+        fireChanged();
+    }
+
+    @Override
+    public void inputDevicesChanged() {
         fireChanged();
     }
 

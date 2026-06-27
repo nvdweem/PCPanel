@@ -7,6 +7,7 @@ import java.net.http.WebSocket;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -30,8 +31,9 @@ import dev.niels.wavelink.IWaveLinkClient;
 import dev.niels.wavelink.IWaveLinkClientEventListener;
 import dev.niels.wavelink.impl.model.WaveLinkApp;
 import dev.niels.wavelink.impl.model.WaveLinkChannel;
-import dev.niels.wavelink.impl.model.WaveLinkControlAction;
 import dev.niels.wavelink.impl.model.WaveLinkEffect;
+import dev.niels.wavelink.impl.model.WaveLinkGain;
+import dev.niels.wavelink.impl.model.WaveLinkInput;
 import dev.niels.wavelink.impl.model.WaveLinkInputDevice;
 import dev.niels.wavelink.impl.model.WaveLinkMainOutput;
 import dev.niels.wavelink.impl.model.WaveLinkMix;
@@ -43,10 +45,12 @@ import dev.niels.wavelink.impl.rpc.WaveLinkAddToChannelCommand.WaveLinkAddToChan
 import dev.niels.wavelink.impl.rpc.WaveLinkChannelChangedCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkChannelsChangedCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkFocusedAppChangedCommand;
+import dev.niels.wavelink.impl.rpc.WaveLinkInputDeviceChangedCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkJsonRpcCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkMixChangedCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkOutputDeviceChangedCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkSetChannelCommand;
+import dev.niels.wavelink.impl.rpc.WaveLinkSetInputDeviceCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkSetMixCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkSetOutputDeviceCommand;
 import dev.niels.wavelink.impl.rpc.WaveLinkSetOutputDeviceCommand.WaveLinkSetOutputDeviceParams;
@@ -163,15 +167,19 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
     }
 
     @Override
-    public void setInput(WaveLinkInputDevice device, WaveLinkControlAction action, Double value, Boolean mute) {
-        // Wave Link has no API to control a raw input device directly — inputs are exposed through
-        // channels. The UI no longer offers the 'Input' target; this guards legacy saved configs.
-        log.warn("Wave Link 'Input' target is not supported (control inputs via their channel instead); ignoring {}", action);
-    }
-
-    @Override
-    public void setInputAudioEffect(WaveLinkInputDevice device, WaveLinkEffect effect) {
-        log.warn("Wave Link 'Input' audio-effect control is not supported (control inputs via their channel instead); ignoring");
+    public void setInput(WaveLinkInputDevice device, @Nullable Double value, @Nullable Boolean mute) {
+        if (device.inputs() == null) {
+            return;
+        }
+        // Apply to every input of the device (a typical mic has one whose id equals the device id). A null
+        // value/mute is omitted from the payload (NON_NULL), so a level-only or mute-only set never touches
+        // the other — matching how Wave Link itself pushes partial input changes.
+        send(new WaveLinkSetInputDeviceCommand().setParams(
+                device.blankWithInputs()
+                      .withInputs(input -> input.blank()
+                                                .withGain(value == null ? null : WaveLinkGain.of(value))
+                                                .withIsMuted(mute))
+        ));
     }
 
     @Override
@@ -287,6 +295,8 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
             updateEntries(IWaveLinkClientEventListener::channelsChanged, channels, channelsChanged.getParams().channels());
         } else if (message instanceof WaveLinkOutputDeviceChangedCommand deviceChanged) {
             updateEntry(IWaveLinkClientEventListener::outputDeviceChanged, outputDevices, deviceChanged.getParams());
+        } else if (message instanceof WaveLinkInputDeviceChangedCommand inputChanged) {
+            updateEntry(IWaveLinkClientEventListener::inputDeviceChanged, inputDevices, mergeInputWithCached(inputChanged.getParams()));
         } else if (message instanceof WaveLinkMixChangedCommand mixChanged) {
             updateEntry(IWaveLinkClientEventListener::mixChanged, mixes, mixChanged.getParams());
         } else if (message instanceof WaveLinkFocusedAppChangedCommand appChanged) {
@@ -368,6 +378,35 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
             merged = merged.withApps(existing.apps());
         }
         return merged;
+    }
+
+    /**
+     * Merges an {@code inputDeviceChanged} push with the cached input device. The push is partial: a gain
+     * change carries the input's gain but not its mute, and a mute change carries the mute but not the gain
+     * — so each input is merged with its cached counterpart, keeping the unchanged sub-field (and the
+     * name/deviceType the push may omit). Otherwise toggling mute would wipe the cached gain, and vice versa.
+     */
+    private WaveLinkInputDevice mergeInputWithCached(WaveLinkInputDevice params) {
+        var existing = inputDevices.get(params.id());
+        if (existing == null || existing.inputs() == null || params.inputs() == null) {
+            return params;
+        }
+        var cachedById = new HashMap<String, WaveLinkInput>();
+        existing.inputs().forEach(input -> cachedById.put(input.id(), input));
+        var mergedInputs = params.inputs().stream().map(input -> {
+            var cached = cachedById.get(input.id());
+            if (cached == null) {
+                return input;
+            }
+            return new WaveLinkInput(
+                    input.id(),
+                    input.name() != null ? input.name() : cached.name(),
+                    input.gain() != null ? input.gain() : cached.gain(),
+                    input.isMuted() != null ? input.isMuted() : cached.isMuted());
+        }).toList();
+        var name = params.name() != null ? params.name() : existing.name();
+        var deviceType = params.deviceType() != null ? params.deviceType() : existing.deviceType();
+        return new WaveLinkInputDevice(params.id(), name, deviceType, mergedInputs);
     }
 
     private int getWaveLinkPort() {
