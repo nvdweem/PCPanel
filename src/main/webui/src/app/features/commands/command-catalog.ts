@@ -13,7 +13,7 @@ export type Integration = 'obs' | 'voicemeeter' | 'wavelink' | 'discord' | 'home
 export type LiveSource =
   | 'obs-scenes' | 'obs-sources' | 'vm-advanced'
   | 'wl-channels' | 'wl-inputs' | 'wl-mixes' | 'wl-outputs' | 'profiles'
-  | 'discord-users'
+  | 'discord-users' | 'discord-channels'
   | 'ha-servers';
 
 export type FieldDef =
@@ -341,6 +341,16 @@ export const COMMANDS: CommandDef[] = [
     type: DC + 'CommandDiscordUserVolume', label: 'Discord — user volume', category: 'integration', integration: 'discord', kinds: ['dial'], icon: 'volume',
     buildEmpty: () => ({ _type: DC + 'CommandDiscordUserVolume', username: '', dialParams: dialParams(), invert: false }),
     fields: [{ kind: 'select-live', key: 'username', label: 'User', source: 'discord-users' }],
+  },
+  {
+    type: DC + 'CommandDiscordJoinVoice', label: 'Discord — join voice', category: 'integration', integration: 'discord', kinds: ['button'], icon: 'plug',
+    buildEmpty: () => ({ _type: DC + 'CommandDiscordJoinVoice', channelId: '', channelName: '', overlayText: '' }),
+    fields: [{ kind: 'select-live', key: 'channelId', label: 'Voice channel', source: 'discord-channels' }],
+  },
+  {
+    type: DC + 'CommandDiscordLeaveVoice', label: 'Discord — leave voice', category: 'integration', integration: 'discord', kinds: ['button'], icon: 'log-out',
+    buildEmpty: () => ({ _type: DC + 'CommandDiscordLeaveVoice', overlayText: '' }),
+    fields: [],
   },
   {
     type: HA + 'CommandHomeAssistantValue', label: 'Home Assistant — set value', category: 'integration', integration: 'homeassistant', kinds: ['dial'], icon: 'sliders',

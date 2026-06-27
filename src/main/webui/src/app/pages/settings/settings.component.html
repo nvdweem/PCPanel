@@ -247,9 +247,10 @@
             @if (discordTabStatus(); as st) { <pc-status-dot [kind]="st" [size]="8"></pc-status-dot> }
           </h2>
           <p class="page-sub">Control Discord voice from your dials and buttons: mute/deafen yourself, set
-            your mic and output volume, and locally mute or change the volume of other people in your call.
-            Voice control needs your own (free) Discord application, because Discord only grants the voice
-            scopes to an app's owner.</p>
+            your mic and output volume, locally mute or change the volume of other people in your call, and
+            join or leave voice channels. Voice control needs your own (free) Discord application, because
+            Discord only grants the voice scopes to an app's owner. Starting/stopping a screen share (Go Live)
+            isn't available — Discord exposes no API for it.</p>
 
           @if (discordDraft(); as d) {
             <div class="pc-card pad stack">

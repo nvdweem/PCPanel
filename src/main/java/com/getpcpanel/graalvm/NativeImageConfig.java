@@ -53,6 +53,8 @@ import com.getpcpanel.commands.command.CommandVolumeProcess;
 import com.getpcpanel.commands.command.CommandVolumeProcessMute;
 import com.getpcpanel.commands.command.DialAction.DialCommandParams;
 import com.getpcpanel.discord.command.CommandDiscord;
+import com.getpcpanel.discord.command.CommandDiscordJoinVoice;
+import com.getpcpanel.discord.command.CommandDiscordLeaveVoice;
 import com.getpcpanel.discord.command.CommandDiscordSelfDeafen;
 import com.getpcpanel.discord.command.CommandDiscordSelfInputVolume;
 import com.getpcpanel.discord.command.CommandDiscordSelfMute;
@@ -236,6 +238,8 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         CommandDiscordSelfInputVolume.class,
         CommandDiscordSelfOutputVolume.class,
         CommandDiscordUserVolume.class,
+        CommandDiscordJoinVoice.class,
+        CommandDiscordLeaveVoice.class,
 
         // WaveLink RPC protocol classes (Jackson @JsonSubTypes / @JsonTypeInfo)
         JsonRpcMessage.class,

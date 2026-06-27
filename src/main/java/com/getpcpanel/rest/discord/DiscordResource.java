@@ -1,10 +1,12 @@
 package com.getpcpanel.rest.discord;
 
 import java.util.List;
+import java.util.concurrent.CompletionStage;
 
 import com.getpcpanel.discord.DiscordService;
 import com.getpcpanel.rest.discord.dto.DiscordStatusDto;
 import com.getpcpanel.rest.discord.dto.DiscordUserDto;
+import com.getpcpanel.rest.discord.dto.DiscordVoiceChannelDto;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -32,6 +34,16 @@ public class DiscordResource {
     @Path("/status")
     public DiscordStatusDto status() {
         return DiscordStatusDto.from(discordService);
+    }
+
+    /** Joinable voice channels across the user's guilds, for the "join voice" command picker. */
+    @GET
+    @Path("/voice-channels")
+    public CompletionStage<List<DiscordVoiceChannelDto>> voiceChannels() {
+        return discordService.listVoiceChannels()
+                .thenApply(list -> list.stream()
+                        .map(c -> new DiscordVoiceChannelDto(c.id(), c.name(), c.guildName()))
+                        .toList());
     }
 
     /**

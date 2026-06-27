@@ -2,6 +2,7 @@ package dev.niels.discord.impl;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -28,6 +29,7 @@ import dev.niels.discord.DiscordRpcException;
 import dev.niels.discord.IDiscordRpcClient;
 import dev.niels.discord.IDiscordRpcListener;
 import dev.niels.discord.model.DiscordUser;
+import dev.niels.discord.model.DiscordVoiceChannel;
 import dev.niels.discord.model.DiscordVoiceSettings;
 import dev.niels.discord.model.DiscordVoiceUser;
 import lombok.extern.log4j.Log4j2;
@@ -390,6 +392,61 @@ public abstract class DiscordRpcClientImpl implements IDiscordRpcClient {
         subscribe("VOICE_CHANNEL_SELECT", null);
         var channel = refreshSelectedVoiceChannel();
         return CompletableFuture.allOf(settings, channel);
+    }
+
+    // ── voice-channel join/leave ─────────────────────────────────────────────────
+
+    /** Joins {@code channelId}, or leaves voice entirely when it is null. {@code force} moves you even if already connected. */
+    public CompletableFuture<Void> selectVoiceChannel(@Nullable String channelId, boolean force) {
+        var args = mapper.createObjectNode();
+        if (channelId == null) {
+            args.putNull("channel_id");
+        } else {
+            args.put("channel_id", channelId);
+        }
+        if (force) {
+            args.put("force", true);
+        }
+        return send("SELECT_VOICE_CHANNEL", args).thenApply(d -> null);
+    }
+
+    /** Lists every voice channel across the user's guilds (GET_GUILDS then GET_CHANNELS per guild), for the join picker. */
+    public CompletableFuture<List<DiscordVoiceChannel>> getVoiceChannels() {
+        return send("GET_GUILDS", null).thenCompose(guildsData -> {
+            var guilds = guildsData == null ? null : guildsData.get("guilds");
+            if (guilds == null || !guilds.isArray()) {
+                return CompletableFuture.completedFuture(List.<DiscordVoiceChannel>of());
+            }
+            var perGuild = new ArrayList<CompletableFuture<List<DiscordVoiceChannel>>>();
+            for (var guild : guilds) {
+                var gid = text(guild, "id");
+                if (gid == null) {
+                    continue;
+                }
+                var gname = text(guild, "name");
+                perGuild.add(send("GET_CHANNELS", mapper.createObjectNode().put("guild_id", gid))
+                        .thenApply(chData -> parseVoiceChannels(chData, gid, gname))
+                        .exceptionally(e -> List.of()));
+            }
+            return CompletableFuture.allOf(perGuild.toArray(CompletableFuture[]::new))
+                    .thenApply(v -> perGuild.stream().flatMap(f -> f.join().stream()).toList());
+        });
+    }
+
+    private List<DiscordVoiceChannel> parseVoiceChannels(@Nullable JsonNode data, String guildId, @Nullable String guildName) {
+        var out = new ArrayList<DiscordVoiceChannel>();
+        var channels = data == null ? null : data.get("channels");
+        if (channels != null && channels.isArray()) {
+            for (var ch : channels) {
+                if (ch.path("type").asInt(-1) == 2) { // GUILD_VOICE
+                    var id = text(ch, "id");
+                    if (id != null) {
+                        out.add(new DiscordVoiceChannel(id, text(ch, "name"), guildId, guildName));
+                    }
+                }
+            }
+        }
+        return out;
     }
 
     // ── voice control ───────────────────────────────────────────────────────────

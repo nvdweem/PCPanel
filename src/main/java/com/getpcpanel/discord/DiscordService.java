@@ -26,6 +26,7 @@ import dev.niels.discord.DiscordRpcClient;
 import dev.niels.discord.DiscordRpcException;
 import dev.niels.discord.IDiscordRpcListener;
 import dev.niels.discord.model.DiscordUser;
+import dev.niels.discord.model.DiscordVoiceChannel;
 import dev.niels.discord.model.DiscordVoiceUser;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -442,6 +443,27 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
     private boolean isSelf(@Nullable String userId) {
         var self = getSelfUser();
         return self != null && StringUtils.equals(userId, self.id());
+    }
+
+    /** Join (connect to) a voice channel by id. */
+    public void joinVoice(String channelId) {
+        selectVoiceChannel(channelId, true).exceptionally(e -> {
+            log.warn("Discord join voice failed", e);
+            return null;
+        });
+    }
+
+    /** Leave the current voice channel. */
+    public void leaveVoice() {
+        selectVoiceChannel(null, false).exceptionally(e -> {
+            log.warn("Discord leave voice failed", e);
+            return null;
+        });
+    }
+
+    /** Voice channels across the user's guilds, for the join-command picker (empty until authenticated). */
+    public CompletableFuture<List<DiscordVoiceChannel>> listVoiceChannels() {
+        return isAuthenticated() ? getVoiceChannels() : CompletableFuture.completedFuture(List.of());
     }
 
     /** Resolves a stored/configured username to a current Discord user id: live channel members first, then the seen roster. */
