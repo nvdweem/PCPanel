@@ -18,7 +18,7 @@ import org.eclipse.microprofile.config.ConfigProvider;
 
 import javax.annotation.Nullable;
 
-import com.getpcpanel.cpp.IProcessHelper;
+import com.getpcpanel.platform.IProcessHelper;
 import com.getpcpanel.platform.LinuxBuild;
 import com.getpcpanel.util.ProcessHelper;
 

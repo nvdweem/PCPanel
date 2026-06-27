@@ -15,7 +15,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
-import com.getpcpanel.cpp.IProcessHelper;
+import com.getpcpanel.platform.IProcessHelper;
 import com.getpcpanel.platform.MacBuild;
 import com.getpcpanel.util.ProcessHelper;
 

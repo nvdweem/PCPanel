@@ -2,7 +2,7 @@ package com.getpcpanel.cpp.windows;
 
 import java.util.OptionalInt;
 
-import com.getpcpanel.cpp.IProcessHelper;
+import com.getpcpanel.platform.IProcessHelper;
 import com.getpcpanel.platform.WindowsBuild;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.ptr.IntByReference;

@@ -11,8 +11,8 @@ import javax.annotation.Nullable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.commands.command.ButtonAction;
-import com.getpcpanel.cpp.IProcessHelper;
 import com.getpcpanel.discord.DiscordService;
+import com.getpcpanel.platform.IProcessHelper;
 import com.getpcpanel.util.CdiHelper;
 
 import lombok.Getter;
