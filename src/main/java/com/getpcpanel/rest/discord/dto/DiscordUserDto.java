@@ -21,15 +21,19 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 @RegisterForReflection(targets = { DiscordUserDto.class, DiscordUserDto[].class })
 public record DiscordUserDto(String id, String username, String displayName, boolean inVoice) {
     public static List<DiscordUserDto> from(DiscordService service) {
+        // Exclude yourself: the "user" voice commands only work on OTHER members (Discord rejects your own id);
+        // to control your own mic/output use the Self commands. Keeping yourself out of the picker stops that trap.
+        var self = service.getSelfUser();
+        var selfId = self == null ? null : self.id();
         var byUsername = new LinkedHashMap<String, DiscordUserDto>();
         for (var u : service.getVoiceUsers()) {
-            if (StringUtils.isBlank(u.username())) {
+            if (StringUtils.isBlank(u.username()) || StringUtils.equals(u.id(), selfId)) {
                 continue;
             }
             byUsername.put(u.username().toLowerCase(Locale.ROOT), new DiscordUserDto(u.id(), u.username(), u.displayName(), true));
         }
         for (var u : service.getSeenUsers()) {
-            if (StringUtils.isBlank(u.username())) {
+            if (StringUtils.isBlank(u.username()) || StringUtils.equals(u.id(), selfId)) {
                 continue;
             }
             byUsername.putIfAbsent(u.username().toLowerCase(Locale.ROOT), new DiscordUserDto(u.id(), u.username(), u.displayName(), false));

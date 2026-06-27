@@ -8,8 +8,8 @@ import org.apache.commons.lang3.StringUtils;
  * client, set via SET_USER_VOICE_SETTINGS). {@code nick} is the per-guild nickname when present.
  */
 public record DiscordVoiceUser(String id, String username, String globalName, String nick, int volume, boolean mute) {
-    /** Best human-facing label: guild nick, else global display name, else username, else id. */
+    /** Best human-facing label: the global display name (what people go by), else guild nick, else username, else id. */
     public String displayName() {
-        return StringUtils.firstNonBlank(nick, globalName, username, id);
+        return StringUtils.firstNonBlank(globalName, nick, username, id);
     }
 }

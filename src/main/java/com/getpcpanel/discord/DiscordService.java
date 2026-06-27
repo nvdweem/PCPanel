@@ -323,8 +323,8 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
         }
         var changed = false;
         for (var u : users) {
-            if (u.id() == null || StringUtils.isBlank(u.username())) {
-                continue;
+            if (u.id() == null || StringUtils.isBlank(u.username()) || isSelf(u.id())) {
+                continue; // never list yourself as a targetable "seen user" — the per-user commands can't target you
             }
             var entry = new DiscordSeenUser(u.id(), u.username(), u.displayName());
             if (!entry.equals(current.get(u.id()))) {
@@ -413,6 +413,10 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
             log.warn("Discord user '{}' not found (not in your voice channel / not seen yet)", username);
             return false;
         }
+        if (isSelf(id)) {
+            log.warn("Discord 'user volume' can't target yourself — that's how loud you hear someone else. Use 'Mic Volume' (your input) or 'Output Volume' (how loud you hear others) instead.");
+            return false;
+        }
         setUserVolume(id, fraction * 200f);
         return true;
     }
@@ -423,9 +427,21 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
             log.warn("Discord user '{}' not found (not in your voice channel / not seen yet)", username);
             return false;
         }
+        if (isSelf(id)) {
+            // Discord rejects SET_USER_VOICE_SETTINGS on your own id (error 4010); "mute yourself" just means self-mute.
+            log.info("Discord 'user mute' targeted yourself — muting self instead. Bind the 'Self Mute' command to do this directly.");
+            toggleSelfMute(type);
+            return true;
+        }
         var current = getVoiceUsers().stream().filter(u -> id.equals(u.id())).findFirst().map(DiscordVoiceUser::mute).orElse(false);
         setUserMute(id, type.convert(current));
         return true;
+    }
+
+    /** Whether {@code userId} is the locally authenticated user (self-targeting the per-user voice commands is invalid). */
+    private boolean isSelf(@Nullable String userId) {
+        var self = getSelfUser();
+        return self != null && StringUtils.equals(userId, self.id());
     }
 
     /** Resolves a stored/configured username to a current Discord user id: live channel members first, then the seen roster. */
