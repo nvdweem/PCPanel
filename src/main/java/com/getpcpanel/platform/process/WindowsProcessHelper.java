@@ -1,4 +1,4 @@
-package com.getpcpanel.cpp.windows;
+package com.getpcpanel.platform.process;
 
 import java.util.OptionalInt;
 

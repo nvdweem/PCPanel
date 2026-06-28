@@ -1,4 +1,4 @@
-package com.getpcpanel.cpp.linux;
+package com.getpcpanel.platform.process;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -8,7 +8,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
-import com.getpcpanel.cpp.linux.LinuxProcessHelper.ActiveWindow;
+import com.getpcpanel.platform.process.LinuxProcessHelper.ActiveWindow;
 
 class LinuxProcessHelperTest {
 

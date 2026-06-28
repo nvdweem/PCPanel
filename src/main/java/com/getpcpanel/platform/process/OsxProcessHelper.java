@@ -1,4 +1,4 @@
-package com.getpcpanel.cpp.osx;
+package com.getpcpanel.platform.process;
 
 import java.io.IOException;
 import java.nio.charset.Charset;

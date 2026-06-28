@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import com.getpcpanel.cpp.linux.LinuxProcessHelper.ActiveWindow;
+import com.getpcpanel.platform.process.LinuxProcessHelper.ActiveWindow;
 import com.getpcpanel.cpp.linux.pulseaudio.PulseAudioWrapper.PulseAudioTarget;
 
 class SndCtrlPulseAudioTest {

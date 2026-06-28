@@ -1,4 +1,4 @@
-package com.getpcpanel.cpp.linux;
+package com.getpcpanel.platform.process;
 
 import java.nio.file.Files;
 import java.nio.file.Path;

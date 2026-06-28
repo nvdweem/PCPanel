@@ -33,6 +33,7 @@ import com.getpcpanel.cpp.EventType;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.platform.MacBuild;
+import com.getpcpanel.platform.process.OsxProcessHelper;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;

@@ -10,8 +10,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import com.getpcpanel.cpp.ISndCtrl;
-import com.getpcpanel.cpp.linux.LinuxProcessHelper;
-import com.getpcpanel.cpp.osx.OsxProcessHelper;
+import com.getpcpanel.platform.process.LinuxProcessHelper;
+import com.getpcpanel.platform.process.OsxProcessHelper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
