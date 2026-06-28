@@ -1,4 +1,4 @@
-package com.getpcpanel.volume;
+package com.getpcpanel.integration.volume;
 
 public interface IFocusRedirector {
     boolean handleFocusVolumeRequest(String targetProcess, float volume);

@@ -1,4 +1,4 @@
-package com.getpcpanel.rest;
+package com.getpcpanel.integration.volume;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;

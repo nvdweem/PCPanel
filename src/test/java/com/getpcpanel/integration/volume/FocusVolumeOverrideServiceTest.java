@@ -1,4 +1,4 @@
-package com.getpcpanel.volume;
+package com.getpcpanel.integration.volume;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -22,8 +22,8 @@ import com.getpcpanel.integration.volume.platform.ISndCtrl;
 import com.getpcpanel.integration.volume.platform.MuteType;
 import com.getpcpanel.profile.Save;
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.profile.dto.FocusVolumeOverride;
-import com.getpcpanel.profile.dto.FocusVolumeTarget;
+import com.getpcpanel.integration.volume.FocusVolumeOverride;
+import com.getpcpanel.integration.volume.FocusVolumeTarget;
 
 /**
  * The decision logic of the focus-volume override service (issue #49): a focused source app redirects the

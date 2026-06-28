@@ -1,4 +1,4 @@
-package com.getpcpanel.volume;
+package com.getpcpanel.integration.volume;
 
 import java.util.List;
 
@@ -12,8 +12,6 @@ import com.getpcpanel.commands.command.DialAction.DialActionParameters;
 import com.getpcpanel.integration.volume.platform.ISndCtrl;
 import com.getpcpanel.hid.DialValue;
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.profile.dto.FocusVolumeOverride;
-import com.getpcpanel.profile.dto.FocusVolumeTarget;
 import com.getpcpanel.profile.dto.KnobSetting;
 
 import io.quarkus.arc.Unremovable;

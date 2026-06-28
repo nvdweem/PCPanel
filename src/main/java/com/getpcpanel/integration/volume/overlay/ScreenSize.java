@@ -1,4 +1,4 @@
-package com.getpcpanel.overlay;
+package com.getpcpanel.integration.volume.overlay;
 
 /**
  * The size of the primary screen, used to position the overlay. A plain value type so the overlay

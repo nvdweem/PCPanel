@@ -1,4 +1,4 @@
-package com.getpcpanel.overlay;
+package com.getpcpanel.integration.volume.overlay;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;

@@ -1,4 +1,4 @@
-package com.getpcpanel.overlay;
+package com.getpcpanel.integration.volume.overlay;
 
 import org.freedesktop.dbus.annotations.DBusInterfaceName;
 import org.freedesktop.dbus.interfaces.DBusInterface;

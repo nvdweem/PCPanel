@@ -1,4 +1,4 @@
-package com.getpcpanel.volume;
+package com.getpcpanel.integration.volume;
 
 import java.util.HashMap;
 import java.util.Map;

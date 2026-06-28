@@ -1,4 +1,4 @@
-package com.getpcpanel.profile.dto;
+package com.getpcpanel.integration.volume.overlay;
 
 /**
  * Position options for the on-screen overlay.

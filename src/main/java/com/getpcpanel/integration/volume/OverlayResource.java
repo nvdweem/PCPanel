@@ -1,11 +1,11 @@
-package com.getpcpanel.rest;
+package com.getpcpanel.integration.volume;
 
 import java.awt.GraphicsEnvironment;
 import java.util.Arrays;
 import java.util.List;
 
-import com.getpcpanel.overlay.Overlay;
-import com.getpcpanel.overlay.OverlayPreviewRenderer;
+import com.getpcpanel.integration.volume.overlay.Overlay;
+import com.getpcpanel.integration.volume.overlay.OverlayPreviewRenderer;
 import com.getpcpanel.profile.Save;
 import com.getpcpanel.rest.model.dto.SettingsDto;
 import com.sun.jna.Platform;

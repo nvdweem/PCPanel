@@ -1,4 +1,4 @@
-package com.getpcpanel.volume;
+package com.getpcpanel.integration.volume;
 
 import java.io.File;
 import java.util.Optional;

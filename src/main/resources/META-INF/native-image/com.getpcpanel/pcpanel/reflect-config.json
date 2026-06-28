@@ -47,7 +47,7 @@
     "allDeclaredMethods": true
   },
   {
-    "name": "com.getpcpanel.overlay.KdeOsdService",
+    "name": "com.getpcpanel.integration.volume.overlay.KdeOsdService",
     "allDeclaredMethods": true
   },
   {

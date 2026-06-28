@@ -1,4 +1,4 @@
-package com.getpcpanel.overlay;
+package com.getpcpanel.integration.volume.overlay;
 
 import com.sun.jna.Platform;
 

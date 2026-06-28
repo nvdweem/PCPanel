@@ -1,4 +1,4 @@
-package com.getpcpanel.overlay;
+package com.getpcpanel.integration.volume.overlay;
 
 import java.awt.Image;
 import java.io.File;
@@ -21,12 +21,11 @@ import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.profile.dto.LightingConfig;
-import com.getpcpanel.profile.dto.OverlayPosition;
 import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
 import com.getpcpanel.profile.dto.SingleKnobLightingConfig.SINGLE_KNOB_MODE;
 import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
 import com.getpcpanel.util.coloroverride.OverrideColorService;
-import com.getpcpanel.volume.VolumeCoordinatorService;
+import com.getpcpanel.integration.volume.VolumeCoordinatorService;
 import com.sun.jna.Platform;
 
 import jakarta.annotation.Nonnull;

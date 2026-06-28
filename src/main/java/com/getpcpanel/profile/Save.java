@@ -14,10 +14,10 @@ import com.getpcpanel.integration.homeassistant.dto.HomeAssistantServer;
 import com.getpcpanel.profile.dto.DiscordAuth;
 import com.getpcpanel.profile.dto.DiscordSeenUser;
 import com.getpcpanel.profile.dto.DiscordSettings;
-import com.getpcpanel.profile.dto.FocusVolumeOverride;
+import com.getpcpanel.integration.volume.FocusVolumeOverride;
 import com.getpcpanel.profile.dto.MqttSettings;
 import com.getpcpanel.profile.dto.OSCConnectionInfo;
-import com.getpcpanel.profile.dto.OverlayPosition;
+import com.getpcpanel.integration.volume.overlay.OverlayPosition;
 import com.getpcpanel.profile.dto.WaveLinkSettings;
 
 import lombok.Data;

@@ -1,4 +1,4 @@
-package com.getpcpanel.overlay;
+package com.getpcpanel.integration.volume.overlay;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;

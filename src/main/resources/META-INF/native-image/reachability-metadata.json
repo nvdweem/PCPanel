@@ -1109,10 +1109,10 @@
       "type": "com.getpcpanel.integration.osc.OSCService"
     },
     {
-      "type": "com.getpcpanel.overlay.Overlay"
+      "type": "com.getpcpanel.integration.volume.overlay.Overlay"
     },
     {
-      "type": "com.getpcpanel.overlay.VolumeOverlay",
+      "type": "com.getpcpanel.integration.volume.overlay.VolumeOverlay",
       "methods": [
         {
           "name": "parseColor",
@@ -1124,10 +1124,10 @@
       ]
     },
     {
-      "type": "com.getpcpanel.overlay.VolumeOverlay$OverlayPanel"
+      "type": "com.getpcpanel.integration.volume.overlay.VolumeOverlay$OverlayPanel"
     },
     {
-      "type": "com.getpcpanel.overlay.VolumeOverlayNativeTest",
+      "type": "com.getpcpanel.integration.volume.overlay.VolumeOverlayNativeTest",
       "methods": [
         {
           "name": "<init>",
@@ -1144,12 +1144,12 @@
       ]
     },
     {
-      "type": "com.getpcpanel.overlay.VolumeOverlayNativeTest$HexColors",
+      "type": "com.getpcpanel.integration.volume.overlay.VolumeOverlayNativeTest$HexColors",
       "methods": [
         {
           "name": "<init>",
           "parameterTypes": [
-            "com.getpcpanel.overlay.VolumeOverlayNativeTest"
+            "com.getpcpanel.integration.volume.overlay.VolumeOverlayNativeTest"
           ]
         },
         {
@@ -1183,12 +1183,12 @@
       ]
     },
     {
-      "type": "com.getpcpanel.overlay.VolumeOverlayNativeTest$RgbColors",
+      "type": "com.getpcpanel.integration.volume.overlay.VolumeOverlayNativeTest$RgbColors",
       "methods": [
         {
           "name": "<init>",
           "parameterTypes": [
-            "com.getpcpanel.overlay.VolumeOverlayNativeTest"
+            "com.getpcpanel.integration.volume.overlay.VolumeOverlayNativeTest"
           ]
         },
         {
@@ -1212,12 +1212,12 @@
       ]
     },
     {
-      "type": "com.getpcpanel.overlay.VolumeOverlayNativeTest$SwingClassLoading",
+      "type": "com.getpcpanel.integration.volume.overlay.VolumeOverlayNativeTest$SwingClassLoading",
       "methods": [
         {
           "name": "<init>",
           "parameterTypes": [
-            "com.getpcpanel.overlay.VolumeOverlayNativeTest"
+            "com.getpcpanel.integration.volume.overlay.VolumeOverlayNativeTest"
           ]
         },
         {
@@ -1701,7 +1701,7 @@
         {
           "name": "setOverlayPosition",
           "parameterTypes": [
-            "com.getpcpanel.profile.dto.OverlayPosition"
+            "com.getpcpanel.integration.volume.overlay.OverlayPosition"
           ]
         },
         {
@@ -2086,7 +2086,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.profile.dto.OverlayPosition"
+      "type": "com.getpcpanel.integration.volume.overlay.OverlayPosition"
     },
     {
       "type": "com.getpcpanel.profile.dto.SingleKnobLightingConfig",
@@ -2351,10 +2351,10 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.AudioResource"
+      "type": "com.getpcpanel.integration.volume.AudioResource"
     },
     {
-      "type": "com.getpcpanel.rest.AudioResource$quarkusrestinvoker$listAudioDevices_550a3b0e13808220fb0b06709e729f8d6f308247",
+      "type": "com.getpcpanel.integration.volume.AudioResource$quarkusrestinvoker$listAudioDevices_550a3b0e13808220fb0b06709e729f8d6f308247",
       "methods": [
         {
           "name": "<init>",
@@ -2363,7 +2363,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.AudioResource$quarkusrestinvoker$listAudioSessions_87b1ad592571c0490d5d65ae30900a3fd5c91858",
+      "type": "com.getpcpanel.integration.volume.AudioResource$quarkusrestinvoker$listAudioSessions_87b1ad592571c0490d5d65ae30900a3fd5c91858",
       "methods": [
         {
           "name": "<init>",
@@ -2372,7 +2372,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.AudioResource$quarkusrestinvoker$listInputDevices_486c01c1309f7e4a8b1b28fdee3458ff7823b6dc",
+      "type": "com.getpcpanel.integration.volume.AudioResource$quarkusrestinvoker$listInputDevices_486c01c1309f7e4a8b1b28fdee3458ff7823b6dc",
       "methods": [
         {
           "name": "<init>",
@@ -2381,7 +2381,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.AudioResource$quarkusrestinvoker$listOutputDevices_07238fa0093e377e9791afc81a93956fc9c90a1f",
+      "type": "com.getpcpanel.integration.volume.AudioResource$quarkusrestinvoker$listOutputDevices_07238fa0093e377e9791afc81a93956fc9c90a1f",
       "methods": [
         {
           "name": "<init>",
@@ -2390,7 +2390,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.AudioResource$quarkusrestinvoker$listRunningApplications_111045ded5c591a7480f876665a40f8cc45b501b",
+      "type": "com.getpcpanel.integration.volume.AudioResource$quarkusrestinvoker$listRunningApplications_111045ded5c591a7480f876665a40f8cc45b501b",
       "methods": [
         {
           "name": "<init>",
@@ -2633,13 +2633,13 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.OverlayResource"
+      "type": "com.getpcpanel.integration.volume.OverlayResource"
     },
     {
-      "type": "com.getpcpanel.rest.OverlayResource$OverlayDto"
+      "type": "com.getpcpanel.integration.volume.OverlayResource$OverlayDto"
     },
     {
-      "type": "com.getpcpanel.rest.OverlayResource$quarkusrestinvoker$showOverlay_53c93d1310f135ffd7c8e51be7eb1f6ba4eac4ba",
+      "type": "com.getpcpanel.integration.volume.OverlayResource$quarkusrestinvoker$showOverlay_53c93d1310f135ffd7c8e51be7eb1f6ba4eac4ba",
       "methods": [
         {
           "name": "<init>",
@@ -2648,7 +2648,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.OverlayResource$quarkusrestinvoker$testOverlay_25269a521d728b138ab48fc9e9ade9c8f2dfd2fc",
+      "type": "com.getpcpanel.integration.volume.OverlayResource$quarkusrestinvoker$testOverlay_25269a521d728b138ab48fc9e9ade9c8f2dfd2fc",
       "methods": [
         {
           "name": "<init>",
@@ -3089,7 +3089,7 @@
         {
           "name": "setOverlayPosition",
           "parameterTypes": [
-            "com.getpcpanel.profile.dto.OverlayPosition"
+            "com.getpcpanel.integration.volume.overlay.OverlayPosition"
           ]
         },
         {
@@ -3502,7 +3502,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.volume.VolumeCoordinatorService"
+      "type": "com.getpcpanel.integration.volume.VolumeCoordinatorService"
     },
     {
       "type": "com.getpcpanel.integration.wavelink.WaveLinkIconHandler"

@@ -17,7 +17,7 @@ import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.util.Debouncer;
 import com.getpcpanel.util.ReconnectBackoff;
-import com.getpcpanel.volume.IFocusRedirector;
+import com.getpcpanel.integration.volume.IFocusRedirector;
 
 import jakarta.enterprise.inject.Instance;
 

@@ -1,4 +1,4 @@
-package com.getpcpanel.profile.dto;
+package com.getpcpanel.integration.volume;
 
 import com.getpcpanel.commands.command.Command;
 
