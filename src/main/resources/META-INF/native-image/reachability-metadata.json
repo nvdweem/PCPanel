@@ -2660,10 +2660,10 @@
       ]
     },
     {
-      "type": "com.getpcpanel.device.ProVisualColorsService"
+      "type": "com.getpcpanel.device.provider.pcpanel.ProVisualColorsService"
     },
     {
-      "type": "com.getpcpanel.device.ProVisualColorsServiceTest",
+      "type": "com.getpcpanel.device.provider.pcpanel.ProVisualColorsServiceTest",
       "methods": [
         {
           "name": "<init>",

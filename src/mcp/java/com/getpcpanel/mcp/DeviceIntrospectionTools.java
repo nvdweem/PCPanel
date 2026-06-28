@@ -9,7 +9,7 @@ import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.device.rest.DeviceResource;
 import com.getpcpanel.device.rest.MidiResource;
-import com.getpcpanel.device.ProVisualColorsService;
+import com.getpcpanel.device.provider.pcpanel.ProVisualColorsService;
 import com.getpcpanel.device.rest.SerialResource;
 import com.getpcpanel.rest.model.dto.DeviceDto;
 import com.getpcpanel.rest.model.dto.DeviceSnapshotDto;

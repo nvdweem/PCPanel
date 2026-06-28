@@ -1,6 +1,6 @@
 package com.getpcpanel.rest;
 
-import com.getpcpanel.device.ProVisualColorsService;
+import com.getpcpanel.device.provider.pcpanel.ProVisualColorsService;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
