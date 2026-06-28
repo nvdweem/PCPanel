@@ -17,8 +17,6 @@ import org.apache.commons.lang3.SystemUtils;
 
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.device.command.CommandBrightness;
-import com.getpcpanel.obs.command.CommandObs;
-import com.getpcpanel.voicemeeter.command.CommandVoiceMeeter;
 import com.getpcpanel.volume.command.CommandVolumeDefaultDevice;
 import com.getpcpanel.volume.command.CommandVolumeDefaultDeviceAdvanced;
 import com.getpcpanel.volume.command.CommandVolumeDefaultDeviceToggle;
@@ -43,8 +41,8 @@ import one.util.streamex.StreamEx;
 @ApplicationScoped
 public class IconService {
     public BufferedImage DEFAULT;
-    private BufferedImage OBS;
-    private BufferedImage VOICEMEETER;
+    public BufferedImage OBS;
+    public BufferedImage VOICEMEETER;
     public BufferedImage DEVICE;
     public BufferedImage SYSTEM_SOUND;
 
@@ -96,8 +94,6 @@ public class IconService {
         // Dials
         imageHandlers.put(CommandVolumeProcess.class, IconService::getRunningProcessIcon);
         imageHandlers.put(CommandVolumeFocus.class, IconService::getFocusProcessIcon);
-        imageHandlers.put(CommandObs.class, IconService::getObsIcon);
-        imageHandlers.put(CommandVoiceMeeter.class, IconService::getVoiceMeeterIcon);
         imageHandlers.put(CommandVolumeDevice.class, IconService::getDeviceIcon);
         imageHandlers.put(CommandBrightness.class, IconService::getBrightnessIcon);
 
@@ -188,13 +184,7 @@ public class IconService {
         return DEVICE;
     }
 
-    private BufferedImage getVoiceMeeterIcon(CommandVoiceMeeter command) {
-        return VOICEMEETER;
-    }
 
-    private BufferedImage getObsIcon(CommandObs command) {
-        return OBS;
-    }
 
     private class SafeMap extends HashMap<Class<? extends Command>, BiFunction<IconService, ? extends Command, BufferedImage>> {
 
