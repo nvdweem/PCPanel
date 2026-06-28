@@ -34,6 +34,12 @@ source of truth for the end state.
   `@All List<MuteStateResolver>`).
 - **pom `classPatterns`** collapsed to one glob `com.getpcpanel.**.command.**` — new feature command
   packages need no build-config edit.
+- **Integrations grouped under `com.getpcpanel.integration.*`** (obs, voicemeeter, wavelink, discord,
+  homeassistant, mqtt, osc), each fully self-contained: its `command/`, `rest/` (resource + DTOs),
+  `MuteStateResolver`/`IIconHandler` impls, `CommandModule`, and service all in the one package. The
+  REST layer is feature-local (`integration.<name>.rest`), not grouped under `rest/`; only the shared
+  web bridge stays in `rest/`. Persisted ids are location-independent, so this was a pure move (the
+  `backend.types.ts` diff is a reorder of the same `_type` literal set).
 - **Frontend command registry is generated from Java.** Each assignable command carries
   `@CommandMeta(label, category, kinds, integration, icon)` in its own file;
   `CommandRegistryGeneratorTest` emits `command-registry.generated.ts` from those annotations (and
@@ -196,42 +202,35 @@ missing from it today — confirming the frontend catalog is the real registry t
 ```
 com.getpcpanel
 ├── commands/                 # the command ENGINE only (framework)
-│   ├── command/              # Command, DialAction/ButtonAction/DeviceAction SPIs,
-│   │                         #   CommandNoOp, CommandConverter (legacy), and the genuinely-core
-│   │                         #   commands: volume/*, media, keystroke, shortcut, run, end-program,
-│   │                         #   brightness, profile, CommandValueOutput + CommandHttpRequest
-│   ├── meta/                 # NEW: @CommandMeta, @FieldMeta, CommandKind, the type-id resolver
+│   ├── command/              #   Command, DialAction/ButtonAction/DeviceAction SPIs,
+│   │                         #   CommandNoOp, CommandConverter (legacy v1.6 migration)
+│   ├── meta/                 #   @CommandMeta, CommandKind, CommandCategory
+│   ├── CommandModule, CommandSubtypeRegistrar   #   the decentralized type-registry SPI
 │   ├── Commands, CommandsType, CommandDispatcher, DeviceSet, PCPanelControlEvent
 │   └── IconService, IIconHandler
 │
-├── voicemeeter/              # ← consolidate
-│   ├── command/              #   CommandVoiceMeeter{,Basic,Advanced,BasicButton,AdvancedButton}
-│   ├── model/                #   the enums extracted from the Voicemeeter facade (ControlType, …)
-│   ├── VoiceMeeterMuteResolver (MuteStateResolver SPI impl; VM_PATTERN no longer leaks)
-│   ├── VoiceMeeterIconHandler (IIconHandler SPI impl)
-│   ├── VoiceMeeterSettings (record; persisted via Save)
-│   └── Voicemeeter, VoicemeeterAPI, VoicemeeterInstance, …  (engine, unchanged)
-├── obs/        + obs/command, obs/ObsIconHandler, ObsSettings
-├── osc/        + osc/command
-├── mqtt/       + mqtt/command
-├── wavelink/   (already good)
-├── discord/    (already good)
-├── homeassistant/ (already good — the action-package reference)
+├── <core command families>   # each a self-contained module: <name>/command + its CommandModule
+│   ├── volume/command, keyboard/command, program/command, device/command,
+│   └── profile/command, analogbands/command, output/command
 │
-└── rest/
-    ├── (shared bridge only: Device/Audio/Settings/Process/Serial/Midi/System/Overlay/Icon/Platform
-    │    resources, EventWebSocket, EventBroadcaster, LocalHttpGuard, model/{dto,ws})
-    ├── voicemeeter/   ← move VoiceMeeterResource (+dto)
-    ├── obs/           ← move ObsResource (+dto)
-    ├── osc/           ← move OscResource
-    ├── wavelink/      (already)
-    └── discord/       (already)
+├── integration/              # external-system connectors, each fully self-contained
+│   ├── voicemeeter/          #   command/, rest/ (+rest/dto), VoiceMeeterMuteResolver,
+│   │                         #   VoiceMeeterIconHandler, VoiceMeeterCommandModule, the engine
+│   ├── obs/   discord/   wavelink/   homeassistant/   mqtt/   osc/   (same shape)
+│   │          # each: command/ + rest/ + its Mute/Icon SPI impls + CommandModule + service
+│
+├── rest/                     # SHARED web bridge only
+│   └── Device/Audio/Settings/… resources, EventWebSocket, EventBroadcaster,
+│       LocalHttpGuard, model/{dto,ws}
+│
+└── mutecolor/                # orchestrator + MuteStateResolver SPI + integration-agnostic resolvers
+                              #   (process/device/named-device); per-integration resolvers live in integration.*
 ```
 
-Per-feature settings records move into the feature package (Wave Link/Discord pattern); `Save` keeps
-the fields or holds the records, and `SettingsDto` mapping shrinks accordingly. Per-feature
-`MuteStateResolver` impls move into their feature package (the `@All List<MuteStateResolver>` discovery
-already makes location irrelevant).
+Each integration's REST resource + DTOs live in `integration.<name>.rest` (feature-local), not
+`rest/<name>` — only the cross-cutting web bridge stays in `rest/`. Per-integration `MuteStateResolver`
+and `IIconHandler` impls live in the integration package; CDI `@All` discovery makes location
+irrelevant. `dev.niels.{discord,wavelink}` (the low-level RPC clients) keep their separate namespace.
 
 ### `pom.xml` classPatterns → one glob
 
