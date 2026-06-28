@@ -15,7 +15,7 @@ import org.hid4java.HidServicesSpecification;
 import org.hid4java.ScanMode;
 import org.hid4java.event.HidServicesEvent;
 
-import com.getpcpanel.device.DescriptorFactory;
+import com.getpcpanel.device.provider.pcpanel.DescriptorFactory;
 import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.device.descriptor.DeviceDescriptor;
 import com.getpcpanel.device.descriptor.DiscoveryMode;

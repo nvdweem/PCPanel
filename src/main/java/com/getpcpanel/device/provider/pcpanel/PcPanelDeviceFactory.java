@@ -1,19 +1,26 @@
-package com.getpcpanel.device;
+package com.getpcpanel.device.provider.pcpanel;
+
+import com.getpcpanel.commands.IconService;
+import com.getpcpanel.device.Device;
+import com.getpcpanel.device.DeviceType;
+import com.getpcpanel.device.descriptor.DeviceDescriptor;
+import com.getpcpanel.profile.DeviceSave;
+import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.util.coloroverride.OverrideColorService;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 
-import com.getpcpanel.commands.IconService;
-import com.getpcpanel.device.descriptor.DeviceDescriptor;
-import com.getpcpanel.device.provider.pcpanel.InputInterpreter;
-import com.getpcpanel.device.provider.pcpanel.OutputInterpreter;
-import com.getpcpanel.profile.DeviceSave;
-import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.util.coloroverride.OverrideColorService;
-
+/**
+ * Builds the concrete PCPanel device model (RGB / Mini / Pro) for a connected PCPanel device. The
+ * subclass is chosen from the descriptor's device-kind (the PCPanel {@link DeviceType}); the subclasses
+ * are otherwise identical and exist only for the per-model {@link Device#deviceType()} value and array
+ * size. This is PCPanel-provider-internal construction — non-PCPanel providers use
+ * {@link com.getpcpanel.device.GenericDeviceFactory}.
+ */
 @ApplicationScoped
-public class DeviceFactory {
+public class PcPanelDeviceFactory {
     @Inject InputInterpreter inputInterpreter;
     @Inject SaveService saveService;
     @Inject OutputInterpreter outputInterpreter;
@@ -21,11 +28,6 @@ public class DeviceFactory {
     @Inject OverrideColorService overrideColorService;
     @Inject Event<Object> eventBus;
 
-    /**
-     * Builds a PCPanel device from its capability descriptor. The concrete subclass is chosen from
-     * the descriptor's device-kind (the PCPanel {@link DeviceType}); the subclasses are otherwise
-     * identical and exist only for the per-model {@link Device#deviceType()} value and array size.
-     */
     public Device build(String serialNum, DeviceSave deviceSave, DeviceDescriptor descriptor) {
         var type = DeviceType.valueOf(descriptor.deviceKindId());
         return switch (type) {
@@ -33,13 +35,5 @@ public class DeviceFactory {
             case PCPANEL_MINI -> new PCPanelMiniDevice(inputInterpreter, saveService, outputInterpreter, iconService, overrideColorService, eventBus, serialNum, deviceSave, descriptor);
             case PCPANEL_PRO -> new PCPanelProDevice(inputInterpreter, saveService, outputInterpreter, iconService, overrideColorService, eventBus, serialNum, deviceSave, descriptor);
         };
-    }
-
-    /**
-     * Builds a descriptor-only {@link GenericDevice} (no {@link DeviceType}, no buttons, no lights)
-     * for any non-PCPanel provider such as Deej.
-     */
-    public Device buildGeneric(String serialNum, DeviceSave deviceSave, DeviceDescriptor descriptor) {
-        return new GenericDevice(saveService, outputInterpreter, iconService, eventBus, serialNum, deviceSave, descriptor);
     }
 }

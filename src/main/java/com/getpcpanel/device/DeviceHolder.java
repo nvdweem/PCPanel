@@ -22,9 +22,9 @@ import jakarta.inject.Inject;
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.profile.WindowFocusChangedEvent;
-import com.getpcpanel.device.DescriptorFactory;
+import com.getpcpanel.device.provider.pcpanel.DescriptorFactory;
+import com.getpcpanel.device.provider.pcpanel.PcPanelDeviceFactory;
 import com.getpcpanel.device.Device;
-import com.getpcpanel.device.DeviceFactory;
 import com.getpcpanel.device.descriptor.DeviceDescriptor;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.SaveService;
@@ -37,7 +37,8 @@ import one.util.streamex.StreamEx;
 public class DeviceHolder {
     private final Map<String, Device> devices = new ConcurrentHashMap<>();
     @Inject SaveService saveService;
-    @Inject DeviceFactory deviceFactory;
+    @Inject PcPanelDeviceFactory pcPanelDeviceFactory;
+    @Inject GenericDeviceFactory genericDeviceFactory;
     @Inject OutputInterpreter outputInterpreter;
     @Inject Event<Object> eventBus;
 
@@ -72,8 +73,8 @@ public class DeviceHolder {
         // steps (init packet + push lighting) run only for a lighting-capable PCPanel/HID device; a
         // lightless device (Deej) has no output channel and skips both.
         var device = isPcPanel
-                ? deviceFactory.build(event.serialNum(), deviceSave, descriptor)
-                : deviceFactory.buildGeneric(event.serialNum(), deviceSave, descriptor);
+                ? pcPanelDeviceFactory.build(event.serialNum(), deviceSave, descriptor)
+                : genericDeviceFactory.build(event.serialNum(), deviceSave, descriptor);
         // A descriptor-only device (MIDI/Deej) grows its descriptor as new controls are learned, which
         // re-fires DeviceConnectedEvent and rebuilds the device here with a zeroed rotation array. Carry
         // the previously-learned knob positions forward so prior controls don't snap back to 0.

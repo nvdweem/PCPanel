@@ -669,7 +669,10 @@
       "type": "com.getpcpanel.integration.volume.platform.windows.WindowsAudioSession"
     },
     {
-      "type": "com.getpcpanel.device.DeviceFactory"
+      "type": "com.getpcpanel.device.GenericDeviceFactory"
+    },
+    {
+      "type": "com.getpcpanel.device.provider.pcpanel.PcPanelDeviceFactory"
     },
     {
       "type": "com.getpcpanel.device.GlobalBrightnessChangedEvent"

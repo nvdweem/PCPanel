@@ -11,7 +11,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.Json;
-import com.getpcpanel.device.DescriptorFactory;
+import com.getpcpanel.device.provider.pcpanel.DescriptorFactory;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.util.concurrent.Debouncer;

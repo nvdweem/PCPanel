@@ -1,9 +1,10 @@
-package com.getpcpanel.device;
+package com.getpcpanel.device.provider.pcpanel;
+
+import com.getpcpanel.device.Device;
+import com.getpcpanel.device.DeviceType;
 
 import com.getpcpanel.commands.IconService;
 import com.getpcpanel.device.descriptor.DeviceDescriptor;
-import com.getpcpanel.device.provider.pcpanel.InputInterpreter;
-import com.getpcpanel.device.provider.pcpanel.OutputInterpreter;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.util.coloroverride.OverrideColorService;

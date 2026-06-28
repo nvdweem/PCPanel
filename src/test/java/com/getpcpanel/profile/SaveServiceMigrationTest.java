@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-import com.getpcpanel.device.DescriptorFactory;
+import com.getpcpanel.device.provider.pcpanel.DescriptorFactory;
 import com.getpcpanel.device.DeviceType;
 
 class SaveServiceMigrationTest {
