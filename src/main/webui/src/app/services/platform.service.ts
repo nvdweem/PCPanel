@@ -1,7 +1,7 @@
 import { computed, Injectable } from '@angular/core';
 import { httpResource } from '@angular/common/http';
 
-interface PlatformInfo { os: string; voicemeeter: boolean; waveLink: boolean; version: string; branch?: string | null; commit?: string | null; }
+interface PlatformInfo { os: string; voicemeeter: boolean; waveLink: boolean; flatpak: boolean; version: string; branch?: string | null; commit?: string | null; }
 
 /**
  * Platform capabilities reported by the BACKEND (the machine the device + native
@@ -23,4 +23,6 @@ export class PlatformService {
   /** Default true until the backend answers, so supported integrations aren't hidden on load. */
   readonly voicemeeterSupported = computed(() => this.info.value()?.voicemeeter ?? true);
   readonly waveLinkSupported = computed(() => this.info.value()?.waveLink ?? true);
+  /** True only inside the Flatpak sandbox, where Discord's IPC socket is visible only if Discord was already running at launch. Default false until the backend answers. */
+  readonly flatpak = computed(() => this.info.value()?.flatpak ?? false);
 }

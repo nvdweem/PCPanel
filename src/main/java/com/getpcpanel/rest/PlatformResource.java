@@ -3,6 +3,7 @@ package com.getpcpanel.rest;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -34,7 +35,7 @@ public class PlatformResource {
     /** Short HEAD commit of a local build, so the running build is identifiable in the UI; null for releases. */
     @Nullable private String commit;
 
-    public record PlatformInfo(String os, boolean voicemeeter, boolean waveLink, String version, @Nullable String branch, @Nullable String commit) {
+    public record PlatformInfo(String os, boolean voicemeeter, boolean waveLink, boolean flatpak, String version, @Nullable String branch, @Nullable String commit) {
     }
 
     @PostConstruct
@@ -51,7 +52,10 @@ public class PlatformResource {
     @GET
     public PlatformInfo get() {
         var os = SystemUtils.IS_OS_WINDOWS ? "windows" : SystemUtils.IS_OS_MAC ? "mac" : SystemUtils.IS_OS_LINUX ? "linux" : "other";
-        return new PlatformInfo(os, SystemUtils.IS_OS_WINDOWS, SystemUtils.IS_OS_WINDOWS || SystemUtils.IS_OS_MAC, version, branch, commit);
+        // Running inside the Flatpak sandbox: the UI uses this to warn that Discord's IPC socket is only
+        // visible if Discord was already running when PCPanel (and so the sandbox) started.
+        var flatpak = StringUtils.isNotBlank(System.getenv("FLATPAK_ID"));
+        return new PlatformInfo(os, SystemUtils.IS_OS_WINDOWS, SystemUtils.IS_OS_WINDOWS || SystemUtils.IS_OS_MAC, flatpak, version, branch, commit);
     }
 
     /**

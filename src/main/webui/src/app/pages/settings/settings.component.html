@@ -360,6 +360,10 @@
                 @if (st.lastError && !st.authenticated) {
                   <div class="pc-hint err">{{ st.lastError }}</div>
                 }
+                @if (platform.flatpak() && !st.connected) {
+                  <div class="pc-hint">Inside Flatpak, Discord is only detected if it was already running when PCPanel started.
+                    If Discord is running but shown as not connected, start Discord first, then restart PCPanel.</div>
+                }
                 @if (st.authorized) {
                   <div class="discord-actions">
                     <button type="button" class="pc-btn ghost" (click)="signOutDiscord()">Remove credentials</button>
