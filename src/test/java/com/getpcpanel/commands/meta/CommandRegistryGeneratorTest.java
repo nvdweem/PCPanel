@@ -39,8 +39,11 @@ class CommandRegistryGeneratorTest {
             Files.writeString(OUTPUT, expected);
             return;
         }
+        // Compare content, not line endings: the generator emits LF, but git's `text=auto` rewrites
+        // the checked-out file to CRLF on Windows (core.autocrlf), which would otherwise fail this test
+        // on the Windows CI runner only. Normalize both sides to LF.
         var actual = Files.exists(OUTPUT) ? Files.readString(OUTPUT) : "";
-        assertEquals(expected, actual,
+        assertEquals(normalizeEol(expected), normalizeEol(actual),
                 "command-registry.generated.ts is stale — regenerate with: ./mvnw test -Dtest=CommandRegistryGeneratorTest -Dpcpanel.generate.catalog");
     }
 
@@ -109,6 +112,10 @@ class CommandRegistryGeneratorTest {
         }
         sb.append("];\n");
         return sb.toString();
+    }
+
+    private static String normalizeEol(String s) {
+        return s.replace("\r\n", "\n");
     }
 
     private static String q(String s) {
