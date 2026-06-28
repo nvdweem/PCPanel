@@ -1,4 +1,4 @@
-package com.getpcpanel.cpp.osx;
+package com.getpcpanel.integration.keyboard.platform.osx;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;

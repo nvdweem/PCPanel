@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.getpcpanel.cpp.linux.LinuxKeyboard;
+import com.getpcpanel.integration.keyboard.platform.linux.LinuxKeyboard;
 import com.sun.jna.Library;
 
 /**

@@ -4,9 +4,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.SystemUtils;
 
-import com.getpcpanel.cpp.linux.LinuxKeyboard;
-import com.getpcpanel.cpp.osx.OsxKeyboard;
-import com.getpcpanel.cpp.windows.WindowsKeyboard;
+import com.getpcpanel.integration.keyboard.platform.linux.LinuxKeyboard;
+import com.getpcpanel.integration.keyboard.platform.osx.OsxKeyboard;
+import com.getpcpanel.integration.keyboard.platform.windows.WindowsKeyboard;
 import com.getpcpanel.util.OsxPermissionHelper;
 
 import lombok.extern.log4j.Log4j2;

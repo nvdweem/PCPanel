@@ -1,4 +1,4 @@
-package com.getpcpanel.cpp.osx;
+package com.getpcpanel.integration.keyboard.platform.osx;
 
 import java.util.HashMap;
 import java.util.Map;

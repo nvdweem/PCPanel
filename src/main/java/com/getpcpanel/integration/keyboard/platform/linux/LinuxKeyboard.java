@@ -1,4 +1,4 @@
-package com.getpcpanel.cpp.linux;
+package com.getpcpanel.integration.keyboard.platform.linux;
 
 import java.util.ArrayList;
 import java.util.HashMap;

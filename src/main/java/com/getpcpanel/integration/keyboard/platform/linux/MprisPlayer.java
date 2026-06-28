@@ -1,4 +1,4 @@
-package com.getpcpanel.cpp.linux;
+package com.getpcpanel.integration.keyboard.platform.linux;
 
 import org.freedesktop.dbus.annotations.DBusInterfaceName;
 import org.freedesktop.dbus.interfaces.DBusInterface;

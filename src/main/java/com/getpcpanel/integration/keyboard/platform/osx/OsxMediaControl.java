@@ -1,4 +1,4 @@
-package com.getpcpanel.util;
+package com.getpcpanel.integration.keyboard.platform.osx;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.integration.keyboard.command.CommandMedia.VolumeButton;
 import com.getpcpanel.platform.MacBuild;
+import com.getpcpanel.util.ProcessHelper;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.RequiredArgsConstructor;

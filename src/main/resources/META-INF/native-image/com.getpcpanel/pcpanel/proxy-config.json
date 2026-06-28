@@ -21,15 +21,15 @@
   {"interfaces": ["com.getpcpanel.util.tray.wayland.StatusNotifierWatcher"]},
   {"interfaces": ["com.getpcpanel.sleepdetection.Login1Manager"]},
   {"interfaces": ["com.getpcpanel.sleepdetection.Login1Session"]},
-  {"interfaces": ["com.getpcpanel.cpp.linux.MprisPlayer"]},
+  {"interfaces": ["com.getpcpanel.integration.keyboard.platform.linux.MprisPlayer"]},
   {"interfaces": ["com.getpcpanel.integration.volume.overlay.KdeOsdService"]},
   {"interfaces": ["org.freedesktop.dbus.interfaces.DBus"]},
   {"interfaces": ["org.freedesktop.dbus.interfaces.Properties"]},
 
   {"interfaces": ["com.getpcpanel.integration.volume.platform.osx.CoreAudioLib"]},
   {"interfaces": ["com.sun.jna.platform.mac.CoreFoundation"]},
-  {"interfaces": ["com.getpcpanel.cpp.osx.OsxKeyboard$CoreGraphics"]},
-  {"interfaces": ["com.getpcpanel.cpp.osx.OsxKeyboard$CoreFoundation"]},
+  {"interfaces": ["com.getpcpanel.integration.keyboard.platform.osx.OsxKeyboard$CoreGraphics"]},
+  {"interfaces": ["com.getpcpanel.integration.keyboard.platform.osx.OsxKeyboard$CoreFoundation"]},
   {"interfaces": ["com.getpcpanel.util.OsxPermissionHelper$ApplicationServicesLib"]},
   {"interfaces": ["com.getpcpanel.util.OsxPermissionHelper$IOKitLib"]}
 ]

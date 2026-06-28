@@ -1,4 +1,4 @@
-package com.getpcpanel.cpp.windows;
+package com.getpcpanel.integration.keyboard.platform.windows;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

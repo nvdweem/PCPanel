@@ -485,10 +485,10 @@
       "type": "com.getpcpanel.integration.volume.platform.MuteType"
     },
     {
-      "type": "com.getpcpanel.cpp.linux.LinuxKeyboard$X11"
+      "type": "com.getpcpanel.integration.keyboard.platform.linux.LinuxKeyboard$X11"
     },
     {
-      "type": "com.getpcpanel.cpp.linux.LinuxKeyboard$XTest"
+      "type": "com.getpcpanel.integration.keyboard.platform.linux.LinuxKeyboard$XTest"
     },
     {
       "type": "com.getpcpanel.integration.volume.platform.linux.SndCtrlPulseAudioTest",
@@ -11474,14 +11474,14 @@
     {
       "type": {
         "proxy": [
-          "com.getpcpanel.cpp.linux.LinuxKeyboard$X11"
+          "com.getpcpanel.integration.keyboard.platform.linux.LinuxKeyboard$X11"
         ]
       }
     },
     {
       "type": {
         "proxy": [
-          "com.getpcpanel.cpp.linux.LinuxKeyboard$XTest"
+          "com.getpcpanel.integration.keyboard.platform.linux.LinuxKeyboard$XTest"
         ]
       }
     },

@@ -1,4 +1,4 @@
-package com.getpcpanel.cpp.windows;
+package com.getpcpanel.integration.keyboard.platform.windows;
 
 import java.util.HashMap;
 import java.util.Map;
