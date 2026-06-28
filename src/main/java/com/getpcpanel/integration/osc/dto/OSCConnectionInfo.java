@@ -1,4 +1,4 @@
-package com.getpcpanel.profile.dto;
+package com.getpcpanel.integration.osc.dto;
 
 public record OSCConnectionInfo(String host, int port) {
 }

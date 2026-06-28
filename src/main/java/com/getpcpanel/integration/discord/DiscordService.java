@@ -15,9 +15,9 @@ import javax.annotation.Nullable;
 import com.getpcpanel.integration.volume.platform.MuteType;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
-import com.getpcpanel.profile.dto.DiscordAuth;
-import com.getpcpanel.profile.dto.DiscordSeenUser;
-import com.getpcpanel.profile.dto.DiscordSettings;
+import com.getpcpanel.integration.discord.dto.DiscordAuth;
+import com.getpcpanel.integration.discord.dto.DiscordSeenUser;
+import com.getpcpanel.integration.discord.dto.DiscordSettings;
 import com.getpcpanel.util.Debouncer;
 import com.getpcpanel.util.ReconnectBackoff;
 

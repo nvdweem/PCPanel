@@ -12,7 +12,7 @@ import com.getpcpanel.commands.Commands;
 import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.profile.dto.KnobSetting;
 import com.getpcpanel.profile.dto.LightingConfig;
-import com.getpcpanel.profile.dto.OSCBinding;
+import com.getpcpanel.integration.osc.dto.OSCBinding;
 
 import lombok.Data;
 

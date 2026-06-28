@@ -1617,7 +1617,7 @@
         {
           "name": "setMqtt",
           "parameterTypes": [
-            "com.getpcpanel.profile.dto.MqttSettings"
+            "com.getpcpanel.integration.mqtt.dto.MqttSettings"
           ]
         },
         {
@@ -1773,7 +1773,7 @@
         {
           "name": "setWaveLink",
           "parameterTypes": [
-            "com.getpcpanel.profile.dto.WaveLinkSettings"
+            "com.getpcpanel.integration.wavelink.dto.WaveLinkSettings"
           ]
         },
         {
@@ -1961,7 +1961,7 @@
       "type": "com.getpcpanel.profile.dto.LightingConfig$LightingMode"
     },
     {
-      "type": "com.getpcpanel.profile.dto.MqttSettings",
+      "type": "com.getpcpanel.integration.mqtt.dto.MqttSettings",
       "methods": [
         {
           "name": "<init>",
@@ -1973,7 +1973,7 @@
             "java.lang.String",
             "boolean",
             "java.lang.String",
-            "com.getpcpanel.profile.dto.MqttSettings$HomeAssistantSettings"
+            "com.getpcpanel.integration.mqtt.dto.MqttSettings$HomeAssistantSettings"
           ]
         },
         {
@@ -2011,7 +2011,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.profile.dto.MqttSettings$HomeAssistantSettings",
+      "type": "com.getpcpanel.integration.mqtt.dto.MqttSettings$HomeAssistantSettings",
       "methods": [
         {
           "name": "<init>",
@@ -2036,7 +2036,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.profile.dto.OSCBinding",
+      "type": "com.getpcpanel.integration.osc.dto.OSCBinding",
       "methods": [
         {
           "name": "<init>",
@@ -2066,7 +2066,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.profile.dto.OSCConnectionInfo",
+      "type": "com.getpcpanel.integration.osc.dto.OSCConnectionInfo",
       "methods": [
         {
           "name": "<init>",
@@ -2336,7 +2336,7 @@
       "type": "com.getpcpanel.profile.dto.SingleSliderLightingConfig[]"
     },
     {
-      "type": "com.getpcpanel.profile.dto.WaveLinkSettings",
+      "type": "com.getpcpanel.integration.wavelink.dto.WaveLinkSettings",
       "methods": [
         {
           "name": "<init>",

@@ -1,4 +1,4 @@
-package com.getpcpanel.profile.dto;
+package com.getpcpanel.integration.mqtt.dto;
 
 public record MqttSettings(boolean enabled, String host, Integer port, String username, String password, boolean secure,
                            String baseTopic,

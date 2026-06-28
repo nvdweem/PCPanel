@@ -1,4 +1,4 @@
-package com.getpcpanel.profile.dto;
+package com.getpcpanel.integration.discord.dto;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

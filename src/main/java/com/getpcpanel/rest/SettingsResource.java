@@ -4,9 +4,9 @@ import java.util.Map;
 
 import com.getpcpanel.integration.mqtt.MqttService;
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.profile.dto.DiscordSettings;
-import com.getpcpanel.profile.dto.MqttSettings;
-import com.getpcpanel.profile.dto.WaveLinkSettings;
+import com.getpcpanel.integration.discord.dto.DiscordSettings;
+import com.getpcpanel.integration.mqtt.dto.MqttSettings;
+import com.getpcpanel.integration.wavelink.dto.WaveLinkSettings;
 import com.getpcpanel.rest.model.dto.SettingsDto;
 
 import jakarta.enterprise.context.ApplicationScoped;

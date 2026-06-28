@@ -1,4 +1,4 @@
-package com.getpcpanel.profile.dto;
+package com.getpcpanel.integration.discord.dto;
 
 import org.apache.commons.lang3.StringUtils;
 

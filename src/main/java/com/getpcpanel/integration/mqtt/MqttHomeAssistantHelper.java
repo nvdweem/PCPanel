@@ -16,7 +16,7 @@ import com.getpcpanel.device.Device;
 import com.getpcpanel.integration.mqtt.MqttTopicHelper.ActionType;
 import com.getpcpanel.integration.mqtt.MqttTopicHelper.ColorType;
 import com.getpcpanel.integration.mqtt.MqttTopicHelper.ValueType;
-import com.getpcpanel.profile.dto.MqttSettings;
+import com.getpcpanel.integration.mqtt.dto.MqttSettings;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

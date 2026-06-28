@@ -1,7 +1,7 @@
 package com.getpcpanel.integration.mqtt;
 
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.profile.dto.MqttSettings;
+import com.getpcpanel.integration.mqtt.dto.MqttSettings;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
