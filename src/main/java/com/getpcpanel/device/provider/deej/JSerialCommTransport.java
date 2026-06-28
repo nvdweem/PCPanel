@@ -1,4 +1,4 @@
-package com.getpcpanel.device.io;
+package com.getpcpanel.device.provider.deej;
 
 import java.util.List;
 import java.util.function.Consumer;

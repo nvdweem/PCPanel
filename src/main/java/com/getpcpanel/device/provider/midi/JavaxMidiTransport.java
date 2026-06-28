@@ -1,4 +1,4 @@
-package com.getpcpanel.device.io;
+package com.getpcpanel.device.provider.midi;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,7 +55,7 @@ public class JavaxMidiTransport implements MidiTransport {
     }
 
     @Override
-    public MidiConnection open(String id, Consumer<com.getpcpanel.device.io.MidiTransport.MidiMessage> onMessage, Consumer<Throwable> onError) {
+    public MidiConnection open(String id, Consumer<com.getpcpanel.device.provider.midi.MidiTransport.MidiMessage> onMessage, Consumer<Throwable> onError) {
         try {
             for (var info : MidiSystem.getMidiDeviceInfo()) {
                 if (!idFor(info).equals(id)) {
@@ -86,9 +86,9 @@ public class JavaxMidiTransport implements MidiTransport {
 
     /** Decodes each inbound {@link ShortMessage} to the raw triple; everything else is dropped. */
     private static final class DecodingReceiver implements Receiver {
-        private final Consumer<com.getpcpanel.device.io.MidiTransport.MidiMessage> onMessage;
+        private final Consumer<com.getpcpanel.device.provider.midi.MidiTransport.MidiMessage> onMessage;
 
-        private DecodingReceiver(Consumer<com.getpcpanel.device.io.MidiTransport.MidiMessage> onMessage) {
+        private DecodingReceiver(Consumer<com.getpcpanel.device.provider.midi.MidiTransport.MidiMessage> onMessage) {
             this.onMessage = onMessage;
         }
 
@@ -97,7 +97,7 @@ public class JavaxMidiTransport implements MidiTransport {
             // One bad message must never kill the receiver thread (mirror the HID reader guard).
             try {
                 if (message instanceof ShortMessage sm) {
-                    onMessage.accept(new com.getpcpanel.device.io.MidiTransport.MidiMessage(sm.getStatus(), sm.getData1(), sm.getData2()));
+                    onMessage.accept(new com.getpcpanel.device.provider.midi.MidiTransport.MidiMessage(sm.getStatus(), sm.getData1(), sm.getData2()));
                 }
             } catch (Throwable t) {
                 // Swallow: decoding/handling is the consumer's job and it guards itself too.

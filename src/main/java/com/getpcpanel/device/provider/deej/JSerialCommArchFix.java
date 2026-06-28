@@ -1,4 +1,4 @@
-package com.getpcpanel.device.io;
+package com.getpcpanel.device.provider.deej;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
