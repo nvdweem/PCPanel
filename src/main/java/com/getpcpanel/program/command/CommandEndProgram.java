@@ -4,6 +4,9 @@ import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.ButtonAction;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.getpcpanel.commands.meta.CommandCategory;
+import com.getpcpanel.commands.meta.CommandKind;
+import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.util.CdiHelper;
 import com.getpcpanel.util.IPlatformCommand;
@@ -16,6 +19,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @ToString(callSuper = true)
 @JsonTypeName("com.getpcpanel.commands.command.CommandEndProgram")
+@CommandMeta(label = "End program", category = CommandCategory.system, kinds = {CommandKind.button}, icon = "x")
 public class CommandEndProgram extends Command implements ButtonAction {
     private static final Runtime rt = Runtime.getRuntime();
     private final boolean specific;

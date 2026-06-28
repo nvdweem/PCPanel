@@ -2,6 +2,9 @@ package com.getpcpanel.obs.command;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.getpcpanel.commands.meta.CommandCategory;
+import com.getpcpanel.commands.meta.CommandKind;
+import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.commands.command.DialAction;
 import com.getpcpanel.util.CdiHelper;
@@ -13,6 +16,7 @@ import lombok.ToString;
 @Getter
 @ToString(callSuper = true)
 @JsonTypeName("com.getpcpanel.commands.command.CommandObsSetSourceVolume")
+@CommandMeta(label = "OBS — source volume", category = CommandCategory.integration, kinds = {CommandKind.dial}, integration = "obs", icon = "sliders")
 public class CommandObsSetSourceVolume extends CommandObs implements DialAction {
     private final String sourceName;
     private final DialCommandParams dialParams;

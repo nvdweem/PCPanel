@@ -6,6 +6,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.getpcpanel.commands.meta.CommandCategory;
+import com.getpcpanel.commands.meta.CommandKind;
+import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.commands.command.ButtonAction;
 
@@ -17,6 +20,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @ToString(callSuper = true)
 @JsonTypeName("com.getpcpanel.wavelink.command.CommandWaveLinkAddFocusToChannel")
+@CommandMeta(label = "Wave Link — add focused app", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "wavelink", icon = "plus")
 public final class CommandWaveLinkAddFocusToChannel extends CommandWaveLink implements ButtonAction {
     @Nullable private final String id;
     @Nullable private final String name;

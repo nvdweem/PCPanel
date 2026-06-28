@@ -8,6 +8,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.getpcpanel.commands.meta.CommandCategory;
+import com.getpcpanel.commands.meta.CommandKind;
+import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.util.CdiHelper;
@@ -17,6 +20,7 @@ import lombok.ToString;
 
 @ToString(callSuper = true)
 @JsonTypeName("com.getpcpanel.commands.command.CommandProfile")
+@CommandMeta(label = "Switch profile", category = CommandCategory.system, kinds = {CommandKind.button}, icon = "refresh")
 public class CommandProfile extends Command implements DeviceAction {
     @Getter private final String profile;
 

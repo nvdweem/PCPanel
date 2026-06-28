@@ -6,6 +6,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.getpcpanel.commands.meta.CommandCategory;
+import com.getpcpanel.commands.meta.CommandKind;
+import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.osc.OSCService;
 import com.getpcpanel.output.command.CommandValueOutput;
@@ -22,6 +25,7 @@ import lombok.ToString;
 @Getter
 @ToString(callSuper = true)
 @JsonTypeName("com.getpcpanel.commands.command.CommandOscSend")
+@CommandMeta(label = "OSC send", category = CommandCategory.system, kinds = {CommandKind.dial, CommandKind.button}, icon = "sliders")
 public class CommandOscSend extends CommandValueOutput {
     private final String address;
 

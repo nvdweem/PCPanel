@@ -6,6 +6,9 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.getpcpanel.commands.meta.CommandCategory;
+import com.getpcpanel.commands.meta.CommandKind;
+import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.cpp.MuteType;
 
@@ -15,6 +18,7 @@ import lombok.ToString;
 @Getter
 @ToString(callSuper = true)
 @JsonTypeName("com.getpcpanel.commands.command.CommandVolumeProcess")
+@CommandMeta(label = "App volume", category = CommandCategory.audio, kinds = {CommandKind.dial}, icon = "volume")
 public class CommandVolumeProcess extends CommandVolume implements DialAction {
     private final List<String> processName;
     private final String device;

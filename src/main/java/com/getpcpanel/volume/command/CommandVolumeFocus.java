@@ -3,6 +3,9 @@ package com.getpcpanel.volume.command;
 import com.getpcpanel.commands.command.DialAction;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.getpcpanel.commands.meta.CommandCategory;
+import com.getpcpanel.commands.meta.CommandKind;
+import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.volume.VolumeCoordinatorService;
 import com.getpcpanel.util.CdiHelper;
@@ -13,6 +16,7 @@ import lombok.ToString;
 @Getter
 @ToString(callSuper = true)
 @JsonTypeName("com.getpcpanel.commands.command.CommandVolumeFocus")
+@CommandMeta(label = "Focused-app volume", category = CommandCategory.audio, kinds = {CommandKind.dial}, icon = "volume")
 public class CommandVolumeFocus extends CommandVolume implements DialAction {
     private final DialCommandParams dialParams;
 

@@ -3,6 +3,9 @@ package com.getpcpanel.volume.command;
 import com.getpcpanel.commands.command.ButtonAction;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.getpcpanel.commands.meta.CommandCategory;
+import com.getpcpanel.commands.meta.CommandKind;
+import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.cpp.MuteType;
 
@@ -12,6 +15,7 @@ import lombok.ToString;
 @Getter
 @ToString(callSuper = true)
 @JsonTypeName("com.getpcpanel.commands.command.CommandVolumeDeviceMute")
+@CommandMeta(label = "Device mute", category = CommandCategory.audio, kinds = {CommandKind.button}, icon = "volume-x")
 public class CommandVolumeDeviceMute extends CommandVolume implements ButtonAction {
     private final String deviceId;
     private final MuteType muteType;

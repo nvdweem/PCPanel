@@ -8,6 +8,9 @@ import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.getpcpanel.commands.meta.CommandCategory;
+import com.getpcpanel.commands.meta.CommandKind;
+import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.analogbands.AnalogBandColorService;
@@ -39,6 +42,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @ToString(callSuper = true)
 @JsonTypeName("com.getpcpanel.commands.command.CommandAnalogBands")
+@CommandMeta(label = "Stepped switch (ranges)", category = CommandCategory.system, kinds = {CommandKind.dial}, icon = "sliders")
 public class CommandAnalogBands extends Command implements DialAction {
     private static final int MAX_RAW = 255;
 

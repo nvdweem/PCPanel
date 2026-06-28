@@ -10,6 +10,9 @@ import org.apache.commons.lang3.SystemUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.getpcpanel.commands.meta.CommandCategory;
+import com.getpcpanel.commands.meta.CommandKind;
+import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.util.CdiHelper;
 import com.getpcpanel.util.OsxMediaControl;
@@ -35,6 +38,7 @@ import one.util.streamex.StreamEx;
 @Log4j2
 @ToString(callSuper = true)
 @JsonTypeName("com.getpcpanel.commands.command.CommandMedia")
+@CommandMeta(label = "Media", category = CommandCategory.system, kinds = {CommandKind.button}, icon = "play")
 public class CommandMedia extends Command implements ButtonAction {
     private static final int WM_APPCOMMAND = 0x0319;
     private final VolumeButton button;

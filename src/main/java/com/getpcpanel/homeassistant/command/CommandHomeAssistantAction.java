@@ -6,6 +6,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.getpcpanel.commands.meta.CommandCategory;
+import com.getpcpanel.commands.meta.CommandKind;
+import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.commands.command.ButtonAction;
@@ -21,6 +24,7 @@ import lombok.ToString;
 @Getter
 @ToString(callSuper = true)
 @JsonTypeName("com.getpcpanel.homeassistant.command.CommandHomeAssistantAction")
+@CommandMeta(label = "Home Assistant — perform action", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "homeassistant", icon = "zap")
 public class CommandHomeAssistantAction extends CommandHomeAssistant implements ButtonAction {
     private final String action;
     @Nullable private final String overlayText;

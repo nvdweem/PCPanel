@@ -5,6 +5,9 @@ import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.getpcpanel.commands.meta.CommandCategory;
+import com.getpcpanel.commands.meta.CommandKind;
+import com.getpcpanel.commands.meta.CommandMeta;
 import com.getpcpanel.cpp.MuteType;
 
 import lombok.Getter;
@@ -13,6 +16,7 @@ import lombok.ToString;
 @Getter
 @ToString(callSuper = true)
 @JsonTypeName("com.getpcpanel.commands.command.CommandVolumeFocusMute")
+@CommandMeta(label = "Focused-app mute", category = CommandCategory.audio, kinds = {CommandKind.button}, icon = "volume-x")
 public class CommandVolumeFocusMute extends CommandVolume implements ButtonAction {
     private final MuteType muteType;
 

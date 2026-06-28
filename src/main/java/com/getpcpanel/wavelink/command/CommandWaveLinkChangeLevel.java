@@ -6,6 +6,9 @@ import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.getpcpanel.commands.meta.CommandCategory;
+import com.getpcpanel.commands.meta.CommandKind;
+import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.commands.command.DialAction;
 
@@ -17,6 +20,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @ToString(callSuper = true)
 @JsonTypeName("com.getpcpanel.wavelink.command.CommandWaveLinkChangeLevel")
+@CommandMeta(label = "Wave Link — level", category = CommandCategory.integration, kinds = {CommandKind.dial}, integration = "wavelink", icon = "sliders")
 public final class CommandWaveLinkChangeLevel extends CommandWaveLinkChange implements DialAction {
     @Nullable private final DialCommandParams dialParams;
 

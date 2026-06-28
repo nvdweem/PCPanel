@@ -6,6 +6,9 @@ import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.getpcpanel.commands.meta.CommandCategory;
+import com.getpcpanel.commands.meta.CommandKind;
+import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.commands.command.ButtonAction;
 import com.getpcpanel.cpp.MuteType;
@@ -19,6 +22,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @ToString(callSuper = true)
 @JsonTypeName("com.getpcpanel.wavelink.command.CommandWaveLinkChangeMute")
+@CommandMeta(label = "Wave Link — mute", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "wavelink", icon = "mic-off")
 public final class CommandWaveLinkChangeMute extends CommandWaveLinkChange implements ButtonAction {
     private final MuteType muteType;
 

@@ -2,6 +2,9 @@ package com.getpcpanel.volume.command;
 
 import com.getpcpanel.commands.command.ButtonAction;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.getpcpanel.commands.meta.CommandCategory;
+import com.getpcpanel.commands.meta.CommandKind;
+import com.getpcpanel.commands.meta.CommandMeta;
 import javax.annotation.Nullable;
 
 import com.getpcpanel.util.CdiHelper;
@@ -23,6 +26,7 @@ import lombok.extern.log4j.Log4j2;
 @AllArgsConstructor
 @ToString(callSuper = true)
 @JsonTypeName("com.getpcpanel.commands.command.CommandVolumeDefaultDeviceAdvanced")
+@CommandMeta(label = "Advanced default device", category = CommandCategory.audio, kinds = {CommandKind.button}, icon = "monitor")
 public class CommandVolumeDefaultDeviceAdvanced extends CommandVolume implements ButtonAction {
     private final String name;
     private final String mediaPb;

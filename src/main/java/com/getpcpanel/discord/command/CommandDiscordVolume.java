@@ -6,6 +6,9 @@ import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.getpcpanel.commands.meta.CommandCategory;
+import com.getpcpanel.commands.meta.CommandKind;
+import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.commands.command.DialAction;
 
@@ -23,6 +26,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @ToString(callSuper = true)
 @JsonTypeName("com.getpcpanel.discord.command.CommandDiscordVolume")
+@CommandMeta(label = "Discord — volume", category = CommandCategory.integration, kinds = {CommandKind.dial}, integration = "discord", icon = "volume")
 public final class CommandDiscordVolume extends CommandDiscord implements DialAction {
     public static final String MIC = "mic";
     public static final String OUTPUT = "output";

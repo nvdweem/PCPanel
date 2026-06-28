@@ -6,6 +6,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.getpcpanel.commands.meta.CommandCategory;
+import com.getpcpanel.commands.meta.CommandKind;
+import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.commands.command.DialAction;
 import com.getpcpanel.util.ValueInterpolator;
@@ -24,6 +27,7 @@ import lombok.ToString;
 @Getter
 @ToString(callSuper = true)
 @JsonTypeName("com.getpcpanel.homeassistant.command.CommandHomeAssistantValue")
+@CommandMeta(label = "Home Assistant — set value", category = CommandCategory.integration, kinds = {CommandKind.dial}, integration = "homeassistant", icon = "sliders")
 public class CommandHomeAssistantValue extends CommandHomeAssistant implements DialAction {
     private final String action;
     @Nullable private final Double min;

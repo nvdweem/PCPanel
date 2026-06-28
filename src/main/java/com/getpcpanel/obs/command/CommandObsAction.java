@@ -2,6 +2,9 @@ package com.getpcpanel.obs.command;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.getpcpanel.commands.meta.CommandCategory;
+import com.getpcpanel.commands.meta.CommandKind;
+import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.obs.OBS;
 import com.getpcpanel.commands.command.ButtonAction;
@@ -17,6 +20,7 @@ import lombok.ToString;
 @Getter
 @ToString(callSuper = true)
 @JsonTypeName("com.getpcpanel.commands.command.CommandObsAction")
+@CommandMeta(label = "OBS — stream / record", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "obs", icon = "film")
 public class CommandObsAction extends CommandObs implements ButtonAction {
     private final ObsActionType action;
 

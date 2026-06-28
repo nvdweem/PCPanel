@@ -2,6 +2,9 @@ package com.getpcpanel.obs.command;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.getpcpanel.commands.meta.CommandCategory;
+import com.getpcpanel.commands.meta.CommandKind;
+import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.obs.OBS;
@@ -14,6 +17,7 @@ import lombok.ToString;
 @Getter
 @ToString(callSuper = true)
 @JsonTypeName("com.getpcpanel.commands.command.CommandObsMuteSource")
+@CommandMeta(label = "OBS — mute source", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "obs", icon = "mic-off")
 public class CommandObsMuteSource extends CommandObs implements ButtonAction {
     private final String source;
     private final MuteType type;

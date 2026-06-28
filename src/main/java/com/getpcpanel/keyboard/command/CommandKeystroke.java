@@ -6,6 +6,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.getpcpanel.commands.meta.CommandCategory;
+import com.getpcpanel.commands.meta.CommandKind;
+import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.commands.KeyMacro;
 
@@ -27,6 +30,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @ToString(callSuper = true)
 @JsonTypeName("com.getpcpanel.commands.command.CommandKeystroke")
+@CommandMeta(label = "Keystroke", category = CommandCategory.system, kinds = {CommandKind.button}, icon = "keyboard")
 public class CommandKeystroke extends Command implements ButtonAction {
     public enum KeystrokeType {
         /** Single key combination (modifiers + one key). */
