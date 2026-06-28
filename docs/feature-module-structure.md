@@ -6,32 +6,44 @@ This document is the source of truth for the end state and the order we get ther
 
 ### Implemented so far
 
-- **Stable type-id foundation.** `Command` now uses `@JsonTypeInfo(Id.NAME)` + an explicit
-  `@JsonSubTypes` registry. Each subtype's `name` is its *historical fully-qualified class name*,
-  frozen as a location-independent logical id. Saved `profiles.json`, the generated TS `_type`
-  union, and the frontend catalog are byte-for-byte unchanged, but command classes can now move
-  package freely. `CommandSubtypeRegistryTest` guards completeness (every concrete command
-  registered) and migration (every persisted id still deserializes).
-- **All integration commands relocated** out of the shared `commands/command` pile into their
-  feature `*.command` packages via `git mv`: VoiceMeeter, OBS, OSC, MQTT (WaveLink/Discord/Home
-  Assistant were already there). `commands/command` now holds only the engine + genuinely-core
-  commands.
+- **Fully decentralized command registry — no central list anywhere.** `Command` uses
+  `@JsonTypeInfo(Id.NAME)` with **no** `@JsonSubTypes`. Each concrete command declares its own stable
+  id with `@JsonTypeName` *in its own file*, and each feature owns an `@ApplicationScoped`
+  `CommandModule` bean that lists only its own commands. `CommandSubtypeRegistrar` (an
+  `ObjectMapperCustomizer`) collects every module via CDI `@All` and registers them with Jackson —
+  the same `@All`-discovered SPI pattern the codebase already uses for `MuteStateResolver`,
+  `IIconHandler`, `DeviceProvider`. **Adding a command or a whole new feature/plugin touches nothing
+  outside its package.** The id is the command's historical FQCN, frozen as a logical name, so saved
+  `profiles.json`, the generated TS `_type` union, and the frontend catalog are byte-for-byte
+  unchanged. `typescript-generator` emits the `_type` literals from `@JsonTypeName` (verified).
+- **Every command — integration *and* core — now lives in its own feature `*.command` module.**
+  Integrations: VoiceMeeter, OBS, OSC, MQTT moved in (WaveLink/Discord/Home Assistant already were).
+  Core split out of the old catch-all into: `volume.command`, `keyboard.command` (keystroke + media),
+  `program.command` (run/shortcut/end-program), `device.command` (brightness), `profile.command`,
+  `analogbands.command`, `output.command` (HTTP + the `CommandValueOutput` base). `commands/command`
+  now holds **only the engine**: `Command`, `CommandNoOp`, `CommandConverter`, the
+  `Dial/Button/DeviceAction` SPIs, and the `CommandModule` SPI + registrar.
 - **`VoiceMeeterMuteResolver`** moved from `mutecolor/` into the `voicemeeter` module (still found via
-  the `@All List<MuteStateResolver>` SPI).
+  `@All List<MuteStateResolver>`).
 - **pom `classPatterns`** collapsed to one glob `com.getpcpanel.**.command.**` — new feature command
   packages need no build-config edit.
 
-Full backend suite green except 3 pre-existing, environment-specific `FocusVolumeOverrideServiceTest`
-failures unrelated to this work; frontend `tsc` clean.
+Guards (all green): `CommandSubtypeRegistryTest` enforces every command self-identifies with a unique
+`@JsonTypeName`, the `CommandModule` SPI covers exactly the concrete set (none missing/stale/dup), and
+every id resolves; `CommandSubtypeRegistrarTest` checks the registrar wiring;
+`ReflectionRegistrationCoverageTest` stays green. Full backend suite green except 3 pre-existing,
+environment-specific `FocusVolumeOverrideServiceTest` failures unrelated to this work; frontend `tsc`
+clean; TS `_type` literal set byte-identical.
+
+**Adding a command is now entirely package-local:** drop the class in `com.getpcpanel.<feature>.command`
+with `@JsonTypeName("…")`, and add it to that feature's `CommandModule`. Nothing central changes.
 
 > **Note on the id scheme vs. the original plan.** The approved design called for *pretty* ids
-> (`voicemeeter.advanced`) with the old FQCN as a legacy alias. The implemented foundation instead
-> **freezes the current FQCN as the stable logical id** — this is the strictly safer stepping stone:
-> it requires *zero* change to saves, the generated TS, or the frontend, while still decoupling the
-> persisted id from the class's package (the whole point). Switching to pretty ids later is a clean,
-> separable follow-up: add `legacyTypes = { "<old FQCN>" }` to each command's future `@CommandMeta`,
-> emit the pretty id as the primary `@JsonSubTypes` name, and regenerate the frontend catalog from the
-> annotations. That step *does* touch the frontend, so it is best done alongside the generator below.
+> (`voicemeeter.advanced`). The implementation **freezes the current FQCN as the stable logical id** —
+> the strictly safer stepping stone: zero change to saves, the generated TS, or the frontend, while
+> still decoupling the persisted id from the class's package. Switching to pretty ids later just adds
+> `legacyTypes` aliases on each command and regenerates the frontend catalog (the one remaining
+> central artifact — see the generator phase below).
 
 ## Goal
 
@@ -222,20 +234,21 @@ CDI-discovery pattern this refactor leans on.
 
 Each phase is independently committable and keeps the build + coverage/parity tests green.
 
-1. **✅ DONE — Type-id infrastructure (no moves).** `Command` switched to `Id.NAME` + `@JsonSubTypes`
-   with frozen-FQCN names; `CommandSubtypeRegistryTest` guards completeness + migration. Purely
-   additive — no behaviour change. (Implemented as frozen FQCN ids rather than the custom
-   `@JsonTypeIdResolver`/`@CommandMeta` form — see the note in *Implemented so far* above.)
-2. **✅ DONE — VoiceMeeter commands → `voicemeeter.command`** (git-mv). `VoiceMeeterMuteResolver` also
-   moved into the module. classPatterns collapsed to the glob.
-3. **✅ DONE — OBS commands → `obs.command`** (git-mv).
-4. **✅ DONE — OSC + MQTT commands → `osc.command` / `mqtt.command`** (git-mv).
-5. **TODO — Annotation-driven catalog + pretty ids.** Add `@CommandMeta` (+ `@FieldMeta` where simple)
-   to every command, mirroring `command-catalog.ts`. Build a generator that emits the command-level
-   metadata into a generated TS catalog; the frontend keeps its hand-written composite-field renderers
-   and live-source wiring. Switch the `@JsonSubTypes` primary names to pretty ids with the old FQCNs as
-   `legacyTypes` aliases, and regenerate the catalog. (This is the step that touches the frontend, so
-   verify with `tsc`/`npm run build`.)
+1. **✅ DONE — Frozen-id type registry.** `Command` → `Id.NAME` with per-class `@JsonTypeName` ids
+   (frozen FQCNs), so command classes can move package with no save/TS/frontend impact.
+2. **✅ DONE — Integration commands relocated** (git-mv): VoiceMeeter, OBS, OSC, MQTT into their
+   `*.command` packages; `VoiceMeeterMuteResolver` into the `voicemeeter` module; classPatterns glob.
+3. **✅ DONE — Decentralized registry (no central list).** Dropped `@JsonSubTypes` entirely; added the
+   `CommandModule` CDI SPI + `CommandSubtypeRegistrar` (`@All`-collected `ObjectMapperCustomizer`); each
+   feature self-registers. Guard tests rewritten for the decentralized invariants.
+4. **✅ DONE — Core commands split into feature modules.** `volume`, `keyboard`, `program`, `device`,
+   `profile`, `analogbands`, `output` — `commands/command` is now engine-only.
+5. **TODO — Annotation-driven frontend catalog + pretty ids.** Add `@CommandMeta` (+ `@FieldMeta`) and a
+   build-time generator that emits the command-level catalog metadata (the frontend keeps its
+   hand-written composite-field renderers + live-source wiring). The generated `command-catalog` is the
+   *one remaining central artifact*; generating it eliminates the last hand-maintained registry. Then
+   optionally switch the `@JsonTypeName` ids to pretty form with the old FQCNs as `legacyTypes` aliases.
+   (Touches the frontend — verify with `tsc`/`npm run build`.)
 6. **TODO — Remaining non-command consolidation.** `VoiceMeeterResource`/`ObsResource`/`OscResource`
    → `rest/<feature>`; migrate the hardcoded `IconService` VoiceMeeter/OBS handlers to the
    `IIconHandler` SPI (mirror `WaveLinkIconHandler`); per-feature settings records local; delete the
@@ -244,7 +257,7 @@ Each phase is independently committable and keeps the build + coverage/parity te
    `ProxyRegistrationCoverageTest`, `NativeBuildArgsParityTest`; build native if feasible.
 
 Git history is preserved throughout by using `git mv` for every relocation. Phases 1–4 are committed
-and green (one commit each).
+and green.
 
 ## Risks & guards
 
