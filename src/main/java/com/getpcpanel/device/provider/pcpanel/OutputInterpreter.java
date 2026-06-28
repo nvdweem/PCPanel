@@ -1,6 +1,6 @@
 package com.getpcpanel.device.provider.pcpanel;
 
-import com.getpcpanel.device.BrightnessService;
+import com.getpcpanel.integration.device.BrightnessService;
 
 import java.util.Arrays;
 

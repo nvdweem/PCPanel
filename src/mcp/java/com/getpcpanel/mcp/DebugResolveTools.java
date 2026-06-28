@@ -15,7 +15,7 @@ import com.getpcpanel.integration.analogbands.command.AnalogBand;
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.integration.analogbands.command.CommandAnalogBands;
 import com.getpcpanel.device.Device;
-import com.getpcpanel.device.BrightnessService;
+import com.getpcpanel.integration.device.BrightnessService;
 import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.profile.BaseLayerService;
 import com.getpcpanel.profile.DeviceSave;
