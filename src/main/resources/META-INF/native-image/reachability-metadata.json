@@ -2399,18 +2399,6 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.CommandsResource"
-    },
-    {
-      "type": "com.getpcpanel.rest.CommandsResource$quarkusrestinvoker$listAvailableCommands_47312a0429306c144b67bec23b8273a7bf24ceec",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
       "type": "com.getpcpanel.rest.DeviceResource"
     },
     {
@@ -2776,9 +2764,6 @@
           "parameterTypes": []
         }
       ]
-    },
-    {
-      "type": "com.getpcpanel.rest.model.dto.CommandType"
     },
     {
       "type": "com.getpcpanel.rest.model.dto.ControlAssignmentsUpdateDto"

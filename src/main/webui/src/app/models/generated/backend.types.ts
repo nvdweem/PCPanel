@@ -232,13 +232,6 @@ export interface CommandShortcut extends Command, ButtonAction {
     shortcut: string;
 }
 
-export interface CommandType {
-    category: CommandCategory;
-    command: string;
-    kind: Kinds;
-    name: string;
-}
-
 export interface CommandValueOutput extends Command, DialAction, ButtonAction {
     _type: "mqtt.publish" | "osc.send" | "output.http-request";
     formula?: string;
@@ -958,8 +951,6 @@ export type AnalogKind = "KNOB" | "SLIDER" | "ENCODER";
 export type ButtonControlMode = "ENABLE" | "DISABLE" | "TOGGLE" | "STRING";
 
 export type ButtonType = "MONO" | "MUTE" | "SOLO" | "MC" | "EQ" | "A1" | "A2" | "A3" | "A4" | "A5" | "B1" | "B2" | "B3" | "SEL" | "MIXA" | "MIXB" | "REPEAT" | "COMPOSITE";
-
-export type CommandCategory = "standard" | "voicemeeter" | "obs" | "wavelink";
 
 export type CommandsType = "allAtOnce" | "sequential";
 
