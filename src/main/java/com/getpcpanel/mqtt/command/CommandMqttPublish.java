@@ -1,4 +1,4 @@
-package com.getpcpanel.commands.command;
+package com.getpcpanel.mqtt.command;
 
 import javax.annotation.Nullable;
 
@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.mqtt.MqttService;
+import com.getpcpanel.commands.command.CommandValueOutput;
 import com.getpcpanel.util.CdiHelper;
 import com.getpcpanel.util.ValueInterpolator;
 

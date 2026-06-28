@@ -1,4 +1,4 @@
-package com.getpcpanel.commands.command;
+package com.getpcpanel.osc.command;
 
 import javax.annotation.Nullable;
 
@@ -7,6 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.osc.OSCService;
+import com.getpcpanel.commands.command.CommandValueOutput;
 import com.getpcpanel.util.CdiHelper;
 
 import lombok.Getter;

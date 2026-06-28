@@ -20,6 +20,8 @@ import com.getpcpanel.discord.command.CommandDiscordVolume;
 import com.getpcpanel.hid.DialValue;
 import com.getpcpanel.homeassistant.command.CommandHomeAssistantAction;
 import com.getpcpanel.homeassistant.command.CommandHomeAssistantValue;
+import com.getpcpanel.mqtt.command.CommandMqttPublish;
+import com.getpcpanel.osc.command.CommandOscSend;
 import com.getpcpanel.obs.command.CommandObsAction;
 import com.getpcpanel.obs.command.CommandObsMuteSource;
 import com.getpcpanel.obs.command.CommandObsSetScene;
