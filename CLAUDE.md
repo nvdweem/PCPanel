@@ -84,16 +84,20 @@ injection, and cross-cutting communication uses the **CDI event bus** (`jakarta.
 fire + `@Observes`) heavily rather than direct calls. `docs/events.md` catalogs the events with their
 firers and observers — keep it current when you add or remove an event.
 
-**Hardware path (`hid/`, `device/`):** `DeviceScanner` discovers HID devices via hid4java;
-`DeviceCommunicationHandler` (one per device, own thread + queue) reads knob/button input and writes
-RGB/output. `Device` subclasses (`PCPanelMini/Pro/RGB`) model each hardware variant. Physical input
+**Hardware path (`device/`):** the device layer is the hardware-abstraction layer (HAL) and is **not**
+an integration — it provides no commands. `DeviceScanner` (in `device/provider/pcpanel/`) discovers HID
+devices via hid4java; `DeviceCommunicationHandler` (one per device, own thread + queue, same package)
+reads knob/button input and writes RGB/output. `Device` subclasses (`PCPanelMini/Pro/RGB`, in `device/`)
+model each hardware variant; `DeviceHolder` (in `device/`) is the cross-provider registry. Physical input
 becomes a `PCPanelControlEvent` / `ButtonClickEvent` on the event bus.
 
 **Device providers (`device/provider/`, `device/descriptor/`):** the device layer is generalized so
 PCPanel is one `DeviceProvider` among several — providers are `@ApplicationScoped` beans discovered via
 `Instance<DeviceProvider>` (NOT build-time stereotypes; every build contains all of them).
-`DeviceScanner` is the `"pcpanel"` HID provider; `DeejSerialProvider` (serial, jSerialComm) and
-`MidiProvider` (`javax.sound.midi`) are external providers. A device is described by a data
+`DeviceScanner` is the `"pcpanel"` HID provider (`device/provider/pcpanel/`); `DeejSerialProvider`
+(serial, jSerialComm, `device/provider/deej/`) and
+`MidiProvider` (`javax.sound.midi`, `device/provider/midi/`) are external providers; each provider
+absorbs its own IO transport (e.g. `SerialTransport`/`JSerialComm*` under `deej/`). A device is described by a data
 `DeviceDescriptor` (analog/digital inputs with source ranges, light/analog outputs, capabilities)
 rather than the `DeviceType` enum, which is now PCPanel-provider-internal. Each provider normalizes
 its raw analog values to the canonical **0–255** internal domain at its edge (PCPanel RGB 0–100, Deej
@@ -105,15 +109,21 @@ paths (lighting, `OutputInterpreter.sendInit`) against `deviceType() == null`. `
 `PcDeviceComponent` for PCPanel, else `GenericDeviceComponent`). Full design + per-phase status:
 `docs/device-layer-generalization-plan.md`.
 
-**Command model (`commands/`):** A user's per-dial/button configuration is a `Commands` (list of
-`Command` subclasses in `commands/command/` — e.g. `CommandVolumeProcess`, `CommandKeystroke`,
-`CommandObs`, `CommandMedia`). `CommandDispatcher` maps incoming control events to the configured
-commands and executes them. Commands are JSON-polymorphic and are part of the generated TS contract.
+**Command model (`commands/` = engine; `integration/*/command/` = the commands):** A user's
+per-dial/button configuration is a `Commands` (list of `Command` subclasses). `commands/` holds only the
+engine — `Command`, the `Dial/Button/DeviceAction` SPIs, `CommandDispatcher`, `DialValue`, the
+`@CommandMeta`/`CommandModule` registry. Each concrete command lives in its feature's package, e.g.
+`integration.volume.command.CommandVolumeProcess`, `integration.keyboard.command.CommandKeystroke`/
+`CommandMedia`, `integration.obs.command.CommandObs`. Commands are JSON-polymorphic (`@JsonTypeName`
+ids, decentralized registry — see `docs/feature-module-structure.md`) and part of the generated TS
+contract. **A package is an `integration` only if it provides commands** — providers/HAL/infra are not.
 
-**Native audio abstraction (`cpp/`):** `ISndCtrl` is the OS-audio facade (volume/mute/default device,
-focus app). Implementations are selected at **build time** by platform stereotypes:
-`@WindowsBuild` (`SndCtrlWindows` → JNI to `SndCtrl.dll` via `SndCtrlNative`, source in
-`src/main/cpp/`) and `@LinuxBuild` (`SndCtrlPulseAudio` via JNA/PulseAudio). These stereotypes wrap
+**Native audio abstraction (`integration/volume/platform/`):** `ISndCtrl` is the OS-audio facade
+(volume/mute/default device, focus app) — it is the backend the volume commands drive, so it lives in
+the volume feature. Implementations are selected at **build time** by platform stereotypes:
+`@WindowsBuild` (`SndCtrlWindows` → JNI to `SndCtrl.dll` via `SndCtrlNative`, both in
+`integration/volume/platform/windows/`; C++ source in `src/main/cpp/`) and `@LinuxBuild`
+(`SndCtrlPulseAudio` in `platform/linux/`, via JNA/PulseAudio). These stereotypes wrap
 Quarkus `@IfBuildProperty(name="pcpanel.build.os", ...)` keyed off `pcpanel.build.os` (set at build
 time from `os.detected.name`), so **a given build only contains one platform's beans** — guard
 optional platform beans with `Instance<T>` injection, and use `CdiHelper` to fetch beans from
@@ -129,11 +139,14 @@ and immutable distros persist settings without a host grant. `PcPanelRoot.resolv
 source of truth: `Main` publishes it as the `pcpanel.root` system property for the native image, and
 the non-CDI `FileChecker`/`HidDebug` call it directly. See `linux.md` for the user-facing details.
 
-**Frontend bridge (`rest/`):** JAX-RS resources under `/api` (`DeviceResource`, `CommandsResource`,
-`SettingsResource`, …) plus a single websocket `EventWebSocket` at `/ws/events`. The backend pushes
-device/state snapshots (DTOs in `rest/model/`) to the Angular UI over the socket; `EventBroadcaster`
-fans CDI events out to connected clients. There is no separate window framework — the "UI" is the
-browser served by Quinoa.
+**Frontend bridge (`rest/`):** the **shared** JAX-RS + websocket bridge: `SettingsResource`,
+`PlatformResource`, `SystemResource`, `IconResource`/`ProcessResource` (the app/process picker, shared
+across features), `EventWebSocket` at `/ws/events`, `EventBroadcaster`, `LocalHttpGuard`, and the
+`rest/model/` DTO+WS contract. Feature-specific resources live with their feature instead:
+device-management REST in `device/rest/` (`DeviceResource`, `SerialResource`, `MidiResource`),
+volume/overlay REST in `integration/volume/`, each external connector's REST in `integration/<name>/rest/`.
+The backend pushes device/state snapshots to the Angular UI over the socket. There is no separate window
+framework — the "UI" is the browser served by Quinoa.
 
 **Web-exposure security model:** the API is unauthenticated, so it must stay reachable only from the
 local machine. Two layers enforce this: `quarkus.http.host=127.0.0.1` keeps other hosts off, and
@@ -146,9 +159,13 @@ the backstop. Toggle with `pcpanel.http.local-only` (default true). This does **
 *local* callers — defending against other processes on the same machine would need a token and is out
 of scope.
 
-**Integrations:** `obs/` (OBS websocket), `voicemeeter/` (JNA), `wavelink/` + `dev/niels/wavelink/`
-(Elgato Wave Link RPC client), `osc/`, `mqtt/` (Eclipse Paho mqttv5), `homeassistant/`. `overlay/`
-draws an on-screen volume overlay: a Win32 JNA layered window on Windows (`Win32VolumeOverlay`) and a
+**Integrations (`integration/*` — command-providing features only):** the external connectors
+`integration/obs/` (OBS websocket), `voicemeeter/` (JNA), `wavelink/` + `dev/niels/wavelink/` (Elgato
+Wave Link RPC client), `osc/`, `mqtt/` (Eclipse Paho mqttv5), `homeassistant/`, `discord/`; plus the
+feature families `volume/`, `keyboard/`, `program/`, `analogbands/`, `profile/`, and `device/` (the
+brightness command only). Each owns its `command/` + `CommandModule` and (where applicable) its REST,
+SPI impls, and service. The on-screen volume overlay lives in `integration/volume/overlay/`: a Win32 JNA
+layered window on Windows (`Win32VolumeOverlay`) and a
 desktop-drawn OSD over D-Bus on Linux/Wayland (`LinuxOverlay`, AWT-free) — KDE Plasma's native volume
 OSD (`org.kde.osdService.volumeChanged`, the same real-time bar as Plasma's own volume keys) when
 plasmashell is on the bus, **else no overlay** (clean no-op). A notification fallback was deliberately
@@ -158,11 +175,11 @@ so those `Save` settings don't apply on Linux (the settings UI greys them out). 
 Selection is the runtime `Platform` check in `Overlay.createOverlay()`.
 `util/tray/` is the system tray (Wayland uses the D-Bus StatusNotifierItem protocol via dbus-java).
 
-`homeassistant/` is *outbound* control (the app drives Home Assistant), distinct from the MQTT
-auto-discovery in `mqtt/` (which lets Home Assistant discover the app). It holds both its own command
-types (`homeassistant/command/`, kept off the big `commands/command/` pile per the action-package
-convention — Jackson `Id.CLASS` makes location irrelevant, but the typescript-generator needs the
-`com.getpcpanel.homeassistant.command.**` classPattern in `pom.xml`) and a minimal REST client
+`integration/homeassistant/` is *outbound* control (the app drives Home Assistant), distinct from the
+MQTT auto-discovery in `integration/mqtt/` (which lets Home Assistant discover the app). It holds both
+its own command types (`integration/homeassistant/command/` — every feature's commands live in its own
+`command/` package, all picked up by the single `com.getpcpanel.**.command.**` typescript-generator
+classPattern in `pom.xml`) and a minimal REST client
 (`HomeAssistantClient`, JDK `HttpClient`, no extra dependency). Multiple servers are configured in
 settings (`Save.homeAssistantServers`); a command with a blank server id auto-resolves to the only
 configured server (the UI also auto-selects it). **Actions are authored as pasted HA "action" YAML**
@@ -197,7 +214,8 @@ Key constraints baked into those args, change with care:
   `quarkus-awt` is dropped via the `os-non-mac` profile, and the `os-mac` profile defers the whole
   AWT/Java2D/Swing/ImageIO subsystem to run-time). So macOS must never *call* AWT: the overlay is a
   no-op (`NoOpOverlayWindow`), icons are disabled, keystrokes use CoreGraphics `CGEvent`
-  (`com.getpcpanel.cpp.osx.OsxKeyboard`), the tray and `java.awt.Desktop` are skipped. JNA classes
+  (`com.getpcpanel.integration.keyboard.platform.osx.OsxKeyboard`, the macOS `Keyboard` impl), the tray
+  and `java.awt.Desktop` are skipped. JNA classes
   that run `Native.load` in their initializer must be `--initialize-at-run-time` (narrowly, by class —
   a package-wide directive would wrongly catch Quarkus's build-time CDI `_Bean` objects).
 - Windows-only GUI-subsystem linker flags (`/SUBSYSTEM:WINDOWS`, `/ENTRY:mainCRTStartup`) are MSVC
@@ -298,9 +316,9 @@ Full reference: [`docs/mcp-server.md`](docs/mcp-server.md).
 ## Conventions
 
 - Lombok is used throughout (`@Data`, `@Log4j2`, `@RequiredArgsConstructor`, etc.). `@Log4j2` is the
-  logging annotation (backed by jboss-logmanager). Note the `cpp` package overrides this with
-  **fluent** accessors (`src/main/java/com/getpcpanel/cpp/lombok.config`): `AudioDevice`/`AudioSession`
-  use `name()`/`volume()`/`muted()`, not `getName()`.
+  logging annotation (backed by jboss-logmanager). Note the audio-facade package overrides this with
+  **fluent** accessors (`src/main/java/com/getpcpanel/integration/volume/platform/lombok.config`):
+  `AudioDevice`/`AudioSession` use `name()`/`volume()`/`muted()`, not `getName()`.
 - Nullability annotated with `javax.annotation.@Nullable/@Nonnull` (JSR-305) — these feed the TS
   generator's optional-property detection.
 - `.editorconfig` defines formatting and a large set of IntelliJ inspection settings; follow it.
