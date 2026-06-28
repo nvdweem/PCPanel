@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.getpcpanel.commands.command.Command;
-import com.getpcpanel.device.command.CommandBrightness;
-import com.getpcpanel.device.command.DeviceCommandModule;
+import com.getpcpanel.integration.device.command.CommandBrightness;
+import com.getpcpanel.integration.device.command.DeviceCommandModule;
 import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterAdvanced;
 import com.getpcpanel.integration.voicemeeter.command.VoiceMeeterCommandModule;
 

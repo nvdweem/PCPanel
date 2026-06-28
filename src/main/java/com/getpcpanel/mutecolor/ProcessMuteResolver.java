@@ -6,7 +6,7 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.commands.Commands;
-import com.getpcpanel.volume.command.CommandVolumeProcess;
+import com.getpcpanel.integration.volume.command.CommandVolumeProcess;
 import com.getpcpanel.cpp.AudioSession;
 import com.getpcpanel.cpp.ISndCtrl;
 

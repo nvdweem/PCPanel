@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.CommandsType;
-import com.getpcpanel.profile.command.CommandProfile;
+import com.getpcpanel.integration.profile.command.CommandProfile;
 import com.getpcpanel.profile.dto.LightingConfig;
 import com.getpcpanel.profile.dto.LightingConfig.LightingMode;
 import com.getpcpanel.profile.dto.SingleKnobLightingConfig.SINGLE_KNOB_MODE;

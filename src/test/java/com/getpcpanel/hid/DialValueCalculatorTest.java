@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-import com.getpcpanel.device.command.CommandBrightness;
+import com.getpcpanel.integration.device.command.CommandBrightness;
 import com.getpcpanel.commands.command.DialAction.DialCommandParams;
 import com.getpcpanel.profile.dto.KnobSetting;
 import com.getpcpanel.util.Util;

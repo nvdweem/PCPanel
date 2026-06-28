@@ -8,7 +8,7 @@ import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
-import com.getpcpanel.keyboard.command.CommandKeystroke;
+import com.getpcpanel.integration.keyboard.command.CommandKeystroke;
 
 /**
  * Generation-only test: drives the real keystroke feature so the GraalVM tracing agent records the

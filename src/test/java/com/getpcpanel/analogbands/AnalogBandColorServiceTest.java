@@ -11,8 +11,8 @@ import org.junit.jupiter.api.Test;
 
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.CommandsType;
-import com.getpcpanel.analogbands.command.AnalogBand;
-import com.getpcpanel.analogbands.command.CommandAnalogBands;
+import com.getpcpanel.integration.analogbands.command.AnalogBand;
+import com.getpcpanel.integration.analogbands.command.CommandAnalogBands;
 import com.getpcpanel.profile.dto.LightingConfig;
 import com.getpcpanel.profile.dto.LightingConfig.LightingMode;
 

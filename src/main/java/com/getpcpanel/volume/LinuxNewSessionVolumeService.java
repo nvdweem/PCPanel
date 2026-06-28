@@ -5,7 +5,7 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.getpcpanel.volume.command.CommandVolumeProcess;
+import com.getpcpanel.integration.volume.command.CommandVolumeProcess;
 import com.getpcpanel.cpp.AudioSessionEvent;
 import com.getpcpanel.cpp.EventType;
 import com.getpcpanel.cpp.ISndCtrl;

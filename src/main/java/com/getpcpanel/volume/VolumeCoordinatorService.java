@@ -6,7 +6,7 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.commands.command.Command;
-import com.getpcpanel.volume.command.CommandVolumeProcess;
+import com.getpcpanel.integration.volume.command.CommandVolumeProcess;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;

@@ -11,7 +11,7 @@ import com.getpcpanel.commands.meta.CommandKind;
 import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.integration.osc.OSCService;
-import com.getpcpanel.output.command.CommandValueOutput;
+import com.getpcpanel.commands.command.CommandValueOutput;
 import com.getpcpanel.util.CdiHelper;
 
 import lombok.Getter;
