@@ -1,7 +1,37 @@
 # Feature-module structure (plugin-style refactor)
 
-Status: **design** — proposed target structure and migration plan. Implementation is phased; this
-document is the source of truth for the end state and the order we get there.
+Status: **in progress** — the type-id foundation and the command relocations are implemented and
+green; the frontend-catalog generator and the remaining non-command consolidation are not yet done.
+This document is the source of truth for the end state and the order we get there.
+
+### Implemented so far
+
+- **Stable type-id foundation.** `Command` now uses `@JsonTypeInfo(Id.NAME)` + an explicit
+  `@JsonSubTypes` registry. Each subtype's `name` is its *historical fully-qualified class name*,
+  frozen as a location-independent logical id. Saved `profiles.json`, the generated TS `_type`
+  union, and the frontend catalog are byte-for-byte unchanged, but command classes can now move
+  package freely. `CommandSubtypeRegistryTest` guards completeness (every concrete command
+  registered) and migration (every persisted id still deserializes).
+- **All integration commands relocated** out of the shared `commands/command` pile into their
+  feature `*.command` packages via `git mv`: VoiceMeeter, OBS, OSC, MQTT (WaveLink/Discord/Home
+  Assistant were already there). `commands/command` now holds only the engine + genuinely-core
+  commands.
+- **`VoiceMeeterMuteResolver`** moved from `mutecolor/` into the `voicemeeter` module (still found via
+  the `@All List<MuteStateResolver>` SPI).
+- **pom `classPatterns`** collapsed to one glob `com.getpcpanel.**.command.**` — new feature command
+  packages need no build-config edit.
+
+Full backend suite green except 3 pre-existing, environment-specific `FocusVolumeOverrideServiceTest`
+failures unrelated to this work; frontend `tsc` clean.
+
+> **Note on the id scheme vs. the original plan.** The approved design called for *pretty* ids
+> (`voicemeeter.advanced`) with the old FQCN as a legacy alias. The implemented foundation instead
+> **freezes the current FQCN as the stable logical id** — this is the strictly safer stepping stone:
+> it requires *zero* change to saves, the generated TS, or the frontend, while still decoupling the
+> persisted id from the class's package (the whole point). Switching to pretty ids later is a clean,
+> separable follow-up: add `legacyTypes = { "<old FQCN>" }` to each command's future `@CommandMeta`,
+> emit the pretty id as the primary `@JsonSubTypes` name, and regenerate the frontend catalog from the
+> annotations. That step *does* touch the frontend, so it is best done alongside the generator below.
 
 ## Goal
 
@@ -192,28 +222,36 @@ CDI-discovery pattern this refactor leans on.
 
 Each phase is independently committable and keeps the build + coverage/parity tests green.
 
-1. **Type-id infrastructure (no moves yet).** Add `@CommandMeta`/`@FieldMeta`, `CommandKind`, and the
-   `@JsonTypeIdResolver` with the legacy-FQCN alias table. Switch `Command` to it. Add a test that
-   every existing saved-FQCN still deserializes. *No class moves — purely additive.*
-2. **Annotation backfill.** Add `@CommandMeta` (+ `@FieldMeta` where simple) to every command,
-   mirroring `command-catalog.ts` exactly. Add the generator; emit `command-catalog.generated.ts`;
-   switch the frontend to it (keeping the hand-written composite renderers). Delete the hand-built
-   catalog. `CommandsResource` derives from the annotations.
-3. **VoiceMeeter consolidation** (git-mv): commands → `voicemeeter.command`; resolver → `voicemeeter`;
-   resource → `rest/voicemeeter`; enums → `voicemeeter.model`; icon → `IIconHandler`; settings record
-   local. Update NativeImageConfig + classPatterns glob. Verify saves load.
-4. **OBS consolidation** (same shape).
-5. **OSC + MQTT consolidation** (same shape).
-6. **Cleanup + parity:** move deserializers next to their types; fix `docs/events.md` (add the missing
-   Discord events); confirm `ReflectionRegistrationCoverageTest`, `ProxyRegistrationCoverageTest`,
-   `NativeBuildArgsParityTest` green; build native if feasible.
+1. **✅ DONE — Type-id infrastructure (no moves).** `Command` switched to `Id.NAME` + `@JsonSubTypes`
+   with frozen-FQCN names; `CommandSubtypeRegistryTest` guards completeness + migration. Purely
+   additive — no behaviour change. (Implemented as frozen FQCN ids rather than the custom
+   `@JsonTypeIdResolver`/`@CommandMeta` form — see the note in *Implemented so far* above.)
+2. **✅ DONE — VoiceMeeter commands → `voicemeeter.command`** (git-mv). `VoiceMeeterMuteResolver` also
+   moved into the module. classPatterns collapsed to the glob.
+3. **✅ DONE — OBS commands → `obs.command`** (git-mv).
+4. **✅ DONE — OSC + MQTT commands → `osc.command` / `mqtt.command`** (git-mv).
+5. **TODO — Annotation-driven catalog + pretty ids.** Add `@CommandMeta` (+ `@FieldMeta` where simple)
+   to every command, mirroring `command-catalog.ts`. Build a generator that emits the command-level
+   metadata into a generated TS catalog; the frontend keeps its hand-written composite-field renderers
+   and live-source wiring. Switch the `@JsonSubTypes` primary names to pretty ids with the old FQCNs as
+   `legacyTypes` aliases, and regenerate the catalog. (This is the step that touches the frontend, so
+   verify with `tsc`/`npm run build`.)
+6. **TODO — Remaining non-command consolidation.** `VoiceMeeterResource`/`ObsResource`/`OscResource`
+   → `rest/<feature>`; migrate the hardcoded `IconService` VoiceMeeter/OBS handlers to the
+   `IIconHandler` SPI (mirror `WaveLinkIconHandler`); per-feature settings records local; delete the
+   dead `CommandsResource` + `CommandType` DTO (and prune their `reachability-metadata.json` entries);
+   fix `docs/events.md` (add the missing Discord events). Confirm `ReflectionRegistrationCoverageTest`,
+   `ProxyRegistrationCoverageTest`, `NativeBuildArgsParityTest`; build native if feasible.
 
-Git history is preserved throughout by using `git mv` for every relocation.
+Git history is preserved throughout by using `git mv` for every relocation. Phases 1–4 are committed
+and green (one commit each).
 
 ## Risks & guards
 
-- **Saved-profile breakage** — mitigated by the legacy-FQCN alias table + a deserialization test
-  seeded with the current FQCNs (phase 1, before any move).
+- **Saved-profile breakage** — eliminated by freezing each command's persisted id to its historical
+  FQCN, so a package move never changes the wire string; `CommandSubtypeRegistryTest` deserializes
+  every registered id. (When phase 5 introduces pretty ids, the old FQCNs become `legacyTypes`
+  aliases and the same test must cover them.)
 - **Native-image 500s** — every concrete command + nested record (and `[]` form for `List`/`Set`)
   must stay registered; `ReflectionRegistrationCoverageTest` enforces it. The `File`/`FileSerializer`
   hazard on `ISndCtrl.RunningApplication` is pre-existing and unaffected.
