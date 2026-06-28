@@ -1,9 +1,15 @@
 # Feature-module structure (plugin-style refactor)
 
-Status: **in progress** — the decentralized command registry, the per-feature module split (core +
-integrations), the Java-generated frontend registry, and nice backwards-compatible discriminators are
-all implemented and green. Remaining: the non-command consolidation (REST resources, icon SPI,
-dead-code/`events.md`). This document is the source of truth for the end state.
+Status: **complete** — the decentralized command registry, the per-feature module split (core +
+integrations), the Java-generated frontend registry, nice backwards-compatible discriminators, and the
+non-command consolidation (REST resources → `rest/<feature>`, VM/OBS icons on the `IIconHandler` SPI,
+dead `CommandsResource`/`CommandType` removed, `events.md` updated) are all implemented and green
+(437 tests pass; `tsc` clean). The branch is rebased on current `origin/main`. This document is the
+source of truth for the end state.
+
+> The only step that cannot be fully verified in a non-native build is the moved REST resources'
+> Quarkus native-image invoker metadata (`reachability-metadata.json`) — per the GraalVM notes in
+> `CLAUDE.md`, that is verified by the native CI build / running the native binary.
 
 ### Implemented so far
 
@@ -263,12 +269,13 @@ Each phase is independently committable and keeps the build + coverage/parity te
    alias via a `DeserializationProblemHandler` (old saves load; re-save converts). Field-level
    generation (`@FieldMeta` for the composite editors) is a possible future extension but not required —
    the editors are genuinely UI, not registry data.
-6. **TODO — Remaining non-command consolidation.** `VoiceMeeterResource`/`ObsResource`/`OscResource`
-   → `rest/<feature>`; migrate the hardcoded `IconService` VoiceMeeter/OBS handlers to the
-   `IIconHandler` SPI (mirror `WaveLinkIconHandler`); per-feature settings records local; delete the
-   dead `CommandsResource` + `CommandType` DTO (and prune their `reachability-metadata.json` entries);
-   fix `docs/events.md` (add the missing Discord events). Confirm `ReflectionRegistrationCoverageTest`,
-   `ProxyRegistrationCoverageTest`, `NativeBuildArgsParityTest`; build native if feasible.
+6. **✅ DONE — Remaining non-command consolidation.** `VoiceMeeterResource`/`ObsResource`/`OscResource`
+   → `rest/<feature>`; the hardcoded `IconService` VoiceMeeter/OBS handlers migrated to the
+   `IIconHandler` SPI (`ObsIconHandler`, `VoiceMeeterIconHandler`); dead `CommandsResource` +
+   `CommandType` DTO removed (and their `reachability-metadata.json` entries pruned); `docs/events.md`
+   updated with `DiscordChangedEvent`. `ReflectionRegistrationCoverageTest` green. (Per-feature
+   settings records are still in `Save`/`SettingsDto` — a possible further tidy, but those are
+   field-name Jackson, not `Id.CLASS`, so they carry no module-locality or migration risk.)
 
 Git history is preserved throughout by using `git mv` for every relocation. Phases 1–4 are committed
 and green.
