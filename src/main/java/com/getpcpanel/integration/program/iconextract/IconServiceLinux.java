@@ -1,18 +1,18 @@
-package com.getpcpanel.iconextract;
+package com.getpcpanel.integration.program.iconextract;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
 
-import com.getpcpanel.platform.WindowsBuild;
+import com.getpcpanel.platform.LinuxBuild;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
-@WindowsBuild
-public class IconServiceWindows implements IIconService {
+@LinuxBuild
+public class IconServiceLinux implements IIconService {
     @Override
     public BufferedImage getIconForFile(int width, int height, File file) {
-        return JIconExtract.getIconForFile(width, height, file);
+        return null;
     }
 }
 

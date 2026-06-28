@@ -1,4 +1,4 @@
-package com.getpcpanel.util;
+package com.getpcpanel.profile;
 
 import java.util.Map;
 import java.util.Set;
@@ -9,8 +9,6 @@ import org.apache.commons.lang3.StringUtils;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.hid.DeviceHolder;
-import com.getpcpanel.profile.Profile;
-import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.platform.WindowsBuild;
 import com.github.kwhat.jnativehook.GlobalScreen;
 import com.github.kwhat.jnativehook.NativeHookException;

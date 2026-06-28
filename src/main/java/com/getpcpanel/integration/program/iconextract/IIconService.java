@@ -1,4 +1,4 @@
-package com.getpcpanel.iconextract;
+package com.getpcpanel.integration.program.iconextract;
 
 import java.awt.image.BufferedImage;
 import java.io.File;

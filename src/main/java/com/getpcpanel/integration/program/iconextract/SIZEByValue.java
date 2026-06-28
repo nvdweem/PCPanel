@@ -2,7 +2,7 @@
  * Adapted from JIconExtract by MrMarnic — https://github.com/MrMarnic/JIconExtractReloaded
  * Copyright (c) 2019 MrMarnic. Used per the upstream grant: "You are free to use it in your project."
  */
-package com.getpcpanel.iconextract;
+package com.getpcpanel.integration.program.iconextract;
 
 import com.sun.jna.Structure.ByValue;
 import com.sun.jna.platform.win32.WinUser.SIZE;

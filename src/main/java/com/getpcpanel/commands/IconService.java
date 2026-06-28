@@ -25,7 +25,7 @@ import com.getpcpanel.integration.volume.command.CommandVolumeDevice;
 import com.getpcpanel.integration.volume.command.CommandVolumeFocus;
 import com.getpcpanel.integration.volume.command.CommandVolumeProcess;
 import com.getpcpanel.integration.volume.platform.ISndCtrl;
-import com.getpcpanel.iconextract.IIconService;
+import com.getpcpanel.integration.program.iconextract.IIconService;
 import com.getpcpanel.profile.dto.KnobSetting;
 import com.getpcpanel.util.PngDecoder;
 

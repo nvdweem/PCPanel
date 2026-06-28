@@ -1,4 +1,4 @@
-package com.getpcpanel.iconextract;
+package com.getpcpanel.integration.program.iconextract;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;

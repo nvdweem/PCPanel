@@ -4,7 +4,7 @@
   {"interfaces": ["org.hid4java.jna.HidrawHidApiLibrary"]},
   {"interfaces": ["org.hid4java.jna.LibusbHidApiLibrary"]},
   {"interfaces": ["com.getpcpanel.integration.voicemeeter.VoicemeeterInstance"]},
-  {"interfaces": ["com.getpcpanel.iconextract.Shell32Extra"]},
+  {"interfaces": ["com.getpcpanel.integration.program.iconextract.Shell32Extra"]},
   {"interfaces": ["com.getpcpanel.util.tray.win.WinShell32"]},
   {"interfaces": ["com.getpcpanel.util.tray.win.WinUser32Ext"]},
   {"interfaces": ["com.getpcpanel.sleepdetection.Win32Desktop"]},

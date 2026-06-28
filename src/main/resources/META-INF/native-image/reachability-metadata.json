@@ -745,13 +745,13 @@
       "type": "com.getpcpanel.hid.OutputInterpreter"
     },
     {
-      "type": "com.getpcpanel.iconextract.IIconService"
+      "type": "com.getpcpanel.integration.program.iconextract.IIconService"
     },
     {
-      "type": "com.getpcpanel.iconextract.IShellItemImageFactory"
+      "type": "com.getpcpanel.integration.program.iconextract.IShellItemImageFactory"
     },
     {
-      "type": "com.getpcpanel.iconextract.IconExtractNativeTest",
+      "type": "com.getpcpanel.integration.program.iconextract.IconExtractNativeTest",
       "methods": [
         {
           "name": "<init>",
@@ -792,13 +792,13 @@
       ]
     },
     {
-      "type": "com.getpcpanel.iconextract.IconServiceWindows"
+      "type": "com.getpcpanel.integration.program.iconextract.IconServiceWindows"
     },
     {
-      "type": "com.getpcpanel.iconextract.SIZEByValue"
+      "type": "com.getpcpanel.integration.program.iconextract.SIZEByValue"
     },
     {
-      "type": "com.getpcpanel.iconextract.Shell32Extra"
+      "type": "com.getpcpanel.integration.program.iconextract.Shell32Extra"
     },
     {
       "type": "com.getpcpanel.integration.mqtt.MqttDeviceColorService"
@@ -2600,10 +2600,10 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.IconResource"
+      "type": "com.getpcpanel.integration.program.IconResource"
     },
     {
-      "type": "com.getpcpanel.rest.IconResource$quarkusrestinvoker$getIcon_dd1d2c3d9ea33b05214aa474cb68b2fe049c04ca",
+      "type": "com.getpcpanel.integration.program.IconResource$quarkusrestinvoker$getIcon_dd1d2c3d9ea33b05214aa474cb68b2fe049c04ca",
       "methods": [
         {
           "name": "<init>",
@@ -2673,10 +2673,10 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.ProcessResource"
+      "type": "com.getpcpanel.integration.program.ProcessResource"
     },
     {
-      "type": "com.getpcpanel.rest.ProcessResource$quarkusrestinvoker$listProcesses_0d52bcca2dc70ba08f01d6ae49343b496faa0697",
+      "type": "com.getpcpanel.integration.program.ProcessResource$quarkusrestinvoker$listProcesses_0d52bcca2dc70ba08f01d6ae49343b496faa0697",
       "methods": [
         {
           "name": "<init>",
@@ -3241,16 +3241,16 @@
       "type": "com.getpcpanel.util.FileUtil"
     },
     {
-      "type": "com.getpcpanel.util.IPlatformCommand"
+      "type": "com.getpcpanel.integration.program.IPlatformCommand"
     },
     {
-      "type": "com.getpcpanel.util.IPlatformCommand$WindowsPlatformCommand"
+      "type": "com.getpcpanel.integration.program.IPlatformCommand$WindowsPlatformCommand"
     },
     {
       "type": "com.getpcpanel.util.ProcessHelper"
     },
     {
-      "type": "com.getpcpanel.util.ShortcutHook"
+      "type": "com.getpcpanel.profile.ShortcutHook"
     },
     {
       "type": "com.getpcpanel.util.coloroverride.IOverrideColorProvider"
@@ -11488,7 +11488,7 @@
     {
       "type": {
         "proxy": [
-          "com.getpcpanel.iconextract.Shell32Extra"
+          "com.getpcpanel.integration.program.iconextract.Shell32Extra"
         ]
       }
     },
