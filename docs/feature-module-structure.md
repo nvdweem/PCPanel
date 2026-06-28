@@ -1,8 +1,9 @@
 # Feature-module structure (plugin-style refactor)
 
-Status: **in progress** — the type-id foundation and the command relocations are implemented and
-green; the frontend-catalog generator and the remaining non-command consolidation are not yet done.
-This document is the source of truth for the end state and the order we get there.
+Status: **in progress** — the decentralized command registry, the per-feature module split (core +
+integrations), the Java-generated frontend registry, and nice backwards-compatible discriminators are
+all implemented and green. Remaining: the non-command consolidation (REST resources, icon SPI,
+dead-code/`events.md`). This document is the source of truth for the end state.
 
 ### Implemented so far
 
@@ -27,6 +28,18 @@ This document is the source of truth for the end state and the order we get ther
   `@All List<MuteStateResolver>`).
 - **pom `classPatterns`** collapsed to one glob `com.getpcpanel.**.command.**` — new feature command
   packages need no build-config edit.
+- **Frontend command registry is generated from Java.** Each assignable command carries
+  `@CommandMeta(label, category, kinds, integration, icon)` in its own file;
+  `CommandRegistryGeneratorTest` emits `command-registry.generated.ts` from those annotations (and
+  guards staleness). `command-catalog.ts` consumes it and keeps only the field editors
+  (`buildEmpty`/`fields[]`, which are Angular UI). So "which commands exist + how they're classified"
+  is retrieved from Java, per command.
+- **Nice, backwards-compatible discriminators.** Each command's persisted `_type` is now a readable id
+  (`voicemeeter.advanced`) via `@JsonTypeName`. `@CommandMeta.legacyIds` records the previous id (the
+  old FQCN); `CommandSubtypeRegistrar` installs a Jackson `DeserializationProblemHandler` that maps an
+  unknown legacy id back to its command on **read only** — old `profiles.json` keep loading and
+  re-saving rewrites them with the nice id (a transparent one-way conversion). New saves are never
+  ambiguous with old ids. `CommandSubtypeRegistrarTest` covers both directions.
 
 Guards (all green): `CommandSubtypeRegistryTest` enforces every command self-identifies with a unique
 `@JsonTypeName`, the `CommandModule` SPI covers exactly the concrete set (none missing/stale/dup), and
@@ -243,12 +256,13 @@ Each phase is independently committable and keeps the build + coverage/parity te
    feature self-registers. Guard tests rewritten for the decentralized invariants.
 4. **✅ DONE — Core commands split into feature modules.** `volume`, `keyboard`, `program`, `device`,
    `profile`, `analogbands`, `output` — `commands/command` is now engine-only.
-5. **TODO — Annotation-driven frontend catalog + pretty ids.** Add `@CommandMeta` (+ `@FieldMeta`) and a
-   build-time generator that emits the command-level catalog metadata (the frontend keeps its
-   hand-written composite-field renderers + live-source wiring). The generated `command-catalog` is the
-   *one remaining central artifact*; generating it eliminates the last hand-maintained registry. Then
-   optionally switch the `@JsonTypeName` ids to pretty form with the old FQCNs as `legacyTypes` aliases.
-   (Touches the frontend — verify with `tsc`/`npm run build`.)
+5. **✅ DONE — Annotation-driven frontend registry + nice backwards-compatible ids.** `@CommandMeta`
+   on each assignable command + `CommandRegistryGeneratorTest` generates `command-registry.generated.ts`;
+   `command-catalog.ts` consumes it (field editors stay hand-written). `@JsonTypeName` ids switched to
+   nice form (`voicemeeter.advanced`), with the old FQCN kept as a read-only `@CommandMeta.legacyIds`
+   alias via a `DeserializationProblemHandler` (old saves load; re-save converts). Field-level
+   generation (`@FieldMeta` for the composite editors) is a possible future extension but not required —
+   the editors are genuinely UI, not registry data.
 6. **TODO — Remaining non-command consolidation.** `VoiceMeeterResource`/`ObsResource`/`OscResource`
    → `rest/<feature>`; migrate the hardcoded `IconService` VoiceMeeter/OBS handlers to the
    `IIconHandler` SPI (mirror `WaveLinkIconHandler`); per-feature settings records local; delete the
