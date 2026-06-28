@@ -1,0 +1,224 @@
+# Feature-module structure (plugin-style refactor)
+
+Status: **design** — proposed target structure and migration plan. Implementation is phased; this
+document is the source of truth for the end state and the order we get there.
+
+## Goal
+
+Make each *integration / feature* (VoiceMeeter, OBS, Wave Link, Discord, Home Assistant, OSC, MQTT,
+and any future one) a **self-contained module**: its code lives in its own package, scoped as local
+as possible, exposing a small public seam to the rest of the app. Adding a new feature should mean
+*creating one package and implementing a few SPIs* — not editing a dozen shared registries.
+
+We are **not** supporting dynamically-loaded third-party plugins (no separate classloaders / jars).
+"Plugin-style" here means *internal modularity*: features are discovered through CDI and a handful of
+annotations rather than hand-wired into central lists.
+
+## Where we are today
+
+Two patterns coexist:
+
+- **Good (the template):** Wave Link, Discord, Home Assistant. Command classes live in
+  `com.getpcpanel.<feature>.command`, REST under `rest/<feature>` (`rest/wavelink`, `rest/discord`),
+  low-level clients under `dev.niels.<feature>`, settings records inside the feature package, icon via
+  the `IIconHandler` SPI, mute-colour via the `MuteStateResolver` SPI. They leak into only a few
+  shared registries.
+- **Scattered (the problem):** VoiceMeeter and OBS (and the generic outputs OSC/MQTT). Their
+  `Command*` classes sit in the shared `commands/command/` pile; their REST resources are flat in
+  `rest/`; VoiceMeeter's mute resolver lives in the generic `mutecolor/` package and exposes a public
+  `VM_PATTERN` regex that `NamedDeviceMuteResolver` reaches into; their icons are hard-coded in
+  `IconService.init()`.
+
+### The real cost: adding one integration command touches ~20 places
+
+Verified by a fan-out audit of every subsystem. The central registries that must change when a
+feature/command is added or removed:
+
+| # | Registry | Location | Avoidable? |
+|---|----------|----------|------------|
+| 1 | Frontend command catalog | `webui/.../features/commands/command-catalog.ts` (`COMMANDS[]`) | **Generate from Java** |
+| 2 | Backend picker list + category enum | `rest/CommandsResource` static list + `rest/model/dto/CommandType.CommandCategory` | **Derive from annotations** |
+| 3 | Icon handler map | `commands/IconService.init()` hard-coded `imageHandlers.put(...)` | **Move to `IIconHandler` SPI** |
+| 4 | Native-image reflection | `graalvm/NativeImageConfig` `classes[]`/`classNames[]` | Guarded by coverage test; can be derived |
+| 5 | Native build args (×2, parity-locked) | `pom.xml` + `application.properties` `additional-build-args` | Only for JNA features |
+| 6 | TS-generator class patterns | `pom.xml` `<classPatterns>` | **Single glob** instead of per-feature line |
+| 7 | Settings schema | `profile/Save` fields | Local to feature (record) |
+| 8 | Settings DTO mapping | `rest/model/dto/SettingsDto` `from`/`applyTo` | Local to feature |
+| 9 | Settings REST + tabs | `rest/SettingsResource`, frontend `settings.component.*` | Partly local |
+| 10 | Platform capability flag | `rest/PlatformResource`, frontend `platform.service.ts` | For OS-gated features |
+| 11 | Mute-colour resolver | `mutecolor/*Resolver` (SPI already) | Local to feature |
+| 12 | Frontend live-picker data | `features/commands/integration-data.service.ts` + `command-fields.ts` `liveOptions()` | Inherently per-feature (frontend) |
+| 13 | Frontend picker integration list | `features/commands/command-picker.component.ts` `INTEGRATIONS` | Inherently per-feature (frontend) |
+| 14 | Legacy migration switch | `commands/command/CommandConverter` | Legacy-only; untouched by new features |
+| 15 | Events catalogue | `docs/events.md` | Doc; keep current |
+
+Items 1–4 and 6 are the high-value collapses. 11–13 stay per-feature but become **local to the
+feature module** instead of edits to shared files.
+
+## The cornerstone constraint: `Command` polymorphism is `Id.CLASS`
+
+`commands/command/Command.java` is annotated `@JsonTypeInfo(use = Id.CLASS, property = "_type")`. That
+means **the persisted discriminator in every user's `profiles.json` is the literal fully-qualified
+class name**, e.g. `com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced`. The frontend
+`command-catalog.ts` keys on the same FQCN strings. `CommandMapDeserializer` does **no** FQCN
+remapping (`CommandConverter` only migrates the ancient v1.6 `String[]` format, never `_type`s).
+
+**Therefore: moving any command class to a new package silently breaks every existing saved profile**
+unless we decouple the persisted type id from the class location first. The commands actually at risk
+(still in `commands/command/`, so a move changes their FQCN) are exactly:
+
+- OBS: `CommandObs`, `CommandObsAction`, `CommandObsSetScene`, `CommandObsMuteSource`, `CommandObsSetSourceVolume`
+- VoiceMeeter: `CommandVoiceMeeter` (+ `Basic`, `Advanced`, `BasicButton`, `AdvancedButton`)
+- MQTT: `CommandMqttPublish`
+- OSC: `CommandOscSend`
+- (generic) `CommandHttpRequest`
+
+Wave Link / Discord / Home Assistant commands also persist their FQCN, but they already live in their
+feature `.command` packages, so they are frozen-in-place and not at move-risk.
+
+### Decision: stable logical type IDs (decouple `_type` from FQCN)
+
+Introduce a stable, location-independent type id per command — the same pattern `WsEvent` already uses
+(`@JsonTypeInfo(use = Id.NAME)` + logical names). Each command declares a stable id (e.g.
+`voicemeeter.advanced`) via the new `@CommandMeta` annotation (below). A custom `@JsonTypeIdResolver`
+configured on `Command` (wired through `com.getpcpanel.Json`, the single shared `ObjectMapper`) maps
+**stable-id ↔ class**, so commands become freely movable forever.
+
+Back-compat is mandatory: the resolver also recognises **legacy FQCN `_type` strings** as aliases for
+their command (a small `legacy-fqcn → stable-id` table, seeded with the current FQCNs of the at-risk
+commands). Old saves load; new saves write the stable id. The frontend catalog then keys on stable ids
+instead of FQCN strings.
+
+This single mechanism is the foundation of the annotation-driven registry: the same `@CommandMeta`
+that carries the stable id carries the UI metadata.
+
+## The annotation-driven command registry (single source of truth)
+
+Today the frontend `command-catalog.ts` is hand-maintained and duplicates metadata that mostly already
+exists on the Java command classes. Replace it with metadata declared **once, in Java, next to each
+command**, and generated into TypeScript at build time (consistent with the existing
+typescript-generator pipeline; keeps the frontend statically typed).
+
+New annotations in `com.getpcpanel.commands.meta`:
+
+```java
+@CommandMeta(
+    id        = "voicemeeter.advanced",          // stable persisted type id + UI _type key
+    label     = "Voicemeeter — parameter",
+    category  = CommandCategory.INTEGRATION,
+    feature   = "voicemeeter",                   // ties to a Feature/enablement key; omit for core
+    kinds     = { CommandKind.DIAL },
+    icon      = "sliders")                        // must be an IconName the UI knows
+@FieldMeta(key = "fullParam", label = "Parameter", kind = SELECT_LIVE, source = "vm-advanced")
+@FieldMeta(key = "ct",        label = "Range",     kind = SELECT, optionsEnum = ControlType.class)
+public final class CommandVoiceMeeterAdvanced extends CommandVoiceMeeter implements DialAction { ... }
+```
+
+A build-time generator (an extension of the typescript-generator step, or a small companion Maven
+generator) emits `webui/.../models/generated/command-catalog.generated.ts` carrying the `CommandDef`
+list — type id, label, category, kinds, feature, icon, the `buildEmpty()` default shape (derived from
+the class's fields/`@JsonProperty` wire names), and the simple `fields[]`.
+
+**Escape hatches stay hand-written.** Composite field editors that are not 1:1 with a Java field —
+`keystroke`, `wavelink-target`, `analog-bands`, and the `mute`/`apps`/`device` live pickers — and the
+`LiveSource` → `IntegrationDataService` wiring cannot be generated. The generated catalog references
+them by a stable `kind`, and `command-fields.component.ts` keeps its bespoke renderers. The generator
+must faithfully reproduce two existing quirks: the `@JsonProperty("isUnMuteOnVolumeChange")` wire-name
+divergence, and the dial `invert` + `dialParams{invert,moveStart,moveEnd}` duplication.
+
+The same annotation metadata feeds `CommandsResource` (picker list + per-feature `enabled()` gate),
+collapsing registry #2. (Note: that backend list is *already* non-authoritative — Discord/HA are
+missing from it today — confirming the frontend catalog is the real registry to replace.)
+
+## Target package layout
+
+```
+com.getpcpanel
+├── commands/                 # the command ENGINE only (framework)
+│   ├── command/              # Command, DialAction/ButtonAction/DeviceAction SPIs,
+│   │                         #   CommandNoOp, CommandConverter (legacy), and the genuinely-core
+│   │                         #   commands: volume/*, media, keystroke, shortcut, run, end-program,
+│   │                         #   brightness, profile, CommandValueOutput + CommandHttpRequest
+│   ├── meta/                 # NEW: @CommandMeta, @FieldMeta, CommandKind, the type-id resolver
+│   ├── Commands, CommandsType, CommandDispatcher, DeviceSet, PCPanelControlEvent
+│   └── IconService, IIconHandler
+│
+├── voicemeeter/              # ← consolidate
+│   ├── command/              #   CommandVoiceMeeter{,Basic,Advanced,BasicButton,AdvancedButton}
+│   ├── model/                #   the enums extracted from the Voicemeeter facade (ControlType, …)
+│   ├── VoiceMeeterMuteResolver (MuteStateResolver SPI impl; VM_PATTERN no longer leaks)
+│   ├── VoiceMeeterIconHandler (IIconHandler SPI impl)
+│   ├── VoiceMeeterSettings (record; persisted via Save)
+│   └── Voicemeeter, VoicemeeterAPI, VoicemeeterInstance, …  (engine, unchanged)
+├── obs/        + obs/command, obs/ObsIconHandler, ObsSettings
+├── osc/        + osc/command
+├── mqtt/       + mqtt/command
+├── wavelink/   (already good)
+├── discord/    (already good)
+├── homeassistant/ (already good — the action-package reference)
+│
+└── rest/
+    ├── (shared bridge only: Device/Audio/Settings/Process/Serial/Midi/System/Overlay/Icon/Platform
+    │    resources, EventWebSocket, EventBroadcaster, LocalHttpGuard, model/{dto,ws})
+    ├── voicemeeter/   ← move VoiceMeeterResource (+dto)
+    ├── obs/           ← move ObsResource (+dto)
+    ├── osc/           ← move OscResource
+    ├── wavelink/      (already)
+    └── discord/       (already)
+```
+
+Per-feature settings records move into the feature package (Wave Link/Discord pattern); `Save` keeps
+the fields or holds the records, and `SettingsDto` mapping shrinks accordingly. Per-feature
+`MuteStateResolver` impls move into their feature package (the `@All List<MuteStateResolver>` discovery
+already makes location irrelevant).
+
+### `pom.xml` classPatterns → one glob
+
+Replace the per-feature lines (`wavelink.command.**`, `discord.command.**`, …) with
+`com.getpcpanel.**.command.**` so any feature's command package is picked up automatically — removing a
+per-integration edit to the build config.
+
+## Out of scope (platform core, not pluggable features)
+
+These packages are core infrastructure, not integrations, and are **not** restructured by this work
+(flagged here so they are not mistaken for omissions): `cpp/` (OS-audio facade `ISndCtrl` + per-OS
+impls), `overlay/`, `sleepdetection/`, `iconextract/`, `volume/`, `analogbands/`, `util/**` (incl.
+`tray/`, `version/`, `coloroverride/`), and top-level `Main`/`Json`/`CachingConfig`. Note `Json.java`
+is the single Jackson-config seam where the command type-id resolver must be registered. Several of
+these already expose sibling SPIs (`IOverrideColorProvider`, `IFocusRedirector`) that confirm the
+CDI-discovery pattern this refactor leans on.
+
+## Phased implementation
+
+Each phase is independently committable and keeps the build + coverage/parity tests green.
+
+1. **Type-id infrastructure (no moves yet).** Add `@CommandMeta`/`@FieldMeta`, `CommandKind`, and the
+   `@JsonTypeIdResolver` with the legacy-FQCN alias table. Switch `Command` to it. Add a test that
+   every existing saved-FQCN still deserializes. *No class moves — purely additive.*
+2. **Annotation backfill.** Add `@CommandMeta` (+ `@FieldMeta` where simple) to every command,
+   mirroring `command-catalog.ts` exactly. Add the generator; emit `command-catalog.generated.ts`;
+   switch the frontend to it (keeping the hand-written composite renderers). Delete the hand-built
+   catalog. `CommandsResource` derives from the annotations.
+3. **VoiceMeeter consolidation** (git-mv): commands → `voicemeeter.command`; resolver → `voicemeeter`;
+   resource → `rest/voicemeeter`; enums → `voicemeeter.model`; icon → `IIconHandler`; settings record
+   local. Update NativeImageConfig + classPatterns glob. Verify saves load.
+4. **OBS consolidation** (same shape).
+5. **OSC + MQTT consolidation** (same shape).
+6. **Cleanup + parity:** move deserializers next to their types; fix `docs/events.md` (add the missing
+   Discord events); confirm `ReflectionRegistrationCoverageTest`, `ProxyRegistrationCoverageTest`,
+   `NativeBuildArgsParityTest` green; build native if feasible.
+
+Git history is preserved throughout by using `git mv` for every relocation.
+
+## Risks & guards
+
+- **Saved-profile breakage** — mitigated by the legacy-FQCN alias table + a deserialization test
+  seeded with the current FQCNs (phase 1, before any move).
+- **Native-image 500s** — every concrete command + nested record (and `[]` form for `List`/`Set`)
+  must stay registered; `ReflectionRegistrationCoverageTest` enforces it. The `File`/`FileSerializer`
+  hazard on `ISndCtrl.RunningApplication` is pre-existing and unaffected.
+- **TS contract drift** — the classPatterns glob must actually match new packages; the build fails
+  loudly if `backend.types.ts` regenerates differently.
+- **Commands are plain data, not beans** — they reach services via `CdiHelper.getBean(...)`. The
+  metadata registry hangs off the *class*, never an instance.
+- **`docs/events.md` is stale** (missing Discord events) — fix as part of phase 6.
