@@ -1,4 +1,4 @@
-package com.getpcpanel.mutecolor;
+package com.getpcpanel.voicemeeter;
 
 import java.util.Map;
 import java.util.Optional;
@@ -9,9 +9,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import com.getpcpanel.commands.Commands;
+import com.getpcpanel.mutecolor.MuteOverridesDirtyEvent;
+import com.getpcpanel.mutecolor.MuteStateResolver;
 import com.getpcpanel.voicemeeter.command.CommandVoiceMeeterAdvanced;
 import com.getpcpanel.voicemeeter.command.CommandVoiceMeeterBasic;
-import com.getpcpanel.voicemeeter.VoiceMeeterMuteEvent;
 import com.getpcpanel.voicemeeter.Voicemeeter.ButtonType;
 import com.getpcpanel.voicemeeter.Voicemeeter.ControlType;
 
