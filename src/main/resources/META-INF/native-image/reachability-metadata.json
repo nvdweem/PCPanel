@@ -217,10 +217,10 @@
       ]
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandVoiceMeeter"
+      "type": "com.getpcpanel.voicemeeter.command.CommandVoiceMeeter"
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandVoiceMeeterBasic",
+      "type": "com.getpcpanel.voicemeeter.command.CommandVoiceMeeterBasic",
       "methods": [
         {
           "name": "<init>",

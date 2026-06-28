@@ -1,4 +1,4 @@
-package com.getpcpanel.commands.command;
+package com.getpcpanel.voicemeeter.command;
 
 import javax.annotation.Nullable;
 
@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.getpcpanel.commands.command.ButtonAction;
 import com.getpcpanel.util.CdiHelper;
 import com.getpcpanel.voicemeeter.Voicemeeter;
 

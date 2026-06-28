@@ -16,6 +16,10 @@ import com.getpcpanel.voicemeeter.Voicemeeter.ButtonType;
 import com.getpcpanel.voicemeeter.Voicemeeter.ControlType;
 import com.getpcpanel.voicemeeter.Voicemeeter.DialControlMode;
 import com.getpcpanel.voicemeeter.Voicemeeter.DialType;
+import com.getpcpanel.voicemeeter.command.CommandVoiceMeeterAdvanced;
+import com.getpcpanel.voicemeeter.command.CommandVoiceMeeterAdvancedButton;
+import com.getpcpanel.voicemeeter.command.CommandVoiceMeeterBasic;
+import com.getpcpanel.voicemeeter.command.CommandVoiceMeeterBasicButton;
 
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;

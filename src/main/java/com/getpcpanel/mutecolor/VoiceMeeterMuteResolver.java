@@ -9,8 +9,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import com.getpcpanel.commands.Commands;
-import com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced;
-import com.getpcpanel.commands.command.CommandVoiceMeeterBasic;
+import com.getpcpanel.voicemeeter.command.CommandVoiceMeeterAdvanced;
+import com.getpcpanel.voicemeeter.command.CommandVoiceMeeterBasic;
 import com.getpcpanel.voicemeeter.VoiceMeeterMuteEvent;
 import com.getpcpanel.voicemeeter.Voicemeeter.ButtonType;
 import com.getpcpanel.voicemeeter.Voicemeeter.ControlType;

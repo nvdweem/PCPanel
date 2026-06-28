@@ -1,8 +1,8 @@
 package com.getpcpanel.voicemeeter;
 
-import com.getpcpanel.commands.command.CommandVoiceMeeter;
-import com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced;
-import com.getpcpanel.commands.command.CommandVoiceMeeterBasic;
+import com.getpcpanel.voicemeeter.command.CommandVoiceMeeter;
+import com.getpcpanel.voicemeeter.command.CommandVoiceMeeterAdvanced;
+import com.getpcpanel.voicemeeter.command.CommandVoiceMeeterBasic;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.platform.WindowsBuild;
 
