@@ -12,7 +12,7 @@ import jakarta.inject.Inject;
 
 /** Supplies the VoiceMeeter icon for any VoiceMeeter command, contributed via the {@link IIconHandler} SPI. */
 @ApplicationScoped
-public class VoiceMeeterIconHandler implements IIconHandler<CommandVoiceMeeter> {
+class VoiceMeeterIconHandler implements IIconHandler<CommandVoiceMeeter> {
     @Inject
     IconService iconService;
 

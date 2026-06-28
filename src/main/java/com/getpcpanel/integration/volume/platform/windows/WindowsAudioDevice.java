@@ -18,7 +18,7 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @SuppressWarnings("unused") // Methods called from JNI
-public class WindowsAudioDevice extends AudioDevice {
+class WindowsAudioDevice extends AudioDevice {
     private final transient Map<Integer, WindowsAudioSession> sessions = new HashMap<>(); // pid -> pointer_addr -> session
 
     public WindowsAudioDevice(Event<Object> eventBus, String name, String id) {

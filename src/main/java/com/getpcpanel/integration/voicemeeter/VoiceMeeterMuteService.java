@@ -15,7 +15,7 @@ import com.getpcpanel.integration.voicemeeter.Voicemeeter.ButtonType;
 import com.getpcpanel.integration.voicemeeter.Voicemeeter.ControlType;
 
 @ApplicationScoped
-public class VoiceMeeterMuteService {
+class VoiceMeeterMuteService {
     @Inject
     Voicemeeter voiceMeeter;
     @Inject

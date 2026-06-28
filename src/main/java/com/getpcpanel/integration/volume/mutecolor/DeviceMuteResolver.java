@@ -11,7 +11,7 @@ import jakarta.inject.Inject;
 
 /** Mute state of an audio-device volume control ({@link CommandVolumeDevice}); empty deviceId = the default device. */
 @ApplicationScoped
-public class DeviceMuteResolver implements MuteStateResolver {
+class DeviceMuteResolver implements MuteStateResolver {
     @Inject
     ISndCtrl sndCtrl;
 

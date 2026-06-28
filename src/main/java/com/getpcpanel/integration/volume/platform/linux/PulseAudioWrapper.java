@@ -27,7 +27,7 @@ import one.util.streamex.StreamEx;
 @Log4j2
 @ApplicationScoped
 @LinuxBuild
-public class PulseAudioWrapper {
+class PulseAudioWrapper {
     public static final int NO_OP_IDX = -1;
     public static final int DEFAULT_DEVICE = -2;
     private static final Pattern pactlFirstLine = Pattern.compile("(.*) #(\\d+)");

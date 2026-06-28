@@ -24,7 +24,7 @@ import lombok.extern.log4j.Log4j2;
  * Java types — which is both safer and friendlier to the native image.
  */
 @Log4j2
-public final class HaActionYaml {
+final class HaActionYaml {
     private HaActionYaml() {
     }
 

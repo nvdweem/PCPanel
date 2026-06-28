@@ -18,7 +18,7 @@ import jakarta.inject.Inject;
  * ({@link CommandObsSetSourceVolume}) or an OBS mute-source button ({@link CommandObsMuteSource}).
  */
 @ApplicationScoped
-public class ObsMuteResolver implements MuteStateResolver {
+class ObsMuteResolver implements MuteStateResolver {
     @Inject
     OBS obs;
 

@@ -30,7 +30,7 @@ import lombok.extern.log4j.Log4j2;
  * request/response correlation, InputMuteStateChanged events.
  */
 @Log4j2
-public class ObsWebSocketClient implements WebSocket.Listener {
+class ObsWebSocketClient implements WebSocket.Listener {
 
     // OBS WebSocket 5 opcodes
     private static final int OP_HELLO = 0;

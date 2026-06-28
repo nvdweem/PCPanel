@@ -28,7 +28,7 @@ import lombok.extern.log4j.Log4j2;
 @Startup
 @Singleton
 @LinuxBuild
-public class PulseAudioEventListener {
+class PulseAudioEventListener {
     @Inject
     Event<Object> eventBus;
     @Inject

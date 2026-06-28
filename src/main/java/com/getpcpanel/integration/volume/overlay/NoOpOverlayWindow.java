@@ -10,7 +10,7 @@ import com.getpcpanel.profile.Save;
  * <p>Returns a plain {@link ScreenSize} value and never touches an AWT type, so it is safe in the
  * libawt-less native images on macOS and Linux.
  */
-public class NoOpOverlayWindow implements OverlayWindow {
+class NoOpOverlayWindow implements OverlayWindow {
     @Override
     public void show(OverlayContent content) {
         // no overlay on macOS

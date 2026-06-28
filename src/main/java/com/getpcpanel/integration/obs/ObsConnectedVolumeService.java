@@ -11,7 +11,7 @@ import jakarta.inject.Inject;
 
 @ApplicationScoped
 @WindowsBuild
-public class ObsConnectedVolumeService {
+class ObsConnectedVolumeService {
     @Inject DeviceHolder devices;
 
     public void onVoiceMeeterConnected(@Observes OBSConnectEvent event) {

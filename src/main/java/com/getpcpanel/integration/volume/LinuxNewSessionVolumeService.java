@@ -21,7 +21,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @LinuxBuild
 @ApplicationScoped
-public class LinuxNewSessionVolumeService implements IFocusRedirector {
+class LinuxNewSessionVolumeService implements IFocusRedirector {
     @Inject DeviceHolder devices;
     @Inject SaveService save;
     @Inject ISndCtrl sndCtrl;

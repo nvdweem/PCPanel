@@ -21,7 +21,7 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 @ApplicationScoped
-public class WaveLinkIconHandler implements IIconHandler<CommandWaveLink> {
+class WaveLinkIconHandler implements IIconHandler<CommandWaveLink> {
     @Inject
     WaveLinkService waveLinkService;
     @Inject

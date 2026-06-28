@@ -20,7 +20,7 @@ import jakarta.inject.Inject;
  */
 @Priority(-100)
 @ApplicationScoped
-public class NamedDeviceMuteResolver implements MuteStateResolver {
+class NamedDeviceMuteResolver implements MuteStateResolver {
     @Inject
     ISndCtrl sndCtrl;
 

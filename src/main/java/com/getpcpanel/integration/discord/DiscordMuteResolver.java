@@ -26,7 +26,7 @@ import jakarta.inject.Inject;
  * Discord client itself).
  */
 @ApplicationScoped
-public class DiscordMuteResolver implements MuteStateResolver {
+class DiscordMuteResolver implements MuteStateResolver {
     private final DiscordService discord;
 
     @Inject

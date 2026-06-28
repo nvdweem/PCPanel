@@ -13,7 +13,7 @@ import one.util.streamex.StreamEx;
 @Log4j2
 @ApplicationScoped
 @LinuxBuild
-public class SndCtrlPulseAudioDebug {
+class SndCtrlPulseAudioDebug {
     /** Clipboard helpers tried in order: Wayland first, then the two common X11 tools. */
     private static final String[][] CLIPBOARD_COMMANDS = {
             { "wl-copy" },

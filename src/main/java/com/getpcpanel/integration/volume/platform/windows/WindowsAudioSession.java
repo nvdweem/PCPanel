@@ -17,7 +17,7 @@ import lombok.ToString;
 
 @Getter
 @EqualsAndHashCode(callSuper = true)
-public class WindowsAudioSession extends AudioSession {
+class WindowsAudioSession extends AudioSession {
     @JsonIgnore @ToString.Exclude private final AudioDevice device;
     @JsonIgnore private final Set<Long> pointers = new HashSet<>();
 

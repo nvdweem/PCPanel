@@ -19,7 +19,7 @@ import jakarta.inject.Inject;
  * mute-override colour.
  */
 @ApplicationScoped
-public class WaveLinkMuteResolver implements MuteStateResolver {
+class WaveLinkMuteResolver implements MuteStateResolver {
     private final WaveLinkService waveLink;
 
     @Inject

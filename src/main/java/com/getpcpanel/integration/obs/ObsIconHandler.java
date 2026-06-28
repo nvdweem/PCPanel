@@ -12,7 +12,7 @@ import jakarta.inject.Inject;
 
 /** Supplies the OBS icon for any OBS command, contributed via the {@link IIconHandler} SPI. */
 @ApplicationScoped
-public class ObsIconHandler implements IIconHandler<CommandObs> {
+class ObsIconHandler implements IIconHandler<CommandObs> {
     @Inject
     IconService iconService;
 

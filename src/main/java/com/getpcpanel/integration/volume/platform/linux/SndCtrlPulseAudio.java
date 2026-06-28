@@ -46,7 +46,7 @@ import one.util.streamex.StreamEx;
 @Log4j2
 @ApplicationScoped
 @LinuxBuild
-public class SndCtrlPulseAudio implements ISndCtrl {
+class SndCtrlPulseAudio implements ISndCtrl {
     public static final String INPUT_PREFIX = "in_";
     @Inject PulseAudioWrapper cmd;
     @Inject LinuxProcessHelper processHelper;

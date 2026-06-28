@@ -8,7 +8,7 @@ import com.getpcpanel.integration.volume.platform.DataFlow;
 import lombok.Getter;
 
 @Getter
-public class PulseAudioAudioDevice extends AudioDevice {
+class PulseAudioAudioDevice extends AudioDevice {
     private final int index;
     private final boolean isDefault;
     private final boolean isOutput;

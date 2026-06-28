@@ -65,7 +65,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @Priority(0)
 @ApplicationScoped
-public class MuteColorService implements IOverrideColorProviderProvider {
+class MuteColorService implements IOverrideColorProviderProvider {
     @Inject
     DeviceHolder devices;
     @Inject

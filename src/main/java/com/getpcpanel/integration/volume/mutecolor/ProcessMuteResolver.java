@@ -15,7 +15,7 @@ import jakarta.inject.Inject;
 
 /** Mute state of a per-application volume control ({@link CommandVolumeProcess}), incl. "System Sounds". */
 @ApplicationScoped
-public class ProcessMuteResolver implements MuteStateResolver {
+class ProcessMuteResolver implements MuteStateResolver {
     @Inject
     ISndCtrl sndCtrl;
 

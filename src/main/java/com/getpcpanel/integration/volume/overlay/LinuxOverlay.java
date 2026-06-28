@@ -38,7 +38,7 @@ import lombok.extern.log4j.Log4j2;
  * OSD's appearance and placement. The settings UI greys those out on Linux.
  */
 @Log4j2
-public class LinuxOverlay implements OverlayWindow {
+class LinuxOverlay implements OverlayWindow {
     private static final String PLASMA_BUS = "org.kde.plasmashell";
     private static final String OSD_PATH = "/org/kde/osdService";
     /** Give up (and stop logging) only after this many consecutive failures, not a single hiccup. */

@@ -20,7 +20,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @ApplicationScoped
 @RequiredArgsConstructor
-public final class VoicemeeterAPI {
+final class VoicemeeterAPI {
     private final SaveService saveService;
     private VoicemeeterInstance instance;
     public final String DEFAULT_VM_WINDOWS_64BIT_PATH = "VoicemeeterRemote64.dll";

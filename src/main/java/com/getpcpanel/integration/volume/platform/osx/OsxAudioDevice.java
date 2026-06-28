@@ -10,7 +10,7 @@ import jakarta.enterprise.event.Event;
 import lombok.Getter;
 
 @Getter
-public class OsxAudioDevice extends AudioDevice {
+class OsxAudioDevice extends AudioDevice {
     private final int deviceId;
     private final boolean isDefault;
 

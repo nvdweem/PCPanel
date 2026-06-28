@@ -46,7 +46,7 @@ import one.util.streamex.StreamEx;
 @Log4j2
 @ApplicationScoped
 @Priority(1)
-public class MqttDeviceColorService implements IOverrideColorProviderProvider {
+class MqttDeviceColorService implements IOverrideColorProviderProvider {
 
     @FunctionalInterface
     interface TriFunction<A, B, C, R> {

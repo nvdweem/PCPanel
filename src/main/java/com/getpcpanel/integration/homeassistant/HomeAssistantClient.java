@@ -23,7 +23,7 @@ import lombok.extern.log4j.Log4j2;
  * @see <a href="https://developers.home-assistant.io/docs/api/rest/">Home Assistant REST API</a>
  */
 @Log4j2
-public class HomeAssistantClient {
+class HomeAssistantClient {
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
 
     @Getter private final HomeAssistantServer server;

@@ -33,7 +33,7 @@ import one.util.streamex.StreamEx;
 @Log4j2
 @Unremovable
 @ApplicationScoped
-public class FocusVolumeOverrideService {
+class FocusVolumeOverrideService {
     /** Audio device selector meaning "every render device" in {@link ISndCtrl#setProcessVolume}. */
     private static final String ALL_DEVICES = "*";
 

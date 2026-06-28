@@ -13,7 +13,7 @@ import lombok.Getter;
 
 @Getter
 @EqualsAndHashCode(callSuper = true)
-public class PulseAudioAudioSession extends AudioSession {
+class PulseAudioAudioSession extends AudioSession {
     private final int index;
 
     /**

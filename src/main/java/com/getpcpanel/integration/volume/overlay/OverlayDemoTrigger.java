@@ -17,7 +17,7 @@ import lombok.extern.log4j.Log4j2;
  */
 @Log4j2
 @ApplicationScoped
-public class OverlayDemoTrigger {
+class OverlayDemoTrigger {
     void onStart(@Observes StartupEvent event) {
         if (!Boolean.getBoolean("pcpanel.overlay.demo")) {
             return;

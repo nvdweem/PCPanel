@@ -12,7 +12,7 @@ import jakarta.inject.Inject;
 
 @ApplicationScoped
 @WindowsBuild
-public class VoiceMeeterConnectedVolumeService {
+class VoiceMeeterConnectedVolumeService {
     @Inject DeviceHolder devices;
 
     public void onVoiceMeeterConnected(@Observes VoiceMeeterConnectedEvent event) {

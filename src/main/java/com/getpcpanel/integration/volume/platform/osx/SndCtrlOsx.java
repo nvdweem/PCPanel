@@ -52,7 +52,7 @@ import one.util.streamex.StreamEx;
 @ApplicationScoped
 @MacBuild
 @RequiredArgsConstructor
-public class SndCtrlOsx implements ISndCtrl {
+class SndCtrlOsx implements ISndCtrl {
     private static final String DEFAULT = "default";
     private static final List<String> SYSTEM_APP_PREFIXES = List.of("/System/Library/", "/System/Cryptexes/", "/usr/libexec/");
     private static final Comparator<RunningApplication> APP_ORDER = Comparator.comparing(RunningApplication::name, String.CASE_INSENSITIVE_ORDER);

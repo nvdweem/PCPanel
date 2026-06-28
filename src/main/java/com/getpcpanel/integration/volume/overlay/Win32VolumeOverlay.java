@@ -51,7 +51,7 @@ import lombok.extern.log4j.Log4j2;
  * The thread parks while the overlay is hidden and is unparked by {@link #show} / the dismiss timer.
  */
 @Log4j2
-public class Win32VolumeOverlay implements OverlayWindow {
+class Win32VolumeOverlay implements OverlayWindow {
     /** Built-in window class with a native window procedure (avoids a Java callback). */
     private static final String WINDOW_CLASS = "STATIC";
     private static final int DISMISS_MS = 2000;
