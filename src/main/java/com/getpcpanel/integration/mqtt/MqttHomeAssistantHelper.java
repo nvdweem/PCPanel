@@ -213,7 +213,7 @@ public class MqttHomeAssistantHelper {
         return "Slider " + (i - buttonCount + 1);
     }
 
-    record HomeAssistantNumberConfig(
+    public record HomeAssistantNumberConfig(
             HomeAssistantDevice device,
             @Nullable HomeAssistantAvailability availability,
             String name,
@@ -244,7 +244,7 @@ public class MqttHomeAssistantHelper {
         }
     }
 
-    record HomeAssistantLightConfig(
+    public record HomeAssistantLightConfig(
             HomeAssistantDevice device,
             @Nullable HomeAssistantAvailability availability,
             String name,
@@ -282,7 +282,7 @@ public class MqttHomeAssistantHelper {
         }
     }
 
-    record HomeAssistantButtonConfig( // Is actually a binary sensor
+    public record HomeAssistantButtonConfig( // Is actually a binary sensor
                                       HomeAssistantDevice device,
                                       @Nullable HomeAssistantAvailability availability,
                                       String state_topic,
@@ -304,7 +304,7 @@ public class MqttHomeAssistantHelper {
         }
     }
 
-    record HomeAssistantButtonEventConfig(HomeAssistantDevice device,
+    public record HomeAssistantButtonEventConfig(HomeAssistantDevice device,
                                           @Nullable HomeAssistantAvailability availability,
                                           String state_topic,
                                           String name,
@@ -350,7 +350,7 @@ public class MqttHomeAssistantHelper {
         return null;
     }
 
-    record HomeAssistantDevice(
+    public record HomeAssistantDevice(
             String sw_version,
             List<String> identifiers,
             String manufacturer,
@@ -361,7 +361,7 @@ public class MqttHomeAssistantHelper {
     ) {
     }
 
-    record HomeAssistantAvailability(
+    public record HomeAssistantAvailability(
             String topic,
             String payload_available,
             String payload_not_available,

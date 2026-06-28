@@ -1,5 +1,10 @@
 package com.getpcpanel.graalvm;
 
+import com.getpcpanel.sleepdetection.Win32Desktop;
+import com.getpcpanel.sleepdetection.Win32PowerNotify;
+import com.getpcpanel.util.tray.win.WinShell32;
+import com.getpcpanel.util.tray.win.WinUser32Ext;
+
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
 /**
@@ -15,7 +20,15 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
  * covered by the generated reachability metadata; this class adds the window-creation and
  * window-messaging types used by the power/session helper window and the volume overlay.
  */
-@RegisterForReflection(classNames = {
+@RegisterForReflection(targets = {
+        // Project (PCPanel) JNA types — referenced by .class so a package move is compiler-checked
+        // rather than silently breaking the native build.
+        WinShell32.class,
+        WinShell32.NOTIFYICONDATA.class,
+        WinUser32Ext.class,
+        Win32Desktop.class,
+        Win32PowerNotify.class,
+}, classNames = {
         "com.sun.jna.platform.win32.WinDef$HMODULE",
         "com.sun.jna.platform.win32.WinDef$HINSTANCE",
         "com.sun.jna.platform.win32.WinDef$HWND",
@@ -37,20 +50,10 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         "com.sun.jna.platform.win32.WinUser$MSG",
         "com.sun.jna.platform.win32.WinDef$POINT",
         "com.sun.jna.platform.win32.WinUser$BLENDFUNCTION",
-        // System-tray NOTIFYICONDATA struct (and the GUID it embeds): JNA reads the struct's declared
-        // fields reflectively to compute its layout. Without this, Structure.getFieldOrder() sees no
-        // fields in the native image and the tray fails with "declared field names ([])".
-        "com.getpcpanel.util.tray.win.WinShell32$NOTIFYICONDATA",
+        // The GUID embedded in the tray NOTIFYICONDATA struct (the struct itself is a .class target above).
         "com.sun.jna.platform.win32.Guid$GUID",
-        // The tray JNA library interfaces themselves: JNA reads their static INSTANCE field (and maps
-        // their methods) reflectively, so the interface types need fields+methods registered.
-        "com.getpcpanel.util.tray.win.WinShell32",
-        "com.getpcpanel.util.tray.win.WinUser32Ext",
-        // Desktop-lock detection helper (OpenInputDesktop/CloseDesktop): same reflective JNA mapping.
-        "com.getpcpanel.sleepdetection.Win32Desktop",
-        // Display-power detection: the power-notify library and the window-procedure callback whose
-        // "callback" method JNA invokes reflectively from the native message dispatch.
-        "com.getpcpanel.sleepdetection.Win32PowerNotify",
+        // The window-procedure callback whose "callback" method JNA invokes reflectively from the
+        // native message dispatch (used by Win32PowerNotify, a .class target above).
         "com.sun.jna.platform.win32.WinUser$WindowProc",
         // SendInput keyboard synthesis (CommandMedia media keys, WindowsKeyboard keystrokes): JNA
         // reflectively instantiates the INPUT union, its INPUT_UNION and every member struct to compute

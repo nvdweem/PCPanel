@@ -21,6 +21,9 @@ import com.getpcpanel.integration.output.command.CommandHttpRequest;
 import com.getpcpanel.integration.keyboard.command.CommandKeystroke;
 import com.getpcpanel.integration.keyboard.command.CommandMedia;
 import com.getpcpanel.integration.keyboard.command.CommandMedia.VolumeButton;
+import com.getpcpanel.integration.mqtt.MqttDeviceService;
+import com.getpcpanel.integration.mqtt.MqttHomeAssistantHelper;
+import com.getpcpanel.integration.volume.platform.osx.CoreAudioLib;
 import com.getpcpanel.integration.mqtt.command.CommandMqttPublish;
 import com.getpcpanel.commands.command.CommandNoOp;
 import com.getpcpanel.integration.obs.command.CommandObs;
@@ -34,6 +37,7 @@ import com.getpcpanel.integration.profile.command.CommandProfile;
 import com.getpcpanel.integration.program.command.CommandRun;
 import com.getpcpanel.integration.program.command.CommandShortcut;
 import com.getpcpanel.commands.command.CommandValueOutput;
+import com.getpcpanel.util.version.Version;
 import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeter;
 import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterAdvanced;
 import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterAdvancedButton;
@@ -177,8 +181,25 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         LibusbHidApiLibrary.class,
         WideStringBuffer.class,
 
-        // MQTT Home Assistant discovery payload classes (serialised to JSON by Jackson)
-        // Note: these records are package-private so referenced by classNames below
+        // MQTT button-click event + Home Assistant discovery payloads (Jackson-serialised). Public so
+        // they are referenced here by .class — compiler-checked — instead of fragile String class names.
+        MqttDeviceService.MqttEvent.class,
+        MqttHomeAssistantHelper.HomeAssistantAvailability.class,
+        MqttHomeAssistantHelper.HomeAssistantButtonConfig.class,
+        MqttHomeAssistantHelper.HomeAssistantButtonEventConfig.class,
+        MqttHomeAssistantHelper.HomeAssistantDevice.class,
+        MqttHomeAssistantHelper.HomeAssistantLightConfig.class,
+        MqttHomeAssistantHelper.HomeAssistantNumberConfig.class,
+
+        // GitHub release version model – deserialised by a plain ObjectMapper in VersionChecker
+        // (records need their canonical creator registered).
+        Version.class,
+        Version.SemVer.class,
+
+        // Project CoreAudio JNA binding: the property-address Structure (instantiated per call) and the
+        // change-listener Callback (used for default-device/volume notifications).
+        CoreAudioLib.AudioObjectPropertyAddress.class,
+        CoreAudioLib.AudioObjectPropertyListenerProc.class,
 
         // Command type hierarchy
         Command.class,
@@ -386,23 +407,6 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         "org.eclipse.paho.mqttv5.client.websocket.WebSocketNetworkModuleFactory",
         "org.eclipse.paho.mqttv5.client.websocket.WebSocketSecureNetworkModuleFactory",
 
-        // GitHub release version model – deserialised by a plain ObjectMapper in VersionChecker,
-        // so Quarkus does not auto-detect it for reflection (records need their canonical creator).
-        "com.getpcpanel.util.version.Version",
-        "com.getpcpanel.util.version.Version$SemVer",
-
-        // MQTT button-click event payload (package-private record); Jackson reads its accessor
-        // reflectively to serialise it on each button press while MQTT is connected.
-        "com.getpcpanel.mqtt.MqttDeviceService$MqttEvent",
-
-        // MQTT Home Assistant discovery records (package-private inner classes – referenced by name)
-        "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantAvailability",
-        "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantButtonConfig",
-        "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantButtonEventConfig",
-        "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantDevice",
-        "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantLightConfig",
-        "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantNumberConfig",
-
         // macOS CoreAudio path (GET /api/audio/*, default-device switching). JNA reflectively
         // instantiates these Structures (no-arg constructor + field access). The CoreFoundation class
         // initializer itself builds a CFTypeID, so the whole jna-platform CoreFoundation inner-class
@@ -425,11 +429,6 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         "com.sun.jna.platform.mac.CoreFoundation$CFStringRef$ByReference",
         "com.sun.jna.platform.mac.CoreFoundation$CFTypeID",
         "com.sun.jna.platform.mac.CoreFoundation$CFTypeRef",
-        // Project CoreAudio JNA binding: the property-address Structure (instantiated per call) and the
-        // change-listener Callback (used for default-device/volume notifications).
-        "com.getpcpanel.integration.volume.platform.osx.CoreAudioLib$AudioObjectPropertyAddress",
-        "com.getpcpanel.integration.volume.platform.osx.CoreAudioLib$AudioObjectPropertyListenerProc",
-
         // JNA by-reference pointer types that appear in project Library method signatures. JNA
         // reflectively instantiates these via their public no-arg constructor when marshalling the
         // call, so each must be registered or the call throws IllegalArgumentException /

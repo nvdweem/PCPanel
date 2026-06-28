@@ -192,6 +192,6 @@ public class MqttDeviceService {
         }
     }
 
-    record MqttEvent(String event_type) {
+    public record MqttEvent(String event_type) {
     }
 }
