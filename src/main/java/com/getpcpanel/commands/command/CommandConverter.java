@@ -22,7 +22,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 
 import com.getpcpanel.integration.keyboard.command.CommandMedia.VolumeButton;
 import com.getpcpanel.commands.command.DialAction.DialCommandParams;
-import com.getpcpanel.cpp.MuteType;
+import com.getpcpanel.integration.volume.platform.MuteType;
 import com.getpcpanel.integration.obs.command.CommandObsMuteSource;
 import com.getpcpanel.integration.obs.command.CommandObsSetScene;
 import com.getpcpanel.integration.obs.command.CommandObsSetSourceVolume;

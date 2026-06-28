@@ -1,6 +1,6 @@
 package com.getpcpanel.integration.discord;
 
-import com.getpcpanel.cpp.MuteType;
+import com.getpcpanel.integration.volume.platform.MuteType;
 
 /**
  * Shared label fragments for the Discord commands. Deliberately NOT in {@code com.getpcpanel.discord.command}:

@@ -9,7 +9,7 @@ import com.getpcpanel.platform.WindowsBuild;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-import com.getpcpanel.cpp.ISndCtrl;
+import com.getpcpanel.integration.volume.platform.ISndCtrl;
 import com.getpcpanel.platform.process.LinuxProcessHelper;
 import com.getpcpanel.platform.process.OsxProcessHelper;
 

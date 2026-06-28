@@ -8,7 +8,7 @@ import jakarta.inject.Inject;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.getpcpanel.cpp.ISndCtrl;
+import com.getpcpanel.integration.volume.platform.ISndCtrl;
 import com.getpcpanel.volume.VolumeCoordinatorService;
 
 import io.quarkus.arc.properties.IfBuildProperty;

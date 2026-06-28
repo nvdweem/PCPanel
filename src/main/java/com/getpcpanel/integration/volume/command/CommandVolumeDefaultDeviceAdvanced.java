@@ -8,9 +8,9 @@ import com.getpcpanel.commands.meta.CommandMeta;
 import javax.annotation.Nullable;
 
 import com.getpcpanel.util.CdiHelper;
-import com.getpcpanel.cpp.DataFlow;
-import com.getpcpanel.cpp.Role;
-import com.getpcpanel.cpp.windows.SndCtrlWindows;
+import com.getpcpanel.integration.volume.platform.DataFlow;
+import com.getpcpanel.integration.volume.platform.Role;
+import com.getpcpanel.integration.volume.platform.windows.SndCtrlWindows;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

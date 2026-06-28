@@ -17,7 +17,7 @@ import jakarta.inject.Inject;
 
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.command.Command;
-import com.getpcpanel.cpp.windows.WindowFocusChangedEvent;
+import com.getpcpanel.profile.WindowFocusChangedEvent;
 import com.getpcpanel.device.DescriptorFactory;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.device.DeviceFactory;

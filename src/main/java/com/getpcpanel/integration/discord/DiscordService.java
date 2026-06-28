@@ -12,7 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nullable;
 
-import com.getpcpanel.cpp.MuteType;
+import com.getpcpanel.integration.volume.platform.MuteType;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.profile.dto.DiscordAuth;

@@ -23,7 +23,7 @@ import com.getpcpanel.integration.keyboard.command.CommandKeystroke;
  * keypress is harmless. (F24 would be quieter still but has no keycode, so it never loads libXtst.)
  *
  * <p>That the proxies are actually <em>registered</em> is guaranteed by
- * {@link com.getpcpanel.cpp.ProxyRegistrationCoverageTest}; this test only makes the agent observe
+ * {@link com.getpcpanel.integration.volume.platform.ProxyRegistrationCoverageTest}; this test only makes the agent observe
  * them during generation.
  */
 @EnabledOnOs(OS.LINUX)

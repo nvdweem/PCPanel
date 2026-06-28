@@ -6,7 +6,7 @@ import com.getpcpanel.commands.meta.CommandCategory;
 import com.getpcpanel.commands.meta.CommandKind;
 import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.getpcpanel.cpp.MuteType;
+import com.getpcpanel.integration.volume.platform.MuteType;
 import com.getpcpanel.integration.obs.OBS;
 import com.getpcpanel.commands.command.ButtonAction;
 import com.getpcpanel.util.CdiHelper;

@@ -331,7 +331,7 @@
           "name": "<init>",
           "parameterTypes": [
             "java.lang.String",
-            "com.getpcpanel.cpp.MuteType"
+            "com.getpcpanel.integration.volume.platform.MuteType"
           ]
         },
         {
@@ -401,7 +401,7 @@
           "name": "<init>",
           "parameterTypes": [
             "java.util.Set",
-            "com.getpcpanel.cpp.MuteType"
+            "com.getpcpanel.integration.volume.platform.MuteType"
           ]
         },
         {
@@ -449,13 +449,13 @@
       ]
     },
     {
-      "type": "com.getpcpanel.cpp.AudioDevice"
+      "type": "com.getpcpanel.integration.volume.platform.AudioDevice"
     },
     {
-      "type": "com.getpcpanel.cpp.AudioDeviceEvent"
+      "type": "com.getpcpanel.integration.volume.platform.AudioDeviceEvent"
     },
     {
-      "type": "com.getpcpanel.cpp.AudioSession",
+      "type": "com.getpcpanel.integration.volume.platform.AudioSession",
       "jniAccessible": true,
       "methods": [
         {
@@ -473,16 +473,16 @@
       ]
     },
     {
-      "type": "com.getpcpanel.cpp.AudioSessionEvent"
+      "type": "com.getpcpanel.integration.volume.platform.AudioSessionEvent"
     },
     {
-      "type": "com.getpcpanel.cpp.ISndCtrl"
+      "type": "com.getpcpanel.integration.volume.platform.ISndCtrl"
     },
     {
-      "type": "com.getpcpanel.cpp.ISndCtrl$RunningApplication"
+      "type": "com.getpcpanel.integration.volume.platform.ISndCtrl$RunningApplication"
     },
     {
-      "type": "com.getpcpanel.cpp.MuteType"
+      "type": "com.getpcpanel.integration.volume.platform.MuteType"
     },
     {
       "type": "com.getpcpanel.cpp.linux.LinuxKeyboard$X11"
@@ -491,7 +491,7 @@
       "type": "com.getpcpanel.cpp.linux.LinuxKeyboard$XTest"
     },
     {
-      "type": "com.getpcpanel.cpp.linux.pulseaudio.SndCtrlPulseAudioTest",
+      "type": "com.getpcpanel.integration.volume.platform.linux.SndCtrlPulseAudioTest",
       "methods": [
         {
           "name": "<init>",
@@ -507,10 +507,10 @@
       ]
     },
     {
-      "type": "com.getpcpanel.cpp.windows.SndCtrlNative"
+      "type": "com.getpcpanel.integration.volume.platform.windows.SndCtrlNative"
     },
     {
-      "type": "com.getpcpanel.cpp.windows.SndCtrlNativeConfigTest",
+      "type": "com.getpcpanel.integration.volume.platform.windows.SndCtrlNativeConfigTest",
       "methods": [
         {
           "name": "<init>",
@@ -615,7 +615,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.cpp.windows.SndCtrlWindows",
+      "type": "com.getpcpanel.integration.volume.platform.windows.SndCtrlWindows",
       "jniAccessible": true,
       "methods": [
         {
@@ -645,10 +645,10 @@
       ]
     },
     {
-      "type": "com.getpcpanel.cpp.windows.WindowFocusChangedEvent"
+      "type": "com.getpcpanel.profile.WindowFocusChangedEvent"
     },
     {
-      "type": "com.getpcpanel.cpp.windows.WindowsAudioDevice",
+      "type": "com.getpcpanel.integration.volume.platform.windows.WindowsAudioDevice",
       "jniAccessible": true,
       "methods": [
         {
@@ -666,7 +666,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.cpp.windows.WindowsAudioSession"
+      "type": "com.getpcpanel.integration.volume.platform.windows.WindowsAudioSession"
     },
     {
       "type": "com.getpcpanel.device.DeviceFactory"
@@ -3567,7 +3567,7 @@
             "java.lang.String",
             "java.lang.String",
             "java.lang.String",
-            "com.getpcpanel.cpp.MuteType"
+            "com.getpcpanel.integration.volume.platform.MuteType"
           ]
         },
         {

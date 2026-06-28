@@ -14,8 +14,8 @@ import com.getpcpanel.commands.meta.CommandCategory;
 import com.getpcpanel.commands.meta.CommandKind;
 import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.getpcpanel.cpp.AudioDevice;
-import com.getpcpanel.cpp.DataFlow;
+import com.getpcpanel.integration.volume.platform.AudioDevice;
+import com.getpcpanel.integration.volume.platform.DataFlow;
 
 import lombok.Getter;
 import lombok.ToString;

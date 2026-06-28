@@ -13,10 +13,10 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 
-import com.getpcpanel.cpp.AudioDevice;
-import com.getpcpanel.cpp.AudioSession;
-import com.getpcpanel.cpp.ISndCtrl;
-import com.getpcpanel.cpp.MuteType;
+import com.getpcpanel.integration.volume.platform.AudioDevice;
+import com.getpcpanel.integration.volume.platform.AudioSession;
+import com.getpcpanel.integration.volume.platform.ISndCtrl;
+import com.getpcpanel.integration.volume.platform.MuteType;
 
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;

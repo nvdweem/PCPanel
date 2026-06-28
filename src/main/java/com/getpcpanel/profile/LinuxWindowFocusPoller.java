@@ -2,8 +2,7 @@ package com.getpcpanel.profile;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.getpcpanel.cpp.ISndCtrl;
-import com.getpcpanel.cpp.windows.WindowFocusChangedEvent;
+import com.getpcpanel.integration.volume.platform.ISndCtrl;
 import com.getpcpanel.platform.LinuxBuild;
 
 import io.quarkus.scheduler.Scheduled;

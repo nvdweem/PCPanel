@@ -4,7 +4,7 @@ import java.util.Optional;
 
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.integration.volume.command.CommandVolumeDevice;
-import com.getpcpanel.cpp.ISndCtrl;
+import com.getpcpanel.integration.volume.platform.ISndCtrl;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

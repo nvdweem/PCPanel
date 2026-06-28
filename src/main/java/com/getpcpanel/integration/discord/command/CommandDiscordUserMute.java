@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.commands.command.ButtonAction;
-import com.getpcpanel.cpp.MuteType;
+import com.getpcpanel.integration.volume.platform.MuteType;
 import com.getpcpanel.integration.discord.DiscordCommandLabels;
 
 import lombok.Getter;

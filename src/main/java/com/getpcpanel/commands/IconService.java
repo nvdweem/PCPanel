@@ -1,6 +1,6 @@
 package com.getpcpanel.commands;
 
-import static com.getpcpanel.cpp.AudioSession.SYSTEM;
+import static com.getpcpanel.integration.volume.platform.AudioSession.SYSTEM;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -24,7 +24,7 @@ import com.getpcpanel.integration.volume.command.CommandVolumeDefaultDeviceToggl
 import com.getpcpanel.integration.volume.command.CommandVolumeDevice;
 import com.getpcpanel.integration.volume.command.CommandVolumeFocus;
 import com.getpcpanel.integration.volume.command.CommandVolumeProcess;
-import com.getpcpanel.cpp.ISndCtrl;
+import com.getpcpanel.integration.volume.platform.ISndCtrl;
 import com.getpcpanel.iconextract.IIconService;
 import com.getpcpanel.profile.dto.KnobSetting;
 import com.getpcpanel.util.PngDecoder;

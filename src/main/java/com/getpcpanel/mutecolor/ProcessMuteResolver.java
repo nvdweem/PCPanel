@@ -7,8 +7,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.integration.volume.command.CommandVolumeProcess;
-import com.getpcpanel.cpp.AudioSession;
-import com.getpcpanel.cpp.ISndCtrl;
+import com.getpcpanel.integration.volume.platform.AudioSession;
+import com.getpcpanel.integration.volume.platform.ISndCtrl;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

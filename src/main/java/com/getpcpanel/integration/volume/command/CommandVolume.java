@@ -4,7 +4,7 @@ import com.getpcpanel.commands.command.Command;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.getpcpanel.util.CdiHelper;
 import jakarta.inject.Inject;
-import com.getpcpanel.cpp.ISndCtrl;
+import com.getpcpanel.integration.volume.platform.ISndCtrl;
 
 import lombok.ToString;
 

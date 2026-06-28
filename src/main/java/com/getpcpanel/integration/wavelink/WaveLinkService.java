@@ -11,8 +11,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nullable;
 
-import com.getpcpanel.cpp.AudioSession;
-import com.getpcpanel.cpp.ISndCtrl;
+import com.getpcpanel.integration.volume.platform.AudioSession;
+import com.getpcpanel.integration.volume.platform.ISndCtrl;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.util.Debouncer;

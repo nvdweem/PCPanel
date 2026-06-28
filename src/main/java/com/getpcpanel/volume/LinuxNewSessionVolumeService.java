@@ -6,9 +6,9 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.integration.volume.command.CommandVolumeProcess;
-import com.getpcpanel.cpp.AudioSessionEvent;
-import com.getpcpanel.cpp.EventType;
-import com.getpcpanel.cpp.ISndCtrl;
+import com.getpcpanel.integration.volume.platform.AudioSessionEvent;
+import com.getpcpanel.integration.volume.platform.EventType;
+import com.getpcpanel.integration.volume.platform.ISndCtrl;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.platform.LinuxBuild;
 import com.getpcpanel.profile.SaveService;

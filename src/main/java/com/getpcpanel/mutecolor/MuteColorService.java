@@ -10,8 +10,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.command.Command;
-import com.getpcpanel.cpp.AudioDeviceEvent;
-import com.getpcpanel.cpp.AudioSessionEvent;
+import com.getpcpanel.integration.volume.platform.AudioDeviceEvent;
+import com.getpcpanel.integration.volume.platform.AudioSessionEvent;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.integration.discord.DiscordChangedEvent;
 import com.getpcpanel.hid.DeviceHolder;

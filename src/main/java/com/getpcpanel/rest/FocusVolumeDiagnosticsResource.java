@@ -12,7 +12,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 
-import com.getpcpanel.cpp.ISndCtrl;
+import com.getpcpanel.integration.volume.platform.ISndCtrl;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.volume.VolumeCoordinatorService;
 import com.getpcpanel.integration.wavelink.WaveLinkAppCache;

@@ -26,7 +26,7 @@
   {"interfaces": ["org.freedesktop.dbus.interfaces.DBus"]},
   {"interfaces": ["org.freedesktop.dbus.interfaces.Properties"]},
 
-  {"interfaces": ["com.getpcpanel.cpp.osx.CoreAudioLib"]},
+  {"interfaces": ["com.getpcpanel.integration.volume.platform.osx.CoreAudioLib"]},
   {"interfaces": ["com.sun.jna.platform.mac.CoreFoundation"]},
   {"interfaces": ["com.getpcpanel.cpp.osx.OsxKeyboard$CoreGraphics"]},
   {"interfaces": ["com.getpcpanel.cpp.osx.OsxKeyboard$CoreFoundation"]},

@@ -427,8 +427,8 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         "com.sun.jna.platform.mac.CoreFoundation$CFTypeRef",
         // Project CoreAudio JNA binding: the property-address Structure (instantiated per call) and the
         // change-listener Callback (used for default-device/volume notifications).
-        "com.getpcpanel.cpp.osx.CoreAudioLib$AudioObjectPropertyAddress",
-        "com.getpcpanel.cpp.osx.CoreAudioLib$AudioObjectPropertyListenerProc",
+        "com.getpcpanel.integration.volume.platform.osx.CoreAudioLib$AudioObjectPropertyAddress",
+        "com.getpcpanel.integration.volume.platform.osx.CoreAudioLib$AudioObjectPropertyListenerProc",
 
         // JNA by-reference pointer types that appear in project Library method signatures. JNA
         // reflectively instantiates these via their public no-arg constructor when marshalling the

@@ -14,9 +14,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.commands.DeviceSet;
-import com.getpcpanel.cpp.AudioDevice;
-import com.getpcpanel.cpp.DataFlow;
-import com.getpcpanel.cpp.windows.SndCtrlWindows;
+import com.getpcpanel.integration.volume.platform.AudioDevice;
+import com.getpcpanel.integration.volume.platform.DataFlow;
+import com.getpcpanel.integration.volume.platform.windows.SndCtrlWindows;
 
 import lombok.Getter;
 import lombok.ToString;
