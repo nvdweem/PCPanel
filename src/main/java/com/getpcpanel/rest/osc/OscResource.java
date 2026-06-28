@@ -1,4 +1,4 @@
-package com.getpcpanel.rest;
+package com.getpcpanel.rest.osc;
 
 import java.util.Map;
 

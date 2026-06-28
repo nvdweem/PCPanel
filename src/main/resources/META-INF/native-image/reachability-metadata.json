@@ -2612,10 +2612,10 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.ObsResource"
+      "type": "com.getpcpanel.rest.obs.ObsResource"
     },
     {
-      "type": "com.getpcpanel.rest.ObsResource$quarkusrestinvoker$listScenes_d45e7a31126e58273b41c15802da4944d2079682",
+      "type": "com.getpcpanel.rest.obs.ObsResource$quarkusrestinvoker$listScenes_d45e7a31126e58273b41c15802da4944d2079682",
       "methods": [
         {
           "name": "<init>",
@@ -2624,7 +2624,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.ObsResource$quarkusrestinvoker$listSources_5f705776229abc7f3484fe8cfadec2344a09af33",
+      "type": "com.getpcpanel.rest.obs.ObsResource$quarkusrestinvoker$listSources_5f705776229abc7f3484fe8cfadec2344a09af33",
       "methods": [
         {
           "name": "<init>",
@@ -2742,13 +2742,13 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.VoiceMeeterResource"
+      "type": "com.getpcpanel.rest.voicemeeter.VoiceMeeterResource"
     },
     {
-      "type": "com.getpcpanel.rest.VoiceMeeterResource$VoiceMeeterParam"
+      "type": "com.getpcpanel.rest.voicemeeter.VoiceMeeterResource$VoiceMeeterParam"
     },
     {
-      "type": "com.getpcpanel.rest.VoiceMeeterResource$quarkusrestinvoker$getAdvancedParams_789ebbb7df6501274ae825c6a27179c302791436",
+      "type": "com.getpcpanel.rest.voicemeeter.VoiceMeeterResource$quarkusrestinvoker$getAdvancedParams_789ebbb7df6501274ae825c6a27179c302791436",
       "methods": [
         {
           "name": "<init>",
@@ -2757,7 +2757,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.VoiceMeeterResource$quarkusrestinvoker$getBasicParams_3fb05518ea0ad168b8b8c6bcdb89e050368544a7",
+      "type": "com.getpcpanel.rest.voicemeeter.VoiceMeeterResource$quarkusrestinvoker$getBasicParams_3fb05518ea0ad168b8b8c6bcdb89e050368544a7",
       "methods": [
         {
           "name": "<init>",
