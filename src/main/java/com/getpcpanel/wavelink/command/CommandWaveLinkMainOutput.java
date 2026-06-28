@@ -19,8 +19,8 @@ import lombok.extern.log4j.Log4j2;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.wavelink.command.CommandWaveLinkMainOutput")
-@CommandMeta(label = "Wave Link — main output", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "wavelink", icon = "volume")
+@JsonTypeName("wavelink.main-output")
+@CommandMeta(label = "Wave Link — main output", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "wavelink", icon = "volume", legacyIds = {"com.getpcpanel.wavelink.command.CommandWaveLinkMainOutput"})
 public final class CommandWaveLinkMainOutput extends CommandWaveLink implements ButtonAction {
     @Nullable private final String id;
     @Nullable private final String name;

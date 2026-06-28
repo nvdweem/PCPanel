@@ -18,8 +18,8 @@ import lombok.extern.log4j.Log4j2;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.discord.command.CommandDiscordToggleVideo")
-@CommandMeta(label = "Discord — toggle camera", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "discord", icon = "film")
+@JsonTypeName("discord.toggle-video")
+@CommandMeta(label = "Discord — toggle camera", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "discord", icon = "film", legacyIds = {"com.getpcpanel.discord.command.CommandDiscordToggleVideo"})
 public final class CommandDiscordToggleVideo extends CommandDiscord implements ButtonAction {
     @Nullable private final String overlayText;
 

@@ -26,8 +26,8 @@ import lombok.ToString;
  */
 @Getter
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.homeassistant.command.CommandHomeAssistantValue")
-@CommandMeta(label = "Home Assistant — set value", category = CommandCategory.integration, kinds = {CommandKind.dial}, integration = "homeassistant", icon = "sliders")
+@JsonTypeName("homeassistant.value")
+@CommandMeta(label = "Home Assistant — set value", category = CommandCategory.integration, kinds = {CommandKind.dial}, integration = "homeassistant", icon = "sliders", legacyIds = {"com.getpcpanel.homeassistant.command.CommandHomeAssistantValue"})
 public class CommandHomeAssistantValue extends CommandHomeAssistant implements DialAction {
     private final String action;
     @Nullable private final Double min;

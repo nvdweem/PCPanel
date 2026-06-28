@@ -390,9 +390,11 @@ const FIELD_DEFS: FieldDef_[] = [
 // joined with the hand-written field editors above, keyed by the command's persisted type id.
 const FIELDS_BY_TYPE = new Map(FIELD_DEFS.map(d => [d.type, d] as const));
 export const COMMANDS: CommandDef[] = GENERATED_COMMANDS.map(g => {
-  const f = FIELDS_BY_TYPE.get(g.type);
+  // field schemas are keyed by the command's historical id; join on `legacy` so renaming the
+  // persisted id to a nice one needs no change here. buildEmpty stamps the current (nice) _type.
+  const f = FIELDS_BY_TYPE.get(g.legacy ?? g.type);
   if (!f) throw new Error('No field schema for command ' + g.type);
-  return { ...g, buildEmpty: f.buildEmpty, fields: f.fields };
+  return { ...g, buildEmpty: () => ({ ...f.buildEmpty(), _type: g.type }), fields: f.fields };
 });
 
 export const COMMAND_BY_TYPE = new Map(COMMANDS.map(c => [c.type, c]));

@@ -19,8 +19,8 @@ import lombok.extern.log4j.Log4j2;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.wavelink.command.CommandWaveLinkChangeLevel")
-@CommandMeta(label = "Wave Link — level", category = CommandCategory.integration, kinds = {CommandKind.dial}, integration = "wavelink", icon = "sliders")
+@JsonTypeName("wavelink.change-level")
+@CommandMeta(label = "Wave Link — level", category = CommandCategory.integration, kinds = {CommandKind.dial}, integration = "wavelink", icon = "sliders", legacyIds = {"com.getpcpanel.wavelink.command.CommandWaveLinkChangeLevel"})
 public final class CommandWaveLinkChangeLevel extends CommandWaveLinkChange implements DialAction {
     @Nullable private final DialCommandParams dialParams;
 

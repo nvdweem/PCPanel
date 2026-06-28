@@ -18,8 +18,8 @@ import lombok.extern.log4j.Log4j2;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.commands.command.CommandShortcut")
-@CommandMeta(label = "Run shortcut", category = CommandCategory.system, kinds = {CommandKind.button}, icon = "zap")
+@JsonTypeName("program.shortcut")
+@CommandMeta(label = "Run shortcut", category = CommandCategory.system, kinds = {CommandKind.button}, icon = "zap", legacyIds = {"com.getpcpanel.commands.command.CommandShortcut"})
 public class CommandShortcut extends Command implements ButtonAction {
     private static final Runtime rt = Runtime.getRuntime();
     private final String shortcut;

@@ -31,8 +31,8 @@ import lombok.extern.log4j.Log4j2;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.discord.command.CommandDiscordScreenShare")
-@CommandMeta(label = "Discord — screen share", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "discord", icon = "monitor")
+@JsonTypeName("discord.screen-share")
+@CommandMeta(label = "Discord — screen share", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "discord", icon = "monitor", legacyIds = {"com.getpcpanel.discord.command.CommandDiscordScreenShare"})
 public final class CommandDiscordScreenShare extends CommandDiscord implements ButtonAction {
     public enum Mode { SCREEN, PROCESS, FOCUS }
 

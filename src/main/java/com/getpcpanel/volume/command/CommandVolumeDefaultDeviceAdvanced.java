@@ -25,8 +25,8 @@ import lombok.extern.log4j.Log4j2;
 @Jacksonized
 @AllArgsConstructor
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.commands.command.CommandVolumeDefaultDeviceAdvanced")
-@CommandMeta(label = "Advanced default device", category = CommandCategory.audio, kinds = {CommandKind.button}, icon = "monitor")
+@JsonTypeName("volume.default-device-advanced")
+@CommandMeta(label = "Advanced default device", category = CommandCategory.audio, kinds = {CommandKind.button}, icon = "monitor", legacyIds = {"com.getpcpanel.commands.command.CommandVolumeDefaultDeviceAdvanced"})
 public class CommandVolumeDefaultDeviceAdvanced extends CommandVolume implements ButtonAction {
     private final String name;
     private final String mediaPb;

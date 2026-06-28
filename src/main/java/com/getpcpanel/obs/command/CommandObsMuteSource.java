@@ -16,8 +16,8 @@ import lombok.ToString;
 
 @Getter
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.commands.command.CommandObsMuteSource")
-@CommandMeta(label = "OBS — mute source", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "obs", icon = "mic-off")
+@JsonTypeName("obs.mute-source")
+@CommandMeta(label = "OBS — mute source", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "obs", icon = "mic-off", legacyIds = {"com.getpcpanel.commands.command.CommandObsMuteSource"})
 public class CommandObsMuteSource extends CommandObs implements ButtonAction {
     private final String source;
     private final MuteType type;

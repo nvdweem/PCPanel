@@ -14,8 +14,8 @@ import lombok.ToString;
 
 @Getter
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.commands.command.CommandVolumeDeviceMute")
-@CommandMeta(label = "Device mute", category = CommandCategory.audio, kinds = {CommandKind.button}, icon = "volume-x")
+@JsonTypeName("volume.device-mute")
+@CommandMeta(label = "Device mute", category = CommandCategory.audio, kinds = {CommandKind.button}, icon = "volume-x", legacyIds = {"com.getpcpanel.commands.command.CommandVolumeDeviceMute"})
 public class CommandVolumeDeviceMute extends CommandVolume implements ButtonAction {
     private final String deviceId;
     private final MuteType muteType;

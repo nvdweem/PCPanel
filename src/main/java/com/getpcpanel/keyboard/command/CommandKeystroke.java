@@ -29,8 +29,8 @@ import lombok.extern.log4j.Log4j2;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.commands.command.CommandKeystroke")
-@CommandMeta(label = "Keystroke", category = CommandCategory.system, kinds = {CommandKind.button}, icon = "keyboard")
+@JsonTypeName("keyboard.keystroke")
+@CommandMeta(label = "Keystroke", category = CommandCategory.system, kinds = {CommandKind.button}, icon = "keyboard", legacyIds = {"com.getpcpanel.commands.command.CommandKeystroke"})
 public class CommandKeystroke extends Command implements ButtonAction {
     public enum KeystrokeType {
         /** Single key combination (modifiers + one key). */

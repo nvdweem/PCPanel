@@ -24,8 +24,8 @@ import lombok.ToString;
  */
 @Getter
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.commands.command.CommandOscSend")
-@CommandMeta(label = "OSC send", category = CommandCategory.system, kinds = {CommandKind.dial, CommandKind.button}, icon = "sliders")
+@JsonTypeName("osc.send")
+@CommandMeta(label = "OSC send", category = CommandCategory.system, kinds = {CommandKind.dial, CommandKind.button}, icon = "sliders", legacyIds = {"com.getpcpanel.commands.command.CommandOscSend"})
 public class CommandOscSend extends CommandValueOutput {
     private final String address;
 

@@ -23,8 +23,8 @@ import lombok.ToString;
  */
 @Getter
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.homeassistant.command.CommandHomeAssistantAction")
-@CommandMeta(label = "Home Assistant — perform action", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "homeassistant", icon = "zap")
+@JsonTypeName("homeassistant.action")
+@CommandMeta(label = "Home Assistant — perform action", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "homeassistant", icon = "zap", legacyIds = {"com.getpcpanel.homeassistant.command.CommandHomeAssistantAction"})
 public class CommandHomeAssistantAction extends CommandHomeAssistant implements ButtonAction {
     private final String action;
     @Nullable private final String overlayText;

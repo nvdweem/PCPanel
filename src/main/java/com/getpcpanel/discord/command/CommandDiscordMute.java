@@ -25,8 +25,8 @@ import lombok.extern.log4j.Log4j2;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.discord.command.CommandDiscordMute")
-@CommandMeta(label = "Discord — mute", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "discord", icon = "mic-off")
+@JsonTypeName("discord.mute")
+@CommandMeta(label = "Discord — mute", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "discord", icon = "mic-off", legacyIds = {"com.getpcpanel.discord.command.CommandDiscordMute"})
 public final class CommandDiscordMute extends CommandDiscord implements ButtonAction {
     public static final String SELF = "self";
 

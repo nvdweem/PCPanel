@@ -18,8 +18,8 @@ import lombok.extern.log4j.Log4j2;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.commands.command.CommandRun")
-@CommandMeta(label = "Run command", category = CommandCategory.system, kinds = {CommandKind.button}, icon = "zap")
+@JsonTypeName("program.run")
+@CommandMeta(label = "Run command", category = CommandCategory.system, kinds = {CommandKind.button}, icon = "zap", legacyIds = {"com.getpcpanel.commands.command.CommandRun"})
 public class CommandRun extends Command implements ButtonAction {
     private final String command;
 

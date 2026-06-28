@@ -33,4 +33,13 @@ public @interface CommandMeta {
 
     /** Icon name; must be one of the frontend {@code IconName} set. */
     String icon();
+
+    /**
+     * Historical {@code _type} discriminator values older profiles.json may contain (typically the
+     * command's previous fully-qualified class name). The current id is the {@code @JsonTypeName};
+     * these are accepted on read only, mapped back via a DeserializationProblemHandler in
+     * {@link com.getpcpanel.commands.CommandSubtypeRegistrar}, so old saves keep loading while new
+     * saves are written with the nice current id.
+     */
+    String[] legacyIds() default {};
 }

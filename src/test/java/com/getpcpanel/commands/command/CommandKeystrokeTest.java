@@ -28,7 +28,7 @@ class CommandKeystrokeTest {
     @Test
     @DisplayName("legacy JSON without a 'type' field deserializes as a KEY keystroke")
     void legacyKeystrokeDefaultsToKey() throws Exception {
-        var json = "{\"_type\":\"com.getpcpanel.commands.command.CommandKeystroke\",\"keystroke\":\"ctrl+A\"}";
+        var json = "{\"_type\":\"keyboard.keystroke\",\"keystroke\":\"ctrl+A\"}";
         var cmd = (CommandKeystroke) mapper.readValue(json, Command.class);
         assertEquals(KeystrokeType.KEY, cmd.getType());
         assertEquals("ctrl+A", cmd.getKeystroke());

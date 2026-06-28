@@ -15,8 +15,8 @@ import lombok.ToString;
 
 @Getter
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.commands.command.CommandObsSetSourceVolume")
-@CommandMeta(label = "OBS — source volume", category = CommandCategory.integration, kinds = {CommandKind.dial}, integration = "obs", icon = "sliders")
+@JsonTypeName("obs.set-source-volume")
+@CommandMeta(label = "OBS — source volume", category = CommandCategory.integration, kinds = {CommandKind.dial}, integration = "obs", icon = "sliders", legacyIds = {"com.getpcpanel.commands.command.CommandObsSetSourceVolume"})
 public class CommandObsSetSourceVolume extends CommandObs implements DialAction {
     private final String sourceName;
     private final DialCommandParams dialParams;

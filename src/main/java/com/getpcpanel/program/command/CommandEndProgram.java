@@ -18,8 +18,8 @@ import lombok.extern.log4j.Log4j2;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.commands.command.CommandEndProgram")
-@CommandMeta(label = "End program", category = CommandCategory.system, kinds = {CommandKind.button}, icon = "x")
+@JsonTypeName("program.end-program")
+@CommandMeta(label = "End program", category = CommandCategory.system, kinds = {CommandKind.button}, icon = "x", legacyIds = {"com.getpcpanel.commands.command.CommandEndProgram"})
 public class CommandEndProgram extends Command implements ButtonAction {
     private static final Runtime rt = Runtime.getRuntime();
     private final boolean specific;

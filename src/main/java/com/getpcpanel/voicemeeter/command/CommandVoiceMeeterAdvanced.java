@@ -15,8 +15,8 @@ import lombok.ToString;
 
 @Getter
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced")
-@CommandMeta(label = "Voicemeeter — parameter", category = CommandCategory.integration, kinds = {CommandKind.dial}, integration = "voicemeeter", icon = "sliders")
+@JsonTypeName("voicemeeter.advanced")
+@CommandMeta(label = "Voicemeeter — parameter", category = CommandCategory.integration, kinds = {CommandKind.dial}, integration = "voicemeeter", icon = "sliders", legacyIds = {"com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced"})
 public class CommandVoiceMeeterAdvanced extends CommandVoiceMeeter implements DialAction {
     private final String fullParam;
     private final Voicemeeter.DialControlMode ct;

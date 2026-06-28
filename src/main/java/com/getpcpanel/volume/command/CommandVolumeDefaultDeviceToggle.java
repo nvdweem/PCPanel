@@ -25,8 +25,8 @@ import one.util.streamex.StreamEx;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggle")
-@CommandMeta(label = "Cycle default device", category = CommandCategory.audio, kinds = {CommandKind.button}, icon = "refresh")
+@JsonTypeName("volume.default-device-toggle")
+@CommandMeta(label = "Cycle default device", category = CommandCategory.audio, kinds = {CommandKind.button}, icon = "refresh", legacyIds = {"com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggle"})
 public class CommandVolumeDefaultDeviceToggle extends CommandVolume implements ButtonAction {
     private final List<String> devices;
     private int currentIdx; // Used as a fallback for when the current idx cannot be found

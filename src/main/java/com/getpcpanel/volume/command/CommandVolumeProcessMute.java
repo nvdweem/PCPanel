@@ -15,8 +15,8 @@ import lombok.ToString;
 
 @Getter
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.commands.command.CommandVolumeProcessMute")
-@CommandMeta(label = "App mute", category = CommandCategory.audio, kinds = {CommandKind.button}, icon = "volume-x")
+@JsonTypeName("volume.process-mute")
+@CommandMeta(label = "App mute", category = CommandCategory.audio, kinds = {CommandKind.button}, icon = "volume-x", legacyIds = {"com.getpcpanel.commands.command.CommandVolumeProcessMute"})
 public class CommandVolumeProcessMute extends CommandVolume implements ButtonAction {
     private final Set<String> processName;
     private final MuteType muteType;

@@ -14,8 +14,8 @@ import lombok.ToString;
 
 @Getter
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.commands.command.CommandVolumeDevice")
-@CommandMeta(label = "Device volume", category = CommandCategory.audio, kinds = {CommandKind.dial}, icon = "volume")
+@JsonTypeName("volume.device")
+@CommandMeta(label = "Device volume", category = CommandCategory.audio, kinds = {CommandKind.dial}, icon = "volume", legacyIds = {"com.getpcpanel.commands.command.CommandVolumeDevice"})
 public class CommandVolumeDevice extends CommandVolume implements DialAction {
     private final String deviceId;
     private final boolean unMuteOnVolumeChange;

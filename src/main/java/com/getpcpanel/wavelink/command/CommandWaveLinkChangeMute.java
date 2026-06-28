@@ -21,8 +21,8 @@ import lombok.extern.log4j.Log4j2;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.wavelink.command.CommandWaveLinkChangeMute")
-@CommandMeta(label = "Wave Link — mute", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "wavelink", icon = "mic-off")
+@JsonTypeName("wavelink.change-mute")
+@CommandMeta(label = "Wave Link — mute", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "wavelink", icon = "mic-off", legacyIds = {"com.getpcpanel.wavelink.command.CommandWaveLinkChangeMute"})
 public final class CommandWaveLinkChangeMute extends CommandWaveLinkChange implements ButtonAction {
     private final MuteType muteType;
 

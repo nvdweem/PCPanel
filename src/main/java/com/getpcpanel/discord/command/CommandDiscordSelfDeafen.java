@@ -20,8 +20,8 @@ import lombok.extern.log4j.Log4j2;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.discord.command.CommandDiscordSelfDeafen")
-@CommandMeta(label = "Discord — deafen self", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "discord", icon = "volume-x")
+@JsonTypeName("discord.self-deafen")
+@CommandMeta(label = "Discord — deafen self", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "discord", icon = "volume-x", legacyIds = {"com.getpcpanel.discord.command.CommandDiscordSelfDeafen"})
 public final class CommandDiscordSelfDeafen extends CommandDiscord implements ButtonAction {
     private final MuteType muteType;
     @Nullable private final String overlayText;

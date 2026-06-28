@@ -20,8 +20,8 @@ import lombok.extern.log4j.Log4j2;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.discord.command.CommandDiscordJoinVoice")
-@CommandMeta(label = "Discord — join voice", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "discord", icon = "plug")
+@JsonTypeName("discord.join-voice")
+@CommandMeta(label = "Discord — join voice", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "discord", icon = "plug", legacyIds = {"com.getpcpanel.discord.command.CommandDiscordJoinVoice"})
 public final class CommandDiscordJoinVoice extends CommandDiscord implements ButtonAction {
     @Nullable private final String channelId;
     /** Cosmetic: the channel's name at configure time, for the button label (the id is what we join). */

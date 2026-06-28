@@ -19,8 +19,8 @@ import lombok.ToString;
 
 @Getter
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.commands.command.CommandVoiceMeeterAdvancedButton")
-@CommandMeta(label = "Voicemeeter — button", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "voicemeeter", icon = "sliders")
+@JsonTypeName("voicemeeter.advanced-button")
+@CommandMeta(label = "Voicemeeter — button", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "voicemeeter", icon = "sliders", legacyIds = {"com.getpcpanel.commands.command.CommandVoiceMeeterAdvancedButton"})
 public class CommandVoiceMeeterAdvancedButton extends CommandVoiceMeeter implements ButtonAction {
     private final String fullParam;
     private final Voicemeeter.ButtonControlMode bt;

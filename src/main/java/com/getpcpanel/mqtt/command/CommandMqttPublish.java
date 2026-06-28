@@ -25,8 +25,8 @@ import lombok.ToString;
  */
 @Getter
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.commands.command.CommandMqttPublish")
-@CommandMeta(label = "MQTT publish", category = CommandCategory.system, kinds = {CommandKind.dial, CommandKind.button}, icon = "zap")
+@JsonTypeName("mqtt.publish")
+@CommandMeta(label = "MQTT publish", category = CommandCategory.system, kinds = {CommandKind.dial, CommandKind.button}, icon = "zap", legacyIds = {"com.getpcpanel.commands.command.CommandMqttPublish"})
 public class CommandMqttPublish extends CommandValueOutput {
     private final String topic;
     private final String payload;

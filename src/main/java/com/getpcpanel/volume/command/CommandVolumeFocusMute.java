@@ -15,8 +15,8 @@ import lombok.ToString;
 
 @Getter
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.commands.command.CommandVolumeFocusMute")
-@CommandMeta(label = "Focused-app mute", category = CommandCategory.audio, kinds = {CommandKind.button}, icon = "volume-x")
+@JsonTypeName("volume.focus-mute")
+@CommandMeta(label = "Focused-app mute", category = CommandCategory.audio, kinds = {CommandKind.button}, icon = "volume-x", legacyIds = {"com.getpcpanel.commands.command.CommandVolumeFocusMute"})
 public class CommandVolumeFocusMute extends CommandVolume implements ButtonAction {
     private final MuteType muteType;
 

@@ -83,7 +83,7 @@ class CommandRegistryGeneratorTest {
         sb.append("import type { CommandCategory, CommandKind, Integration } from './command-catalog';\n\n");
         sb.append("export interface GeneratedCommand {\n");
         sb.append("  type: string;\n  label: string;\n  category: CommandCategory;\n");
-        sb.append("  kinds: CommandKind[];\n  integration?: Integration;\n  icon: IconName;\n}\n\n");
+        sb.append("  kinds: CommandKind[];\n  integration?: Integration;\n  icon: IconName;\n  /** previous _type id(s) for joining hand-written field schemas keyed by the old id */\n  legacy?: string;\n}\n\n");
         sb.append("export const GENERATED_COMMANDS: GeneratedCommand[] = [\n");
         for (var e : entries) {
             sb.append("  { type: ").append(q(e.type()));
@@ -102,6 +102,9 @@ class CommandRegistryGeneratorTest {
                 sb.append(", integration: ").append(q(e.meta().integration()));
             }
             sb.append(", icon: ").append(q(e.meta().icon()));
+            if (e.meta().legacyIds().length > 0) {
+                sb.append(", legacy: ").append(q(e.meta().legacyIds()[0]));
+            }
             sb.append(" },\n");
         }
         sb.append("];\n");

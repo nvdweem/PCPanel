@@ -18,8 +18,8 @@ import lombok.extern.log4j.Log4j2;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.commands.command.CommandBrightness")
-@CommandMeta(label = "Brightness", category = CommandCategory.system, kinds = {CommandKind.dial}, icon = "sun")
+@JsonTypeName("device.brightness")
+@CommandMeta(label = "Brightness", category = CommandCategory.system, kinds = {CommandKind.dial}, icon = "sun", legacyIds = {"com.getpcpanel.commands.command.CommandBrightness"})
 public class CommandBrightness extends Command implements DialAction {
     private final DialCommandParams dialParams;
 

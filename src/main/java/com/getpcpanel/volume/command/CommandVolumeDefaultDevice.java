@@ -15,8 +15,8 @@ import lombok.ToString;
 
 @Getter
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.commands.command.CommandVolumeDefaultDevice")
-@CommandMeta(label = "Set default device", category = CommandCategory.audio, kinds = {CommandKind.button}, icon = "monitor")
+@JsonTypeName("volume.default-device")
+@CommandMeta(label = "Set default device", category = CommandCategory.audio, kinds = {CommandKind.button}, icon = "monitor", legacyIds = {"com.getpcpanel.commands.command.CommandVolumeDefaultDevice"})
 public class CommandVolumeDefaultDevice extends CommandVolume implements ButtonAction {
     private final String deviceId;
 

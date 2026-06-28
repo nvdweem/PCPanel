@@ -41,8 +41,8 @@ import lombok.extern.log4j.Log4j2;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.commands.command.CommandAnalogBands")
-@CommandMeta(label = "Stepped switch (ranges)", category = CommandCategory.system, kinds = {CommandKind.dial}, icon = "sliders")
+@JsonTypeName("analogbands.ranges")
+@CommandMeta(label = "Stepped switch (ranges)", category = CommandCategory.system, kinds = {CommandKind.dial}, icon = "sliders", legacyIds = {"com.getpcpanel.commands.command.CommandAnalogBands"})
 public class CommandAnalogBands extends Command implements DialAction {
     private static final int MAX_RAW = 255;
 

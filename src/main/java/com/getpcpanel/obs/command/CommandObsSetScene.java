@@ -15,8 +15,8 @@ import lombok.ToString;
 
 @Getter
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.commands.command.CommandObsSetScene")
-@CommandMeta(label = "OBS — switch scene", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "obs", icon = "film")
+@JsonTypeName("obs.set-scene")
+@CommandMeta(label = "OBS — switch scene", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "obs", icon = "film", legacyIds = {"com.getpcpanel.commands.command.CommandObsSetScene"})
 public class CommandObsSetScene extends CommandObs implements ButtonAction {
     private final String scene;
 

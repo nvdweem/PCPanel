@@ -19,8 +19,8 @@ import lombok.ToString;
  */
 @Getter
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.commands.command.CommandObsAction")
-@CommandMeta(label = "OBS — stream / record", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "obs", icon = "film")
+@JsonTypeName("obs.action")
+@CommandMeta(label = "OBS — stream / record", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "obs", icon = "film", legacyIds = {"com.getpcpanel.commands.command.CommandObsAction"})
 public class CommandObsAction extends CommandObs implements ButtonAction {
     private final ObsActionType action;
 

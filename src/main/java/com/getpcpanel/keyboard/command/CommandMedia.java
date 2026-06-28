@@ -37,8 +37,8 @@ import one.util.streamex.StreamEx;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.commands.command.CommandMedia")
-@CommandMeta(label = "Media", category = CommandCategory.system, kinds = {CommandKind.button}, icon = "play")
+@JsonTypeName("keyboard.media")
+@CommandMeta(label = "Media", category = CommandCategory.system, kinds = {CommandKind.button}, icon = "play", legacyIds = {"com.getpcpanel.commands.command.CommandMedia"})
 public class CommandMedia extends Command implements ButtonAction {
     private static final int WM_APPCOMMAND = 0x0319;
     private final VolumeButton button;

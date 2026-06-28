@@ -19,8 +19,8 @@ import lombok.Getter;
 import lombok.ToString;
 
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.commands.command.CommandProfile")
-@CommandMeta(label = "Switch profile", category = CommandCategory.system, kinds = {CommandKind.button}, icon = "refresh")
+@JsonTypeName("profile.switch")
+@CommandMeta(label = "Switch profile", category = CommandCategory.system, kinds = {CommandKind.button}, icon = "refresh", legacyIds = {"com.getpcpanel.commands.command.CommandProfile"})
 public class CommandProfile extends Command implements DeviceAction {
     @Getter private final String profile;
 

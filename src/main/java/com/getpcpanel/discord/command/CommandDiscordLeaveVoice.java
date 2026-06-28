@@ -18,8 +18,8 @@ import lombok.extern.log4j.Log4j2;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.discord.command.CommandDiscordLeaveVoice")
-@CommandMeta(label = "Discord — leave voice", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "discord", icon = "log-out")
+@JsonTypeName("discord.leave-voice")
+@CommandMeta(label = "Discord — leave voice", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "discord", icon = "log-out", legacyIds = {"com.getpcpanel.discord.command.CommandDiscordLeaveVoice"})
 public final class CommandDiscordLeaveVoice extends CommandDiscord implements ButtonAction {
     @Nullable private final String overlayText;
 

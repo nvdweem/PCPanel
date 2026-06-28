@@ -15,8 +15,8 @@ import lombok.ToString;
 
 @Getter
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.commands.command.CommandVolumeFocus")
-@CommandMeta(label = "Focused-app volume", category = CommandCategory.audio, kinds = {CommandKind.dial}, icon = "volume")
+@JsonTypeName("volume.focus")
+@CommandMeta(label = "Focused-app volume", category = CommandCategory.audio, kinds = {CommandKind.dial}, icon = "volume", legacyIds = {"com.getpcpanel.commands.command.CommandVolumeFocus"})
 public class CommandVolumeFocus extends CommandVolume implements DialAction {
     private final DialCommandParams dialParams;
 

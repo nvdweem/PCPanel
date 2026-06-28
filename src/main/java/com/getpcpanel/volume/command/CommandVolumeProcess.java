@@ -17,8 +17,8 @@ import lombok.ToString;
 
 @Getter
 @ToString(callSuper = true)
-@JsonTypeName("com.getpcpanel.commands.command.CommandVolumeProcess")
-@CommandMeta(label = "App volume", category = CommandCategory.audio, kinds = {CommandKind.dial}, icon = "volume")
+@JsonTypeName("volume.process")
+@CommandMeta(label = "App volume", category = CommandCategory.audio, kinds = {CommandKind.dial}, icon = "volume", legacyIds = {"com.getpcpanel.commands.command.CommandVolumeProcess"})
 public class CommandVolumeProcess extends CommandVolume implements DialAction {
     private final List<String> processName;
     private final String device;
