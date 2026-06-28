@@ -1,4 +1,4 @@
-package com.getpcpanel.hid;
+package com.getpcpanel.commands;
 
 import javax.annotation.Nullable;
 

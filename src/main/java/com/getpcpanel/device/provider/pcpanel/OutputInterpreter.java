@@ -1,4 +1,6 @@
-package com.getpcpanel.hid;
+package com.getpcpanel.device.provider.pcpanel;
+
+import com.getpcpanel.device.BrightnessService;
 
 import java.util.Arrays;
 

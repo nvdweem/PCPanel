@@ -13,7 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.getpcpanel.Json;
 import com.getpcpanel.device.DescriptorFactory;
 import com.getpcpanel.device.Device;
-import com.getpcpanel.hid.DeviceHolder;
+import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.util.Debouncer;
 import com.getpcpanel.util.FileUtil;
 import com.getpcpanel.util.tray.win.WinUser32Ext;

@@ -9,7 +9,7 @@ import com.getpcpanel.commands.meta.CommandKind;
 import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.util.CdiHelper;
-import com.getpcpanel.hid.DeviceHolder;
+import com.getpcpanel.device.DeviceHolder;
 
 import lombok.Getter;
 import lombok.ToString;

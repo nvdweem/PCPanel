@@ -675,34 +675,34 @@
       "type": "com.getpcpanel.device.GlobalBrightnessChangedEvent"
     },
     {
-      "type": "com.getpcpanel.hid.ButtonClickEvent"
+      "type": "com.getpcpanel.device.provider.pcpanel.ButtonClickEvent"
     },
     {
-      "type": "com.getpcpanel.hid.DeviceCommunicationHandler$ButtonPressEvent"
+      "type": "com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandler$ButtonPressEvent"
     },
     {
-      "type": "com.getpcpanel.hid.DeviceCommunicationHandler$KnobRotateEvent"
+      "type": "com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandler$KnobRotateEvent"
     },
     {
-      "type": "com.getpcpanel.hid.DeviceCommunicationHandlerFactory"
+      "type": "com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandlerFactory"
     },
     {
-      "type": "com.getpcpanel.hid.DeviceHolder"
+      "type": "com.getpcpanel.device.DeviceHolder"
     },
     {
-      "type": "com.getpcpanel.hid.DeviceHolder$DeviceFullyConnectedEvent"
+      "type": "com.getpcpanel.device.DeviceHolder$DeviceFullyConnectedEvent"
     },
     {
-      "type": "com.getpcpanel.hid.DeviceScanner"
+      "type": "com.getpcpanel.device.provider.pcpanel.DeviceScanner"
     },
     {
-      "type": "com.getpcpanel.hid.DeviceScanner$DeviceConnectedEvent"
+      "type": "com.getpcpanel.device.provider.pcpanel.DeviceScanner$DeviceConnectedEvent"
     },
     {
-      "type": "com.getpcpanel.hid.DeviceScanner$DeviceDisconnectedEvent"
+      "type": "com.getpcpanel.device.provider.pcpanel.DeviceScanner$DeviceDisconnectedEvent"
     },
     {
-      "type": "com.getpcpanel.hid.DialValueCalculatorTest",
+      "type": "com.getpcpanel.commands.DialValueCalculatorTest",
       "methods": [
         {
           "name": "<init>",
@@ -719,7 +719,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.hid.DialValueTest",
+      "type": "com.getpcpanel.commands.DialValueTest",
       "methods": [
         {
           "name": "<init>",
@@ -739,10 +739,10 @@
       ]
     },
     {
-      "type": "com.getpcpanel.hid.InputInterpreter"
+      "type": "com.getpcpanel.device.provider.pcpanel.InputInterpreter"
     },
     {
-      "type": "com.getpcpanel.hid.OutputInterpreter"
+      "type": "com.getpcpanel.device.provider.pcpanel.OutputInterpreter"
     },
     {
       "type": "com.getpcpanel.integration.program.iconextract.IIconService"

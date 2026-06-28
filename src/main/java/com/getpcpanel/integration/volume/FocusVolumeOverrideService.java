@@ -10,7 +10,7 @@ import com.getpcpanel.integration.volume.command.CommandVolumeProcess;
 import com.getpcpanel.commands.command.DialAction;
 import com.getpcpanel.commands.command.DialAction.DialActionParameters;
 import com.getpcpanel.integration.volume.platform.ISndCtrl;
-import com.getpcpanel.hid.DialValue;
+import com.getpcpanel.commands.DialValue;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.dto.KnobSetting;
 

@@ -18,11 +18,11 @@ import javax.annotation.Nullable;
 
 import com.getpcpanel.device.Device;
 import com.getpcpanel.device.GlobalBrightnessChangedEvent;
-import com.getpcpanel.hid.ButtonClickEvent;
-import com.getpcpanel.hid.DeviceCommunicationHandler.ButtonPressEvent;
-import com.getpcpanel.hid.DeviceCommunicationHandler.KnobRotateEvent;
-import com.getpcpanel.hid.DeviceHolder;
-import com.getpcpanel.hid.DeviceHolder.DeviceFullyConnectedEvent;
+import com.getpcpanel.device.provider.pcpanel.ButtonClickEvent;
+import com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandler.ButtonPressEvent;
+import com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandler.KnobRotateEvent;
+import com.getpcpanel.device.DeviceHolder;
+import com.getpcpanel.device.DeviceHolder.DeviceFullyConnectedEvent;
 import com.getpcpanel.integration.mqtt.MqttTopicHelper.ColorType;
 import com.getpcpanel.integration.mqtt.MqttTopicHelper.DeviceMqttTopicHelper;
 import com.getpcpanel.profile.SaveService;

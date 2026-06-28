@@ -1,4 +1,6 @@
-package com.getpcpanel.hid;
+package com.getpcpanel.device;
+
+import com.getpcpanel.commands.DialValueCalculator;
 
 import java.util.Comparator;
 import java.util.List;

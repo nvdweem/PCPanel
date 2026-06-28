@@ -2,7 +2,7 @@ package com.getpcpanel.integration.obs;
 
 import java.util.function.Function;
 import com.getpcpanel.integration.obs.command.CommandObsSetSourceVolume;
-import com.getpcpanel.hid.DeviceHolder;
+import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.platform.WindowsBuild;
 
 import jakarta.enterprise.context.ApplicationScoped;

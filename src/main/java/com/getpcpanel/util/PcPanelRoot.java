@@ -12,7 +12,7 @@ import java.util.Locale;
  * static field or a build-time constant: in a GraalVM native image a static initializer runs at
  * <em>build</em> time and would bake in the build machine's home/environment (e.g. the CI runner's
  * {@code C:\Users\runneradmin}). {@link com.getpcpanel.Main}, {@link FileChecker} and
- * {@link com.getpcpanel.hid.HidDebug} each resolve the root through here so the three agree.
+ * {@link com.getpcpanel.device.provider.pcpanel.HidDebug} each resolve the root through here so the three agree.
  *
  * <p>On Linux the directory follows the XDG Base Directory spec so config lands in a
  * sandbox-friendly, persisted location. This matters for two shipped targets:

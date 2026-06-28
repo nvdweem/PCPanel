@@ -1,4 +1,4 @@
-package com.getpcpanel.hid;
+package com.getpcpanel.device.provider.pcpanel;
 
 import java.io.File;
 import java.io.FileOutputStream;

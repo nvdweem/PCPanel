@@ -20,9 +20,9 @@ import org.junit.jupiter.api.Test;
 
 import com.getpcpanel.device.descriptor.AnalogKind;
 import com.getpcpanel.device.io.SerialTransport;
-import com.getpcpanel.hid.DeviceCommunicationHandler.KnobRotateEvent;
-import com.getpcpanel.hid.DeviceScanner.DeviceConnectedEvent;
-import com.getpcpanel.hid.DeviceScanner.DeviceDisconnectedEvent;
+import com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandler.KnobRotateEvent;
+import com.getpcpanel.device.provider.pcpanel.DeviceScanner.DeviceConnectedEvent;
+import com.getpcpanel.device.provider.pcpanel.DeviceScanner.DeviceDisconnectedEvent;
 import com.getpcpanel.profile.Save;
 import com.getpcpanel.profile.SaveService;
 

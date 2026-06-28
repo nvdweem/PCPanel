@@ -1,4 +1,4 @@
-package com.getpcpanel.hid;
+package com.getpcpanel.device.provider.pcpanel;
 
 import org.hid4java.HidDevice;
 import jakarta.enterprise.event.Event;

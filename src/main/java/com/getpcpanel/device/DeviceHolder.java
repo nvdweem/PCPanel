@@ -1,4 +1,8 @@
-package com.getpcpanel.hid;
+package com.getpcpanel.device;
+
+import com.getpcpanel.device.provider.pcpanel.OutputInterpreter;
+import com.getpcpanel.device.provider.pcpanel.DeviceScanner;
+import com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandler;
 
 import java.util.Collection;
 import java.util.Map;

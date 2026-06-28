@@ -22,9 +22,9 @@ import com.getpcpanel.device.io.MidiTransport.MidiMessage;
 import com.getpcpanel.device.provider.DeviceProvider;
 import com.getpcpanel.device.provider.midi.MidiProtocol.MidiEvent;
 import com.getpcpanel.device.provider.midi.MidiProtocol.MidiKind;
-import com.getpcpanel.hid.DeviceCommunicationHandler.ButtonPressEvent;
-import com.getpcpanel.hid.DeviceCommunicationHandler.KnobRotateEvent;
-import com.getpcpanel.hid.DeviceScanner;
+import com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandler.ButtonPressEvent;
+import com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandler.KnobRotateEvent;
+import com.getpcpanel.device.provider.pcpanel.DeviceScanner;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.SaveService;
 

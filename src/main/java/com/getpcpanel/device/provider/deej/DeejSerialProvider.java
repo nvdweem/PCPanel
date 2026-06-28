@@ -15,8 +15,8 @@ import com.getpcpanel.device.io.SerialTransport;
 import com.getpcpanel.device.io.SerialTransport.SerialConnection;
 import com.getpcpanel.device.provider.DeviceProvider;
 import com.getpcpanel.device.provider.deej.DeejProtocol.NoiseReduction;
-import com.getpcpanel.hid.DeviceCommunicationHandler.KnobRotateEvent;
-import com.getpcpanel.hid.DeviceScanner;
+import com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandler.KnobRotateEvent;
+import com.getpcpanel.device.provider.pcpanel.DeviceScanner;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.SaveService;
 

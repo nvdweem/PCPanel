@@ -5,7 +5,7 @@ import java.util.List;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-import com.getpcpanel.hid.DeviceHolder;
+import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.rest.DeviceResource;
 import com.getpcpanel.rest.MidiResource;

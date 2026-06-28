@@ -17,7 +17,7 @@ import com.getpcpanel.commands.command.DialAction;
 import com.getpcpanel.integration.volume.platform.ISndCtrl;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.device.descriptor.AnalogKind;
-import com.getpcpanel.hid.DeviceHolder;
+import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.profile.dto.LightingConfig;

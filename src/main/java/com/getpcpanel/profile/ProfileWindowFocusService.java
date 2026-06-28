@@ -4,7 +4,7 @@ import jakarta.inject.Inject;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.context.ApplicationScoped;
 
-import com.getpcpanel.hid.DeviceHolder;
+import com.getpcpanel.device.DeviceHolder;
 
 import lombok.RequiredArgsConstructor;
 

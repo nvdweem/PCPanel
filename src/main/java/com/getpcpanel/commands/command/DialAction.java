@@ -2,7 +2,7 @@ package com.getpcpanel.commands.command;
 
 import javax.annotation.Nullable;
 
-import com.getpcpanel.hid.DialValue;
+import com.getpcpanel.commands.DialValue;
 
 public interface DialAction {
     void execute(DialActionParameters context);

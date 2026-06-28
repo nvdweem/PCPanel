@@ -3,7 +3,7 @@ package com.getpcpanel.commands.command;
 import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.getpcpanel.hid.DialValue;
+import com.getpcpanel.commands.DialValue;
 
 import lombok.ToString;
 import lombok.extern.log4j.Log4j2;

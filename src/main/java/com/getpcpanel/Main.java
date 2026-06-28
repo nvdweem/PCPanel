@@ -6,7 +6,7 @@ import java.util.Set;
 
 import org.eclipse.microprofile.config.ConfigProvider;
 
-import com.getpcpanel.hid.HidDebug;
+import com.getpcpanel.device.provider.pcpanel.HidDebug;
 import com.getpcpanel.util.ConsoleSupport;
 import com.getpcpanel.util.FileChecker;
 import com.getpcpanel.util.PcPanelRoot;

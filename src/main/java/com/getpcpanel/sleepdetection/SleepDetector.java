@@ -1,9 +1,9 @@
 package com.getpcpanel.sleepdetection;
 
 import com.getpcpanel.device.Device;
-import com.getpcpanel.hid.DeviceHolder;
-import com.getpcpanel.hid.DeviceScanner;
-import com.getpcpanel.hid.OutputInterpreter;
+import com.getpcpanel.device.DeviceHolder;
+import com.getpcpanel.device.provider.pcpanel.DeviceScanner;
+import com.getpcpanel.device.provider.pcpanel.OutputInterpreter;
 import com.getpcpanel.profile.dto.LightingConfig;
 import com.getpcpanel.sleepdetection.DarkReasonGate.Reason;
 

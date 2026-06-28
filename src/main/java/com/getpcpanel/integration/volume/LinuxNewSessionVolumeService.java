@@ -9,7 +9,7 @@ import com.getpcpanel.integration.volume.command.CommandVolumeProcess;
 import com.getpcpanel.integration.volume.platform.AudioSessionEvent;
 import com.getpcpanel.integration.volume.platform.EventType;
 import com.getpcpanel.integration.volume.platform.ISndCtrl;
-import com.getpcpanel.hid.DeviceHolder;
+import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.platform.LinuxBuild;
 import com.getpcpanel.profile.SaveService;
 

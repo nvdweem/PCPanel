@@ -1,4 +1,4 @@
-package com.getpcpanel.hid;
+package com.getpcpanel.commands;
 
 import static com.getpcpanel.util.Util.map;
 

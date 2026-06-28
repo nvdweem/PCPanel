@@ -3,7 +3,7 @@ package com.getpcpanel.integration.voicemeeter;
 import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeter;
 import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterAdvanced;
 import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterBasic;
-import com.getpcpanel.hid.DeviceHolder;
+import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.platform.WindowsBuild;
 
 import jakarta.enterprise.context.ApplicationScoped;

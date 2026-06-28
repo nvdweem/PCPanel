@@ -1,4 +1,7 @@
-package com.getpcpanel.hid;
+package com.getpcpanel.device.provider.pcpanel;
+
+import com.getpcpanel.device.DeviceHolder;
+import com.getpcpanel.commands.DialValue;
 
 import static com.getpcpanel.commands.Commands.hasCommands;
 import static java.util.Objects.requireNonNullElse;

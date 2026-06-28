@@ -14,7 +14,7 @@ import com.getpcpanel.integration.volume.platform.AudioDeviceEvent;
 import com.getpcpanel.integration.volume.platform.AudioSessionEvent;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.integration.discord.DiscordChangedEvent;
-import com.getpcpanel.hid.DeviceHolder;
+import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.integration.obs.OBSConnectEvent;
 import com.getpcpanel.integration.obs.OBSMuteEvent;
 import com.getpcpanel.profile.BaseLayerService;

@@ -10,8 +10,8 @@ import java.util.Set;
 
 import javax.annotation.Nonnull;
 
-import com.getpcpanel.hid.DeviceCommunicationHandler.ButtonPressEvent;
-import com.getpcpanel.hid.DeviceCommunicationHandler.KnobRotateEvent;
+import com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandler.ButtonPressEvent;
+import com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandler.KnobRotateEvent;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.dto.OSCBinding;
 import com.getpcpanel.profile.dto.OSCConnectionInfo;

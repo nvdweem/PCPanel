@@ -8,7 +8,7 @@ import java.util.function.Function;
 import org.apache.commons.lang3.StringUtils;
 import jakarta.enterprise.context.ApplicationScoped;
 
-import com.getpcpanel.hid.DeviceHolder;
+import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.platform.WindowsBuild;
 import com.github.kwhat.jnativehook.GlobalScreen;
 import com.github.kwhat.jnativehook.NativeHookException;

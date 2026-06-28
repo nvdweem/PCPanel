@@ -6,7 +6,7 @@ import java.util.Optional;
 
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.device.Device;
-import com.getpcpanel.hid.DeviceHolder;
+import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.LightingChangedToDefaultEvent;
 import com.getpcpanel.profile.Profile;

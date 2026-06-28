@@ -2,11 +2,11 @@ package com.getpcpanel.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.getpcpanel.commands.Commands;
-import com.getpcpanel.hid.DeviceCommunicationHandler.ButtonPressEvent;
-import com.getpcpanel.hid.DeviceCommunicationHandler.KnobRotateEvent;
-import com.getpcpanel.hid.DeviceHolder;
-import com.getpcpanel.hid.DeviceHolder.DeviceFullyConnectedEvent;
-import com.getpcpanel.hid.DeviceScanner.DeviceDisconnectedEvent;
+import com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandler.ButtonPressEvent;
+import com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandler.KnobRotateEvent;
+import com.getpcpanel.device.DeviceHolder;
+import com.getpcpanel.device.DeviceHolder.DeviceFullyConnectedEvent;
+import com.getpcpanel.device.provider.pcpanel.DeviceScanner.DeviceDisconnectedEvent;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.ProfileSwitchedEvent;
 import com.getpcpanel.profile.SaveService;
