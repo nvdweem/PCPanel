@@ -1,8 +1,8 @@
 package com.getpcpanel.volume;
 
-import java.io.File;
 import java.util.List;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.commands.command.Command;
@@ -64,7 +64,7 @@ public class FocusVolumeOverrideService {
         // device (apps often don't play on the default device — e.g. Steam routes to "Steam Streaming
         // Speakers"). Off by default for apps that never play audio themselves (Steam → SteamWebHelper).
         if (includeSource) {
-            sndCtrl.setProcessVolume(new File(application).getName(), ALL_DEVICES, volume);
+            sndCtrl.setProcessVolume(FilenameUtils.getName(application), ALL_DEVICES, volume);
         }
         return true;
     }
@@ -79,7 +79,7 @@ public class FocusVolumeOverrideService {
         if (StringUtils.isBlank(application)) {
             return List.of();
         }
-        var basename = new File(application).getName();
+        var basename = FilenameUtils.getName(application);
         return StreamEx.of(saveService.get().getFocusVolumeOverrides())
                        .filter(o -> StreamEx.of(o.sources()).nonNull().anyMatch(s -> s.equalsIgnoreCase(basename)))
                        .toList();
