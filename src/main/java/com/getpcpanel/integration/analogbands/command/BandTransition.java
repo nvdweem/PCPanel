@@ -1,4 +1,4 @@
-package com.getpcpanel.analogbands;
+package com.getpcpanel.integration.analogbands.command;
 
 /**
  * Result of feeding one analog reading to a {@link com.getpcpanel.commands.command.CommandAnalogBands}: the

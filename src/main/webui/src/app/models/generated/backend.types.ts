@@ -37,6 +37,12 @@ export interface AnalogOutputSpec {
     min: number;
 }
 
+export interface BandTransition {
+    band: number;
+    changed: boolean;
+    fire: boolean;
+}
+
 export interface ButtonAction {
     overlayText?: string;
 }

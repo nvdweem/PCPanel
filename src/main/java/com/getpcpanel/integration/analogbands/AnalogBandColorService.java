@@ -1,4 +1,4 @@
-package com.getpcpanel.analogbands;
+package com.getpcpanel.integration.analogbands;
 
 import java.util.Map;
 import java.util.Objects;
