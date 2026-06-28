@@ -5,8 +5,8 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.commands.Commands;
-import com.getpcpanel.commands.command.CommandObsMuteSource;
-import com.getpcpanel.commands.command.CommandObsSetSourceVolume;
+import com.getpcpanel.obs.command.CommandObsMuteSource;
+import com.getpcpanel.obs.command.CommandObsSetSourceVolume;
 import com.getpcpanel.obs.OBS;
 
 import jakarta.enterprise.context.ApplicationScoped;

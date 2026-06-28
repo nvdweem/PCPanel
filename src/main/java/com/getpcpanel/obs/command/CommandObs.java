@@ -1,4 +1,6 @@
-package com.getpcpanel.commands.command;
+package com.getpcpanel.obs.command;
+
+import com.getpcpanel.commands.command.Command;
 
 import lombok.Getter;
 

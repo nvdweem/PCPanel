@@ -1,8 +1,9 @@
-package com.getpcpanel.commands.command;
+package com.getpcpanel.obs.command;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.obs.OBS;
+import com.getpcpanel.commands.command.ButtonAction;
 import com.getpcpanel.util.CdiHelper;
 
 import lombok.Getter;

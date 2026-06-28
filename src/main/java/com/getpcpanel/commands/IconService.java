@@ -17,7 +17,7 @@ import org.apache.commons.lang3.SystemUtils;
 
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandBrightness;
-import com.getpcpanel.commands.command.CommandObs;
+import com.getpcpanel.obs.command.CommandObs;
 import com.getpcpanel.voicemeeter.command.CommandVoiceMeeter;
 import com.getpcpanel.commands.command.CommandVolumeDefaultDevice;
 import com.getpcpanel.commands.command.CommandVolumeDefaultDeviceAdvanced;

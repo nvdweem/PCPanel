@@ -179,10 +179,10 @@
       ]
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandObs"
+      "type": "com.getpcpanel.obs.command.CommandObs"
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandObsSetScene",
+      "type": "com.getpcpanel.obs.command.CommandObsSetScene",
       "methods": [
         {
           "name": "<init>",
@@ -197,7 +197,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandObsSetSourceVolume",
+      "type": "com.getpcpanel.obs.command.CommandObsSetSourceVolume",
       "methods": [
         {
           "name": "<init>",
