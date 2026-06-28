@@ -9,7 +9,7 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.getpcpanel.device.DeviceType;
+import com.getpcpanel.device.provider.pcpanel.DeviceType;
 import com.getpcpanel.device.descriptor.DeviceDescriptor;
 import com.getpcpanel.profile.dto.LightingConfig;
 

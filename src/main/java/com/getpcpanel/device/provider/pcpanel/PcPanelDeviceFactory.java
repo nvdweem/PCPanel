@@ -2,7 +2,7 @@ package com.getpcpanel.device.provider.pcpanel;
 
 import com.getpcpanel.commands.IconService;
 import com.getpcpanel.device.Device;
-import com.getpcpanel.device.DeviceType;
+import com.getpcpanel.device.provider.pcpanel.DeviceType;
 import com.getpcpanel.device.descriptor.DeviceDescriptor;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.SaveService;

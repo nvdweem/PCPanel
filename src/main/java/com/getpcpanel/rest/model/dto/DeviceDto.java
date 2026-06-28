@@ -5,7 +5,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 import com.getpcpanel.device.Device;
-import com.getpcpanel.device.DeviceType;
+import com.getpcpanel.device.provider.pcpanel.DeviceType;
 import com.getpcpanel.device.descriptor.DeviceDescriptor;
 import com.getpcpanel.device.descriptor.LightGroupKind;
 import com.getpcpanel.profile.DeviceSave;

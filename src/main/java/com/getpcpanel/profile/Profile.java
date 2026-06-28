@@ -9,7 +9,7 @@ import java.util.function.Supplier;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.getpcpanel.commands.Commands;
-import com.getpcpanel.device.DeviceType;
+import com.getpcpanel.device.provider.pcpanel.DeviceType;
 import com.getpcpanel.profile.dto.KnobSetting;
 import com.getpcpanel.profile.dto.LightingConfig;
 import com.getpcpanel.integration.osc.dto.OSCBinding;

@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.getpcpanel.device.Device;
-import com.getpcpanel.device.DeviceType;
+import com.getpcpanel.device.provider.pcpanel.DeviceType;
 import com.getpcpanel.profile.BaseLayerService;
 import com.getpcpanel.profile.dto.LightingConfig;
 import com.getpcpanel.profile.dto.SingleKnobLightingConfig;

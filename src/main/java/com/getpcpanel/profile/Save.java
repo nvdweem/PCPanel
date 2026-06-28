@@ -8,7 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import com.getpcpanel.device.DeviceType;
+import com.getpcpanel.device.provider.pcpanel.DeviceType;
 import com.getpcpanel.device.descriptor.DeviceDescriptor;
 import com.getpcpanel.integration.homeassistant.dto.HomeAssistantServer;
 import com.getpcpanel.integration.discord.dto.DiscordAuth;

@@ -1,5 +1,7 @@
 package com.getpcpanel.device;
 
+import com.getpcpanel.device.provider.pcpanel.DeviceType;
+
 import com.getpcpanel.commands.IconService;
 import com.getpcpanel.device.descriptor.AnalogInputSpec;
 import com.getpcpanel.device.descriptor.DeviceDescriptor;

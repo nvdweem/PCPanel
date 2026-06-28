@@ -1,5 +1,7 @@
 package com.getpcpanel.device;
 
+import com.getpcpanel.device.provider.pcpanel.DeviceType;
+
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;

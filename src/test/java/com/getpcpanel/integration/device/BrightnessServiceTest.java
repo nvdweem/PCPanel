@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.CommandsType;
 import com.getpcpanel.integration.device.command.CommandBrightness;
-import com.getpcpanel.device.DeviceType;
+import com.getpcpanel.device.provider.pcpanel.DeviceType;
 import com.getpcpanel.profile.Profile;
 
 class BrightnessServiceTest {
