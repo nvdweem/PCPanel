@@ -85,7 +85,7 @@ void SndCtrl::DeviceAdded(CComPtr<IMMDevice> cpDevice) {
         auto nameStr = thread.jstr(nameAndId.name.get());
         auto idStr = thread.jstr(nameAndId.id.get());
         auto dataFlow = getDataFlow(*cpDevice);
-        auto jObj = pJni->CallObject(thread, "deviceAdded", "(Ljava/lang/String;Ljava/lang/String;FZI)Lcom/getpcpanel/cpp/AudioDevice;",
+        auto jObj = pJni->CallObject(thread, "deviceAdded", "(Ljava/lang/String;Ljava/lang/String;FZI)Lcom/getpcpanel/integration/volume/platform/AudioDevice;",
             nameStr, idStr, volume, muted, dataFlow
         );
         NULLRETURN(jObj);

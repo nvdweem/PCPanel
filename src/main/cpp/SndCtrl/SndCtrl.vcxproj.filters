@@ -45,7 +45,7 @@
     <ClInclude Include="FocusListener.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="com_getpcpanel_cpp_windows_SndCtrlNative.h">
+    <ClInclude Include="com_getpcpanel_integration_volume_platform_windows_SndCtrlNative.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="audiopolicyconfigfactory.h">
@@ -59,7 +59,7 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="com_getpcpanel_cpp_windows_SndCtrlNative.cpp">
+    <ClCompile Include="com_getpcpanel_integration_volume_platform_windows_SndCtrlNative.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="sndctrl.cpp">
