@@ -1,14 +1,15 @@
 package com.getpcpanel.rest;
 
+import com.getpcpanel.device.provider.pcpanel.ProVisualColorsService;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.getpcpanel.hid.DeviceHolder;
+import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.rest.model.dto.DeviceSnapshotDto;
 import com.getpcpanel.rest.model.ws.WsDeviceConnectedEvent;
-import com.getpcpanel.util.AppShutdownState;
+import com.getpcpanel.util.app.AppShutdownState;
 
 import io.quarkus.websockets.next.OnClose;
 import io.quarkus.websockets.next.OnOpen;

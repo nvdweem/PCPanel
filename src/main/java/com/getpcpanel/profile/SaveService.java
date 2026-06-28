@@ -11,11 +11,11 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.Json;
-import com.getpcpanel.device.DescriptorFactory;
+import com.getpcpanel.device.provider.pcpanel.DescriptorFactory;
 import com.getpcpanel.device.Device;
-import com.getpcpanel.hid.DeviceHolder;
-import com.getpcpanel.util.Debouncer;
-import com.getpcpanel.util.FileUtil;
+import com.getpcpanel.device.DeviceHolder;
+import com.getpcpanel.util.concurrent.Debouncer;
+import com.getpcpanel.util.io.FileUtil;
 import com.getpcpanel.util.tray.win.WinUser32Ext;
 import com.sun.jna.WString;
 

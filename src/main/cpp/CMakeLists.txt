@@ -60,7 +60,7 @@ set(SNDCTRL_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/SndCtrl)
 add_library(SndCtrl SHARED
     ${SNDCTRL_SRC_DIR}/AudioDevice.cpp
     ${SNDCTRL_SRC_DIR}/AudioSession.cpp
-    ${SNDCTRL_SRC_DIR}/com_getpcpanel_cpp_windows_SndCtrlNative.cpp
+    ${SNDCTRL_SRC_DIR}/com_getpcpanel_integration_volume_platform_windows_SndCtrlNative.cpp
     ${SNDCTRL_SRC_DIR}/dllmain.cpp
     ${SNDCTRL_SRC_DIR}/FocusListener.cpp
     ${SNDCTRL_SRC_DIR}/helpers.cpp

@@ -1,18 +1,19 @@
 package com.getpcpanel.rest;
 
+import com.getpcpanel.device.provider.pcpanel.ProVisualColorsService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.getpcpanel.commands.Commands;
-import com.getpcpanel.hid.DeviceCommunicationHandler.ButtonPressEvent;
-import com.getpcpanel.hid.DeviceCommunicationHandler.KnobRotateEvent;
-import com.getpcpanel.hid.DeviceHolder;
-import com.getpcpanel.hid.DeviceHolder.DeviceFullyConnectedEvent;
-import com.getpcpanel.hid.DeviceScanner.DeviceDisconnectedEvent;
+import com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandler.ButtonPressEvent;
+import com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandler.KnobRotateEvent;
+import com.getpcpanel.device.DeviceHolder;
+import com.getpcpanel.device.DeviceHolder.DeviceFullyConnectedEvent;
+import com.getpcpanel.device.provider.pcpanel.DeviceScanner.DeviceDisconnectedEvent;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.ProfileSwitchedEvent;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.dto.KnobSetting;
 import com.getpcpanel.profile.dto.LightingConfig;
-import com.getpcpanel.rest.ProVisualColorsService.ProVisualColors;
+import com.getpcpanel.device.provider.pcpanel.ProVisualColorsService.ProVisualColors;
 import com.getpcpanel.rest.model.dto.DeviceSnapshotDto;
 import com.getpcpanel.rest.model.dto.ProfileSnapshotDto;
 import com.getpcpanel.rest.model.ws.WsAssignmentChangedEvent;
@@ -26,7 +27,7 @@ import com.getpcpanel.rest.model.ws.WsLightingChangedEvent;
 import com.getpcpanel.rest.model.ws.WsNewVersionAvailableEvent;
 import com.getpcpanel.rest.model.ws.WsProfileSwitchedEvent;
 import com.getpcpanel.rest.model.ws.WsVisualColorsChangedEvent;
-import com.getpcpanel.util.AppShutdownState;
+import com.getpcpanel.util.app.AppShutdownState;
 import com.getpcpanel.util.version.VersionChecker.NewVersionAvailableEvent;
 
 import jakarta.enterprise.context.ApplicationScoped;

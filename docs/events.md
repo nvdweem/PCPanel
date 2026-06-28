@@ -66,6 +66,7 @@ up to date when you add or remove an event or an observer.
 | `VoiceMeeterDirtyEvent` | `Voicemeeter` | `VoiceMeeterMuteService` |
 | `VoiceMeeterMuteEvent` | `VoiceMeeterMuteService` | `VoiceMeeterMuteResolver` (mute-colour) |
 | `WaveLinkChangedEvent` | `WaveLinkService` (Wave Link state incl. mute changed) | `MuteColorService` |
+| `DiscordChangedEvent` | `DiscordService` (Discord voice/mute/deafen state changed) | `MuteColorService` |
 | `MuteOverridesDirtyEvent` | mute-colour resolvers (e.g. `VoiceMeeterMuteResolver` after caching a mute change) | `MuteColorService` |
 | `MqttStatusEvent` | `MqttService` | `MqttDeviceService` |
 

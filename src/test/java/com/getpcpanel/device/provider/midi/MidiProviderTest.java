@@ -20,11 +20,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import com.getpcpanel.device.descriptor.AnalogKind;
-import com.getpcpanel.device.io.MidiTransport;
-import com.getpcpanel.hid.DeviceCommunicationHandler.ButtonPressEvent;
-import com.getpcpanel.hid.DeviceCommunicationHandler.KnobRotateEvent;
-import com.getpcpanel.hid.DeviceScanner.DeviceConnectedEvent;
-import com.getpcpanel.hid.DeviceScanner.DeviceDisconnectedEvent;
+import com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandler.ButtonPressEvent;
+import com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandler.KnobRotateEvent;
+import com.getpcpanel.device.provider.pcpanel.DeviceScanner.DeviceConnectedEvent;
+import com.getpcpanel.device.provider.pcpanel.DeviceScanner.DeviceDisconnectedEvent;
 import com.getpcpanel.profile.Save;
 import com.getpcpanel.profile.SaveService;
 

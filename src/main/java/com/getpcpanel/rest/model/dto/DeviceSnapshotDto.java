@@ -12,7 +12,7 @@ import com.getpcpanel.device.descriptor.LightGroupKind;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.dto.LightingConfig;
-import com.getpcpanel.rest.ProVisualColorsService;
+import com.getpcpanel.device.provider.pcpanel.ProVisualColorsService;
 import com.getpcpanel.rest.model.ws.WsEvent;
 
 import one.util.streamex.StreamEx;

@@ -1,12 +1,14 @@
 package com.getpcpanel.device;
 
+import com.getpcpanel.device.provider.pcpanel.DeviceType;
+
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.commands.IconService;
 import com.getpcpanel.device.descriptor.DeviceDescriptor;
-import com.getpcpanel.hid.OutputInterpreter;
+import com.getpcpanel.device.provider.pcpanel.OutputInterpreter;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.LightingChangedToDefaultEvent;
 import com.getpcpanel.profile.Profile;

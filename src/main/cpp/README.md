@@ -116,7 +116,7 @@ functionally unchanged:
 
 There is no automated runtime test (it needs real audio hardware and a JVM).
 After building, sanity-check the export surface — it must match the committed
-DLL exactly (11 `Java_com_getpcpanel_cpp_windows_SndCtrlNative_*` entry points
+DLL exactly (11 `Java_com_getpcpanel_integration_volume_platform_windows_SndCtrlNative_*` entry points
 plus `JNI_OnLoad` / `JNI_OnUnload`):
 
 ```powershell

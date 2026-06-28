@@ -1,5 +1,17 @@
 package com.getpcpanel.commands.command;
 
+import com.getpcpanel.integration.keyboard.command.CommandKeystroke;
+import com.getpcpanel.integration.keyboard.command.CommandMedia;
+import com.getpcpanel.integration.profile.command.CommandProfile;
+import com.getpcpanel.integration.program.command.CommandEndProgram;
+import com.getpcpanel.integration.program.command.CommandShortcut;
+import com.getpcpanel.integration.volume.command.CommandVolumeDefaultDevice;
+import com.getpcpanel.integration.volume.command.CommandVolumeDefaultDeviceToggle;
+import com.getpcpanel.integration.volume.command.CommandVolumeDevice;
+import com.getpcpanel.integration.volume.command.CommandVolumeDeviceMute;
+import com.getpcpanel.integration.volume.command.CommandVolumeFocus;
+import com.getpcpanel.integration.volume.command.CommandVolumeProcess;
+import com.getpcpanel.integration.volume.command.CommandVolumeProcessMute;
 import static com.getpcpanel.commands.command.CommandNoOp.NOOP;
 
 import java.util.List;
@@ -8,14 +20,21 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
-import com.getpcpanel.commands.command.CommandMedia.VolumeButton;
+import com.getpcpanel.integration.keyboard.command.CommandMedia.VolumeButton;
 import com.getpcpanel.commands.command.DialAction.DialCommandParams;
-import com.getpcpanel.cpp.MuteType;
-import com.getpcpanel.voicemeeter.Voicemeeter.ButtonControlMode;
-import com.getpcpanel.voicemeeter.Voicemeeter.ButtonType;
-import com.getpcpanel.voicemeeter.Voicemeeter.ControlType;
-import com.getpcpanel.voicemeeter.Voicemeeter.DialControlMode;
-import com.getpcpanel.voicemeeter.Voicemeeter.DialType;
+import com.getpcpanel.integration.volume.platform.MuteType;
+import com.getpcpanel.integration.obs.command.CommandObsMuteSource;
+import com.getpcpanel.integration.obs.command.CommandObsSetScene;
+import com.getpcpanel.integration.obs.command.CommandObsSetSourceVolume;
+import com.getpcpanel.integration.voicemeeter.Voicemeeter.ButtonControlMode;
+import com.getpcpanel.integration.voicemeeter.Voicemeeter.ButtonType;
+import com.getpcpanel.integration.voicemeeter.Voicemeeter.ControlType;
+import com.getpcpanel.integration.voicemeeter.Voicemeeter.DialControlMode;
+import com.getpcpanel.integration.voicemeeter.Voicemeeter.DialType;
+import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterAdvanced;
+import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterAdvancedButton;
+import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterBasic;
+import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterBasicButton;
 
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;

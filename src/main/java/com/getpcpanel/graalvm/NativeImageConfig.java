@@ -12,64 +12,68 @@ import org.hid4java.jna.WideStringBuffer;
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.CommandsType;
 import com.getpcpanel.commands.DeviceSet;
-import com.getpcpanel.commands.command.AnalogBand;
+import com.getpcpanel.integration.analogbands.command.AnalogBand;
 import com.getpcpanel.commands.command.Command;
-import com.getpcpanel.commands.command.CommandAnalogBands;
-import com.getpcpanel.commands.command.CommandBrightness;
-import com.getpcpanel.commands.command.CommandEndProgram;
-import com.getpcpanel.commands.command.CommandHttpRequest;
-import com.getpcpanel.commands.command.CommandKeystroke;
-import com.getpcpanel.commands.command.CommandMedia;
-import com.getpcpanel.commands.command.CommandMedia.VolumeButton;
-import com.getpcpanel.commands.command.CommandMqttPublish;
+import com.getpcpanel.integration.analogbands.command.CommandAnalogBands;
+import com.getpcpanel.integration.device.command.CommandBrightness;
+import com.getpcpanel.integration.program.command.CommandEndProgram;
+import com.getpcpanel.integration.output.command.CommandHttpRequest;
+import com.getpcpanel.integration.keyboard.command.CommandKeystroke;
+import com.getpcpanel.integration.keyboard.command.CommandMedia;
+import com.getpcpanel.integration.keyboard.command.CommandMedia.VolumeButton;
+import com.getpcpanel.integration.mqtt.MqttDeviceService;
+import com.getpcpanel.integration.mqtt.MqttHomeAssistantHelper;
+import com.getpcpanel.integration.volume.platform.osx.CoreAudioLib;
+import com.getpcpanel.integration.mqtt.command.CommandMqttPublish;
 import com.getpcpanel.commands.command.CommandNoOp;
-import com.getpcpanel.commands.command.CommandObs;
-import com.getpcpanel.commands.command.CommandObsAction;
-import com.getpcpanel.commands.command.CommandObsAction.ObsActionType;
-import com.getpcpanel.commands.command.CommandObsMuteSource;
-import com.getpcpanel.commands.command.CommandObsSetScene;
-import com.getpcpanel.commands.command.CommandObsSetSourceVolume;
-import com.getpcpanel.commands.command.CommandOscSend;
-import com.getpcpanel.commands.command.CommandProfile;
-import com.getpcpanel.commands.command.CommandRun;
-import com.getpcpanel.commands.command.CommandShortcut;
+import com.getpcpanel.integration.obs.command.CommandObs;
+import com.getpcpanel.integration.obs.command.CommandObsAction;
+import com.getpcpanel.integration.obs.command.CommandObsAction.ObsActionType;
+import com.getpcpanel.integration.obs.command.CommandObsMuteSource;
+import com.getpcpanel.integration.obs.command.CommandObsSetScene;
+import com.getpcpanel.integration.obs.command.CommandObsSetSourceVolume;
+import com.getpcpanel.integration.osc.command.CommandOscSend;
+import com.getpcpanel.integration.profile.command.CommandProfile;
+import com.getpcpanel.integration.program.command.CommandRun;
+import com.getpcpanel.integration.program.command.CommandShortcut;
 import com.getpcpanel.commands.command.CommandValueOutput;
-import com.getpcpanel.commands.command.CommandVoiceMeeter;
-import com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced;
-import com.getpcpanel.commands.command.CommandVoiceMeeterAdvancedButton;
-import com.getpcpanel.commands.command.CommandVoiceMeeterBasic;
-import com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton;
-import com.getpcpanel.commands.command.CommandVolume;
-import com.getpcpanel.commands.command.CommandVolumeApplicationDeviceToggle;
-import com.getpcpanel.commands.command.CommandVolumeDefaultDevice;
-import com.getpcpanel.commands.command.CommandVolumeDefaultDeviceAdvanced;
-import com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggle;
-import com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggleAdvanced;
-import com.getpcpanel.commands.command.CommandVolumeDevice;
-import com.getpcpanel.commands.command.CommandVolumeDeviceMute;
-import com.getpcpanel.commands.command.CommandVolumeFocus;
-import com.getpcpanel.commands.command.CommandVolumeFocusMute;
-import com.getpcpanel.commands.command.CommandVolumeProcess;
-import com.getpcpanel.commands.command.CommandVolumeProcessMute;
+import com.getpcpanel.util.version.Version;
+import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeter;
+import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterAdvanced;
+import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterAdvancedButton;
+import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterBasic;
+import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterBasicButton;
+import com.getpcpanel.integration.volume.command.CommandVolume;
+import com.getpcpanel.integration.volume.command.CommandVolumeApplicationDeviceToggle;
+import com.getpcpanel.integration.volume.command.CommandVolumeDefaultDevice;
+import com.getpcpanel.integration.volume.command.CommandVolumeDefaultDeviceAdvanced;
+import com.getpcpanel.integration.volume.command.CommandVolumeDefaultDeviceToggle;
+import com.getpcpanel.integration.volume.command.CommandVolumeDefaultDeviceToggleAdvanced;
+import com.getpcpanel.integration.volume.command.CommandVolumeDevice;
+import com.getpcpanel.integration.volume.command.CommandVolumeDeviceMute;
+import com.getpcpanel.integration.volume.command.CommandVolumeFocus;
+import com.getpcpanel.integration.volume.command.CommandVolumeFocusMute;
+import com.getpcpanel.integration.volume.command.CommandVolumeProcess;
+import com.getpcpanel.integration.volume.command.CommandVolumeProcessMute;
 import com.getpcpanel.commands.command.DialAction.DialCommandParams;
-import com.getpcpanel.discord.command.CommandDiscord;
-import com.getpcpanel.discord.command.CommandDiscordJoinVoice;
-import com.getpcpanel.discord.command.CommandDiscordLeaveVoice;
-import com.getpcpanel.discord.command.CommandDiscordMute;
-import com.getpcpanel.discord.command.CommandDiscordScreenShare;
-import com.getpcpanel.discord.command.CommandDiscordToggleVideo;
-import com.getpcpanel.discord.command.CommandDiscordVolume;
-import com.getpcpanel.discord.command.CommandDiscordSelfDeafen;
-import com.getpcpanel.discord.command.CommandDiscordSelfInputVolume;
-import com.getpcpanel.discord.command.CommandDiscordSelfMute;
-import com.getpcpanel.discord.command.CommandDiscordSelfOutputVolume;
-import com.getpcpanel.discord.command.CommandDiscordUserMute;
-import com.getpcpanel.discord.command.CommandDiscordUserVolume;
-import com.getpcpanel.homeassistant.command.CommandHomeAssistant;
-import com.getpcpanel.homeassistant.command.CommandHomeAssistantAction;
-import com.getpcpanel.homeassistant.command.CommandHomeAssistantValue;
-import com.getpcpanel.homeassistant.dto.HomeAssistantServer;
-import com.getpcpanel.homeassistant.dto.HomeAssistantServerStatus;
+import com.getpcpanel.integration.discord.command.CommandDiscord;
+import com.getpcpanel.integration.discord.command.CommandDiscordJoinVoice;
+import com.getpcpanel.integration.discord.command.CommandDiscordLeaveVoice;
+import com.getpcpanel.integration.discord.command.CommandDiscordMute;
+import com.getpcpanel.integration.discord.command.CommandDiscordScreenShare;
+import com.getpcpanel.integration.discord.command.CommandDiscordToggleVideo;
+import com.getpcpanel.integration.discord.command.CommandDiscordVolume;
+import com.getpcpanel.integration.discord.command.CommandDiscordSelfDeafen;
+import com.getpcpanel.integration.discord.command.CommandDiscordSelfInputVolume;
+import com.getpcpanel.integration.discord.command.CommandDiscordSelfMute;
+import com.getpcpanel.integration.discord.command.CommandDiscordSelfOutputVolume;
+import com.getpcpanel.integration.discord.command.CommandDiscordUserMute;
+import com.getpcpanel.integration.discord.command.CommandDiscordUserVolume;
+import com.getpcpanel.integration.homeassistant.command.CommandHomeAssistant;
+import com.getpcpanel.integration.homeassistant.command.CommandHomeAssistantAction;
+import com.getpcpanel.integration.homeassistant.command.CommandHomeAssistantValue;
+import com.getpcpanel.integration.homeassistant.dto.HomeAssistantServer;
+import com.getpcpanel.integration.homeassistant.dto.HomeAssistantServerStatus;
 import com.getpcpanel.device.descriptor.AnalogInputSpec;
 import com.getpcpanel.device.descriptor.AnalogKind;
 import com.getpcpanel.device.descriptor.AnalogOutputSpec;
@@ -83,19 +87,19 @@ import com.getpcpanel.device.descriptor.LightOutputSpec;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.Save;
-import com.getpcpanel.profile.dto.DiscordAuth;
-import com.getpcpanel.profile.dto.DiscordSeenUser;
-import com.getpcpanel.profile.dto.DiscordSettings;
-import com.getpcpanel.profile.dto.FocusVolumeOverride;
-import com.getpcpanel.profile.dto.FocusVolumeTarget;
+import com.getpcpanel.integration.discord.dto.DiscordAuth;
+import com.getpcpanel.integration.discord.dto.DiscordSeenUser;
+import com.getpcpanel.integration.discord.dto.DiscordSettings;
+import com.getpcpanel.integration.volume.FocusVolumeOverride;
+import com.getpcpanel.integration.volume.FocusVolumeTarget;
 import com.getpcpanel.profile.dto.KnobSetting;
 import com.getpcpanel.profile.dto.LightingConfig;
 import com.getpcpanel.profile.dto.LightingConfig.LightingMode;
-import com.getpcpanel.profile.dto.MqttSettings;
-import com.getpcpanel.profile.dto.MqttSettings.HomeAssistantSettings;
-import com.getpcpanel.profile.dto.OSCBinding;
-import com.getpcpanel.profile.dto.OSCConnectionInfo;
-import com.getpcpanel.profile.dto.OverlayPosition;
+import com.getpcpanel.integration.mqtt.dto.MqttSettings;
+import com.getpcpanel.integration.mqtt.dto.MqttSettings.HomeAssistantSettings;
+import com.getpcpanel.integration.osc.dto.OSCBinding;
+import com.getpcpanel.integration.osc.dto.OSCConnectionInfo;
+import com.getpcpanel.integration.volume.overlay.OverlayPosition;
 import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
 import com.getpcpanel.profile.dto.SingleKnobLightingConfig.SINGLE_KNOB_MODE;
 import com.getpcpanel.profile.dto.SingleLogoLightingConfig;
@@ -104,19 +108,19 @@ import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig;
 import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig.SINGLE_SLIDER_LABEL_MODE;
 import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
 import com.getpcpanel.profile.dto.SingleSliderLightingConfig.SINGLE_SLIDER_MODE;
-import com.getpcpanel.profile.dto.WaveLinkSettings;
+import com.getpcpanel.integration.wavelink.dto.WaveLinkSettings;
 import com.getpcpanel.rest.model.dto.AddDeejDeviceDto;
 import com.getpcpanel.rest.model.dto.MidiDeviceDto;
 import com.getpcpanel.rest.model.dto.OnboardingDto;
 import com.getpcpanel.rest.model.dto.SerialPortDto;
-import com.getpcpanel.wavelink.command.CommandWaveLink;
-import com.getpcpanel.wavelink.command.CommandWaveLinkAddFocusToChannel;
-import com.getpcpanel.wavelink.command.CommandWaveLinkChange;
-import com.getpcpanel.wavelink.command.CommandWaveLinkChangeLevel;
-import com.getpcpanel.wavelink.command.CommandWaveLinkChangeMute;
-import com.getpcpanel.wavelink.command.CommandWaveLinkChannelEffect;
-import com.getpcpanel.wavelink.command.CommandWaveLinkMainOutput;
-import com.getpcpanel.wavelink.command.WaveLinkCommandTarget;
+import com.getpcpanel.integration.wavelink.command.CommandWaveLink;
+import com.getpcpanel.integration.wavelink.command.CommandWaveLinkAddFocusToChannel;
+import com.getpcpanel.integration.wavelink.command.CommandWaveLinkChange;
+import com.getpcpanel.integration.wavelink.command.CommandWaveLinkChangeLevel;
+import com.getpcpanel.integration.wavelink.command.CommandWaveLinkChangeMute;
+import com.getpcpanel.integration.wavelink.command.CommandWaveLinkChannelEffect;
+import com.getpcpanel.integration.wavelink.command.CommandWaveLinkMainOutput;
+import com.getpcpanel.integration.wavelink.command.WaveLinkCommandTarget;
 
 import dev.niels.wavelink.impl.model.WaveLinkApp;
 import dev.niels.wavelink.impl.model.WaveLinkChannel;
@@ -177,8 +181,25 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         LibusbHidApiLibrary.class,
         WideStringBuffer.class,
 
-        // MQTT Home Assistant discovery payload classes (serialised to JSON by Jackson)
-        // Note: these records are package-private so referenced by classNames below
+        // MQTT button-click event + Home Assistant discovery payloads (Jackson-serialised). Public so
+        // they are referenced here by .class — compiler-checked — instead of fragile String class names.
+        MqttDeviceService.MqttEvent.class,
+        MqttHomeAssistantHelper.HomeAssistantAvailability.class,
+        MqttHomeAssistantHelper.HomeAssistantButtonConfig.class,
+        MqttHomeAssistantHelper.HomeAssistantButtonEventConfig.class,
+        MqttHomeAssistantHelper.HomeAssistantDevice.class,
+        MqttHomeAssistantHelper.HomeAssistantLightConfig.class,
+        MqttHomeAssistantHelper.HomeAssistantNumberConfig.class,
+
+        // GitHub release version model – deserialised by a plain ObjectMapper in VersionChecker
+        // (records need their canonical creator registered).
+        Version.class,
+        Version.SemVer.class,
+
+        // Project CoreAudio JNA binding: the property-address Structure (instantiated per call) and the
+        // change-listener Callback (used for default-device/volume notifications).
+        CoreAudioLib.AudioObjectPropertyAddress.class,
+        CoreAudioLib.AudioObjectPropertyListenerProc.class,
 
         // Command type hierarchy
         Command.class,
@@ -386,23 +407,6 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         "org.eclipse.paho.mqttv5.client.websocket.WebSocketNetworkModuleFactory",
         "org.eclipse.paho.mqttv5.client.websocket.WebSocketSecureNetworkModuleFactory",
 
-        // GitHub release version model – deserialised by a plain ObjectMapper in VersionChecker,
-        // so Quarkus does not auto-detect it for reflection (records need their canonical creator).
-        "com.getpcpanel.util.version.Version",
-        "com.getpcpanel.util.version.Version$SemVer",
-
-        // MQTT button-click event payload (package-private record); Jackson reads its accessor
-        // reflectively to serialise it on each button press while MQTT is connected.
-        "com.getpcpanel.mqtt.MqttDeviceService$MqttEvent",
-
-        // MQTT Home Assistant discovery records (package-private inner classes – referenced by name)
-        "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantAvailability",
-        "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantButtonConfig",
-        "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantButtonEventConfig",
-        "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantDevice",
-        "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantLightConfig",
-        "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantNumberConfig",
-
         // macOS CoreAudio path (GET /api/audio/*, default-device switching). JNA reflectively
         // instantiates these Structures (no-arg constructor + field access). The CoreFoundation class
         // initializer itself builds a CFTypeID, so the whole jna-platform CoreFoundation inner-class
@@ -425,11 +429,6 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         "com.sun.jna.platform.mac.CoreFoundation$CFStringRef$ByReference",
         "com.sun.jna.platform.mac.CoreFoundation$CFTypeID",
         "com.sun.jna.platform.mac.CoreFoundation$CFTypeRef",
-        // Project CoreAudio JNA binding: the property-address Structure (instantiated per call) and the
-        // change-listener Callback (used for default-device/volume notifications).
-        "com.getpcpanel.cpp.osx.CoreAudioLib$AudioObjectPropertyAddress",
-        "com.getpcpanel.cpp.osx.CoreAudioLib$AudioObjectPropertyListenerProc",
-
         // JNA by-reference pointer types that appear in project Library method signatures. JNA
         // reflectively instantiates these via their public no-arg constructor when marshalling the
         // call, so each must be registered or the call throws IllegalArgumentException /

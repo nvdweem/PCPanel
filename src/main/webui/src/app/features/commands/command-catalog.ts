@@ -1,4 +1,5 @@
 import { IconName } from '../../ui';
+import { GENERATED_COMMANDS } from './command-registry.generated';
 
 /**
  * Data-driven catalog of every assignable command. One generic editor renders a
@@ -56,10 +57,11 @@ const MUTE_OPTS = [
 ];
 const dialParams = () => ({ invert: false, moveStart: 0, moveEnd: 0 });
 
-export const COMMANDS: CommandDef[] = [
+interface FieldDef_ { type: string; buildEmpty: () => Record<string, any>; fields: FieldDef[]; }
+const FIELD_DEFS: FieldDef_[] = [
   // ── AUDIO ────────────────────────────────────────────────────────────────
   {
-    type: P + 'CommandVolumeProcess', label: 'App volume', category: 'audio', kinds: ['dial'], icon: 'volume',
+    type: P + 'CommandVolumeProcess',
     buildEmpty: () => ({ _type: P + 'CommandVolumeProcess', device: '', processName: [], unMuteOnVolumeChange: false, dialParams: dialParams(), invert: false }),
     fields: [
       { kind: 'apps', key: 'processName', label: 'Applications' },
@@ -67,7 +69,7 @@ export const COMMANDS: CommandDef[] = [
     ],
   },
   {
-    type: P + 'CommandVolumeProcessMute', label: 'App mute', category: 'audio', kinds: ['button'], icon: 'volume-x',
+    type: P + 'CommandVolumeProcessMute',
     buildEmpty: () => ({ _type: P + 'CommandVolumeProcessMute', muteType: 'toggle', processName: [], overlayText: '' }),
     fields: [
       { kind: 'apps', key: 'processName', label: 'Applications' },
@@ -75,17 +77,17 @@ export const COMMANDS: CommandDef[] = [
     ],
   },
   {
-    type: P + 'CommandVolumeFocus', label: 'Focused-app volume', category: 'audio', kinds: ['dial'], icon: 'volume',
+    type: P + 'CommandVolumeFocus',
     buildEmpty: () => ({ _type: P + 'CommandVolumeFocus', dialParams: dialParams(), invert: false }),
     fields: [],
   },
   {
-    type: P + 'CommandVolumeFocusMute', label: 'Focused-app mute', category: 'audio', kinds: ['button'], icon: 'volume-x',
+    type: P + 'CommandVolumeFocusMute',
     buildEmpty: () => ({ _type: P + 'CommandVolumeFocusMute', muteType: 'toggle', overlayText: '' }),
     fields: [{ kind: 'mute', key: 'muteType', label: 'Action' }],
   },
   {
-    type: P + 'CommandVolumeDevice', label: 'Device volume', category: 'audio', kinds: ['dial'], icon: 'volume',
+    type: P + 'CommandVolumeDevice',
     buildEmpty: () => ({ _type: P + 'CommandVolumeDevice', deviceId: '', unMuteOnVolumeChange: false, dialParams: dialParams(), invert: false }),
     fields: [
       { kind: 'device', key: 'deviceId', label: 'Audio device', filter: 'all', defaultLabel: 'Default device' },
@@ -93,7 +95,7 @@ export const COMMANDS: CommandDef[] = [
     ],
   },
   {
-    type: P + 'CommandVolumeDeviceMute', label: 'Device mute', category: 'audio', kinds: ['button'], icon: 'volume-x',
+    type: P + 'CommandVolumeDeviceMute',
     buildEmpty: () => ({ _type: P + 'CommandVolumeDeviceMute', deviceId: '', muteType: 'toggle', overlayText: '' }),
     fields: [
       { kind: 'device', key: 'deviceId', label: 'Audio device', filter: 'all', defaultLabel: 'Default device' },
@@ -101,17 +103,17 @@ export const COMMANDS: CommandDef[] = [
     ],
   },
   {
-    type: P + 'CommandVolumeDefaultDevice', label: 'Set default device', category: 'audio', kinds: ['button'], icon: 'monitor',
+    type: P + 'CommandVolumeDefaultDevice',
     buildEmpty: () => ({ _type: P + 'CommandVolumeDefaultDevice', deviceId: '', overlayText: '' }),
     fields: [{ kind: 'device', key: 'deviceId', label: 'Default device', filter: 'all' }],
   },
   {
-    type: P + 'CommandVolumeDefaultDeviceToggle', label: 'Cycle default device', category: 'audio', kinds: ['button'], icon: 'refresh',
+    type: P + 'CommandVolumeDefaultDeviceToggle',
     buildEmpty: () => ({ _type: P + 'CommandVolumeDefaultDeviceToggle', currentIdx: 0, devices: [], overlayText: '' }),
     fields: [{ kind: 'devices-list', key: 'devices', label: 'Devices to cycle' }],
   },
   {
-    type: P + 'CommandVolumeDefaultDeviceAdvanced', label: 'Advanced default device', category: 'audio', kinds: ['button'], icon: 'monitor',
+    type: P + 'CommandVolumeDefaultDeviceAdvanced',
     buildEmpty: () => ({ _type: P + 'CommandVolumeDefaultDeviceAdvanced', communicationPb: '', communicationRec: '', mediaPb: '', mediaRec: '', name: '', overlayText: '' }),
     fields: [
       { kind: 'device', key: 'mediaPb', label: 'Media — playback', filter: 'output' },
@@ -123,32 +125,32 @@ export const COMMANDS: CommandDef[] = [
 
   // ── DEVICE & SYSTEM ────────────────────────────────────────────────────────
   {
-    type: P + 'CommandBrightness', label: 'Brightness', category: 'system', kinds: ['dial'], icon: 'sun',
+    type: P + 'CommandBrightness',
     buildEmpty: () => ({ _type: P + 'CommandBrightness', dialParams: dialParams(), invert: false }),
     fields: [],
   },
   {
-    type: P + 'CommandProfile', label: 'Switch profile', category: 'system', kinds: ['button'], icon: 'refresh',
+    type: P + 'CommandProfile',
     buildEmpty: () => ({ _type: P + 'CommandProfile', profile: '' }),
     fields: [{ kind: 'select-live', key: 'profile', label: 'Profile', source: 'profiles' }],
   },
   {
-    type: P + 'CommandAnalogBands', label: 'Stepped switch (ranges)', category: 'system', kinds: ['dial'], icon: 'sliders',
+    type: P + 'CommandAnalogBands',
     buildEmpty: () => ({ _type: P + 'CommandAnalogBands', bands: [] }),
     fields: [{ kind: 'analog-bands' }],
   },
   {
-    type: P + 'CommandRun', label: 'Run command', category: 'system', kinds: ['button'], icon: 'zap',
+    type: P + 'CommandRun',
     buildEmpty: () => ({ _type: P + 'CommandRun', command: '', overlayText: '' }),
     fields: [{ kind: 'text', key: 'command', label: 'Command / program', placeholder: 'e.g. notepad.exe', mono: true }],
   },
   {
-    type: P + 'CommandShortcut', label: 'Run shortcut', category: 'system', kinds: ['button'], icon: 'zap',
+    type: P + 'CommandShortcut',
     buildEmpty: () => ({ _type: P + 'CommandShortcut', shortcut: '', overlayText: '' }),
     fields: [{ kind: 'text', key: 'shortcut', label: 'Shortcut path', placeholder: '…/app.lnk', mono: true }],
   },
   {
-    type: P + 'CommandEndProgram', label: 'End program', category: 'system', kinds: ['button'], icon: 'x',
+    type: P + 'CommandEndProgram',
     buildEmpty: () => ({ _type: P + 'CommandEndProgram', name: '', specific: false, overlayText: '' }),
     fields: [
       { kind: 'text', key: 'name', label: 'Process name', placeholder: 'leave blank for focused app' },
@@ -156,12 +158,12 @@ export const COMMANDS: CommandDef[] = [
     ],
   },
   {
-    type: P + 'CommandKeystroke', label: 'Keystroke', category: 'system', kinds: ['button'], icon: 'keyboard',
+    type: P + 'CommandKeystroke',
     buildEmpty: () => ({ _type: P + 'CommandKeystroke', type: 'KEY', keystroke: '', text: '', overlayText: '' }),
     fields: [{ kind: 'keystroke' }],
   },
   {
-    type: P + 'CommandMedia', label: 'Media', category: 'system', kinds: ['button'], icon: 'play',
+    type: P + 'CommandMedia',
     buildEmpty: () => ({ _type: P + 'CommandMedia', button: 'playPause', spotify: false, overlayText: '' }),
     fields: [
       {
@@ -176,7 +178,7 @@ export const COMMANDS: CommandDef[] = [
   // Generic outputs: send to anything over HTTP/MQTT/OSC. On a dial the position maps (min/max or
   // formula) to the number replacing {{ value }}; on a button the value resolves at full scale.
   {
-    type: P + 'CommandHttpRequest', label: 'HTTP request', category: 'system', kinds: ['dial', 'button'], icon: 'zap',
+    type: P + 'CommandHttpRequest',
     buildEmpty: () => ({ _type: P + 'CommandHttpRequest', url: '', method: 'GET', headers: '', body: '', min: 0, max: 100, formula: '', dialParams: dialParams(), invert: false }),
     fields: [
       { kind: 'text', key: 'url', label: 'URL', placeholder: 'https://host/path?v={{ value }}', mono: true },
@@ -194,7 +196,7 @@ export const COMMANDS: CommandDef[] = [
     ],
   },
   {
-    type: P + 'CommandMqttPublish', label: 'MQTT publish', category: 'system', kinds: ['dial', 'button'], icon: 'zap',
+    type: P + 'CommandMqttPublish',
     buildEmpty: () => ({ _type: P + 'CommandMqttPublish', topic: '', payload: '', min: 0, max: 100, formula: '', dialParams: dialParams(), invert: false }),
     fields: [
       { kind: 'text', key: 'topic', label: 'Topic', placeholder: 'home/livingroom/light', mono: true },
@@ -205,7 +207,7 @@ export const COMMANDS: CommandDef[] = [
     ],
   },
   {
-    type: P + 'CommandOscSend', label: 'OSC send', category: 'system', kinds: ['dial', 'button'], icon: 'sliders',
+    type: P + 'CommandOscSend',
     buildEmpty: () => ({ _type: P + 'CommandOscSend', address: '', min: 0, max: 100, formula: '', dialParams: dialParams(), invert: false }),
     fields: [
       { kind: 'text', key: 'address', label: 'OSC address', placeholder: '/track/1/volume', mono: true },
@@ -217,17 +219,17 @@ export const COMMANDS: CommandDef[] = [
 
   // ── INTEGRATIONS ───────────────────────────────────────────────────────────
   {
-    type: P + 'CommandObsSetSourceVolume', label: 'OBS — source volume', category: 'integration', integration: 'obs', kinds: ['dial'], icon: 'sliders',
+    type: P + 'CommandObsSetSourceVolume',
     buildEmpty: () => ({ _type: P + 'CommandObsSetSourceVolume', sourceName: '', dialParams: dialParams(), invert: false }),
     fields: [{ kind: 'select-live', key: 'sourceName', label: 'Source', source: 'obs-sources' }],
   },
   {
-    type: P + 'CommandObsSetScene', label: 'OBS — switch scene', category: 'integration', integration: 'obs', kinds: ['button'], icon: 'film',
+    type: P + 'CommandObsSetScene',
     buildEmpty: () => ({ _type: P + 'CommandObsSetScene', scene: '', overlayText: '' }),
     fields: [{ kind: 'select-live', key: 'scene', label: 'Scene', source: 'obs-scenes' }],
   },
   {
-    type: P + 'CommandObsMuteSource', label: 'OBS — mute source', category: 'integration', integration: 'obs', kinds: ['button'], icon: 'mic-off',
+    type: P + 'CommandObsMuteSource',
     buildEmpty: () => ({ _type: P + 'CommandObsMuteSource', source: '', type: 'toggle', overlayText: '' }),
     fields: [
       { kind: 'select-live', key: 'source', label: 'Source', source: 'obs-sources' },
@@ -235,7 +237,7 @@ export const COMMANDS: CommandDef[] = [
     ],
   },
   {
-    type: P + 'CommandObsAction', label: 'OBS — stream / record', category: 'integration', integration: 'obs', kinds: ['button'], icon: 'film',
+    type: P + 'CommandObsAction',
     buildEmpty: () => ({ _type: P + 'CommandObsAction', action: 'TOGGLE_STREAM', overlayText: '' }),
     fields: [
       {
@@ -250,7 +252,7 @@ export const COMMANDS: CommandDef[] = [
     ],
   },
   {
-    type: P + 'CommandVoiceMeeterAdvanced', label: 'Voicemeeter — parameter', category: 'integration', integration: 'voicemeeter', kinds: ['dial'], icon: 'sliders',
+    type: P + 'CommandVoiceMeeterAdvanced',
     buildEmpty: () => ({ _type: P + 'CommandVoiceMeeterAdvanced', ct: 'NEG_12_TO_12', fullParam: '', dialParams: dialParams(), invert: false }),
     fields: [
       { kind: 'select-live', key: 'fullParam', label: 'Parameter', source: 'vm-advanced' },
@@ -264,7 +266,7 @@ export const COMMANDS: CommandDef[] = [
     ],
   },
   {
-    type: P + 'CommandVoiceMeeterAdvancedButton', label: 'Voicemeeter — button', category: 'integration', integration: 'voicemeeter', kinds: ['button'], icon: 'sliders',
+    type: P + 'CommandVoiceMeeterAdvancedButton',
     buildEmpty: () => ({ _type: P + 'CommandVoiceMeeterAdvancedButton', bt: 'TOGGLE', fullParam: '', stringValue: '', overlayText: '' }),
     fields: [
       { kind: 'select-live', key: 'fullParam', label: 'Parameter', source: 'vm-advanced' },
@@ -277,7 +279,7 @@ export const COMMANDS: CommandDef[] = [
     ],
   },
   {
-    type: WL + 'CommandWaveLinkChangeLevel', label: 'Wave Link — level', category: 'integration', integration: 'wavelink', kinds: ['dial'], icon: 'sliders',
+    type: WL + 'CommandWaveLinkChangeLevel',
     buildEmpty: () => ({ _type: WL + 'CommandWaveLinkChangeLevel', commandType: 'Channel', id1: '', id2: '', dialParams: dialParams(), invert: false }),
     fields: [
       {
@@ -290,7 +292,7 @@ export const COMMANDS: CommandDef[] = [
     ],
   },
   {
-    type: WL + 'CommandWaveLinkChangeMute', label: 'Wave Link — mute', category: 'integration', integration: 'wavelink', kinds: ['button'], icon: 'mic-off',
+    type: WL + 'CommandWaveLinkChangeMute',
     buildEmpty: () => ({ _type: WL + 'CommandWaveLinkChangeMute', commandType: 'Channel', id1: '', id2: '', muteType: 'toggle', overlayText: '' }),
     fields: [
       {
@@ -304,17 +306,17 @@ export const COMMANDS: CommandDef[] = [
     ],
   },
   {
-    type: WL + 'CommandWaveLinkMainOutput', label: 'Wave Link — main output', category: 'integration', integration: 'wavelink', kinds: ['button'], icon: 'volume',
+    type: WL + 'CommandWaveLinkMainOutput',
     buildEmpty: () => ({ _type: WL + 'CommandWaveLinkMainOutput', id: '', name: '', overlayText: '' }),
     fields: [{ kind: 'select-live', key: 'id', label: 'Output', source: 'wl-outputs' }],
   },
   {
-    type: WL + 'CommandWaveLinkAddFocusToChannel', label: 'Wave Link — add focused app', category: 'integration', integration: 'wavelink', kinds: ['button'], icon: 'plus',
+    type: WL + 'CommandWaveLinkAddFocusToChannel',
     buildEmpty: () => ({ _type: WL + 'CommandWaveLinkAddFocusToChannel', id: '', name: '', overlayText: '' }),
     fields: [{ kind: 'select-live', key: 'id', label: 'Channel', source: 'wl-channels' }],
   },
   {
-    type: DC + 'CommandDiscordMute', label: 'Discord — mute', category: 'integration', integration: 'discord', kinds: ['button'], icon: 'mic-off',
+    type: DC + 'CommandDiscordMute',
     buildEmpty: () => ({ _type: DC + 'CommandDiscordMute', target: 'self', muteType: 'toggle', overlayText: '' }),
     fields: [
       { kind: 'select-live', key: 'target', label: 'Target', source: 'discord-mute-targets', searchable: true },
@@ -322,12 +324,12 @@ export const COMMANDS: CommandDef[] = [
     ],
   },
   {
-    type: DC + 'CommandDiscordSelfDeafen', label: 'Discord — deafen self', category: 'integration', integration: 'discord', kinds: ['button'], icon: 'volume-x',
+    type: DC + 'CommandDiscordSelfDeafen',
     buildEmpty: () => ({ _type: DC + 'CommandDiscordSelfDeafen', muteType: 'toggle', overlayText: '' }),
     fields: [{ kind: 'mute', key: 'muteType', label: 'Action' }],
   },
   {
-    type: DC + 'CommandDiscordVolume', label: 'Discord — volume', category: 'integration', integration: 'discord', kinds: ['dial'], icon: 'volume',
+    type: DC + 'CommandDiscordVolume',
     buildEmpty: () => ({ _type: DC + 'CommandDiscordVolume', target: 'mic', clearMuteOnChange: false, dialParams: dialParams(), invert: false }),
     fields: [
       { kind: 'select-live', key: 'target', label: 'Target', source: 'discord-volume-targets', searchable: true },
@@ -335,7 +337,7 @@ export const COMMANDS: CommandDef[] = [
     ],
   },
   {
-    type: DC + 'CommandDiscordScreenShare', label: 'Discord — screen share', category: 'integration', integration: 'discord', kinds: ['button'], icon: 'monitor',
+    type: DC + 'CommandDiscordScreenShare',
     buildEmpty: () => ({ _type: DC + 'CommandDiscordScreenShare', mode: 'SCREEN', processName: [], overlayText: '' }),
     fields: [
       {
@@ -347,22 +349,22 @@ export const COMMANDS: CommandDef[] = [
     ],
   },
   {
-    type: DC + 'CommandDiscordToggleVideo', label: 'Discord — toggle camera', category: 'integration', integration: 'discord', kinds: ['button'], icon: 'film',
+    type: DC + 'CommandDiscordToggleVideo',
     buildEmpty: () => ({ _type: DC + 'CommandDiscordToggleVideo', overlayText: '' }),
     fields: [],
   },
   {
-    type: DC + 'CommandDiscordJoinVoice', label: 'Discord — join voice', category: 'integration', integration: 'discord', kinds: ['button'], icon: 'plug',
+    type: DC + 'CommandDiscordJoinVoice',
     buildEmpty: () => ({ _type: DC + 'CommandDiscordJoinVoice', channelId: '', channelName: '', overlayText: '' }),
     fields: [{ kind: 'select-live', key: 'channelId', label: 'Voice channel', source: 'discord-channels' }],
   },
   {
-    type: DC + 'CommandDiscordLeaveVoice', label: 'Discord — leave voice', category: 'integration', integration: 'discord', kinds: ['button'], icon: 'log-out',
+    type: DC + 'CommandDiscordLeaveVoice',
     buildEmpty: () => ({ _type: DC + 'CommandDiscordLeaveVoice', overlayText: '' }),
     fields: [],
   },
   {
-    type: HA + 'CommandHomeAssistantValue', label: 'Home Assistant — set value', category: 'integration', integration: 'homeassistant', kinds: ['dial'], icon: 'sliders',
+    type: HA + 'CommandHomeAssistantValue',
     buildEmpty: () => ({ _type: HA + 'CommandHomeAssistantValue', server: '', action: '', min: 0, max: 100, formula: '', dialParams: dialParams(), invert: false }),
     fields: [
       { kind: 'select-live', key: 'server', label: 'Server', source: 'ha-servers' },
@@ -374,7 +376,7 @@ export const COMMANDS: CommandDef[] = [
     ],
   },
   {
-    type: HA + 'CommandHomeAssistantAction', label: 'Home Assistant — perform action', category: 'integration', integration: 'homeassistant', kinds: ['button'], icon: 'zap',
+    type: HA + 'CommandHomeAssistantAction',
     buildEmpty: () => ({ _type: HA + 'CommandHomeAssistantAction', server: '', action: '', overlayText: '' }),
     fields: [
       { kind: 'select-live', key: 'server', label: 'Server', source: 'ha-servers' },
@@ -383,6 +385,17 @@ export const COMMANDS: CommandDef[] = [
     ],
   },
 ];
+
+// COMMANDS is assembled from the Java-generated registry (label/category/kinds/integration/icon)
+// joined with the hand-written field editors above, keyed by the command's persisted type id.
+const FIELDS_BY_TYPE = new Map(FIELD_DEFS.map(d => [d.type, d] as const));
+export const COMMANDS: CommandDef[] = GENERATED_COMMANDS.map(g => {
+  // field schemas are keyed by the command's historical id; join on `legacy` so renaming the
+  // persisted id to a nice one needs no change here. buildEmpty stamps the current (nice) _type.
+  const f = FIELDS_BY_TYPE.get(g.legacy ?? g.type);
+  if (!f) throw new Error('No field schema for command ' + g.type);
+  return { ...g, buildEmpty: () => ({ ...f.buildEmpty(), _type: g.type }), fields: f.fields };
+});
 
 export const COMMAND_BY_TYPE = new Map(COMMANDS.map(c => [c.type, c]));
 

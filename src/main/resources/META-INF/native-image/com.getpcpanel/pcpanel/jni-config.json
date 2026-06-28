@@ -1,24 +1,24 @@
 [
   {
-    "name": "com.getpcpanel.cpp.windows.SndCtrlWindows",
+    "name": "com.getpcpanel.integration.volume.platform.windows.SndCtrlWindows",
     "allDeclaredMethods": true,
     "allDeclaredConstructors": true,
     "allDeclaredFields": true
   },
   {
-    "name": "com.getpcpanel.cpp.windows.WindowsAudioDevice",
+    "name": "com.getpcpanel.integration.volume.platform.windows.WindowsAudioDevice",
     "allDeclaredMethods": true,
     "allDeclaredConstructors": true,
     "allDeclaredFields": true
   },
   {
-    "name": "com.getpcpanel.cpp.AudioDevice",
+    "name": "com.getpcpanel.integration.volume.platform.AudioDevice",
     "allDeclaredMethods": true,
     "allDeclaredConstructors": true,
     "allDeclaredFields": true
   },
   {
-    "name": "com.getpcpanel.cpp.AudioSession",
+    "name": "com.getpcpanel.integration.volume.platform.AudioSession",
     "allDeclaredMethods": true,
     "allDeclaredConstructors": true,
     "allDeclaredFields": true

@@ -1,0 +1,88 @@
+package com.getpcpanel.integration.volume.platform;
+
+import java.io.File;
+
+import org.apache.commons.lang3.StringUtils;
+
+import javax.annotation.Nullable;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.enterprise.event.Event;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.EqualsAndHashCode.Exclude;
+import lombok.ToString;
+import lombok.extern.log4j.Log4j2;
+
+@Data
+@Log4j2
+@SuppressWarnings("unused") // Methods called from JNI
+public class AudioSession {
+    public static final String SYSTEM = "System Sounds";
+    @JsonIgnore @Exclude @ToString.Exclude @Nullable
+    transient Event<Object> eventBus;
+    private int pid;
+    private File executable;
+    @Exclude private String title;
+    @Exclude @Nullable private String icon;
+    @Exclude private float volume;
+    @Exclude private boolean muted;
+
+    public AudioSession(@Nullable Event<Object> eventBus, int pid, File executable, String title, @Nullable String icon, float volume, boolean muted) {
+        this.eventBus = eventBus;
+        this.pid = pid;
+        this.executable = executable;
+        this.icon = icon;
+        this.volume = volume;
+        this.muted = muted;
+
+        // Uses pid and icon, so do this late
+        this.title = isSystemSounds() ? SYSTEM : StringUtils.firstNonBlank(title, executable.getName());
+    }
+
+    public AudioSession name(String title) {
+        this.title = title;
+        triggerChange();
+        return this;
+    }
+
+    private AudioSession title(String title) {
+        this.title = title;
+        triggerChange();
+        return this;
+    }
+
+    private AudioSession icon(String icon) {
+        this.icon = icon;
+        triggerChange();
+        return this;
+    }
+
+    private AudioSession volume(float volume) {
+        this.volume = volume;
+        triggerChange();
+        return this;
+    }
+
+    private AudioSession muted(boolean muted) {
+        this.muted = muted;
+        triggerChange();
+        return this;
+    }
+
+    public boolean isSystemSounds() {
+        return pid == 0 || StringUtils.containsIgnoreCase(icon, "AudioSrv.Dll");
+    }
+
+    protected AudioSession setVolumeNoTrigger(float volume) {
+        this.volume = volume;
+        return this;
+    }
+
+    private void triggerChange() {
+        if (eventBus != null) {
+            eventBus.fire(new AudioSessionEvent(this, EventType.CHANGED));
+        }
+    }
+}

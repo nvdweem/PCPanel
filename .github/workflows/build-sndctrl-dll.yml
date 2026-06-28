@@ -1,0 +1,43 @@
+name: Build SndCtrl.dll (Windows)
+
+# Manual, on-demand build of the Windows native audio library SndCtrl.dll with MSVC.
+# It ONLY builds the DLL and holds it as a workflow artifact — it does not attach it to a
+# release or commit it. Download the artifact and commit src/main/resources/SndCtrl.dll by hand
+# after changing the C++ sources under src/main/cpp/ (e.g. when SndCtrlNative's package changes).
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      # The build needs the Windows JNI headers (include/ + include/win32/jni_md.h), nothing more.
+      - name: Set up JDK (for JNI headers)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Configure (CMake + MSVC)
+        shell: pwsh
+        run: cmake -S src/main/cpp -B build -G "Visual Studio 17 2022" -A x64 "-DWIN_JDK_HOME=$env:JAVA_HOME"
+
+      - name: Build (Release)
+        shell: pwsh
+        run: cmake --build build --config Release
+
+      # Log the exported JNI entry points so a package mismatch is visible in the run output.
+      # Best-effort: dumpbin is only on PATH inside a VS dev shell, so never fail the build on it.
+      - name: Show exported JNI symbols
+        shell: pwsh
+        continue-on-error: true
+        run: dumpbin /exports build\Release\SndCtrl.dll | Select-String "Java_|JNI_"
+
+      - name: Upload SndCtrl.dll
+        uses: actions/upload-artifact@v4
+        with:
+          name: SndCtrl-dll
+          path: build/Release/SndCtrl.dll
+          if-no-files-found: error

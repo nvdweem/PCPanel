@@ -1,8 +1,10 @@
 package com.getpcpanel.commands.command;
 
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import lombok.ToString;
 
 @ToString(callSuper = true)
+@JsonTypeName("com.getpcpanel.commands.command.CommandNoOp")
 public final class CommandNoOp extends Command implements ButtonAction, DialAction {
     public static final CommandNoOp NOOP = new CommandNoOp();
 

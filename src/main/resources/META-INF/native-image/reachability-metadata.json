@@ -134,7 +134,7 @@
       "type": "com.getpcpanel.commands.PCPanelControlEvent"
     },
     {
-      "type": "com.getpcpanel.mutecolor.MuteColorService"
+      "type": "com.getpcpanel.integration.volume.mutecolor.MuteColorService"
     },
     {
       "type": "com.getpcpanel.commands.command.ButtonAction",
@@ -149,7 +149,7 @@
       "type": "com.getpcpanel.commands.command.Command"
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandBrightness",
+      "type": "com.getpcpanel.integration.device.command.CommandBrightness",
       "methods": [
         {
           "name": "<init>",
@@ -164,7 +164,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandKeystroke",
+      "type": "com.getpcpanel.integration.keyboard.command.CommandKeystroke",
       "methods": [
         {
           "name": "<init>",
@@ -179,10 +179,10 @@
       ]
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandObs"
+      "type": "com.getpcpanel.integration.obs.command.CommandObs"
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandObsSetScene",
+      "type": "com.getpcpanel.integration.obs.command.CommandObsSetScene",
       "methods": [
         {
           "name": "<init>",
@@ -197,7 +197,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandObsSetSourceVolume",
+      "type": "com.getpcpanel.integration.obs.command.CommandObsSetSourceVolume",
       "methods": [
         {
           "name": "<init>",
@@ -217,17 +217,17 @@
       ]
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandVoiceMeeter"
+      "type": "com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeter"
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandVoiceMeeterBasic",
+      "type": "com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterBasic",
       "methods": [
         {
           "name": "<init>",
           "parameterTypes": [
-            "com.getpcpanel.voicemeeter.Voicemeeter$ControlType",
+            "com.getpcpanel.integration.voicemeeter.Voicemeeter$ControlType",
             "int",
-            "com.getpcpanel.voicemeeter.Voicemeeter$DialType",
+            "com.getpcpanel.integration.voicemeeter.Voicemeeter$DialType",
             "com.getpcpanel.commands.command.DialAction$DialCommandParams"
           ]
         },
@@ -250,10 +250,10 @@
       ]
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandVolume"
+      "type": "com.getpcpanel.integration.volume.command.CommandVolume"
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceAdvanced",
+      "type": "com.getpcpanel.integration.volume.command.CommandVolumeDefaultDeviceAdvanced",
       "methods": [
         {
           "name": "getCommunicationPb",
@@ -282,7 +282,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceAdvanced$CommandVolumeDefaultDeviceAdvancedBuilder",
+      "type": "com.getpcpanel.integration.volume.command.CommandVolumeDefaultDeviceAdvanced$CommandVolumeDefaultDeviceAdvancedBuilder",
       "methods": [
         {
           "name": "<init>",
@@ -325,13 +325,13 @@
       ]
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandVolumeDeviceMute",
+      "type": "com.getpcpanel.integration.volume.command.CommandVolumeDeviceMute",
       "methods": [
         {
           "name": "<init>",
           "parameterTypes": [
             "java.lang.String",
-            "com.getpcpanel.cpp.MuteType"
+            "com.getpcpanel.integration.volume.platform.MuteType"
           ]
         },
         {
@@ -345,7 +345,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandVolumeFocus",
+      "type": "com.getpcpanel.integration.volume.command.CommandVolumeFocus",
       "methods": [
         {
           "name": "<init>",
@@ -360,7 +360,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandVolumeProcess",
+      "type": "com.getpcpanel.integration.volume.command.CommandVolumeProcess",
       "fields": [
         {
           "name": "unMuteOnVolumeChange"
@@ -395,13 +395,13 @@
       ]
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandVolumeProcessMute",
+      "type": "com.getpcpanel.integration.volume.command.CommandVolumeProcessMute",
       "methods": [
         {
           "name": "<init>",
           "parameterTypes": [
             "java.util.Set",
-            "com.getpcpanel.cpp.MuteType"
+            "com.getpcpanel.integration.volume.platform.MuteType"
           ]
         },
         {
@@ -449,13 +449,13 @@
       ]
     },
     {
-      "type": "com.getpcpanel.cpp.AudioDevice"
+      "type": "com.getpcpanel.integration.volume.platform.AudioDevice"
     },
     {
-      "type": "com.getpcpanel.cpp.AudioDeviceEvent"
+      "type": "com.getpcpanel.integration.volume.platform.AudioDeviceEvent"
     },
     {
-      "type": "com.getpcpanel.cpp.AudioSession",
+      "type": "com.getpcpanel.integration.volume.platform.AudioSession",
       "jniAccessible": true,
       "methods": [
         {
@@ -473,25 +473,25 @@
       ]
     },
     {
-      "type": "com.getpcpanel.cpp.AudioSessionEvent"
+      "type": "com.getpcpanel.integration.volume.platform.AudioSessionEvent"
     },
     {
-      "type": "com.getpcpanel.cpp.ISndCtrl"
+      "type": "com.getpcpanel.integration.volume.platform.ISndCtrl"
     },
     {
-      "type": "com.getpcpanel.cpp.ISndCtrl$RunningApplication"
+      "type": "com.getpcpanel.integration.volume.platform.ISndCtrl$RunningApplication"
     },
     {
-      "type": "com.getpcpanel.cpp.MuteType"
+      "type": "com.getpcpanel.integration.volume.platform.MuteType"
     },
     {
-      "type": "com.getpcpanel.cpp.linux.LinuxKeyboard$X11"
+      "type": "com.getpcpanel.integration.keyboard.platform.linux.LinuxKeyboard$X11"
     },
     {
-      "type": "com.getpcpanel.cpp.linux.LinuxKeyboard$XTest"
+      "type": "com.getpcpanel.integration.keyboard.platform.linux.LinuxKeyboard$XTest"
     },
     {
-      "type": "com.getpcpanel.cpp.linux.pulseaudio.SndCtrlPulseAudioTest",
+      "type": "com.getpcpanel.integration.volume.platform.linux.SndCtrlPulseAudioTest",
       "methods": [
         {
           "name": "<init>",
@@ -507,10 +507,10 @@
       ]
     },
     {
-      "type": "com.getpcpanel.cpp.windows.SndCtrlNative"
+      "type": "com.getpcpanel.integration.volume.platform.windows.SndCtrlNative"
     },
     {
-      "type": "com.getpcpanel.cpp.windows.SndCtrlNativeConfigTest",
+      "type": "com.getpcpanel.integration.volume.platform.windows.SndCtrlNativeConfigTest",
       "methods": [
         {
           "name": "<init>",
@@ -615,7 +615,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.cpp.windows.SndCtrlWindows",
+      "type": "com.getpcpanel.integration.volume.platform.windows.SndCtrlWindows",
       "jniAccessible": true,
       "methods": [
         {
@@ -645,10 +645,10 @@
       ]
     },
     {
-      "type": "com.getpcpanel.cpp.windows.WindowFocusChangedEvent"
+      "type": "com.getpcpanel.profile.WindowFocusChangedEvent"
     },
     {
-      "type": "com.getpcpanel.cpp.windows.WindowsAudioDevice",
+      "type": "com.getpcpanel.integration.volume.platform.windows.WindowsAudioDevice",
       "jniAccessible": true,
       "methods": [
         {
@@ -666,43 +666,46 @@
       ]
     },
     {
-      "type": "com.getpcpanel.cpp.windows.WindowsAudioSession"
+      "type": "com.getpcpanel.integration.volume.platform.windows.WindowsAudioSession"
     },
     {
-      "type": "com.getpcpanel.device.DeviceFactory"
+      "type": "com.getpcpanel.device.GenericDeviceFactory"
+    },
+    {
+      "type": "com.getpcpanel.device.provider.pcpanel.PcPanelDeviceFactory"
     },
     {
       "type": "com.getpcpanel.device.GlobalBrightnessChangedEvent"
     },
     {
-      "type": "com.getpcpanel.hid.ButtonClickEvent"
+      "type": "com.getpcpanel.device.provider.pcpanel.ButtonClickEvent"
     },
     {
-      "type": "com.getpcpanel.hid.DeviceCommunicationHandler$ButtonPressEvent"
+      "type": "com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandler$ButtonPressEvent"
     },
     {
-      "type": "com.getpcpanel.hid.DeviceCommunicationHandler$KnobRotateEvent"
+      "type": "com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandler$KnobRotateEvent"
     },
     {
-      "type": "com.getpcpanel.hid.DeviceCommunicationHandlerFactory"
+      "type": "com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandlerFactory"
     },
     {
-      "type": "com.getpcpanel.hid.DeviceHolder"
+      "type": "com.getpcpanel.device.DeviceHolder"
     },
     {
-      "type": "com.getpcpanel.hid.DeviceHolder$DeviceFullyConnectedEvent"
+      "type": "com.getpcpanel.device.DeviceHolder$DeviceFullyConnectedEvent"
     },
     {
-      "type": "com.getpcpanel.hid.DeviceScanner"
+      "type": "com.getpcpanel.device.provider.pcpanel.DeviceScanner"
     },
     {
-      "type": "com.getpcpanel.hid.DeviceScanner$DeviceConnectedEvent"
+      "type": "com.getpcpanel.device.provider.pcpanel.DeviceScanner$DeviceConnectedEvent"
     },
     {
-      "type": "com.getpcpanel.hid.DeviceScanner$DeviceDisconnectedEvent"
+      "type": "com.getpcpanel.device.provider.pcpanel.DeviceScanner$DeviceDisconnectedEvent"
     },
     {
-      "type": "com.getpcpanel.hid.DialValueCalculatorTest",
+      "type": "com.getpcpanel.commands.DialValueCalculatorTest",
       "methods": [
         {
           "name": "<init>",
@@ -719,7 +722,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.hid.DialValueTest",
+      "type": "com.getpcpanel.commands.DialValueTest",
       "methods": [
         {
           "name": "<init>",
@@ -739,10 +742,10 @@
       ]
     },
     {
-      "type": "com.getpcpanel.hid.InputInterpreter"
+      "type": "com.getpcpanel.device.provider.pcpanel.InputInterpreter"
     },
     {
-      "type": "com.getpcpanel.hid.OutputInterpreter"
+      "type": "com.getpcpanel.device.provider.pcpanel.OutputInterpreter"
     },
     {
       "type": "com.getpcpanel.iconextract.IIconService"
@@ -801,16 +804,16 @@
       "type": "com.getpcpanel.iconextract.Shell32Extra"
     },
     {
-      "type": "com.getpcpanel.mqtt.MqttDeviceColorService"
+      "type": "com.getpcpanel.integration.mqtt.MqttDeviceColorService"
     },
     {
-      "type": "com.getpcpanel.mqtt.MqttDeviceService"
+      "type": "com.getpcpanel.integration.mqtt.MqttDeviceService"
     },
     {
-      "type": "com.getpcpanel.mqtt.MqttHomeAssistantHelper"
+      "type": "com.getpcpanel.integration.mqtt.MqttHomeAssistantHelper"
     },
     {
-      "type": "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantAvailability",
+      "type": "com.getpcpanel.integration.mqtt.MqttHomeAssistantHelper$HomeAssistantAvailability",
       "methods": [
         {
           "name": "payload_available",
@@ -831,7 +834,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantButtonConfig",
+      "type": "com.getpcpanel.integration.mqtt.MqttHomeAssistantHelper$HomeAssistantButtonConfig",
       "methods": [
         {
           "name": "availability",
@@ -876,7 +879,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantButtonEventConfig",
+      "type": "com.getpcpanel.integration.mqtt.MqttHomeAssistantHelper$HomeAssistantButtonEventConfig",
       "methods": [
         {
           "name": "availability",
@@ -917,7 +920,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantDevice",
+      "type": "com.getpcpanel.integration.mqtt.MqttHomeAssistantHelper$HomeAssistantDevice",
       "methods": [
         {
           "name": "identifiers",
@@ -950,7 +953,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantLightConfig",
+      "type": "com.getpcpanel.integration.mqtt.MqttHomeAssistantHelper$HomeAssistantLightConfig",
       "methods": [
         {
           "name": "availability",
@@ -1023,7 +1026,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.mqtt.MqttHomeAssistantHelper$HomeAssistantNumberConfig",
+      "type": "com.getpcpanel.integration.mqtt.MqttHomeAssistantHelper$HomeAssistantNumberConfig",
       "methods": [
         {
           "name": "availability",
@@ -1076,25 +1079,25 @@
       ]
     },
     {
-      "type": "com.getpcpanel.mqtt.MqttService"
+      "type": "com.getpcpanel.integration.mqtt.MqttService"
     },
     {
-      "type": "com.getpcpanel.mqtt.MqttStatusEvent"
+      "type": "com.getpcpanel.integration.mqtt.MqttStatusEvent"
     },
     {
-      "type": "com.getpcpanel.mqtt.MqttTopicHelper"
+      "type": "com.getpcpanel.integration.mqtt.MqttTopicHelper"
     },
     {
-      "type": "com.getpcpanel.obs.OBS"
+      "type": "com.getpcpanel.integration.obs.OBS"
     },
     {
-      "type": "com.getpcpanel.obs.OBSConnectEvent"
+      "type": "com.getpcpanel.integration.obs.OBSConnectEvent"
     },
     {
-      "type": "com.getpcpanel.obs.OBSMuteEvent"
+      "type": "com.getpcpanel.integration.obs.OBSMuteEvent"
     },
     {
-      "type": "com.getpcpanel.obs.OBS_ScheduledInvoker_reconnectIfNeeded_6f07f3246eb86b7d40ae832b0baf4e681d703711",
+      "type": "com.getpcpanel.integration.obs.OBS_ScheduledInvoker_reconnectIfNeeded_6f07f3246eb86b7d40ae832b0baf4e681d703711",
       "methods": [
         {
           "name": "<init>",
@@ -1103,16 +1106,16 @@
       ]
     },
     {
-      "type": "com.getpcpanel.obs.ObsConnectedVolumeService"
+      "type": "com.getpcpanel.integration.obs.ObsConnectedVolumeService"
     },
     {
-      "type": "com.getpcpanel.osc.OSCService"
+      "type": "com.getpcpanel.integration.osc.OSCService"
     },
     {
-      "type": "com.getpcpanel.overlay.Overlay"
+      "type": "com.getpcpanel.integration.volume.overlay.Overlay"
     },
     {
-      "type": "com.getpcpanel.overlay.VolumeOverlay",
+      "type": "com.getpcpanel.integration.volume.overlay.VolumeOverlay",
       "methods": [
         {
           "name": "parseColor",
@@ -1124,10 +1127,10 @@
       ]
     },
     {
-      "type": "com.getpcpanel.overlay.VolumeOverlay$OverlayPanel"
+      "type": "com.getpcpanel.integration.volume.overlay.VolumeOverlay$OverlayPanel"
     },
     {
-      "type": "com.getpcpanel.overlay.VolumeOverlayNativeTest",
+      "type": "com.getpcpanel.integration.volume.overlay.VolumeOverlayNativeTest",
       "methods": [
         {
           "name": "<init>",
@@ -1144,12 +1147,12 @@
       ]
     },
     {
-      "type": "com.getpcpanel.overlay.VolumeOverlayNativeTest$HexColors",
+      "type": "com.getpcpanel.integration.volume.overlay.VolumeOverlayNativeTest$HexColors",
       "methods": [
         {
           "name": "<init>",
           "parameterTypes": [
-            "com.getpcpanel.overlay.VolumeOverlayNativeTest"
+            "com.getpcpanel.integration.volume.overlay.VolumeOverlayNativeTest"
           ]
         },
         {
@@ -1183,12 +1186,12 @@
       ]
     },
     {
-      "type": "com.getpcpanel.overlay.VolumeOverlayNativeTest$RgbColors",
+      "type": "com.getpcpanel.integration.volume.overlay.VolumeOverlayNativeTest$RgbColors",
       "methods": [
         {
           "name": "<init>",
           "parameterTypes": [
-            "com.getpcpanel.overlay.VolumeOverlayNativeTest"
+            "com.getpcpanel.integration.volume.overlay.VolumeOverlayNativeTest"
           ]
         },
         {
@@ -1212,12 +1215,12 @@
       ]
     },
     {
-      "type": "com.getpcpanel.overlay.VolumeOverlayNativeTest$SwingClassLoading",
+      "type": "com.getpcpanel.integration.volume.overlay.VolumeOverlayNativeTest$SwingClassLoading",
       "methods": [
         {
           "name": "<init>",
           "parameterTypes": [
-            "com.getpcpanel.overlay.VolumeOverlayNativeTest"
+            "com.getpcpanel.integration.volume.overlay.VolumeOverlayNativeTest"
           ]
         },
         {
@@ -1617,7 +1620,7 @@
         {
           "name": "setMqtt",
           "parameterTypes": [
-            "com.getpcpanel.profile.dto.MqttSettings"
+            "com.getpcpanel.integration.mqtt.dto.MqttSettings"
           ]
         },
         {
@@ -1701,7 +1704,7 @@
         {
           "name": "setOverlayPosition",
           "parameterTypes": [
-            "com.getpcpanel.profile.dto.OverlayPosition"
+            "com.getpcpanel.integration.volume.overlay.OverlayPosition"
           ]
         },
         {
@@ -1773,7 +1776,7 @@
         {
           "name": "setWaveLink",
           "parameterTypes": [
-            "com.getpcpanel.profile.dto.WaveLinkSettings"
+            "com.getpcpanel.integration.wavelink.dto.WaveLinkSettings"
           ]
         },
         {
@@ -1961,7 +1964,7 @@
       "type": "com.getpcpanel.profile.dto.LightingConfig$LightingMode"
     },
     {
-      "type": "com.getpcpanel.profile.dto.MqttSettings",
+      "type": "com.getpcpanel.integration.mqtt.dto.MqttSettings",
       "methods": [
         {
           "name": "<init>",
@@ -1973,7 +1976,7 @@
             "java.lang.String",
             "boolean",
             "java.lang.String",
-            "com.getpcpanel.profile.dto.MqttSettings$HomeAssistantSettings"
+            "com.getpcpanel.integration.mqtt.dto.MqttSettings$HomeAssistantSettings"
           ]
         },
         {
@@ -2011,7 +2014,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.profile.dto.MqttSettings$HomeAssistantSettings",
+      "type": "com.getpcpanel.integration.mqtt.dto.MqttSettings$HomeAssistantSettings",
       "methods": [
         {
           "name": "<init>",
@@ -2036,7 +2039,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.profile.dto.OSCBinding",
+      "type": "com.getpcpanel.integration.osc.dto.OSCBinding",
       "methods": [
         {
           "name": "<init>",
@@ -2066,7 +2069,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.profile.dto.OSCConnectionInfo",
+      "type": "com.getpcpanel.integration.osc.dto.OSCConnectionInfo",
       "methods": [
         {
           "name": "<init>",
@@ -2086,7 +2089,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.profile.dto.OverlayPosition"
+      "type": "com.getpcpanel.integration.volume.overlay.OverlayPosition"
     },
     {
       "type": "com.getpcpanel.profile.dto.SingleKnobLightingConfig",
@@ -2336,7 +2339,7 @@
       "type": "com.getpcpanel.profile.dto.SingleSliderLightingConfig[]"
     },
     {
-      "type": "com.getpcpanel.profile.dto.WaveLinkSettings",
+      "type": "com.getpcpanel.integration.wavelink.dto.WaveLinkSettings",
       "methods": [
         {
           "name": "<init>",
@@ -2351,10 +2354,10 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.AudioResource"
+      "type": "com.getpcpanel.integration.volume.AudioResource"
     },
     {
-      "type": "com.getpcpanel.rest.AudioResource$quarkusrestinvoker$listAudioDevices_550a3b0e13808220fb0b06709e729f8d6f308247",
+      "type": "com.getpcpanel.integration.volume.AudioResource$quarkusrestinvoker$listAudioDevices_550a3b0e13808220fb0b06709e729f8d6f308247",
       "methods": [
         {
           "name": "<init>",
@@ -2363,7 +2366,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.AudioResource$quarkusrestinvoker$listAudioSessions_87b1ad592571c0490d5d65ae30900a3fd5c91858",
+      "type": "com.getpcpanel.integration.volume.AudioResource$quarkusrestinvoker$listAudioSessions_87b1ad592571c0490d5d65ae30900a3fd5c91858",
       "methods": [
         {
           "name": "<init>",
@@ -2372,7 +2375,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.AudioResource$quarkusrestinvoker$listInputDevices_486c01c1309f7e4a8b1b28fdee3458ff7823b6dc",
+      "type": "com.getpcpanel.integration.volume.AudioResource$quarkusrestinvoker$listInputDevices_486c01c1309f7e4a8b1b28fdee3458ff7823b6dc",
       "methods": [
         {
           "name": "<init>",
@@ -2381,7 +2384,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.AudioResource$quarkusrestinvoker$listOutputDevices_07238fa0093e377e9791afc81a93956fc9c90a1f",
+      "type": "com.getpcpanel.integration.volume.AudioResource$quarkusrestinvoker$listOutputDevices_07238fa0093e377e9791afc81a93956fc9c90a1f",
       "methods": [
         {
           "name": "<init>",
@@ -2390,7 +2393,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.AudioResource$quarkusrestinvoker$listRunningApplications_111045ded5c591a7480f876665a40f8cc45b501b",
+      "type": "com.getpcpanel.integration.volume.AudioResource$quarkusrestinvoker$listRunningApplications_111045ded5c591a7480f876665a40f8cc45b501b",
       "methods": [
         {
           "name": "<init>",
@@ -2399,10 +2402,10 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.CommandsResource"
+      "type": "com.getpcpanel.device.rest.DeviceResource"
     },
     {
-      "type": "com.getpcpanel.rest.CommandsResource$quarkusrestinvoker$listAvailableCommands_47312a0429306c144b67bec23b8273a7bf24ceec",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$createProfile_88e0b72b3cc218b89f781ee55504c22f31b2f27e",
       "methods": [
         {
           "name": "<init>",
@@ -2411,10 +2414,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource"
-    },
-    {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$createProfile_88e0b72b3cc218b89f781ee55504c22f31b2f27e",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$deleteProfile_9d32d4744c4970ae1371b95a7d547ee8fcfe1353",
       "methods": [
         {
           "name": "<init>",
@@ -2423,7 +2423,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$deleteProfile_9d32d4744c4970ae1371b95a7d547ee8fcfe1353",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$getButton_95405a9e4345b0ab8a7d493bb1394d53861ed75c",
       "methods": [
         {
           "name": "<init>",
@@ -2432,7 +2432,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$getButton_95405a9e4345b0ab8a7d493bb1394d53861ed75c",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$getDblButton_8107605d1ba06eba3e81dc77b2abf282fafd3126",
       "methods": [
         {
           "name": "<init>",
@@ -2441,7 +2441,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$getDblButton_8107605d1ba06eba3e81dc77b2abf282fafd3126",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$getDevice_56060172aa7ec103e6a8d16bd0a0401de0b9b313",
       "methods": [
         {
           "name": "<init>",
@@ -2450,7 +2450,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$getDevice_56060172aa7ec103e6a8d16bd0a0401de0b9b313",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$getDial_a0fce217793424f22cbe3a71a6a0155df3df1926",
       "methods": [
         {
           "name": "<init>",
@@ -2459,7 +2459,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$getDial_a0fce217793424f22cbe3a71a6a0155df3df1926",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$getKnobSettings_700328b65fa1fcb1835f30fb00f2ad16c22f5f18",
       "methods": [
         {
           "name": "<init>",
@@ -2468,7 +2468,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$getKnobSettings_700328b65fa1fcb1835f30fb00f2ad16c22f5f18",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$getLighting_91993aac0e4a5b7c8e8be4b52f360dacee3ffcba",
       "methods": [
         {
           "name": "<init>",
@@ -2477,7 +2477,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$getLighting_91993aac0e4a5b7c8e8be4b52f360dacee3ffcba",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$listDevices_e219037e4a3399072bd6f450ff430ee7f67d25e8",
       "methods": [
         {
           "name": "<init>",
@@ -2486,7 +2486,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$listDevices_e219037e4a3399072bd6f450ff430ee7f67d25e8",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$listProfiles_0ca917159424d2b8a9cf788ec1185aedc089d542",
       "methods": [
         {
           "name": "<init>",
@@ -2495,7 +2495,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$listProfiles_0ca917159424d2b8a9cf788ec1185aedc089d542",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$renameDevice_c12a7298412f8af1081cf456a541fb61c5c7ee8c",
       "methods": [
         {
           "name": "<init>",
@@ -2504,7 +2504,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$renameDevice_c12a7298412f8af1081cf456a541fb61c5c7ee8c",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$setButton_eed2abfcf7f93ce2c2b24fa5eb23de3ee9b767a9",
       "methods": [
         {
           "name": "<init>",
@@ -2513,7 +2513,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$setButton_eed2abfcf7f93ce2c2b24fa5eb23de3ee9b767a9",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$setControlAssignments_c562b43459bc0e2fd723850281361ef3c6d7eb93",
       "methods": [
         {
           "name": "<init>",
@@ -2522,7 +2522,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$setControlAssignments_c562b43459bc0e2fd723850281361ef3c6d7eb93",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$setDblButton_a0df09678683d42577657cf1a090f7f405067e2c",
       "methods": [
         {
           "name": "<init>",
@@ -2531,7 +2531,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$setDblButton_a0df09678683d42577657cf1a090f7f405067e2c",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$setDial_f682a143c7e3ef0796d1547515908e05db60a875",
       "methods": [
         {
           "name": "<init>",
@@ -2540,7 +2540,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$setDial_f682a143c7e3ef0796d1547515908e05db60a875",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$setKnobSettings_21aec8f7c847c04e9dfb6a9bca9e62fe39e2d1ae",
       "methods": [
         {
           "name": "<init>",
@@ -2549,7 +2549,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$setKnobSettings_21aec8f7c847c04e9dfb6a9bca9e62fe39e2d1ae",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$setLighting_f66173d4ddfbe8acfdf22bcb19769100485e9dbf",
       "methods": [
         {
           "name": "<init>",
@@ -2558,16 +2558,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$setLighting_f66173d4ddfbe8acfdf22bcb19769100485e9dbf",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$switchProfile_02ac5ffc5ddabd13031116edd28722ff686e677d",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$switchProfile_02ac5ffc5ddabd13031116edd28722ff686e677d",
       "methods": [
         {
           "name": "<init>",
@@ -2624,10 +2615,10 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.ObsResource"
+      "type": "com.getpcpanel.integration.obs.rest.ObsResource"
     },
     {
-      "type": "com.getpcpanel.rest.ObsResource$quarkusrestinvoker$listScenes_d45e7a31126e58273b41c15802da4944d2079682",
+      "type": "com.getpcpanel.integration.obs.rest.ObsResource$quarkusrestinvoker$listScenes_d45e7a31126e58273b41c15802da4944d2079682",
       "methods": [
         {
           "name": "<init>",
@@ -2636,7 +2627,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.ObsResource$quarkusrestinvoker$listSources_5f705776229abc7f3484fe8cfadec2344a09af33",
+      "type": "com.getpcpanel.integration.obs.rest.ObsResource$quarkusrestinvoker$listSources_5f705776229abc7f3484fe8cfadec2344a09af33",
       "methods": [
         {
           "name": "<init>",
@@ -2645,13 +2636,13 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.OverlayResource"
+      "type": "com.getpcpanel.integration.volume.OverlayResource"
     },
     {
-      "type": "com.getpcpanel.rest.OverlayResource$OverlayDto"
+      "type": "com.getpcpanel.integration.volume.OverlayResource$OverlayDto"
     },
     {
-      "type": "com.getpcpanel.rest.OverlayResource$quarkusrestinvoker$showOverlay_53c93d1310f135ffd7c8e51be7eb1f6ba4eac4ba",
+      "type": "com.getpcpanel.integration.volume.OverlayResource$quarkusrestinvoker$showOverlay_53c93d1310f135ffd7c8e51be7eb1f6ba4eac4ba",
       "methods": [
         {
           "name": "<init>",
@@ -2660,7 +2651,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.OverlayResource$quarkusrestinvoker$testOverlay_25269a521d728b138ab48fc9e9ade9c8f2dfd2fc",
+      "type": "com.getpcpanel.integration.volume.OverlayResource$quarkusrestinvoker$testOverlay_25269a521d728b138ab48fc9e9ade9c8f2dfd2fc",
       "methods": [
         {
           "name": "<init>",
@@ -2669,10 +2660,10 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.ProVisualColorsService"
+      "type": "com.getpcpanel.device.provider.pcpanel.ProVisualColorsService"
     },
     {
-      "type": "com.getpcpanel.rest.ProVisualColorsServiceTest",
+      "type": "com.getpcpanel.device.provider.pcpanel.ProVisualColorsServiceTest",
       "methods": [
         {
           "name": "<init>",
@@ -2754,13 +2745,13 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.VoiceMeeterResource"
+      "type": "com.getpcpanel.integration.voicemeeter.rest.VoiceMeeterResource"
     },
     {
-      "type": "com.getpcpanel.rest.VoiceMeeterResource$VoiceMeeterParam"
+      "type": "com.getpcpanel.integration.voicemeeter.rest.VoiceMeeterResource$VoiceMeeterParam"
     },
     {
-      "type": "com.getpcpanel.rest.VoiceMeeterResource$quarkusrestinvoker$getAdvancedParams_789ebbb7df6501274ae825c6a27179c302791436",
+      "type": "com.getpcpanel.integration.voicemeeter.rest.VoiceMeeterResource$quarkusrestinvoker$getAdvancedParams_789ebbb7df6501274ae825c6a27179c302791436",
       "methods": [
         {
           "name": "<init>",
@@ -2769,16 +2760,13 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.VoiceMeeterResource$quarkusrestinvoker$getBasicParams_3fb05518ea0ad168b8b8c6bcdb89e050368544a7",
+      "type": "com.getpcpanel.integration.voicemeeter.rest.VoiceMeeterResource$quarkusrestinvoker$getBasicParams_3fb05518ea0ad168b8b8c6bcdb89e050368544a7",
       "methods": [
         {
           "name": "<init>",
           "parameterTypes": []
         }
       ]
-    },
-    {
-      "type": "com.getpcpanel.rest.model.dto.CommandType"
     },
     {
       "type": "com.getpcpanel.rest.model.dto.ControlAssignmentsUpdateDto"
@@ -3104,7 +3092,7 @@
         {
           "name": "setOverlayPosition",
           "parameterTypes": [
-            "com.getpcpanel.profile.dto.OverlayPosition"
+            "com.getpcpanel.integration.volume.overlay.OverlayPosition"
           ]
         },
         {
@@ -3211,10 +3199,10 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.wavelink.WaveLinkResource"
+      "type": "com.getpcpanel.integration.wavelink.rest.WaveLinkResource"
     },
     {
-      "type": "com.getpcpanel.rest.wavelink.WaveLinkResource$quarkusrestinvoker$listAllDevices_98920131f1bddff6dc628ac5409344fdbe93b63b",
+      "type": "com.getpcpanel.integration.wavelink.rest.WaveLinkResource$quarkusrestinvoker$listAllDevices_98920131f1bddff6dc628ac5409344fdbe93b63b",
       "methods": [
         {
           "name": "<init>",
@@ -3223,10 +3211,10 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.wavelink.dto.WaveLinkMixDto[]"
+      "type": "com.getpcpanel.integration.wavelink.rest.dto.WaveLinkMixDto[]"
     },
     {
-      "type": "com.getpcpanel.rest.wavelink.dto.WaveLinkResponseDto"
+      "type": "com.getpcpanel.integration.wavelink.rest.dto.WaveLinkResponseDto"
     },
     {
       "type": "com.getpcpanel.sleepdetection.SleepDetector"
@@ -3238,34 +3226,34 @@
       "type": "com.getpcpanel.sleepdetection.WindowsSystemEventService"
     },
     {
-      "type": "com.getpcpanel.util.AppEvents"
+      "type": "com.getpcpanel.util.app.AppEvents"
     },
     {
-      "type": "com.getpcpanel.util.AppShutdownState"
+      "type": "com.getpcpanel.util.app.AppShutdownState"
     },
     {
       "type": "com.getpcpanel.util.CdiHelper"
     },
     {
-      "type": "com.getpcpanel.util.Debouncer"
+      "type": "com.getpcpanel.util.concurrent.Debouncer"
     },
     {
-      "type": "com.getpcpanel.util.ExtractUtil"
+      "type": "com.getpcpanel.util.io.ExtractUtil"
     },
     {
-      "type": "com.getpcpanel.util.FileUtil"
+      "type": "com.getpcpanel.util.io.FileUtil"
     },
     {
-      "type": "com.getpcpanel.util.IPlatformCommand"
+      "type": "com.getpcpanel.integration.program.IPlatformCommand"
     },
     {
-      "type": "com.getpcpanel.util.IPlatformCommand$WindowsPlatformCommand"
+      "type": "com.getpcpanel.integration.program.IPlatformCommand$WindowsPlatformCommand"
     },
     {
-      "type": "com.getpcpanel.util.ProcessHelper"
+      "type": "com.getpcpanel.util.os.ProcessHelper"
     },
     {
-      "type": "com.getpcpanel.util.ShortcutHook"
+      "type": "com.getpcpanel.profile.ShortcutHook"
     },
     {
       "type": "com.getpcpanel.util.coloroverride.IOverrideColorProvider"
@@ -3299,34 +3287,34 @@
       ]
     },
     {
-      "type": "com.getpcpanel.voicemeeter.VoiceMeeterConnectedEvent"
+      "type": "com.getpcpanel.integration.voicemeeter.VoiceMeeterConnectedEvent"
     },
     {
-      "type": "com.getpcpanel.voicemeeter.VoiceMeeterConnectedVolumeService"
+      "type": "com.getpcpanel.integration.voicemeeter.VoiceMeeterConnectedVolumeService"
     },
     {
-      "type": "com.getpcpanel.voicemeeter.VoiceMeeterMuteEvent"
+      "type": "com.getpcpanel.integration.voicemeeter.VoiceMeeterMuteEvent"
     },
     {
-      "type": "com.getpcpanel.voicemeeter.VoiceMeeterMuteService"
+      "type": "com.getpcpanel.integration.voicemeeter.VoiceMeeterMuteService"
     },
     {
-      "type": "com.getpcpanel.voicemeeter.Voicemeeter"
+      "type": "com.getpcpanel.integration.voicemeeter.Voicemeeter"
     },
     {
-      "type": "com.getpcpanel.voicemeeter.Voicemeeter$ControlType"
+      "type": "com.getpcpanel.integration.voicemeeter.Voicemeeter$ControlType"
     },
     {
-      "type": "com.getpcpanel.voicemeeter.Voicemeeter$DialType"
+      "type": "com.getpcpanel.integration.voicemeeter.Voicemeeter$DialType"
     },
     {
-      "type": "com.getpcpanel.voicemeeter.VoicemeeterAPI"
+      "type": "com.getpcpanel.integration.voicemeeter.VoicemeeterAPI"
     },
     {
-      "type": "com.getpcpanel.voicemeeter.VoicemeeterInstance"
+      "type": "com.getpcpanel.integration.voicemeeter.VoicemeeterInstance"
     },
     {
-      "type": "com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOBUFFER",
+      "type": "com.getpcpanel.integration.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOBUFFER",
       "fields": [
         {
           "name": "audiobuffer_nbi"
@@ -3349,7 +3337,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOINFO",
+      "type": "com.getpcpanel.integration.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOINFO",
       "fields": [
         {
           "name": "nbSamplePerFrame"
@@ -3360,7 +3348,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_INTERFACE",
+      "type": "com.getpcpanel.integration.voicemeeter.VoicemeeterInstance$tagVBVMR_INTERFACE",
       "fields": [
         {
           "name": "VBVMR_AudioCallbackRegister"
@@ -3443,7 +3431,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.voicemeeter.VoicemeeterNativeTest",
+      "type": "com.getpcpanel.integration.voicemeeter.VoicemeeterNativeTest",
       "methods": [
         {
           "name": "<init>",
@@ -3508,7 +3496,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.voicemeeter.Voicemeeter_ScheduledInvoker_checkParamsDirtyScheduled_0347d99f171a2b21b9c9adf917b46e141dc1b212",
+      "type": "com.getpcpanel.integration.voicemeeter.Voicemeeter_ScheduledInvoker_checkParamsDirtyScheduled_0347d99f171a2b21b9c9adf917b46e141dc1b212",
       "methods": [
         {
           "name": "<init>",
@@ -3517,16 +3505,16 @@
       ]
     },
     {
-      "type": "com.getpcpanel.volume.VolumeCoordinatorService"
+      "type": "com.getpcpanel.integration.volume.VolumeCoordinatorService"
     },
     {
-      "type": "com.getpcpanel.wavelink.WaveLinkIconHandler"
+      "type": "com.getpcpanel.integration.wavelink.WaveLinkIconHandler"
     },
     {
-      "type": "com.getpcpanel.wavelink.WaveLinkService"
+      "type": "com.getpcpanel.integration.wavelink.WaveLinkService"
     },
     {
-      "type": "com.getpcpanel.wavelink.WaveLinkService_ScheduledInvoker_checkConnection_1196ea9e6f0adeb1c2a90be981b980a4df038c55",
+      "type": "com.getpcpanel.integration.wavelink.WaveLinkService_ScheduledInvoker_checkConnection_1196ea9e6f0adeb1c2a90be981b980a4df038c55",
       "methods": [
         {
           "name": "<init>",
@@ -3535,10 +3523,10 @@
       ]
     },
     {
-      "type": "com.getpcpanel.wavelink.command.CommandWaveLink"
+      "type": "com.getpcpanel.integration.wavelink.command.CommandWaveLink"
     },
     {
-      "type": "com.getpcpanel.wavelink.command.CommandWaveLinkChange",
+      "type": "com.getpcpanel.integration.wavelink.command.CommandWaveLinkChange",
       "methods": [
         {
           "name": "getCommandType",
@@ -3555,12 +3543,12 @@
       ]
     },
     {
-      "type": "com.getpcpanel.wavelink.command.CommandWaveLinkChangeLevel",
+      "type": "com.getpcpanel.integration.wavelink.command.CommandWaveLinkChangeLevel",
       "methods": [
         {
           "name": "<init>",
           "parameterTypes": [
-            "com.getpcpanel.wavelink.command.WaveLinkCommandTarget",
+            "com.getpcpanel.integration.wavelink.command.WaveLinkCommandTarget",
             "java.lang.String",
             "java.lang.String",
             "com.getpcpanel.commands.command.DialAction$DialCommandParams"
@@ -3573,7 +3561,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.wavelink.command.CommandWaveLinkChannelEffect",
+      "type": "com.getpcpanel.integration.wavelink.command.CommandWaveLinkChannelEffect",
       "methods": [
         {
           "name": "<init>",
@@ -3582,7 +3570,7 @@
             "java.lang.String",
             "java.lang.String",
             "java.lang.String",
-            "com.getpcpanel.cpp.MuteType"
+            "com.getpcpanel.integration.volume.platform.MuteType"
           ]
         },
         {
@@ -3608,7 +3596,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.wavelink.command.WaveLinkCommandTarget"
+      "type": "com.getpcpanel.integration.wavelink.command.WaveLinkCommandTarget"
     },
     {
       "type": "com.github.benmanes.caffeine.cache.UnboundedLocalCache",
@@ -11489,14 +11477,14 @@
     {
       "type": {
         "proxy": [
-          "com.getpcpanel.cpp.linux.LinuxKeyboard$X11"
+          "com.getpcpanel.integration.keyboard.platform.linux.LinuxKeyboard$X11"
         ]
       }
     },
     {
       "type": {
         "proxy": [
-          "com.getpcpanel.cpp.linux.LinuxKeyboard$XTest"
+          "com.getpcpanel.integration.keyboard.platform.linux.LinuxKeyboard$XTest"
         ]
       }
     },

@@ -1,5 +1,8 @@
 package com.getpcpanel.commands.command;
 
+import com.getpcpanel.commands.command.Command;
+import com.getpcpanel.commands.command.DialAction;
+import com.getpcpanel.commands.command.ButtonAction;
 import javax.annotation.Nullable;
 
 import com.getpcpanel.util.ValueInterpolator;

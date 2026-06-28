@@ -15,6 +15,9 @@ export interface AnalogBand {
     start: number;
 }
 
+export interface AnalogBandsCommandModule extends CommandModule {
+}
+
 export interface AnalogInputSpec {
     hasButton: boolean;
     id: string;
@@ -34,54 +37,60 @@ export interface AnalogOutputSpec {
     min: number;
 }
 
+export interface BandTransition {
+    band: number;
+    changed: boolean;
+    fire: boolean;
+}
+
 export interface ButtonAction {
     overlayText?: string;
 }
 
 export interface Command {
-    _type: "com.getpcpanel.commands.command.CommandAnalogBands" | "com.getpcpanel.commands.command.CommandBrightness" | "com.getpcpanel.commands.command.CommandEndProgram" | "com.getpcpanel.commands.command.CommandKeystroke" | "com.getpcpanel.commands.command.CommandMedia" | "com.getpcpanel.commands.command.CommandNoOp" | "com.getpcpanel.commands.command.CommandObs" | "com.getpcpanel.commands.command.CommandObsAction" | "com.getpcpanel.commands.command.CommandObsMuteSource" | "com.getpcpanel.commands.command.CommandObsSetScene" | "com.getpcpanel.commands.command.CommandObsSetSourceVolume" | "com.getpcpanel.commands.command.CommandProfile" | "com.getpcpanel.commands.command.CommandRun" | "com.getpcpanel.commands.command.CommandShortcut" | "com.getpcpanel.commands.command.CommandValueOutput" | "com.getpcpanel.commands.command.CommandHttpRequest" | "com.getpcpanel.commands.command.CommandMqttPublish" | "com.getpcpanel.commands.command.CommandOscSend" | "com.getpcpanel.commands.command.CommandVoiceMeeter" | "com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced" | "com.getpcpanel.commands.command.CommandVoiceMeeterAdvancedButton" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasic" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton" | "com.getpcpanel.commands.command.CommandVolume" | "com.getpcpanel.commands.command.CommandVolumeApplicationDeviceToggle" | "com.getpcpanel.commands.command.CommandVolumeDefaultDevice" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceAdvanced" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggle" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggleAdvanced" | "com.getpcpanel.commands.command.CommandVolumeDevice" | "com.getpcpanel.commands.command.CommandVolumeDeviceMute" | "com.getpcpanel.commands.command.CommandVolumeFocus" | "com.getpcpanel.commands.command.CommandVolumeFocusMute" | "com.getpcpanel.commands.command.CommandVolumeProcess" | "com.getpcpanel.commands.command.CommandVolumeProcessMute" | "com.getpcpanel.discord.command.CommandDiscord" | "com.getpcpanel.discord.command.CommandDiscordJoinVoice" | "com.getpcpanel.discord.command.CommandDiscordLeaveVoice" | "com.getpcpanel.discord.command.CommandDiscordMute" | "com.getpcpanel.discord.command.CommandDiscordScreenShare" | "com.getpcpanel.discord.command.CommandDiscordSelfDeafen" | "com.getpcpanel.discord.command.CommandDiscordSelfInputVolume" | "com.getpcpanel.discord.command.CommandDiscordSelfMute" | "com.getpcpanel.discord.command.CommandDiscordSelfOutputVolume" | "com.getpcpanel.discord.command.CommandDiscordToggleVideo" | "com.getpcpanel.discord.command.CommandDiscordUserMute" | "com.getpcpanel.discord.command.CommandDiscordUserVolume" | "com.getpcpanel.discord.command.CommandDiscordVolume" | "com.getpcpanel.homeassistant.command.CommandHomeAssistant" | "com.getpcpanel.homeassistant.command.CommandHomeAssistantAction" | "com.getpcpanel.homeassistant.command.CommandHomeAssistantValue" | "com.getpcpanel.wavelink.command.CommandWaveLink" | "com.getpcpanel.wavelink.command.CommandWaveLinkAddFocusToChannel" | "com.getpcpanel.wavelink.command.CommandWaveLinkChange" | "com.getpcpanel.wavelink.command.CommandWaveLinkChangeLevel" | "com.getpcpanel.wavelink.command.CommandWaveLinkChangeMute" | "com.getpcpanel.wavelink.command.CommandWaveLinkChannelEffect" | "com.getpcpanel.wavelink.command.CommandWaveLinkMainOutput";
+    _type: "com.getpcpanel.commands.command.CommandNoOp" | "mqtt.publish" | "osc.send" | "output.http-request" | "analogbands.ranges" | "device.brightness" | "discord.join-voice" | "discord.leave-voice" | "discord.mute" | "discord.screen-share" | "discord.self-deafen" | "com.getpcpanel.discord.command.CommandDiscordSelfInputVolume" | "com.getpcpanel.discord.command.CommandDiscordSelfMute" | "com.getpcpanel.discord.command.CommandDiscordSelfOutputVolume" | "discord.toggle-video" | "com.getpcpanel.discord.command.CommandDiscordUserMute" | "com.getpcpanel.discord.command.CommandDiscordUserVolume" | "discord.volume" | "homeassistant.action" | "homeassistant.value" | "keyboard.keystroke" | "keyboard.media" | "obs.action" | "obs.mute-source" | "obs.set-scene" | "obs.set-source-volume" | "profile.switch" | "program.end-program" | "program.run" | "program.shortcut" | "voicemeeter.advanced" | "voicemeeter.advanced-button" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasic" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton" | "com.getpcpanel.commands.command.CommandVolumeApplicationDeviceToggle" | "volume.default-device" | "volume.default-device-advanced" | "volume.default-device-toggle" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggleAdvanced" | "volume.device" | "volume.device-mute" | "volume.focus" | "volume.focus-mute" | "volume.process" | "volume.process-mute" | "wavelink.add-focus-to-channel" | "wavelink.change-level" | "wavelink.change-mute" | "com.getpcpanel.wavelink.command.CommandWaveLinkChannelEffect" | "wavelink.main-output";
 }
 
 export interface CommandAnalogBands extends Command, DialAction {
-    _type: "com.getpcpanel.commands.command.CommandAnalogBands";
+    _type: "analogbands.ranges";
     bands?: AnalogBand[];
 }
 
 export interface CommandBrightness extends Command, DialAction {
-    _type: "com.getpcpanel.commands.command.CommandBrightness";
+    _type: "device.brightness";
 }
 
 export interface CommandConverter {
 }
 
 export interface CommandDiscord extends Command {
-    _type: "com.getpcpanel.discord.command.CommandDiscord" | "com.getpcpanel.discord.command.CommandDiscordJoinVoice" | "com.getpcpanel.discord.command.CommandDiscordLeaveVoice" | "com.getpcpanel.discord.command.CommandDiscordMute" | "com.getpcpanel.discord.command.CommandDiscordScreenShare" | "com.getpcpanel.discord.command.CommandDiscordSelfDeafen" | "com.getpcpanel.discord.command.CommandDiscordSelfInputVolume" | "com.getpcpanel.discord.command.CommandDiscordSelfMute" | "com.getpcpanel.discord.command.CommandDiscordSelfOutputVolume" | "com.getpcpanel.discord.command.CommandDiscordToggleVideo" | "com.getpcpanel.discord.command.CommandDiscordUserMute" | "com.getpcpanel.discord.command.CommandDiscordUserVolume" | "com.getpcpanel.discord.command.CommandDiscordVolume";
+    _type: "discord.join-voice" | "discord.leave-voice" | "discord.mute" | "discord.screen-share" | "discord.self-deafen" | "com.getpcpanel.discord.command.CommandDiscordSelfInputVolume" | "com.getpcpanel.discord.command.CommandDiscordSelfMute" | "com.getpcpanel.discord.command.CommandDiscordSelfOutputVolume" | "discord.toggle-video" | "com.getpcpanel.discord.command.CommandDiscordUserMute" | "com.getpcpanel.discord.command.CommandDiscordUserVolume" | "discord.volume";
 }
 
 export interface CommandDiscordJoinVoice extends CommandDiscord, ButtonAction {
-    _type: "com.getpcpanel.discord.command.CommandDiscordJoinVoice";
+    _type: "discord.join-voice";
     channelId?: string;
     channelName?: string;
 }
 
 export interface CommandDiscordLeaveVoice extends CommandDiscord, ButtonAction {
-    _type: "com.getpcpanel.discord.command.CommandDiscordLeaveVoice";
+    _type: "discord.leave-voice";
 }
 
 export interface CommandDiscordMute extends CommandDiscord, ButtonAction {
-    _type: "com.getpcpanel.discord.command.CommandDiscordMute";
+    _type: "discord.mute";
     muteType?: MuteType;
     target?: string;
 }
 
 export interface CommandDiscordScreenShare extends CommandDiscord, ButtonAction {
-    _type: "com.getpcpanel.discord.command.CommandDiscordScreenShare";
+    _type: "discord.screen-share";
     mode?: Mode;
     processName?: string[];
 }
 
 export interface CommandDiscordSelfDeafen extends CommandDiscord, ButtonAction {
-    _type: "com.getpcpanel.discord.command.CommandDiscordSelfDeafen";
+    _type: "discord.self-deafen";
     muteType?: MuteType;
 }
 
@@ -101,7 +110,7 @@ export interface CommandDiscordSelfOutputVolume extends CommandDiscord, DialActi
 }
 
 export interface CommandDiscordToggleVideo extends CommandDiscord, ButtonAction {
-    _type: "com.getpcpanel.discord.command.CommandDiscordToggleVideo";
+    _type: "discord.toggle-video";
 }
 
 export interface CommandDiscordUserMute extends CommandDiscord, ButtonAction {
@@ -116,29 +125,29 @@ export interface CommandDiscordUserVolume extends CommandDiscord, DialAction {
 }
 
 export interface CommandDiscordVolume extends CommandDiscord, DialAction {
-    _type: "com.getpcpanel.discord.command.CommandDiscordVolume";
+    _type: "discord.volume";
     clearMuteOnChange: boolean;
     target?: string;
 }
 
 export interface CommandEndProgram extends Command, ButtonAction {
-    _type: "com.getpcpanel.commands.command.CommandEndProgram";
+    _type: "program.end-program";
     name: string;
     specific: boolean;
 }
 
 export interface CommandHomeAssistant extends Command {
-    _type: "com.getpcpanel.homeassistant.command.CommandHomeAssistant" | "com.getpcpanel.homeassistant.command.CommandHomeAssistantAction" | "com.getpcpanel.homeassistant.command.CommandHomeAssistantValue";
+    _type: "homeassistant.action" | "homeassistant.value";
     server?: string;
 }
 
 export interface CommandHomeAssistantAction extends CommandHomeAssistant, ButtonAction {
-    _type: "com.getpcpanel.homeassistant.command.CommandHomeAssistantAction";
+    _type: "homeassistant.action";
     action: string;
 }
 
 export interface CommandHomeAssistantValue extends CommandHomeAssistant, DialAction {
-    _type: "com.getpcpanel.homeassistant.command.CommandHomeAssistantValue";
+    _type: "homeassistant.value";
     action: string;
     formula?: string;
     max?: number;
@@ -146,7 +155,7 @@ export interface CommandHomeAssistantValue extends CommandHomeAssistant, DialAct
 }
 
 export interface CommandHttpRequest extends CommandValueOutput {
-    _type: "com.getpcpanel.commands.command.CommandHttpRequest";
+    _type: "output.http-request";
     body?: string;
     headers?: string;
     method: string;
@@ -154,20 +163,23 @@ export interface CommandHttpRequest extends CommandValueOutput {
 }
 
 export interface CommandKeystroke extends Command, ButtonAction {
-    _type: "com.getpcpanel.commands.command.CommandKeystroke";
+    _type: "keyboard.keystroke";
     keystroke: string;
     text: string;
     type: KeystrokeType;
 }
 
 export interface CommandMedia extends Command, ButtonAction {
-    _type: "com.getpcpanel.commands.command.CommandMedia";
+    _type: "keyboard.media";
     button: VolumeButton;
     spotify: boolean;
 }
 
+export interface CommandModule {
+}
+
 export interface CommandMqttPublish extends CommandValueOutput {
-    _type: "com.getpcpanel.commands.command.CommandMqttPublish";
+    _type: "mqtt.publish";
     payload: string;
     topic: string;
 }
@@ -177,42 +189,42 @@ export interface CommandNoOp extends Command, ButtonAction, DialAction {
 }
 
 export interface CommandObs extends Command {
-    _type: "com.getpcpanel.commands.command.CommandObs" | "com.getpcpanel.commands.command.CommandObsAction" | "com.getpcpanel.commands.command.CommandObsMuteSource" | "com.getpcpanel.commands.command.CommandObsSetScene" | "com.getpcpanel.commands.command.CommandObsSetSourceVolume";
+    _type: "obs.action" | "obs.mute-source" | "obs.set-scene" | "obs.set-source-volume";
 }
 
 export interface CommandObsAction extends CommandObs, ButtonAction {
-    _type: "com.getpcpanel.commands.command.CommandObsAction";
+    _type: "obs.action";
     action: ObsActionType;
 }
 
 export interface CommandObsMuteSource extends CommandObs, ButtonAction {
-    _type: "com.getpcpanel.commands.command.CommandObsMuteSource";
+    _type: "obs.mute-source";
     source: string;
     type: MuteType;
 }
 
 export interface CommandObsSetScene extends CommandObs, ButtonAction {
-    _type: "com.getpcpanel.commands.command.CommandObsSetScene";
+    _type: "obs.set-scene";
     scene: string;
 }
 
 export interface CommandObsSetSourceVolume extends CommandObs, DialAction {
-    _type: "com.getpcpanel.commands.command.CommandObsSetSourceVolume";
+    _type: "obs.set-source-volume";
     sourceName: string;
 }
 
 export interface CommandOscSend extends CommandValueOutput {
-    _type: "com.getpcpanel.commands.command.CommandOscSend";
+    _type: "osc.send";
     address: string;
 }
 
 export interface CommandProfile extends Command, DeviceAction {
-    _type: "com.getpcpanel.commands.command.CommandProfile";
+    _type: "profile.switch";
     profile?: string;
 }
 
 export interface CommandRun extends Command, ButtonAction {
-    _type: "com.getpcpanel.commands.command.CommandRun";
+    _type: "program.run";
     command: string;
 }
 
@@ -222,36 +234,29 @@ export interface Commands {
 }
 
 export interface CommandShortcut extends Command, ButtonAction {
-    _type: "com.getpcpanel.commands.command.CommandShortcut";
+    _type: "program.shortcut";
     shortcut: string;
 }
 
-export interface CommandType {
-    category: CommandCategory;
-    command: string;
-    kind: Kinds;
-    name: string;
-}
-
 export interface CommandValueOutput extends Command, DialAction, ButtonAction {
-    _type: "com.getpcpanel.commands.command.CommandValueOutput" | "com.getpcpanel.commands.command.CommandHttpRequest" | "com.getpcpanel.commands.command.CommandMqttPublish" | "com.getpcpanel.commands.command.CommandOscSend";
+    _type: "mqtt.publish" | "osc.send" | "output.http-request";
     formula?: string;
     max?: number;
     min?: number;
 }
 
 export interface CommandVoiceMeeter extends Command {
-    _type: "com.getpcpanel.commands.command.CommandVoiceMeeter" | "com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced" | "com.getpcpanel.commands.command.CommandVoiceMeeterAdvancedButton" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasic" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton";
+    _type: "voicemeeter.advanced" | "voicemeeter.advanced-button" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasic" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton";
 }
 
 export interface CommandVoiceMeeterAdvanced extends CommandVoiceMeeter, DialAction {
-    _type: "com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced";
+    _type: "voicemeeter.advanced";
     ct: DialControlMode;
     fullParam: string;
 }
 
 export interface CommandVoiceMeeterAdvancedButton extends CommandVoiceMeeter, ButtonAction {
-    _type: "com.getpcpanel.commands.command.CommandVoiceMeeterAdvancedButton";
+    _type: "voicemeeter.advanced-button";
     bt: ButtonControlMode;
     fullParam: string;
     stringValue?: string;
@@ -272,7 +277,7 @@ export interface CommandVoiceMeeterBasicButton extends CommandVoiceMeeter, Butto
 }
 
 export interface CommandVolume extends Command {
-    _type: "com.getpcpanel.commands.command.CommandVolume" | "com.getpcpanel.commands.command.CommandVolumeApplicationDeviceToggle" | "com.getpcpanel.commands.command.CommandVolumeDefaultDevice" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceAdvanced" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggle" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggleAdvanced" | "com.getpcpanel.commands.command.CommandVolumeDevice" | "com.getpcpanel.commands.command.CommandVolumeDeviceMute" | "com.getpcpanel.commands.command.CommandVolumeFocus" | "com.getpcpanel.commands.command.CommandVolumeFocusMute" | "com.getpcpanel.commands.command.CommandVolumeProcess" | "com.getpcpanel.commands.command.CommandVolumeProcessMute";
+    _type: "com.getpcpanel.commands.command.CommandVolumeApplicationDeviceToggle" | "volume.default-device" | "volume.default-device-advanced" | "volume.default-device-toggle" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggleAdvanced" | "volume.device" | "volume.device-mute" | "volume.focus" | "volume.focus-mute" | "volume.process" | "volume.process-mute";
 }
 
 export interface CommandVolumeApplicationDeviceToggle extends CommandVolume, ButtonAction {
@@ -284,12 +289,12 @@ export interface CommandVolumeApplicationDeviceToggle extends CommandVolume, But
 }
 
 export interface CommandVolumeDefaultDevice extends CommandVolume, ButtonAction {
-    _type: "com.getpcpanel.commands.command.CommandVolumeDefaultDevice";
+    _type: "volume.default-device";
     deviceId: string;
 }
 
 export interface CommandVolumeDefaultDeviceAdvanced extends CommandVolume, ButtonAction {
-    _type: "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceAdvanced";
+    _type: "volume.default-device-advanced";
     communicationPb: string;
     communicationRec: string;
     mediaPb: string;
@@ -301,7 +306,7 @@ export interface CommandVolumeDefaultDeviceAdvancedBuilder {
 }
 
 export interface CommandVolumeDefaultDeviceToggle extends CommandVolume, ButtonAction {
-    _type: "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggle";
+    _type: "volume.default-device-toggle";
     currentIdx: number;
     devices: string[];
 }
@@ -313,29 +318,29 @@ export interface CommandVolumeDefaultDeviceToggleAdvanced extends CommandVolume,
 }
 
 export interface CommandVolumeDevice extends CommandVolume, DialAction {
-    _type: "com.getpcpanel.commands.command.CommandVolumeDevice";
+    _type: "volume.device";
     deviceId: string;
     isUnMuteOnVolumeChange: boolean;
     unMuteOnVolumeChange: boolean;
 }
 
 export interface CommandVolumeDeviceMute extends CommandVolume, ButtonAction {
-    _type: "com.getpcpanel.commands.command.CommandVolumeDeviceMute";
+    _type: "volume.device-mute";
     deviceId: string;
     muteType: MuteType;
 }
 
 export interface CommandVolumeFocus extends CommandVolume, DialAction {
-    _type: "com.getpcpanel.commands.command.CommandVolumeFocus";
+    _type: "volume.focus";
 }
 
 export interface CommandVolumeFocusMute extends CommandVolume, ButtonAction {
-    _type: "com.getpcpanel.commands.command.CommandVolumeFocusMute";
+    _type: "volume.focus-mute";
     muteType: MuteType;
 }
 
 export interface CommandVolumeProcess extends CommandVolume, DialAction {
-    _type: "com.getpcpanel.commands.command.CommandVolumeProcess";
+    _type: "volume.process";
     device: string;
     isUnMuteOnVolumeChange: boolean;
     processName: string[];
@@ -343,34 +348,34 @@ export interface CommandVolumeProcess extends CommandVolume, DialAction {
 }
 
 export interface CommandVolumeProcessMute extends CommandVolume, ButtonAction {
-    _type: "com.getpcpanel.commands.command.CommandVolumeProcessMute";
+    _type: "volume.process-mute";
     muteType: MuteType;
     processName: string[];
 }
 
 export interface CommandWaveLink extends Command {
-    _type: "com.getpcpanel.wavelink.command.CommandWaveLink" | "com.getpcpanel.wavelink.command.CommandWaveLinkAddFocusToChannel" | "com.getpcpanel.wavelink.command.CommandWaveLinkChange" | "com.getpcpanel.wavelink.command.CommandWaveLinkChangeLevel" | "com.getpcpanel.wavelink.command.CommandWaveLinkChangeMute" | "com.getpcpanel.wavelink.command.CommandWaveLinkChannelEffect" | "com.getpcpanel.wavelink.command.CommandWaveLinkMainOutput";
+    _type: "wavelink.add-focus-to-channel" | "wavelink.change-level" | "wavelink.change-mute" | "com.getpcpanel.wavelink.command.CommandWaveLinkChannelEffect" | "wavelink.main-output";
 }
 
 export interface CommandWaveLinkAddFocusToChannel extends CommandWaveLink, ButtonAction {
-    _type: "com.getpcpanel.wavelink.command.CommandWaveLinkAddFocusToChannel";
+    _type: "wavelink.add-focus-to-channel";
     id?: string;
     name?: string;
 }
 
 export interface CommandWaveLinkChange extends CommandWaveLink {
-    _type: "com.getpcpanel.wavelink.command.CommandWaveLinkChange" | "com.getpcpanel.wavelink.command.CommandWaveLinkChangeLevel" | "com.getpcpanel.wavelink.command.CommandWaveLinkChangeMute";
+    _type: "wavelink.change-level" | "wavelink.change-mute";
     commandType: WaveLinkCommandTarget;
     id1?: string;
     id2?: string;
 }
 
 export interface CommandWaveLinkChangeLevel extends CommandWaveLinkChange, DialAction {
-    _type: "com.getpcpanel.wavelink.command.CommandWaveLinkChangeLevel";
+    _type: "wavelink.change-level";
 }
 
 export interface CommandWaveLinkChangeMute extends CommandWaveLinkChange, ButtonAction {
-    _type: "com.getpcpanel.wavelink.command.CommandWaveLinkChangeMute";
+    _type: "wavelink.change-mute";
     muteType: MuteType;
 }
 
@@ -384,7 +389,7 @@ export interface CommandWaveLinkChannelEffect extends CommandWaveLink, ButtonAct
 }
 
 export interface CommandWaveLinkMainOutput extends CommandWaveLink, ButtonAction {
-    _type: "com.getpcpanel.wavelink.command.CommandWaveLinkMainOutput";
+    _type: "wavelink.main-output";
     id?: string;
     name?: string;
 }
@@ -402,6 +407,9 @@ export interface DeviceAction {
 
 export interface DeviceActionParameters {
     device: string;
+}
+
+export interface DeviceCommandModule extends CommandModule {
 }
 
 export interface DeviceDescriptor {
@@ -498,6 +506,9 @@ export interface DiscordAuth {
     userName?: string;
 }
 
+export interface DiscordCommandModule extends CommandModule {
+}
+
 export interface DiscordSeenUser {
     displayName: string;
     id: string;
@@ -534,6 +545,9 @@ export interface DiscordVoiceChannelDto {
     name: string;
 }
 
+export interface EngineCommandModule extends CommandModule {
+}
+
 export interface FocusVolumeOverride {
     includeSource: boolean;
     sources: string[];
@@ -550,6 +564,9 @@ export interface GlobalLightingSpec {
     firmwareAnimated: boolean;
     hasGlobalBrightness: boolean;
     supportedModes: string[];
+}
+
+export interface HomeAssistantCommandModule extends CommandModule {
 }
 
 export interface HomeAssistantServer {
@@ -570,6 +587,9 @@ export interface HomeAssistantSettings {
     availability: boolean;
     baseTopic: string;
     enableDiscovery: boolean;
+}
+
+export interface KeyboardCommandModule extends CommandModule {
 }
 
 export interface KnobSetting {
@@ -623,6 +643,9 @@ export interface MidiDeviceDto {
     name: string;
 }
 
+export interface MqttCommandModule extends CommandModule {
+}
+
 export interface MqttSettings {
     baseTopic: string;
     enabled: boolean;
@@ -632,6 +655,9 @@ export interface MqttSettings {
     port: number;
     secure: boolean;
     username: string;
+}
+
+export interface ObsCommandModule extends CommandModule {
 }
 
 export interface OnboardingDto {
@@ -647,9 +673,15 @@ export interface OSCBinding {
     toggle: boolean;
 }
 
+export interface OscCommandModule extends CommandModule {
+}
+
 export interface OSCConnectionInfo {
     host: string;
     port: number;
+}
+
+export interface OutputCommandModule extends CommandModule {
 }
 
 export interface ProcessDto {
@@ -657,6 +689,9 @@ export interface ProcessDto {
     name: string;
     path: string;
     pid: number;
+}
+
+export interface ProfileCommandModule extends CommandModule {
 }
 
 export interface ProfileDto {
@@ -679,6 +714,9 @@ export interface ProfileSnapshotDto {
     knobSettings: { [index: string]: KnobSetting };
     name: string;
     releaseButtonData: { [index: string]: Commands };
+}
+
+export interface ProgramCommandModule extends CommandModule {
 }
 
 export interface SerialPortDto {
@@ -766,6 +804,12 @@ export interface SingleSliderLightingConfig {
     muteOverrideDeviceOrFollow: string;
 }
 
+export interface VoiceMeeterCommandModule extends CommandModule {
+}
+
+export interface VolumeCommandModule extends CommandModule {
+}
+
 export interface WaveLinkAppDto {
     id: string;
     name: string;
@@ -779,6 +823,9 @@ export interface WaveLinkChannelDto {
     mixes: WaveLinkMixDto[];
     name?: string;
     type?: string;
+}
+
+export interface WaveLinkCommandModule extends CommandModule {
 }
 
 export interface WaveLinkEffectDto {
@@ -910,8 +957,6 @@ export type AnalogKind = "KNOB" | "SLIDER" | "ENCODER";
 export type ButtonControlMode = "ENABLE" | "DISABLE" | "TOGGLE" | "STRING";
 
 export type ButtonType = "MONO" | "MUTE" | "SOLO" | "MC" | "EQ" | "A1" | "A2" | "A3" | "A4" | "A5" | "B1" | "B2" | "B3" | "SEL" | "MIXA" | "MIXB" | "REPEAT" | "COMPOSITE";
-
-export type CommandCategory = "standard" | "voicemeeter" | "obs" | "wavelink";
 
 export type CommandsType = "allAtOnce" | "sequential";
 

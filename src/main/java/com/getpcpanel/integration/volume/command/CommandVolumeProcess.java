@@ -1,0 +1,53 @@
+package com.getpcpanel.integration.volume.command;
+
+import com.getpcpanel.commands.command.DialAction;
+import java.util.HashSet;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.getpcpanel.commands.meta.CommandCategory;
+import com.getpcpanel.commands.meta.CommandKind;
+import com.getpcpanel.commands.meta.CommandMeta;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.getpcpanel.integration.volume.platform.MuteType;
+
+import lombok.Getter;
+import lombok.ToString;
+
+@Getter
+@ToString(callSuper = true)
+@JsonTypeName("volume.process")
+@CommandMeta(label = "App volume", category = CommandCategory.audio, kinds = {CommandKind.dial}, icon = "volume", legacyIds = {"com.getpcpanel.commands.command.CommandVolumeProcess"})
+public class CommandVolumeProcess extends CommandVolume implements DialAction {
+    private final List<String> processName;
+    private final String device;
+    private final boolean unMuteOnVolumeChange;
+    private final DialCommandParams dialParams;
+
+    @JsonCreator
+    public CommandVolumeProcess(
+            @JsonProperty("processName") List<String> processName,
+            @JsonProperty("device") String device,
+            @JsonProperty("isUnMuteOnVolumeChange") boolean unMuteOnVolumeChange,
+            @JsonProperty("dialParams") DialCommandParams dialParams) {
+        this.processName = processName;
+        this.device = device;
+        this.unMuteOnVolumeChange = unMuteOnVolumeChange;
+        this.dialParams = dialParams;
+    }
+
+    @Override
+    public void execute(DialActionParameters context) {
+        var snd = getSndCtrl();
+        if (!context.initial() && unMuteOnVolumeChange) {
+            snd.muteProcesses(new HashSet<>(processName), MuteType.unmute);
+        }
+        processName.forEach(process -> snd.setProcessVolume(process, device, context.dial().getValue(this, 0, 1)));
+    }
+
+    @Override
+    public String buildLabel() {
+        return processName + (unMuteOnVolumeChange ? "(unmute)" : "");
+    }
+}

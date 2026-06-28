@@ -8,11 +8,11 @@ import java.util.Map;
 import org.freedesktop.dbus.types.UInt32;
 import org.freedesktop.dbus.types.Variant;
 
-import com.getpcpanel.util.AppEvents;
+import com.getpcpanel.util.app.AppEvents;
 import com.getpcpanel.util.CdiHelper;
-import com.getpcpanel.util.FileUtil;
-import com.getpcpanel.util.OpenFolderEvent;
-import com.getpcpanel.util.ShowMainEvent;
+import com.getpcpanel.util.io.FileUtil;
+import com.getpcpanel.util.app.OpenFolderEvent;
+import com.getpcpanel.util.app.ShowMainEvent;
 
 import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.annotations.RegisterForReflection;

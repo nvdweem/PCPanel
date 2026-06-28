@@ -1,3 +1,3 @@
 @echo off
-javac -h ..\cpp\SndCtrl\ ..\java\com\getpcpanel\cpp\windows\SndCtrlNative.java
-del ..\java\com\getpcpanel\cpp\windows\SndCtrlNative.class
+javac -h ..\cpp\SndCtrl\ ..\java\com\getpcpanel\integration\volume\platform\windows\SndCtrlNative.java
+del ..\java\com\getpcpanel\integration\volume\platform\windows\SndCtrlNative.class

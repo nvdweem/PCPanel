@@ -6,7 +6,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.getpcpanel.commands.command.CommandKeystroke.KeystrokeType;
+import com.getpcpanel.integration.keyboard.command.CommandKeystroke;
+import com.getpcpanel.integration.keyboard.command.CommandKeystroke.KeystrokeType;
 
 /**
  * Functional tests for {@link CommandKeystroke}'s two modes and its JSON contract. The execute()
@@ -16,12 +17,18 @@ import com.getpcpanel.commands.command.CommandKeystroke.KeystrokeType;
  */
 @DisplayName("CommandKeystroke key vs text modes")
 class CommandKeystrokeTest {
+    // Command polymorphism is registered per-class (@JsonTypeName) + via the CommandModule SPI at
+    // runtime, so a bare mapper must be told about the subtype it deserializes.
     private final ObjectMapper mapper = new ObjectMapper();
+
+    {
+        mapper.registerSubtypes(CommandKeystroke.class);
+    }
 
     @Test
     @DisplayName("legacy JSON without a 'type' field deserializes as a KEY keystroke")
     void legacyKeystrokeDefaultsToKey() throws Exception {
-        var json = "{\"_type\":\"com.getpcpanel.commands.command.CommandKeystroke\",\"keystroke\":\"ctrl+A\"}";
+        var json = "{\"_type\":\"keyboard.keystroke\",\"keystroke\":\"ctrl+A\"}";
         var cmd = (CommandKeystroke) mapper.readValue(json, Command.class);
         assertEquals(KeystrokeType.KEY, cmd.getType());
         assertEquals("ctrl+A", cmd.getKeystroke());

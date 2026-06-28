@@ -43,11 +43,11 @@
     "allDeclaredMethods": true
   },
   {
-    "name": "com.getpcpanel.cpp.linux.MprisPlayer",
+    "name": "com.getpcpanel.integration.keyboard.platform.linux.MprisPlayer",
     "allDeclaredMethods": true
   },
   {
-    "name": "com.getpcpanel.overlay.KdeOsdService",
+    "name": "com.getpcpanel.integration.volume.overlay.KdeOsdService",
     "allDeclaredMethods": true
   },
   {

@@ -9,12 +9,12 @@ import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import com.getpcpanel.device.provider.DeviceProvider;
-import com.getpcpanel.mqtt.MqttService;
-import com.getpcpanel.obs.OBS;
+import com.getpcpanel.integration.mqtt.MqttService;
+import com.getpcpanel.integration.obs.OBS;
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.util.FileUtil;
-import com.getpcpanel.voicemeeter.Voicemeeter;
-import com.getpcpanel.wavelink.WaveLinkService;
+import com.getpcpanel.util.io.FileUtil;
+import com.getpcpanel.integration.voicemeeter.Voicemeeter;
+import com.getpcpanel.integration.wavelink.WaveLinkService;
 
 import io.quarkus.arc.properties.IfBuildProperty;
 import io.quarkiverse.mcp.server.Tool;

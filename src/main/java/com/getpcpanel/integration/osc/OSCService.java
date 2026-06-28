@@ -1,0 +1,209 @@
+package com.getpcpanel.integration.osc;
+
+import java.io.IOException;
+import java.net.InetAddress;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+
+import javax.annotation.Nonnull;
+
+import com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandler.ButtonPressEvent;
+import com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandler.KnobRotateEvent;
+import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.integration.osc.dto.OSCBinding;
+import com.getpcpanel.integration.osc.dto.OSCConnectionInfo;
+import com.getpcpanel.util.Util;
+import com.illposed.osc.OSCBadDataEvent;
+import com.illposed.osc.OSCBundle;
+import com.illposed.osc.OSCMessage;
+import com.illposed.osc.OSCPacket;
+import com.illposed.osc.OSCPacketEvent;
+import com.illposed.osc.OSCPacketListener;
+import com.illposed.osc.transport.OSCPortIn;
+import com.illposed.osc.transport.OSCPortOut;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
+import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
+import one.util.streamex.StreamEx;
+
+@Log4j2
+@ApplicationScoped
+public class OSCService {
+    @Inject
+    SaveService saveService;
+    private OSCPortIn portIn;
+    private List<OSCPortOut> ports = List.of();
+    private Integer prevListenPort;
+    private List<OSCConnectionInfo> prevOscConnections;
+    @Getter private boolean listening;
+    @Getter private final Set<String> addresses = new HashSet<>();
+
+    /** Whether OSC is turned on in the user's settings (gates both the listener and the send targets). */
+    public boolean isEnabled() {
+        return saveService.get().isOscEnabled();
+    }
+
+    public void saveChanged(@Observes SaveService.SaveEvent event) {
+        log.trace("Save changed, restarting OSC");
+        initSend();
+        initListen();
+    }
+
+    private void initSend() {
+        // When OSC is disabled, drop any send targets so dial/button events never go out.
+        if (!isEnabled()) {
+            prevOscConnections = null;
+            ports = List.of();
+            return;
+        }
+        if (Objects.equals(prevOscConnections, saveService.get().getOscConnections()) || saveService.get().getOscConnections() == null) {
+            return;
+        }
+        prevOscConnections = saveService.get().getOscConnections();
+        ports = StreamEx.of(prevOscConnections).mapPartial(this::buildPort).toList();
+    }
+
+    private void initListen() {
+        // When OSC is disabled (or no listen port is set), tear the listener down and stay down.
+        if (!isEnabled() || saveService.get().getOscListenPort() == null) {
+            stopPortIn();
+            prevListenPort = null;
+            return;
+        }
+        if (Objects.equals(prevListenPort, saveService.get().getOscListenPort())) {
+            return;
+        }
+        prevListenPort = saveService.get().getOscListenPort();
+
+        stopPortIn();
+        try {
+            portIn = new OSCPortIn(prevListenPort);
+            portIn.addPacketListener(new OSCPacketListener() {
+                @Override
+                public void handlePacket(OSCPacketEvent event) {
+                    readPacket(event.getPacket());
+                }
+
+                @Override
+                public void handleBadData(OSCBadDataEvent event) {
+                }
+            });
+            portIn.startListening();
+            listening = true;
+        } catch (IOException e) {
+            log.error("Unable to start OSC listener", e);
+        }
+    }
+
+    private void readPacket(OSCPacket packet) {
+        if (packet instanceof OSCBundle bundle) {
+            bundle.getPackets().forEach(this::readPacket);
+        } else if (packet instanceof OSCMessage message) {
+            if (CharSequence.compare("f", message.getInfo().getArgumentTypeTags()) == 0) {
+                addresses.add(message.getAddress());
+            }
+        }
+    }
+
+    private void stopPortIn() {
+        if (portIn != null) {
+            portIn.stopListening();
+            portIn = null;
+        }
+        listening = false;
+    }
+
+    public void dialAction(@Observes KnobRotateEvent dial) {
+        if (dial.initial() || ports == null || ports.isEmpty()) {
+            return;
+        }
+
+        saveService.getProfile(dial.serialNum()).ifPresent(profile -> {
+            var knobLength = profile.lightingConfig().knobConfigs().length;
+            var idx = dial.knob() < knobLength ? dial.knob() * 2 : dial.knob() + knobLength;
+
+            var target = profile.getOscBinding().get(idx);
+            if (target != null) {
+                send(target, "/pcpanel/" + profile.getName() + "/knob" + dial.knob(), dial.value() / 255f);
+            }
+        });
+    }
+
+    public void dialAction(@Observes ButtonPressEvent button) {
+        if (ports == null || ports.isEmpty()) {
+            return;
+        }
+        var idx = button.button() * 2 + 1;
+
+        saveService.getProfile(button.serialNum()).ifPresent(profile -> {
+            var target = profile.getOscBinding().get(idx);
+            if (target != null) {
+                send(target, "/pcpanel/" + profile.getName() + "/button" + button.button(), button.pressed() ? 1f : 0f);
+            }
+        });
+    }
+
+    /**
+     * Send a single float argument to {@code address} on every configured OSC send target. Used by the
+     * generic OSC-send command. No-op when OSC is disabled, no targets are configured, or the address is blank.
+     */
+    public void send(String address, float value) {
+        if (!isEnabled() || ports.isEmpty() || address == null || address.isBlank()) {
+            return;
+        }
+        OSCMessage message;
+        try {
+            message = new OSCMessage(address, List.of(value));
+        } catch (Exception e) {
+            log.error("Invalid OSC address {}", address, e);
+            return;
+        }
+        ports.forEach(port -> {
+            try {
+                port.send(message);
+            } catch (Exception e) {
+                log.error("Error sending OSC message", e);
+            }
+        });
+    }
+
+    private void send(@Nonnull OSCBinding target, String defaultTarget, float val) {
+        var message = buildMessage(target, defaultTarget, determineValue(target, val));
+        ports.forEach(port -> {
+            try {
+                port.send(message);
+            } catch (Exception e) {
+                log.error("Error sending OSC message", e);
+            }
+        });
+    }
+
+    private float determineValue(@Nonnull OSCBinding target, float val) {
+        return Util.map(val, 0, 1, target.min(), target.max());
+    }
+
+    @Nonnull
+    private static OSCMessage buildMessage(OSCBinding target, String defaultTarget, float val) {
+        var targetString = target == null ? defaultTarget : target.address();
+        try {
+            return new OSCMessage(targetString, List.of(val));
+        } catch (Exception e) {
+            return new OSCMessage(defaultTarget, List.of(val));
+        }
+    }
+
+    private Optional<OSCPortOut> buildPort(OSCConnectionInfo oscConnectionInfo) {
+        try {
+            return Optional.of(new OSCPortOut(InetAddress.getByName(oscConnectionInfo.host()), oscConnectionInfo.port()));
+        } catch (Exception e) {
+            log.error("Failed to build OSC port", e);
+            return Optional.empty();
+        }
+    }
+}

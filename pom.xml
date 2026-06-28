@@ -56,12 +56,12 @@
         <quarkus.native.additional-build-args>
             -Os,
             -R:MaxHeapSize=67108864,
-            --initialize-at-run-time=com.getpcpanel.util.Kernel32Console,
-            --initialize-at-run-time=com.getpcpanel.cpp.linux.LinuxKeyboard$X11,
-            --initialize-at-run-time=com.getpcpanel.cpp.linux.LinuxKeyboard$XTest,
-            --initialize-at-run-time=com.getpcpanel.overlay.OverlayRenderer,
+            --initialize-at-run-time=com.getpcpanel.util.os.Kernel32Console,
+            --initialize-at-run-time=com.getpcpanel.integration.keyboard.platform.linux.LinuxKeyboard$X11,
+            --initialize-at-run-time=com.getpcpanel.integration.keyboard.platform.linux.LinuxKeyboard$XTest,
+            --initialize-at-run-time=com.getpcpanel.integration.volume.overlay.OverlayRenderer,
             --trace-object-instantiation=java.security.SecureRandom,
-            -J-XX:-UseCompressedOops,--initialize-at-run-time=com.sun.jna,--initialize-at-run-time=org.hid4java,--initialize-at-run-time=com.fazecast.jSerialComm,--initialize-at-run-time=com.sun.media.sound,--initialize-at-run-time=javax.sound.midi.MidiSystem,--initialize-at-run-time=com.github.kwhat.jnativehook,--initialize-at-run-time=com.getpcpanel.commands.KeyMacro,--initialize-at-run-time=com.getpcpanel.iconextract.Shell32Extra,--initialize-at-run-time=com.getpcpanel.util.tray.win.WinShell32,--initialize-at-run-time=com.getpcpanel.util.tray.win.WinUser32Ext,--initialize-at-run-time=com.getpcpanel.sleepdetection.Win32Desktop,--initialize-at-run-time=com.getpcpanel.sleepdetection.Win32PowerNotify,--initialize-at-run-time=com.getpcpanel.sleepdetection.WindowsPowerEventMonitor,--initialize-at-run-time=com.getpcpanel.sleepdetection.LinuxX11$LibX11,--initialize-at-run-time=com.getpcpanel.sleepdetection.LinuxX11$LibXext,--initialize-at-run-time=com.getpcpanel.cpp.osx.CoreAudioLib,--initialize-at-run-time=com.getpcpanel.cpp.osx.CoreAudioLib$AudioObjectPropertyAddress,--initialize-at-run-time=com.getpcpanel.cpp.osx.CoreAudioLib$AudioObjectPropertyListenerProc,--initialize-at-run-time=com.getpcpanel.cpp.osx.OsxKeyboard$CoreGraphics,--initialize-at-run-time=com.getpcpanel.cpp.osx.OsxKeyboard$CoreFoundation,--initialize-at-run-time=com.getpcpanel.util.OsxPermissionHelper,--initialize-at-run-time=com.getpcpanel.util.OsxPermissionHelper$ApplicationServicesLib,--initialize-at-run-time=com.getpcpanel.util.OsxPermissionHelper$IOKitLib,--initialize-at-run-time=org.freedesktop.dbus,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOINFO,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOBUFFER,--initialize-at-run-time=com.getpcpanel.voicemeeter.VoicemeeterInstance$tagVBVMR_INTERFACE${native.awt.args}${native.platform.linker.args}
+            -J-XX:-UseCompressedOops,--initialize-at-run-time=com.sun.jna,--initialize-at-run-time=org.hid4java,--initialize-at-run-time=com.fazecast.jSerialComm,--initialize-at-run-time=com.sun.media.sound,--initialize-at-run-time=javax.sound.midi.MidiSystem,--initialize-at-run-time=com.github.kwhat.jnativehook,--initialize-at-run-time=com.getpcpanel.iconextract.Shell32Extra,--initialize-at-run-time=com.getpcpanel.util.tray.win.WinShell32,--initialize-at-run-time=com.getpcpanel.util.tray.win.WinUser32Ext,--initialize-at-run-time=com.getpcpanel.sleepdetection.Win32Desktop,--initialize-at-run-time=com.getpcpanel.sleepdetection.Win32PowerNotify,--initialize-at-run-time=com.getpcpanel.sleepdetection.WindowsPowerEventMonitor,--initialize-at-run-time=com.getpcpanel.sleepdetection.LinuxX11$LibX11,--initialize-at-run-time=com.getpcpanel.sleepdetection.LinuxX11$LibXext,--initialize-at-run-time=com.getpcpanel.integration.volume.platform.osx.CoreAudioLib,--initialize-at-run-time=com.getpcpanel.integration.volume.platform.osx.CoreAudioLib$AudioObjectPropertyAddress,--initialize-at-run-time=com.getpcpanel.integration.volume.platform.osx.CoreAudioLib$AudioObjectPropertyListenerProc,--initialize-at-run-time=com.getpcpanel.integration.keyboard.platform.osx.OsxKeyboard$CoreGraphics,--initialize-at-run-time=com.getpcpanel.integration.keyboard.platform.osx.OsxKeyboard$CoreFoundation,--initialize-at-run-time=com.getpcpanel.util.os.OsxPermissionHelper,--initialize-at-run-time=com.getpcpanel.util.os.OsxPermissionHelper$ApplicationServicesLib,--initialize-at-run-time=com.getpcpanel.util.os.OsxPermissionHelper$IOKitLib,--initialize-at-run-time=org.freedesktop.dbus,--initialize-at-run-time=com.getpcpanel.integration.voicemeeter.VoicemeeterInstance,--initialize-at-run-time=com.getpcpanel.integration.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOINFO,--initialize-at-run-time=com.getpcpanel.integration.voicemeeter.VoicemeeterInstance$tagVBVMR_AUDIOBUFFER,--initialize-at-run-time=com.getpcpanel.integration.voicemeeter.VoicemeeterInstance$tagVBVMR_INTERFACE${native.awt.args}${native.platform.linker.args}
         </quarkus.native.additional-build-args>
         <!-- AWT/Java2D native-image initialization policy. This default value is the Linux build, which
              (like macOS) bundles no libawt: the whole AWT/Java2D/Swing/ImageIO subsystem is deferred to
@@ -70,7 +70,7 @@
              icons disabled, keystrokes via X11 XTEST, tray via D-Bus). The os-windows profile overrides
              this with the non-headless windowing variant (Windows keeps quarkus-awt + headless Java2D).
              The leading comma joins this onto the preceding arg; keep it as a single comma-separated list. -->
-        <native.awt.args>,--initialize-at-run-time=java.awt,--initialize-at-run-time=javax.swing,--initialize-at-run-time=sun.awt,--initialize-at-run-time=sun.lwawt,--initialize-at-run-time=sun.java2d,--initialize-at-run-time=sun.font,--initialize-at-run-time=javax.imageio,--initialize-at-run-time=com.sun.imageio,--initialize-at-run-time=com.getpcpanel.overlay.OverlayRenderer</native.awt.args>
+        <native.awt.args>,--initialize-at-run-time=java.awt,--initialize-at-run-time=javax.swing,--initialize-at-run-time=sun.awt,--initialize-at-run-time=sun.lwawt,--initialize-at-run-time=sun.java2d,--initialize-at-run-time=sun.font,--initialize-at-run-time=javax.imageio,--initialize-at-run-time=com.sun.imageio,--initialize-at-run-time=com.getpcpanel.integration.volume.overlay.OverlayRenderer</native.awt.args>
         <!-- Platform-specific native-image args, appended to the list above. Empty by default
              (Linux/macOS); the os-windows profile injects the GUI-subsystem linker flags. The
              leading comma joins it to the preceding arg; keep it empty (not blank lines) elsewhere. -->
@@ -375,10 +375,11 @@
                     <classPatterns>
                         <classPattern>com.getpcpanel.rest.model.**</classPattern>
                         <classPattern>com.getpcpanel.commands.Commands</classPattern>
-                        <classPattern>com.getpcpanel.commands.command.**</classPattern>
-                        <classPattern>com.getpcpanel.wavelink.command.**</classPattern>
-                        <classPattern>com.getpcpanel.discord.command.**</classPattern>
-                        <classPattern>com.getpcpanel.homeassistant.command.**</classPattern>
+                        <!-- Every feature owns its command classes in a `*.command` subpackage; this
+                             glob picks them all up (commands.command, voicemeeter.command,
+                             obs.command, wavelink.command, discord.command, homeassistant.command, …)
+                             so adding a new integration needs no edit here. -->
+                        <classPattern>com.getpcpanel.**.command.**</classPattern>
                         <classPattern>com.getpcpanel.device.descriptor.**</classPattern>
                         <classPattern>**.dto.**</classPattern>
                     </classPatterns>
@@ -573,7 +574,7 @@
                 </os>
             </activation>
             <properties>
-                <native.awt.args>,--initialize-at-run-time=java.awt,--initialize-at-run-time=javax.swing,--initialize-at-run-time=sun.awt,--initialize-at-run-time=sun.lwawt,--initialize-at-run-time=sun.java2d,--initialize-at-run-time=sun.font,--initialize-at-run-time=javax.imageio,--initialize-at-run-time=com.sun.imageio,--initialize-at-run-time=com.getpcpanel.overlay.OverlayRenderer</native.awt.args>
+                <native.awt.args>,--initialize-at-run-time=java.awt,--initialize-at-run-time=javax.swing,--initialize-at-run-time=sun.awt,--initialize-at-run-time=sun.lwawt,--initialize-at-run-time=sun.java2d,--initialize-at-run-time=sun.font,--initialize-at-run-time=javax.imageio,--initialize-at-run-time=com.sun.imageio,--initialize-at-run-time=com.getpcpanel.integration.volume.overlay.OverlayRenderer</native.awt.args>
             </properties>
         </profile>
         <profile>

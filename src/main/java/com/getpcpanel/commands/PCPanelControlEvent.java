@@ -2,7 +2,7 @@ package com.getpcpanel.commands;
 
 import javax.annotation.Nullable;
 
-import com.getpcpanel.hid.DialValue;
+import com.getpcpanel.commands.DialValue;
 
 import one.util.streamex.StreamEx;
 

@@ -11,12 +11,12 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import com.getpcpanel.commands.Commands;
-import com.getpcpanel.commands.command.AnalogBand;
+import com.getpcpanel.integration.analogbands.command.AnalogBand;
 import com.getpcpanel.commands.command.Command;
-import com.getpcpanel.commands.command.CommandAnalogBands;
+import com.getpcpanel.integration.analogbands.command.CommandAnalogBands;
 import com.getpcpanel.device.Device;
-import com.getpcpanel.hid.BrightnessService;
-import com.getpcpanel.hid.DeviceHolder;
+import com.getpcpanel.integration.device.BrightnessService;
+import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.profile.BaseLayerService;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.Profile;

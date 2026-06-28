@@ -14,7 +14,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
 
 import com.getpcpanel.iconextract.IIconService;
-import com.getpcpanel.util.PngEncoder;
+import com.getpcpanel.util.image.PngEncoder;
 
 import lombok.extern.log4j.Log4j2;
 

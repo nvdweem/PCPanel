@@ -145,7 +145,7 @@
   <ItemGroup>
     <ClCompile Include="..\SndCtrl\AudioDevice.cpp" />
     <ClCompile Include="..\SndCtrl\AudioSession.cpp" />
-    <ClCompile Include="..\SndCtrl\com_getpcpanel_cpp_windows_SndCtrlNative.cpp" />
+    <ClCompile Include="..\SndCtrl\com_getpcpanel_integration_volume_platform_windows_SndCtrlNative.cpp" />
     <ClCompile Include="..\SndCtrl\dllmain.cpp" />
     <ClCompile Include="..\SndCtrl\FocusListener.cpp" />
     <ClCompile Include="..\SndCtrl\helpers.cpp" />
@@ -159,7 +159,7 @@
     <ClInclude Include="..\SndCtrl\AudioDevice.h" />
     <ClInclude Include="..\SndCtrl\audiopolicyconfigfactory.h" />
     <ClInclude Include="..\SndCtrl\AudioSession.h" />
-    <ClInclude Include="..\SndCtrl\com_getpcpanel_cpp_windows_SndCtrlNative.h" />
+    <ClInclude Include="..\SndCtrl\com_getpcpanel_integration_volume_platform_windows_SndCtrlNative.h" />
     <ClInclude Include="..\SndCtrl\FocusListener.h" />
     <ClInclude Include="..\SndCtrl\framework.h" />
     <ClInclude Include="..\SndCtrl\helpers.h" />

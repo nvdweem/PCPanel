@@ -8,17 +8,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import com.getpcpanel.device.DeviceType;
+import com.getpcpanel.device.provider.pcpanel.DeviceType;
 import com.getpcpanel.device.descriptor.DeviceDescriptor;
-import com.getpcpanel.homeassistant.dto.HomeAssistantServer;
-import com.getpcpanel.profile.dto.DiscordAuth;
-import com.getpcpanel.profile.dto.DiscordSeenUser;
-import com.getpcpanel.profile.dto.DiscordSettings;
-import com.getpcpanel.profile.dto.FocusVolumeOverride;
-import com.getpcpanel.profile.dto.MqttSettings;
-import com.getpcpanel.profile.dto.OSCConnectionInfo;
-import com.getpcpanel.profile.dto.OverlayPosition;
-import com.getpcpanel.profile.dto.WaveLinkSettings;
+import com.getpcpanel.integration.homeassistant.dto.HomeAssistantServer;
+import com.getpcpanel.integration.discord.dto.DiscordAuth;
+import com.getpcpanel.integration.discord.dto.DiscordSeenUser;
+import com.getpcpanel.integration.discord.dto.DiscordSettings;
+import com.getpcpanel.integration.volume.FocusVolumeOverride;
+import com.getpcpanel.integration.mqtt.dto.MqttSettings;
+import com.getpcpanel.integration.osc.dto.OSCConnectionInfo;
+import com.getpcpanel.integration.volume.overlay.OverlayPosition;
+import com.getpcpanel.integration.wavelink.dto.WaveLinkSettings;
 
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
