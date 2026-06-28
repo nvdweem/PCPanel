@@ -93,6 +93,11 @@ for focus volume is **bundled inside the sandbox** and talks to the host KWin ov
 Plasma focus volume works without a host-installed kdotool. Volume control (`pactl`) and the optional non-KDE-X11 fallback
 (`xdotool`) are still forwarded to the host via `flatpak-spawn`, so those host tools need to be present for their features.
 
+> **Discord integration:** the sandbox is granted access to Discord's local IPC socket
+> (`$XDG_RUNTIME_DIR/discord-ipc-*`, plus the Flatpak/snap Discord locations). Because a Flatpak only
+> binds that socket when it already exists at launch, **start Discord before PCPanel** (or restart
+> PCPanel after Discord is up); otherwise the Discord settings page reports that Discord isn't running.
+
 ### Other
 
 If neither package works on your distribution, download the raw executable from the release (it sits inside the `.deb`

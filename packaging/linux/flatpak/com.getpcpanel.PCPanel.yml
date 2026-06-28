@@ -52,6 +52,20 @@ finish-args:
   - --talk-name=org.freedesktop.Flatpak
   # Bundled kdotool drives the host KWin's scripting API to resolve the focused window
   - --talk-name=org.kde.KWin
+  # Discord integration (Rich Presence / RPC). Discord exposes an IPC *Unix domain socket* at
+  # $XDG_RUNTIME_DIR/discord-ipc-N (DiscordIpcConnections probes indices 0-9). --share=ipc above only
+  # shares the SysV/POSIX IPC namespace (shared memory), NOT filesystem sockets, and the sandbox gets
+  # its own private $XDG_RUNTIME_DIR — so without an explicit bind the host's socket is invisible and
+  # the UI reports "Discord not running". Bind the host runtime-dir sockets read-write (the RPC
+  # handshake writes to the socket). A loose-file grant only resolves if the socket already exists when
+  # the sandbox starts, so launch Discord before PCPanel (or restart PCPanel) — a later-started Discord
+  # won't appear. xdg-run/discord-ipc-{0,1} covers a native Discord; the app sub-dir grants cover a
+  # sandboxed (Flatpak/snap) Discord, matching the sub-directories DiscordIpcConnections probes.
+  - --filesystem=xdg-run/discord-ipc-0
+  - --filesystem=xdg-run/discord-ipc-1
+  - --filesystem=xdg-run/app/com.discordapp.Discord:ro
+  - --filesystem=xdg-run/snap.discord:ro
+  - --filesystem=xdg-run/snap.discord-canary:ro
   # No host-filesystem grant for the profile store: the host-backed per-app dir
   # ~/.var/app/com.getpcpanel.PCPanel/ is the persisted store ($HOME itself is an unbacked sandbox
   # overlay at /home/<user>), and PcPanelRoot resolves the data dir via
