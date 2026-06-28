@@ -134,7 +134,7 @@
       "type": "com.getpcpanel.commands.PCPanelControlEvent"
     },
     {
-      "type": "com.getpcpanel.mutecolor.MuteColorService"
+      "type": "com.getpcpanel.integration.volume.mutecolor.MuteColorService"
     },
     {
       "type": "com.getpcpanel.commands.command.ButtonAction",

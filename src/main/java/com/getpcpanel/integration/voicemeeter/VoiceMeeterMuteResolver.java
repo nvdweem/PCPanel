@@ -9,8 +9,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import com.getpcpanel.commands.Commands;
-import com.getpcpanel.mutecolor.MuteOverridesDirtyEvent;
-import com.getpcpanel.mutecolor.MuteStateResolver;
+import com.getpcpanel.integration.volume.mutecolor.MuteOverridesDirtyEvent;
+import com.getpcpanel.integration.volume.mutecolor.MuteStateResolver;
 import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterAdvanced;
 import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterBasic;
 import com.getpcpanel.integration.voicemeeter.Voicemeeter.ButtonType;

@@ -1,4 +1,4 @@
-package com.getpcpanel.mutecolor;
+package com.getpcpanel.integration.volume.mutecolor;
 
 import java.util.Optional;
 

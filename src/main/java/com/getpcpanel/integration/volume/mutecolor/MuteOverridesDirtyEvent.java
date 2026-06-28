@@ -1,4 +1,4 @@
-package com.getpcpanel.mutecolor;
+package com.getpcpanel.integration.volume.mutecolor;
 
 /**
  * Fired when a resolver's internally-cached mute state has changed (e.g. a VoiceMeeter mute toggle)
