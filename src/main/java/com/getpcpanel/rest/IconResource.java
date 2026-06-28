@@ -1,4 +1,4 @@
-package com.getpcpanel.integration.program;
+package com.getpcpanel.rest;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,7 +13,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
 
-import com.getpcpanel.integration.program.iconextract.IIconService;
+import com.getpcpanel.iconextract.IIconService;
 import com.getpcpanel.util.PngEncoder;
 
 import lombok.extern.log4j.Log4j2;

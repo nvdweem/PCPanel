@@ -1,4 +1,4 @@
-package com.getpcpanel.integration.program;
+package com.getpcpanel.rest;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -8,7 +8,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 import com.getpcpanel.integration.volume.platform.ISndCtrl;
-import com.getpcpanel.integration.program.iconextract.IIconService;
+import com.getpcpanel.iconextract.IIconService;
 import com.getpcpanel.rest.model.dto.ProcessDto;
 import com.getpcpanel.util.PngEncoder;
 
