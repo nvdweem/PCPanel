@@ -8,7 +8,7 @@ import java.util.OptionalInt;
 
 import javax.annotation.Nullable;
 
-import com.getpcpanel.commands.command.CommandBrightness;
+import com.getpcpanel.device.command.CommandBrightness;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.dto.KnobSetting;

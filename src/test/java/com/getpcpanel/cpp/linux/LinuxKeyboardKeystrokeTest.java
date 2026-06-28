@@ -11,7 +11,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import com.getpcpanel.commands.command.CommandMedia.VolumeButton;
+import com.getpcpanel.keyboard.command.CommandMedia.VolumeButton;
 
 /**
  * Functional tests for the Linux keystroke feature's pure string -> X11 keysym mapping (the part of

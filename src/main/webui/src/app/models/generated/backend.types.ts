@@ -15,6 +15,9 @@ export interface AnalogBand {
     start: number;
 }
 
+export interface AnalogBandsCommandModule extends CommandModule {
+}
+
 export interface AnalogInputSpec {
     hasButton: boolean;
     id: string;
@@ -39,7 +42,7 @@ export interface ButtonAction {
 }
 
 export interface Command {
-    _type: "com.getpcpanel.commands.command.CommandAnalogBands" | "com.getpcpanel.commands.command.CommandBrightness" | "com.getpcpanel.commands.command.CommandEndProgram" | "com.getpcpanel.commands.command.CommandKeystroke" | "com.getpcpanel.commands.command.CommandMedia" | "com.getpcpanel.commands.command.CommandNoOp" | "com.getpcpanel.commands.command.CommandProfile" | "com.getpcpanel.commands.command.CommandRun" | "com.getpcpanel.commands.command.CommandShortcut" | "com.getpcpanel.commands.command.CommandHttpRequest" | "com.getpcpanel.commands.command.CommandMqttPublish" | "com.getpcpanel.commands.command.CommandOscSend" | "com.getpcpanel.commands.command.CommandVolumeApplicationDeviceToggle" | "com.getpcpanel.commands.command.CommandVolumeDefaultDevice" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceAdvanced" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggle" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggleAdvanced" | "com.getpcpanel.commands.command.CommandVolumeDevice" | "com.getpcpanel.commands.command.CommandVolumeDeviceMute" | "com.getpcpanel.commands.command.CommandVolumeFocus" | "com.getpcpanel.commands.command.CommandVolumeFocusMute" | "com.getpcpanel.commands.command.CommandVolumeProcess" | "com.getpcpanel.commands.command.CommandVolumeProcessMute" | "com.getpcpanel.discord.command.CommandDiscordJoinVoice" | "com.getpcpanel.discord.command.CommandDiscordLeaveVoice" | "com.getpcpanel.discord.command.CommandDiscordMute" | "com.getpcpanel.discord.command.CommandDiscordScreenShare" | "com.getpcpanel.discord.command.CommandDiscordSelfDeafen" | "com.getpcpanel.discord.command.CommandDiscordSelfInputVolume" | "com.getpcpanel.discord.command.CommandDiscordSelfMute" | "com.getpcpanel.discord.command.CommandDiscordSelfOutputVolume" | "com.getpcpanel.discord.command.CommandDiscordToggleVideo" | "com.getpcpanel.discord.command.CommandDiscordUserMute" | "com.getpcpanel.discord.command.CommandDiscordUserVolume" | "com.getpcpanel.discord.command.CommandDiscordVolume" | "com.getpcpanel.homeassistant.command.CommandHomeAssistantAction" | "com.getpcpanel.homeassistant.command.CommandHomeAssistantValue" | "com.getpcpanel.commands.command.CommandObsAction" | "com.getpcpanel.commands.command.CommandObsMuteSource" | "com.getpcpanel.commands.command.CommandObsSetScene" | "com.getpcpanel.commands.command.CommandObsSetSourceVolume" | "com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced" | "com.getpcpanel.commands.command.CommandVoiceMeeterAdvancedButton" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasic" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton" | "com.getpcpanel.wavelink.command.CommandWaveLinkAddFocusToChannel" | "com.getpcpanel.wavelink.command.CommandWaveLinkChangeLevel" | "com.getpcpanel.wavelink.command.CommandWaveLinkChangeMute" | "com.getpcpanel.wavelink.command.CommandWaveLinkChannelEffect" | "com.getpcpanel.wavelink.command.CommandWaveLinkMainOutput";
+    _type: "com.getpcpanel.commands.command.CommandAnalogBands" | "com.getpcpanel.commands.command.CommandNoOp" | "com.getpcpanel.commands.command.CommandBrightness" | "com.getpcpanel.discord.command.CommandDiscordJoinVoice" | "com.getpcpanel.discord.command.CommandDiscordLeaveVoice" | "com.getpcpanel.discord.command.CommandDiscordMute" | "com.getpcpanel.discord.command.CommandDiscordScreenShare" | "com.getpcpanel.discord.command.CommandDiscordSelfDeafen" | "com.getpcpanel.discord.command.CommandDiscordSelfInputVolume" | "com.getpcpanel.discord.command.CommandDiscordSelfMute" | "com.getpcpanel.discord.command.CommandDiscordSelfOutputVolume" | "com.getpcpanel.discord.command.CommandDiscordToggleVideo" | "com.getpcpanel.discord.command.CommandDiscordUserMute" | "com.getpcpanel.discord.command.CommandDiscordUserVolume" | "com.getpcpanel.discord.command.CommandDiscordVolume" | "com.getpcpanel.homeassistant.command.CommandHomeAssistantAction" | "com.getpcpanel.homeassistant.command.CommandHomeAssistantValue" | "com.getpcpanel.commands.command.CommandKeystroke" | "com.getpcpanel.commands.command.CommandMedia" | "com.getpcpanel.commands.command.CommandObsAction" | "com.getpcpanel.commands.command.CommandObsMuteSource" | "com.getpcpanel.commands.command.CommandObsSetScene" | "com.getpcpanel.commands.command.CommandObsSetSourceVolume" | "com.getpcpanel.commands.command.CommandMqttPublish" | "com.getpcpanel.commands.command.CommandOscSend" | "com.getpcpanel.commands.command.CommandHttpRequest" | "com.getpcpanel.commands.command.CommandProfile" | "com.getpcpanel.commands.command.CommandEndProgram" | "com.getpcpanel.commands.command.CommandRun" | "com.getpcpanel.commands.command.CommandShortcut" | "com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced" | "com.getpcpanel.commands.command.CommandVoiceMeeterAdvancedButton" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasic" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton" | "com.getpcpanel.commands.command.CommandVolumeApplicationDeviceToggle" | "com.getpcpanel.commands.command.CommandVolumeDefaultDevice" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceAdvanced" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggle" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggleAdvanced" | "com.getpcpanel.commands.command.CommandVolumeDevice" | "com.getpcpanel.commands.command.CommandVolumeDeviceMute" | "com.getpcpanel.commands.command.CommandVolumeFocus" | "com.getpcpanel.commands.command.CommandVolumeFocusMute" | "com.getpcpanel.commands.command.CommandVolumeProcess" | "com.getpcpanel.commands.command.CommandVolumeProcessMute" | "com.getpcpanel.wavelink.command.CommandWaveLinkAddFocusToChannel" | "com.getpcpanel.wavelink.command.CommandWaveLinkChangeLevel" | "com.getpcpanel.wavelink.command.CommandWaveLinkChangeMute" | "com.getpcpanel.wavelink.command.CommandWaveLinkChannelEffect" | "com.getpcpanel.wavelink.command.CommandWaveLinkMainOutput";
 }
 
 export interface CommandAnalogBands extends Command, DialAction {
@@ -237,7 +240,7 @@ export interface CommandType {
 }
 
 export interface CommandValueOutput extends Command, DialAction, ButtonAction {
-    _type: "com.getpcpanel.commands.command.CommandHttpRequest" | "com.getpcpanel.commands.command.CommandMqttPublish" | "com.getpcpanel.commands.command.CommandOscSend";
+    _type: "com.getpcpanel.commands.command.CommandMqttPublish" | "com.getpcpanel.commands.command.CommandOscSend" | "com.getpcpanel.commands.command.CommandHttpRequest";
     formula?: string;
     max?: number;
     min?: number;
@@ -400,14 +403,14 @@ export interface ControlAssignmentsUpdateDto {
     releaseButton?: Commands;
 }
 
-export interface CoreCommandModule extends CommandModule {
-}
-
 export interface DeviceAction {
 }
 
 export interface DeviceActionParameters {
     device: string;
+}
+
+export interface DeviceCommandModule extends CommandModule {
 }
 
 export interface DeviceDescriptor {
@@ -543,6 +546,9 @@ export interface DiscordVoiceChannelDto {
     name: string;
 }
 
+export interface EngineCommandModule extends CommandModule {
+}
+
 export interface FocusVolumeOverride {
     includeSource: boolean;
     sources: string[];
@@ -582,6 +588,9 @@ export interface HomeAssistantSettings {
     availability: boolean;
     baseTopic: string;
     enableDiscovery: boolean;
+}
+
+export interface KeyboardCommandModule extends CommandModule {
 }
 
 export interface KnobSetting {
@@ -673,11 +682,17 @@ export interface OSCConnectionInfo {
     port: number;
 }
 
+export interface OutputCommandModule extends CommandModule {
+}
+
 export interface ProcessDto {
     icon?: string;
     name: string;
     path: string;
     pid: number;
+}
+
+export interface ProfileCommandModule extends CommandModule {
 }
 
 export interface ProfileDto {
@@ -700,6 +715,9 @@ export interface ProfileSnapshotDto {
     knobSettings: { [index: string]: KnobSetting };
     name: string;
     releaseButtonData: { [index: string]: Commands };
+}
+
+export interface ProgramCommandModule extends CommandModule {
 }
 
 export interface SerialPortDto {
@@ -788,6 +806,9 @@ export interface SingleSliderLightingConfig {
 }
 
 export interface VoiceMeeterCommandModule extends CommandModule {
+}
+
+export interface VolumeCommandModule extends CommandModule {
 }
 
 export interface WaveLinkAppDto {

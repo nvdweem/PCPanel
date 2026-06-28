@@ -3,7 +3,7 @@ package com.getpcpanel.mutecolor;
 import java.util.Optional;
 
 import com.getpcpanel.commands.Commands;
-import com.getpcpanel.commands.command.CommandVolumeDevice;
+import com.getpcpanel.volume.command.CommandVolumeDevice;
 import com.getpcpanel.cpp.ISndCtrl;
 
 import jakarta.enterprise.context.ApplicationScoped;

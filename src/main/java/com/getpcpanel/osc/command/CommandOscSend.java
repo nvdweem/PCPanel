@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.osc.OSCService;
-import com.getpcpanel.commands.command.CommandValueOutput;
+import com.getpcpanel.output.command.CommandValueOutput;
 import com.getpcpanel.util.CdiHelper;
 
 import lombok.Getter;

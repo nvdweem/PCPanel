@@ -6,7 +6,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.getpcpanel.commands.command.CommandKeystroke.KeystrokeType;
+import com.getpcpanel.keyboard.command.CommandKeystroke;
+import com.getpcpanel.keyboard.command.CommandKeystroke.KeystrokeType;
 
 /**
  * Functional tests for {@link CommandKeystroke}'s two modes and its JSON contract. The execute()

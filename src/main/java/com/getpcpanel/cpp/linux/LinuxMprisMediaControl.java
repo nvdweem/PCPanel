@@ -12,7 +12,7 @@ import org.freedesktop.dbus.connections.impl.DBusConnectionBuilder;
 import org.freedesktop.dbus.interfaces.DBus;
 import org.freedesktop.dbus.interfaces.Properties;
 
-import com.getpcpanel.commands.command.CommandMedia.VolumeButton;
+import com.getpcpanel.keyboard.command.CommandMedia.VolumeButton;
 
 import lombok.extern.log4j.Log4j2;
 

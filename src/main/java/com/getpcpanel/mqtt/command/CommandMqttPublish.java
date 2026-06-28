@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.mqtt.MqttService;
-import com.getpcpanel.commands.command.CommandValueOutput;
+import com.getpcpanel.output.command.CommandValueOutput;
 import com.getpcpanel.util.CdiHelper;
 import com.getpcpanel.util.ValueInterpolator;
 

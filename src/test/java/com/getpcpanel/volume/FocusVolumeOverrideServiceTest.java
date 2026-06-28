@@ -13,7 +13,7 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import com.getpcpanel.commands.command.Command;
-import com.getpcpanel.commands.command.CommandVolumeProcess;
+import com.getpcpanel.volume.command.CommandVolumeProcess;
 import com.getpcpanel.commands.command.DialAction;
 import com.getpcpanel.commands.command.DialAction.DialCommandParams;
 import com.getpcpanel.cpp.AudioDevice;

@@ -149,7 +149,7 @@
       "type": "com.getpcpanel.commands.command.Command"
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandBrightness",
+      "type": "com.getpcpanel.device.command.CommandBrightness",
       "methods": [
         {
           "name": "<init>",
@@ -164,7 +164,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandKeystroke",
+      "type": "com.getpcpanel.keyboard.command.CommandKeystroke",
       "methods": [
         {
           "name": "<init>",
@@ -250,10 +250,10 @@
       ]
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandVolume"
+      "type": "com.getpcpanel.volume.command.CommandVolume"
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceAdvanced",
+      "type": "com.getpcpanel.volume.command.CommandVolumeDefaultDeviceAdvanced",
       "methods": [
         {
           "name": "getCommunicationPb",
@@ -282,7 +282,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceAdvanced$CommandVolumeDefaultDeviceAdvancedBuilder",
+      "type": "com.getpcpanel.volume.command.CommandVolumeDefaultDeviceAdvanced$CommandVolumeDefaultDeviceAdvancedBuilder",
       "methods": [
         {
           "name": "<init>",
@@ -325,7 +325,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandVolumeDeviceMute",
+      "type": "com.getpcpanel.volume.command.CommandVolumeDeviceMute",
       "methods": [
         {
           "name": "<init>",
@@ -345,7 +345,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandVolumeFocus",
+      "type": "com.getpcpanel.volume.command.CommandVolumeFocus",
       "methods": [
         {
           "name": "<init>",
@@ -360,7 +360,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandVolumeProcess",
+      "type": "com.getpcpanel.volume.command.CommandVolumeProcess",
       "fields": [
         {
           "name": "unMuteOnVolumeChange"
@@ -395,7 +395,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.commands.command.CommandVolumeProcessMute",
+      "type": "com.getpcpanel.volume.command.CommandVolumeProcessMute",
       "methods": [
         {
           "name": "<init>",

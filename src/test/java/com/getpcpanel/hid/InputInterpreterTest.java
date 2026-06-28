@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.CommandsType;
 import com.getpcpanel.commands.command.Command;
-import com.getpcpanel.commands.command.CommandVolumeProcessMute;
+import com.getpcpanel.volume.command.CommandVolumeProcessMute;
 import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.profile.BaseLayerService;

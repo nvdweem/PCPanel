@@ -6,7 +6,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.commands.command.Command;
-import com.getpcpanel.commands.command.CommandVolumeProcess;
+import com.getpcpanel.volume.command.CommandVolumeProcess;
 import com.getpcpanel.commands.command.DialAction;
 import com.getpcpanel.commands.command.DialAction.DialActionParameters;
 import com.getpcpanel.cpp.ISndCtrl;

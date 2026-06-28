@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.getpcpanel.commands.command.Command;
-import com.getpcpanel.commands.command.CommandBrightness;
-import com.getpcpanel.commands.command.CoreCommandModule;
+import com.getpcpanel.device.command.CommandBrightness;
+import com.getpcpanel.device.command.DeviceCommandModule;
 import com.getpcpanel.voicemeeter.command.CommandVoiceMeeterAdvanced;
 import com.getpcpanel.voicemeeter.command.VoiceMeeterCommandModule;
 
@@ -29,7 +29,7 @@ class CommandSubtypeRegistrarTest {
     @DisplayName("module-contributed command types deserialize by their id after customize()")
     void registersModuleContributedSubtypes() throws Exception {
         var registrar = new CommandSubtypeRegistrar();
-        registrar.modules = List.of(new CoreCommandModule(), new VoiceMeeterCommandModule());
+        registrar.modules = List.of(new DeviceCommandModule(), new VoiceMeeterCommandModule());
 
         var mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         registrar.customize(mapper);

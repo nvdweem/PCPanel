@@ -1,5 +1,17 @@
 package com.getpcpanel.commands.command;
 
+import com.getpcpanel.keyboard.command.CommandKeystroke;
+import com.getpcpanel.keyboard.command.CommandMedia;
+import com.getpcpanel.profile.command.CommandProfile;
+import com.getpcpanel.program.command.CommandEndProgram;
+import com.getpcpanel.program.command.CommandShortcut;
+import com.getpcpanel.volume.command.CommandVolumeDefaultDevice;
+import com.getpcpanel.volume.command.CommandVolumeDefaultDeviceToggle;
+import com.getpcpanel.volume.command.CommandVolumeDevice;
+import com.getpcpanel.volume.command.CommandVolumeDeviceMute;
+import com.getpcpanel.volume.command.CommandVolumeFocus;
+import com.getpcpanel.volume.command.CommandVolumeProcess;
+import com.getpcpanel.volume.command.CommandVolumeProcessMute;
 import static com.getpcpanel.commands.command.CommandNoOp.NOOP;
 
 import java.util.List;
@@ -8,7 +20,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
-import com.getpcpanel.commands.command.CommandMedia.VolumeButton;
+import com.getpcpanel.keyboard.command.CommandMedia.VolumeButton;
 import com.getpcpanel.commands.command.DialAction.DialCommandParams;
 import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.obs.command.CommandObsMuteSource;

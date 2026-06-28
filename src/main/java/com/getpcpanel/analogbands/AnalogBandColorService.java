@@ -6,7 +6,7 @@ import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.commands.Commands;
-import com.getpcpanel.commands.command.CommandAnalogBands;
+import com.getpcpanel.analogbands.command.CommandAnalogBands;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.profile.BaseLayerService;

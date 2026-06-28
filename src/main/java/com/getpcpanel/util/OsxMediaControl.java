@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.getpcpanel.commands.command.CommandMedia.VolumeButton;
+import com.getpcpanel.keyboard.command.CommandMedia.VolumeButton;
 import com.getpcpanel.platform.MacBuild;
 
 import jakarta.enterprise.context.ApplicationScoped;

@@ -12,7 +12,7 @@ import com.getpcpanel.commands.IconService;
 import com.getpcpanel.commands.PCPanelControlEvent;
 import com.getpcpanel.commands.command.ButtonAction;
 import com.getpcpanel.commands.command.Command;
-import com.getpcpanel.commands.command.CommandVolumeFocus;
+import com.getpcpanel.volume.command.CommandVolumeFocus;
 import com.getpcpanel.commands.command.DialAction;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.device.Device;

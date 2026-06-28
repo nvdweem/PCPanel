@@ -11,9 +11,9 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import com.getpcpanel.commands.Commands;
-import com.getpcpanel.commands.command.AnalogBand;
+import com.getpcpanel.analogbands.command.AnalogBand;
 import com.getpcpanel.commands.command.Command;
-import com.getpcpanel.commands.command.CommandAnalogBands;
+import com.getpcpanel.analogbands.command.CommandAnalogBands;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.hid.BrightnessService;
 import com.getpcpanel.hid.DeviceHolder;

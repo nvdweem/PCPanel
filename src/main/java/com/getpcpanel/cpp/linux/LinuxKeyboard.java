@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.getpcpanel.commands.command.CommandMedia.VolumeButton;
+import com.getpcpanel.keyboard.command.CommandMedia.VolumeButton;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
