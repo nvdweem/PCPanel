@@ -166,6 +166,9 @@ export interface CommandMedia extends Command, ButtonAction {
     spotify: boolean;
 }
 
+export interface CommandModule {
+}
+
 export interface CommandMqttPublish extends CommandValueOutput {
     _type: "com.getpcpanel.commands.command.CommandMqttPublish";
     payload: string;
@@ -217,7 +220,7 @@ export interface CommandRun extends Command, ButtonAction {
 }
 
 export interface Commands {
-    commands: CommandUnion[];
+    commands: Command[];
     type?: CommandsType;
 }
 
@@ -397,6 +400,9 @@ export interface ControlAssignmentsUpdateDto {
     releaseButton?: Commands;
 }
 
+export interface CoreCommandModule extends CommandModule {
+}
+
 export interface DeviceAction {
 }
 
@@ -498,6 +504,9 @@ export interface DiscordAuth {
     userName?: string;
 }
 
+export interface DiscordCommandModule extends CommandModule {
+}
+
 export interface DiscordSeenUser {
     displayName: string;
     id: string;
@@ -541,7 +550,7 @@ export interface FocusVolumeOverride {
 }
 
 export interface FocusVolumeTarget {
-    command: CommandUnion;
+    command: Command;
 }
 
 export interface GlobalLightingSpec {
@@ -550,6 +559,9 @@ export interface GlobalLightingSpec {
     firmwareAnimated: boolean;
     hasGlobalBrightness: boolean;
     supportedModes: string[];
+}
+
+export interface HomeAssistantCommandModule extends CommandModule {
 }
 
 export interface HomeAssistantServer {
@@ -623,6 +635,9 @@ export interface MidiDeviceDto {
     name: string;
 }
 
+export interface MqttCommandModule extends CommandModule {
+}
+
 export interface MqttSettings {
     baseTopic: string;
     enabled: boolean;
@@ -632,6 +647,9 @@ export interface MqttSettings {
     port: number;
     secure: boolean;
     username: string;
+}
+
+export interface ObsCommandModule extends CommandModule {
 }
 
 export interface OnboardingDto {
@@ -645,6 +663,9 @@ export interface OSCBinding {
     max: number;
     min: number;
     toggle: boolean;
+}
+
+export interface OscCommandModule extends CommandModule {
 }
 
 export interface OSCConnectionInfo {
@@ -766,6 +787,9 @@ export interface SingleSliderLightingConfig {
     muteOverrideDeviceOrFollow: string;
 }
 
+export interface VoiceMeeterCommandModule extends CommandModule {
+}
+
 export interface WaveLinkAppDto {
     id: string;
     name: string;
@@ -779,6 +803,9 @@ export interface WaveLinkChannelDto {
     mixes: WaveLinkMixDto[];
     name?: string;
     type?: string;
+}
+
+export interface WaveLinkCommandModule extends CommandModule {
 }
 
 export interface WaveLinkEffectDto {
@@ -914,8 +941,6 @@ export type ButtonType = "MONO" | "MUTE" | "SOLO" | "MC" | "EQ" | "A1" | "A2" | 
 export type CommandCategory = "standard" | "voicemeeter" | "obs" | "wavelink";
 
 export type CommandsType = "allAtOnce" | "sequential";
-
-export type CommandUnion = CommandAnalogBands | CommandBrightness | CommandEndProgram | CommandHttpRequest | CommandKeystroke | CommandMedia | CommandMqttPublish | CommandNoOp | CommandObsAction | CommandObsMuteSource | CommandObsSetScene | CommandObsSetSourceVolume | CommandOscSend | CommandProfile | CommandRun | CommandShortcut | CommandVoiceMeeterAdvanced | CommandVoiceMeeterAdvancedButton | CommandVoiceMeeterBasic | CommandVoiceMeeterBasicButton | CommandVolumeApplicationDeviceToggle | CommandVolumeDefaultDevice | CommandVolumeDefaultDeviceAdvanced | CommandVolumeDefaultDeviceToggle | CommandVolumeDefaultDeviceToggleAdvanced | CommandVolumeDevice | CommandVolumeDeviceMute | CommandVolumeFocus | CommandVolumeFocusMute | CommandVolumeProcess | CommandVolumeProcessMute | CommandDiscordJoinVoice | CommandDiscordLeaveVoice | CommandDiscordMute | CommandDiscordScreenShare | CommandDiscordSelfDeafen | CommandDiscordSelfInputVolume | CommandDiscordSelfMute | CommandDiscordSelfOutputVolume | CommandDiscordToggleVideo | CommandDiscordUserMute | CommandDiscordUserVolume | CommandDiscordVolume | CommandHomeAssistantAction | CommandHomeAssistantValue | CommandWaveLinkAddFocusToChannel | CommandWaveLinkChangeLevel | CommandWaveLinkChangeMute | CommandWaveLinkChannelEffect | CommandWaveLinkMainOutput;
 
 export type ControlType = "STRIP" | "BUS";
 

@@ -5,6 +5,7 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.commands.command.ButtonAction;
@@ -19,6 +20,7 @@ import lombok.ToString;
  */
 @Getter
 @ToString(callSuper = true)
+@JsonTypeName("com.getpcpanel.homeassistant.command.CommandHomeAssistantAction")
 public class CommandHomeAssistantAction extends CommandHomeAssistant implements ButtonAction {
     private final String action;
     @Nullable private final String overlayText;

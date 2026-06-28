@@ -5,6 +5,7 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.osc.OSCService;
 import com.getpcpanel.commands.command.CommandValueOutput;
@@ -20,6 +21,7 @@ import lombok.ToString;
  */
 @Getter
 @ToString(callSuper = true)
+@JsonTypeName("com.getpcpanel.commands.command.CommandOscSend")
 public class CommandOscSend extends CommandValueOutput {
     private final String address;
 

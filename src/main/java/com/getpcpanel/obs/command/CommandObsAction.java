@@ -1,6 +1,7 @@
 package com.getpcpanel.obs.command;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.obs.OBS;
 import com.getpcpanel.commands.command.ButtonAction;
@@ -15,6 +16,7 @@ import lombok.ToString;
  */
 @Getter
 @ToString(callSuper = true)
+@JsonTypeName("com.getpcpanel.commands.command.CommandObsAction")
 public class CommandObsAction extends CommandObs implements ButtonAction {
     private final ObsActionType action;
 

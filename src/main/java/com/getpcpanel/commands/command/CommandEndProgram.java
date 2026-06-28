@@ -1,6 +1,7 @@
 package com.getpcpanel.commands.command;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.util.CdiHelper;
 import com.getpcpanel.util.IPlatformCommand;
@@ -12,6 +13,7 @@ import lombok.extern.log4j.Log4j2;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
+@JsonTypeName("com.getpcpanel.commands.command.CommandEndProgram")
 public class CommandEndProgram extends Command implements ButtonAction {
     private static final Runtime rt = Runtime.getRuntime();
     private final boolean specific;

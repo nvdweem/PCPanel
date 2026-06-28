@@ -5,6 +5,7 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.mqtt.MqttService;
 import com.getpcpanel.commands.command.CommandValueOutput;
@@ -21,6 +22,7 @@ import lombok.ToString;
  */
 @Getter
 @ToString(callSuper = true)
+@JsonTypeName("com.getpcpanel.commands.command.CommandMqttPublish")
 public class CommandMqttPublish extends CommandValueOutput {
     private final String topic;
     private final String payload;

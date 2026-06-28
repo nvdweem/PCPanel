@@ -5,6 +5,7 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.commands.command.ButtonAction;
 import com.getpcpanel.util.CdiHelper;
@@ -15,6 +16,7 @@ import lombok.ToString;
 
 @Getter
 @ToString(callSuper = true)
+@JsonTypeName("com.getpcpanel.commands.command.CommandVoiceMeeterAdvancedButton")
 public class CommandVoiceMeeterAdvancedButton extends CommandVoiceMeeter implements ButtonAction {
     private final String fullParam;
     private final Voicemeeter.ButtonControlMode bt;

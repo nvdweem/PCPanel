@@ -6,7 +6,7 @@ import { DeviceStateService } from '../../services/device-state.service';
 import { DeviceService } from '../../services/device.service';
 import { IntegrationDataService } from '../../features/commands/integration-data.service';
 import { DeviceCapabilitiesService } from '../../services/device-capabilities.service';
-import { Command, CommandUnion, Commands, KnobSetting } from '../../models/generated/backend.types';
+import { Command, Commands, KnobSetting } from '../../models/generated/backend.types';
 import {
   AppPickerComponent, IconComponent, ToggleComponent, ToastService,
 } from '../../ui';
@@ -169,7 +169,7 @@ export class ControlComponent {
   // ── mutations ────────────────────────────────────────────────────────────
   addCommand(def: CommandDef): void {
     const sig = this.currentSlotSignal();
-    const next = { ...sig(), commands: [...sig().commands, def.buildEmpty() as CommandUnion] };
+    const next = { ...sig(), commands: [...sig().commands, def.buildEmpty() as Command] };
     sig.set(next);
     this.expanded.set(next.commands.length - 1);
     this.save();
@@ -184,7 +184,7 @@ export class ControlComponent {
   updateCommand(i: number, cmd: Record<string, any>): void {
     const sig = this.currentSlotSignal();
     const cmds = [...sig().commands];
-    cmds[i] = cmd as unknown as CommandUnion;
+    cmds[i] = cmd as unknown as Command;
     sig.set({ ...sig(), commands: cmds });
     this.save();
   }

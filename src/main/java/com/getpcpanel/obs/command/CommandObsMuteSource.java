@@ -1,6 +1,7 @@
 package com.getpcpanel.obs.command;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.obs.OBS;
@@ -12,6 +13,7 @@ import lombok.ToString;
 
 @Getter
 @ToString(callSuper = true)
+@JsonTypeName("com.getpcpanel.commands.command.CommandObsMuteSource")
 public class CommandObsMuteSource extends CommandObs implements ButtonAction {
     private final String source;
     private final MuteType type;

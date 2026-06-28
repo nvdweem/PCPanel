@@ -1,5 +1,6 @@
 package com.getpcpanel.commands.command;
 
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import javax.annotation.Nullable;
 
 import com.getpcpanel.util.CdiHelper;
@@ -20,6 +21,7 @@ import lombok.extern.log4j.Log4j2;
 @Jacksonized
 @AllArgsConstructor
 @ToString(callSuper = true)
+@JsonTypeName("com.getpcpanel.commands.command.CommandVolumeDefaultDeviceAdvanced")
 public class CommandVolumeDefaultDeviceAdvanced extends CommandVolume implements ButtonAction {
     private final String name;
     private final String mediaPb;

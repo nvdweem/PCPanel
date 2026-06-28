@@ -8,6 +8,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.cpp.AudioDevice;
 import com.getpcpanel.cpp.DataFlow;
@@ -20,6 +21,7 @@ import one.util.streamex.StreamEx;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
+@JsonTypeName("com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggle")
 public class CommandVolumeDefaultDeviceToggle extends CommandVolume implements ButtonAction {
     private final List<String> devices;
     private int currentIdx; // Used as a fallback for when the current idx cannot be found

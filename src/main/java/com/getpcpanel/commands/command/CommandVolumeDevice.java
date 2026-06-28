@@ -1,6 +1,7 @@
 package com.getpcpanel.commands.command;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.cpp.MuteType;
 
@@ -9,6 +10,7 @@ import lombok.ToString;
 
 @Getter
 @ToString(callSuper = true)
+@JsonTypeName("com.getpcpanel.commands.command.CommandVolumeDevice")
 public class CommandVolumeDevice extends CommandVolume implements DialAction {
     private final String deviceId;
     private final boolean unMuteOnVolumeChange;

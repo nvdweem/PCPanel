@@ -10,6 +10,7 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.commands.DeviceSet;
 import com.getpcpanel.cpp.AudioDevice;
@@ -26,6 +27,7 @@ import one.util.streamex.StreamEx;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
+@JsonTypeName("com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggleAdvanced")
 public class CommandVolumeDefaultDeviceToggleAdvanced extends CommandVolume implements ButtonAction {
     private final List<DeviceSet> devices;
     private int currentIdx = -1;

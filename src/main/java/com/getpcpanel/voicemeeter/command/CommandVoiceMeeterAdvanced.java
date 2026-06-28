@@ -1,6 +1,7 @@
 package com.getpcpanel.voicemeeter.command;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.commands.command.DialAction;
 import com.getpcpanel.util.CdiHelper;
@@ -11,6 +12,7 @@ import lombok.ToString;
 
 @Getter
 @ToString(callSuper = true)
+@JsonTypeName("com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced")
 public class CommandVoiceMeeterAdvanced extends CommandVoiceMeeter implements DialAction {
     private final String fullParam;
     private final Voicemeeter.DialControlMode ct;

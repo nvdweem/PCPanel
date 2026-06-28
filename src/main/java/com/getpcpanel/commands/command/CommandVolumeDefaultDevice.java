@@ -3,6 +3,7 @@ package com.getpcpanel.commands.command;
 import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Getter;
@@ -10,6 +11,7 @@ import lombok.ToString;
 
 @Getter
 @ToString(callSuper = true)
+@JsonTypeName("com.getpcpanel.commands.command.CommandVolumeDefaultDevice")
 public class CommandVolumeDefaultDevice extends CommandVolume implements ButtonAction {
     private final String deviceId;
 

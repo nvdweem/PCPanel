@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.commands.command.ButtonAction;
 import com.getpcpanel.discord.DiscordService;
@@ -27,6 +28,7 @@ import lombok.extern.log4j.Log4j2;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
+@JsonTypeName("com.getpcpanel.discord.command.CommandDiscordScreenShare")
 public final class CommandDiscordScreenShare extends CommandDiscord implements ButtonAction {
     public enum Mode { SCREEN, PROCESS, FOCUS }
 

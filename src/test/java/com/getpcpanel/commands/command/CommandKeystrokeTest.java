@@ -16,7 +16,13 @@ import com.getpcpanel.commands.command.CommandKeystroke.KeystrokeType;
  */
 @DisplayName("CommandKeystroke key vs text modes")
 class CommandKeystrokeTest {
+    // Command polymorphism is registered per-class (@JsonTypeName) + via the CommandModule SPI at
+    // runtime, so a bare mapper must be told about the subtype it deserializes.
     private final ObjectMapper mapper = new ObjectMapper();
+
+    {
+        mapper.registerSubtypes(CommandKeystroke.class);
+    }
 
     @Test
     @DisplayName("legacy JSON without a 'type' field deserializes as a KEY keystroke")

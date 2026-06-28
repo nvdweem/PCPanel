@@ -3,6 +3,7 @@ package com.getpcpanel.discord.command;
 import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.commands.command.DialAction;
 
@@ -14,6 +15,7 @@ import lombok.extern.log4j.Log4j2;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
+@JsonTypeName("com.getpcpanel.discord.command.CommandDiscordSelfInputVolume")
 public final class CommandDiscordSelfInputVolume extends CommandDiscord implements DialAction {
     @Nullable private final DialCommandParams dialParams;
     private final boolean unmuteOnChange;

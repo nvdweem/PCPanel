@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.cpp.MuteType;
 
@@ -12,6 +13,7 @@ import lombok.ToString;
 
 @Getter
 @ToString(callSuper = true)
+@JsonTypeName("com.getpcpanel.commands.command.CommandVolumeProcess")
 public class CommandVolumeProcess extends CommandVolume implements DialAction {
     private final List<String> processName;
     private final String device;

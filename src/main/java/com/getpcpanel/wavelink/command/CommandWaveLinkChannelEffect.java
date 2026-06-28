@@ -6,6 +6,7 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.commands.command.ButtonAction;
 import com.getpcpanel.cpp.MuteType;
@@ -19,6 +20,7 @@ import one.util.streamex.StreamEx;
 @Getter
 @Log4j2
 @ToString(callSuper = true)
+@JsonTypeName("com.getpcpanel.wavelink.command.CommandWaveLinkChannelEffect")
 public final class CommandWaveLinkChannelEffect extends CommandWaveLink implements ButtonAction {
     @Nullable private final String channelId;
     @Nullable private final String channelName;
