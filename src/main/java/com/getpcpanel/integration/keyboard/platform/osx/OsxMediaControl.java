@@ -24,12 +24,12 @@ import lombok.extern.log4j.Log4j2;
 @ApplicationScoped
 @MacBuild
 @RequiredArgsConstructor
-public class OsxMediaControl {
+class OsxMediaControl {
     private static final AtomicBoolean warnedFailure = new AtomicBoolean();
     private final ProcessHelper processHelper;
     private final Set<VolumeButton> warnedUnsupported = ConcurrentHashMap.newKeySet();
 
-    public void execute(VolumeButton button, boolean spotify) {
+    void execute(VolumeButton button, boolean spotify) {
         var verb = switch (button) {
             case playPause -> "playpause";
             case next -> "next track";

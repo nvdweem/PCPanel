@@ -1,43 +1,60 @@
 package com.getpcpanel.integration.keyboard.platform.windows;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
+import com.getpcpanel.integration.keyboard.Keyboard;
+import com.getpcpanel.integration.keyboard.command.CommandMedia.VolumeButton;
+import com.getpcpanel.integration.volume.platform.ISndCtrl;
+import com.getpcpanel.integration.volume.platform.windows.SndCtrlWindows;
+import com.getpcpanel.platform.WindowsBuild;
 import com.sun.jna.platform.win32.BaseTSD;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.platform.win32.WinUser;
+import com.sun.jna.ptr.IntByReference;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
+import one.util.streamex.StreamEx;
 
 /**
- * Synthesises keystrokes on Windows through {@code User32.SendInput} (the same Win32 path
- * {@link com.getpcpanel.commands.command.CommandMedia} uses for media keys), replacing
- * {@link java.awt.Robot} so the native image never needs the AWT windowing toolkit.
+ * Windows {@link Keyboard} backend: synthesises keystrokes and media keys through
+ * {@code User32.SendInput}, replacing {@link java.awt.Robot} so the native image never needs the AWT
+ * windowing toolkit.
  *
- * <p>The input string is the cross-platform "{@code modifier+modifier+key}" format parsed by
- * {@link com.getpcpanel.commands.KeyMacro}; tokens are the AWT {@code VK_}-suffix names. They are
- * mapped here to Win32 virtual-key codes and posted as keydown/keyup {@code KEYBDINPUT} events.
+ * <p>The keystroke input is the cross-platform "{@code modifier+modifier+key}" format; tokens are the
+ * AWT {@code VK_}-suffix names, mapped here to Win32 virtual-key codes and posted as keydown/keyup
+ * {@code KEYBDINPUT} events. Media keys post the global multimedia virtual key, except Spotify-targeted
+ * actions which locate the Spotify window and send it a {@code WM_APPCOMMAND}.
  */
 @Log4j2
-public final class WindowsKeyboard {
+@ApplicationScoped
+@WindowsBuild
+class WindowsKeyboard implements Keyboard {
     private static final int KEYEVENTF_KEYUP = 0x0002;
     private static final int KEYEVENTF_UNICODE = 0x0004;
     private static final int VK_RETURN = 0x0D;
     private static final int VK_TAB = 0x09;
+    private static final int WM_APPCOMMAND = 0x0319;
 
     /** AWT-VK-style token (the part after {@code VK_}) → Win32 virtual-key code, for non-trivial keys. */
     private static final Map<String, Integer> KEY_CODES = buildKeyCodes();
 
-    private WindowsKeyboard() {
-    }
+    @Inject
+    SndCtrlWindows sndCtrl;
 
-    public static void executeKeyStroke(String input) {
+    @Override
+    public void executeKeyStroke(String input) {
         if (input == null || input.contains("UNDEFINED")) {
             return;
         }
         var parts = input.replace(" ", "").split("\\+");
-        var pressed = new java.util.ArrayList<Integer>();
+        var pressed = new ArrayList<Integer>();
         try {
             for (var i = 0; i < parts.length - 1; i++) {
                 var vk = modifierVk(parts[i]);
@@ -75,7 +92,8 @@ public final class WindowsKeyboard {
      * astral-plane characters are delivered as their two code units in order). Newlines and tabs are
      * sent as real {@code VK_RETURN}/{@code VK_TAB} presses since the Unicode path does not produce them.
      */
-    public static void typeText(String text) {
+    @Override
+    public void typeText(String text) {
         if (text == null || text.isEmpty()) {
             return;
         }
@@ -92,6 +110,60 @@ public final class WindowsKeyboard {
         } catch (Throwable e) { // UnsatisfiedLinkError if user32 is somehow missing
             log.error("Unable to type text on Windows", e);
         }
+    }
+
+    @Override
+    public void sendMediaKey(VolumeButton button, boolean spotify) {
+        if (spotify) {
+            sendSpotifyAppCommand(button);
+        } else {
+            sendGlobalMediaKey(button);
+        }
+    }
+
+    /** Posts the global multimedia virtual key (routed by Windows to the foreground media session). */
+    private void sendGlobalMediaKey(VolumeButton button) {
+        var input = new WinUser.INPUT();
+        input.type = new WinDef.DWORD(WinUser.INPUT.INPUT_KEYBOARD);
+        input.input.setType("ki");
+        input.input.ki.wScan = new WinDef.WORD(0);
+        input.input.ki.time = new WinDef.DWORD(0);
+        input.input.ki.dwExtraInfo = new BaseTSD.ULONG_PTR(0);
+        input.input.ki.wVk = new WinDef.WORD(mediaVk(button));
+        input.input.ki.dwFlags = new WinDef.DWORD(0);  // keydown
+        User32.INSTANCE.SendInput(new WinDef.DWORD(1), (WinUser.INPUT[]) input.toArray(1), input.size());
+        input.input.ki.dwFlags = new WinDef.DWORD(KEYEVENTF_KEYUP);
+        User32.INSTANCE.SendInput(new WinDef.DWORD(1), (WinUser.INPUT[]) input.toArray(1), input.size());
+    }
+
+    /** Sends the media action straight to the Spotify window via {@code WM_APPCOMMAND}. */
+    private void sendSpotifyAppCommand(VolumeButton button) {
+        var spotifyWnd = findSpotify();
+        if (spotifyWnd == null) {
+            log.warn("Spotify media command: no Spotify window found, nothing sent");
+            return;
+        }
+        User32.INSTANCE.SendMessage(spotifyWnd, WM_APPCOMMAND, new WinDef.WPARAM(0), new WinDef.LPARAM(appCommand(button)));
+    }
+
+    private WinDef.HWND findSpotify() {
+        var result = new WinDef.HWND[] { null };
+        var apps = sndCtrl.getRunningApplications();
+        var pidIsSpotify = StreamEx.of(apps).mapToEntry(ISndCtrl.RunningApplication::pid, ra -> StringUtils.equalsIgnoreCase("spotify.exe", ra.file().getName())).distinctKeys().toMap();
+        var spotifyPids = pidIsSpotify.entrySet().stream().filter(Map.Entry::getValue).map(Map.Entry::getKey).toList();
+        var windowsSeen = new int[] { 0 };
+        User32.INSTANCE.EnumWindows((hWnd, data) -> {
+            windowsSeen[0]++;
+            var target = new IntByReference();
+            User32.INSTANCE.GetWindowThreadProcessId(hWnd, target);
+            if (pidIsSpotify.getOrDefault(target.getValue(), false)) {
+                result[0] = hWnd;
+                return false;
+            }
+            return true;
+        }, null);
+        log.debug("findSpotify: {} running apps, spotify pids={}, windows enumerated={}, match={}", apps.size(), spotifyPids, windowsSeen[0], result[0]);
+        return result[0];
     }
 
     private static void sendUnicode(char c, boolean keyUp) {
@@ -116,6 +188,28 @@ public final class WindowsKeyboard {
         input.input.ki.wVk = new WinDef.WORD(vk);
         input.input.ki.dwFlags = new WinDef.DWORD(keyUp ? KEYEVENTF_KEYUP : 0);
         User32.INSTANCE.SendInput(new WinDef.DWORD(1), (WinUser.INPUT[]) input.toArray(1), input.size());
+    }
+
+    /** Global multimedia virtual-key code (VK_MEDIA_... / VK_VOLUME_MUTE) for a media button. */
+    private static int mediaVk(VolumeButton button) {
+        return switch (button) {
+            case mute -> 0xAD;       // VK_VOLUME_MUTE
+            case next -> 0xB0;       // VK_MEDIA_NEXT_TRACK
+            case prev -> 0xB1;       // VK_MEDIA_PREV_TRACK
+            case stop -> 0xB2;       // VK_MEDIA_STOP
+            case playPause -> 0xB3;  // VK_MEDIA_PLAY_PAUSE
+        };
+    }
+
+    /** {@code APPCOMMAND_*} lParam (shifted into the high word) for a Spotify {@code WM_APPCOMMAND}. */
+    private static int appCommand(VolumeButton button) {
+        return switch (button) {
+            case mute -> 0x80000;       // APPCOMMAND_VOLUME_MUTE
+            case next -> 0xB0000;       // APPCOMMAND_MEDIA_NEXTTRACK
+            case prev -> 0xC0000;       // APPCOMMAND_MEDIA_PREVIOUSTRACK
+            case stop -> 0xD0000;       // APPCOMMAND_MEDIA_STOP
+            case playPause -> 0xE0000;  // APPCOMMAND_MEDIA_PLAY_PAUSE
+        };
     }
 
     static int modifierVk(String mod) {

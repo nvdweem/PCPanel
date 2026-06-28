@@ -18,7 +18,6 @@ import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.getpcpanel.integration.keyboard.platform.linux.LinuxKeyboard;
 import com.sun.jna.Library;
 
 /**
@@ -146,7 +145,7 @@ class ProxyRegistrationCoverageTest {
 
     /** The {@code target/classes} root of the MAIN sources (not {@code test-classes}), via a known main class. */
     private static Path projectMainClassesRoot() throws Exception {
-        var location = LinuxKeyboard.class.getProtectionDomain().getCodeSource().getLocation();
+        var location = com.getpcpanel.commands.command.Command.class.getProtectionDomain().getCodeSource().getLocation();
         return Path.of(location.toURI());
     }
 

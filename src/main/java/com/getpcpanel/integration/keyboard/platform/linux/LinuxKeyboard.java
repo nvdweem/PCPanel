@@ -4,29 +4,34 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.getpcpanel.integration.keyboard.Keyboard;
 import com.getpcpanel.integration.keyboard.command.CommandMedia.VolumeButton;
+import com.getpcpanel.platform.LinuxBuild;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import lombok.extern.log4j.Log4j2;
 
 /**
- * Synthesises keystrokes on Linux through the X11 {@code XTEST} extension
+ * Linux {@link Keyboard} backend: synthesises keystrokes through the X11 {@code XTEST} extension
  * ({@code XTestFakeKeyEvent}) — the exact mechanism {@link java.awt.Robot} uses on X11 — so the
  * native image no longer needs the AWT windowing toolkit.
  *
- * <p>The input string is the cross-platform "{@code modifier+modifier+key}" format parsed by
- * {@link com.getpcpanel.commands.KeyMacro}; tokens (AWT {@code VK_}-suffix names) are mapped to X11
- * keysyms, resolved to keycodes via the current keyboard mapping, then pressed/released.
+ * <p>The input string is the cross-platform "{@code modifier+modifier+key}" format; tokens (AWT
+ * {@code VK_}-suffix names) are mapped to X11 keysyms, resolved to keycodes via the current keyboard
+ * mapping, then pressed/released.
  *
  * <p>Works against an X server (native X11 or XWayland). On a pure Wayland session with no X server
  * {@code XOpenDisplay} returns null and keystrokes are skipped with a warning.
  */
 @Log4j2
-public final class LinuxKeyboard {
+@ApplicationScoped
+@LinuxBuild
+class LinuxKeyboard implements Keyboard {
     private interface X11 extends Library {
         X11 INSTANCE = Native.load("X11", X11.class);
 
@@ -75,10 +80,8 @@ public final class LinuxKeyboard {
     private static byte shiftKeycode;
     private static byte altGrKeycode;
 
-    private LinuxKeyboard() {
-    }
-
-    public static void executeKeyStroke(String input) {
+    @Override
+    public void executeKeyStroke(String input) {
         if (input == null || input.contains("UNDEFINED")) {
             return;
         }
@@ -131,9 +134,11 @@ public final class LinuxKeyboard {
      *
      * <p>On a pure Wayland session with no X server there is nothing to inject into, so this falls back
      * to controlling the active player directly through MPRIS on the session D-Bus
-     * ({@link LinuxMprisMediaControl}).
+     * ({@link LinuxMprisMediaControl}). The {@code spotify} flag is irrelevant on Linux — the desktop
+     * already routes the global media key to whichever player is active (Spotify included via MPRIS).
      */
-    public static void sendMediaKey(VolumeButton button) {
+    @Override
+    public void sendMediaKey(VolumeButton button, boolean spotify) {
         var keysym = mediaKeysym(button);
         synchronized (LOCK) {
             var disp = display();
@@ -162,7 +167,8 @@ public final class LinuxKeyboard {
      * not present on the current layout fall back to the {@code xdotool}-style spare-keycode remap, which
      * still works on a plain X server (but generally not through the Wayland bridge).
      */
-    public static void typeText(String input) {
+    @Override
+    public void typeText(String input) {
         if (input == null || input.isEmpty()) {
             return;
         }

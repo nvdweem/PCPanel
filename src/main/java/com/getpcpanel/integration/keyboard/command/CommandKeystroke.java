@@ -10,7 +10,8 @@ import com.getpcpanel.commands.meta.CommandCategory;
 import com.getpcpanel.commands.meta.CommandKind;
 import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.getpcpanel.commands.KeyMacro;
+import com.getpcpanel.integration.keyboard.Keyboard;
+import com.getpcpanel.util.CdiHelper;
 
 import lombok.Getter;
 import lombok.ToString;
@@ -20,7 +21,7 @@ import lombok.extern.log4j.Log4j2;
  * Button action that synthesises keyboard input. Two flavours, selected by {@link #type}:
  * <ul>
  *     <li>{@link KeystrokeType#KEY} — presses a single key combination such as {@code ctrl+shift+A}
- *     (the cross-platform "{@code modifier+modifier+key}" format parsed by {@link KeyMacro}).</li>
+ *     (the cross-platform "{@code modifier+modifier+key}" format the {@link Keyboard} backend parses).</li>
  *     <li>{@link KeystrokeType#TEXT} — types an arbitrary string character-by-character.</li>
  * </ul>
  * Profiles saved before this field existed deserialize with a {@code null} {@code type}, which
@@ -54,10 +55,11 @@ public class CommandKeystroke extends Command implements ButtonAction {
 
     @Override
     public void execute() {
+        var keyboard = CdiHelper.getBean(Keyboard.class);
         if (type == KeystrokeType.TEXT) {
-            KeyMacro.typeText(text);
+            keyboard.typeText(text);
         } else {
-            KeyMacro.executeKeyStroke(keystroke);
+            keyboard.executeKeyStroke(keystroke);
         }
     }
 

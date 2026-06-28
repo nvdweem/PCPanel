@@ -2,17 +2,26 @@ package com.getpcpanel.integration.keyboard.platform.osx;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.getpcpanel.integration.keyboard.Keyboard;
+import com.getpcpanel.integration.keyboard.command.CommandMedia.VolumeButton;
+import com.getpcpanel.platform.MacBuild;
+import com.getpcpanel.util.OsxPermissionHelper;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 
 /**
- * Synthesises keystrokes on macOS through CoreGraphics {@code CGEvent}s, replacing {@link java.awt.Robot}
- * (AWT is unavailable in the macOS GraalVM native image).
+ * macOS {@link Keyboard} backend: synthesises keystrokes through CoreGraphics {@code CGEvent}s,
+ * replacing {@link java.awt.Robot} (AWT is unavailable in the macOS GraalVM native image). Media keys
+ * delegate to {@link OsxMediaControl} (AppleScript), since macOS has no media-key API safely reachable
+ * from Java.
  *
  * <p>Architecture independent: every native handle is passed as an opaque {@link Pointer} and every
  * scalar uses a fixed C width (CGKeyCode = uint16, CGEventTapLocation = uint32, CGEventFlags = uint64),
@@ -24,9 +33,13 @@ import lombok.extern.log4j.Log4j2;
  * {@link com.getpcpanel.util.OsxPermissionHelper#isAccessibilityGranted()}.
  */
 @Log4j2
-public final class OsxKeyboard {
-    private OsxKeyboard() {
-    }
+@ApplicationScoped
+@MacBuild
+class OsxKeyboard implements Keyboard {
+    private final AtomicBoolean accessibilityWarned = new AtomicBoolean();
+
+    @Inject
+    OsxMediaControl mediaControl;
 
     private interface CoreGraphics extends Library {
         CoreGraphics INSTANCE = Native.load("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics", CoreGraphics.class);
@@ -65,14 +78,16 @@ public final class OsxKeyboard {
     private static final Map<String, Short> KEY_CODES = buildKeyCodes();
 
     /**
-     * Executes a "{@code modifier+modifier+key}" combination (the same string format the cross-platform
-     * {@link com.getpcpanel.commands.KeyMacro} parses) by posting a key-down then key-up CGEvent with the
-     * modifiers folded into the event flags. Unknown keys are logged and skipped rather than throwing.
+     * Executes a "{@code modifier+modifier+key}" combination by posting a key-down then key-up CGEvent
+     * with the modifiers folded into the event flags. Unknown keys are logged and skipped rather than
+     * throwing.
      */
-    public static void executeKeyStroke(String input) {
+    @Override
+    public void executeKeyStroke(String input) {
         if (input == null || input.contains("UNDEFINED")) {
             return;
         }
+        warnIfAccessibilityNotGranted();
         var parts = input.replace(" ", "").split("\\+");
         long flags = 0;
         for (var i = 0; i < parts.length - 1; i++) {
@@ -100,10 +115,12 @@ public final class OsxKeyboard {
      * which is layout-independent. Newlines and tabs are sent as real Return/Tab key codes since the
      * Unicode-string path does not synthesise them.
      */
-    public static void typeText(String text) {
+    @Override
+    public void typeText(String text) {
         if (text == null || text.isEmpty()) {
             return;
         }
+        warnIfAccessibilityNotGranted();
         try {
             for (var i = 0; i < text.length(); i++) {
                 var c = text.charAt(i);
@@ -116,6 +133,17 @@ public final class OsxKeyboard {
             }
         } catch (Throwable e) { // UnsatisfiedLinkError if the frameworks are somehow missing
             log.error("Unable to type text on macOS", e);
+        }
+    }
+
+    @Override
+    public void sendMediaKey(VolumeButton button, boolean spotify) {
+        mediaControl.execute(button, spotify);
+    }
+
+    private void warnIfAccessibilityNotGranted() {
+        if (!OsxPermissionHelper.isAccessibilityGranted() && accessibilityWarned.compareAndSet(false, true)) {
+            log.warn("Keystrokes require Accessibility permission: System Settings > Privacy & Security > Accessibility > enable PCPanel");
         }
     }
 
