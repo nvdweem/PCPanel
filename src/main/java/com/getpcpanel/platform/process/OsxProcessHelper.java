@@ -17,7 +17,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 
 import com.getpcpanel.platform.IProcessHelper;
 import com.getpcpanel.platform.MacBuild;
-import com.getpcpanel.util.ProcessHelper;
+import com.getpcpanel.util.os.ProcessHelper;
 
 import io.quarkus.arc.Unremovable;
 import jakarta.enterprise.context.ApplicationScoped;

@@ -11,7 +11,7 @@
   {"interfaces": ["com.getpcpanel.sleepdetection.Win32PowerNotify"]},
   {"interfaces": ["com.getpcpanel.sleepdetection.LinuxX11$LibX11"]},
   {"interfaces": ["com.getpcpanel.sleepdetection.LinuxX11$LibXext"]},
-  {"interfaces": ["com.getpcpanel.util.Kernel32Console"]},
+  {"interfaces": ["com.getpcpanel.util.os.Kernel32Console"]},
   {"interfaces": ["com.sun.jna.platform.win32.Kernel32"]},
   {"interfaces": ["com.sun.jna.platform.win32.User32"]},
   {"interfaces": ["com.sun.jna.platform.win32.Shell32"]},
@@ -30,6 +30,6 @@
   {"interfaces": ["com.sun.jna.platform.mac.CoreFoundation"]},
   {"interfaces": ["com.getpcpanel.integration.keyboard.platform.osx.OsxKeyboard$CoreGraphics"]},
   {"interfaces": ["com.getpcpanel.integration.keyboard.platform.osx.OsxKeyboard$CoreFoundation"]},
-  {"interfaces": ["com.getpcpanel.util.OsxPermissionHelper$ApplicationServicesLib"]},
-  {"interfaces": ["com.getpcpanel.util.OsxPermissionHelper$IOKitLib"]}
+  {"interfaces": ["com.getpcpanel.util.os.OsxPermissionHelper$ApplicationServicesLib"]},
+  {"interfaces": ["com.getpcpanel.util.os.OsxPermissionHelper$IOKitLib"]}
 ]

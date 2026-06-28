@@ -15,8 +15,8 @@ import com.getpcpanel.integration.volume.platform.AudioSession;
 import com.getpcpanel.integration.volume.platform.ISndCtrl;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
-import com.getpcpanel.util.Debouncer;
-import com.getpcpanel.util.ReconnectBackoff;
+import com.getpcpanel.util.concurrent.Debouncer;
+import com.getpcpanel.util.concurrent.ReconnectBackoff;
 import com.getpcpanel.integration.volume.IFocusRedirector;
 
 import jakarta.enterprise.inject.Instance;

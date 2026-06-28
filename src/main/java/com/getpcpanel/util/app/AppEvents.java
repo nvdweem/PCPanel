@@ -1,4 +1,4 @@
-package com.getpcpanel.util;
+package com.getpcpanel.util.app;
 
 import io.quarkus.runtime.Startup;
 import jakarta.annotation.PostConstruct;

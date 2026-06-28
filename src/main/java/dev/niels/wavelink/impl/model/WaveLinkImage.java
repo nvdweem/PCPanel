@@ -7,7 +7,7 @@ import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.getpcpanel.util.PngDecoder;
+import com.getpcpanel.util.image.PngDecoder;
 
 import lombok.extern.log4j.Log4j2;
 

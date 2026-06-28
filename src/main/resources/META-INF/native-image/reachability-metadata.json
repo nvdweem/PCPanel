@@ -3223,22 +3223,22 @@
       "type": "com.getpcpanel.sleepdetection.WindowsSystemEventService"
     },
     {
-      "type": "com.getpcpanel.util.AppEvents"
+      "type": "com.getpcpanel.util.app.AppEvents"
     },
     {
-      "type": "com.getpcpanel.util.AppShutdownState"
+      "type": "com.getpcpanel.util.app.AppShutdownState"
     },
     {
       "type": "com.getpcpanel.util.CdiHelper"
     },
     {
-      "type": "com.getpcpanel.util.Debouncer"
+      "type": "com.getpcpanel.util.concurrent.Debouncer"
     },
     {
-      "type": "com.getpcpanel.util.ExtractUtil"
+      "type": "com.getpcpanel.util.io.ExtractUtil"
     },
     {
-      "type": "com.getpcpanel.util.FileUtil"
+      "type": "com.getpcpanel.util.io.FileUtil"
     },
     {
       "type": "com.getpcpanel.integration.program.IPlatformCommand"
@@ -3247,7 +3247,7 @@
       "type": "com.getpcpanel.integration.program.IPlatformCommand$WindowsPlatformCommand"
     },
     {
-      "type": "com.getpcpanel.util.ProcessHelper"
+      "type": "com.getpcpanel.util.os.ProcessHelper"
     },
     {
       "type": "com.getpcpanel.profile.ShortcutHook"

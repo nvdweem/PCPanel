@@ -1,4 +1,4 @@
-package com.getpcpanel.util;
+package com.getpcpanel.util.io;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

@@ -10,7 +10,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 import com.getpcpanel.rest.model.dto.OnboardingDto;
-import com.getpcpanel.util.StartupOnboarding;
+import com.getpcpanel.util.app.StartupOnboarding;
 
 import io.quarkus.runtime.Quarkus;
 import lombok.extern.log4j.Log4j2;

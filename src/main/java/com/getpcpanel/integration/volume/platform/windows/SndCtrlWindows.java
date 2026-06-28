@@ -23,7 +23,7 @@ import com.getpcpanel.integration.volume.platform.MuteType;
 import com.getpcpanel.integration.volume.platform.Role;
 import com.getpcpanel.platform.WindowsBuild;
 import com.getpcpanel.profile.WindowFocusChangedEvent;
-import com.getpcpanel.util.ExtractUtil;
+import com.getpcpanel.util.io.ExtractUtil;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;

@@ -1,4 +1,4 @@
-package com.getpcpanel.util;
+package com.getpcpanel.util.image;
 
 /**
  * Image resources stub — JavaFX removed as part of Quarkus migration.

@@ -1,4 +1,4 @@
-package com.getpcpanel.util;
+package com.getpcpanel.util.concurrent;
 
 /**
  * Exponential-backoff gate for the integration reconnect loops (OBS, Wave Link, …). Each integration

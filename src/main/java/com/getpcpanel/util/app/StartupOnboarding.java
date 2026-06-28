@@ -1,4 +1,4 @@
-package com.getpcpanel.util;
+package com.getpcpanel.util.app;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.microprofile.config.inject.ConfigProperty;

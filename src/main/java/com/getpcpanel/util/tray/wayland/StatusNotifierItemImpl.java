@@ -2,8 +2,8 @@ package com.getpcpanel.util.tray.wayland;
 
 import static com.getpcpanel.util.tray.wayland.TrayServiceWayland.SNI_BUS_NAME;
 
-import com.getpcpanel.util.AppEvents;
-import com.getpcpanel.util.ShowMainEvent;
+import com.getpcpanel.util.app.AppEvents;
+import com.getpcpanel.util.app.ShowMainEvent;
 
 import org.freedesktop.dbus.annotations.DBusInterfaceName;
 import lombok.extern.log4j.Log4j2;

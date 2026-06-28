@@ -20,7 +20,7 @@ import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.device.descriptor.DeviceDescriptor;
 import com.getpcpanel.device.descriptor.DiscoveryMode;
 import com.getpcpanel.device.provider.DeviceProvider;
-import com.getpcpanel.util.OsxPermissionHelper;
+import com.getpcpanel.util.os.OsxPermissionHelper;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;

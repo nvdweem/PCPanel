@@ -6,7 +6,7 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
-import com.getpcpanel.util.ReconnectBackoff;
+import com.getpcpanel.util.concurrent.ReconnectBackoff;
 
 import io.quarkus.scheduler.Scheduled;
 import jakarta.annotation.PreDestroy;

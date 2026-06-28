@@ -27,7 +27,7 @@ import com.getpcpanel.rest.model.ws.WsLightingChangedEvent;
 import com.getpcpanel.rest.model.ws.WsNewVersionAvailableEvent;
 import com.getpcpanel.rest.model.ws.WsProfileSwitchedEvent;
 import com.getpcpanel.rest.model.ws.WsVisualColorsChangedEvent;
-import com.getpcpanel.util.AppShutdownState;
+import com.getpcpanel.util.app.AppShutdownState;
 import com.getpcpanel.util.version.VersionChecker.NewVersionAvailableEvent;
 
 import jakarta.enterprise.context.ApplicationScoped;

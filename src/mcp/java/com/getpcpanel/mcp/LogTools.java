@@ -11,7 +11,7 @@ import jakarta.inject.Inject;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.getpcpanel.util.FileUtil;
+import com.getpcpanel.util.io.FileUtil;
 
 import io.quarkus.arc.properties.IfBuildProperty;
 import io.quarkiverse.mcp.server.Tool;

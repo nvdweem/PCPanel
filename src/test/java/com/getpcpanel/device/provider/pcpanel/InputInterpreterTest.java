@@ -22,7 +22,7 @@ import com.getpcpanel.profile.BaseLayerService;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.Save;
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.util.Debouncer;
+import com.getpcpanel.util.concurrent.Debouncer;
 
 import jakarta.enterprise.event.Event;
 import jakarta.enterprise.event.NotificationOptions;

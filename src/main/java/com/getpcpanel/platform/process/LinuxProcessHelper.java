@@ -20,7 +20,7 @@ import javax.annotation.Nullable;
 
 import com.getpcpanel.platform.IProcessHelper;
 import com.getpcpanel.platform.LinuxBuild;
-import com.getpcpanel.util.ProcessHelper;
+import com.getpcpanel.util.os.ProcessHelper;
 
 import io.quarkus.arc.Unremovable;
 import jakarta.annotation.PostConstruct;

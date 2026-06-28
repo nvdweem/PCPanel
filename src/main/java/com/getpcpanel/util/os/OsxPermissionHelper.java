@@ -1,4 +1,4 @@
-package com.getpcpanel.util;
+package com.getpcpanel.util.os;
 
 import org.apache.commons.lang3.SystemUtils;
 

@@ -14,7 +14,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import javax.annotation.Nullable;
 
 import com.getpcpanel.platform.LinuxBuild;
-import com.getpcpanel.util.ProcessHelper;
+import com.getpcpanel.util.os.ProcessHelper;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;

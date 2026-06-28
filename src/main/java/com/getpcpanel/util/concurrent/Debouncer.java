@@ -1,4 +1,4 @@
-package com.getpcpanel.util;
+package com.getpcpanel.util.concurrent;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

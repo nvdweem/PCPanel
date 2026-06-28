@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.getpcpanel.integration.keyboard.Keyboard;
 import com.getpcpanel.integration.keyboard.command.CommandMedia.VolumeButton;
 import com.getpcpanel.platform.MacBuild;
-import com.getpcpanel.util.OsxPermissionHelper;
+import com.getpcpanel.util.os.OsxPermissionHelper;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
@@ -30,7 +30,7 @@ import lombok.extern.log4j.Log4j2;
  *
  * <p>Requires the Accessibility permission (System Settings &gt; Privacy &amp; Security &gt; Accessibility);
  * without it macOS silently drops the synthesised events. See
- * {@link com.getpcpanel.util.OsxPermissionHelper#isAccessibilityGranted()}.
+ * {@link com.getpcpanel.util.os.OsxPermissionHelper#isAccessibilityGranted()}.
  */
 @Log4j2
 @ApplicationScoped

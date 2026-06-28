@@ -11,7 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.integration.keyboard.command.CommandMedia.VolumeButton;
 import com.getpcpanel.platform.MacBuild;
-import com.getpcpanel.util.ProcessHelper;
+import com.getpcpanel.util.os.ProcessHelper;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.RequiredArgsConstructor;

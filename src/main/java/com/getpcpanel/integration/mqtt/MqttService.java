@@ -29,7 +29,7 @@ import org.eclipse.paho.mqttv5.common.packet.MqttProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.integration.mqtt.dto.MqttSettings;
-import com.getpcpanel.util.Debouncer;
+import com.getpcpanel.util.concurrent.Debouncer;
 
 import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;

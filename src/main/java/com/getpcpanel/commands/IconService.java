@@ -27,7 +27,7 @@ import com.getpcpanel.integration.volume.command.CommandVolumeProcess;
 import com.getpcpanel.integration.volume.platform.ISndCtrl;
 import com.getpcpanel.iconextract.IIconService;
 import com.getpcpanel.profile.dto.KnobSetting;
-import com.getpcpanel.util.PngDecoder;
+import com.getpcpanel.util.image.PngDecoder;
 
 import io.quarkus.arc.All;
 import io.quarkus.cache.CacheResult;

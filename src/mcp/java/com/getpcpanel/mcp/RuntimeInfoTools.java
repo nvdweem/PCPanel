@@ -12,7 +12,7 @@ import com.getpcpanel.device.provider.DeviceProvider;
 import com.getpcpanel.integration.mqtt.MqttService;
 import com.getpcpanel.integration.obs.OBS;
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.util.FileUtil;
+import com.getpcpanel.util.io.FileUtil;
 import com.getpcpanel.integration.voicemeeter.Voicemeeter;
 import com.getpcpanel.integration.wavelink.WaveLinkService;
 

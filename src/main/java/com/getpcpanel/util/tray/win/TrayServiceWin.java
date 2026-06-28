@@ -6,9 +6,9 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import com.getpcpanel.platform.WindowsBuild;
-import com.getpcpanel.util.FileUtil;
-import com.getpcpanel.util.OpenFolderEvent;
-import com.getpcpanel.util.ShowMainEvent;
+import com.getpcpanel.util.io.FileUtil;
+import com.getpcpanel.util.app.OpenFolderEvent;
+import com.getpcpanel.util.app.ShowMainEvent;
 import com.getpcpanel.util.tray.ITrayService;
 import com.getpcpanel.util.tray.awt.AwtTrayImpl;
 import com.sun.jna.Memory;

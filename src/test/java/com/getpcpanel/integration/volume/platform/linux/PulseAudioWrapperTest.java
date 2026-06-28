@@ -8,7 +8,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import com.getpcpanel.integration.volume.platform.MuteType;
-import com.getpcpanel.util.ProcessHelper;
+import com.getpcpanel.util.os.ProcessHelper;
 
 class PulseAudioWrapperTest {
 

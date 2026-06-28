@@ -18,7 +18,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.integration.volume.platform.MuteType;
 import com.getpcpanel.platform.LinuxBuild;
-import com.getpcpanel.util.ProcessHelper;
+import com.getpcpanel.util.os.ProcessHelper;
 
 import lombok.Builder;
 import lombok.extern.log4j.Log4j2;

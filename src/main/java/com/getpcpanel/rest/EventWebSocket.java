@@ -9,7 +9,7 @@ import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.rest.model.dto.DeviceSnapshotDto;
 import com.getpcpanel.rest.model.ws.WsDeviceConnectedEvent;
-import com.getpcpanel.util.AppShutdownState;
+import com.getpcpanel.util.app.AppShutdownState;
 
 import io.quarkus.websockets.next.OnClose;
 import io.quarkus.websockets.next.OnOpen;

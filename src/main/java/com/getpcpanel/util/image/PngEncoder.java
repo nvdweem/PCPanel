@@ -1,4 +1,4 @@
-package com.getpcpanel.util;
+package com.getpcpanel.util.image;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;

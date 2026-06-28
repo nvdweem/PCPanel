@@ -1,4 +1,4 @@
-package com.getpcpanel.util;
+package com.getpcpanel.util.os;
 
 import com.sun.jna.Native;
 import com.sun.jna.win32.StdCallLibrary;

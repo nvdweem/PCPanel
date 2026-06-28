@@ -18,8 +18,8 @@ import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.integration.discord.dto.DiscordAuth;
 import com.getpcpanel.integration.discord.dto.DiscordSeenUser;
 import com.getpcpanel.integration.discord.dto.DiscordSettings;
-import com.getpcpanel.util.Debouncer;
-import com.getpcpanel.util.ReconnectBackoff;
+import com.getpcpanel.util.concurrent.Debouncer;
+import com.getpcpanel.util.concurrent.ReconnectBackoff;
 
 import dev.niels.discord.DiscordRpcClient;
 import dev.niels.discord.DiscordRpcException;

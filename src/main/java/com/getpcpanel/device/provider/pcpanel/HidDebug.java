@@ -8,7 +8,7 @@ import org.hid4java.HidManager;
 import org.hid4java.HidServicesListener;
 import org.hid4java.event.HidServicesEvent;
 
-import com.getpcpanel.util.PcPanelRoot;
+import com.getpcpanel.util.io.PcPanelRoot;
 
 import lombok.SneakyThrows;
 

@@ -15,7 +15,7 @@ import com.getpcpanel.integration.homeassistant.dto.HomeAssistantServer;
 import com.getpcpanel.integration.homeassistant.dto.HomeAssistantServerStatus;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
-import com.getpcpanel.util.Debouncer;
+import com.getpcpanel.util.concurrent.Debouncer;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;

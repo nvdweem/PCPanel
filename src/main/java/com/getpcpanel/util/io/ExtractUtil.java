@@ -1,4 +1,6 @@
-package com.getpcpanel.util;
+package com.getpcpanel.util.io;
+
+import com.getpcpanel.util.Util;
 
 import java.io.File;
 import java.io.IOException;

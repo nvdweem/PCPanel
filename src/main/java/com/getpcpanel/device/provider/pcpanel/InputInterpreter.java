@@ -20,7 +20,7 @@ import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.PCPanelControlEvent;
 import com.getpcpanel.profile.BaseLayerService;
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.util.Debouncer;
+import com.getpcpanel.util.concurrent.Debouncer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;

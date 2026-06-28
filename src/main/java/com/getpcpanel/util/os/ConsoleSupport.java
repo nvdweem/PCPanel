@@ -1,4 +1,4 @@
-package com.getpcpanel.util;
+package com.getpcpanel.util.os;
 
 import java.io.FileOutputStream;
 import java.io.PrintStream;
