@@ -7,10 +7,10 @@ import jakarta.inject.Inject;
 
 import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.rest.DeviceResource;
-import com.getpcpanel.rest.MidiResource;
-import com.getpcpanel.rest.ProVisualColorsService;
-import com.getpcpanel.rest.SerialResource;
+import com.getpcpanel.device.rest.DeviceResource;
+import com.getpcpanel.device.rest.MidiResource;
+import com.getpcpanel.device.ProVisualColorsService;
+import com.getpcpanel.device.rest.SerialResource;
 import com.getpcpanel.rest.model.dto.DeviceDto;
 import com.getpcpanel.rest.model.dto.DeviceSnapshotDto;
 import com.getpcpanel.rest.model.dto.MidiDeviceDto;

@@ -2399,10 +2399,10 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource"
+      "type": "com.getpcpanel.device.rest.DeviceResource"
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$createProfile_88e0b72b3cc218b89f781ee55504c22f31b2f27e",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$createProfile_88e0b72b3cc218b89f781ee55504c22f31b2f27e",
       "methods": [
         {
           "name": "<init>",
@@ -2411,7 +2411,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$deleteProfile_9d32d4744c4970ae1371b95a7d547ee8fcfe1353",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$deleteProfile_9d32d4744c4970ae1371b95a7d547ee8fcfe1353",
       "methods": [
         {
           "name": "<init>",
@@ -2420,7 +2420,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$getButton_95405a9e4345b0ab8a7d493bb1394d53861ed75c",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$getButton_95405a9e4345b0ab8a7d493bb1394d53861ed75c",
       "methods": [
         {
           "name": "<init>",
@@ -2429,7 +2429,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$getDblButton_8107605d1ba06eba3e81dc77b2abf282fafd3126",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$getDblButton_8107605d1ba06eba3e81dc77b2abf282fafd3126",
       "methods": [
         {
           "name": "<init>",
@@ -2438,7 +2438,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$getDevice_56060172aa7ec103e6a8d16bd0a0401de0b9b313",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$getDevice_56060172aa7ec103e6a8d16bd0a0401de0b9b313",
       "methods": [
         {
           "name": "<init>",
@@ -2447,7 +2447,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$getDial_a0fce217793424f22cbe3a71a6a0155df3df1926",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$getDial_a0fce217793424f22cbe3a71a6a0155df3df1926",
       "methods": [
         {
           "name": "<init>",
@@ -2456,7 +2456,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$getKnobSettings_700328b65fa1fcb1835f30fb00f2ad16c22f5f18",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$getKnobSettings_700328b65fa1fcb1835f30fb00f2ad16c22f5f18",
       "methods": [
         {
           "name": "<init>",
@@ -2465,7 +2465,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$getLighting_91993aac0e4a5b7c8e8be4b52f360dacee3ffcba",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$getLighting_91993aac0e4a5b7c8e8be4b52f360dacee3ffcba",
       "methods": [
         {
           "name": "<init>",
@@ -2474,7 +2474,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$listDevices_e219037e4a3399072bd6f450ff430ee7f67d25e8",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$listDevices_e219037e4a3399072bd6f450ff430ee7f67d25e8",
       "methods": [
         {
           "name": "<init>",
@@ -2483,7 +2483,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$listProfiles_0ca917159424d2b8a9cf788ec1185aedc089d542",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$listProfiles_0ca917159424d2b8a9cf788ec1185aedc089d542",
       "methods": [
         {
           "name": "<init>",
@@ -2492,7 +2492,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$renameDevice_c12a7298412f8af1081cf456a541fb61c5c7ee8c",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$renameDevice_c12a7298412f8af1081cf456a541fb61c5c7ee8c",
       "methods": [
         {
           "name": "<init>",
@@ -2501,7 +2501,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$setButton_eed2abfcf7f93ce2c2b24fa5eb23de3ee9b767a9",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$setButton_eed2abfcf7f93ce2c2b24fa5eb23de3ee9b767a9",
       "methods": [
         {
           "name": "<init>",
@@ -2510,7 +2510,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$setControlAssignments_c562b43459bc0e2fd723850281361ef3c6d7eb93",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$setControlAssignments_c562b43459bc0e2fd723850281361ef3c6d7eb93",
       "methods": [
         {
           "name": "<init>",
@@ -2519,7 +2519,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$setDblButton_a0df09678683d42577657cf1a090f7f405067e2c",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$setDblButton_a0df09678683d42577657cf1a090f7f405067e2c",
       "methods": [
         {
           "name": "<init>",
@@ -2528,7 +2528,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$setDial_f682a143c7e3ef0796d1547515908e05db60a875",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$setDial_f682a143c7e3ef0796d1547515908e05db60a875",
       "methods": [
         {
           "name": "<init>",
@@ -2537,7 +2537,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$setKnobSettings_21aec8f7c847c04e9dfb6a9bca9e62fe39e2d1ae",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$setKnobSettings_21aec8f7c847c04e9dfb6a9bca9e62fe39e2d1ae",
       "methods": [
         {
           "name": "<init>",
@@ -2546,7 +2546,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$setLighting_f66173d4ddfbe8acfdf22bcb19769100485e9dbf",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$setLighting_f66173d4ddfbe8acfdf22bcb19769100485e9dbf",
       "methods": [
         {
           "name": "<init>",
@@ -2555,7 +2555,7 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.DeviceResource$quarkusrestinvoker$switchProfile_02ac5ffc5ddabd13031116edd28722ff686e677d",
+      "type": "com.getpcpanel.device.rest.DeviceResource$quarkusrestinvoker$switchProfile_02ac5ffc5ddabd13031116edd28722ff686e677d",
       "methods": [
         {
           "name": "<init>",
@@ -2657,10 +2657,10 @@
       ]
     },
     {
-      "type": "com.getpcpanel.rest.ProVisualColorsService"
+      "type": "com.getpcpanel.device.ProVisualColorsService"
     },
     {
-      "type": "com.getpcpanel.rest.ProVisualColorsServiceTest",
+      "type": "com.getpcpanel.device.ProVisualColorsServiceTest",
       "methods": [
         {
           "name": "<init>",

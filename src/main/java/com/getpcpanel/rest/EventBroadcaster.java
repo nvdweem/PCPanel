@@ -1,5 +1,6 @@
 package com.getpcpanel.rest;
 
+import com.getpcpanel.device.ProVisualColorsService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandler.ButtonPressEvent;
@@ -12,7 +13,7 @@ import com.getpcpanel.profile.ProfileSwitchedEvent;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.dto.KnobSetting;
 import com.getpcpanel.profile.dto.LightingConfig;
-import com.getpcpanel.rest.ProVisualColorsService.ProVisualColors;
+import com.getpcpanel.device.ProVisualColorsService.ProVisualColors;
 import com.getpcpanel.rest.model.dto.DeviceSnapshotDto;
 import com.getpcpanel.rest.model.dto.ProfileSnapshotDto;
 import com.getpcpanel.rest.model.ws.WsAssignmentChangedEvent;

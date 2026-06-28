@@ -1,4 +1,4 @@
-package com.getpcpanel.rest;
+package com.getpcpanel.device;
 
 import java.util.ArrayList;
 import java.util.Collections;
