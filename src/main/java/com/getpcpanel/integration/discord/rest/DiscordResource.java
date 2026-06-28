@@ -1,12 +1,12 @@
-package com.getpcpanel.rest.discord;
+package com.getpcpanel.integration.discord.rest;
 
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 import com.getpcpanel.integration.discord.DiscordService;
-import com.getpcpanel.rest.discord.dto.DiscordStatusDto;
-import com.getpcpanel.rest.discord.dto.DiscordUserDto;
-import com.getpcpanel.rest.discord.dto.DiscordVoiceChannelDto;
+import com.getpcpanel.integration.discord.rest.dto.DiscordStatusDto;
+import com.getpcpanel.integration.discord.rest.dto.DiscordUserDto;
+import com.getpcpanel.integration.discord.rest.dto.DiscordVoiceChannelDto;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

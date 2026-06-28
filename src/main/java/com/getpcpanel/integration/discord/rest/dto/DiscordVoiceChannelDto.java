@@ -1,4 +1,4 @@
-package com.getpcpanel.rest.discord.dto;
+package com.getpcpanel.integration.discord.rest.dto;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 

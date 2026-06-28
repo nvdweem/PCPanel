@@ -1,4 +1,4 @@
-package com.getpcpanel.rest.wavelink.dto;
+package com.getpcpanel.integration.wavelink.rest.dto;
 
 import dev.niels.wavelink.impl.model.WaveLinkApp;
 

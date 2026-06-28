@@ -1,6 +1,6 @@
-package com.getpcpanel.rest.wavelink;
+package com.getpcpanel.integration.wavelink.rest;
 
-import com.getpcpanel.rest.wavelink.dto.WaveLinkResponseDto;
+import com.getpcpanel.integration.wavelink.rest.dto.WaveLinkResponseDto;
 import com.getpcpanel.integration.wavelink.WaveLinkService;
 
 import jakarta.enterprise.context.ApplicationScoped;

@@ -1,4 +1,4 @@
-package com.getpcpanel.rest.voicemeeter;
+package com.getpcpanel.integration.voicemeeter.rest;
 
 import java.util.List;
 

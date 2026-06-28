@@ -1,4 +1,4 @@
-package com.getpcpanel.rest.obs;
+package com.getpcpanel.integration.obs.rest;
 
 import java.util.List;
 
