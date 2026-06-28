@@ -7,7 +7,7 @@ import java.util.Locale;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.getpcpanel.discord.DiscordService;
+import com.getpcpanel.integration.discord.DiscordService;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 

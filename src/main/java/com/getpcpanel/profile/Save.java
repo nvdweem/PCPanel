@@ -10,7 +10,7 @@ import javax.annotation.Nullable;
 
 import com.getpcpanel.device.DeviceType;
 import com.getpcpanel.device.descriptor.DeviceDescriptor;
-import com.getpcpanel.homeassistant.dto.HomeAssistantServer;
+import com.getpcpanel.integration.homeassistant.dto.HomeAssistantServer;
 import com.getpcpanel.profile.dto.DiscordAuth;
 import com.getpcpanel.profile.dto.DiscordSeenUser;
 import com.getpcpanel.profile.dto.DiscordSettings;

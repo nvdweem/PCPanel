@@ -3,7 +3,7 @@
   {"interfaces": ["org.hid4java.jna.DarwinHidApiLibrary"]},
   {"interfaces": ["org.hid4java.jna.HidrawHidApiLibrary"]},
   {"interfaces": ["org.hid4java.jna.LibusbHidApiLibrary"]},
-  {"interfaces": ["com.getpcpanel.voicemeeter.VoicemeeterInstance"]},
+  {"interfaces": ["com.getpcpanel.integration.voicemeeter.VoicemeeterInstance"]},
   {"interfaces": ["com.getpcpanel.iconextract.Shell32Extra"]},
   {"interfaces": ["com.getpcpanel.util.tray.win.WinShell32"]},
   {"interfaces": ["com.getpcpanel.util.tray.win.WinUser32Ext"]},

@@ -3,7 +3,7 @@ package com.getpcpanel.rest.discord;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
-import com.getpcpanel.discord.DiscordService;
+import com.getpcpanel.integration.discord.DiscordService;
 import com.getpcpanel.rest.discord.dto.DiscordStatusDto;
 import com.getpcpanel.rest.discord.dto.DiscordUserDto;
 import com.getpcpanel.rest.discord.dto.DiscordVoiceChannelDto;

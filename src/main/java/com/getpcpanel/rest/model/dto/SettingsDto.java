@@ -4,7 +4,7 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-import com.getpcpanel.homeassistant.dto.HomeAssistantServer;
+import com.getpcpanel.integration.homeassistant.dto.HomeAssistantServer;
 import com.getpcpanel.profile.Save;
 import com.getpcpanel.profile.dto.FocusVolumeOverride;
 import com.getpcpanel.profile.dto.MqttSettings;

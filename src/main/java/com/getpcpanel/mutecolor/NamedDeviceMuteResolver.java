@@ -5,7 +5,7 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.commands.Commands;
-import com.getpcpanel.voicemeeter.VoiceMeeterMuteResolver;
+import com.getpcpanel.integration.voicemeeter.VoiceMeeterMuteResolver;
 import com.getpcpanel.cpp.ISndCtrl;
 
 import jakarta.annotation.Priority;

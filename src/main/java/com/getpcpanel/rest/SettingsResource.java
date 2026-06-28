@@ -2,7 +2,7 @@ package com.getpcpanel.rest;
 
 import java.util.Map;
 
-import com.getpcpanel.mqtt.MqttService;
+import com.getpcpanel.integration.mqtt.MqttService;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.dto.DiscordSettings;
 import com.getpcpanel.profile.dto.MqttSettings;

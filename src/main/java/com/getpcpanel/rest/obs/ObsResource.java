@@ -2,7 +2,7 @@ package com.getpcpanel.rest.obs;
 
 import java.util.List;
 
-import com.getpcpanel.obs.OBS;
+import com.getpcpanel.integration.obs.OBS;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

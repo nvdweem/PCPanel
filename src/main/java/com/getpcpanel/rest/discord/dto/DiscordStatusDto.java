@@ -2,7 +2,7 @@ package com.getpcpanel.rest.discord.dto;
 
 import javax.annotation.Nullable;
 
-import com.getpcpanel.discord.DiscordService;
+import com.getpcpanel.integration.discord.DiscordService;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 

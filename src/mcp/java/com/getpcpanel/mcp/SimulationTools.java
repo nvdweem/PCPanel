@@ -16,9 +16,9 @@ import com.getpcpanel.hid.DeviceCommunicationHandler.KnobRotateEvent;
 import com.getpcpanel.hid.DeviceHolder;
 import com.getpcpanel.hid.DeviceScanner.DeviceConnectedEvent;
 import com.getpcpanel.hid.DeviceScanner.DeviceDisconnectedEvent;
-import com.getpcpanel.obs.OBS;
+import com.getpcpanel.integration.obs.OBS;
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.wavelink.WaveLinkService;
+import com.getpcpanel.integration.wavelink.WaveLinkService;
 
 import dev.niels.wavelink.impl.model.WaveLinkChannel;
 

@@ -1,7 +1,7 @@
 package com.getpcpanel.rest.wavelink;
 
 import com.getpcpanel.rest.wavelink.dto.WaveLinkResponseDto;
-import com.getpcpanel.wavelink.WaveLinkService;
+import com.getpcpanel.integration.wavelink.WaveLinkService;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

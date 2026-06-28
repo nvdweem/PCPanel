@@ -2,7 +2,7 @@ package com.getpcpanel.rest.osc;
 
 import java.util.Map;
 
-import com.getpcpanel.osc.OSCService;
+import com.getpcpanel.integration.osc.OSCService;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

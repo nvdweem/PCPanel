@@ -15,8 +15,8 @@ import com.getpcpanel.commands.CommandsType;
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.profile.dto.LightingConfig;
 import com.getpcpanel.profile.dto.LightingConfig.LightingMode;
-import com.getpcpanel.wavelink.command.CommandWaveLinkChangeLevel;
-import com.getpcpanel.wavelink.command.WaveLinkCommandTarget;
+import com.getpcpanel.integration.wavelink.command.CommandWaveLinkChangeLevel;
+import com.getpcpanel.integration.wavelink.command.WaveLinkCommandTarget;
 
 /**
  * Exercises the mute-override mapping for the exact reported scenario: a Pro slider bound to a Wave

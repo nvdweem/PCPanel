@@ -2,7 +2,7 @@ package com.getpcpanel.rest.wavelink.dto;
 
 import java.util.List;
 
-import com.getpcpanel.wavelink.WaveLinkService;
+import com.getpcpanel.integration.wavelink.WaveLinkService;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import one.util.streamex.StreamEx;

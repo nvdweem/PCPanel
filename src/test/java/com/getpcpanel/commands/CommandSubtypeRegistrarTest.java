@@ -14,8 +14,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.device.command.CommandBrightness;
 import com.getpcpanel.device.command.DeviceCommandModule;
-import com.getpcpanel.voicemeeter.command.CommandVoiceMeeterAdvanced;
-import com.getpcpanel.voicemeeter.command.VoiceMeeterCommandModule;
+import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterAdvanced;
+import com.getpcpanel.integration.voicemeeter.command.VoiceMeeterCommandModule;
 
 /**
  * Validates {@link CommandSubtypeRegistrar}: it turns the {@link CommandModule} contributions into

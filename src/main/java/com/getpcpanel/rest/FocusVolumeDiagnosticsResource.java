@@ -15,8 +15,8 @@ import jakarta.ws.rs.core.MediaType;
 import com.getpcpanel.cpp.ISndCtrl;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.volume.VolumeCoordinatorService;
-import com.getpcpanel.wavelink.WaveLinkAppCache;
-import com.getpcpanel.wavelink.WaveLinkService;
+import com.getpcpanel.integration.wavelink.WaveLinkAppCache;
+import com.getpcpanel.integration.wavelink.WaveLinkService;
 
 import dev.niels.wavelink.impl.model.WaveLinkApp;
 import dev.niels.wavelink.impl.model.WaveLinkChannel;

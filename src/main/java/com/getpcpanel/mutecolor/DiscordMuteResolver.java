@@ -7,11 +7,11 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.commands.Commands;
-import com.getpcpanel.discord.DiscordService;
-import com.getpcpanel.discord.command.CommandDiscordMute;
-import com.getpcpanel.discord.command.CommandDiscordSelfDeafen;
-import com.getpcpanel.discord.command.CommandDiscordSelfMute;
-import com.getpcpanel.discord.command.CommandDiscordUserMute;
+import com.getpcpanel.integration.discord.DiscordService;
+import com.getpcpanel.integration.discord.command.CommandDiscordMute;
+import com.getpcpanel.integration.discord.command.CommandDiscordSelfDeafen;
+import com.getpcpanel.integration.discord.command.CommandDiscordSelfMute;
+import com.getpcpanel.integration.discord.command.CommandDiscordUserMute;
 
 import dev.niels.discord.model.DiscordVoiceUser;
 import jakarta.enterprise.context.ApplicationScoped;
