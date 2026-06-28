@@ -1,5 +1,6 @@
-package com.getpcpanel.mutecolor;
+package com.getpcpanel.integration.discord;
 
+import com.getpcpanel.mutecolor.MuteStateResolver;
 import java.util.Optional;
 
 import javax.annotation.Nullable;

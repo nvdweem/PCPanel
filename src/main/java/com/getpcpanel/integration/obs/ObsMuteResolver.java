@@ -1,5 +1,6 @@
-package com.getpcpanel.mutecolor;
+package com.getpcpanel.integration.obs;
 
+import com.getpcpanel.mutecolor.MuteStateResolver;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;

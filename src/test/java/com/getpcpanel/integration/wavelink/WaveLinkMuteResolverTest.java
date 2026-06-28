@@ -12,7 +12,6 @@ import com.getpcpanel.commands.CommandsType;
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.cpp.MuteType;
 import com.getpcpanel.mutecolor.MuteStateResolver;
-import com.getpcpanel.mutecolor.WaveLinkMuteResolver;
 import com.getpcpanel.integration.wavelink.command.CommandWaveLinkChangeLevel;
 import com.getpcpanel.integration.wavelink.command.CommandWaveLinkChangeMute;
 import com.getpcpanel.integration.wavelink.command.WaveLinkCommandTarget;
