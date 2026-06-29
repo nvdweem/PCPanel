@@ -1,6 +1,8 @@
 package com.getpcpanel.platform.process;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.List;
@@ -52,6 +54,21 @@ class LinuxProcessHelperTest {
 
         assertEquals(Set.of("firefox"), window.identifiers());
         assertEquals("firefox", window.primaryIdentifier(), "process is preferred over the (duplicate) window class");
+    }
+
+    /**
+     * Pre-2021 xdotool (e.g. 3.20160805 on Linux Mint/Cinnamon) has no {@code getwindowclassname} and aborts the
+     * whole chained call on it, printing nothing - so focus volume silently did nothing (#112). The no-class
+     * variant must keep the universally supported pid+name and drop only getwindowclassname.
+     */
+    @Test
+    void windowQueryDropsOnlyClassnameWhenUnsupported() {
+        assertArrayEquals(new String[] { "getactivewindow", "getwindowpid", "getwindowclassname", "getwindowname" },
+                LinuxProcessHelper.windowQuerySubcommands(true));
+
+        var noClass = LinuxProcessHelper.windowQuerySubcommands(false);
+        assertArrayEquals(new String[] { "getactivewindow", "getwindowpid", "getwindowname" }, noClass);
+        assertFalse(List.of(noClass).contains("getwindowclassname"), "the unsupported subcommand must be dropped");
     }
 
     /** The window name is the last-resort identifier, used for both matching and display when nothing else is known. */

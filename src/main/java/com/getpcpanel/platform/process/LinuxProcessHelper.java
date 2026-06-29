@@ -6,10 +6,12 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -137,14 +139,39 @@ public class LinuxProcessHelper implements IProcessHelper {
     private record CachedActiveWindow(ActiveWindow window, long at) {
     }
 
+    // xdotool only learned `getwindowclassname` in 2021 (jordansissel/xdotool#247); older builds - e.g. the
+    // 3.20160805 that still ships on Linux Mint/Cinnamon - abort the whole chained invocation on the unknown
+    // subcommand and print nothing, so the focused window never resolves and focus volume silently does nothing
+    // (#112). kdotool always supports it. Probe optimistically and, if a tool turns out not to, remember it so
+    // every later tick skips the doomed command and only loses the (fallback-only) window class - PID matching,
+    // the robust path, is unaffected.
+    private final Map<Tool, Boolean> windowClassSupported = new ConcurrentHashMap<>();
+
     private Optional<ActiveWindow> getActiveWindow(Tool tool) {
         var command = tool.command();
         if (!tool.available(command)) {
             return Optional.empty();
         }
+        var withClass = windowClassSupported.getOrDefault(tool, Boolean.TRUE);
+        var window = queryActiveWindow(tool, command, withClass);
+        if (window.isEmpty() && withClass) {
+            // The chain may have failed because this tool lacks getwindowclassname. Retry without it; if that
+            // resolves the window, the classname subcommand was the culprit - stop sending it from now on.
+            var fallback = queryActiveWindow(tool, command, false);
+            fallback.ifPresent(w -> {
+                windowClassSupported.put(tool, Boolean.FALSE);
+                log.info("{} does not support 'getwindowclassname' (pre-2021); omitting it from focus matching - "
+                        + "PID-based matching is unaffected.", tool.tool);
+            });
+            return fallback;
+        }
+        return window;
+    }
+
+    private Optional<ActiveWindow> queryActiveWindow(Tool tool, String command, boolean withClass) {
         List<String> lines;
         try {
-            lines = linesFrom(command, "getactivewindow", "getwindowpid", "getwindowclassname", "getwindowname");
+            lines = linesFrom(StreamEx.of(command).append(windowQuerySubcommands(withClass)).toArray(String[]::new));
         } catch (Exception e) {
             log.error("Unable to resolve active window with {}", tool.tool, e);
             return Optional.empty();
@@ -153,8 +180,20 @@ public class LinuxProcessHelper implements IProcessHelper {
         if (pid == -1) {
             return Optional.empty();
         }
-        return Optional.of(new ActiveWindow(pid, processName(pid), flatpakAppId(pid),
-                StringUtils.trimToNull(line(lines, 1)), StringUtils.trimToNull(line(lines, 2))));
+        var windowClass = withClass ? StringUtils.trimToNull(line(lines, 1)) : null;
+        var windowName = StringUtils.trimToNull(line(lines, withClass ? 2 : 1));
+        return Optional.of(new ActiveWindow(pid, processName(pid), flatpakAppId(pid), windowClass, windowName));
+    }
+
+    /**
+     * The chained active-window subcommands, in output order. {@code getwindowclassname} (a #96 fallback
+     * identifier for Wine/Steam games) is dropped when a tool can't parse it, so the universally supported
+     * pid+name still resolve - see {@link #getActiveWindow(Tool)}.
+     */
+    static String[] windowQuerySubcommands(boolean withClass) {
+        return withClass
+                ? new String[] { "getactivewindow", "getwindowpid", "getwindowclassname", "getwindowname" }
+                : new String[] { "getactivewindow", "getwindowpid", "getwindowname" };
     }
 
     private static @Nullable String line(List<String> lines, int index) {
