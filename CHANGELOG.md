@@ -2,9 +2,8 @@
 
 <!-- Releasenotes without version are included in releases -->
 
-> **⚠️ 2.0 is an early pre-release and is NOT stable.** It may fail to start at all, and you should expect bugs and breaking changes. Do not rely on it. Back up your profiles before upgrading.
-
 - The entire user interface has been rebuilt from the ground up with a brand-new design — a custom dark theme replacing the old windows, covering the device view, action assignment, lighting and settings.
+- The underlying framework has been replaced to be more efficient. On my local machine, this results in 100mb memory usage instead of 500mb (for both Windows and Linux).
 - The app now supports controllers beyond PCPanel through a generalized device layer. PCPanel hardware works exactly as before (and with zero setup), while other devices can be added and bound to the same actions through the same UI.
     - **Deej** — add the open-source Arduino serial volume mixer by its serial port; its sliders map to the same actions as PCPanel dials (no buttons/lights).
     - MIDI controller support is in progress.
