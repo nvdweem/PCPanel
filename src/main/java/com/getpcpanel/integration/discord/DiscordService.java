@@ -58,8 +58,10 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
     private static final long TOKEN_REFRESH_MARGIN_MS = 60_000;
 
     private final SaveService saveService;
-    /** Spaces out reconnect attempts when Discord is down (base = the scheduled interval, capped at 5 min). */
-    private final ReconnectBackoff backoff = new ReconnectBackoff(10_000, 300_000);
+    // Reconnecting is a cheap local pipe/socket probe (no network), so we retry often — a freshly-started
+    // Discord is picked up within ~30s instead of minutes. The log stays quiet (INFO once per outage, DEBUG
+    // after), so frequent attempts don't spam.
+    private final ReconnectBackoff backoff = new ReconnectBackoff(10_000, 30_000);
     private final AtomicBoolean authInProgress = new AtomicBoolean(false);
     private boolean wasEnabled;
     @Nullable private String lastClientId;
@@ -134,7 +136,12 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
                 authenticateWithStoredToken(); // connected but not yet authenticated (e.g. token just stored)
             }
         } else if (backoff.ready(System.currentTimeMillis())) {
-            log.info("Discord not connected, connecting.");
+            // First attempt of an outage at INFO; the frequent retries after it at DEBUG so logs don't fill up.
+            if (backoff.failures() == 0) {
+                log.info("Discord not connected; retrying until it's available.");
+            } else {
+                log.debug("Discord still not connected, retrying.");
+            }
             connectAndAuthenticate();
             backoff.onFailure(System.currentTimeMillis());
         }
