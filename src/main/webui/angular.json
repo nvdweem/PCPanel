@@ -78,7 +78,11 @@
                   "maximumError": "12kB"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "sourceMap": {
+                "scripts": true,
+                "styles": true
+              }
             },
             "development": {
               "optimization": false,
