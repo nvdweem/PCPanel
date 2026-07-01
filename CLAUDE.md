@@ -146,7 +146,12 @@ across features), `EventWebSocket` at `/ws/events`, `EventBroadcaster`, `LocalHt
 device-management REST in `device/rest/` (`DeviceResource`, `SerialResource`, `MidiResource`),
 volume/overlay REST in `integration/volume/`, each external connector's REST in `integration/<name>/rest/`.
 The backend pushes device/state snapshots to the Angular UI over the socket. There is no separate window
-framework — the "UI" is the browser served by Quinoa.
+framework — the "UI" is the browser served by Quinoa. `StaticCacheControl` (another `@Observes Router`
+filter) stamps `no-cache` on every UI path except the content-hashed bundle files — Quarkus's static
+default (`Cache-Control: immutable, max-age=86400`) otherwise keeps a browser on the previous release's
+frontend for up to a day after an app update, without revalidating even on reload (see issue #113).
+Production builds ship the frontend source maps (`sourceMap` in `angular.json`'s production config) so
+user-reported console errors carry readable TS stack traces.
 
 **Web-exposure security model:** the API is unauthenticated, so it must stay reachable only from the
 local machine. Two layers enforce this: `quarkus.http.host=127.0.0.1` keeps other hosts off, and
