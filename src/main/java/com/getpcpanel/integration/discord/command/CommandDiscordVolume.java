@@ -51,8 +51,8 @@ public final class CommandDiscordVolume extends CommandDiscord implements DialAc
 
     @Override
     public String buildLabel() {
-        var t = isMic() ? "mic" : OUTPUT.equals(target) ? "output" : target;
-        return "Discord — " + t + " volume";
+        var t = isMic() ? "Mic" : OUTPUT.equals(target) ? "Output" : target;
+        return t + " — Discord";
     }
 
     @Override

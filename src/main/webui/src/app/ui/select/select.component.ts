@@ -180,7 +180,14 @@ export class SelectComponent<T = string> {
   protected readonly keyManager = new ActiveDescendantKeyManager<ManagedOption<T>>(this.items, this.injector)
     .withWrap().withHomeAndEnd().skipPredicate(i => i.disabled);
 
-  readonly selectedLabel = computed(() => this.options().find(o => o.value === this.value())?.label ?? this.placeholder());
+  readonly selectedLabel = computed(() => {
+    const v = this.value();
+    const match = this.options().find(o => o.value === v);
+    if (match) return match.label;
+    // A configured value absent from the current options (e.g. an integration is offline so its live list
+    // is empty) still shows its raw value rather than the placeholder — so a saved selection never looks blank.
+    return v === undefined || v === null || v === '' ? this.placeholder() : String(v);
+  });
   readonly selectedFont = computed(() => this.options().find(o => o.value === this.value())?.font);
 
   toggle(): void {
