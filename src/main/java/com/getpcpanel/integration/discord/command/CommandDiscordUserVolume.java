@@ -32,7 +32,7 @@ public final class CommandDiscordUserVolume extends CommandDiscord implements Di
 
     @Override
     public String buildLabel() {
-        return StringUtils.isBlank(username) ? "Discord — user volume" : "Discord — " + username + " volume";
+        return StringUtils.isBlank(username) ? "Discord — user volume" : username + " — Discord";
     }
 
     @Override

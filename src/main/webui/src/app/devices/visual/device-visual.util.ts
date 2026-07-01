@@ -1,5 +1,6 @@
 import { Command, Commands, LightingConfig } from '../../models/generated/backend.types';
 import { IntegrationDataService } from '../../features/commands/integration-data.service';
+import { COMMAND_BY_TYPE } from '../../features/commands/command-catalog';
 import {
   ColorVisual, knobRingColor, lightingAnimClass, lightingAnimDuration, lightingBreathMin, resolveColorVisual,
 } from '../pcpanel/lighting-animation';
@@ -34,31 +35,6 @@ export function knobColor(dialColors: string[] | undefined, i: number, total: nu
   return knobRingColor(config, i, total, fallback);
 }
 
-const SHORT: Record<string, (c: Command) => string | undefined> = {
-  CommandVolumeProcess: c => firstName((c as any).processName),
-  CommandVolumeProcessMute: c => mutePrefix(c) + (firstName((c as any).processName) ?? 'app'),
-  CommandVolumeDevice: () => 'Device vol',
-  CommandVolumeDeviceMute: c => mutePrefix(c) + 'device',
-  CommandVolumeFocus: () => 'Focus vol',
-  CommandVolumeFocusMute: c => mutePrefix(c) + 'focus',
-  CommandBrightness: () => 'Brightness',
-  CommandProfile: () => 'Switch profile',
-  CommandMedia: c => mediaLabel((c as any).button),
-  CommandKeystroke: () => 'Keystroke',
-  CommandShortcut: () => 'Shortcut',
-  CommandRun: () => 'Run',
-  CommandEndProgram: () => 'End program',
-  CommandObsSetScene: () => 'OBS scene',
-  CommandObsMuteSource: () => 'OBS mute',
-  CommandObsSetSourceVolume: () => 'OBS vol',
-  CommandObsAction: () => 'OBS',
-  CommandHttpRequest: c => httpLabel(c),
-  CommandMqttPublish: () => 'MQTT',
-  CommandOscSend: () => 'OSC',
-  CommandVolumeDefaultDevice: () => 'Default device',
-  CommandVolumeDefaultDeviceToggle: () => 'Cycle device',
-};
-
 function firstName(arr: unknown): string | undefined {
   return Array.isArray(arr) && arr.length ? String(arr[0]) : undefined;
 }
@@ -67,9 +43,6 @@ function mutePrefix(c: Command): string {
 }
 function mutePrefixOf(t: string | undefined): string {
   return t === 'unmute' ? 'Unmute ' : 'Mute ';
-}
-function mediaLabel(b: string): string {
-  return ({ mute: 'Mute', next: 'Next', prev: 'Prev', stop: 'Stop', playPause: 'Play/Pause' } as Record<string, string>)[b] ?? 'Media';
 }
 function httpLabel(c: Command): string {
   const m = (c as any).method;
@@ -84,9 +57,6 @@ function obsActionLabel(action: string): string {
   } as Record<string, string>)[action] ?? 'Action';
 }
 
-function typeNameOf(cmd: Command): string {
-  return (cmd._type?.split('.').pop() ?? '').replace(/^Command/, '');
-}
 function wlNameOf(data: IntegrationDataService, id: string | undefined): string | undefined {
   if (!id) return undefined;
   const all = [...data.wlChannels(), ...data.wlInputs(), ...data.wlMixes(), ...data.wlOutputs()];
@@ -95,6 +65,12 @@ function wlNameOf(data: IntegrationDataService, id: string | undefined): string 
 function deviceNameOf(data: IntegrationDataService, id: string | undefined): string | undefined {
   if (!id) return undefined;
   return (data.audioDevices.value() ?? []).find(d => d.id === id)?.name || undefined;
+}
+/** Friendly display name for a Discord user targeted by username; the raw username when the live list
+ *  isn't loaded (Discord off), so a configured target still names itself. */
+function discordNameOf(data: IntegrationDataService, username: string | undefined): string | undefined {
+  if (!username) return undefined;
+  return (data.discordUsers.value() ?? []).find(u => u.username === username)?.displayName || username;
 }
 
 /**
@@ -107,25 +83,34 @@ function deviceNameOf(data: IntegrationDataService, id: string | undefined): str
 export function describeCommand(cmd: Command | undefined, data: IntegrationDataService): string {
   if (!cmd) return '';
   const c = cmd as any;
-  switch (typeNameOf(cmd)) {
-    case 'VolumeProcess': { const n = firstName(c.processName); return n ? `${n} — Volume` : ''; }
-    case 'VolumeProcessMute': { const n = firstName(c.processName); return n ? `${mutePrefix(cmd)}${n}` : ''; }
-    case 'VolumeDevice': { const n = deviceNameOf(data, c.deviceId); return n ? `${n} — Volume` : ''; }
-    case 'VolumeDeviceMute': { const n = deviceNameOf(data, c.deviceId); return n ? `${mutePrefix(cmd)}${n}` : ''; }
-    case 'VolumeDefaultDevice': { const n = deviceNameOf(data, c.deviceId); return n ? `${n} — Default device` : ''; }
-    case 'ObsSetSourceVolume': return c.sourceName ? `${c.sourceName} — OBS` : '';
-    case 'ObsSetScene': return c.scene ? `${c.scene} — OBS` : '';
-    case 'ObsMuteSource': return c.source ? `${mutePrefixOf(c.type)}${c.source} — OBS` : '';
-    case 'ObsAction': return c.action ? `${obsActionLabel(c.action)} — OBS` : '';
-    case 'HttpRequest': return c.url ? `${httpLabel(cmd)} ${c.url}` : '';
-    case 'MqttPublish': return c.topic ? `${c.topic} — MQTT` : '';
-    case 'OscSend': return c.address ? `${c.address} — OSC` : '';
-    case 'VoiceMeeterAdvanced':
-    case 'VoiceMeeterAdvancedButton': return c.fullParam ? `${c.fullParam} — Voicemeeter` : '';
-    case 'WaveLinkChangeLevel': { const n = wlNameOf(data, c.id1); return n ? `${n} — Wave Link` : ''; }
-    case 'WaveLinkChangeMute': { const n = wlNameOf(data, c.id1); return n ? `${mutePrefix(cmd)}${n} — Wave Link` : ''; }
-    case 'WaveLinkMainOutput': { const n = wlNameOf(data, c.id) || c.name; return n ? `${n} — Wave Link` : ''; }
-    case 'WaveLinkAddFocusToChannel': { const n = wlNameOf(data, c.id) || c.name; return n ? `Add focus → ${n} — Wave Link` : ''; }
+  // Keyed on the persisted _type id (the short "integration.name" form emitted by @CommandMeta), so it
+  // survives the class-name → id rename. Returns '' when there's no target to name; shortLabel then uses
+  // the command's catalog label.
+  switch (c._type as string) {
+    case 'volume.process': { const n = firstName(c.processName); return n ? `${n} — Volume` : ''; }
+    case 'volume.process-mute': { const n = firstName(c.processName); return n ? `${mutePrefix(cmd)}${n}` : ''; }
+    case 'volume.device': { const n = deviceNameOf(data, c.deviceId); return n ? `${n} — Volume` : ''; }
+    case 'volume.device-mute': { const n = deviceNameOf(data, c.deviceId); return n ? `${mutePrefix(cmd)}${n}` : ''; }
+    case 'volume.default-device': { const n = deviceNameOf(data, c.deviceId); return n ? `${n} — Default device` : ''; }
+    case 'obs.set-source-volume': return c.sourceName ? `${c.sourceName} — OBS` : '';
+    case 'obs.set-scene': return c.scene ? `${c.scene} — OBS` : '';
+    case 'obs.mute-source': return c.source ? `${mutePrefixOf(c.type)}${c.source} — OBS` : '';
+    case 'obs.action': return c.action ? `${obsActionLabel(c.action)} — OBS` : '';
+    case 'output.http-request': return c.url ? `${httpLabel(cmd)} ${c.url}` : '';
+    case 'mqtt.publish': return c.topic ? `${c.topic} — MQTT` : '';
+    case 'osc.send': return c.address ? `${c.address} — OSC` : '';
+    case 'voicemeeter.advanced':
+    case 'voicemeeter.advanced-button': return c.fullParam ? `${c.fullParam} — Voicemeeter` : '';
+    case 'wavelink.change-level': { const n = wlNameOf(data, c.id1); return n ? `${n} — Wave Link` : ''; }
+    case 'wavelink.change-mute': { const n = wlNameOf(data, c.id1); return n ? `${mutePrefix(cmd)}${n} — Wave Link` : ''; }
+    case 'wavelink.main-output': { const n = wlNameOf(data, c.id) || c.name; return n ? `${n} — Wave Link` : ''; }
+    case 'wavelink.add-focus-to-channel': { const n = wlNameOf(data, c.id) || c.name; return n ? `Add focus → ${n} — Wave Link` : ''; }
+    case 'discord.volume': {
+      // mic/output are your own; anything else is another member's username (raw when Discord is offline).
+      if (!c.target || c.target === 'mic') return 'Mic — Discord';
+      if (c.target === 'output') return 'Output — Discord';
+      return `${discordNameOf(data, c.target)} — Discord`;
+    }
     default: return '';
   }
 }
@@ -145,12 +130,11 @@ export function shortLabel(cmds: Commands | null | undefined, data?: Integration
     const described = describeCommand(first, data);
     if (described) return described;
   }
-  const typeName = (first._type?.split('.').pop() ?? '').replace(/^Command/, '');
-  const fn = SHORT[`Command${typeName}`];
-  const label = fn?.(first);
-  if (label) return label;
-  // fall back to spaced type name
-  return typeName.replace(/([a-z])([A-Z])/g, '$1 $2');
+  // No named target — use the command's catalog label ("App volume", "Brightness", "Discord — volume").
+  const meta = COMMAND_BY_TYPE.get((first as any)._type);
+  if (meta) return meta.label;
+  // Last resort for an unknown id: its final path segment.
+  return (first._type?.split('.').pop() ?? '');
 }
 
 export type { ColorVisual };
