@@ -2,6 +2,7 @@ package com.getpcpanel.integration.homeassistant;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.Map;
@@ -36,6 +37,8 @@ public class HomeAssistantService {
     /** Short timeout for the UI status probe so an unreachable server can't pin a REST worker thread for
      *  the full 10s service-call timeout (and N dead servers don't add up to N*10s). */
     private static final java.time.Duration STATUS_PING_TIMEOUT = java.time.Duration.ofSeconds(2);
+    /** Shown for plain-http servers on non-local hosts; local http installs are the norm and must not warn. */
+    private static final String PLAIN_HTTP_WARNING = "Plain HTTP to a non-local host: the access token is sent unencrypted. Use https.";
 
     @Inject SaveService saveService;
     @Inject ObjectMapper objectMapper;
@@ -44,6 +47,8 @@ public class HomeAssistantService {
     // serverId -> client, rebuilt on every save so url/token edits take effect immediately.
     private final Map<String, HomeAssistantClient> clients = new ConcurrentHashMap<>();
     private final Map<String, CachedStatus> statusCache = new ConcurrentHashMap<>();
+    // Server ids already warned about plain http over a non-local network, so the warning logs once per run.
+    private final Set<String> plainHttpWarned = ConcurrentHashMap.newKeySet();
 
     void onSave(@Observes SaveEvent event) {
         rebuild();
@@ -85,6 +90,10 @@ public class HomeAssistantService {
             log.warn("Home Assistant: no server resolved for id '{}' (configured: {})", serverId, clients.size());
             return false;
         }
+        var server = client.getServer();
+        if (HaUrls.isNonLocalPlainHttp(server.url()) && plainHttpWarned.add(server.id())) {
+            log.warn("Home Assistant server '{}' ({}) uses plain HTTP to a non-local host; the access token is sent unencrypted", server.name(), server.url());
+        }
         var parsed = HaActionYaml.parse(actionYaml);
         if (parsed == null) {
             return false;
@@ -115,9 +124,14 @@ public class HomeAssistantService {
     public List<HomeAssistantServerStatus> serverStatuses() {
         var out = new ArrayList<HomeAssistantServerStatus>();
         for (var server : servers()) {
-            out.add(new HomeAssistantServerStatus(server.id(), server.name(), server.url(), isConnected(server.id())));
+            out.add(new HomeAssistantServerStatus(server.id(), server.name(), server.url(), isConnected(server.id()), warningFor(server.url())));
         }
         return out;
+    }
+
+    @Nullable
+    private static String warningFor(@Nullable String url) {
+        return HaUrls.isNonLocalPlainHttp(url) ? PLAIN_HTTP_WARNING : null;
     }
 
     /** True when any configured server is currently reachable. Drives the settings status dot. */
