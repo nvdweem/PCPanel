@@ -1,0 +1,11 @@
+name: Question
+description: Not a bug or a feature, just a question.
+labels: [question]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: What would you like to know? Include your setup (OS, device, app version — see the app footer) if it is relevant.
+    validations:
+      required: true

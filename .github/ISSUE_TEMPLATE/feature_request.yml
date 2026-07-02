@@ -1,0 +1,16 @@
+name: Feature request
+description: Want to see a new feature?
+labels: [enhancement]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What should happen
+      description: Describe what you want to happen and how it should work. Try to be complete in which software should be controlled, which device you have to control it with, and what you expect the result to be.
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device
+      placeholder: e.g. PCPanel Pro / Mini / RGB, Deej, MIDI controller

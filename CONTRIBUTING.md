@@ -23,7 +23,7 @@ user, see the [README](README.md).
 - **Packaging:** GraalVM native image, wrapped into per-platform installers in CI.
 
 A deeper tour of the architecture (hardware path, command model, persistence, the REST/WebSocket
-bridge, integrations) lives in [CLAUDE.md](CLAUDE.md).
+bridge, integrations) lives in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Prerequisites
 
@@ -32,7 +32,8 @@ bridge, integrations) lives in [CLAUDE.md](CLAUDE.md).
 - The Maven wrapper (`./mvnw` / `mvnw.cmd`) — no separate Maven install needed.
 - **Node.js** is only needed if you want to run the Angular dev server standalone; otherwise Quinoa
   manages it for you during `quarkus:dev`.
-- **Windows native code** (optional): Visual Studio, to rebuild `SndCtrl.dll` (see below).
+- **Windows native code** (optional): CMake plus a C++ compiler (MSVC Build Tools or MinGW-w64), to
+  rebuild `SndCtrl.dll` (see below). No Visual Studio IDE required.
 
 Development focus is Windows; Linux is best-effort. On Linux you'll also need the device-access setup
 from [linux.md](linux.md).
@@ -83,14 +84,24 @@ npm start          # serves :4200, proxies /api + /ws to :7654
 ```
 
 **TypeScript types are generated from Java, not hand-written.** The `typescript-generator-maven-plugin`
-(in the `compile` phase) writes `src/app/models/generated/backend.types.ts` from
-`com.getpcpanel.rest.model.**`, the command classes, and any `**.dto.**`. When you change a DTO or
+(in the `compile` phase) writes `src/app/models/generated/backend.types.ts` from the REST/WS DTOs,
+the command classes, and the device descriptors (the full classPattern list is in
+[ARCHITECTURE.md](ARCHITECTURE.md) and `pom.xml`). When you change a DTO or
 command shape, **recompile** so the contract regenerates — don't edit the generated file by hand.
 
 ## Native C++ (`src/main/cpp/`, Windows only)
 
-A Visual Studio solution builds `SndCtrl.dll` (audio control via Windows Core Audio) and a
-`SndCtrlTest` harness. The built DLL is committed at `src/main/resources/SndCtrl.dll`.
+`SndCtrl.dll` (audio control via Windows Core Audio) ships **pre-built and committed** at
+`src/main/resources/SndCtrl.dll` — the Maven/CI build only bundles it. You only need to rebuild it
+when you change the C++ sources.
+
+The sources build via **CMake** with either MSVC or MinGW-w64 — including a cross-compile from
+Linux; no Visual Studio IDE or ATL required. On Windows,
+`powershell -File src/main/cpp/build-windows.ps1 -InstallTools` installs the tooling (via winget)
+and builds in one go. Full instructions, including the Linux cross-compile, are in
+[src/main/cpp/README.md](src/main/cpp/README.md).
+
+The legacy Visual Studio solution (`SndCtrl.sln`) still works as an alternative:
 
 - The one machine-specific setting is the JNI include directory: project properties →
   `C/C++ → General → Additional Include Directories`. Point it at your JDK's `include` folder.
@@ -105,25 +116,28 @@ be kept in sync — the `quarkus.native.*` properties in `pom.xml` and the copy 
 `application.properties` — because which one wins depends on how the build is invoked. **Change both,**
 or you'll get different images locally vs. in CI. The full set of constraints (compressed-oops flag,
 `--initialize-at-run-time` classes, platform linker flags, macOS having no `libawt`) is documented in
-[CLAUDE.md](CLAUDE.md) — read that section before touching native config.
+[ARCHITECTURE.md](ARCHITECTURE.md) — read that section before touching native config.
 
 Reachability metadata lives under `src/main/resources/META-INF/native-image/`. Regenerate it with the
-tracing agent:
+tracing agent via the `native-config-gen` Maven profile (needs a GraalVM JDK):
 
 ```shell
-mvn test "-DargLine=-agentlib:native-image-agent=config-output-dir=src/main/resources/META-INF/native-image/ -Djava.awt.headless=false"
-mvn test "-DargLine=-Dnative -Dquarkus.native.agent-configuration-apply" -Dnative -Dquarkus.native.agent-configuration-apply
+mvn -Pnative-config-gen test -Dquarkus.native.enabled=false
 ```
 
-On Windows you can use `generate-native-configs.cmd`.
+It runs the test suite under `-agentlib:native-image-agent` in merge mode (keeping entries other
+platforms captured) and enables the generation-only tests. Afterwards, review the diff and strip any
+captured `*Test` infrastructure entries before committing. On Windows, `generate-native-configs.cmd`
+wraps the process.
 
 ## Releasing
 
 `<project.baseversion>` in `pom.xml` is the version source of truth (artifacts are
 `<baseversion>.<build>`). Bump it with `packaging/bump-version.sh <version>` (which also updates the
 AppStream metadata), then push a `releases/<version>` branch to trigger a release build. CI
-(`.github/workflows/build-and-release.yml`) builds the native image on Windows and Linux, wraps it in
-the platform installers (`packaging/`) and publishes a per-branch pre-release.
+(`.github/workflows/build-and-release.yml`) builds the native image on Windows (`mvn -B verify
+-Pnative`, which also runs the failsafe integration tests) and on Linux and macOS (`mvn -B package
+-Pnative`), wraps it in the platform installers (`packaging/`) and publishes a per-branch pre-release.
 
 ## Coding conventions
 
@@ -139,9 +153,13 @@ the platform installers (`packaging/`) and publishes a per-branch pre-release.
 
 ## Submitting changes
 
-Open a pull request against `main` with a clear description of the change and the motivation. If your
-change affects behavior users will notice, mention it so it can make the changelog. Bug reports and
-feature requests are welcome on the [issue tracker](https://github.com/nvdweem/PCPanel/issues).
+Open a pull request against `main` with a clear description of the change and the motivation. Bug
+reports and feature requests are welcome on the
+[issue tracker](https://github.com/nvdweem/PCPanel/issues).
+
+**Changelog:** if your change affects behavior users will notice, add a line at the **top** of
+`CHANGELOG.md`, above the versioned sections. Unversioned entries there are included in the next
+release's notes (see the comment at the top of that file).
 
 ## AI-assisted contributions
 
