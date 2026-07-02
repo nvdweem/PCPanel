@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import lombok.extern.log4j.Log4j2;
@@ -17,7 +18,11 @@ public final class CommandDispatcher {
     @PostConstruct
     public void init() {
         handler.start();
-        Runtime.getRuntime().addShutdownHook(new Thread(handler::doStop, "CommandHandler shutdown hook"));
+    }
+
+    @PreDestroy
+    void stop() {
+        handler.doStop();
     }
 
     private CommandDispatcher() {
@@ -72,6 +77,11 @@ public final class CommandDispatcher {
         private void waitForWaiter() {
             try {
                 synchronized (waiter) {
+                    // Re-check the queue under the lock before sleeping: onCommand does map.put then
+                    // doNotify, so an event that arrives between our sweep and this wait would otherwise
+                    // have its notify lost and sit unprocessed until the next event.
+                    if (!map.isEmpty() || stopped)
+                        return;
                     waiter.wait();
                 }
             } catch (InterruptedException e) {

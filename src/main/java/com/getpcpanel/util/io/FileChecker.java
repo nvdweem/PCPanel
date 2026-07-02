@@ -2,6 +2,7 @@ package com.getpcpanel.util.io;
 
 import com.getpcpanel.util.app.ShowMainEvent;
 import com.getpcpanel.util.app.AppEvents;
+import com.getpcpanel.util.concurrent.AppThreads;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,7 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
-public class FileChecker extends Thread {
+public class FileChecker implements Runnable {
     private static final AtomicBoolean started = new AtomicBoolean(false);
     @SuppressWarnings("FieldCanBeLocal") // If this field is local then the lock will be released.
     private RandomAccessFile randomFile;
@@ -58,17 +59,17 @@ public class FileChecker extends Thread {
         } catch (IOException e) {
             log.warn("Unable to determine if the application is already running, pretending it isn't.", e);
         }
-        result.start();
+        AppThreads.named("File Checker Thread", true, result).start();
     }
 
     public FileChecker() {
-        super("File Checker Thread");
-        setDaemon(true);
         if (!reopenFile().delete()) {
             log.trace("Unable to delete {}", reopenFile());
         }
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> started.set(false), "FileChecker shutdown hook"));
+        // Raw JVM hook on purpose: FileChecker is created from Main before CDI starts, so it cannot
+        // observe the Quarkus ShutdownEvent. The hook only clears the started flag.
+        Runtime.getRuntime().addShutdownHook(AppThreads.named("FileChecker shutdown hook", false, () -> started.set(false)));
     }
 
     private boolean isDuplicate() throws IOException {
