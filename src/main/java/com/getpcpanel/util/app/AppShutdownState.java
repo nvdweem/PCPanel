@@ -26,6 +26,10 @@ public class AppShutdownState {
 
     @PostConstruct
     void registerJvmShutdownHook() {
+        // Deliberately a raw JVM hook in addition to the ShutdownEvent observer: JVM shutdown hooks run
+        // concurrently, so readers on other threads (WebSocket send paths) need this flag set as soon as
+        // any exit path starts — including exits where Quarkus's own shutdown sequence is delayed or
+        // never reaches the CDI observer. It only flips an AtomicBoolean, so it is safe at any point.
         Runtime.getRuntime().addShutdownHook(new Thread(() -> SHUTTING_DOWN.set(true), "AppShutdownState shutdown hook"));
     }
 }

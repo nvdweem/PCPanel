@@ -6,6 +6,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.LongSupplier;
 
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -16,14 +17,28 @@ import jakarta.enterprise.context.ApplicationScoped;
  * <p>Previously implemented with RxJava ({@code PublishSubject} + {@code debounce}/{@code throttleLatest}),
  * which pulled in the whole RxJava runtime and its computation thread pool. This plain-Java version
  * keeps the same semantics with one daemon thread and no extra dependencies.
+ *
+ * <p>The scheduler and the nano-time clock are injectable (package-private constructor) so tests can
+ * drive time deterministically; the CDI/no-arg path uses the real single-thread scheduler and
+ * {@link System#nanoTime()}.
  */
 @ApplicationScoped
 public class Debouncer {
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
-        var t = new Thread(r, "Debouncer");
-        t.setDaemon(true);
-        return t;
-    });
+    private final ScheduledExecutorService scheduler;
+    private final LongSupplier nanoTime;
+
+    public Debouncer() {
+        this(Executors.newSingleThreadScheduledExecutor(r -> {
+            var t = new Thread(r, "Debouncer");
+            t.setDaemon(true);
+            return t;
+        }), System::nanoTime);
+    }
+
+    Debouncer(ScheduledExecutorService scheduler, LongSupplier nanoTime) {
+        this.scheduler = scheduler;
+        this.nanoTime = nanoTime;
+    }
 
     private final Map<Object, ScheduledFuture<?>> debounces = new ConcurrentHashMap<>();
     private final Map<Object, Throttle> throttles = new ConcurrentHashMap<>();
@@ -67,7 +82,7 @@ public class Debouncer {
         var windowNanos = unit.toNanos(delay);
         Runnable leading = null;
         synchronized (throttle) {
-            var now = System.nanoTime();
+            var now = nanoTime.getAsLong();
             if (!throttle.scheduled && (!throttle.hasRun || now - throttle.lastRunNanos >= windowNanos)) {
                 throttle.hasRun = true;
                 throttle.lastRunNanos = now;
@@ -105,7 +120,7 @@ public class Debouncer {
             throttle.latest = null;
             throttle.scheduled = false;
             if (toRun != null) {
-                throttle.lastRunNanos = System.nanoTime();
+                throttle.lastRunNanos = nanoTime.getAsLong();
             }
         }
         if (toRun != null) {

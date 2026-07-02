@@ -1,0 +1,57 @@
+name: Bug report
+description: Create a report to help us improve
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: Shown in the footer of the app window.
+      placeholder: e.g. 1.4.250
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - Linux
+        - macOS
+    validations:
+      required: true
+  - type: input
+    id: os-details
+    attributes:
+      label: OS details
+      description: Windows/macOS version, or Linux distro + desktop environment (X11/Wayland) and install method (deb/Flatpak/AppImage).
+      placeholder: e.g. Windows 11 24H2 / Fedora 42 KDE Wayland, Flatpak
+  - type: input
+    id: device
+    attributes:
+      label: Device
+      description: Which controller you use.
+      placeholder: e.g. PCPanel Pro / Mini / RGB, Deej, MIDI controller
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What you expected to happen.
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Anything else that helps — logs, screenshots, involved integrations.

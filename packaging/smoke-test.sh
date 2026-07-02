@@ -21,6 +21,13 @@
 #   --lenient /ep       Endpoint that SHOULD return 200 but only warns on failure (repeatable) —
 #                       e.g. /api/audio/* on a CI runner with no audio server, where Linux audio
 #                       degrades to a no-op ISndCtrl by design.
+#   --no-baseline       Skip the built-in baseline endpoint set. By default every parameterless,
+#                       side-effect-free GET endpoint of the REST API is exercised in addition to
+#                       the CLI-specified ones: integration endpoints that answer 200 with an empty
+#                       list/DTO when their backing service (OBS, Wave Link, Discord, MQTT, Home
+#                       Assistant, ...) is absent are required — a non-200 there is a serialization/
+#                       reflection break, not a missing backend — while endpoints tied to the OS
+#                       audio stack or to per-platform native libs are lenient.
 #   --require-hid       Fail if the startup log reports "Failed to initialize HID services".
 #   --quit-check        After the endpoint checks, POST /api/system/quit and assert the process exits
 #                       (verifies the in-UI Quit button actually shuts the app down). Runs last.
@@ -36,6 +43,7 @@ port=7654
 boot_timeout=120
 require_hid=0
 quit_check=0
+no_baseline=0
 require=()
 lenient=()
 
@@ -44,6 +52,7 @@ while [ $# -gt 0 ]; do
     --port)         port=$2; shift 2 ;;
     --require)      require+=("$2"); shift 2 ;;
     --lenient)      lenient+=("$2"); shift 2 ;;
+    --no-baseline)  no_baseline=1; shift ;;
     --require-hid)  require_hid=1; shift ;;
     --quit-check)   quit_check=1; shift ;;
     --boot-timeout) boot_timeout=$2; shift 2 ;;
@@ -52,6 +61,59 @@ while [ $# -gt 0 ]; do
 done
 
 [ ${#require[@]} -gt 0 ] || require=(/api/devices)
+
+# Baseline: every parameterless, side-effect-free GET endpoint of the REST API. The required tier
+# answers 200 with an empty list/DTO on any OS when its backing service isn't there, so a failure
+# means a broken build (typically a native-image reflection/registration gap), never a bare CI
+# runner. The lenient tier depends on the OS audio stack or on native libs that are only bundled
+# on some platforms. Deliberately absent: GET /api/overlay (shows the overlay — a side effect),
+# GET /api/icons (needs ?path=), and the /api/devices/{serial}/** tree (needs path params).
+baseline_require=(
+  /api/settings
+  /api/settings/mqtt
+  /api/settings/mqtt/status
+  /api/settings/wavelink
+  /api/settings/discord
+  /api/system/onboarding
+  /api/osc/status
+  /api/obs/scenes
+  /api/obs/sources
+  /api/voicemeeter/basic
+  /api/voicemeeter/advanced
+  /api/homeassistant/servers
+  /api/homeassistant/status
+  /api/wavelink/devices
+  /api/discord/users
+  /api/discord/status
+  /api/discord/voice-channels
+  /api/overlay/fonts
+  /api/midi/devices
+)
+baseline_lenient=(
+  /api/serial/ports             # jSerialComm's native lib is only bundled next to the exe on Windows
+  /api/processes                # ISndCtrl running-application list — same audio caveat as /api/audio/*
+  /api/focus-volume/diagnostics # reads the live ISndCtrl focus application
+  /api/audio/devices/output
+  /api/audio/devices/input
+  /api/audio/sessions
+)
+
+contains() {
+  needle=$1; shift
+  for _c in "$@"; do
+    [ "$_c" = "$needle" ] && return 0
+  done
+  return 1
+}
+
+if [ "$no_baseline" != 1 ]; then
+  for ep in "${baseline_require[@]}"; do
+    contains "$ep" "${require[@]}" || require+=("$ep")
+  done
+  for ep in "${baseline_lenient[@]}"; do
+    contains "$ep" "${require[@]}" "${lenient[@]}" || lenient+=("$ep")
+  done
+fi
 
 base="http://127.0.0.1:${port}"
 log=pcpanel-smoke.log

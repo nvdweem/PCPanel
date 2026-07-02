@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -28,6 +29,7 @@ import com.getpcpanel.device.Device;
 import com.getpcpanel.device.descriptor.DeviceDescriptor;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.util.concurrent.Debouncer;
 
 import lombok.RequiredArgsConstructor;
 import one.util.streamex.EntryStream;
@@ -37,6 +39,7 @@ import one.util.streamex.StreamEx;
 public class DeviceHolder {
     private final Map<String, Device> devices = new ConcurrentHashMap<>();
     @Inject SaveService saveService;
+    @Inject Debouncer debouncer;
     @Inject PcPanelDeviceFactory pcPanelDeviceFactory;
     @Inject GenericDeviceFactory genericDeviceFactory;
     @Inject OutputInterpreter outputInterpreter;
@@ -63,8 +66,12 @@ public class DeviceHolder {
         // Self-identifying persistence (Phase 2): back-fill identity/capabilities from the just-
         // connected descriptor for legacy saves (migrated providerId only) or whenever the hardware
         // now reports something different. Persist so a later disconnect can still render the device.
+        // The backfill above already mutated the in-memory Save; only the persist (and the SaveEvent it
+        // fires) is deferred. It must not run synchronously here: this observer runs on the device
+        // provider's thread, and SaveEvent observers (OBS/MQTT/WaveLink/OSC reconfigure logic) running
+        // re-entrantly on that thread can deadlock it (the same shape as a past startup hang).
         if (backfillIdentity(deviceSave, event.descriptor())) {
-            saveService.save();
+            debouncer.debounce("DeviceHolder.identityBackfillSave", saveService::save, 500, TimeUnit.MILLISECONDS);
         }
         var descriptor = event.descriptor();
         var isPcPanel = DescriptorFactory.PROVIDER_ID.equals(descriptor.providerId());

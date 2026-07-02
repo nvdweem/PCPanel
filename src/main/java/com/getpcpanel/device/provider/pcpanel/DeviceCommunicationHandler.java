@@ -25,6 +25,7 @@ import com.getpcpanel.device.descriptor.AnalogInputSpec;
 import com.getpcpanel.device.descriptor.DeviceDescriptor;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.util.Util;
+import com.getpcpanel.util.concurrent.AppThreads;
 
 import jakarta.enterprise.event.Event;
 import lombok.Setter;
@@ -71,10 +72,8 @@ public class DeviceCommunicationHandler {
     }
 
     public void start() {
-        readerThread = new Thread(this::reader, "HIDReader " + device.getSerialNumber());
-        writerThread = new Thread(this::writer, "HIDWriter " + device.getSerialNumber());
-        readerThread.setDaemon(true);
-        writerThread.setDaemon(true);
+        readerThread = AppThreads.named("HIDReader " + device.getSerialNumber(), true, this::reader);
+        writerThread = AppThreads.named("HIDWriter " + device.getSerialNumber(), true, this::writer);
         // Start the rolling-average worker here (not in its constructor) so it does not publish a
         // reference to this not-yet-constructed handler, and so it only runs once the device is live.
         rollingAverageSetter.setDaemon(true);
@@ -342,6 +341,7 @@ public class DeviceCommunicationHandler {
     @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
     private class RollingAverageSetter extends Thread {
         private final Map<Integer, Deque<Pair<Long, Integer>>> targets = new ConcurrentHashMap<>();
+        private final Object wakeLock = new Object();
         @Setter private Integer rollWindowMs;
         private volatile boolean running = true;
 
@@ -355,11 +355,30 @@ public class DeviceCommunicationHandler {
                 }
                 target.add(Pair.of(System.currentTimeMillis(), knob.value()));
             }
+            synchronized (wakeLock) {
+                wakeLock.notifyAll();
+            }
         }
 
         @Override
         public void run() {
             while (running) {
+                // Park while there is nothing to roll (i.e. until the first rolling-average knob event
+                // for this device); the 10ms cadence below would otherwise spin forever for nothing.
+                synchronized (wakeLock) {
+                    while (running && targets.isEmpty()) {
+                        try {
+                            wakeLock.wait();
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt();
+                            return;
+                        }
+                    }
+                }
+                if (!running) {
+                    return;
+                }
+
                 // targets is a ConcurrentHashMap and each knob's deque is guarded individually (see
                 // setKnob/handleRoll), so iterating here needs no map-wide lock — nothing else holds one.
                 targets.forEach(this::handleRoll);
@@ -431,6 +450,9 @@ public class DeviceCommunicationHandler {
 
         public void shutdown() {
             running = false;
+            synchronized (wakeLock) {
+                wakeLock.notifyAll();
+            }
         }
     }
 }
