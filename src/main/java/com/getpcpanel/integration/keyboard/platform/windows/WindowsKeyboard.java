@@ -46,6 +46,9 @@ class WindowsKeyboard implements Keyboard {
     private static final int VK_RETURN = 0x0D;
     private static final int VK_TAB = 0x09;
     private static final int WM_APPCOMMAND = 0x0319;
+    private static final int GW_HWNDNEXT = 2;
+    private static final int GW_CHILD = 5;
+    private static final int WINDOW_WALK_LIMIT = 20_000; // safety bound on the top-level window walk
 
     /** AWT-VK-style token (the part after {@code VK_}) → Win32 virtual-key code, for non-trivial keys. */
     private static final Map<String, Integer> KEY_CODES = buildKeyCodes();
@@ -149,9 +152,15 @@ class WindowsKeyboard implements Keyboard {
     /**
      * Finds the best window to send a {@code WM_APPCOMMAND} to for a running app whose executable is
      * {@code exeName} (e.g. {@code "Spotify.exe"}, matched case-insensitively and with the {@code .exe}
-     * suffix optional). Prefers a visible, titled window — Chromium/CEF apps such as Spotify spawn
-     * several helper processes whose hidden windows would silently swallow the command — and falls back
-     * to any window of a matching process. Returns null when the app is not running or has no window.
+     * suffix optional). Only a <em>visible, titled</em> window counts — that is the app's real main
+     * window. A process can be running with only hidden helper windows (Chromium/Electron apps spawn
+     * several, and a dormant {@code SpotifyLauncher.exe} shows nothing at all); sending it a
+     * {@code WM_APPCOMMAND} does nothing, so such a process is treated as "no window" and the caller
+     * moves on to the next preferred app. Returns null when the app is not running or has no such window.
+     *
+     * <p>Top-level windows are walked with {@code GetWindow}, not {@code EnumWindows}: the JNA
+     * {@code EnumWindows} callback does not run in the GraalVM native image, so the callback version
+     * found no window there and the media action leaked to the global key — a browser then grabbed it.
      */
     private WinDef.HWND findAppWindow(String exeName) {
         var wanted = StringUtils.removeEndIgnoreCase(StringUtils.trimToEmpty(exeName), ".exe");
@@ -163,33 +172,23 @@ class WindowsKeyboard implements Keyboard {
                 .map(ISndCtrl.RunningApplication::pid)
                 .toSet();
         if (pids.isEmpty()) {
+            log.debug("findAppWindow('{}'): not running", exeName);
             return null;
         }
-        var preferred = new WinDef.HWND[] { null }; // visible + titled: the app's main window
-        var fallback = new WinDef.HWND[] { null };  // any window of a matching process
-        User32.INSTANCE.EnumWindows((hWnd, data) -> {
-            var target = new IntByReference();
-            User32.INSTANCE.GetWindowThreadProcessId(hWnd, target);
-            if (!pids.contains(target.getValue())) {
-                return true;
+        WinDef.HWND match = null;
+        var pid = new IntByReference();
+        var hWnd = User32.INSTANCE.GetWindow(User32.INSTANCE.GetDesktopWindow(), new WinDef.DWORD(GW_CHILD));
+        for (var guard = 0; hWnd != null && guard < WINDOW_WALK_LIMIT; guard++) {
+            User32.INSTANCE.GetWindowThreadProcessId(hWnd, pid);
+            if (pids.contains(pid.getValue())
+                    && User32.INSTANCE.IsWindowVisible(hWnd) && User32.INSTANCE.GetWindowTextLength(hWnd) > 0) {
+                match = hWnd;
+                break;
             }
-            if (fallback[0] == null) {
-                fallback[0] = hWnd;
-            }
-            if (isMainWindow(hWnd)) {
-                preferred[0] = hWnd;
-                return false; // best possible match; stop enumerating
-            }
-            return true;
-        }, null);
-        var match = preferred[0] != null ? preferred[0] : fallback[0];
+            hWnd = User32.INSTANCE.GetWindow(hWnd, new WinDef.DWORD(GW_HWNDNEXT));
+        }
         log.debug("findAppWindow('{}'): pids={}, match={}", exeName, pids, match);
         return match;
-    }
-
-    /** A visible, titled window — an app's main window, not a hidden helper or an owned popup. */
-    private static boolean isMainWindow(WinDef.HWND hWnd) {
-        return User32.INSTANCE.IsWindowVisible(hWnd) && User32.INSTANCE.GetWindowTextLength(hWnd) > 0;
     }
 
     private static void sendUnicode(char c, boolean keyUp) {
