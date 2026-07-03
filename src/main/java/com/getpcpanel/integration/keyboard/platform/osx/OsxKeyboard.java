@@ -1,6 +1,7 @@
 package com.getpcpanel.integration.keyboard.platform.osx;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -13,6 +14,7 @@ import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 
+import io.quarkus.arc.Unremovable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
@@ -34,6 +36,7 @@ import lombok.extern.log4j.Log4j2;
  */
 @Log4j2
 @ApplicationScoped
+@Unremovable
 @MacBuild
 class OsxKeyboard implements Keyboard {
     private final AtomicBoolean accessibilityWarned = new AtomicBoolean();
@@ -137,7 +140,9 @@ class OsxKeyboard implements Keyboard {
     }
 
     @Override
-    public void sendMediaKey(VolumeButton button, boolean spotify) {
+    public void sendMediaKey(VolumeButton button, List<String> apps) {
+        // Per-window targeting isn't available on macOS; honour a Spotify preference (else Music.app).
+        var spotify = apps.stream().anyMatch(a -> a != null && a.regionMatches(true, 0, "spotify", 0, "spotify".length()));
         mediaControl.execute(button, spotify);
     }
 

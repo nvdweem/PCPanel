@@ -171,6 +171,7 @@ export interface CommandKeystroke extends Command, ButtonAction {
 
 export interface CommandMedia extends Command, ButtonAction {
     _type: "keyboard.media";
+    apps: string[];
     button: VolumeButton;
     spotify: boolean;
 }

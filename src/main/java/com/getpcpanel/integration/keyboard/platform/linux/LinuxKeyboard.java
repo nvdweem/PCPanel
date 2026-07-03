@@ -2,6 +2,7 @@ package com.getpcpanel.integration.keyboard.platform.linux;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.getpcpanel.integration.keyboard.Keyboard;
@@ -13,6 +14,7 @@ import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 
+import io.quarkus.arc.Unremovable;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.extern.log4j.Log4j2;
 
@@ -30,6 +32,7 @@ import lombok.extern.log4j.Log4j2;
  */
 @Log4j2
 @ApplicationScoped
+@Unremovable
 @LinuxBuild
 class LinuxKeyboard implements Keyboard {
     private interface X11 extends Library {
@@ -134,11 +137,12 @@ class LinuxKeyboard implements Keyboard {
      *
      * <p>On a pure Wayland session with no X server there is nothing to inject into, so this falls back
      * to controlling the active player directly through MPRIS on the session D-Bus
-     * ({@link LinuxMprisMediaControl}). The {@code spotify} flag is irrelevant on Linux — the desktop
-     * already routes the global media key to whichever player is active (Spotify included via MPRIS).
+     * ({@link LinuxMprisMediaControl}). The {@code apps} preference list is irrelevant on Linux — the
+     * desktop already routes the global media key to whichever player is active (Spotify included via
+     * MPRIS), so there is no portable way (nor need) to target a specific player window.
      */
     @Override
-    public void sendMediaKey(VolumeButton button, boolean spotify) {
+    public void sendMediaKey(VolumeButton button, List<String> apps) {
         var keysym = mediaKeysym(button);
         synchronized (LOCK) {
             var disp = display();

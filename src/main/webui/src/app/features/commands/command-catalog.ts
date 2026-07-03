@@ -164,7 +164,7 @@ const FIELD_DEFS: FieldDef_[] = [
   },
   {
     type: P + 'CommandMedia',
-    buildEmpty: () => ({ _type: P + 'CommandMedia', button: 'playPause', spotify: false, overlayText: '' }),
+    buildEmpty: () => ({ _type: P + 'CommandMedia', button: 'playPause', apps: [], overlayText: '' }),
     fields: [
       {
         kind: 'select', key: 'button', label: 'Media key', options: [
@@ -172,7 +172,8 @@ const FIELD_DEFS: FieldDef_[] = [
           { value: 'prev', label: 'Previous' }, { value: 'stop', label: 'Stop' }, { value: 'mute', label: 'Mute' },
         ],
       },
-      { kind: 'toggle', key: 'spotify', label: 'Spotify-aware' },
+      // Windows: the first listed app that's running gets the key directly; if none run, it goes global.
+      { kind: 'apps', key: 'apps', label: 'Send to app if running (Windows)' },
     ],
   },
   // Generic outputs: send to anything over HTTP/MQTT/OSC. On a dial the position maps (min/max or
