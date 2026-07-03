@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, model } from '@angular/core';
 import { OverlayModule } from '@angular/cdk/overlay';
+import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { RouterLink } from '@angular/router';
 import { CommandDef, COMMAND_BY_TYPE, FieldDef, LiveSource } from './command-catalog';
 import { CommandPickerComponent } from './command-picker.component';
@@ -21,7 +22,7 @@ type Cmd = Record<string, any>;
   selector: 'pc-command-fields',
   standalone: true,
   // Self-referenced (CommandFieldsComponent) so each stepped-switch band can host a nested action editor.
-  imports: [OverlayModule, RouterLink, IconComponent, ToggleComponent, SelectComponent, AppPickerComponent, KeyRecorderComponent, SegmentedComponent, ColorPickerComponent, CommandFieldsComponent, CommandPickerComponent],
+  imports: [OverlayModule, DragDropModule, RouterLink, IconComponent, ToggleComponent, SelectComponent, AppPickerComponent, KeyRecorderComponent, SegmentedComponent, ColorPickerComponent, CommandFieldsComponent, CommandPickerComponent],
   template: `
     <div class="fields">
       @for (f of visibleFields(); track f.kind + ($any(f).key || '')) {
@@ -99,9 +100,11 @@ type Cmd = Record<string, any>;
           @case ('apps') {
             <div class="field-block">
               <div class="flabel">{{ $any(f).label }}</div>
-              <div class="chips">
+              <div class="chips" cdkDropList cdkDropListOrientation="mixed" (cdkDropListDropped)="reorder($any(f).key, $event)">
                 @for (p of asArray($any(f).key); track p) {
-                  <span class="pc-chip">{{ p }}<span class="x" (click)="removeFromArray($any(f).key, p)"><pc-icon name="x" [size]="11" [strokeWidth]="2.5"></pc-icon></span></span>
+                  <span class="pc-chip drag" cdkDrag title="Drag to reorder">
+                    <pc-icon class="grip" name="grip" [size]="12"></pc-icon>{{ p }}<span class="x" (click)="removeFromArray($any(f).key, p)"><pc-icon name="x" [size]="11" [strokeWidth]="2.5"></pc-icon></span>
+                  </span>
                 }
                 <button class="pc-chip dashed" cdkOverlayOrigin #ao="cdkOverlayOrigin" (click)="appsOpen.set($any(f).key)">
                   <pc-icon name="plus" [size]="12"></pc-icon> {{ $any(f).single ? 'choose app' : 'add app' }}
@@ -286,6 +289,12 @@ type Cmd = Record<string, any>;
     .bai-del:hover { color: var(--danger, #FF453A); }
     .bai-body { padding: 12px; border-top: 1px solid var(--line-hair); background: var(--surface-1, #15171C); }
     .add-band { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; }
+    .pc-chip.drag { cursor: grab; gap: 5px; }
+    .pc-chip.drag .grip { color: var(--text-3); flex: none; margin-right: -1px; }
+    .pc-chip.drag.cdk-drag-dragging { cursor: grabbing; }
+    .cdk-drag-preview { cursor: grabbing; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
+    .cdk-drag-placeholder { opacity: .35; }
+    .chips.cdk-drop-list-dragging .pc-chip:not(.cdk-drag-placeholder) { transition: transform 180ms cubic-bezier(0,0,.2,1); }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -344,6 +353,12 @@ export class CommandFieldsComponent {
   }
   removeFromArray(key: string, item: string): void {
     this.set(key, this.asArray(key).filter(x => x !== item));
+  }
+  /** Reorder the app list by drag — order is meaningful (e.g. media targeting picks the first running app). */
+  reorder(key: string, ev: CdkDragDrop<string[]>): void {
+    const list = [...this.asArray(key)];
+    moveItemInArray(list, ev.previousIndex, ev.currentIndex);
+    this.set(key, list);
   }
 
   liveOptions(source: LiveSource): SelectOption[] {
