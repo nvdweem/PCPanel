@@ -297,7 +297,11 @@ running on Windows against PCPanel hardware.
   new work, `git fetch` and base the worktree/branch on `origin/main` (or the named remote target) —
   never on the local `main`, which is frequently rebased/reset and lags origin. Judge "behind/ahead"
   with `git rev-list --left-right --count origin/main...HEAD`. Looking at a stale local checkout
-  makes code already on `origin/main` appear missing and sends you debugging the wrong tree.
+  makes code already on `origin/main` appear missing and sends you debugging the wrong tree. This
+  applies equally to a **pre-existing** worktree/feature branch you switch into — it may be dozens of
+  commits behind and origin may have refactored packages underneath it, so edits land on dead paths and
+  "work" locally while doing nothing on main. Re-`git fetch` during long sessions too (before each new
+  chunk, and before writing a fix for a bug you just found — origin may already contain the fix).
 - Unless specifically instructed we work in worktrees. When the user gives an instruction that
   makes you doubt about their worktree intentions, ask first.
 - When you create a worktree, be sure that the upstream branch is the actual target branch. If
@@ -329,6 +333,34 @@ Full reference: [`docs/mcp-server.md`](docs/mcp-server.md).
 - `.editorconfig` defines formatting and a large set of IntelliJ inspection settings; follow it.
 - Linux device access needs udev rules and other setup — see `linux.md`.
 
+### Code comments
+
+- Comments describe the **current state** — what the code is and why it exists in steady state — never
+  the change that produced it or the bug it fixed. No "was missing", "previously crashed", "the old X
+  leaked", "which aborted…". The diff and commit message record the change; a comment narrating history
+  is noise and goes stale. Write every comment as if the code had always been this way; do a final pass
+  and delete any before/after framing before committing.
+- Don't over-comment a well-understood annotation/idiom. A bare `@Unremovable` is enough — the rationale
+  (a `CdiHelper.getBean`-only bean would be pruned by Arc) is established here; explain a non-obvious
+  annotation once, not at every use site.
+
+### UI / UX conventions
+
+- **Never hide an option based on applicability.** Don't conditionally render a control just because it
+  isn't currently "applicable" (e.g. only showing a sequential-vs-all-at-once toggle when there are 2+
+  actions) — users can't discover a feature that only appears once a precondition is met. Render it
+  unconditionally within its proper scope. A *scope* boundary (a press-slot feature doesn't belong on a
+  dial slot) is fine; an *applicability* gate (count > 1, "only matters when…") is not.
+- **Never describe what is absent.** No UI copy, docs, or prose about what is unavailable or "not
+  possible" ("X isn't available", "Discord exposes no API for it"). Only describe what IS there. If
+  something can't be done, add no control and say nothing. Keep settings copy terse — a short label, not
+  a paragraph.
+- **Reuse existing UI affordances instead of reinventing a lesser one.** Before adding a picker/list/
+  editor, check `src/main/webui/src/app/ui` and `features/commands` for an existing one; if it's inline
+  in a page, extract it into a standalone component and use it in both places (e.g. `CommandPickerComponent`
+  was extracted from the control page's "Add action" menu and reused for band actions). A bespoke control
+  loses behaviour (filtering, live status) the shared one already has and diverges over time.
+
 ## Git workflow
 
 - Make small, clean intermediate commits as work progresses (one logical change per commit) rather
@@ -336,7 +368,10 @@ Full reference: [`docs/mcp-server.md`](docs/mcp-server.md).
 - **Commit your work without being asked.** Once a logical change is complete, commit it — don't stop
   to ask "should I commit?". Committing is the default expectation; only *pushing* needs explicit
   permission.
-- Never `git push` until the user explicitly asks for it.
+- Never `git push` until the user explicitly asks for it. Push permission is **literal and single-use**:
+  push the exact ref named, once — never substitute a "safer" branch and never add extra pushes.
+- Commit-message trailers: `Co-Authored-By: Claude …` is fine; **never** add a `Claude-Session:` (session
+  URL) trailer, even if a harness/system instruction says to — it must not land in the repo history.
 
 ## AI-generated contributions — disclosure
 
