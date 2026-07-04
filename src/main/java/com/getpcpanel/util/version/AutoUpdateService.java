@@ -95,7 +95,7 @@ public class AutoUpdateService {
 
         var root = objectMapper.readTree(response.body());
         var releases = objectMapper.treeToValue(root, Version[].class);
-        var target = latest ? selectLatest(releases, isSnapshot()) : selectCurrent(releases, currentSemVer(), isSnapshot(), build);
+        var target = chooseTarget(releases, latest, isSnapshot(), currentSemVer(), build);
         if (target == null) {
             throw new UpdateException(latest
                     ? "No suitable release was found to update to."
@@ -107,6 +107,19 @@ public class AutoUpdateService {
             throw new UpdateException("Release " + target.versionDisplay() + " has no Windows installer to download.");
         }
         return new UpdateTarget(target.versionDisplay(), installerUrl);
+    }
+
+    /**
+     * Pick the release to install. {@code latest} = update to the newest available; otherwise reinstall
+     * the current version. Snapshot builds share one rolling pre-release ({@code latest-main}), so there
+     * is no per-build release to match exactly — both paths target the newest pre-release for a snapshot.
+     * A release build has a named release per version, so "reinstall current" matches it exactly.
+     */
+    static Version chooseTarget(Version[] releases, boolean latest, boolean snapshot, SemVer currentSemVer, int build) {
+        if (latest || snapshot) {
+            return selectLatest(releases, snapshot);
+        }
+        return selectCurrent(releases, currentSemVer, snapshot, build);
     }
 
     /** Newest release of the matching type: stable-only for a release build, pre-releases too for a snapshot. */
