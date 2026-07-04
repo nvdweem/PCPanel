@@ -3,6 +3,7 @@ import { DeviceSnapshotDto, ProfileSnapshotDto, WsAssignmentChangedEvent, WsCont
 import { ToastService } from '../ui/toast/toast.service';
 import { PlatformService } from './platform.service';
 import { UpdateService } from './update.service';
+import { VersionGuardService } from './version-guard.service';
 
 type DeviceMap = Record<string, DeviceSnapshotDto>;
 
@@ -18,6 +19,7 @@ export class DeviceStateService implements OnDestroy {
   private readonly toasts = inject(ToastService);
   private readonly platform = inject(PlatformService);
   private readonly updates = inject(UpdateService);
+  private readonly versionGuard = inject(VersionGuardService);
   private readonly _devices = signal<DeviceMap>({});
   private socket: WebSocket | null = null;
   private reconnectTimer?: ReturnType<typeof setTimeout>;
@@ -86,6 +88,9 @@ export class DeviceStateService implements OnDestroy {
       this.connected.set(true);
       this.reconnecting.set(false);
       this.lastError.set(null);
+      // If the backend came back on a new version (e.g. after an auto-update), reload to swap the stale
+      // frontend bundle for the matching one instead of running the old UI against the new backend.
+      void this.versionGuard.checkOnConnect();
     };
 
     this.socket.onmessage = (event) => {
