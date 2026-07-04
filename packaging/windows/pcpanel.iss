@@ -101,6 +101,12 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
 ; OS auto-start — this is a one-shot launch.
 Filename: "{app}\{#MyAppExeName}"; Parameters: "/postinstall"; Description: "Launch {#MyAppName} now"; \
     Flags: nowait postinstall skipifsilent
+; Auto-update relaunch. The in-app updater runs this installer silently with `/UPDATE=1`, which skips the
+; interactive "Launch now" entry above (skipifsilent). This entry re-launches the freshly updated app in
+; that case so an unattended update ends with the app running again (same /postinstall UX as a manual
+; install: it opens the UI and shows the changelog). WantsUpdateRelaunch gates it to the /UPDATE=1 run.
+Filename: "{app}\{#MyAppExeName}"; Parameters: "/postinstall"; \
+    Flags: nowait; Check: WantsUpdateRelaunch
 
 [UninstallRun]
 ; Make sure a running instance is stopped before files are removed.
@@ -165,6 +171,13 @@ function PrepareToInstall(var NeedsRestart: Boolean): String;
 begin
   CloseRunningInstance;
   Result := '';
+end;
+
+// True when the in-app auto-updater launched this installer (it passes /UPDATE=1). Used to relaunch the
+// app after a silent update, since the normal "Launch now" [Run] entry is skipped in silent mode.
+function WantsUpdateRelaunch: Boolean;
+begin
+  Result := ExpandConstant('{param:UPDATE|0}') = '1';
 end;
 
 // Create an "on logon" scheduled task that runs the app with highest privileges. This requires

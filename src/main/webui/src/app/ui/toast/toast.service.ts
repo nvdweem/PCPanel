@@ -9,8 +9,10 @@ export interface Toast {
   kind: ToastKind;
   /** Optional call-to-action link (e.g. a download page); rendered as an anchor in the toast. */
   href?: string;
-  /** Label for the {@link href} link; defaults to "Open". */
+  /** Label for the {@link href} link (or {@link onAction} button); defaults to "Open". */
   action?: string;
+  /** Optional call-to-action callback; rendered as a button. Takes precedence over {@link href}. */
+  onAction?: () => void;
 }
 
 /** Lightweight non-blocking toast queue (profile switches, version notices). */
@@ -19,9 +21,9 @@ export class ToastService {
   private seq = 0;
   readonly toasts = signal<Toast[]>([]);
 
-  show(message: string, opts: { sub?: string; kind?: ToastKind; timeout?: number; href?: string; action?: string } = {}): number {
+  show(message: string, opts: { sub?: string; kind?: ToastKind; timeout?: number; href?: string; action?: string; onAction?: () => void } = {}): number {
     const id = ++this.seq;
-    const toast: Toast = { id, message, sub: opts.sub, kind: opts.kind ?? 'info', href: opts.href, action: opts.action };
+    const toast: Toast = { id, message, sub: opts.sub, kind: opts.kind ?? 'info', href: opts.href, action: opts.action, onAction: opts.onAction };
     this.toasts.update(list => [...list, toast]);
     const timeout = opts.timeout ?? 3200;
     if (timeout > 0) setTimeout(() => this.dismiss(id), timeout);

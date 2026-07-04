@@ -7,9 +7,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import com.getpcpanel.util.version.AutoUpdateService;
+
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
@@ -27,6 +30,8 @@ import lombok.extern.log4j.Log4j2;
 @Produces(MediaType.APPLICATION_JSON)
 public class PlatformResource {
 
+    @Inject AutoUpdateService autoUpdate;
+
     @ConfigProperty(name = "quarkus.application.version", defaultValue = "dev")
     String version;
 
@@ -35,7 +40,7 @@ public class PlatformResource {
     /** Short HEAD commit of a local build, so the running build is identifiable in the UI; null for releases. */
     @Nullable private String commit;
 
-    public record PlatformInfo(String os, boolean voicemeeter, boolean waveLink, boolean flatpak, String version, @Nullable String branch, @Nullable String commit) {
+    public record PlatformInfo(String os, boolean voicemeeter, boolean waveLink, boolean flatpak, boolean autoUpdate, String version, @Nullable String branch, @Nullable String commit) {
     }
 
     @PostConstruct
@@ -55,7 +60,7 @@ public class PlatformResource {
         // Running inside the Flatpak sandbox: the UI uses this to warn that Discord's IPC socket is only
         // visible if Discord was already running when PCPanel (and so the sandbox) started.
         var flatpak = StringUtils.isNotBlank(System.getenv("FLATPAK_ID"));
-        return new PlatformInfo(os, SystemUtils.IS_OS_WINDOWS, SystemUtils.IS_OS_WINDOWS || SystemUtils.IS_OS_MAC, flatpak, version, branch, commit);
+        return new PlatformInfo(os, SystemUtils.IS_OS_WINDOWS, SystemUtils.IS_OS_WINDOWS || SystemUtils.IS_OS_MAC, flatpak, autoUpdate.isSupported(), version, branch, commit);
     }
 
     /**

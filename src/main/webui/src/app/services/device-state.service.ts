@@ -1,6 +1,8 @@
 import { computed, inject, Injectable, OnDestroy, Signal, signal } from '@angular/core';
 import { DeviceSnapshotDto, ProfileSnapshotDto, WsAssignmentChangedEvent, WsControlSettingChangedEvent, WsEvent, WsEventUnion } from '../models/generated/backend.types';
 import { ToastService } from '../ui/toast/toast.service';
+import { PlatformService } from './platform.service';
+import { UpdateService } from './update.service';
 
 type DeviceMap = Record<string, DeviceSnapshotDto>;
 
@@ -14,6 +16,8 @@ type DeviceMap = Record<string, DeviceSnapshotDto>;
 @Injectable({providedIn: 'root'})
 export class DeviceStateService implements OnDestroy {
   private readonly toasts = inject(ToastService);
+  private readonly platform = inject(PlatformService);
+  private readonly updates = inject(UpdateService);
   private readonly _devices = signal<DeviceMap>({});
   private socket: WebSocket | null = null;
   private reconnectTimer?: ReturnType<typeof setTimeout>;
@@ -235,12 +239,15 @@ export class DeviceStateService implements OnDestroy {
       case 'new_version_available':
         if (this.announcedVersion !== event.version) {
           this.announcedVersion = event.version;
+          // On an installed Windows build the app can update itself; elsewhere link to the download page.
+          const canAutoUpdate = this.platform.autoUpdate();
           this.toasts.show('A new version is available', {
             sub: event.version,
             kind: 'info',
             timeout: 0,
-            href: event.url,
-            action: 'Download',
+            action: canAutoUpdate ? 'Update & restart' : 'Download',
+            href: canAutoUpdate ? undefined : event.url,
+            onAction: canAutoUpdate ? () => this.updates.updateToLatest() : undefined,
           });
         }
         return true;
