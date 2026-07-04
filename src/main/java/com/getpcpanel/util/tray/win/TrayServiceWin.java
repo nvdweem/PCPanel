@@ -68,6 +68,14 @@ public class TrayServiceWin implements ITrayService, WindowProc {
     private static final int WM_CONTEXTMENU = 0x007B;
     private static final int WM_NULL = 0x0000;
 
+    // Window/session close messages. The Windows installer (and the Restart Manager it drives) closes a
+    // running instance by targeting this window: it posts WM_CLOSE, and a session-end sends
+    // WM_QUERYENDSESSION/WM_ENDSESSION. Handling them here lets the app shut down gracefully — and
+    // release its locked exe/DLLs — instead of forcing the user to close it by hand before an update.
+    private static final int WM_CLOSE = 0x0010;
+    private static final int WM_QUERYENDSESSION = 0x0011;
+    private static final int WM_ENDSESSION = 0x0016;
+
     @Inject Event<Object> eventBus;
     @Inject FileUtil fileUtil;
 
@@ -150,6 +158,18 @@ public class TrayServiceWin implements ITrayService, WindowProc {
             WinShell32.INSTANCE.Shell_NotifyIcon(WinShell32.NIM_ADD, nid);
             return new LRESULT(0);
         }
+        if (uMsg == WM_CLOSE || uMsg == WM_ENDSESSION) {
+            // A close/session-end request (e.g. from the installer): exit the whole app, not just the
+            // tray thread. Letting this fall through to DefWindowProc would only destroy this daemon
+            // window while the app keeps running, so the exe/DLLs would stay locked. System.exit runs
+            // the normal Quarkus shutdown, exactly like the tray "Exit" menu.
+            log.info("Received {} on the tray window; shutting down", uMsg == WM_CLOSE ? "WM_CLOSE" : "WM_ENDSESSION");
+            exitApplication();
+            return new LRESULT(0);
+        }
+        if (uMsg == WM_QUERYENDSESSION) {
+            return new LRESULT(1); // allow the session to end; WM_ENDSESSION follows and shuts us down
+        }
         if (uMsg == WinUser.WM_DESTROY) {
             User32.INSTANCE.PostQuitMessage(0);
             return new LRESULT(0);
@@ -189,15 +209,17 @@ public class TrayServiceWin implements ITrayService, WindowProc {
             switch (cmd) {
                 case MENU_OPEN -> eventBus.fire(new ShowMainEvent());
                 case MENU_SETTINGS -> eventBus.fire(new OpenFolderEvent(fileUtil.getRoot().toString()));
-                case MENU_EXIT -> {
-                    //noinspection CallToSystemExit
-                    System.exit(0);
-                }
+                case MENU_EXIT -> exitApplication();
                 default -> { /* menu dismissed */ }
             }
         } finally {
             ext.DestroyMenu(menu);
         }
+    }
+
+    @SuppressWarnings("CallToSystemExit")
+    private void exitApplication() {
+        System.exit(0);
     }
 
     /**
