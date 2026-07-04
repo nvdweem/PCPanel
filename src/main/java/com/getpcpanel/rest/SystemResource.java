@@ -11,6 +11,8 @@ import jakarta.ws.rs.core.Response;
 
 import com.getpcpanel.rest.model.dto.OnboardingDto;
 import com.getpcpanel.util.app.StartupOnboarding;
+import com.getpcpanel.util.version.AutoUpdateService;
+import com.getpcpanel.util.version.AutoUpdateService.UpdateException;
 
 import io.quarkus.runtime.Quarkus;
 import lombok.extern.log4j.Log4j2;
@@ -27,6 +29,7 @@ import lombok.extern.log4j.Log4j2;
 @Produces(MediaType.APPLICATION_JSON)
 public class SystemResource {
     @Inject StartupOnboarding onboarding;
+    @Inject AutoUpdateService autoUpdate;
 
     /**
      * One-time onboarding hint for the UI (which welcome/update dialog to show, the version, and the
@@ -59,4 +62,45 @@ public class SystemResource {
         Quarkus.asyncExit(0);
         return Response.accepted().build();
     }
+
+    /**
+     * Windows self-update: download the latest release's installer and run it silently, then restart.
+     * Only works on an installed Windows build ({@link AutoUpdateService#isSupported()}); elsewhere the
+     * UI links to the release page instead and never calls this. The running app is closed by the
+     * installer moments after it is launched, so the response is returned first.
+     */
+    @POST
+    @Path("/update")
+    public Response update() {
+        return runUpdate(autoUpdate::updateToLatest);
+    }
+
+    /** Debug/testing: re-download and reinstall the currently running version through the same path. */
+    @POST
+    @Path("/update/reinstall")
+    public Response reinstallCurrent() {
+        return runUpdate(autoUpdate::reinstallCurrent);
+    }
+
+    private Response runUpdate(UpdateAction action) {
+        try {
+            var target = action.run();
+            log.info("Update to {} started from the web UI", target.version());
+            return Response.accepted().entity(target).build();
+        } catch (UpdateException e) {
+            log.warn("Update could not start: {}", e.getMessage());
+            return Response.status(Response.Status.CONFLICT).entity(new ErrorDto(e.getMessage())).build();
+        } catch (Exception e) {
+            log.error("Update failed to start", e);
+            return Response.serverError().entity(new ErrorDto("The update could not be started: " + e.getMessage())).build();
+        }
+    }
+
+    @FunctionalInterface
+    private interface UpdateAction {
+        AutoUpdateService.UpdateTarget run() throws Exception;
+    }
+
+    @io.quarkus.runtime.annotations.RegisterForReflection
+    public record ErrorDto(String error) {}
 }

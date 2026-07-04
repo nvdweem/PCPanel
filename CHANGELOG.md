@@ -14,6 +14,8 @@
 - Restored **System Sounds** as a target for the App volume and App mute actions (it had gone missing from the app picker).
 - The Device volume and Device mute actions now offer a selectable **Default device** option, so an empty choice is shown and selectable as the default output device.
 - Java 25 is now required to run the software. The installer will include it.
+- The Windows installer now closes a running PCPanel by itself before updating, instead of asking you to close it manually — it shuts the running instance down cleanly (saving your settings) and only force-closes it as a fallback.
+- **One-click updates on Windows**: when a new version is available, the notification's "Update & restart" button now downloads the installer, runs it silently (keeping your existing install location), and restarts the updated app for you — no more clicking through the installer. The page you started from reconnects on its own and confirms with a short "up to date" dialog. On Linux and macOS the notification still links to the download page.
 - #87 - Experimental macOS support (community contributed by Choaterboater, ported to the new Quarkus build). Device volume/mute/default-device switching via Core Audio, keystrokes, shortcuts and Music/Spotify media control. Per-application volume is not possible on stock macOS. See the [macOS instructions](mac.md).
 - Profiles are now saved on application exit, so a change made right before quitting is no longer lost.
 - Added support for Elgato Wave Link, enable it in the settings to add the dial/button commands

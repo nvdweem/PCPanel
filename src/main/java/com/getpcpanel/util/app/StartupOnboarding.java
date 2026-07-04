@@ -45,6 +45,12 @@ public class StartupOnboarding {
     @ConfigProperty(name = "pcpanel.postinstall", defaultValue = "false")
     boolean postInstall;
 
+    // Set when the in-app auto-updater relaunched us after a silent update (installer arg /updated). Shows
+    // the same "just updated" dialog as postInstall, but the browser is NOT opened — the UI that triggered
+    // the update is already open and reconnects to pick this up.
+    @ConfigProperty(name = "pcpanel.updated", defaultValue = "false")
+    boolean updated;
+
     @ConfigProperty(name = "quarkus.application.version", defaultValue = "dev")
     String version;
 
@@ -55,9 +61,11 @@ public class StartupOnboarding {
 
     void onStart(@Observes StartupEvent event) {
         var newSave = saveService.isNewSave();
-        intent = newSave ? INTENT_NEW_USER : postInstall ? INTENT_POST_INSTALL : INTENT_NONE;
+        intent = newSave ? INTENT_NEW_USER : (postInstall || updated) ? INTENT_POST_INSTALL : INTENT_NONE;
 
-        var openBrowser = newSave || postInstall || saveService.get().isOpenBrowserOnStartup();
+        // After an auto-update the triggering UI is already open (it reconnects), so never open a second
+        // browser tab — even if "open on startup" is on. First install / /postinstall still open it.
+        var openBrowser = newSave || postInstall || (!updated && saveService.get().isOpenBrowserOnStartup());
         if (openBrowser) {
             log.info("Opening the UI in the browser on startup (firstRun={}, postInstall={}, setting={})",
                     newSave, postInstall, saveService.get().isOpenBrowserOnStartup());

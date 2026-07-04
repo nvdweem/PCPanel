@@ -20,6 +20,7 @@ public class Main implements QuarkusApplication {
     private static final String SKIP_FILE_CHECK_ARG = "skipfilecheck";
     private static final String SKIP_FILE_CHECK_PROPERTY = "pcpanel.skip-file-check";
     private static final String POST_INSTALL_PROPERTY = "pcpanel.postinstall";
+    private static final String UPDATED_PROPERTY = "pcpanel.updated";
 
     static void main(String... args) {
         forceHeadlessAwt();
@@ -33,7 +34,7 @@ public class Main implements QuarkusApplication {
             new HidDebug().execute();
             return;
         }
-        markPostInstallLaunch(argSet);
+        markLaunchIntent(argSet);
         Quarkus.run(Main.class, args);
     }
 
@@ -57,16 +58,24 @@ public class Main implements QuarkusApplication {
     }
 
     /**
-     * The Windows installer launches the app once with {@code /postinstall} when it finishes (it does
-     * NOT set up OS auto-start). Surface that as the {@value #POST_INSTALL_PROPERTY} system property so a
-     * CDI bean can read it via config and show the post-install dialog + open the browser. Accept the
-     * bare {@code postinstall} too, so a non-Windows manual launch can trigger the same flow. Done before
-     * {@code Quarkus.run} so the property is in the config at boot.
+     * Surface how the app was launched so {@code StartupOnboarding} can react, before {@code Quarkus.run}
+     * puts the properties in the config at boot:
+     * <ul>
+     *   <li>{@code /postinstall} — a fresh interactive install finished. Show the post-install/update
+     *       dialog <em>and</em> open the UI in the browser (no tab is open yet).</li>
+     *   <li>{@code /updated} — the in-app auto-updater relaunched us after a silent update. Show the same
+     *       "just updated" dialog, but do <em>not</em> open a browser: the UI that triggered the update is
+     *       already open and simply reconnects. See {@code packaging/windows/pcpanel.iss}.</li>
+     * </ul>
+     * The bare {@code postinstall} form is also accepted so a non-Windows manual launch can trigger it.
      */
     @SuppressWarnings("AccessOfSystemProperties")
-    private static void markPostInstallLaunch(Set<String> argSet) {
+    private static void markLaunchIntent(Set<String> argSet) {
         if (argSet.contains("/postinstall") || argSet.contains("postinstall")) {
             System.setProperty(POST_INSTALL_PROPERTY, "true");
+        }
+        if (argSet.contains("/updated") || argSet.contains("updated")) {
+            System.setProperty(UPDATED_PROPERTY, "true");
         }
     }
 
