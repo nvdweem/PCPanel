@@ -70,8 +70,9 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
   downloads a GitHub release's `PCPanel-*-setup.exe` and runs it with `/VERYSILENT /SUPPRESSMSGBOXES
   /NORESTART /UPDATE=1`. Inno keeps the existing install dir (fixed `AppId`); `TrayServiceWin` handles
   the installer's `WM_CLOSE` to shut the running app down cleanly (releasing its file locks); the
-  installer's `pcpanel.iss` `/UPDATE`-gated `[Run]` entry relaunches it (`/postinstall`) — the normal
-  "Launch now" entry is `skipifsilent` and wouldn't fire. Gated to `SystemUtils.IS_OS_WINDOWS &&`
+  installer's `pcpanel.iss` `/UPDATE`-gated `[Run]` entry relaunches it (`quiet`, i.e. to the tray — the
+  update came from the already-open UI, whose websocket just reconnects; the normal "Launch now" entry is
+  `skipifsilent` and wouldn't fire). Gated to `SystemUtils.IS_OS_WINDOWS &&`
   native image, exposed to the UI as `PlatformInfo.autoUpdate`; elsewhere (Linux/macOS, dev/JVM) the
   UI links to the release page instead. REST: `POST /api/system/update` (latest) and
   `/api/system/update/reinstall` (the Debug page's reinstall-current button, for testing the flow).

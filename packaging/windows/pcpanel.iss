@@ -103,9 +103,11 @@ Filename: "{app}\{#MyAppExeName}"; Parameters: "/postinstall"; Description: "Lau
     Flags: nowait postinstall skipifsilent
 ; Auto-update relaunch. The in-app updater runs this installer silently with `/UPDATE=1`, which skips the
 ; interactive "Launch now" entry above (skipifsilent). This entry re-launches the freshly updated app in
-; that case so an unattended update ends with the app running again (same /postinstall UX as a manual
-; install: it opens the UI and shows the changelog). WantsUpdateRelaunch gates it to the /UPDATE=1 run.
-Filename: "{app}\{#MyAppExeName}"; Parameters: "/postinstall"; \
+; that case so an unattended update ends with it running again. It uses `quiet` (start to the tray, no
+; browser): the update was triggered from the already-open UI, whose websocket simply reconnects when the
+; backend comes back — opening another browser tab to the same UI would be redundant. WantsUpdateRelaunch
+; gates this to the /UPDATE=1 run.
+Filename: "{app}\{#MyAppExeName}"; Parameters: "quiet"; \
     Flags: nowait; Check: WantsUpdateRelaunch
 
 [UninstallRun]
