@@ -44,6 +44,12 @@ public class Save {
      *  tray and the UI is opened on demand; a first run and an installer launch open it regardless. */
     private boolean openBrowserOnStartup;
     private boolean startupVersionCheck = true;
+    /** Include pre-release (snapshot) builds when checking for updates. Explicit choice — the running
+     *  build's own snapshot-ness no longer decides this. Only meaningful when startupVersionCheck is on. */
+    private boolean checkForPreReleases;
+    /** Windows only: on startup, download and silently install a newer version (of the chosen type),
+     *  then restart. Off by default; only meaningful when startupVersionCheck is on. */
+    private boolean autoUpdate;
     private boolean forceVolume; // Linux only
     private Long dblClickInterval = 500L;
     private boolean preventClickWhenDblClick = true;
