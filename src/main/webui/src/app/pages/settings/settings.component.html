@@ -69,6 +69,24 @@
               <pc-toggle [value]="s.startupVersionCheck" (valueChange)="patch('startupVersionCheck', $event)"></pc-toggle>
             </div>
             <div class="row">
+              <div class="row-text">
+                <div class="row-label">Check for pre-release versions</div>
+                <div class="row-sub">Also be notified about in-development snapshot builds, not just stable releases.</div>
+              </div>
+              <pc-toggle [value]="s.checkForPreReleases" [disabled]="!s.startupVersionCheck"
+                         (valueChange)="patch('checkForPreReleases', $event)"></pc-toggle>
+            </div>
+            @if (platform.autoUpdate()) {
+              <div class="row">
+                <div class="row-text">
+                  <div class="row-label">Automatically install updates</div>
+                  <div class="row-sub">On startup, download and install a newer version and restart — no clicking through the installer.</div>
+                </div>
+                <pc-toggle [value]="s.autoUpdate" [disabled]="!s.startupVersionCheck"
+                           (valueChange)="patch('autoUpdate', $event)"></pc-toggle>
+              </div>
+            }
+            <div class="row">
               <div class="row-text"><div class="row-label">Double-click interval</div><div class="row-sub">milliseconds</div></div>
               <div class="pc-field num-field">
                 <input class="pc-field-input" type="number" min="0" [value]="s.dblClickInterval ?? 0"

@@ -49,6 +49,7 @@ public class AutoUpdateService {
     static final Pattern SETUP_ASSET = Pattern.compile("(?i)^pcpanel-.*setup\\.exe$");
 
     @Inject ObjectMapper objectMapper;
+    @Inject com.getpcpanel.profile.SaveService save;
 
     @ConfigProperty(name = "pcpanel.github.user-and-repo") String githubUserAndRepo;
     @ConfigProperty(name = "pcpanel.version") String version;
@@ -95,7 +96,7 @@ public class AutoUpdateService {
 
         var root = objectMapper.readTree(response.body());
         var releases = objectMapper.treeToValue(root, Version[].class);
-        var target = chooseTarget(releases, latest, isSnapshot(), currentSemVer(), build);
+        var target = chooseTarget(releases, latest, save.get().isCheckForPreReleases(), isSnapshot(), currentSemVer(), build);
         if (target == null) {
             throw new UpdateException(latest
                     ? "No suitable release was found to update to."
@@ -110,23 +111,30 @@ public class AutoUpdateService {
     }
 
     /**
-     * Pick the release to install. {@code latest} = update to the newest available; otherwise reinstall
-     * the current version. Snapshot builds share one rolling pre-release ({@code latest-main}), so there
-     * is no per-build release to match exactly — both paths target the newest pre-release for a snapshot.
-     * A release build has a named release per version, so "reinstall current" matches it exactly.
+     * Pick the release to install.
+     * <ul>
+     *   <li>{@code latest} — update to the newest available, filtered by {@code includePrereleases} (the
+     *       user's "check for pre-release versions" choice).</li>
+     *   <li>otherwise — reinstall the current version. A {@code currentIsSnapshot} build has no per-build
+     *       release to match (all snapshots share the rolling {@code latest-main} pre-release), so it
+     *       targets the newest pre-release; a release build matches its exact named release.</li>
+     * </ul>
      */
-    static Version chooseTarget(Version[] releases, boolean latest, boolean snapshot, SemVer currentSemVer, int build) {
-        if (latest || snapshot) {
-            return selectLatest(releases, snapshot);
+    static Version chooseTarget(Version[] releases, boolean latest, boolean includePrereleases, boolean currentIsSnapshot, SemVer currentSemVer, int build) {
+        if (latest) {
+            return selectLatest(releases, includePrereleases);
         }
-        return selectCurrent(releases, currentSemVer, snapshot, build);
+        if (currentIsSnapshot) {
+            return selectLatest(releases, true); // rolling snapshot channel: no exact per-build release
+        }
+        return selectCurrent(releases, currentSemVer, false, build);
     }
 
-    /** Newest release of the matching type: stable-only for a release build, pre-releases too for a snapshot. */
-    static Version selectLatest(Version[] releases, boolean snapshot) {
+    /** Newest release, optionally including pre-releases (snapshots) rather than stable-only. */
+    static Version selectLatest(Version[] releases, boolean includePrereleases) {
         return StreamEx.of(releases)
                        .sorted(Comparator.comparing(Version::semVer).reversed())
-                       .filter(v -> snapshot || !v.prerelease())
+                       .filter(v -> includePrereleases || !v.prerelease())
                        .findFirst()
                        .orElse(null);
     }

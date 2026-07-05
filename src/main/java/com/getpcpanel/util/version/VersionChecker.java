@@ -33,6 +33,7 @@ public class VersionChecker extends Thread {
     @Inject Event<Object> eventBus;
     @Inject SaveService save;
     @Inject ObjectMapper objectMapper;
+    @Inject AutoUpdateService autoUpdate;
 
     @ConfigProperty(name = "pcpanel.version")
     String version;
@@ -65,17 +66,37 @@ public class VersionChecker extends Thread {
 
             var correctVersion = getVersionOfCorrectType(versions);
             if (versionIsNewer(correctVersion)) {
-                eventBus.fire(new NewVersionAvailableEvent(correctVersion));
+                onNewVersion(correctVersion);
             }
         } catch (Exception e) {
             log.error("Unable to get latest version from GitHub", e);
         }
     }
 
+    /**
+     * A newer version of the chosen type is available. If auto-update is enabled and supported (a Windows
+     * install), download and silently install it now and let the installer restart the app; otherwise
+     * (or if the update could not be started) notify the UI so the user can update manually.
+     */
+    private void onNewVersion(Version correctVersion) {
+        if (save.get().isAutoUpdate() && autoUpdate.isSupported()) {
+            try {
+                log.info("Auto-updating to {} on startup", correctVersion.versionDisplay());
+                autoUpdate.updateToLatest();
+                return; // the installer closes and relaunches the app
+            } catch (Exception e) {
+                log.error("Auto-update on startup failed; falling back to a notification", e);
+            }
+        }
+        eventBus.fire(new NewVersionAvailableEvent(correctVersion));
+    }
+
+    // Whether to consider pre-release (snapshot) builds is now an explicit user setting, not derived from
+    // the running build's own snapshot-ness (currentIsSnapshot is only used to compare build numbers).
     private Version getVersionOfCorrectType(Version[] versions) {
         return StreamEx.of(versions)
                        .sorted(Comparator.comparing(Version::semVer).reversed())
-                       .filter(v -> currentIsSnapshot || !v.prerelease())
+                       .filter(v -> save.get().isCheckForPreReleases() || !v.prerelease())
                        .findFirst()
                        .orElseThrow(() -> new RuntimeException("Unable to find release"));
     }

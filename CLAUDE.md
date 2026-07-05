@@ -78,6 +78,11 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
   native image, exposed to the UI as `PlatformInfo.autoUpdate`; elsewhere (Linux/macOS, dev/JVM) the
   UI links to the release page instead. REST: `POST /api/system/update` (latest) and
   `/api/system/update/reinstall` (the Debug page's reinstall-current button, for testing the flow).
+  Settings (`Save`): `autoUpdate` (Windows-only, off by default) makes `VersionChecker` install a newer
+  version on startup automatically instead of just notifying; `checkForPreReleases` is the explicit
+  opt-in to snapshot/pre-release builds — the "type" of update is no longer derived from whether the
+  running build is a snapshot (that only decides build-number comparison now). Both are only meaningful
+  when `startupVersionCheck` is on, and the UI disables them otherwise.
 
 ### Frontend (`src/main/webui`, Angular 21)
 

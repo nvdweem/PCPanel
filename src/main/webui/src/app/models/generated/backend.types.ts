@@ -726,6 +726,8 @@ export interface SerialPortDto {
 }
 
 export interface SettingsDto {
+    autoUpdate: boolean;
+    checkForPreReleases: boolean;
     dblClickInterval: number;
     focusVolumeOverrides: FocusVolumeOverride[];
     forceVolume: boolean;
