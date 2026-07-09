@@ -54,7 +54,7 @@ jobs:
       # was the only artifact off the workspace drive; without it every produced artifact stays under
       # target/ on one drive and the native build is clean.
       - name: Set up GraalVM CE
-        uses: graalvm/setup-graalvm@6f3fa030c4b8f77c1f554a860f593a654538fa38 # v1.5.6
+        uses: graalvm/setup-graalvm@186d0493a2df5eb62df5ecc498883d18fd58c303 # v1.6.2
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'graalvm-community'
@@ -219,7 +219,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
       - name: Set up GraalVM CE
-        uses: graalvm/setup-graalvm@6f3fa030c4b8f77c1f554a860f593a654538fa38 # v1.5.6
+        uses: graalvm/setup-graalvm@186d0493a2df5eb62df5ecc498883d18fd58c303 # v1.6.2
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'graalvm-community'
@@ -430,7 +430,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
       - name: Set up GraalVM CE
-        uses: graalvm/setup-graalvm@6f3fa030c4b8f77c1f554a860f593a654538fa38 # v1.5.6
+        uses: graalvm/setup-graalvm@186d0493a2df5eb62df5ecc498883d18fd58c303 # v1.6.2
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'graalvm-community'
