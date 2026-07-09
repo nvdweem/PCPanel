@@ -1,0 +1,53 @@
+# JVM-mode CI for pull requests: full unit + integration test suite (including the GraalVM
+# reflection/proxy coverage guards) and the Quinoa frontend build on Windows and Linux.
+# No native image is built here — that stays in Build & Release.
+
+name: PR CI
+env:
+  JAVA_VERSION: '25'        # GraalVM CE 25 — keep in sync with build-and-release.yml
+
+on:
+  pull_request:
+
+# One run per PR; a newer push supersedes an in-flight run.
+concurrency:
+  group: pr-ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: JVM tests (${{ matrix.os }})
+    # Same-repo PRs only: fork PRs must never consume build minutes.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Set up GraalVM CE
+        uses: graalvm/setup-graalvm@6f3fa030c4b8f77c1f554a860f593a654538fa38 # v1.5.6
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'graalvm-community'
+          cache: 'maven'
+
+      # AWT/Swing-touching unit tests (e.g. the overlay tests) need a display on Linux;
+      # mirror the Build & Release Linux job and run the whole build under a virtual X server.
+      - name: Install xvfb (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
+      - name: Build and test (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a ./mvnw -B -Dquarkus.native.enabled=false verify
+
+      - name: Build and test (Windows)
+        shell: pwsh
+        if: runner.os == 'Windows'
+        # Quote the -D property: PowerShell otherwise splits -Dquarkus.native.enabled=false and Maven
+        # sees ".native.enabled=false" as a bogus lifecycle phase (same as build-and-release.yml).
+        run: .\mvnw.cmd -B "-Dquarkus.native.enabled=false" verify
