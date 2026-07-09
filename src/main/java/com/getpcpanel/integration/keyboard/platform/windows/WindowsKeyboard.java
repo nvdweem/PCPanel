@@ -2,7 +2,9 @@ package com.getpcpanel.integration.keyboard.platform.windows;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -17,6 +19,7 @@ import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.platform.win32.WinUser;
 import com.sun.jna.ptr.IntByReference;
 
+import io.quarkus.arc.Unremovable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
@@ -29,11 +32,13 @@ import one.util.streamex.StreamEx;
  *
  * <p>The keystroke input is the cross-platform "{@code modifier+modifier+key}" format; tokens are the
  * AWT {@code VK_}-suffix names, mapped here to Win32 virtual-key codes and posted as keydown/keyup
- * {@code KEYBDINPUT} events. Media keys post the global multimedia virtual key, except Spotify-targeted
- * actions which locate the Spotify window and send it a {@code WM_APPCOMMAND}.
+ * {@code KEYBDINPUT} events. Media keys post the global multimedia virtual key, except when a list of
+ * preferred target apps is given: the first one running is located and sent a {@code WM_APPCOMMAND}
+ * directly, so the action reaches (say) Spotify even when a browser would otherwise grab the key.
  */
 @Log4j2
 @ApplicationScoped
+@Unremovable
 @WindowsBuild
 class WindowsKeyboard implements Keyboard {
     private static final int KEYEVENTF_KEYUP = 0x0002;
@@ -41,6 +46,9 @@ class WindowsKeyboard implements Keyboard {
     private static final int VK_RETURN = 0x0D;
     private static final int VK_TAB = 0x09;
     private static final int WM_APPCOMMAND = 0x0319;
+    private static final int GW_HWNDNEXT = 2;
+    private static final int GW_CHILD = 5;
+    private static final int WINDOW_WALK_LIMIT = 20_000; // safety bound on the top-level window walk
 
     /** AWT-VK-style token (the part after {@code VK_}) → Win32 virtual-key code, for non-trivial keys. */
     private static final Map<String, Integer> KEY_CODES = buildKeyCodes();
@@ -113,12 +121,17 @@ class WindowsKeyboard implements Keyboard {
     }
 
     @Override
-    public void sendMediaKey(VolumeButton button, boolean spotify) {
-        if (spotify) {
-            sendSpotifyAppCommand(button);
-        } else {
-            sendGlobalMediaKey(button);
+    public void sendMediaKey(VolumeButton button, List<String> apps) {
+        for (var app : apps) {
+            var wnd = findAppWindow(app);
+            if (wnd != null) {
+                log.debug("Media '{}' → {} via WM_APPCOMMAND", button, app);
+                User32.INSTANCE.SendMessage(wnd, WM_APPCOMMAND, new WinDef.WPARAM(0), new WinDef.LPARAM(appCommand(button)));
+                return;
+            }
         }
+        // No preferred app running (or none configured) — let Windows route the global media key.
+        sendGlobalMediaKey(button);
     }
 
     /** Posts the global multimedia virtual key (routed by Windows to the foreground media session). */
@@ -136,34 +149,46 @@ class WindowsKeyboard implements Keyboard {
         User32.INSTANCE.SendInput(new WinDef.DWORD(1), (WinUser.INPUT[]) input.toArray(1), input.size());
     }
 
-    /** Sends the media action straight to the Spotify window via {@code WM_APPCOMMAND}. */
-    private void sendSpotifyAppCommand(VolumeButton button) {
-        var spotifyWnd = findSpotify();
-        if (spotifyWnd == null) {
-            log.warn("Spotify media command: no Spotify window found, nothing sent");
-            return;
+    /**
+     * Finds the best window to send a {@code WM_APPCOMMAND} to for a running app whose executable is
+     * {@code exeName} (e.g. {@code "Spotify.exe"}, matched case-insensitively and with the {@code .exe}
+     * suffix optional). Only a <em>visible, titled</em> window counts — that is the app's real main
+     * window. A process can be running with only hidden helper windows (Chromium/Electron apps spawn
+     * several, and a dormant {@code SpotifyLauncher.exe} shows nothing at all); sending it a
+     * {@code WM_APPCOMMAND} does nothing, so such a process is treated as "no window" and the caller
+     * moves on to the next preferred app. Returns null when the app is not running or has no such window.
+     *
+     * <p>Top-level windows are walked with {@code GetWindow}, not {@code EnumWindows}: the JNA
+     * {@code EnumWindows} callback does not run in the GraalVM native image, so the callback version
+     * found no window there and the media action leaked to the global key — a browser then grabbed it.
+     */
+    private WinDef.HWND findAppWindow(String exeName) {
+        var wanted = StringUtils.removeEndIgnoreCase(StringUtils.trimToEmpty(exeName), ".exe");
+        if (wanted.isEmpty()) {
+            return null;
         }
-        User32.INSTANCE.SendMessage(spotifyWnd, WM_APPCOMMAND, new WinDef.WPARAM(0), new WinDef.LPARAM(appCommand(button)));
-    }
-
-    private WinDef.HWND findSpotify() {
-        var result = new WinDef.HWND[] { null };
-        var apps = sndCtrl.getRunningApplications();
-        var pidIsSpotify = StreamEx.of(apps).mapToEntry(ISndCtrl.RunningApplication::pid, ra -> StringUtils.equalsIgnoreCase("spotify.exe", ra.file().getName())).distinctKeys().toMap();
-        var spotifyPids = pidIsSpotify.entrySet().stream().filter(Map.Entry::getValue).map(Map.Entry::getKey).toList();
-        var windowsSeen = new int[] { 0 };
-        User32.INSTANCE.EnumWindows((hWnd, data) -> {
-            windowsSeen[0]++;
-            var target = new IntByReference();
-            User32.INSTANCE.GetWindowThreadProcessId(hWnd, target);
-            if (pidIsSpotify.getOrDefault(target.getValue(), false)) {
-                result[0] = hWnd;
-                return false;
+        Set<Integer> pids = StreamEx.of(sndCtrl.getRunningApplications())
+                .filter(ra -> ra.file() != null && StringUtils.equalsIgnoreCase(wanted, StringUtils.removeEndIgnoreCase(ra.file().getName(), ".exe")))
+                .map(ISndCtrl.RunningApplication::pid)
+                .toSet();
+        if (pids.isEmpty()) {
+            log.debug("findAppWindow('{}'): not running", exeName);
+            return null;
+        }
+        WinDef.HWND match = null;
+        var pid = new IntByReference();
+        var hWnd = User32.INSTANCE.GetWindow(User32.INSTANCE.GetDesktopWindow(), new WinDef.DWORD(GW_CHILD));
+        for (var guard = 0; hWnd != null && guard < WINDOW_WALK_LIMIT; guard++) {
+            User32.INSTANCE.GetWindowThreadProcessId(hWnd, pid);
+            if (pids.contains(pid.getValue())
+                    && User32.INSTANCE.IsWindowVisible(hWnd) && User32.INSTANCE.GetWindowTextLength(hWnd) > 0) {
+                match = hWnd;
+                break;
             }
-            return true;
-        }, null);
-        log.debug("findSpotify: {} running apps, spotify pids={}, windows enumerated={}, match={}", apps.size(), spotifyPids, windowsSeen[0], result[0]);
-        return result[0];
+            hWnd = User32.INSTANCE.GetWindow(hWnd, new WinDef.DWORD(GW_HWNDNEXT));
+        }
+        log.debug("findAppWindow('{}'): pids={}, match={}", exeName, pids, match);
+        return match;
     }
 
     private static void sendUnicode(char c, boolean keyUp) {

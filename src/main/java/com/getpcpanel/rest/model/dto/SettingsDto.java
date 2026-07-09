@@ -21,6 +21,8 @@ public class SettingsDto {
     private boolean mainUIIcons;
     private boolean openBrowserOnStartup;
     private boolean startupVersionCheck;
+    private boolean checkForPreReleases;
+    private boolean autoUpdate;
     private boolean forceVolume;
     private Long dblClickInterval;
     private boolean preventClickWhenDblClick;
@@ -80,6 +82,8 @@ public class SettingsDto {
         dto.mainUIIcons = save.isMainUIIcons();
         dto.openBrowserOnStartup = save.isOpenBrowserOnStartup();
         dto.startupVersionCheck = save.isStartupVersionCheck();
+        dto.checkForPreReleases = save.isCheckForPreReleases();
+        dto.autoUpdate = save.isAutoUpdate();
         dto.forceVolume = save.isForceVolume();
         dto.dblClickInterval = save.getDblClickInterval();
         dto.preventClickWhenDblClick = save.isPreventClickWhenDblClick();
@@ -130,6 +134,8 @@ public class SettingsDto {
         save.setMainUIIcons(mainUIIcons);
         save.setOpenBrowserOnStartup(openBrowserOnStartup);
         save.setStartupVersionCheck(startupVersionCheck);
+        save.setCheckForPreReleases(checkForPreReleases);
+        save.setAutoUpdate(autoUpdate);
         save.setForceVolume(forceVolume);
         save.setDblClickInterval(dblClickInterval);
         save.setPreventClickWhenDblClick(preventClickWhenDblClick);

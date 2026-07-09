@@ -6,6 +6,7 @@ import java.io.IOException;
 import com.getpcpanel.platform.LinuxBuild;
 import com.getpcpanel.platform.MacBuild;
 import com.getpcpanel.platform.WindowsBuild;
+import io.quarkus.arc.Unremovable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -27,6 +28,7 @@ public abstract class IPlatformCommand {
     public abstract void kill(String process);
 
     @ApplicationScoped
+    @Unremovable
     @LinuxBuild
     public static class LinuxPlatformCommand extends IPlatformCommand {
         @Inject
@@ -61,6 +63,7 @@ public abstract class IPlatformCommand {
     }
 
     @ApplicationScoped
+    @Unremovable
     @MacBuild
     @RequiredArgsConstructor
     public static class OsxPlatformCommand extends IPlatformCommand {
@@ -103,6 +106,7 @@ public abstract class IPlatformCommand {
     }
 
     @ApplicationScoped
+    @Unremovable
     @WindowsBuild
     @RequiredArgsConstructor
     public static class WindowsPlatformCommand extends IPlatformCommand {

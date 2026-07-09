@@ -59,7 +59,12 @@ Compression=lzma2/max
 SolidCompression=yes
 OutputDir={#OutputDir}
 OutputBaseFilename=PCPanel-{#MyAppVersion}-setup
-CloseApplications=yes
+; A running PCPanel locks its own exe + companion DLLs, so it must be closed before we overwrite them.
+; We close it ourselves in PrepareToInstall (graceful WM_CLOSE, then a forced kill) — see [Code] below.
+; `force` is the backstop: if anything is still holding a file when the Restart Manager runs, it is
+; terminated silently instead of showing the user a "please close these applications" page (which they
+; could not act on for a headless tray app anyway).
+CloseApplications=force
 RestartApplications=no
 
 [Languages]
@@ -96,6 +101,14 @@ Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: 
 ; OS auto-start — this is a one-shot launch.
 Filename: "{app}\{#MyAppExeName}"; Parameters: "/postinstall"; Description: "Launch {#MyAppName} now"; \
     Flags: nowait postinstall skipifsilent
+; Auto-update relaunch. The in-app updater runs this installer silently with `/UPDATE=1`, which skips the
+; interactive "Launch now" entry above (skipifsilent). This entry re-launches the freshly updated app in
+; that case so an unattended update ends with it running again. It passes `/updated`, which flags the
+; "just updated" dialog for the UI but does NOT open a browser: the update was triggered from the
+; already-open UI, whose websocket reconnects and shows the dialog itself — a second tab to the same UI
+; would be redundant. WantsUpdateRelaunch gates this to the /UPDATE=1 run.
+Filename: "{app}\{#MyAppExeName}"; Parameters: "/updated"; \
+    Flags: nowait; Check: WantsUpdateRelaunch
 
 [UninstallRun]
 ; Make sure a running instance is stopped before files are removed.
@@ -105,6 +118,69 @@ Filename: "{cmd}"; Parameters: "/C taskkill /IM ""{#MyAppExeName}"" /F"; \
 [Code]
 const
   StartupTaskName = 'PCPanel';
+  // Win32 class name registered by TrayServiceWin for the app's (invisible) message window, and the
+  // WM_CLOSE message we post to it. Keep the class name in sync with TrayServiceWin.WINDOW_CLASS.
+  TrayWindowClass = 'PCPanelTrayWindow';
+  WM_CLOSE = $0010;
+
+// Handle to the running instance's tray window, or 0 if PCPanel is not running.
+function FindTrayWindow: HWND;
+begin
+  Result := FindWindowByClassName(TrayWindowClass);
+end;
+
+// Close any running PCPanel before its files are overwritten. A running instance locks its own exe and
+// the companion DLLs it loaded, so an in-place upgrade fails unless it is stopped first. We ask it to
+// shut down gracefully (WM_CLOSE, handled by TrayServiceWin -> normal Quarkus shutdown, which saves
+// settings and releases the file locks), wait for it to go, and force-kill only as a fallback.
+procedure CloseRunningInstance;
+var
+  wnd: HWND;
+  resultCode: Integer;
+  i: Integer;
+begin
+  wnd := FindTrayWindow;
+  if wnd <> 0 then
+  begin
+    Log('PCPanel is running; asking it to close gracefully (WM_CLOSE).');
+    PostMessage(wnd, WM_CLOSE, 0, 0);
+    // Wait up to ~8s for it to shut down and release its locks.
+    for i := 1 to 40 do
+    begin
+      if FindTrayWindow = 0 then
+        Break;
+      Sleep(200);
+    end;
+    if FindTrayWindow = 0 then
+    begin
+      // Give the shutdown hooks (settings save, tray cleanup) a moment to finish after the window is gone.
+      Sleep(500);
+      Log('PCPanel closed gracefully.');
+      Exit;
+    end;
+    Log('PCPanel did not close in time; forcing termination.');
+  end;
+
+  // Fallback: force-terminate any lingering PCPanel.exe (graceful close timed out, or a process is
+  // running without a tray window). Harmless no-op when nothing is running.
+  Exec(ExpandConstant('{cmd}'), '/C taskkill /IM "{#MyAppExeName}" /F', '',
+    SW_HIDE, ewWaitUntilTerminated, resultCode);
+  Sleep(1000); // let the OS release the file handles before we start copying
+end;
+
+// Runs after the wizard, just before any file is copied.
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+begin
+  CloseRunningInstance;
+  Result := '';
+end;
+
+// True when the in-app auto-updater launched this installer (it passes /UPDATE=1). Used to relaunch the
+// app after a silent update, since the normal "Launch now" [Run] entry is skipped in silent mode.
+function WantsUpdateRelaunch: Boolean;
+begin
+  Result := ExpandConstant('{param:UPDATE|0}') = '1';
+end;
 
 // Create an "on logon" scheduled task that runs the app with highest privileges. This requires
 // elevation, so it is launched with the 'runas' verb (a single UAC confirmation). The /tr value is

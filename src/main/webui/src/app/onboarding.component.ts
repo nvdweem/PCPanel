@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { OnboardingService } from './services/onboarding.service';
 import { SettingsService } from './services/settings.service';
 import { PlatformService } from './services/platform.service';
 import { DebugService } from './services/debug.service';
+import { DeviceStateService } from './services/device-state.service';
 import { IconComponent, ModalComponent, ToggleComponent } from './ui';
 
 const GITHUB_URL = 'https://github.com/nvdweem/PCPanel';
@@ -79,6 +80,8 @@ export class OnboardingComponent {
   private readonly settings = inject(SettingsService);
   private readonly platform = inject(PlatformService);
   private readonly debug = inject(DebugService);
+  private readonly deviceState = inject(DeviceStateService);
+  private connectedWas = false;
 
   readonly githubUrl = GITHUB_URL;
   private readonly dismissed = signal(false);
@@ -105,6 +108,17 @@ export class OnboardingComponent {
 
   constructor() {
     this.onboarding.load();
+    // Re-check onboarding each time the websocket (re)connects. After an auto-update the app restarts and
+    // this same tab reconnects; the backend then reports the "just updated" intent (installer arg
+    // /updated), which surfaces the post-install dialog here without a new tab being opened.
+    effect(() => {
+      const connected = this.deviceState.connected();
+      if (connected && !this.connectedWas) {
+        this.dismissed.set(false);
+        this.onboarding.load();
+      }
+      this.connectedWas = connected;
+    });
   }
 
   setOpenOnStartup(on: boolean): void {

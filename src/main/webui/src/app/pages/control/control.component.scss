@@ -29,7 +29,17 @@
 .overlay-icon .oi-title { font-size: 12.5px; color: var(--text-soft); }
 .overlay-icon .oi-sub { font-size: 10.5px; color: var(--text-3); }
 .oi-pick { display: flex; align-items: center; gap: 8px; background: transparent; border: none; cursor: pointer; color: var(--text-2); }
-.oi-tile { width: 28px; height: 28px; border-radius: 7px; background: linear-gradient(135deg,#7E57C2,#4527A0); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; }
+.oi-tile { width: 28px; height: 28px; border-radius: 7px; background: linear-gradient(135deg,#7E57C2,#4527A0); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; overflow: hidden; }
+.oi-tile img { width: 100%; height: 100%; object-fit: contain; }
+.oi-picker { background: var(--input); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; }
+.oi-picker pc-app-picker { display: block; }
+.oi-picker .picker { border: none; border-radius: 0; background: transparent; }
+.oi-actions { display: flex; gap: 8px; padding: 9px 11px; border-top: 1px solid var(--line-hair); }
+.oi-action { display: flex; align-items: center; gap: 6px; flex: 1; justify-content: center; padding: 7px 9px; font-size: 11.5px; border: 1px solid var(--line); border-radius: var(--r-md); background: transparent; color: var(--text-2); cursor: pointer; }
+.oi-action:hover { background: rgba(255,255,255,0.03); color: var(--text-1); }
+.oi-action pc-icon { color: var(--accent); }
+.oi-action.danger { flex: 0 0 auto; }
+.oi-action.danger pc-icon { color: var(--danger, #e5484d); }
 
 /* ── Main config ────────────────────────────────────────────────────────────── */
 .config-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }

@@ -1,6 +1,14 @@
 import { computed, inject, Injectable, OnDestroy, Signal, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { DeviceSnapshotDto, ProfileSnapshotDto, WsAssignmentChangedEvent, WsControlSettingChangedEvent, WsEvent, WsEventUnion } from '../models/generated/backend.types';
 import { ToastService } from '../ui/toast/toast.service';
+import { PlatformService } from './platform.service';
+import { UpdateService } from './update.service';
+import { VersionGuardService } from './version-guard.service';
+
+/** Result of an on-demand update check (POST /api/system/checkforupdate). */
+interface UpdateCheckResult { updateAvailable: boolean; version?: string; url?: string; }
 
 type DeviceMap = Record<string, DeviceSnapshotDto>;
 
@@ -14,6 +22,10 @@ type DeviceMap = Record<string, DeviceSnapshotDto>;
 @Injectable({providedIn: 'root'})
 export class DeviceStateService implements OnDestroy {
   private readonly toasts = inject(ToastService);
+  private readonly platform = inject(PlatformService);
+  private readonly updates = inject(UpdateService);
+  private readonly versionGuard = inject(VersionGuardService);
+  private readonly http = inject(HttpClient);
   private readonly _devices = signal<DeviceMap>({});
   private socket: WebSocket | null = null;
   private reconnectTimer?: ReturnType<typeof setTimeout>;
@@ -82,6 +94,9 @@ export class DeviceStateService implements OnDestroy {
       this.connected.set(true);
       this.reconnecting.set(false);
       this.lastError.set(null);
+      // If the backend came back on a new version (e.g. after an auto-update), reload to swap the stale
+      // frontend bundle for the matching one instead of running the old UI against the new backend.
+      void this.versionGuard.checkOnConnect();
     };
 
     this.socket.onmessage = (event) => {
@@ -233,16 +248,7 @@ export class DeviceStateService implements OnDestroy {
         return true;
 
       case 'new_version_available':
-        if (this.announcedVersion !== event.version) {
-          this.announcedVersion = event.version;
-          this.toasts.show('A new version is available', {
-            sub: event.version,
-            kind: 'info',
-            timeout: 0,
-            href: event.url,
-            action: 'Download',
-          });
-        }
+        this.announceNewVersion(event.version, event.url);
         return true;
 
       case 'button_press':
@@ -256,6 +262,48 @@ export class DeviceStateService implements OnDestroy {
       [event.serial]: event,
     }));
     this.ready.set(true);
+  }
+
+  /**
+   * Show the sticky "new version available" popup. On an installed Windows build the app can update
+   * itself (the action runs the self-updater); elsewhere the action links to the download page.
+   * Deduped by version per session so socket-reconnect replays don't re-toast — `force` bypasses that
+   * (used by the manual debug check so it triggers every time).
+   */
+  announceNewVersion(version: string, url: string, force = false): void {
+    if (!force && this.announcedVersion === version) {
+      return;
+    }
+    this.announcedVersion = version;
+    const canAutoUpdate = this.platform.autoUpdate();
+    this.toasts.show('A new version is available', {
+      sub: version,
+      kind: 'info',
+      timeout: 0,
+      action: canAutoUpdate ? 'Update & restart' : 'Download',
+      href: canAutoUpdate ? undefined : url,
+      onAction: canAutoUpdate ? () => this.updates.updateToLatest() : undefined,
+    });
+  }
+
+  /**
+   * Debug: run an update check on demand. Surfaces the same new-version popup when a newer release
+   * exists (forced, so repeated checks always show it), otherwise confirms the app is up to date.
+   */
+  async checkForUpdates(): Promise<void> {
+    const pending = this.toasts.show('Checking for updates…', { kind: 'info', timeout: 0 });
+    try {
+      const result = await firstValueFrom(this.http.post<UpdateCheckResult>('/api/system/checkforupdate', {}));
+      this.toasts.dismiss(pending);
+      if (result.updateAvailable && result.version) {
+        this.announceNewVersion(result.version, result.url ?? '', true);
+      } else {
+        this.toasts.show("You're on the latest version", { kind: 'success', timeout: 4000 });
+      }
+    } catch {
+      this.toasts.dismiss(pending);
+      this.toasts.show('Update check failed', { sub: 'Could not reach GitHub.', kind: 'error', timeout: 6000 });
+    }
   }
 
   ngOnDestroy(): void {

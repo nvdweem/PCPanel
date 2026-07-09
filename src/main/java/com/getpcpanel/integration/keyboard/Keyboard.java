@@ -1,5 +1,7 @@
 package com.getpcpanel.integration.keyboard;
 
+import java.util.List;
+
 import com.getpcpanel.integration.keyboard.command.CommandMedia.VolumeButton;
 
 /**
@@ -19,9 +21,12 @@ public interface Keyboard {
     void typeText(String text);
 
     /**
-     * Sends a multimedia key (play/pause, next, prev, stop, mute). {@code spotify} requests targeting
-     * Spotify specifically where the platform supports it (Windows {@code WM_APPCOMMAND} / macOS
-     * AppleScript); on Linux the desktop routes the global media key to the active player regardless.
+     * Sends a multimedia key (play/pause, next, prev, stop, mute). {@code apps} is an ordered list of
+     * preferred target executables (e.g. {@code "Spotify.exe"}): on Windows the first one that is
+     * running receives the action directly via {@code WM_APPCOMMAND}, and only if none are running is
+     * the global media key posted — so a browser can't steal the key from Spotify. macOS honours a
+     * Spotify preference through AppleScript; on Linux the desktop routes the global media key to the
+     * active player regardless, so the list is ignored. An empty list always posts the global key.
      */
-    void sendMediaKey(VolumeButton button, boolean spotify);
+    void sendMediaKey(VolumeButton button, List<String> apps);
 }
