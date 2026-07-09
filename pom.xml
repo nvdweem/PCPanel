@@ -25,7 +25,7 @@
         <start-class>com.getpcpanel.Main</start-class>
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-        <quarkus.platform.version>3.34.1</quarkus.platform.version>
+        <quarkus.platform.version>3.37.2</quarkus.platform.version>
 
         <maven.build.timestamp.format>yy.ww.WWkkmm</maven.build.timestamp.format>
         <app.version>${project.baseversion}.${github.build}</app.version>
@@ -33,12 +33,12 @@
         <windows.vendor>PCPanel</windows.vendor>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <jna.version>5.13.0</jna.version>
-        <asm.version>9.9</asm.version>
+        <jna.version>5.19.1</jna.version>
+        <asm.version>9.10.1</asm.version>
         <dbus-java.version>5.2.0</dbus-java.version>
-        <lombok.version>1.18.44</lombok.version>
-        <typescript-generator.version>4.0.0</typescript-generator.version>
-        <mcp-server.version>1.13.0</mcp-server.version>
+        <lombok.version>1.18.46</lombok.version>
+        <typescript-generator.version>4.1.1</typescript-generator.version>
+        <mcp-server.version>1.13.1</mcp-server.version>
 
         <!-- ── Native image: always build a native executable ─────────────── -->
         <!-- Use -Dquarkus.native.enabled=false to skip native (JVM-only build) -->
@@ -140,7 +140,7 @@
         <dependency>
             <groupId>io.quarkiverse.quinoa</groupId>
             <artifactId>quarkus-quinoa</artifactId>
-            <version>2.8.0</version>
+            <version>2.8.3</version>
         </dependency>
 
         <!-- Jackson -->
@@ -172,12 +172,12 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-collections4</artifactId>
-            <version>4.4</version>
+            <version>4.5.0</version>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.18.0</version>
+            <version>2.22.0</version>
         </dependency>
 
         <!-- JNA for Windows audio control and Linux -->
@@ -210,14 +210,14 @@
         <dependency>
             <groupId>com.fazecast</groupId>
             <artifactId>jSerialComm</artifactId>
-            <version>2.10.2</version>
+            <version>2.11.4</version>
         </dependency>
 
         <!-- Stream utilities -->
         <dependency>
             <groupId>one.util</groupId>
             <artifactId>streamex</artifactId>
-            <version>0.8.1</version>
+            <version>0.8.4</version>
         </dependency>
 
         <!-- ASM bytecode manipulation -->
@@ -248,7 +248,7 @@
         <dependency>
             <groupId>com.illposed.osc</groupId>
             <artifactId>javaosc-core</artifactId>
-            <version>0.8</version>
+            <version>0.9</version>
             <exclusions>
                 <exclusion>
                     <artifactId>log4j</artifactId>
@@ -289,7 +289,7 @@
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
-            <version>2.3</version>
+            <version>2.6</version>
         </dependency>
 
         <!-- D-Bus support for Linux Wayland system tray (StatusNotifierItem protocol) -->
@@ -332,7 +332,7 @@
             <extension>
                 <groupId>kr.motd.maven</groupId>
                 <artifactId>os-maven-plugin</artifactId>
-                <version>1.7.0</version>
+                <version>1.7.1</version>
             </extension>
         </extensions>
         <resources>
@@ -453,12 +453,12 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-project-info-reports-plugin</artifactId>
-                    <version>3.1.2</version>
+                    <version>3.9.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-site-plugin</artifactId>
-                    <version>3.9.1</version>
+                    <version>3.22.0</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -627,7 +627,7 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>build-helper-maven-plugin</artifactId>
-                        <version>3.6.0</version>
+                        <version>3.6.1</version>
                         <executions>
                             <execution>
                                 <id>add-mcp-source</id>
