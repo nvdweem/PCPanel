@@ -218,9 +218,40 @@ export class ControlComponent {
     this.save();
   }
 
-  setOverlayIcon(name: string): void {
-    this.setKnob('overlayIcon', name);
+  /** True when the stored overlay icon is a renderable image (custom upload data-URI, app-icon snapshot,
+   *  a bundled classpath asset, or an absolute path) rather than a bare letter fallback. */
+  readonly overlayIconPreview = computed(() => {
+    const v = this.knob().overlayIcon;
+    return v && (v.startsWith('data:') || v.startsWith('http') || v.startsWith('/')) ? v : null;
+  });
+
+  setOverlayIcon(key: string): void {
+    // Snapshot the picked app's real icon (a data-URI) so the overlay shows it even when that app is not
+    // running; fall back to the bare key (the backend still resolves legacy process names — issue #121).
+    const item = this.processItems().find(i => i.key === key);
+    this.setKnob('overlayIcon', item?.icon ?? key);
     this.iconPickerOpen.set(false);
+  }
+
+  /** Clear the per-control override so the overlay falls back to the command-derived icon. */
+  clearOverlayIcon(): void {
+    this.setKnob('overlayIcon', '');
+    this.iconPickerOpen.set(false);
+  }
+
+  /** Let the user pick any image file as the overlay icon (issue #122). We downscale it to a small PNG
+   *  data-URI in the browser so it renders identically to app icons and keeps profiles.json compact. */
+  async onCustomIcon(ev: Event): Promise<void> {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    try {
+      this.setKnob('overlayIcon', await downscaleImageToPng(file, 64));
+      this.iconPickerOpen.set(false);
+    } catch {
+      this.toast.show('Could not read that image', { kind: 'error' });
+    }
   }
 
   // ── persistence ──────────────────────────────────────────────────────────
@@ -251,4 +282,31 @@ export class ControlComponent {
 
 function clone<T>(v: T | undefined): T | undefined {
   return v === undefined ? undefined : JSON.parse(JSON.stringify(v));
+}
+
+/** Read an image file and re-encode it as a PNG data-URI, scaled so its longest side is at most `max` px
+ *  (aspect preserved). Runs entirely in the browser; the PNG is what the backend overlay decoder expects. */
+function downscaleImageToPng(file: File, max: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error ?? new Error('read failed'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('decode failed'));
+      img.onload = () => {
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { reject(new Error('no 2d context')); return; }
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
 }

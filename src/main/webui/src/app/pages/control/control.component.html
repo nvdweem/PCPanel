@@ -64,14 +64,33 @@
             <div class="oi-sub">shown in the pop-up</div>
           </div>
           <button class="oi-pick" cdkOverlayOrigin #oi="cdkOverlayOrigin" (click)="iconPickerOpen.set(true)">
-            <span class="oi-tile">{{ (knob().overlayIcon || '?').charAt(0).toUpperCase() }}</span>
+            <span class="oi-tile">
+              @if (overlayIconPreview(); as src) {
+                <img [src]="src" alt="">
+              } @else {
+                {{ (knob().overlayIcon || '?').charAt(0).toUpperCase() }}
+              }
+            </span>
             <pc-icon name="pencil" [size]="13"></pc-icon>
           </button>
           <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="oi" [cdkConnectedOverlayOpen]="iconPickerOpen()"
                        [cdkConnectedOverlayHasBackdrop]="true" cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
                        [cdkConnectedOverlayWidth]="280" [cdkConnectedOverlayOffsetY]="6"
                        (backdropClick)="iconPickerOpen.set(false)" (detach)="iconPickerOpen.set(false)">
-            <pc-app-picker [items]="processItems()" (picked)="setOverlayIcon($event)"></pc-app-picker>
+            <div class="oi-picker">
+              <pc-app-picker [items]="processItems()" (picked)="setOverlayIcon($event)"></pc-app-picker>
+              <div class="oi-actions">
+                <button type="button" class="oi-action" (click)="customIconInput.click()">
+                  <pc-icon name="plus" [size]="14"></pc-icon> Upload custom image…
+                </button>
+                @if (knob().overlayIcon) {
+                  <button type="button" class="oi-action danger" (click)="clearOverlayIcon()">
+                    <pc-icon name="trash" [size]="14"></pc-icon> Clear
+                  </button>
+                }
+              </div>
+              <input #customIconInput type="file" accept="image/*" hidden (change)="onCustomIcon($event)">
+            </div>
           </ng-template>
         </div>
       </div>
