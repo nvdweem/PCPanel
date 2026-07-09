@@ -31,6 +31,7 @@ import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.integration.mqtt.dto.MqttSettings;
 import com.getpcpanel.util.concurrent.Debouncer;
 
+import jakarta.annotation.PreDestroy;
 import jakarta.annotation.Priority;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
@@ -216,6 +217,17 @@ public class MqttService {
         }
     }
 
+    @PreDestroy
+    void shutdown() {
+        // A graceful MQTT disconnect suppresses the last will, so publish the availability payload
+        // (same empty retained message) explicitly; otherwise the broker only marks us offline after
+        // the keepalive timeout.
+        if (isConnected()) {
+            publish(availabilityTopic, null, true, true);
+        }
+        disconnect();
+    }
+
     private void disconnect() {
         var client = mqttClient;
         mqttClient = null;
@@ -253,7 +265,14 @@ public class MqttService {
             var cd = props == null ? null : props.getCorrelationData();
             var ignore = cd != null && IGNORE_CORRELATION.equals(new String(cd, StandardCharsets.UTF_8));
             if (!ignore) {
-                consumer.accept(converter.apply(publish.getPayload()));
+                // Catch per message: a throw from here propagates into Paho's delivery thread, where a
+                // single malformed (possibly retained) message would kill delivery for every subscription.
+                try {
+                    consumer.accept(converter.apply(publish.getPayload()));
+                } catch (Exception e) {
+                    log.warn("Failed to handle MQTT message on {}", t, e);
+                    return;
+                }
                 send(topic, publish.getPayload(), true, false); // Ensure that the message isn't picked up after restart
             }
         };

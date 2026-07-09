@@ -29,8 +29,10 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
  * Discovery guard: finds missing native-image <em>reflection</em> registrations for the Jackson
  * {@link Command} hierarchy <em>without being told which to look for</em>.
  *
- * <p>Every {@link Command} subtype is serialised to/from JSON via {@code @JsonTypeInfo(use=ID.CLASS)}
- * (the per-control command maps in the profile, and the device snapshots pushed over the WebSocket).
+ * <p>Every {@link Command} subtype is serialised to/from JSON via {@code @JsonTypeInfo(use=Id.NAME)}
+ * with an explicit subtype allowlist — each command package contributes a {@code CommandModule} bean,
+ * and {@code CommandSubtypeRegistrar} registers the listed subclasses on the ObjectMapper (the
+ * per-control command maps in the profile, and the device snapshots pushed over the WebSocket).
  * In a native image Jackson invokes each type's accessors reflectively, so every concrete subtype —
  * and every project type it transitively serialises — must be registered for reflection or the first
  * serialisation throws {@code MissingReflectionRegistrationError}, which kills the WebSocket

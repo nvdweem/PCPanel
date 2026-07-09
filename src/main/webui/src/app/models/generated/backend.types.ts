@@ -582,6 +582,7 @@ export interface HomeAssistantServerStatus {
     id: string;
     name: string;
     url?: string;
+    warning?: string;
 }
 
 export interface HomeAssistantSettings {

@@ -9,6 +9,7 @@ import com.getpcpanel.platform.WindowsBuild;
 import com.getpcpanel.util.io.FileUtil;
 import com.getpcpanel.util.app.OpenFolderEvent;
 import com.getpcpanel.util.app.ShowMainEvent;
+import com.getpcpanel.util.concurrent.AppThreads;
 import com.getpcpanel.util.tray.ITrayService;
 import com.getpcpanel.util.tray.awt.AwtTrayImpl;
 import com.sun.jna.Memory;
@@ -28,6 +29,7 @@ import com.sun.jna.platform.win32.WinUser.MSG;
 import com.sun.jna.platform.win32.WinUser.WNDCLASSEX;
 import com.sun.jna.platform.win32.WinUser.WindowProc;
 
+import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
@@ -84,9 +86,15 @@ public class TrayServiceWin implements ITrayService, WindowProc {
 
     @Override
     public void init() {
-        var thread = new Thread(this::run, "PCPanel Tray");
-        thread.setDaemon(true);
-        thread.start();
+        AppThreads.named("PCPanel Tray", true, this::run).start();
+    }
+
+    @PreDestroy
+    void removeIcon() {
+        var icon = nid;
+        if (icon != null) {
+            WinShell32.INSTANCE.Shell_NotifyIcon(WinShell32.NIM_DELETE, icon);
+        }
     }
 
     private void run() {
@@ -133,8 +141,6 @@ public class TrayServiceWin implements ITrayService, WindowProc {
             log.warn("Shell_NotifyIcon(NIM_ADD) failed (error {})", Kernel32.INSTANCE.GetLastError());
             return;
         }
-        Runtime.getRuntime().addShutdownHook(new Thread(
-                () -> WinShell32.INSTANCE.Shell_NotifyIcon(WinShell32.NIM_DELETE, nid), "PCPanel Tray cleanup"));
         log.debug("Windows tray icon added");
 
         var msg = new MSG();

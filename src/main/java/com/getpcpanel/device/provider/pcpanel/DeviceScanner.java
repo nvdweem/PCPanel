@@ -20,6 +20,7 @@ import com.getpcpanel.device.provider.pcpanel.DeviceType;
 import com.getpcpanel.device.descriptor.DeviceDescriptor;
 import com.getpcpanel.device.descriptor.DiscoveryMode;
 import com.getpcpanel.device.provider.DeviceProvider;
+import com.getpcpanel.util.concurrent.AppThreads;
 import com.getpcpanel.util.os.OsxPermissionHelper;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -103,8 +104,7 @@ public class DeviceScanner implements HidServicesListener, DeviceProvider {
      * restarted. This loop re-enumerates and retries while any open is outstanding, then goes idle.
      */
     private void startReconciliation() {
-        var t = new Thread(this::reconcileLoop, "pcpanel-device-reconcile");
-        t.setDaemon(true);
+        var t = AppThreads.named("pcpanel-device-reconcile", true, this::reconcileLoop);
         reconcileThread = t;
         t.start();
     }
@@ -139,7 +139,7 @@ public class DeviceScanner implements HidServicesListener, DeviceProvider {
         if (!SystemUtils.IS_OS_MAC) {
             return;
         }
-        var checker = new Thread(() -> {
+        AppThreads.named("pcpanel-mac-permission-check", true, () -> {
             try {
                 Thread.sleep(10_000);
             } catch (InterruptedException e) {
@@ -150,9 +150,7 @@ public class DeviceScanner implements HidServicesListener, DeviceProvider {
                 log.warn("No PCPanel detected. macOS requires the Input Monitoring permission: " +
                         "System Settings > Privacy & Security > Input Monitoring > enable PCPanel, then restart PCPanel");
             }
-        }, "pcpanel-mac-permission-check");
-        checker.setDaemon(true);
-        checker.start();
+        }).start();
     }
 
     private void reconnectDevicesAfterRestart() {

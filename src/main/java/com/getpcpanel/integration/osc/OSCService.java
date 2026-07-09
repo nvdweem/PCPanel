@@ -2,6 +2,7 @@ package com.getpcpanel.integration.osc;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -35,6 +36,8 @@ import one.util.streamex.StreamEx;
 @Log4j2
 @ApplicationScoped
 public class OSCService {
+    /** Upper bound on the autocomplete address set, so a chatty/hostile sender cannot grow it unboundedly. */
+    private static final int MAX_ADDRESSES = 500;
     @Inject
     SaveService saveService;
     private OSCPortIn portIn;
@@ -43,6 +46,7 @@ public class OSCService {
     private List<OSCConnectionInfo> prevOscConnections;
     @Getter private boolean listening;
     @Getter private final Set<String> addresses = new HashSet<>();
+    private boolean addressCapLogged;
 
     /** Whether OSC is turned on in the user's settings (gates both the listener and the send targets). */
     public boolean isEnabled() {
@@ -83,7 +87,8 @@ public class OSCService {
 
         stopPortIn();
         try {
-            portIn = new OSCPortIn(prevListenPort);
+            // Bind to loopback only: the OSC listener is the app's only network-facing socket, keep it off the LAN.
+            portIn = new OSCPortIn(new InetSocketAddress(InetAddress.getLoopbackAddress(), prevListenPort));
             portIn.addPacketListener(new OSCPacketListener() {
                 @Override
                 public void handlePacket(OSCPacketEvent event) {
@@ -106,7 +111,12 @@ public class OSCService {
             bundle.getPackets().forEach(this::readPacket);
         } else if (packet instanceof OSCMessage message) {
             if (CharSequence.compare("f", message.getInfo().getArgumentTypeTags()) == 0) {
-                addresses.add(message.getAddress());
+                if (addresses.size() < MAX_ADDRESSES || addresses.contains(message.getAddress())) {
+                    addresses.add(message.getAddress());
+                } else if (!addressCapLogged) {
+                    addressCapLogged = true;
+                    log.debug("OSC address autocomplete set reached its cap of {} entries, ignoring further addresses", MAX_ADDRESSES);
+                }
             }
         }
     }
