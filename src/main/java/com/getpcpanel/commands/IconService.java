@@ -4,6 +4,7 @@ import static com.getpcpanel.integration.volume.platform.AudioSession.SYSTEM;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -123,19 +124,9 @@ public class IconService {
         }
 
         if (override != null) {
-            try {
-                var iconStr = override.getOverlayIcon();
-                if (StringUtils.endsWithAny(iconStr, "exe", "dll") && new File(iconStr).exists()) {
-                    var result = iconService.getIconForFile(32, 32, new File(iconStr));
-                    if (result != null) {
-                        return result;
-                    }
-                }
-                if (StringUtils.isNotBlank(iconStr)) {
-                    return loadImage(iconStr);
-                }
-            } catch (Exception e) {
-                log.trace("Unable to load {}", override, e);
+            var overrideIcon = resolveOverrideIcon(override.getOverlayIcon());
+            if (overrideIcon != null) {
+                return overrideIcon;
             }
         }
 
@@ -149,6 +140,92 @@ public class IconService {
     public boolean isDefault(BufferedImage img) {
         //noinspection ObjectEquality
         return img == DEFAULT;
+    }
+
+    /**
+     * Resolve the per-control overlay icon a user picked for a dial/slider (stored in
+     * {@link KnobSetting#getOverlayIcon()}). The string can be, in priority order:
+     * <ul>
+     *   <li>a {@code data:image/png;base64,...} URI — a custom image the user uploaded, or a snapshot of an
+     *       app icon taken from the picker (issues #121/#122);</li>
+     *   <li>an absolute path to an {@code .exe}/{@code .dll} whose icon is extracted;</li>
+     *   <li>a bundled classpath resource such as {@code /assets/obs.png};</li>
+     *   <li>a running-process name (legacy saves from the app picker, e.g. {@code "Spotify"}) — resolved to
+     *       that process's icon. Before issue #121 the picker stored the bare name here and it silently
+     *       resolved to nothing, so the overlay showed no icon.</li>
+     * </ul>
+     * Returns {@code null} when the string is blank or nothing resolves, so the caller falls back to the
+     * command-derived icon.
+     */
+    @Nullable
+    private BufferedImage resolveOverrideIcon(@Nullable String iconStr) {
+        if (StringUtils.isBlank(iconStr)) {
+            return null;
+        }
+        try {
+            if (StringUtils.startsWith(iconStr, "data:")) {
+                return decodeImageDataUri(iconStr);
+            }
+            if (StringUtils.endsWithAny(iconStr, "exe", "dll") && new File(iconStr).exists()) {
+                var result = iconService.getIconForFile(32, 32, new File(iconStr));
+                if (result != null) {
+                    return result;
+                }
+            }
+            if (StringUtils.startsWith(iconStr, "/")) {
+                var result = loadImage(iconStr);
+                if (result != null) {
+                    return result;
+                }
+            }
+            // Legacy: the app picker used to store a running-process name (issue #121). Resolve it to that
+            // process's icon so previously-configured overlay icons keep working.
+            return resolveProcessNameIcon(iconStr);
+        } catch (Exception e) {
+            log.trace("Unable to load overlay icon {}", iconStr, e);
+        }
+        return null;
+    }
+
+    @Nullable
+    private BufferedImage resolveProcessNameIcon(String name) {
+        if (StringUtils.equalsIgnoreCase(name, SYSTEM)) {
+            return SYSTEM_SOUND;
+        }
+        for (var runningProcess : sndCtrl.getRunningApplications()) {
+            if (StringUtils.containsIgnoreCase(runningProcess.file().getAbsolutePath(), name)) {
+                var image = iconService.getIconForFile(32, 32, runningProcess.file());
+                if (image != null) {
+                    return image;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Decode a {@code data:} URI into an image. Only base64-encoded PNG payloads are supported: the frontend
+     * always re-encodes uploaded/snapshotted overlay icons to PNG via a canvas, and {@link PngDecoder} is
+     * AWT-free so it is safe in the native image (see {@link #loadImage}). Returns {@code null} for anything
+     * it cannot parse.
+     */
+    @Nullable
+    static BufferedImage decodeImageDataUri(String uri) {
+        var comma = uri.indexOf(',');
+        if (comma < 0) {
+            return null;
+        }
+        var meta = uri.substring("data:".length(), comma);
+        if (!StringUtils.contains(meta, "base64")) {
+            return null;
+        }
+        try {
+            var bytes = Base64.getDecoder().decode(uri.substring(comma + 1).trim());
+            return PngDecoder.decode(bytes);
+        } catch (RuntimeException e) {
+            log.trace("Unable to decode data-uri overlay icon", e);
+            return null;
+        }
     }
 
     private BufferedImage getRunningProcessIcon(CommandVolumeProcess commandIcon) {
