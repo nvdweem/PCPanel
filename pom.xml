@@ -265,7 +265,7 @@
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
-            <version>24.0.1</version>
+            <version>26.1.0</version>
         </dependency>
 
         <!-- MQTT client: Eclipse Paho mqttv5 — pure Java (no Netty/RxJava), keeps native footprint small -->
