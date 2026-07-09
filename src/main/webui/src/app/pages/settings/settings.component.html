@@ -865,6 +865,18 @@
             </div>
           </div>
 
+          <div class="divider"></div>
+          <div class="micro-label section-label">UPDATES</div>
+          <div class="pc-card pad stack">
+            <div class="row">
+              <div class="row-text">
+                <div class="row-label">Check for updates now</div>
+                <div class="row-sub">Runs the update check against GitHub immediately. If a newer version is found the new-version popup appears; otherwise it confirms you're up to date.</div>
+              </div>
+              <button class="pc-btn ghost" (click)="state.checkForUpdates()">Check now</button>
+            </div>
+          </div>
+
           @if (platform.autoUpdate()) {
             <div class="divider"></div>
             <div class="micro-label section-label">AUTO-UPDATE</div>

@@ -13,6 +13,7 @@ import com.getpcpanel.rest.model.dto.OnboardingDto;
 import com.getpcpanel.util.app.StartupOnboarding;
 import com.getpcpanel.util.version.AutoUpdateService;
 import com.getpcpanel.util.version.AutoUpdateService.UpdateException;
+import com.getpcpanel.util.version.VersionChecker;
 
 import io.quarkus.runtime.Quarkus;
 import lombok.extern.log4j.Log4j2;
@@ -30,6 +31,7 @@ import lombok.extern.log4j.Log4j2;
 public class SystemResource {
     @Inject StartupOnboarding onboarding;
     @Inject AutoUpdateService autoUpdate;
+    @Inject VersionChecker versionChecker;
 
     /**
      * One-time onboarding hint for the UI (which welcome/update dialog to show, the version, and the
@@ -82,6 +84,24 @@ public class SystemResource {
         return runUpdate(autoUpdate::reinstallCurrent);
     }
 
+    /**
+     * Run an update check on demand (from the debug page) and report whether a newer release exists, so
+     * the UI can surface the new-version popup — or confirm the app is up to date. Unlike the startup
+     * check this never auto-updates; it only reports.
+     */
+    @POST
+    @Path("/checkforupdate")
+    public Response checkForUpdate() {
+        try {
+            return versionChecker.checkForUpdatesNow()
+                                  .map(v -> Response.ok(new UpdateCheckDto(true, v.versionDisplay(), v.html_url())).build())
+                                  .orElseGet(() -> Response.ok(new UpdateCheckDto(false, null, null)).build());
+        } catch (Exception e) {
+            log.error("Manual update check failed", e);
+            return Response.serverError().entity(new ErrorDto("The update check failed: " + e.getMessage())).build();
+        }
+    }
+
     private Response runUpdate(UpdateAction action) {
         try {
             var target = action.run();
@@ -103,4 +123,7 @@ public class SystemResource {
 
     @io.quarkus.runtime.annotations.RegisterForReflection
     public record ErrorDto(String error) {}
+
+    @io.quarkus.runtime.annotations.RegisterForReflection
+    public record UpdateCheckDto(boolean updateAvailable, String version, String url) {}
 }

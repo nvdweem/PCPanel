@@ -7,6 +7,7 @@ import { IntegrationDataService } from '../../features/commands/integration-data
 import { PlatformService } from '../../services/platform.service';
 import { DebugService, DeviceTypeOverride, OsOverride } from '../../services/debug.service';
 import { UpdateService } from '../../services/update.service';
+import { DeviceStateService } from '../../services/device-state.service';
 import {
   DiscordSettings, DiscordStatusDto, FocusVolumeOverride, FocusVolumeTarget, OverlayPosition, SettingsDto, WaveLinkSettings,
 } from '../../models/generated/backend.types';
@@ -45,6 +46,7 @@ export class SettingsComponent {
   readonly platform = inject(PlatformService);
   readonly debug = inject(DebugService);
   readonly updates = inject(UpdateService);
+  readonly state = inject(DeviceStateService);
 
   readonly deviceOverrideOptions: SelectOption<DeviceTypeOverride>[] = [
     { value: '', label: 'Off — show real device' },
