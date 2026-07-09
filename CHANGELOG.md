@@ -13,10 +13,12 @@
 - The per-control "change colour when muted" option is now an explicit on/off toggle, so black (`#000000`) is a usable muted colour instead of being treated as "off".
 - Restored **System Sounds** as a target for the App volume and App mute actions (it had gone missing from the app picker).
 - The Device volume and Device mute actions now offer a selectable **Default device** option, so an empty choice is shown and selectable as the default output device.
+- The on-screen volume **overlay icon** is now freely choosable per control: pick any running app's icon, or **upload your own image** (set it under a control's *Overlay icon* picker). Picking an app icon also works again — a chosen app icon previously failed to show on the overlay (#121, #122).
 - Java 25 is now required to run the software. The installer will include it.
 - The Windows installer now closes a running PCPanel by itself before updating, instead of asking you to close it manually — it shuts the running instance down cleanly (saving your settings) and only force-closes it as a fallback.
 - **One-click updates on Windows**: when a new version is available, the notification's "Update & restart" button now downloads the installer, runs it silently (keeping your existing install location), and restarts the updated app for you — no more clicking through the installer. The page you started from reconnects on its own and confirms with a short "up to date" dialog. On Linux and macOS the notification still links to the download page.
 - New update settings (under "Check for updates on startup"): **Automatically install updates** (Windows only, off by default) applies a newer version on startup without any prompts; and **Check for pre-release versions** opts in to in-development snapshot builds rather than only stable releases.
+- The Settings → Debug page has a new **Check for updates now** button that runs the update check on demand — surfacing the new-version popup if one is found, or confirming you're already up to date.
 - #87 - Experimental macOS support (community contributed by Choaterboater, ported to the new Quarkus build). Device volume/mute/default-device switching via Core Audio, keystrokes, shortcuts and Music/Spotify media control. Per-application volume is not possible on stock macOS. See the [macOS instructions](mac.md).
 - Profiles are now saved on application exit, so a change made right before quitting is no longer lost.
 - Added support for Elgato Wave Link, enable it in the settings to add the dial/button commands
