@@ -45,8 +45,9 @@ import one.util.streamex.StreamEx;
 
 /**
  * macOS sound control backed by CoreAudio. Controls device volume/mute and default devices.
- * Per-application sessions do not exist on macOS without a virtual audio driver, so all
- * session related calls are no-ops.
+ * Per-application volume/mute (including focus volume) uses CoreAudio process taps via
+ * {@link OsxProcessTapService} on macOS 14.4+; macOS has no per-application sessions, so
+ * {@link #getAllSessions()} stays empty.
  */
 @Log4j2
 @ApplicationScoped
@@ -58,6 +59,7 @@ class SndCtrlOsx implements ISndCtrl {
     private static final Comparator<RunningApplication> APP_ORDER = Comparator.comparing(RunningApplication::name, String.CASE_INSENSITIVE_ORDER);
     private final CoreAudioWrapper wrapper;
     private final OsxProcessHelper processHelper;
+    private final OsxProcessTapService tapService;
     private final Event<Object> eventBus;
     @GuardedBy("devices") private final Map<String, OsxAudioDevice> devices = new HashMap<>();
     @GuardedBy("devices") private final Map<Integer, List<CoreAudioWrapper.ListenerHandle>> deviceListeners = new HashMap<>();
@@ -191,17 +193,26 @@ class SndCtrlOsx implements ISndCtrl {
 
     @Override
     public void setProcessVolume(String fileName, @Nullable String device, float volume) {
-        log.trace("Per application volume is not supported on macOS ({})", fileName);
+        pidsFor(fileName).forEach(pid -> tapService.setVolume(pid, volume));
     }
 
     @Override
     public void setFocusVolume(float volume) {
-        log.trace("Focus volume is not supported on macOS");
+        processHelper.foregroundPid().ifPresent(pid -> tapService.setVolume(pid, volume));
     }
 
     @Override
-    public void muteProcesses(Set<String> fileName, MuteType mute) {
-        log.trace("Per application mute is not supported on macOS ({})", fileName);
+    public void muteProcesses(Set<String> fileNames, MuteType mute) {
+        StreamEx.of(fileNames).flatCollection(this::pidsFor).forEach(pid -> tapService.mute(pid, mute));
+    }
+
+    /** PIDs whose executable matches, by base name (mirroring the Windows session match) or full path. */
+    private List<Integer> pidsFor(String fileName) {
+        var baseName = new File(fileName).getName();
+        return StreamEx.of(getRunningApplications())
+                       .filter(app -> app.file().getName().equalsIgnoreCase(baseName) || app.file().getPath().equalsIgnoreCase(fileName))
+                       .map(RunningApplication::pid)
+                       .toList();
     }
 
     @Override
