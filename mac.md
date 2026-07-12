@@ -1,8 +1,8 @@
 # macOS installation
 
 Note: macOS support is experimental and best-effort. Development focus is Windows; macOS is community
-contributed. Device volume, mute and default-device switching work, but per-application volume is not
-possible on stock macOS (Core Audio has no per-application sessions without a virtual audio driver).
+contributed. Device volume, mute, default-device switching and (on macOS 14.4+) per-application /
+focused-application volume all work.
 Please report issues via the [issue tracker](https://github.com/nvdweem/PCPanel/issues).
 
 The application is shipped as a GraalVM native executable, so no Java installation is needed. The build is
@@ -37,6 +37,7 @@ macOS guards the APIs PCPanel needs behind privacy (TCC) permissions. Grant them
 | **Input Monitoring** | Reading the PCPanel device (without it the device does not even appear) | Privacy & Security → Input Monitoring |
 | **Accessibility**    | Sending keystroke / shortcut mappings                   | Privacy & Security → Accessibility |
 | **Automation**       | Controlling Music.app / Spotify from the Media button   | Privacy & Security → Automation (prompted on first use) |
+| **System Audio Recording** | Per-application / focused-application volume and mute | Privacy & Security → Screen & System Audio Recording (prompted on first use) |
 
 Because the app is only ad-hoc signed (its signature is regenerated on every build, so its identity
 changes), macOS may forget these grants after an update; re-add PCPanel if a feature stops working
@@ -50,14 +51,18 @@ after upgrading. PCPanel logs a hint when it detects a missing permission.
   DisplayPort monitors).
 - Keystroke and shortcut mappings, including the `cmd` modifier (synthesised through CoreGraphics
   `CGEvent`s — works on both Intel and Apple Silicon).
+- Per-application volume / mute and focused-application (focus) volume on **macOS 14.4 or newer**, via
+  CoreAudio process taps: PCPanel taps the target app's audio (muting its direct output) and re-renders
+  it at the dial's volume. Requires the System Audio Recording permission; returning a dial to full
+  volume removes the tap so the app's audio path is completely untouched again.
 - Media control of Music.app and Spotify (AppleScript; the player is only controlled if it is already
   running, never launched).
 - Run program / end program / profile switching, plus the OBS, OSC, MQTT and Wave Link integrations.
 
 ## Limitations
 
-- **Per-application volume / mute / focus volume is not available.** macOS Core Audio has no per-process
-  audio sessions, so these commands are no-ops.
+- Per-application and focus volume need macOS 14.4+ (the CoreAudio process-tap API); on older versions
+  those commands do nothing.
 - Voicemeeter is Windows-only.
 - The Media button's `mute` action has no AppleScript equivalent and is ignored.
 - **No AWT/Swing-based UI features.** GraalVM/Quarkus cannot bundle AWT (`libawt`) in a macOS native

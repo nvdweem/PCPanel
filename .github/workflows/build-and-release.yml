@@ -497,6 +497,7 @@ jobs:
             <key>CFBundlePackageType</key><string>APPL</string>
             <key>LSMinimumSystemVersion</key><string>11.0</string>
             <key>NSHighResolutionCapable</key><true/>
+            <key>NSAudioCaptureUsageDescription</key><string>PCPanel taps an application's audio to control its volume (per-app and focused-app volume).</string>
           </dict>
           </plist>
           PLIST

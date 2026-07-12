@@ -48,6 +48,7 @@ public class CoreAudioWrapper {
     static final int PROP_VOLUME_SCALAR = fourcc("volm");
     static final int PROP_MUTE = fourcc("mute");
     private static final int PROP_RUN_LOOP = fourcc("rnlp");
+    private static final int PROP_TRANSLATE_PID_TO_PROCESS_OBJECT = fourcc("id2p");
     private static final int PROP_PREFERRED_STEREO_CHANNELS = fourcc("dch2");
     private static final int[] FALLBACK_CHANNELS = { 1, 2 };
 
@@ -147,6 +148,21 @@ public class CoreAudioWrapper {
             }
             return data.getInt(0);
         }
+    }
+
+    /** The HAL process object for a PID (the handle the process-tap API taps), or 0 when the process has no audio presence. */
+    public int translatePidToProcessObject(int pid) {
+        try (var qualifier = new Memory(4); var data = new Memory(4)) {
+            qualifier.setInt(0, pid);
+            var size = new IntByReference(4);
+            var status = ca().AudioObjectGetPropertyData(SYSTEM_OBJECT, address(PROP_TRANSLATE_PID_TO_PROCESS_OBJECT, SCOPE_GLOBAL, ELEMENT_MAIN), 4, qualifier, size, data);
+            return status == 0 ? data.getInt(0) : 0;
+        }
+    }
+
+    @Nullable
+    public String deviceUid(int deviceId) {
+        return getString(deviceId, PROP_DEVICE_UID);
     }
 
     public void setDefaultDevice(int deviceId, boolean output) {

@@ -24,6 +24,7 @@ import com.getpcpanel.integration.keyboard.command.CommandMedia.VolumeButton;
 import com.getpcpanel.integration.mqtt.MqttDeviceService;
 import com.getpcpanel.integration.mqtt.MqttHomeAssistantHelper;
 import com.getpcpanel.integration.volume.platform.osx.CoreAudioLib;
+import com.getpcpanel.integration.volume.platform.osx.CoreAudioTapLib;
 import com.getpcpanel.integration.mqtt.command.CommandMqttPublish;
 import com.getpcpanel.commands.command.CommandNoOp;
 import com.getpcpanel.integration.obs.command.CommandObs;
@@ -196,10 +197,12 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         Version.class,
         Version.SemVer.class,
 
-        // Project CoreAudio JNA binding: the property-address Structure (instantiated per call) and the
-        // change-listener Callback (used for default-device/volume notifications).
+        // Project CoreAudio JNA binding: the property-address Structure (instantiated per call), the
+        // change-listener Callback (used for default-device/volume notifications) and the process-tap
+        // render Callback (invoked by CoreAudio's IO thread for per-app volume).
         CoreAudioLib.AudioObjectPropertyAddress.class,
         CoreAudioLib.AudioObjectPropertyListenerProc.class,
+        CoreAudioTapLib.AudioDeviceIOProc.class,
 
         // Command type hierarchy
         Command.class,

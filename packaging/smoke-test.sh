@@ -111,7 +111,8 @@ if [ "$no_baseline" != 1 ]; then
     contains "$ep" "${require[@]}" || require+=("$ep")
   done
   for ep in "${baseline_lenient[@]}"; do
-    contains "$ep" "${require[@]}" "${lenient[@]}" || lenient+=("$ep")
+    # ${arr[@]+...} keeps an empty array safe under `set -u` on bash 3.2 (macOS's /bin/bash)
+    contains "$ep" "${require[@]}" ${lenient[@]+"${lenient[@]}"} || lenient+=("$ep")
   done
 fi
 
@@ -157,7 +158,7 @@ for ep in "${require[@]}"; do
 done
 
 # Lenient endpoints: warn but don't fail (the runner may lack the backing service).
-for ep in "${lenient[@]}"; do
+for ep in ${lenient[@]+"${lenient[@]}"}; do
   code=$(curl -s -o /dev/null -w '%{http_code}' "${base}${ep}" || echo 000)
   echo "GET $ep -> $code (lenient)"
   if [ "$code" != 200 ]; then
