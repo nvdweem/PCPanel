@@ -193,18 +193,18 @@
     .then(r => r.ok ? r.json() : Promise.reject())
     .then(rels => {
       if (!rels.length) throw 0;
-      // Feature the release that actually carries the current installers: prefer the newest stable one,
-      // else the newest overall (a snapshot, until a stable is cut). Old releases (the 1.7.x .msi era)
-      // lack these assets, so blindly picking "newest stable" would point every button at a release page.
-      const hasModern = r => (r.assets || []).some(x => /(setup\.exe|\.AppImage)$/i.test(x.name));
-      const rel = rels.find(r => !r.prerelease && hasModern(r)) || rels.find(hasModern) || rels[0];
+      // Feature the newest STABLE release — stable is the download, snapshots stay opt-in (the Flatpak
+      // snapshot command above). Until 2.0 stable ships this is the old 1.7.x, whose assets predate the
+      // current installers, so some buttons fall back to that release's own page; that self-corrects the
+      // moment a modern stable is released.
+      const rel = rels.find(r => !r.prerelease) || rels[0];
       const assets = rel.assets || [];
       const find = re => (assets.find(x => re.test(x.name)) || {}).browser_download_url;
-      setLink('dl-win', find(/setup\.exe$/i));
-      setLink('dl-mac-arm', find(/arm64\.dmg$/i));
-      setLink('dl-mac-intel', find(/x86_64\.dmg$/i) || find(/intel.*\.dmg$/i));
-      setLink('dl-appimage', find(/x86_64\.AppImage$/i));
-      setLink('dl-deb', find(/\.deb$/i));
+      setLink('dl-win', find(/setup\.exe$/i) || rel.html_url);
+      setLink('dl-mac-arm', find(/arm64\.dmg$/i) || rel.html_url);
+      setLink('dl-mac-intel', find(/x86_64\.dmg$/i) || find(/intel.*\.dmg$/i) || rel.html_url);
+      setLink('dl-appimage', find(/x86_64\.AppImage$/i) || rel.html_url);
+      setLink('dl-deb', find(/\.deb$/i) || rel.html_url);
       // The version text is a link to that release's page — the buttons download, the version navigates.
       const label = rel.name || rel.tag_name || 'release';
       const ver = document.getElementById('ver');
