@@ -53,7 +53,9 @@ public class AppImageUpdater implements PlatformUpdater {
         }
 
         log.info("Updating AppImage {} via {}", appImage, tool);
-        var pb = new ProcessBuilder(tool, appImage);
+        // -O overwrites the AppImage in place (the default writes a new file and leaves ours untouched);
+        // -r removes the .zs-old backup once the new file verifies.
+        var pb = new ProcessBuilder(tool, "-O", "-r", appImage);
         pb.environment().put("APPIMAGE_EXTRACT_AND_RUN", "1");
         pb.redirectOutput(ProcessBuilder.Redirect.DISCARD).redirectError(ProcessBuilder.Redirect.DISCARD);
         var code = pb.start().waitFor();
