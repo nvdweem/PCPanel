@@ -1,0 +1,9 @@
+[Flatpak Ref]
+Title=PCPanel (snapshot)
+Name=com.getpcpanel.PCPanel
+Branch=snapshot
+Url=https://nvdweem.github.io/PCPanel/repo
+Homepage=https://github.com/nvdweem/PCPanel
+Comment=Community controller software for PCPanel USB audio devices (rolling snapshot channel)
+IsRuntime=false
+RuntimeRepo=https://flathub.org/repo/flathub.flatpakref
