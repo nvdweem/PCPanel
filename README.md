@@ -4,12 +4,13 @@ Turn the knobs, sliders and buttons on your [PCPanel](https://getpcpanel.com) in
 controls for everything on your PC: per-app volume, your microphone, Discord voice, OBS scenes,
 media playback, keyboard shortcuts and more.
 
-> ## 📥 [**Download & install → nvdweem.github.io/PCPanel**](https://nvdweem.github.io/PCPanel/)
-> Installation instructions and downloads for **Windows, macOS and Linux** live on the project
-> page. This README is aimed at contributors.
+<p align="center">
+  <a href="https://nvdweem.github.io/PCPanel/"><img alt="Download and install PCPanel for Windows, macOS or Linux" height="54" src="https://img.shields.io/badge/⬇_Download_%26_Install-2ea043?style=for-the-badge&logo=github&logoColor=white"></a>
+</p>
 
 This is **third-party, community-maintained** software for PCPanel hardware. It is a drop-in
 alternative to the official app that adds features and bug fixes requested by the community.
+(This README is aimed at contributors — end users just need the download button above.)
 
 > **Not affiliated with PCPanel / getpcpanel.com.** The original, official software lives
 > [here](https://www.getpcpanel.com/download). This project's version numbering is independent —
