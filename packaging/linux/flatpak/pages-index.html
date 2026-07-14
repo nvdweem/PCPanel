@@ -40,6 +40,7 @@
   a.btn.ghost { background:#21262d; border:1px solid var(--border); color:var(--fg); }
   .dl-row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:8px; }
   .ver { color:var(--muted); font-size:.85rem; }
+  .ver a { color:var(--accent); }
   .links a { color:var(--accent); }
   hr.sep { border:0; border-top:1px solid var(--border); margin:30px 0; }
   .markdown-body { background:transparent; }
@@ -143,7 +144,7 @@
       </div>
     </div>
 
-    <p class="links" style="margin:14px 0 0">All downloads &amp; changelog on the <a href="https://github.com/nvdweem/PCPanel/releases">releases page</a> · <a href="https://github.com/nvdweem/PCPanel">Project on GitHub</a></p>
+    <p class="links" style="margin:14px 0 0">All downloads &amp; the changelog are on the <a href="https://github.com/nvdweem/PCPanel/releases">releases page</a>.</p>
   </div>
 
   <hr class="sep">
@@ -186,23 +187,32 @@
   document.querySelectorAll('[data-copy-text]').forEach(btn =>
     btn.addEventListener('click', () => copy(btn.getAttribute('data-copy-text'), btn)));
 
-  // ---- Fill in direct download links + version from the latest release -----
+  // ---- Direct download links + a version that links to its release page --------------------
   function setLink(id, url) { const a = document.getElementById(id); if (a && url) a.href = url; }
-  fetch('https://api.github.com/repos/' + REPO + '/releases?per_page=15')
+  fetch('https://api.github.com/repos/' + REPO + '/releases?per_page=30')
     .then(r => r.ok ? r.json() : Promise.reject())
     .then(rels => {
       if (!rels.length) throw 0;
-      const rel = rels.find(r => !r.prerelease) || rels[0]; // newest stable, else newest
-      const a = rel.assets || [];
-      const find = re => (a.find(x => re.test(x.name)) || {}).browser_download_url;
+      // Feature the release that actually carries the current installers: prefer the newest stable one,
+      // else the newest overall (a snapshot, until a stable is cut). Old releases (the 1.7.x .msi era)
+      // lack these assets, so blindly picking "newest stable" would point every button at a release page.
+      const hasModern = r => (r.assets || []).some(x => /(setup\.exe|\.AppImage)$/i.test(x.name));
+      const rel = rels.find(r => !r.prerelease && hasModern(r)) || rels.find(hasModern) || rels[0];
+      const assets = rel.assets || [];
+      const find = re => (assets.find(x => re.test(x.name)) || {}).browser_download_url;
       setLink('dl-win', find(/setup\.exe$/i));
       setLink('dl-mac-arm', find(/arm64\.dmg$/i));
       setLink('dl-mac-intel', find(/x86_64\.dmg$/i) || find(/intel.*\.dmg$/i));
       setLink('dl-appimage', find(/x86_64\.AppImage$/i));
       setLink('dl-deb', find(/\.deb$/i));
-      const label = (rel.name || rel.tag_name || '') + (rel.prerelease ? ' (pre-release)' : '');
-      document.getElementById('ver').textContent = 'Latest: ' + label;
-      const wa = find(/setup\.exe$/i); if (wa) document.getElementById('ver-win').textContent = wa.split('/').pop();
+      // The version text is a link to that release's page — the buttons download, the version navigates.
+      const label = rel.name || rel.tag_name || 'release';
+      const ver = document.getElementById('ver');
+      ver.textContent = 'Latest: ';
+      const link = document.createElement('a');
+      link.href = rel.html_url;
+      link.textContent = label;
+      ver.appendChild(link);
     })
     .catch(() => { document.getElementById('ver').textContent = 'See the releases page for the latest downloads.'; });
 
