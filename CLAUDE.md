@@ -66,23 +66,39 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
 - **Run two instances side by side:** pass the `skipfilecheck` arg (otherwise launching a second
   instance just focuses the already-installed one — see `Main`/`FileChecker`). For a separate dev
   data dir, set `pcpanel.root=${user.home}/.pcpaneldev/` (dev profile already does this).
-- **Windows auto-update:** on an installed Windows build, `AutoUpdateService` (in `util/version/`)
-  downloads a GitHub release's `PCPanel-*-setup.exe` and runs it with `/VERYSILENT /SUPPRESSMSGBOXES
-  /NORESTART /UPDATE=1`. Inno keeps the existing install dir (fixed `AppId`); `TrayServiceWin` handles
-  the installer's `WM_CLOSE` to shut the running app down cleanly (releasing its file locks); the
-  installer's `pcpanel.iss` `/UPDATE`-gated `[Run]` entry relaunches it with `/updated` (the normal "Launch
-  now" entry is `skipifsilent` and wouldn't fire). `/updated` (handled in `Main` → `StartupOnboarding`)
-  flags the "just updated" dialog like `/postinstall` but does NOT open a browser — the UI that triggered
-  the update is already open; it re-fetches onboarding when its websocket reconnects and shows the dialog
-  itself (`OnboardingComponent`). Gated to `SystemUtils.IS_OS_WINDOWS &&`
-  native image, exposed to the UI as `PlatformInfo.autoUpdate`; elsewhere (Linux/macOS, dev/JVM) the
-  UI links to the release page instead. REST: `POST /api/system/update` (latest) and
-  `/api/system/update/reinstall` (the Debug page's reinstall-current button, for testing the flow).
-  Settings (`Save`): `autoUpdate` (Windows-only, off by default) makes `VersionChecker` install a newer
-  version on startup automatically instead of just notifying; `checkForPreReleases` is the explicit
-  opt-in to snapshot/pre-release builds — the "type" of update is no longer derived from whether the
-  running build is a snapshot (that only decides build-number comparison now). Both are only meaningful
-  when `startupVersionCheck` is on, and the UI disables them otherwise.
+- **Self-update (`util/version/`):** `AutoUpdateService` is a thin façade that picks the one
+  `PlatformUpdater` transport matching how the app is packaged (`isSupported()` is mutually exclusive) and
+  delegates. Exposed to the UI as `PlatformInfo.autoUpdate`; when no transport supports the install (a
+  `.deb`, dev/JVM, macOS) the UI links to the release page instead of offering "Update & restart". REST:
+  `POST /api/system/update` (latest) and `/api/system/update/reinstall` (the Debug page's
+  reinstall-current button — re-runs the real path against the current version to test the flow on any
+  platform, no newer release needed). The three transports:
+  - **Windows** (`WindowsInstallerUpdater`, installed native build): downloads a release's
+    `PCPanel-*-setup.exe` and runs it `/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /UPDATE=1`. Inno keeps the
+    existing install dir (fixed `AppId`); `TrayServiceWin` handles the installer's `WM_CLOSE` to shut the
+    app down cleanly; `pcpanel.iss`'s `/UPDATE`-gated `[Run]` entry relaunches it with `/updated` (the
+    normal "Launch now" entry is `skipifsilent`). `/updated` (`Main` → `StartupOnboarding`) flags the
+    "just updated" dialog like `/postinstall` but opens no browser (the triggering UI is already open).
+  - **AppImage** (`AppImageUpdater`, `$APPIMAGE` set): runs the bundled `appimageupdatetool -O -r
+    "$APPIMAGE"` (zsync delta, in place) then relaunches via `UpdaterRestart`. The AppImage carries
+    `gh-releases-zsync` update-info baked at build time (`appimagetool -u`, targeting the branch's rolling
+    `latest-<branch>` tag) and the companion `.zsync` is uploaded next to it. `packaging/linux/fetch-appimageupdatetool.sh`
+    pins the tool (MIT) by sha256, same model as kdotool.
+  - **Flatpak** (`FlatpakUpdater`, `$FLATPAK_ID` set): `flatpak-spawn --host flatpak update` then relaunch
+    on the host. Updates only work for installs from the hosted OSTree repo (the `.flatpakref` adds the
+    remote); the one-shot `.flatpak` bundle has none. CI publishes that repo to the **gh-pages** branch /
+    GitHub Pages with exactly two rolling refs — `stable` (from `releases/**`) and `snapshot` — each
+    pruned to its latest commit to stay under the ~1 GB Pages limit; each run clones the existing repo
+    first so the other channel's ref survives.
+
+  `UpdaterRestart` (Linux) starts a detached, self-delaying relauncher and then `Quarkus.asyncExit` — the
+  sleep lets the HTTP response flush and the single-instance `FileChecker` lock release before the new
+  process starts (the Flatpak relauncher is host-spawned so it survives the sandbox teardown).
+  Settings (`Save`): `autoUpdate` (off by default) makes `VersionChecker` install on startup instead of
+  only notifying, whenever a transport is supported; `checkForPreReleases` is the explicit opt-in to
+  snapshot/pre-release builds (the "type" of update is not derived from the running build's snapshot-ness
+  — that only decides build-number comparison). Both need `startupVersionCheck` on, and the UI disables
+  them otherwise.
 
 ### Frontend (`src/main/webui`, Angular 21)
 

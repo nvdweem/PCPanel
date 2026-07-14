@@ -76,13 +76,22 @@ executable, so it works without a system install. `xdotool` is only *suggested* 
 
 ### Flatpak (best-effort)
 
-A Flatpak bundle is provided as an alternative. Note that the app is primarily developed for Windows and the Flatpak sandbox
+A Flatpak is provided as an alternative. Note that the app is primarily developed for Windows and the Flatpak sandbox
 makes some features harder; it is provided on a best-effort basis.
 
+Install from the hosted repo so you get automatic updates (see [Updating](#updating)):
+
    ```shell
-   flatpak install --user PCPanel-[version].flatpak
+   # Stable channel (recommended):
+   flatpak install --user https://nvdweem.github.io/PCPanel/com.getpcpanel.PCPanel.stable.flatpakref
+   # …or the rolling snapshot channel:
+   flatpak install --user https://nvdweem.github.io/PCPanel/com.getpcpanel.PCPanel.snapshot.flatpakref
    flatpak run com.getpcpanel.PCPanel
    ```
+
+The single-file `PCPanel-[version].flatpak` bundle attached to each release is also available
+(`flatpak install --user PCPanel-[version].flatpak`), but a bundle install has no remote attached, so it
+will **not** receive updates — prefer the `.flatpakref` above unless you have a reason not to.
 
 > **Device access:** the Flatpak still needs the host udev rule from [Preparation](#preparation) above — the sandbox can see
 > the device but cannot grant itself permission to open it. If the device is detected but never connects (`Unable to open
@@ -102,6 +111,24 @@ Plasma focus volume works without a host-installed kdotool. Volume control (`pac
 
 If neither package works on your distribution, download the raw executable from the release (it sits inside the `.deb`
 under `/opt/pcpanel`) together with its `.so` libraries and run `./PCPanel`.
+
+## Updating
+
+The app checks GitHub for newer releases on startup (toggle under Settings → Updates) and shows a popup when
+one is available. Whether the popup can update in place depends on how you installed:
+
+- **AppImage** — self-updating. The popup's **Update & restart** button (or Settings → Auto-update → *Reinstall*
+  to test the flow) runs the bundled `appimageupdatetool`, which pulls only the changed blocks (zsync) into the
+  same `.AppImage` file and relaunches. Requires that you launched the actual `.AppImage` (the runtime sets
+  `$APPIMAGE`); running an extracted copy falls back to the download link. You can also update by hand:
+  `appimageupdatetool PCPanel-*.AppImage`.
+- **Flatpak** — self-updating **when installed from the `.flatpakref`** (which adds the hosted remote). **Update &
+  restart** runs `flatpak update` on the host and relaunches; your desktop's software centre (GNOME Software / KDE
+  Discover) also updates it automatically in the background. An install from the one-shot `.flatpak` bundle has no
+  remote and cannot update — reinstall from the `.flatpakref` to switch.
+- **`.deb`** — updated through your package manager as usual; the popup links to the download page (no in-app update).
+
+Stable installs follow the stable releases; snapshot/`snapshot`-channel installs follow the rolling pre-releases.
 
 ## Settings and data location
 
