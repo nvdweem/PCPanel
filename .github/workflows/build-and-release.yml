@@ -276,14 +276,14 @@ jobs:
       # Cache the bundled kdotool download (Apache-2.0) across runs; the key changes only when
       # fetch-kdotool.sh (which pins the version + sha256) changes, so it is downloaded once per pin.
       - name: Cache kdotool
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/pcpanel-kdotool
           key: kdotool-${{ hashFiles('packaging/linux/fetch-kdotool.sh') }}
 
       # Downloaded once per pin, same pattern as kdotool (see fetch-appimageupdatetool.sh).
       - name: Cache appimageupdatetool
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/pcpanel-appimageupdatetool
           key: appimageupdatetool-${{ hashFiles('packaging/linux/fetch-appimageupdatetool.sh') }}
@@ -388,7 +388,7 @@ jobs:
 
       # Same cache as the buildLinux job: kdotool is downloaded once per pin (see fetch-kdotool.sh).
       - name: Cache kdotool
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/pcpanel-kdotool
           key: kdotool-${{ hashFiles('packaging/linux/fetch-kdotool.sh') }}
@@ -457,19 +457,16 @@ jobs:
           ostree prune --repo=site/repo --refs-only --depth=0
           flatpak build-update-repo --prune site/repo
 
-          # Static site: the .flatpakref install files, a landing page, and .nojekyll so GitHub Pages
-          # serves the OSTree object tree verbatim (Jekyll would drop files it considers special).
+          # Static site: the .flatpakref install files, an OS-detecting landing page that renders the
+          # README, and .nojekyll so GitHub Pages serves the OSTree object tree verbatim (Jekyll would
+          # drop files it considers special). index.html fetches ./README.md and app-icon.png at view
+          # time, so ship both alongside it.
           cp packaging/linux/flatpak/com.getpcpanel.PCPanel.stable.flatpakref   site/
           cp packaging/linux/flatpak/com.getpcpanel.PCPanel.snapshot.flatpakref site/
+          cp packaging/linux/flatpak/pages-index.html site/index.html
+          cp README.md site/README.md
+          cp app-icon.png site/app-icon.png
           touch site/.nojekyll
-          cat > site/index.html <<'HTML'
-          <!doctype html><meta charset=utf-8><title>PCPanel Flatpak</title>
-          <h1>PCPanel — Flatpak</h1>
-          <p>Install and then get automatic updates via your usual Flatpak tooling:</p>
-          <pre>flatpak install --user https://nvdweem.github.io/PCPanel/com.getpcpanel.PCPanel.stable.flatpakref</pre>
-          <p>Bleeding-edge builds (snapshot channel):</p>
-          <pre>flatpak install --user https://nvdweem.github.io/PCPanel/com.getpcpanel.PCPanel.snapshot.flatpakref</pre>
-          HTML
 
       - name: Report Flatpak result
         if: steps.flatpak.outcome != 'success'
@@ -481,7 +478,7 @@ jobs:
       - name: Publish Flatpak repo to GitHub Pages
         if: steps.flatpak.outcome == 'success' && github.repository == 'nvdweem/PCPanel'
         continue-on-error: true
-        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4.0.0
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./site

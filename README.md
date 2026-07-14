@@ -108,8 +108,9 @@ to control the volume of apps that run elevated.
 
 Linux is best-effort. Device access needs a udev rule (granting your user access to the device's
 `hidraw` node) and a couple of helper packages; the `.deb` installs the rule for you, but **AppImage,
-Flatpak and manual installs must add it themselves**. Full instructions, including autostart and Wayland
-tray setup, are in [linux.md](linux.md).
+Flatpak and manual installs must add it themselves**. The AppImage and (when installed from the hosted
+repository's `.flatpakref`) the Flatpak update themselves in place. Full instructions, including
+updating, autostart and Wayland tray setup, are in [linux.md](linux.md).
 
 ### macOS
 
