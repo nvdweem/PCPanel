@@ -444,6 +444,10 @@ jobs:
             mkdir -p site
           fi
           mkdir -p site/repo
+          # git does not store empty directories, so a repo cloned back from gh-pages is missing OSTree's
+          # empty ref dirs (refs/remotes, refs/mirrors) and tmp/. `ostree prune` then dies with
+          # "opendir(refs/remotes): No such file or directory". Recreate them before any ostree op.
+          mkdir -p site/repo/refs/heads site/repo/refs/remotes site/repo/refs/mirrors site/repo/tmp
 
           # Unsigned repo (the .flatpakref carries no GPGKey); served over HTTPS from Pages.
           flatpak-builder --user --disable-rofiles-fuse --force-clean \
@@ -468,14 +472,11 @@ jobs:
           cp app-icon.png site/app-icon.png
           touch site/.nojekyll
 
-      - name: Report Flatpak result
-        if: steps.flatpak.outcome != 'success'
-        run: echo "::warning::Flatpak build/publish failed; releasing .deb + AppImage only."
-
       # Publish the merged repo to gh-pages. force_orphan keeps a single commit (the OSTree objects are
       # large — history would balloon), which is safe because `site/` already contains the full merged
       # repo. Only on the canonical repo, so forks don't try to push.
       - name: Publish Flatpak repo to GitHub Pages
+        id: publish
         if: steps.flatpak.outcome == 'success' && github.repository == 'nvdweem/PCPanel'
         continue-on-error: true
         uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
@@ -486,11 +487,22 @@ jobs:
           force_orphan: true
 
       - name: Store Flatpak artifact
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: linux-flatpak
           path: PCPanel-*.flatpak
           if-no-files-found: ignore
+
+      # Make a Flatpak/Pages failure VISIBLE. Both steps above are continue-on-error so the release is
+      # never blocked (.deb + AppImage still ship), but that previously let a real failure show up green.
+      # This marks the JOB red when the build failed or the gh-pages publish failed; the job-level
+      # continue-on-error still keeps the overall run — and the release — passing.
+      - name: Flag Flatpak/Pages failure
+        if: always() && (steps.flatpak.outcome != 'success' || steps.publish.outcome == 'failure')
+        run: |
+          echo "::error::Flatpak build or gh-pages publish failed (build=${{ steps.flatpak.outcome }}, publish=${{ steps.publish.outcome }}); gh-pages was NOT updated. The release still shipped .deb + AppImage."
+          exit 1
 
   buildMac:
     name: macOS .dmg (best-effort)
