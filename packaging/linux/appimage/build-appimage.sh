@@ -17,6 +17,10 @@
 # Environment:
 #   APPIMAGETOOL  - path to appimagetool (default: "appimagetool" on PATH)
 #   ARCH          - target arch for appimagetool (default: x86_64)
+#   UPDATE_INFO   - AppImage update-information string baked into the output so it can self-update, e.g.
+#                   "gh-releases-zsync|<owner>|<repo>|<tag>|PCPanel-*-x86_64.AppImage.zsync". When set,
+#                   appimagetool also emits <output>.zsync, which MUST be uploaded to the release next to
+#                   the AppImage. Unset (local builds) → no update info, no .zsync, no self-update.
 set -euo pipefail
 
 VERSION="${1:?usage: build-appimage.sh <version> <native-exe> <output-dir>}"
@@ -56,6 +60,12 @@ shopt -u nullglob
 bash "$PKG_LINUX/fetch-kdotool.sh" "$APPDIR/usr/bin" || \
     echo ">> WARNING: could not bundle kdotool; focus volume will need a system kdotool/xdotool" >&2
 
+# Bundle appimageupdatetool next to the executable so the app can update itself in place (zsync). It reads
+# the update-information baked in below via UPDATE_INFO; AppImageUpdater runs the sibling tool. Only useful
+# when UPDATE_INFO is set, but harmless to bundle either way. No-op on non-x86_64 (no upstream binary).
+bash "$PKG_LINUX/fetch-appimageupdatetool.sh" "$APPDIR/usr/bin" || \
+    echo ">> WARNING: could not bundle appimageupdatetool; AppImage self-update will be unavailable" >&2
+
 # AppRun launcher.
 install -m 0755 "$PKG_LINUX/appimage/AppRun" "$APPDIR/AppRun"
 
@@ -73,5 +83,13 @@ OUTPUT_DIR="$(cd "$OUTPUT_DIR" && pwd)"
 OUT="$OUTPUT_DIR/PCPanel-${VERSION}-${ARCH}.AppImage"
 
 echo ">> Building AppImage with $APPIMAGETOOL"
-"$APPIMAGETOOL" "$APPDIR" "$OUT"
+if [ -n "${UPDATE_INFO:-}" ]; then
+    # -u bakes the update-information into the AppImage and makes appimagetool emit "$OUT.zsync"
+    # alongside it (the control file the updater fetches). Both must be uploaded to the release.
+    echo ">> Embedding update information: $UPDATE_INFO"
+    "$APPIMAGETOOL" -u "$UPDATE_INFO" "$APPDIR" "$OUT"
+else
+    echo ">> No UPDATE_INFO set; building without self-update information"
+    "$APPIMAGETOOL" "$APPDIR" "$OUT"
+fi
 echo ">> Built $OUT"

@@ -281,6 +281,13 @@ jobs:
           path: ~/.cache/pcpanel-kdotool
           key: kdotool-${{ hashFiles('packaging/linux/fetch-kdotool.sh') }}
 
+      # Downloaded once per pin, same pattern as kdotool (see fetch-appimageupdatetool.sh).
+      - name: Cache appimageupdatetool
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.cache/pcpanel-appimageupdatetool
+          key: appimageupdatetool-${{ hashFiles('packaging/linux/fetch-appimageupdatetool.sh') }}
+
       - name: Build .deb
         run: |
           exe=$(ls target/*-runner | head -1)
@@ -303,6 +310,17 @@ jobs:
           export APPIMAGETOOL="$PWD/appimagetool"
           export APPIMAGE_EXTRACT_AND_RUN=1   # CI runners have no FUSE
           export ARCH=x86_64
+          # Bake self-update info so the AppImage can update itself in place (zsync). It targets this
+          # branch's own rolling pre-release ("latest-<safe-branch>", the same tag preRelease publishes
+          # to), so an installed build self-updates to the newest build of the SAME branch — which is
+          # exactly what makes it testable by re-running this workflow. For a stable 2.0 release, swap the
+          # tag for the literal "latest" (GitHub's newest non-prerelease). appimagetool also emits
+          # PCPanel-*-x86_64.AppImage.zsync next to the output; preRelease uploads it alongside.
+          branch="${GITHUB_REF#refs/heads/}"
+          safe_branch=$(echo "$branch" | sed 's/[^A-Za-z0-9._-]/-/g')
+          owner="${GITHUB_REPOSITORY%%/*}"
+          repo="${GITHUB_REPOSITORY#*/}"
+          export UPDATE_INFO="gh-releases-zsync|${owner}|${repo}|latest-${safe_branch}|PCPanel-*-x86_64.AppImage.zsync"
           exe=$(ls target/*-runner | head -1)
           bash packaging/linux/appimage/build-appimage.sh "${{ steps.ver.outputs.version }}" "$exe" target
 
@@ -317,7 +335,11 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: linux-appimage
-          path: ./target/*.AppImage
+          # The .zsync control file must ship next to the AppImage on the release, or the bundled
+          # appimageupdatetool cannot find what to pull.
+          path: |
+            ./target/*.AppImage
+            ./target/*.AppImage.zsync
           if-no-files-found: error
 
       # Hand the native binary + companion .so libraries to the buildFlatpak job, which runs inside
@@ -343,6 +365,9 @@ jobs:
     # Job-level continue-on-error: even a container-start failure (bad image, infra) must not fail the
     # run or block the release. preRelease gates only on the required Windows/Linux jobs (see its `if`).
     continue-on-error: true
+    # contents: write is for pushing the updated OSTree repo to the gh-pages branch (Flatpak updates).
+    permissions:
+      contents: write
     container:
       image: bilelmoussaoui/flatpak-github-actions:freedesktop-24.08
       options: --privileged
@@ -390,19 +415,78 @@ jobs:
           cp native/*.so "$stage/" 2>/dev/null || true
           tar -czf "$build/pcpanel-native.tar.gz" -C "$stage" .
 
-      - name: Build Flatpak bundle
+      # Build the Flatpak into a persistent OSTree repo (not just a one-shot bundle) so installs from the
+      # hosted repo can `flatpak update`. The repo lives on the gh-pages branch and carries exactly two
+      # rolling refs — `stable` (from releases/** branches) and `snapshot` (everything else) — each pruned
+      # to its single latest commit, so the published site stays small (GitHub Pages caps at ~1 GB). We
+      # clone the existing gh-pages repo first and build into it, so the *other* channel's ref survives
+      # this run. The single-file .flatpak bundle is still produced as a direct-download release asset.
+      - name: Build Flatpak (OSTree repo + bundle)
         id: flatpak
         continue-on-error: true
-        uses: flatpak/flatpak-github-actions/flatpak-builder@401fe28a8384095fc1531b9d320b292f0ee45adb # v6
-        with:
-          bundle: PCPanel-${{ steps.ver.outputs.version }}.flatpak
-          manifest-path: flatpak-build/com.getpcpanel.PCPanel.yml
-          cache-key: flatpak-builder-${{ github.sha }}
-          arch: x86_64
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euxo pipefail
+          channel=snapshot
+          case "${GITHUB_REF#refs/heads/}" in releases/*) channel=stable;; esac
+          echo "channel=$channel" >> "$GITHUB_OUTPUT"
+
+          # Start from the currently published repo so we don't drop the other channel's ref. A shallow
+          # clone still contains every file at HEAD (depth limits history, not content). First publish
+          # (no gh-pages yet) starts empty; flatpak-builder --repo initialises the OSTree repo.
+          git config --global --add safe.directory "$PWD"
+          if git clone --depth 1 --branch gh-pages \
+               "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" site 2>/dev/null; then
+            echo "Reusing existing gh-pages repo"
+          else
+            echo "No gh-pages yet; starting a fresh site"
+            mkdir -p site
+          fi
+          mkdir -p site/repo
+
+          # Unsigned repo (the .flatpakref carries no GPGKey); served over HTTPS from Pages.
+          flatpak-builder --user --disable-rofiles-fuse --force-clean \
+            --repo=site/repo --default-branch="$channel" \
+            builddir flatpak-build/com.getpcpanel.PCPanel.yml
+
+          flatpak build-bundle site/repo "PCPanel-${{ steps.ver.outputs.version }}.flatpak" \
+            com.getpcpanel.PCPanel "$channel"
+
+          # Keep only the newest commit per ref, then regenerate the summary/metadata.
+          ostree prune --repo=site/repo --refs-only --depth=0
+          flatpak build-update-repo --prune site/repo
+
+          # Static site: the .flatpakref install files, a landing page, and .nojekyll so GitHub Pages
+          # serves the OSTree object tree verbatim (Jekyll would drop files it considers special).
+          cp packaging/linux/flatpak/com.getpcpanel.PCPanel.stable.flatpakref   site/
+          cp packaging/linux/flatpak/com.getpcpanel.PCPanel.snapshot.flatpakref site/
+          touch site/.nojekyll
+          cat > site/index.html <<'HTML'
+          <!doctype html><meta charset=utf-8><title>PCPanel Flatpak</title>
+          <h1>PCPanel — Flatpak</h1>
+          <p>Install and then get automatic updates via your usual Flatpak tooling:</p>
+          <pre>flatpak install --user https://nvdweem.github.io/PCPanel/com.getpcpanel.PCPanel.stable.flatpakref</pre>
+          <p>Bleeding-edge builds (snapshot channel):</p>
+          <pre>flatpak install --user https://nvdweem.github.io/PCPanel/com.getpcpanel.PCPanel.snapshot.flatpakref</pre>
+          HTML
 
       - name: Report Flatpak result
         if: steps.flatpak.outcome != 'success'
-        run: echo "::warning::Flatpak bundle failed to build; releasing .deb + AppImage only."
+        run: echo "::warning::Flatpak build/publish failed; releasing .deb + AppImage only."
+
+      # Publish the merged repo to gh-pages. force_orphan keeps a single commit (the OSTree objects are
+      # large — history would balloon), which is safe because `site/` already contains the full merged
+      # repo. Only on the canonical repo, so forks don't try to push.
+      - name: Publish Flatpak repo to GitHub Pages
+        if: steps.flatpak.outcome == 'success' && github.repository == 'nvdweem/PCPanel'
+        continue-on-error: true
+        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4.0.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          publish_branch: gh-pages
+          force_orphan: true
 
       - name: Store Flatpak artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
