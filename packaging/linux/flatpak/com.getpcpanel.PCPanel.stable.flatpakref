@@ -6,4 +6,4 @@ Url=https://nvdweem.github.io/PCPanel/repo
 Homepage=https://github.com/nvdweem/PCPanel
 Comment=Community controller software for PCPanel USB audio devices (stable channel)
 IsRuntime=false
-RuntimeRepo=https://flathub.org/repo/flathub.flatpakref
+RuntimeRepo=https://dl.flathub.org/repo/flathub.flatpakrepo
