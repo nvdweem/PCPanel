@@ -457,19 +457,16 @@ jobs:
           ostree prune --repo=site/repo --refs-only --depth=0
           flatpak build-update-repo --prune site/repo
 
-          # Static site: the .flatpakref install files, a landing page, and .nojekyll so GitHub Pages
-          # serves the OSTree object tree verbatim (Jekyll would drop files it considers special).
+          # Static site: the .flatpakref install files, an OS-detecting landing page that renders the
+          # README, and .nojekyll so GitHub Pages serves the OSTree object tree verbatim (Jekyll would
+          # drop files it considers special). index.html fetches ./README.md and app-icon.png at view
+          # time, so ship both alongside it.
           cp packaging/linux/flatpak/com.getpcpanel.PCPanel.stable.flatpakref   site/
           cp packaging/linux/flatpak/com.getpcpanel.PCPanel.snapshot.flatpakref site/
+          cp packaging/linux/flatpak/pages-index.html site/index.html
+          cp README.md site/README.md
+          cp app-icon.png site/app-icon.png
           touch site/.nojekyll
-          cat > site/index.html <<'HTML'
-          <!doctype html><meta charset=utf-8><title>PCPanel Flatpak</title>
-          <h1>PCPanel — Flatpak</h1>
-          <p>Install and then get automatic updates via your usual Flatpak tooling:</p>
-          <pre>flatpak install --user https://nvdweem.github.io/PCPanel/com.getpcpanel.PCPanel.stable.flatpakref</pre>
-          <p>Bleeding-edge builds (snapshot channel):</p>
-          <pre>flatpak install --user https://nvdweem.github.io/PCPanel/com.getpcpanel.PCPanel.snapshot.flatpakref</pre>
-          HTML
 
       - name: Report Flatpak result
         if: steps.flatpak.outcome != 'success'
