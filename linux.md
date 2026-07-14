@@ -206,7 +206,23 @@ X-GNOME-Autostart-enabled=true
 ```
 
 (If you installed manually instead of via the `.deb`, replace `pcpanel` with the full path to the executable, e.g.
-`/opt/pcpanel/PCPanel quiet`. For the Flatpak, use `Exec=flatpak run com.getpcpanel.PCPanel quiet`.)
+`/opt/pcpanel/PCPanel quiet`.)
+
+### Flatpak
+
+`flatpak install` cannot enable autostart itself (the sandbox can't write to the host's autostart directory during
+install), so set it up once afterwards with either:
+
+- **Your desktop's autostart settings** — GNOME (Tweaks → *Startup Applications*), KDE (*System Settings → Autostart →
+  Add Application*), XFCE (*Session and Startup*): add **PCPanel** from the app list.
+- **A host autostart file** — create `~/.config/autostart/com.getpcpanel.PCPanel.desktop` (this lives on the host, not
+  in the sandbox) using the XDG template above but with:
+
+  ```ini
+  Exec=flatpak run com.getpcpanel.PCPanel quiet
+  ```
+
+The `quiet` argument keeps the main window hidden on login (it runs in the tray).
 
 ### systemd user service
 
