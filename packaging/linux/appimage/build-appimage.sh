@@ -84,10 +84,21 @@ OUT="$OUTPUT_DIR/PCPanel-${VERSION}-${ARCH}.AppImage"
 
 echo ">> Building AppImage with $APPIMAGETOOL"
 if [ -n "${UPDATE_INFO:-}" ]; then
-    # -u bakes the update-information into the AppImage and makes appimagetool emit "$OUT.zsync"
-    # alongside it (the control file the updater fetches). Both must be uploaded to the release.
+    # -u bakes the update-information into the AppImage and makes appimagetool emit the companion
+    # "<basename>.zsync" control file that the updater fetches. Both must be uploaded to the release.
     echo ">> Embedding update information: $UPDATE_INFO"
     "$APPIMAGETOOL" -u "$UPDATE_INFO" "$APPDIR" "$OUT"
+    # appimagetool writes the .zsync into the CURRENT directory (by AppImage basename), NOT next to an
+    # absolute $OUT — move it beside the AppImage so the artifact glob (target/*.AppImage.zsync) picks it
+    # up. Without this the release ships the AppImage but no .zsync, and self-update silently can't run.
+    zsync_basename="$(basename "$OUT").zsync"
+    if [ -f "$zsync_basename" ]; then
+        mv -f "$zsync_basename" "$OUT.zsync"
+        echo ">> Placed update control file at $OUT.zsync"
+    elif [ ! -f "$OUT.zsync" ]; then
+        echo ">> ERROR: appimagetool did not produce '$zsync_basename'; self-update would be broken" >&2
+        exit 1
+    fi
 else
     echo ">> No UPDATE_INFO set; building without self-update information"
     "$APPIMAGETOOL" "$APPDIR" "$OUT"
