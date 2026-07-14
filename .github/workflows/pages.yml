@@ -1,0 +1,58 @@
+name: Deploy Pages site
+
+# Fast, build-free deploy of the STATIC GitHub Pages content (landing page, README, icon, and the
+# .flatpakref install files). None of these depend on the native application build, so they must not
+# require a full Build & Release run to go live — this workflow publishes them to gh-pages in seconds.
+#
+# The Flatpak OSTree repo (the actual app payload under repo/) is NOT touched here; it is regenerated
+# only by the Build & Release "Linux Flatpak" job. We publish with keep_files: true so the existing
+# repo/ directory on gh-pages is preserved while these static files are added/overwritten.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'packaging/linux/flatpak/pages-index.html'
+      - 'packaging/linux/flatpak/*.flatpakref'
+      - 'README.md'
+      - 'app-icon.png'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+# One deploy at a time; a newer push supersedes an in-flight one.
+concurrency:
+  group: pages-static
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Publish static site
+    # Only on the canonical repo — forks have no gh-pages to publish to.
+    if: github.repository == 'nvdweem/PCPanel'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Stage static site
+        run: |
+          set -euxo pipefail
+          mkdir -p site
+          cp packaging/linux/flatpak/pages-index.html                     site/index.html
+          cp packaging/linux/flatpak/com.getpcpanel.PCPanel.stable.flatpakref   site/
+          cp packaging/linux/flatpak/com.getpcpanel.PCPanel.snapshot.flatpakref site/
+          cp README.md   site/README.md
+          cp app-icon.png site/app-icon.png
+          touch site/.nojekyll
+
+      # keep_files: true leaves everything already on gh-pages (crucially the OSTree repo/) in place and
+      # only writes the static files above — so this never disturbs the Flatpak payload.
+      - name: Publish to gh-pages
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          publish_branch: gh-pages
+          keep_files: true
