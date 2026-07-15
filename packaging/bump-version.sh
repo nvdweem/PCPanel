@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Bump the project version.
 #
-# pom.xml's <project.baseversion> is the single source of truth: CI derives every
-# artifact version from it (Windows installer / .deb / AppImage = <baseversion>.<build>,
-# release title = <baseversion>-SNAPSHOT). This script updates that property and the
-# AppStream <release> entry so a version roll is a one-command change.
+# pom.xml's <project.baseversion> is the single source of truth: CI derives every artifact
+# version from it. Snapshots build as <baseversion>.<run> pre-releases; pushing a releases/**
+# branch builds a clean, bare <baseversion> stable release tagged v<baseversion> (CI strips
+# -SNAPSHOT). This script updates that property and the AppStream <release> entry so a version
+# roll is a one-command change. See CLAUDE.md "Releasing" for the full flow.
 #
 # Usage:
 #   packaging/bump-version.sh <version>        # e.g. packaging/bump-version.sh 2.1

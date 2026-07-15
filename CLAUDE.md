@@ -57,12 +57,23 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
   host-visible per-app cache dir (`XDG_CACHE_HOME` = `~/.var/app/<id>/cache`, identity-mapped into the
   sandbox — *not* `$HOME`, which is an unbacked overlay) so the host KWin can read the temp KWin script
   kdotool generates.
-- **Releasing:** `<project.baseversion>` in `pom.xml` is the version source of truth (artifacts are
-  `<baseversion>.<build>`). Bump it with `packaging/bump-version.sh <version>` (also updates the
-  AppStream metadata), then push a `releases/<version>` branch to trigger a pre-release build. CI bakes
-  the same `<baseversion>.<build>` into the app via `-Dquarkus.application.version=` on `mvn package`, so
-  the UI footer reports the build number for official builds (local/dev stays at `<project.version>`,
-  i.e. `-SNAPSHOT`).
+- **Releasing:** `<project.baseversion>` in `pom.xml` is the version source of truth. `main` always
+  carries `<baseversion>-SNAPSHOT` (the *next* version, being developed). There are two build kinds,
+  keyed off the branch (see `docs/superpowers/specs/2026-07-15-release-versioning-strategy-design.md`):
+  - **Snapshots** (any branch except `releases/**`, e.g. `main` via manual dispatch) → a rolling
+    per-branch **pre-release** tagged `latest-<branch>`, versioned `<baseversion>.<run>` (e.g. `2.0.83`),
+    with `pcpanel.version = <baseversion>-SNAPSHOT`.
+  - **Stable releases** (push a `releases/<version>` branch) → a permanent **`v<version>`** tag marked
+    *Latest* (not a pre-release), versioned bare `<version>` (CI strips `-SNAPSHOT` via
+    `-Dproject.snapshot=`, so `pcpanel.version = <version>` and the app self-reports as final).
+  - **Ordering matters:** a snapshot is a *pre-release of the version it leads to*, so it sorts **below**
+    that release (`2.0-SNAPSHOT (90) < 2.0 < 2.1-SNAPSHOT (1)`). `Version.SemVer` implements this SemVer
+    precedence; never let a snapshot get a numeric part that outranks its own release (the old
+    `2.0 < 2.0.x` bug). `VersionTest` guards the ordering.
+  - **To cut a release:** `packaging/bump-version.sh <version>` (updates baseversion + AppStream
+    metadata), push `releases/<version>`, then bump `main` to the next `-SNAPSHOT`
+    (`packaging/bump-version.sh <next>`). CI bakes the version into the app via
+    `-Dquarkus.application.version=`, so the UI footer reports it (local/dev stays at `-SNAPSHOT`).
 - **Run two instances side by side:** pass the `skipfilecheck` arg (otherwise launching a second
   instance just focuses the already-installed one — see `Main`/`FileChecker`). For a separate dev
   data dir, set `pcpanel.root=${user.home}/.pcpaneldev/` (dev profile already does this).
