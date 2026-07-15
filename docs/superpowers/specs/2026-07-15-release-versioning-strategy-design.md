@@ -62,12 +62,21 @@ published non-prerelease under a permanent `vX.Y` tag.
 
 ## One-time transition
 
-The new comparator ships *inside* 2.0, so already-deployed apps still run the old one. In
-practice the switch is smooth: current **stable** users (1.7.1) see `2.0 > 1.7.1` and
-auto-update; current **snapshot** users auto-update to the next `2.1-SNAPSHOT` build (the old
-comparator still sees `2.1.x > 2.0.x`) and pick up the new logic there. The only gap is a
-snapshot user wanting to drop *back* to stable 2.0 at release moment — a one-time manual install
-for a handful of testers. Acceptable, and only happens once.
+The new comparator ships *inside* the first release, so already-deployed apps still run the old
+one, which ranks a build number *above* the bare version (`2.0.83 > 2.0`). To reach those
+installs, cut the **first** stable release with a build number one above the last snapshot — e.g.
+last `latest-main` is `(83)`, so release **`2.0.84`** (`packaging/bump-version.sh 2.0.84`), bare
+and non-prerelease. Then:
+
+- Old **stable** users (1.7.1): old comparator sees `2.0.84 > 1.7.1` → auto-update. ✓
+- Old **snapshot** users (2.0.83): old comparator parses `v2.0.84` as `[2,0,84]` (no parenthesised
+  build to append) and sees `[2,0,84] > [2,0,83]` → auto-update straight to the stable release. ✓
+
+That `2.0.84` build carries the new comparator, so from then on ordering follows SemVer precedence
+and the *next* release is a clean `2.1` (`[2,1] > [2,0,84]`). The only one-time cost — accepted —
+is that this first release is `2.0.84` rather than a clean `2.0`; every release after is clean
+`.0`. Bump `main` to `2.1-SNAPSHOT` immediately after so no further `2.0.x` snapshots appear.
+`VersionTest.oneTimeTransitionReleaseOrdersConsistently` guards the new-comparator side of this.
 
 ## Rejected alternatives
 

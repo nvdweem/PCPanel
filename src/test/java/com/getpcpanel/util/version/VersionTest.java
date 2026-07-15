@@ -61,6 +61,22 @@ class VersionTest {
         assertSortsTo(order);
     }
 
+    // The one-time transition: the first stable is cut as "2.0.<lastSnapshot+1>" so the OLD comparator
+    // in already-installed snapshots (which ranks a build number above the bare version) still sees it as
+    // an upgrade. Under the NEW comparator that release must remain a normal final version — below the
+    // next minor and its snapshots, above the snapshot line it supersedes and the previous release.
+    @Test
+    void oneTimeTransitionReleaseOrdersConsistently() {
+        var order = List.of(
+                SemVer.fromName("v1.7.1"),                        // previous stable
+                SemVer.fromName("v2.0-SNAPSHOT Pre-Release (83)"),// the snapshot it supersedes
+                SemVer.fromName("v2.0.84"),                       // the one-time stable release
+                SemVer.fromName("v2.1-SNAPSHOT Pre-Release (1)"), // dev moves on to 2.1
+                SemVer.fromName("v2.1"));                         // next clean .0 release
+
+        assertSortsTo(order);
+    }
+
     private static void assertSortsTo(List<SemVer> ascending) {
         var shuffled = new ArrayList<>(ascending);
         shuffled.sort(Comparator.reverseOrder()); // start from a wrong order
