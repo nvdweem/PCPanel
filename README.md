@@ -5,7 +5,11 @@ controls for everything on your PC: per-app volume, your microphone, Discord voi
 media playback, keyboard shortcuts and more.
 
 <p align="center">
-  <a href="https://nvdweem.github.io/PCPanel/"><img alt="Download and install PCPanel for Windows, macOS or Linux" height="54" src="https://img.shields.io/badge/⬇_Download_%26_Install-2ea043?style=for-the-badge&logo=github&logoColor=white"></a>
+  <!-- Size the badge by width, not height: GitHub's README sanitizer rewrites height="N" into
+       style="height:auto;max-height:Npx", which only caps the image, so a for-the-badge SVG stays at its
+       ~28px natural height (small). A hard width scales the SVG proportionally, so it renders large. GitHub
+       Pages serves this same HTML raw (no sanitizer), where height would have worked — hence the mismatch. -->
+  <a href="https://nvdweem.github.io/PCPanel/"><img alt="Download and install PCPanel for Windows, macOS or Linux" width="374" src="https://img.shields.io/badge/⬇_Download_%26_Install-2ea043?style=for-the-badge"></a>
 </p>
 
 This is **third-party, community-maintained** software for PCPanel hardware. It is a drop-in
