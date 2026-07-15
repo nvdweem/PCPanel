@@ -60,13 +60,22 @@ jobs:
           distribution: 'graalvm-community'
           cache: 'maven'
 
+      # A releases/** branch produces a clean stable version ("2.0"); every other branch produces a
+      # numbered snapshot ("2.0.<run>"). snapshotArg strips the pom's -SNAPSHOT on a release build so the
+      # app self-reports as a final version (pcpanel.version = "2.0", so the version check treats it as a
+      # release, not a pre-release). See docs/superpowers/specs/2026-07-15-release-versioning-strategy-design.md.
       - name: Compute app version
         id: ver
         shell: pwsh
         run: |
           $base = (Select-String -Path pom.xml -Pattern '<project\.baseversion>(.*?)</project\.baseversion>').Matches[0].Groups[1].Value
-          $version = "$base.$env:GITHUB_RUN_NUMBER"
-          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          if ($env:GITHUB_REF -like 'refs/heads/releases/*') {
+            "version=$base" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            "snapshotArg=-Dproject.snapshot=" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          } else {
+            "version=$base.$env:GITHUB_RUN_NUMBER" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+            "snapshotArg=" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          }
           Write-Host "App version: $version"
 
       # Regenerate reachability metadata for THIS OS before compiling, so the native build
@@ -101,7 +110,7 @@ jobs:
         # native image whose awt.dll won't load (empty GraalVM java.dll/jvm.dll shim → dead overlay and
         # font picker). Bake the build-numbered version (<baseversion>.<run>) so the UI footer reports
         # it instead of the bare ${project.version} (2.0-SNAPSHOT). Quote the -D so PowerShell doesn't split it.
-        run: mvn -B verify -Pnative "-Dquarkus.application.version=${{ steps.ver.outputs.version }}" --file pom.xml
+        run: mvn -B verify -Pnative "-Dquarkus.application.version=${{ steps.ver.outputs.version }}" ${{ steps.ver.outputs.snapshotArg }} --file pom.xml
 
       - name: Assemble distribution (exe + companion DLLs)
         shell: pwsh
@@ -226,11 +235,18 @@ jobs:
           native-image-job-reports: 'true'
           cache: 'maven'
 
+      # See the Windows job: releases/** -> clean "2.0" (snapshotArg strips -SNAPSHOT), else "2.0.<run>".
       - name: Compute app version
         id: ver
         run: |
           base=$(grep -oP '(?<=<project\.baseversion>)[^<]+' pom.xml | head -1)
-          echo "version=${base}.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_REF" == refs/heads/releases/* ]]; then
+            echo "version=${base}" >> "$GITHUB_OUTPUT"
+            echo "snapshotArg=-Dproject.snapshot=" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${base}.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+            echo "snapshotArg=" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Install xvfb
         run: sudo apt-get update && sudo apt-get install -y xvfb
@@ -256,7 +272,7 @@ jobs:
         # Bake the build-numbered version (<baseversion>.<run>) into the app so the UI footer reports it
         # instead of the bare ${project.version} (2.0-SNAPSHOT). The Flatpak job reuses this binary, so it
         # inherits the same version.
-        run: xvfb-run -a mvn -B package -Pnative -Dquarkus.application.version=${{ steps.ver.outputs.version }} --file pom.xml
+        run: xvfb-run -a mvn -B package -Pnative -Dquarkus.application.version=${{ steps.ver.outputs.version }} ${{ steps.ver.outputs.snapshotArg }} --file pom.xml
 
       - name: Smoke-test the native binary (boots and serves)
         # Boot the freshly built runner and assert the REST API answers — the same cheap, high-value
@@ -310,17 +326,23 @@ jobs:
           export APPIMAGETOOL="$PWD/appimagetool"
           export APPIMAGE_EXTRACT_AND_RUN=1   # CI runners have no FUSE
           export ARCH=x86_64
-          # Bake self-update info so the AppImage can update itself in place (zsync). It targets this
-          # branch's own rolling pre-release ("latest-<safe-branch>", the same tag preRelease publishes
-          # to), so an installed build self-updates to the newest build of the SAME branch — which is
-          # exactly what makes it testable by re-running this workflow. For a stable 2.0 release, swap the
-          # tag for the literal "latest" (GitHub's newest non-prerelease). appimagetool also emits
+          # Bake self-update info so the AppImage can update itself in place (zsync). A snapshot targets
+          # this branch's own rolling pre-release ("latest-<safe-branch>", the same tag preRelease
+          # publishes to), so an installed build self-updates to the newest build of the SAME branch —
+          # exactly what makes it testable by re-running this workflow. A stable release (releases/**) is
+          # published under a permanent "vX.Y" tag instead, so it targets the literal "latest" (GitHub's
+          # newest non-prerelease) and self-updates across stable releases. appimagetool also emits
           # PCPanel-*-x86_64.AppImage.zsync next to the output; preRelease uploads it alongside.
           branch="${GITHUB_REF#refs/heads/}"
           safe_branch=$(echo "$branch" | sed 's/[^A-Za-z0-9._-]/-/g')
           owner="${GITHUB_REPOSITORY%%/*}"
           repo="${GITHUB_REPOSITORY#*/}"
-          export UPDATE_INFO="gh-releases-zsync|${owner}|${repo}|latest-${safe_branch}|PCPanel-*-x86_64.AppImage.zsync"
+          if [[ "$GITHUB_REF" == refs/heads/releases/* ]]; then
+            zsync_tag="latest"
+          else
+            zsync_tag="latest-${safe_branch}"
+          fi
+          export UPDATE_INFO="gh-releases-zsync|${owner}|${repo}|${zsync_tag}|PCPanel-*-x86_64.AppImage.zsync"
           exe=$(ls target/*-runner | head -1)
           bash packaging/linux/appimage/build-appimage.sh "${{ steps.ver.outputs.version }}" "$exe" target
 
@@ -374,11 +396,17 @@ jobs:
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
+      # See the Windows job: releases/** -> clean "2.0", else "2.0.<run>". (This job repackages the
+      # Linux native binary, so it only needs the version string for artifact naming.)
       - name: Compute app version
         id: ver
         run: |
           base=$(grep -oP '(?<=<project\.baseversion>)[^<]+' pom.xml | head -1)
-          echo "version=${base}.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_REF" == refs/heads/releases/* ]]; then
+            echo "version=${base}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${base}.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Download native binary
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -530,11 +558,18 @@ jobs:
           native-image-job-reports: 'true'
           cache: 'maven'
 
+      # See the Windows job: releases/** -> clean "2.0" (snapshotArg strips -SNAPSHOT), else "2.0.<run>".
       - name: Compute app version
         id: ver
         run: |
           base=$(grep -oE '<project\.baseversion>[^<]+' pom.xml | head -1 | sed 's/<project\.baseversion>//')
-          echo "version=${base}.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_REF" == refs/heads/releases/* ]]; then
+            echo "version=${base}" >> "$GITHUB_OUTPUT"
+            echo "snapshotArg=-Dproject.snapshot=" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${base}.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+            echo "snapshotArg=" >> "$GITHUB_OUTPUT"
+          fi
 
       # Regenerate reachability metadata for THIS OS before compiling (see the Windows job for the
       # rationale). Best-effort like the rest of the macOS leg: the headless runner makes the AWT
@@ -556,7 +591,7 @@ jobs:
         continue-on-error: true
         # Bake the build-numbered version (<baseversion>.<run>) into the app so the UI footer reports it
         # instead of the bare ${project.version} (2.0-SNAPSHOT).
-        run: mvn -B package -Pnative -Dquarkus.application.version=${{ steps.ver.outputs.version }} --file pom.xml
+        run: mvn -B package -Pnative -Dquarkus.application.version=${{ steps.ver.outputs.version }} ${{ steps.ver.outputs.snapshotArg }} --file pom.xml
 
       - name: Assemble .app bundle
         id: assemble
@@ -681,7 +716,7 @@ jobs:
           if-no-files-found: ignore
 
   preRelease:
-    name: Pre-release
+    name: Publish (release or snapshot)
     needs:
       - buildWindows
       - buildLinux
@@ -695,17 +730,28 @@ jobs:
       - name: Fetch Sources
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
-      - name: Extract Maven project version
-        run: echo "version=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec)" >> $GITHUB_OUTPUT
-        id: project
-
-      - name: Compute tag name
+      # Two publishing modes keyed off the branch:
+      #   releases/**  -> a STABLE release: a permanent "vX.Y" tag, marked Latest, NOT a pre-release.
+      #   anything else -> a SNAPSHOT: the rolling per-branch "latest-<branch>" pre-release (deleted and
+      #                    recreated each run so it always points at the newest commit).
+      - name: Compute release identity
         run: |
-          branch="${GITHUB_REF#refs/heads/}"
-          safe_branch=$(echo "$branch" | sed 's/[^A-Za-z0-9._-]/-/g')
-          echo "TAG_NAME=latest-$safe_branch" >> $GITHUB_ENV
+          base=$(grep -oP '(?<=<project\.baseversion>)[^<]+' pom.xml | head -1)
+          if [[ "$GITHUB_REF" == refs/heads/releases/* ]]; then
+            echo "IS_RELEASE=true" >> "$GITHUB_ENV"
+            echo "TAG_NAME=v${base}" >> "$GITHUB_ENV"
+            echo "RELEASE_TITLE=v${base}" >> "$GITHUB_ENV"
+          else
+            branch="${GITHUB_REF#refs/heads/}"
+            safe_branch=$(echo "$branch" | sed 's/[^A-Za-z0-9._-]/-/g')
+            echo "IS_RELEASE=false" >> "$GITHUB_ENV"
+            echo "TAG_NAME=latest-${safe_branch}" >> "$GITHUB_ENV"
+            echo "RELEASE_TITLE=v${base}-SNAPSHOT Pre-Release (${GITHUB_RUN_NUMBER})" >> "$GITHUB_ENV"
+          fi
 
+      # Snapshots only: a stable release keeps its permanent tag, so never delete/recreate it.
       - name: Remove existing pre-release for this branch
+        if: env.IS_RELEASE == 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -718,6 +764,7 @@ jobs:
             | xargs -r -I '{}' gh api -X DELETE repos/{owner}/{repo}/releases/{}
 
       - name: Remove previous tag
+        if: env.IS_RELEASE == 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -728,10 +775,9 @@ jobs:
             echo "Tag $TAG_NAME does not exist; skipping delete"
           fi
 
-      - name: Create Pre-release
+      - name: Create release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_RUN_NUMBER: ${{ github.run_number }}
           WIN_GEN: ${{ needs.buildWindows.outputs.genStatus }}
           LIN_GEN: ${{ needs.buildLinux.outputs.genStatus }}
         run: |
@@ -750,10 +796,18 @@ jobs:
             notes="${notes}"$'\n\n'"### ⚠️ Build warnings"$'\n'"${warnings}"
           fi
           printf '%s' "$notes" > "$RUNNER_TEMP/release-notes.md"
-          gh release create "$TAG_NAME" \
-            --prerelease \
-            --title "v${{ steps.project.outputs.version }} Pre-Release (${{ env.GITHUB_RUN_NUMBER }})" \
-            --notes-file "$RUNNER_TEMP/release-notes.md"
+          # A stable release is marked Latest and is NOT a pre-release; a snapshot is a rolling pre-release.
+          if [ "$IS_RELEASE" = "true" ]; then
+            gh release create "$TAG_NAME" \
+              --latest \
+              --title "$RELEASE_TITLE" \
+              --notes-file "$RUNNER_TEMP/release-notes.md"
+          else
+            gh release create "$TAG_NAME" \
+              --prerelease \
+              --title "$RELEASE_TITLE" \
+              --notes-file "$RUNNER_TEMP/release-notes.md"
+          fi
 
       - name: Download all build artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
