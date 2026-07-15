@@ -110,7 +110,11 @@ jobs:
         # native image whose awt.dll won't load (empty GraalVM java.dll/jvm.dll shim → dead overlay and
         # font picker). Bake the build-numbered version (<baseversion>.<run>) so the UI footer reports
         # it instead of the bare ${project.version} (2.0-SNAPSHOT). Quote the -D so PowerShell doesn't split it.
-        run: mvn -B verify -Pnative "-Dquarkus.application.version=${{ steps.ver.outputs.version }}" ${{ steps.ver.outputs.snapshotArg }} --file pom.xml
+        run: |
+          # Splat the release-only -Dproject.snapshot= via an array so PowerShell passes it as ONE intact
+          # argument — a bare token gets split at the dot into "-Dproject" + ".snapshot=". Empty = no arg.
+          $snap = @(); if ('${{ steps.ver.outputs.snapshotArg }}') { $snap = @('${{ steps.ver.outputs.snapshotArg }}') }
+          mvn -B verify -Pnative "-Dquarkus.application.version=${{ steps.ver.outputs.version }}" @snap --file pom.xml
 
       - name: Assemble distribution (exe + companion DLLs)
         shell: pwsh
