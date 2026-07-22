@@ -81,6 +81,8 @@ public class WindowsPowerEventMonitor {
     private final Consumer<SystemEventType> sink;
     /** Set once WTS session notifications are live, so the inference-based lock poller can stand down. */
     private final AtomicBoolean sessionNotificationsActive = new AtomicBoolean();
+    /** Guards the registration-time echo of the console display state — see handlePowerSettingChange. */
+    private final AtomicBoolean displayStateBaselineSeen = new AtomicBoolean();
     private Thread thread;
     private volatile HWND hwnd;
     private WindowProc wndProc; // strong reference: a collected callback would crash the native dispatch
@@ -254,6 +256,14 @@ public class WindowsPowerEventMonitor {
             return;
         }
         var state = setting.getByte(OFFSET_DATA) & 0xFF;
+        // RegisterPowerSettingNotification echoes the *current* value a few ms after registering
+        // (measured: +4ms). That echo is a baseline, not a transition — acting on an "off" echo would
+        // darken the panels with no matching displayOn to ever follow, which is the #145 failure mode
+        // by another route. Adopt it silently; only real changes after it drive the lighting.
+        if (displayStateBaselineSeen.compareAndSet(false, true)) {
+            log.debug("Initial console display state: {}", state);
+            return;
+        }
         if (state == DISPLAY_OFF) {
             sink.accept(SystemEventType.displayOff);
         } else if (state == DISPLAY_ON) {
