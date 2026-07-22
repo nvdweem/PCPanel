@@ -1,2 +1,7 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Shell scripts must keep LF even on Windows checkouts. CI runs packaging/ci-version.sh with bash on
+# the windows-latest runner, whose git defaults to core.autocrlf=true; bash chokes on a CRLF script
+# ("set: pipefail: invalid option name"). The Linux-only packaging scripts never exposed this.
+*.sh text eol=lf

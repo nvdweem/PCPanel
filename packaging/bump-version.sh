@@ -1,18 +1,19 @@
 #!/usr/bin/env bash
-# Bump the project version.
+# Set the DEVELOPMENT (snapshot) version of a line.
 #
-# pom.xml's <project.baseversion> is the single source of truth: CI derives every artifact
-# version from it. Snapshots build as <baseversion>.<run> pre-releases; pushing a releases/**
-# branch builds a clean, bare <baseversion> stable release tagged v<baseversion> (CI strips
-# -SNAPSHOT). This script updates that property and the AppStream <release> entry so a version
-# roll is a one-command change. See CLAUDE.md "Releasing" for the full flow.
+# This does NOT release anything. pom.xml's <project.baseversion> names the version a branch is
+# working towards, and CI uses it only to label snapshots as <baseversion>.<run> pre-releases.
+#
+# Releases carry no version in the tree at all: pushing a vX.Y.Z tag builds exactly that version
+# (CI passes -Dproject.baseversion=X.Y.Z -Dproject.snapshot=). That is deliberate — a maintenance
+# branch that never edits a version file merges forward into main without conflicting on pom.xml
+# or the AppStream metainfo. Use this script only when a line starts working towards a new
+# version (e.g. main moving to 2.2 after 2.1 ships). See CLAUDE.md "Releasing" for the full flow.
 #
 # Usage:
-#   packaging/bump-version.sh <version>        # e.g. packaging/bump-version.sh 2.1
+#   packaging/bump-version.sh <version>        # e.g. packaging/bump-version.sh 2.2
 #
-# Runs anywhere with bash (Linux, macOS, Git Bash / WSL on Windows). After running,
-# commit the change and push a releases/<version> branch to publish (see the hints
-# it prints at the end).
+# Runs anywhere with bash (Linux, macOS, Git Bash / WSL on Windows).
 set -euo pipefail
 
 VERSION="${1:-}"
@@ -27,9 +28,6 @@ fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 POM="$REPO_ROOT/pom.xml"
-METAINFO="$REPO_ROOT/packaging/linux/com.getpcpanel.PCPanel.metainfo.xml"
-TODAY="$(date +%F)"
-
 # Portable in-place edit: GNU and BSD sed disagree on -i, so write via a temp file.
 replace_in_file() {
     local file="$1" expr="$2"
@@ -40,14 +38,11 @@ current="$(sed -n 's/.*<project\.baseversion>\([^<]*\)<.*/\1/p' "$POM" | head -1
 echo "pom.xml   <project.baseversion>: ${current:-?} -> $VERSION"
 replace_in_file "$POM" "s|<project\.baseversion>[^<]*</project\.baseversion>|<project.baseversion>$VERSION</project.baseversion>|"
 
-if [ -f "$METAINFO" ]; then
-    echo "metainfo  <release>: version=$VERSION date=$TODAY"
-    replace_in_file "$METAINFO" "s|<release version=\"[^\"]*\" date=\"[^\"]*\" */>|<release version=\"$VERSION\" date=\"$TODAY\" />|"
-fi
-
 cat <<EOF
 
-Updated to $VERSION. Next steps:
-  git commit -am "release: bump version to $VERSION"
-  git switch -c releases/$VERSION && git push -u origin releases/$VERSION   # triggers Build & Release
+Development version set to $VERSION. Next steps:
+  git commit -am "chore: develop $VERSION"
+
+To RELEASE, no version edit is needed - tag the commit you want to ship:
+  git tag v$VERSION && git push origin v$VERSION                # triggers Build & Release
 EOF

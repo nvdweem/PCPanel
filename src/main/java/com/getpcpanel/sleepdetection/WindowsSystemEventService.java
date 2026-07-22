@@ -15,10 +15,16 @@ import lombok.extern.log4j.Log4j2;
  *
  * <ul>
  *   <li>resume-from-suspend via the cross-platform {@link SuspendResumeWatchdog} (downcall-only);</li>
- *   <li>lock/unlock by polling {@link Win32Desktop#OpenInputDesktop}, which fails while the secure
- *       lock-screen desktop is active (downcall-only);</li>
- *   <li>display power off/on and advance {@link SystemEventType#goingToSuspend} notice via
- *       {@link WindowsPowerEventMonitor}, the one window that listens for {@code WM_POWERBROADCAST}.</li>
+ *   <li>lock/unlock, display power off/on and advance {@link SystemEventType#goingToSuspend} notice
+ *       via {@link WindowsPowerEventMonitor}, the one window that listens for the session/power
+ *       messages. Lock/unlock comes from {@code WTSRegisterSessionNotification} — the OS states the
+ *       transition rather than us inferring it;</li>
+ *   <li>lock/unlock <em>fallback</em> by polling {@link Win32Desktop#OpenInputDesktop}, which fails
+ *       while the secure lock-screen desktop is active (downcall-only). Only used when the window
+ *       above could not register for session notifications, and debounced through
+ *       {@link LockStateTracker}: {@code OpenInputDesktop} also fails right after logon, during a
+ *       desktop switch and under the UAC secure desktop, and treating that as a lock blacked out the
+ *       panels until the user touched a lighting setting (#145).</li>
  * </ul>
  *
  * <p>The power-event source uses a window-procedure {@link com.sun.jna.Callback}; that once segfaulted
@@ -63,13 +69,18 @@ public class WindowsSystemEventService {
     }
 
     private void pollLockState() {
-        var wasLocked = false;
+        var tracker = new LockStateTracker();
         while (running) {
             try {
                 Thread.sleep(LOCK_POLL_INTERVAL_MS);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 return;
+            }
+            // The window monitor's WTS session events are authoritative; while they are live this
+            // guess-based detector must stay silent (its false positives blacked out the panels, #145).
+            if (powerEventMonitor.hasAuthoritativeLockEvents()) {
+                continue;
             }
             boolean locked;
             try {
@@ -78,9 +89,9 @@ public class WindowsSystemEventService {
                 log.debug("Lock-state poll failed; assuming unlocked", e);
                 locked = false;
             }
-            if (locked != wasLocked) {
-                wasLocked = locked;
-                fire(locked ? SystemEventType.locked : SystemEventType.unlocked);
+            var event = tracker.sample(locked);
+            if (event != null) {
+                fire(event);
             }
         }
     }
@@ -98,8 +109,17 @@ public class WindowsSystemEventService {
         return false;
     }
 
+    /**
+     * Observers run synchronously on the caller's thread — the lock poller, or the native window
+     * procedure of {@link WindowsPowerEventMonitor}. A throwing observer must not kill the poller
+     * (that would end lock detection for the session) or unwind into the native message pump.
+     */
     private void fire(SystemEventType type) {
         log.debug("Windows system event: {}", type);
-        eventBus.fire(new SystemEvent(type));
+        try {
+            eventBus.fire(new SystemEvent(type));
+        } catch (Throwable e) { // NOSONAR - see javadoc: this thread must survive any observer failure
+            log.warn("Handler for system event {} failed", type, e);
+        }
     }
 }

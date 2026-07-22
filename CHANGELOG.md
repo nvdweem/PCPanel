@@ -2,6 +2,12 @@
 
 <!-- Releasenotes without version are included in releases -->
 
+- #145 - Fixed the panel lights staying off after booting the PC, until any lighting setting was toggled. Windows lock detection was *inferred* from an internal desktop check that also fails while the desktop is still being set up right after logon (and during a UAC prompt, or a desktop switch), so a false "workstation locked" switched the panels off with nothing left to switch them back on. Lock and unlock now come from Windows itself.
+- As a result the panels also switch off **when you lock the PC**, instead of only once you click through to the password/PIN prompt, and come back on when you sign in.
+- (Windows) Restored monitor-off/on and going-to-sleep detection, which had never actually started: the hidden window that receives those notifications failed to be created on every launch, so the panels only dimmed on lock. They now switch off when the monitors go to sleep and when Windows suspends, and light up again on wake.
+
+## [2.0.84]
+
 - The entire user interface has been rebuilt from the ground up with a brand-new design — a custom dark theme replacing the old windows, covering the device view, action assignment, lighting and settings.
 - The underlying framework has been replaced to be more efficient. On my local machine, this results in 100mb memory usage instead of 500mb (for both Windows and Linux).
 - The app now supports controllers beyond PCPanel through a generalized device layer. PCPanel hardware works exactly as before (and with zero setup), while other devices can be added and bound to the same actions through the same UI.
