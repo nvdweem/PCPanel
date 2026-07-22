@@ -44,6 +44,26 @@ published non-prerelease under a permanent `vX.Y` tag.
 - After releasing, advance dev with one line: `packaging/bump-version.sh 2.1` (a deliberate
   "what's next" choice). No CI auto-bump — kept explicit.
 
+> **Superseded (2026-07-22): release = push a `vX.Y.Z` tag, not a `releases/**` branch.**
+> The model above put the release version in the tree (`<project.baseversion>` + the AppStream
+> `<release>` entry). That works for a single line, but it makes a long-lived maintenance branch
+> unmergeable in practice: `releases/2.0` and `main` both edit the same version line from a common
+> ancestor, so **every** forward merge conflicts on `pom.xml` and the metainfo — and resolving it once
+> does not help, because the merge base advances to a release-branch tip that still disagrees
+> (measured: merge #2 conflicts identically after merge #1 was resolved).
+>
+> Now: the tag carries the version and nothing in the tree does. `packaging/ci-version.sh` (one
+> implementation, called by all four jobs, guarded by `CiVersionScriptTest`) maps
+> `refs/tags/vX.Y.Z` → build `X.Y.Z` via `-Dproject.baseversion=X.Y.Z -Dproject.snapshot=`; every other
+> ref → snapshot `<baseversion>.<run>`. A `releases/**` push now publishes that line's rolling
+> *snapshot* pre-release so a fix can be tested before it is released. `releases/2.0` never edits a
+> versioned file, so it merges forward into `main` with only real-code conflicts. The AppStream
+> `<release>` entry is stamped at package time (`packaging/linux/stamp-metainfo.sh`), and *Latest* is
+> claimed only by the highest released version so a `2.0.x` patch cut after `2.1` cannot demote it.
+>
+> Everything below about **version formats and SemVer precedence is unchanged** — `2.0-SNAPSHOT (90)
+> < 2.0 < 2.1-SNAPSHOT (1)` still holds, and the `2.0.84` one-time transition still applies.
+
 ## Code changes (3 contained pieces)
 
 1. **`Version.SemVer`** — rewrite `compareTo` to SemVer precedence: compare numeric core

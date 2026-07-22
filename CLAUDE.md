@@ -57,23 +57,37 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
   host-visible per-app cache dir (`XDG_CACHE_HOME` = `~/.var/app/<id>/cache`, identity-mapped into the
   sandbox — *not* `$HOME`, which is an unbacked overlay) so the host KWin can read the temp KWin script
   kdotool generates.
-- **Releasing:** `<project.baseversion>` in `pom.xml` is the version source of truth. `main` always
-  carries `<baseversion>-SNAPSHOT` (the *next* version, being developed). There are two build kinds,
-  keyed off the branch (see `docs/superpowers/specs/2026-07-15-release-versioning-strategy-design.md`):
-  - **Snapshots** (any branch except `releases/**`, e.g. `main` via manual dispatch) → a rolling
+- **Releasing:** **the git tag is the release version — it is never committed anywhere.** `pom.xml`'s
+  `<project.baseversion>` only names the version a branch is *working towards*, and is used solely to
+  label snapshots. `packaging/ci-version.sh` is the single place that decides a build's version (all
+  four CI jobs call it; `CiVersionScriptTest` guards it). Two build kinds, keyed off the ref (see
+  `docs/superpowers/specs/2026-07-15-release-versioning-strategy-design.md`):
+  - **Snapshots** (any branch push, e.g. `releases/2.0`, or `main` via manual dispatch) → a rolling
     per-branch **pre-release** tagged `latest-<branch>`, versioned `<baseversion>.<run>` (e.g. `2.0.83`),
     with `pcpanel.version = <baseversion>-SNAPSHOT`.
-  - **Stable releases** (push a `releases/<version>` branch) → a permanent **`v<version>`** tag marked
-    *Latest* (not a pre-release), versioned bare `<version>` (CI strips `-SNAPSHOT` via
-    `-Dproject.snapshot=`, so `pcpanel.version = <version>` and the app self-reports as final).
+  - **Stable releases** (push a **`v<version>` tag**) → a permanent **`v<version>`** release, not a
+    pre-release, versioned bare `<version>` (CI passes `-Dproject.baseversion=<version>
+    -Dproject.snapshot=`, so `pcpanel.version = <version>` and the app self-reports as final). It is
+    marked *Latest* only when it is the highest released version, so a `2.0.x` patch cut after `2.1`
+    ships cannot steal the Latest badge or hijack the AppImage self-update channel.
+  - **Why the tag and not a file:** a release that edits `pom.xml` (and the AppStream metainfo) makes
+    every forward merge of a maintenance branch into `main` conflict on the version line, because both
+    branches edit it from a common ancestor — permanently, not once. With the version only in the tag,
+    `releases/2.0` never touches a versioned file and merges forward cleanly. The AppStream `<release>`
+    entry is stamped at package time by `packaging/linux/stamp-metainfo.sh`.
   - **Ordering matters:** a snapshot is a *pre-release of the version it leads to*, so it sorts **below**
     that release (`2.0-SNAPSHOT (90) < 2.0 < 2.1-SNAPSHOT (1)`). `Version.SemVer` implements this SemVer
     precedence; never let a snapshot get a numeric part that outranks its own release (the old
     `2.0 < 2.0.x` bug). `VersionTest` guards the ordering.
-  - **To cut a release:** `packaging/bump-version.sh <version>` (updates baseversion + AppStream
-    metadata), push `releases/<version>`, then bump `main` to the next `-SNAPSHOT`
-    (`packaging/bump-version.sh <next>`). CI bakes the version into the app via
-    `-Dquarkus.application.version=`, so the UI footer reports it (local/dev stays at `-SNAPSHOT`).
+  - **To cut a release:** tag the commit you want to ship — `git tag v<version> && git push origin
+    v<version>`. No version edit, no release commit. `packaging/bump-version.sh <next>` is only for
+    pointing a branch at the next development version (e.g. `main` moving to `2.2` after `2.1` ships).
+    CI bakes the version into the app via `-Dquarkus.application.version=`, so the UI footer reports it
+    (local/dev stays at `-SNAPSHOT`).
+  - **Maintenance lines:** `releases/X.Y` is long-lived. Fix on the oldest affected line and **merge
+    forward** into `main` (`releases/2.0` → `main`), so ancestry is real and the same hunks don't
+    re-conflict. Anything meant for both lines should be based on their merge base; anything
+    release-only stays on the release branch. Patch by tagging `v2.0.85`, `v2.0.86`, … off that branch.
 - **Run two instances side by side:** pass the `skipfilecheck` arg (otherwise launching a second
   instance just focuses the already-installed one — see `Main`/`FileChecker`). For a separate dev
   data dir, set `pcpanel.root=${user.home}/.pcpaneldev/` (dev profile already does this).
