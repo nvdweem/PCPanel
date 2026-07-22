@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -36,26 +37,54 @@ class CiVersionScriptTest {
      */
     private static final String SCRIPT = "packaging/ci-version.sh";
 
+    /**
+     * Candidate bash executables, best first. On a Windows runner the {@code bash} on PATH is the WSL
+     * launcher ({@code C:\Windows\System32\bash.exe}), which reports "Windows Subsystem for Linux has
+     * no installed distributions" and fails — so Git Bash is tried first, which is also exactly what
+     * GitHub Actions' own {@code shell: bash} uses on Windows.
+     */
+    private static final List<String> BASH_CANDIDATES = List.of(
+            "C:\\Program Files\\Git\\bin\\bash.exe",
+            "C:\\Program Files (x86)\\Git\\bin\\bash.exe",
+            "bash");
+
+    private static String bash;
+
     @BeforeAll
     static void locateScript() {
         assumeTrue(Files.isRegularFile(Path.of(SCRIPT)), "packaging/ci-version.sh not found");
-        assumeTrue(hasBash(), "bash not available on this machine");
+        bash = findWorkingBash();
+        assumeTrue(bash != null, "no working bash on this machine");
     }
 
-    private static boolean hasBash() {
-        try {
-            return new ProcessBuilder("bash", "-c", "exit 0").start().waitFor(30, TimeUnit.SECONDS);
-        } catch (IOException | InterruptedException e) {
-            if (e instanceof InterruptedException) {
+    /** A candidate counts only if it actually runs something — merely existing is not enough (see WSL). */
+    private static String findWorkingBash() {
+        for (var candidate : BASH_CANDIDATES) {
+            try {
+                var pb = new ProcessBuilder(candidate, "-c", "echo pcpanel-bash-ok");
+                pb.redirectErrorStream(true);
+                var process = pb.start();
+                String out;
+                try (var in = process.getInputStream()) {
+                    out = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+                }
+                if (process.waitFor(30, TimeUnit.SECONDS) && process.exitValue() == 0
+                        && out.contains("pcpanel-bash-ok")) {
+                    return candidate;
+                }
+            } catch (IOException e) {
+                // candidate not present - try the next
+            } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
+                return null;
             }
-            return false;
         }
+        return null;
     }
 
     /** Runs the script for a ref and returns its KEY=VALUE output as a map. */
     private static Map<String, String> run(String ref, String runNumber) throws Exception {
-        var pb = new ProcessBuilder("bash", SCRIPT, ref, runNumber);
+        var pb = new ProcessBuilder(bash, SCRIPT, ref, runNumber);
         pb.redirectErrorStream(true);
         var process = pb.start();
         String out;
