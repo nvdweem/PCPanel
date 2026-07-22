@@ -1,5 +1,6 @@
 package com.getpcpanel.sleepdetection;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import com.sun.jna.Pointer;
@@ -12,19 +13,24 @@ import com.sun.jna.platform.win32.WinDef.LPARAM;
 import com.sun.jna.platform.win32.WinDef.LRESULT;
 import com.sun.jna.platform.win32.WinDef.WPARAM;
 import com.sun.jna.platform.win32.WinNT.HANDLE;
-import com.sun.jna.platform.win32.WinUser;
 import com.sun.jna.platform.win32.WinUser.MSG;
 import com.sun.jna.platform.win32.WinUser.WNDCLASSEX;
 import com.sun.jna.platform.win32.WinUser.WindowProc;
+import com.sun.jna.platform.win32.Wtsapi32;
 
 import lombok.extern.log4j.Log4j2;
 
 /**
- * Hosts the one hidden Windows window that receives {@code WM_POWERBROADCAST} and turns it into
- * {@link SystemEventType} events for two cases the rest of the callback-free Windows detection cannot
- * see:
+ * Hosts the one hidden Windows window that receives the session/power window messages and turns them
+ * into {@link SystemEventType} events for the cases the rest of the Windows detection cannot see:
  *
  * <ul>
+ *   <li>the workstation being locked/unlocked — {@link SystemEventType#locked} /
+ *       {@link SystemEventType#unlocked} — via {@code WTSRegisterSessionNotification}. This is the
+ *       <em>authoritative</em> source: the OS states the transition instead of it being inferred from
+ *       {@code OpenInputDesktop} failing, which also fails for unrelated reasons and produced spurious
+ *       blackouts (issue #145). {@link WindowsSystemEventService}'s poller stands down once this is
+ *       registered;</li>
  *   <li>the console display being powered off/on — {@link SystemEventType#displayOff} /
  *       {@link SystemEventType#displayOn} — via {@code GUID_CONSOLE_DISPLAY_STATE}. Covers everything
  *       the OS drives the monitors with (idle-timeout, a manual "turn off display", DPMS); it cannot
@@ -37,10 +43,18 @@ import lombok.extern.log4j.Log4j2;
  *       threshold, so it stays as a fallback).</li>
  * </ul>
  *
- * <p>Both arrive only as window messages, so unlike the rest of the Windows detection this needs a
- * (message-only) window with a real window procedure. It runs its own message-pump thread, mirroring
- * the native {@code FocusListener}. The {@link WindowProc} reference is held in a field so the GC never
- * collects the live native callback.
+ * <p>These arrive only as window messages, so unlike the rest of the Windows detection this needs a
+ * real window with a real window procedure. It runs its own message-pump thread, mirroring the native
+ * {@code FocusListener}. The {@link WindowProc} reference is held in a field so the GC never collects
+ * the live native callback.
+ *
+ * <p><b>Not</b> a message-only window ({@code HWND_MESSAGE} parent): those never receive the
+ * {@code PBT_APMSUSPEND} broadcast, and JNA's {@code WinUser.HWND_MESSAGE} constant is unusable on
+ * 64-bit anyway — it is built with {@code Pointer.createConstant(int)}, which zero-extends {@code -3}
+ * to {@code 0x00000000FFFFFFFD} instead of {@code 0xFFFFFFFFFFFFFFFD}, so every {@code CreateWindowEx}
+ * call failed with {@code ERROR_INVALID_WINDOW_HANDLE} (1400) and this whole monitor never started.
+ * A plain top-level window is created instead and simply never shown (no {@code WS_VISIBLE}, never
+ * passed to {@code ShowWindow}).
  */
 @Log4j2
 public class WindowsPowerEventMonitor {
@@ -51,6 +65,7 @@ public class WindowsPowerEventMonitor {
     private static final int WM_DESTROY = 0x0002;
     private static final int WM_CLOSE = 0x0010;
     private static final int WM_POWERBROADCAST = 0x0218;
+    private static final int WM_WTSSESSION_CHANGE = 0x02B1;
     private static final int PBT_APMSUSPEND = 0x0004;
     private static final int PBT_APMRESUMESUSPEND = 0x0007;
     private static final int PBT_APMRESUMEAUTOMATIC = 0x0012;
@@ -64,14 +79,26 @@ public class WindowsPowerEventMonitor {
     private static final int OFFSET_DATA = 20;
 
     private final Consumer<SystemEventType> sink;
+    /** Set once WTS session notifications are live, so the inference-based lock poller can stand down. */
+    private final AtomicBoolean sessionNotificationsActive = new AtomicBoolean();
     private Thread thread;
     private volatile HWND hwnd;
     private WindowProc wndProc; // strong reference: a collected callback would crash the native dispatch
     private HANDLE displayNotifyHandle;
     private HANDLE suspendNotifyHandle;
+    private volatile boolean sessionNotifyRegistered;
 
     public WindowsPowerEventMonitor(Consumer<SystemEventType> sink) {
         this.sink = sink;
+    }
+
+    /**
+     * Whether the OS is delivering authoritative lock/unlock events to this window. While true the
+     * {@code OpenInputDesktop} poller must not report lock transitions of its own — it only guesses,
+     * and its false positives black out the panels (#145).
+     */
+    public boolean hasAuthoritativeLockEvents() {
+        return sessionNotificationsActive.get();
     }
 
     public void start() {
@@ -101,6 +128,10 @@ public class WindowsPowerEventMonitor {
         } catch (Throwable e) { // NOSONAR - power-event detection is non-essential, must never crash the app
             log.warn("Windows power-event detection unavailable: {}", e.toString());
             log.debug("power-event monitor failure", e);
+        } finally {
+            // The pump is gone, so no more session events will arrive. Hand lock detection back to the
+            // poller rather than leaving it stood down with no source at all.
+            sessionNotificationsActive.set(false);
         }
     }
 
@@ -117,11 +148,22 @@ public class WindowsPowerEventMonitor {
             throw new IllegalStateException("RegisterClassEx failed (err=" + Kernel32.INSTANCE.GetLastError() + ")");
         }
 
-        // A message-only window (HWND_MESSAGE parent) receives messages but is never shown.
+        // A plain top-level window with no parent: it is never shown (no WS_VISIBLE, never passed to
+        // ShowWindow), but unlike a message-only window it does receive the PBT_APMSUSPEND broadcast.
         hwnd = User32.INSTANCE.CreateWindowEx(0, WINDOW_CLASS, WINDOW_CLASS, 0, 0, 0, 0, 0,
-                WinUser.HWND_MESSAGE, null, hInst, null);
+                null, null, hInst, null);
         if (hwnd == null) {
             throw new IllegalStateException("CreateWindowEx failed (err=" + Kernel32.INSTANCE.GetLastError() + ")");
+        }
+
+        // Authoritative lock/unlock. Best-effort: without it WindowsSystemEventService falls back to
+        // polling OpenInputDesktop, which is why this must not abort the rest of the monitor.
+        if (Wtsapi32.INSTANCE.WTSRegisterSessionNotification(hwnd, Wtsapi32.NOTIFY_FOR_THIS_SESSION)) {
+            sessionNotifyRegistered = true;
+            sessionNotificationsActive.set(true);
+        } else {
+            log.warn("WTSRegisterSessionNotification failed (err={}); falling back to polled lock detection",
+                    Kernel32.INSTANCE.GetLastError());
         }
 
         displayNotifyHandle = Win32PowerNotify.INSTANCE.RegisterPowerSettingNotification(
@@ -138,7 +180,8 @@ public class WindowsPowerEventMonitor {
             log.warn("RegisterSuspendResumeNotification failed (err={}); no advance suspend notice", Kernel32.INSTANCE.GetLastError());
         }
 
-        log.info("Windows power-event detection started");
+        log.info("Windows power-event detection started (session notifications: {})",
+                sessionNotifyRegistered ? "on" : "off - polling for lock state");
 
         var msg = new MSG();
         // GetMessage returns >0 for a message, 0 on WM_QUIT, -1 on error.
@@ -154,6 +197,10 @@ public class WindowsPowerEventMonitor {
                 handlePowerBroadcast(wParam, lParam);
                 return new LRESULT(1); // TRUE
             }
+            case WM_WTSSESSION_CHANGE -> {
+                handleSessionChange(wParam);
+                return new LRESULT(0);
+            }
             case WM_CLOSE -> {
                 User32.INSTANCE.DestroyWindow(hWnd);
                 return new LRESULT(0);
@@ -166,6 +213,22 @@ public class WindowsPowerEventMonitor {
             default -> {
                 return User32.INSTANCE.DefWindowProc(hWnd, uMsg, wParam, lParam);
             }
+        }
+    }
+
+    /**
+     * The OS telling us the session was locked/unlocked (or the user logged on/off). Unlike the
+     * {@code OpenInputDesktop} poller this never guesses, so it cannot produce the spurious lock that
+     * blacked out the panels at startup in #145. Console-connect/disconnect and remote-session events
+     * are ignored — they say nothing about the panels.
+     */
+    private void handleSessionChange(WPARAM wParam) {
+        switch (wParam.intValue()) {
+            case Wtsapi32.WTS_SESSION_LOCK -> sink.accept(SystemEventType.locked);
+            case Wtsapi32.WTS_SESSION_UNLOCK -> sink.accept(SystemEventType.unlocked);
+            case Wtsapi32.WTS_SESSION_LOGON -> sink.accept(SystemEventType.logon);
+            case Wtsapi32.WTS_SESSION_LOGOFF -> sink.accept(SystemEventType.logoff);
+            default -> { /* console/remote connect-disconnect and the rest say nothing about lighting */ }
         }
     }
 
@@ -200,6 +263,11 @@ public class WindowsPowerEventMonitor {
     }
 
     private void unregisterNotifications() {
+        if (sessionNotifyRegistered) {
+            sessionNotificationsActive.set(false);
+            sessionNotifyRegistered = false;
+            Wtsapi32.INSTANCE.WTSUnRegisterSessionNotification(hwnd);
+        }
         if (displayNotifyHandle != null) {
             Win32PowerNotify.INSTANCE.UnregisterPowerSettingNotification(displayNotifyHandle);
             displayNotifyHandle = null;

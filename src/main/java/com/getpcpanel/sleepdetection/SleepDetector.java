@@ -53,9 +53,13 @@ public final class SleepDetector {
                     continue; // Non-PCPanel devices (e.g. Deej) have no HID lighting channel to switch off.
                 }
                 log.debug("Pause: {}", device.getSerialNumber());
-                outputInterpreter.sendLightingConfig(device.getSerialNumber(), device.deviceType(), ALL_OFF, true);
-                if (shutdown) {
-                    waitUntilEmptyPrioQueue(device);
+                try {
+                    outputInterpreter.sendLightingConfig(device.getSerialNumber(), device.deviceType(), ALL_OFF, true);
+                    if (shutdown) {
+                        waitUntilEmptyPrioQueue(device);
+                    }
+                } catch (Exception e) {
+                    log.error("Unable to switch off lighting for {}", device.getSerialNumber(), e);
                 }
             }
         };
@@ -87,7 +91,14 @@ public final class SleepDetector {
                 continue; // Non-PCPanel devices (e.g. Deej) have no HID lighting channel to restore.
             }
             log.info("RESUME: {}", device.getSerialNumber());
-            outputInterpreter.sendLightingConfig(device.getSerialNumber(), device.deviceType(), device.lightingConfig(), true);
+            // A relight that is skipped is not retried by anything: the panel then stays dark until the
+            // device reconnects or the user edits lighting. So one device failing must not cost the
+            // others their relight, nor unwind onto the caller's thread (the lock poller / message pump).
+            try {
+                outputInterpreter.sendLightingConfig(device.getSerialNumber(), device.deviceType(), device.lightingConfig(), true);
+            } catch (Exception e) {
+                log.error("Unable to restore lighting for {}", device.getSerialNumber(), e);
+            }
         }
     }
 }
