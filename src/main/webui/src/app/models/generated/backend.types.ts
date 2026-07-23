@@ -770,6 +770,7 @@ export interface SettingsDto {
     preventSliderTwitchDelay?: number;
     sendOnlyIfDelta?: number;
     skipControlledFocusApps: boolean;
+    sleepDetectionEnabled: boolean;
     sliderRollingAverage?: number;
     startupVersionCheck: boolean;
     voicemeeterEnabled: boolean;

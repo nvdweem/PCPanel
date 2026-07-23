@@ -37,7 +37,7 @@ up to date when you add or remove an event or an observer.
 
 | Event | Fired by | Observed by |
 |-------|----------|-------------|
-| `SaveService.SaveEvent` | `SaveService` (on load and after saves) | `DeviceHolder`, `Overlay`, `MqttService`, `MqttDeviceService`, `OSCService`, `WaveLinkService`, `ShortcutHook` |
+| `SaveService.SaveEvent` | `SaveService` (on load and after saves) | `DeviceHolder`, `Overlay`, `MqttService`, `MqttDeviceService`, `OSCService`, `WaveLinkService`, `ShortcutHook`, `SleepDetector` (relights if sleep detection was switched off while dark) |
 | `ProfileSwitchedEvent` | `Device`, `DeviceResource` | `EventBroadcaster` (→ UI), `MuteColorService` |
 | `LightingChangedEvent` (`EventBroadcaster.LightingChangedEvent`) | `DeviceResource` | `EventBroadcaster` (→ UI) |
 | `LightingChangedToDefaultEvent` | `Device`, `DeviceResource` | `MuteColorService`, `VoiceMeeterMuteService` |

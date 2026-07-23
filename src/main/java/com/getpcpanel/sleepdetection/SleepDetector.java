@@ -8,6 +8,7 @@ import com.getpcpanel.device.Device;
 import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.device.provider.pcpanel.DeviceScanner;
 import com.getpcpanel.device.provider.pcpanel.OutputInterpreter;
+import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.dto.LightingConfig;
 import com.getpcpanel.sleepdetection.DarkReasonGate.Reason;
 import com.getpcpanel.util.concurrent.AppThreads;
@@ -43,6 +44,8 @@ public final class SleepDetector {
     OutputInterpreter outputInterpreter;
     @Inject
     DeviceHolder devices;
+    @Inject
+    SaveService saveService;
 
     public void onShutdown(@Observes ShutdownEvent event) {
         // Same queue as every other write, so a decided-but-not-yet-sent relight cannot land after
@@ -58,6 +61,12 @@ public final class SleepDetector {
     }
 
     public void onEvent(@Observes SystemEvent event) {
+        // Opt-out for machines where the detection misbehaves (#145): leave the lighting alone
+        // entirely. Ignoring the light-side events too is deliberate — a stray relight would be just
+        // as unasked-for. The lights-off on app shutdown is a separate behavior and stays.
+        if (!saveService.get().isSleepDetectionEnabled()) {
+            return;
+        }
         switch (event.type()) {
             case goingToSuspend -> gate.add(Reason.suspend);
             case locked -> gate.add(Reason.lock);
@@ -68,6 +77,14 @@ public final class SleepDetector {
             // on platforms whose callback-free detection never saw the matching goingToSuspend.
             case resumedFromSuspend -> gate.reset();
             case logon, logoff -> { /* no lighting action */ }
+        }
+    }
+
+    public void onSaveChanged(@Observes SaveService.SaveEvent event) {
+        // Switching the feature off while a dark reason is active must not strand dark panels: the
+        // events that would have cleared it are ignored from now on, so clear it and relight here.
+        if (!saveService.get().isSleepDetectionEnabled()) {
+            gate.resetIfDark();
         }
     }
 

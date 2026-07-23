@@ -59,4 +59,17 @@ final class DarkReasonGate {
         active.clear();
         executor.execute(onLight);
     }
+
+    /**
+     * Like {@link #reset()} but only acts when something was dark. Used when the user switches sleep
+     * detection off: the events that would have cleared an active reason are ignored from then on, so
+     * the panels must be relit here — but a no-reason state must not trigger a gratuitous relight
+     * (this runs on every settings save).
+     */
+    synchronized void resetIfDark() {
+        if (!active.isEmpty()) {
+            active.clear();
+            executor.execute(onLight);
+        }
+    }
 }

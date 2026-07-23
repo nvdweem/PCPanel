@@ -24,6 +24,7 @@ public class SettingsDto {
     private boolean checkForPreReleases;
     private boolean autoUpdate;
     private boolean forceVolume;
+    private boolean sleepDetectionEnabled;
     private Long dblClickInterval;
     private boolean preventClickWhenDblClick;
     private boolean skipControlledFocusApps;
@@ -85,6 +86,7 @@ public class SettingsDto {
         dto.checkForPreReleases = save.isCheckForPreReleases();
         dto.autoUpdate = save.isAutoUpdate();
         dto.forceVolume = save.isForceVolume();
+        dto.sleepDetectionEnabled = save.isSleepDetectionEnabled();
         dto.dblClickInterval = save.getDblClickInterval();
         dto.preventClickWhenDblClick = save.isPreventClickWhenDblClick();
         dto.skipControlledFocusApps = save.isSkipControlledFocusApps();
@@ -137,6 +139,7 @@ public class SettingsDto {
         save.setCheckForPreReleases(checkForPreReleases);
         save.setAutoUpdate(autoUpdate);
         save.setForceVolume(forceVolume);
+        save.setSleepDetectionEnabled(sleepDetectionEnabled);
         save.setDblClickInterval(dblClickInterval);
         save.setPreventClickWhenDblClick(preventClickWhenDblClick);
         save.setSkipControlledFocusApps(skipControlledFocusApps);

@@ -51,6 +51,10 @@ public class Save {
      *  then restart. Off by default; only meaningful when startupVersionCheck is on. */
     private boolean autoUpdate;
     private boolean forceVolume; // Linux only
+    /** Switch the panel lights off when the PC locks / the monitors sleep / the PC suspends, and back
+     *  on afterwards. Opt-out escape hatch for #145-class detection trouble; the lights-off on app
+     *  shutdown is unaffected. */
+    private boolean sleepDetectionEnabled = true;
     private Long dblClickInterval = 500L;
     private boolean preventClickWhenDblClick = true;
     /** When set, focused-app volume does nothing for apps already controlled elsewhere (a per-app

@@ -75,6 +75,18 @@ class DarkReasonGateTest {
         assertEquals(List.of("dark", "light", "dark"), events);
     }
 
+    /** Switching sleep detection off while dark relights; the reasons are gone so nothing re-darkens. */
+    @Test
+    void resetIfDarkRelightsOnlyWhenSomethingWasDark() {
+        gate.resetIfDark(); // lit and no reasons: a settings save must not send a gratuitous relight
+        assertEquals(List.of(), events);
+        gate.add(Reason.lock);
+        gate.resetIfDark();
+        assertEquals(List.of("dark", "light"), events);
+        gate.resetIfDark(); // idempotent once cleared
+        assertEquals(List.of("dark", "light"), events);
+    }
+
     @Test
     void resumeOnWindowsWithoutPriorSuspendStillRelights() {
         // Windows can't fire goingToSuspend, so only the watchdog's resume arrives.
