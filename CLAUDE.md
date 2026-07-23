@@ -211,16 +211,35 @@ frontend for up to a day after an app update, without revalidating even on reloa
 Production builds ship the frontend source maps (`sourceMap` in `angular.json`'s production config) so
 user-reported console errors carry readable TS stack traces.
 
-**Web-exposure security model:** the API is unauthenticated, so it must stay reachable only from the
-local machine. Two layers enforce this: `quarkus.http.host=127.0.0.1` keeps other hosts off, and
+**Web-exposure security model:** the API has no per-request credential of its own, so two independent
+layers guard it — a *network-origin* layer and an *authentication* layer.
+
+*Network origin (`LocalHttpGuard`):* `quarkus.http.host=127.0.0.1` keeps other hosts off, and
 `LocalHttpGuard` (a `@Observes Router` Vert.x filter, lowest order) rejects any request whose `Host`
 or `Origin` header is not loopback — defeating DNS rebinding and cross-site WebSocket hijacking from a
 website the user visits. `EventWebSocket.onOpen` re-checks the handshake with the same
-`LocalHttpGuard` helpers as a second layer. Loopback `Origin` is accepted on any port (so dev's
-`:4200` Quinoa proxy works); absent `Origin` is allowed (non-browser clients) with the `Host` check as
-the backstop. Toggle with `pcpanel.http.local-only` (default true). This does **not** authenticate
-*local* callers — defending against other processes on the same machine would need a token and is out
-of scope.
+`LocalHttpGuard` helpers. Loopback `Origin` is accepted on any port (so dev's `:4200` Quinoa proxy
+works); absent `Origin` is allowed (non-browser clients) with the `Host` check as the backstop. Toggle
+with `pcpanel.http.local-only` (default true). Note this layer allows an *absent* `Origin`, so it is
+mutating-`@GET`s that a website could reach — today safe only because every state-changing endpoint is
+POST/PUT (forces an `Origin`); the session layer below closes that latent CSRF-via-GET trap permanently.
+
+*Authentication (`rest/auth/`, `SessionAuthFilter`):* the origin layer stops *websites* but not *other
+local processes* — any program running as the user can send a loopback `Host` with no `Origin` and drive
+the API. So the browser UI authenticates with a per-session cookie. `SessionTokenService` mints a
+single-use, short-TTL **nonce**; `ShowMainService` (the tray→browser open) passes it in the launch URL
+to `GET /api/auth/bootstrap` (`AuthResource`), which swaps it for a session token returned only as an
+`HttpOnly; SameSite=Strict; Path=/` cookie and redirects to `/` (dropping the nonce from the URL). So
+the long-lived secret never transits a URL/command line, and `SameSite=Strict` is what stops the
+auto-attached cookie from reintroducing CSRF. `SessionAuthFilter` (one order behind `LocalHttpGuard`)
+requires a valid cookie on every `/api/**` + `/ws/**` request (bootstrap exempted; static shell left
+open — it holds no secret); `EventWebSocket.onOpen` re-checks it on the WS handshake. All session state
+is in-memory, so a restart forces re-auth (the frontend `AuthGateComponent` shows a 401 gate pointing
+the user back to the tray). Toggle with `pcpanel.http.require-session` (default true; **off in `%dev`**
+so `quarkus:dev` and a standalone Angular dev server work without the handshake). **Scope/limits:** this
+fully closes the *website* vector and stops *opportunistic* local processes; it is **not** sound against
+a same-user process that specifically targets the app (it can read the served page/cookie files/command
+lines), which remains out of scope — defeating a same-user attacker on a desktop is not achievable.
 
 **Integrations (`integration/*` — command-providing features only):** the external connectors
 `integration/obs/` (OBS websocket), `voicemeeter/` (JNA), `wavelink/` + `dev/niels/wavelink/` (Elgato
