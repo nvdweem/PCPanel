@@ -2,6 +2,11 @@ package com.getpcpanel.integration.program;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.platform.LinuxBuild;
 import com.getpcpanel.platform.MacBuild;
@@ -112,15 +117,34 @@ public abstract class IPlatformCommand {
     public static class WindowsPlatformCommand extends IPlatformCommand {
         private final ISndCtrl sndCtrl;
 
+        // Extensions the OS can start directly via CreateProcess (ProcessBuilder). Everything else the
+        // application picker accepts as "executable" (.lnk/.bat/.cmd/.msi/.ps1/.vbs/...) needs the shell
+        // to resolve a file association or interpreter, so those keep the cmd.exe path below.
+        private static final Set<String> DIRECTLY_LAUNCHABLE = Set.of("exe", "com");
+
         @Override
         public void exec(String shortcut) {
             var file = new File(shortcut);
             try {
                 if (file.isDirectory()) {
-                    Runtime.getRuntime().exec("cmd /c \"start %s\"".formatted(file.getAbsolutePath()));
+                    // Open the folder in Explorer without a shell, so spaces / & / % / ^ in the path are
+                    // taken literally (cmd's "start" also mis-reads a quoted path as a window title).
+                    new ProcessBuilder(directoryArgv(file)).start();
                 } else if (file.isFile() && Util.isFileExecutable(file)) {
-                    rt.exec("cmd.exe /c \"" + file.getName() + "\"", null, file.getParentFile());
+                    if (canLaunchDirectly(file)) {
+                        // A concrete .exe/.com the user pointed at: CreateProcess it directly. No shell
+                        // means the whole path is one argument, so metacharacters pass through verbatim.
+                        new ProcessBuilder(executableArgv(file)).directory(file.getParentFile()).start();
+                    } else {
+                        // .lnk/.bat/.msi/scripts can't be CreateProcess'd; the shell resolves their file
+                        // association/interpreter. Run from the parent dir by bare name as before.
+                        rt.exec("cmd.exe /c \"" + file.getName() + "\"", null, file.getParentFile());
+                    }
                 } else {
+                    // Free-form input: a bare program name resolved via PATH, a URL / protocol handler, or a
+                    // full command line with arguments the user typed. The shell is doing real work here
+                    // (PATH lookup, argument parsing, ShellExecute of URLs), so it stays. The binding comes
+                    // from the trusted local user, so this is a robustness choice, not an injection boundary.
                     rt.exec("cmd.exe /c \"" + shortcut + "\"");
                 }
             } catch (IOException e) {
@@ -132,7 +156,8 @@ public abstract class IPlatformCommand {
         public void kill(String process) {
             var toKill = stripFile(FOCUS.equals(process) ? sndCtrl.getFocusApplication() : process);
             try {
-                rt.exec("cmd.exe /c taskkill /IM " + toKill + " /F");
+                // taskkill.exe is a real executable — run it directly instead of via cmd.exe.
+                new ProcessBuilder("taskkill", "/IM", toKill, "/F").start();
             } catch (IOException e) {
                 log.error("Unable to end '{}'", toKill, e);
             }
@@ -140,6 +165,18 @@ public abstract class IPlatformCommand {
 
         private String stripFile(String file) {
             return new File(file).getName();
+        }
+
+        static boolean canLaunchDirectly(File file) {
+            return DIRECTLY_LAUNCHABLE.contains(StringUtils.lowerCase(FilenameUtils.getExtension(file.getName())));
+        }
+
+        static List<String> directoryArgv(File dir) {
+            return List.of("explorer.exe", dir.getAbsolutePath());
+        }
+
+        static List<String> executableArgv(File exe) {
+            return List.of(exe.getAbsolutePath());
         }
     }
 }
