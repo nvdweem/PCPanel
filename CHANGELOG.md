@@ -6,6 +6,7 @@
 - As a result the panels also switch off **when you lock the PC**, instead of only once you click through to the password/PIN prompt, and come back on when you sign in.
 - (Windows) Restored monitor-off/on and going-to-sleep detection, which had never actually started: the hidden window that receives those notifications failed to be created on every launch, so the panels only dimmed on lock. They now switch off when the monitors go to sleep and when Windows suspends, and light up again on wake.
 - #145 - Fixed the panel lights coming on after **booting the PC** but switching off again a few seconds later, staying off until a lighting setting was changed. The previous fix helped when restarting the app, but right after a boot Windows itself isn't fully up yet, and the app could mistake that for the PC being locked — and switch the lights off. Locking and unlocking still turn the lights off and back on as intended.
+- New setting **"Lights off when locked or asleep"** (General, on by default): controls whether the panel lights switch off when you lock the PC, the monitors go to sleep or the PC suspends. Turn it off if your lights ever switch off when they shouldn't — the app then leaves the lighting alone entirely (the lights still turn off when the app closes).
 
 ## [2.0.84]
 
