@@ -65,8 +65,14 @@ public class SessionAuthFilter {
         ctx.response().setStatusCode(401).end("Unauthorized: open PCPanel from the tray icon");
     }
 
-    /** The control surface that must be authenticated: the JSON API and the event WebSocket. */
-    private static boolean isProtected(String path) {
+    /**
+     * The control surface that must be authenticated: the JSON API and the event WebSocket. This is
+     * intentionally method-agnostic — a GET on {@code /api} is gated exactly like a POST — which is what
+     * keeps a future state-changing GET from being reachable cross-site without the session (the
+     * CSRF-via-GET trap {@link com.getpcpanel.rest.LocalHttpGuard} leaves open by allowing an absent
+     * Origin).
+     */
+    static boolean isProtected(String path) {
         return path.startsWith("/api/") || path.startsWith("/ws/");
     }
 
