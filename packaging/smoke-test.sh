@@ -120,7 +120,10 @@ base="http://127.0.0.1:${port}"
 log=pcpanel-smoke.log
 
 echo "Smoke test: booting $bin on port $port"
-"$bin" skipfilecheck quiet "-Dquarkus.http.port=${port}" >"$log" 2>&1 &
+# The session gate (pcpanel.http.require-session) is on in prod. This is a boot-and-serve check that
+# hits the API to catch native-image reflection/serialization gaps (5xx), not an auth test, so turn the
+# gate off here — otherwise every /api endpoint answers 401 and the boot probe never sees the app come up.
+"$bin" skipfilecheck quiet "-Dquarkus.http.port=${port}" "-Dpcpanel.http.require-session=false" >"$log" 2>&1 &
 pid=$!
 trap 'kill -KILL "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true' EXIT
 
