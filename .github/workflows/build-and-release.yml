@@ -26,16 +26,13 @@ env:
 # version instead made pom.xml + the AppStream metainfo conflict on *every* forward merge, because
 # both branches edit the same line from a common ancestor.
 #
-#   push releases/**        -> rolling SNAPSHOT pre-release for that line (test before releasing)
 #   push tag vX.Y.Z         -> STABLE release X.Y.Z, permanent tag, no commit required
 #   workflow_dispatch       -> snapshot of whatever ref you pick
+#
+# Branch pushes never build. Snapshot builds are triggered manually via workflow_dispatch
+# (Actions tab → "Build & Release" → "Run workflow" → pick the branch).
 on:
   push:
-    branches:
-      # Disabled: do not build/publish on every push to main. Trigger manually via
-      # workflow_dispatch (Actions tab → "Build & Release" → "Run workflow") instead.
-      # - main
-      - releases/**
     tags:
       - 'v[0-9]*'
   workflow_dispatch:
