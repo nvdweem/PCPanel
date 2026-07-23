@@ -10,6 +10,7 @@ import com.getpcpanel.integration.volume.FocusVolumeOverride;
 import com.getpcpanel.integration.mqtt.dto.MqttSettings;
 import com.getpcpanel.integration.osc.dto.OSCConnectionInfo;
 import com.getpcpanel.integration.volume.overlay.OverlayPosition;
+import com.getpcpanel.util.SecretMasking;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -98,7 +99,7 @@ public class SettingsDto {
         dto.obsEnabled = save.isObsEnabled();
         dto.obsAddress = save.getObsAddress();
         dto.obsPort = save.getObsPort();
-        dto.obsPassword = save.getObsPassword();
+        dto.obsPassword = SecretMasking.mask(save.getObsPassword());
         dto.voicemeeterEnabled = save.isVoicemeeterEnabled();
         dto.voicemeeterPath = save.getVoicemeeterPath();
         dto.oscEnabled = save.isOscEnabled();
@@ -126,8 +127,8 @@ public class SettingsDto {
         dto.overlayBarFollowsLight = save.isOverlayBarFollowsLight();
         dto.overlayFontFamily = save.getOverlayFontFamily();
         dto.overlayFontBold = save.isOverlayFontBold();
-        dto.mqtt = save.getMqtt();
-        dto.homeAssistantServers = save.getHomeAssistantServers();
+        dto.mqtt = SecretMasking.mask(save.getMqtt());
+        dto.homeAssistantServers = SecretMasking.maskHaServers(save.getHomeAssistantServers());
         dto.homeAssistantDebounceMs = save.getHomeAssistantDebounceMs();
         return dto;
     }
@@ -151,7 +152,7 @@ public class SettingsDto {
         save.setObsEnabled(obsEnabled);
         save.setObsAddress(obsAddress);
         save.setObsPort(obsPort);
-        save.setObsPassword(obsPassword);
+        save.setObsPassword(SecretMasking.unmask(obsPassword, save.getObsPassword()));
         save.setVoicemeeterEnabled(voicemeeterEnabled);
         save.setVoicemeeterPath(voicemeeterPath);
         save.setOscEnabled(oscEnabled);
@@ -179,8 +180,8 @@ public class SettingsDto {
         save.setOverlayBarFollowsLight(overlayBarFollowsLight);
         save.setOverlayFontFamily(overlayFontFamily);
         save.setOverlayFontBold(overlayFontBold);
-        save.setMqtt(mqtt);
-        save.setHomeAssistantServers(homeAssistantServers);
+        save.setMqtt(SecretMasking.unmask(mqtt, save.getMqtt()));
+        save.setHomeAssistantServers(SecretMasking.unmaskHaServers(homeAssistantServers, save.getHomeAssistantServers()));
         save.setHomeAssistantDebounceMs(homeAssistantDebounceMs);
     }
 }
