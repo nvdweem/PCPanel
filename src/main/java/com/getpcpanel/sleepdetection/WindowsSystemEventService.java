@@ -20,11 +20,13 @@ import lombok.extern.log4j.Log4j2;
  *       messages. Lock/unlock comes from {@code WTSRegisterSessionNotification} — the OS states the
  *       transition rather than us inferring it;</li>
  *   <li>lock/unlock <em>fallback</em> by polling {@link Win32Desktop#OpenInputDesktop}, which fails
- *       while the secure lock-screen desktop is active (downcall-only). Only used when the window
- *       above could not register for session notifications, and debounced through
- *       {@link LockStateTracker}: {@code OpenInputDesktop} also fails right after logon, during a
- *       desktop switch and under the UAC secure desktop, and treating that as a lock blacked out the
- *       panels until the user touched a lighting setting (#145).</li>
+ *       while the secure lock-screen desktop is active (downcall-only). Only used while the window
+ *       above has not (yet) registered for session notifications — at boot that registration fails
+ *       until the Remote Desktop Services service is up, so the poller keeps re-trying it and stands
+ *       down as soon as it succeeds. Samples are debounced through {@link LockStateTracker}:
+ *       {@code OpenInputDesktop} also fails right after logon, during a desktop switch and under the
+ *       UAC secure desktop, and treating that as a lock blacked out the panels until the user touched
+ *       a lighting setting (#145).</li>
  * </ul>
  *
  * <p>The power-event source uses a window-procedure {@link com.sun.jna.Callback}; that once segfaulted
@@ -38,6 +40,8 @@ import lombok.extern.log4j.Log4j2;
 @WindowsBuild
 public class WindowsSystemEventService {
     private static final long LOCK_POLL_INTERVAL_MS = 1_000L;
+    /** While falling back, re-try the WTS session-notification registration once per this many poll ticks. */
+    private static final int SESSION_REGISTRATION_RETRY_TICKS = 5;
 
     @Inject
     Event<Object> eventBus;
@@ -70,6 +74,7 @@ public class WindowsSystemEventService {
 
     private void pollLockState() {
         var tracker = new LockStateTracker();
+        var ticksUntilRegistrationRetry = 0;
         while (running) {
             try {
                 Thread.sleep(LOCK_POLL_INTERVAL_MS);
@@ -79,7 +84,21 @@ public class WindowsSystemEventService {
             }
             // The window monitor's WTS session events are authoritative; while they are live this
             // guess-based detector must stay silent (its false positives blacked out the panels, #145).
+            // The registration is re-tried from here because at boot it fails until the Remote Desktop
+            // Services service is up — exactly the window in which an auto-started app runs (#145).
+            if (!powerEventMonitor.hasAuthoritativeLockEvents() && --ticksUntilRegistrationRetry <= 0) {
+                ticksUntilRegistrationRetry = SESSION_REGISTRATION_RETRY_TICKS;
+                if (powerEventMonitor.tryRegisterSessionNotifications()) {
+                    log.info("WTS session notifications registered; lock polling stands down");
+                }
+            }
             if (powerEventMonitor.hasAuthoritativeLockEvents()) {
+                // WTS only reports transitions, so nothing authoritative will ever clear a lock this
+                // fallback asserted — clear it ourselves or the panels stay dark forever.
+                if (tracker.confirmedLocked()) {
+                    fire(SystemEventType.unlocked);
+                    tracker = new LockStateTracker();
+                }
                 continue;
             }
             boolean locked;
@@ -115,7 +134,9 @@ public class WindowsSystemEventService {
      * (that would end lock detection for the session) or unwind into the native message pump.
      */
     private void fire(SystemEventType type) {
-        log.debug("Windows system event: {}", type);
+        // Info, not debug: these are rare, and #145-class reports live or die on whether a user's log
+        // shows which event darkened the panels.
+        log.info("Windows system event: {}", type);
         try {
             eventBus.fire(new SystemEvent(type));
         } catch (Throwable e) { // NOSONAR - see javadoc: this thread must survive any observer failure
