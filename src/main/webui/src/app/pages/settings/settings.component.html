@@ -267,7 +267,8 @@
             </div>
             <div class="pc-field">
               <div class="pc-field-label">Password</div>
-              <input class="pc-field-input" type="password" [value]="s.obsPassword ?? ''"
+              <input class="pc-field-input" type="password" [value]="secretValue(s.obsPassword)"
+                     [placeholder]="secretPlaceholder(s.obsPassword)"
                      (input)="patch('obsPassword', $any($event.target).value)">
             </div>
           </div>
@@ -409,8 +410,8 @@
                 </div>
                 <div class="pc-field">
                   <div class="pc-field-label">Client secret</div>
-                  <input class="pc-field-input mono" type="password" placeholder="client secret"
-                         [value]="d.clientSecret ?? ''" (input)="patchDiscord('clientSecret', $any($event.target).value)">
+                  <input class="pc-field-input mono" type="password" [placeholder]="secretPlaceholder(d.clientSecret, 'client secret')"
+                         [value]="secretValue(d.clientSecret)" (input)="patchDiscord('clientSecret', $any($event.target).value)">
                 </div>
                 <div class="pc-field">
                   <div class="pc-field-label">Redirect URI</div>
@@ -553,12 +554,14 @@
             <div class="two-col">
               <div class="pc-field">
                 <div class="pc-field-label">Username</div>
-                <input class="pc-field-input" type="text" [value]="s.mqtt.username ?? ''"
+                <input class="pc-field-input" type="text" [value]="secretValue(s.mqtt.username)"
+                       [placeholder]="secretPlaceholder(s.mqtt.username)"
                        (input)="patchMqtt('username', $any($event.target).value)">
               </div>
               <div class="pc-field">
                 <div class="pc-field-label">Password</div>
-                <input class="pc-field-input" type="password" [value]="s.mqtt.password ?? ''"
+                <input class="pc-field-input" type="password" [value]="secretValue(s.mqtt.password)"
+                       [placeholder]="secretPlaceholder(s.mqtt.password)"
                        (input)="patchMqtt('password', $any($event.target).value)">
               </div>
             </div>
@@ -636,8 +639,8 @@
                 </div>
                 <div class="pc-field">
                   <div class="pc-field-label">Access token</div>
-                  <input class="pc-field-input mono" type="password" placeholder="long-lived access token"
-                         [value]="srv.token ?? ''" (input)="patchHaServer($index, 'token', $any($event.target).value)">
+                  <input class="pc-field-input mono" type="password" [placeholder]="secretPlaceholder(srv.token, 'long-lived access token')"
+                         [value]="secretValue(srv.token)" (input)="patchHaServer($index, 'token', $any($event.target).value)">
                 </div>
               </div>
             }

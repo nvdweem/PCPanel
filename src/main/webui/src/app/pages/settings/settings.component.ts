@@ -64,6 +64,36 @@ export class SettingsComponent {
 
   readonly settings = this.settingsService.settings;
 
+  /**
+   * Placeholder the backend returns in place of a stored secret (obs/mqtt passwords, mqtt username,
+   * Discord client secret, Home Assistant tokens) — must match {@code SecretMasking.MASK} on the Java
+   * side. The real value is never sent to the browser; a field holding this is "configured". A save
+   * that echoes it back (or sends blank) keeps the stored secret, so the user only ever types a value
+   * to *change* it.
+   */
+  private readonly SECRET_MASK = '••••••••';
+
+  /** Value to show in a secret input: blank when it's the mask (so the user types over an empty field). */
+  secretValue(v: string | null | undefined): string {
+    return v === this.SECRET_MASK ? '' : (v ?? '');
+  }
+
+  /** True when the field currently holds the mask, i.e. a secret is stored and hasn't been re-typed. */
+  secretConfigured(v: string | null | undefined): boolean {
+    return v === this.SECRET_MASK;
+  }
+
+  /** Placeholder for a secret input: a "configured" hint when a value is stored, else the given default. */
+  secretPlaceholder(v: string | null | undefined, fallback = ''): string {
+    return this.secretConfigured(v) ? 'Saved — leave blank to keep' : fallback;
+  }
+
+  /** Replace any still-masked secret with '' so we never round-trip the mask as if it were a new value
+   *  (the backend treats blank as "keep the stored secret", identical to sending the mask). */
+  private stripSecretMask(v: string | null | undefined): string {
+    return v === this.SECRET_MASK ? '' : (v ?? '');
+  }
+
   readonly activeTab = signal<TabId>('general');
   readonly saving = signal(false);
   readonly confirmLeaveOpen = signal(false);
@@ -423,7 +453,7 @@ export class SettingsComponent {
   saveDiscord(): void {
     const dto = this.discordDraft();
     if (!dto) return;
-    this.http.put<void>('/api/settings/discord', dto).subscribe({
+    this.http.put<void>('/api/settings/discord', { ...dto, clientSecret: this.stripSecretMask(dto.clientSecret) }).subscribe({
       next: () => {
         this.discordDirty.set(false);
         this.discordSettings.reload();
@@ -446,7 +476,7 @@ export class SettingsComponent {
     const dto: DiscordSettings = { ...cur, enabled: true };
     this.discordDraft.set(dto);
     this.discordAuthorizing.set(true);
-    this.http.put<void>('/api/settings/discord', dto).subscribe({
+    this.http.put<void>('/api/settings/discord', { ...dto, clientSecret: this.stripSecretMask(dto.clientSecret) }).subscribe({
       next: () => {
         this.discordDirty.set(false);
         this.discordSettings.reload();
@@ -618,11 +648,21 @@ export class SettingsComponent {
   fvTargetIcon(t: FocusVolumeTarget): IconName { return this.fvTargetDef(t)?.icon ?? 'volume'; }
 
   // ── save ────────────────────────────────────────────────────────────────────
+  /** Copy of the settings with masked secrets replaced by '' — never send the mask back as a value. */
+  private sanitizeSecrets(dto: SettingsDto): SettingsDto {
+    return {
+      ...dto,
+      obsPassword: this.stripSecretMask(dto.obsPassword),
+      mqtt: { ...dto.mqtt, username: this.stripSecretMask(dto.mqtt.username), password: this.stripSecretMask(dto.mqtt.password) },
+      homeAssistantServers: (dto.homeAssistantServers ?? []).map(s => ({ ...s, token: this.stripSecretMask(s.token) })),
+    };
+  }
+
   save(thenLeave = false): void {
     const dto = this.local();
     if (!dto || this.saving()) return;
     this.saving.set(true);
-    this.settingsService.updateSettings(dto).subscribe({
+    this.settingsService.updateSettings(this.sanitizeSecrets(dto)).subscribe({
       next: () => {
         this.saving.set(false);
         this.dirty.set(false);
