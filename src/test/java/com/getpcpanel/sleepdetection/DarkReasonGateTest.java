@@ -1,9 +1,13 @@
 package com.getpcpanel.sleepdetection;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,7 +22,7 @@ class DarkReasonGateTest {
     @BeforeEach
     void setUp() {
         events = new ArrayList<>();
-        gate = new DarkReasonGate(() -> events.add("dark"), () -> events.add("light"));
+        gate = new DarkReasonGate(() -> events.add("dark"), () -> events.add("light"), Runnable::run);
     }
 
     @Test
@@ -76,5 +80,37 @@ class DarkReasonGateTest {
         // Windows can't fire goingToSuspend, so only the watchdog's resume arrives.
         gate.reset();
         assertEquals(List.of("light"), events);
+    }
+
+    /**
+     * The boot-only remainder of #145: a quick dark→light pair (display off/on blink during logon, a
+     * lock-inference blip) must execute its actions in decision order even when the off action itself
+     * is slow. The off used to run on a freshly spawned thread while the relight ran synchronously on
+     * the caller's thread, so the ALL_OFF could land on the device queue after the relight — panels
+     * dark until the user touched a lighting setting. A single-threaded executor makes the order
+     * structural: the relight cannot start before the off has finished.
+     */
+    @Test
+    void slowOffActionCannotOvertakeTheMatchingRelight() throws InterruptedException {
+        var order = Collections.synchronizedList(new ArrayList<String>());
+        var executor = Executors.newSingleThreadExecutor();
+        try {
+            var slowGate = new DarkReasonGate(() -> {
+                try {
+                    Thread.sleep(150); // the spawned-thread scheduling delay that inverted the order at boot
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                order.add("dark");
+            }, () -> order.add("light"), executor);
+
+            slowGate.add(Reason.display);   // boot-time display blink: off...
+            slowGate.clear(Reason.display); // ...and on again a moment later
+            executor.shutdown();
+            assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS), "gate actions did not finish");
+            assertEquals(List.of("dark", "light"), order);
+        } finally {
+            executor.shutdownNow();
+        }
     }
 }

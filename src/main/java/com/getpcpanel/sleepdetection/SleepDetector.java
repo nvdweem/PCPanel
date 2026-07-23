@@ -1,11 +1,16 @@
 package com.getpcpanel.sleepdetection;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
 import com.getpcpanel.device.Device;
 import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.device.provider.pcpanel.DeviceScanner;
 import com.getpcpanel.device.provider.pcpanel.OutputInterpreter;
 import com.getpcpanel.profile.dto.LightingConfig;
 import com.getpcpanel.sleepdetection.DarkReasonGate.Reason;
+import com.getpcpanel.util.concurrent.AppThreads;
 
 import io.quarkus.runtime.ShutdownEvent;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -17,9 +22,20 @@ import lombok.extern.log4j.Log4j2;
 @ApplicationScoped
 public final class SleepDetector {
     private static final LightingConfig ALL_OFF = LightingConfig.createAllColor("#000000");
+    private static final long SHUTDOWN_OFF_TIMEOUT_SECONDS = 10;
+
+    /**
+     * Every off/relight runs through this one queue, in the order the gate decided them. That single
+     * ordering is the fix for the boot-time half of #145: the off used to run on a freshly spawned
+     * thread while the relight ran on the caller's thread, so a quick dark→light pair could deliver
+     * the ALL_OFF <em>after</em> the relight and the panels stayed dark until the user touched a
+     * lighting setting. It also keeps the (cheap, queue-only) device writes off the callers — the
+     * Windows message pump and the lock poller.
+     */
+    private final ExecutorService lightingWrites = Executors.newSingleThreadExecutor(AppThreads.factory("sleep-detector", true));
 
     /** Collapses the overlapping dark reasons (suspend / lock / display-off) into off/relight transitions. */
-    private final DarkReasonGate gate = new DarkReasonGate(() -> onSuspended(false), this::onResumed);
+    private final DarkReasonGate gate = new DarkReasonGate(this::onSuspended, this::onResumed, lightingWrites);
 
     @Inject
     DeviceScanner deviceScanner;
@@ -29,7 +45,16 @@ public final class SleepDetector {
     DeviceHolder devices;
 
     public void onShutdown(@Observes ShutdownEvent event) {
-        onSuspended(true);
+        // Same queue as every other write, so a decided-but-not-yet-sent relight cannot land after
+        // this final off. Waiting is required: the app is about to exit and the off must be flushed.
+        var done = lightingWrites.submit(() -> allOff(true));
+        try {
+            done.get(SHUTDOWN_OFF_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (Exception e) {
+            log.warn("Shutdown lights-off did not complete", e);
+        }
     }
 
     public void onEvent(@Observes SystemEvent event) {
@@ -46,28 +71,24 @@ public final class SleepDetector {
         }
     }
 
-    private void onSuspended(boolean shutdown) {
-        Runnable r = () -> {
-            for (var device : devices.values()) {
-                if (device.deviceType() == null) {
-                    continue; // Non-PCPanel devices (e.g. Deej) have no HID lighting channel to switch off.
-                }
-                log.debug("Pause: {}", device.getSerialNumber());
-                try {
-                    outputInterpreter.sendLightingConfig(device.getSerialNumber(), device.deviceType(), ALL_OFF, true);
-                    if (shutdown) {
-                        waitUntilEmptyPrioQueue(device);
-                    }
-                } catch (Exception e) {
-                    log.error("Unable to switch off lighting for {}", device.getSerialNumber(), e);
-                }
-            }
-        };
+    private void onSuspended() {
+        allOff(false);
+    }
 
-        if (shutdown) {
-            r.run();
-        } else {
-            new Thread(r, "SleepDetector-suspend").start();
+    private void allOff(boolean shutdown) {
+        for (var device : devices.values()) {
+            if (device.deviceType() == null) {
+                continue; // Non-PCPanel devices (e.g. Deej) have no HID lighting channel to switch off.
+            }
+            log.debug("Pause: {}", device.getSerialNumber());
+            try {
+                outputInterpreter.sendLightingConfig(device.getSerialNumber(), device.deviceType(), ALL_OFF, true);
+                if (shutdown) {
+                    waitUntilEmptyPrioQueue(device);
+                }
+            } catch (Exception e) {
+                log.error("Unable to switch off lighting for {}", device.getSerialNumber(), e);
+            }
         }
         log.info("Stopped sleep detector");
     }
@@ -93,7 +114,7 @@ public final class SleepDetector {
             log.info("RESUME: {}", device.getSerialNumber());
             // A relight that is skipped is not retried by anything: the panel then stays dark until the
             // device reconnects or the user edits lighting. So one device failing must not cost the
-            // others their relight, nor unwind onto the caller's thread (the lock poller / message pump).
+            // others their relight.
             try {
                 outputInterpreter.sendLightingConfig(device.getSerialNumber(), device.deviceType(), device.lightingConfig(), true);
             } catch (Exception e) {
