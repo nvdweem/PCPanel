@@ -3,10 +3,14 @@ package com.getpcpanel.rest;
 import com.getpcpanel.device.provider.pcpanel.ProVisualColorsService;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.rest.auth.SessionAuthFilter;
+import com.getpcpanel.rest.auth.SessionTokenService;
 import com.getpcpanel.rest.model.dto.DeviceSnapshotDto;
 import com.getpcpanel.rest.model.ws.WsDeviceConnectedEvent;
 import com.getpcpanel.util.app.AppShutdownState;
@@ -28,6 +32,10 @@ public class EventWebSocket {
     @Inject SaveService saveService;
     @Inject ProVisualColorsService proVisualColorsService;
     @Inject EventBroadcaster eventBroadcaster;
+    @Inject SessionTokenService sessionTokens;
+
+    @ConfigProperty(name = "pcpanel.http.require-session", defaultValue = "true")
+    boolean requireSession;
 
     @OnOpen
     public void onOpen(WebSocketConnection connection) {
@@ -40,6 +48,16 @@ public class EventWebSocket {
             log.debug("Rejecting non-local websocket connection {} (Host={}, Origin={})", connection.id(), handshake.header("Host"), handshake.header("Origin"));
             connection.closeAndAwait();
             return;
+        }
+        // Second layer, mirroring the REST session filter: the browser auto-sends the session cookie on
+        // the WS handshake, so an unauthenticated local process cannot open the event socket either.
+        if (requireSession) {
+            var token = SessionAuthFilter.sessionTokenFrom(handshake.header("Cookie")).orElse(null);
+            if (!sessionTokens.isValidSession(token)) {
+                log.debug("Rejecting websocket connection {}: missing or invalid session cookie", connection.id());
+                connection.closeAndAwait();
+                return;
+            }
         }
         connections.add(connection);
         log.debug("WebSocket client connected: {} (total connections: {})", connection.id(), connections.size());

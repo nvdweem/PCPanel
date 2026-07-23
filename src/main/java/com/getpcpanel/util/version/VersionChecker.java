@@ -44,9 +44,6 @@ public class VersionChecker extends Thread {
     @ConfigProperty(name = "pcpanel.build")
     int build;
 
-    @ConfigProperty(name = "pcpanel.github.user-and-repo")
-    String githubUserAndRepo;
-
     private boolean currentIsSnapshot;
 
     @PostConstruct
@@ -83,7 +80,7 @@ public class VersionChecker extends Thread {
     }
 
     private Version fetchLatestCandidate() throws IOException, InterruptedException {
-        var url = "https://api.github.com/repos/" + githubUserAndRepo + "/releases?per_page=4";
+        var url = "https://api.github.com/repos/" + UpdateSource.GITHUB_REPO + "/releases?per_page=4";
         var client = SharedHttpClient.get();
         var request = HttpRequest.newBuilder(URI.create(url)).build();
         var response = client.send(request, HttpResponse.BodyHandlers.ofString());

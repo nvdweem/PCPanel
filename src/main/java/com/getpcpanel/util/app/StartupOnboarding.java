@@ -5,6 +5,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.rest.model.dto.OnboardingDto;
+import com.getpcpanel.util.version.UpdateSource;
 
 import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -54,9 +55,6 @@ public class StartupOnboarding {
     @ConfigProperty(name = "quarkus.application.version", defaultValue = "dev")
     String version;
 
-    @ConfigProperty(name = "pcpanel.github.user-and-repo", defaultValue = "nvdweem/PCPanel")
-    String githubUserAndRepo;
-
     private volatile String intent = INTENT_NONE;
 
     void onStart(@Observes StartupEvent event) {
@@ -89,8 +87,7 @@ public class StartupOnboarding {
      * version links to the releases listing, whose newest entry is that version.
      */
     private String changelogUrl() {
-        var repo = StringUtils.contains(githubUserAndRepo, '/') ? githubUserAndRepo : "nvdweem/PCPanel";
-        var base = "https://github.com/" + repo + "/releases";
+        var base = "https://github.com/" + UpdateSource.GITHUB_REPO + "/releases";
         var isSnapshot = StringUtils.isBlank(version) || StringUtils.containsIgnoreCase(version, "snapshot") || "dev".equals(version);
         return isSnapshot ? base + "/tag/latest-main" : base;
     }

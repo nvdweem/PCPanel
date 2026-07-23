@@ -51,7 +51,6 @@ public class WindowsInstallerUpdater implements PlatformUpdater {
     @Inject ObjectMapper objectMapper;
     @Inject com.getpcpanel.profile.SaveService save;
 
-    @ConfigProperty(name = "pcpanel.github.user-and-repo") String githubUserAndRepo;
     @ConfigProperty(name = "pcpanel.version") String version;
     @ConfigProperty(name = "pcpanel.build") int build;
 
@@ -85,7 +84,7 @@ public class WindowsInstallerUpdater implements PlatformUpdater {
             throw new AutoUpdateService.UpdateException("Automatic updates are only available on an installed Windows build.");
         }
 
-        var url = "https://api.github.com/repos/" + githubUserAndRepo + "/releases?per_page=20";
+        var url = "https://api.github.com/repos/" + UpdateSource.GITHUB_REPO + "/releases?per_page=20";
         var request = HttpRequest.newBuilder(URI.create(url)).header("Accept", "application/vnd.github+json").build();
         var response = SharedHttpClient.get().send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() / 100 != 2) {

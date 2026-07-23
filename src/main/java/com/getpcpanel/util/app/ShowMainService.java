@@ -7,8 +7,11 @@ import java.nio.file.Path;
 import org.apache.commons.lang3.SystemUtils;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import com.getpcpanel.rest.auth.SessionTokenService;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 
 /**
@@ -21,8 +24,14 @@ public class ShowMainService {
     @ConfigProperty(name = "quarkus.http.port")
     int port;
 
+    @Inject SessionTokenService sessionTokens;
+
     public void onShowMain(@Observes ShowMainEvent event) {
-        openExternally("http://localhost:" + port + "/", false);
+        // Open the UI via the bootstrap handshake carrying a single-use nonce: the endpoint swaps it for
+        // an HttpOnly session cookie and redirects to the app, so only the browser the user launched from
+        // the tray is authenticated to the local API. The nonce is worthless once consumed.
+        var nonce = sessionTokens.issueNonce();
+        openExternally("http://localhost:" + port + "/api/auth/bootstrap?nonce=" + nonce, false);
     }
 
     public void onOpenFolder(@Observes OpenFolderEvent event) {

@@ -6,6 +6,7 @@ import { ToastService } from '../ui/toast/toast.service';
 import { PlatformService } from './platform.service';
 import { UpdateService } from './update.service';
 import { VersionGuardService } from './version-guard.service';
+import { AuthStateService } from './auth-state.service';
 
 /** Result of an on-demand update check (POST /api/system/checkforupdate). */
 interface UpdateCheckResult { updateAvailable: boolean; version?: string; url?: string; }
@@ -25,6 +26,7 @@ export class DeviceStateService implements OnDestroy {
   private readonly platform = inject(PlatformService);
   private readonly updates = inject(UpdateService);
   private readonly versionGuard = inject(VersionGuardService);
+  private readonly auth = inject(AuthStateService);
   private readonly http = inject(HttpClient);
   private readonly _devices = signal<DeviceMap>({});
   private socket: WebSocket | null = null;
@@ -114,8 +116,15 @@ export class DeviceStateService implements OnDestroy {
     this.socket.onclose = () => {
       this.connected.set(false);
       if (this.destroyed) return;
+      // Already locked out: stop the reconnect loop — the socket will only be refused again until the
+      // page is reloaded (the auth gate tells the user to reopen from the tray, which reloads).
+      if (this.auth.unauthenticated()) return;
 
       this.reconnecting.set(true);
+      // The UI is populated entirely from this socket, so a rejected handshake would otherwise spin
+      // forever with no HTTP request to trip the auth gate. Probe the session explicitly to tell a
+      // stale-cookie rejection (→ gate) apart from the backend merely restarting (→ keep reconnecting).
+      this.verifySessionAfterDisconnect();
       this.reconnectTimer = setTimeout(() => this.connect(), 3000);
     };
 
@@ -123,6 +132,17 @@ export class DeviceStateService implements OnDestroy {
       this.lastError.set('WebSocket transport error');
       this.socket?.close();
     };
+  }
+
+  /**
+   * When the event socket closes we can't tell from the WebSocket alone whether the backend is
+   * restarting or has rejected our session (the upgrade is refused at the HTTP layer, so the browser
+   * only sees a failed socket). Probe a gated endpoint: a 401 is turned into the auth gate by the HTTP
+   * interceptor; a network error (server down) or 200 is left to the normal reconnect.
+   */
+  private verifySessionAfterDisconnect(): void {
+    this.http.get('/api/auth/status', { responseType: 'text' })
+      .subscribe({ error: () => { /* the 401 interceptor raises the gate; nothing to do here */ } });
   }
 
   private tryParseEvent(raw: string): WsEventUnion | null {
