@@ -443,6 +443,14 @@
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                         <maven.home>${maven.home}</maven.home>
                     </systemPropertyVariables>
+                    <!-- @QuarkusIntegrationTest launches the packaged app in prod mode, where the session gate
+                         is on. NativeTestIT hits /api/overlay without the tray-issued session cookie, but it
+                         exercises the native image (AWT loads, endpoints wired), not authentication — which is
+                         covered by the JVM unit tests. The launched process inherits this env var, turning the
+                         gate off for the smoke test (Quarkus maps it to pcpanel.http.require-session). -->
+                    <environmentVariables>
+                        <PCPANEL_HTTP_REQUIRE_SESSION>false</PCPANEL_HTTP_REQUIRE_SESSION>
+                    </environmentVariables>
                 </configuration>
             </plugin>
         </plugins>
