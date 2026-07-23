@@ -103,6 +103,32 @@ public class WindowsPowerEventMonitor {
         return sessionNotificationsActive.get();
     }
 
+    /**
+     * Tries to register for WTS session notifications. Called at window creation and re-tried from
+     * the fallback lock poller: at boot {@code WTSRegisterSessionNotification} fails while the Remote
+     * Desktop Services service is itself still starting — precisely the situation of an auto-started
+     * app on a freshly booted machine, which is when the authoritative source matters most (#145).
+     * Safe from any thread: the notifications are delivered to the window regardless of which thread
+     * registered, and the registration state is guarded by this monitor's lock.
+     *
+     * @return whether authoritative session notifications are (now) live.
+     */
+    public synchronized boolean tryRegisterSessionNotifications() {
+        if (sessionNotificationsActive.get()) {
+            return true;
+        }
+        var h = hwnd;
+        if (h == null || thread == null || !thread.isAlive()) {
+            return false; // no live message pump for the notifications to arrive on
+        }
+        if (!Wtsapi32.INSTANCE.WTSRegisterSessionNotification(h, Wtsapi32.NOTIFY_FOR_THIS_SESSION)) {
+            return false;
+        }
+        sessionNotifyRegistered = true;
+        sessionNotificationsActive.set(true);
+        return true;
+    }
+
     public void start() {
         thread = new Thread(this::run, "windows-power-event-monitor");
         thread.setDaemon(true);
@@ -159,12 +185,11 @@ public class WindowsPowerEventMonitor {
         }
 
         // Authoritative lock/unlock. Best-effort: without it WindowsSystemEventService falls back to
-        // polling OpenInputDesktop, which is why this must not abort the rest of the monitor.
-        if (Wtsapi32.INSTANCE.WTSRegisterSessionNotification(hwnd, Wtsapi32.NOTIFY_FOR_THIS_SESSION)) {
-            sessionNotifyRegistered = true;
-            sessionNotificationsActive.set(true);
-        } else {
-            log.warn("WTSRegisterSessionNotification failed (err={}); falling back to polled lock detection",
+        // polling OpenInputDesktop (and keeps re-trying this registration — at boot it fails merely
+        // because the Remote Desktop Services service has not started yet), which is why this must
+        // not abort the rest of the monitor.
+        if (!tryRegisterSessionNotifications()) {
+            log.warn("WTSRegisterSessionNotification failed (err={}); polling for lock state until it succeeds",
                     Kernel32.INSTANCE.GetLastError());
         }
 
@@ -183,7 +208,7 @@ public class WindowsPowerEventMonitor {
         }
 
         log.info("Windows power-event detection started (session notifications: {})",
-                sessionNotifyRegistered ? "on" : "off - polling for lock state");
+                sessionNotifyRegistered ? "on" : "off - polling for lock state and retrying registration");
 
         var msg = new MSG();
         // GetMessage returns >0 for a message, 0 on WM_QUIT, -1 on error.
@@ -272,7 +297,7 @@ public class WindowsPowerEventMonitor {
         // state == 2 (dimmed) is left alone: the display is still on, just idle-dimming.
     }
 
-    private void unregisterNotifications() {
+    private synchronized void unregisterNotifications() {
         if (sessionNotifyRegistered) {
             sessionNotificationsActive.set(false);
             sessionNotifyRegistered = false;
