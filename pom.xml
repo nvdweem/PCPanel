@@ -14,8 +14,6 @@
         <project.snapshot>-SNAPSHOT</project.snapshot>
         <!--suppress UnresolvedMavenProperty -->
         <github.build>${env.GITHUB_RUN_NUMBER}</github.build>
-        <!--suppress UnresolvedMavenProperty -->
-        <github.repo>${env.GITHUB_REPOSITORY}</github.repo>
 
         <java.version>25</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
@@ -474,7 +472,6 @@
             </activation>
             <properties>
                 <github.build>9999</github.build>
-                <github.repo>nvdweem/PCPanel</github.repo>
             </properties>
         </profile>
         <profile>

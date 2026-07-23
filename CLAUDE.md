@@ -93,7 +93,11 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
   data dir, set `pcpanel.root=${user.home}/.pcpaneldev/` (dev profile already does this).
 - **Self-update (`util/version/`):** `AutoUpdateService` is a thin façade that picks the one
   `PlatformUpdater` transport matching how the app is packaged (`isSupported()` is mutually exclusive) and
-  delegates. Exposed to the UI as `PlatformInfo.autoUpdate`; when no transport supports the install (a
+  delegates. The update **source** repo is `UpdateSource.GITHUB_REPO`, a hardcoded constant — *not* a
+  `@ConfigProperty` — deliberately: the updater downloads and runs an installer, so the source it trusts
+  must not be redirectable at runtime by a stray `-D`/env/`config/application.properties`. A fork shipping
+  its own releases edits this one constant. (It is not build-time-filtered from `github.repo`: a generated
+  source under `target/` breaks IntelliJ and `quarkus:dev`, which build without Maven's generate-sources.) Exposed to the UI as `PlatformInfo.autoUpdate`; when no transport supports the install (a
   `.deb`, dev/JVM, macOS) the UI links to the release page instead of offering "Update & restart". REST:
   `POST /api/system/update` (latest) and `/api/system/update/reinstall` (the Debug page's
   reinstall-current button — re-runs the real path against the current version to test the flow on any
