@@ -62,7 +62,9 @@ public class SessionAuthFilter {
             return;
         }
         log.debug("Rejecting unauthenticated request {} {} (no valid session cookie)", ctx.request().method(), path);
-        ctx.response().setStatusCode(401).end("Unauthorized: open PCPanel from the tray icon");
+        // no-store so a soft browser reload always re-checks the session against the server rather than
+        // serving a stale cached response (which would mask the auth state — see the auth probe).
+        ctx.response().setStatusCode(401).putHeader("Cache-Control", "no-store").end("Unauthorized: open PCPanel from the tray icon");
     }
 
     /**

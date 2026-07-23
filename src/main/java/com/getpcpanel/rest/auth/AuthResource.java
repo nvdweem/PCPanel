@@ -42,4 +42,20 @@ public class AuthResource {
                        .header("Set-Cookie", cookie)
                        .build();
     }
+
+    /**
+     * Lightweight authentication probe. It is gated by {@link SessionAuthFilter} like any other
+     * {@code /api} path, so an unauthenticated caller gets a 401 (never reaching this method) and an
+     * authenticated one gets a 200. The frontend calls it when its event WebSocket closes, to tell a
+     * rejected session (the server refused the WS handshake because the cookie is stale — show the auth
+     * gate) apart from a transient disconnect (the backend is restarting — keep reconnecting). The
+     * WebSocket upgrade is rejected at the HTTP layer, so the browser sees only a failed socket with no
+     * status code to react to; this endpoint gives the UI that status explicitly. {@code no-store} so a
+     * soft reload always re-checks against the server instead of a cached result.
+     */
+    @GET
+    @Path("/status")
+    public Response status() {
+        return Response.ok().header("Cache-Control", "no-store").build();
+    }
 }

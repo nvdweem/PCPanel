@@ -13,6 +13,9 @@ class SessionAuthFilterTest {
         assertTrue(SessionAuthFilter.isProtected("/api/settings"));
         assertTrue(SessionAuthFilter.isProtected("/api/system/quit"));
         assertTrue(SessionAuthFilter.isProtected("/ws/events"));
+        // The session probe must be gated (unauth → 401), so a stale-cookie WebSocket rejection surfaces
+        // the auth gate. Only /api/auth/bootstrap is additionally exempted (inside guard()).
+        assertTrue(SessionAuthFilter.isProtected("/api/auth/status"));
     }
 
     @Test
