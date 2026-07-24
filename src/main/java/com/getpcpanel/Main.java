@@ -4,8 +4,6 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Set;
 
-import org.eclipse.microprofile.config.ConfigProvider;
-
 import com.getpcpanel.device.provider.pcpanel.HidDebug;
 import com.getpcpanel.util.os.ConsoleSupport;
 import com.getpcpanel.util.io.FileChecker;
@@ -35,7 +33,25 @@ public class Main implements QuarkusApplication {
             return;
         }
         markLaunchIntent(argSet);
+        // Detect a duplicate launch before the container starts. The device layer connects to the
+        // hardware on Quarkus' StartupEvent, so a second launch must exit here — before Quarkus.run() —
+        // rather than after boot: otherwise it opens the shared PCPanel and, on its own shutdown, turns
+        // the LEDs off on the still-running first instance.
+        if (!skipFileCheck(argSet)) {
+            FileChecker.ensureSingleInstance();
+        }
         Quarkus.run(Main.class, args);
+    }
+
+    /**
+     * Whether to bypass the single-instance file check. The {@code skipfilecheck} arg (IDE/side-by-side
+     * launches) and the {@code pcpanel.skip-file-check} system property both suppress it. The {@code %dev}
+     * profile sets that property as MicroProfile config, but dev mode does not run {@link #main} at all —
+     * it invokes {@link #run} directly — so this pre-boot gate never fires there.
+     */
+    @SuppressWarnings("AccessOfSystemProperties")
+    private static boolean skipFileCheck(Set<String> argSet) {
+        return argSet.contains(SKIP_FILE_CHECK_ARG) || Boolean.getBoolean(SKIP_FILE_CHECK_PROPERTY);
     }
 
     /**
@@ -126,11 +142,10 @@ public class Main implements QuarkusApplication {
 
     @Override
     public int run(String... args) throws Exception {
-        var argSet = Set.of(args);
-        var skipFileCheck = argSet.contains(SKIP_FILE_CHECK_ARG) || ConfigProvider.getConfig().getOptionalValue(SKIP_FILE_CHECK_PROPERTY, Boolean.class).orElse(false);
-        if (!skipFileCheck) {
-            FileChecker.createAndStart();
-        }
+        // The single-instance lock is taken in main(), before the container starts. Now that CDI is up,
+        // begin watching for a later relaunch so we can raise the window. No-op when the check was skipped
+        // (skipfilecheck / %dev), so nothing holds the lock.
+        FileChecker.startWatching();
         Quarkus.waitForExit();
         return 0;
     }
