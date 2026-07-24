@@ -7,6 +7,7 @@ import java.nio.ByteOrder;
 
 import com.getpcpanel.platform.WindowsBuild;
 import com.getpcpanel.util.io.FileUtil;
+import com.getpcpanel.util.app.CopyUiLinkEvent;
 import com.getpcpanel.util.app.OpenFolderEvent;
 import com.getpcpanel.util.app.ShowMainEvent;
 import com.getpcpanel.util.concurrent.AppThreads;
@@ -61,6 +62,7 @@ public class TrayServiceWin implements ITrayService, WindowProc {
     private static final int MENU_OPEN = 1;
     private static final int MENU_EXIT = 2;
     private static final int MENU_SETTINGS = 3;
+    private static final int MENU_COPY_LINK = 4;
     private static final int IDI_APPLICATION = 32512;
 
     // Mouse messages delivered in the low word of the callback's lParam (NOTIFYICON_VERSION 0).
@@ -200,6 +202,7 @@ public class TrayServiceWin implements ITrayService, WindowProc {
         }
         try {
             ext.AppendMenuW(menu, WinUser32Ext.MF_STRING, MENU_OPEN, new WString("Open PCPanel"));
+            ext.AppendMenuW(menu, WinUser32Ext.MF_STRING, MENU_COPY_LINK, new WString("Copy UI link"));
             ext.AppendMenuW(menu, WinUser32Ext.MF_STRING, MENU_SETTINGS, new WString("Open settings folder"));
             ext.AppendMenuW(menu, WinUser32Ext.MF_STRING, MENU_EXIT, new WString("Exit"));
             ext.SetMenuDefaultItem(menu, MENU_OPEN, 0);
@@ -214,6 +217,7 @@ public class TrayServiceWin implements ITrayService, WindowProc {
             user32.PostMessage(hWnd, WM_NULL, new WPARAM(0), new LPARAM(0));
             switch (cmd) {
                 case MENU_OPEN -> eventBus.fire(new ShowMainEvent());
+                case MENU_COPY_LINK -> eventBus.fire(new CopyUiLinkEvent());
                 case MENU_SETTINGS -> eventBus.fire(new OpenFolderEvent(fileUtil.getRoot().toString()));
                 case MENU_EXIT -> exitApplication();
                 default -> { /* menu dismissed */ }

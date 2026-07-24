@@ -37,6 +37,32 @@ class SessionAuthFilterTest {
         assertTrue(SessionAuthFilter.isProtected("/api/profile/switch"));
     }
 
+    // ── The gating decision guard() applies to the router-normalized path ──
+    @Test
+    void bootstrapIsExemptButOtherApiPathsRequireSession() {
+        // The one gated path that mints the session cannot itself require one; everything else on the
+        // API/WS surface does.
+        assertFalse(SessionAuthFilter.requiresSession("/api/auth/bootstrap"));
+        assertTrue(SessionAuthFilter.requiresSession("/api/auth/status"));
+        assertTrue(SessionAuthFilter.requiresSession("/api/system/quit"));
+        assertTrue(SessionAuthFilter.requiresSession("/ws/events"));
+        assertFalse(SessionAuthFilter.requiresSession("/index.html"));
+    }
+
+    /**
+     * The gate must run on the router-NORMALIZED path. These raw request-line forms normalize to a
+     * protected /api path (which RESTEasy Reactive then dispatches to) but are not recognized by the
+     * string prefix check, so guard() must feed it {@code ctx.normalizedPath()} rather than
+     * {@code ctx.request().path()} — otherwise they reach the API with no session.
+     */
+    @Test
+    void rawUnnormalizedApiFormsAreNotCaughtByTheStringCheck() {
+        assertFalse(SessionAuthFilter.isProtected("//api/settings"));
+        assertFalse(SessionAuthFilter.isProtected("/x/../api/settings"));
+        // ...which is exactly why the gate keys off the normalized form, where they ARE protected:
+        assertTrue(SessionAuthFilter.requiresSession("/api/settings"));
+    }
+
     // ── Extracting the session token from the raw Cookie header (WebSocket handshake path) ──
     @Test
     void extractsTheSessionCookieAmongOthers() {

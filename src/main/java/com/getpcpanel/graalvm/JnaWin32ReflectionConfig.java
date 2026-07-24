@@ -1,5 +1,7 @@
 package com.getpcpanel.graalvm;
 
+import com.getpcpanel.integration.clipboard.platform.windows.WinClipboardKernel32;
+import com.getpcpanel.integration.clipboard.platform.windows.WinClipboardUser32;
 import com.getpcpanel.sleepdetection.Win32Desktop;
 import com.getpcpanel.sleepdetection.Win32PowerNotify;
 import com.getpcpanel.util.tray.win.WinShell32;
@@ -26,6 +28,8 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         WinShell32.class,
         WinShell32.NOTIFYICONDATA.class,
         WinUser32Ext.class,
+        WinClipboardUser32.class,
+        WinClipboardKernel32.class,
         Win32Desktop.class,
         Win32PowerNotify.class,
 }, classNames = {

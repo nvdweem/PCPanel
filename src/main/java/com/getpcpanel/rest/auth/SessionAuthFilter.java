@@ -51,8 +51,13 @@ public class SessionAuthFilter {
     }
 
     private void guard(RoutingContext ctx) {
-        var path = ctx.request().path();
-        if (!isProtected(path) || BOOTSTRAP_PATH.equals(path)) {
+        // Gate on the router-normalized path, NOT ctx.request().path(). The raw request-line path keeps
+        // `.`/`..` segments and repeated slashes, so a path like `//api/system/quit` or `/x/../api/settings`
+        // fails the startsWith("/api/") check below yet still normalizes to a protected /api path that
+        // RESTEasy Reactive matches and dispatches to — reaching the endpoint with no session. normalizedPath()
+        // is exactly the value the router matches on, so the gate and the routing agree on what the path is.
+        var path = ctx.normalizedPath();
+        if (!requiresSession(path)) {
             ctx.next();
             return;
         }
@@ -76,6 +81,15 @@ public class SessionAuthFilter {
      */
     static boolean isProtected(String path) {
         return path.startsWith("/api/") || path.startsWith("/ws/");
+    }
+
+    /**
+     * Whether a request to this (router-normalized) path must carry a session: the gated API/WS surface,
+     * minus {@link #BOOTSTRAP_PATH}, which mints the session and so cannot itself require one. Callers must
+     * pass the normalized path (see {@link #guard}) so this decision matches what the router dispatches on.
+     */
+    static boolean requiresSession(String path) {
+        return isProtected(path) && !BOOTSTRAP_PATH.equals(path);
     }
 
     /**

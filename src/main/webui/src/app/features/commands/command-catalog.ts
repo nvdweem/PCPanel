@@ -385,6 +385,18 @@ const FIELD_DEFS: FieldDef_[] = [
       { kind: 'ha-help' },
     ],
   },
+  {
+    type: 'clipboard.set',
+    buildEmpty: () => ({ _type: 'clipboard.set', text: '' }),
+    fields: [
+      { kind: 'text', key: 'text', label: 'Text', placeholder: 'Text to copy to the clipboard' },
+    ],
+  },
+  {
+    type: 'webui.open',
+    buildEmpty: () => ({ _type: 'webui.open' }),
+    fields: [],
+  },
 ];
 
 // COMMANDS is assembled from the Java-generated registry (label/category/kinds/integration/icon)

@@ -11,6 +11,7 @@ import org.freedesktop.dbus.types.Variant;
 import com.getpcpanel.util.app.AppEvents;
 import com.getpcpanel.util.CdiHelper;
 import com.getpcpanel.util.io.FileUtil;
+import com.getpcpanel.util.app.CopyUiLinkEvent;
 import com.getpcpanel.util.app.OpenFolderEvent;
 import com.getpcpanel.util.app.ShowMainEvent;
 
@@ -30,7 +31,8 @@ public class DBusMenuImpl implements DBusMenu {
     private static final int ID_OPEN = 1;
     private static final int ID_SETTINGS = 2;
     private static final int ID_QUIT = 3;
-    private static final int[] ITEM_IDS = {ID_OPEN, ID_SETTINGS, ID_QUIT};
+    private static final int ID_COPY_LINK = 4;
+    private static final int[] ITEM_IDS = {ID_OPEN, ID_COPY_LINK, ID_SETTINGS, ID_QUIT};
 
     @Override
     public String getObjectPath() {
@@ -75,6 +77,10 @@ public class DBusMenuImpl implements DBusMenu {
                 log.debug("Open settings folder selected from the tray menu");
                 AppEvents.fire(new OpenFolderEvent(settingsRoot().getRoot().toString()));
             }
+            case ID_COPY_LINK -> {
+                log.debug("Copy UI link selected from the tray menu");
+                AppEvents.fire(new CopyUiLinkEvent());
+            }
             default -> {
                 log.debug("Open selected from the tray menu");
                 AppEvents.fire(new ShowMainEvent());
@@ -99,6 +105,7 @@ public class DBusMenuImpl implements DBusMenu {
 
     private static String label(int id) {
         return switch (id) {
+            case ID_COPY_LINK -> "Copy UI link";
             case ID_SETTINGS -> "Open settings folder";
             case ID_QUIT -> "Quit";
             default -> "Open PCPanel";

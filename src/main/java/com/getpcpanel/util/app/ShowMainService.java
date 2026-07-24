@@ -64,7 +64,15 @@ public class ShowMainService {
             }
             new ProcessBuilder(command).start();
         } catch (IOException e) {
-            log.error("Unable to open {}", target, e);
+            // Drop the query string: the bootstrap URL carries the single-use session nonce there, and it
+            // must never reach the log (which other same-user processes and shared bug reports can read).
+            log.error("Unable to open {}", redactQuery(target), e);
         }
+    }
+
+    /** The target with any query string removed, so a URL's secrets (e.g. the bootstrap nonce) are not logged. */
+    private static String redactQuery(String target) {
+        var q = target.indexOf('?');
+        return q < 0 ? target : target.substring(0, q) + "?<redacted>";
     }
 }
