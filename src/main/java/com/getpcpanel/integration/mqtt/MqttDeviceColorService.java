@@ -143,10 +143,10 @@ class MqttDeviceColorService implements IOverrideColorProviderProvider {
 
         // Base color changes
         mqtt.subscribeString(baseTopic, publish -> {
-            log.debug("Color changed {}: {}", baseTopic, publish);
+            log.debug("Color changed {}: {}", baseTopic, forLog(publish));
             var setColor = parseColor(publish);
             if (setColor.isEmpty()) {
-                log.debug("Invalid color {}, stop overriding", publish);
+                log.debug("Invalid color {}, stop overriding", forLog(publish));
                 colorOverrider.accept(null);
                 return;
             }
@@ -161,7 +161,7 @@ class MqttDeviceColorService implements IOverrideColorProviderProvider {
     private void addHomeAssistantSubscriptions(String baseTopic, Consumer<String> colorOverrider, MutableColor color, Supplier<String> currentColorSupplier) {
         // On/off command
         mqtt.subscribeString(baseTopic + "/cmd", publish -> {
-            log.debug("Command {}: {}", baseTopic, publish);
+            log.debug("Command {}: {}", baseTopic, forLog(publish));
             switch (StringUtils.defaultString(StringUtils.lowerCase(publish))) {
                 case "off" -> {
                     sendColor(baseTopic, "#000000", false);
@@ -177,24 +177,24 @@ class MqttDeviceColorService implements IOverrideColorProviderProvider {
                         colorOverrider.accept(colorString);
                     }
                 }
-                default -> log.error("Unknown command {}", publish);
+                default -> log.error("Unknown command {}", forLog(publish));
             }
         });
 
         // Brightness changes
         mqtt.subscribeString(baseTopic + "/brightness", publish -> {
-            log.debug("Brightness changed {}: {}", baseTopic, publish);
+            log.debug("Brightness changed {}: {}", baseTopic, forLog(publish));
             color.brightness = NumberUtils.toInt(publish, 255);
             color.isOverriding = true;
         });
 
         // Set rgb color
         mqtt.subscribeString(baseTopic + "/rgb", publish -> {
-            log.debug("Rgb changed {}: {}", baseTopic, publish);
+            log.debug("Rgb changed {}: {}", baseTopic, forLog(publish));
 
             var rgb = StreamEx.split(publish, ",").mapToInt(NumberUtils::toInt).toArray();
             if (rgb.length != 3) {
-                log.error("Invalid RGB {}, ignoring", publish);
+                log.error("Invalid RGB {}, ignoring", forLog(publish));
                 return;
             }
             color.red = rgb[0];
@@ -205,7 +205,7 @@ class MqttDeviceColorService implements IOverrideColorProviderProvider {
 
         // Effect (stop overriding)
         mqtt.subscribeString(baseTopic + "/effect", publish -> {
-            log.debug("Effect {}: {}", baseTopic, publish);
+            log.debug("Effect {}: {}", baseTopic, forLog(publish));
             if (EFFECT_STOP_OVERRIDE.equals(publish)) {
                 colorOverrider.accept(null);
                 color.isOverriding = false;
@@ -213,6 +213,19 @@ class MqttDeviceColorService implements IOverrideColorProviderProvider {
                 mqtt.send(baseTopic + "/effect", EFFECT_NONE, false);
             }
         });
+    }
+
+    /**
+     * Neutralizes an untrusted MQTT payload for logging: strips CR/LF and other control characters (so a
+     * broker publisher cannot forge or split log lines) and caps the length. The MQTT command/colour topics
+     * are an external control surface, so their payloads must never reach the log verbatim.
+     */
+    private static String forLog(@Nullable String payload) {
+        if (payload == null) {
+            return "null";
+        }
+        var cleaned = payload.replaceAll("\\p{Cntrl}", "_");
+        return cleaned.length() > 200 ? cleaned.substring(0, 200) + "...[+" + (cleaned.length() - 200) + " chars]" : cleaned;
     }
 
     private static class MqttColorOverrideHolder extends ColorOverrideHolder {
