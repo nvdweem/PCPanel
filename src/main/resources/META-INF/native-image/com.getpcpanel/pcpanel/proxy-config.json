@@ -7,6 +7,8 @@
   {"interfaces": ["com.getpcpanel.iconextract.Shell32Extra"]},
   {"interfaces": ["com.getpcpanel.util.tray.win.WinShell32"]},
   {"interfaces": ["com.getpcpanel.util.tray.win.WinUser32Ext"]},
+  {"interfaces": ["com.getpcpanel.integration.clipboard.platform.windows.WinClipboardUser32"]},
+  {"interfaces": ["com.getpcpanel.integration.clipboard.platform.windows.WinClipboardKernel32"]},
   {"interfaces": ["com.getpcpanel.sleepdetection.Win32Desktop"]},
   {"interfaces": ["com.getpcpanel.sleepdetection.Win32PowerNotify"]},
   {"interfaces": ["com.getpcpanel.sleepdetection.LinuxX11$LibX11"]},
