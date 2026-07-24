@@ -16,6 +16,7 @@ export interface GeneratedCommand {
 
 export const GENERATED_COMMANDS: GeneratedCommand[] = [
   { type: 'analogbands.ranges', label: 'Stepped switch (ranges)', category: 'system', kinds: ['dial'], icon: 'sliders', legacy: 'com.getpcpanel.commands.command.CommandAnalogBands' },
+  { type: 'clipboard.set', label: 'Set clipboard', category: 'system', kinds: ['button'], icon: 'clipboard' },
   { type: 'device.brightness', label: 'Brightness', category: 'system', kinds: ['dial'], icon: 'sun', legacy: 'com.getpcpanel.commands.command.CommandBrightness' },
   { type: 'discord.join-voice', label: 'Discord — join voice', category: 'integration', kinds: ['button'], integration: 'discord', icon: 'plug', legacy: 'com.getpcpanel.discord.command.CommandDiscordJoinVoice' },
   { type: 'discord.leave-voice', label: 'Discord — leave voice', category: 'integration', kinds: ['button'], integration: 'discord', icon: 'log-out', legacy: 'com.getpcpanel.discord.command.CommandDiscordLeaveVoice' },
@@ -54,4 +55,5 @@ export const GENERATED_COMMANDS: GeneratedCommand[] = [
   { type: 'wavelink.change-level', label: 'Wave Link — level', category: 'integration', kinds: ['dial'], integration: 'wavelink', icon: 'sliders', legacy: 'com.getpcpanel.wavelink.command.CommandWaveLinkChangeLevel' },
   { type: 'wavelink.change-mute', label: 'Wave Link — mute', category: 'integration', kinds: ['button'], integration: 'wavelink', icon: 'mic-off', legacy: 'com.getpcpanel.wavelink.command.CommandWaveLinkChangeMute' },
   { type: 'wavelink.main-output', label: 'Wave Link — main output', category: 'integration', kinds: ['button'], integration: 'wavelink', icon: 'volume', legacy: 'com.getpcpanel.wavelink.command.CommandWaveLinkMainOutput' },
+  { type: 'webui.open', label: 'Open web UI', category: 'system', kinds: ['button'], icon: 'window' },
 ];

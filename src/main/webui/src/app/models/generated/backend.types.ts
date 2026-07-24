@@ -47,8 +47,11 @@ export interface ButtonAction {
     overlayText?: string;
 }
 
+export interface ClipboardCommandModule extends CommandModule {
+}
+
 export interface Command {
-    _type: "com.getpcpanel.commands.command.CommandNoOp" | "mqtt.publish" | "osc.send" | "output.http-request" | "analogbands.ranges" | "device.brightness" | "discord.join-voice" | "discord.leave-voice" | "discord.mute" | "discord.screen-share" | "discord.self-deafen" | "com.getpcpanel.discord.command.CommandDiscordSelfInputVolume" | "com.getpcpanel.discord.command.CommandDiscordSelfMute" | "com.getpcpanel.discord.command.CommandDiscordSelfOutputVolume" | "discord.toggle-video" | "com.getpcpanel.discord.command.CommandDiscordUserMute" | "com.getpcpanel.discord.command.CommandDiscordUserVolume" | "discord.volume" | "homeassistant.action" | "homeassistant.value" | "keyboard.keystroke" | "keyboard.media" | "obs.action" | "obs.mute-source" | "obs.set-scene" | "obs.set-source-volume" | "profile.switch" | "program.end-program" | "program.run" | "program.shortcut" | "voicemeeter.advanced" | "voicemeeter.advanced-button" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasic" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton" | "com.getpcpanel.commands.command.CommandVolumeApplicationDeviceToggle" | "volume.default-device" | "volume.default-device-advanced" | "volume.default-device-toggle" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggleAdvanced" | "volume.device" | "volume.device-mute" | "volume.focus" | "volume.focus-mute" | "volume.process" | "volume.process-mute" | "wavelink.add-focus-to-channel" | "wavelink.change-level" | "wavelink.change-mute" | "com.getpcpanel.wavelink.command.CommandWaveLinkChannelEffect" | "wavelink.main-output";
+    _type: "com.getpcpanel.commands.command.CommandNoOp" | "mqtt.publish" | "osc.send" | "output.http-request" | "analogbands.ranges" | "clipboard.set" | "device.brightness" | "discord.join-voice" | "discord.leave-voice" | "discord.mute" | "discord.screen-share" | "discord.self-deafen" | "com.getpcpanel.discord.command.CommandDiscordSelfInputVolume" | "com.getpcpanel.discord.command.CommandDiscordSelfMute" | "com.getpcpanel.discord.command.CommandDiscordSelfOutputVolume" | "discord.toggle-video" | "com.getpcpanel.discord.command.CommandDiscordUserMute" | "com.getpcpanel.discord.command.CommandDiscordUserVolume" | "discord.volume" | "homeassistant.action" | "homeassistant.value" | "keyboard.keystroke" | "keyboard.media" | "obs.action" | "obs.mute-source" | "obs.set-scene" | "obs.set-source-volume" | "profile.switch" | "program.end-program" | "program.run" | "program.shortcut" | "voicemeeter.advanced" | "voicemeeter.advanced-button" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasic" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton" | "com.getpcpanel.commands.command.CommandVolumeApplicationDeviceToggle" | "volume.default-device" | "volume.default-device-advanced" | "volume.default-device-toggle" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggleAdvanced" | "volume.device" | "volume.device-mute" | "volume.focus" | "volume.focus-mute" | "volume.process" | "volume.process-mute" | "wavelink.add-focus-to-channel" | "wavelink.change-level" | "wavelink.change-mute" | "com.getpcpanel.wavelink.command.CommandWaveLinkChannelEffect" | "wavelink.main-output" | "webui.open";
 }
 
 export interface CommandAnalogBands extends Command, DialAction {
@@ -214,6 +217,10 @@ export interface CommandObsSetSourceVolume extends CommandObs, DialAction {
     sourceName: string;
 }
 
+export interface CommandOpenWebUi extends Command, ButtonAction {
+    _type: "webui.open";
+}
+
 export interface CommandOscSend extends CommandValueOutput {
     _type: "osc.send";
     address: string;
@@ -232,6 +239,11 @@ export interface CommandRun extends Command, ButtonAction {
 export interface Commands {
     commands: Command[];
     type?: CommandsType;
+}
+
+export interface CommandSetClipboard extends Command, ButtonAction {
+    _type: "clipboard.set";
+    text: string;
 }
 
 export interface CommandShortcut extends Command, ButtonAction {
@@ -866,6 +878,9 @@ export interface WaveLinkSettings {
     enabled: boolean;
     enforceControlledVolume: boolean;
     focusVolumeRedirect?: boolean;
+}
+
+export interface WebUiCommandModule extends CommandModule {
 }
 
 export interface WsAssignmentChangedEvent extends WsEvent {
