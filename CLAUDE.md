@@ -98,6 +98,13 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
 - **Run two instances side by side:** pass the `skipfilecheck` arg (otherwise launching a second
   instance just focuses the already-installed one — see `Main`/`FileChecker`). For a separate dev
   data dir, set `pcpanel.root=${user.home}/.pcpaneldev/` (dev profile already does this).
+  `FileChecker` is two-phase and the split is load-bearing: `ensureSingleInstance()` runs in
+  `Main.main()` **before `Quarkus.run()`**, and `startWatching()` runs in `run()` once CDI is up. The
+  duplicate check must happen pre-boot because the device layer connects to the shared PCPanel on the
+  container's `StartupEvent` — if a second launch booted the container before detecting it was a
+  duplicate, its own `ShutdownEvent` would `provider.stop()` and switch the LEDs off on the
+  still-running first instance. Dev mode never runs `main()` (Quarkus calls `run()` directly), so the
+  pre-boot check is inert there and `%dev.skip-file-check` only ever mattered to the old `run()`-time check.
 - **Self-update (`util/version/`):** `AutoUpdateService` is a thin façade that picks the one
   `PlatformUpdater` transport matching how the app is packaged (`isSupported()` is mutually exclusive) and
   delegates. The update **source** repo is `UpdateSource.GITHUB_REPO`, a hardcoded constant — *not* a
