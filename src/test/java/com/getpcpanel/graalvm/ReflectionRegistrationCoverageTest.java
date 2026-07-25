@@ -120,10 +120,12 @@ class ReflectionRegistrationCoverageTest {
      * (WaveLinkResponseDto needed them spelled out). Declaring a type that is already reachable costs
      * nothing at runtime, and it turns "hopefully Quarkus covers this" into an invariant the build checks.
      *
-     * <p>The alternative — hitting the endpoints — cannot do this job: Jackson only instantiates the
-     * element array once a list is non-empty, and these lists are hardware- and audio-dependent, so CI
-     * sees them empty and passes while a user with real data gets the 500. Walking types instead needs no
-     * device, no Wave Link server and no native build.
+     * <p>Complements {@code RestDtoSerializationSmokeTest}, which discovers the same endpoints but answers
+     * a different question: it serialises a populated instance to prove Jackson <em>can</em> write the
+     * shape, which fails identically in JVM and native. This one proves the native image is <em>told</em>
+     * it may do so reflectively — a gap that is invisible in JVM mode, where reflection always works.
+     * Neither subsumes the other, and hitting the live endpoints answers neither: those lists are
+     * hardware- and audio-dependent, so CI sees them empty.
      */
     @Test
     @DisplayName("every project type returned by a REST resource is registered for reflection")

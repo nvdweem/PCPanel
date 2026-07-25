@@ -69,8 +69,12 @@ public class NativeTestIT {
      * list never instantiates the array, so it cannot prove the array form is registered. What this does
      * catch is every other native-only failure on these paths (an unregistered element record, a missing
      * Jackson {@code StdSerializer} for a field type, a platform bean that fails to resolve in the
-     * image), and it catches the array gap too on any runner that does have audio state. Closing the
-     * array case for certain needs a fixture that forces a non-empty list; see CLAUDE.md.
+     * image), and it catches the array gap too on any runner that does have audio state.
+     *
+     * <p>Serialisation of a <em>populated</em> instance of every one of these DTOs is already covered at
+     * unit level by {@code RestDtoSerializationSmokeTest}, which builds non-empty collections on purpose.
+     * What only a native IT adds is the real image: that the registrations actually resolve and the
+     * platform beans wire up in a binary with no runtime reflection to fall back on.
      */
     @Test
     public void dtoListEndpointsSerialise() {
