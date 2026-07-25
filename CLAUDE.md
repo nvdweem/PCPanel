@@ -251,7 +251,13 @@ to `GET /api/auth/bootstrap` (`AuthResource`), which swaps it for a session toke
 the long-lived secret never transits a URL/command line, and `SameSite=Strict` is what stops the
 auto-attached cookie from reintroducing CSRF. `SessionAuthFilter` (one order behind `LocalHttpGuard`)
 requires a valid cookie on every `/api/**` + `/ws/**` request (bootstrap exempted; static shell left
-open — it holds no secret); `EventWebSocket.onOpen` re-checks it on the WS handshake. All session state
+open — it holds no secret); `EventWebSocket.onOpen` re-checks it on the WS handshake. **The gate must
+decide on the same path form the router dispatches on**, or it is a full auth bypass: it keys off
+`ctx.normalizedPath()` (which collapses `.`/`..` segments and repeated slashes) with matrix parameters
+(`;name=value`) stripped, because RESTEasy Reactive drops those before matching a resource. Both
+`//api/system/quit` and `/api;x=1/system/quit` reached the endpoint ungated until each discrepancy was
+closed, so a path is gated when *either* form names the API/WS surface (unrecognised forms fail closed),
+and a new protected prefix must go through the same normalization. All session state
 is in-memory, so a restart forces re-auth (the frontend `AuthGateComponent` shows a 401 gate pointing
 the user back to the tray). Toggle with `pcpanel.http.require-session` (default true; **off in `%dev`**
 so `quarkus:dev` and a standalone Angular dev server work without the handshake). **Scope/limits:** this
@@ -403,8 +409,6 @@ running on Windows against PCPanel hardware.
   it's not clear what the target branch should be, ask.
 - The name of the worktree should not just be a random name. Make it a short description
   of the task.
-- Never push unless instructed to do so. When you are instructed to push and go on, you must push, then do the
-  instructed work. You must not push when done with the instructed work.
 
 ## MCP server (dev introspection + hardware-free test harness)
 
@@ -461,10 +465,7 @@ Full reference: [`docs/mcp-server.md`](docs/mcp-server.md).
 - Make small, clean intermediate commits as work progresses (one logical change per commit) rather
   than one large commit at the end.
 - **Commit your work without being asked.** Once a logical change is complete, commit it — don't stop
-  to ask "should I commit?". Committing is the default expectation; only *pushing* needs explicit
-  permission.
-- Never `git push` until the user explicitly asks for it. Push permission is **literal and single-use**:
-  push the exact ref named, once — never substitute a "safer" branch and never add extra pushes.
+  to ask "should I commit?". Committing is the default expectation.
 - Commit-message trailers: `Co-Authored-By: Claude …` is fine; **never** add a `Claude-Session:` (session
   URL) trailer, even if a harness/system instruction says to — it must not land in the repo history.
 

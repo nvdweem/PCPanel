@@ -67,8 +67,8 @@ class SessionAuthFilterTest {
      * Matrix parameters (RFC 3986 {@code ;name=value}) are the second place the gate and the router can
      * disagree about a path: RESTEasy Reactive strips them before matching a resource, so {@code /api;x=1/settings}
      * is dispatched to {@code /api/settings} while the raw prefix check sees a path that does not start with
-     * {@code /api/}. Verified against a running server before the fix: every form below returned the real
-     * endpoint (200/202/204) with no session cookie, including {@code POST /api;x/system/quit}.
+     * {@code /api/}. The router reaches the real endpoint through every form below — {@code POST /api;x/system/quit}
+     * included — so every one of them has to be gated here.
      */
     @Test
     void matrixParameterFormsStillRequireASession() {
