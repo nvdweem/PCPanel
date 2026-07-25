@@ -13,6 +13,7 @@
 - New tray menu item **Copy UI link**: copies a one-time link to the interface onto your clipboard, ready to paste into any browser — handy if the interface didn't open on its own.
 - New **Set clipboard** button action: copies a piece of text you choose onto the clipboard when the button is pressed.
 - Saved integration secrets (OBS, MQTT, Home Assistant and Discord passwords and tokens) are no longer sent back to the browser: each shows as already configured, and you only enter a value when you want to change it.
+- **Security fix:** closed a hole in the web interface's access control (2.0.86). Another program on your PC could still reach the interface and change your settings — or shut PCPanel down — by dressing up the web address in a way the access check did not recognise but the app still accepted. Websites you visit were never able to read your settings this way. Updating is enough; nothing to change on your side.
 
 ## [2.0.84]
 

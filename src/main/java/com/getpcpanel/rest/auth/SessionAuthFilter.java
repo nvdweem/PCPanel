@@ -56,6 +56,7 @@ public class SessionAuthFilter {
         // fails the startsWith("/api/") check below yet still normalizes to a protected /api path that
         // RESTEasy Reactive matches and dispatches to — reaching the endpoint with no session. normalizedPath()
         // is exactly the value the router matches on, so the gate and the routing agree on what the path is.
+        // requiresSession() additionally strips matrix parameters, the other place the two can disagree.
         var path = ctx.normalizedPath();
         if (!requiresSession(path)) {
             ctx.next();
@@ -87,9 +88,37 @@ public class SessionAuthFilter {
      * Whether a request to this (router-normalized) path must carry a session: the gated API/WS surface,
      * minus {@link #BOOTSTRAP_PATH}, which mints the session and so cannot itself require one. Callers must
      * pass the normalized path (see {@link #guard}) so this decision matches what the router dispatches on.
+     *
+     * <p>Normalization alone is not enough: the path is gated if <em>either</em> its normalized form or its
+     * {@linkplain #withoutMatrixParams matrix-parameter-stripped} form names the API/WS surface, so a form
+     * that only one of the two recognises still fails closed. The exemption keys off the stripped form —
+     * the endpoint a request actually reaches — so it cannot be widened by decorating the path.
      */
     static boolean requiresSession(String path) {
-        return isProtected(path) && !BOOTSTRAP_PATH.equals(path);
+        var routed = withoutMatrixParams(path);
+        return (isProtected(path) || isProtected(routed)) && !BOOTSTRAP_PATH.equals(routed);
+    }
+
+    /**
+     * The normalized path with each segment's matrix parameters (RFC 3986 {@code ;name=value}) removed —
+     * the form RESTEasy Reactive matches resources on. The router drops those parameters before matching,
+     * so the gate has to see the same path: {@code /api;x=1/system/quit} does not start with {@code /api/}
+     * and would otherwise pass the prefix check ungated while still being dispatched to
+     * {@code /api/system/quit}. Only a literal {@code ;} matters — a percent-encoded {@code %3B} is not a
+     * parameter delimiter and is not matched as one by the router either.
+     */
+    static String withoutMatrixParams(String path) {
+        if (path.indexOf(';') < 0) {
+            return path;
+        }
+        var segments = path.split("/", -1);
+        for (var i = 0; i < segments.length; i++) {
+            var semicolon = segments[i].indexOf(';');
+            if (semicolon >= 0) {
+                segments[i] = segments[i].substring(0, semicolon);
+            }
+        }
+        return String.join("/", segments);
     }
 
     /**
