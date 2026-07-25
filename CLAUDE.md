@@ -72,9 +72,17 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
     ships cannot steal the Latest badge or hijack the AppImage self-update channel.
   - **Why the tag and not a file:** a release that edits `pom.xml` (and the AppStream metainfo) makes
     every forward merge of a maintenance branch into `main` conflict on the version line, because both
-    branches edit it from a common ancestor — permanently, not once. With the version only in the tag,
-    `releases/2.0` never touches a versioned file and merges forward cleanly. The AppStream `<release>`
-    entry is stamped at package time by `packaging/linux/stamp-metainfo.sh`.
+    branches edit it from a common ancestor — permanently, not once. Keeping the release version only in
+    the tag means a release itself touches no versioned file. The AppStream `<release>` entry is stamped
+    at package time by `packaging/linux/stamp-metainfo.sh`.
+  - **The post-release bump still collides, and that is handled in the merge, not by avoiding it.** The
+    bump below is a real `pom.xml` edit on the maintenance line, so `<project.baseversion>` does diverge
+    from `main`'s (`2.0.89` vs `2.1`) and every forward merge conflicts on exactly that line. `merge-forward.yml`
+    installs `packaging/merge-pom-version.sh` as a merge driver for `pom.xml`, which rewrites that one line
+    to `main`'s value in the base and incoming sides so it merges as unchanged — `main` is the newer line,
+    so its value always wins. Everything else in `pom.xml` merges or conflicts on its own merits, so a
+    dependency bump made on the maintenance line is never silently dropped, and a genuine conflict still
+    fails the run and opens the PR. Do not "fix" a version-line conflict by resolving the whole file.
   - **Ordering matters:** a snapshot is a *pre-release of the version it leads to*, so it sorts **below**
     that release (`2.0-SNAPSHOT (90) < 2.0 < 2.1-SNAPSHOT (1)`). `Version.SemVer` implements this SemVer
     precedence; never let a snapshot get a numeric part that outranks its own release (the old

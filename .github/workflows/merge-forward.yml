@@ -41,6 +41,21 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          # Resolve the one conflict that is structural rather than a real disagreement: both lines
+          # move pom.xml's <project.baseversion> away from their common ancestor after a release, so
+          # every forward merge collides on it with the same correct answer — main is the newer line,
+          # its value stays. packaging/merge-pom-version.sh resolves that line only, leaving any real
+          # pom change on the maintenance line to merge or conflict on its own merits.
+          #
+          # The driver and the attribute are taken from the pushed maintenance line and installed
+          # outside the tree (git reads .gitattributes from the working tree, which here is main's
+          # checkout), so this works on the first run, before main has either file.
+          driver="$RUNNER_TEMP/merge-pom-version.sh"
+          git show '${{ github.ref }}:packaging/merge-pom-version.sh' > "$driver"
+          git config merge.pomversion.name 'keep main pom.xml baseversion, merge the rest'
+          git config merge.pomversion.driver "bash '$driver' %O %A %B %L"
+          mkdir -p "$(git rev-parse --git-dir)/info"
+          echo 'pom.xml merge=pomversion' >> "$(git rev-parse --git-dir)/info/attributes"
           pre=$(git rev-parse HEAD)
           if ! git merge --no-ff -m 'Merge ${{ github.ref_name }} into main' 'origin/${{ github.ref_name }}'; then
             gh pr create --base main --head '${{ github.ref_name }}' \
