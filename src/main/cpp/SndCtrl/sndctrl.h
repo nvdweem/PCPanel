@@ -59,4 +59,7 @@ private:
     void BuildAudioPolicyConfigFactory();
 };
 
-extern unique_ptr<SndCtrl> pSndCtrl;
+// Published by the COM apartment thread that builds it and read by every JNI worker thread, so the
+// handoff is atomic. The instance deliberately outlives the pointer: its notification sinks are still
+// registered with WASAPI on that thread, so there is no point at which destroying it is safe.
+extern std::atomic<SndCtrl*> pSndCtrl;

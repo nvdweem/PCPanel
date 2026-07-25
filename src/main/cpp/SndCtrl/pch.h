@@ -24,6 +24,7 @@
 #include "comptr_compat.h"
 #include <jni.h>
 
+#include <atomic>
 #include <audioclient.h>
 #include <audiopolicy.h>
 #include <endpointvolume.h>

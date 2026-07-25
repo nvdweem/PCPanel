@@ -126,7 +126,10 @@ public:
         return Listener::QueryInterface(riid, ppv);
     }
 
-    virtual HRESULT STDMETHODCALLTYPE OnDeviceStateChanged(LPCWSTR pwstrDeviceId, DWORD dwNewState) { 
+    virtual HRESULT STDMETHODCALLTYPE OnDeviceStateChanged(LPCWSTR pwstrDeviceId, DWORD dwNewState) {
+        if (pwstrDeviceId == nullptr) {
+            return S_OK;
+        }
         if (dwNewState != DEVICE_STATE_ACTIVE) {
             return OnDeviceRemoved(pwstrDeviceId);
         }
@@ -147,13 +150,21 @@ public:
     }
     virtual HRESULT STDMETHODCALLTYPE OnPropertyValueChanged(LPCWSTR pwstrDeviceId, const PROPERTYKEY key) { return S_OK; }
     virtual HRESULT STDMETHODCALLTYPE OnDeviceAdded(LPCWSTR pwstrDeviceId) {
+        if (pwstrDeviceId == nullptr) {
+            return S_OK;
+        }
+        NULLRETURNVAL(cpEnumerator, S_OK);
         CComPtr<IMMDevice> cpDevice;
+        // GetDevice fails for an endpoint that is already gone again; DeviceAdded ignores a null device.
         cpEnumerator->GetDevice(pwstrDeviceId, &cpDevice);
         ctrl.DeviceAdded(cpDevice);
         return S_OK;
     }
 
     virtual HRESULT STDMETHODCALLTYPE OnDeviceRemoved(LPCWSTR pwstrDeviceId) {
+        if (pwstrDeviceId == nullptr) {
+            return S_OK;
+        }
         wstring tempStr(pwstrDeviceId);
         ctrl.DeviceRemoved(tempStr);
         return S_OK;
@@ -168,10 +179,12 @@ private:
 
 class DeviceVolumeListener : public Listener, public IAudioEndpointVolumeCallback {
 private:
-    JniCaller& jni;
+    // Held by value, not by reference to the AudioDevice's: unplugging the endpoint destroys that
+    // device while a volume notification for it can still be running on the WASAPI thread.
+    shared_ptr<JniCaller> jni;
     CComPtr<IAudioEndpointVolume> pVolume;
 public:
-    DeviceVolumeListener(CComPtr<IAudioEndpointVolume> pVolume, JniCaller& jni) : pVolume(pVolume), jni(jni) {
+    DeviceVolumeListener(CComPtr<IAudioEndpointVolume> pVolume, shared_ptr<JniCaller> jni) : pVolume(pVolume), jni(jni) {
     }
     virtual void Start() {
         NULLRETURN(pVolume);
@@ -183,9 +196,13 @@ public:
     }
 
     virtual HRESULT STDMETHODCALLTYPE OnNotify(PAUDIO_VOLUME_NOTIFICATION_DATA pNotify) {
+        NULLRETURNVAL(pNotify, S_OK);
+        // Unregistering happens on another thread, so hold a reference for the duration of the call
+        // and the last Release lands here instead of under this frame.
+        CComPtr<DeviceVolumeListener> self(this);
         JThread env;
-        if (*env) {
-            jni.CallVoid(env, "setState", "(FZ)V", pNotify->fMasterVolume, pNotify->bMuted);
+        if (*env && jni) {
+            jni->CallVoid(env, "setState", "(FZ)V", pNotify->fMasterVolume, pNotify->bMuted);
         }
         return S_OK;
     }
@@ -300,6 +317,9 @@ public:
     }
     virtual HRESULT STDMETHODCALLTYPE OnStateChanged(AudioSessionState NewState) {
         if (NewState == AudioSessionStateExpired) {
+            // Removing the session destroys this listener from another thread, so hold a reference
+            // across the call and the last Release lands here instead of under this frame.
+            CComPtr<AudioSessionListener> self(this);
             callback.SessionRemoved(session);
         }
         return S_OK;

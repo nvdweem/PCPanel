@@ -5,7 +5,7 @@
 #include "roapi.h"
 #include "winstring.h"
 
-unique_ptr<SndCtrl> pSndCtrl;
+std::atomic<SndCtrl*> pSndCtrl{ nullptr };
 wstring SndCtrl::MMDEVAPI_DEVICE_PREFIX = L"\\\\?\\SWD#MMDEVAPI#";
 wstring SndCtrl::MMDEVAPI_RENDER_POSTFIX = L"#{e6327cad-dcec-4949-ae8a-991e976a79d2}";
 wstring SndCtrl::MMDEVAPI_CAPTURE_POSTFIX = L"#{2eef81be-33fa-4800-9670-1cd474972c3f}";
@@ -68,8 +68,15 @@ void SndCtrl::InitDevices() {
 }
 
 void SndCtrl::DeviceAdded(CComPtr<IMMDevice> cpDevice) {
+    // The endpoint-notification path resolves the device by id, which fails when it disappears between
+    // the notification and the lookup.
+    NULLRETURN(cpDevice);
+
     std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
     auto nameAndId = DeviceNameId(*cpDevice);
+    // The id keys the device map and is the handle Java addresses the device by, so there is nothing
+    // to register without it. The friendly name is optional and renders empty when absent.
+    NULLRETURN(nameAndId.id);
     wstring deviceId(nameAndId.id.get());
 
     float volume = 0;
@@ -196,9 +203,11 @@ CComPtr<IMMDeviceCollection> SndCtrl::EnumAudioEndpoints(IMMDeviceEnumerator& en
 }
 
 UINT SndCtrl::GetCount(IMMDeviceCollection& collection) {
-    UINT count;
-    collection.GetCount(&count);
-    return count;;
+    UINT count = 0;
+    if (FAILED(collection.GetCount(&count))) {
+        return 0;
+    }
+    return count;
 }
 
 CComPtr<IMMDevice> SndCtrl::DeviceFromCollection(IMMDeviceCollection& collection, UINT idx) {
@@ -227,7 +236,17 @@ SDeviceNameId SndCtrl::DeviceNameId(IMMDevice& device) {
         }
     }
 
-    return SDeviceNameId{ co_ptr<WCHAR>(varName.pwszVal), co_ptr<WCHAR>(pwszID) };
+    // Only VT_LPWSTR carries a string in pwszVal. The property value comes from the device driver, so
+    // any other type would be reinterpreted as a pointer here and then both dereferenced and freed.
+    // Adopting pwszVal takes over its allocation, which is why only the non-string case clears.
+    LPWSTR pwszName = nullptr;
+    if (varName.vt == VT_LPWSTR) {
+        pwszName = varName.pwszVal;
+    } else {
+        PropVariantClear(&varName);
+    }
+
+    return SDeviceNameId{ co_ptr<WCHAR>(pwszName), co_ptr<WCHAR>(pwszID) };
 }
 
 CComPtr<IAudioEndpointVolume> SndCtrl::GetVolumeControl(IMMDevice& device) {
@@ -278,7 +297,7 @@ bool SndCtrl::SetPersistedDefaultAudioEndpoint(int pid, EDataFlow flow, wstring 
 
     if (!deviceId.empty()) {
         wstring fullDeviceId(MMDEVAPI_DEVICE_PREFIX + deviceId + (flow == eRender ? MMDEVAPI_RENDER_POSTFIX : MMDEVAPI_CAPTURE_POSTFIX));
-        auto hr = WindowsCreateString(fullDeviceId.c_str(), fullDeviceId.length(), &hDeviceId);
+        auto hr = WindowsCreateString(fullDeviceId.c_str(), static_cast<UINT32>(fullDeviceId.length()), &hDeviceId);
         if (FAILED(hr)) {
             return false;
         }
@@ -286,6 +305,7 @@ bool SndCtrl::SetPersistedDefaultAudioEndpoint(int pid, EDataFlow flow, wstring 
 
     auto hrCo = pPolicyConfigFactory->SetPersistedDefaultAudioEndpoint(pid, flow, eConsole, hDeviceId);
     auto hrMM = pPolicyConfigFactory->SetPersistedDefaultAudioEndpoint(pid, flow, eMultimedia, hDeviceId);
+    WindowsDeleteString(hDeviceId); // a no-op on the null handle that an empty device id leaves
     return SUCCEEDED(hrCo) && SUCCEEDED(hrMM);
 }
 
@@ -294,8 +314,13 @@ wstring SndCtrl::GetPersistedDefaultAudioEndpoint(int pid, EDataFlow flow) {
         return wstring();
     }
     HSTRING hDeviceId = nullptr;
-    auto hrMM = pPolicyConfigFactory->GetPersistedDefaultAudioEndpoint(pid, flow, eMultimedia | eConsole, &hDeviceId);
+    if (FAILED(pPolicyConfigFactory->GetPersistedDefaultAudioEndpoint(pid, flow, eMultimedia | eConsole, &hDeviceId))) {
+        return wstring();
+    }
 
-    UINT32 len;
-    return WindowsGetStringRawBuffer(hDeviceId, &len);
+    UINT32 len = 0;
+    auto* raw = WindowsGetStringRawBuffer(hDeviceId, &len);
+    wstring result = raw ? wstring(raw, len) : wstring();
+    WindowsDeleteString(hDeviceId);
+    return result;
 }

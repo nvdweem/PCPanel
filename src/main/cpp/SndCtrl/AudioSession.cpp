@@ -2,6 +2,7 @@
 #include "AudioSession.h"
 #include "helpers.h"
 #include <winver.h>
+#include <wchar.h>
 
 
 CComPtr<IAudioSessionControl2> GetSession2(IAudioSessionControl& control) {
@@ -46,7 +47,6 @@ void AudioSession::Init(JniCaller& audioDevice, AudioSessionListenerCB& callback
     }
 
     auto pname = GetProductName();
-    auto nameCopy = pname;
     JThread thread;
     if (*thread) {
         auto nameStr = thread.jstr(name.c_str());
@@ -83,11 +83,17 @@ basic_string<TCHAR> AudioSession::GetProductName() {
         return _T(""); // No version info (or name is not a readable file path).
     }
     std::vector<BYTE> data(dwFileVersionInfoSize);
-    LPVOID lpInfo;
-    UINT unInfoLen;
+    LPVOID lpInfo = nullptr;
+    UINT unInfoLen = 0;
     if (GetFileVersionInfo(name.c_str(), dwHandle, dwFileVersionInfoSize, data.data())) {
-        if (VerQueryValue(data.data(), _T("\\StringFileInfo\\040904B0\\ProductName"), &lpInfo, &unInfoLen))
-            return wstring((LPCTSTR)lpInfo);
+        if (VerQueryValue(data.data(), _T("\\StringFileInfo\\040904B0\\ProductName"), &lpInfo, &unInfoLen) && lpInfo && unInfoLen > 0) {
+            // unInfoLen bounds the read: the value is raw resource content from an arbitrary
+            // executable, so it carries no guarantee of a terminator inside the version block.
+            // VerQueryValue reports the length in characters, terminator included when present.
+            auto* chars = static_cast<LPCTSTR>(lpInfo);
+            size_t len = wcsnlen(chars, unInfoLen);
+            return wstring(chars, len);
+        }
     }
     return _T("");
 }
