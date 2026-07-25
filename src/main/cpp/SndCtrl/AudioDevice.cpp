@@ -6,7 +6,7 @@ AudioDevice::AudioDevice(wstring id, CComPtr<IMMDevice> cpDevice, EDataFlow data
     id(id),
     cpDevice(cpDevice),
     dataFlow(dataFlow),
-    jni(JniCaller::Create(obj)),
+    jni(JniCaller::CreateShared(obj)),
     cpVolume(GetVolumeControl(*cpDevice)),
     cpDeviceVolumeListener(new DeviceVolumeListener(cpVolume, jni)),
     cpSessionListener() {
@@ -81,7 +81,7 @@ void AudioDevice::SessionRemoved(AudioSession& session) {
 
         JThread thread;
         jlong pointer = reinterpret_cast<std::uintptr_t>(&session);
-        jni.CallVoid(thread, "removeSession", "(JI)V", pointer, pid);
+        jni->CallVoid(thread, "removeSession", "(JI)V", pointer, pid);
 
         auto entry = sessions.find(pid);
         if (entry != sessions.end()) {
@@ -115,7 +115,7 @@ void AudioDevice::SessionAdded(CComPtr<IAudioSessionControl> session) {
     auto raw = ptr.get();
     auto& target = sessions[pid];
     target.push_back(std::move(ptr));
-    raw->Init(jni, *this);
+    raw->Init(*jni, *this);
 }
 
 CComPtr<IAudioSessionManager2> AudioDevice::Activate(IMMDevice& device) {

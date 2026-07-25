@@ -8,7 +8,7 @@
 class AudioDevice : public SessionListenerCB, public AudioSessionListenerCB
 {
 private:
-    JniCaller jni;
+    shared_ptr<JniCaller> jni;
     CComPtr<IMMDevice> cpDevice;
     EDataFlow dataFlow;
     CComPtr<IAudioEndpointVolume> cpVolume;

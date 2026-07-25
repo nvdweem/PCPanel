@@ -63,6 +63,14 @@ public:
         return JniCaller(env, obj);
     }
 
+    // For owners that outlive the object holding them: a listener keeps its caller alive for as long
+    // as a notification can still be in flight, which is not bounded by the lifetime of whoever
+    // registered it.
+    static shared_ptr<JniCaller> CreateShared(jobject obj) {
+        JThread env;
+        return shared_ptr<JniCaller>(new JniCaller(env, obj));
+    }
+
 private:
     JniCaller(JThread& env, jobject obj): obj(nullptr) {
 #ifndef NO_JNI
@@ -80,11 +88,16 @@ public:
     ~JniCaller() {
 #ifndef NO_JNI
         JThread env;
-        if (*env) {
+        if (*env && this->obj) {
             env->DeleteGlobalRef(this->obj);
         }
 #endif
     }
+
+    // The global ref is owned, so a copy would release it twice. Construction always goes through
+    // Create/CreateShared, whose returned prvalue is elided rather than copied.
+    JniCaller(const JniCaller&) = delete;
+    JniCaller& operator=(const JniCaller&) = delete;
 
 #ifndef NO_JNI
     void CallVoid(JThread& env, const char* name, const char* sig, ...) {

@@ -297,7 +297,7 @@ bool SndCtrl::SetPersistedDefaultAudioEndpoint(int pid, EDataFlow flow, wstring 
 
     if (!deviceId.empty()) {
         wstring fullDeviceId(MMDEVAPI_DEVICE_PREFIX + deviceId + (flow == eRender ? MMDEVAPI_RENDER_POSTFIX : MMDEVAPI_CAPTURE_POSTFIX));
-        auto hr = WindowsCreateString(fullDeviceId.c_str(), fullDeviceId.length(), &hDeviceId);
+        auto hr = WindowsCreateString(fullDeviceId.c_str(), static_cast<UINT32>(fullDeviceId.length()), &hDeviceId);
         if (FAILED(hr)) {
             return false;
         }
@@ -305,6 +305,7 @@ bool SndCtrl::SetPersistedDefaultAudioEndpoint(int pid, EDataFlow flow, wstring 
 
     auto hrCo = pPolicyConfigFactory->SetPersistedDefaultAudioEndpoint(pid, flow, eConsole, hDeviceId);
     auto hrMM = pPolicyConfigFactory->SetPersistedDefaultAudioEndpoint(pid, flow, eMultimedia, hDeviceId);
+    WindowsDeleteString(hDeviceId); // a no-op on the null handle that an empty device id leaves
     return SUCCEEDED(hrCo) && SUCCEEDED(hrMM);
 }
 
@@ -313,8 +314,13 @@ wstring SndCtrl::GetPersistedDefaultAudioEndpoint(int pid, EDataFlow flow) {
         return wstring();
     }
     HSTRING hDeviceId = nullptr;
-    auto hrMM = pPolicyConfigFactory->GetPersistedDefaultAudioEndpoint(pid, flow, eMultimedia | eConsole, &hDeviceId);
+    if (FAILED(pPolicyConfigFactory->GetPersistedDefaultAudioEndpoint(pid, flow, eMultimedia | eConsole, &hDeviceId))) {
+        return wstring();
+    }
 
-    UINT32 len;
-    return WindowsGetStringRawBuffer(hDeviceId, &len);
+    UINT32 len = 0;
+    auto* raw = WindowsGetStringRawBuffer(hDeviceId, &len);
+    wstring result = raw ? wstring(raw, len) : wstring();
+    WindowsDeleteString(hDeviceId);
+    return result;
 }
