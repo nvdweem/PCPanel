@@ -139,7 +139,9 @@ public class SndCtrlWindows implements ISndCtrl {
         synchronized (devices) {
             var deviceId = defaultDeviceOnEmpty(device);
             StreamEx.ofValues(devices)
-                    .filter(d -> ("*".equals(device) && d.dataflow() == DataFlow.dfRender) || deviceId.equals(d.id()))
+                    // deviceId is null until the first default-device callback arrives, and stays null
+                    // while the machine has no default playback device; no device matches either way.
+                    .filter(d -> ("*".equals(device) && d.dataflow() == DataFlow.dfRender) || StringUtils.equals(deviceId, d.id()))
                     .flatCollection(d -> d.getSessions().values())
                     .filter(s -> (StringUtils.equalsIgnoreCase(fileName, AudioSession.SYSTEM) && s.isSystemSounds()) || (s.executable() != null && StringUtils.equalsIgnoreCase(fileName, s.executable().getName())))
                     .forEach(s -> setProcessVolume(s, volume));
