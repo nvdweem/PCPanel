@@ -143,10 +143,12 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
   — that only decides build-number comparison). Both need `startupVersionCheck` on, and the UI disables
   them otherwise.
 
-### Frontend (`src/main/webui`, Angular 21)
+### Frontend (`src/main/webui`, Angular 22)
 
 Managed by the Quinoa Quarkus extension — normally you don't run it directly; `quarkus:dev` proxies it.
 Standalone: `cd src/main/webui && npm install && npm start` (serves :4200, proxies `/api` + `/ws` to :7654).
+Quinoa uses the system Node (`package-manager-install=false`), and Angular CLI 22 requires **Node ≥
+22.22.3 / 24.15** — CI pins Node 24 via `actions/setup-node` in every frontend-building job.
 
 **TypeScript types are generated from Java**, not hand-written. The `typescript-generator-maven-plugin`
 (runs in the `compile` phase) writes `src/main/webui/src/app/models/generated/backend.types.ts` from
