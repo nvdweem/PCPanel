@@ -350,12 +350,19 @@ Key constraints baked into those args, change with care:
   Jackson-internal, not a project type), so the reliable check is to **run the native binary and curl the
   list/DTO REST endpoints** — JVM/dev mode never reproduces it.
 - **Discovery guards catch the above automatically — keep them green.** `ReflectionRegistrationCoverageTest`
-  walks the Jackson `Command` hierarchy's serialised property graph and fails if any concrete subtype, or
-  any concrete project record/class it reaches (plus the `Foo[]` array form for `List`/`Set` of a concrete
-  element), is missing from the `@RegisterForReflection`/reachability-metadata registrations — so a new
-  command or a record nested in one can't ship unregistered. `ProxyRegistrationCoverageTest` does the same
+  walks the Jackson-serialised property graph from **two root sets** — the `Command` hierarchy and the
+  return type of every JAX-RS resource method — and fails if any concrete subtype, or any concrete project
+  record/class it reaches (plus the `Foo[]` array form for `List`/`Set` of a concrete element), is missing
+  from the `@RegisterForReflection`/reachability-metadata registrations. So neither a new command, a record
+  nested in one, nor a new REST DTO can ship unregistered. `ProxyRegistrationCoverageTest` does the same
   for JNA `Library` proxies. Both run on every OS/JVM build, so the platform that forgot a registration
   need not be the one running the test. When one fails, add the named type to `NativeImageConfig`.
+- **Declare REST DTO registrations even when Quarkus would add them anyway.** Quarkus registers REST
+  signature types itself, so some entries in `NativeImageConfig` are redundant in practice — declare them
+  regardless. Auto-registration is an implementation detail nothing in this repo asserts, it has already
+  proven insufficient for array forms (`WaveLinkResponseDto`), and a redundant registration costs nothing
+  at runtime (GraalVM unions them). Declaring it is what makes the requirement checkable by the guard
+  above instead of resting on framework behaviour. Do not "fix" a guard failure by deleting the assertion.
 - **jSerialComm (the Deej serial provider) is pinned to 2.10.2** — the last release before it bundled
   an Android USB-serial driver (2.10.3+), whose `android.*` references fail the native build under
   `--link-at-build-time` (we never run on Android). It also can't self-extract its bundled native lib

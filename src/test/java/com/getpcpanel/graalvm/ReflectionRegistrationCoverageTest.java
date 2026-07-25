@@ -4,7 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
@@ -14,6 +16,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Stream;
+
+import jakarta.ws.rs.HttpMethod;
+import jakarta.ws.rs.core.Response;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,8 +31,11 @@ import com.getpcpanel.commands.command.Command;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
 /**
- * Discovery guard: finds missing native-image <em>reflection</em> registrations for the Jackson
- * {@link Command} hierarchy <em>without being told which to look for</em>.
+ * Discovery guard: finds missing native-image <em>reflection</em> registrations <em>without being told
+ * which to look for</em>. It walks the Jackson-serialised property graph from two root sets — the
+ * {@link Command} hierarchy (serialised into the profile and the WebSocket device snapshots) and the
+ * return types of every JAX-RS resource method — and fails on any reachable project type the native
+ * image is not told it needs reflective access to.
  *
  * <p>Every {@link Command} subtype is serialised to/from JSON via {@code @JsonTypeInfo(use=Id.NAME)}
  * with an explicit subtype allowlist — each command package contributes a {@code CommandModule} bean,
@@ -59,7 +67,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
  * Enums and interfaces/abstract types are not themselves required here (enums serialise by name; the
  * concrete leaves of abstract hierarchies are discovered separately as roots).
  */
-@DisplayName("native-image reflection registration coverage (Command hierarchy)")
+@DisplayName("native-image reflection registration coverage (Command hierarchy + REST responses)")
 class ReflectionRegistrationCoverageTest {
 
     private static final String REACHABILITY_METADATA = "/META-INF/native-image/reachability-metadata.json";
@@ -79,7 +87,6 @@ class ReflectionRegistrationCoverageTest {
 
         var mapper = new ObjectMapper();
         var missing = new TreeSet<String>();
-        var visited = new HashSet<Class<?>>();
         Deque<Class<?>> queue = new ArrayDeque<>(roots);
 
         // Every concrete Command subtype must itself be registered.
@@ -87,16 +94,7 @@ class ReflectionRegistrationCoverageTest {
             requireType(root, registered, missing);
         }
 
-        // Walk the Jackson-serialised property graph reachable from each command.
-        while (!queue.isEmpty()) {
-            var clazz = queue.poll();
-            if (!visited.add(clazz)) {
-                continue;
-            }
-            for (var prop : mapper.getSerializationConfig().introspect(mapper.constructType(clazz)).findProperties()) {
-                inspectType(prop.getPrimaryType(), registered, missing, queue);
-            }
-        }
+        walkSerialisedGraph(queue, mapper, registered, missing);
 
         if (!missing.isEmpty()) {
             fail("""
@@ -110,6 +108,114 @@ class ReflectionRegistrationCoverageTest {
                     Missing:
                     %s""".formatted(missing.stream().map(n -> "  " + n).reduce((a, b) -> a + "\n" + b).orElse("")));
         }
+    }
+
+    /**
+     * Same guard, rooted at the REST layer instead of the {@link Command} hierarchy: every project type
+     * a resource method returns must be declared, and a {@code List<Foo>} must declare {@code Foo[]} too.
+     *
+     * <p>Quarkus registers REST signature types itself, so some of what this requires is redundant in
+     * practice. Requiring it regardless is the point: framework auto-registration is an implementation
+     * detail nothing here asserts, and it has already proven insufficient for array forms
+     * (WaveLinkResponseDto needed them spelled out). Declaring a type that is already reachable costs
+     * nothing at runtime, and it turns "hopefully Quarkus covers this" into an invariant the build checks.
+     *
+     * <p>Complements {@code RestDtoSerializationSmokeTest}, which discovers the same endpoints but answers
+     * a different question: it serialises a populated instance to prove Jackson <em>can</em> write the
+     * shape, which fails identically in JVM and native. This one proves the native image is <em>told</em>
+     * it may do so reflectively — a gap that is invisible in JVM mode, where reflection always works.
+     * Neither subsumes the other, and hitting the live endpoints answers neither: those lists are
+     * hardware- and audio-dependent, so CI sees them empty.
+     */
+    @Test
+    @DisplayName("every project type returned by a REST resource is registered for reflection")
+    void everySerialisedRestResponseTypeIsRegistered() throws Exception {
+        var registered = readRegisteredReflectionTypeNames();
+        var mapper = new ObjectMapper();
+        var missing = new TreeSet<String>();
+        Deque<Class<?>> queue = new ArrayDeque<>();
+
+        var returnTypes = findRestResponseTypes();
+        assertTrue(returnTypes.size() >= 10,
+                "sanity: expected to discover the JAX-RS resource method return types on the classpath, found "
+                        + returnTypes.size());
+
+        for (var returnType : returnTypes) {
+            inspectType(mapper.constructType(returnType), registered, missing, queue);
+        }
+        walkSerialisedGraph(queue, mapper, registered, missing);
+
+        if (!missing.isEmpty()) {
+            fail("""
+                    These project types are reachable through Jackson serialisation of a REST response but \
+                    are NOT declared for native-image reflection. Add each to the @RegisterForReflection \
+                    targets in NativeImageConfig (or on the response DTO) — and for a List/Set of a concrete \
+                    type, add BOTH the element type AND its array form (Foo.class, Foo[].class). Declare them \
+                    even if Quarkus would register them anyway: it costs nothing and keeps the requirement \
+                    checkable rather than resting on framework behaviour.
+
+                    Missing:
+                    %s""".formatted(missing.stream().map(n -> "  " + n).reduce((a, b) -> a + "\n" + b).orElse("")));
+        }
+    }
+
+    /**
+     * Breadth-first walk of the Jackson-serialised property graph reachable from the queued roots,
+     * recording every concrete project type that is not registered.
+     */
+    private static void walkSerialisedGraph(Deque<Class<?>> queue, ObjectMapper mapper,
+            Set<String> registered, Set<String> missing) {
+        var visited = new HashSet<Class<?>>();
+        while (!queue.isEmpty()) {
+            var clazz = queue.poll();
+            if (!visited.add(clazz)) {
+                continue;
+            }
+            for (var prop : mapper.getSerializationConfig().introspect(mapper.constructType(clazz)).findProperties()) {
+                inspectType(prop.getPrimaryType(), registered, missing, queue);
+            }
+        }
+    }
+
+    /**
+     * Generic return types of every JAX-RS resource method in the project. Verbs are found via the
+     * {@link HttpMethod} meta-annotation, so this covers {@code @GET}/{@code @POST}/{@code @PUT}/
+     * {@code @DELETE} alike. {@code void} and {@link Response} say nothing about the serialised body, so
+     * they are skipped — an endpoint that hand-builds a {@code Response} is outside what this can see.
+     */
+    private static Set<Type> findRestResponseTypes() throws Exception {
+        var mainClassesRoot = projectMainClassesRoot();
+        var loader = ReflectionRegistrationCoverageTest.class.getClassLoader();
+        var result = new HashSet<Type>();
+        try (Stream<Path> walk = Files.walk(mainClassesRoot.resolve("com").resolve("getpcpanel"))) {
+            for (var classFile : walk.filter(p -> p.toString().endsWith(".class")).toList()) {
+                Class<?> clazz;
+                try {
+                    clazz = Class.forName(toBinaryName(mainClassesRoot, classFile), false, loader);
+                } catch (Throwable e) { // NoClassDefFoundError for optional platform deps etc.
+                    continue;
+                }
+                if (!clazz.isAnnotationPresent(jakarta.ws.rs.Path.class)) {
+                    continue;
+                }
+                for (var method : clazz.getMethods()) {
+                    if (isResourceMethod(method) && method.getReturnType() != void.class
+                            && method.getReturnType() != Response.class) {
+                        result.add(method.getGenericReturnType());
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    private static boolean isResourceMethod(Method method) {
+        for (var annotation : method.getAnnotations()) {
+            if (annotation.annotationType().isAnnotationPresent(HttpMethod.class)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Require a single (possibly array) type to be registered, recording a violation if it is not. */

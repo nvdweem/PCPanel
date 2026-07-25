@@ -25,8 +25,13 @@ import com.getpcpanel.integration.keyboard.command.CommandMedia;
 import com.getpcpanel.integration.keyboard.command.CommandMedia.VolumeButton;
 import com.getpcpanel.integration.mqtt.MqttDeviceService;
 import com.getpcpanel.integration.mqtt.MqttHomeAssistantHelper;
+import com.getpcpanel.integration.volume.platform.AudioDevice;
+import com.getpcpanel.integration.volume.platform.AudioSession;
+import com.getpcpanel.integration.volume.platform.ISndCtrl;
 import com.getpcpanel.integration.volume.platform.osx.CoreAudioLib;
 import com.getpcpanel.integration.volume.platform.osx.CoreAudioTapLib;
+import com.getpcpanel.integration.discord.rest.dto.DiscordStatusDto;
+import com.getpcpanel.integration.voicemeeter.rest.VoiceMeeterResource;
 import com.getpcpanel.integration.mqtt.command.CommandMqttPublish;
 import com.getpcpanel.commands.command.CommandNoOp;
 import com.getpcpanel.integration.obs.command.CommandObs;
@@ -112,9 +117,14 @@ import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig.SINGLE_SLIDER_
 import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
 import com.getpcpanel.profile.dto.SingleSliderLightingConfig.SINGLE_SLIDER_MODE;
 import com.getpcpanel.integration.wavelink.dto.WaveLinkSettings;
+import com.getpcpanel.rest.PlatformResource;
 import com.getpcpanel.rest.model.dto.AddDeejDeviceDto;
+import com.getpcpanel.rest.model.dto.DeviceDto;
 import com.getpcpanel.rest.model.dto.MidiDeviceDto;
 import com.getpcpanel.rest.model.dto.OnboardingDto;
+import com.getpcpanel.rest.model.dto.ProcessDto;
+import com.getpcpanel.rest.model.dto.ProfileDto;
+import com.getpcpanel.rest.model.dto.ProfileSettingsDto;
 import com.getpcpanel.rest.model.dto.SerialPortDto;
 import com.getpcpanel.integration.wavelink.command.CommandWaveLink;
 import com.getpcpanel.integration.wavelink.command.CommandWaveLinkAddFocusToChannel;
@@ -398,6 +408,29 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         FocusVolumeOverride[].class,
         FocusVolumeTarget.class,
         FocusVolumeTarget[].class,
+
+        // Types a JAX-RS resource method returns. Quarkus registers REST signature types itself, so
+        // several of these are redundant today — they are declared anyway, because relying on that
+        // leaves the project's correctness resting on framework behaviour nothing here asserts, and it
+        // has already proven insufficient for array forms (see WaveLinkResponseDto). Declaring them is
+        // free at runtime (GraalVM unions the registrations) and makes the requirement explicit and
+        // checkable: ReflectionRegistrationCoverageTest walks every resource method return type and
+        // fails the build on anything absent here, so a new REST DTO cannot ship unregistered.
+        // A List<Foo> needs BOTH Foo and Foo[] — Jackson instantiates the array reflectively per
+        // collection, which only happens once the list is non-empty.
+        AudioDevice[].class,
+        AudioSession[].class,
+        ISndCtrl.RunningApplication[].class,
+        DeviceDto[].class,
+        MidiDeviceDto[].class,
+        ProcessDto[].class,
+        ProfileDto[].class,
+        ProfileSettingsDto.class,
+        SerialPortDto[].class,
+        OSCConnectionInfo[].class,
+        DiscordStatusDto.class,
+        PlatformResource.PlatformInfo.class,
+        VoiceMeeterResource.VoiceMeeterParam[].class,
 }, classNames = {
         // Jackson selects FileSerializer at runtime to serialise a java.io.File field (e.g.
         // ISndCtrl.RunningApplication.file, returned by GET /api/audio/applications). Its no-arg
