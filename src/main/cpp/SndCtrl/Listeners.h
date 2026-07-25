@@ -126,7 +126,10 @@ public:
         return Listener::QueryInterface(riid, ppv);
     }
 
-    virtual HRESULT STDMETHODCALLTYPE OnDeviceStateChanged(LPCWSTR pwstrDeviceId, DWORD dwNewState) { 
+    virtual HRESULT STDMETHODCALLTYPE OnDeviceStateChanged(LPCWSTR pwstrDeviceId, DWORD dwNewState) {
+        if (pwstrDeviceId == nullptr) {
+            return S_OK;
+        }
         if (dwNewState != DEVICE_STATE_ACTIVE) {
             return OnDeviceRemoved(pwstrDeviceId);
         }
@@ -147,13 +150,21 @@ public:
     }
     virtual HRESULT STDMETHODCALLTYPE OnPropertyValueChanged(LPCWSTR pwstrDeviceId, const PROPERTYKEY key) { return S_OK; }
     virtual HRESULT STDMETHODCALLTYPE OnDeviceAdded(LPCWSTR pwstrDeviceId) {
+        if (pwstrDeviceId == nullptr) {
+            return S_OK;
+        }
+        NULLRETURNVAL(cpEnumerator, S_OK);
         CComPtr<IMMDevice> cpDevice;
+        // GetDevice fails for an endpoint that is already gone again; DeviceAdded ignores a null device.
         cpEnumerator->GetDevice(pwstrDeviceId, &cpDevice);
         ctrl.DeviceAdded(cpDevice);
         return S_OK;
     }
 
     virtual HRESULT STDMETHODCALLTYPE OnDeviceRemoved(LPCWSTR pwstrDeviceId) {
+        if (pwstrDeviceId == nullptr) {
+            return S_OK;
+        }
         wstring tempStr(pwstrDeviceId);
         ctrl.DeviceRemoved(tempStr);
         return S_OK;

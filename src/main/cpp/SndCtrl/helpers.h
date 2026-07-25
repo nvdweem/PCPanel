@@ -15,6 +15,7 @@ extern std::recursive_mutex g_audioMutex;
 #undef DEBUG
 
 #define NULLRETURN(x) if (!x) return;
+#define NULLRETURNVAL(x, v) if (!(x)) return v;
 #define NULLCONTINUE(x) if (!x) continue;
 
 template<class T> T* notNull(T* t, int line, const char* file) {

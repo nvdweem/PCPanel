@@ -131,8 +131,10 @@ CComPtr<IAudioSessionEnumerator> AudioDevice::GetSessionEnumerator(IAudioSession
 }
 
 int AudioDevice::GetCount(IAudioSessionEnumerator& collection) {
-    int sessionCount;
-    collection.GetCount(&sessionCount);
+    int sessionCount = 0;
+    if (FAILED(collection.GetCount(&sessionCount))) {
+        return 0;
+    }
     return sessionCount;
 }
 
