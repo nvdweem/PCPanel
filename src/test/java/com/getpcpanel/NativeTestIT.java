@@ -1,7 +1,11 @@
 package com.getpcpanel;
 
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.emptyOrNullString;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.not;
+
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
@@ -38,5 +42,42 @@ public class NativeTestIT {
                 .when().get("/api/overlay/fonts")
                 .then().statusCode(200)
                 .body("size()", greaterThan(0));
+    }
+
+    /**
+     * Serialises the {@code PlatformInfo} record, which is always populated regardless of hardware. A
+     * record reached only through a REST return type is exactly the shape that throws
+     * {@code MissingReflectionRegistrationError} in the image while working in JVM/dev, so asserting a
+     * real field is non-blank proves Jackson could actually read it reflectively.
+     */
+    @Test
+    public void platformInfoSerialises() {
+        given()
+                .when().get("/api/platform")
+                .then().statusCode(200)
+                .body("os", not(emptyOrNullString()));
+    }
+
+    /**
+     * The DTO-list endpoints. These are where the native reflection gap bites: a {@code List<SomeDto>}
+     * also needs {@code SomeDto[]} registered, because Jackson instantiates that array reflectively per
+     * collection.
+     *
+     * <p>Only the status is asserted, deliberately. Every one of these lists is sourced from
+     * {@link com.getpcpanel.integration.volume.platform.ISndCtrl}, which degrades to a no-op on a
+     * headless CI runner, so none of them can be relied on to be non-empty here — and an <em>empty</em>
+     * list never instantiates the array, so it cannot prove the array form is registered. What this does
+     * catch is every other native-only failure on these paths (an unregistered element record, a missing
+     * Jackson {@code StdSerializer} for a field type, a platform bean that fails to resolve in the
+     * image), and it catches the array gap too on any runner that does have audio state. Closing the
+     * array case for certain needs a fixture that forces a non-empty list; see CLAUDE.md.
+     */
+    @Test
+    public void dtoListEndpointsSerialise() {
+        for (var path : List.of("/api/processes",
+                "/api/audio/devices", "/api/audio/devices/output", "/api/audio/devices/input",
+                "/api/audio/sessions", "/api/audio/applications")) {
+            given().when().get(path).then().statusCode(200);
+        }
     }
 }
