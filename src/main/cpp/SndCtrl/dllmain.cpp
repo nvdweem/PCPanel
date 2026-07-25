@@ -25,5 +25,5 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 }
 
 void JNI_OnUnload(JavaVM* vm, void* reserved) {
-    pSndCtrl.release();
+    pSndCtrl.store(nullptr);
 }

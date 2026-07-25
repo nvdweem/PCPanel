@@ -46,7 +46,7 @@ JNIEXPORT void JNICALL Java_com_getpcpanel_integration_volume_platform_windows_S
     std::thread([globalObj]() {
         JThread thread; // attaches this thread to the JVM for its whole lifetime
         if (*thread) {
-            pSndCtrl = make_unique<SndCtrl>(thread.raw(), globalObj);
+            pSndCtrl.store(new SndCtrl(thread.raw(), globalObj));
             thread->DeleteGlobalRef(globalObj);
         }
         MSG msg;
@@ -64,9 +64,10 @@ JNIEXPORT void JNICALL Java_com_getpcpanel_integration_volume_platform_windows_S
  */
 JNIEXPORT void JNICALL Java_com_getpcpanel_integration_volume_platform_windows_SndCtrlNative_setDeviceVolume(JNIEnv* env, jobject, jstring jDeviceId, jfloat volume) {
     //cout << "Java_com_getpcpanel_integration_volume_platform_windows_SndCtrlNative_setDeviceVolume" << endl;
-    if (!pSndCtrl) return;
+    auto* ctrl = pSndCtrl.load();
+    if (!ctrl) return;
     auto deviceId = str(env, jDeviceId);
-    pSndCtrl->SetDeviceVolume(deviceId, volume);
+    ctrl->SetDeviceVolume(deviceId, volume);
 }
 
 /*
@@ -76,9 +77,10 @@ JNIEXPORT void JNICALL Java_com_getpcpanel_integration_volume_platform_windows_S
  */
 JNIEXPORT void JNICALL Java_com_getpcpanel_integration_volume_platform_windows_SndCtrlNative_setProcessVolume(JNIEnv* env, jobject, jstring jDeviceId, jint pid, jfloat volume) {
     //cout << "Java_com_getpcpanel_integration_volume_platform_windows_SndCtrlNative_setProcessVolume" << endl;
-    if (!pSndCtrl) return;
+    auto* ctrl = pSndCtrl.load();
+    if (!ctrl) return;
     auto deviceId = str(env, jDeviceId);
-    pSndCtrl->SetProcessVolume(deviceId, pid, volume);
+    ctrl->SetProcessVolume(deviceId, pid, volume);
 }
 
 /*
@@ -88,8 +90,9 @@ JNIEXPORT void JNICALL Java_com_getpcpanel_integration_volume_platform_windows_S
  */
 JNIEXPORT void JNICALL Java_com_getpcpanel_integration_volume_platform_windows_SndCtrlNative_setFocusVolume(JNIEnv*, jobject, jfloat volume) {
     //cout << "Java_com_getpcpanel_integration_volume_platform_windows_SndCtrlNative_setFocusVolume" << endl;
-    if (!pSndCtrl) return;
-    pSndCtrl->SetFocusVolume(volume);
+    auto* ctrl = pSndCtrl.load();
+    if (!ctrl) return;
+    ctrl->SetFocusVolume(volume);
 }
 
 /*
@@ -99,9 +102,10 @@ JNIEXPORT void JNICALL Java_com_getpcpanel_integration_volume_platform_windows_S
  */
 JNIEXPORT void JNICALL Java_com_getpcpanel_integration_volume_platform_windows_SndCtrlNative_setDefaultDevice(JNIEnv* env, jobject, jstring jDevice, jint dataFlow, jint role) {
     //cout << "Java_com_getpcpanel_integration_volume_platform_windows_SndCtrlNative_setDefaultDevice" << endl;
-    if (!pSndCtrl) return;
+    auto* ctrl = pSndCtrl.load();
+    if (!ctrl) return;
     auto device = str(env, jDevice);
-    pSndCtrl->UpdateDefaultDevice(device, (EDataFlow) dataFlow, (ERole) role);
+    ctrl->UpdateDefaultDevice(device, (EDataFlow) dataFlow, (ERole) role);
 }
 
 /*
@@ -111,9 +115,10 @@ JNIEXPORT void JNICALL Java_com_getpcpanel_integration_volume_platform_windows_S
  */
 JNIEXPORT void JNICALL Java_com_getpcpanel_integration_volume_platform_windows_SndCtrlNative_muteDevice(JNIEnv* env, jobject, jstring jDevice, jboolean muted) {
     //cout << "Java_com_getpcpanel_integration_volume_platform_windows_SndCtrlNative_muteDevice" << endl;
-    if (!pSndCtrl) return;
+    auto* ctrl = pSndCtrl.load();
+    if (!ctrl) return;
     auto device = str(env, jDevice);
-    pSndCtrl->MuteDevice(device, muted);
+    ctrl->MuteDevice(device, muted);
 }
 
 /*
@@ -123,9 +128,10 @@ JNIEXPORT void JNICALL Java_com_getpcpanel_integration_volume_platform_windows_S
  */
 JNIEXPORT void JNICALL Java_com_getpcpanel_integration_volume_platform_windows_SndCtrlNative_muteSession(JNIEnv* env, jobject, jstring jDevice, jint pid, jboolean muted) {
     //cout << "Java_com_getpcpanel_integration_volume_platform_windows_SndCtrlNative_muteSession" << endl;
-    if (!pSndCtrl) return;
+    auto* ctrl = pSndCtrl.load();
+    if (!ctrl) return;
     auto device = str(env, jDevice);
-    pSndCtrl->MuteProcess(device, pid, muted);
+    ctrl->MuteProcess(device, pid, muted);
 }
 
 /*
@@ -146,9 +152,10 @@ JNIEXPORT jstring JNICALL Java_com_getpcpanel_integration_volume_platform_window
  * Signature: (IILjava/lang/String;)Z
  */
 JNIEXPORT jboolean JNICALL Java_com_getpcpanel_integration_volume_platform_windows_SndCtrlNative_setPersistedDefaultAudioEndpoint(JNIEnv* env, jobject, jint pid, jint flow, jstring jDeviceId) {
-    if (!pSndCtrl) return false;
+    auto* ctrl = pSndCtrl.load();
+    if (!ctrl) return false;
     auto device = str(env, jDeviceId);
-    return pSndCtrl->SetPersistedDefaultAudioEndpoint(pid, (EDataFlow) flow, device);
+    return ctrl->SetPersistedDefaultAudioEndpoint(pid, (EDataFlow) flow, device);
 }
 
 /*
@@ -157,8 +164,9 @@ JNIEXPORT jboolean JNICALL Java_com_getpcpanel_integration_volume_platform_windo
  * Signature: (II)Ljava/lang/String;
  */
 JNIEXPORT jstring JNICALL Java_com_getpcpanel_integration_volume_platform_windows_SndCtrlNative_getPersistedDefaultAudioEndpoint(JNIEnv* env, jobject, jint pid, jint flow) {
-    if (!pSndCtrl) return env->NewString((jchar*) L"", 0);
-    auto result = pSndCtrl->GetPersistedDefaultAudioEndpoint(pid, (EDataFlow) flow);
+    auto* ctrl = pSndCtrl.load();
+    if (!ctrl) return env->NewString((jchar*) L"", 0);
+    auto result = ctrl->GetPersistedDefaultAudioEndpoint(pid, (EDataFlow) flow);
     return env->NewString((jchar*) result.c_str(), (jsize)result.length());
 }
 
@@ -168,8 +176,9 @@ JNIEXPORT jstring JNICALL Java_com_getpcpanel_integration_volume_platform_window
  * Signature: ()Z
  */
 JNIEXPORT jboolean JNICALL Java_com_getpcpanel_integration_volume_platform_windows_SndCtrlNative_hasAudioPolicyConfigFactory(JNIEnv*, jobject) {
-    if (!pSndCtrl) return false;
-    return pSndCtrl->HasAudioPolicyConfigFactory();
+    auto* ctrl = pSndCtrl.load();
+    if (!ctrl) return false;
+    return ctrl->HasAudioPolicyConfigFactory();
 }
 
 /*
@@ -178,8 +187,9 @@ JNIEXPORT jboolean JNICALL Java_com_getpcpanel_integration_volume_platform_windo
  * Signature: ()V
  */
 JNIEXPORT void JNICALL Java_com_getpcpanel_integration_volume_platform_windows_SndCtrlNative_triggerAv(JNIEnv*, jobject) {
-    new std::thread([](){
+    std::thread([](){
         Sleep(1000);
-        if (pSndCtrl) pSndCtrl->TriggerAv();
-    });
+        auto* ctrl = pSndCtrl.load();
+        if (ctrl) ctrl->TriggerAv();
+    }).detach();
 }

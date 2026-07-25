@@ -5,7 +5,7 @@
 #include "roapi.h"
 #include "winstring.h"
 
-unique_ptr<SndCtrl> pSndCtrl;
+std::atomic<SndCtrl*> pSndCtrl{ nullptr };
 wstring SndCtrl::MMDEVAPI_DEVICE_PREFIX = L"\\\\?\\SWD#MMDEVAPI#";
 wstring SndCtrl::MMDEVAPI_RENDER_POSTFIX = L"#{e6327cad-dcec-4949-ae8a-991e976a79d2}";
 wstring SndCtrl::MMDEVAPI_CAPTURE_POSTFIX = L"#{2eef81be-33fa-4800-9670-1cd474972c3f}";
