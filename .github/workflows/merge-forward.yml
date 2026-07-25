@@ -1,0 +1,58 @@
+# Merges every push on a maintenance line (releases/**) forward into main automatically,
+# implementing the merge-forward policy from CLAUDE.md (a real merge with shared ancestry,
+# never cherry-picks) without the manual step. A clean merge is pushed directly; a conflict
+# fails the run and opens a releases/X.Y -> main pull request so a human resolves it there.
+#
+# If two maintenance lines ever coexist (releases/2.0 and releases/2.1), the policy says the
+# older line chains through the newer one (2.0 -> 2.1 -> main) — this workflow merges straight
+# into main, so it needs adjusting at that point.
+#
+# Requires main to allow direct pushes from the default GITHUB_TOKEN; if main ever gets a
+# branch protection rule blocking that, switch to a PAT or GitHub App token.
+
+name: Merge forward
+on:
+  push:
+    branches: ['releases/**']
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+# Serialize merges into main so concurrent release-line pushes can't race each other.
+concurrency:
+  group: merge-forward-main
+  cancel-in-progress: false
+
+jobs:
+  merge:
+    name: Merge ${{ github.ref_name }} into main
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Merge and push
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          pre=$(git rev-parse HEAD)
+          if ! git merge --no-ff -m 'Merge ${{ github.ref_name }} into main' 'origin/${{ github.ref_name }}'; then
+            gh pr create --base main --head '${{ github.ref_name }}' \
+              --title 'Merge ${{ github.ref_name }} into main' \
+              --body 'Automatic merge-forward hit conflicts. Resolve and merge manually (regular merge, not squash/rebase, to keep ancestry).' \
+              || true
+            exit 1
+          fi
+          git push origin main
+          # Pushes made with the default GITHUB_TOKEN never trigger other on-push workflows,
+          # so kick the dependency snapshot manually when the merge changed pom.xml.
+          if ! git diff --quiet "$pre" HEAD -- pom.xml; then
+            gh workflow run dependency-submission.yml --ref main
+          fi
