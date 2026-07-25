@@ -1,0 +1,41 @@
+# Submits the fully resolved Maven dependency tree to GitHub's dependency graph, so
+# Dependabot alerts cover transitive Java dependencies too. Without this the graph only
+# parses pom.xml textually and sees direct dependencies — the bulk of the Java attack
+# surface (everything pulled in by Quarkus, JNA, Paho, …) would be invisible to CVE
+# scanning. The npm lockfiles need no help: the graph reads package-lock.json natively.
+#
+# Alerts are keyed to the default branch's snapshot, so this only needs to run on main,
+# and only when the dependency set can actually change.
+
+name: Dependency submission
+env:
+  JAVA_VERSION: '25'        # GraalVM CE 25 — keep in sync with build-and-release.yml
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - pom.xml
+      - .github/workflows/dependency-submission.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write           # required by the dependency submission API
+
+jobs:
+  submit:
+    name: Submit Maven dependency snapshot
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Set up GraalVM CE
+        uses: graalvm/setup-graalvm@6f3fa030c4b8f77c1f554a860f593a654538fa38 # v1.5.6
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'graalvm-community'
+          cache: 'maven'
+
+      - name: Submit dependency snapshot
+        uses: advanced-security/maven-dependency-submission-action@b275d12641ac2d2108b2cbb7598b154ad2f2cee8 # v5.0.0
