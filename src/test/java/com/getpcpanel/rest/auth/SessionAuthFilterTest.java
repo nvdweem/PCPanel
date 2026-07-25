@@ -63,6 +63,47 @@ class SessionAuthFilterTest {
         assertTrue(SessionAuthFilter.requiresSession("/api/settings"));
     }
 
+    /**
+     * Matrix parameters (RFC 3986 {@code ;name=value}) are the second place the gate and the router can
+     * disagree about a path: RESTEasy Reactive strips them before matching a resource, so {@code /api;x=1/settings}
+     * is dispatched to {@code /api/settings} while the raw prefix check sees a path that does not start with
+     * {@code /api/}. The router reaches the real endpoint through every form below — {@code POST /api;x/system/quit}
+     * included — so every one of them has to be gated here.
+     */
+    @Test
+    void matrixParameterFormsStillRequireASession() {
+        assertTrue(SessionAuthFilter.requiresSession("/api;x=1/settings"));
+        assertTrue(SessionAuthFilter.requiresSession("/api;/settings"));
+        assertTrue(SessionAuthFilter.requiresSession("/api;a=b;c=d/system/quit"));
+        assertTrue(SessionAuthFilter.requiresSession("/ws;a=b/events"));
+        // ...and combined with the normalization forms the guard already collapses.
+        assertTrue(SessionAuthFilter.requiresSession("/api;a=b/./settings"));
+    }
+
+    /** A decorated bootstrap path is still the bootstrap endpoint, so it stays exempt rather than 401-ing. */
+    @Test
+    void aDecoratedBootstrapPathIsStillExempt() {
+        assertFalse(SessionAuthFilter.requiresSession("/api;x=1/auth/bootstrap"));
+        assertFalse(SessionAuthFilter.requiresSession("/api/auth/bootstrap;x=1"));
+    }
+
+    /** Stripping must not turn an unprotected static path into a protected one, or the UI shell 401s. */
+    @Test
+    void staticPathsAreUnaffectedByMatrixStripping() {
+        assertFalse(SessionAuthFilter.requiresSession("/index.html"));
+        assertFalse(SessionAuthFilter.requiresSession("/main-ABC123.js"));
+        assertFalse(SessionAuthFilter.requiresSession("/assets/icon.png;v=2"));
+    }
+
+    @Test
+    void withoutMatrixParamsStripsEverySegment() {
+        assertEquals("/api/settings", SessionAuthFilter.withoutMatrixParams("/api;x=1/settings"));
+        assertEquals("/api/settings", SessionAuthFilter.withoutMatrixParams("/api;a=b;c=d/settings;e=f"));
+        // Untouched when there is nothing to strip, and a percent-encoded ';' is not a delimiter.
+        assertEquals("/api/settings", SessionAuthFilter.withoutMatrixParams("/api/settings"));
+        assertEquals("/api%3Bx/settings", SessionAuthFilter.withoutMatrixParams("/api%3Bx/settings"));
+    }
+
     // ── Extracting the session token from the raw Cookie header (WebSocket handshake path) ──
     @Test
     void extractsTheSessionCookieAmongOthers() {
