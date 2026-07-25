@@ -3,9 +3,8 @@
 # never cherry-picks) without the manual step. A clean merge is pushed directly; a conflict
 # fails the run and opens a releases/X.Y -> main pull request so a human resolves it there.
 #
-# If two maintenance lines ever coexist (releases/2.0 and releases/2.1), the policy says the
-# older line chains through the newer one (2.0 -> 2.1 -> main) — this workflow merges straight
-# into main, so it needs adjusting at that point.
+# Only one maintenance line is active at a time (a new releases/X.Y supersedes the previous
+# one, which then gets no more pushes), so any releases/** push merges straight into main.
 #
 # Requires main to allow direct pushes from the default GITHUB_TOKEN; if main ever gets a
 # branch protection rule blocking that, switch to a PAT or GitHub App token.
