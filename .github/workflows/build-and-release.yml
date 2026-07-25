@@ -68,6 +68,14 @@ jobs:
           distribution: 'graalvm-community'
           cache: 'maven'
 
+      # Quinoa builds the frontend with the system Node (package-manager-install=false); Angular
+      # CLI 22 refuses Node older than 22.22.3 / 24.15, so pin a new-enough Node explicitly instead
+      # of relying on whatever the runner image ships.
+      - name: Set up Node 24
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
       # A vX.Y.Z tag produces that exact stable version; anything else produces a numbered snapshot
       # ("2.1.<run>") off the pom's <project.baseversion>. On a release, mvnVersionArgs overrides the
       # pom so the app self-reports the tag's version as a FINAL one (pcpanel.version = "2.0.85", no
@@ -241,6 +249,14 @@ jobs:
           distribution: 'graalvm-community'
           native-image-job-reports: 'true'
           cache: 'maven'
+
+      # Quinoa builds the frontend with the system Node (package-manager-install=false); Angular
+      # CLI 22 refuses Node older than 22.22.3 / 24.15, so pin a new-enough Node explicitly instead
+      # of relying on whatever the runner image ships.
+      - name: Set up Node 24
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
 
       # See the Windows job: tag vX.Y.Z -> that exact version, else "<baseversion>.<run>".
       - name: Compute app version
@@ -569,6 +585,14 @@ jobs:
           distribution: 'graalvm-community'
           native-image-job-reports: 'true'
           cache: 'maven'
+
+      # Quinoa builds the frontend with the system Node (package-manager-install=false); Angular
+      # CLI 22 refuses Node older than 22.22.3 / 24.15, so pin a new-enough Node explicitly instead
+      # of relying on whatever the runner image ships.
+      - name: Set up Node 24
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
 
       # See the Windows job: tag vX.Y.Z -> that exact version, else "<baseversion>.<run>".
       - name: Compute app version
