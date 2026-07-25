@@ -80,10 +80,12 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
     precedence; never let a snapshot get a numeric part that outranks its own release (the old
     `2.0 < 2.0.x` bug). `VersionTest` guards the ordering.
   - **To cut a release:** tag the commit you want to ship — `git tag v<version> && git push origin
-    v<version>`. No version edit, no release commit. `packaging/bump-version.sh <next>` is only for
-    pointing a branch at the next development version (e.g. `main` moving to `2.2` after `2.1` ships).
-    CI bakes the version into the app via `-Dquarkus.application.version=`, so the UI footer reports it
-    (local/dev stays at `-SNAPSHOT`).
+    v<version>`. No version edit, no release commit. **After tagging, point the branch at the next
+    development version** with `packaging/bump-version.sh <next>` (e.g. `2.0.88` on `releases/2.0`
+    after `v2.0.87`, `2.2` on `main` after `2.1` ships) — a snapshot whose baseversion equals an
+    already-shipped release sorts *below* it, so local/snapshot builds would immediately self-update
+    away to the release. CI bakes the version into the app via `-Dquarkus.application.version=`, so
+    the UI footer reports it (local/dev stays at `-SNAPSHOT`).
   - **Release notes come from `CHANGELOG.md`:** the publish job uses `sed '/##/Q' CHANGELOG.md` — i.e.
     everything **above the first `## [version]` heading** — verbatim as the GitHub release body (a
     degraded-metadata build appends a warnings section). So a **user-facing** change must add a bullet to
