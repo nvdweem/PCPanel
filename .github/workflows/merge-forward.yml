@@ -50,8 +50,9 @@ jobs:
           # The driver and the attribute are taken from the pushed maintenance line and installed
           # outside the tree (git reads .gitattributes from the working tree, which here is main's
           # checkout), so this works on the first run, before main has either file.
+          # origin/<name>, not github.ref: only remote-tracking refs exist in a checkout of main.
           driver="$RUNNER_TEMP/merge-pom-version.sh"
-          git show '${{ github.ref }}:packaging/merge-pom-version.sh' > "$driver"
+          git show 'origin/${{ github.ref_name }}:packaging/merge-pom-version.sh' > "$driver"
           git config merge.pomversion.name 'keep main pom.xml baseversion, merge the rest'
           git config merge.pomversion.driver "bash '$driver' %O %A %B %L"
           mkdir -p "$(git rev-parse --git-dir)/info"
