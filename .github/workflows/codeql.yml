@@ -1,0 +1,100 @@
+# CodeQL code scanning for the three first-party languages: Java, TypeScript and the C++ JNI
+# library. This complements Dependabot — Dependabot reports dependency *versions*, CodeQL reports
+# bugs in our own code.
+#
+# The C++ job is the one that earns its keep regardless of threat model: src/main/cpp/ (SndCtrl.dll)
+# has no automated test of any kind, and a fault there is an access violation that takes the whole
+# app down. Java/TypeScript findings are expected to include a fair number of untrusted-input
+# reports that do not apply here — see SECURITY.md, "Dependency advisories", for how those are
+# triaged, and .github/codeql/codeql-config.yml for how to silence a whole class of them.
+#
+# No native image is built: CodeQL only needs to observe compilation, so the Java job stops at
+# `compile` (which also skips Quinoa, so this job needs no Node at all).
+
+name: CodeQL
+
+env:
+  JAVA_VERSION: '25'        # GraalVM CE 25 — keep in sync with pr-ci.yml and build-and-release.yml
+
+# Scheduled and on-demand only — deliberately not on pull_request. Code scanning here is a
+# periodic sweep of the whole tree, not a per-change gate, and PR CI already runs the test suite.
+on:
+  schedule:
+    # Weekly, Monday 05:17 UTC. Off-the-hour to avoid GitHub's scheduling stampede.
+    - cron: '17 5 * * 1'
+  workflow_dispatch:
+
+# A manual dispatch supersedes an in-flight scheduled run on the same ref.
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze ${{ matrix.language }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    permissions:
+      security-events: write   # upload the SARIF results
+      contents: read
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Lombok generates most accessors, so buildless extraction would miss them — build for real.
+          - language: java-kotlin
+            os: ubuntu-latest
+            build-mode: manual
+          # Interpreted: CodeQL extracts the sources directly, no build needed.
+          - language: javascript-typescript
+            os: ubuntu-latest
+            build-mode: none
+          # Mirrors build-sndctrl-dll.yml: MSVC + CMake, Windows JNI headers from a JDK.
+          - language: c-cpp
+            os: windows-2022
+            build-mode: manual
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Set up GraalVM CE
+        if: matrix.language == 'java-kotlin'
+        uses: graalvm/setup-graalvm@6f3fa030c4b8f77c1f554a860f593a654538fa38 # v1.5.6
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'graalvm-community'
+          cache: 'maven'
+
+      # The DLL build needs only the Windows JNI headers (include/ + include/win32/jni_md.h).
+      - name: Set up JDK (for JNI headers)
+        if: matrix.language == 'c-cpp'
+        uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5.5.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@c54b30b7df092240050e69945842bc67aee0f0f4 # v4.37.3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          config-file: .github/codeql/codeql-config.yml
+
+      # Stop at `compile`: it runs javac over src/main/java (all CodeQL needs) and skips the
+      # quarkus-maven-plugin's `build` goal, which is bound to `package` and is what would pull in
+      # Quinoa/Node and the native image.
+      - name: Build Java
+        if: matrix.language == 'java-kotlin'
+        run: ./mvnw -B -Dquarkus.native.enabled=false -Dquarkus.quinoa.enabled=false compile
+
+      - name: Build SndCtrl.dll (CMake + MSVC)
+        if: matrix.language == 'c-cpp'
+        shell: pwsh
+        run: |
+          cmake -S src/main/cpp -B build -G "Visual Studio 17 2022" -A x64 "-DWIN_JDK_HOME=$env:JAVA_HOME"
+          cmake --build build --config Release
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@c54b30b7df092240050e69945842bc67aee0f0f4 # v4.37.3
+        with:
+          category: /language:${{ matrix.language }}
