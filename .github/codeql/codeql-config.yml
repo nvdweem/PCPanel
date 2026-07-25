@@ -1,0 +1,24 @@
+name: PCPanel CodeQL config
+
+# No `queries:` block, so the default suite runs. `security-extended` and `security-and-quality`
+# are deliberately not enabled: they trade a lot of noise for a few extra findings, and this
+# project's threat model (see SECURITY.md, "Dependency advisories") already discounts most
+# untrusted-input findings — the local user is trusted. Revisit once the default suite is quiet.
+
+paths-ignore:
+  # Generated from com.getpcpanel.rest.model.** by typescript-generator; never hand-edited.
+  - src/main/webui/src/app/models/generated
+  # Build output and vendored trees.
+  - src/main/webui/dist
+  - src/main/wsproxy/dist
+  - '**/node_modules'
+  - target
+
+# To silence a whole CLASS of findings, add its query id here rather than dismissing each alert
+# one by one — dismissals are per-alert and a new occurrence opens a new alert. Find the id on the
+# alert page ("Rule ID"). Expected candidates here are queries that assume an untrusted caller,
+# which for a loopback-only, single-user desktop app is not a real position:
+#
+# query-filters:
+#   - exclude:
+#       id: java/path-injection

@@ -73,3 +73,33 @@ limitations rather than vulnerabilities, and expect some reluctance to change th
   `pcpanel.http.local-only=false` or `pcpanel.http.require-session=false`, or otherwise exposing
   the server on a network. These are opt-outs for advanced users who accept the risk.
 - **Physical access** to an unlocked machine.
+
+## Dependency advisories (Dependabot and similar scanners)
+
+The scope above also decides how advisories against dependencies are prioritised. Per that scope
+the attacker positions that matter are a **remote host**, a **website the user visits**, and
+content arriving from a **connected integration or device**. The machine's own user is not an
+attacker: they are already trusted to configure the app to launch programs and send keystrokes, and
+every HTTP entry point is loopback-bound, `Origin`/`Host`-checked and session-authenticated.
+
+So an advisory is judged by **reachability, not by its CVSS score**. It is treated as applicable
+only when the vulnerable code is on a path this app actually executes *and* the input that triggers
+it can come from somewhere other than the local user.
+
+- **A CVE whose trigger is attacker-supplied input to the local API does not apply at its published
+  severity.** Those scores assume an internet-facing service with untrusted clients. Here there is
+  no such client, so the same bug carries a different priority — and resource exhaustion that the
+  user can only inflict on their own app is not a vulnerability at all.
+- **Build- and development-time dependencies are not part of any shipped artifact.** The frontend's
+  `devDependencies` and the standalone dev tools under `src/main/` never reach a user's machine, so
+  advisories against them are usually not acted on. The exception is anything exploitable by a
+  remote host, or by a website a developer visits while a dev server is running — dev-server CSRF
+  and cross-origin source-exposure issues are real and do count.
+- **Transitive dependencies are not pinned or overridden just to clear an unreachable advisory.**
+  Forcing a version that the Quarkus platform BOM or the Angular CLI pins deliberately trades a real
+  compatibility risk for no security gain; those versions arrive when the platform itself moves.
+
+This decides **priority, not commitment.** A reachable advisory is treated like any other in-scope
+report — which, per the top of this file, means best-effort, with no guaranteed response time and no
+guarantee it will be fixed at all. When reporting, please include the path by which the vulnerable
+code is reached — raw scanner output without a reachable path is not enough to act on.
