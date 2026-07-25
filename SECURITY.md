@@ -24,14 +24,6 @@ on the same machine, physical access — this matters a lot here; see the scope 
 allow reasonable time before publicly disclosing a privately-reported issue. There is no
 bug-bounty program.
 
-## Disclosure
-
-A confirmed in-scope issue is normally published as a
-[GitHub Security Advisory](https://github.com/nvdweem/PCPanel/security/advisories) once a build
-containing the fix is out, with a CVE requested where the impact warrants one — that advisory is
-what tells people still running an affected build that they need to update. Reporters are
-credited in it unless they would rather not be.
-
 ## Supported versions
 
 Only the **latest released version** is looked at for security fixes. PCPanel ships as a rolling
