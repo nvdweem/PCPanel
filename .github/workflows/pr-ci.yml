@@ -35,6 +35,16 @@ jobs:
           distribution: 'graalvm-community'
           cache: 'maven'
 
+      # Quinoa builds the frontend with the system Node (package-manager-install=false); Angular
+      # CLI 22 refuses Node older than 22.22.3 / 24.15, so pin a new-enough Node explicitly instead
+      # of relying on whatever the runner image ships.
+      - name: Set up Node 24
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: src/main/webui/package-lock.json
+
       # AWT/Swing-touching unit tests (e.g. the overlay tests) need a display on Linux;
       # mirror the Build & Release Linux job and run the whole build under a virtual X server.
       - name: Install xvfb (Linux)

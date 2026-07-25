@@ -80,10 +80,12 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
     precedence; never let a snapshot get a numeric part that outranks its own release (the old
     `2.0 < 2.0.x` bug). `VersionTest` guards the ordering.
   - **To cut a release:** tag the commit you want to ship — `git tag v<version> && git push origin
-    v<version>`. No version edit, no release commit. `packaging/bump-version.sh <next>` is only for
-    pointing a branch at the next development version (e.g. `main` moving to `2.2` after `2.1` ships).
-    CI bakes the version into the app via `-Dquarkus.application.version=`, so the UI footer reports it
-    (local/dev stays at `-SNAPSHOT`).
+    v<version>`. No version edit, no release commit. **After tagging, point the branch at the next
+    development version** with `packaging/bump-version.sh <next>` (e.g. `2.0.88` on `releases/2.0`
+    after `v2.0.87`, `2.2` on `main` after `2.1` ships) — a snapshot whose baseversion equals an
+    already-shipped release sorts *below* it, so local/snapshot builds would immediately self-update
+    away to the release. CI bakes the version into the app via `-Dquarkus.application.version=`, so
+    the UI footer reports it (local/dev stays at `-SNAPSHOT`).
   - **Release notes come from `CHANGELOG.md`:** the publish job uses `sed '/##/Q' CHANGELOG.md` — i.e.
     everything **above the first `## [version]` heading** — verbatim as the GitHub release body (a
     degraded-metadata build appends a warnings section). So a **user-facing** change must add a bullet to
@@ -143,10 +145,12 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
   — that only decides build-number comparison). Both need `startupVersionCheck` on, and the UI disables
   them otherwise.
 
-### Frontend (`src/main/webui`, Angular 21)
+### Frontend (`src/main/webui`, Angular 22)
 
 Managed by the Quinoa Quarkus extension — normally you don't run it directly; `quarkus:dev` proxies it.
 Standalone: `cd src/main/webui && npm install && npm start` (serves :4200, proxies `/api` + `/ws` to :7654).
+Quinoa uses the system Node (`package-manager-install=false`), and Angular CLI 22 requires **Node ≥
+22.22.3 / 24.15** — CI pins Node 24 via `actions/setup-node` in every frontend-building job.
 
 **TypeScript types are generated from Java**, not hand-written. The `typescript-generator-maven-plugin`
 (runs in the `compile` phase) writes `src/main/webui/src/app/models/generated/backend.types.ts` from
