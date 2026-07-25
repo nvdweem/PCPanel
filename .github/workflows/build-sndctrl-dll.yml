@@ -29,11 +29,19 @@ jobs:
         run: cmake --build build --config Release
 
       # Log the exported JNI entry points so a package mismatch is visible in the run output.
-      # Best-effort: dumpbin is only on PATH inside a VS dev shell, so never fail the build on it.
+      # dumpbin lives in the MSVC toolchain and is only on PATH inside a VS dev shell, so locate it
+      # through vswhere. `-requires` the VC tools component: other products register as Visual Studio
+      # instances too (SQL Server Management Studio, for one) and would otherwise win `-latest` and
+      # resolve to an installation that ships no compiler. Best-effort — this is a diagnostic, so a
+      # runner that cannot produce it must not fail the build.
       - name: Show exported JNI symbols
         shell: pwsh
         continue-on-error: true
-        run: dumpbin /exports build\Release\SndCtrl.dll | Select-String "Java_|JNI_"
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $install = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          $dumpbin = Get-ChildItem -Path "$install\VC\Tools\MSVC" -Recurse -Filter dumpbin.exe | Where-Object { $_.FullName -match 'Hostx64\\x64' } | Select-Object -First 1 -ExpandProperty FullName
+          & $dumpbin /exports build\Release\SndCtrl.dll | Select-String "Java_|JNI_"
 
       - name: Upload SndCtrl.dll
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
