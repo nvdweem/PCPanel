@@ -5,3 +5,11 @@
 # the windows-latest runner, whose git defaults to core.autocrlf=true; bash chokes on a CRLF script
 # ("set: pipefail: invalid option name"). The Linux-only packaging scripts never exposed this.
 *.sh text eol=lf
+
+# pom.xml's <project.baseversion> differs per line by design, so the automatic forward merge from a
+# maintenance line into main conflicts on it after every release. packaging/merge-pom-version.sh
+# resolves just that line (main's value wins) and merges the rest of the file normally, so a real
+# pom change on the maintenance line still merges or conflicts on its own merits. The driver is
+# configured in merge-forward.yml; without that config git uses its default merge and the line
+# conflicts as before.
+pom.xml merge=pomversion
