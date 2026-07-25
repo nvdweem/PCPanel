@@ -374,6 +374,13 @@ Key constraints baked into those args, change with care:
 
 `SndCtrl.dll` (audio control via Windows Core Audio). The built DLL is committed at
 `src/main/resources/SndCtrl.dll`; the Maven/CI build only bundles it, it does not rebuild it.
+**So a C++ change only reaches users once the committed binary is rebuilt with it.** The reference
+build is the manual `Build SndCtrl.dll (Windows)` workflow
+(`.github/workflows/build-sndctrl-dll.yml`, `workflow_dispatch`): dispatch it on the branch holding
+the change, download the `SndCtrl-dll` artifact and commit it over
+`src/main/resources/SndCtrl.dll`. It uploads an artifact only — it neither commits nor attaches it
+to a release. Building locally works too, but the workflow is the reference toolchain, so prefer it
+for anything that ships.
 
 The sources are compiler-portable and build via **CMake** (`src/main/cpp/CMakeLists.txt`) with
 either MSVC or MinGW-w64 — including a **cross-compile from Linux** (no Visual Studio needed). See
