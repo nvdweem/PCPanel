@@ -18,7 +18,7 @@ class WindowsInstallerUpdaterTest {
     void setupAssetPatternMatchesTheCiArtifactOnly() {
         assertTrue(WindowsInstallerUpdater.SETUP_ASSET.matcher("PCPanel-1.8.123-setup.exe").matches());
         assertTrue(WindowsInstallerUpdater.SETUP_ASSET.matcher("pcpanel-2.0-setup.exe").matches());
-        assertTrue(WindowsInstallerUpdater.SETUP_ASSET.matcher("PCPanel-2.0.71-setup.exe").matches()); // real latest-main asset name
+        assertTrue(WindowsInstallerUpdater.SETUP_ASSET.matcher("PCPanel-2.0.71-setup.exe").matches()); // real snapshot asset name
         // Not the installer: the Linux artifacts, or a checksum file.
         assertFalse(WindowsInstallerUpdater.SETUP_ASSET.matcher("PCPanel-1.8.123.AppImage").matches());
         assertFalse(WindowsInstallerUpdater.SETUP_ASSET.matcher("pcpanel_1.8.123_amd64.deb").matches());
@@ -26,7 +26,7 @@ class WindowsInstallerUpdaterTest {
     }
 
     // Real release shapes from the repo: the rolling snapshot channel is one pre-release whose name
-    // carries the build number, e.g. "v2.0-SNAPSHOT Pre-Release (71)", tagged latest-main.
+    // carries the build number, e.g. "v2.0-SNAPSHOT Pre-Release (71)", tagged latest-snapshot.
     @Test
     void chooseTargetSnapshotAlwaysTakesNewestPreReleaseEvenWhenRunningANewerBuild() {
         var releases = new Version[] {

@@ -4,14 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -30,78 +25,20 @@ import org.junit.jupiter.api.Test;
  * every CI runner (Windows included, via Git Bash) has it.
  */
 class CiVersionScriptTest {
-    /**
-     * Deliberately RELATIVE. On Windows the first {@code bash} on PATH is usually WSL's
-     * ({@code C:\Windows\System32\bash.exe}), which cannot open a {@code D:\...} argument; given a
-     * relative path with the working directory at the project root it resolves fine, as does Git Bash.
-     */
     private static final String SCRIPT = "packaging/ci-version.sh";
-
-    /**
-     * Candidate bash executables, best first. On a Windows runner the {@code bash} on PATH is the WSL
-     * launcher ({@code C:\Windows\System32\bash.exe}), which reports "Windows Subsystem for Linux has
-     * no installed distributions" and fails — so Git Bash is tried first, which is also exactly what
-     * GitHub Actions' own {@code shell: bash} uses on Windows.
-     */
-    private static final List<String> BASH_CANDIDATES = List.of(
-            "C:\\Program Files\\Git\\bin\\bash.exe",
-            "C:\\Program Files (x86)\\Git\\bin\\bash.exe",
-            "bash");
 
     private static String bash;
 
     @BeforeAll
     static void locateScript() {
         assumeTrue(Files.isRegularFile(Path.of(SCRIPT)), "packaging/ci-version.sh not found");
-        bash = findWorkingBash();
+        bash = BashScript.findWorkingBash();
         assumeTrue(bash != null, "no working bash on this machine");
-    }
-
-    /** A candidate counts only if it actually runs something — merely existing is not enough (see WSL). */
-    private static String findWorkingBash() {
-        for (var candidate : BASH_CANDIDATES) {
-            try {
-                var pb = new ProcessBuilder(candidate, "-c", "echo pcpanel-bash-ok");
-                pb.redirectErrorStream(true);
-                var process = pb.start();
-                String out;
-                try (var in = process.getInputStream()) {
-                    out = new String(in.readAllBytes(), StandardCharsets.UTF_8);
-                }
-                if (process.waitFor(30, TimeUnit.SECONDS) && process.exitValue() == 0
-                        && out.contains("pcpanel-bash-ok")) {
-                    return candidate;
-                }
-            } catch (IOException e) {
-                // candidate not present - try the next
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                return null;
-            }
-        }
-        return null;
     }
 
     /** Runs the script for a ref and returns its KEY=VALUE output as a map. */
     private static Map<String, String> run(String ref, String runNumber) throws Exception {
-        var pb = new ProcessBuilder(bash, SCRIPT, ref, runNumber);
-        pb.redirectErrorStream(true);
-        var process = pb.start();
-        String out;
-        try (var in = process.getInputStream()) {
-            out = new String(in.readAllBytes(), StandardCharsets.UTF_8);
-        }
-        assertTrue(process.waitFor(60, TimeUnit.SECONDS), "ci-version.sh timed out");
-        assertEquals(0, process.exitValue(), "ci-version.sh failed:\n" + out);
-
-        var result = new HashMap<String, String>();
-        for (var line : out.split("\\R")) {
-            var eq = line.indexOf('=');
-            if (eq > 0) {
-                result.put(line.substring(0, eq), line.substring(eq + 1));
-            }
-        }
-        return result;
+        return BashScript.run(bash, SCRIPT, ref, runNumber);
     }
 
     @Test
@@ -138,12 +75,12 @@ class CiVersionScriptTest {
     }
 
     /**
-     * CI publishes its rolling snapshots under {@code latest-<branch>} tags. Those must never be
+     * CI publishes its rolling snapshots under {@code latest-*} tags. Those must never be
      * mistaken for a release, or every snapshot publish would re-trigger a stable build of itself.
      */
     @Test
     void rollingSnapshotTagIsNotARelease() throws Exception {
-        var out = run("refs/tags/latest-main", "77");
+        var out = run("refs/tags/latest-snapshot", "77");
         assertEquals("false", out.get("isRelease"));
     }
 }

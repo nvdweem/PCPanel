@@ -2,6 +2,7 @@ package dev.niels.wavelink.impl;
 
 import java.net.http.WebSocket;
 import java.net.http.WebSocket.Listener;
+import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -44,6 +45,7 @@ public class WaveLinkListener implements Listener {
     @Override
     public void onOpen(WebSocket webSocket) {
         socket = webSocket;
+        client.markConnected(System.currentTimeMillis());
         log.debug("WebSocket opened");
         Listener.super.onOpen(webSocket);
         client.trigger(IWaveLinkClientEventListener::connected);
@@ -76,6 +78,7 @@ public class WaveLinkListener implements Listener {
 
     @Override
     public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
+        client.recordInboundActivity(System.currentTimeMillis());
         msgBuffer.append(data);
         if (last) {
             var fullMessage = msgBuffer.toString();
@@ -135,8 +138,17 @@ public class WaveLinkListener implements Listener {
     }
 
     @Override
+    public CompletionStage<?> onPong(WebSocket webSocket, ByteBuffer message) {
+        // Wave Link's reply to our keepalive ping: proof the peer is still alive on an otherwise idle
+        // connection, so the inactivity window (and thus the reconnect decision) resets.
+        client.recordInboundActivity(System.currentTimeMillis());
+        return Listener.super.onPong(webSocket, message);
+    }
+
+    @Override
     public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
         socket = null;
+        client.markDisconnected();
         log.info("WebSocket closed with status code {} and reason {}", statusCode, reason);
         client.trigger(IWaveLinkClientEventListener::connectionClosed);
         return Listener.super.onClose(webSocket, statusCode, reason);

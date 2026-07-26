@@ -37,12 +37,13 @@ on:
       - 'v[0-9]*'
   workflow_dispatch:
 
-# One run per branch. The snapshot pre-release only reflects the latest commit, so a
-# newer push supersedes an in-flight build instead of queueing behind it (and two runs
-# can never race on the same `latest-<branch>` release). A run cancelled mid-publish
+# One run per rolling release that a build publishes to, so two runs can never race on the same
+# release: every dev-line ref (main, releases/**) publishes to `latest-snapshot` and therefore shares
+# one group, while any other branch owns its own `latest-<branch>` and is keyed on its ref. A newer
+# run supersedes an in-flight one instead of queueing behind it. A run cancelled mid-publish
 # self-heals: the next run's scoped delete+create rebuilds the release cleanly.
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/releases/')) && 'latest-snapshot' || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -268,6 +269,15 @@ jobs:
         shell: bash
         run: bash packaging/ci-version.sh >> "$GITHUB_OUTPUT"
 
+      # Which self-update channels this build publishes to (see packaging/ci-channel.sh). The tag list
+      # decides whether a release may claim the rolling channels, so it has to be present first.
+      - name: Compute update channels
+        id: chan
+        shell: bash
+        run: |
+          git fetch --tags --quiet || true
+          bash packaging/ci-channel.sh >> "$GITHUB_OUTPUT"
+
       - name: Install xvfb
         run: sudo apt-get update && sudo apt-get install -y xvfb
 
@@ -352,34 +362,32 @@ jobs:
           export APPIMAGETOOL="$PWD/appimagetool"
           export APPIMAGE_EXTRACT_AND_RUN=1   # CI runners have no FUSE
           export ARCH=x86_64
-          # Bake self-update info so the AppImage can update itself in place (zsync). A snapshot targets
-          # this branch's own rolling pre-release ("latest-<safe-branch>", the same tag preRelease
-          # publishes to), so an installed build self-updates to the newest build of the SAME branch —
-          # exactly what makes it testable by re-running this workflow. A stable release (releases/**) is
-          # published under a permanent "vX.Y" tag instead, so it targets the literal "latest" (GitHub's
-          # newest non-prerelease) and self-updates across stable releases. appimagetool also emits
+          # Bake self-update info so the AppImage can update itself in place (zsync), pointed at the
+          # channel this build's own release belongs to: `latest` for a stable release (a magic value
+          # meaning GitHub's newest non-prerelease), `latest-snapshot` for a development-line build, or
+          # the branch's self-contained pre-release for anything else. appimagetool also emits
           # PCPanel-*-x86_64.AppImage.zsync next to the output; preRelease uploads it alongside.
-          branch="${GITHUB_REF#refs/heads/}"
-          safe_branch=$(echo "$branch" | sed 's/[^A-Za-z0-9._-]/-/g')
           owner="${GITHUB_REPOSITORY%%/*}"
           repo="${GITHUB_REPOSITORY#*/}"
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            # Only the newest release may claim the "latest" channel. A maintenance patch published
-            # AFTER a newer line (2.0.86 released once 2.1 is out) must NOT redirect 2.1 users'
-            # self-update back onto the older line, so it points at its own permanent tag instead.
-            git fetch --tags --quiet || true
-            newest=$(git tag -l 'v[0-9]*' | sort -V | tail -1)
-            if [ "${GITHUB_REF#refs/tags/}" = "$newest" ]; then
-              zsync_tag="latest"
-            else
-              zsync_tag="${GITHUB_REF#refs/tags/}"
-            fi
-          else
-            zsync_tag="latest-${safe_branch}"
-          fi
-          export UPDATE_INFO="gh-releases-zsync|${owner}|${repo}|${zsync_tag}|PCPanel-*-x86_64.AppImage.zsync"
+          export UPDATE_INFO="gh-releases-zsync|${owner}|${repo}|${{ steps.chan.outputs.zsyncTag }}|PCPanel-*-x86_64.AppImage.zsync"
           exe=$(ls target/*-runner | head -1)
           bash packaging/linux/appimage/build-appimage.sh "${{ steps.ver.outputs.version }}" "$exe" target
+
+      # A stable release reaches snapshot installs too, so it is also published to `latest-snapshot`.
+      # The zsync target is baked into the file, which is why that copy has to be built separately: an
+      # identical AppImage that keeps following the snapshot channel, so the users it pulls onto the
+      # final build still receive the next snapshot instead of silently becoming stable-channel users.
+      - name: Build AppImage for the snapshot channel
+        if: steps.chan.outputs.mirrorToSnapshot == 'true'
+        run: |
+          export APPIMAGETOOL="$PWD/appimagetool"
+          export APPIMAGE_EXTRACT_AND_RUN=1
+          export ARCH=x86_64
+          owner="${GITHUB_REPOSITORY%%/*}"
+          repo="${GITHUB_REPOSITORY#*/}"
+          export UPDATE_INFO="gh-releases-zsync|${owner}|${repo}|${{ steps.chan.outputs.snapshotTag }}|PCPanel-*-x86_64.AppImage.zsync"
+          exe=$(ls target/*-runner | head -1)
+          bash packaging/linux/appimage/build-appimage.sh "${{ steps.ver.outputs.version }}" "$exe" target/snapshot-channel
 
       - name: Store .deb artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -393,10 +401,14 @@ jobs:
         with:
           name: linux-appimage
           # The .zsync control file must ship next to the AppImage on the release, or the bundled
-          # appimageupdatetool cannot find what to pull.
+          # appimageupdatetool cannot find what to pull. The snapshot-channel copy of a release rides
+          # along in its own subdirectory (the two builds share a filename) and is present only on a
+          # release; preRelease publishes it to the rolling snapshot release instead of to this one.
           path: |
             ./target/*.AppImage
             ./target/*.AppImage.zsync
+            ./target/snapshot-channel/*.AppImage
+            ./target/snapshot-channel/*.AppImage.zsync
           if-no-files-found: error
 
       # Hand the native binary + companion .so libraries to the buildFlatpak job, which runs inside
@@ -438,6 +450,14 @@ jobs:
         shell: bash
         run: bash packaging/ci-version.sh >> "$GITHUB_OUTPUT"
 
+      # Which OSTree refs this build publishes to (see packaging/ci-channel.sh).
+      - name: Compute update channels
+        id: chan
+        shell: bash
+        run: |
+          git fetch --tags --quiet || true
+          bash packaging/ci-channel.sh >> "$GITHUB_OUTPUT"
+
       - name: Download native binary
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
@@ -477,7 +497,7 @@ jobs:
 
       # Build the Flatpak into a persistent OSTree repo (not just a one-shot bundle) so installs from the
       # hosted repo can `flatpak update`. The repo lives on the gh-pages branch and carries exactly two
-      # rolling refs — `stable` (from releases/** branches) and `snapshot` (everything else) — each pruned
+      # rolling refs — `stable` (from a release) and `snapshot` (from the development line) — each pruned
       # to its single latest commit, so the published site stays small (GitHub Pages caps at ~1 GB). We
       # clone the existing gh-pages repo first and build into it, so the *other* channel's ref survives
       # this run. The single-file .flatpak bundle is still produced as a direct-download release asset.
@@ -489,7 +509,7 @@ jobs:
         run: |
           set -euxo pipefail
           channel=snapshot
-          case "$GITHUB_REF" in refs/tags/v*) channel=stable;; esac
+          if [ "${{ steps.chan.outputs.isRelease }}" = "true" ]; then channel=stable; fi
           echo "channel=$channel" >> "$GITHUB_OUTPUT"
 
           # Start from the currently published repo so we don't drop the other channel's ref. A shallow
@@ -517,6 +537,17 @@ jobs:
           flatpak build-bundle site/repo "PCPanel-${{ steps.ver.outputs.version }}.flatpak" \
             com.getpcpanel.PCPanel "$channel"
 
+          # A release reaches snapshot installs too: copy this build's commits onto the snapshot ref, so
+          # an install on that channel moves to the final build and keeps following the channel — the
+          # next development build reaches it as usual. The objects are already in the repo, so this
+          # deduplicates rather than rebuilding. Covers the .Debug/.Locale refs alongside the app.
+          if [ "${{ steps.chan.outputs.mirrorToSnapshot }}" = "true" ]; then
+            for ref in $(ostree refs --repo=site/repo | grep '/stable$' || true); do
+              flatpak build-commit-from --src-repo=site/repo --src-ref="$ref" \
+                site/repo "${ref%/stable}/snapshot"
+            done
+          fi
+
           # Keep only the newest commit per ref, then regenerate the summary/metadata.
           ostree prune --repo=site/repo --refs-only --depth=0
           flatpak build-update-repo --prune site/repo
@@ -534,10 +565,12 @@ jobs:
 
       # Publish the merged repo to gh-pages. force_orphan keeps a single commit (the OSTree objects are
       # large — history would balloon), which is safe because `site/` already contains the full merged
-      # repo. Only on the canonical repo, so forks don't try to push.
+      # repo. Only on the canonical repo, so forks don't try to push, and only for a build that owns a
+      # channel: the repo carries the two refs real users follow, so a feature branch's test build is
+      # built and attached as a .flatpak bundle but must not take one of them over.
       - name: Publish Flatpak repo to GitHub Pages
         id: publish
-        if: steps.flatpak.outcome == 'success' && github.repository == 'nvdweem/PCPanel'
+        if: steps.flatpak.outcome == 'success' && github.repository == 'nvdweem/PCPanel' && steps.chan.outputs.feedsSharedChannel == 'true'
         continue-on-error: true
         uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
         with:
@@ -765,32 +798,31 @@ jobs:
       - name: Fetch Sources
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
+      # Which self-update channels this build publishes to (see packaging/ci-channel.sh).
+      - name: Compute update channels
+        id: chan
+        run: |
+          git fetch --tags --quiet || true
+          bash packaging/ci-channel.sh >> "$GITHUB_OUTPUT"
+
       # Two publishing modes keyed off the ref:
       #   tag vX.Y.Z    -> a STABLE release under that exact tag, NOT a pre-release. Marked Latest only
       #                    when it is the highest released version, so a maintenance patch published
       #                    after a newer line (2.0.86 once 2.1 is out) cannot steal the Latest badge.
-      #   anything else -> a SNAPSHOT: the rolling per-branch "latest-<branch>" pre-release (deleted and
-      #                    recreated each run so it always points at the newest commit).
+      #   anything else -> a SNAPSHOT: a rolling pre-release (deleted and recreated each run so it always
+      #                    points at the newest commit) — `latest-snapshot` for the development line,
+      #                    `latest-<branch>` for any other branch.
       - name: Compute release identity
         run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            tag="${GITHUB_REF#refs/tags/}"
-            git fetch --tags --quiet || true
-            newest=$(git tag -l 'v[0-9]*' | sort -V | tail -1)
+          if [ "${{ steps.chan.outputs.isRelease }}" = "true" ]; then
             echo "IS_RELEASE=true" >> "$GITHUB_ENV"
-            echo "TAG_NAME=${tag}" >> "$GITHUB_ENV"
-            echo "RELEASE_TITLE=${tag}" >> "$GITHUB_ENV"
-            if [ "$tag" = "$newest" ]; then
-              echo "IS_NEWEST=true" >> "$GITHUB_ENV"
-            else
-              echo "IS_NEWEST=false" >> "$GITHUB_ENV"
-            fi
+            echo "TAG_NAME=${{ steps.chan.outputs.releaseTag }}" >> "$GITHUB_ENV"
+            echo "RELEASE_TITLE=${{ steps.chan.outputs.releaseTag }}" >> "$GITHUB_ENV"
+            echo "IS_NEWEST=${{ steps.chan.outputs.isNewest }}" >> "$GITHUB_ENV"
           else
             base=$(grep -oP '(?<=<project\.baseversion>)[^<]+' pom.xml | head -1)
-            branch="${GITHUB_REF#refs/heads/}"
-            safe_branch=$(echo "$branch" | sed 's/[^A-Za-z0-9._-]/-/g')
             echo "IS_RELEASE=false" >> "$GITHUB_ENV"
-            echo "TAG_NAME=latest-${safe_branch}" >> "$GITHUB_ENV"
+            echo "TAG_NAME=${{ steps.chan.outputs.snapshotTag }}" >> "$GITHUB_ENV"
             echo "RELEASE_TITLE=v${base}-SNAPSHOT Pre-Release (${GITHUB_RUN_NUMBER})" >> "$GITHUB_ENV"
           fi
 
@@ -869,5 +901,42 @@ jobs:
           # linux-native (raw runner + .so) is the buildLinux -> buildFlatpak hand-off, not a release
           # asset; drop it so only the installers/bundles are published.
           rm -f dist/*-runner dist/*.so
+          # The snapshot-channel AppImage belongs to the rolling snapshot release, not to this one.
+          if [ -d dist/snapshot-channel ]; then
+            mv dist/snapshot-channel "$RUNNER_TEMP/snapshot-channel"
+          fi
           gh release upload "$TAG_NAME" dist/*
+
+      # A release is published to the snapshot channel as well, so an install following `latest-snapshot`
+      # moves onto the final build. It carries the same asset set as the release itself, with the AppImage
+      # swapped for the copy that bakes `latest-snapshot` — that is what keeps those users on the channel,
+      # so the next development build reaches them instead of stranding them on the stable channel.
+      - name: Publish the release to the snapshot channel
+        if: steps.chan.outputs.mirrorToSnapshot == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SNAPSHOT_TAG: ${{ steps.chan.outputs.snapshotTag }}
+        run: |
+          # Check before deleting anything: publishing the channel without its AppImage would leave
+          # snapshot installs pointing at a release that has nothing for them to pull.
+          if [ ! -d "$RUNNER_TEMP/snapshot-channel" ]; then
+            echo "::error::No snapshot-channel AppImage was built; refusing to replace $SNAPSHOT_TAG."
+            exit 1
+          fi
+          gh api repos/{owner}/{repo}/releases \
+            --jq ".[] | select(.tag_name == \"$SNAPSHOT_TAG\") | .id" \
+            | xargs -r -I '{}' gh api -X DELETE repos/{owner}/{repo}/releases/{}
+          if gh api /repos/{owner}/{repo}/git/refs/tags/"$SNAPSHOT_TAG" >/dev/null 2>&1; then
+            gh api --method DELETE -H "Accept: application/vnd.github.v3+json" /repos/{owner}/{repo}/git/refs/tags/"$SNAPSHOT_TAG"
+          fi
+          # Titled exactly like the stable release, so the update check reads it as that final version
+          # rather than as a newer pre-release and offers no phantom update. Still flagged --prerelease
+          # so the rolling tag cannot claim the Latest badge from the release itself.
+          gh release create "$SNAPSHOT_TAG" \
+            --prerelease \
+            --title "$RELEASE_TITLE" \
+            --notes-file "$RUNNER_TEMP/release-notes.md"
+          rm -f dist/*.AppImage dist/*.AppImage.zsync
+          cp "$RUNNER_TEMP"/snapshot-channel/* dist/
+          gh release upload "$SNAPSHOT_TAG" dist/*
           gh release edit "$TAG_NAME" --draft=false

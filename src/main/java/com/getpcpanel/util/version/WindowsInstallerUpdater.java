@@ -113,7 +113,7 @@ public class WindowsInstallerUpdater implements PlatformUpdater {
      *   <li>{@code latest} — update to the newest available, filtered by {@code includePrereleases} (the
      *       user's "check for pre-release versions" choice).</li>
      *   <li>otherwise — reinstall the current version. A {@code currentIsSnapshot} build has no per-build
-     *       release to match (all snapshots share the rolling {@code latest-main} pre-release), so it
+     *       release to match (all snapshots share the rolling {@code latest-snapshot} pre-release), so it
      *       targets the newest pre-release; a release build matches its exact named release.</li>
      * </ul>
      */
