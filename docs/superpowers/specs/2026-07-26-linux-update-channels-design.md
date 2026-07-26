@@ -53,11 +53,14 @@ non-prerelease — which is the release channel. Any other string, including `la
 treated as a literal tag.
 
 The existing rule that a tag which is *not* the newest bakes its own permanent tag instead of `latest`
-is unchanged: it is what stops a `2.0.86` cut after `2.1` shipped from redirecting its users onto the
-newer line.
+is unchanged, and now gates the snapshot channel too: a `2.0.86` cut after `2.1` shipped claims nothing
+rolling — not the Latest badge, not `latest`, not `latest-snapshot`. One condition, both channels,
+because pulling the development line's users back onto an older line is the same hazard.
 
 Feature branches keep their own `latest-<branch>` pre-release so a test build cannot take over the
-channel that real users follow.
+channel that real users follow. The Flatpak repo has no per-branch equivalent — it carries exactly the
+two refs — so a feature branch still builds and attaches its `.flatpak` bundle but no longer publishes
+to gh-pages at all, where it would previously have overwritten the shared `snapshot` ref.
 
 ### AppImage: two builds per release
 
@@ -89,6 +92,11 @@ feature branches stay keyed on their own ref.
 - `VersionChecker`'s `releases?per_page=4` window. Orthogonal to channels and unchanged by this work.
 - Windows and `.deb`, which have no channel concept: Windows resolves its target from the releases API
   by SemVer, and `.deb` has no self-update.
+
+### In-app link
+
+The rolling development-line pre-release moves from `latest-<branch>` to `latest-snapshot`, so the
+"what's new" link a snapshot build opens (`StartupOnboarding.changelogUrl`) follows it.
 
 ## Documentation
 
