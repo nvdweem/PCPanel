@@ -60,6 +60,19 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseable {
     private static final int DEFAULT_WAVELINK_PORT = 1884;
+    /**
+     * How long an open connection may go without any inbound frame (a Wave Link message or a pong reply
+     * to our ping) before it is treated as dead. A half-open socket — one the OS never delivered a close
+     * for, so {@link #isConnected()} still reports it open — stops producing inbound frames, and this
+     * window is what turns that silent death into a reconnect. Sized at ~3 missed 10s pings.
+     */
+    private static final long INBOUND_INACTIVITY_TIMEOUT_MS = 35_000;
+    /**
+     * Grace period after the socket opens for the post-connect handshake ({@code getInfo}) to complete.
+     * If it has not — e.g. Wave Link is still starting up right after a reboot and never answers — the
+     * open-but-uninitialised connection is reconnected rather than left holding no channel data.
+     */
+    private static final long HANDSHAKE_GRACE_MS = 20_000;
     private CompletableFuture<WebSocket> websocket = CompletableFuture.completedFuture(null);
     private WaveLinkListener waveLinkListener;
     private final HttpClient client;
@@ -68,7 +81,11 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
     @Getter private final Map<String, WaveLinkOutputDevice> outputDevices = new ConcurrentHashMap<>();
     @Getter private final Map<String, WaveLinkChannel> channels = new ConcurrentHashMap<>();
     @Getter private final Map<String, WaveLinkMix> mixes = new ConcurrentHashMap<>();
-    @Getter private boolean initialized;
+    @Getter private volatile boolean initialized;
+    /** Wall-clock ms of the last inbound frame (Wave Link message or pong); 0 when not connected. */
+    private volatile long lastInboundActivityMs;
+    /** Wall-clock ms the current socket opened; 0 when not connected. Bounds the handshake grace. */
+    private volatile long connectedAtMs;
     @Getter private String mainOutputDeviceId;
     @Getter private WaveLinkApp lastFocusApp = WaveLinkApp.EMPTY;
 
@@ -107,6 +124,46 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
             currentWs.abort();
         }
         websocket = CompletableFuture.completedFuture(null);
+        resetConnectionState();
+    }
+
+    /**
+     * Whether the connection is not just open but actually alive and usable: the socket is open, the
+     * post-connect handshake has completed (or is still within its grace window), and Wave Link has sent
+     * a frame recently. This is the reconnect decision's health signal, so a half-open socket or a
+     * stalled handshake — both of which leave {@link #isConnected()} reporting open — is detected and
+     * reconnected instead of silently swallowing every command until the app is restarted.
+     */
+    public boolean isConnectionHealthy(long nowMs) {
+        if (!isConnected()) {
+            return false;
+        }
+        if (!initialized && nowMs - connectedAtMs > HANDSHAKE_GRACE_MS) {
+            return false;
+        }
+        return nowMs - lastInboundActivityMs < INBOUND_INACTIVITY_TIMEOUT_MS;
+    }
+
+    /** Records the socket opening: starts the handshake-grace clock and counts as fresh activity. */
+    public void markConnected(long nowMs) {
+        connectedAtMs = nowMs;
+        lastInboundActivityMs = nowMs;
+    }
+
+    /** Records an inbound frame (Wave Link message or pong) — proof the peer is still alive. */
+    public void recordInboundActivity(long nowMs) {
+        lastInboundActivityMs = nowMs;
+    }
+
+    /** Clears the liveness bookkeeping so a closed connection can never still look healthy. */
+    public void markDisconnected() {
+        resetConnectionState();
+    }
+
+    private void resetConnectionState() {
+        initialized = false;
+        connectedAtMs = 0;
+        lastInboundActivityMs = 0;
     }
 
     private CompletableFuture<WebSocket> connect() {

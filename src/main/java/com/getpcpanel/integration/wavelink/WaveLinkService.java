@@ -316,18 +316,27 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
             backoff.onSuccess(); // nothing to connect → keep the gate clear so enabling reconnects at once
             return;
         }
-        if (isConnected()) {
+        var now = System.currentTimeMillis();
+        if (isConnectionHealthy(now)) {
             backoff.onSuccess();
             log.debug("WaveLink connected, sending ping.");
             ping();
             // Keep the controlled-app cache current even when no channelChanged event fires after the
             // initial channel load, so the set is persisted for the next startup's focus-volume race.
             syncAppCache();
-        } else if (backoff.ready(System.currentTimeMillis())) {
+        } else if (isConnected()) {
+            // The socket still reports open but the connection is not alive — a half-open socket that
+            // never delivered a close (e.g. across a PC restart/resume), or a handshake that never
+            // completed after Wave Link came up. isConnected() alone keeps this state — quietly swallowing
+            // every command — until the app is restarted, so force a reconnect.
+            log.info("WaveLink connection open but unresponsive, reconnecting.");
+            reconnect();
+            backoff.onFailure(now);
+        } else if (backoff.ready(now)) {
             log.info("WaveLink not connected, connecting.");
             reconnect();
             // reconnect() is async; record an attempt and let the next tick clear the backoff once connected.
-            backoff.onFailure(System.currentTimeMillis());
+            backoff.onFailure(now);
         }
     }
 

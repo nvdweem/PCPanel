@@ -17,6 +17,7 @@
 - Fixed crashes in the Windows audio layer. Plugging or unplugging an audio device, or an app releasing its audio session, could crash PCPanel — the handlers that react to those changes could run while the objects they belonged to were being destroyed. A device reporting an unexpected value for its name is no longer read as if it were text. Also fixed a crash while shutting down with the focused-app watcher still running.
 - Fixed the **App volume** action doing nothing when it was aimed at the default output device (it logged an error instead), including on a PC with no default playback device.
 - (Linux) **AppImage and Flatpak installs that follow snapshot builds now update to a stable release when one comes out**, instead of staying on snapshots indefinitely. They stay on the snapshot channel afterwards, so once development moves past that release you carry on receiving snapshots as before. Nothing to change on your side — an AppImage picks this up on its next update, and a Flatpak on its next `flatpak update`.
+- Fixed the **Wave Link** integration silently dropping out after a PC restart or resume from sleep and staying dead until you restarted PCPanel. The connection could be left looking alive when it wasn't — so nothing tried to reconnect — and Wave Link actions quietly did nothing. PCPanel now detects a stalled connection and reconnects on its own.
 
 ## [2.0.84]
 
