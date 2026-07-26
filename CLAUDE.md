@@ -62,14 +62,23 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
   label snapshots. `packaging/ci-version.sh` is the single place that decides a build's version (all
   four CI jobs call it; `CiVersionScriptTest` guards it). Two build kinds, keyed off the ref (see
   `docs/superpowers/specs/2026-07-15-release-versioning-strategy-design.md`):
-  - **Snapshots** (any branch push, e.g. `releases/2.0`, or `main` via manual dispatch) → a rolling
-    per-branch **pre-release** tagged `latest-<branch>`, versioned `<baseversion>.<run>` (e.g. `2.0.83`),
-    with `pcpanel.version = <baseversion>-SNAPSHOT`.
+  - **Snapshots** (manual `workflow_dispatch` of any branch) → a rolling **pre-release**, versioned
+    `<baseversion>.<run>` (e.g. `2.0.89.83`), with `pcpanel.version = <baseversion>-SNAPSHOT`. The
+    development line (`main`, `releases/**`) publishes to the shared `latest-snapshot` channel; every
+    other branch gets its own self-contained `latest-<branch>` so a test build cannot take a channel
+    over. `packaging/ci-channel.sh` decides this, guarded by `CiChannelScriptTest`.
   - **Stable releases** (push a **`v<version>` tag**) → a permanent **`v<version>`** release, not a
     pre-release, versioned bare `<version>` (CI passes `-Dproject.baseversion=<version>
     -Dproject.snapshot=`, so `pcpanel.version = <version>` and the app self-reports as final). It is
-    marked *Latest* only when it is the highest released version, so a `2.0.x` patch cut after `2.1`
-    ships cannot steal the Latest badge or hijack the AppImage self-update channel.
+    marked *Latest* only when it is the highest released version. That same condition gates everything
+    rolling, so a `2.0.x` patch cut after `2.1` ships claims nothing: not the Latest badge, not the
+    `latest` zsync channel, not the snapshot channel. It publishes under its own permanent tag alone.
+  - **Two self-update channels, ordered by publication:** `latest` (the newest stable release) and
+    `latest-snapshot` (the newest build of the development line). **A stable release publishes to
+    both**, which is what moves a snapshot install onto a final build when one ships while leaving it
+    on the snapshot channel, so the next development build reaches it again. No version comparison is
+    involved anywhere: the post-release bump below keeps a snapshot always ahead of the newest tag, so
+    publication order and SemVer order already coincide.
   - **Why the tag and not a file:** a release that edits `pom.xml` (and the AppStream metainfo) makes
     every forward merge of a maintenance branch into `main` conflict on the version line, because both
     branches edit it from a common ancestor — permanently, not once. Keeping the release version only in
@@ -134,15 +143,23 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
     "just updated" dialog like `/postinstall` but opens no browser (the triggering UI is already open).
   - **AppImage** (`AppImageUpdater`, `$APPIMAGE` set): runs the bundled `appimageupdatetool -O -r
     "$APPIMAGE"` (zsync delta, in place) then relaunches via `UpdaterRestart`. The AppImage carries
-    `gh-releases-zsync` update-info baked at build time (`appimagetool -u`, targeting the branch's rolling
-    `latest-<branch>` tag) and the companion `.zsync` is uploaded next to it. `packaging/linux/fetch-appimageupdatetool.sh`
-    pins the tool (MIT) by sha256, same model as kdotool.
+    `gh-releases-zsync` update-info baked at build time (`appimagetool -u`) and the companion `.zsync` is
+    uploaded next to it. `packaging/linux/fetch-appimageupdatetool.sh` pins the tool (MIT) by sha256,
+    same model as kdotool. The baked tag *is* the channel — `latest` is a magic value in the updater
+    meaning GitHub's newest non-prerelease; anything else is a literal tag. Because it is baked in, a
+    release builds the AppImage **twice**: identical contents, one baking `latest` for the permanent
+    release and one baking `latest-snapshot` for the snapshot channel. Without the second copy the
+    snapshot users it pulls onto the release build would carry `latest` and silently become
+    stable-channel users.
   - **Flatpak** (`FlatpakUpdater`, `$FLATPAK_ID` set): `flatpak-spawn --host flatpak update` then relaunch
     on the host. Updates only work for installs from the hosted OSTree repo (the `.flatpakref` adds the
     remote); the one-shot `.flatpak` bundle has none. CI publishes that repo to the **gh-pages** branch /
-    GitHub Pages with exactly two rolling refs — `stable` (from `releases/**`) and `snapshot` — each
-    pruned to its latest commit to stay under the ~1 GB Pages limit; each run clones the existing repo
-    first so the other channel's ref survives.
+    GitHub Pages with exactly two rolling refs — `stable` (from a release) and `snapshot` (from the
+    development line) — each pruned to its latest commit to stay under the ~1 GB Pages limit; each run
+    clones the existing repo first so the other channel's ref survives. A ref *is* the channel here, so
+    no second build is needed: a release commits to `stable` and then `flatpak build-commit-from` copies
+    those same commits onto `snapshot`. Only a build that owns a channel is published at all — a feature
+    branch still produces its `.flatpak` bundle but must not take one of the two refs over.
 
   `UpdaterRestart` (Linux) starts a detached, self-delaying relauncher and then `Quarkus.asyncExit` — the
   sleep lets the HTTP response flush and the single-instance `FileChecker` lock release before the new

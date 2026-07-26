@@ -82,13 +82,13 @@ public class StartupOnboarding {
     }
 
     /**
-     * Link to this version's release notes. SNAPSHOT/dev builds map to the rolling {@code latest-main}
-     * pre-release (old snapshots are not kept, so the newest is the relevant one); a concrete release
-     * version links to the releases listing, whose newest entry is that version.
+     * Link to this version's release notes. SNAPSHOT/dev builds map to the rolling
+     * {@code latest-snapshot} pre-release (old snapshots are not kept, so the newest is the relevant
+     * one); a concrete release version links to the releases listing, whose newest entry is that version.
      */
     private String changelogUrl() {
         var base = "https://github.com/" + UpdateSource.GITHUB_REPO + "/releases";
         var isSnapshot = StringUtils.isBlank(version) || StringUtils.containsIgnoreCase(version, "snapshot") || "dev".equals(version);
-        return isSnapshot ? base + "/tag/latest-main" : base;
+        return isSnapshot ? base + "/tag/latest-snapshot" : base;
     }
 }

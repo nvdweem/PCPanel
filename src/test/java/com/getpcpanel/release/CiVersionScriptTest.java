@@ -75,12 +75,12 @@ class CiVersionScriptTest {
     }
 
     /**
-     * CI publishes its rolling snapshots under {@code latest-<branch>} tags. Those must never be
+     * CI publishes its rolling snapshots under {@code latest-*} tags. Those must never be
      * mistaken for a release, or every snapshot publish would re-trigger a stable build of itself.
      */
     @Test
     void rollingSnapshotTagIsNotARelease() throws Exception {
-        var out = run("refs/tags/latest-main", "77");
+        var out = run("refs/tags/latest-snapshot", "77");
         assertEquals("false", out.get("isRelease"));
     }
 }
