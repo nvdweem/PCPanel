@@ -6,6 +6,7 @@ import { CommandDef, COMMAND_BY_TYPE, FieldDef, LiveSource } from './command-cat
 import { CommandPickerComponent } from './command-picker.component';
 import { mappingCurve } from './mapping-curve.util';
 import { IntegrationDataService } from './integration-data.service';
+import { CurveDefinition } from '../../models/generated/backend.types';
 import {
   AppPickerComponent, ColorPickerComponent, IconComponent, IconName, KeyRecorderComponent, SegmentedComponent,
   SelectComponent, SelectOption, ToggleComponent,
@@ -304,6 +305,8 @@ export class CommandFieldsComponent {
   readonly def = input.required<CommandDef>();
   readonly command = model.required<Cmd>();
   readonly showMapping = input<boolean>(false);
+  /** The control's response curve, so the mapping graph plots the shape the dial actually applies. */
+  readonly responseCurve = input<CurveDefinition | null>(null);
   readonly profiles = input<string[]>([]);
 
   readonly appsOpen = model<string | null>(null);
@@ -432,7 +435,8 @@ export class CommandFieldsComponent {
   setEnd(v: number): void { this.setDial('moveEnd', clamp(100 - clamp(v))); }
 
   // Transfer curve on the 150x100 graph (x 18..132, y 82(0%)..24(100%)), via the shared mapping math.
-  readonly curve = computed(() => mappingCurve(this.command()['dialParams'], { x0: 18, x1: 132, yBottom: 82, yTop: 24 }));
+  readonly curve = computed(() =>
+    mappingCurve(this.command()['dialParams'], { x0: 18, x1: 132, yBottom: 82, yTop: 24 }, this.responseCurve()));
 
   // ── stepped-switch bands ─────────────────────────────────────────────────────
   // Each band holds a Commands list ({ commands: [...], type }); a position can run any number of

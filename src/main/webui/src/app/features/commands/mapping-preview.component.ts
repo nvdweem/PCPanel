@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { CurveDefinition } from '../../models/generated/backend.types';
 import { DialParams, mappingCurve } from './mapping-curve.util';
 
 /**
@@ -22,6 +23,8 @@ import { DialParams, mappingCurve } from './mapping-curve.util';
 })
 export class MappingPreviewComponent {
   readonly dialParams = input<DialParams | null>(null);
+  /** The control's response curve; without one the mapping is drawn straight through. */
+  readonly responseCurve = input<CurveDefinition | null>(null);
   readonly width = input<number>(46);
   readonly height = input<number>(26);
   private readonly pad = 4;
@@ -30,5 +33,5 @@ export class MappingPreviewComponent {
     x0: this.pad, x1: this.width() - this.pad,
     yBottom: this.height() - this.pad, yTop: this.pad,
   }));
-  readonly curve = computed(() => mappingCurve(this.dialParams(), this.geom()));
+  readonly curve = computed(() => mappingCurve(this.dialParams(), this.geom(), this.responseCurve()));
 }

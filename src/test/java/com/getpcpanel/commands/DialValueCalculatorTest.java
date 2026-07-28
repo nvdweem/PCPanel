@@ -66,6 +66,23 @@ class DialValueCalculatorTest {
         }
     }
 
+    /** What the input-mapping graph draws: the window holds the whole curve, the outside holds an extreme. */
+    @Test
+    void theStartEndWindowFitsTheWholeCurveIntoItsPortionOfTheThrow() {
+        var shape = new AmountCurve(AmountCurve.LOG_AMOUNT);
+        var calculator = new DialValueCalculator(new KnobSetting(), shape);
+        var cmd = new CommandBrightness(new DialCommandParams(false, 25, 25));
+        var windowStart = Util.map(25, 0, 100, 0, 255);
+        var windowEnd = Util.map(75, 0, 100, 0, 255);
+
+        assertEquals(0f, calculator.calcValue(cmd, 63, 0, 100), 0.01f);
+        assertEquals(100f, calculator.calcValue(cmd, 192, 0, 100), 0.01f);
+        for (var raw = 64; raw <= 191; raw++) {
+            var travelled = Util.map(raw, windowStart, windowEnd, 0, 255) / 255d;
+            assertEquals((float) (shape.apply(travelled) * 100), calculator.calcValue(cmd, raw, 0, 100), 0.01f, "at " + raw);
+        }
+    }
+
     @Test
     void anUnknownCurveIdBehavesLinearlyRatherThanBreakingInput() {
         var setting = new KnobSetting().setCurve("deleted-by-the-user");
