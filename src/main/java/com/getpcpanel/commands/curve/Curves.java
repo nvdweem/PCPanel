@@ -16,8 +16,10 @@ import com.getpcpanel.profile.dto.CurveMode;
  *
  * <p>The saved library is consulted before {@link #BUILT_INS}, so a saved entry carrying a built-in id
  * retunes that built-in for every control referencing it at once — the "just a global setting" case —
- * and dropping that entry restores the default. An id that resolves to nothing evaluates linear rather
- * than throwing, so a curve deleted while controls still point at it degrades instead of breaking input.
+ * and dropping that entry restores the default. Naming nothing means {@link #LINEAR_ID}, so a control the
+ * picker shows as Linear follows a retuned Linear like any other. An id that resolves to nothing evaluates
+ * linear rather than throwing, so a curve deleted while controls still point at it degrades instead of
+ * breaking input.
  *
  * <p>Static and side-effect-free so resolution is unit-testable without the save file.
  */
@@ -62,15 +64,14 @@ public final class Curves {
     }
 
     private static boolean sameShape(CurveDefinition one, CurveDefinition other) {
-        return one.mode() == other.mode() && one.amount() == other.amount() && one.points().equals(other.points());
+        return one.mode() == other.mode() && one.amount() == other.amount()
+                && one.points().equals(other.points()) && one.name().equals(other.name());
     }
 
     public static Curve resolve(@Nullable String id, @Nullable List<CurveDefinition> saved) {
-        if (StringUtils.isBlank(id)) {
-            return Curve.LINEAR;
-        }
-        return find(id, saved == null ? List.of() : saved)
-                .or(() -> find(id, BUILT_INS))
+        var wanted = StringUtils.isBlank(id) ? LINEAR_ID : id;
+        return find(wanted, saved == null ? List.of() : saved)
+                .or(() -> find(wanted, BUILT_INS))
                 .map(Curves::of)
                 .orElse(Curve.LINEAR);
     }

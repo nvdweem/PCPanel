@@ -25,12 +25,24 @@ class CurvesTest {
 
     @Test
     void noCurveIsLinear() {
-        assertSame(Curve.LINEAR, Curves.resolve(null, List.of()));
+        assertEquals(0.25, Curves.resolve(null, List.of()).apply(0.25), 1e-12);
     }
 
     @Test
     void blankCurveIsLinear() {
-        assertSame(Curve.LINEAR, Curves.resolve("", List.of()));
+        assertEquals(0.25, Curves.resolve("", List.of()).apply(0.25), 1e-12);
+    }
+
+    @Test
+    void namingNothingFollowsARetunedLinear() {
+        var saved = List.of(amount(Curves.LINEAR_ID, 50));
+        assertEquals(Curves.resolve(Curves.LINEAR_ID, saved).apply(0.25), Curves.resolve(null, saved).apply(0.25), 1e-12);
+    }
+
+    @Test
+    void renamingABuiltInIsStored() {
+        var renamed = new CurveDefinition(Curves.LINEAR_ID, "Straight", CurveMode.amount, 0, List.of());
+        assertEquals(List.of(renamed), Curves.userCurves(List.of(renamed)));
     }
 
     @Test

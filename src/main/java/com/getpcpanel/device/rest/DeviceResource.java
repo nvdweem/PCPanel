@@ -402,11 +402,7 @@ public class DeviceResource {
 
         if (update.knobSetting() != null) {
             var knob = profile.getKnobSettings(index);
-            knob.setMinTrim(update.knobSetting().getMinTrim());
-            knob.setMaxTrim(update.knobSetting().getMaxTrim());
-            knob.setLogarithmic(update.knobSetting().isLogarithmic());
-            knob.setOverlayIcon(update.knobSetting().getOverlayIcon());
-            knob.setButtonDebounce(update.knobSetting().getButtonDebounce());
+            knob.copyFrom(update.knobSetting());
             eventBus.fire(new KnobSettingChangedEvent(serial, profileName, index, knob));
             changed = true;
         }

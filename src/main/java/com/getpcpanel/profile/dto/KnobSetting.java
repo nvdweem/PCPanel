@@ -36,6 +36,19 @@ public class KnobSetting {
     }
 
     /**
+     * Takes every property from another setting. The stored setting is edited in place rather than
+     * replaced, so this is the one place that has to list them — a property missing here would be
+     * dropped on the way in from the UI.
+     */
+    public void copyFrom(KnobSetting source) {
+        minTrim = source.minTrim;
+        maxTrim = source.maxTrim;
+        setCurve(source.curve);
+        overlayIcon = source.overlayIcon;
+        buttonDebounce = source.buttonDebounce;
+    }
+
+    /**
      * Part of the JSON contract for saves written before curves were named: reading one seeds
      * {@link #curve}, and writing it lets an older app read a new save file and still land on the right
      * one of the two shapes it knows. Only the built-in logarithmic curve reports true.
