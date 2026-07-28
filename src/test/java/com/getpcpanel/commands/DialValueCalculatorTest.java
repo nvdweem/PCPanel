@@ -83,6 +83,18 @@ class DialValueCalculatorTest {
         }
     }
 
+    /** The other half of that graph: the window's flats are the raw extremes, the trim range is inside it. */
+    @Test
+    void outsideTheWindowTheExtremeIsWholeWhileInsideItTheTrimRangeApplies() {
+        var calculator = new DialValueCalculator(new KnobSetting().setMinTrim(20).setMaxTrim(80), Curve.LINEAR);
+        var cmd = new CommandBrightness(new DialCommandParams(false, 25, 25));
+
+        assertEquals(0f, calculator.calcValue(cmd, 62, 0, 100), 0.01f);
+        assertEquals(20f, calculator.calcValue(cmd, 63, 0, 100), 0.01f);
+        assertEquals(80f, calculator.calcValue(cmd, 191, 0, 100), 0.01f);
+        assertEquals(100f, calculator.calcValue(cmd, 192, 0, 100), 0.01f);
+    }
+
     @Test
     void anUnknownCurveIdBehavesLinearlyRatherThanBreakingInput() {
         var setting = new KnobSetting().setCurve("deleted-by-the-user");

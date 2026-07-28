@@ -155,7 +155,7 @@
                   <span class="ai-icon"><pc-icon [name]="iconFor(cmd)" [size]="14"></pc-icon></span>
                   @if (mapParams(cmd); as mp) {
                     <pc-mapping-preview class="ai-map" [dialParams]="mp"
-                                        [responseCurve]="activeCurve()"></pc-mapping-preview>
+                                        [responseCurve]="activeCurve()" [trim]="knob()"></pc-mapping-preview>
                   }
                   <span class="ai-name">{{ labelFor(cmd) }}</span>
                   <pc-icon [name]="expanded() === $index ? 'chevron-up' : 'chevron-down'" [size]="14" [strokeWidth]="2.5" class="chev"></pc-icon>
@@ -165,7 +165,7 @@
                   <div class="ai-body">
                     <pc-command-fields [def]="defFor(cmd)!" [command]="cmd" (commandChange)="updateCommand($index, $event)"
                                        [showMapping]="activeSlot() === 'rotate'" [responseCurve]="activeCurve()"
-                                       [profiles]="s.profiles"></pc-command-fields>
+                                       [trim]="knob()" [profiles]="s.profiles"></pc-command-fields>
                   </div>
                 }
               </div>
