@@ -1,0 +1,1250 @@
+{
+  "devices" : {
+    "F0E1D2C3B4A5" : {
+      "displayName" : "mini-panel",
+      "profiles" : [ {
+        "name" : "default",
+        "buttonData" : { },
+        "dblButtonData" : { },
+        "dialData" : { },
+        "knobSettings" : {
+          "0" : {
+            "minTrim" : 534,
+            "maxTrim" : 533,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-535",
+            "buttonDebounce" : 532
+          },
+          "1" : {
+            "minTrim" : 538,
+            "maxTrim" : 537,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-539",
+            "buttonDebounce" : 536
+          },
+          "2" : {
+            "minTrim" : 542,
+            "maxTrim" : 541,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-543",
+            "buttonDebounce" : 540
+          },
+          "3" : {
+            "minTrim" : 546,
+            "maxTrim" : 545,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-547",
+            "buttonDebounce" : 544
+          }
+        },
+        "lightingConfig" : {
+          "lightingMode" : "ALL_COLOR",
+          "individualColors" : [ "individualColors-486", "individualColors-487" ],
+          "volumeBrightnessTrackingEnabled" : [ true, true ],
+          "allColor" : "allColor-481",
+          "rainbowPhaseShift" : 26,
+          "rainbowBrightness" : 25,
+          "rainbowSpeed" : 28,
+          "rainbowReverse" : 27,
+          "rainbowVertical" : 29,
+          "waveHue" : 50,
+          "waveBrightness" : 49,
+          "waveSpeed" : 52,
+          "waveReverse" : 51,
+          "waveBounce" : 48,
+          "breathHue" : 4,
+          "breathBrightness" : 3,
+          "breathSpeed" : 5,
+          "knobConfigs" : [ {
+            "mode" : "STATIC",
+            "color1" : "color1-488",
+            "color2" : "color2-489",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-492",
+            "muteOverrideColor" : "muteOverrideColor-491"
+          }, {
+            "mode" : "NONE",
+            "color1" : "color1-493",
+            "color2" : "color2-494",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-497",
+            "muteOverrideColor" : "muteOverrideColor-496"
+          } ],
+          "sliderLabelConfigs" : [ {
+            "mode" : "NONE",
+            "color" : "color-519",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-522",
+            "muteOverrideColor" : "muteOverrideColor-521"
+          }, {
+            "mode" : "NONE",
+            "color" : "color-523",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-526",
+            "muteOverrideColor" : "muteOverrideColor-525"
+          } ],
+          "sliderConfigs" : [ {
+            "mode" : "VOLUME_GRADIENT",
+            "color1" : "color1-509",
+            "color2" : "color2-510",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-513",
+            "muteOverrideColor" : "muteOverrideColor-512"
+          }, {
+            "mode" : "NONE",
+            "color1" : "color1-514",
+            "color2" : "color2-515",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-518",
+            "muteOverrideColor" : "muteOverrideColor-517"
+          } ],
+          "logoConfig" : {
+            "mode" : "RAINBOW",
+            "color" : "color-500",
+            "brightness" : 20,
+            "speed" : 24,
+            "hue" : 22
+          },
+          "globalBrightness" : 485
+        },
+        "focusBackOnLost" : true,
+        "activateApplications" : [ "activateApplications-478", "activateApplications-479" ],
+        "activationShortcut" : "activationShortcut-480",
+        "oscBinding" : {
+          "0" : {
+            "address" : "address-548",
+            "min" : 549.5,
+            "max" : 550.5,
+            "toggle" : true
+          },
+          "1" : {
+            "address" : "address-551",
+            "min" : 552.5,
+            "max" : 553.5,
+            "toggle" : true
+          },
+          "2" : {
+            "address" : "address-554",
+            "min" : 555.5,
+            "max" : 556.5,
+            "toggle" : true
+          },
+          "3" : {
+            "address" : "address-557",
+            "min" : 558.5,
+            "max" : 559.5,
+            "toggle" : true
+          }
+        },
+        "isMainProfile" : true
+      }, {
+        "name" : "gaming",
+        "buttonData" : { },
+        "dblButtonData" : { },
+        "dialData" : { },
+        "knobSettings" : {
+          "0" : {
+            "minTrim" : 616,
+            "maxTrim" : 615,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-617",
+            "buttonDebounce" : 614
+          },
+          "1" : {
+            "minTrim" : 620,
+            "maxTrim" : 619,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-621",
+            "buttonDebounce" : 618
+          },
+          "2" : {
+            "minTrim" : 624,
+            "maxTrim" : 623,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-625",
+            "buttonDebounce" : 622
+          },
+          "3" : {
+            "minTrim" : 628,
+            "maxTrim" : 627,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-629",
+            "buttonDebounce" : 626
+          }
+        },
+        "lightingConfig" : {
+          "lightingMode" : "SINGLE_COLOR",
+          "individualColors" : [ "individualColors-568", "individualColors-569" ],
+          "volumeBrightnessTrackingEnabled" : [ true, true ],
+          "allColor" : "allColor-563",
+          "rainbowPhaseShift" : 108,
+          "rainbowBrightness" : 107,
+          "rainbowSpeed" : 110,
+          "rainbowReverse" : 109,
+          "rainbowVertical" : 111,
+          "waveHue" : 12,
+          "waveBrightness" : 11,
+          "waveSpeed" : 14,
+          "waveReverse" : 13,
+          "waveBounce" : 10,
+          "breathHue" : 86,
+          "breathBrightness" : 85,
+          "breathSpeed" : 87,
+          "knobConfigs" : [ {
+            "mode" : "VOLUME_GRADIENT",
+            "color1" : "color1-570",
+            "color2" : "color2-571",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-574",
+            "muteOverrideColor" : "muteOverrideColor-573"
+          }, {
+            "mode" : "STATIC",
+            "color1" : "color1-575",
+            "color2" : "color2-576",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-579",
+            "muteOverrideColor" : "muteOverrideColor-578"
+          } ],
+          "sliderLabelConfigs" : [ {
+            "mode" : "NONE",
+            "color" : "color-601",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-604",
+            "muteOverrideColor" : "muteOverrideColor-603"
+          }, {
+            "mode" : "NONE",
+            "color" : "color-605",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-608",
+            "muteOverrideColor" : "muteOverrideColor-607"
+          } ],
+          "sliderConfigs" : [ {
+            "mode" : "STATIC",
+            "color1" : "color1-591",
+            "color2" : "color2-592",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-595",
+            "muteOverrideColor" : "muteOverrideColor-594"
+          }, {
+            "mode" : "STATIC_GRADIENT",
+            "color1" : "color1-596",
+            "color2" : "color2-597",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-600",
+            "muteOverrideColor" : "muteOverrideColor-599"
+          } ],
+          "logoConfig" : {
+            "mode" : "NONE",
+            "color" : "color-582",
+            "brightness" : 102,
+            "speed" : 106,
+            "hue" : 104
+          },
+          "globalBrightness" : 567
+        },
+        "focusBackOnLost" : true,
+        "activateApplications" : [ "activateApplications-560", "activateApplications-561" ],
+        "activationShortcut" : "activationShortcut-562",
+        "oscBinding" : {
+          "0" : {
+            "address" : "address-630",
+            "min" : 631.5,
+            "max" : 632.5,
+            "toggle" : true
+          },
+          "1" : {
+            "address" : "address-633",
+            "min" : 634.5,
+            "max" : 635.5,
+            "toggle" : true
+          },
+          "2" : {
+            "address" : "address-636",
+            "min" : 637.5,
+            "max" : 638.5,
+            "toggle" : true
+          },
+          "3" : {
+            "address" : "address-639",
+            "min" : 640.5,
+            "max" : 641.5,
+            "toggle" : true
+          }
+        },
+        "isMainProfile" : false
+      } ],
+      "currentProfileName" : "default"
+    },
+    "9C6A1B2E3D4F" : {
+      "displayName" : "pro-panel",
+      "profiles" : [ {
+        "name" : "default",
+        "buttonData" : {
+          "0" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandEndProgram",
+              "specific" : true,
+              "name" : "name-136"
+            } ],
+            "type" : "allAtOnce"
+          },
+          "1" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandKeystroke",
+              "keystroke" : "keystroke-137"
+            } ],
+            "type" : "allAtOnce"
+          },
+          "2" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandMedia",
+              "button" : "stop",
+              "spotify" : true
+            } ],
+            "type" : "allAtOnce"
+          },
+          "3" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandObsMuteSource",
+              "source" : "source-139",
+              "type" : "unmute"
+            } ],
+            "type" : "allAtOnce"
+          },
+          "4" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandObsSetScene",
+              "scene" : "scene-141"
+            } ],
+            "type" : "allAtOnce"
+          },
+          "5" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandProfile",
+              "profile" : "profile-145"
+            } ],
+            "type" : "allAtOnce"
+          },
+          "6" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandRun",
+              "command" : "command-146"
+            } ],
+            "type" : "allAtOnce"
+          },
+          "7" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandShortcut",
+              "shortcut" : "shortcut-147"
+            } ],
+            "type" : "allAtOnce"
+          },
+          "8" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandVoiceMeeterAdvancedButton",
+              "fullParam" : "fullParam-152",
+              "bt" : "DISABLE",
+              "stringValue" : "stringValue-154"
+            } ],
+            "type" : "allAtOnce"
+          },
+          "9" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton",
+              "ct" : "STRIP",
+              "index" : 161,
+              "bt" : "MONO"
+            } ],
+            "type" : "allAtOnce"
+          },
+          "10" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandVolumeApplicationDeviceToggle",
+              "processes" : [ "processes-163", "processes-164" ],
+              "followFocus" : true,
+              "devices" : [ {
+                "name" : "name-165",
+                "mediaPlayback" : "mediaPlayback-166",
+                "mediaRecord" : "mediaRecord-167",
+                "communicationPlayback" : "communicationPlayback-168",
+                "communicationRecord" : "communicationRecord-169"
+              }, {
+                "name" : "name-170",
+                "mediaPlayback" : "mediaPlayback-171",
+                "mediaRecord" : "mediaRecord-172",
+                "communicationPlayback" : "communicationPlayback-173",
+                "communicationRecord" : "communicationRecord-174"
+              } ],
+              "currentIdx" : 0,
+              "overlayText" : "name-165"
+            } ],
+            "type" : "allAtOnce"
+          },
+          "11" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandVolumeDefaultDevice",
+              "deviceId" : "deviceId-175"
+            } ],
+            "type" : "allAtOnce"
+          },
+          "12" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceAdvanced",
+              "name" : "name-176",
+              "mediaPb" : "mediaPb-177",
+              "mediaRec" : "mediaRec-178",
+              "communicationPb" : "communicationPb-179",
+              "communicationRec" : "communicationRec-180",
+              "overlayText" : "name-176"
+            } ],
+            "type" : "allAtOnce"
+          },
+          "13" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggle",
+              "devices" : [ "devices-181", "devices-182" ],
+              "currentIdx" : 0
+            } ],
+            "type" : "allAtOnce"
+          },
+          "14" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggleAdvanced",
+              "devices" : [ {
+                "name" : "name-183",
+                "mediaPlayback" : "mediaPlayback-184",
+                "mediaRecord" : "mediaRecord-185",
+                "communicationPlayback" : "communicationPlayback-186",
+                "communicationRecord" : "communicationRecord-187"
+              }, {
+                "name" : "name-188",
+                "mediaPlayback" : "mediaPlayback-189",
+                "mediaRecord" : "mediaRecord-190",
+                "communicationPlayback" : "communicationPlayback-191",
+                "communicationRecord" : "communicationRecord-192"
+              } ],
+              "currentIdx" : -1
+            } ],
+            "type" : "allAtOnce"
+          },
+          "15" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandVolumeDeviceMute",
+              "deviceId" : "deviceId-196",
+              "muteType" : "toggle"
+            } ],
+            "type" : "allAtOnce"
+          },
+          "16" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandVolumeFocusMute",
+              "muteType" : "toggle"
+            } ],
+            "type" : "allAtOnce"
+          },
+          "17" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandVolumeProcessMute",
+              "processName" : [ "processName-206", "processName-207" ],
+              "muteType" : "unmute"
+            } ],
+            "type" : "allAtOnce"
+          },
+          "18" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandEndProgram",
+              "specific" : true,
+              "name" : "name-136"
+            }, {
+              "_type" : "com.getpcpanel.commands.command.CommandKeystroke",
+              "keystroke" : "keystroke-137"
+            }, {
+              "_type" : "com.getpcpanel.commands.command.CommandMedia",
+              "button" : "stop",
+              "spotify" : true
+            } ],
+            "type" : "sequential"
+          }
+        },
+        "dblButtonData" : {
+          "0" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandEndProgram",
+              "specific" : true,
+              "name" : "name-136"
+            }, {
+              "_type" : "com.getpcpanel.commands.command.CommandKeystroke",
+              "keystroke" : "keystroke-137"
+            } ],
+            "type" : "allAtOnce"
+          },
+          "1" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandEndProgram",
+              "specific" : true,
+              "name" : "name-136"
+            } ],
+            "type" : "sequential"
+          }
+        },
+        "dialData" : {
+          "0" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandBrightness",
+              "dialParams" : {
+                "invert" : true,
+                "moveStart" : 134,
+                "moveEnd" : 135
+              },
+              "invert" : true
+            } ],
+            "type" : "allAtOnce"
+          },
+          "1" : {
+            "commands" : [ ],
+            "type" : "allAtOnce"
+          },
+          "2" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandObsSetSourceVolume",
+              "sourceName" : "sourceName-142",
+              "dialParams" : {
+                "invert" : true,
+                "moveStart" : 143,
+                "moveEnd" : 144
+              },
+              "invert" : true
+            } ],
+            "type" : "allAtOnce"
+          },
+          "3" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced",
+              "fullParam" : "fullParam-148",
+              "ct" : "NEG_INF_TO_ZERO",
+              "dialParams" : {
+                "invert" : true,
+                "moveStart" : 150,
+                "moveEnd" : 151
+              },
+              "invert" : true
+            } ],
+            "type" : "allAtOnce"
+          },
+          "4" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandVoiceMeeterBasic",
+              "ct" : "BUS",
+              "index" : 156,
+              "dt" : "RETURNDELAY",
+              "dialParams" : {
+                "invert" : true,
+                "moveStart" : 158,
+                "moveEnd" : 159
+              },
+              "invert" : true
+            } ],
+            "type" : "allAtOnce"
+          },
+          "5" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandVolumeDevice",
+              "deviceId" : "deviceId-193",
+              "isUnMuteOnVolumeChange" : true,
+              "dialParams" : {
+                "invert" : true,
+                "moveStart" : 194,
+                "moveEnd" : 195
+              },
+              "invert" : true
+            } ],
+            "type" : "allAtOnce"
+          },
+          "6" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandVolumeFocus",
+              "dialParams" : {
+                "invert" : true,
+                "moveStart" : 198,
+                "moveEnd" : 199
+              },
+              "invert" : true
+            } ],
+            "type" : "allAtOnce"
+          },
+          "7" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandVolumeProcess",
+              "processName" : [ "processName-201", "processName-202" ],
+              "device" : "device-203",
+              "isUnMuteOnVolumeChange" : true,
+              "dialParams" : {
+                "invert" : true,
+                "moveStart" : 204,
+                "moveEnd" : 205
+              },
+              "invert" : true
+            } ],
+            "type" : "allAtOnce"
+          },
+          "8" : {
+            "commands" : [ {
+              "_type" : "com.getpcpanel.commands.command.CommandBrightness",
+              "dialParams" : {
+                "invert" : true,
+                "moveStart" : 134,
+                "moveEnd" : 135
+              },
+              "invert" : true
+            }, {
+              "_type" : "com.getpcpanel.commands.command.CommandObsSetSourceVolume",
+              "sourceName" : "sourceName-142",
+              "dialParams" : {
+                "invert" : true,
+                "moveStart" : 143,
+                "moveEnd" : 144
+              },
+              "invert" : true
+            } ],
+            "type" : "sequential"
+          }
+        },
+        "knobSettings" : {
+          "0" : {
+            "minTrim" : 85,
+            "maxTrim" : 84,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-86",
+            "buttonDebounce" : 83
+          },
+          "1" : {
+            "minTrim" : 89,
+            "maxTrim" : 88,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-90",
+            "buttonDebounce" : 87
+          },
+          "2" : {
+            "minTrim" : 93,
+            "maxTrim" : 92,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-94",
+            "buttonDebounce" : 91
+          },
+          "3" : {
+            "minTrim" : 97,
+            "maxTrim" : 96,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-98",
+            "buttonDebounce" : 95
+          },
+          "4" : {
+            "minTrim" : 101,
+            "maxTrim" : 100,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-102",
+            "buttonDebounce" : 99
+          },
+          "5" : {
+            "minTrim" : 105,
+            "maxTrim" : 104,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-106",
+            "buttonDebounce" : 103
+          },
+          "6" : {
+            "minTrim" : 109,
+            "maxTrim" : 108,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-110",
+            "buttonDebounce" : 107
+          },
+          "7" : {
+            "minTrim" : 113,
+            "maxTrim" : 112,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-114",
+            "buttonDebounce" : 111
+          },
+          "8" : {
+            "minTrim" : 117,
+            "maxTrim" : 116,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-118",
+            "buttonDebounce" : 115
+          }
+        },
+        "lightingConfig" : {
+          "lightingMode" : "ALL_RAINBOW",
+          "individualColors" : [ "individualColors-37", "individualColors-38" ],
+          "volumeBrightnessTrackingEnabled" : [ true, true ],
+          "allColor" : "allColor-32",
+          "rainbowPhaseShift" : 57,
+          "rainbowBrightness" : 56,
+          "rainbowSpeed" : 59,
+          "rainbowReverse" : 58,
+          "rainbowVertical" : 60,
+          "waveHue" : 81,
+          "waveBrightness" : 80,
+          "waveSpeed" : 83,
+          "waveReverse" : 82,
+          "waveBounce" : 79,
+          "breathHue" : 35,
+          "breathBrightness" : 34,
+          "breathSpeed" : 36,
+          "knobConfigs" : [ {
+            "mode" : "VOLUME_GRADIENT",
+            "color1" : "color1-39",
+            "color2" : "color2-40",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-43",
+            "muteOverrideColor" : "muteOverrideColor-42"
+          }, {
+            "mode" : "STATIC",
+            "color1" : "color1-44",
+            "color2" : "color2-45",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-48",
+            "muteOverrideColor" : "muteOverrideColor-47"
+          } ],
+          "sliderLabelConfigs" : [ {
+            "mode" : "STATIC",
+            "color" : "color-70",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-73",
+            "muteOverrideColor" : "muteOverrideColor-72"
+          }, {
+            "mode" : "STATIC",
+            "color" : "color-74",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-77",
+            "muteOverrideColor" : "muteOverrideColor-76"
+          } ],
+          "sliderConfigs" : [ {
+            "mode" : "STATIC_GRADIENT",
+            "color1" : "color1-60",
+            "color2" : "color2-61",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-64",
+            "muteOverrideColor" : "muteOverrideColor-63"
+          }, {
+            "mode" : "VOLUME_GRADIENT",
+            "color1" : "color1-65",
+            "color2" : "color2-66",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-69",
+            "muteOverrideColor" : "muteOverrideColor-68"
+          } ],
+          "logoConfig" : {
+            "mode" : "STATIC",
+            "color" : "color-51",
+            "brightness" : 51,
+            "speed" : 55,
+            "hue" : 53
+          },
+          "globalBrightness" : 36
+        },
+        "focusBackOnLost" : true,
+        "activateApplications" : [ "activateApplications-29", "activateApplications-30" ],
+        "activationShortcut" : "activationShortcut-31",
+        "oscBinding" : {
+          "0" : {
+            "address" : "address-119",
+            "min" : 120.5,
+            "max" : 121.5,
+            "toggle" : true
+          },
+          "1" : {
+            "address" : "address-122",
+            "min" : 123.5,
+            "max" : 124.5,
+            "toggle" : true
+          },
+          "2" : {
+            "address" : "address-125",
+            "min" : 126.5,
+            "max" : 127.5,
+            "toggle" : true
+          },
+          "3" : {
+            "address" : "address-128",
+            "min" : 129.5,
+            "max" : 130.5,
+            "toggle" : true
+          },
+          "4" : {
+            "address" : "address-131",
+            "min" : 132.5,
+            "max" : 133.5,
+            "toggle" : true
+          }
+        },
+        "isMainProfile" : true
+      }, {
+        "name" : "gaming",
+        "buttonData" : { },
+        "dblButtonData" : { },
+        "dialData" : { },
+        "knobSettings" : {
+          "0" : {
+            "minTrim" : 265,
+            "maxTrim" : 264,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-266",
+            "buttonDebounce" : 263
+          },
+          "1" : {
+            "minTrim" : 269,
+            "maxTrim" : 268,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-270",
+            "buttonDebounce" : 267
+          },
+          "2" : {
+            "minTrim" : 273,
+            "maxTrim" : 272,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-274",
+            "buttonDebounce" : 271
+          },
+          "3" : {
+            "minTrim" : 277,
+            "maxTrim" : 276,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-278",
+            "buttonDebounce" : 275
+          },
+          "4" : {
+            "minTrim" : 281,
+            "maxTrim" : 280,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-282",
+            "buttonDebounce" : 279
+          },
+          "5" : {
+            "minTrim" : 285,
+            "maxTrim" : 284,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-286",
+            "buttonDebounce" : 283
+          },
+          "6" : {
+            "minTrim" : 289,
+            "maxTrim" : 288,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-290",
+            "buttonDebounce" : 287
+          },
+          "7" : {
+            "minTrim" : 293,
+            "maxTrim" : 292,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-294",
+            "buttonDebounce" : 291
+          },
+          "8" : {
+            "minTrim" : 297,
+            "maxTrim" : 296,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-298",
+            "buttonDebounce" : 295
+          }
+        },
+        "lightingConfig" : {
+          "lightingMode" : "ALL_RAINBOW",
+          "individualColors" : [ "individualColors-217", "individualColors-218" ],
+          "volumeBrightnessTrackingEnabled" : [ true, true ],
+          "allColor" : "allColor-212",
+          "rainbowPhaseShift" : 117,
+          "rainbowBrightness" : 116,
+          "rainbowSpeed" : 119,
+          "rainbowReverse" : 118,
+          "rainbowVertical" : 120,
+          "waveHue" : 21,
+          "waveBrightness" : 20,
+          "waveSpeed" : 23,
+          "waveReverse" : 22,
+          "waveBounce" : 19,
+          "breathHue" : 95,
+          "breathBrightness" : 94,
+          "breathSpeed" : 96,
+          "knobConfigs" : [ {
+            "mode" : "VOLUME_GRADIENT",
+            "color1" : "color1-219",
+            "color2" : "color2-220",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-223",
+            "muteOverrideColor" : "muteOverrideColor-222"
+          }, {
+            "mode" : "STATIC",
+            "color1" : "color1-224",
+            "color2" : "color2-225",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-228",
+            "muteOverrideColor" : "muteOverrideColor-227"
+          } ],
+          "sliderLabelConfigs" : [ {
+            "mode" : "STATIC",
+            "color" : "color-250",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-253",
+            "muteOverrideColor" : "muteOverrideColor-252"
+          }, {
+            "mode" : "STATIC",
+            "color" : "color-254",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-257",
+            "muteOverrideColor" : "muteOverrideColor-256"
+          } ],
+          "sliderConfigs" : [ {
+            "mode" : "STATIC_GRADIENT",
+            "color1" : "color1-240",
+            "color2" : "color2-241",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-244",
+            "muteOverrideColor" : "muteOverrideColor-243"
+          }, {
+            "mode" : "VOLUME_GRADIENT",
+            "color1" : "color1-245",
+            "color2" : "color2-246",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-249",
+            "muteOverrideColor" : "muteOverrideColor-248"
+          } ],
+          "logoConfig" : {
+            "mode" : "STATIC",
+            "color" : "color-231",
+            "brightness" : 111,
+            "speed" : 115,
+            "hue" : 113
+          },
+          "globalBrightness" : 216
+        },
+        "focusBackOnLost" : true,
+        "activateApplications" : [ "activateApplications-209", "activateApplications-210" ],
+        "activationShortcut" : "activationShortcut-211",
+        "oscBinding" : {
+          "0" : {
+            "address" : "address-299",
+            "min" : 300.5,
+            "max" : 301.5,
+            "toggle" : true
+          },
+          "1" : {
+            "address" : "address-302",
+            "min" : 303.5,
+            "max" : 304.5,
+            "toggle" : true
+          },
+          "2" : {
+            "address" : "address-305",
+            "min" : 306.5,
+            "max" : 307.5,
+            "toggle" : true
+          },
+          "3" : {
+            "address" : "address-308",
+            "min" : 309.5,
+            "max" : 310.5,
+            "toggle" : true
+          },
+          "4" : {
+            "address" : "address-311",
+            "min" : 312.5,
+            "max" : 313.5,
+            "toggle" : true
+          }
+        },
+        "isMainProfile" : false
+      } ],
+      "currentProfileName" : "default"
+    },
+    "1A2B3C4D5E6F" : {
+      "displayName" : "rgb-panel",
+      "profiles" : [ {
+        "name" : "default",
+        "buttonData" : { },
+        "dblButtonData" : { },
+        "dialData" : { },
+        "knobSettings" : {
+          "0" : {
+            "minTrim" : 370,
+            "maxTrim" : 369,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-371",
+            "buttonDebounce" : 368
+          },
+          "1" : {
+            "minTrim" : 374,
+            "maxTrim" : 373,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-375",
+            "buttonDebounce" : 372
+          },
+          "2" : {
+            "minTrim" : 378,
+            "maxTrim" : 377,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-379",
+            "buttonDebounce" : 376
+          },
+          "3" : {
+            "minTrim" : 382,
+            "maxTrim" : 381,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-383",
+            "buttonDebounce" : 380
+          }
+        },
+        "lightingConfig" : {
+          "lightingMode" : "SINGLE_COLOR",
+          "individualColors" : [ "individualColors-322", "individualColors-323" ],
+          "volumeBrightnessTrackingEnabled" : [ true, true ],
+          "allColor" : "allColor-317",
+          "rainbowPhaseShift" : 102,
+          "rainbowBrightness" : 101,
+          "rainbowSpeed" : 104,
+          "rainbowReverse" : 103,
+          "rainbowVertical" : 105,
+          "waveHue" : 6,
+          "waveBrightness" : 5,
+          "waveSpeed" : 8,
+          "waveReverse" : 7,
+          "waveBounce" : 4,
+          "breathHue" : 80,
+          "breathBrightness" : 79,
+          "breathSpeed" : 81,
+          "knobConfigs" : [ {
+            "mode" : "VOLUME_GRADIENT",
+            "color1" : "color1-324",
+            "color2" : "color2-325",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-328",
+            "muteOverrideColor" : "muteOverrideColor-327"
+          }, {
+            "mode" : "STATIC",
+            "color1" : "color1-329",
+            "color2" : "color2-330",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-333",
+            "muteOverrideColor" : "muteOverrideColor-332"
+          } ],
+          "sliderLabelConfigs" : [ {
+            "mode" : "NONE",
+            "color" : "color-355",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-358",
+            "muteOverrideColor" : "muteOverrideColor-357"
+          }, {
+            "mode" : "NONE",
+            "color" : "color-359",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-362",
+            "muteOverrideColor" : "muteOverrideColor-361"
+          } ],
+          "sliderConfigs" : [ {
+            "mode" : "VOLUME_GRADIENT",
+            "color1" : "color1-345",
+            "color2" : "color2-346",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-349",
+            "muteOverrideColor" : "muteOverrideColor-348"
+          }, {
+            "mode" : "NONE",
+            "color1" : "color1-350",
+            "color2" : "color2-351",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-354",
+            "muteOverrideColor" : "muteOverrideColor-353"
+          } ],
+          "logoConfig" : {
+            "mode" : "RAINBOW",
+            "color" : "color-336",
+            "brightness" : 96,
+            "speed" : 100,
+            "hue" : 98
+          },
+          "globalBrightness" : 321
+        },
+        "focusBackOnLost" : true,
+        "activateApplications" : [ "activateApplications-314", "activateApplications-315" ],
+        "activationShortcut" : "activationShortcut-316",
+        "oscBinding" : {
+          "0" : {
+            "address" : "address-384",
+            "min" : 385.5,
+            "max" : 386.5,
+            "toggle" : true
+          },
+          "1" : {
+            "address" : "address-387",
+            "min" : 388.5,
+            "max" : 389.5,
+            "toggle" : true
+          },
+          "2" : {
+            "address" : "address-390",
+            "min" : 391.5,
+            "max" : 392.5,
+            "toggle" : true
+          },
+          "3" : {
+            "address" : "address-393",
+            "min" : 394.5,
+            "max" : 395.5,
+            "toggle" : true
+          }
+        },
+        "isMainProfile" : true
+      }, {
+        "name" : "gaming",
+        "buttonData" : { },
+        "dblButtonData" : { },
+        "dialData" : { },
+        "knobSettings" : {
+          "0" : {
+            "minTrim" : 452,
+            "maxTrim" : 451,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-453",
+            "buttonDebounce" : 450
+          },
+          "1" : {
+            "minTrim" : 456,
+            "maxTrim" : 455,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-457",
+            "buttonDebounce" : 454
+          },
+          "2" : {
+            "minTrim" : 460,
+            "maxTrim" : 459,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-461",
+            "buttonDebounce" : 458
+          },
+          "3" : {
+            "minTrim" : 464,
+            "maxTrim" : 463,
+            "logarithmic" : true,
+            "overlayIcon" : "overlayIcon-465",
+            "buttonDebounce" : 462
+          }
+        },
+        "lightingConfig" : {
+          "lightingMode" : "ALL_WAVE",
+          "individualColors" : [ "individualColors-404", "individualColors-405" ],
+          "volumeBrightnessTrackingEnabled" : [ true, true ],
+          "allColor" : "allColor-399",
+          "rainbowPhaseShift" : 64,
+          "rainbowBrightness" : 63,
+          "rainbowSpeed" : 66,
+          "rainbowReverse" : 65,
+          "rainbowVertical" : 67,
+          "waveHue" : 88,
+          "waveBrightness" : 87,
+          "waveSpeed" : 90,
+          "waveReverse" : 89,
+          "waveBounce" : 86,
+          "breathHue" : 42,
+          "breathBrightness" : 41,
+          "breathSpeed" : 43,
+          "knobConfigs" : [ {
+            "mode" : "NONE",
+            "color1" : "color1-406",
+            "color2" : "color2-407",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-410",
+            "muteOverrideColor" : "muteOverrideColor-409"
+          }, {
+            "mode" : "VOLUME_GRADIENT",
+            "color1" : "color1-411",
+            "color2" : "color2-412",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-415",
+            "muteOverrideColor" : "muteOverrideColor-414"
+          } ],
+          "sliderLabelConfigs" : [ {
+            "mode" : "NONE",
+            "color" : "color-437",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-440",
+            "muteOverrideColor" : "muteOverrideColor-439"
+          }, {
+            "mode" : "NONE",
+            "color" : "color-441",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-444",
+            "muteOverrideColor" : "muteOverrideColor-443"
+          } ],
+          "sliderConfigs" : [ {
+            "mode" : "STATIC",
+            "color1" : "color1-427",
+            "color2" : "color2-428",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-431",
+            "muteOverrideColor" : "muteOverrideColor-430"
+          }, {
+            "mode" : "STATIC_GRADIENT",
+            "color1" : "color1-432",
+            "color2" : "color2-433",
+            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-436",
+            "muteOverrideColor" : "muteOverrideColor-435"
+          } ],
+          "logoConfig" : {
+            "mode" : "NONE",
+            "color" : "color-418",
+            "brightness" : 58,
+            "speed" : 62,
+            "hue" : 60
+          },
+          "globalBrightness" : 403
+        },
+        "focusBackOnLost" : true,
+        "activateApplications" : [ "activateApplications-396", "activateApplications-397" ],
+        "activationShortcut" : "activationShortcut-398",
+        "oscBinding" : {
+          "0" : {
+            "address" : "address-466",
+            "min" : 467.5,
+            "max" : 468.5,
+            "toggle" : true
+          },
+          "1" : {
+            "address" : "address-469",
+            "min" : 470.5,
+            "max" : 471.5,
+            "toggle" : true
+          },
+          "2" : {
+            "address" : "address-472",
+            "min" : 473.5,
+            "max" : 474.5,
+            "toggle" : true
+          },
+          "3" : {
+            "address" : "address-475",
+            "min" : 476.5,
+            "max" : 477.5,
+            "toggle" : true
+          }
+        },
+        "isMainProfile" : false
+      } ],
+      "currentProfileName" : "default"
+    }
+  },
+  "mainUIIcons" : true,
+  "startupVersionCheck" : true,
+  "dblClickInterval" : 10,
+  "preventClickWhenDblClick" : true,
+  "obsEnabled" : true,
+  "obsAddress" : "obsAddress-8",
+  "obsPort" : "obsPort-10",
+  "obsPassword" : "obsPassword-9",
+  "voicemeeterEnabled" : true,
+  "voicemeeterPath" : "voicemeeterPath-28",
+  "preventSliderTwitchDelay" : 25,
+  "sliderRollingAverage" : 27,
+  "sendOnlyIfDelta" : 26,
+  "workaroundsOnlySliders" : true,
+  "oscListenPort" : 15,
+  "oscConnections" : [ {
+    "host" : "host-11",
+    "port" : 12
+  }, {
+    "host" : "host-13",
+    "port" : 14
+  } ],
+  "mqtt" : {
+    "enabled" : true,
+    "host" : "host-2",
+    "port" : 3,
+    "username" : "username-4",
+    "password" : "password-5",
+    "secure" : true,
+    "baseTopic" : "baseTopic-6",
+    "homeAssistant" : {
+      "enableDiscovery" : true,
+      "baseTopic" : "baseTopic-7",
+      "availability" : true
+    }
+  },
+  "overlayEnabled" : true,
+  "overlayUseLog" : true,
+  "overlayShowNumber" : true,
+  "overlayBackgroundColor" : "overlayBackgroundColor-16",
+  "overlayTextColor" : "overlayTextColor-23",
+  "overlayBarColor" : "overlayBarColor-18",
+  "overlayBarBackgroundColor" : "overlayBarBackgroundColor-17",
+  "overlayWindowCornerRounding" : 24,
+  "overlayBarHeight" : 20,
+  "overlayBarCornerRounding" : 19,
+  "overlayPosition" : "middleMiddle",
+  "overlayPadding" : 21
+}

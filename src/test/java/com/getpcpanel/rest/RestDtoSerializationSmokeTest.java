@@ -42,8 +42,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.opentest4j.TestAbortedException;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.getpcpanel.AppLikeMapper;
 import com.getpcpanel.commands.CommandModule;
 import com.getpcpanel.commands.CommandSubtypeRegistrar;
 
@@ -51,18 +51,16 @@ import jakarta.ws.rs.core.Response;
 
 /**
  * REST serialization smoke: catches "compiles but 500s at serialization" wiring breaks across the
- * DTO-returning endpoints without booting the app (a {@code @QuarkusTest} is unsafe here —
- * {@code DeviceProviderRegistry} starts every device provider on {@code StartupEvent}, which scans
- * real HID/serial/MIDI hardware, and there is no {@code %test} config gate for it).
+ * DTO-returning endpoints without booting the app (see {@link AppLikeMapper} for why a
+ * {@code @QuarkusTest} is unsafe here).
  *
  * <p>Discovery is reflective so new endpoints are covered automatically: every compiled
  * {@code com.getpcpanel.**} class annotated {@code @jakarta.ws.rs.Path} is a resource; every HTTP
  * method on it whose return type is a project DTO (or a collection of one) contributes that type.
  * For each type a fully <em>populated</em> instance is built (non-null fields, single-element
  * collections — an empty list would hide exactly the class of bug this guards) and serialized
- * through an ObjectMapper configured like the app's (registered modules +
- * {@link CommandSubtypeRegistrar} with every {@link CommandModule} on the classpath +
- * {@code fail-on-unknown-properties=false}).
+ * through {@link AppLikeMapper}: registered modules + {@link CommandSubtypeRegistrar} with every
+ * {@link CommandModule} on the classpath + {@code fail-on-unknown-properties=false}.
  *
  * <p>Types the dummy-value builder cannot instantiate are <em>skipped</em> with a clear message
  * (via {@link TestAbortedException}) rather than failed, so an exotic DTO shape can't turn this
@@ -74,8 +72,8 @@ import jakarta.ws.rs.core.Response;
 class RestDtoSerializationSmokeTest {
     private static final int MAX_DEPTH = 10;
 
-    private final List<Class<?>> allProjectClasses = scanProjectClasses();
-    private final ObjectMapper mapper = buildAppLikeMapper(allProjectClasses);
+    private final List<Class<?>> allProjectClasses = AppLikeMapper.scanProjectClasses();
+    private final ObjectMapper mapper = AppLikeMapper.build(allProjectClasses);
 
     /** One entry per resource method whose (unwrapped) return type is serialized by Jackson. */
     record Endpoint(String description, Type returnType) {
@@ -180,54 +178,6 @@ class RestDtoSerializationSmokeTest {
                 && raw != byte[].class
                 && !InputStream.class.isAssignableFrom(raw)
                 && !File.class.isAssignableFrom(raw);
-    }
-
-    private static List<Class<?>> scanProjectClasses() {
-        try {
-            var classesRoot = Path.of(CommandModule.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-            var loader = RestDtoSerializationSmokeTest.class.getClassLoader();
-            var result = new ArrayList<Class<?>>();
-            try (Stream<Path> walk = Files.walk(classesRoot.resolve("com").resolve("getpcpanel"))) {
-                for (var classFile : walk.filter(p -> p.toString().endsWith(".class")).toList()) {
-                    var relative = classesRoot.relativize(classFile).toString();
-                    var binaryName = relative.substring(0, relative.length() - ".class".length()).replace(File.separatorChar, '.');
-                    try {
-                        result.add(Class.forName(binaryName, false, loader));
-                    } catch (Throwable e) { // optional platform deps etc.
-                    }
-                }
-            }
-            return result;
-        } catch (Exception e) {
-            throw new IllegalStateException("cannot scan project classes", e);
-        }
-    }
-
-    /** The app's mapper shape: registered datatype modules + the command-subtype customizer. */
-    private static ObjectMapper buildAppLikeMapper(List<Class<?>> allProjectClasses) {
-        var mapper = new ObjectMapper().findAndRegisterModules()
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        var modules = new ArrayList<CommandModule>();
-        for (var clazz : allProjectClasses) {
-            if (CommandModule.class.isAssignableFrom(clazz) && !clazz.isInterface() && !Modifier.isAbstract(clazz.getModifiers())) {
-                try {
-                    modules.add((CommandModule) clazz.getDeclaredConstructor().newInstance());
-                } catch (Exception e) {
-                    throw new IllegalStateException("CommandModule " + clazz.getName() + " is not no-arg instantiable", e);
-                }
-            }
-        }
-        assertTrue(modules.size() >= 5, "expected the CommandModule scan to find the feature modules, found " + modules.size());
-        try {
-            var registrar = new CommandSubtypeRegistrar();
-            var field = CommandSubtypeRegistrar.class.getDeclaredField("modules");
-            field.setAccessible(true);
-            field.set(registrar, modules);
-            registrar.customize(mapper);
-        } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("cannot wire CommandSubtypeRegistrar", e);
-        }
-        return mapper;
     }
 
     // ── populated dummy-instance builder ──────────────────────────────────────
