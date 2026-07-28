@@ -9,7 +9,7 @@ import { DebugService, DeviceTypeOverride, OsOverride } from '../../services/deb
 import { UpdateService } from '../../services/update.service';
 import { DeviceStateService } from '../../services/device-state.service';
 import {
-  DiscordSettings, DiscordStatusDto, FocusVolumeOverride, FocusVolumeTarget, OverlayPosition, SettingsDto, WaveLinkSettings,
+  CurveDefinition, DiscordSettings, DiscordStatusDto, FocusVolumeOverride, FocusVolumeTarget, OverlayPosition, SettingsDto, WaveLinkSettings,
 } from '../../models/generated/backend.types';
 import {
   AppPickerComponent,
@@ -19,9 +19,12 @@ import {
 import { CommandPickerComponent } from '../../features/commands/command-picker.component';
 import { CommandFieldsComponent } from '../../features/commands/command-fields.component';
 import { COMMAND_BY_TYPE, CommandDef } from '../../features/commands/command-catalog';
+import { CurveEditorComponent } from '../../features/curves/curve-editor.component';
+import { CurveGraphComponent } from '../../features/curves/curve-graph.component';
+import { BUILT_IN_DEFAULTS, isBuiltIn } from '../../features/curves/curve.util';
 
 type Cmd = Record<string, any>;
-type TabId = 'general' | 'focusoverride' | 'obs' | 'voicemeeter' | 'wavelink' | 'discord' | 'osc' | 'mqtt' | 'homeassistant' | 'overlay' | 'debug';
+type TabId = 'general' | 'curves' | 'focusoverride' | 'obs' | 'voicemeeter' | 'wavelink' | 'discord' | 'osc' | 'mqtt' | 'homeassistant' | 'overlay' | 'debug';
 interface TabDef { id: TabId; label: string; integration?: 'obs' | 'voicemeeter' | 'wavelink'; supported?: boolean; }
 
 @Component({
@@ -31,6 +34,7 @@ interface TabDef { id: TabId; label: string; integration?: 'obs' | 'voicemeeter'
     IconComponent, StatusDotComponent, SpinnerComponent, ToggleComponent,
     SegmentedComponent, SliderComponent, ColorPickerComponent, ModalComponent, SelectComponent,
     OverlayModule, AppPickerComponent, CommandPickerComponent, CommandFieldsComponent,
+    CurveEditorComponent, CurveGraphComponent,
   ],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.scss',
@@ -122,6 +126,7 @@ export class SettingsComponent {
 
   private readonly allTabs: TabDef[] = [
     { id: 'general', label: 'General' },
+    { id: 'curves', label: 'Curves' },
     { id: 'focusoverride', label: 'Focus Override' },
     { id: 'overlay', label: 'Overlay' },
     { id: 'obs', label: 'OBS Studio', integration: 'obs' },
@@ -556,6 +561,60 @@ export class SettingsComponent {
   readonly fvDetecting = signal<number | null>(null);
   /** Seconds left on the detect countdown (gives you time to alt-tab to the target window). */
   readonly fvDetectCountdown = signal(0);
+
+  // ── Curves ─────────────────────────────────────────────────────────────────
+  /** Which curve's editor is open, by id; null = the list is collapsed. */
+  readonly curveOpen = signal<string | null>(null);
+
+  curves(): CurveDefinition[] { return this.local()?.curves ?? []; }
+
+  curveIsBuiltIn(curve: CurveDefinition): boolean { return isBuiltIn(curve.id); }
+
+  /** A built-in is back to its default when nothing about its shape differs from the shipped one. */
+  curveIsDefault(curve: CurveDefinition): boolean {
+    const shipped = BUILT_IN_DEFAULTS.find(d => d.id === curve.id);
+    if (!shipped) return false;
+    return (curve.mode ?? 'amount') === shipped.mode
+      && curve.amount === shipped.amount
+      && !(curve.points ?? []).length;
+  }
+
+  curveSummary(curve: CurveDefinition): string {
+    if ((curve.mode ?? 'amount') === 'points') return `${(curve.points ?? []).length} points`;
+    if (curve.amount === 0) return 'Linear';
+    return `Amount ${curve.amount > 0 ? '+' : ''}${curve.amount}`;
+  }
+
+  toggleCurve(id: string): void { this.curveOpen.set(this.curveOpen() === id ? null : id); }
+
+  updateCurve(next: CurveDefinition): void {
+    this.patch('curves', this.curves().map(c => (c.id === next.id ? next : c)));
+  }
+
+  addCurve(): void {
+    const id = `curve-${Date.now().toString(36)}`;
+    const created: CurveDefinition = { id, name: 'New curve', mode: 'amount', amount: 25, points: [] };
+    this.patch('curves', [...this.curves(), created]);
+    this.curveOpen.set(id);
+  }
+
+  duplicateCurve(source: CurveDefinition): void {
+    const id = `curve-${Date.now().toString(36)}`;
+    const copy: CurveDefinition = { ...source, id, name: `${source.name ?? source.id} copy` };
+    this.patch('curves', [...this.curves(), copy]);
+    this.curveOpen.set(id);
+  }
+
+  removeCurve(curve: CurveDefinition): void {
+    this.patch('curves', this.curves().filter(c => c.id !== curve.id));
+    if (this.curveOpen() === curve.id) this.curveOpen.set(null);
+  }
+
+  /** Puts a retuned built-in back to the shape the app ships with. */
+  resetCurve(curve: CurveDefinition): void {
+    const shipped = BUILT_IN_DEFAULTS.find(d => d.id === curve.id);
+    if (shipped) this.updateCurve({ ...shipped });
+  }
 
   fvOverrides(): FocusVolumeOverride[] { return this.local()?.focusVolumeOverrides ?? []; }
   fvTargets(rule: FocusVolumeOverride): FocusVolumeTarget[] { return rule?.targets ?? []; }

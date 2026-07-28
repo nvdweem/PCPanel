@@ -2,9 +2,15 @@ package com.getpcpanel.profile.dto;
 
 import javax.annotation.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.getpcpanel.commands.curve.Curves;
 
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 @Data
 public class KnobSetting {
@@ -14,6 +20,20 @@ public class KnobSetting {
     @Nullable private String curve;
     private String overlayIcon;
     private int buttonDebounce = 50;
+
+    /** Whether a curve property was present at all, null included. Not part of the value. */
+    @JsonIgnore
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    private boolean curveRead;
+
+    public KnobSetting setCurve(@Nullable String curve) {
+        this.curve = curve;
+        curveRead = true;
+        return this;
+    }
 
     /**
      * Part of the JSON contract for saves written before curves were named: reading one seeds
@@ -25,11 +45,12 @@ public class KnobSetting {
     }
 
     /**
-     * Applied only when no {@link #curve} has been read yet, so the two properties may appear in either
-     * order in the file without the older one clobbering the newer.
+     * Applied only when the document carried no curve property at all, so the two may appear in either
+     * order without the older one clobbering the newer — and so a client clearing a control back to linear
+     * (curve null next to a flag it has not refreshed) is not silently undone.
      */
     public KnobSetting setLogarithmic(boolean logarithmic) {
-        if (logarithmic && curve == null) {
+        if (logarithmic && !curveRead) {
             curve = Curves.LOGARITHMIC_ID;
         }
         return this;

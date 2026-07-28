@@ -19,7 +19,7 @@
         </div>
         <div class="cc-stats">
           <div class="stat value"><div class="stat-val">{{ valuePct() }}%</div><div class="stat-label">VALUE</div></div>
-          @if (knob().logarithmic) {
+          @if (curveIsShaped()) {
             <div class="stat actual"><div class="stat-val">{{ actualPct() }}%</div><div class="stat-label">ACTUAL</div></div>
           }
           <div class="stat actions"><div class="stat-val">{{ actionCount() }}</div><div class="stat-label">ACTIONS</div></div>
@@ -43,8 +43,13 @@
       <div class="micro-label">CONTROL SETTINGS</div>
       <div class="settings-block">
         <div class="setting-row">
-          <span>Logarithmic scaling</span>
-          <pc-toggle [value]="knob().logarithmic" (valueChange)="setKnob('logarithmic', $event)"></pc-toggle>
+          <span>Response curve</span>
+          <pc-select [options]="curveOptions()" [value]="knob().curve ?? 'linear'"
+                     (valueChange)="setCurve($any($event))"></pc-select>
+        </div>
+        <div class="curve-peek">
+          <pc-curve-graph [curve]="activeCurve()" [size]="76"></pc-curve-graph>
+          <a [routerLink]="['/settings']" [queryParams]="{ tab: 'curves' }">Edit curves →</a>
         </div>
         <div class="trim">
           <div class="pc-field">

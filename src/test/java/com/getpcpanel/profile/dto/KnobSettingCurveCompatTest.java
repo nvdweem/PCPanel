@@ -72,6 +72,17 @@ class KnobSettingCurveCompatTest {
     }
 
     @Test
+    void clearingTheCurveIsNotUndoneByAStaleFlagFromTheSameClient() throws Exception {
+        // The UI round-trips the whole setting, so switching a control from Logarithmic back to Linear can
+        // send curve:null next to a logarithmic:true it has not refreshed. An explicit curve wins whichever
+        // order the two arrive in; only a save file with no curve key at all falls back to the flag.
+        assertNull(read("""
+                {"curve":null,"logarithmic":true}""").getCurve());
+        assertNull(read("""
+                {"logarithmic":true,"curve":null}""").getCurve());
+    }
+
+    @Test
     void aDowngradedAppStillSeesTheLogarithmicFlag() throws Exception {
         var logarithmic = new KnobSetting();
         logarithmic.setCurve(Curves.LOGARITHMIC_ID);

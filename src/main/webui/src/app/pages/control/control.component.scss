@@ -83,3 +83,8 @@
 /* ── Add column ─────────────────────────────────────────────────────────────── */
 /* The categorized + filterable command menu now lives in CommandPickerComponent. */
 .add-col { width: 260px; flex: none; position: relative; z-index: 50; }
+
+.curve-peek {
+  display: flex; align-items: center; gap: 12px; margin-top: 8px;
+  a { font-size: 11.5px; color: var(--accent, #ffb020); text-decoration: none; &:hover { text-decoration: underline; } }
+}

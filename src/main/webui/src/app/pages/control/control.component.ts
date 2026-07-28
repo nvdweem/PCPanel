@@ -6,10 +6,13 @@ import { DeviceStateService } from '../../services/device-state.service';
 import { DeviceService } from '../../services/device.service';
 import { IntegrationDataService } from '../../features/commands/integration-data.service';
 import { DeviceCapabilitiesService } from '../../services/device-capabilities.service';
-import { Command, Commands, KnobSetting } from '../../models/generated/backend.types';
+import { Command, Commands, CurveDefinition, KnobSetting } from '../../models/generated/backend.types';
 import {
-  AppPickerComponent, IconComponent, ToggleComponent, ToastService,
+  AppPickerComponent, IconComponent, SelectComponent, SelectOption, ToastService,
 } from '../../ui';
+import { SettingsService } from '../../services/settings.service';
+import { CurveGraphComponent } from '../../features/curves/curve-graph.component';
+import { BUILT_IN_DEFAULTS, curveFn, LINEAR_ID, LOGARITHMIC_ID } from '../../features/curves/curve.util';
 import { PcKnobComponent } from '../../devices/visual/pc-knob.component';
 import { PcFaderComponent } from '../../devices/visual/pc-fader.component';
 import { CommandDef, CommandKind, COMMAND_BY_TYPE } from '../../features/commands/command-catalog';
@@ -30,9 +33,10 @@ const EMPTY_KNOB: KnobSetting = { minTrim: 0, maxTrim: 100, logarithmic: false, 
   selector: 'app-control',
   standalone: true,
   imports: [
-    DragDropModule, OverlayModule, RouterLink, IconComponent, ToggleComponent,
+    DragDropModule, OverlayModule, RouterLink, IconComponent, SelectComponent,
     AppPickerComponent, PcKnobComponent, PcFaderComponent, CommandFieldsComponent,
     ControlLightingComponent, MappingPreviewComponent, CommandPickerComponent,
+    CurveGraphComponent,
   ],
   templateUrl: './control.component.html',
   styleUrl: './control.component.scss',
@@ -43,6 +47,7 @@ export class ControlComponent {
   private readonly deviceService = inject(DeviceService);
   private readonly integrations = inject(IntegrationDataService);
   private readonly capsService = inject(DeviceCapabilitiesService);
+  private readonly settings = inject(SettingsService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
   private readonly location = inject(Location);
@@ -117,12 +122,29 @@ export class ControlComponent {
     // 0–255 domain at the backend edge, so display scales against 0–255 — NOT the
     // descriptor's raw sourceMin/sourceMax (which is the pre-normalization range).
     Math.round(analogPct(this.snap()?.analogValues?.[this.idx()])));
-  /** Output after logarithmic scaling (mirrors backend DialValueCalculator), as a %.
-   *  This is PCPanel firmware math in the canonical 0–255 domain. */
+  /** The curve library, so this page can plot and evaluate exactly what the backend will apply. */
+  private readonly curveLibrary = computed(() => this.settings.settings.value()?.curves ?? []);
+
+  readonly curveOptions = computed<SelectOption[]>(() =>
+    this.curveLibrary().map(curve => ({ value: curve.id, label: curve.name || curve.id })));
+
+  /** The control's curve, falling back to Linear when it names nothing or something since deleted. */
+  readonly activeCurve = computed<CurveDefinition>(() => {
+    const id = this.knob().curve;
+    return this.curveLibrary().find(curve => curve.id === id) ?? BUILT_IN_DEFAULTS[0];
+  });
+
+  /** Whether the ACTUAL readout is worth showing — a straight-through curve just repeats VALUE. */
+  readonly curveIsShaped = computed(() => {
+    const curve = this.activeCurve();
+    return curve.mode === 'points' ? (curve.points ?? []).length >= 2 : curve.amount !== 0;
+  });
+
+  /** Output after the control's curve, as a %. Mirrors the backend DialValueCalculator in the
+   *  canonical 0–255 domain. */
   readonly actualPct = computed(() => {
     const raw = this.snap()?.analogValues?.[this.idx()] ?? 0;        // 0–255
-    const logged = (Math.round(Math.pow(1.04723275, raw / 2.55)) - 1) * 2.55;
-    return Math.round(Math.max(0, Math.min(255, logged)) / 255 * 100);
+    return Math.round(curveFn(this.activeCurve())(raw / 255) * 100);
   });
   readonly ledColor = computed(() => {
     const s = this.snap();
@@ -215,6 +237,14 @@ export class ControlComponent {
   // ── knob settings ──────────────────────────────────────────────────────────
   setKnob<K extends keyof KnobSetting>(key: K, value: KnobSetting[K]): void {
     this.knob.update(k => ({ ...k, [key]: value }));
+    this.save();
+  }
+
+  /** Linear is the absence of a curve, so it stores nothing. The legacy flag is kept consistent with the
+   *  chosen curve so the setting round-trips the same whichever field an older reader looks at. */
+  setCurve(id: string): void {
+    const curve = id === LINEAR_ID ? undefined : id;
+    this.knob.update(k => ({ ...k, curve, logarithmic: id === LOGARITHMIC_ID }));
     this.save();
   }
 
