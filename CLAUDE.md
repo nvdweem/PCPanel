@@ -244,6 +244,18 @@ and immutable distros persist settings without a host grant. `PcPanelRoot.resolv
 source of truth: `Main` publishes it as the `pcpanel.root` system property for the native image, and
 the non-CDI `FileChecker`/`HidDebug` call it directly. See `linux.md` for the user-facing details.
 
+**Backwards compatibility of the save file is tested against real old files.**
+`src/test/resources/legacy-saves/` holds a chain of `profiles.json` fixtures — one per release
+(`1.7.1` → `1.8` → `2.0`), each produced by *that* release from its predecessor and verified to
+round-trip through that release's own Jackson setup. `LegacySaveCompatibilityTest` loads them all and
+asserts every `_type` still resolves, that values (not just shape) survive, and that re-saving
+rewrites legacy ids and then settles. **The older fixtures are frozen**; the current-version one is
+regenerated with `SaveFixtureGenerator` when the format changes — the test fails with a pointer when a
+new command or `Save` property is missing from it. Provenance and the regeneration command are in the
+README next to the fixtures. The main thing this guards is the `_type` discriminator: 1.7.x/1.8 wrote
+fully-qualified class names (`JsonTypeInfo.Id.CLASS`), which today are accepted only because each
+command lists them in `@CommandMeta.legacyIds`.
+
 **Frontend bridge (`rest/`):** the **shared** JAX-RS + websocket bridge: `SettingsResource`,
 `PlatformResource`, `SystemResource`, `IconResource`/`ProcessResource` (the app/process picker, shared
 across features), `EventWebSocket` at `/ws/events`, `EventBroadcaster`, `LocalHttpGuard`, and the
