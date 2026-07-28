@@ -83,3 +83,13 @@
 /* ── Add column ─────────────────────────────────────────────────────────────── */
 /* The categorized + filterable command menu now lives in CommandPickerComponent. */
 .add-col { width: 260px; flex: none; position: relative; z-index: 50; }
+
+.curve-row-label { white-space: nowrap; }
+.curve-pick {
+  display: flex; align-items: center; gap: 9px; flex: 1; min-width: 0; justify-content: flex-end;
+  .peek {
+    flex: 0 0 auto; padding: 2px; border: 1px solid var(--line); border-radius: var(--r-sm);
+    background: var(--input);
+  }
+  pc-select { min-width: 0; }
+}

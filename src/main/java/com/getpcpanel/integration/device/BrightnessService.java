@@ -1,6 +1,8 @@
 package com.getpcpanel.integration.device;
 
-import com.getpcpanel.commands.DialValueCalculator;
+import org.apache.commons.lang3.StringUtils;
+
+import com.getpcpanel.commands.curve.CurveService;
 
 import java.util.Comparator;
 import java.util.List;
@@ -40,6 +42,8 @@ public class BrightnessService {
     SaveService saveService;
     @Inject
     DeviceHolder devices;
+    @Inject
+    CurveService curves;
 
     /** The runtime global brightness (0-100) for a device, or empty when no analog input controls it. */
     public OptionalInt runtimeBrightness(String serial) {
@@ -62,14 +66,14 @@ public class BrightnessService {
             return OptionalInt.empty();
         }
         var raw = device.getKnobRotation(control.index());
-        var value = new DialValueCalculator(control.knobSetting()).calcValue(control.command(), raw, 0f, 100f);
+        var value = curves.calculatorFor(control.knobSetting()).calcValue(control.command(), raw, 0f, 100f);
         return OptionalInt.of(Math.round(value));
     }
 
     /**
-     * The brightness control to read, picked deterministically across all the device's profiles: a
-     * logarithmic one wins over a linear one, then the lowest analog index. Static + side-effect-free so
-     * the ordering is unit-testable.
+     * The brightness control to read, picked deterministically across all the device's profiles: one
+     * carrying a response curve wins over a straight-through one, then the lowest analog index. Static +
+     * side-effect-free so the ordering is unit-testable.
      */
     static Optional<BrightnessControl> bestBrightnessControl(List<Profile> profiles) {
         return profiles.stream()
@@ -78,13 +82,14 @@ public class BrightnessService {
                                                  .map(cmd -> new BrightnessControl(e.getKey(), cmd, p.getKnobSettings().get(e.getKey())))
                                                  .orElse(null))
                                       .filter(Objects::nonNull))
-                       .min(Comparator.comparing((BrightnessControl b) -> !b.logarithmic())
+                       .min(Comparator.comparing((BrightnessControl b) -> !b.shaped())
                                       .thenComparingInt(BrightnessControl::index));
     }
 
     record BrightnessControl(int index, CommandBrightness command, @Nullable KnobSetting knobSetting) {
-        boolean logarithmic() {
-            return knobSetting != null && knobSetting.isLogarithmic();
+        /** Carries a response curve rather than running straight through — finer low-end control. */
+        boolean shaped() {
+            return knobSetting != null && StringUtils.isNotBlank(knobSetting.getCurve());
         }
     }
 }

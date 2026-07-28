@@ -7,6 +7,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import com.getpcpanel.integration.device.command.CommandBrightness;
 import com.getpcpanel.commands.command.DialAction.DialCommandParams;
+import com.getpcpanel.commands.curve.Curves;
 import com.getpcpanel.profile.dto.KnobSetting;
 
 class DialValueTest {
@@ -30,7 +31,8 @@ class DialValueTest {
     })
     @ParameterizedTest
     void testGetValue(boolean invert, boolean log, int value, float min, float max, float expected) {
-        var dialValue = new DialValue(new KnobSetting().setLogarithmic(log), value);
+        var setting = new KnobSetting().setLogarithmic(log);
+        var dialValue = new DialValue(setting, Curves.resolve(setting.getCurve(), null), value);
         var calculated = dialValue.getValue(new CommandBrightness(new DialCommandParams(invert, null, null)), min, max);
         var rounded = Math.round(calculated * 100) / 100d; // Round to make the expected more usable
 

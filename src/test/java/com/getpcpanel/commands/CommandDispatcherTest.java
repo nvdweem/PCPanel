@@ -18,7 +18,7 @@ import com.getpcpanel.commands.PCPanelControlEvent.Source;
 import com.getpcpanel.commands.command.ButtonAction;
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.DialAction;
-import com.getpcpanel.profile.dto.KnobSetting;
+import com.getpcpanel.commands.curve.Curve;
 
 /**
  * Routing behaviour of {@link CommandDispatcher} and the {@link Command#toRunnable} action-selection
@@ -131,7 +131,7 @@ class CommandDispatcherTest {
     }
 
     private static DialValue dial(int value) {
-        return new DialValue((KnobSetting) null, value);
+        return new DialValue(null, Curve.LINEAR, value);
     }
 
     private static final class ButtonCommand extends Command implements ButtonAction {

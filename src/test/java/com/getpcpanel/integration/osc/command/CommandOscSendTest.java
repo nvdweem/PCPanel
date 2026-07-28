@@ -21,7 +21,7 @@ import com.getpcpanel.commands.command.DialAction.DialActionParameters;
 import com.getpcpanel.commands.command.DialAction.DialCommandParams;
 import com.getpcpanel.integration.osc.OSCService;
 import com.getpcpanel.integration.testutil.FakeCdi;
-import com.getpcpanel.profile.dto.KnobSetting;
+import com.getpcpanel.commands.curve.Curve;
 
 /**
  * {@link CommandOscSend}: JSON round-trip through the polymorphic mapper, and the value pipeline —
@@ -64,7 +64,7 @@ class CommandOscSendTest {
     }
 
     private static DialActionParameters dialAt(int raw) {
-        return new DialActionParameters("device", false, new DialValue((KnobSetting) null, raw));
+        return new DialActionParameters("device", false, new DialValue(null, Curve.LINEAR, raw));
     }
 
     @Test

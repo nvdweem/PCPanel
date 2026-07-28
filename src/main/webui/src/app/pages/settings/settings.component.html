@@ -157,6 +157,49 @@
           </div>
         }
 
+        <!-- ── CURVES ──────────────────────────────────────────────────────── -->
+        @case ('curves') {
+          <h2 class="page-title">Curves</h2>
+          <p class="page-sub">How far a knob or slider turns into how much. Pick a curve per control on its
+            control page. <strong>Amount</strong> slides the taper between straight through and a steep
+            logarithmic one; <strong>Custom</strong> lets you drag the shape by hand.</p>
+
+          @for (curve of curves(); track curve.id) {
+            <div class="pc-card pad stack curve-row">
+              <div class="curve-head" (click)="toggleCurve(curve.id)">
+                <pc-curve-graph [curve]="curve" [size]="56"></pc-curve-graph>
+                <div class="curve-id">
+                  <span class="curve-name">{{ curve.name || curve.id }}</span>
+                  <span class="curve-sum">{{ curveSummary(curve) }}</span>
+                </div>
+                @if (curveIsBuiltIn(curve)) { <span class="curve-tag">BUILT-IN</span> }
+                <span class="spacer"></span>
+                <button class="pc-btn ghost" (click)="duplicateCurve(curve); $event.stopPropagation()"
+                        title="Make an editable copy">Duplicate</button>
+                @if (curveIsBuiltIn(curve)) {
+                  <button class="pc-btn ghost" [disabled]="curveIsDefault(curve)"
+                          (click)="resetCurve(curve); $event.stopPropagation()"
+                          title="Put this built-in back to its shipped shape">Reset</button>
+                } @else {
+                  <button class="fv-del" (click)="curvePendingDelete.set(curve); $event.stopPropagation()"
+                          title="Remove curve">
+                    <pc-icon name="trash" [size]="14"></pc-icon>
+                  </button>
+                }
+                <pc-icon [name]="curveOpen() === curve.id ? 'chevron-down' : 'chevron-right'" [size]="15"></pc-icon>
+              </div>
+
+              @if (curveOpen() === curve.id) {
+                <pc-curve-editor [curve]="curve" (curveChange)="updateCurve($event)"></pc-curve-editor>
+              }
+            </div>
+          }
+
+          <button class="pc-btn" (click)="addCurve()">
+            <pc-icon name="plus" [size]="14"></pc-icon> Add curve
+          </button>
+        }
+
         <!-- ── FOCUS OVERRIDE ──────────────────────────────────────────────── -->
         @case ('focusoverride') {
           <h2 class="page-title">Focus Volume Override</h2>
@@ -912,6 +955,18 @@
         <button class="pc-btn ghost" (click)="stayHere()">Stay here</button>
         <button class="pc-btn danger" (click)="leaveWithoutSaving()">Proceed without saving</button>
         <button class="pc-btn primary" [disabled]="saving()" (click)="saveAndLeave()">Save &amp; proceed</button>
+      </div>
+    </div>
+  </pc-modal>
+
+  <pc-modal [open]="curvePendingDelete() !== null" heading="Delete curve?" [width]="440"
+            (dismiss)="curvePendingDelete.set(null)">
+    <div class="leave-body">
+      <p class="leave-msg">"{{ curvePendingDelete()?.name || curvePendingDelete()?.id }}" will be removed.
+        Controls using it go back to Linear.</p>
+      <div class="leave-actions">
+        <button class="pc-btn ghost" (click)="curvePendingDelete.set(null)">Cancel</button>
+        <button class="pc-btn danger" (click)="confirmRemoveCurve()">Delete</button>
       </div>
     </div>
   </pc-modal>

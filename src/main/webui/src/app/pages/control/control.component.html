@@ -19,7 +19,7 @@
         </div>
         <div class="cc-stats">
           <div class="stat value"><div class="stat-val">{{ valuePct() }}%</div><div class="stat-label">VALUE</div></div>
-          @if (knob().logarithmic) {
+          @if (curveIsShaped()) {
             <div class="stat actual"><div class="stat-val">{{ actualPct() }}%</div><div class="stat-label">ACTUAL</div></div>
           }
           <div class="stat actions"><div class="stat-val">{{ actionCount() }}</div><div class="stat-label">ACTIONS</div></div>
@@ -43,8 +43,12 @@
       <div class="micro-label">CONTROL SETTINGS</div>
       <div class="settings-block">
         <div class="setting-row">
-          <span>Logarithmic scaling</span>
-          <pc-toggle [value]="knob().logarithmic" (valueChange)="setKnob('logarithmic', $event)"></pc-toggle>
+          <span class="curve-row-label">Response curve</span>
+          <div class="curve-pick">
+            <pc-curve-graph class="peek" [curve]="activeCurve()" [size]="34"></pc-curve-graph>
+            <pc-select [options]="curveOptions()" [value]="activeCurve().id"
+                       (valueChange)="setCurve($any($event))"></pc-select>
+          </div>
         </div>
         <div class="trim">
           <div class="pc-field">
@@ -150,7 +154,8 @@
                   <span class="grip"><pc-icon name="grip" [size]="14"></pc-icon></span>
                   <span class="ai-icon"><pc-icon [name]="iconFor(cmd)" [size]="14"></pc-icon></span>
                   @if (mapParams(cmd); as mp) {
-                    <pc-mapping-preview class="ai-map" [dialParams]="mp"></pc-mapping-preview>
+                    <pc-mapping-preview class="ai-map" [dialParams]="mp"
+                                        [responseCurve]="activeCurve()" [trim]="knob()"></pc-mapping-preview>
                   }
                   <span class="ai-name">{{ labelFor(cmd) }}</span>
                   <pc-icon [name]="expanded() === $index ? 'chevron-up' : 'chevron-down'" [size]="14" [strokeWidth]="2.5" class="chev"></pc-icon>
@@ -159,7 +164,8 @@
                 @if (expanded() === $index && defFor(cmd)) {
                   <div class="ai-body">
                     <pc-command-fields [def]="defFor(cmd)!" [command]="cmd" (commandChange)="updateCommand($index, $event)"
-                                       [showMapping]="activeSlot() === 'rotate'" [profiles]="s.profiles"></pc-command-fields>
+                                       [showMapping]="activeSlot() === 'rotate'" [responseCurve]="activeCurve()"
+                                       [trim]="knob()" [profiles]="s.profiles"></pc-command-fields>
                   </div>
                 }
               </div>

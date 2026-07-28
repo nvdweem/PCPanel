@@ -18,6 +18,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.PCPanelControlEvent;
+import com.getpcpanel.commands.curve.CurveService;
 import com.getpcpanel.profile.BaseLayerService;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.util.concurrent.Debouncer;
@@ -38,6 +39,8 @@ public final class InputInterpreter {
     Event<Object> eventBus;
     @Inject
     Debouncer debouncer;
+    @Inject
+    CurveService curves;
     private final Map<ClickId, Long> lastClicks = new HashMap<>();
 
         public void onKnobRotate(@Observes DeviceCommunicationHandler.KnobRotateEvent event) {
@@ -45,7 +48,7 @@ public final class InputInterpreter {
             var value = event.value();
             device.setKnobRotation(event.knob(), value);
             var settings = save.getProfile(event.serialNum()).map(p -> p.getKnobSettings(event.knob())).orElse(null);
-            doDialAction(event.serialNum(), event.initial(), event.knob(), new DialValue(settings, value));
+            doDialAction(event.serialNum(), event.initial(), event.knob(), new DialValue(settings, curves.forControl(settings), value));
         });
     }
 

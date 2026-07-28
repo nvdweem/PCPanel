@@ -3,14 +3,15 @@ package com.getpcpanel.commands;
 import javax.annotation.Nullable;
 
 import com.getpcpanel.commands.command.Command;
+import com.getpcpanel.commands.curve.Curve;
 import com.getpcpanel.profile.dto.KnobSetting;
 
 public record DialValue(
         DialValueCalculator settings,
         int value
 ) {
-    public DialValue(@Nullable KnobSetting settings, int value) {
-        this(new DialValueCalculator(settings), value);
+    public DialValue(@Nullable KnobSetting settings, Curve curve, int value) {
+        this(new DialValueCalculator(settings, curve), value);
     }
 
     @SuppressWarnings("NumericCastThatLosesPrecision")

@@ -4,8 +4,9 @@ import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-
 import { RouterLink } from '@angular/router';
 import { CommandDef, COMMAND_BY_TYPE, FieldDef, LiveSource } from './command-catalog';
 import { CommandPickerComponent } from './command-picker.component';
-import { mappingCurve } from './mapping-curve.util';
+import { mappingCurve, TrimRange } from './mapping-curve.util';
 import { IntegrationDataService } from './integration-data.service';
+import { CurveDefinition } from '../../models/generated/backend.types';
 import {
   AppPickerComponent, ColorPickerComponent, IconComponent, IconName, KeyRecorderComponent, SegmentedComponent,
   SelectComponent, SelectOption, ToggleComponent,
@@ -215,6 +216,12 @@ type Cmd = Record<string, any>;
               <rect x="1" y="1" width="148" height="98" rx="8" fill="#0E0F12" stroke="#23262E"></rect>
               <line x1="18" y1="82" x2="132" y2="82" stroke="#2A2E37" stroke-width="1"></line>
               <line x1="18" y1="18" x2="18" y2="82" stroke="#2A2E37" stroke-width="1"></line>
+              @for (band of curve().dead; track $index) {
+                <rect [attr.x]="band.x" y="18" [attr.width]="band.width" height="64" fill="#FFFFFF" opacity="0.05"></rect>
+              }
+              @if (curve().ghost) {
+                <path [attr.d]="curve().ghost" fill="none" stroke="#FFB020" stroke-width="1.5" opacity="0.3"></path>
+              }
               <path [attr.d]="curve().path" fill="none" stroke="#FFB020" stroke-width="2.5" stroke-linecap="round"></path>
               <circle [attr.cx]="18" [attr.cy]="curve().y0" r="3.5" fill="#FFB020"></circle>
               <circle [attr.cx]="132" [attr.cy]="curve().y1" r="3.5" fill="#FFB020"></circle>
@@ -304,6 +311,10 @@ export class CommandFieldsComponent {
   readonly def = input.required<CommandDef>();
   readonly command = model.required<Cmd>();
   readonly showMapping = input<boolean>(false);
+  /** The control's response curve, so the mapping graph plots the shape the dial actually applies. */
+  readonly responseCurve = input<CurveDefinition | null>(null);
+  /** The control's trim range, which bounds what that shape produces. */
+  readonly trim = input<TrimRange | null>(null);
   readonly profiles = input<string[]>([]);
 
   readonly appsOpen = model<string | null>(null);
@@ -432,7 +443,8 @@ export class CommandFieldsComponent {
   setEnd(v: number): void { this.setDial('moveEnd', clamp(100 - clamp(v))); }
 
   // Transfer curve on the 150x100 graph (x 18..132, y 82(0%)..24(100%)), via the shared mapping math.
-  readonly curve = computed(() => mappingCurve(this.command()['dialParams'], { x0: 18, x1: 132, yBottom: 82, yTop: 24 }));
+  readonly curve = computed(() =>
+    mappingCurve(this.command()['dialParams'], { x0: 18, x1: 132, yBottom: 82, yTop: 24 }, this.responseCurve(), this.trim()));
 
   // ── stepped-switch bands ─────────────────────────────────────────────────────
   // Each band holds a Commands list ({ commands: [...], type }); a position can run any number of

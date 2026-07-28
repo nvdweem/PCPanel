@@ -4,8 +4,10 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
+import com.getpcpanel.commands.curve.Curves;
 import com.getpcpanel.integration.homeassistant.dto.HomeAssistantServer;
 import com.getpcpanel.profile.Save;
+import com.getpcpanel.profile.dto.CurveDefinition;
 import com.getpcpanel.integration.volume.FocusVolumeOverride;
 import com.getpcpanel.integration.mqtt.dto.MqttSettings;
 import com.getpcpanel.integration.osc.dto.OSCConnectionInfo;
@@ -30,6 +32,8 @@ public class SettingsDto {
     private boolean preventClickWhenDblClick;
     private boolean skipControlledFocusApps;
     private List<FocusVolumeOverride> focusVolumeOverrides;
+    /** The whole picker-visible library: the built-ins, then the user's own. */
+    private List<CurveDefinition> curves;
     @Nullable private Integer preventSliderTwitchDelay;
     @Nullable private Integer sliderRollingAverage;
     @Nullable private Integer sendOnlyIfDelta;
@@ -92,6 +96,7 @@ public class SettingsDto {
         dto.preventClickWhenDblClick = save.isPreventClickWhenDblClick();
         dto.skipControlledFocusApps = save.isSkipControlledFocusApps();
         dto.focusVolumeOverrides = save.getFocusVolumeOverrides();
+        dto.curves = Curves.library(save.getCurves());
         dto.preventSliderTwitchDelay = save.getPreventSliderTwitchDelay();
         dto.sliderRollingAverage = save.getSliderRollingAverage();
         dto.sendOnlyIfDelta = save.getSendOnlyIfDelta();
@@ -145,6 +150,7 @@ public class SettingsDto {
         save.setPreventClickWhenDblClick(preventClickWhenDblClick);
         save.setSkipControlledFocusApps(skipControlledFocusApps);
         save.setFocusVolumeOverrides(focusVolumeOverrides);
+        save.setCurves(Curves.userCurves(curves));
         save.setPreventSliderTwitchDelay(preventSliderTwitchDelay);
         save.setSliderRollingAverage(sliderRollingAverage);
         save.setSendOnlyIfDelta(sendOnlyIfDelta);

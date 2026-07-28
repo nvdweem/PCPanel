@@ -223,6 +223,24 @@ engine — `Command`, the `Dial/Button/DeviceAction` SPIs, `CommandDispatcher`, 
 ids, decentralized registry — see `docs/feature-module-structure.md`) and part of the generated TS
 contract. **A package is an `integration` only if it provides commands** — providers/HAL/infra are not.
 
+**Response curves (`commands/curve/`):** how far a control moves → how much output, applied by
+`DialValueCalculator` **before** trim and invert. A `Curve` maps 0..1 → 0..1 and comes in two shapes:
+`AmountCurve`, a one-parameter family where `0` is straight through and `+50` (`LOG_AMOUNT`) reproduces
+the historic hardcoded taper, mirrored for negative amounts; and `PointsCurve`, hand-placed points
+interpolated with a monotone cubic (Fritsch-Carlson) spline so a dragged curve cannot overshoot between
+its points. Curves are **named** (`CurveDefinition` in `profile/dto/`, stored in `Save.curves`) and a
+control references one by id (`KnobSetting.curve`). `Curves.resolve` checks the saved library **before**
+the built-in `linear`/`logarithmic`, so saving an entry under a built-in id retunes it for every control
+at once and deleting that entry restores the default; an unresolvable id evaluates linear rather than
+throwing. `DialValueCalculator` takes the **resolved** curve — never a `KnobSetting` alone — so no path
+can silently skip the user's library; `CurveService` does the resolving for CDI callers.
+`KnobSetting.isLogarithmic()/setLogarithmic()` are hand-written accessors, not a field: they keep the
+pre-curves JSON readable and keep new saves legible to an older build. Curve types hang off `Save`, not
+the `Command` graph, so `ReflectionRegistrationCoverageTest` does not reach them — they are registered
+in `NativeImageConfig` by hand. The Angular side re-implements both shapes in
+`webui/src/app/features/curves/curve.util.ts` to draw and preview them; that mirror is preview-only, the
+backend stays authoritative for what the hardware does.
+
 **Native audio abstraction (`integration/volume/platform/`):** `ISndCtrl` is the OS-audio facade
 (volume/mute/default device, focus app) — it is the backend the volume commands drive, so it lives in
 the volume feature. Implementations are selected at **build time** by platform stereotypes:
