@@ -181,7 +181,8 @@
                           (click)="resetCurve(curve); $event.stopPropagation()"
                           title="Put this built-in back to its shipped shape">Reset</button>
                 } @else {
-                  <button class="fv-del" (click)="removeCurve(curve); $event.stopPropagation()" title="Remove curve">
+                  <button class="fv-del" (click)="curvePendingDelete.set(curve); $event.stopPropagation()"
+                          title="Remove curve">
                     <pc-icon name="trash" [size]="14"></pc-icon>
                   </button>
                 }
@@ -954,6 +955,18 @@
         <button class="pc-btn ghost" (click)="stayHere()">Stay here</button>
         <button class="pc-btn danger" (click)="leaveWithoutSaving()">Proceed without saving</button>
         <button class="pc-btn primary" [disabled]="saving()" (click)="saveAndLeave()">Save &amp; proceed</button>
+      </div>
+    </div>
+  </pc-modal>
+
+  <pc-modal [open]="curvePendingDelete() !== null" heading="Delete curve?" [width]="440"
+            (dismiss)="curvePendingDelete.set(null)">
+    <div class="leave-body">
+      <p class="leave-msg">"{{ curvePendingDelete()?.name || curvePendingDelete()?.id }}" will be removed.
+        Controls using it go back to Linear.</p>
+      <div class="leave-actions">
+        <button class="pc-btn ghost" (click)="curvePendingDelete.set(null)">Cancel</button>
+        <button class="pc-btn danger" (click)="confirmRemoveCurve()">Delete</button>
       </div>
     </div>
   </pc-modal>

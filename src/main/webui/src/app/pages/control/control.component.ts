@@ -28,6 +28,8 @@ type Slot = 'rotate' | 'press' | 'dblpress' | 'release';
 
 const EMPTY: Commands = { commands: [], type: 'allAtOnce' };
 const EMPTY_KNOB: KnobSetting = { minTrim: 0, maxTrim: 100, logarithmic: false, overlayIcon: '', buttonDebounce: 0 };
+/** Last entry of the curve picker: opens the library rather than selecting a curve. */
+const EDIT_CURVES = '__edit-curves__';
 
 @Component({
   selector: 'app-control',
@@ -125,13 +127,18 @@ export class ControlComponent {
   /** The curve library, so this page can plot and evaluate exactly what the backend will apply. */
   private readonly curveLibrary = computed(() => this.settings.settings.value()?.curves ?? []);
 
-  readonly curveOptions = computed<SelectOption[]>(() =>
-    this.curveLibrary().map(curve => ({ value: curve.id, label: curve.name || curve.id })));
+  readonly curveOptions = computed<SelectOption[]>(() => [
+    ...this.curveLibrary().map(curve => ({ value: curve.id, label: curve.name || curve.id })),
+    { value: EDIT_CURVES, label: 'Edit curves…' },
+  ]);
 
   /** The control's curve, falling back to Linear when it names nothing or something since deleted. */
   readonly activeCurve = computed<CurveDefinition>(() => {
-    const id = this.knob().curve;
-    return this.curveLibrary().find(curve => curve.id === id) ?? BUILT_IN_DEFAULTS[0];
+    const library = this.curveLibrary();
+    const id = this.knob().curve || LINEAR_ID;
+    return library.find(curve => curve.id === id)
+      ?? library.find(curve => curve.id === LINEAR_ID)
+      ?? BUILT_IN_DEFAULTS[0];
   });
 
   /** Whether the ACTUAL readout is worth showing — a straight-through curve just repeats VALUE. */
@@ -240,11 +247,15 @@ export class ControlComponent {
     this.save();
   }
 
-  /** Linear is the absence of a curve, so it stores nothing. The legacy flag is kept consistent with the
-   *  chosen curve so the setting round-trips the same whichever field an older reader looks at. */
+  /** The id is stored as picked, Linear included, so a control follows the library entry it names even
+   *  after that entry is retuned. The legacy flag is kept consistent with it so the setting round-trips
+   *  the same whichever field an older reader looks at. */
   setCurve(id: string): void {
-    const curve = id === LINEAR_ID ? undefined : id;
-    this.knob.update(k => ({ ...k, curve, logarithmic: id === LOGARITHMIC_ID }));
+    if (id === EDIT_CURVES) {
+      this.router.navigate(['/settings'], { queryParams: { tab: 'curves' } });
+      return;
+    }
+    this.knob.update(k => ({ ...k, curve: id, logarithmic: id === LOGARITHMIC_ID }));
     this.save();
   }
 

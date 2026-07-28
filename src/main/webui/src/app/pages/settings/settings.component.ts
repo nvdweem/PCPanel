@@ -605,9 +605,15 @@ export class SettingsComponent {
     this.curveOpen.set(id);
   }
 
-  removeCurve(curve: CurveDefinition): void {
+  /** The curve waiting on a confirmed delete; null when nothing is pending. */
+  readonly curvePendingDelete = signal<CurveDefinition | null>(null);
+
+  confirmRemoveCurve(): void {
+    const curve = this.curvePendingDelete();
+    if (!curve) return;
     this.patch('curves', this.curves().filter(c => c.id !== curve.id));
     if (this.curveOpen() === curve.id) this.curveOpen.set(null);
+    this.curvePendingDelete.set(null);
   }
 
   /** Puts a retuned built-in back to the shape the app ships with. */
