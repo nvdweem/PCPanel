@@ -100,6 +100,9 @@ import com.getpcpanel.integration.discord.dto.DiscordSeenUser;
 import com.getpcpanel.integration.discord.dto.DiscordSettings;
 import com.getpcpanel.integration.volume.FocusVolumeOverride;
 import com.getpcpanel.integration.volume.FocusVolumeTarget;
+import com.getpcpanel.profile.dto.CurveDefinition;
+import com.getpcpanel.profile.dto.CurveMode;
+import com.getpcpanel.profile.dto.CurvePoint;
 import com.getpcpanel.profile.dto.KnobSetting;
 import com.getpcpanel.profile.dto.LightingConfig;
 import com.getpcpanel.profile.dto.LightingConfig.LightingMode;
@@ -408,6 +411,16 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         FocusVolumeOverride[].class,
         FocusVolumeTarget.class,
         FocusVolumeTarget[].class,
+
+        // The response-curve library, persisted in the save file + sent in SettingsDto. Same List-of-record
+        // shape as the focus-volume rules above (Save.curves, CurveDefinition.points), so the element and
+        // its array form both have to be reachable. These hang off Save rather than the Command graph, so
+        // ReflectionRegistrationCoverageTest does not reach them — they are registered by hand.
+        CurveDefinition.class,
+        CurveDefinition[].class,
+        CurvePoint.class,
+        CurvePoint[].class,
+        CurveMode.class,
 
         // Types a JAX-RS resource method returns. Quarkus registers REST signature types itself, so
         // several of these are redundant today — they are declared anyway, because relying on that

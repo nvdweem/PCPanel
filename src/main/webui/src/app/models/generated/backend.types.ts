@@ -755,6 +755,7 @@ export interface SerialPortDto {
 export interface SettingsDto {
     autoUpdate: boolean;
     checkForPreReleases: boolean;
+    curves: CurveDefinition[];
     dblClickInterval: number;
     focusVolumeOverrides: FocusVolumeOverride[];
     forceVolume: boolean;

@@ -45,6 +45,26 @@ public final class Curves {
                 stored.stream().filter(curve -> !isBuiltIn(curve.id()))).toList();
     }
 
+    /**
+     * The half of a submitted library worth storing: the user's own curves, plus any built-in they have
+     * actually changed. Storing an untouched built-in would freeze today's default into the save file and
+     * leave nothing for "reset to default" to fall back to.
+     */
+    public static List<CurveDefinition> userCurves(@Nullable List<CurveDefinition> submitted) {
+        if (submitted == null) {
+            return List.of();
+        }
+        return submitted.stream().filter(curve -> !isDefault(curve)).toList();
+    }
+
+    private static boolean isDefault(CurveDefinition curve) {
+        return find(curve.id(), BUILT_INS).filter(builtIn -> sameShape(builtIn, curve)).isPresent();
+    }
+
+    private static boolean sameShape(CurveDefinition one, CurveDefinition other) {
+        return one.mode() == other.mode() && one.amount() == other.amount() && one.points().equals(other.points());
+    }
+
     public static Curve resolve(@Nullable String id, @Nullable List<CurveDefinition> saved) {
         if (StringUtils.isBlank(id)) {
             return Curve.LINEAR;
