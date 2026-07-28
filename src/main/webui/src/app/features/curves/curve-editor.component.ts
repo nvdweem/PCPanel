@@ -17,8 +17,11 @@ import { curveFn, LOG_AMOUNT, seedPoints } from './curve.util';
   template: `
     <div class="editor">
       <div class="left">
-        <pc-curve-graph [curve]="curve()" [size]="270" [interactive]="curve().mode === 'points'"
-                        (pointsChange)="setPoints($event)"></pc-curve-graph>
+        <div class="plot">
+          <div class="y-axis">output</div>
+          <pc-curve-graph [curve]="curve()" [size]="270" [interactive]="curve().mode === 'points'"
+                          (pointsChange)="setPoints($event)"></pc-curve-graph>
+        </div>
         <div class="axis"><span>0%</span><span>dial position</span><span>100%</span></div>
       </div>
 
@@ -62,6 +65,11 @@ import { curveFn, LOG_AMOUNT, seedPoints } from './curve.util';
     :host { display: block; }
     .editor { display: flex; gap: 22px; flex-wrap: wrap; align-items: flex-start; }
     .left { flex: 0 0 auto; }
+    .plot { display: flex; align-items: center; gap: 2px; }
+    .y-axis {
+      writing-mode: vertical-rl; transform: rotate(180deg);
+      font-size: 10.5px; color: var(--text-2); letter-spacing: .04em;
+    }
     .right { flex: 1 1 260px; min-width: 240px; display: flex; flex-direction: column; gap: 10px; }
     .axis, .scale {
       display: flex; justify-content: space-between; font-size: 10.5px;

@@ -2,7 +2,10 @@ import { ChangeDetectionStrategy, Component, computed, ElementRef, input, output
 import { CurveDefinition, CurvePoint } from '../../models/generated/backend.types';
 import { amountCurve, curveFn, curvePath, LOG_AMOUNT } from './curve.util';
 
-const PAD = 22;
+/** Breathing room around the plot, as a share of the box — a fixed inset would swallow a thumbnail. */
+const PAD_RATIO = 0.085;
+/** Below this the graph is a glyph in a list row, where grid and reference lines are only noise. */
+const DETAIL_FROM = 110;
 
 /**
  * Plots a curve: dial position across, resulting output up. Linear and the logarithmic taper are drawn
@@ -19,12 +22,14 @@ const PAD = 22;
          [class.interactive]="interactive()" (pointerdown)="onDown($event)"
          (pointermove)="onMove($event)" (pointerup)="stopDrag()" (pointerleave)="stopDrag()"
          (contextmenu)="onContext($event)">
-      @for (t of ticks; track t) {
-        <line class="grid" [attr.x1]="px(t)" [attr.y1]="py(0)" [attr.x2]="px(t)" [attr.y2]="py(1)"></line>
-        <line class="grid" [attr.x1]="px(0)" [attr.y1]="py(t)" [attr.x2]="px(1)" [attr.y2]="py(t)"></line>
+      @if (detailed()) {
+        @for (t of ticks; track t) {
+          <line class="grid" [attr.x1]="px(t)" [attr.y1]="py(0)" [attr.x2]="px(t)" [attr.y2]="py(1)"></line>
+          <line class="grid" [attr.x1]="px(0)" [attr.y1]="py(t)" [attr.x2]="px(1)" [attr.y2]="py(t)"></line>
+        }
+        <path class="ghost" [attr.d]="linearPath()"></path>
+        <path class="ghost" [attr.d]="logPath()"></path>
       }
-      <path class="ghost" [attr.d]="linearPath()"></path>
-      <path class="ghost" [attr.d]="logPath()"></path>
       <path class="curve" [attr.d]="path()"></path>
       @if (interactive()) {
         @for (p of points(); track $index) {
@@ -55,13 +60,18 @@ export class CurveGraphComponent {
   private readonly plot = viewChild.required<ElementRef<SVGSVGElement>>('plot');
   private dragging: number | null = null;
 
-  protected readonly points = computed(() => this.curve().points ?? []);
-  protected readonly path = computed(() => curvePath(curveFn(this.curve()), this.size(), PAD));
-  protected readonly linearPath = computed(() => curvePath(amountCurve(0), this.size(), PAD));
-  protected readonly logPath = computed(() => curvePath(amountCurve(LOG_AMOUNT), this.size(), PAD));
+  protected readonly detailed = computed(() => this.size() >= DETAIL_FROM);
+  private readonly pad = computed(() => this.size() * PAD_RATIO);
 
-  protected px(x: number): number { return PAD + x * (this.size() - 2 * PAD); }
-  protected py(y: number): number { return this.size() - PAD - Math.min(1, Math.max(0, y)) * (this.size() - 2 * PAD); }
+  protected readonly points = computed(() => this.curve().points ?? []);
+  protected readonly path = computed(() => curvePath(curveFn(this.curve()), this.size(), this.pad()));
+  protected readonly linearPath = computed(() => curvePath(amountCurve(0), this.size(), this.pad()));
+  protected readonly logPath = computed(() => curvePath(amountCurve(LOG_AMOUNT), this.size(), this.pad()));
+
+  protected px(x: number): number { return this.pad() + x * (this.size() - 2 * this.pad()); }
+  protected py(y: number): number {
+    return this.size() - this.pad() - Math.min(1, Math.max(0, y)) * (this.size() - 2 * this.pad());
+  }
 
   protected onDown(ev: PointerEvent): void {
     if (!this.interactive() || ev.button === 2) return;
@@ -109,9 +119,10 @@ export class CurveGraphComponent {
   private toUnit(ev: { clientX: number; clientY: number }): CurvePoint {
     const rect = this.plot().nativeElement.getBoundingClientRect();
     const scale = this.size() / rect.width;
-    const span = this.size() - 2 * PAD;
-    const x = ((ev.clientX - rect.left) * scale - PAD) / span;
-    const y = (this.size() - PAD - (ev.clientY - rect.top) * scale) / span;
+    const pad = this.pad();
+    const span = this.size() - 2 * pad;
+    const x = ((ev.clientX - rect.left) * scale - pad) / span;
+    const y = (this.size() - pad - (ev.clientY - rect.top) * scale) / span;
     return { x: Math.min(1, Math.max(0, x)), y: Math.min(1, Math.max(0, y)) };
   }
 }
