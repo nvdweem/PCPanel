@@ -415,6 +415,14 @@ export interface ControlAssignmentsUpdateDto {
     releaseButton?: Commands;
 }
 
+export interface CurveDefinition {
+    amount: number;
+    id: string;
+    mode?: CurveMode;
+    name?: string;
+    points?: CurvePoint[];
+}
+
 export interface CurvePoint {
     x: number;
     y: number;
@@ -613,6 +621,7 @@ export interface KeyboardCommandModule extends CommandModule {
 
 export interface KnobSetting {
     buttonDebounce: number;
+    curve?: string;
     logarithmic: boolean;
     maxTrim: number;
     minTrim: number;
@@ -986,6 +995,8 @@ export type ButtonType = "MONO" | "MUTE" | "SOLO" | "MC" | "EQ" | "A1" | "A2" | 
 export type CommandsType = "allAtOnce" | "sequential";
 
 export type ControlType = "STRIP" | "BUS";
+
+export type CurveMode = "amount" | "points";
 
 export type DeviceType = "PCPANEL_RGB" | "PCPANEL_MINI" | "PCPANEL_PRO";
 
