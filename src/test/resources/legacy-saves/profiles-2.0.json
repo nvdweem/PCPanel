@@ -12,30 +12,34 @@
           "0" : {
             "minTrim" : 534,
             "maxTrim" : 533,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-535",
-            "buttonDebounce" : 532
+            "buttonDebounce" : 532,
+            "logarithmic" : true
           },
           "1" : {
             "minTrim" : 538,
             "maxTrim" : 537,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-539",
-            "buttonDebounce" : 536
+            "buttonDebounce" : 536,
+            "logarithmic" : true
           },
           "2" : {
             "minTrim" : 542,
             "maxTrim" : 541,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-543",
-            "buttonDebounce" : 540
+            "buttonDebounce" : 540,
+            "logarithmic" : true
           },
           "3" : {
             "minTrim" : 546,
             "maxTrim" : 545,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-547",
-            "buttonDebounce" : 544
+            "buttonDebounce" : 544,
+            "logarithmic" : true
           }
         },
         "lightingConfig" : {
@@ -145,30 +149,34 @@
           "0" : {
             "minTrim" : 616,
             "maxTrim" : 615,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-617",
-            "buttonDebounce" : 614
+            "buttonDebounce" : 614,
+            "logarithmic" : true
           },
           "1" : {
             "minTrim" : 620,
             "maxTrim" : 619,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-621",
-            "buttonDebounce" : 618
+            "buttonDebounce" : 618,
+            "logarithmic" : true
           },
           "2" : {
             "minTrim" : 624,
             "maxTrim" : 623,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-625",
-            "buttonDebounce" : 622
+            "buttonDebounce" : 622,
+            "logarithmic" : true
           },
           "3" : {
             "minTrim" : 628,
             "maxTrim" : 627,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-629",
-            "buttonDebounce" : 626
+            "buttonDebounce" : 626,
+            "logarithmic" : true
           }
         },
         "lightingConfig" : {
@@ -611,89 +619,89 @@
           "23" : {
             "commands" : [ {
               "_type" : "clipboard.set",
-              "text" : "arg0-74"
+              "text" : "arg0-90"
             } ],
             "type" : "allAtOnce"
           },
           "24" : {
             "commands" : [ {
               "_type" : "discord.join-voice",
-              "channelId" : "arg0-75",
-              "channelName" : "arg1-76",
-              "overlayText" : "arg2-77"
+              "channelId" : "arg0-91",
+              "channelName" : "arg1-92",
+              "overlayText" : "arg2-93"
             } ],
             "type" : "allAtOnce"
           },
           "25" : {
             "commands" : [ {
               "_type" : "discord.leave-voice",
-              "overlayText" : "arg0-78"
+              "overlayText" : "arg0-94"
             } ],
             "type" : "allAtOnce"
           },
           "26" : {
             "commands" : [ {
               "_type" : "discord.mute",
-              "target" : "arg0-79",
-              "muteType" : "toggle",
-              "overlayText" : "arg2-81"
+              "target" : "arg0-95",
+              "muteType" : "mute",
+              "overlayText" : "arg2-97"
             } ],
             "type" : "allAtOnce"
           },
           "27" : {
             "commands" : [ {
               "_type" : "discord.screen-share",
-              "mode" : "PROCESS",
-              "processName" : [ "arg1-83", "arg1-84" ],
-              "overlayText" : "arg2-85"
+              "mode" : "FOCUS",
+              "processName" : [ "arg1-99", "arg1-100" ],
+              "overlayText" : "arg2-101"
             } ],
             "type" : "allAtOnce"
           },
           "28" : {
             "commands" : [ {
               "_type" : "discord.self-deafen",
-              "muteType" : "toggle",
-              "overlayText" : "arg1-87"
+              "muteType" : "mute",
+              "overlayText" : "arg1-103"
             } ],
             "type" : "allAtOnce"
           },
           "29" : {
             "commands" : [ {
               "_type" : "com.getpcpanel.discord.command.CommandDiscordSelfMute",
-              "muteType" : "mute",
-              "overlayText" : "arg1-91"
+              "muteType" : "unmute",
+              "overlayText" : "arg1-107"
             } ],
             "type" : "allAtOnce"
           },
           "30" : {
             "commands" : [ {
               "_type" : "discord.toggle-video",
-              "overlayText" : "arg0-94"
+              "overlayText" : "arg0-110"
             } ],
             "type" : "allAtOnce"
           },
           "31" : {
             "commands" : [ {
               "_type" : "com.getpcpanel.discord.command.CommandDiscordUserMute",
-              "username" : "arg0-95",
-              "muteType" : "mute",
-              "overlayText" : "arg2-97"
+              "username" : "arg0-111",
+              "muteType" : "unmute",
+              "overlayText" : "arg2-113"
             } ],
             "type" : "allAtOnce"
           },
           "32" : {
             "commands" : [ {
               "_type" : "homeassistant.action",
-              "server" : "arg0-104",
-              "action" : "arg1-105",
-              "overlayText" : "arg2-106"
+              "server" : "arg0-120",
+              "action" : "arg1-121",
+              "overlayText" : "arg2-122"
             } ],
             "type" : "allAtOnce"
           },
           "33" : {
             "commands" : [ {
               "_type" : "obs.action",
-              "action" : "STOP_STREAM"
+              "action" : "TOGGLE_RECORD"
             } ],
             "type" : "allAtOnce"
           },
@@ -890,14 +898,14 @@
             "commands" : [ {
               "_type" : "analogbands.ranges",
               "bands" : [ {
-                "start" : 68.25,
-                "end" : 69.25,
-                "color" : "color-70",
+                "start" : 84.25,
+                "end" : 85.25,
+                "color" : "color-86",
                 "commands" : null
               }, {
-                "start" : 71.25,
-                "end" : 72.25,
-                "color" : "color-73",
+                "start" : 87.25,
+                "end" : 88.25,
+                "color" : "color-89",
                 "commands" : null
               } ],
               "dialParams" : null,
@@ -910,8 +918,8 @@
               "_type" : "com.getpcpanel.discord.command.CommandDiscordSelfInputVolume",
               "dialParams" : {
                 "invert" : true,
-                "moveStart" : 88,
-                "moveEnd" : 89
+                "moveStart" : 104,
+                "moveEnd" : 105
               },
               "unmuteOnChange" : true,
               "invert" : true
@@ -923,8 +931,8 @@
               "_type" : "com.getpcpanel.discord.command.CommandDiscordSelfOutputVolume",
               "dialParams" : {
                 "invert" : true,
-                "moveStart" : 92,
-                "moveEnd" : 93
+                "moveStart" : 108,
+                "moveEnd" : 109
               },
               "undeafenOnChange" : true,
               "invert" : true
@@ -934,11 +942,11 @@
           "13" : {
             "commands" : [ {
               "_type" : "com.getpcpanel.discord.command.CommandDiscordUserVolume",
-              "username" : "arg0-98",
+              "username" : "arg0-114",
               "dialParams" : {
                 "invert" : true,
-                "moveStart" : 99,
-                "moveEnd" : 100
+                "moveStart" : 115,
+                "moveEnd" : 116
               },
               "invert" : true
             } ],
@@ -947,12 +955,12 @@
           "14" : {
             "commands" : [ {
               "_type" : "discord.volume",
-              "target" : "arg0-101",
+              "target" : "arg0-117",
               "clearMuteOnChange" : true,
               "dialParams" : {
                 "invert" : true,
-                "moveStart" : 102,
-                "moveEnd" : 103
+                "moveStart" : 118,
+                "moveEnd" : 119
               },
               "invert" : true
             } ],
@@ -961,15 +969,15 @@
           "15" : {
             "commands" : [ {
               "_type" : "homeassistant.value",
-              "server" : "arg0-107",
-              "action" : "arg1-108",
-              "min" : 109.25,
-              "max" : 110.25,
-              "formula" : "arg4-111",
+              "server" : "arg0-123",
+              "action" : "arg1-124",
+              "min" : 125.25,
+              "max" : 126.25,
+              "formula" : "arg4-127",
               "dialParams" : {
                 "invert" : true,
-                "moveStart" : 112,
-                "moveEnd" : 113
+                "moveStart" : 128,
+                "moveEnd" : 129
               },
               "invert" : true
             } ],
@@ -978,15 +986,15 @@
           "16" : {
             "commands" : [ {
               "_type" : "mqtt.publish",
-              "topic" : "arg0-114",
-              "payload" : "arg1-115",
-              "min" : 116.25,
-              "max" : 117.25,
-              "formula" : "arg4-118",
+              "topic" : "arg0-130",
+              "payload" : "arg1-131",
+              "min" : 132.25,
+              "max" : 133.25,
+              "formula" : "arg4-134",
               "dialParams" : {
                 "invert" : true,
-                "moveStart" : 119,
-                "moveEnd" : 120
+                "moveStart" : 135,
+                "moveEnd" : 136
               },
               "invert" : true
             } ],
@@ -995,14 +1003,14 @@
           "17" : {
             "commands" : [ {
               "_type" : "osc.send",
-              "address" : "arg0-122",
-              "min" : 123.25,
-              "max" : 124.25,
-              "formula" : "arg3-125",
+              "address" : "arg0-138",
+              "min" : 139.25,
+              "max" : 140.25,
+              "formula" : "arg3-141",
               "dialParams" : {
                 "invert" : true,
-                "moveStart" : 126,
-                "moveEnd" : 127
+                "moveStart" : 142,
+                "moveEnd" : 143
               },
               "invert" : true
             } ],
@@ -1011,17 +1019,17 @@
           "18" : {
             "commands" : [ {
               "_type" : "output.http-request",
-              "url" : "arg0-128",
-              "method" : "arg1-129",
-              "headers" : "arg2-130",
-              "body" : "arg3-131",
-              "min" : 132.25,
-              "max" : 133.25,
-              "formula" : "arg6-134",
+              "url" : "arg0-144",
+              "method" : "arg1-145",
+              "headers" : "arg2-146",
+              "body" : "arg3-147",
+              "min" : 148.25,
+              "max" : 149.25,
+              "formula" : "arg6-150",
               "dialParams" : {
                 "invert" : true,
-                "moveStart" : 135,
-                "moveEnd" : 136
+                "moveStart" : 151,
+                "moveEnd" : 152
               },
               "invert" : true
             } ],
@@ -1032,65 +1040,74 @@
           "0" : {
             "minTrim" : 85,
             "maxTrim" : 84,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-86",
-            "buttonDebounce" : 83
+            "buttonDebounce" : 83,
+            "logarithmic" : true
           },
           "1" : {
             "minTrim" : 89,
             "maxTrim" : 88,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-90",
-            "buttonDebounce" : 87
+            "buttonDebounce" : 87,
+            "logarithmic" : true
           },
           "2" : {
             "minTrim" : 93,
             "maxTrim" : 92,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-94",
-            "buttonDebounce" : 91
+            "buttonDebounce" : 91,
+            "logarithmic" : true
           },
           "3" : {
             "minTrim" : 97,
             "maxTrim" : 96,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-98",
-            "buttonDebounce" : 95
+            "buttonDebounce" : 95,
+            "logarithmic" : true
           },
           "4" : {
             "minTrim" : 101,
             "maxTrim" : 1,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-102",
-            "buttonDebounce" : 99
+            "buttonDebounce" : 99,
+            "logarithmic" : true
           },
           "5" : {
             "minTrim" : 105,
             "maxTrim" : 104,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-106",
-            "buttonDebounce" : 103
+            "buttonDebounce" : 103,
+            "logarithmic" : true
           },
           "6" : {
             "minTrim" : 109,
             "maxTrim" : 108,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-110",
-            "buttonDebounce" : 107
+            "buttonDebounce" : 107,
+            "logarithmic" : true
           },
           "7" : {
             "minTrim" : 113,
             "maxTrim" : 112,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-114",
-            "buttonDebounce" : 111
+            "buttonDebounce" : 111,
+            "logarithmic" : true
           },
           "8" : {
             "minTrim" : 117,
             "maxTrim" : 116,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-118",
-            "buttonDebounce" : 115
+            "buttonDebounce" : 115,
+            "logarithmic" : true
           }
         },
         "lightingConfig" : {
@@ -1206,65 +1223,74 @@
           "0" : {
             "minTrim" : 265,
             "maxTrim" : 264,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-266",
-            "buttonDebounce" : 263
+            "buttonDebounce" : 263,
+            "logarithmic" : true
           },
           "1" : {
             "minTrim" : 269,
             "maxTrim" : 268,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-270",
-            "buttonDebounce" : 267
+            "buttonDebounce" : 267,
+            "logarithmic" : true
           },
           "2" : {
             "minTrim" : 273,
             "maxTrim" : 272,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-274",
-            "buttonDebounce" : 271
+            "buttonDebounce" : 271,
+            "logarithmic" : true
           },
           "3" : {
             "minTrim" : 277,
             "maxTrim" : 276,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-278",
-            "buttonDebounce" : 275
+            "buttonDebounce" : 275,
+            "logarithmic" : true
           },
           "4" : {
             "minTrim" : 281,
             "maxTrim" : 280,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-282",
-            "buttonDebounce" : 279
+            "buttonDebounce" : 279,
+            "logarithmic" : true
           },
           "5" : {
             "minTrim" : 285,
             "maxTrim" : 284,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-286",
-            "buttonDebounce" : 283
+            "buttonDebounce" : 283,
+            "logarithmic" : true
           },
           "6" : {
             "minTrim" : 289,
             "maxTrim" : 288,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-290",
-            "buttonDebounce" : 287
+            "buttonDebounce" : 287,
+            "logarithmic" : true
           },
           "7" : {
             "minTrim" : 293,
             "maxTrim" : 292,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-294",
-            "buttonDebounce" : 291
+            "buttonDebounce" : 291,
+            "logarithmic" : true
           },
           "8" : {
             "minTrim" : 297,
             "maxTrim" : 296,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-298",
-            "buttonDebounce" : 295
+            "buttonDebounce" : 295,
+            "logarithmic" : true
           }
         },
         "lightingConfig" : {
@@ -1611,30 +1637,34 @@
           "0" : {
             "minTrim" : 370,
             "maxTrim" : 369,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-371",
-            "buttonDebounce" : 368
+            "buttonDebounce" : 368,
+            "logarithmic" : true
           },
           "1" : {
             "minTrim" : 374,
             "maxTrim" : 373,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-375",
-            "buttonDebounce" : 372
+            "buttonDebounce" : 372,
+            "logarithmic" : true
           },
           "2" : {
             "minTrim" : 378,
             "maxTrim" : 377,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-379",
-            "buttonDebounce" : 376
+            "buttonDebounce" : 376,
+            "logarithmic" : true
           },
           "3" : {
             "minTrim" : 382,
             "maxTrim" : 381,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-383",
-            "buttonDebounce" : 380
+            "buttonDebounce" : 380,
+            "logarithmic" : true
           }
         },
         "lightingConfig" : {
@@ -1744,30 +1774,34 @@
           "0" : {
             "minTrim" : 452,
             "maxTrim" : 451,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-453",
-            "buttonDebounce" : 450
+            "buttonDebounce" : 450,
+            "logarithmic" : true
           },
           "1" : {
             "minTrim" : 456,
             "maxTrim" : 455,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-457",
-            "buttonDebounce" : 454
+            "buttonDebounce" : 454,
+            "logarithmic" : true
           },
           "2" : {
             "minTrim" : 460,
             "maxTrim" : 459,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-461",
-            "buttonDebounce" : 458
+            "buttonDebounce" : 458,
+            "logarithmic" : true
           },
           "3" : {
             "minTrim" : 464,
             "maxTrim" : 463,
-            "logarithmic" : true,
+            "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-465",
-            "buttonDebounce" : 462
+            "buttonDebounce" : 462,
+            "logarithmic" : true
           }
         },
         "lightingConfig" : {
@@ -1988,7 +2022,7 @@
   "preventClickWhenDblClick" : true,
   "skipControlledFocusApps" : true,
   "focusVolumeOverrides" : [ {
-    "sources" : [ "sources-49", "sources-50" ],
+    "sources" : [ "sources-65", "sources-66" ],
     "targets" : [ {
       "command" : null
     }, {
@@ -1996,13 +2030,38 @@
     } ],
     "includeSource" : true
   }, {
-    "sources" : [ "sources-51", "sources-52" ],
+    "sources" : [ "sources-67", "sources-68" ],
     "targets" : [ {
       "command" : null
     }, {
       "command" : null
     } ],
     "includeSource" : true
+  } ],
+  "curves" : [ {
+    "id" : "id-34",
+    "name" : "name-35",
+    "mode" : "amount",
+    "amount" : 37,
+    "points" : [ {
+      "x" : 38.25,
+      "y" : 39.25
+    }, {
+      "x" : 40.25,
+      "y" : 41.25
+    } ]
+  }, {
+    "id" : "id-42",
+    "name" : "name-43",
+    "mode" : "amount",
+    "amount" : 45,
+    "points" : [ {
+      "x" : 46.25,
+      "y" : 47.25
+    }, {
+      "x" : 48.25,
+      "y" : 49.25
+    } ]
   } ],
   "obsEnabled" : true,
   "obsAddress" : "obsAddress-8",
@@ -2044,39 +2103,39 @@
     "controlledVolumePercent" : 100
   },
   "homeAssistantServers" : [ {
-    "id" : "id-54",
-    "name" : "name-55",
-    "url" : "url-56",
-    "token" : "token-57"
+    "id" : "id-70",
+    "name" : "name-71",
+    "url" : "url-72",
+    "token" : "token-73"
   }, {
-    "id" : "id-58",
-    "name" : "name-59",
-    "url" : "url-60",
-    "token" : "token-61"
+    "id" : "id-74",
+    "name" : "name-75",
+    "url" : "url-76",
+    "token" : "token-77"
   } ],
-  "homeAssistantDebounceMs" : 53,
+  "homeAssistantDebounceMs" : 69,
   "discord" : {
     "enabled" : true,
-    "clientId" : "clientId-34",
-    "clientSecret" : "clientSecret-35",
-    "redirectUri" : "redirectUri-36"
+    "clientId" : "clientId-50",
+    "clientSecret" : "clientSecret-51",
+    "redirectUri" : "redirectUri-52"
   },
   "discordAuth" : {
-    "accessToken" : "accessToken-37",
-    "refreshToken" : "refreshToken-38",
-    "expiresAtEpochMs" : 390,
-    "scope" : "scope-40",
-    "userId" : "userId-41",
-    "userName" : "userName-42"
+    "accessToken" : "accessToken-53",
+    "refreshToken" : "refreshToken-54",
+    "expiresAtEpochMs" : 550,
+    "scope" : "scope-56",
+    "userId" : "userId-57",
+    "userName" : "userName-58"
   },
   "discordSeenUsers" : [ {
-    "id" : "id-43",
-    "username" : "username-44",
-    "displayName" : "displayName-45"
+    "id" : "id-59",
+    "username" : "username-60",
+    "displayName" : "displayName-61"
   }, {
-    "id" : "id-46",
-    "username" : "username-47",
-    "displayName" : "displayName-48"
+    "id" : "id-62",
+    "username" : "username-63",
+    "displayName" : "displayName-64"
   } ],
   "overlayEnabled" : true,
   "overlayUseLog" : true,
@@ -2092,12 +2151,12 @@
   "overlayPosition" : "middleMiddle",
   "overlayPadding" : 21,
   "overlayShowAppName" : true,
-  "overlayTextSize" : 66,
-  "overlayIconSize" : 65,
-  "overlayElementGap" : 63,
-  "overlayWidth" : 67,
-  "overlayContentPadding" : 62,
+  "overlayTextSize" : 82,
+  "overlayIconSize" : 81,
+  "overlayElementGap" : 79,
+  "overlayWidth" : 83,
+  "overlayContentPadding" : 78,
   "overlayBarFollowsLight" : true,
-  "overlayFontFamily" : "overlayFontFamily-64",
+  "overlayFontFamily" : "overlayFontFamily-80",
   "overlayFontBold" : true
 }
