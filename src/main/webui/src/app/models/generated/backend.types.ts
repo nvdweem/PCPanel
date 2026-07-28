@@ -415,6 +415,11 @@ export interface ControlAssignmentsUpdateDto {
     releaseButton?: Commands;
 }
 
+export interface CurvePoint {
+    x: number;
+    y: number;
+}
+
 export interface DeviceAction {
 }
 
