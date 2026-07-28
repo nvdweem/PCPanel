@@ -44,7 +44,18 @@ class BrightnessServiceTest {
         var logHigh = brightnessAt("b", 6, true);       // higher index, but logarithmic
         var best = BrightnessService.bestBrightnessControl(List.of(linearLow, logHigh)).orElseThrow();
         assertEquals(6, best.index(), "a logarithmic brightness control is preferred");
-        assertTrue(best.logarithmic());
+        assertTrue(best.shaped());
+    }
+
+    @Test
+    void anyNamedCurveWinsOverLinearNotJustTheBuiltInLogarithmic() {
+        var linearLow = brightnessAt("a", 1, false);
+        var custom = brightnessAt("b", 6, false);
+        custom.getKnobSettings(6).setCurve("my-taper");
+
+        var best = BrightnessService.bestBrightnessControl(List.of(linearLow, custom)).orElseThrow();
+        assertEquals(6, best.index(), "a control with a shaped curve is preferred");
+        assertTrue(best.shaped());
     }
 
     @Test

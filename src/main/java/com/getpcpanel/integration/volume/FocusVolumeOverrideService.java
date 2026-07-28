@@ -11,8 +11,8 @@ import com.getpcpanel.commands.command.DialAction;
 import com.getpcpanel.commands.command.DialAction.DialActionParameters;
 import com.getpcpanel.integration.volume.platform.ISndCtrl;
 import com.getpcpanel.commands.DialValue;
+import com.getpcpanel.commands.curve.Curve;
 import com.getpcpanel.profile.SaveService;
-import com.getpcpanel.profile.dto.KnobSetting;
 
 import io.quarkus.arc.Unremovable;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -85,9 +85,10 @@ class FocusVolumeOverrideService {
 
     /** Run each target command as if {@code device}'s dial moved to {@code volume} (0..1). */
     private void applyTargets(FocusVolumeOverride rule, float volume, String device) {
-        // A null KnobSetting → the calculator passes the raw value straight through (linear, no trim), so a
-        // target receives exactly the focus value and then applies its own per-command mapping (invert, etc).
-        var context = new DialActionParameters(device, false, new DialValue((KnobSetting) null, Math.round(volume * 255f)));
+        // A null KnobSetting and a linear curve → the calculator passes the raw value straight through (no
+        // trim), so a target receives exactly the focus value and then applies its own per-command mapping
+        // (invert, etc). The redirection is a pass-through; the shaping already happened on the source dial.
+        var context = new DialActionParameters(device, false, new DialValue(null, Curve.LINEAR, Math.round(volume * 255f)));
         for (FocusVolumeTarget target : rule.targets()) {
             if (target == null || target.command() == null) {
                 continue;

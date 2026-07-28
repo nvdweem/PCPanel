@@ -7,22 +7,27 @@ import javax.annotation.Nullable;
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.DialAction;
 import com.getpcpanel.commands.command.DialAction.DialCommandParams;
+import com.getpcpanel.commands.curve.Curve;
 import com.getpcpanel.profile.dto.KnobSetting;
 
+/**
+ * Turns a raw analog reading into the value a command receives: the move start/end deadzones first, then
+ * the control's response {@link Curve}, then the trim range, then invert.
+ *
+ * <p>The curve arrives already resolved rather than being looked up from the {@link KnobSetting}'s id, so
+ * every path through the dial engine reads the same library the user edits.
+ */
 public class DialValueCalculator {
-    public static final double EXP_CONST = 1.04723275; // This will make 0-100 map to 1-101 exponentially
-
-    private final boolean logarithmic;
+    private final Curve curve;
     private final int minTrim;
     private final int maxTrim;
 
-    public DialValueCalculator(@Nullable KnobSetting setting) {
+    public DialValueCalculator(@Nullable KnobSetting setting, Curve curve) {
+        this.curve = curve;
         if (setting == null) {
-            logarithmic = false;
             minTrim = 0;
             maxTrim = 100;
         } else {
-            logarithmic = setting.isLogarithmic();
             minTrim = setting.getMinTrim();
             maxTrim = setting.getMaxTrim();
         }
@@ -36,7 +41,7 @@ public class DialValueCalculator {
         }
         var proceedValue = moveResult.newValue;
 
-        var calc = withAppliedLog(proceedValue);
+        var calc = withAppliedCurve(proceedValue);
         var minTrimValue = map(minTrim, 0, 100, min, max);
         var maxTrimValue = map(maxTrim, 0, 100, min, max);
         var trimmed = map(calc, 0, 255, minTrimValue, maxTrimValue);
@@ -59,12 +64,10 @@ public class DialValueCalculator {
         return new MoveResult(map(value, startMoved, endMoved, 0, 255), false);
     }
 
+    /** Curves work on 0..1, the dial engine on 0..255. */
     @SuppressWarnings("NumericCastThatLosesPrecision")
-    private float withAppliedLog(float value) {
-        if (!logarithmic) {
-            return value;
-        }
-        return (float) ((Math.round(Math.pow(EXP_CONST, value / 2.55d)) - 1) * 2.55d);
+    private float withAppliedCurve(float value) {
+        return (float) (curve.apply(value / 255d) * 255d);
     }
 
     record MoveResult(float newValue, boolean returnImmediate) {

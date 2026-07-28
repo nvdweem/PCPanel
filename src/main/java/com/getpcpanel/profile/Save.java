@@ -15,6 +15,7 @@ import com.getpcpanel.integration.discord.dto.DiscordAuth;
 import com.getpcpanel.integration.discord.dto.DiscordSeenUser;
 import com.getpcpanel.integration.discord.dto.DiscordSettings;
 import com.getpcpanel.integration.volume.FocusVolumeOverride;
+import com.getpcpanel.profile.dto.CurveDefinition;
 import com.getpcpanel.integration.mqtt.dto.MqttSettings;
 import com.getpcpanel.integration.osc.dto.OSCConnectionInfo;
 import com.getpcpanel.integration.volume.overlay.OverlayPosition;
@@ -63,6 +64,9 @@ public class Save {
     /** Focus-volume redirection rules: when a source app has focus, the focus dial drives the rule's
      *  targets instead of (or alongside) the source. See {@link FocusVolumeOverride}. */
     @Nullable private List<FocusVolumeOverride> focusVolumeOverrides;
+    /** The user's response-curve library. An entry carrying a built-in id retunes that built-in for every
+     *  control referencing it; removing it restores the default. See {@link com.getpcpanel.commands.curve.Curves}. */
+    @Nullable private List<CurveDefinition> curves;
     private boolean obsEnabled;
     private String obsAddress = "localhost";
     private String obsPort = "4455";
@@ -219,5 +223,10 @@ public class Save {
     @Nonnull
     public List<FocusVolumeOverride> getFocusVolumeOverrides() {
         return Objects.requireNonNullElseGet(focusVolumeOverrides, List::of);
+    }
+
+    @Nonnull
+    public List<CurveDefinition> getCurves() {
+        return Objects.requireNonNullElseGet(curves, List::of);
     }
 }
