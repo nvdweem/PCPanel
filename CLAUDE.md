@@ -262,6 +262,20 @@ and immutable distros persist settings without a host grant. `PcPanelRoot.resolv
 source of truth: `Main` publishes it as the `pcpanel.root` system property for the native image, and
 the non-CDI `FileChecker`/`HidDebug` call it directly. See `linux.md` for the user-facing details.
 
+**A persisted JSON property needs a backing field, or the save file loses it.**
+`quarkus.rest.jackson.optimization.enable-reflection-free-serializers=false` in
+`application.properties` is load-bearing, not a tuning knob. With it on, quarkus-rest-jackson
+generates a build-time reader per DTO that finds properties by walking *fields*; a property carried by
+a getter/setter pair alone is simply absent from that reader, and since
+`quarkus.jackson.fail-on-unknown-properties=false` the value is dropped from the document without a
+word — read as its default on load, then written back as that default on the next save. That is
+silent, permanent user-data loss, and **no test in this repo can see it**: every mapper here,
+`AppLikeMapper` included, is a plain `ObjectMapper` that handles such a property correctly, and a
+`@QuarkusTest` (the only thing holding the real mapper) can't run because the device providers scan
+real hardware on `StartupEvent`. `GeneratedJacksonReaderHazardTest` pins the pair that has to hold:
+either those readers are off, or no `**.dto.**` type has a writable property without a field.
+`KnobSetting.isLogarithmic()/setLogarithmic()` is exactly such a pair.
+
 **Backwards compatibility of the save file is tested against real old files.**
 `src/test/resources/legacy-saves/` holds a chain of `profiles.json` fixtures — one per release
 (`1.7.1` → `1.8` → `2.0`), each produced by *that* release from its predecessor and verified to

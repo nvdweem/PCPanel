@@ -72,14 +72,22 @@ class KnobSettingCurveCompatTest {
     }
 
     @Test
-    void clearingTheCurveIsNotUndoneByAStaleFlagFromTheSameClient() throws Exception {
-        // The UI round-trips the whole setting, so switching a control from Logarithmic back to Linear can
-        // send curve:null next to a logarithmic:true it has not refreshed. An explicit curve wins whichever
-        // order the two arrive in; only a save file with no curve key at all falls back to the flag.
-        assertNull(read("""
+    void anEmptyCurveBesideTheLegacyFlagIsStillLogarithmic() throws Exception {
+        // A null curve is no curve, so the flag beside it is the only thing naming one — whichever order
+        // the two arrive in. Property order is not ours to choose: a document sorted alphabetically puts
+        // curve first, and a reader that let that null settle the question would drop the user's setting.
+        assertEquals(Curves.LOGARITHMIC_ID, read("""
                 {"curve":null,"logarithmic":true}""").getCurve());
-        assertNull(read("""
+        assertEquals(Curves.LOGARITHMIC_ID, read("""
                 {"logarithmic":true,"curve":null}""").getCurve());
+        assertNull(read("""
+                {"curve":null,"logarithmic":false}""").getCurve());
+    }
+
+    @Test
+    void noCurveIsWrittenAsAnAbsentProperty() throws Exception {
+        // Writing an explicit null would put one in every save file, next to the flag it must not silence.
+        assertNull(mapper.readTree(mapper.writeValueAsString(new KnobSetting())).get("curve"));
     }
 
     @Test
