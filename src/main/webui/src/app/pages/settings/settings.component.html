@@ -873,6 +873,27 @@
           </div>
         }
 
+        <!-- ── REPORT A PROBLEM ────────────────────────────────────────────── -->
+        @case ('report') {
+          <h2 class="page-title">Report a problem</h2>
+          <div class="pc-card pad stack">
+            <div class="row">
+              <div class="row-text">
+                <div class="row-label">Report a problem</div>
+                <div class="row-sub">answer a few questions, and we'll collect the logs and system details for you</div>
+              </div>
+              <button class="pc-btn primary" (click)="report.open()">Start</button>
+            </div>
+            <div class="row">
+              <div class="row-text">
+                <div class="row-label">Reports folder</div>
+                <div class="row-sub">where the diagnostics files are saved</div>
+              </div>
+              <button class="pc-btn ghost" (click)="openReportsFolder()">Open</button>
+            </div>
+          </div>
+        }
+
         <!-- ── DEBUG ───────────────────────────────────────────────────────── -->
         @case ('debug') {
           <h2 class="page-title">Debug</h2>
