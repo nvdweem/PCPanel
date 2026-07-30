@@ -443,6 +443,14 @@ jobs:
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
+      # This job runs in a container, so the user git runs as is not the one that owns the checkout
+      # and git refuses to read the repository at all ("detected dubious ownership", exit 128). Every
+      # later step that shells out to git depends on this, so it is marked safe once, here, before the
+      # first of them rather than in each.
+      - name: Trust the checkout
+        shell: bash
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
       # See the Windows job: releases/** -> clean "2.0", else "2.0.<run>". (This job repackages the
       # Linux native binary, so it only needs the version string for artifact naming.)
       - name: Compute app version
