@@ -62,6 +62,9 @@ public class BugReportService {
     @ConfigProperty(name = "quarkus.http.access-log.base-file-name")
     String accessLogBaseName;
 
+    @ConfigProperty(name = "quarkus.http.access-log.log-suffix", defaultValue = ".log")
+    String accessLogSuffix;
+
     public BugReportResponse create(BugReportRequest request) throws IOException {
         var dir = fileUtil.getFile(REPORTS_DIR);
         Files.createDirectories(dir.toPath());
