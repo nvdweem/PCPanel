@@ -93,11 +93,23 @@ public class DeviceSave {
         return StreamEx.of(profiles).findFirst(p -> p.getName().equals(name));
     }
 
+    /**
+     * The active profile, falling back to the first one when {@link #currentProfileName} names none.
+     *
+     * <p>The fallback also <em>adopts</em> that profile's name, so the pointer always names a profile
+     * that exists. Everything the app itself does goes through this method and so works either way,
+     * but the name is also what the UI is told the active profile is, and what it puts in the URL of
+     * every assignment it saves — and those endpoints resolve the profile strictly. A pointer left
+     * naming nothing therefore reads perfectly while every save 404s, for as long as the file says so
+     * (issue #150).
+     */
     @JsonIgnore
     private Optional<Profile> getCurrentProfile() {
         var p = getProfile(currentProfileName);
         if (!profiles.isEmpty() && p.isEmpty()) {
-            return Optional.of(profiles.get(0));
+            var first = profiles.get(0);
+            currentProfileName = first.getName();
+            return Optional.of(first);
         }
         return p;
     }

@@ -23,6 +23,7 @@
 - A dial action's **Input mapping** graph now draws the whole picture: the curve the control is set to, the part of the throw the action ignores dimmed out, and where **Trim min/max** bounds the result. The curve you configured is drawn faintly behind it, so you can see what narrowing Start/End costs.
 - **Linear** and **Logarithmic** are still there and unchanged, and controls you have already set up keep behaving exactly as before. You can now edit those two as well — retuning **Logarithmic** changes every control that uses it at once, which is the quickest way to adjust everything in one go, and **Reset** puts it back. Pick a curve per control on its control page.
 - Fixed the **Wave Link** integration silently dropping out after a PC restart or resume from sleep and staying dead until you restarted PCPanel. The connection could be left looking alive when it wasn't — so nothing tried to reconnect — and Wave Link actions quietly did nothing. PCPanel now detects a stalled connection and reconnects on its own.
+- #150 - Fixed **"Could not save assignment"** appearing on every change to a dial or button — including removing an action — with nothing saved, while the rest of the interface kept working normally. It happened when the active profile's name contains a `#`, `?` or `/`, and also when the profile the device was set to was no longer there. Both now save, and a profile file in the second state puts itself right the next time PCPanel starts, so there is nothing to rename or set up again.
 
 ## [2.0.84]
 
