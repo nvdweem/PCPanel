@@ -13,7 +13,8 @@ export type IconName =
   | 'mic' | 'mic-off' | 'volume' | 'volume-x' | 'monitor' | 'log-out'
   | 'window' | 'sliders' | 'grid' | 'refresh' | 'download' | 'alert-triangle'
   | 'plug' | 'usb' | 'keyboard' | 'play' | 'film' | 'wave' | 'lightbulb'
-  | 'cable' | 'zap' | 'copy' | 'clipboard' | 'eraser' | 'arrow-down' | 'gamepad' | 'external-link';
+  | 'cable' | 'zap' | 'copy' | 'clipboard' | 'eraser' | 'arrow-down' | 'gamepad' | 'external-link'
+  | 'bug';
 
 const PATHS: Record<string, string> = {
   'chevron-down': '<polyline points="6 9 12 15 18 9"/>',
@@ -60,6 +61,7 @@ const PATHS: Record<string, string> = {
   'arrow-down': '<line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>',
   'gamepad': '<line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><rect x="2" y="6" width="20" height="12" rx="2"/>',
   'external-link': '<path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>',
+  'bug': '<path d="M6 11a6 6 0 0112 0v3a6 6 0 01-12 0z"/><path d="M12 5v15"/><path d="M8.5 4.5L6.5 2"/><path d="M15.5 4.5L17.5 2"/><path d="M6 11H3"/><path d="M6 15H3"/><path d="M18 11h3"/><path d="M18 15h3"/>',
 };
 
 @Component({

@@ -2,7 +2,7 @@
 
 <!-- Releasenotes without version are included in releases -->
 
-- New **Report a problem** option, in the settings and in the tray menu. It asks what went wrong, how to reproduce it and what you expected, then saves a zip with the logs and details next to your settings and opens a GitHub issue already filled in — you just attach the zip. Passwords and tokens are removed from anything it collects, and you choose what goes in: the log and system details are included by default, your configuration only if you tick it. Open the zip and check it before attaching, especially if you use OBS, MQTT, Home Assistant or Discord.
+- New **Report a problem** option, on the bug button next to the settings icon and in the tray menu. It asks what went wrong, how to reproduce it and what you expected, then saves a zip with the logs and details next to your settings and opens both the already filled-in GitHub issue and the folder holding the zip, so all you do is attach it. Passwords and tokens are removed from anything it collects, and you choose what goes in: the log and system details are included by default, your configuration only if you tick it. Open the zip and check it before attaching, especially if you use OBS, MQTT, Home Assistant or Discord.
 - When something goes wrong, the error message itself now offers **Report this**, which starts that report with the error already written down and the failure details attached.
 - PCPanel now records more about failed requests in its log, so a problem you report can be diagnosed from the log instead of guessed at. Requests are logged to a separate `access.log` next to the existing log file.
 

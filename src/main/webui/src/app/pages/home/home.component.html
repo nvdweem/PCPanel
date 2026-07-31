@@ -77,7 +77,12 @@
         </button>
       }
       <pc-connection-badge [state]="connState()"></pc-connection-badge>
-      <button class="pc-icon-btn" (click)="openSettings()"><pc-icon name="settings" [size]="17" [strokeWidth]="1.8"></pc-icon></button>
+      <button class="pc-icon-btn" title="Report a problem" aria-label="Report a problem" (click)="openReport()">
+        <pc-icon name="bug" [size]="17" [strokeWidth]="1.8"></pc-icon>
+      </button>
+      <button class="pc-btn primary icon" title="Settings" aria-label="Settings" (click)="openSettings()">
+        <pc-icon name="settings" [size]="17" [strokeWidth]="1.8"></pc-icon>
+      </button>
     </header>
 
     <section class="stage">

@@ -79,6 +79,7 @@ import { ModalComponent, SelectComponent, SelectOption, SpinnerComponent, Toggle
           especially if you use OBS, MQTT, Home Assistant or Discord.</p>
 
         <div class="actions">
+          <button class="pc-btn ghost folder" (click)="openReportsFolder()">Open reports folder</button>
           <button class="pc-btn ghost" (click)="close()">Cancel</button>
           <button class="pc-btn primary" [disabled]="!canSubmit()" (click)="submit()">
             @if (saving()) { <pc-spinner [size]="13" [thickness]="2"></pc-spinner> } Continue on GitHub
@@ -100,6 +101,7 @@ import { ModalComponent, SelectComponent, SelectOption, SpinnerComponent, Toggle
     .row-sub { font-size: 11px; color: var(--text-3); margin-top: 2px; }
     .note { font-size: 11.5px; color: var(--text-3); line-height: 1.5; margin: 0; }
     .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+    .actions .folder { margin-right: auto; }
     .pc-btn pc-spinner { margin-right: 4px; }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -152,6 +154,10 @@ export class ReportDialogComponent {
     this.report.close();
   }
 
+  openReportsFolder(): void {
+    void this.report.openReportsFolder();
+  }
+
   async submit(): Promise<void> {
     if (!this.canSubmit()) return;
     this.saving.set(true);
@@ -171,6 +177,9 @@ export class ReportDialogComponent {
       });
       this.report.close();
       window.open(result.issueUrl, '_blank', 'noopener');
+      // The bundle has to be attached by hand, so put it in front of the user rather than leaving
+      // them to find it — the issue form and the folder holding the file both open together.
+      void this.report.openReportsFolder();
       this.toast.show(`Saved ${result.fileName}`, {
         sub: 'Attach it to the issue that just opened.',
         kind: 'success',

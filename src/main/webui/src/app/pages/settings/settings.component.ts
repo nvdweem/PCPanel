@@ -6,7 +6,6 @@ import { SettingsService } from '../../services/settings.service';
 import { IntegrationDataService } from '../../features/commands/integration-data.service';
 import { PlatformService } from '../../services/platform.service';
 import { DebugService, DeviceTypeOverride, OsOverride } from '../../services/debug.service';
-import { ReportService } from '../../services/report.service';
 import { UpdateService } from '../../services/update.service';
 import { DeviceStateService } from '../../services/device-state.service';
 import {
@@ -25,7 +24,7 @@ import { CurveGraphComponent } from '../../features/curves/curve-graph.component
 import { BUILT_IN_DEFAULTS, isBuiltIn } from '../../features/curves/curve.util';
 
 type Cmd = Record<string, any>;
-type TabId = 'general' | 'curves' | 'focusoverride' | 'obs' | 'voicemeeter' | 'wavelink' | 'discord' | 'osc' | 'mqtt' | 'homeassistant' | 'overlay' | 'report' | 'debug';
+type TabId = 'general' | 'curves' | 'focusoverride' | 'obs' | 'voicemeeter' | 'wavelink' | 'discord' | 'osc' | 'mqtt' | 'homeassistant' | 'overlay' | 'debug';
 interface TabDef { id: TabId; label: string; integration?: 'obs' | 'voicemeeter' | 'wavelink'; supported?: boolean; }
 
 @Component({
@@ -52,7 +51,6 @@ export class SettingsComponent {
   readonly debug = inject(DebugService);
   readonly updates = inject(UpdateService);
   readonly state = inject(DeviceStateService);
-  readonly report = inject(ReportService);
 
   readonly deviceOverrideOptions: SelectOption<DeviceTypeOverride>[] = [
     { value: '', label: 'Off — show real device' },
@@ -138,7 +136,6 @@ export class SettingsComponent {
     { id: 'osc', label: 'OSC' },
     { id: 'mqtt', label: 'MQTT' },
     { id: 'homeassistant', label: 'Home Assistant' },
-    { id: 'report', label: 'Report a problem' },
     { id: 'debug', label: 'Debug' },
   ];
 
@@ -149,10 +146,6 @@ export class SettingsComponent {
     if (id === 'voicemeeter') return this.platform.voicemeeterSupported();
     if (id === 'wavelink') return this.platform.waveLinkSupported();
     return true;
-  }
-
-  openReportsFolder(): void {
-    void this.report.openReportsFolder();
   }
 
   platformNote(id: TabId): string {
