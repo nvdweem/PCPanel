@@ -883,6 +883,7 @@ export interface WaveLinkOutputDto {
 
 export interface WaveLinkResponseDto {
     channels: WaveLinkChannelDto[];
+    connected: boolean;
     inputs: WaveLinkInputDto[];
     mixes: WaveLinkMixDto[];
     outputs: WaveLinkOutputDto[];

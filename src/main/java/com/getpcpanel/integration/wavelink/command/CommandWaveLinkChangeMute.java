@@ -45,8 +45,8 @@ public final class CommandWaveLinkChangeMute extends CommandWaveLinkChange imple
     @Override
     public void execute() {
         var service = getWaveLinkService();
-        if (!service.isConnected()) {
-            log.warn("Not sending command, wavelink not connected");
+        if (!service.isReady()) {
+            log.warn("Not sending command, Wave Link is not ready (connected={}, handshake completed={})", service.isConnected(), service.isInitialized());
             return;
         }
         if (StringUtils.isBlank(getId1())) {
