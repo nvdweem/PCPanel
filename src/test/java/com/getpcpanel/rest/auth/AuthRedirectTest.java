@@ -7,12 +7,15 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import com.getpcpanel.util.app.ShowMainEvent;
+
 @DisplayName("Bootstrap redirect (in-app paths only)")
 class AuthRedirectTest {
     @Test
     @DisplayName("an in-app path is honoured, so a tray entry can open the screen it names")
     void allowsInAppPaths() {
-        assertEquals("/settings?tab=report", AuthResource.safeRedirect("/settings?tab=report"));
+        // The literal the tray actually sends, so retargeting it cannot silently start falling back to "/".
+        assertEquals(ShowMainEvent.REPORT_PATH, AuthResource.safeRedirect(ShowMainEvent.REPORT_PATH));
         assertEquals("/", AuthResource.safeRedirect("/"));
         assertEquals("/device/ABC-123", AuthResource.safeRedirect("/device/ABC-123"));
     }

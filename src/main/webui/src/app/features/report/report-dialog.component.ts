@@ -93,6 +93,11 @@ import { ModalComponent, SelectComponent, SelectOption, SpinnerComponent, Toggle
     .field-label { font-size: 11.5px; color: var(--text-2); }
     .ta { resize: vertical; line-height: 1.45; }
     .section-label { margin-top: 2px; }
+    .stack { display: flex; flex-direction: column; gap: 14px; }
+    .row { display: flex; align-items: center; gap: 16px; }
+    .row-text { flex: 1; min-width: 0; }
+    .row-label { font-size: 13.5px; color: var(--text-soft); }
+    .row-sub { font-size: 11px; color: var(--text-3); margin-top: 2px; }
     .note { font-size: 11.5px; color: var(--text-3); line-height: 1.5; margin: 0; }
     .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
     .pc-btn pc-spinner { margin-right: 4px; }
