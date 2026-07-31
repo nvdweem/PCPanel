@@ -58,14 +58,18 @@ export class IntegrationDataService {
   readonly haConnected = computed(() => this.haStatus.value()?.connected ?? false);
 
   // ── Honest connection state (frontend-only) ─────────────────────────────────
-  // The backend endpoints return data ONLY when the integration is actually
-  // connected (empty otherwise), so non-empty data is a reliable "connected"
-  // signal for OBS and Wave Link. Voicemeeter's REST endpoint is a stub that
+  // OBS returns data ONLY while it is actually connected (empty otherwise), so
+  // non-empty data is a reliable "connected" signal for it. Integrations whose
+  // data outlives the connection report their state themselves, as a field on
+  // the response. Voicemeeter's REST endpoint is a stub that
   // always returns [], so there is no live signal — we never claim it connected.
   readonly obsConnected = computed(() =>
     (this.obsScenes.value()?.length ?? 0) > 0 || (this.obsSources.value()?.length ?? 0) > 0);
-  readonly waveLinkConnected = computed(() =>
-    this.wlChannels().length > 0 || this.wlInputs().length > 0 || this.wlMixes().length > 0 || this.wlOutputs().length > 0);
+  /**
+   * Wave Link reports its own connection state: its lists outlive a disconnect (they keep naming the
+   * targets a command is configured against), so a populated list is no evidence the connection is up.
+   */
+  readonly waveLinkConnected = computed(() => this.waveLink.value()?.connected ?? false);
   /** No live Voicemeeter signal exists (REST stub) — connection state is unknown. */
   readonly voicemeeterConnected = computed(() => false);
   /** OSC is "connected" when its listen socket is actually bound. */

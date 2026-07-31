@@ -324,16 +324,18 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
             // Keep the controlled-app cache current even when no channelChanged event fires after the
             // initial channel load, so the set is persisted for the next startup's focus-volume race.
             syncAppCache();
-        } else if (isConnected()) {
-            // The socket still reports open but the connection is not alive — a half-open socket that
-            // never delivered a close (e.g. across a PC restart/resume), or a handshake that never
-            // completed after Wave Link came up. isConnected() alone keeps this state — quietly swallowing
-            // every command — until the app is restarted, so force a reconnect.
-            log.info("WaveLink connection open but unresponsive, reconnecting.");
-            reconnect();
-            backoff.onFailure(now);
         } else if (backoff.ready(now)) {
-            log.info("WaveLink not connected, connecting.");
+            if (isConnected()) {
+                // The socket still reports open but the connection is not alive — a half-open socket that
+                // never delivered a close (e.g. across a PC restart/resume), or a handshake that never
+                // completed after Wave Link came up. isConnected() alone keeps this state — quietly
+                // swallowing every command — until the app is restarted, so force a reconnect. The backoff
+                // gate covers this case too, so a connection that keeps coming up unusable is retried at a
+                // growing interval instead of being torn down and rebuilt every few seconds indefinitely.
+                log.info("WaveLink connection open but unresponsive, reconnecting.");
+            } else {
+                log.info("WaveLink not connected, connecting.");
+            }
             reconnect();
             // reconnect() is async; record an attempt and let the next tick clear the backoff once connected.
             backoff.onFailure(now);

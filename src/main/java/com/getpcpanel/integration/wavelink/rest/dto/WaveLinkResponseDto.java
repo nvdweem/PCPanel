@@ -22,6 +22,7 @@ import one.util.streamex.StreamEx;
         WaveLinkEffectDto.class, WaveLinkEffectDto[].class,
 })
 public record WaveLinkResponseDto(
+        boolean connected,
         List<WaveLinkChannelDto> channels,
         List<WaveLinkInputDto> inputs,
         List<WaveLinkMixDto> mixes,
@@ -29,6 +30,10 @@ public record WaveLinkResponseDto(
 ) {
     public static WaveLinkResponseDto from(WaveLinkService waveLinkService) {
         return new WaveLinkResponseDto(
+                // The lists survive a disconnect — they keep naming the targets a command is configured
+                // against while Wave Link is down — so they say nothing about the connection. Report the
+                // same readiness the commands gate on, so a green light means a command would land.
+                waveLinkService.isReady(),
                 StreamEx.ofValues(waveLinkService.getChannels()).map(WaveLinkChannelDto::from).toList(),
                 StreamEx.ofValues(waveLinkService.getInputDevices()).map(WaveLinkInputDto::from).toList(),
                 StreamEx.ofValues(waveLinkService.getMixes()).map(WaveLinkMixDto::from).toList(),

@@ -8,6 +8,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -41,6 +42,10 @@ public class WaveLinkListener implements Listener {
     @Nullable private WebSocket socket;
     private long nextSendId;
     private final StringBuffer msgBuffer = new StringBuffer();
+    /** Guards {@link #writeChain} so concurrent senders queue behind each other rather than race. */
+    private final Object writeLock = new Object();
+    /** Completes when the last queued write is on the wire; the next write is chained onto it. */
+    private CompletableFuture<?> writeChain = CompletableFuture.completedFuture(null);
 
     @Override
     public void onOpen(WebSocket webSocket) {
@@ -55,6 +60,11 @@ public class WaveLinkListener implements Listener {
             ensureCorrectVersion(res);
             log.debug("Connected to Wave Link, getting info");
             getInfo();
+        }).exceptionally(ex -> {
+            // Nothing retries this handshake, so the connection stays open and uninitialised until the
+            // health check reconnects it. Log why rather than leaving the reconnect loop unexplained.
+            log.error("Wave Link handshake failed at getApplicationInfo", ex);
+            return null;
         });
     }
 
@@ -64,7 +74,15 @@ public class WaveLinkListener implements Listener {
                 sendExpectingResult(new WaveLinkGetChannels()).thenAccept(res -> client.updateChannels(res.channels())), sendExpectingResult(new WaveLinkGetMixes()).thenAccept(res -> client.updateMixes(res.mixes())),
                 sendExpectingResult(WaveLinkSetSubscription.setFocusAppChanged(true)).thenAccept(res -> {
                     log.debug("Successfully subscribed to websocket events");
-                })).thenRun(client::setInitialized);
+                })).whenComplete((ignored, ex) -> {
+                    if (ex == null) {
+                        client.setInitialized();
+                    } else {
+                        // An unanswered request leaves the client uninitialised — open but useless — so
+                        // name the failure instead of letting the health check reconnect in silence.
+                        log.error("Wave Link handshake did not complete; connection stays uninitialised", ex);
+                    }
+                });
     }
 
     private void ensureCorrectVersion(WaveLinkGetApplicationInfoResult res) {
@@ -171,15 +189,44 @@ public class WaveLinkListener implements Listener {
             pendingRequests.put(message.getId(), new PendingRequest(message, message.getResultClass(), result));
         }
         // Time out the request if Wave Link never answers, and always drop the pending entry when it
-        // settles, so the pendingRequests map cannot grow without bound on a stalled connection.
+        // settles, so the pendingRequests map cannot grow without bound on a stalled connection. A
+        // timeout is named in the log because it is the one thing that distinguishes a Wave Link that
+        // accepted the request and never answered from one we failed to send to at all — the two
+        // otherwise leave identical traces: a handshake that simply never finishes.
         var requestId = message.getId();
+        var requestName = message.getClass().getSimpleName();
         result.orTimeout(REQUEST_TIMEOUT_MS, TimeUnit.MILLISECONDS)
-              .whenComplete((r, ex) -> pendingRequests.remove(requestId));
+              .whenComplete((r, ex) -> {
+                  pendingRequests.remove(requestId);
+                  if (ex instanceof TimeoutException) {
+                      log.warn("Wave Link did not answer request {} ({}) within {}ms", requestId, requestName, REQUEST_TIMEOUT_MS);
+                  }
+              });
         var messageText = mapper.writeValueAsString(message);
         log.debug("Sending: {}", messageText);
-        socket.sendText(messageText, true);
+        queueWrite(socket, messageText).exceptionally(ex -> {
+            log.error("Failed to send request {} ({})", requestId, requestName, ex);
+            result.completeExceptionally(ex);
+            return null;
+        });
 
         return result;
+    }
+
+    /**
+     * Puts one message on the wire once the previous one is there. {@link WebSocket#sendText} accepts a
+     * single write at a time and rejects any other with {@code IllegalStateException("Send pending")}
+     * without sending it, so messages issued in a burst — the post-connect handshake, or the run of
+     * commands a turning dial produces — are chained instead of fired off together. Each write is
+     * chained on the previous one's <em>outcome</em>, so one failure delays nothing but itself.
+     */
+    private CompletableFuture<?> queueWrite(WebSocket socket, String messageText) {
+        synchronized (writeLock) {
+            var write = writeChain.handle((ignored, ex) -> null)
+                                  .thenCompose(ignored -> socket.sendText(messageText, true));
+            writeChain = write;
+            return write;
+        }
     }
 
     @Nonnull

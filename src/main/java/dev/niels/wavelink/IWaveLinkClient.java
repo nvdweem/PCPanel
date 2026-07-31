@@ -19,6 +19,18 @@ public interface IWaveLinkClient {
 
     boolean isConnected();
 
+    /**
+     * Whether a command sent now can actually reach Wave Link. An open socket is not enough: until the
+     * post-connect handshake completes the client holds no channel, mix or device state to address, and
+     * a connection can sit open and uninitialised for as long as Wave Link accepts the socket without
+     * answering. Writing to it in that state succeeds locally and changes nothing — the connection looks
+     * healthy while every command quietly disappears — so callers gate on this rather than on
+     * {@link #isConnected()}.
+     */
+    default boolean isReady() {
+        return isConnected() && isInitialized();
+    }
+
     void ping();
 
     CompletableFuture<Void> reconnect();
