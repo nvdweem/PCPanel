@@ -43,8 +43,43 @@ export interface BandTransition {
     fire: boolean;
 }
 
+export interface BugReportRequest {
+    consoleEntries?: ClientLogEntry[];
+    deviceSerial?: string;
+    expected: string;
+    failedRequests?: ClientRequestFailure[];
+    includeClientDiagnostics: boolean;
+    includeLog: boolean;
+    includeProfile: boolean;
+    includeSystemInfo: boolean;
+    steps: string;
+    summary: string;
+}
+
+export interface BugReportResponse {
+    fileName: string;
+    issueUrl: string;
+    path: string;
+}
+
 export interface ButtonAction {
     overlayText?: string;
+}
+
+export interface ClientLogEntry {
+    level: string;
+    message: string;
+    stack?: string;
+    timestamp: number;
+}
+
+export interface ClientRequestFailure {
+    method: string;
+    responseSnippet?: string;
+    status: number;
+    statusText?: string;
+    timestamp: number;
+    url: string;
 }
 
 export interface ClipboardCommandModule extends CommandModule {

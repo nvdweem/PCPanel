@@ -302,6 +302,28 @@ frontend for up to a day after an app update, without revalidating even on reloa
 Production builds ship the frontend source maps (`sourceMap` in `angular.json`'s production config) so
 user-reported console errors carry readable TS stack traces.
 
+**Bug reports + diagnosability (`report/`):** `BugReportService` writes `${pcpanel.root}/reports/
+pcpanel-report-<stamp>.zip` (newest 5 kept) holding the reporter's answers plus the attachments they
+opted into — `system.txt`, the logs, the configuration, and the browser's console/failed-request
+capture — and `BugReportUrlBuilder` returns a prefilled GitHub issue URL with the body **capped**
+(GitHub takes it as a query parameter; the full text always survives in the zip's `report.md`).
+Reachable from the bug button in the main header, the tray, and the "Report this" action on any error
+toast. The dialog is mounted at the app root rather than on a page of its own, so the tray's
+`ShowMainEvent.REPORT_PATH` is the start page carrying `?report=1`, which `AppComponent` consumes and
+then strips from the URL. Two rules to keep:
+- **`ProfileRedactor` blanks credentials by field NAME across the whole serialised `Save` tree**, and
+  its notion of "secret" must stay in step with `util/SecretMasking` — which is why the MQTT *username*
+  is redacted despite not being named like a credential. `ProfileRedactionTest` forces every string
+  reachable from the settings side of `Save` to be classified (redacted, or listed as reviewed), so a
+  new integration field cannot ship unclassified; it also fails on a stale allowlist entry.
+- **The HTTP access log (`${pcpanel.root}/logs/access.log`, its own file so it cannot evict the
+  application log) records query strings and is offered as a report attachment.** Any endpoint taking a
+  secret in its query must therefore be in `quarkus.http.access-log.exclude-pattern` — today
+  `/api/auth/bootstrap`, whose query carries the session nonce (`ShowMainService` strips the same value
+  from its own log line). `AccessLogSecretExclusionTest` guards this. `ApiExceptionLogger` complements
+  it by logging the *reason* a matched resource rejected a request; a path matching no resource reaches
+  only the access log, so the pair tells the two apart.
+
 **Web-exposure security model:** the API has no per-request credential of its own, so two independent
 layers guard it — a *network-origin* layer and an *authentication* layer.
 

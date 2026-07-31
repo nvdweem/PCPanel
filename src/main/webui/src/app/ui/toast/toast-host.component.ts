@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { IconComponent } from '../icon/icon.component';
 import { StatusDotComponent } from '../status-dot/status-dot.component';
+import { ReportService } from '../../services/report.service';
 import { ToastService } from './toast.service';
 
 /** Fixed bottom-right stack of toasts. Mount once near the app root. */
@@ -20,6 +21,8 @@ import { ToastService } from './toast.service';
               <button type="button" class="action" (click)="t.onAction!(); toasts.dismiss(t.id)">{{ t.action ?? 'Open' }}</button>
             } @else if (t.href) {
               <a class="action" [href]="t.href" target="_blank" rel="noopener">{{ t.action ?? 'Open' }}</a>
+            } @else if (t.kind === 'error') {
+              <button type="button" class="action" (click)="reportThis(t.message, t.sub); toasts.dismiss(t.id)">Report this</button>
             }
           </div>
           <button type="button" class="close" (click)="toasts.dismiss(t.id)">
@@ -54,7 +57,14 @@ import { ToastService } from './toast.service';
 })
 export class ToastHostComponent {
   readonly toasts = inject(ToastService);
+  private readonly report = inject(ReportService);
+
   dot(kind: string): 'ok' | 'warn' | 'error' | 'idle' {
     return kind === 'success' ? 'ok' : kind === 'warn' ? 'warn' : kind === 'error' ? 'error' : 'idle';
+  }
+
+  /** Catches people while they are looking at the failure, with the message already written down. */
+  reportThis(message: string, sub?: string): void {
+    this.report.open(sub ? `${message}\n\n${sub}` : message);
   }
 }

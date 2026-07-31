@@ -1,6 +1,8 @@
 package com.getpcpanel.util.app;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -31,7 +33,9 @@ public class ShowMainService {
         // an HttpOnly session cookie and redirects to the app, so only the browser the user launched from
         // the tray is authenticated to the local API. The nonce is worthless once consumed.
         var nonce = sessionTokens.issueNonce();
-        openExternally("http://localhost:" + port + "/api/auth/bootstrap?nonce=" + nonce, false);
+        var redirect = event.redirect() == null ? ""
+                : "&redirect=" + URLEncoder.encode(event.redirect(), StandardCharsets.UTF_8);
+        openExternally("http://localhost:" + port + "/api/auth/bootstrap?nonce=" + nonce + redirect, false);
     }
 
     public void onOpenFolder(@Observes OpenFolderEvent event) {

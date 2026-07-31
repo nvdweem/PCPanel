@@ -7,6 +7,7 @@ import { SettingsService } from '../../services/settings.service';
 import { IntegrationDataService } from '../../features/commands/integration-data.service';
 import { PlatformService } from '../../services/platform.service';
 import { DebugService } from '../../services/debug.service';
+import { ReportService } from '../../services/report.service';
 import {
   BottomBarComponent, ConnectionBadgeComponent, ConnState, IconComponent, ModalComponent,
   SpinnerComponent, StatusDotComponent, ToastService,
@@ -39,6 +40,7 @@ export class HomeComponent {
   private readonly debug = inject(DebugService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
+  private readonly report = inject(ReportService);
 
   readonly ready = this.state.ready;
   readonly devices = this.facade.devices;
@@ -168,4 +170,6 @@ export class HomeComponent {
   }
 
   openSettings(): void { this.router.navigate(['/settings']); }
+
+  openReport(): void { this.report.open(); }
 }

@@ -2,6 +2,10 @@
 
 <!-- Releasenotes without version are included in releases -->
 
+- New **Report a problem** option, on the bug button next to the settings icon and in the tray menu. It asks what went wrong, how to reproduce it and what you expected, then saves a zip with the logs and details next to your settings and opens both the already filled-in GitHub issue and the folder holding the zip, so all you do is attach it. Passwords and tokens are removed from anything it collects, and you choose what goes in: the log and system details are included by default, your configuration only if you tick it. Open the zip and check it before attaching, especially if you use OBS, MQTT, Home Assistant or Discord.
+- When something goes wrong, the error message itself now offers **Report this**, which starts that report with the error already written down and the failure details attached.
+- PCPanel now records more about failed requests in its log, so a problem you report can be diagnosed from the log instead of guessed at. Requests are logged to a separate `access.log` next to the existing log file.
+
 - #145 - Fixed the panel lights staying off after booting the PC, until any lighting setting was toggled. Windows lock detection was *inferred* from an internal desktop check that also fails while the desktop is still being set up right after logon (and during a UAC prompt, or a desktop switch), so a false "workstation locked" switched the panels off with nothing left to switch them back on. Lock and unlock now come from Windows itself.
 - As a result the panels also switch off **when you lock the PC**, instead of only once you click through to the password/PIN prompt, and come back on when you sign in.
 - (Windows) Restored monitor-off/on and going-to-sleep detection, which had never actually started: the hidden window that receives those notifications failed to be created on every launch, so the panels only dimmed on lock. They now switch off when the monitors go to sleep and when Windows suspends, and light up again on wake.

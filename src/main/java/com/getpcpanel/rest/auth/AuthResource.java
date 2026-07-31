@@ -23,9 +23,17 @@ import lombok.extern.log4j.Log4j2;
 public class AuthResource {
     @Inject SessionTokenService tokens;
 
+    /**
+     * In-app paths only. The nonce is spent by the time the redirect is issued, so a crafted link
+     * cannot use this to launder a session — but a bootstrap that forwarded to an arbitrary target
+     * would still be an open redirect wearing this app's address, so only a single-slash relative path
+     * with URL-safe characters is accepted. Anything else falls back to the start page.
+     */
+    private static final java.util.regex.Pattern IN_APP_PATH = java.util.regex.Pattern.compile("/(?!/)[A-Za-z0-9/_\\-.]*(\\?[A-Za-z0-9/_\\-.=&%]*)?");
+
     @GET
     @Path("/bootstrap")
-    public Response bootstrap(@QueryParam("nonce") String nonce) {
+    public Response bootstrap(@QueryParam("nonce") String nonce, @QueryParam("redirect") String redirect) {
         var token = tokens.redeemNonce(nonce).orElse(null);
         if (token == null) {
             log.debug("Bootstrap rejected: nonce missing, expired, or already used");
@@ -38,9 +46,13 @@ public class AuthResource {
         // reintroducing CSRF/cross-site-WebSocket. Path=/ covers /api and /ws. No Secure attribute:
         // the app is served over plain http on loopback. The redirect drops the nonce from the URL.
         var cookie = SessionAuthFilter.COOKIE_NAME + "=" + token + "; Path=/; HttpOnly; SameSite=Strict";
-        return Response.seeOther(URI.create("/"))
+        return Response.seeOther(URI.create(safeRedirect(redirect)))
                        .header("Set-Cookie", cookie)
                        .build();
+    }
+
+    static String safeRedirect(String redirect) {
+        return redirect != null && IN_APP_PATH.matcher(redirect).matches() ? redirect : "/";
     }
 
     /**
