@@ -109,6 +109,60 @@ class CommandDispatcherTest {
         assertEquals(List.of("first", "second", "first"), ran);
     }
 
+    @Test
+    @DisplayName("a command that never returns is reported once, naming what is blocking every control")
+    void stuckCommandIsReported() throws Exception {
+        var dispatcher = startedDispatcher();
+        var entered = new CountDownLatch(1);
+        var release = new CountDownLatch(1);
+        dispatcher.onCommand(event("serial", 1, Source.PRESS, null, new ButtonCommand(() -> {
+            entered.countDown();
+            awaitQuietly(release);
+        })));
+        assertTrue(entered.await(2, TimeUnit.SECONDS), "the command must have started");
+
+        try {
+            var pastThreshold = System.currentTimeMillis() + CommandDispatcher.STUCK_COMMAND_THRESHOLD_MS + 1;
+            assertTrue(dispatcher.reportIfStuck(pastThreshold), "a command past the threshold must be reported");
+            assertFalse(dispatcher.reportIfStuck(pastThreshold), "reporting it on every poll would flood the log");
+        } finally {
+            release.countDown();
+        }
+    }
+
+    @Test
+    @DisplayName("a command still within the threshold is not reported")
+    void runningCommandWithinThresholdIsNotReported() throws Exception {
+        var dispatcher = startedDispatcher();
+        var entered = new CountDownLatch(1);
+        var release = new CountDownLatch(1);
+        dispatcher.onCommand(event("serial", 1, Source.PRESS, null, new ButtonCommand(() -> {
+            entered.countDown();
+            awaitQuietly(release);
+        })));
+        assertTrue(entered.await(2, TimeUnit.SECONDS), "the command must have started");
+
+        try {
+            assertFalse(dispatcher.reportIfStuck(System.currentTimeMillis()), "a command that just started is not stuck");
+        } finally {
+            release.countDown();
+        }
+    }
+
+    @Test
+    @DisplayName("an idle handler has nothing to report")
+    void idleHandlerIsNotReported() {
+        assertFalse(dispatcher().reportIfStuck(System.currentTimeMillis() + 60_000));
+    }
+
+    private static void awaitQuietly(CountDownLatch latch) {
+        try {
+            latch.await(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
     /** Handler threads are daemons, so instances left running do not keep the test JVM alive. */
     private static CommandDispatcher startedDispatcher() {
         var dispatcher = dispatcher();

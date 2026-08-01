@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -129,23 +130,49 @@ public class SndCtrlWindows implements ISndCtrl {
         if (StringUtils.isBlank(deviceName)) {
             return;
         }
+        String deviceId;
         synchronized (devices) {
-            StreamEx.ofValues(devices).findFirst(d -> d.dataflow() == flow && StringUtils.containsIgnoreCase(d.name(), deviceName)).ifPresent(d -> SndCtrlNative.instance.setDefaultDevice(d.id(), flow.ordinal(), role.ordinal()));
+            deviceId = StreamEx.ofValues(devices).findFirst(d -> d.dataflow() == flow && StringUtils.containsIgnoreCase(d.name(), deviceName)).map(AudioDevice::id).orElse(null);
         }
+        if (deviceId != null) {
+            applyDefaultDevice(deviceId, flow, role);
+        }
+    }
+
+    /** The DLL call behind {@link #setDefaultDevice(String, DataFlow, Role)}, as its own seam. */
+    void applyDefaultDevice(String deviceId, DataFlow flow, Role role) {
+        SndCtrlNative.instance.setDefaultDevice(deviceId, flow.ordinal(), role.ordinal());
+    }
+
+    /**
+     * Runs {@code action} for each resolved target with the {@link #devices} monitor <b>released</b>.
+     *
+     * <p>Every action here enters {@code SndCtrl.dll}, and the DLL holds its own {@code g_audioMutex}
+     * while calling back up into {@link #deviceAdded} / {@link #deviceRemoved} — both of which take that
+     * monitor. Entering the DLL while holding it therefore forms an AB-BA cycle with the DLL's
+     * notification thread and both park forever. The damage is not confined to audio: every dial and
+     * button is executed by the single command-dispatch thread, so one such hang silently kills all
+     * hardware control until the application is restarted. Resolve targets under the lock; call out
+     * from outside it.
+     */
+    private static <T> void callNativeForEach(List<T> targets, Consumer<T> action) {
+        targets.forEach(action);
     }
 
     @Override
     public void setProcessVolume(String fileName, String device, float volume) {
+        var deviceId = defaultDeviceOnEmpty(device);
+        List<WindowsAudioSession> targets;
         synchronized (devices) {
-            var deviceId = defaultDeviceOnEmpty(device);
-            StreamEx.ofValues(devices)
+            targets = StreamEx.ofValues(devices)
                     // deviceId is null until the first default-device callback arrives, and stays null
                     // while the machine has no default playback device; no device matches either way.
                     .filter(d -> ("*".equals(device) && d.dataflow() == DataFlow.dfRender) || StringUtils.equals(deviceId, d.id()))
                     .flatCollection(d -> d.getSessions().values())
                     .filter(s -> (StringUtils.equalsIgnoreCase(fileName, AudioSession.SYSTEM) && s.isSystemSounds()) || (s.executable() != null && StringUtils.equalsIgnoreCase(fileName, s.executable().getName())))
-                    .forEach(s -> setProcessVolume(s, volume));
+                    .toList();
         }
+        callNativeForEach(targets, s -> setProcessVolume(s, volume));
     }
 
     public void setProcessVolume(WindowsAudioSession session, float volume) {
@@ -162,12 +189,14 @@ public class SndCtrlWindows implements ISndCtrl {
     public void muteProcesses(Set<String> fileName, MuteType mute) {
         var lcFileNames = StreamEx.of(fileName).map(String::toLowerCase).toImmutableSet();
         var systemSounds = lcFileNames.contains(AudioSession.SYSTEM.toLowerCase());
+        List<WindowsAudioSession> targets;
         synchronized (devices) {
-            StreamEx.ofValues(devices).flatCollection(d -> d.getSessions().values())
+            targets = StreamEx.ofValues(devices).flatCollection(d -> d.getSessions().values())
                     .filter(s -> (systemSounds && s.isSystemSounds())
                             || (s.executable() != null && (lcFileNames.contains(s.executable().getName().toLowerCase()) || lcFileNames.contains(s.executable().getAbsolutePath().toLowerCase()))))
-                    .forEach(s -> muteProcess(s, mute));
+                    .toList();
         }
+        callNativeForEach(targets, s -> muteProcess(s, mute));
     }
 
     public void muteProcess(WindowsAudioSession session, MuteType muted) {
