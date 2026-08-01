@@ -33,6 +33,15 @@ public final class ReconnectBackoff {
 
     /** Clears the backoff (call when connected) so the next disconnect retries without delay. */
     public synchronized void onSuccess() {
+        reset();
+    }
+
+    /**
+     * Clears the backoff outright. Distinct from {@link #onSuccess()} in intent rather than effect: for
+     * a caller that has learned the service became available (so the accumulated delay is based on
+     * evidence that is now stale) without having connected to it yet.
+     */
+    public synchronized void reset() {
         failures = 0;
         nextAttemptAtMs = 0;
     }

@@ -466,21 +466,42 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
         return new WaveLinkInputDevice(params.id(), name, deviceType, mergedInputs);
     }
 
-    private int getWaveLinkPort() {
+    /**
+     * The websocket endpoint Wave Link advertises on disk: the port it listens on, and when it wrote
+     * that. Wave Link picks a fresh port and rewrites the descriptor every time it starts, so a stamp
+     * that differs from the last one seen is proof a new Wave Link is now up — the signal the reconnect
+     * loop needs to tell "still not running" apart from "running, and we simply haven't retried yet".
+     */
+    public record WaveLinkEndpoint(int port, long publishedAtMs) {
+    }
+
+    /** The currently advertised {@link WaveLinkEndpoint}, or null when no descriptor can be read. */
+    @Nullable
+    public WaveLinkEndpoint readEndpoint() {
         // Just using a static port is too easy for Elgato, so we retrieve the (random?) port from the ws-info.json, just like the StreamDeck does...
         var wsInfoPath = getWsInfoPath();
-        if (wsInfoPath != null) {
-            try {
-                var content = Files.readString(wsInfoPath);
-                var mapper = new ObjectMapper();
-                var wsInfo = mapper.readValue(content, Map.class);
-                log.info("WaveLink port: {}", wsInfo.get("port"));
-                return NumberUtils.toInt(Objects.toString(wsInfo.get("port")), DEFAULT_WAVELINK_PORT);
-            } catch (Exception e) {
-                log.warn("Failed to read WaveLink ws-info.json", e);
-            }
+        if (wsInfoPath == null) {
+            return null;
         }
-        return DEFAULT_WAVELINK_PORT;
+        try {
+            var content = Files.readString(wsInfoPath);
+            var mapper = new ObjectMapper();
+            var wsInfo = mapper.readValue(content, Map.class);
+            var port = NumberUtils.toInt(Objects.toString(wsInfo.get("port")), DEFAULT_WAVELINK_PORT);
+            return new WaveLinkEndpoint(port, Files.getLastModifiedTime(wsInfoPath).toMillis());
+        } catch (Exception e) {
+            log.warn("Failed to read WaveLink ws-info.json", e);
+            return null;
+        }
+    }
+
+    private int getWaveLinkPort() {
+        var endpoint = readEndpoint();
+        if (endpoint == null) {
+            return DEFAULT_WAVELINK_PORT;
+        }
+        log.info("WaveLink port: {}", endpoint.port());
+        return endpoint.port();
     }
 
     @Nullable
