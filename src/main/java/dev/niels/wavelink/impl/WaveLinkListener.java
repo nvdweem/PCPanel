@@ -131,6 +131,10 @@ public class WaveLinkListener implements Listener {
             log.warn("Received response for unknown request ID {}", id);
             return;
         }
+        // Any answer — result or error — is proof the write side still carries what we send. The socket
+        // delivers pongs and pushes just the same when nothing we write reaches Wave Link, so this, not
+        // inbound traffic, is what tells a usable connection from one that only looks alive.
+        client.recordRequestAnswered();
 
         if (response.getError() != null) {
             var error = response.getError();
@@ -200,12 +204,14 @@ public class WaveLinkListener implements Listener {
                   pendingRequests.remove(requestId);
                   if (ex instanceof TimeoutException) {
                       log.warn("Wave Link did not answer request {} ({}) within {}ms", requestId, requestName, REQUEST_TIMEOUT_MS);
+                      client.recordRequestUnanswered();
                   }
               });
         var messageText = mapper.writeValueAsString(message);
         log.debug("Sending: {}", messageText);
         queueWrite(socket, messageText).exceptionally(ex -> {
             log.error("Failed to send request {} ({})", requestId, requestName, ex);
+            client.recordRequestUnanswered(); // never reached the wire — the same broken write side
             result.completeExceptionally(ex);
             return null;
         });
