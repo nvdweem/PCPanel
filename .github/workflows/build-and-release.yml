@@ -940,7 +940,11 @@ jobs:
           # Titled exactly like the stable release, so the update check reads it as that final version
           # rather than as a newer pre-release and offers no phantom update. Still flagged --prerelease
           # so the rolling tag cannot claim the Latest badge from the release itself.
+          # --target names the commit to create the rolling tag at: it was just deleted above, so it does
+          # not exist on the remote here, and the checkout's local copy of it would otherwise make gh
+          # refuse ("exists locally but has not been pushed") rather than create it.
           gh release create "$SNAPSHOT_TAG" \
+            --target "$GITHUB_SHA" \
             --prerelease \
             --title "$RELEASE_TITLE" \
             --notes-file "$RUNNER_TEMP/release-notes.md"
