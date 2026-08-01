@@ -23,6 +23,7 @@ import jakarta.enterprise.inject.Instance;
 
 import dev.niels.wavelink.IWaveLinkClientEventListener;
 import dev.niels.wavelink.WaveLinkClient;
+import dev.niels.wavelink.impl.WaveLinkClientImpl.WaveLinkEndpoint;
 import dev.niels.wavelink.impl.model.WaveLinkApp;
 import dev.niels.wavelink.impl.model.WaveLinkChannel;
 import dev.niels.wavelink.impl.model.WaveLinkInputDevice;
@@ -41,8 +42,17 @@ import one.util.streamex.StreamEx;
 @ApplicationScoped
 public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEventListener, IFocusRedirector {
     private final SaveService saveService;
-    /** Spaces out reconnect attempts when Wave Link is down (base = the scheduled interval, capped at 5 min). */
-    private final ReconnectBackoff backoff = new ReconnectBackoff(10_000, 300_000);
+    /**
+     * Spaces out reconnect attempts when Wave Link is down (base = the scheduled interval). The cap is
+     * deliberately short: the attempt is a loopback socket costing nothing, so the only thing a long cap
+     * buys is a longer stretch during which a Wave Link that came back stays unnoticed.
+     */
+    private final ReconnectBackoff backoff = new ReconnectBackoff(10_000, 60_000);
+    /**
+     * The endpoint Wave Link last advertised, as of the most recent tick that found it down. Compared on
+     * each tick to notice a Wave Link that has just started; null until the first descriptor is read.
+     */
+    @Nullable private WaveLinkEndpoint lastSeenEndpoint;
     private boolean wasEnabled;
     @Inject
     Event<WaveLinkChangedEvent> changedEvent;
@@ -312,11 +322,14 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
 
     @Scheduled(every = "10s")
     public void checkConnection() {
+        checkConnection(System.currentTimeMillis());
+    }
+
+    void checkConnection(long now) {
         if (!isEnabled()) {
             backoff.onSuccess(); // nothing to connect → keep the gate clear so enabling reconnects at once
             return;
         }
-        var now = System.currentTimeMillis();
         if (isConnectionHealthy(now)) {
             backoff.onSuccess();
             log.debug("WaveLink connected, sending ping.");
@@ -324,7 +337,17 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
             // Keep the controlled-app cache current even when no channelChanged event fires after the
             // initial channel load, so the set is persisted for the next startup's focus-volume race.
             syncAppCache();
-        } else if (backoff.ready(now)) {
+            return;
+        }
+        if (endpointRepublished()) {
+            // Wave Link advertises the port it listens on when it starts. On a cold boot it comes up long
+            // after PCPanel, so every attempt until then fails and the backoff grows into the minutes —
+            // and an available Wave Link would go unnoticed for that whole delay. A new advertisement is
+            // proof it is listening now, which makes the accumulated delay meaningless, so drop it.
+            log.info("WaveLink published a new endpoint, connecting now.");
+            backoff.reset();
+        }
+        if (backoff.ready(now)) {
             if (isConnected()) {
                 // The socket still reports open but the connection is not alive — a half-open socket that
                 // never delivered a close (e.g. across a PC restart/resume), or a handshake that never
@@ -340,6 +363,23 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
             // reconnect() is async; record an attempt and let the next tick clear the backoff once connected.
             backoff.onFailure(now);
         }
+    }
+
+    /**
+     * Whether Wave Link has advertised a different endpoint than the one seen at the previous down tick.
+     * Both halves of the stamp matter: a restart usually yields a new port, but the port can repeat, in
+     * which case only the publish time moves. The first read establishes the baseline and counts as no
+     * change, and an unreadable or absent descriptor is no evidence either way — neither may defeat the
+     * backoff, or a Wave Link that is simply not installed would be retried on every tick forever.
+     */
+    private boolean endpointRepublished() {
+        var current = readEndpoint();
+        if (current == null) {
+            return false;
+        }
+        var previous = lastSeenEndpoint;
+        lastSeenEndpoint = current;
+        return previous != null && !previous.equals(current);
     }
 
     @Override

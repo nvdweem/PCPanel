@@ -105,6 +105,57 @@ class WaveLinkConnectionHealthTest {
         assertFalse(wl.isConnectionHealthy(25_000));
     }
 
+    /**
+     * The write side has its own way of dying: the socket keeps delivering pongs and pushes while
+     * nothing we send reaches Wave Link. Inbound liveness alone reports that as perfectly healthy, so
+     * every command is swallowed by a connection nobody reconnects — the failure only a restart cleared.
+     */
+    @Test
+    void requestsThatNeverGetAnsweredMakeAnInboundLiveConnectionUnhealthy() {
+        var wl = new TestService();
+        wl.markConnected(0);
+        wl.setInitialized();
+        wl.recordInboundActivity(30_000); // pongs still arriving: inbound liveness is untouched
+        assertTrue(wl.isConnectionHealthy(31_000));
+
+        wl.recordRequestUnanswered();
+        assertTrue(wl.isConnectionHealthy(31_000), "a single unanswered request can be a hiccup");
+
+        wl.recordRequestUnanswered();
+        assertFalse(wl.isConnectionHealthy(31_000),
+                "commands that never reach Wave Link mean the connection is not usable, however alive it reads");
+    }
+
+    @Test
+    void anAnsweredRequestClearsTheUnansweredRun() {
+        var wl = new TestService();
+        wl.markConnected(0);
+        wl.setInitialized();
+        wl.recordInboundActivity(30_000);
+        wl.recordRequestUnanswered();
+        wl.recordRequestUnanswered();
+        assertFalse(wl.isConnectionHealthy(31_000));
+
+        wl.recordRequestAnswered(); // Wave Link answered: the link carries commands again
+        assertTrue(wl.isConnectionHealthy(31_000));
+    }
+
+    @Test
+    void reconnectingClearsTheUnansweredRun() {
+        var wl = new TestService();
+        wl.markConnected(0);
+        wl.setInitialized();
+        wl.recordInboundActivity(30_000);
+        wl.recordRequestUnanswered();
+        wl.recordRequestUnanswered();
+
+        // A fresh socket must not inherit the dead one's tally, or it is condemned before it is used.
+        wl.markDisconnected();
+        wl.markConnected(31_000);
+        wl.setInitialized();
+        assertTrue(wl.isConnectionHealthy(31_000));
+    }
+
     @Test
     void checkConnectionReconnectsAnOpenButUnhealthyConnection() {
         var wl = new TestService();

@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -73,6 +74,14 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
      * open-but-uninitialised connection is reconnected rather than left holding no channel data.
      */
     private static final long HANDSHAKE_GRACE_MS = 20_000;
+    /**
+     * How many requests in a row may go unanswered before the connection is treated as dead. The write
+     * side dies on its own: a socket keeps delivering pongs and pushes while nothing we send reaches
+     * Wave Link, which inbound liveness reads as perfectly healthy. Two is the smallest run that is not
+     * a single hiccup, and each costs a request timeout, so a genuinely broken write side is caught
+     * within a couple of commands rather than never.
+     */
+    private static final int UNANSWERED_REQUEST_LIMIT = 2;
     private CompletableFuture<WebSocket> websocket = CompletableFuture.completedFuture(null);
     private WaveLinkListener waveLinkListener;
     private final HttpClient client;
@@ -86,6 +95,8 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
     private volatile long lastInboundActivityMs;
     /** Wall-clock ms the current socket opened; 0 when not connected. Bounds the handshake grace. */
     private volatile long connectedAtMs;
+    /** Requests sent since the last one Wave Link answered; the write side's liveness signal. */
+    private final AtomicInteger unansweredRequests = new AtomicInteger();
     @Getter private String mainOutputDeviceId;
     @Getter private WaveLinkApp lastFocusApp = WaveLinkApp.EMPTY;
 
@@ -141,7 +152,20 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
         if (!initialized && nowMs - connectedAtMs > HANDSHAKE_GRACE_MS) {
             return false;
         }
+        if (unansweredRequests.get() >= UNANSWERED_REQUEST_LIMIT) {
+            return false;
+        }
         return nowMs - lastInboundActivityMs < INBOUND_INACTIVITY_TIMEOUT_MS;
+    }
+
+    /** Records that Wave Link answered a request — proof the link still carries what we send. */
+    public void recordRequestAnswered() {
+        unansweredRequests.set(0);
+    }
+
+    /** Records a request Wave Link never answered, or that never made it onto the wire. */
+    public void recordRequestUnanswered() {
+        unansweredRequests.incrementAndGet();
     }
 
     /** Records the socket opening: starts the handshake-grace clock and counts as fresh activity. */
@@ -164,6 +188,8 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
         initialized = false;
         connectedAtMs = 0;
         lastInboundActivityMs = 0;
+        // A fresh socket must not inherit the dead one's tally, or it is condemned before it is used.
+        unansweredRequests.set(0);
     }
 
     private CompletableFuture<WebSocket> connect() {
@@ -466,21 +492,42 @@ public abstract class WaveLinkClientImpl implements IWaveLinkClient, AutoCloseab
         return new WaveLinkInputDevice(params.id(), name, deviceType, mergedInputs);
     }
 
-    private int getWaveLinkPort() {
+    /**
+     * The websocket endpoint Wave Link advertises on disk: the port it listens on, and when it wrote
+     * that. Wave Link picks a fresh port and rewrites the descriptor every time it starts, so a stamp
+     * that differs from the last one seen is proof a new Wave Link is now up — the signal the reconnect
+     * loop needs to tell "still not running" apart from "running, and we simply haven't retried yet".
+     */
+    public record WaveLinkEndpoint(int port, long publishedAtMs) {
+    }
+
+    /** The currently advertised {@link WaveLinkEndpoint}, or null when no descriptor can be read. */
+    @Nullable
+    public WaveLinkEndpoint readEndpoint() {
         // Just using a static port is too easy for Elgato, so we retrieve the (random?) port from the ws-info.json, just like the StreamDeck does...
         var wsInfoPath = getWsInfoPath();
-        if (wsInfoPath != null) {
-            try {
-                var content = Files.readString(wsInfoPath);
-                var mapper = new ObjectMapper();
-                var wsInfo = mapper.readValue(content, Map.class);
-                log.info("WaveLink port: {}", wsInfo.get("port"));
-                return NumberUtils.toInt(Objects.toString(wsInfo.get("port")), DEFAULT_WAVELINK_PORT);
-            } catch (Exception e) {
-                log.warn("Failed to read WaveLink ws-info.json", e);
-            }
+        if (wsInfoPath == null) {
+            return null;
         }
-        return DEFAULT_WAVELINK_PORT;
+        try {
+            var content = Files.readString(wsInfoPath);
+            var mapper = new ObjectMapper();
+            var wsInfo = mapper.readValue(content, Map.class);
+            var port = NumberUtils.toInt(Objects.toString(wsInfo.get("port")), DEFAULT_WAVELINK_PORT);
+            return new WaveLinkEndpoint(port, Files.getLastModifiedTime(wsInfoPath).toMillis());
+        } catch (Exception e) {
+            log.warn("Failed to read WaveLink ws-info.json", e);
+            return null;
+        }
+    }
+
+    private int getWaveLinkPort() {
+        var endpoint = readEndpoint();
+        if (endpoint == null) {
+            return DEFAULT_WAVELINK_PORT;
+        }
+        log.info("WaveLink port: {}", endpoint.port());
+        return endpoint.port();
     }
 
     @Nullable
