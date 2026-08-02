@@ -28,9 +28,11 @@ import lombok.extern.log4j.Log4j2;
  * see, so the deadlocks that involve a native lock — the ones that have actually cost this project
  * releases — are exactly the ones it stays silent about. A plain dump shows both halves.
  *
- * <p>Monitor ownership is asked for separately and only enriches the dump: it needs
- * {@code java.lang.management}, whose support in a native image is narrower than the plain thread API.
- * Its absence costs the owner's name, not the dump.
+ * <p>Monitor ownership is asked for separately and only enriches the dump. A native image — which is
+ * every shipped build — answers the {@code ThreadMXBean} calls but enumerates no threads through them,
+ * so ownership is a JVM-mode luxury and the header says so rather than leaving a reader to read its
+ * silence as "nothing was contending". {@link Thread#getAllStackTraces()} is unaffected there and
+ * returns every thread with its full stack, which is the evidence that actually matters.
  */
 @Log4j2
 @ApplicationScoped
@@ -106,7 +108,16 @@ public class ThreadDumpCollector {
     private static Map<Long, LockInfo> lockOwners() {
         try {
             var bean = ManagementFactory.getThreadMXBean();
-            var infos = bean.getThreadInfo(bean.getAllThreadIds(), 0);
+            var ids = bean.getAllThreadIds();
+            if (ids.length == 0) {
+                // What a native image does: the bean is there and answers every call, but enumerates
+                // nothing — measured on GraalVM 25, and --enable-monitoring=threaddump does not change
+                // it. A live process always has threads, so an empty roll call is the absence of the
+                // feature and not the absence of contention. Saying "available" here would let a reader
+                // take a dump with no lock lines as proof that nothing was contending.
+                return null;
+            }
+            var infos = bean.getThreadInfo(ids, 0);
             var result = new HashMap<Long, LockInfo>();
             for (var info : infos) {
                 if (info == null || StringUtils.isBlank(info.getLockName())) {
