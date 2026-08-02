@@ -41,6 +41,7 @@
 - #151 - (Linux, Flatpak) **Fixed the media keys (play/pause, next, previous) never finding a player.** Every media action failed with *"No MPRIS media player found"* even with music playing, because the sandbox hid the running players from PCPanel.
 - (Linux) A stuck helper can no longer hold up the panel: resolving the focused window now gives up after three seconds instead of waiting forever.
 - #150 - Fixed **"Could not save assignment"** appearing on every change to a dial or button — including removing an action — with nothing saved, while the rest of the interface kept working normally. It happened when the active profile's name contains a `#`, `?` or `/`, and also when the profile the device was set to was no longer there. Both now save, and a profile file in the second state puts itself right the next time PCPanel starts, so there is nothing to rename or set up again.
+- A bug report now records **what every part of PCPanel was doing at the moment you made it**. When the panel goes dead while the interface carries on as normal, that is the one piece of evidence that names the action which got stuck — the last time this happened it took a release to find without it. It is included when you leave **System information** ticked, and describes only the program's own workings: no file names, no window titles, nothing you typed.
 
 ## [2.0.84]
 

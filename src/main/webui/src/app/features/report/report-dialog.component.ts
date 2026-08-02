@@ -55,8 +55,9 @@ import { ModalComponent, SelectComponent, SelectOption, SpinnerComponent, Toggle
           <div class="row">
             <div class="row-text">
               <div class="row-label">System information</div>
-              <div class="row-sub">version, operating system, connected devices — and, on Linux, the title of
-                the window that was focused (needed to diagnose focus volume; check it before sharing)</div>
+              <div class="row-sub">version, operating system, connected devices, what every thread is doing —
+                and, on Linux, the title of the window that was focused (needed to diagnose focus volume;
+                check it before sharing)</div>
             </div>
             <pc-toggle [value]="includeSystemInfo()" (valueChange)="includeSystemInfo.set($event)"></pc-toggle>
           </div>
