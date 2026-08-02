@@ -13,6 +13,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 
 import com.getpcpanel.integration.volume.platform.ISndCtrl;
+import com.getpcpanel.platform.IProcessHelper;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.integration.wavelink.WaveLinkAppCache;
 import com.getpcpanel.integration.wavelink.WaveLinkService;
@@ -35,6 +36,7 @@ import one.util.streamex.StreamEx;
 @Produces(MediaType.APPLICATION_JSON)
 public class FocusVolumeDiagnosticsResource {
     @Inject Instance<ISndCtrl> sndCtrl;
+    @Inject Instance<IProcessHelper> processHelper;
     @Inject SaveService save;
     @Inject VolumeCoordinatorService coordinator;
     @Inject WaveLinkService waveLink;
@@ -48,6 +50,12 @@ public class FocusVolumeDiagnosticsResource {
         var focus = sndCtrl.isResolvable() ? sndCtrl.get().getFocusApplication() : null;
         var target = app != null && !app.isBlank() ? app : focus;
         out.put("liveFocusApplication", focus);
+        // Why there is no focused app, when there isn't one. Without this the UI can only say "could not
+        // read the focused app", which on Linux hides the one thing that matters: whether the desktop
+        // session supports it at all (#151).
+        out.put("focusUnavailableReason", focus != null || !processHelper.isResolvable() ? null
+                : processHelper.get().focusUnavailableReason().orElse(null));
+        out.put("focusDetection", processHelper.isResolvable() ? processHelper.get().focusDiagnostics() : Map.of());
         out.put("queriedApp", target);
         out.put("normalizedKey", target == null ? null : WaveLinkAppCache.normalizeKey(target));
 

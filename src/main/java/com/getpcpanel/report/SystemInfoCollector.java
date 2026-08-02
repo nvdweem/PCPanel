@@ -1,13 +1,17 @@
 package com.getpcpanel.report;
 
+import java.util.Map;
+
 import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.device.DeviceHolder;
+import com.getpcpanel.platform.IProcessHelper;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.rest.PlatformResource;
 import com.getpcpanel.util.io.FileUtil;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 
 /**
@@ -24,6 +28,8 @@ public class SystemInfoCollector {
     @Inject DeviceHolder devices;
     @Inject SaveService saveService;
     @Inject FileUtil fileUtil;
+    // Platform-gated bean: only the running OS's process helper is in the build, so this is Instance<>.
+    @Inject Instance<IProcessHelper> processHelper;
 
     public String collect() {
         var info = platform.get();
@@ -60,6 +66,8 @@ public class SystemInfoCollector {
                .append(" serial ").append(device.getSerialNumber()).append('\n');
         }
 
+        appendFocusDiagnostics(out);
+
         out.append("\nIntegrations enabled\n");
         append(out, "obs", String.valueOf(save.isObsEnabled()));
         append(out, "voicemeeter", String.valueOf(save.isVoicemeeterEnabled()));
@@ -71,6 +79,22 @@ public class SystemInfoCollector {
         append(out, "overlay", String.valueOf(save.isOverlayEnabled()));
 
         return out.toString();
+    }
+
+    /**
+     * Whether the focused window can be resolved here, and if not, what each helper said. On Linux this is
+     * the difference between "focus volume is broken" and "this desktop has no API for it", and it is not
+     * something a reporter can look up — the previous round of #151 cost a full round trip just to learn
+     * which desktop session was in use. Probed live, so it is present even when the reporter never used the
+     * feature. Empty (and so omitted) on the platforms that answer the question from the OS directly.
+     */
+    private void appendFocusDiagnostics(StringBuilder out) {
+        var facts = processHelper.isResolvable() ? processHelper.get().focusDiagnostics() : Map.<String, String>of();
+        if (facts.isEmpty()) {
+            return;
+        }
+        out.append("\nFocused-window detection\n");
+        facts.forEach((label, value) -> append(out, label, value));
     }
 
     private static String packaging(boolean flatpak) {

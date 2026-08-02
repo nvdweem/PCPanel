@@ -658,7 +658,7 @@ export class SettingsComponent {
     const tick = (): void => {
       n -= 1;
       if (n > 0) { this.fvDetectCountdown.set(n); setTimeout(tick, 1000); return; }
-      this.http.get<{ liveFocusApplication?: string | null }>('/api/focus-volume/diagnostics').subscribe({
+      this.http.get<{ liveFocusApplication?: string | null; focusUnavailableReason?: string | null }>('/api/focus-volume/diagnostics').subscribe({
         next: r => {
           const app = r.liveFocusApplication;
           const base = app ? app.split(/[\\/]/).pop() ?? '' : '';
@@ -667,7 +667,9 @@ export class SettingsComponent {
             this.setFvSources(ruleIndex, [...(cur.sources ?? []), base]);
             this.toast.show(`Added focused app: ${base}`, { kind: 'success' });
           } else if (!base) {
-            this.toast.show('Could not read the focused app', { kind: 'error' });
+            // The backend knows *why* — on Linux that is usually "this desktop session has no API for it"
+            // rather than anything the user did wrong. Say so instead of the bare failure (#151).
+            this.toast.show(r.focusUnavailableReason ?? 'Could not read the focused app', { kind: 'error' });
           }
           this.fvDetecting.set(null);
         },
