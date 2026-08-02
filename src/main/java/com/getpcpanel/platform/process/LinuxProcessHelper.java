@@ -329,6 +329,9 @@ public class LinuxProcessHelper implements IProcessHelper {
             out.put(tool.tool + " result", toolStatus.getOrDefault(tool, "not tried"));
         }
         out.put("focused window", window.map(ActiveWindow::describe).orElse("could not be resolved"));
+        // Own line, and labelled for what it is, so a reporter reviewing the zip before attaching it to a
+        // public issue can see the window title rather than missing it inside a list of identifiers.
+        out.put("focused window title", window.map(ActiveWindow::reportableTitle).orElse("n/a"));
         return out;
     }
 
@@ -481,9 +484,26 @@ public class LinuxProcessHelper implements IProcessHelper {
             return StringUtils.firstNonBlank(flatpakAppId, process, windowClass, windowName);
         }
 
-        /** Everything we know about the window, on one line, for diagnostics. */
+        /**
+         * The window's identifying names, minus the window title. The title is reported separately by
+         * {@link #reportableTitle()} rather than folded in here: a bug-report bundle is meant to be attached
+         * to a public issue, and a title names whatever document, page or conversation happened to be focused.
+         * Keeping it on its own labelled line means someone reviewing the zip can actually see it.
+         */
         public String describe() {
-            return "pid " + pid + " " + identifiers();
+            return "pid " + pid + " "
+                    + StreamEx.of(process, flatpakAppId, windowClass).filter(StringUtils::isNotBlank).toSet();
+        }
+
+        /**
+         * The window title, for the diagnostics section. Kept (rather than dropped) because for Wine/Proton
+         * and Steam games it <em>is</em> the identifier a stream is matched on — the class is overwritten with
+         * {@code steam_app_<id>} while the title stays the game's name (#96) — so without it those reports
+         * can't be diagnosed. Truncated, because the diagnostic value is in the first few words and the rest
+         * is just more of someone's private business on a public issue.
+         */
+        public String reportableTitle() {
+            return StringUtils.isBlank(windowName) ? "(none)" : '"' + StringUtils.abbreviate(windowName, 60) + '"';
         }
     }
 
