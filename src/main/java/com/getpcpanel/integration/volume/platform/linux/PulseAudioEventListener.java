@@ -4,7 +4,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.Date;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
 import org.apache.commons.collections4.queue.CircularFifoQueue;
@@ -61,30 +63,59 @@ class PulseAudioEventListener {
      */
     private static final long RESTART_DELAY_MS = 5000;
 
+    /**
+     * Health of the change stream, for the bug-report bundle. A dead or never-started stream is invisible
+     * from the outside and presents as an application picker frozen on whatever was playing at startup —
+     * the second half of #151 — so the report has to be able to say which it was.
+     */
+    private volatile Instant streamStartedAt;
+    private volatile Instant lastEventAt;
+    private volatile String lastEnded;
+    private final AtomicInteger restarts = new AtomicInteger();
+
+    String healthSummary() {
+        var started = streamStartedAt;
+        if (started == null) {
+            return "never started" + (lastEnded == null ? "" : " (" + lastEnded + ")");
+        }
+        return "running since " + started
+                + ", last event " + (lastEventAt == null ? "none yet" : lastEventAt)
+                + ", restarts " + restarts.get()
+                + (lastEnded == null ? "" : ", last ended: " + lastEnded);
+    }
+
     private void run() {
         while (running) {
             try {
                 var process = processHelper.builder("pactl", "subscribe").start();
                 var reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                streamStartedAt = Instant.now();
 
                 var dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 String line;
                 //noinspection NestedAssignment
                 while ((line = reader.readLine()) != null) {
+                    lastEventAt = Instant.now();
                     latestEvents.add(dateFormat.format(new Date()) + " - " + line);
                     checkTrigger(line);
                 }
                 // The stream ended. Until it is back, nothing updates the device/session lists from the OS,
                 // which shows up as an application picker frozen on whatever was playing at startup — so say
                 // so rather than restarting in silence (#151).
+                var exit = process.waitFor();
+                streamStartedAt = null;
+                lastEnded = "exit " + exit + " at " + Instant.now();
                 log.warn("'pactl subscribe' ended (exit {}); audio device/session changes are not being observed. "
-                        + "Retrying in {}ms.", process.waitFor(), RESTART_DELAY_MS);
+                        + "Retrying in {}ms.", exit, RESTART_DELAY_MS);
             } catch (IOException e) {
+                streamStartedAt = null;
+                lastEnded = "could not be started: " + e;
                 log.warn("Subscribe process error", e);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 return;
             }
+            restarts.incrementAndGet();
             sleepBeforeRestart();
         }
     }

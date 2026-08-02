@@ -41,6 +41,15 @@ public interface ISndCtrl {
     default void refreshRunningApplications() {
     }
 
+    /**
+     * Ordered label → value facts about the OS audio layer for the bug-report bundle: what is known, and
+     * whether the mechanism that keeps it current is alive. Empty where nothing here can silently stop
+     * working; the PulseAudio backend fills it in because its change stream is an external process (#151).
+     */
+    default Map<String, String> audioDiagnostics() {
+        return Map.of();
+    }
+
     String defaultDeviceOnEmpty(String deviceId);
 
     String defaultPlayer();

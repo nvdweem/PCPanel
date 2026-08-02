@@ -5,6 +5,7 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.device.DeviceHolder;
+import com.getpcpanel.integration.volume.platform.ISndCtrl;
 import com.getpcpanel.platform.IProcessHelper;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.rest.PlatformResource;
@@ -30,6 +31,7 @@ public class SystemInfoCollector {
     @Inject FileUtil fileUtil;
     // Platform-gated bean: only the running OS's process helper is in the build, so this is Instance<>.
     @Inject Instance<IProcessHelper> processHelper;
+    @Inject Instance<ISndCtrl> sndCtrl;
 
     public String collect() {
         var info = platform.get();
@@ -67,6 +69,7 @@ public class SystemInfoCollector {
         }
 
         appendFocusDiagnostics(out);
+        appendSection(out, "Audio backend", sndCtrl.isResolvable() ? sndCtrl.get().audioDiagnostics() : Map.of());
 
         out.append("\nIntegrations enabled\n");
         append(out, "obs", String.valueOf(save.isObsEnabled()));
@@ -89,11 +92,16 @@ public class SystemInfoCollector {
      * feature. Empty (and so omitted) on the platforms that answer the question from the OS directly.
      */
     private void appendFocusDiagnostics(StringBuilder out) {
-        var facts = processHelper.isResolvable() ? processHelper.get().focusDiagnostics() : Map.<String, String>of();
+        appendSection(out, "Focused-window detection",
+                processHelper.isResolvable() ? processHelper.get().focusDiagnostics() : Map.of());
+    }
+
+    /** Writes a titled block of label/value facts, or nothing at all when the platform reported none. */
+    private static void appendSection(StringBuilder out, String title, Map<String, String> facts) {
         if (facts.isEmpty()) {
             return;
         }
-        out.append("\nFocused-window detection\n");
+        out.append('\n').append(title).append('\n');
         facts.forEach((label, value) -> append(out, label, value));
     }
 

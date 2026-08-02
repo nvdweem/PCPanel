@@ -7,6 +7,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -50,6 +51,7 @@ class SndCtrlPulseAudio implements ISndCtrl {
     public static final String INPUT_PREFIX = "in_";
     @Inject PulseAudioWrapper cmd;
     @Inject LinuxProcessHelper processHelper;
+    @Inject PulseAudioEventListener eventListener;
     @Inject Event<Object> eventBus;
     @GuardedBy("devices") private final Map<String, PulseAudioAudioDevice> devices = new HashMap<>();
     @GuardedBy("sessions") private final Set<PulseAudioAudioSession> sessions = new HashSet<>();
@@ -277,6 +279,19 @@ class SndCtrlPulseAudio implements ISndCtrl {
     @Override
     public void refreshRunningApplications() {
         initSessions(null);
+    }
+
+    @Override
+    public Map<String, String> audioDiagnostics() {
+        var out = new LinkedHashMap<String, String>();
+        out.put("change stream", eventListener.healthSummary());
+        synchronized (sessions) {
+            out.put("audio sessions", String.valueOf(sessions.size()));
+        }
+        synchronized (devices) {
+            out.put("audio devices", String.valueOf(devices.size()));
+        }
+        return out;
     }
 
     @Override
