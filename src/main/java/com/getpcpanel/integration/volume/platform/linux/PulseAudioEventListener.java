@@ -54,6 +54,13 @@ class PulseAudioEventListener {
         }
     }
 
+    /**
+     * How long to wait before restarting the stream. Without it, a {@code pactl} that exits immediately —
+     * missing on the host, or unreachable through the Flatpak's {@code flatpak-spawn} shim — turns this into
+     * a process-spawning hot loop that burns a core and floods nothing but the log.
+     */
+    private static final long RESTART_DELAY_MS = 5000;
+
     private void run() {
         while (running) {
             try {
@@ -67,9 +74,27 @@ class PulseAudioEventListener {
                     latestEvents.add(dateFormat.format(new Date()) + " - " + line);
                     checkTrigger(line);
                 }
+                // The stream ended. Until it is back, nothing updates the device/session lists from the OS,
+                // which shows up as an application picker frozen on whatever was playing at startup — so say
+                // so rather than restarting in silence (#151).
+                log.warn("'pactl subscribe' ended (exit {}); audio device/session changes are not being observed. "
+                        + "Retrying in {}ms.", process.waitFor(), RESTART_DELAY_MS);
             } catch (IOException e) {
                 log.warn("Subscribe process error", e);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
             }
+            sleepBeforeRestart();
+        }
+    }
+
+    private void sleepBeforeRestart() {
+        try {
+            Thread.sleep(RESTART_DELAY_MS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            running = false;
         }
     }
 

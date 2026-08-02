@@ -31,6 +31,16 @@ public interface ISndCtrl {
 
     List<RunningApplication> getRunningApplications();
 
+    /**
+     * Re-reads the session list from the OS before it is handed out, for backends that maintain it from a
+     * change stream rather than querying live. Called when the UI asks for the application list, so a picker
+     * opened right after starting an app shows it even if the stream missed (or never delivered) the event —
+     * "I have to restart PCPanel before a new app appears" is otherwise the only workaround (#151). No-op
+     * where the list is already read on demand or the change notifications are in-process and reliable.
+     */
+    default void refreshRunningApplications() {
+    }
+
     String defaultDeviceOnEmpty(String deviceId);
 
     String defaultPlayer();

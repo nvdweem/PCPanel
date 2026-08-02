@@ -30,6 +30,9 @@ public class ProcessResource {
 
     @GET
     public List<ProcessDto> listProcesses() {
+        // Opening the picker is the moment the list has to be right, so let the backend re-read it first
+        // (a no-op where it is already live) instead of showing a stale snapshot — see #151.
+        sndCtrl.refreshRunningApplications();
         return sndCtrl.getRunningApplications().stream()
                       .map(this::toDto)
                       .toList();

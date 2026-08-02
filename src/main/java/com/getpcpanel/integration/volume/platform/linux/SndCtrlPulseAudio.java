@@ -266,6 +266,19 @@ class SndCtrlPulseAudio implements ISndCtrl {
         return processHelper.getActiveWindow().map(ActiveWindow::primaryIdentifier).orElse(null);
     }
 
+    /**
+     * The session set is maintained from the {@code pactl subscribe} stream. That stream is a child process
+     * reached through a pipe (and, in the Flatpak, through {@code flatpak-spawn --host} as well), so it can
+     * die or miss events without anything else noticing — after which the application picker keeps showing
+     * whatever was playing when PCPanel started, and only a restart fixes it (#151). Re-querying costs one
+     * {@code pactl list} and only happens when the picker is opened, so pay it there rather than trusting the
+     * stream. {@link #initSessions} fires the usual added/removed events, so the rest of the UI catches up too.
+     */
+    @Override
+    public void refreshRunningApplications() {
+        initSessions(null);
+    }
+
     @Override
     public List<RunningApplication> getRunningApplications() {
         synchronized (sessions) {
