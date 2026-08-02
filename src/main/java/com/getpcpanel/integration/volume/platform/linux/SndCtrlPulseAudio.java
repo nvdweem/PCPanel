@@ -271,10 +271,13 @@ class SndCtrlPulseAudio implements ISndCtrl {
     /**
      * The session set is maintained from the {@code pactl subscribe} stream. That stream is a child process
      * reached through a pipe (and, in the Flatpak, through {@code flatpak-spawn --host} as well), so it can
-     * die or miss events without anything else noticing — after which the application picker keeps showing
-     * whatever was playing when PCPanel started, and only a restart fixes it (#151). Re-querying costs one
+     * die without anything else noticing, leaving the picker on a stale list. Re-querying costs one
      * {@code pactl list} and only happens when the picker is opened, so pay it there rather than trusting the
      * stream. {@link #initSessions} fires the usual added/removed events, so the rest of the UI catches up too.
+     *
+     * <p>Note this is robustness, not a cure for "my app isn't in the list": what this backend can enumerate
+     * at all is audio streams, so a program that isn't currently playing has nothing to find, no matter how
+     * often we re-read (see {@link #getRunningApplications()}).
      */
     @Override
     public void refreshRunningApplications() {
@@ -294,6 +297,13 @@ class SndCtrlPulseAudio implements ISndCtrl {
         return out;
     }
 
+    /**
+     * <strong>Audio streams only</strong>, which is a different set from the one the Windows backend returns:
+     * there it is every running process. A program that is open but silent has no PulseAudio/PipeWire stream
+     * and so cannot appear here, and one that stops playing disappears again — which is what "I have to
+     * restart PCPanel before my app shows up under Add app" actually is (#151); the restart only coincides
+     * with a moment when more programs happen to be making sound.
+     */
     @Override
     public List<RunningApplication> getRunningApplications() {
         synchronized (sessions) {
