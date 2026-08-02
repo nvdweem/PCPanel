@@ -552,6 +552,11 @@ export class SettingsComponent {
 
   /** Source apps available to pick (running processes), shared with the command editor's app picker. */
   readonly processItems = computed(() => this.integrations.processItems());
+  /**
+   * Re-reads the running-application list before the picker shows it: the list is fetched once per page
+   * load and cached, so without this it shows whatever was running when the page opened (#151).
+   */
+  refreshProcesses(): void { this.integrations.refreshProcesses(); }
   /** Which target's editor is expanded, keyed "{ruleIdx}:{targetIdx}"; null = all collapsed. */
   readonly fvExpanded = signal<string | null>(null);
   /** Which rule's "add source app" picker overlay is open (rule index), or null. */

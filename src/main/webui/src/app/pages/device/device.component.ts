@@ -26,6 +26,12 @@ export class DeviceComponent {
   private readonly state = inject(DeviceStateService);
   private readonly deviceService = inject(DeviceService);
   private readonly integrations = inject(IntegrationDataService);
+
+  /**
+   * Re-reads the running-application list before the picker shows it: the list is fetched once per page
+   * load and cached, so without this it shows whatever was running when the page opened (#151).
+   */
+  refreshProcesses(): void { this.integrations.refreshProcesses(); }
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
   private readonly capsService = inject(DeviceCapabilitiesService);

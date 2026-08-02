@@ -67,7 +67,7 @@
             <div class="oi-title">Overlay icon</div>
             <div class="oi-sub">shown in the pop-up</div>
           </div>
-          <button class="oi-pick" cdkOverlayOrigin #oi="cdkOverlayOrigin" (click)="iconPickerOpen.set(true)">
+          <button class="oi-pick" cdkOverlayOrigin #oi="cdkOverlayOrigin" (click)="iconPickerOpen.set(true); refreshProcesses()">
             <span class="oi-tile">
               @if (overlayIconPreview(); as src) {
                 <img [src]="src" alt="">

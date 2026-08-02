@@ -107,7 +107,7 @@ type Cmd = Record<string, any>;
                     <pc-icon class="grip" name="grip" [size]="12"></pc-icon>{{ p }}<span class="x" (click)="removeFromArray($any(f).key, p)"><pc-icon name="x" [size]="11" [strokeWidth]="2.5"></pc-icon></span>
                   </span>
                 }
-                <button class="pc-chip dashed" cdkOverlayOrigin #ao="cdkOverlayOrigin" (click)="appsOpen.set($any(f).key)">
+                <button class="pc-chip dashed" cdkOverlayOrigin #ao="cdkOverlayOrigin" (click)="appsOpen.set($any(f).key); data.refreshProcesses()">
                   <pc-icon name="plus" [size]="12"></pc-icon> {{ $any(f).single ? 'choose app' : 'add app' }}
                 </button>
                 <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="ao" [cdkConnectedOverlayOpen]="appsOpen() === $any(f).key"

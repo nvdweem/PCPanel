@@ -100,6 +100,27 @@ export class IntegrationDataService {
       key: d.id, label: d.name, sub: d.output ? 'OUTPUT' : d.input ? 'INPUT' : undefined,
     })));
 
+  /** Wall-clock time of the last process-list fetch, for {@link refreshProcesses}. */
+  private lastProcessRefresh = 0;
+
+  /**
+   * Re-reads the running-application list, for callers that are about to show it.
+   *
+   * httpResource fetches once and then caches for the lifetime of this service — and the service is
+   * `providedIn: 'root'`, so that lifetime is the whole page. Nothing else re-fetched it, which is why the
+   * app picker showed the list as it was when the page was opened: start a program, open "Add app", and it
+   * isn't there. Closing and reopening PCPanel appeared to be the fix only because that reopens the UI, and
+   * a fresh page re-fetches (#151).
+   *
+   * Throttled, because opening a picker is a click and the list is a subprocess call on the backend.
+   */
+  refreshProcesses(): void {
+    const now = Date.now();
+    if (now - this.lastProcessRefresh < 1000) return;
+    this.lastProcessRefresh = now;
+    this.processes.reload();
+  }
+
   /** Reload everything (call after a save that may change the lists). */
   reload(): void {
     this.audioDevices.reload();
