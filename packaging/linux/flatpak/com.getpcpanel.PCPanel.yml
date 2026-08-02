@@ -48,6 +48,12 @@ finish-args:
   - --own-name=org.kde.StatusNotifierItem-PCPanel
   - --talk-name=org.kde.StatusNotifierWatcher
   - --talk-name=org.freedesktop.Notifications
+  # Media keys (play/pause/next/…) are sent over MPRIS, and players are found by scanning the session bus
+  # for org.mpris.MediaPlayer2.<player>. Under the sandbox's xdg-dbus-proxy, ListNames only returns names
+  # the app has a policy for, so without this the scan comes back empty and every media command logs "No
+  # MPRIS media player found on the session bus" even with a player running (seen in #151's report bundle).
+  # `.*` is flatpak's dot-suffix wildcard, matching each player's own bus name.
+  - --talk-name=org.mpris.MediaPlayer2.*
   # Run remaining host tools (pactl/xdotool) via flatpak-spawn --host
   - --talk-name=org.freedesktop.Flatpak
   # Bundled kdotool drives the host KWin's scripting API to resolve the focused window
