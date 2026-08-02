@@ -48,6 +48,7 @@ public class BugReportService {
     @Inject SaveService saveService;
     @Inject ProfileRedactor redactor;
     @Inject SystemInfoCollector systemInfo;
+    @Inject ThreadDumpCollector threadDump;
     @Inject BugReportUrlBuilder urlBuilder;
     @Inject PlatformResource platform;
     @Inject DeviceHolder devices;
@@ -80,6 +81,10 @@ public class BugReportService {
             writeText(out, "report.md", reportMarkdown(request, deviceLabel, info.version(), info.os()));
             if (request.includeSystemInfo()) {
                 writeText(out, "system.txt", systemInfo.collect());
+                // Rides the same opt-in: it is a fact about the running application, and one that is only
+                // ever collectable while the problem is still on screen. Its own toggle would be off in
+                // precisely the reports that need it.
+                writeText(out, "threads.txt", threadDump.collect());
             }
             if (request.includeProfile()) {
                 writeText(out, "profiles.json", redactor.redactedJson(saveService.get()));
