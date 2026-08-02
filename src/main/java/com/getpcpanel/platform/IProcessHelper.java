@@ -1,5 +1,7 @@
 package com.getpcpanel.platform;
 
+import java.util.Map;
+import java.util.Optional;
 import java.util.OptionalInt;
 
 /**
@@ -12,4 +14,23 @@ import java.util.OptionalInt;
 public interface IProcessHelper {
     /** PID of the process owning the currently focused / foreground window, or empty if it can't be resolved. */
     OptionalInt foregroundPid();
+
+    /**
+     * Ordered label → value facts explaining whether focused-window detection can work on this machine, for
+     * the bug-report bundle. Empty where the OS answers the question directly and the only possible failure
+     * is an OS error (Windows, macOS); Linux fills it in, because there the answer depends on the desktop
+     * session and on external helper binaries that may be present but useless (#151).
+     */
+    default Map<String, String> focusDiagnostics() {
+        return Map.of();
+    }
+
+    /**
+     * One sentence the UI can show instead of a bare "could not read the focused app", or empty when there is
+     * nothing more to say than that. Separate from {@link #focusDiagnostics()}: that is the evidence, this is
+     * the conclusion a user can act on (install something, or accept that their desktop can't do it).
+     */
+    default Optional<String> focusUnavailableReason() {
+        return Optional.empty();
+    }
 }

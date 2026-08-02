@@ -552,6 +552,11 @@ export class SettingsComponent {
 
   /** Source apps available to pick (running processes), shared with the command editor's app picker. */
   readonly processItems = computed(() => this.integrations.processItems());
+  /**
+   * Re-reads the running-application list before the picker shows it: the list is fetched once per page
+   * load and cached, so without this it shows whatever was running when the page opened (#151).
+   */
+  refreshProcesses(): void { this.integrations.refreshProcesses(); }
   /** Which target's editor is expanded, keyed "{ruleIdx}:{targetIdx}"; null = all collapsed. */
   readonly fvExpanded = signal<string | null>(null);
   /** Which rule's "add source app" picker overlay is open (rule index), or null. */
@@ -658,7 +663,7 @@ export class SettingsComponent {
     const tick = (): void => {
       n -= 1;
       if (n > 0) { this.fvDetectCountdown.set(n); setTimeout(tick, 1000); return; }
-      this.http.get<{ liveFocusApplication?: string | null }>('/api/focus-volume/diagnostics').subscribe({
+      this.http.get<{ liveFocusApplication?: string | null; focusUnavailableReason?: string | null }>('/api/focus-volume/diagnostics').subscribe({
         next: r => {
           const app = r.liveFocusApplication;
           const base = app ? app.split(/[\\/]/).pop() ?? '' : '';
@@ -667,7 +672,9 @@ export class SettingsComponent {
             this.setFvSources(ruleIndex, [...(cur.sources ?? []), base]);
             this.toast.show(`Added focused app: ${base}`, { kind: 'success' });
           } else if (!base) {
-            this.toast.show('Could not read the focused app', { kind: 'error' });
+            // The backend knows *why* — on Linux that is usually "this desktop session has no API for it"
+            // rather than anything the user did wrong. Say so instead of the bare failure (#151).
+            this.toast.show(r.focusUnavailableReason ?? 'Could not read the focused app', { kind: 'error' });
           }
           this.fvDetecting.set(null);
         },

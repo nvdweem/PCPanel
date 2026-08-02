@@ -31,6 +31,25 @@ public interface ISndCtrl {
 
     List<RunningApplication> getRunningApplications();
 
+    /**
+     * Re-reads the session list from the OS before it is handed out, for backends that maintain it from a
+     * change stream rather than querying live. Called when the UI asks for the application list, so a picker
+     * opened right after starting an app shows it even if the stream missed (or never delivered) the event —
+     * "I have to restart PCPanel before a new app appears" is otherwise the only workaround (#151). No-op
+     * where the list is already read on demand or the change notifications are in-process and reliable.
+     */
+    default void refreshRunningApplications() {
+    }
+
+    /**
+     * Ordered label → value facts about the OS audio layer for the bug-report bundle: what is known, and
+     * whether the mechanism that keeps it current is alive. Empty where nothing here can silently stop
+     * working; the PulseAudio backend fills it in because its change stream is an external process (#151).
+     */
+    default Map<String, String> audioDiagnostics() {
+        return Map.of();
+    }
+
     String defaultDeviceOnEmpty(String deviceId);
 
     String defaultPlayer();

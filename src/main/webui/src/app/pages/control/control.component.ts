@@ -68,6 +68,11 @@ export class ControlComponent {
   readonly snap = this.state.snapshotFor(this.serial);
   private readonly caps = this.capsService.forSerial(this.serial);
   readonly processItems = computed(() => this.integrations.processItems());
+  /**
+   * Re-reads the running-application list before the picker shows it: the list is fetched once per page
+   * load and cached, so without this it shows whatever was running when the page opened (#151).
+   */
+  refreshProcesses(): void { this.integrations.refreshProcesses(); }
   readonly isPro = this.caps.isProLayout;
   readonly knobCount = this.caps.knobCount;
   readonly isSlider = computed(() => this.caps.isSlider(this.idx()));

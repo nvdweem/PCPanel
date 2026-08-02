@@ -76,7 +76,7 @@
                 }
               </div>
               <div class="ps-add">
-                <button class="pc-btn ghost ps-pick" cdkOverlayOrigin #ap="cdkOverlayOrigin" (click)="appPickerOpen.set(true)">
+                <button class="pc-btn ghost ps-pick" cdkOverlayOrigin #ap="cdkOverlayOrigin" (click)="appPickerOpen.set(true); refreshProcesses()">
                   <pc-icon name="plus" [size]="13"></pc-icon> Add app
                 </button>
                 <input class="pc-input ps-manual" placeholder="or type an executable name…" [value]="newApp()"

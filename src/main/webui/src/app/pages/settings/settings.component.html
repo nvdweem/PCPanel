@@ -222,7 +222,7 @@
                   @for (app of rule.sources; track app) {
                     <span class="pc-chip">{{ app }}<span class="x" (click)="removeFvSource(ri, app)"><pc-icon name="x" [size]="11" [strokeWidth]="2.5"></pc-icon></span></span>
                   }
-                  <button class="pc-chip dashed" cdkOverlayOrigin #so="cdkOverlayOrigin" (click)="fvAppsOpen.set(ri)">
+                  <button class="pc-chip dashed" cdkOverlayOrigin #so="cdkOverlayOrigin" (click)="fvAppsOpen.set(ri); refreshProcesses()">
                     <pc-icon name="plus" [size]="12"></pc-icon> add app
                   </button>
                   <button class="pc-chip dashed" [disabled]="fvDetecting() !== null" (click)="detectFocusedSource(ri)">

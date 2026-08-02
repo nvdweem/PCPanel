@@ -7,6 +7,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -50,6 +51,7 @@ class SndCtrlPulseAudio implements ISndCtrl {
     public static final String INPUT_PREFIX = "in_";
     @Inject PulseAudioWrapper cmd;
     @Inject LinuxProcessHelper processHelper;
+    @Inject PulseAudioEventListener eventListener;
     @Inject Event<Object> eventBus;
     @GuardedBy("devices") private final Map<String, PulseAudioAudioDevice> devices = new HashMap<>();
     @GuardedBy("sessions") private final Set<PulseAudioAudioSession> sessions = new HashSet<>();
@@ -266,6 +268,42 @@ class SndCtrlPulseAudio implements ISndCtrl {
         return processHelper.getActiveWindow().map(ActiveWindow::primaryIdentifier).orElse(null);
     }
 
+    /**
+     * The session set is maintained from the {@code pactl subscribe} stream. That stream is a child process
+     * reached through a pipe (and, in the Flatpak, through {@code flatpak-spawn --host} as well), so it can
+     * die without anything else noticing, leaving the picker on a stale list. Re-querying costs one
+     * {@code pactl list} and only happens when the picker is opened, so pay it there rather than trusting the
+     * stream. {@link #initSessions} fires the usual added/removed events, so the rest of the UI catches up too.
+     *
+     * <p>Note this is robustness, not a cure for "my app isn't in the list": what this backend can enumerate
+     * at all is audio streams, so a program that isn't currently playing has nothing to find, no matter how
+     * often we re-read (see {@link #getRunningApplications()}).
+     */
+    @Override
+    public void refreshRunningApplications() {
+        initSessions(null);
+    }
+
+    @Override
+    public Map<String, String> audioDiagnostics() {
+        var out = new LinkedHashMap<String, String>();
+        out.put("change stream", eventListener.healthSummary());
+        synchronized (sessions) {
+            out.put("audio sessions", String.valueOf(sessions.size()));
+        }
+        synchronized (devices) {
+            out.put("audio devices", String.valueOf(devices.size()));
+        }
+        return out;
+    }
+
+    /**
+     * <strong>Audio streams only</strong>, which is a different set from the one the Windows backend returns:
+     * there it is every running process. A program that is open but silent has no PulseAudio/PipeWire stream
+     * and so cannot appear here, and one that stops playing disappears again — which is what "I have to
+     * restart PCPanel before my app shows up under Add app" actually is (#151); the restart only coincides
+     * with a moment when more programs happen to be making sound.
+     */
     @Override
     public List<RunningApplication> getRunningApplications() {
         synchronized (sessions) {

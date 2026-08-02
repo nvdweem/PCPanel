@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -12,6 +13,8 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -50,7 +53,7 @@ public class LinuxProcessHelper implements IProcessHelper {
     void logResolvedTools() {
         for (var tool : Tool.values()) {
             var command = tool.command();
-            log.info("Active window tool {} command: {} (available: {})", tool.tool, command, tool.available(command));
+            log.info("Active window tool {} command: {} (present: {})", tool.tool, command, tool.available(command));
         }
     }
 
@@ -59,38 +62,11 @@ public class LinuxProcessHelper implements IProcessHelper {
     }
 
     public int getActiveProcessPid() {
-        var pid = getActiveProcessPid(Tool.KDoTool)
-                .or(() -> getActiveProcessPid(Tool.XDoTool))
-                .orElse(-1);
-        if (pid == -1 && !anyActiveWindowToolAvailable()) {
-            warnNoActiveWindowTool();
-        }
-        return pid;
-    }
-
-    private Optional<Integer> getActiveProcessPid(Tool tool) {
-        var command = tool.command();
-        if (tool.available(command)) {
-            try {
-                var line = lineFrom(command, "getactivewindow", "getwindowpid");
-                return Optional.of(NumberUtils.toInt(line, -1)).filter(v -> v != -1);
-            } catch (Exception e) {
-                log.error("Unable to run process", e);
-            }
-        }
-        return Optional.empty();
+        return getActiveWindow().map(ActiveWindow::pid).orElse(-1);
     }
 
     public @Nullable String getActiveProcess() {
-        try {
-            var pid = getActiveProcessPid();
-            if (pid == -1)
-                return null;
-            return processName(pid);
-        } catch (Exception e) {
-            log.error("Unable to run process", e);
-        }
-        return null;
+        return getActiveWindow().map(ActiveWindow::process).orElse(null);
     }
 
     /**
@@ -125,15 +101,21 @@ public class LinuxProcessHelper implements IProcessHelper {
         if (cached != null && now - cached.at() < ACTIVE_WINDOW_CACHE_NANOS) {
             return Optional.of(cached.window());
         }
-        var result = getActiveWindow(Tool.KDoTool).or(() -> getActiveWindow(Tool.XDoTool));
-        if (result.isEmpty() && !anyActiveWindowToolAvailable()) {
-            warnNoActiveWindowTool();
-        }
+        var result = resolveActiveWindow();
         result.ifPresent(window -> activeWindowCache = new CachedActiveWindow(window, now));
         return result;
     }
 
-    private static final long ACTIVE_WINDOW_CACHE_NANOS = java.util.concurrent.TimeUnit.MILLISECONDS.toNanos(200);
+    /** One resolution attempt across every tool, bypassing the burst cache. Also refreshes {@link #toolStatus}. */
+    private Optional<ActiveWindow> resolveActiveWindow() {
+        var result = getActiveWindow(Tool.KDoTool).or(() -> getActiveWindow(Tool.XDoTool));
+        if (result.isEmpty()) {
+            warnFocusUnavailable();
+        }
+        return result;
+    }
+
+    private static final long ACTIVE_WINDOW_CACHE_NANOS = TimeUnit.MILLISECONDS.toNanos(200);
     private volatile CachedActiveWindow activeWindowCache;
 
     private record CachedActiveWindow(ActiveWindow window, long at) {
@@ -147,9 +129,18 @@ public class LinuxProcessHelper implements IProcessHelper {
     // the robust path, is unaffected.
     private final Map<Tool, Boolean> windowClassSupported = new ConcurrentHashMap<>();
 
+    /**
+     * Why each tool did or didn't resolve the focused window on its last attempt. A tool being installed says
+     * nothing about whether it works here - inside the Flatpak both "tools" always exist (kdotool is bundled,
+     * xdotool is a {@code flatpak-spawn --host} shim), so presence alone can never explain a silent failure.
+     * This is what {@link #focusDiagnostics()} reports and what the throttled warning quotes (#151).
+     */
+    private final Map<Tool, String> toolStatus = new ConcurrentHashMap<>();
+
     private Optional<ActiveWindow> getActiveWindow(Tool tool) {
         var command = tool.command();
         if (!tool.available(command)) {
+            toolStatus.put(tool, "not installed (" + command + ")");
             return Optional.empty();
         }
         var withClass = windowClassSupported.getOrDefault(tool, Boolean.TRUE);
@@ -169,19 +160,25 @@ public class LinuxProcessHelper implements IProcessHelper {
     }
 
     private Optional<ActiveWindow> queryActiveWindow(Tool tool, String command, boolean withClass) {
-        List<String> lines;
+        CommandOutput output;
         try {
-            lines = linesFrom(StreamEx.of(command).append(windowQuerySubcommands(withClass)).toArray(String[]::new));
+            output = run(StreamEx.of(command).append(windowQuerySubcommands(withClass)).toArray(String[]::new));
         } catch (Exception e) {
+            toolStatus.put(tool, "could not be started: " + e);
             log.error("Unable to resolve active window with {}", tool.tool, e);
             return Optional.empty();
         }
-        var pid = NumberUtils.toInt(line(lines, 0), -1);
+        var pid = NumberUtils.toInt(line(output.stdout(), 0), -1);
         if (pid == -1) {
+            // The tool ran but told us nothing. Its stderr is the only thing that says why (no KWin on a
+            // non-KDE desktop, no X11 display on Wayland, a missing host binary behind the Flatpak shim),
+            // so keep it rather than discarding it into a silent empty Optional.
+            toolStatus.put(tool, command + ": " + output.failureDetail());
             return Optional.empty();
         }
-        var windowClass = withClass ? StringUtils.trimToNull(line(lines, 1)) : null;
-        var windowName = StringUtils.trimToNull(line(lines, withClass ? 2 : 1));
+        toolStatus.put(tool, "resolved the focused window (pid " + pid + ")");
+        var windowClass = withClass ? StringUtils.trimToNull(line(output.stdout(), 1)) : null;
+        var windowName = StringUtils.trimToNull(line(output.stdout(), withClass ? 2 : 1));
         return Optional.of(new ActiveWindow(pid, processName(pid), flatpakAppId(pid), windowClass, windowName));
     }
 
@@ -222,7 +219,7 @@ public class LinuxProcessHelper implements IProcessHelper {
             // a sandbox just read it directly.
             List<String> lines;
             if (inFlatpakSandbox()) {
-                lines = linesFrom(hostCmd("cat", path));
+                lines = run(hostCmd("cat", path)).stdout();
             } else if (Files.isReadable(Path.of(path))) {
                 lines = Files.readAllLines(Path.of(path));
             } else {
@@ -264,35 +261,38 @@ public class LinuxProcessHelper implements IProcessHelper {
         return full;
     }
 
-    private boolean anyActiveWindowToolAvailable() {
-        return Tool.KDoTool.available(Tool.KDoTool.command()) || Tool.XDoTool.available(Tool.XDoTool.command());
-    }
-
     private static final long WARN_LOG_INTERVAL_MS = 5L * 60 * 1000;
     private volatile long lastNoToolWarnAt;
     private volatile boolean desktopNotified;
 
     /**
-     * Focus volume and the other focused-window features need an active-window helper. On KDE Plasma
-     * (Wayland or X11) that is kdotool, which we now bundle next to the executable in every Linux build,
-     * so this should normally never fire - but a user running from source, on an unsupported CPU arch, or
-     * with a broken {@code linux.commands.kdotool} override can still end up with nothing available. Make
-     * that visible instead of failing silently (the long-standing #88 "the knob just does nothing"
-     * complaint): a throttled log line, plus a best-effort desktop notification the first time it happens.
+     * Focus volume and the other focused-window features need a helper that can name the focused window.
+     * Only two desktops can be served: KDE Plasma (kdotool, over KWin's D-Bus scripting API, on both Wayland
+     * and X11) and any X11 session (xdotool). On a non-KDE Wayland session - GNOME above all - there is no
+     * API to use: GNOME's {@code org.gnome.Shell.Introspect} is allow-listed to the xdg-desktop-portal
+     * implementations, and wlroots exposes nothing equivalent. So this is a supported-configuration problem
+     * far more often than an installation problem.
+     *
+     * <p>Reaching that conclusion used to be impossible from the outside, because the failure was silent in
+     * exactly the case that matters: the old check only complained when <em>no tool was installed</em>, and
+     * inside the Flatpak both are always installed (kdotool is bundled, xdotool is a {@code flatpak-spawn}
+     * shim) - so a GNOME-Wayland user got no log line, no notification and a bare "Could not read the focused
+     * app" in the UI (#151). Warn on the resolution failing instead, and quote what each tool actually said.
      */
-    private void warnNoActiveWindowTool() {
+    private void warnFocusUnavailable() {
         var now = System.currentTimeMillis();
         if (now - lastNoToolWarnAt > WARN_LOG_INTERVAL_MS) {
             lastNoToolWarnAt = now;
-            log.warn("No active-window tool available - focus volume and focused-app features cannot work. "
-                    + "Install 'kdotool' (it handles both Wayland and X11 on KDE Plasma; xdotool is not needed "
-                    + "alongside it). It ships bundled with the .deb/AppImage/Flatpak, so seeing this usually "
-                    + "means a PATH/override issue or an unsupported setup. See linux.md.");
+            log.warn("Could not resolve the focused window - focus volume and the focused-app features cannot work. "
+                    + "{}. Tools: {}. Focused-window detection needs KDE Plasma (kdotool, bundled with the "
+                    + ".deb/AppImage/Flatpak) or an X11 session (xdotool); a non-KDE Wayland session such as GNOME "
+                    + "exposes no API for it. See linux.md.", describeSession(), describeTools());
         }
         if (!desktopNotified) {
             desktopNotified = true;
-            sendDesktopNotification("PCPanel: focus control unavailable",
-                    "Install kdotool to control the focused application's volume on KDE Plasma (Wayland/X11).");
+            sendDesktopNotification("PCPanel: focused-app control unavailable",
+                    "The focused window could not be resolved on this desktop. Focus volume needs KDE Plasma or an "
+                            + "X11 session; see the log for details.");
         }
     }
 
@@ -306,6 +306,84 @@ public class LinuxProcessHelper implements IProcessHelper {
         } catch (Exception e) {
             log.debug("Could not show desktop notification (notify-send missing?)", e);
         }
+    }
+
+    /**
+     * The session facts that decide whether focused-window detection can work at all, plus what each tool
+     * last reported. A reporter can't be expected to know any of this, and asking for it costs a round trip
+     * per issue - so the bug-report bundle carries it (see {@code SystemInfoCollector}). The tools are probed
+     * live, so the answer is current even when the user never triggered the feature.
+     */
+    @Override
+    public Map<String, String> focusDiagnostics() {
+        var out = new LinkedHashMap<String, String>();
+        out.put("desktop", env("XDG_CURRENT_DESKTOP"));
+        out.put("session type", env("XDG_SESSION_TYPE"));
+        out.put("wayland display", env("WAYLAND_DISPLAY"));
+        out.put("x11 display", env("DISPLAY"));
+        out.put("flatpak sandbox", inFlatpakSandbox() ? System.getenv("FLATPAK_ID") : "no");
+
+        var window = resolveActiveWindow();
+        for (var tool : Tool.values()) {
+            out.put(tool.tool + " command", tool.command());
+            out.put(tool.tool + " result", toolStatus.getOrDefault(tool, "not tried"));
+        }
+        out.put("focused window", window.map(ActiveWindow::describe).orElse("could not be resolved"));
+        return out;
+    }
+
+    /**
+     * The actionable half of {@link #focusDiagnostics()}. Which of the three cases applies is decided by the
+     * session, because that is what decides whether anything <em>can</em> work:
+     * <ul>
+     *   <li>KDE Plasma — kdotool is the supported path and is bundled, so a failure here is a real fault and
+     *       what kdotool printed is the useful part;</li>
+     *   <li>an X11 session on any other desktop — xdotool is the supported path, and it is not bundled, so
+     *       "install it" is usually the answer;</li>
+     *   <li>a non-KDE Wayland session — nothing can work, and saying so is kinder than an error that implies
+     *       the user misconfigured something (#151).</li>
+     * </ul>
+     */
+    @Override
+    public Optional<String> focusUnavailableReason() {
+        if (getActiveWindow().isPresent()) {
+            return Optional.empty();
+        }
+        return Optional.of(focusUnavailableReason(env("XDG_CURRENT_DESKTOP"), System.getenv("DISPLAY"),
+                toolDetail(Tool.KDoTool), toolDetail(Tool.XDoTool)));
+    }
+
+    static String focusUnavailableReason(String desktop, @Nullable String x11Display, String kdotoolDetail, String xdotoolDetail) {
+        if (StringUtils.containsIgnoreCase(desktop, "KDE")) {
+            return "kdotool could not read the focused window from KWin (" + kdotoolDetail + ").";
+        }
+        if (StringUtils.isNotBlank(x11Display)) {
+            return "xdotool could not read the focused window on this X11 session (" + xdotoolDetail
+                    + "). Installing xdotool usually fixes this.";
+        }
+        return "This is a " + desktop + " Wayland session. Only KDE Plasma (via kdotool) and X11 sessions "
+                + "(via xdotool) let an application read the focused window, so the focused-app features cannot work here.";
+    }
+
+    private String toolDetail(Tool tool) {
+        return toolStatus.getOrDefault(tool, "not tried");
+    }
+
+    /** One-line summary of why detection may be impossible here, for the warning that a reporter will quote. */
+    private static String describeSession() {
+        return "desktop=" + env("XDG_CURRENT_DESKTOP") + ", session=" + env("XDG_SESSION_TYPE")
+                + ", wayland=" + env("WAYLAND_DISPLAY") + ", x11=" + env("DISPLAY")
+                + (inFlatpakSandbox() ? ", flatpak=" + System.getenv("FLATPAK_ID") : "");
+    }
+
+    private String describeTools() {
+        return StreamEx.of(Tool.values())
+                       .map(tool -> tool.tool + " -> " + toolStatus.getOrDefault(tool, "not tried"))
+                       .joining("; ");
+    }
+
+    private static String env(String name) {
+        return StringUtils.defaultIfBlank(System.getenv(name), "unset");
     }
 
     /**
@@ -325,18 +403,67 @@ public class LinuxProcessHelper implements IProcessHelper {
     }
 
     private @Nullable String lineFrom(String... cmd) throws IOException {
-        var lines = linesFrom(cmd);
-        if (lines.isEmpty()) {
-            return null;
-        }
-        return lines.get(0);
+        var lines = run(cmd).stdout();
+        return lines.isEmpty() ? null : lines.get(0);
     }
 
-    private List<String> linesFrom(String... cmd) throws IOException {
-        // Discard stderr so an expected failure (e.g. cat on a non-flatpak target's missing .flatpak-info)
-        // doesn't leak to the console.
-        var process = processHelper.builder(cmd).redirectError(ProcessBuilder.Redirect.DISCARD).start();
-        return IOUtils.readLines(process.getInputStream(), Charset.defaultCharset());
+    /** How long a helper gets before it is killed, so a wedged tool can't stall the HID input thread forever. */
+    private static final long COMMAND_TIMEOUT_MS = 3000;
+    private static final int MAX_STDERR_CHARS = 400;
+    private static final int EXIT_TIMED_OUT = -1;
+    private static final int EXIT_INTERRUPTED = -2;
+
+    /**
+     * Runs a helper and keeps everything needed to explain a failure: stdout, the exit code, and stderr.
+     * stderr used to be discarded, which is precisely why a non-working tool looked identical to a working
+     * one that found no window.
+     */
+    private CommandOutput run(String... cmd) throws IOException {
+        var process = processHelper.builder(cmd).start();
+        // Drain stderr on its own thread: a helper writing more than the pipe buffer would otherwise
+        // deadlock against our stdout read.
+        var stderr = new AtomicReference<>("");
+        var drain = new Thread(() -> {
+            try (var err = process.getErrorStream()) {
+                stderr.set(StringUtils.abbreviate(StringUtils.trimToEmpty(
+                        String.join(" ", IOUtils.readLines(err, Charset.defaultCharset()))), MAX_STDERR_CHARS));
+            } catch (IOException e) {
+                log.debug("Could not read stderr of {}", cmd[0], e);
+            }
+        }, "focus-tool-stderr");
+        drain.setDaemon(true);
+        drain.start();
+
+        var stdout = IOUtils.readLines(process.getInputStream(), Charset.defaultCharset());
+        int exitCode;
+        try {
+            if (process.waitFor(COMMAND_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                exitCode = process.exitValue();
+            } else {
+                process.destroyForcibly();
+                exitCode = EXIT_TIMED_OUT;
+            }
+            drain.join(200);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            process.destroyForcibly();
+            exitCode = EXIT_INTERRUPTED;
+        }
+        return new CommandOutput(exitCode, stdout, stderr.get());
+    }
+
+    /** A helper invocation's full outcome — stdout is the answer, the rest is why there wasn't one. */
+    record CommandOutput(int exitCode, List<String> stdout, String stderr) {
+        /** Why this invocation produced nothing usable, phrased for a log line or a bug report. */
+        String failureDetail() {
+            var reason = switch (exitCode) {
+                case EXIT_TIMED_OUT -> "timed out after " + COMMAND_TIMEOUT_MS + "ms";
+                case EXIT_INTERRUPTED -> "interrupted";
+                case 0 -> "no window reported";
+                default -> "exit " + exitCode;
+            };
+            return StringUtils.isBlank(stderr) ? reason : reason + " - " + stderr;
+        }
     }
 
     /**
@@ -352,6 +479,11 @@ public class LinuxProcessHelper implements IProcessHelper {
 
         public @Nullable String primaryIdentifier() {
             return StringUtils.firstNonBlank(flatpakAppId, process, windowClass, windowName);
+        }
+
+        /** Everything we know about the window, on one line, for diagnostics. */
+        public String describe() {
+            return "pid " + pid + " " + identifiers();
         }
     }
 
@@ -378,6 +510,11 @@ public class LinuxProcessHelper implements IProcessHelper {
             return Optional.ofNullable(bundledSibling(configured)).orElse(configured);
         }
 
+        /**
+         * Whether the command exists. Note that this says nothing about whether it can do its job here:
+         * inside the Flatpak kdotool is bundled and xdotool is a host-spawn shim, so both are always
+         * "available" even on a desktop where neither can resolve anything - see {@link #toolStatus}.
+         */
         private boolean available(String command) {
             var available = ProcessConditionalHelper.isProcessAvailable(command);
             log.debug("Active Window tool {} command {} enabled: {}", tool, command, available);
