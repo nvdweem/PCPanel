@@ -110,7 +110,7 @@ void SndCtrl::DeviceAdded(CComPtr<IMMDevice> cpDevice) {
 
     {
         // Already known: nothing to build. Re-adding would drop the live device and its listeners.
-        std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
+        std::lock_guard<std::recursive_timed_mutex> lock(g_audioMutex);
         if (devices.find(deviceId) != devices.end()) {
             return;
         }
@@ -135,7 +135,7 @@ void SndCtrl::DeviceAdded(CComPtr<IMMDevice> cpDevice) {
         NULLRETURN(jObj);
         auto device = make_unique<AudioDevice>(deviceId, cpDevice, dataFlow, jObj);
         {
-            std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
+            std::lock_guard<std::recursive_timed_mutex> lock(g_audioMutex);
             // insert (not insert_or_assign): if another notification won the race, keep the registered
             // device. The loser is released below.
             devices.insert({ deviceId, std::move(device) });
@@ -152,7 +152,7 @@ void SndCtrl::DeviceRemoved(wstring deviceId) {
     // application code, which the volume calls waiting on this mutex should not be behind.
     std::unique_ptr<AudioDevice> removed;
     {
-        std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
+        std::lock_guard<std::recursive_timed_mutex> lock(g_audioMutex);
         auto found = devices.find(deviceId);
         if (found != devices.end()) {
             removed = std::move(found->second);
@@ -172,7 +172,11 @@ void SndCtrl::DeviceRemoved(wstring deviceId) {
 }
 
 void SndCtrl::SetDeviceVolume(wstring deviceId, float volume) {
-    std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
+    auto lock = lockAudioForJavaCall();
+    if (!lock.owns_lock()) {
+        cerr << "SetDeviceVolume: audio lock unavailable, skipping" << endl;
+        return;
+    }
     auto found = devices.find(deviceId);
     if (found != devices.end()) {
         found->second->SetVolume(volume);
@@ -180,7 +184,11 @@ void SndCtrl::SetDeviceVolume(wstring deviceId, float volume) {
 }
 
 void SndCtrl::MuteDevice(wstring deviceId, bool muted) {
-    std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
+    auto lock = lockAudioForJavaCall();
+    if (!lock.owns_lock()) {
+        cerr << "MuteDevice: audio lock unavailable, skipping" << endl;
+        return;
+    }
     auto found = devices.find(deviceId);
     if (found != devices.end()) {
         found->second->Mute(muted);
@@ -188,7 +196,11 @@ void SndCtrl::MuteDevice(wstring deviceId, bool muted) {
 }
 
 void SndCtrl::SetProcessVolume(wstring deviceId, int pid, float volume) {
-    std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
+    auto lock = lockAudioForJavaCall();
+    if (!lock.owns_lock()) {
+        cerr << "SetProcessVolume: audio lock unavailable, skipping" << endl;
+        return;
+    }
     auto found = devices.find(deviceId);
     if (found != devices.end()) {
         found->second->SetProcessVolume(pid, volume);
@@ -196,7 +208,11 @@ void SndCtrl::SetProcessVolume(wstring deviceId, int pid, float volume) {
 }
 
 void SndCtrl::MuteProcess(wstring deviceId, int pid, bool muted) {
-    std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
+    auto lock = lockAudioForJavaCall();
+    if (!lock.owns_lock()) {
+        cerr << "MuteProcess: audio lock unavailable, skipping" << endl;
+        return;
+    }
     auto found = devices.find(deviceId);
     if (found != devices.end()) {
         found->second->MuteProcess(pid, muted);
@@ -204,7 +220,11 @@ void SndCtrl::MuteProcess(wstring deviceId, int pid, bool muted) {
 }
 
 void SndCtrl::SetFocusVolume(float volume) {
-    std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
+    auto lock = lockAudioForJavaCall();
+    if (!lock.owns_lock()) {
+        cerr << "SetFocusVolume: audio lock unavailable, skipping" << endl;
+        return;
+    }
     auto pid = GetFocusProcessId();
     bool found = false;
     for (auto& entry : devices) {
@@ -233,7 +253,11 @@ void SndCtrl::SetFocusVolume(float volume) {
 }
 
 void SndCtrl::UpdateDefaultDevice(wstring id, EDataFlow dataFlow, ERole role) {
-    std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
+    auto lock = lockAudioForJavaCall();
+    if (!lock.owns_lock()) {
+        cerr << "UpdateDefaultDevice: audio lock unavailable, skipping" << endl;
+        return;
+    }
     auto device = devices.find(id);
     if (device != devices.end()) {
         device->second->SetDefault(dataFlow, role);

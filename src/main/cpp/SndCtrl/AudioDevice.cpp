@@ -39,7 +39,7 @@ void AudioDevice::Mute(bool muted) {
 }
 
 bool AudioDevice::SetProcessVolume(int pid, float volume) {
-    std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
+    std::lock_guard<std::recursive_timed_mutex> lock(g_audioMutex);
     auto entry = sessions.find(pid);
     if (entry != sessions.end()) {
         for (auto& sess : entry->second) {
@@ -51,7 +51,7 @@ bool AudioDevice::SetProcessVolume(int pid, float volume) {
 }
 
 bool AudioDevice::MuteProcess(int pid, bool muted) {
-    std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
+    std::lock_guard<std::recursive_timed_mutex> lock(g_audioMutex);
     auto entry = sessions.find(pid);
     if (entry != sessions.end()) {
         for (auto& sess : entry->second) {
@@ -77,7 +77,7 @@ void AudioDevice::SessionRemoved(AudioSession& session) {
     auto pid = session.GetPid();
     std::unique_ptr<AudioSession> removed;
     {
-        std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
+        std::lock_guard<std::recursive_timed_mutex> lock(g_audioMutex);
 
         auto entry = sessions.find(pid);
         if (entry != sessions.end()) {
@@ -125,7 +125,7 @@ void AudioDevice::SessionAdded(CComPtr<IAudioSessionControl> session) {
     auto pid = ptr->GetPid();
     ptr->Init(*jni, *this);
 
-    std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
+    std::lock_guard<std::recursive_timed_mutex> lock(g_audioMutex);
     sessions[pid].push_back(std::move(ptr));
 }
 

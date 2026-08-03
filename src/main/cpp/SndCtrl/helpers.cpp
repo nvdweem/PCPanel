@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "helpers.h"
 
-std::recursive_mutex g_audioMutex;
+std::recursive_timed_mutex g_audioMutex;
 
 DWORD GetFocusProcessId() {
     DWORD procId;
