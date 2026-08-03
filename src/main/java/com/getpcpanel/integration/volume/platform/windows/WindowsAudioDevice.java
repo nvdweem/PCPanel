@@ -1,8 +1,8 @@
 package com.getpcpanel.integration.volume.platform.windows;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.Nullable;
 
@@ -21,11 +21,22 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @SuppressWarnings("unused") // Methods called from JNI
 class WindowsAudioDevice extends AudioDevice {
-    private final transient Map<Integer, WindowsAudioSession> sessions = new HashMap<>(); // pid -> pointer_addr -> session
     /**
-     * Session arrivals and departures are reported by the DLL while it holds its global audio lock, so
-     * their observers must not run on that thread — see {@link CallbackEventBus}. Everything else this
-     * device raises comes from a callback made without that lock and uses the plain bus.
+     * pid -&gt; session. Written by the audio backend's notification threads, read by the command thread
+     * and by REST requests, so it is concurrent: those readers iterate it directly and a plain map can
+     * be left mid-resize by a concurrent write.
+     *
+     * <p>Concurrency alone is not enough for {@link #addSession} / {@link #removeSession} though — each
+     * is a read-then-write over both this map and the session's pointer set, and interleaving them
+     * loses sessions (a departing session's removal can drop an entry another thread has just
+     * re-registered). Both are synchronized on the device for that reason.
+     */
+    private final transient Map<Integer, WindowsAudioSession> sessions = new ConcurrentHashMap<>();
+    /**
+     * Everything this device and its sessions report comes from a {@code SndCtrl.dll} callback on a
+     * thread the Windows audio API owns — and for session arrivals and departures, one that holds the
+     * DLL's global audio lock. Those callbacks may not block, so every event goes out through this bus
+     * rather than running observers on the caller — see {@link CallbackEventBus}.
      */
     @Nullable private final transient CallbackEventBus callbackEvents;
 
@@ -39,15 +50,15 @@ class WindowsAudioDevice extends AudioDevice {
         return sessions;
     }
 
-    public AudioSession addSession(long pointer, int pid, String name, String title, String icon, float volume, boolean muted) {
+    public synchronized AudioSession addSession(long pointer, int pid, String name, String title, String icon, float volume, boolean muted) {
         log.debug("Add device session: {} {} {} {} {} {} {}", pointer, pid, name, title, icon, volume, muted);
         var result = sessions.computeIfAbsent(pid, p -> new WindowsAudioSession(this, eventBus, pid, new File(name), title, icon, volume, muted));
         result.pointers().add(pointer);
-        CallbackEventBus.fire(callbackEvents, new AudioSessionEvent(result, EventType.ADDED));
+        publish(new AudioSessionEvent(result, EventType.ADDED));
         return result;
     }
 
-    public void removeSession(long pointer, int pid) {
+    public synchronized void removeSession(long pointer, int pid) {
         var session = sessions.get(pid);
         if (session == null) {
             log.debug("Unknown session was removed: {} ({})", pid, pointer);
@@ -58,8 +69,13 @@ class WindowsAudioDevice extends AudioDevice {
         if (session.pointers().isEmpty()) {
             log.debug("Session removed: {} ({})", pid, pointer);
             sessions.remove(pid);
-            CallbackEventBus.fire(callbackEvents, new AudioSessionEvent(session, EventType.REMOVED));
+            publish(new AudioSessionEvent(session, EventType.REMOVED));
         }
+    }
+
+    @Override
+    protected void publish(Object event) {
+        CallbackEventBus.fire(callbackEvents, event);
     }
 
     @Override

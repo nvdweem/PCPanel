@@ -26,4 +26,18 @@ class WindowsAudioSession extends AudioSession {
         super(eventBus, pid, executable, title, icon, volume, muted);
         this.device = device;
     }
+
+    /**
+     * A session's volume, mute, name and icon changes are reported by {@code SndCtrl.dll} from the
+     * threads the Windows audio API owns, and those callbacks may not block. Delivery goes through the
+     * device's off-thread bus so no observer runs on one.
+     */
+    @Override
+    protected void publish(Object event) {
+        if (device instanceof WindowsAudioDevice windows) {
+            windows.publish(event);
+        } else {
+            super.publish(event);
+        }
+    }
 }

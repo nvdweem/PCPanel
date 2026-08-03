@@ -31,8 +31,18 @@ public class AudioDevice implements Serializable {
 
     private void setState(float volume, boolean muted) {
         volume(volume).muted(muted);
-        eventBus.fire(new AudioDeviceEvent(this, EventType.CHANGED));
+        publish(new AudioDeviceEvent(this, EventType.CHANGED));
         log.trace("State changed: {}", this);
+    }
+
+    /**
+     * Hands an event to the bus. Overridden on Windows to get delivery off the audio backend's own
+     * notification threads, which must not be held while arbitrary observers run.
+     */
+    protected void publish(Object event) {
+        if (eventBus != null) {
+            eventBus.fire(event);
+        }
     }
 
     public boolean isOutput() {
