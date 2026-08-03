@@ -1,11 +1,11 @@
 package com.getpcpanel.rest;
 
 import com.getpcpanel.device.provider.pcpanel.ProVisualColorsService;
+import java.time.Duration;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.profile.SaveService;
@@ -101,23 +101,26 @@ public class EventWebSocket {
         }
     }
 
-    public static void broadcast(Object event, ObjectMapper mapper) {
+    /**
+     * Sends one prepared frame to every connected client, waiting at most {@code timeout} on each.
+     *
+     * <p>Only {@link WebSocketBroadcastQueue}'s dispatcher thread calls this — never a thread that
+     * produced an event, which is the whole point: a client that has stopped reading must not be able
+     * to hold the HID input thread, the command thread, or the audio backend's notification threads.
+     * The timeout keeps one such client from holding up the others' updates indefinitely too.
+     */
+    static void sendToAll(String json, Duration timeout) {
         if (AppShutdownState.isShuttingDown()) {
             connections.clear();
             return;
         }
-        try {
-            var json = mapper.writeValueAsString(event);
-            log.debug("Broadcasting event to {} WebSocket clients: {}", connections.size(), json);
-            connections.forEach(c -> {
-                try {
-                    c.sendTextAndAwait(json);
-                } catch (Exception e) {
-                    log.debug("Failed to send event to WS client {}", c.id(), e);
-                }
-            });
-        } catch (JsonProcessingException e) {
-            log.warn("Failed to serialize event", e);
-        }
+        log.debug("Broadcasting event to {} WebSocket clients: {}", connections.size(), json);
+        connections.forEach(c -> {
+            try {
+                c.sendText(json).await().atMost(timeout);
+            } catch (Exception e) {
+                log.debug("Failed to send event to WS client {}", c.id(), e);
+            }
+        });
     }
 }
