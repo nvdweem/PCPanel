@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.annotation.Nullable;
+
 import jakarta.enterprise.event.Event;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -20,9 +22,16 @@ import lombok.extern.log4j.Log4j2;
 @SuppressWarnings("unused") // Methods called from JNI
 class WindowsAudioDevice extends AudioDevice {
     private final transient Map<Integer, WindowsAudioSession> sessions = new HashMap<>(); // pid -> pointer_addr -> session
+    /**
+     * Session arrivals and departures are reported by the DLL while it holds its global audio lock, so
+     * their observers must not run on that thread — see {@link CallbackEventBus}. Everything else this
+     * device raises comes from a callback made without that lock and uses the plain bus.
+     */
+    @Nullable private final transient CallbackEventBus callbackEvents;
 
-    public WindowsAudioDevice(Event<Object> eventBus, String name, String id) {
+    public WindowsAudioDevice(Event<Object> eventBus, @Nullable CallbackEventBus callbackEvents, String name, String id) {
         super(eventBus, name, id);
+        this.callbackEvents = callbackEvents;
     }
 
     @JsonIgnore
@@ -34,7 +43,7 @@ class WindowsAudioDevice extends AudioDevice {
         log.debug("Add device session: {} {} {} {} {} {} {}", pointer, pid, name, title, icon, volume, muted);
         var result = sessions.computeIfAbsent(pid, p -> new WindowsAudioSession(this, eventBus, pid, new File(name), title, icon, volume, muted));
         result.pointers().add(pointer);
-        eventBus.fire(new AudioSessionEvent(result, EventType.ADDED));
+        CallbackEventBus.fire(callbackEvents, new AudioSessionEvent(result, EventType.ADDED));
         return result;
     }
 
@@ -49,7 +58,7 @@ class WindowsAudioDevice extends AudioDevice {
         if (session.pointers().isEmpty()) {
             log.debug("Session removed: {} ({})", pid, pointer);
             sessions.remove(pid);
-            eventBus.fire(new AudioSessionEvent(session, EventType.REMOVED));
+            CallbackEventBus.fire(callbackEvents, new AudioSessionEvent(session, EventType.REMOVED));
         }
     }
 
