@@ -70,6 +70,12 @@ public class EventWebSocket {
         log.debug("WebSocket client disconnected: {} (remaining connections: {})", connection.id(), connections.size());
     }
 
+    /**
+     * Sends the opening state to one client, bounded so a client that never reads cannot hold the
+     * connection's open handler for the life of the connection. These go direct rather than through
+     * {@link WebSocketBroadcastQueue} because they are addressed to this one client and have to precede
+     * anything broadcast to it.
+     */
     private void sendInitialSnapshots(WebSocketConnection connection) {
         var save = saveService.get();
         deviceHolder.all().forEach(device -> {
@@ -83,7 +89,7 @@ public class EventWebSocket {
                 var snapshot = DeviceSnapshotDto.from(device, deviceSave, proVisualColorsService);
                 var connectedEvent = new WsDeviceConnectedEvent(snapshot);
                 var json = objectMapper.writeValueAsString(connectedEvent);
-                connection.sendTextAndAwait(json);
+                connection.sendText(json).await().atMost(WebSocketBroadcastQueue.SEND_TIMEOUT);
             } catch (Exception e) {
                 log.warn("Failed to send initial device_connected for {} to new WS connection {}", device.getSerialNumber(), connection.id(), e);
             }
@@ -94,7 +100,7 @@ public class EventWebSocket {
         var newVersion = eventBroadcaster.latestNewVersion();
         if (newVersion != null) {
             try {
-                connection.sendTextAndAwait(objectMapper.writeValueAsString(newVersion));
+                connection.sendText(objectMapper.writeValueAsString(newVersion)).await().atMost(WebSocketBroadcastQueue.SEND_TIMEOUT);
             } catch (Exception e) {
                 log.warn("Failed to send new-version notice to new WS connection {}", connection.id(), e);
             }

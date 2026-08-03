@@ -81,8 +81,16 @@ public class AudioSession {
     }
 
     private void triggerChange() {
+        publish(new AudioSessionEvent(this, EventType.CHANGED));
+    }
+
+    /**
+     * Hands an event to the bus. Overridden on Windows to get delivery off the audio backend's own
+     * notification threads, which must not be held while arbitrary observers run.
+     */
+    protected void publish(Object event) {
         if (eventBus != null) {
-            eventBus.fire(new AudioSessionEvent(this, EventType.CHANGED));
+            eventBus.fire(event);
         }
     }
 }
