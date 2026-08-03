@@ -43,9 +43,15 @@ public class SndCtrlWindows implements ISndCtrl {
     @Inject Event<Object> eventBus;
     @GuardedBy("defaults") private final Map<DefaultFor, String> defaults = new HashMap<>();
     @GuardedBy("devices") private final Map<String, WindowsAudioDevice> devices = new HashMap<>();
+    /**
+     * The bus every event raised from a JNI callback goes through. The DLL makes those calls holding
+     * its global audio lock, so observers must not run on that thread — see {@link CallbackEventBus}.
+     */
+    @Nullable private CallbackEventBus callbackEvents;
 
     @PostConstruct
     public void init() {
+        callbackEvents = new CallbackEventBus(eventBus);
         loadLibrary();
         SndCtrlNative.start(this);
 
@@ -237,7 +243,7 @@ public class SndCtrlWindows implements ISndCtrl {
     }
 
     public AudioDevice deviceAdded(String name, String id, float volume, boolean muted, int dataFlow) {
-        var result = new WindowsAudioDevice(eventBus, name, id).volume(volume).muted(muted).dataflow(DataFlow.from(dataFlow));
+        var result = new WindowsAudioDevice(eventBus, callbackEvents, name, id).volume(volume).muted(muted).dataflow(DataFlow.from(dataFlow));
         synchronized (devices) {
             devices.put(id, result);
         }
@@ -248,9 +254,7 @@ public class SndCtrlWindows implements ISndCtrl {
     }
 
     private void fireEvent(Object result) {
-        if (eventBus != null) {
-            eventBus.fire(result);
-        }
+        CallbackEventBus.fire(callbackEvents, result);
     }
 
     public void deviceRemoved(String id) {

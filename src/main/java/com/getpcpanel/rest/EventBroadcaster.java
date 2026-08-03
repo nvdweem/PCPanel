@@ -1,6 +1,7 @@
 package com.getpcpanel.rest;
 
 import com.getpcpanel.device.provider.pcpanel.ProVisualColorsService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandler.ButtonPressEvent;
@@ -42,6 +43,7 @@ public class EventBroadcaster {
     @Inject SaveService saveService;
     @Inject DeviceHolder deviceHolder;
     @Inject ProVisualColorsService proVisualColorsService;
+    @Inject WebSocketBroadcastQueue broadcastQueue;
 
     // The version check runs once at startup and may complete before any browser opens the
     // websocket. Cache the result so EventWebSocket can replay it to clients that connect later.
@@ -51,10 +53,19 @@ public class EventBroadcaster {
         return AppShutdownState.isShuttingDown();
     }
 
+    /**
+     * Queues an event for the browser. Serializing here, on the thread that produced the event, keeps
+     * the frame a snapshot of the state at that moment; the sending itself is the dispatcher's job, so
+     * that no producer ever waits on a websocket client — see {@link WebSocketBroadcastQueue}.
+     */
     private void broadcast(Object event) {
         if (shouldSkipBroadcast())
             return;
-        EventWebSocket.broadcast(event, objectMapper);
+        try {
+            broadcastQueue.enqueue(objectMapper.writeValueAsString(event));
+        } catch (JsonProcessingException e) {
+            log.warn("Failed to serialize event", e);
+        }
     }
 
     // ── Existing operational events ────────────────────────────────────────────

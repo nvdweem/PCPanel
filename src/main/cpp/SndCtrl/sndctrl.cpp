@@ -67,17 +67,54 @@ void SndCtrl::InitDevices() {
     }
 }
 
+/**
+ * Destroys an AudioDevice on a thread of its own, never on the caller's.
+ *
+ * Releasing the device releases its IAudioEndpointVolume, and that Release ends in
+ * MMDevApi!UnregisterMediaCallback -> AXB::WaitForOperations, which waits for every media notification
+ * callback in flight to finish. Called from inside IMMNotificationClient::OnDeviceStateChanged, one of
+ * those callbacks is the caller itself, so it waits on its own return and never comes back -- taking
+ * g_audioMutex with it if it holds it, and with it every dial and button, since all of them are run by
+ * one command thread that needs the mutex for any volume call. AudioDevice::SessionRemoved already does
+ * this for sessions, and for the same reason.
+ *
+ * The thread owns the device outright, so it depends on nothing that could outlive it.
+ */
+static void ReleaseOffCallbackThread(std::unique_ptr<AudioDevice> device) {
+    if (device) {
+        std::thread([d = std::move(device)]() mutable { d.reset(); }).detach();
+    }
+}
+
+/**
+ * Builds the device and registers it, doing every slow part outside g_audioMutex.
+ *
+ * The mutex guards the device map, but it is also the mutex every volume, mute and default-device call
+ * from Java has to take. Building a device is not quick: it reads COM properties, activates the endpoint
+ * and its session manager, enumerates the existing sessions, and calls up into Java for each one -- which
+ * runs application code. Doing that under the mutex means a single slow endpoint blocks all volume
+ * control, and Windows delivers these notifications in bursts (resuming from sleep, with the audio
+ * service still restarting, is the worst of them). Windows also documents an IMMNotificationClient
+ * callback as no place to block. So the mutex is taken only to publish the finished device.
+ */
 void SndCtrl::DeviceAdded(CComPtr<IMMDevice> cpDevice) {
     // The endpoint-notification path resolves the device by id, which fails when it disappears between
     // the notification and the lookup.
     NULLRETURN(cpDevice);
 
-    std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
     auto nameAndId = DeviceNameId(*cpDevice);
     // The id keys the device map and is the handle Java addresses the device by, so there is nothing
     // to register without it. The friendly name is optional and renders empty when absent.
     NULLRETURN(nameAndId.id);
     wstring deviceId(nameAndId.id.get());
+
+    {
+        // Already known: nothing to build. Re-adding would drop the live device and its listeners.
+        std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
+        if (devices.find(deviceId) != devices.end()) {
+            return;
+        }
+    }
 
     float volume = 0;
     BOOL muted = 0;
@@ -96,7 +133,14 @@ void SndCtrl::DeviceAdded(CComPtr<IMMDevice> cpDevice) {
             nameStr, idStr, volume, muted, dataFlow
         );
         NULLRETURN(jObj);
-        devices.insert({ deviceId, make_unique<AudioDevice>(deviceId, cpDevice, dataFlow, jObj)});
+        auto device = make_unique<AudioDevice>(deviceId, cpDevice, dataFlow, jObj);
+        {
+            std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
+            // insert (not insert_or_assign): if another notification won the race, keep the registered
+            // device. The loser is released below.
+            devices.insert({ deviceId, std::move(device) });
+        }
+        ReleaseOffCallbackThread(std::move(device));
         thread.DoneWith(nameStr);
         thread.DoneWith(idStr);
         thread.DoneWith(jObj);
@@ -104,8 +148,19 @@ void SndCtrl::DeviceAdded(CComPtr<IMMDevice> cpDevice) {
 }
 
 void SndCtrl::DeviceRemoved(wstring deviceId) {
-    std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
-    devices.erase(deviceId);
+    // Take the device out under the mutex, then tell Java without holding it: the callback runs
+    // application code, which the volume calls waiting on this mutex should not be behind.
+    std::unique_ptr<AudioDevice> removed;
+    {
+        std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
+        auto found = devices.find(deviceId);
+        if (found != devices.end()) {
+            removed = std::move(found->second);
+            devices.erase(found);
+        }
+    }
+    ReleaseOffCallbackThread(std::move(removed));
+
     JThread thread;
     if (*thread) {
         auto deviceIdStr = thread.jstr(deviceId.c_str());
