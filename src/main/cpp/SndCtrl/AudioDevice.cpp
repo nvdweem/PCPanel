@@ -79,10 +79,6 @@ void AudioDevice::SessionRemoved(AudioSession& session) {
     {
         std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
 
-        JThread thread;
-        jlong pointer = reinterpret_cast<std::uintptr_t>(&session);
-        jni->CallVoid(thread, "removeSession", "(JI)V", pointer, pid);
-
         auto entry = sessions.find(pid);
         if (entry != sessions.end()) {
             auto& list = entry->second;
@@ -99,6 +95,15 @@ void AudioDevice::SessionRemoved(AudioSession& session) {
         }
     }
 
+    // Told outside the mutex, because the callback runs application code and this mutex is the one
+    // every volume call has to take. The session stays alive across the call: `removed` still owns it,
+    // and its address serves only as an identifier on the Java side.
+    {
+        JThread thread;
+        jlong pointer = reinterpret_cast<std::uintptr_t>(&session);
+        jni->CallVoid(thread, "removeSession", "(JI)V", pointer, pid);
+    }
+
     // Destroy the session (which calls UnregisterAudioSessionNotification) off this COM event
     // callback: unregistering an IAudioSessionEvents sink from inside that same sink's OnStateChanged
     // can deadlock WASAPI. The detached thread owns only the extracted session, so it has no
@@ -109,13 +114,19 @@ void AudioDevice::SessionRemoved(AudioSession& session) {
 }
 
 void AudioDevice::SessionAdded(CComPtr<IAudioSessionControl> session) {
-    std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
+    // Init reads COM properties, registers the session sink and calls up into Java, which runs
+    // application code -- so it happens before the mutex is taken. That mutex is the one every volume
+    // call needs, and this is a notification callback that may not block.
+    //
+    // Init before insert, not after: the session identifies itself to Java by its own address, which
+    // moving the owning pointer into the map does not change. The other order would mean calling Init
+    // through a raw pointer with the mutex released, which a concurrent removal could free underneath.
     auto ptr = make_unique<AudioSession>(session);
     auto pid = ptr->GetPid();
-    auto raw = ptr.get();
-    auto& target = sessions[pid];
-    target.push_back(std::move(ptr));
-    raw->Init(*jni, *this);
+    ptr->Init(*jni, *this);
+
+    std::lock_guard<std::recursive_mutex> lock(g_audioMutex);
+    sessions[pid].push_back(std::move(ptr));
 }
 
 CComPtr<IAudioSessionManager2> AudioDevice::Activate(IMMDevice& device) {
