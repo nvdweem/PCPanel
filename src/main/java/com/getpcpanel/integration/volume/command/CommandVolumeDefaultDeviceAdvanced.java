@@ -41,6 +41,9 @@ public class CommandVolumeDefaultDeviceAdvanced extends CommandVolume implements
             log.warn("The default device (advanced) command is only available on Windows");
             return;
         }
+        // roleMultimedia covers what Windows shows as the plain "Default Device": setting it moves
+        // roleConsole with it, and leaves roleCommunications — the "Default Communications Device" —
+        // to the two communication fields.
         var windowsSndCtrl = windowsSndCtrlOpt.get();
         windowsSndCtrl.setDefaultDevice(mediaPb, DataFlow.dfRender, Role.roleMultimedia);
         windowsSndCtrl.setDefaultDevice(mediaRec, DataFlow.dfCapture, Role.roleMultimedia);
