@@ -27,7 +27,9 @@ export type FieldDef = (
   | { kind: 'select'; key: string; label: string; options: { value: string; label: string }[] }
   | { kind: 'select-live'; key: string; label: string; source: LiveSource; searchable?: boolean }
   | { kind: 'apps'; key: string; label: string; single?: boolean }  // single: pick exactly one app (still stored as a 1-element array)
-  | { kind: 'device'; key: string; label: string; filter?: 'output' | 'input' | 'all'; defaultLabel?: string }  // defaultLabel: adds a selectable empty option (e.g. "Default device") for commands where blank = the default
+  // defaultLabel: adds a selectable empty option (e.g. "Default device") for commands where blank = the default
+  // byName: stores the device's *name* and accepts free text, which the backend matches on part of a name
+  | { kind: 'device'; key: string; label: string; filter?: 'output' | 'input' | 'all'; defaultLabel?: string; byName?: boolean }
   | { kind: 'mute'; key: string; label: string }
   | { kind: 'keystroke' }                       // CommandKeystroke: KEY/TEXT toggle + combo/text
   | { kind: 'wavelink-target' }                 // id1 (+id2 for Mix), with the source driven by commandType
@@ -116,10 +118,10 @@ const FIELD_DEFS: FieldDef_[] = [
     type: P + 'CommandVolumeDefaultDeviceAdvanced',
     buildEmpty: () => ({ _type: P + 'CommandVolumeDefaultDeviceAdvanced', communicationPb: '', communicationRec: '', mediaPb: '', mediaRec: '', name: '', overlayText: '' }),
     fields: [
-      { kind: 'device', key: 'mediaPb', label: 'Media — playback', filter: 'output' },
-      { kind: 'device', key: 'mediaRec', label: 'Media — recording', filter: 'input' },
-      { kind: 'device', key: 'communicationPb', label: 'Comms — playback', filter: 'output' },
-      { kind: 'device', key: 'communicationRec', label: 'Comms — recording', filter: 'input' },
+      { kind: 'device', key: 'mediaPb', label: 'Media — playback', filter: 'output', byName: true },
+      { kind: 'device', key: 'mediaRec', label: 'Media — recording', filter: 'input', byName: true },
+      { kind: 'device', key: 'communicationPb', label: 'Comms — playback', filter: 'output', byName: true },
+      { kind: 'device', key: 'communicationRec', label: 'Comms — recording', filter: 'input', byName: true },
     ],
   },
 

@@ -49,7 +49,7 @@ class ManagedOption<T> implements Highlightable {
                  (backdropClick)="open.set(false)" (detach)="open.set(false)">
       <div class="pc-select-panel panel" cdkTrapFocus [cdkTrapFocusAutoCapture]="showFilter()">
         @if (showFilter()) {
-          <input class="filter" type="text" [value]="filter()" placeholder="Filter…" cdkFocusInitial
+          <input class="filter" type="text" [value]="filter()" [placeholder]="filterPlaceholder()" cdkFocusInitial
                  role="combobox" aria-controls="pc-select-list" [attr.aria-activedescendant]="keyManager.activeItem?.id"
                  (input)="setFilter($event)" (keydown)="onKey($event)" />
         }
@@ -135,14 +135,24 @@ export class SelectComponent<T = string> {
   /** Force the filter field on even for short lists (for pickers that are expected to grow, e.g. Discord targets). */
   readonly searchable = input<boolean>(false);
 
+  /**
+   * Turns the filter field into a value field: typed text that matches no option is offered as an
+   * extra entry at the end of the list, so it can be committed as the value. For fields where the
+   * accepted values are open-ended and the options are suggestions (e.g. an audio device matched on
+   * part of its name, which must stay settable while that device is unplugged).
+   */
+  readonly allowCustom = input<boolean>(false);
+
   readonly open = model<boolean>(false);
   readonly filter = signal('');
 
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly injector = inject(Injector);
 
-  /** Show the filter field for long lists, or whenever the caller opts in via [searchable]. */
-  readonly showFilter = computed(() => this.searchable() || this.options().length > 10);
+  /** Show the filter field for long lists, or whenever the caller opts in via [searchable]/[allowCustom]. */
+  readonly showFilter = computed(() => this.searchable() || this.allowCustom() || this.options().length > 10);
+
+  readonly filterPlaceholder = computed(() => this.allowCustom() ? 'Filter or type a value…' : 'Filter…');
 
   /** One stable wrapper per option value, reused across change-detection cycles. This is load-bearing:
    *  callers often pass `[options]` from a method (e.g. a device list) that returns a NEW array every CD,
@@ -169,10 +179,20 @@ export class SelectComponent<T = string> {
     return result;
   });
 
+  /** Holds the [allowCustom] entry. One reused instance, for the identity reason {@link wrappers} explains. */
+  private readonly customWrapper = new ManagedOption<T>({ value: '' as T, label: '' });
+
   readonly items = computed<ManagedOption<T>[]>(() => {
-    const q = this.filter().trim().toLowerCase();
+    const typed = this.filter().trim();
+    const q = typed.toLowerCase();
     const all = this.allItems();
-    return q ? all.filter(i => i.opt.label.toLowerCase().includes(q)) : all;
+    const matches = q ? all.filter(i => i.opt.label.toLowerCase().includes(q)) : all;
+    // Offered last, so typing to narrow the list and pressing Enter still picks the matching option.
+    if (this.allowCustom() && typed && !all.some(i => i.opt.label.toLowerCase() === q)) {
+      this.customWrapper.opt = { value: typed as T, label: `Use “${typed}”` };
+      return [...matches, this.customWrapper];
+    }
+    return matches;
   });
 
   /** CDK drives ↑/↓/Home/End, wrap and disabled-skip. The signal overload makes it track {@link items}
@@ -205,6 +225,8 @@ export class SelectComponent<T = string> {
 
   setFilter(e: Event): void {
     this.filter.set((e.target as HTMLInputElement).value);
+    // Highlight the best remaining match, so Enter commits what the narrowed list is showing.
+    this.keyManager.setFirstItemActive();
   }
 
   setActive(i: number): void {

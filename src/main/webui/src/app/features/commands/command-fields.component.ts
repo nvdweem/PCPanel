@@ -94,7 +94,8 @@ type Cmd = Record<string, any>;
           @case ('device') {
             <div class="field-block">
               <div class="flabel">{{ $any(f).label }}</div>
-              <pc-select [block]="true" [options]="deviceOptions($any(f).filter, $any(f).defaultLabel)" [value]="val($any(f).key)"
+              <pc-select [block]="true" [options]="deviceOptions($any(f).filter, $any(f).defaultLabel, $any(f).byName, val($any(f).key))"
+                         [value]="val($any(f).key)" [searchable]="true" [allowCustom]="!!$any(f).byName"
                          placeholder="—" (valueChange)="set($any(f).key, $event)"></pc-select>
             </div>
           }
@@ -425,9 +426,16 @@ export class CommandFieldsComponent {
     }
   }
 
-  deviceOptions(filter: 'output' | 'input' | 'all' | undefined, defaultLabel?: string): SelectOption[] {
+  deviceOptions(filter: 'output' | 'input' | 'all' | undefined, defaultLabel?: string, byName?: boolean, current?: any): SelectOption[] {
     const res = filter === 'output' ? this.data.outputDevices : filter === 'input' ? this.data.inputDevices : this.data.audioDevices;
-    const opts = (res.value() ?? []).map(d => ({ value: d.id, label: d.name }));
+    const devices = res.value() ?? [];
+    const opts: SelectOption[] = devices.map(d => ({ value: byName ? d.name : d.id, label: d.name }));
+    // A byName field configured before it stored names holds an endpoint id, which the backend still
+    // resolves. Name it so the field reads as the device it points at; picking from the list stores the name.
+    if (byName) {
+      const byId = devices.find(d => d.id === current);
+      if (byId) opts.unshift({ value: byId.id, label: byId.name, hint: 'by id' });
+    }
     // For commands where a blank device means "use the default device", make that explicitly selectable.
     return defaultLabel ? [{ value: '', label: defaultLabel }, ...opts] : opts;
   }
