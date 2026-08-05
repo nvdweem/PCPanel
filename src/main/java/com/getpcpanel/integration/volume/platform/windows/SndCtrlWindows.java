@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -132,17 +133,49 @@ public class SndCtrlWindows implements ISndCtrl {
         SndCtrlNative.instance.setDefaultDevice(deviceId, DataFlow.dfAll.ordinal(), Role.roleMultimedia.ordinal());
     }
 
-    public void setDefaultDevice(String deviceName, DataFlow flow, Role role) {
-        if (StringUtils.isBlank(deviceName)) {
+    /**
+     * Switches the {@code flow}/{@code role} default to the device {@code deviceRef} points at. Blank
+     * leaves that default alone, so an action can set only the pairs it cares about.
+     */
+    public void setDefaultDevice(String deviceRef, DataFlow flow, Role role) {
+        if (StringUtils.isBlank(deviceRef)) {
             return;
         }
         String deviceId;
         synchronized (devices) {
-            deviceId = StreamEx.ofValues(devices).findFirst(d -> d.dataflow() == flow && StringUtils.containsIgnoreCase(d.name(), deviceName)).map(AudioDevice::id).orElse(null);
+            deviceId = resolveDeviceRef(devices.values(), deviceRef, flow);
         }
-        if (deviceId != null) {
-            applyDefaultDevice(deviceId, flow, role);
+        if (deviceId == null) {
+            log.warn("No connected {} device matches '{}', leaving the {} default alone", flow, deviceRef, role);
+            return;
         }
+        applyDefaultDevice(deviceId, flow, role);
+    }
+
+    /**
+     * Resolves a stored device reference to the endpoint id of a connected device on {@code flow}.
+     *
+     * <p>A reference is either an endpoint id or part of a device's name. Names are matched loosely on
+     * purpose: Windows numbers a device by the order it was enumerated ("Speakers (2- USB Audio)"), so
+     * that number changes on re-plug and an action keyed to the full name would stop working. Matching
+     * on "USB Audio" — or on "Yeti" for a microphone — keeps it pointing at the same hardware.
+     *
+     * <p>The exact matches are tried first so a name that is also a prefix of a longer one still selects
+     * its own device: "Headset" picks "Headset" rather than "Headset Earphone (3- Wireless)".
+     */
+    @Nullable
+    static String resolveDeviceRef(Collection<? extends AudioDevice> candidates, String deviceRef, DataFlow flow) {
+        var onFlow = StreamEx.of(candidates).filter(d -> d.dataflow() == flow).toList();
+        for (var matcher : List.<Predicate<AudioDevice>>of(
+                d -> StringUtils.equals(d.id(), deviceRef),
+                d -> StringUtils.equalsIgnoreCase(d.name(), deviceRef),
+                d -> StringUtils.containsIgnoreCase(d.name(), deviceRef))) {
+            var match = StreamEx.of(onFlow).findFirst(matcher);
+            if (match.isPresent()) {
+                return match.get().id();
+            }
+        }
+        return null;
     }
 
     /** The DLL call behind {@link #setDefaultDevice(String, DataFlow, Role)}, as its own seam. */
