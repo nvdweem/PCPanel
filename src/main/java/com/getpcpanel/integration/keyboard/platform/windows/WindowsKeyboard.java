@@ -238,10 +238,10 @@ class WindowsKeyboard implements Keyboard {
     }
 
     static int modifierVk(String mod) {
-        return switch (mod) {
-            case "ctrl" -> 0x11;                       // VK_CONTROL
-            case "shift" -> 0x10;                       // VK_SHIFT
-            case "alt" -> 0x12;                         // VK_MENU
+        return switch (mod.toLowerCase()) {
+            case "ctrl" -> 0xA2;                       // VK_LCONTROL
+            case "shift" -> 0xA0;                       // VK_LSHIFT
+            case "alt" -> 0xA4;                         // VK_LMENU
             case "cmd", "command", "windows", "meta" -> 0x5B; // VK_LWIN
             default -> 0;
         };
