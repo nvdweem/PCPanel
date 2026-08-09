@@ -9,12 +9,14 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.integration.keyboard.Keyboard;
+import com.getpcpanel.integration.keyboard.KeystrokeTokens;
 import com.getpcpanel.integration.keyboard.command.CommandMedia.VolumeButton;
 import com.getpcpanel.integration.volume.platform.ISndCtrl;
 import com.getpcpanel.integration.volume.platform.windows.SndCtrlWindows;
 import com.getpcpanel.platform.WindowsBuild;
 import com.sun.jna.platform.win32.BaseTSD;
 import com.sun.jna.platform.win32.User32;
+import com.sun.jna.platform.win32.Win32VK;
 import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.platform.win32.WinUser;
 import com.sun.jna.ptr.IntByReference;
@@ -30,8 +32,8 @@ import one.util.streamex.StreamEx;
  * {@code User32.SendInput}, replacing {@link java.awt.Robot} so the native image never needs the AWT
  * windowing toolkit.
  *
- * <p>The keystroke input is the cross-platform "{@code modifier+modifier+key}" format; tokens are the
- * AWT {@code VK_}-suffix names, mapped here to Win32 virtual-key codes and posted as keydown/keyup
+ * <p>The keystroke input is the cross-platform "{@code modifier+modifier+key}" format, canonicalised by
+ * {@link KeystrokeTokens} and mapped here to Win32 virtual-key codes, then posted as keydown/keyup
  * {@code KEYBDINPUT} events. Media keys post the global multimedia virtual key, except when a list of
  * preferred target apps is given: the first one running is located and sent a {@code WM_APPCOMMAND}
  * directly, so the action reaches (say) Spotify even when a browser would otherwise grab the key.
@@ -43,11 +45,7 @@ import one.util.streamex.StreamEx;
 class WindowsKeyboard implements Keyboard {
     private static final int KEYEVENTF_KEYUP = 0x0002;
     private static final int KEYEVENTF_UNICODE = 0x0004;
-    private static final int VK_RETURN = 0x0D;
-    private static final int VK_TAB = 0x09;
     private static final int WM_APPCOMMAND = 0x0319;
-    private static final int GW_HWNDNEXT = 2;
-    private static final int GW_CHILD = 5;
     private static final int WINDOW_WALK_LIMIT = 20_000; // safety bound on the top-level window walk
 
     /** AWT-VK-style token (the part after {@code VK_}) → Win32 virtual-key code, for non-trivial keys. */
@@ -61,21 +59,25 @@ class WindowsKeyboard implements Keyboard {
         if (input == null || input.contains("UNDEFINED")) {
             return;
         }
-        var parts = input.replace(" ", "").split("\\+");
+        var tokens = KeystrokeTokens.split(input);
+        if (tokens.isEmpty()) {
+            return;
+        }
         var pressed = new ArrayList<Integer>();
         try {
-            for (var i = 0; i < parts.length - 1; i++) {
-                var vk = modifierVk(parts[i]);
+            for (var i = 0; i < tokens.size() - 1; i++) {
+                var vk = modifierVk(tokens.get(i));
                 if (vk == 0) {
-                    log.error("bad keystroke modifier: {}", parts[i]);
+                    log.error("bad keystroke modifier: {}", tokens.get(i));
                 } else {
                     sendVk(vk, false);
                     pressed.add(vk);
                 }
             }
-            var keyVk = keyVk(parts[parts.length - 1]);
+            var last = tokens.get(tokens.size() - 1);
+            var keyVk = keyVk(last);
             if (keyVk == 0) {
-                log.error("Unsupported Windows keystroke key '{}' in '{}'", parts[parts.length - 1], input);
+                log.error("Unsupported Windows keystroke key '{}' in '{}'", last, input);
             } else {
                 sendVk(keyVk, false);
                 pressed.add(keyVk);
@@ -110,8 +112,8 @@ class WindowsKeyboard implements Keyboard {
                 var c = text.charAt(i);
                 switch (c) {
                     case '\r' -> { /* ignore; '\n' drives the newline */ }
-                    case '\n' -> { sendVk(VK_RETURN, false); sendVk(VK_RETURN, true); }
-                    case '\t' -> { sendVk(VK_TAB, false); sendVk(VK_TAB, true); }
+                    case '\n' -> { sendVk(Win32VK.VK_RETURN.code, false); sendVk(Win32VK.VK_RETURN.code, true); }
+                    case '\t' -> { sendVk(Win32VK.VK_TAB.code, false); sendVk(Win32VK.VK_TAB.code, true); }
                     default -> { sendUnicode(c, false); sendUnicode(c, true); }
                 }
             }
@@ -177,7 +179,7 @@ class WindowsKeyboard implements Keyboard {
         }
         WinDef.HWND match = null;
         var pid = new IntByReference();
-        var hWnd = User32.INSTANCE.GetWindow(User32.INSTANCE.GetDesktopWindow(), new WinDef.DWORD(GW_CHILD));
+        var hWnd = User32.INSTANCE.GetWindow(User32.INSTANCE.GetDesktopWindow(), new WinDef.DWORD(WinUser.GW_CHILD));
         for (var guard = 0; hWnd != null && guard < WINDOW_WALK_LIMIT; guard++) {
             User32.INSTANCE.GetWindowThreadProcessId(hWnd, pid);
             if (pids.contains(pid.getValue())
@@ -185,7 +187,7 @@ class WindowsKeyboard implements Keyboard {
                 match = hWnd;
                 break;
             }
-            hWnd = User32.INSTANCE.GetWindow(hWnd, new WinDef.DWORD(GW_HWNDNEXT));
+            hWnd = User32.INSTANCE.GetWindow(hWnd, new WinDef.DWORD(WinUser.GW_HWNDNEXT));
         }
         log.debug("findAppWindow('{}'): pids={}, match={}", exeName, pids, match);
         return match;
@@ -215,14 +217,14 @@ class WindowsKeyboard implements Keyboard {
         User32.INSTANCE.SendInput(new WinDef.DWORD(1), (WinUser.INPUT[]) input.toArray(1), input.size());
     }
 
-    /** Global multimedia virtual-key code (VK_MEDIA_... / VK_VOLUME_MUTE) for a media button. */
+    /** Global multimedia virtual-key code for a media button. */
     private static int mediaVk(VolumeButton button) {
         return switch (button) {
-            case mute -> 0xAD;       // VK_VOLUME_MUTE
-            case next -> 0xB0;       // VK_MEDIA_NEXT_TRACK
-            case prev -> 0xB1;       // VK_MEDIA_PREV_TRACK
-            case stop -> 0xB2;       // VK_MEDIA_STOP
-            case playPause -> 0xB3;  // VK_MEDIA_PLAY_PAUSE
+            case mute -> Win32VK.VK_VOLUME_MUTE.code;
+            case next -> Win32VK.VK_MEDIA_NEXT_TRACK.code;
+            case prev -> Win32VK.VK_MEDIA_PREV_TRACK.code;
+            case stop -> Win32VK.VK_MEDIA_STOP.code;
+            case playPause -> Win32VK.VK_MEDIA_PLAY_PAUSE.code;
         };
     }
 
@@ -237,18 +239,25 @@ class WindowsKeyboard implements Keyboard {
         };
     }
 
+    /**
+     * The left-hand variant of each modifier, which is what a physical keyboard reports. Applications
+     * that distinguish the two sides see a synthesised combo as an ordinary one.
+     */
     static int modifierVk(String mod) {
-        return switch (mod) {
-            case "ctrl" -> 0x11;                       // VK_CONTROL
-            case "shift" -> 0x10;                       // VK_SHIFT
-            case "alt" -> 0x12;                         // VK_MENU
-            case "cmd", "command", "windows", "meta" -> 0x5B; // VK_LWIN
-            default -> 0;
+        var modifier = KeystrokeTokens.modifier(mod);
+        if (modifier == null) {
+            return 0;
+        }
+        return switch (modifier) {
+            case CTRL -> Win32VK.VK_LCONTROL.code;
+            case SHIFT -> Win32VK.VK_LSHIFT.code;
+            case ALT -> Win32VK.VK_LMENU.code;
+            case META -> Win32VK.VK_LWIN.code;
         };
     }
 
     static int keyVk(String token) {
-        var t = token.toUpperCase();
+        var t = KeystrokeTokens.key(token);
         if (t.length() == 1) {
             var c = t.charAt(0);
             if (c >= 'A' && c <= 'Z' || c >= '0' && c <= '9') {
@@ -261,21 +270,25 @@ class WindowsKeyboard implements Keyboard {
     @SuppressWarnings("java:S138") // long but flat lookup table
     private static Map<String, Integer> buildKeyCodes() {
         Map<String, Integer> m = new HashMap<>();
-        // Function keys
+        // Function keys (VK_F1..VK_F12 are contiguous)
         for (var i = 1; i <= 12; i++) {
-            m.put("F" + i, 0x70 + (i - 1)); // VK_F1..VK_F12
+            m.put("F" + i, Win32VK.VK_F1.code + (i - 1));
         }
         // Control / navigation
-        m.put("ENTER", 0x0D); m.put("TAB", 0x09); m.put("SPACE", 0x20);
-        m.put("BACK_SPACE", 0x08); m.put("ESCAPE", 0x1B); m.put("ESC", 0x1B);
-        m.put("DELETE", 0x2E); m.put("INSERT", 0x2D); m.put("HOME", 0x24); m.put("END", 0x23);
-        m.put("PAGE_UP", 0x21); m.put("PAGE_DOWN", 0x22);
-        m.put("LEFT", 0x25); m.put("UP", 0x26); m.put("RIGHT", 0x27); m.put("DOWN", 0x28);
+        m.put("ENTER", Win32VK.VK_RETURN.code); m.put("TAB", Win32VK.VK_TAB.code); m.put("SPACE", Win32VK.VK_SPACE.code);
+        m.put("BACK_SPACE", Win32VK.VK_BACK.code); m.put("ESCAPE", Win32VK.VK_ESCAPE.code); m.put("ESC", Win32VK.VK_ESCAPE.code);
+        m.put("DELETE", Win32VK.VK_DELETE.code); m.put("INSERT", Win32VK.VK_INSERT.code);
+        m.put("HOME", Win32VK.VK_HOME.code); m.put("END", Win32VK.VK_END.code);
+        m.put("PAGE_UP", Win32VK.VK_PRIOR.code); m.put("PAGE_DOWN", Win32VK.VK_NEXT.code);
+        m.put("LEFT", Win32VK.VK_LEFT.code); m.put("UP", Win32VK.VK_UP.code);
+        m.put("RIGHT", Win32VK.VK_RIGHT.code); m.put("DOWN", Win32VK.VK_DOWN.code);
         // Punctuation (OEM keys, US layout)
-        m.put("MINUS", 0xBD); m.put("EQUALS", 0xBB); m.put("OPEN_BRACKET", 0xDB);
-        m.put("CLOSE_BRACKET", 0xDD); m.put("BACK_SLASH", 0xDC); m.put("SEMICOLON", 0xBA);
-        m.put("QUOTE", 0xDE); m.put("COMMA", 0xBC); m.put("PERIOD", 0xBE); m.put("SLASH", 0xBF);
-        m.put("BACK_QUOTE", 0xC0);
+        m.put("MINUS", Win32VK.VK_OEM_MINUS.code); m.put("EQUALS", Win32VK.VK_OEM_PLUS.code);
+        m.put("OPEN_BRACKET", Win32VK.VK_OEM_4.code); m.put("CLOSE_BRACKET", Win32VK.VK_OEM_6.code);
+        m.put("BACK_SLASH", Win32VK.VK_OEM_5.code); m.put("SEMICOLON", Win32VK.VK_OEM_1.code);
+        m.put("QUOTE", Win32VK.VK_OEM_7.code); m.put("COMMA", Win32VK.VK_OEM_COMMA.code);
+        m.put("PERIOD", Win32VK.VK_OEM_PERIOD.code); m.put("SLASH", Win32VK.VK_OEM_2.code);
+        m.put("BACK_QUOTE", Win32VK.VK_OEM_3.code);
         return m;
     }
 }

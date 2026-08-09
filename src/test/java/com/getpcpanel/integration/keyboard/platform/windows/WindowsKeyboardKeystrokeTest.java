@@ -17,14 +17,21 @@ import org.junit.jupiter.params.provider.ValueSource;
 class WindowsKeyboardKeystrokeTest {
 
     @ParameterizedTest
-    @CsvSource({ "ctrl, 0x11", "shift, 0x10", "alt, 0x12", "cmd, 0x5B", "command, 0x5B", "windows, 0x5B", "meta, 0x5B" })
-    @DisplayName("modifiers map to Win32 VK codes")
+    @CsvSource({ "ctrl, 0xA2", "shift, 0xA0", "alt, 0xA4", "cmd, 0x5B", "command, 0x5B", "windows, 0x5B", "meta, 0x5B" })
+    @DisplayName("modifiers map to the left-hand Win32 VK code")
     void modifiersMap(String token, String expectedHex) {
         assertEquals(Integer.decode(expectedHex).intValue(), WindowsKeyboard.modifierVk(token));
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "wibble", "CTRL", "" })
+    @CsvSource({ "Ctrl, 0xA2", "CTRL, 0xA2", "Shift, 0xA0", "Alt, 0xA4", "Win, 0x5B" })
+    @DisplayName("the key recorder's modifier labels map to the same codes")
+    void recordedModifiersMap(String token, String expectedHex) {
+        assertEquals(Integer.decode(expectedHex).intValue(), WindowsKeyboard.modifierVk(token));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "wibble", "" })
     @DisplayName("unknown modifiers resolve to 0")
     void unknownModifiersAreZero(String token) {
         assertEquals(0, WindowsKeyboard.modifierVk(token));
@@ -42,6 +49,21 @@ class WindowsKeyboardKeystrokeTest {
     @DisplayName("named keys map to the expected VK code")
     void namedKeysMap(String token, String expectedHex) {
         assertEquals(Integer.decode(expectedHex).intValue(), WindowsKeyboard.keyVk(token));
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "ArrowLeft, 0x25", "ArrowDown, 0x28", "PageUp, 0x21", "Backspace, 0x08", "Escape, 0x1B", "Enter, 0x0D", "Space, 0x20", "',', 0xBC" })
+    @DisplayName("the key recorder's key names map to the expected VK code")
+    void recordedKeysMap(String token, String expectedHex) {
+        assertEquals(Integer.decode(expectedHex).intValue(), WindowsKeyboard.keyVk(token));
+    }
+
+    @Test
+    @DisplayName("a combo recorded in the UI resolves end to end")
+    void recordedComboResolves() {
+        assertEquals(0xA2, WindowsKeyboard.modifierVk("Ctrl"));
+        assertEquals(0xA0, WindowsKeyboard.modifierVk("Shift"));
+        assertEquals(0x25, WindowsKeyboard.keyVk("ArrowLeft"));
     }
 
     @ParameterizedTest

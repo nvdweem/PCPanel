@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, computed, input, model, signal } fr
 
 const MODS = ['Control', 'Shift', 'Alt', 'Meta'];
 const MOD_LABEL: Record<string, string> = { Control: 'Ctrl', Shift: 'Shift', Alt: 'Alt', Meta: 'Win' };
+/** Keys whose character is unusable in a "+"-joined combo, so they are recorded by name. */
+const KEY_LABEL: Record<string, string> = { ' ': 'Space', '+': 'Plus' };
 
 /**
  * Key-combo recorder. Two-way binds [(value)] a "+"-joined combo string
@@ -77,7 +79,7 @@ export class KeyRecorderComponent {
     // Wait for a non-modifier key to finalize the combo.
     if (MODS.includes(ev.key)) return;
 
-    const main = ev.key.length === 1 ? ev.key.toUpperCase() : ev.key;
+    const main = KEY_LABEL[ev.key] ?? (ev.key.length === 1 ? ev.key.toUpperCase() : ev.key);
     parts.push(main);
     this.value.set(parts.join('+'));
     this.stop();

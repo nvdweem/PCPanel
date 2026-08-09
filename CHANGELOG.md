@@ -46,6 +46,9 @@
 - **The Advanced default device fields now take a piece of a device's name, typed in.** Type `Yeti` and the action picks your Yeti microphone — even after Windows renames it, which it does whenever the number in a name like *Speakers (2- USB Audio)* changes. You can still pick a device from the list instead.
 - **Audio device lists can now be searched.** Every place that asks you to choose an audio device has a filter box, so you can type a few letters instead of hunting through the list.
 - A bug report now records **what every part of PCPanel was doing at the moment you made it**. When the panel goes dead while the interface carries on as normal, that is the one piece of evidence that names the action which got stuck — the last time this happened it took a release to find without it. It is included when you leave **System information** ticked, and describes only the program's own workings: no file names, no window titles, nothing you typed.
+- #154 - **Fixed a recorded keyboard shortcut losing its modifiers.** A shortcut set with the *Keystroke* action's recorder — Ctrl, Shift, Alt or Win plus a key — was sent as the bare key on its own, so a button set to `Ctrl+C` typed a plain `c`. Shortcuts carried over from older versions were unaffected, which is why this only ever showed up on newly recorded ones. Thanks to **@hayhany** for finding it and sending the fix.
+- Recording a shortcut now also accepts the **arrow keys, Page Up/Down, Home/End, Backspace, Delete, the space bar and punctuation** — those were recorded happily but did nothing when the button was pressed. Fixed on Windows, Linux and macOS alike.
+- A shortcut now presses the **left-hand** Ctrl, Shift and Alt, matching what a real keyboard sends, so programs that tell the two sides apart see it as an ordinary key press.
 
 ## [2.0.84]
 
