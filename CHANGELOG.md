@@ -50,6 +50,8 @@
 - Recording a shortcut now also accepts the **arrow keys, Page Up/Down, Home/End, Backspace, Delete, the space bar and punctuation** — those were recorded happily but did nothing when the button was pressed. Fixed on Windows, Linux and macOS alike.
 - (Windows) **Holding Shift with an arrow or navigation key now extends the selection**, so `Shift+Left` and `Ctrl+Shift+Left` select text instead of just moving the cursor. Those keys were being sent in their numeric-keypad form, and Windows lets go of Shift for the duration of a keypad key.
 - A shortcut now presses the **left-hand** Ctrl, Shift and Alt, matching what a real keyboard sends, so programs that tell the two sides apart see it as an ordinary key press.
+- The shortcut recorder now has **Ctrl / Shift / Alt / Win buttons you can switch on yourself**. Some combinations never reach the recorder because something else claims them first — Windows takes every `Win` combination, and the browser takes `Alt+Left` to go back — so record the plain key and switch the modifiers on to build shortcuts like `Win+D` or `Alt+Left`.
+- **Type text** now takes **more than one line**, and pressing **Tab** puts a tab into the text instead of jumping out of the field.
 
 ## [2.0.84]
 
