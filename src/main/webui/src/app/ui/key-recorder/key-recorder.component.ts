@@ -1,28 +1,46 @@
-import { ChangeDetectionStrategy, Component, computed, input, model, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, model, signal } from '@angular/core';
 
 const MODS = ['Control', 'Shift', 'Alt', 'Meta'];
 const MOD_LABEL: Record<string, string> = { Control: 'Ctrl', Shift: 'Shift', Alt: 'Alt', Meta: 'Win' };
+/** Modifier labels in the order a combo spells them. */
+const MOD_ORDER = ['Ctrl', 'Shift', 'Alt', 'Win'];
+/** Every spelling of a modifier the backend accepts, mapped to the label shown here. */
+const MOD_ALIASES: Record<string, string> = {
+  ctrl: 'Ctrl', control: 'Ctrl', ctl: 'Ctrl',
+  shift: 'Shift',
+  alt: 'Alt', option: 'Alt', opt: 'Alt',
+  cmd: 'Win', command: 'Win', windows: 'Win', win: 'Win', meta: 'Win', super: 'Win', os: 'Win',
+};
 /** Keys whose character is unusable in a "+"-joined combo, so they are recorded by name. */
 const KEY_LABEL: Record<string, string> = { ' ': 'Space', '+': 'Plus' };
+
+/** The modifier a token names, or undefined when it names none. */
+function modOf(token: string): string | undefined { return MOD_ALIASES[token.toLowerCase()]; }
 
 /**
  * Key-combo recorder. Two-way binds [(value)] a "+"-joined combo string
  * (e.g. "Ctrl+Shift+M"). Click to record; press the keys; it captures modifiers
  * plus the final key.
+ *
+ * <p>The modifiers are also toggle buttons. The OS and the browser claim some combos before the page
+ * sees them — Windows takes every Win chord, the browser takes Alt+Left for history — so those are
+ * built by recording the plain key and switching the modifiers on.
  */
 @Component({
   selector: 'pc-key-recorder',
   standalone: true,
   template: `
+    <div class="mods">
+      @for (m of modKeys; track m) {
+        <button type="button" class="mod" [class.on]="hasMod(m)" (click)="toggleMod(m)">{{ m }}</button>
+      }
+    </div>
     @if (!recording()) {
       <button type="button" class="field" (click)="start()">
-        @if (keys().length) {
-          @for (k of keys(); track $index; let last = $last) {
-            <span class="key">{{ k }}</span>
-            @if (!last) { <span class="plus">+</span> }
-          }
+        @if (mainKey(); as k) {
+          <span class="key">{{ k }}</span>
         } @else {
-          <span class="empty">Click to set a shortcut…</span>
+          <span class="empty">Click to set a key…</span>
         }
         <span class="spacer"></span>
         <span class="set">SET</span>
@@ -36,6 +54,17 @@ const KEY_LABEL: Record<string, string> = { ' ': 'Space', '+': 'Plus' };
   `,
   styles: [`
     :host { display: block; }
+    .mods { display: flex; gap: 6px; margin-bottom: 8px; }
+    .mod {
+      font-family: var(--font-mono); font-size: 12px; color: var(--text-3);
+      background: var(--input); border: 1px solid var(--raised-line);
+      border-radius: var(--r-sm); padding: 5px 10px; cursor: pointer;
+    }
+    .mod:hover { color: var(--text-1); }
+    .mod.on {
+      color: var(--accent-text); background: var(--accent-tint);
+      border-color: var(--accent-border-2, var(--accent));
+    }
     .field {
       display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
       background: var(--input); border: 1px solid var(--raised-line); border-radius: var(--r-md);
@@ -46,7 +75,6 @@ const KEY_LABEL: Record<string, string> = { ' ': 'Space', '+': 'Plus' };
       background: var(--raised); border: 1px solid var(--line-2); border-bottom-width: 2px;
       border-radius: var(--r-sm); padding: 4px 9px;
     }
-    .plus { color: var(--text-3); }
     .empty { color: var(--text-3); font-size: 13px; }
     .spacer { flex: 1; }
     .set { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); }
@@ -59,29 +87,47 @@ const KEY_LABEL: Record<string, string> = { ' ': 'Space', '+': 'Plus' };
 export class KeyRecorderComponent {
   readonly value = model<string>('');
   readonly recording = signal(false);
+  readonly modKeys = MOD_ORDER;
 
-  readonly keys = computed(() => this.value() ? this.value().split('+').map(s => s.trim()).filter(Boolean) : []);
+  private readonly tokens = computed(() =>
+    this.value() ? this.value().split('+').map(s => s.trim()).filter(Boolean) : []);
+
+  /** The modifiers the combo carries, however it spells them. */
+  readonly mods = computed(() => [...new Set(this.tokens().map(modOf).filter((m): m is string => !!m))]);
+  /** The key the combo ends on, empty when only modifiers are set so far. */
+  readonly mainKey = computed(() => this.tokens().filter(t => !modOf(t)).pop() ?? '');
 
   start(): void { this.recording.set(true); }
   stop(): void { this.recording.set(false); }
+
+  hasMod(mod: string): boolean { return this.mods().includes(mod); }
+
+  toggleMod(mod: string): void {
+    const next = this.hasMod(mod) ? this.mods().filter(m => m !== mod) : [...this.mods(), mod];
+    this.emit(next, this.mainKey());
+  }
 
   onKey(ev: KeyboardEvent): void {
     ev.preventDefault();
     ev.stopPropagation();
     if (ev.key === 'Escape') { this.stop(); return; }
 
-    const parts: string[] = [];
-    if (ev.ctrlKey) parts.push(MOD_LABEL['Control']);
-    if (ev.shiftKey) parts.push(MOD_LABEL['Shift']);
-    if (ev.altKey) parts.push(MOD_LABEL['Alt']);
-    if (ev.metaKey) parts.push(MOD_LABEL['Meta']);
+    const mods: string[] = [];
+    if (ev.ctrlKey) mods.push(MOD_LABEL['Control']);
+    if (ev.shiftKey) mods.push(MOD_LABEL['Shift']);
+    if (ev.altKey) mods.push(MOD_LABEL['Alt']);
+    if (ev.metaKey) mods.push(MOD_LABEL['Meta']);
 
     // Wait for a non-modifier key to finalize the combo.
     if (MODS.includes(ev.key)) return;
 
     const main = KEY_LABEL[ev.key] ?? (ev.key.length === 1 ? ev.key.toUpperCase() : ev.key);
-    parts.push(main);
-    this.value.set(parts.join('+'));
+    this.emit(mods, main);
     this.stop();
+  }
+
+  private emit(mods: string[], key: string): void {
+    const ordered = MOD_ORDER.filter(m => mods.includes(m));
+    this.value.set([...ordered, ...(key ? [key] : [])].join('+'));
   }
 }
