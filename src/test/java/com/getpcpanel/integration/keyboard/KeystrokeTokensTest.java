@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -118,6 +119,34 @@ class KeystrokeTokensTest {
         @DisplayName("read a blank token as the space bar")
         void blankIsSpace() {
             assertEquals("SPACE", KeystrokeTokens.key(" "));
+        }
+    }
+
+    @Nested
+    @DisplayName("a combo saved before the recorder existed")
+    class LegacySpellings {
+        @ParameterizedTest
+        @CsvSource({
+                "ctrl+A, Ctrl+A",
+                "ctrl+shift+M, Ctrl+Shift+M",
+                "alt+F4, Alt+F4",
+                "windows+D, Win+D",
+                "ctrl+PAGE_UP, Ctrl+PageUp",
+                "ctrl+BACK_SPACE, Ctrl+Backspace",
+                "shift+LEFT, Shift+ArrowLeft",
+        })
+        @DisplayName("resolves to exactly what the recorder writes for the same combo")
+        void legacyMatchesRecorded(String legacy, String recorded) {
+            assertEquals(canonical(recorded), canonical(legacy));
+        }
+
+        private String canonical(String combo) {
+            return KeystrokeTokens.split(combo).stream()
+                    .map(t -> {
+                        var mod = KeystrokeTokens.modifier(t);
+                        return mod != null ? mod.name() : KeystrokeTokens.key(t);
+                    })
+                    .collect(Collectors.joining("+"));
         }
     }
 

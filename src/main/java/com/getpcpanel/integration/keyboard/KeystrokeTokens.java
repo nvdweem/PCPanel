@@ -1,10 +1,12 @@
 package com.getpcpanel.integration.keyboard;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -54,6 +56,11 @@ public final class KeystrokeTokens {
     @Nullable
     public static Modifier modifier(String token) {
         return MODIFIERS.get(token.trim().toLowerCase(Locale.ROOT));
+    }
+
+    /** Every spelling {@link #modifier} accepts, lowercased. */
+    public static Set<String> modifierAliases() {
+        return Collections.unmodifiableSet(MODIFIERS.keySet());
     }
 
     /** The AWT {@code VK_}-suffix name a token denotes, uppercased; unknown tokens pass through. */

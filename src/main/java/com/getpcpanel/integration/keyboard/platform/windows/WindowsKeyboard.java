@@ -43,6 +43,7 @@ import one.util.streamex.StreamEx;
 @Unremovable
 @WindowsBuild
 class WindowsKeyboard implements Keyboard {
+    private static final int KEYEVENTF_EXTENDEDKEY = 0x0001;
     private static final int KEYEVENTF_KEYUP = 0x0002;
     private static final int KEYEVENTF_UNICODE = 0x0004;
     private static final int WM_APPCOMMAND = 0x0319;
@@ -50,6 +51,18 @@ class WindowsKeyboard implements Keyboard {
 
     /** AWT-VK-style token (the part after {@code VK_}) → Win32 virtual-key code, for non-trivial keys. */
     private static final Map<String, Integer> KEY_CODES = buildKeyCodes();
+
+    /**
+     * The virtual keys a keyboard reports with an {@code E0} scan-code prefix. {@code SendInput} derives
+     * the scan code from the virtual key, and for these it derives the numeric-keypad twin instead —
+     * {@code VK_LEFT} becomes keypad 4. Windows brackets a keypad key with a synthetic Shift release and
+     * press, so a held Shift reaches the application as released and {@code Shift+Left} moves the caret
+     * rather than extending the selection. The flag selects the real key.
+     */
+    private static final Set<Integer> EXTENDED_VKS = Set.of(
+            Win32VK.VK_LEFT.code, Win32VK.VK_UP.code, Win32VK.VK_RIGHT.code, Win32VK.VK_DOWN.code,
+            Win32VK.VK_HOME.code, Win32VK.VK_END.code, Win32VK.VK_PRIOR.code, Win32VK.VK_NEXT.code,
+            Win32VK.VK_INSERT.code, Win32VK.VK_DELETE.code, Win32VK.VK_LWIN.code);
 
     @Inject
     SndCtrlWindows sndCtrl;
@@ -213,12 +226,21 @@ class WindowsKeyboard implements Keyboard {
         input.input.ki.time = new WinDef.DWORD(0);
         input.input.ki.dwExtraInfo = new BaseTSD.ULONG_PTR(0);
         input.input.ki.wVk = new WinDef.WORD(vk);
-        input.input.ki.dwFlags = new WinDef.DWORD(keyUp ? KEYEVENTF_KEYUP : 0);
+        input.input.ki.dwFlags = new WinDef.DWORD(vkFlags(vk, keyUp));
         User32.INSTANCE.SendInput(new WinDef.DWORD(1), (WinUser.INPUT[]) input.toArray(1), input.size());
     }
 
+    /** {@code KEYBDINPUT.dwFlags} for one press or release of a virtual key. */
+    static int vkFlags(int vk, boolean keyUp) {
+        var flags = keyUp ? KEYEVENTF_KEYUP : 0;
+        if (EXTENDED_VKS.contains(vk)) {
+            flags |= KEYEVENTF_EXTENDEDKEY;
+        }
+        return flags;
+    }
+
     /** Global multimedia virtual-key code for a media button. */
-    private static int mediaVk(VolumeButton button) {
+    static int mediaVk(VolumeButton button) {
         return switch (button) {
             case mute -> Win32VK.VK_VOLUME_MUTE.code;
             case next -> Win32VK.VK_MEDIA_NEXT_TRACK.code;

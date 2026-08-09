@@ -150,7 +150,9 @@ type Cmd = Record<string, any>;
               <pc-segmented [options]="keyModes" [value]="val('type')" (valueChange)="set('type', $event)"></pc-segmented>
               <div style="height:10px"></div>
               @if (val('type') === 'TEXT') {
-                <input class="pc-input mono" placeholder="Text to type…" [value]="val('text')" (input)="set('text', $any($event.target).value)">
+                <textarea class="pc-input mono ta" rows="4" placeholder="Text to type…"
+                          [value]="val('text')" (keydown)="onTypeTextKey($event)"
+                          (input)="set('text', $any($event.target).value)"></textarea>
               } @else {
                 <pc-key-recorder [value]="val('keystroke')" (valueChange)="set('keystroke', $event)"></pc-key-recorder>
               }
@@ -356,6 +358,20 @@ export class CommandFieldsComponent {
 
   val(key: string): any { return this.command()[key]; }
   asArray(key: string): string[] { const v = this.command()[key]; return Array.isArray(v) ? v : []; }
+
+  /**
+   * Tab types a tab into the text being composed, so a typed sequence can contain one.
+   * Shift+Tab still moves focus, which is how you leave the field from the keyboard.
+   */
+  onTypeTextKey(ev: KeyboardEvent): void {
+    if (ev.key !== 'Tab' || ev.shiftKey || ev.ctrlKey || ev.altKey || ev.metaKey) return;
+    ev.preventDefault();
+    const el = ev.target as HTMLTextAreaElement;
+    const start = el.selectionStart, end = el.selectionEnd;
+    el.value = el.value.slice(0, start) + '\t' + el.value.slice(end);
+    el.selectionStart = el.selectionEnd = start + 1;
+    this.set('text', el.value);
+  }
 
   set(key: string, value: any): void {
     this.command.update(c => ({ ...c, [key]: value }));
