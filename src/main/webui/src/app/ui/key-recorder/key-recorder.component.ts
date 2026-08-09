@@ -1,21 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, model, signal } from '@angular/core';
 
+import { formatCombo, MOD_ORDER, parseCombo } from './key-combo';
+
 const MODS = ['Control', 'Shift', 'Alt', 'Meta'];
 const MOD_LABEL: Record<string, string> = { Control: 'Ctrl', Shift: 'Shift', Alt: 'Alt', Meta: 'Win' };
-/** Modifier labels in the order a combo spells them. */
-const MOD_ORDER = ['Ctrl', 'Shift', 'Alt', 'Win'];
-/** Every spelling of a modifier the backend accepts, mapped to the label shown here. */
-const MOD_ALIASES: Record<string, string> = {
-  ctrl: 'Ctrl', control: 'Ctrl', ctl: 'Ctrl',
-  shift: 'Shift',
-  alt: 'Alt', option: 'Alt', opt: 'Alt',
-  cmd: 'Win', command: 'Win', windows: 'Win', win: 'Win', meta: 'Win', super: 'Win', os: 'Win',
-};
 /** Keys whose character is unusable in a "+"-joined combo, so they are recorded by name. */
 const KEY_LABEL: Record<string, string> = { ' ': 'Space', '+': 'Plus' };
-
-/** The modifier a token names, or undefined when it names none. */
-function modOf(token: string): string | undefined { return MOD_ALIASES[token.toLowerCase()]; }
 
 /**
  * Key-combo recorder. Two-way binds [(value)] a "+"-joined combo string
@@ -89,13 +79,12 @@ export class KeyRecorderComponent {
   readonly recording = signal(false);
   readonly modKeys = MOD_ORDER;
 
-  private readonly tokens = computed(() =>
-    this.value() ? this.value().split('+').map(s => s.trim()).filter(Boolean) : []);
+  private readonly combo = computed(() => parseCombo(this.value()));
 
   /** The modifiers the combo carries, however it spells them. */
-  readonly mods = computed(() => [...new Set(this.tokens().map(modOf).filter((m): m is string => !!m))]);
+  readonly mods = computed(() => this.combo().mods);
   /** The key the combo ends on, empty when only modifiers are set so far. */
-  readonly mainKey = computed(() => this.tokens().filter(t => !modOf(t)).pop() ?? '');
+  readonly mainKey = computed(() => this.combo().key);
 
   start(): void { this.recording.set(true); }
   stop(): void { this.recording.set(false); }
@@ -127,7 +116,6 @@ export class KeyRecorderComponent {
   }
 
   private emit(mods: string[], key: string): void {
-    const ordered = MOD_ORDER.filter(m => mods.includes(m));
-    this.value.set([...ordered, ...(key ? [key] : [])].join('+'));
+    this.value.set(formatCombo(mods, key));
   }
 }
