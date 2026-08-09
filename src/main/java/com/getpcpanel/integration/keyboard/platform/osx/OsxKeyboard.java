@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.getpcpanel.integration.keyboard.Keyboard;
+import com.getpcpanel.integration.keyboard.KeystrokeTokens;
 import com.getpcpanel.integration.keyboard.command.CommandMedia.VolumeButton;
 import com.getpcpanel.platform.MacBuild;
 import com.getpcpanel.util.os.OsxPermissionHelper;
@@ -91,19 +92,23 @@ class OsxKeyboard implements Keyboard {
             return;
         }
         warnIfAccessibilityNotGranted();
-        var parts = input.replace(" ", "").split("\\+");
+        var tokens = KeystrokeTokens.split(input);
+        if (tokens.isEmpty()) {
+            return;
+        }
         long flags = 0;
-        for (var i = 0; i < parts.length - 1; i++) {
-            var flag = modifierFlag(parts[i]);
+        for (var i = 0; i < tokens.size() - 1; i++) {
+            var flag = modifierFlag(tokens.get(i));
             if (flag == 0) {
-                log.error("bad keystroke modifier: {}", parts[i]);
+                log.error("bad keystroke modifier: {}", tokens.get(i));
             } else {
                 flags |= flag;
             }
         }
-        var keyCode = keyCode(parts[parts.length - 1]);
+        var last = tokens.get(tokens.size() - 1);
+        var keyCode = keyCode(last);
         if (keyCode == UNKNOWN) {
-            log.error("Unsupported macOS keystroke key '{}' in '{}'", parts[parts.length - 1], input);
+            log.error("Unsupported macOS keystroke key '{}' in '{}'", last, input);
             return;
         }
         try {
@@ -186,17 +191,20 @@ class OsxKeyboard implements Keyboard {
     }
 
     static long modifierFlag(String mod) {
-        return switch (mod) {
-            case "ctrl" -> FLAG_CONTROL;
-            case "shift" -> FLAG_SHIFT;
-            case "alt" -> FLAG_ALTERNATE;
-            case "cmd", "command", "windows", "meta" -> FLAG_COMMAND;
-            default -> 0;
+        var modifier = KeystrokeTokens.modifier(mod);
+        if (modifier == null) {
+            return 0;
+        }
+        return switch (modifier) {
+            case CTRL -> FLAG_CONTROL;
+            case SHIFT -> FLAG_SHIFT;
+            case ALT -> FLAG_ALTERNATE;
+            case META -> FLAG_COMMAND;
         };
     }
 
     static short keyCode(String token) {
-        return KEY_CODES.getOrDefault(token.toUpperCase(), UNKNOWN);
+        return KEY_CODES.getOrDefault(KeystrokeTokens.key(token), UNKNOWN);
     }
 
     @SuppressWarnings("java:S138") // long but flat lookup table

@@ -33,7 +33,21 @@ class LinuxKeyboardKeystrokeTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "wibble", "", "CTRL", "control" })
+    @CsvSource({ "Ctrl, 0xffe3", "CTRL, 0xffe3", "control, 0xffe3", "Shift, 0xffe1", "Alt, 0xffe9", "Win, 0xffeb" })
+    @DisplayName("the key recorder's modifier labels map to the same keysyms")
+    void recordedModifiersMap(String token, String expectedHex) {
+        assertEquals(Long.decode(expectedHex).longValue(), LinuxKeyboard.modifierKeysym(token));
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "ArrowLeft, 0xff51", "ArrowDown, 0xff54", "PageUp, 0xff55", "Backspace, 0xff08", "Escape, 0xff1b", "Space, 0x20" })
+    @DisplayName("the key recorder's key names map to the expected keysyms")
+    void recordedKeysMap(String token, String expectedHex) {
+        assertEquals(Long.decode(expectedHex).longValue(), LinuxKeyboard.keysym(token));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "wibble", "" })
     @DisplayName("unknown modifier tokens resolve to 0 (the 'bad modifier' sentinel)")
     void unknownModifiersAreZero(String token) {
         assertEquals(0L, LinuxKeyboard.modifierKeysym(token));

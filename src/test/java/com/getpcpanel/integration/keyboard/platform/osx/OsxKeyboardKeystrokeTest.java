@@ -25,7 +25,21 @@ class OsxKeyboardKeystrokeTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "wibble", "CTRL", "" })
+    @CsvSource({ "Ctrl, 0x40000", "CTRL, 0x40000", "Shift, 0x20000", "Alt, 0x80000", "Win, 0x100000" })
+    @DisplayName("the key recorder's modifier labels map to the same masks")
+    void recordedModifiersMap(String token, String expectedHex) {
+        assertEquals(Long.decode(expectedHex).longValue(), OsxKeyboard.modifierFlag(token));
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "ArrowLeft, 0x7B", "ArrowDown, 0x7D", "PageUp, 0x74", "Backspace, 0x33", "Escape, 0x35", "Space, 0x31" })
+    @DisplayName("the key recorder's key names map to the expected keycodes")
+    void recordedKeysMap(String token, String expectedHex) {
+        assertEquals((short) Integer.decode(expectedHex).intValue(), OsxKeyboard.keyCode(token));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "wibble", "" })
     @DisplayName("unknown modifiers resolve to 0")
     void unknownModifiersAreZero(String token) {
         assertEquals(0L, OsxKeyboard.modifierFlag(token));

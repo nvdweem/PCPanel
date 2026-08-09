@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.getpcpanel.integration.keyboard.Keyboard;
+import com.getpcpanel.integration.keyboard.KeystrokeTokens;
 import com.getpcpanel.integration.keyboard.command.CommandMedia.VolumeButton;
 import com.getpcpanel.platform.LinuxBuild;
 import com.sun.jna.Library;
@@ -23,8 +24,8 @@ import lombok.extern.log4j.Log4j2;
  * ({@code XTestFakeKeyEvent}) — the exact mechanism {@link java.awt.Robot} uses on X11 — so the
  * native image no longer needs the AWT windowing toolkit.
  *
- * <p>The input string is the cross-platform "{@code modifier+modifier+key}" format; tokens (AWT
- * {@code VK_}-suffix names) are mapped to X11 keysyms, resolved to keycodes via the current keyboard
+ * <p>The input string is the cross-platform "{@code modifier+modifier+key}" format, canonicalised by
+ * {@link KeystrokeTokens} and mapped to X11 keysyms, resolved to keycodes via the current keyboard
  * mapping, then pressed/released.
  *
  * <p>Works against an X server (native X11 or XWayland). On a pure Wayland session with no X server
@@ -88,7 +89,10 @@ class LinuxKeyboard implements Keyboard {
         if (input == null || input.contains("UNDEFINED")) {
             return;
         }
-        var parts = input.replace(" ", "").split("\\+");
+        var tokens = KeystrokeTokens.split(input);
+        if (tokens.isEmpty()) {
+            return;
+        }
         synchronized (LOCK) {
             var disp = display();
             if (disp == null) {
@@ -97,17 +101,18 @@ class LinuxKeyboard implements Keyboard {
             }
             var pressed = new ArrayList<Byte>();
             try {
-                for (var i = 0; i < parts.length - 1; i++) {
-                    var sym = modifierKeysym(parts[i]);
+                for (var i = 0; i < tokens.size() - 1; i++) {
+                    var sym = modifierKeysym(tokens.get(i));
                     if (sym == 0) {
-                        log.error("bad keystroke modifier: {}", parts[i]);
+                        log.error("bad keystroke modifier: {}", tokens.get(i));
                     } else {
                         pressed.add(sendKeysym(disp, sym, true));
                     }
                 }
-                var keySym = keysym(parts[parts.length - 1]);
+                var last = tokens.get(tokens.size() - 1);
+                var keySym = keysym(last);
                 if (keySym == 0) {
-                    log.error("Unsupported Linux keystroke key '{}' in '{}'", parts[parts.length - 1], input);
+                    log.error("Unsupported Linux keystroke key '{}' in '{}'", last, input);
                 } else {
                     pressed.add(sendKeysym(disp, keySym, true));
                 }
@@ -373,17 +378,20 @@ class LinuxKeyboard implements Keyboard {
     }
 
     static long modifierKeysym(String mod) {
-        return switch (mod) {
-            case "ctrl" -> 0xffe3L;                      // Control_L
-            case "shift" -> 0xffe1L;                      // Shift_L
-            case "alt" -> 0xffe9L;                        // Alt_L
-            case "cmd", "command", "windows", "meta" -> 0xffebL; // Super_L
-            default -> 0;
+        var modifier = KeystrokeTokens.modifier(mod);
+        if (modifier == null) {
+            return 0;
+        }
+        return switch (modifier) {
+            case CTRL -> 0xffe3L;  // Control_L
+            case SHIFT -> 0xffe1L; // Shift_L
+            case ALT -> 0xffe9L;   // Alt_L
+            case META -> 0xffebL;  // Super_L
         };
     }
 
     static long keysym(String token) {
-        var t = token.toUpperCase();
+        var t = KeystrokeTokens.key(token);
         if (t.length() == 1) {
             var c = t.charAt(0);
             if (c >= 'A' && c <= 'Z') {
