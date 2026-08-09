@@ -240,7 +240,7 @@ class WindowsKeyboard implements Keyboard {
     }
 
     /** Global multimedia virtual-key code for a media button. */
-    private static int mediaVk(VolumeButton button) {
+    static int mediaVk(VolumeButton button) {
         return switch (button) {
             case mute -> Win32VK.VK_VOLUME_MUTE.code;
             case next -> Win32VK.VK_MEDIA_NEXT_TRACK.code;

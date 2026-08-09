@@ -8,6 +8,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import com.getpcpanel.integration.keyboard.command.CommandMedia.VolumeButton;
+
 /**
  * Functional tests for the Windows keystroke feature's pure token -> Win32 virtual-key mapping
  * (the part of {@link WindowsKeyboard} that runs before {@code User32.SendInput}). The mapping
@@ -67,6 +69,23 @@ class WindowsKeyboardKeystrokeTest {
     }
 
     @ParameterizedTest
+    @CsvSource({
+            "F1, 0x70", "F2, 0x71", "F3, 0x72", "F4, 0x73", "F5, 0x74", "F6, 0x75",
+            "F7, 0x76", "F8, 0x77", "F9, 0x78", "F10, 0x79", "F11, 0x7A", "F12, 0x7B",
+            "ENTER, 0x0D", "TAB, 0x09", "SPACE, 0x20", "BACK_SPACE, 0x08",
+            "ESCAPE, 0x1B", "ESC, 0x1B", "DELETE, 0x2E", "INSERT, 0x2D",
+            "HOME, 0x24", "END, 0x23", "PAGE_UP, 0x21", "PAGE_DOWN, 0x22",
+            "LEFT, 0x25", "UP, 0x26", "RIGHT, 0x27", "DOWN, 0x28",
+            "MINUS, 0xBD", "EQUALS, 0xBB", "OPEN_BRACKET, 0xDB", "CLOSE_BRACKET, 0xDD",
+            "BACK_SLASH, 0xDC", "SEMICOLON, 0xBA", "QUOTE, 0xDE", "COMMA, 0xBC",
+            "PERIOD, 0xBE", "SLASH, 0xBF", "BACK_QUOTE, 0xC0",
+    })
+    @DisplayName("every entry in the table is the virtual key Windows documents for that name")
+    void everyNamedKeyHasItsWin32Code(String token, String expectedHex) {
+        assertEquals(Integer.decode(expectedHex).intValue(), WindowsKeyboard.keyVk(token), token);
+    }
+
+    @ParameterizedTest
     @CsvSource({ "LEFT", "UP", "RIGHT", "DOWN", "HOME", "END", "PAGE_UP", "PAGE_DOWN", "INSERT", "DELETE" })
     @DisplayName("navigation keys are sent as extended, so a held Shift survives them")
     void navigationKeysAreExtended(String token) {
@@ -83,6 +102,13 @@ class WindowsKeyboardKeystrokeTest {
         assertEquals(0, WindowsKeyboard.vkFlags(WindowsKeyboard.keyVk("A"), false));
         assertEquals(0, WindowsKeyboard.vkFlags(WindowsKeyboard.keyVk("ENTER"), false));
         assertEquals(0x0002, WindowsKeyboard.vkFlags(WindowsKeyboard.keyVk("A"), true));
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "mute, 0xAD", "next, 0xB0", "prev, 0xB1", "stop, 0xB2", "playPause, 0xB3" })
+    @DisplayName("media buttons keep their global multimedia virtual key")
+    void mediaKeysMap(VolumeButton button, String expectedHex) {
+        assertEquals(Integer.decode(expectedHex).intValue(), WindowsKeyboard.mediaVk(button));
     }
 
     @ParameterizedTest
