@@ -67,6 +67,25 @@ class WindowsKeyboardKeystrokeTest {
     }
 
     @ParameterizedTest
+    @CsvSource({ "LEFT", "UP", "RIGHT", "DOWN", "HOME", "END", "PAGE_UP", "PAGE_DOWN", "INSERT", "DELETE" })
+    @DisplayName("navigation keys are sent as extended, so a held Shift survives them")
+    void navigationKeysAreExtended(String token) {
+        var vk = WindowsKeyboard.keyVk(token);
+        assertEquals(0x0001, WindowsKeyboard.vkFlags(vk, false) & 0x0001, token + " must set KEYEVENTF_EXTENDEDKEY");
+        assertEquals(0x0003, WindowsKeyboard.vkFlags(vk, true), token + " release must keep both flags");
+    }
+
+    @Test
+    @DisplayName("the Windows modifier is extended; the other modifiers and ordinary keys are not")
+    void onlyTheRightKeysAreExtended() {
+        assertEquals(0x0001, WindowsKeyboard.vkFlags(WindowsKeyboard.modifierVk("Win"), false));
+        assertEquals(0, WindowsKeyboard.vkFlags(WindowsKeyboard.modifierVk("Shift"), false));
+        assertEquals(0, WindowsKeyboard.vkFlags(WindowsKeyboard.keyVk("A"), false));
+        assertEquals(0, WindowsKeyboard.vkFlags(WindowsKeyboard.keyVk("ENTER"), false));
+        assertEquals(0x0002, WindowsKeyboard.vkFlags(WindowsKeyboard.keyVk("A"), true));
+    }
+
+    @ParameterizedTest
     @ValueSource(strings = { "UNDEFINED", "NOPE", "F13" })
     @DisplayName("unrecognised keys resolve to 0 (note: F13-F24 are not yet mapped on Windows)")
     void unknownKeysAreZero(String token) {
