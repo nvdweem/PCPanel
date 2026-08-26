@@ -22,6 +22,7 @@ import com.getpcpanel.profile.LightingChangedToDefaultEvent;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.ProfileSwitchedEvent;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.profile.WindowFocusChangedEvent;
 import com.getpcpanel.profile.dto.LightingConfig;
 import com.getpcpanel.profile.dto.LightingConfig.LightingMode;
 import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
@@ -120,6 +121,12 @@ class MuteColorService implements IOverrideColorProviderProvider {
     }
 
     public void onDiscord(@Observes DiscordChangedEvent event) {
+        recomputeAll();
+    }
+
+    public void onWindowFocusChanged(@Observes WindowFocusChangedEvent event) {
+        // A focused-app control acts on a moving target, so its muted colour has to be re-evaluated
+        // against the application that now has focus.
         recomputeAll();
     }
 

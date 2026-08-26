@@ -75,7 +75,7 @@ up to date when you add or remove an event or an observer.
 | Event | Fired by | Observed by |
 |-------|----------|-------------|
 | `SystemEvent` (sleep/wake/lock/display-off/display-on) | `WindowsSystemEventService` / `LinuxSystemEventService` / `MacSystemEventService` | `SleepDetector` |
-| `WindowFocusChangedEvent` | focus watchers | `DeviceHolder`, `ProfileWindowFocusService` |
+| `WindowFocusChangedEvent` | focus watchers | `DeviceHolder`, `ProfileWindowFocusService`, `MuteColorService` (a focused-app control's muted colour tracks the app that now has focus) |
 | `ShowMainEvent` | `FileChecker`, `StatusNotifierItemImpl`, `TrayServiceWin`, `DBusMenuImpl`, `CommandOpenWebUi`, `StartupOnboarding` | `ShowMainService` (optional `redirect` lands the browser on a named in-app path, e.g. the tray's "Report a problem" → `/?report=1`) |
 | `OpenFolderEvent` | `TrayServiceWin`, `DBusMenuImpl` (tray "Open settings folder") | `ShowMainService` (reveals the folder in the OS file manager) |
 | `NewVersionAvailableEvent` | `VersionChecker` | (UI/notification consumers) |
