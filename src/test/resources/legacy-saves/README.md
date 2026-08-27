@@ -22,6 +22,16 @@ regenerating produces a reviewable diff rather than noise.
 
 `CommandNoOp` never appears: the `Commands` constructor strips it, so no save file can contain one.
 
+### One value that is deliberately not from the counter
+
+The first knob's `muteOverrideDeviceOrFollow` reads `Follow what is controlled by this knob/slider`.
+That is the wording the pre-2.0 lighting dialog wrote to mean "follow this control", and it is the
+only shape a real file can carry there besides a device name or a `VoiceMeeter: …` target — a counter
+value could never appear. `SaveServiceMigrationTest` keys off it to prove a real legacy file has that
+wording rewritten on load; it fails loudly if the fixtures stop carrying it, rather than passing on an
+empty search. Regenerating is safe: `SavePopulator.topUp` only fills fields still holding a default,
+so a value loaded from the previous fixture is carried forward untouched.
+
 ## Freezing rule
 
 **`profiles-1.7.1.json` and `profiles-1.8.json` are frozen.** They are artifacts of releases that

@@ -59,7 +59,7 @@
             "mode" : "STATIC",
             "color1" : "color1-488",
             "color2" : "color2-489",
-            "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-492",
+            "muteOverrideDeviceOrFollow" : "Follow what is controlled by this knob/slider",
             "muteOverrideColor" : "muteOverrideColor-491"
           }, {
             "mode" : "NONE",

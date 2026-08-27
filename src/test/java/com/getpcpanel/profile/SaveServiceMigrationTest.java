@@ -5,11 +5,22 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
+
 import org.junit.jupiter.api.Test;
 
+import com.getpcpanel.AppLikeMapper;
+import com.getpcpanel.StubBeans;
 import com.getpcpanel.device.provider.pcpanel.DescriptorFactory;
 import com.getpcpanel.device.provider.pcpanel.DeviceType;
 import com.getpcpanel.profile.dto.LightingConfig;
+import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
+import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig;
+import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
 
 class SaveServiceMigrationTest {
     @Test
@@ -84,5 +95,37 @@ class SaveServiceMigrationTest {
 
         assertFalse(migrated, "a target naming a device is not legacy wording");
         assertEquals("Speakers (Realtek Audio)", targetsOf(save).knob());
+    }
+
+    /** Every mute-override target in the save, across knobs, sliders and slider labels. */
+    private static List<String> muteTargetsIn(Save save) {
+        return save.getDevices().values().stream()
+                   .flatMap(d -> d.getProfiles().stream())
+                   .map(Profile::lightingConfig)
+                   .flatMap(lc -> Stream.of(
+                           Arrays.stream(lc.knobConfigs()).map(SingleKnobLightingConfig::getMuteOverrideDeviceOrFollow),
+                           Arrays.stream(lc.sliderConfigs()).map(SingleSliderLightingConfig::getMuteOverrideDeviceOrFollow),
+                           Arrays.stream(lc.sliderLabelConfigs()).map(SingleSliderLabelLightingConfig::getMuteOverrideDeviceOrFollow))
+                                          .flatMap(s -> s))
+                   .filter(Objects::nonNull)
+                   .toList();
+    }
+
+    @Test
+    void aRealLegacyFileHasEveryFollowTargetMigrated() throws Exception {
+        StubBeans.install();
+        var save = AppLikeMapper.build().readValue(
+                new String(Objects.requireNonNull(getClass().getResourceAsStream("/legacy-saves/profiles-1.7.1.json")).readAllBytes(), StandardCharsets.UTF_8),
+                Save.class);
+
+        // Without the wording in the fixture this test proves nothing, so say so rather than pass empty.
+        assertTrue(muteTargetsIn(save).contains(LightingConfig.LEGACY_FOLLOW_TARGET),
+                "the 1.7.1 fixture no longer spells the follow target out, so this guards nothing");
+
+        var migrated = SaveService.migrateMuteOverrideFollow(save);
+
+        assertTrue(migrated, "a real pre-2.0 file should be migrated");
+        assertFalse(muteTargetsIn(save).contains(LightingConfig.LEGACY_FOLLOW_TARGET),
+                "no control may still name the follow wording as if it were a device");
     }
 }
