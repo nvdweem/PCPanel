@@ -6,6 +6,10 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+
+import javax.annotation.Nullable;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -14,6 +18,10 @@ import com.getpcpanel.Json;
 import com.getpcpanel.device.provider.pcpanel.DescriptorFactory;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.device.DeviceHolder;
+import com.getpcpanel.profile.dto.LightingConfig;
+import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
+import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig;
+import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
 import com.getpcpanel.util.concurrent.Debouncer;
 import com.getpcpanel.util.io.FileUtil;
 import com.getpcpanel.util.tray.win.WinUser32Ext;
@@ -70,8 +78,10 @@ public class SaveService {
 
         try {
             save = json.read(FileUtils.readFileToString(saveFile, Charset.defaultCharset()), Save.class);
-            if (migrateProviderIds(save)) {
-                // Legacy DeviceSave entries had no provider identity. Treat this as an old-version
+            var migratedProviderIds = migrateProviderIds(save);
+            var migratedMuteTargets = migrateMuteOverrideFollow(save);
+            if (migratedProviderIds || migratedMuteTargets) {
+                // Both rewrite values an older file spells differently. Treat either as an old-version
                 // read so the existing backup(.bak) + one-time rewrite path persists the migration.
                 encounterOldVersion("2.0");
             }
@@ -112,6 +122,47 @@ public class SaveService {
             }
         }
         return migrated;
+    }
+
+    /**
+     * Blanks any per-control mute-override target still spelled as {@link LightingConfig#LEGACY_FOLLOW_TARGET}.
+     * A blank target is what "follow this control" is written as, so leaving the wording in place would
+     * name a device that does not exist — both to the mute-colour resolvers and to the lighting UI.
+     * Pure (no I/O); returns {@code true} if anything changed so the caller can trigger the rewrite.
+     */
+    static boolean migrateMuteOverrideFollow(Save save) {
+        var migrated = false;
+        for (var deviceSave : save.getDevices().values()) {
+            for (var profile : deviceSave.getProfiles()) {
+                var lc = profile.lightingConfig();
+                if (lc == null) {
+                    continue;
+                }
+                var changed = clearLegacyFollow(lc.knobConfigs(), SingleKnobLightingConfig::getMuteOverrideDeviceOrFollow, SingleKnobLightingConfig::setMuteOverrideDeviceOrFollow);
+                changed |= clearLegacyFollow(lc.sliderConfigs(), SingleSliderLightingConfig::getMuteOverrideDeviceOrFollow, SingleSliderLightingConfig::setMuteOverrideDeviceOrFollow);
+                changed |= clearLegacyFollow(lc.sliderLabelConfigs(), SingleSliderLabelLightingConfig::getMuteOverrideDeviceOrFollow,
+                        SingleSliderLabelLightingConfig::setMuteOverrideDeviceOrFollow);
+                if (changed) {
+                    profile.setLightingConfig(lc);
+                    migrated = true;
+                }
+            }
+        }
+        return migrated;
+    }
+
+    private static <T> boolean clearLegacyFollow(@Nullable T[] configs, Function<T, String> target, BiConsumer<T, String> setTarget) {
+        if (configs == null) {
+            return false;
+        }
+        var changed = false;
+        for (var cfg : configs) {
+            if (cfg != null && LightingConfig.LEGACY_FOLLOW_TARGET.equals(target.apply(cfg))) {
+                setTarget.accept(cfg, "");
+                changed = true;
+            }
+        }
+        return changed;
     }
 
     private void handleOldVersionEncountered() {

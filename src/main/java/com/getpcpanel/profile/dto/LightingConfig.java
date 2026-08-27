@@ -16,6 +16,13 @@ import lombok.Setter;
 @Builder(toBuilder = true)
 @JsonAutoDetect(fieldVisibility = Visibility.ANY)
 public class LightingConfig {
+    /**
+     * The wording a per-control {@code muteOverrideDeviceOrFollow} carries in save files written before
+     * the property became "blank means follow this control". It means exactly what a blank value means,
+     * so it resolves the same and is rewritten to blank when such a save is loaded.
+     */
+    public static final String LEGACY_FOLLOW_TARGET = "Follow what is controlled by this knob/slider";
+
     private LightingMode lightingMode;
     private String[] individualColors = {};
     private boolean[] volumeBrightnessTrackingEnabled = {};

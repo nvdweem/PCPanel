@@ -59,9 +59,11 @@ import lombok.extern.log4j.Log4j2;
  * after applying them this service both re-sends lighting to the hardware and fires
  * {@link VisualColorsChangedEvent} so the on-screen device re-renders.
  *
- * <p>The override is active whenever a control has a non-black muted colour. The target it follows is
- * the control's {@code muteOverrideDeviceOrFollow}: blank means {@link MuteStateResolver#FOLLOW} (follow
- * the control's own command), a non-blank value names a fixed device / VoiceMeeter target.
+ * <p>The override is active whenever a control has a muted colour set at all (black is a colour; only a
+ * blank one means "off"). The target it follows is the control's {@code muteOverrideDeviceOrFollow}:
+ * blank — or the equivalent {@link LightingConfig#LEGACY_FOLLOW_TARGET} wording — means
+ * {@link MuteStateResolver#FOLLOW} (follow the control's own command), and any other value names a fixed
+ * device / VoiceMeeter target.
  */
 @Log4j2
 @Priority(0)
@@ -281,7 +283,7 @@ class MuteColorService implements IOverrideColorProviderProvider {
 
     /** First resolver that claims responsibility wins; an unclaimed target counts as not muted. */
     private boolean resolveMuted(Commands command, String target) {
-        var normalized = StringUtils.isBlank(target) ? MuteStateResolver.FOLLOW : target;
+        var normalized = StringUtils.isBlank(target) || LightingConfig.LEGACY_FOLLOW_TARGET.equals(target) ? MuteStateResolver.FOLLOW : target;
         for (var resolver : resolvers) {
             try {
                 var result = resolver.resolve(command, normalized);

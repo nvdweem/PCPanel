@@ -99,4 +99,35 @@ class MuteColorServiceTest {
         assertTrue(changed, "unmuting should clear the override");
         assertTrue(service.getOverrideColorProvider().getSliderOverride("serial", 0).isEmpty());
     }
+
+    /** Like the real resolvers, which claim a control only when the target is {@link MuteStateResolver#FOLLOW}. */
+    private static MuteColorService serviceFollowingOnly(boolean muted) {
+        var service = new MuteColorService();
+        service.resolvers = List.of((command, target) -> MuteStateResolver.FOLLOW.equals(target) ? Optional.of(muted) : Optional.empty());
+        return service;
+    }
+
+    @Test
+    void aBlankTargetFollowsTheControlsOwnCommand() {
+        var service = serviceFollowingOnly(true);
+        var lc = proCustomWithSliderMuteColor("#FF0000");
+
+        var changed = service.applyOverrides("serial", lc, Map.of(5, waveLinkChannelVolume("music")));
+
+        assertTrue(changed, "a blank target means follow whatever the control drives");
+        assertTrue(service.getOverrideColorProvider().getSliderOverride("serial", 0).isPresent());
+    }
+
+    @Test
+    void theLegacyFollowTargetAlsoMeansFollow() {
+        var service = serviceFollowingOnly(true);
+        var lc = proCustomWithSliderMuteColor("#FF0000");
+        // The wording save files written by the pre-Angular lighting dialog carry for "follow this control".
+        lc.sliderConfigs()[0].setMuteOverrideDeviceOrFollow("Follow what is controlled by this knob/slider");
+
+        var changed = service.applyOverrides("serial", lc, Map.of(5, waveLinkChannelVolume("music")));
+
+        assertTrue(changed, "the legacy follow wording must resolve like a blank target");
+        assertTrue(service.getOverrideColorProvider().getSliderOverride("serial", 0).isPresent());
+    }
 }
