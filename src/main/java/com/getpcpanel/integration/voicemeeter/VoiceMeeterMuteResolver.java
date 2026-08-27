@@ -12,7 +12,9 @@ import com.getpcpanel.commands.Commands;
 import com.getpcpanel.integration.volume.mutecolor.MuteOverridesDirtyEvent;
 import com.getpcpanel.integration.volume.mutecolor.MuteStateResolver;
 import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterAdvanced;
+import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterAdvancedButton;
 import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterBasic;
+import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterBasicButton;
 import com.getpcpanel.integration.voicemeeter.Voicemeeter.ButtonType;
 import com.getpcpanel.integration.voicemeeter.Voicemeeter.ControlType;
 
@@ -25,8 +27,8 @@ import jakarta.inject.Inject;
  * Mute state of a VoiceMeeter strip/bus. VoiceMeeter pushes mute changes as {@link VoiceMeeterMuteEvent};
  * this resolver caches the last-seen state per control and, after updating the cache, fires a
  * {@link MuteOverridesDirtyEvent} so the override colours recompute against fresh state. Supports a
- * control following its own basic/advanced VoiceMeeter command, and the legacy {@code VoiceMeeter: …}
- * named-target pattern.
+ * control following its own basic/advanced VoiceMeeter command — dial or button, the dial winning when
+ * it has both — and the legacy {@code VoiceMeeter: …} named-target pattern.
  */
 @ApplicationScoped
 public class VoiceMeeterMuteResolver implements MuteStateResolver {
@@ -53,11 +55,15 @@ public class VoiceMeeterMuteResolver implements MuteStateResolver {
             }
             var advanced = command.getCommand(CommandVoiceMeeterAdvanced.class).orElse(null);
             if (advanced != null) {
-                var matcher = ADVANCED.matcher(StringUtils.defaultString(advanced.getFullParam()));
-                if (matcher.find()) {
-                    var ct = "bus".equalsIgnoreCase(matcher.group(1)) ? ControlType.BUS : ControlType.STRIP;
-                    return lookup(ct, NumberUtils.toInt(matcher.group(2), 0), ButtonType.MUTE);
-                }
+                return fromFullParam(advanced.getFullParam());
+            }
+            var basicButton = command.getCommand(CommandVoiceMeeterBasicButton.class).orElse(null);
+            if (basicButton != null) {
+                return lookup(basicButton.getCt(), basicButton.getIndex(), ButtonType.MUTE);
+            }
+            var advancedButton = command.getCommand(CommandVoiceMeeterAdvancedButton.class).orElse(null);
+            if (advancedButton != null) {
+                return fromFullParam(advancedButton.getFullParam());
             }
             return Optional.empty();
         }
@@ -72,6 +78,17 @@ public class VoiceMeeterMuteResolver implements MuteStateResolver {
             return Optional.empty();
         }
         return lookup(ct, NumberUtils.toInt(matcher.group(2), 0) - 1, button);
+    }
+
+    /** A raw parameter such as {@code Strip[0].Mute} or {@code Bus[1].Gain} → the MUTE state of the
+     *  strip/bus it addresses, whichever of its parameters the control itself drives. */
+    private Optional<Boolean> fromFullParam(String fullParam) {
+        var matcher = ADVANCED.matcher(StringUtils.defaultString(fullParam));
+        if (!matcher.find()) {
+            return Optional.empty();
+        }
+        var ct = "bus".equalsIgnoreCase(matcher.group(1)) ? ControlType.BUS : ControlType.STRIP;
+        return lookup(ct, NumberUtils.toInt(matcher.group(2), 0), ButtonType.MUTE);
     }
 
     private Optional<Boolean> lookup(ControlType ct, int idx, ButtonType button) {

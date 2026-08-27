@@ -51,6 +51,9 @@
 - (Windows) **Holding Shift with an arrow key now selects text** instead of only moving the cursor, so Shift+Left and Ctrl+Shift+Left do what you would expect.
 - **Shortcuts that can't be recorded can now be put together by hand.** The recorder has Ctrl, Shift, Alt and Win buttons you can switch on yourself, for combinations Windows or your browser keeps for itself — press the plain key, then switch the modifiers on to build something like Win+D or Alt+Left.
 - **Type text** now takes more than one line, and pressing Tab puts a tab in the text instead of jumping out of the field.
+- #155 - Fixed **"Change colour when muted" doing nothing on a control muted by a mute button.** If a knob's press was set to *Device mute*, *App mute* or *Focused-app mute*, pressing it muted the sound but left the light on its normal colour. The muted colour only ever followed a *volume* action, so a control that mutes without also having *Device volume* or *App volume* on the same knob was never seen as muted. It now follows the mute button's own target as well. Set your muted colour to black to have the light switch off while muted.
+- A knob set to **Focused-app volume** or **Focused-app mute** now changes to its muted colour too, and follows along as you switch between programs.
+- The same fix applies to **Voicemeeter**: a knob that mutes a strip or bus from its button now takes the muted colour, where before only a Voicemeeter volume knob did.
 
 ## [2.0.84]
 
