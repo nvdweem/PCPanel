@@ -6,6 +6,7 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.integration.volume.command.CommandVolumeProcess;
+import com.getpcpanel.integration.volume.platform.AudioSession;
 import com.getpcpanel.integration.volume.platform.AudioSessionEvent;
 import com.getpcpanel.integration.volume.platform.EventType;
 import com.getpcpanel.integration.volume.platform.ISndCtrl;
@@ -73,17 +74,23 @@ class LinuxNewSessionVolumeService implements IFocusRedirector {
         return false;
     }
 
-    /**
-     * Returns {@code true} if the given command matches the session's executable
-     */
-    private boolean isProcessAndDevice(AudioSessionEvent event, CommandVolumeProcess c) {
+    /** Returns {@code true} if the given command names the session's executable or title */
+    boolean isProcessAndDevice(AudioSessionEvent event, CommandVolumeProcess c) {
         var session = event.session();
         if (session.executable() == null)
             return false;
-        if (!c.getProcessName().contains(session.executable().getName())) {
+        if (c.getProcessName().stream().noneMatch(n -> matchesName(session, n))) {
             return false;
         }
         var deviceId = c.getDevice();
         return StringUtils.isBlank(deviceId) || "*".equals(deviceId);
+    }
+
+    private static boolean matchesName(AudioSession session, String query) {
+        var normalized = StringUtils.removeEndIgnoreCase(StringUtils.trimToEmpty(query), ".exe");
+        return StringUtils.isNotBlank(normalized)
+                && StringUtils.equalsAnyIgnoreCase(normalized,
+                        StringUtils.removeEndIgnoreCase(session.executable().getName(), ".exe"),
+                        StringUtils.removeEndIgnoreCase(session.title(), ".exe"));
     }
 }
