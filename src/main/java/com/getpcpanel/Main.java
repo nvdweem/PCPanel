@@ -25,7 +25,6 @@ public class Main implements QuarkusApplication {
     private static final String SKIP_FILE_CHECK_PROPERTY = "pcpanel.skip-file-check";
     private static final String POST_INSTALL_PROPERTY = "pcpanel.postinstall";
     private static final String UPDATED_PROPERTY = "pcpanel.updated";
-    private static final String AUTOSTART_PROPERTY = "pcpanel.autostart";
 
     static void main(String... args) {
         forceHeadlessAwt();
@@ -109,9 +108,6 @@ public class Main implements QuarkusApplication {
         if (argSet.contains("/updated") || argSet.contains("updated")) {
             System.setProperty(UPDATED_PROPERTY, "true");
         }
-        // Published for the startup log line: main() runs before the container, so how this process was
-        // launched can only be reported once the file log handler exists.
-        System.setProperty(AUTOSTART_PROPERTY, String.valueOf(isAutostartLaunch(argSet)));
     }
 
     /**
