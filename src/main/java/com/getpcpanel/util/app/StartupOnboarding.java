@@ -52,6 +52,11 @@ public class StartupOnboarding {
     @ConfigProperty(name = "pcpanel.updated", defaultValue = "false")
     boolean updated;
 
+    // Whether the OS started this process at logon rather than the user starting it (launch arg "quiet",
+    // published by Main). Reported in the startup log line so a user's log says how PCPanel was launched.
+    @ConfigProperty(name = "pcpanel.autostart", defaultValue = "false")
+    boolean autostart;
+
     @ConfigProperty(name = "quarkus.application.version", defaultValue = "dev")
     String version;
 
@@ -63,10 +68,13 @@ public class StartupOnboarding {
 
         // After an auto-update the triggering UI is already open (it reconnects), so never open a second
         // browser tab — even if "open on startup" is on. First install / /postinstall still open it.
-        var openBrowser = newSave || postInstall || (!updated && saveService.get().isOpenBrowserOnStartup());
+        var setting = saveService.get().isOpenBrowserOnStartup();
+        var openBrowser = newSave || postInstall || (!updated && setting);
+        // Logged on every start, whichever way it goes: this line and FileChecker's are what a reported
+        // log has to answer "did PCPanel open the browser, and why" with.
+        log.info("Startup UI decision: open={} (firstRun={}, postInstall={}, updated={}, autostart={}, setting={})",
+                openBrowser, newSave, postInstall, updated, autostart, setting);
         if (openBrowser) {
-            log.info("Opening the UI in the browser on startup (firstRun={}, postInstall={}, setting={})",
-                    newSave, postInstall, saveService.get().isOpenBrowserOnStartup());
             eventBus.fire(new ShowMainEvent());
         }
     }
