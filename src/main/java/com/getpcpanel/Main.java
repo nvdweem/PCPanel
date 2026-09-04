@@ -16,6 +16,12 @@ import io.quarkus.runtime.annotations.QuarkusMain;
 @QuarkusMain
 public class Main implements QuarkusApplication {
     private static final String SKIP_FILE_CHECK_ARG = "skipfilecheck";
+    /**
+     * Marks a launch the OS performed at logon rather than one the user performed. Both autostart
+     * mechanisms the installer sets up pass it: the {@code HKCU\Run} value and, for the elevated
+     * option, the {@code PCPanel} scheduled task (see {@code packaging/windows/pcpanel.iss}).
+     */
+    private static final String AUTOSTART_ARG = "quiet";
     private static final String SKIP_FILE_CHECK_PROPERTY = "pcpanel.skip-file-check";
     private static final String POST_INSTALL_PROPERTY = "pcpanel.postinstall";
     private static final String UPDATED_PROPERTY = "pcpanel.updated";
@@ -38,9 +44,18 @@ public class Main implements QuarkusApplication {
         // rather than after boot: otherwise it opens the shared PCPanel and, on its own shutdown, turns
         // the LEDs off on the still-running first instance.
         if (!skipFileCheck(argSet)) {
-            FileChecker.ensureSingleInstance();
+            FileChecker.ensureSingleInstance(!isAutostartLaunch(argSet));
         }
         Quarkus.run(Main.class, args);
+    }
+
+    /**
+     * Whether the OS started this process at logon rather than the user starting it. Only the latter is
+     * a "show me the UI" gesture when it turns out another instance is already running — see
+     * {@link FileChecker#signalRunningInstance(boolean, java.io.File)}.
+     */
+    static boolean isAutostartLaunch(Set<String> argSet) {
+        return argSet.contains(AUTOSTART_ARG);
     }
 
     /**
