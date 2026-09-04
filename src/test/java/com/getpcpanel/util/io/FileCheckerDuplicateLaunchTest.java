@@ -6,8 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardWatchEventKinds;
+import java.nio.file.WatchService;
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -96,6 +101,48 @@ class FileCheckerDuplicateLaunchTest {
             assertTrue(FileChecker.shouldShowUi(""));
             assertTrue(FileChecker.shouldShowUi(null));
             assertTrue(FileChecker.shouldShowUi("something else"));
+        }
+    }
+
+    /**
+     * The watcher reacts to the marker being created and reads its contents right then, so the whole
+     * scheme rests on a move into the watched directory arriving as {@code ENTRY_CREATE} with the
+     * contents already complete. Pinned here because it is an OS-behaviour assumption, and if it ever
+     * stopped holding the running instance would silently read an empty marker and open the browser on
+     * every duplicate launch again.
+     */
+    @Nested
+    @DisplayName("the watcher contract the marker relies on")
+    class WatcherContract {
+        @Test
+        @DisplayName("a moved-in marker arrives as ENTRY_CREATE, complete")
+        void moveFiresCreateWithCompleteContents() throws IOException, InterruptedException {
+            try (var watcher = FileSystems.getDefault().newWatchService()) {
+                root.register(watcher, StandardWatchEventKinds.ENTRY_CREATE);
+
+                FileChecker.signalRunningInstance(false, reopenFile());
+
+                var contents = awaitMarker(watcher);
+                assertEquals("autostart", contents, "the watcher should see the finished marker, not an empty file");
+            }
+        }
+
+        /** Contents of {@code reopen.txt} read the instant its ENTRY_CREATE arrives, as the watcher does. */
+        private String awaitMarker(WatchService watcher) throws InterruptedException, IOException {
+            var deadline = System.nanoTime() + Duration.ofSeconds(20).toNanos();
+            while (System.nanoTime() < deadline) {
+                var key = watcher.poll(1, TimeUnit.SECONDS);
+                if (key == null) {
+                    continue;
+                }
+                for (var event : key.pollEvents()) {
+                    if ("reopen.txt".equals(event.context().toString())) {
+                        return Files.readString(reopenFile().toPath());
+                    }
+                }
+                key.reset();
+            }
+            return "<no ENTRY_CREATE observed>";
         }
     }
 
