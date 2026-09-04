@@ -87,12 +87,18 @@ Name: "{group}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Registry]
-; Normal (unelevated) autostart for the current user. "quiet" launches without showing the main
-; window. Skipped when the administrator-startup sub-option is chosen (a scheduled task is used
-; instead) so the app does not start twice.
+; Normal (unelevated) autostart for the current user. The "quiet" argument marks the launch as one the
+; OS performed at logon rather than one the user performed, so a duplicate launch does not open the UI
+; (see Main.isAutostartLaunch). Skipped when the administrator-startup sub-option is chosen (a scheduled
+; task is used instead) so the app does not start twice.
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; \
     ValueName: "{#MyAppName}"; ValueData: """{app}\{#MyAppExeName}"" quiet"; \
-    Flags: uninsdeletevalue; Tasks: startup; Check: not WizardIsTaskSelected('startup\admin')
+    Flags: uninsdeletevalue; Check: WantsRunKeyAutostart
+; Drop the Run value again when this install does not want it — autostart switched off, or moved to the
+; administrator scheduled task. Inno only ever writes the entry above, so without this a re-install that
+; changes the choice leaves the old registration in place and the app is launched twice at logon.
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; \
+    ValueName: "{#MyAppName}"; Flags: deletevalue; Check: not WantsRunKeyAutostart
 
 [Run]
 ; Offer to launch the app right after installation finishes. The /postinstall argument tells the app
@@ -122,6 +128,14 @@ const
   // WM_CLOSE message we post to it. Keep the class name in sync with TrayServiceWin.WINDOW_CLASS.
   TrayWindowClass = 'PCPanelTrayWindow';
   WM_CLOSE = $0010;
+
+// True when this install wants the plain HKCU\Run autostart: the user asked for autostart and did not
+// pick the elevated variant, which uses a scheduled task instead. The two must never both be
+// registered — the app would be launched twice at every logon.
+function WantsRunKeyAutostart: Boolean;
+begin
+  Result := WizardIsTaskSelected('startup') and not WizardIsTaskSelected('startup\admin');
+end;
 
 // Handle to the running instance's tray window, or 0 if PCPanel is not running.
 function FindTrayWindow: HWND;
