@@ -124,20 +124,13 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
   duplicate, its own `ShutdownEvent` would `provider.stop()` and switch the LEDs off on the
   still-running first instance. Dev mode never runs `main()` (Quarkus calls `run()` directly), so the
   pre-boot check is inert there and `%dev.skip-file-check` only ever mattered to the old `run()`-time check.
-  A duplicate launch only raises the UI when a **person** started it. The OS autostart entries
-  (`HKCU\Run` and the elevated scheduled task) both pass the `quiet` arg — `Main.isAutostartLaunch` —
-  and the duplicate writes that kind (`user`/`autostart`) into `reopen.txt`; the **running** instance
-  reads it and decides. Windows can legitimately launch the app twice at logon (two autostart
-  registrations, or session restore alongside one), and treating that as a "show me" gesture opened the
-  browser on every boot regardless of the user's `openBrowserOnStartup` setting (#157).
-  The decision deliberately lives in the running instance: the duplicate exits before the container —
-  and so before the file log handler — exists, so anything it decided for itself would leave **no
-  record** in `logging.log` of why the UI did or did not open. The marker is staged as `reopen.txt.tmp`
-  and `ATOMIC_MOVE`d into place, because the watcher fires on create and would otherwise read an empty
-  file. `StartupOnboarding` logs its decision on **every** start and `FileChecker` logs both duplicate
-  outcomes, all at INFO — together they are what makes a user's `logging.log` answer "did PCPanel open
-  the browser, and why". Keep them that way; diagnosing #157 needed exactly these lines and they were
-  missing.
+  A duplicate launch only asks the running instance to open the UI when a **person** started it. The OS
+  autostart entries (`HKCU\Run` and the elevated scheduled task) both pass the `quiet` arg —
+  `Main.isAutostartLaunch` — and a duplicate marked that way exits silently. Windows can legitimately
+  launch the app twice at logon (two autostart registrations, or session restore alongside one), and
+  treating that as a "show me" gesture opened the browser on every boot regardless of the user's
+  `openBrowserOnStartup` setting (#157). Both browser-opening paths log at INFO
+  (`StartupOnboarding` and `FileChecker`), so a user's `logging.log` says whether the app opened it.
 - **Self-update (`util/version/`):** `AutoUpdateService` is a thin façade that picks the one
   `PlatformUpdater` transport matching how the app is packaged (`isSupported()` is mutually exclusive) and
   delegates. The update **source** repo is `UpdateSource.GITHUB_REPO`, a hardcoded constant — *not* a
