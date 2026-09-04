@@ -1,6 +1,8 @@
 package com.getpcpanel.integration.volume.platform;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.Collection;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -73,6 +75,32 @@ public class AudioSession {
 
     public boolean isSystemSounds() {
         return pid == 0 || StringUtils.containsIgnoreCase(icon, "AudioSrv.Dll");
+    }
+
+    /**
+     * Returns {@code true} if {@code query} names this session. The comparison is case-insensitive and ignores a
+     * trailing {@code .exe} on either side, so a Proton stream ({@code deadlock.exe}) and the window name a user
+     * binds ({@code Deadlock}) resolve to the same stream (#96).
+     * <p>
+     * This is the single rule behind every "does this binding name this stream" decision - the dial that sets the
+     * volume, the new-session restore that re-applies it, and the stored focus volume - so those can never disagree
+     * about which streams an App-volume binding owns.
+     */
+    public boolean matches(@Nullable String query) {
+        var normalized = stripExe(query);
+        return StringUtils.isNotBlank(normalized) && matchKeys().stream().anyMatch(key -> StringUtils.equalsIgnoreCase(normalized, stripExe(key)));
+    }
+
+    /**
+     * Every name this session can be addressed by. Subclasses add the identifiers their platform exposes.
+     */
+    @JsonIgnore
+    protected Collection<String> matchKeys() {
+        return Arrays.asList(executable == null ? null : executable.getName(), title);
+    }
+
+    private static String stripExe(@Nullable String value) {
+        return StringUtils.removeEndIgnoreCase(StringUtils.trimToEmpty(value), ".exe");
     }
 
     protected AudioSession setVolumeNoTrigger(float volume) {

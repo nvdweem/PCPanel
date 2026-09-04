@@ -117,6 +117,22 @@ class SndCtrlPulseAudioTest {
         assertFalse(SndCtrlPulseAudio.matches(session, ""), "blank query never matches");
     }
 
+    /**
+     * A stream that exposes both an application.name and a portal app id keeps the app name as its title, so the
+     * portal id is a match key in its own right rather than a by-product of the title fallback.
+     */
+    @Test
+    void matchesPortalAppIdAlongsideApplicationName() {
+        var session = session(Map.of(
+                "application.name", "Spotify",
+                "media.name", "audio-src",
+                "pipewire.access.portal.app_id", "com.spotify.Client"));
+
+        assertEquals("Spotify", session.title(), "the application name wins the title");
+        assertTrue(SndCtrlPulseAudio.matches(session, "Spotify"), "should match the application name");
+        assertTrue(SndCtrlPulseAudio.matches(session, "com.spotify.Client"), "should match the portal app id as well");
+    }
+
     /** The app selector must show a bindable name; metadata-sparse sink-inputs fall back to title/portal id (#71). */
     @Test
     void runningAppNamePrefersExecutableThenTitle() {

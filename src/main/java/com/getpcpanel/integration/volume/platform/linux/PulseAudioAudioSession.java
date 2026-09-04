@@ -1,6 +1,7 @@
 package com.getpcpanel.integration.volume.platform.linux;
 
 import java.io.File;
+import java.util.Collection;
 
 import javax.annotation.Nullable;
 
@@ -10,6 +11,7 @@ import com.getpcpanel.integration.volume.platform.AudioSession;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import one.util.streamex.StreamEx;
 
 @Getter
 @EqualsAndHashCode(callSuper = true)
@@ -32,5 +34,14 @@ class PulseAudioAudioSession extends AudioSession {
     @Override
     protected AudioSession setVolumeNoTrigger(float volume) {
         return super.setVolumeNoTrigger(volume);
+    }
+
+    /**
+     * A PulseAudio stream is additionally addressable by its portal app id, which for a sandboxed app may be the
+     * only identifier it exposes.
+     */
+    @Override
+    protected Collection<String> matchKeys() {
+        return StreamEx.of(super.matchKeys()).append(portalAppId).toList();
     }
 }

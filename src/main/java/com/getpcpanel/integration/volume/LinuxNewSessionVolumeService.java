@@ -2,6 +2,7 @@ package com.getpcpanel.integration.volume;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -18,6 +19,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
+import one.util.streamex.StreamEx;
 
 @Log4j2
 @LinuxBuild
@@ -52,16 +54,28 @@ class LinuxNewSessionVolumeService implements IFocusRedirector {
             return true;
         }
 
-        return triggerStoredFocusAppVolume(exe);
+        return triggerStoredFocusAppVolume(session);
     }
 
-    private boolean triggerStoredFocusAppVolume(String exe) {
-        var stored = storedFocusAppVolume.get(StringUtils.lowerCase(exe));
-        if (stored != null) {
-            sndCtrl.setProcessVolume(exe, null, stored);
-            return true;
-        }
-        return false;
+    /**
+     * Re-applies the volume the focus dial last set for this app. The stored key is whatever identified the focused
+     * window ({@code ActiveWindow.primaryIdentifier}: a Flatpak id, process, window class or window name), which is
+     * rarely the stream's executable name - so the session is matched against it with {@link AudioSession#matches}
+     * rather than by an exact name lookup, and that same key is handed to
+     * {@link ISndCtrl#setProcessVolume} so every stream of the app is covered.
+     */
+    private boolean triggerStoredFocusAppVolume(AudioSession session) {
+        return storedFocusTarget(session)
+                .map(target -> {
+                    sndCtrl.setProcessVolume(target, null, storedFocusAppVolume.get(target));
+                    return true;
+                })
+                .orElse(false);
+    }
+
+    /** The stored focus identifier this session answers to, if the focus dial has set a volume for it. */
+    Optional<String> storedFocusTarget(AudioSession session) {
+        return StreamEx.ofKeys(storedFocusAppVolume).findFirst(session::matches);
     }
 
     private boolean triggerCommandVolumeProcessIfAvailable(AudioSessionEvent event, String exe) {
@@ -74,23 +88,19 @@ class LinuxNewSessionVolumeService implements IFocusRedirector {
         return false;
     }
 
-    /** Returns {@code true} if the given command names the session's executable or title */
+    /**
+     * Returns {@code true} if the given command names the session. Uses {@link AudioSession#matches} - the same rule
+     * the dial itself uses to pick the streams it controls - so a binding that drives a dial also gets its volume
+     * restored.
+     */
     boolean isProcessAndDevice(AudioSessionEvent event, CommandVolumeProcess c) {
         var session = event.session();
         if (session.executable() == null)
             return false;
-        if (c.getProcessName().stream().noneMatch(n -> matchesName(session, n))) {
+        if (c.getProcessName().stream().noneMatch(session::matches)) {
             return false;
         }
         var deviceId = c.getDevice();
         return StringUtils.isBlank(deviceId) || "*".equals(deviceId);
-    }
-
-    private static boolean matchesName(AudioSession session, String query) {
-        var normalized = StringUtils.removeEndIgnoreCase(StringUtils.trimToEmpty(query), ".exe");
-        return StringUtils.isNotBlank(normalized)
-                && StringUtils.equalsAnyIgnoreCase(normalized,
-                        StringUtils.removeEndIgnoreCase(session.executable().getName(), ".exe"),
-                        StringUtils.removeEndIgnoreCase(session.title(), ".exe"));
     }
 }
