@@ -37,7 +37,7 @@ the "No PCPanel connected" empty state even though the device was detected. Set 
    sudo udevadm control --reload-rules && sudo udevadm trigger
    ```
    (`udevadm trigger` applies the rule to the already-connected device, so a replug is not needed.)
-1. (Optional) Make the software startup automatically. When making the application startup automatically you can add the `quiet` parameter to not show the main window on startup.
+1. (Optional) Make the software startup automatically. Add the `quiet` parameter when you do: it marks the launch as one your system performed at login, so if PCPanel is somehow started twice the second start does not open the interface in your browser.
 
 If it still doesn't work, try restarting your computer (logging out is not enough).
 
@@ -191,8 +191,9 @@ or an `env` prefix in the `Exec=` line for XDG autostart).
 
 ## Autostart on login
 
-There is no installer on Linux, so autostart is set up manually. Add the `quiet` argument so the main window stays
-hidden on login. Pick whichever fits your setup:
+There is no installer on Linux, so autostart is set up manually. Add the `quiet` argument: it marks the launch as one
+your system performed at login, so a session that starts PCPanel twice does not open the interface in your browser.
+Pick whichever fits your setup:
 
 ### XDG autostart (most desktops: GNOME, KDE, XFCE, …)
 
@@ -224,7 +225,8 @@ install), so set it up once afterwards with either:
   Exec=flatpak run com.getpcpanel.PCPanel quiet
   ```
 
-The `quiet` argument keeps the main window hidden on login (it runs in the tray).
+The `quiet` argument marks the launch as one your system performed at login, so a second start does not open the
+interface in your browser.
 
 ### systemd user service
 

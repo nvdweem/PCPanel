@@ -47,13 +47,18 @@ public class FileChecker implements Runnable {
 
     /**
      * Phase 1, before the Quarkus container starts: take the single-instance lock. If another instance
-     * already holds it, signal that instance to raise its window and exit <em>this</em> process
-     * immediately. This runs before {@code Quarkus.run()} on purpose: the device layer connects to the
-     * hardware on the container's {@code StartupEvent}, so a second launch that got as far as booting
-     * would open the shared PCPanel and then, on its own shutdown, extinguish the LEDs of the
-     * still-running first instance. Exiting here keeps a second launch from ever touching the device.
+     * already holds it, exit <em>this</em> process immediately — raising the running instance's UI first
+     * when {@code userLaunch} says a person started us. This runs before {@code Quarkus.run()} on
+     * purpose: the device layer connects to the hardware on the container's {@code StartupEvent}, so a
+     * second launch that got as far as booting would open the shared PCPanel and then, on its own
+     * shutdown, extinguish the LEDs of the still-running first instance. Exiting here keeps a second
+     * launch from ever touching the device.
+     *
+     * @param userLaunch whether a person started this process (a shortcut, the Start menu, the
+     *                   installer) as opposed to the OS starting it at logon — see
+     *                   {@link #signalRunningInstance(boolean, File)}.
      */
-    public static void ensureSingleInstance() {
+    public static void ensureSingleInstance(boolean userLaunch) {
         if (started.getAndSet(true)) {
             log.error("Trying to start FileChecker when it is already started.");
             return;
@@ -64,8 +69,8 @@ public class FileChecker implements Runnable {
         instance = checker;
         try {
             if (checker.isDuplicate()) {
-                log.warn("Application already running, exiting and showing the already started instance.");
-                showOtherAndExit();
+                log.warn("Application already running, exiting (userLaunch={}).", userLaunch);
+                signalRunningInstanceAndExit(userLaunch);
             }
         } catch (IOException e) {
             log.warn("Unable to determine if the application is already running, pretending it isn't.", e);
@@ -75,7 +80,7 @@ public class FileChecker implements Runnable {
     /**
      * Phase 2, after the container is up: start watching for a later relaunch so this (surviving)
      * instance can raise its window. Deferred until CDI is ready because a detected relaunch fires a
-     * {@link ShowMainEvent} handled by an {@code @Observes} bean. No-op when {@link #ensureSingleInstance()}
+     * {@link ShowMainEvent} handled by an {@code @Observes} bean. No-op when {@link #ensureSingleInstance(boolean)}
      * did not run (e.g. the {@code skipfilecheck} arg), so nothing holds the lock and there is nothing to watch.
      */
     public static void startWatching() {
@@ -103,12 +108,31 @@ public class FileChecker implements Runnable {
         return lock == null;
     }
 
-    private static void showOtherAndExit() throws IOException {
-        if (!reopenFile().createNewFile()) {
-            log.debug("Unable to create reopen file.");
-        }
+    private static void signalRunningInstanceAndExit(boolean userLaunch) throws IOException {
+        signalRunningInstance(userLaunch, reopenFile());
         //noinspection CallToSystemExit
         System.exit(0);
+    }
+
+    /**
+     * Tell the already-running instance what this duplicate launch means, by leaving (or withholding)
+     * the marker its watcher reacts to.
+     *
+     * <p>Only a launch the user performed themselves is a "show me the UI" gesture. An autostart launch
+     * is the OS starting PCPanel at logon, and a machine can do that twice — two autostart registrations
+     * left behind by switching between the plain and the administrator startup option, or Windows
+     * restoring the previous session's apps alongside one of them. Treating that second launch as a
+     * gesture opens the browser on every boot, which overrides the user's "open in browser when PCPanel
+     * starts" preference and looks like that setting is being ignored.
+     */
+    static void signalRunningInstance(boolean userLaunch, File reopen) throws IOException {
+        if (!userLaunch) {
+            log.info("Duplicate autostart launch; leaving the running instance's UI closed.");
+            return;
+        }
+        if (!reopen.createNewFile()) {
+            log.debug("Unable to create reopen file.");
+        }
     }
 
     private static void tryCreateLockFile() {
@@ -152,7 +176,9 @@ public class FileChecker implements Runnable {
                         if (!reopenFile().delete()) {
                             log.trace("Unable to delete {}", file);
                         }
-                        log.debug("Showing window because another process was started");
+                        // INFO, not DEBUG: together with StartupOnboarding's line this is the only record
+                        // that the app itself opened the browser, and shipped builds log at INFO.
+                        log.info("Showing the UI because the user started a second instance");
                         AppEvents.fire(new ShowMainEvent());
                     }
                 }

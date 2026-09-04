@@ -124,6 +124,13 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
   duplicate, its own `ShutdownEvent` would `provider.stop()` and switch the LEDs off on the
   still-running first instance. Dev mode never runs `main()` (Quarkus calls `run()` directly), so the
   pre-boot check is inert there and `%dev.skip-file-check` only ever mattered to the old `run()`-time check.
+  A duplicate launch only asks the running instance to open the UI when a **person** started it. The OS
+  autostart entries (`HKCU\Run` and the elevated scheduled task) both pass the `quiet` arg —
+  `Main.isAutostartLaunch` — and a duplicate marked that way exits silently. Windows can legitimately
+  launch the app twice at logon (two autostart registrations, or session restore alongside one), and
+  treating that as a "show me" gesture opened the browser on every boot regardless of the user's
+  `openBrowserOnStartup` setting (#157). Both browser-opening paths log at INFO
+  (`StartupOnboarding` and `FileChecker`), so a user's `logging.log` says whether the app opened it.
 - **Self-update (`util/version/`):** `AutoUpdateService` is a thin façade that picks the one
   `PlatformUpdater` transport matching how the app is packaged (`isSupported()` is mutually exclusive) and
   delegates. The update **source** repo is `UpdateSource.GITHUB_REPO`, a hardcoded constant — *not* a
