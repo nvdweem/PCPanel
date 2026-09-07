@@ -148,6 +148,13 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
     app down cleanly; `pcpanel.iss`'s `/UPDATE`-gated `[Run]` entry relaunches it with `/updated` (the
     normal "Launch now" entry is `skipifsilent`). `/updated` (`Main` → `StartupOnboarding`) flags the
     "just updated" dialog like `/postinstall` but opens no browser (the triggering UI is already open).
+    **The startup tasks on an upgrade come from the machine, not from Inno's memory:** `InitializeWizard`
+    preselects `startup`/`startup\admin` from whether the `HKCU\Run` value or the elevated scheduled task
+    actually exists (explicit `/TASKS`/`/MERGETASKS` still win). Inno's own default is the task selection
+    remembered from the previous install, which can disagree with what is registered, and the `[Registry]`
+    `deletevalue` entry enforces the selection — so a silent update seeded from a stale memory would
+    de-register autostart. `startup` is `checkablealone` and `startup\admin` `dontinheritcheck`, so the two
+    boxes toggle independently (a parent task is otherwise only selectable through its children).
   - **AppImage** (`AppImageUpdater`, `$APPIMAGE` set): runs the bundled `appimageupdatetool -O -r
     "$APPIMAGE"` (zsync delta, in place) then relaunches via `UpdaterRestart`. The AppImage carries
     `gh-releases-zsync` update-info baked at build time (`appimagetool -u`) and the companion `.zsync` is
