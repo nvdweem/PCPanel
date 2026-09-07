@@ -21,7 +21,7 @@ public class Main implements QuarkusApplication {
      * mechanisms the installer sets up pass it: the {@code HKCU\Run} value and, for the elevated
      * option, the {@code PCPanel} scheduled task (see {@code packaging/windows/pcpanel.iss}).
      */
-    private static final String AUTOSTART_ARG = "quiet";
+    public static final String AUTOSTART_ARG = "quiet";
     private static final String SKIP_FILE_CHECK_PROPERTY = "pcpanel.skip-file-check";
     private static final String POST_INSTALL_PROPERTY = "pcpanel.postinstall";
     private static final String UPDATED_PROPERTY = "pcpanel.updated";

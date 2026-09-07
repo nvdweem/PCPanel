@@ -57,6 +57,20 @@
               </div>
               <pc-toggle [value]="s.openBrowserOnStartup" (valueChange)="patch('openBrowserOnStartup', $event)"></pc-toggle>
             </div>
+            @if (autostart.supported()) {
+              <div class="row">
+                <div class="row-text">
+                  <div class="row-label">Start with Windows</div>
+                  @if (autostart.elevatedTask()) {
+                    <div class="row-sub">Set up by the installer to run as administrator.</div>
+                  } @else {
+                    <div class="row-sub">Starts PCPanel in the system tray when you sign in.</div>
+                  }
+                </div>
+                <pc-toggle [value]="autostart.enabled()" [disabled]="autostart.elevatedTask()"
+                           (valueChange)="autostart.set($event)"></pc-toggle>
+              </div>
+            }
             <div class="row">
               <div class="row-text">
                 <div class="row-label">Focus volume skips controlled apps</div>

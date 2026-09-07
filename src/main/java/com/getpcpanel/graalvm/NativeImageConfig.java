@@ -122,6 +122,8 @@ import com.getpcpanel.profile.dto.SingleSliderLightingConfig.SINGLE_SLIDER_MODE;
 import com.getpcpanel.integration.wavelink.dto.WaveLinkSettings;
 import com.getpcpanel.rest.PlatformResource;
 import com.getpcpanel.rest.model.dto.AddDeejDeviceDto;
+import com.getpcpanel.rest.model.dto.AutostartRequestDto;
+import com.getpcpanel.rest.model.dto.AutostartStateDto;
 import com.getpcpanel.rest.model.dto.DeviceDto;
 import com.getpcpanel.rest.model.dto.MidiDeviceDto;
 import com.getpcpanel.rest.model.dto.OnboardingDto;
@@ -443,6 +445,8 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         OSCConnectionInfo[].class,
         DiscordStatusDto.class,
         PlatformResource.PlatformInfo.class,
+        AutostartStateDto.class,
+        AutostartRequestDto.class,
         VoiceMeeterResource.VoiceMeeterParam[].class,
 }, classNames = {
         // Jackson selects FileSerializer at runtime to serialise a java.io.File field (e.g.
