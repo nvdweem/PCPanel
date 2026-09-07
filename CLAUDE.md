@@ -155,6 +155,13 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
     `deletevalue` entry enforces the selection — so a silent update seeded from a stale memory would
     de-register autostart. `startup` is `checkablealone` and `startup\admin` `dontinheritcheck`, so the two
     boxes toggle independently (a parent task is otherwise only selectable through its children).
+    The app exposes the same registration as the **Start with Windows** switch
+    (`platform/autostart/WindowsAutostart`, `GET`/`PUT /api/platform/autostart`, Settings → General and
+    the post-update dialog): it reads the `HKCU\Run` value and the elevated task via `reg.exe`/`schtasks.exe`
+    and writes the value through `powershell.exe -EncodedCommand` (the data carries quotes, which
+    `ProcessBuilder` rejects as an argument on Windows) — no JNA, so nothing to register for the native
+    image beyond the two DTOs. Supported only in an installed Windows build (the value points at the
+    running exe); refused while the elevated task exists, so the two registrations never coexist.
   - **AppImage** (`AppImageUpdater`, `$APPIMAGE` set): runs the bundled `appimageupdatetool -O -r
     "$APPIMAGE"` (zsync delta, in place) then relaunches via `UpdaterRestart`. The AppImage carries
     `gh-releases-zsync` update-info baked at build time (`appimagetool -u`) and the companion `.zsync` is

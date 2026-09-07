@@ -37,6 +37,16 @@ export interface AnalogOutputSpec {
     min: number;
 }
 
+export interface AutostartRequestDto {
+    enabled: boolean;
+}
+
+export interface AutostartStateDto {
+    elevatedTask: boolean;
+    enabled: boolean;
+    supported: boolean;
+}
+
 export interface BandTransition {
     band: number;
     changed: boolean;

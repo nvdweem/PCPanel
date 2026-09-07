@@ -7,6 +7,7 @@ import { IntegrationDataService } from '../../features/commands/integration-data
 import { PlatformService } from '../../services/platform.service';
 import { DebugService, DeviceTypeOverride, OsOverride } from '../../services/debug.service';
 import { UpdateService } from '../../services/update.service';
+import { AutostartService } from '../../services/autostart.service';
 import { DeviceStateService } from '../../services/device-state.service';
 import {
   CurveDefinition, DiscordSettings, DiscordStatusDto, FocusVolumeOverride, FocusVolumeTarget, OverlayPosition, SettingsDto, WaveLinkSettings,
@@ -50,6 +51,7 @@ export class SettingsComponent {
   readonly platform = inject(PlatformService);
   readonly debug = inject(DebugService);
   readonly updates = inject(UpdateService);
+  readonly autostart = inject(AutostartService);
   readonly state = inject(DeviceStateService);
 
   readonly deviceOverrideOptions: SelectOption<DeviceTypeOverride>[] = [
