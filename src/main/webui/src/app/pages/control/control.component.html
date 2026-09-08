@@ -97,6 +97,12 @@
             </div>
           </ng-template>
         </div>
+        <div class="pc-field">
+          <div class="pc-field-label">Overlay name</div>
+          <input class="pc-field-input" type="text" maxlength="64" placeholder="Automatic"
+                 [value]="knob().overlayName || ''"
+                 (input)="setKnob('overlayName', $any($event.target).value)">
+        </div>
       </div>
 
       @if (!isSlider()) {

@@ -27,7 +27,7 @@ import { OverlayModule } from '@angular/cdk/overlay';
 type Slot = 'rotate' | 'press' | 'dblpress' | 'release';
 
 const EMPTY: Commands = { commands: [], type: 'allAtOnce' };
-const EMPTY_KNOB: KnobSetting = { minTrim: 0, maxTrim: 100, logarithmic: false, overlayIcon: '', buttonDebounce: 0 };
+const EMPTY_KNOB: KnobSetting = { minTrim: 0, maxTrim: 100, logarithmic: false, overlayIcon: '', overlayName: '', buttonDebounce: 0 };
 /** Last entry of the curve picker: opens the library rather than selecting a curve. */
 const EDIT_CURVES = '__edit-curves__';
 

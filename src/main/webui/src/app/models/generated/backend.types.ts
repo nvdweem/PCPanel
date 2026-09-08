@@ -671,6 +671,7 @@ export interface KnobSetting {
     maxTrim: number;
     minTrim: number;
     overlayIcon: string;
+    overlayName: string;
 }
 
 export interface LightingConfig {

@@ -26,6 +26,8 @@ public class KnobSetting {
      */
     @Nullable @JsonInclude(JsonInclude.Include.NON_NULL) private String curve;
     private String overlayIcon;
+    /** Replaces the name the overlay derives from this control's actions. Blank keeps the derived name. */
+    private String overlayName;
     private int buttonDebounce = 50;
 
     /** The legacy flag as read, so the two properties settle the curve the same in either order. */
@@ -52,6 +54,7 @@ public class KnobSetting {
         maxTrim = source.maxTrim;
         curve = source.curve;
         overlayIcon = source.overlayIcon;
+        overlayName = source.overlayName;
         buttonDebounce = source.buttonDebounce;
     }
 

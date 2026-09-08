@@ -20,6 +20,7 @@ import com.getpcpanel.device.descriptor.AnalogKind;
 import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
+import com.getpcpanel.profile.dto.KnobSetting;
 import com.getpcpanel.profile.dto.LightingConfig;
 import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
 import com.getpcpanel.profile.dto.SingleKnobLightingConfig.SINGLE_KNOB_MODE;
@@ -163,8 +164,18 @@ public class Overlay {
             // Icon decoding needs libawt (Windows only); elsewhere the overlay is a no-op that ignores
             // the icon, so skip the BufferedImage lookup entirely to stay libawt-free.
             var icon = Platform.isWindows() ? iconService.getImageFrom(data, setting) : null;
-            return new CommandAndIcon(data, icon, targetName(data), barColorFromLight(event));
+            return new CommandAndIcon(data, icon, overlayName(setting, () -> targetName(data)), barColorFromLight(event));
         }).orElse(CommandAndIcon.DEFAULT);
+    }
+
+    /**
+     * The name the overlay shows: the per-control override a user typed ({@link KnobSetting#getOverlayName()}),
+     * or the name derived from the control's actions when that is blank. {@code detected} is only resolved on
+     * the fallback path, since deriving it can query the OS for the focused application.
+     */
+    static String overlayName(@Nullable KnobSetting setting, Supplier<String> detected) {
+        var override = setting == null ? null : setting.getOverlayName();
+        return StringUtils.isBlank(override) ? detected.get() : StringUtils.strip(override);
     }
 
     /** The bar colour to use, sourced from the moved control's current light, when "bar follows light"
