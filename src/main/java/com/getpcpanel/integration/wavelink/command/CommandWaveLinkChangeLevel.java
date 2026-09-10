@@ -56,6 +56,7 @@ public final class CommandWaveLinkChangeLevel extends CommandWaveLinkChange impl
             case Input -> service.setInputLevel(getId1(), value);
             case Channel -> service.setChannelLevel(getId1(), value);
             case Mix -> service.setChannelLevel(getId1(), getId2(), value);
+            case MixMaster -> service.setMixLevel(getId1(), value);
             case Output -> service.setOutputLevel(getId1(), value);
         }
     }

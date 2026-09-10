@@ -431,6 +431,7 @@ export class CommandFieldsComponent {
     switch (this.val('commandType')) {
       case 'Input': return 'wl-inputs';
       case 'Output': return 'wl-outputs';
+      case 'MixMaster': return 'wl-mixes';
       default: return 'wl-channels';   // Channel and Mix both pick a channel first
     }
   }
@@ -438,6 +439,7 @@ export class CommandFieldsComponent {
     switch (this.val('commandType')) {
       case 'Input': return 'Input';
       case 'Output': return 'Output';
+      case 'MixMaster': return 'Master Mix';
       default: return 'Channel';
     }
   }

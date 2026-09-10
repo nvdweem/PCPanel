@@ -139,8 +139,16 @@ public interface IWaveLinkClient {
 
     void setChannelAudioEffect(WaveLinkChannel channel, WaveLinkEffect effect);
 
+    default void setMixLevel(String mixId, double value) {
+        setMixLevel(getMixFromId(mixId), value);
+    }
+
     default void setMixLevel(WaveLinkMix mix, double value) {
         setMix(mix, value, null);
+    }
+
+    default void setMixMute(String mixId, boolean mute) {
+        setMixMute(getMixFromId(mixId), mute);
     }
 
     default void setMixMute(WaveLinkMix mix, boolean mute) {

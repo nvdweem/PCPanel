@@ -52,6 +52,7 @@ class WaveLinkMuteResolver implements MuteStateResolver {
                 var mix = channel.findMix(cmd.getId2()).orElseGet(() -> waveLink.getMixFromId(cmd.getId2()));
                 yield Optional.ofNullable(mix.isMuted());
             }
+            case MixMaster -> Optional.ofNullable(waveLink.getMixFromId(cmd.getId1()).isMuted());
             case Output -> {
                 var output = waveLink.getOutputFromId(cmd.getId1());
                 yield output.outputs() == null || output.outputs().isEmpty()
