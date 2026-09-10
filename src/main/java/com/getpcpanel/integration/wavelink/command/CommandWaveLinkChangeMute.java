@@ -63,7 +63,7 @@ public final class CommandWaveLinkChangeMute extends CommandWaveLinkChange imple
                 var channel = service.getChannelFromId(getId1());
                 service.setChannelMute(getId1(), muteType.convert(channel.isMuted()));
             }
-            case Mix -> {
+            case Mix -> { // Control the channel-mix combo.
                 if (StringUtils.isBlank(getId2())) {
                     log.warn("No mix id specified");
                     return;
@@ -71,6 +71,10 @@ public final class CommandWaveLinkChangeMute extends CommandWaveLinkChange imple
                 var channel = service.getChannelFromId(getId1());
                 var mix = channel.findMix(getId2()).orElseGet(() -> service.getMixFromId(getId2()));
                 service.setChannelMute(channel, mix, muteType.convert(mix.isMuted()));
+            }
+            case MixMaster -> { // Master mix control.
+                var mix = service.getMixFromId(getId1());
+                service.setMixMute(mix, muteType.convert(mix.isMuted()));
             }
             case Output -> {
                 var output = service.getOutputFromId(getId1());

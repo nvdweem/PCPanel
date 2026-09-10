@@ -1081,6 +1081,6 @@ export type SINGLE_SLIDER_MODE = "NONE" | "STATIC" | "STATIC_GRADIENT" | "VOLUME
 
 export type VolumeButton = "mute" | "next" | "prev" | "stop" | "playPause";
 
-export type WaveLinkCommandTarget = "Input" | "Channel" | "Mix" | "Output";
+export type WaveLinkCommandTarget = "Input" | "Channel" | "Mix" | "Output" | "MixMaster";
 
 export type WsEventUnion = WsAssignmentChangedEvent | WsButtonEvent | WsDeviceConnectedEvent | WsDeviceDisconnectedEvent | WsDeviceRenamedEvent | WsKnobEvent | WsLightingChangedEvent | WsProfileSwitchedEvent | WsVisualColorsChangedEvent | DeviceSnapshotDto | WsControlSettingChangedEvent | WsNewVersionAvailableEvent;

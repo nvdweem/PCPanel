@@ -288,7 +288,7 @@ const FIELD_DEFS: FieldDef_[] = [
       {
         kind: 'select', key: 'commandType', label: 'Target', options: [
           { value: 'Channel', label: 'Channel' }, { value: 'Input', label: 'Input' },
-          { value: 'Mix', label: 'Mix' }, { value: 'Output', label: 'Output' },
+          { value: 'Mix', label: 'Mix' }, { value: 'MixMaster', label: 'Master Mix' }, { value: 'Output', label: 'Output' },
         ],
       },
       { kind: 'wavelink-target' },
@@ -301,7 +301,7 @@ const FIELD_DEFS: FieldDef_[] = [
       {
         kind: 'select', key: 'commandType', label: 'Target', options: [
           { value: 'Channel', label: 'Channel' }, { value: 'Input', label: 'Input' },
-          { value: 'Mix', label: 'Mix' }, { value: 'Output', label: 'Output' },
+          { value: 'Mix', label: 'Mix' }, { value: 'MixMaster', label: 'Master Mix' }, { value: 'Output', label: 'Output' },
         ],
       },
       { kind: 'wavelink-target' },
