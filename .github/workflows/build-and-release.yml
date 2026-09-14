@@ -859,6 +859,9 @@ jobs:
           else
             echo "Tag $TAG_NAME does not exist; skipping delete"
           fi
+          # "Compute update channels" fetched every tag, including this one; left in the checkout, a tag that is
+          # gone from the remote makes `gh release create` refuse to create it again.
+          git tag -d "$TAG_NAME" 2>/dev/null || true
 
       - name: Create release
         env:
@@ -892,6 +895,7 @@ jobs:
           else
             gh release create "$TAG_NAME" \
               --prerelease \
+              --target "$GITHUB_SHA" \
               --title "$RELEASE_TITLE" \
               --notes-file "$RUNNER_TEMP/release-notes.md"
           fi
