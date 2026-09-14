@@ -20,11 +20,13 @@ import org.junit.jupiter.api.Test;
 import com.getpcpanel.AppLikeMapper;
 
 import io.quarkus.qute.TemplateData;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 
 /**
  * Every type a template can reach must carry {@code @TemplateData}: Quarkus generates a reflection-free resolver
  * for it at build time. An unannotated type still renders on the JVM (dev mode, these tests) but its properties are
- * "not found" in the native image, so this walks every namespace root and the core views and fails on any gap.
+ * "not found" in the native image, so this walks every namespace root and the core views and fails on any gap. They
+ * also need {@code @RegisterForReflection}, which the editor's variable list uses to enumerate their properties.
  */
 class TemplateDataCoverageTest {
     private static final Set<Class<?>> SCALARS = Set.of(String.class, Boolean.class, boolean.class, Integer.class, int.class, Long.class, long.class,
@@ -62,6 +64,9 @@ class TemplateDataCoverageTest {
             problems.add(path + ": " + c.getName() + " has no @TemplateData");
             return;
         }
+        if (!c.isAnnotationPresent(RegisterForReflection.class)) {
+            problems.add(path + ": " + c.getName() + " has no @RegisterForReflection (the editor's variable list reads its properties)");
+        }
         for (Method m : c.getMethods()) {
             if (m.getParameterCount() == 0 && !Modifier.isStatic(m.getModifiers()) && m.getDeclaringClass() != Object.class && !IGNORED.contains(m.getName())
                     && m.getReturnType() != void.class) {
@@ -92,6 +97,7 @@ class TemplateDataCoverageTest {
     }
 
     @TemplateData
+    @RegisterForReflection
     public static final class Covered {
         public Uncovered getChild() {
             return new Uncovered();

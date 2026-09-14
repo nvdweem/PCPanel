@@ -882,6 +882,36 @@ export interface SingleSliderLightingConfig {
     muteOverrideDeviceOrFollow: string;
 }
 
+export interface TemplateCatalogDto {
+    items: TemplateVariableDto[];
+    path: string;
+}
+
+export interface TemplatePreviewDto {
+    error?: string;
+    literalTags: string[];
+    output: string;
+}
+
+export interface TemplatePreviewRequestDto {
+    control: number;
+    formula?: string;
+    max?: number;
+    min?: number;
+    serial?: string;
+    slot?: string;
+    source: string;
+}
+
+export interface TemplateVariableDto {
+    description?: string;
+    insert: string;
+    kind: string;
+    label?: string;
+    name: string;
+    value?: string;
+}
+
 export interface VoiceMeeterCommandModule extends CommandModule {
 }
 

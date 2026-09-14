@@ -1,9 +1,11 @@
 package com.getpcpanel.integration.mqtt;
 
+import com.getpcpanel.template.TemplateDoc;
 import com.getpcpanel.template.TemplateNamespace;
 import com.getpcpanel.template.TemplateScope;
 
 import io.quarkus.qute.TemplateData;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -29,6 +31,8 @@ public class MqttTemplateNamespace implements TemplateNamespace {
     }
 
     @TemplateData
+    @RegisterForReflection
+    @TemplateDoc("MQTT connection")
     public static final class Root {
         private final MqttService mqtt;
 
@@ -36,6 +40,7 @@ public class MqttTemplateNamespace implements TemplateNamespace {
             this.mqtt = mqtt;
         }
 
+        @TemplateDoc("Whether it is connected")
         public boolean isConnected() {
             return mqtt.isConnected();
         }

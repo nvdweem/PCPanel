@@ -11,10 +11,12 @@ import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterAdvanced
 import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterAdvancedButton;
 import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterBasic;
 import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterBasicButton;
+import com.getpcpanel.template.TemplateDoc;
 import com.getpcpanel.template.TemplateNamespace;
 import com.getpcpanel.template.TemplateScope;
 
 import io.quarkus.qute.TemplateData;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -42,6 +44,8 @@ public class VoiceMeeterTemplateNamespace implements TemplateNamespace {
     }
 
     @TemplateData
+    @RegisterForReflection
+    @TemplateDoc("VoiceMeeter: strips and buses")
     public static final class Root {
         private final Voicemeeter vm;
         private final TemplateScope scope;
@@ -51,14 +55,17 @@ public class VoiceMeeterTemplateNamespace implements TemplateNamespace {
             this.scope = scope;
         }
 
+        @TemplateDoc("Whether it is connected")
         public boolean isConnected() {
             return vm.isConnected();
         }
 
+        @TemplateDoc("Strips, by index: strip.get(0)")
         public List<ControlView> getStrip() {
             return controls(ControlType.STRIP, vm.isConnected() ? vm.getNumStrips() : 0);
         }
 
+        @TemplateDoc("Buses, by index: bus.get(0)")
         public List<ControlView> getBus() {
             return controls(ControlType.BUS, vm.isConnected() ? vm.getNumBuses() : 0);
         }
@@ -72,6 +79,7 @@ public class VoiceMeeterTemplateNamespace implements TemplateNamespace {
         }
 
         /** The strip or bus this control's VoiceMeeter action acts on. */
+        @TemplateDoc("What this control acts on")
         @Nullable
         public ControlView getTarget() {
             var commands = scope.commands();
@@ -98,6 +106,7 @@ public class VoiceMeeterTemplateNamespace implements TemplateNamespace {
     }
 
     @TemplateData
+    @RegisterForReflection
     public static final class ControlView {
         private final Voicemeeter vm;
         private final ControlType type;
@@ -109,22 +118,26 @@ public class VoiceMeeterTemplateNamespace implements TemplateNamespace {
             this.index = index;
         }
 
+        @TemplateDoc("Index")
         public int getIndex() {
             return index;
         }
 
+        @TemplateDoc("Label")
         @Nullable
         public String getLabel() {
             return vm.readString(vm.makeParameterString(type, index, "Label"));
         }
 
         /** Gain in dB, one decimal. */
+        @TemplateDoc("Gain in dB")
         @Nullable
         public Double getGain() {
             var gain = vm.readFloat(vm.makeParameterString(type, index, "Gain"));
             return gain == null ? null : Math.round(gain * 10) / 10d;
         }
 
+        @TemplateDoc("Muted")
         @Nullable
         public Boolean getMuted() {
             var mute = vm.readFloat(vm.makeParameterString(type, index, "Mute"));

@@ -7,10 +7,12 @@ import org.apache.commons.lang3.StringUtils;
 import com.getpcpanel.integration.obs.command.CommandObsMuteSource;
 import com.getpcpanel.integration.obs.command.CommandObsSetSourceVolume;
 import com.getpcpanel.template.LazyMap;
+import com.getpcpanel.template.TemplateDoc;
 import com.getpcpanel.template.TemplateNamespace;
 import com.getpcpanel.template.TemplateScope;
 
 import io.quarkus.qute.TemplateData;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -36,6 +38,8 @@ public class ObsTemplateNamespace implements TemplateNamespace {
     }
 
     @TemplateData
+    @RegisterForReflection
+    @TemplateDoc("OBS: connection and source mute state")
     public static final class Root {
         private final OBS obs;
         private final TemplateScope scope;
@@ -45,16 +49,19 @@ public class ObsTemplateNamespace implements TemplateNamespace {
             this.scope = scope;
         }
 
+        @TemplateDoc("Whether it is connected")
         public boolean isConnected() {
             return obs.isConnected();
         }
 
+        @TemplateDoc("Audio sources, by name")
         public LazyMap<SourceView> getSource() {
             var sources = obs.getSourcesWithMuteState();
             return LazyMap.of(sources, name -> new SourceView(name, sources.get(name)));
         }
 
         /** The source this control's OBS volume or mute action acts on. */
+        @TemplateDoc("What this control acts on")
         @Nullable
         public SourceView getTarget() {
             var commands = scope.commands();
@@ -77,7 +84,8 @@ public class ObsTemplateNamespace implements TemplateNamespace {
     }
 
     @TemplateData
-    public record SourceView(String name, @Nullable Boolean muted) {
+    @RegisterForReflection
+    public record SourceView(@TemplateDoc("Name") String name, @TemplateDoc("Muted") @Nullable Boolean muted) {
         @Override
         public String toString() {
             return name;

@@ -84,11 +84,11 @@ public class TemplateService {
     }
 
     /** A render for the editor preview: the output, the tags that stayed text, and any error. */
-    public TemplateRenderer.Result preview(String source, TemplateScope scope) {
+    public TemplateResult preview(String source, TemplateScope scope) {
         try {
             return renderer.render(source, name -> root(name, scope));
         } catch (RuntimeException e) {
-            return new TemplateRenderer.Result("", List.of(), String.valueOf(e.getMessage()));
+            return new TemplateResult("", List.of(), String.valueOf(e.getMessage()));
         }
     }
 
@@ -101,7 +101,7 @@ public class TemplateService {
     }
 
     @Nullable
-    private Object root(String name, TemplateScope scope) {
+    Object root(String name, TemplateScope scope) {
         if (CoreTemplateVariables.NAMES.contains(name)) {
             return core.get(name, scope);
         }

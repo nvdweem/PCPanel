@@ -18,10 +18,12 @@ import com.getpcpanel.integration.volume.platform.AudioDevice;
 import com.getpcpanel.integration.volume.platform.AudioSession;
 import com.getpcpanel.integration.volume.platform.ISndCtrl;
 import com.getpcpanel.template.LazyMap;
+import com.getpcpanel.template.TemplateDoc;
 import com.getpcpanel.template.TemplateNamespace;
 import com.getpcpanel.template.TemplateScope;
 
 import io.quarkus.qute.TemplateData;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -59,6 +61,8 @@ public class AudioTemplateNamespace implements TemplateNamespace {
     }
 
     @TemplateData
+    @RegisterForReflection
+    @TemplateDoc("Operating system audio: devices and application volumes")
     public static final class Root {
         private final ISndCtrl snd;
         private final TemplateScope scope;
@@ -68,21 +72,25 @@ public class AudioTemplateNamespace implements TemplateNamespace {
             this.scope = scope;
         }
 
+        @TemplateDoc("Audio devices, by id")
         public LazyMap<DeviceView> getDevice() {
             var devices = snd.getDevicesMap();
             return LazyMap.of(devices, id -> new DeviceView(devices.get(id)));
         }
 
+        @TemplateDoc("The default output device")
         @Nullable
         public DeviceView getDefaultOutput() {
             return device(snd.defaultPlayer());
         }
 
+        @TemplateDoc("The default input device")
         @Nullable
         public DeviceView getDefaultInput() {
             return device(snd.defaultRecorder());
         }
 
+        @TemplateDoc("Applications, by executable name (lower case, without .exe)")
         public LazyMap<AppView> getApp() {
             var apps = new LinkedHashMap<String, AppView>();
             for (var session : snd.getAllSessions()) {
@@ -92,6 +100,7 @@ public class AudioTemplateNamespace implements TemplateNamespace {
         }
 
         /** What this control acts on: an application, a device, or the focused application. */
+        @TemplateDoc("What this control acts on")
         @Nullable
         public TargetView getTarget() {
             var commands = scope.commands();
@@ -136,7 +145,8 @@ public class AudioTemplateNamespace implements TemplateNamespace {
     }
 
     @TemplateData
-    public record TargetView(String name, long volume, boolean muted) {
+    @RegisterForReflection
+    public record TargetView(@TemplateDoc("Name") String name, @TemplateDoc("Volume, 0–100") long volume, @TemplateDoc("Muted") boolean muted) {
         @Nullable
         static TargetView of(@Nullable DeviceView device) {
             return device == null ? null : new TargetView(device.getName(), device.getVolume(), device.isMuted());
@@ -154,6 +164,7 @@ public class AudioTemplateNamespace implements TemplateNamespace {
     }
 
     @TemplateData
+    @RegisterForReflection
     public static final class DeviceView {
         private final AudioDevice device;
 
@@ -161,23 +172,28 @@ public class AudioTemplateNamespace implements TemplateNamespace {
             this.device = device;
         }
 
+        @TemplateDoc("Id")
         public String getId() {
             return device.id();
         }
 
+        @TemplateDoc("Name")
         public String getName() {
             return device.name();
         }
 
+        @TemplateDoc("Volume, 0–100")
         public long getVolume() {
             return percent(device.volume());
         }
 
+        @TemplateDoc("Muted")
         public boolean isMuted() {
             return device.muted();
         }
 
         /** {@code output}, {@code input} or {@code both}. */
+        @TemplateDoc("output, input or both")
         public String getType() {
             var flow = device.dataflow();
             return flow == null ? "output" : flow.input() && flow.output() ? "both" : flow.input() ? "input" : "output";
@@ -190,6 +206,7 @@ public class AudioTemplateNamespace implements TemplateNamespace {
     }
 
     @TemplateData
+    @RegisterForReflection
     public static final class AppView {
         private final AudioSession session;
 
@@ -197,14 +214,17 @@ public class AudioTemplateNamespace implements TemplateNamespace {
             this.session = session;
         }
 
+        @TemplateDoc("Name")
         public String getName() {
             return session.title();
         }
 
+        @TemplateDoc("Volume, 0–100")
         public long getVolume() {
             return percent(session.volume());
         }
 
+        @TemplateDoc("Muted")
         public boolean isMuted() {
             return session.muted();
         }

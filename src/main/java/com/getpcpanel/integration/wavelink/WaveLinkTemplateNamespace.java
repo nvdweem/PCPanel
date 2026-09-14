@@ -8,6 +8,7 @@ import com.getpcpanel.integration.wavelink.command.CommandWaveLinkAddFocusToChan
 import com.getpcpanel.integration.wavelink.command.CommandWaveLinkChange;
 import com.getpcpanel.integration.wavelink.command.CommandWaveLinkChannelEffect;
 import com.getpcpanel.template.LazyMap;
+import com.getpcpanel.template.TemplateDoc;
 import com.getpcpanel.template.TemplateNamespace;
 import com.getpcpanel.template.TemplateScope;
 
@@ -18,6 +19,7 @@ import dev.niels.wavelink.impl.model.WaveLinkMix;
 import dev.niels.wavelink.impl.model.WaveLinkOutput;
 import dev.niels.wavelink.impl.model.WaveLinkOutputDevice;
 import io.quarkus.qute.TemplateData;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -48,6 +50,8 @@ public class WaveLinkTemplateNamespace implements TemplateNamespace {
     }
 
     @TemplateData
+    @RegisterForReflection
+    @TemplateDoc("Elgato Wave Link: channels, mixes, inputs and outputs")
     public static final class Root {
         private final WaveLinkService waveLink;
         private final TemplateScope scope;
@@ -57,34 +61,41 @@ public class WaveLinkTemplateNamespace implements TemplateNamespace {
             this.scope = scope;
         }
 
+        @TemplateDoc("Whether it is connected")
         public boolean isConnected() {
             return waveLink.isReady();
         }
 
         /** The application Wave Link reports as focused, by its Wave Link name. */
+        @TemplateDoc("The focused application, by its Wave Link name")
         @Nullable
         public String getFocusApp() {
             var app = waveLink.getLastFocusApp();
             return app == null || app.isEmpty() ? null : app.name();
         }
 
+        @TemplateDoc("Channels, by id")
         public LazyMap<ChannelView> getChannel() {
             return LazyMap.of(waveLink.getChannels(), id -> new ChannelView(waveLink.getChannels().get(id)));
         }
 
+        @TemplateDoc("Mixes, by id")
         public LazyMap<MixView> getMix() {
             return LazyMap.of(waveLink.getMixes(), id -> new MixView(waveLink.getMixes().get(id)));
         }
 
+        @TemplateDoc("Inputs, by id")
         public LazyMap<InputView> getInput() {
             return LazyMap.of(waveLink.getInputDevices(), id -> new InputView(waveLink.getInputDevices().get(id)));
         }
 
+        @TemplateDoc("Outputs, by id")
         public LazyMap<OutputView> getOutput() {
             return LazyMap.of(waveLink.getOutputDevices(), id -> new OutputView(waveLink.getOutputDevices().get(id)));
         }
 
         /** What this control acts on: the channel, the channel-in-mix, the mix, the input or the output. */
+        @TemplateDoc("What this control acts on")
         @Nullable
         public TargetView getTarget() {
             var commands = scope.commands();
@@ -131,7 +142,8 @@ public class WaveLinkTemplateNamespace implements TemplateNamespace {
     }
 
     @TemplateData
-    public record TargetView(@Nullable String name, @Nullable Long level, @Nullable Boolean muted) {
+    @RegisterForReflection
+    public record TargetView(@TemplateDoc("Name") @Nullable String name, @TemplateDoc("Level, 0–100") @Nullable Long level, @TemplateDoc("Muted") @Nullable Boolean muted) {
         @Override
         public String toString() {
             return name == null ? "" : name;
@@ -139,6 +151,7 @@ public class WaveLinkTemplateNamespace implements TemplateNamespace {
     }
 
     @TemplateData
+    @RegisterForReflection
     public static final class ChannelView {
         private final WaveLinkChannel channel;
 
@@ -146,31 +159,37 @@ public class WaveLinkTemplateNamespace implements TemplateNamespace {
             this.channel = channel;
         }
 
+        @TemplateDoc("Id")
         public String getId() {
             return channel.id();
         }
 
+        @TemplateDoc("Name")
         @Nullable
         public String getName() {
             return channel.name();
         }
 
+        @TemplateDoc("Channel type")
         @Nullable
         public String getType() {
             return channel.type();
         }
 
+        @TemplateDoc("Level, 0–100")
         @Nullable
         public Long getLevel() {
             return percent(channel.level());
         }
 
+        @TemplateDoc("Muted")
         @Nullable
         public Boolean getMuted() {
             return channel.isMuted();
         }
 
         /** This channel's level and mute in each mix, by mix id. */
+        @TemplateDoc("This channel's level and mute in each mix, by mix id")
         public LazyMap<MixView> getMix() {
             var byId = new java.util.LinkedHashMap<String, WaveLinkMix>();
             channel.mixes().forEach(m -> byId.put(m.id(), m));
@@ -178,6 +197,7 @@ public class WaveLinkTemplateNamespace implements TemplateNamespace {
         }
 
         /** Names of the applications routed to this channel. */
+        @TemplateDoc("Applications routed to this channel")
         public List<String> getApps() {
             return channel.apps().stream().map(a -> a.name()).toList();
         }
@@ -189,6 +209,7 @@ public class WaveLinkTemplateNamespace implements TemplateNamespace {
     }
 
     @TemplateData
+    @RegisterForReflection
     public static final class MixView {
         private final WaveLinkMix mix;
 
@@ -196,20 +217,24 @@ public class WaveLinkTemplateNamespace implements TemplateNamespace {
             this.mix = mix;
         }
 
+        @TemplateDoc("Id")
         public String getId() {
             return mix.id();
         }
 
+        @TemplateDoc("Name")
         @Nullable
         public String getName() {
             return mix.name();
         }
 
+        @TemplateDoc("Level, 0–100")
         @Nullable
         public Long getLevel() {
             return percent(mix.level());
         }
 
+        @TemplateDoc("Muted")
         @Nullable
         public Boolean getMuted() {
             return mix.isMuted();
@@ -222,6 +247,7 @@ public class WaveLinkTemplateNamespace implements TemplateNamespace {
     }
 
     @TemplateData
+    @RegisterForReflection
     public static final class InputView {
         private final WaveLinkInputDevice device;
 
@@ -239,20 +265,24 @@ public class WaveLinkTemplateNamespace implements TemplateNamespace {
             return input == null || input.gain() == null ? null : percent(input.gain().value());
         }
 
+        @TemplateDoc("Id")
         public String getId() {
             return device.id();
         }
 
+        @TemplateDoc("Name")
         @Nullable
         public String getName() {
             return device.name();
         }
 
+        @TemplateDoc("Gain, 0–100")
         @Nullable
         public Long getGain() {
             return gain(first());
         }
 
+        @TemplateDoc("Muted")
         @Nullable
         public Boolean getMuted() {
             var input = first();
@@ -266,6 +296,7 @@ public class WaveLinkTemplateNamespace implements TemplateNamespace {
     }
 
     @TemplateData
+    @RegisterForReflection
     public static final class OutputView {
         private final WaveLinkOutputDevice device;
 
@@ -278,21 +309,25 @@ public class WaveLinkTemplateNamespace implements TemplateNamespace {
             return device.outputs() == null || device.outputs().isEmpty() ? null : device.outputs().getFirst();
         }
 
+        @TemplateDoc("Id")
         public String getId() {
             return device.id();
         }
 
+        @TemplateDoc("Name")
         @Nullable
         public String getName() {
             return device.name();
         }
 
+        @TemplateDoc("Level, 0–100")
         @Nullable
         public Long getLevel() {
             var output = first();
             return output == null ? null : percent(output.level());
         }
 
+        @TemplateDoc("Muted")
         @Nullable
         public Boolean getMuted() {
             var output = first();

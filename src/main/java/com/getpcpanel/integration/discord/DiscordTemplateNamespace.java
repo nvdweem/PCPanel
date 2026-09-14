@@ -9,11 +9,13 @@ import org.apache.commons.lang3.StringUtils;
 import com.getpcpanel.integration.discord.command.CommandDiscordMute;
 import com.getpcpanel.integration.discord.command.CommandDiscordUserVolume;
 import com.getpcpanel.template.LazyMap;
+import com.getpcpanel.template.TemplateDoc;
 import com.getpcpanel.template.TemplateNamespace;
 import com.getpcpanel.template.TemplateScope;
 
 import dev.niels.discord.model.DiscordVoiceUser;
 import io.quarkus.qute.TemplateData;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -39,6 +41,8 @@ public class DiscordTemplateNamespace implements TemplateNamespace {
     }
 
     @TemplateData
+    @RegisterForReflection
+    @TemplateDoc("Discord: your voice state and voice channel members")
     public static final class Root {
         private final DiscordService discord;
         private final TemplateScope scope;
@@ -48,30 +52,36 @@ public class DiscordTemplateNamespace implements TemplateNamespace {
             this.scope = scope;
         }
 
+        @TemplateDoc("Whether it is connected")
         public boolean isConnected() {
             return discord.isAuthenticated();
         }
 
+        @TemplateDoc("Whether your microphone is muted")
         @Nullable
         public Boolean getSelfMuted() {
             return discord.isAuthenticated() ? discord.getVoiceSettings().mute() : null;
         }
 
+        @TemplateDoc("Whether you are deafened")
         @Nullable
         public Boolean getDeafened() {
             return discord.isAuthenticated() ? discord.getVoiceSettings().deaf() : null;
         }
 
+        @TemplateDoc("Your input volume, 0–100")
         @Nullable
         public Integer getInputVolume() {
             return discord.isAuthenticated() ? discord.getVoiceSettings().inputVolume() : null;
         }
 
+        @TemplateDoc("Your output volume, 0–200")
         @Nullable
         public Integer getOutputVolume() {
             return discord.isAuthenticated() ? discord.getVoiceSettings().outputVolume() : null;
         }
 
+        @TemplateDoc("Members of your voice channel, by username")
         public LazyMap<UserView> getUser() {
             var users = new LinkedHashMap<String, DiscordVoiceUser>();
             if (discord.isAuthenticated()) {
@@ -81,6 +91,7 @@ public class DiscordTemplateNamespace implements TemplateNamespace {
         }
 
         /** The member this control's Discord action acts on; your own state for a self mute. */
+        @TemplateDoc("What this control acts on")
         @Nullable
         public UserView getTarget() {
             var commands = scope.commands();
@@ -103,7 +114,8 @@ public class DiscordTemplateNamespace implements TemplateNamespace {
     }
 
     @TemplateData
-    public record UserView(String displayName, @Nullable Integer volume, boolean muted) {
+    @RegisterForReflection
+    public record UserView(@TemplateDoc("Display name") String displayName, @TemplateDoc("Volume, 0–200") @Nullable Integer volume, @TemplateDoc("Muted") boolean muted) {
         static UserView of(DiscordVoiceUser user) {
             return new UserView(user.displayName(), user.volume(), user.mute());
         }

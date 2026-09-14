@@ -17,6 +17,7 @@ import com.getpcpanel.integration.volume.platform.ISndCtrl;
 
 import io.quarkus.arc.All;
 import io.quarkus.qute.TemplateData;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
@@ -92,6 +93,7 @@ public class CoreTemplateVariables {
     }
 
     @TemplateData
+    @RegisterForReflection
     public static final class DeviceView {
         private final Device device;
 
@@ -99,14 +101,17 @@ public class CoreTemplateVariables {
             this.device = device;
         }
 
+        @TemplateDoc("Name")
         public String getName() {
             return device.getDisplayName();
         }
 
+        @TemplateDoc("Serial number")
         public String getSerial() {
             return device.getSerialNumber();
         }
 
+        @TemplateDoc("Device kind")
         public String getKind() {
             return device.descriptor().displayName();
         }
@@ -118,7 +123,8 @@ public class CoreTemplateVariables {
     }
 
     @TemplateData
-    public record ControlView(String label, int index, String kind) {
+    @RegisterForReflection
+    public record ControlView(@TemplateDoc("Label") String label, @TemplateDoc("Index") int index, @TemplateDoc("knob, slider or button") String kind) {
         static ControlView of(Device device, TemplateScope scope) {
             var descriptor = device.descriptor();
             if (scope.button()) {

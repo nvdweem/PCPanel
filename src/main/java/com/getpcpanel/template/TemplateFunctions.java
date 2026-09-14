@@ -37,6 +37,36 @@ public final class TemplateFunctions {
     private TemplateFunctions() {
     }
 
+    /** A function as the editor offers it: what completion inserts and what it does. */
+    record Doc(String name, String insert, String description) {
+    }
+
+    static final List<Doc> NUMBER_DOCS = List.of(
+            new Doc("round", "round(0)", "Round to the given number of decimals"),
+            new Doc("floor", "floor", "Round down"),
+            new Doc("ceil", "ceil", "Round up"),
+            new Doc("abs", "abs", "Without its sign"),
+            new Doc("clamp", "clamp(0, 100)", "Keep between a minimum and maximum"),
+            new Doc("scale", "scale(0, 100, 0, 10)", "Map from one range (min, max) to another (min, max)"),
+            new Doc("format", "format('0.0')", "Format with a pattern, e.g. '0.0' or '000'"),
+            new Doc("*", "* 2", "Multiply"),
+            new Doc("/", "/ 2", "Divide"),
+            new Doc("+", "+ 1", "Add"),
+            new Doc("-", "- 1", "Subtract"));
+    static final List<Doc> STRING_DOCS = List.of(
+            new Doc("upper", "upper", "Upper case"),
+            new Doc("lower", "lower", "Lower case"),
+            new Doc("trim", "trim", "Without surrounding spaces"),
+            new Doc("truncate", "truncate(12)", "Shorten to at most this many characters"),
+            new Doc("pad", "pad(10)", "Pad with spaces to this length"),
+            new Doc("padStart", "padStart(3, '0')", "Pad at the start to this length"),
+            new Doc("replace", "replace('a', 'b')", "Replace text"),
+            new Doc("urlencode", "urlencode", "Encode for use in a URL"),
+            new Doc("json", "json", "As a quoted JSON string"));
+    static final List<Doc> MATH_DOCS = List.of(
+            new Doc("math:min", "math:min(a, b)", "The smaller of two numbers"),
+            new Doc("math:max", "math:max(a, b)", "The larger of two numbers"));
+
     static Set<String> names() {
         var all = new java.util.HashSet<String>();
         all.addAll(NUMBER);

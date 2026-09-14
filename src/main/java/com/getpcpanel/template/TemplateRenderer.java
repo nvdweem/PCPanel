@@ -37,10 +37,6 @@ final class TemplateRenderer {
     record Parsed(Template template, List<String> literals, List<String> literalTags, @Nullable String error) {
     }
 
-    /** What rendering a template produced; {@code error} explains a section structure that was ignored or a failed render. */
-    record Result(String output, List<String> literalTags, @Nullable String error) {
-    }
-
     /** See {@link TemplateDialect#escapeTags}. */
     String escapeTags(String source, java.util.function.Predicate<String> keep) {
         return hasTags(source) ? dialect.escapeTags(source, keep) : source;
@@ -51,15 +47,15 @@ final class TemplateRenderer {
         return source != null && source.contains(TAG_START);
     }
 
-    Result render(String source, Function<String, Object> roots) {
+    TemplateResult render(String source, Function<String, Object> roots) {
         if (!hasTags(source)) {
-            return new Result(source, List.of(), null);
+            return new TemplateResult(source, List.of(), null);
         }
         var parsed = cache.computeIfAbsent(source, this::parse);
         var output = parsed.template().instance()
                            .data(new RootMap(parsed.literals(), roots))
                            .render();
-        return new Result(output, parsed.literalTags(), parsed.error());
+        return new TemplateResult(output, parsed.literalTags(), parsed.error());
     }
 
     private Parsed parse(String source) {
