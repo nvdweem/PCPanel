@@ -129,6 +129,13 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-vertx</artifactId>
         </dependency>
+        <!-- Qute renders the user-written {{ }} templates of the overlay and output commands (see
+             com.getpcpanel.template). Its build-time generated resolvers keep them reflection-free in the
+             native image. -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-qute</artifactId>
+        </dependency>
         <!-- quarkus-awt is added only on Windows (see the os-windows-awt profile below): its native
              build step unconditionally fails on macOS ("MacOS AWT integration is not ready") and GraalVM
              has no libawt on macOS or Linux. Windows keeps headless Java2D (Win32 overlay + icon
