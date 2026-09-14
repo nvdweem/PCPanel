@@ -42,7 +42,7 @@ public class CoreTemplateVariables {
             case "value" -> scope.value();
             case "percent" -> scope.dial() == null ? null : Math.round(scope.dial().getValue(null, 0f, 100f));
             case "raw" -> scope.dial() == null ? null : scope.dial().value();
-            case "name" -> scope.name() != null ? scope.name() : automaticName(scope);
+            case "name" -> scope.name() != null ? scope.name().get() : automaticName(scope);
             case "muted" -> muted(scope);
             case "device" -> device(scope).map(DeviceView::new).orElse(null);
             case "profile" -> device(scope).map(d -> d.currentProfile().getName()).orElse(null);

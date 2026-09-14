@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import com.getpcpanel.template.TemplateSaveMigration;
 import com.getpcpanel.device.provider.pcpanel.DeviceType;
 import com.getpcpanel.device.descriptor.DeviceDescriptor;
 import com.getpcpanel.integration.homeassistant.dto.HomeAssistantServer;
@@ -40,6 +41,8 @@ public class Save {
     public static final int DEFAULT_OVERLAY_CONTENT_PADDING = 10;
     private static final OverlayPosition DEFAULT_OVERLAY_POSITION = OverlayPosition.topLeft;
     private Map<String, DeviceSave> devices = new ConcurrentHashMap<>();
+    /** Which template syntax the saved text fields are written for; see {@code TemplateSaveMigration}. */
+    private int templateVersion = TemplateSaveMigration.CURRENT_VERSION;
     private boolean mainUIIcons;
     /** Open the UI in the default browser every time the app starts. Default off — PCPanel runs in the
      *  tray and the UI is opened on demand; a first run and an installer launch open it regardless. */

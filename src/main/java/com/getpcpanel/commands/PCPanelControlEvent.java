@@ -3,6 +3,8 @@ package com.getpcpanel.commands;
 import javax.annotation.Nullable;
 
 import com.getpcpanel.commands.DialValue;
+import com.getpcpanel.template.TemplateContext;
+import com.getpcpanel.template.TemplateScope;
 
 import one.util.streamex.StreamEx;
 
@@ -15,7 +17,7 @@ public record PCPanelControlEvent(String serialNum, int knob, Commands cmd, bool
     }
 
     public Runnable buildRunnable() {
-        return switch (cmd.getType()) {
+        Runnable run = switch (cmd.getType()) {
             case allAtOnce -> () -> StreamEx.of(cmd.getCommands()).map(c -> c.toRunnable(initial, serialNum, vol)).forEach(Runnable::run);
             case sequential -> () -> {
                 var idx = incBetween(cmd.getSequenceIdx(), cmd.getCommands().size());
@@ -23,6 +25,12 @@ public record PCPanelControlEvent(String serialNum, int knob, Commands cmd, bool
                 cmd.getCommands().get(idx).toRunnable(initial, serialNum, vol).run();
             };
         };
+        return () -> TemplateContext.run(templateScope(), run);
+    }
+
+    /** The control this event is for, as the scope its actions' templates render in. */
+    public TemplateScope templateScope() {
+        return new TemplateScope(serialNum, knob, source != Source.DIAL, cmd, vol, null, null);
     }
 
     private int incBetween(int value, int high) {

@@ -11,6 +11,7 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 import io.quarkus.arc.All;
+import io.quarkus.arc.Unremovable;
 import io.quarkus.qute.Engine;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -24,6 +25,7 @@ import one.util.streamex.StreamEx;
  * every {@link TemplateNamespace}.
  */
 @Log4j2
+@Unremovable
 @ApplicationScoped
 public class TemplateService {
     @Inject

@@ -11,6 +11,8 @@ import com.getpcpanel.commands.meta.CommandKind;
 import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.commands.command.DialAction;
+import com.getpcpanel.template.TemplateContext;
+import com.getpcpanel.template.Templates;
 import com.getpcpanel.util.ValueInterpolator;
 
 import lombok.Getter;
@@ -57,7 +59,7 @@ public class CommandHomeAssistantValue extends CommandHomeAssistant implements D
             return;
         }
         var x = context.dial().getValue(this, 0f, 1f); // normalised 0..1, honouring trim/invert/range
-        var yaml = ValueInterpolator.interpolate(action, ValueInterpolator.translate(x, min, max, formula));
+        var yaml = Templates.renderValue(action, TemplateContext.current(), ValueInterpolator.translate(x, min, max, formula));
         // A moving dial fires a stream of events; the throttle (configurable on the HA settings page)
         // sends the first instantly, gates the middle, and guarantees the final value. Keyed by a stable
         // value (server + action) rather than `this`: a fresh command instance is deserialised on every

@@ -1,5 +1,6 @@
 package com.getpcpanel;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -24,6 +25,16 @@ public final class Json {
     @SneakyThrows
     public <T> T read(String in, Class<T> clazz) {
         return mapper.readValue(in, clazz);
+    }
+
+    @SneakyThrows
+    public JsonNode readTree(String in) {
+        return mapper.readTree(in);
+    }
+
+    @SneakyThrows
+    public <T> T read(JsonNode in, Class<T> clazz) {
+        return mapper.treeToValue(in, clazz);
     }
 
     @SneakyThrows
