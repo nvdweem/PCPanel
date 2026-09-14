@@ -28,7 +28,7 @@ class AudioTemplateNamespaceTest {
             muted(false);
         }
     };
-    private static final AudioSession SPOTIFY = new AudioSession(null, 42, new File("C:\\Apps\\Spotify.exe"), "Spotify", null, 0.3f, true);
+    private static final AudioSession SPOTIFY = new AudioSession(null, 42, new File("apps", "Spotify.exe"), "Spotify", null, 0.3f, true);
 
     private static ISndCtrl snd() {
         return (ISndCtrl) Proxy.newProxyInstance(ISndCtrl.class.getClassLoader(), new Class<?>[] { ISndCtrl.class }, (proxy, method, args) -> switch (method.getName()) {
