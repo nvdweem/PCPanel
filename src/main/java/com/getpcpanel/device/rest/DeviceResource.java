@@ -300,11 +300,7 @@ public class DeviceResource {
             @PathParam("index") int index,
             KnobSetting settings) {
         var knob = getProfile(serial, profileName).getKnobSettings(index);
-        knob.setMinTrim(settings.getMinTrim());
-        knob.setMaxTrim(settings.getMaxTrim());
-        knob.setLogarithmic(settings.isLogarithmic());
-        knob.setOverlayIcon(settings.getOverlayIcon());
-        knob.setButtonDebounce(settings.getButtonDebounce());
+        knob.copyFrom(settings);
         saveService.save();
         eventBus.fire(new KnobSettingChangedEvent(serial, profileName, index, knob));
         return Response.ok().build();

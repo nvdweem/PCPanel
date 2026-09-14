@@ -39,6 +39,13 @@ function wlChannelIdOf(cmd: Record<string, any>): string | undefined {
   }
 }
 
+/** The Wave Link mix a command controls as a whole (its master level/mute), or undefined. */
+function wlMixIdOf(cmd: Record<string, any>): string | undefined {
+  const type = cmd['_type']?.split('.').pop() ?? '';
+  const isChange = type === 'CommandWaveLinkChangeLevel' || type === 'CommandWaveLinkChangeMute';
+  return isChange && cmd['commandType'] === 'MixMaster' ? cmd['id1'] : undefined;
+}
+
 /**
  * The on-screen device — the focal point of the editor. Renders the live
  * snapshot (knob positions, LED colors, animation) for Pro / Mini / RGB and
@@ -225,6 +232,8 @@ export class PcDeviceComponent {
     if (!cmd) return undefined;
     const appIc = this.appIcon(processNameOf(cmds));
     if (appIc) return appIc;
+    const mixId = wlMixIdOf(cmd);
+    if (mixId) return this.integrations.wlMixes().find(m => m.id === mixId)?.image || undefined;
     const channelId = wlChannelIdOf(cmd);
     if (channelId) return this.integrations.wlChannels().find(c => c.id === channelId)?.image || undefined;
     return undefined;
