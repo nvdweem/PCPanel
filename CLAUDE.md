@@ -415,6 +415,35 @@ the YAML into the `domain.service` + flat body the REST API wants. The dial comm
 the 0..1 dial position to a number via min/max or an `exp4j` formula (variable `x`) and substitutes it
 for the `{{ value }}` token in the YAML before sending.
 
+**Templates (`template/`):** the overlay name and the output commands' text fields (HTTP url/headers/body,
+MQTT topic/payload, OSC address, Home Assistant action YAML) are `{{ … }}` templates rendered by **Qute**
+(`quarkus-qute`). Qute's own delimiters are single braces, so `TemplateDialect` translates first: literal
+text becomes `{_lit.get(n)}` placeholders filled from data (Qute never lexes a user `{`, `}` or `\`), and a
+`{{ … }}` tag becomes a Qute tag only when **every** root, namespace and function in it is ours — so JSON,
+YAML flow maps, Home Assistant Jinja and Qute's built-in namespaces (`config:`, `inject:`, `str:`) stay text.
+Functions are `@EngineConfiguration` resolvers in `TemplateFunctions` (one implementation serves the app
+engine and the bare-engine unit tests). Variables: `CoreTemplateVariables` (`value`, `percent`, `raw`,
+`name`, `muted`, `device`, `profile`, `control`, `focusApp`) plus one `TemplateNamespace` bean per
+integration (`wl`, `audio`, `obs`, `vm`, `discord`, `mqtt`, `ha`) exposing its live state as views and a
+`target` for what the control acts on. Rules for a namespace:
+- **Accessors read state the app already holds** — no I/O, no process launch, no blocking lock: the overlay
+  renders on the HID input thread. That is why OBS offers only connection + source mute (its scenes/volumes
+  are websocket round-trips) and Home Assistant only server names (its `isConnected` can hit the network).
+- Views are lazy (a getter runs only when a template reaches it; id-keyed collections are `LazyMap`s), so a
+  namespace can expose everything without a per-render cost. Levels/volumes are exposed as 0–100 (0–200 where
+  the integration itself uses that), never 0..1.
+- Every view needs **`@TemplateData`** (Quarkus generates its resolver; unregistered types render on the JVM
+  but are "not found" in native) **and `@RegisterForReflection`** (the editor's `TemplateCatalog` lists
+  properties reflectively), with `@TemplateDoc` descriptions. `TemplateDataCoverageTest` enforces both.
+
+A control event carries its scope to the actions it runs via `TemplateContext` (set in
+`PCPanelControlEvent.buildRunnable`); code that defers work (the HTTP throttle) captures it first.
+`TemplateSaveMigration` runs once per save file (`Save.templateVersion`) on the raw JSON: in a save that predates
+this syntax it rewrites every tag that would now render to the literal form `{{ '{' }}{ … }}` (except
+`{{ value }}` in fields that always substituted it), keeping a rewrite only when it renders exactly what the
+field produced before, behind the usual `.bak`. The UI edits these fields with
+`TemplateInputComponent` (completion via `GET /api/templates/catalog`, preview via `POST /api/templates/preview`).
+
 ## GraalVM native image — important
 
 Native image config is the most fragile part of the build, and it lives in **two** places that
@@ -465,6 +494,8 @@ Key constraints baked into those args, change with care:
   the serializer by name in `NativeImageConfig.classNames`. The coverage tests don't catch this (it is
   Jackson-internal, not a project type), so the reliable check is to **run the native binary and curl the
   list/DTO REST endpoints** — JVM/dev mode never reproduces it.
+- **Template views** (anything a `{{ }}` template can reach) need `@TemplateData` + `@RegisterForReflection`;
+  `TemplateDataCoverageTest` walks every `TemplateNamespace` root and fails on a gap (see *Templates* above).
 - **Discovery guards catch the above automatically — keep them green.** `ReflectionRegistrationCoverageTest`
   walks the Jackson-serialised property graph from **two root sets** — the `Command` hierarchy and the
   return type of every JAX-RS resource method — and fails if any concrete subtype, or any concrete project
