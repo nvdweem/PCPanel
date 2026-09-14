@@ -99,9 +99,8 @@
         </div>
         <div class="pc-field">
           <div class="pc-field-label">Overlay name</div>
-          <input class="pc-field-input" type="text" maxlength="64" placeholder="Automatic"
-                 [value]="knob().overlayName || ''"
-                 (input)="setKnob('overlayName', $any($event.target).value)">
+          <pc-template-input [mono]="false" placeholder="Automatic" [context]="overlayTemplateContext()"
+                             [value]="knob().overlayName || ''" (valueChange)="setKnob('overlayName', $event)"></pc-template-input>
         </div>
       </div>
 
@@ -171,7 +170,7 @@
                   <div class="ai-body">
                     <pc-command-fields [def]="defFor(cmd)!" [command]="cmd" (commandChange)="updateCommand($index, $event)"
                                        [showMapping]="activeSlot() === 'rotate'" [responseCurve]="activeCurve()"
-                                       [trim]="knob()" [profiles]="s.profiles"></pc-command-fields>
+                                       [trim]="knob()" [profiles]="s.profiles" [templateContext]="templateContext()"></pc-command-fields>
                   </div>
                 }
               </div>

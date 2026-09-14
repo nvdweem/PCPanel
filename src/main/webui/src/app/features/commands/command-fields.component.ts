@@ -9,8 +9,9 @@ import { IntegrationDataService } from './integration-data.service';
 import { CurveDefinition } from '../../models/generated/backend.types';
 import {
   AppPickerComponent, ColorPickerComponent, IconComponent, IconName, KeyRecorderComponent, SegmentedComponent,
-  SelectComponent, SelectOption, ToggleComponent,
+  SelectComponent, SelectOption, TemplateInputComponent, ToggleComponent,
 } from '../../ui';
+import { TemplateContext } from '../../services/template.service';
 
 type Cmd = Record<string, any>;
 
@@ -23,7 +24,7 @@ type Cmd = Record<string, any>;
   selector: 'pc-command-fields',
   standalone: true,
   // Self-referenced (CommandFieldsComponent) so each stepped-switch band can host a nested action editor.
-  imports: [OverlayModule, DragDropModule, RouterLink, IconComponent, ToggleComponent, SelectComponent, AppPickerComponent, KeyRecorderComponent, SegmentedComponent, ColorPickerComponent, CommandFieldsComponent, CommandPickerComponent],
+  imports: [OverlayModule, DragDropModule, RouterLink, IconComponent, ToggleComponent, SelectComponent, AppPickerComponent, KeyRecorderComponent, SegmentedComponent, ColorPickerComponent, TemplateInputComponent, CommandFieldsComponent, CommandPickerComponent],
   template: `
     <div class="fields">
       @for (f of visibleFields(); track f.kind + ($any(f).key || '')) {
@@ -31,15 +32,25 @@ type Cmd = Record<string, any>;
           @case ('text') {
             <div class="field-block">
               <div class="flabel">{{ $any(f).label }}</div>
-              <input class="pc-input" [class.mono]="$any(f).mono" [placeholder]="$any(f).placeholder || ''"
-                     [value]="val($any(f).key)" (input)="set($any(f).key, $any($event.target).value)">
+              @if ($any(f).template) {
+                <pc-template-input [mono]="!!$any(f).mono" [placeholder]="$any(f).placeholder || ''" [context]="fieldTemplateContext()"
+                                   [value]="val($any(f).key) || ''" (valueChange)="set($any(f).key, $event)"></pc-template-input>
+              } @else {
+                <input class="pc-input" [class.mono]="$any(f).mono" [placeholder]="$any(f).placeholder || ''"
+                       [value]="val($any(f).key)" (input)="set($any(f).key, $any($event.target).value)">
+              }
             </div>
           }
           @case ('textarea') {
             <div class="field-block">
               <div class="flabel">{{ $any(f).label }}</div>
-              <textarea class="pc-input mono ta" [attr.rows]="$any(f).rows || 3" [placeholder]="$any(f).placeholder || ''"
-                        [value]="val($any(f).key)" (input)="set($any(f).key, $any($event.target).value)"></textarea>
+              @if ($any(f).template) {
+                <pc-template-input [placeholder]="$any(f).placeholder || ''" [context]="fieldTemplateContext()"
+                                   [value]="val($any(f).key) || ''" (valueChange)="set($any(f).key, $event)"></pc-template-input>
+              } @else {
+                <textarea class="pc-input mono ta" [attr.rows]="$any(f).rows || 3" [placeholder]="$any(f).placeholder || ''"
+                          [value]="val($any(f).key)" (input)="set($any(f).key, $any($event.target).value)"></textarea>
+              }
             </div>
           }
           @case ('ha-help') {
@@ -194,7 +205,7 @@ type Cmd = Record<string, any>;
                             </div>
                             @if (bandExpanded() === bandKey(bi, ci) && bandCmdDef(cmd); as cdef) {
                               <div class="bai-body">
-                                <pc-command-fields [def]="cdef" [command]="cmd" (commandChange)="setBandCmd(bi, ci, $event)" [profiles]="profiles()"></pc-command-fields>
+                                <pc-command-fields [def]="cdef" [command]="cmd" (commandChange)="setBandCmd(bi, ci, $event)" [profiles]="profiles()" [templateContext]="templateContext()"></pc-command-fields>
                               </div>
                             }
                           </div>
@@ -319,6 +330,13 @@ export class CommandFieldsComponent {
   /** The control's trim range, which bounds what that shape produces. */
   readonly trim = input<TrimRange | null>(null);
   readonly profiles = input<string[]>([]);
+  /** The control this command belongs to, so template fields offer its variables and preview against it. */
+  readonly templateContext = input<TemplateContext | null>(null);
+  /** The control's context plus this command's own value mapping, which {{ value }} goes through. */
+  readonly fieldTemplateContext = computed<TemplateContext | null>(() => {
+    const cmd = this.command();
+    return { ...(this.templateContext() ?? {}), min: cmd['min'] ?? null, max: cmd['max'] ?? null, formula: cmd['formula'] ?? null };
+  });
 
   readonly appsOpen = model<string | null>(null);
 
