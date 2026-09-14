@@ -7,7 +7,8 @@ does not lose a user's configuration.
 |------|-----------|----------|
 | `profiles-1.7.1.json` | tag `v1.7.1` (Spring Boot + JavaFX) | 3 devices (Pro / RGB / Mini), 2 profiles each, 25 command types |
 | `profiles-1.8.json` | branch `releases/1.8` | the 1.7.1 file after 1.8 read and re-saved it, plus 1.8's Wave Link commands — 30 command types |
-| `profiles-2.0.json` | this branch | the 1.8 file after 2.0 read and re-saved it, plus everything 2.0 added — 51 command types |
+| `profiles-2.0.json` | branch `releases/2.0` | the 1.8 file after 2.0 read and re-saved it, plus everything 2.0 added — 51 command types |
+| `profiles-2.1.json` | this branch | the 2.0 file after 2.1 read and re-saved it, plus everything 2.1 added — 51 command types |
 
 Each file is the previous one carried forward by the release that follows it, which is exactly the
 path a user's file takes. They are not hand-written: each was produced by that version's own model
@@ -34,11 +35,11 @@ so a value loaded from the previous fixture is carried forward untouched.
 
 ## Freezing rule
 
-**`profiles-1.7.1.json` and `profiles-1.8.json` are frozen.** They are artifacts of releases that
+**`profiles-1.7.1.json`, `profiles-1.8.json` and `profiles-2.0.json` are frozen.** They are artifacts of releases that
 already shipped; regenerating them with today's code would turn the test into a tautology. Only edit
 them to fix a demonstrated mistake about what those versions actually wrote.
 
-`profiles-2.0.json` is the *current* version's file and is regenerated when the save format changes.
+`profiles-2.1.json` is the *current* version's file and is regenerated when the save format changes.
 `LegacySaveCompatibilityTest` fails with a pointer here when a new command or `Save` property is
 missing from it.
 
@@ -49,8 +50,8 @@ missing from it.
 ./mvnw -q dependency:build-classpath -Dmdep.outputFile=cp-test.txt -Dmdep.includeScope=test
 java -cp "target/classes:target/test-classes:$(cat cp-test.txt)" \
      com.getpcpanel.profile.compat.SaveFixtureGenerator \
-     src/test/resources/legacy-saves/profiles-1.8.json \
-     src/test/resources/legacy-saves/profiles-2.0.json
+     src/test/resources/legacy-saves/profiles-2.0.json \
+     src/test/resources/legacy-saves/profiles-2.1.json
 ```
 
 (Windows: use `;` as the classpath separator.) Review the diff before committing — it should show
@@ -58,8 +59,8 @@ only the properties and commands you added.
 
 ## Starting a new version's fixture
 
-When a release line moves on (say 2.1), add `profiles-2.1.json` generated from `profiles-2.0.json`
-with the same tool, freeze `profiles-2.0.json`, and point `CURRENT` in
+When a release line moves on (say 2.2), add `profiles-2.2.json` generated from `profiles-2.1.json`
+with the same tool, freeze `profiles-2.1.json`, and point `CURRENT` in
 `LegacySaveCompatibilityTest` at the new file. The chain is what gives each release an authentic
 predecessor to load.
 
