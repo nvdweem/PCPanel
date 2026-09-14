@@ -114,6 +114,10 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
     forward** into `main` (`releases/2.0` → `main`), so ancestry is real and the same hunks don't
     re-conflict. Anything meant for both lines should be based on their merge base; anything
     release-only stays on the release branch. Patch by tagging `v2.0.85`, `v2.0.86`, … off that branch.
+  - **Current line: `main` (2.1.x).** `releases/2.0` is retired (last release `v2.0.97`) and gets no more
+    pushes; base work, fixes included, on `origin/main` and patch by tagging `v2.1.1`, `v2.1.2`, … off it.
+    Only once `main` takes on work that must not ship in a 2.1 patch does `releases/2.1` get cut from the
+    latest 2.1 tag, and the merge-forward flow above applies to it.
 - **Run two instances side by side:** pass the `skipfilecheck` arg (otherwise launching a second
   instance just focuses the already-installed one — see `Main`/`FileChecker`). For a separate dev
   data dir, set `pcpanel.root=${user.home}/.pcpaneldev/` (dev profile already does this).
