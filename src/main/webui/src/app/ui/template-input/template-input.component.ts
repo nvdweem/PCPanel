@@ -2,7 +2,7 @@ import {
   AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, model, signal, untracked, viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { CdkOverlayOrigin, ConnectedPosition, OverlayModule } from '@angular/cdk/overlay';
+import { CdkConnectedOverlay, ConnectedPosition, OverlayModule } from '@angular/cdk/overlay';
 import { Subject, debounceTime, of, switchMap, catchError } from 'rxjs';
 import { IconComponent } from '../icon/icon.component';
 import { TemplateContext, TemplateService } from '../../services/template.service';
@@ -41,9 +41,9 @@ import { CompletionContext, CompletionItem, applyCompletion, completionContext, 
     }
 
     <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="origin" [cdkConnectedOverlayOpen]="open()"
-                 [cdkConnectedOverlayPositions]="positions" [cdkConnectedOverlayOffsetY]="4"
-                 [cdkConnectedOverlayMinWidth]="280" (detach)="open.set(false)">
-      <div class="panel" role="listbox" (mousedown)="$event.preventDefault()">
+                 [cdkConnectedOverlayPositions]="positions" [cdkConnectedOverlayViewportMargin]="8"
+                 [cdkConnectedOverlayMinWidth]="280" (attach)="reposition()" (detach)="open.set(false)">
+      <div class="panel" role="listbox" [style.max-height.px]="panelMaxHeight()" (mousedown)="$event.preventDefault()">
         @if (path()) { <div class="crumb">{{ path() }}</div> }
         @for (item of visible(); track item.name; let i = $index) {
           <button type="button" class="opt" role="option" [class.active]="i === active()" [attr.aria-selected]="i === active()"
@@ -96,6 +96,7 @@ import { CompletionContext, CompletionItem, applyCompletion, completionContext, 
 export class TemplateInputComponent implements AfterViewInit {
   private readonly templates = inject(TemplateService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   readonly value = model<string>('');
   readonly placeholder = input<string>('');
@@ -112,16 +113,26 @@ export class TemplateInputComponent implements AfterViewInit {
   readonly preview = signal<TemplatePreviewDto | null>(null);
   readonly visible = computed(() => filterItems(this.items(), this.partial()));
   readonly braces = '{ }';
+  /** Below the field, or above it when the list does not fit below; right-aligned when a field near the right edge
+   *  leaves no room for it to extend rightwards. */
   readonly positions: ConnectedPosition[] = [
-    { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top' },
-    { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom' },
+    { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
+    { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -4 },
+    { originX: 'end', originY: 'bottom', overlayX: 'end', overlayY: 'top', offsetY: 4 },
+    { originX: 'end', originY: 'top', overlayX: 'end', overlayY: 'bottom', offsetY: -4 },
   ];
+  /** The list's height limit: the room on the roomier side of the field, so it always fits on one of them. */
+  readonly panelMaxHeight = signal(320);
 
   private readonly area = viewChild.required<ElementRef<HTMLTextAreaElement>>('area');
+  private readonly connectedOverlay = viewChild(CdkConnectedOverlay);
   private readonly catalogRequests = new Subject<string>();
   private readonly previewRequests = new Subject<string>();
   private loadedPath: string | null = null;
   private forced = false;
+  /** Set while the list is loading for a first open: it only opens once its content is known, so the overlay
+   *  picks above or below for the list it will actually show. */
+  private openWhenLoaded = false;
 
   constructor() {
     this.catalogRequests.pipe(
@@ -131,6 +142,19 @@ export class TemplateInputComponent implements AfterViewInit {
       this.loading.set(false);
       this.items.set(result.items);
       this.active.set(0);
+      if (this.openWhenLoaded) {
+        this.openWhenLoaded = false;
+        this.fitToViewport();
+        this.open.set(true);
+      }
+    });
+    // The overlay positions itself when it opens; a list that then grows or shrinks (drilling in, filtering) must be
+    // re-placed, or it stays on the side chosen for the old size and runs off the screen.
+    effect(() => {
+      this.visible();
+      if (untracked(() => this.open())) {
+        this.reposition();
+      }
     });
     this.previewRequests.pipe(
       debounceTime(300),
@@ -150,6 +174,16 @@ export class TemplateInputComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
     this.autoGrow();
+    // The field moves whenever this component changes size — the text wrapping to another line, the preview line
+    // appearing or changing — and in a layout anchored below it that moves the field itself; keep an open list
+    // against the field's current edge.
+    const observer = new ResizeObserver(() => {
+      if (this.open()) {
+        this.reposition();
+      }
+    });
+    observer.observe(this.host.nativeElement);
+    this.destroyRef.onDestroy(() => observer.disconnect());
   }
 
   isDrill(item: CompletionItem): boolean {
@@ -170,14 +204,12 @@ export class TemplateInputComponent implements AfterViewInit {
   }
 
   onBlur(): void {
-    this.forced = false;
-    this.open.set(false);
+    this.close();
   }
 
   toggle(): void {
     if (this.open()) {
-      this.forced = false;
-      this.open.set(false);
+      this.close();
       return;
     }
     this.forced = true;
@@ -214,8 +246,7 @@ export class TemplateInputComponent implements AfterViewInit {
       }
       case 'Escape':
         event.preventDefault();
-        this.forced = false;
-        this.open.set(false);
+        this.close();
         break;
     }
   }
@@ -232,8 +263,7 @@ export class TemplateInputComponent implements AfterViewInit {
     if (drillsDown(item)) {
       this.refresh(true);
     } else {
-      this.forced = false;
-      this.open.set(false);
+      this.close();
     }
   }
 
@@ -242,21 +272,37 @@ export class TemplateInputComponent implements AfterViewInit {
     const el = this.area().nativeElement;
     const ctx: CompletionContext = completionContext(el.value, el.selectionStart ?? el.value.length);
     if (!ctx.inTag && !force) {
-      this.open.set(false);
+      this.close();
       return;
     }
     const wasOpen = this.open();
     this.partial.set(ctx.partial);
     this.path.set(ctx.path);
-    this.open.set(true);
     if (!wasOpen || this.loadedPath !== ctx.path) {
       this.loadedPath = ctx.path;
       this.loading.set(true);
-      this.items.set([]);
+      this.openWhenLoaded = !wasOpen;
       this.catalogRequests.next(ctx.path);
     } else {
       this.active.set(0);
     }
+  }
+
+  private close(): void {
+    this.forced = false;
+    this.openWhenLoaded = false;
+    this.open.set(false);
+  }
+
+  /** Re-places the open list after its size changed, flipping it above the field when it no longer fits below. */
+  reposition(): void {
+    requestAnimationFrame(() => this.connectedOverlay()?.overlayRef?.updatePosition());
+  }
+
+  private fitToViewport(): void {
+    const rect = this.area().nativeElement.getBoundingClientRect();
+    const room = Math.max(window.innerHeight - rect.bottom, rect.top) - 20;
+    this.panelMaxHeight.set(Math.max(120, Math.min(320, room)));
   }
 
   private autoGrow(): void {
