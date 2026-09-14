@@ -60,22 +60,65 @@ public final class OutputInterpreter {
     }
 
     public void sendFullLEDData(String deviceSerialNumber, int brightness, String[] colors, boolean[] volumeTrack, boolean priority) {
-        var handler = deviceScanner.getConnectedDevice(deviceSerialNumber);
+        var resolved = new String[colors.length];
+        for (var i = 0; i < colors.length; i++) {
+            resolved[i] = overrideColorService.getDialOverride(deviceSerialNumber, i).map(SingleKnobLightingConfig::getColor1).orElse(colors[i]);
+        }
+        sendRGBMessage(deviceSerialNumber, buildFullLEDData(brightness, resolved, volumeTrack), priority);
+    }
+
+    /**
+     * Per-knob lighting on the RGB. Its firmware has no per-knob gradient, so each knob is sent as a single
+     * colour: static knobs as their colour, volume-gradient knobs as their end colour with the LED brightness
+     * following the knob position, and off/unset knobs as black.
+     */
+    private void sendRGBCustom(String serialNumber, LightingConfig config, boolean priority) {
+        var knobConfigs = config.knobConfigs();
+        var resolved = new SingleKnobLightingConfig[DeviceType.PCPANEL_RGB.getAnalogCount()];
+        for (var i = 0; i < resolved.length; i++) {
+            var configured = knobConfigs != null && i < knobConfigs.length ? knobConfigs[i] : null;
+            resolved[i] = overrideColorService.getDialOverride(serialNumber, i).orElse(configured);
+        }
+        sendRGBMessage(serialNumber, buildRGBCustomData(config.getGlobalBrightness(), resolved), priority);
+    }
+
+    static byte[] buildRGBCustomData(int brightness, SingleKnobLightingConfig[] knobConfigs) {
+        var colors = new String[knobConfigs.length];
+        var volumeTrack = new boolean[knobConfigs.length];
+        for (var i = 0; i < knobConfigs.length; i++) {
+            var knob = knobConfigs[i];
+            var mode = knob == null || knob.getMode() == null ? SingleKnobLightingConfig.SINGLE_KNOB_MODE.NONE : knob.getMode();
+            switch (mode) {
+                case NONE -> colors[i] = "#000000";
+                case STATIC -> colors[i] = knob.getColor1();
+                case VOLUME_GRADIENT -> {
+                    colors[i] = knob.getColor2();
+                    volumeTrack[i] = true;
+                }
+            }
+        }
+        return buildFullLEDData(brightness, colors, volumeTrack);
+    }
+
+    static byte[] buildFullLEDData(int brightness, String[] colors, boolean[] volumeTrack) {
+        var data = new ByteWriter(brightness, 2 + 4 * colors.length + colors.length).append(OUTPUT_CODE_RGB, 0);
+        for (var color : colors) {
+            data.append(OUTPUT_CODE_RGB_RGB).appendHex(color);
+        }
+        for (var i = 0; i < colors.length; i++) {
+            data.append(volumeTrack != null && i < volumeTrack.length && volumeTrack[i] ? 1 : 0);
+        }
+        return data.get();
+    }
+
+    private void sendRGBMessage(String serialNumber, byte[] data, boolean priority) {
+        var handler = deviceScanner.getConnectedDevice(serialNumber);
         if (handler == null)
             throw new IllegalArgumentException("invalid device");
-
-        var data = new ByteWriter(brightness, 2 + 4 * colors.length + colors.length).append(2, 0);
-        for (var color : colors) {
-            var toSend = overrideColorService.getDialOverride(deviceSerialNumber, 0).map(SingleKnobLightingConfig::getColor1).orElse(color);
-            data.append(OUTPUT_CODE_RGB_RGB).appendHex(toSend);
-        }
-        for (var b : volumeTrack) {
-            data.append(b ? 1 : 0);
-        }
         if (priority) {
-            handler.sendMessage(data.get());
+            handler.sendMessage(data);
         } else {
-            handler.sendMessage(new byte[][] { data.get() });
+            handler.sendMessage(new byte[][] { data });
         }
     }
 
@@ -285,7 +328,7 @@ public final class OutputInterpreter {
             case ALL_RAINBOW -> sendRainbow(serialNumber, config.rainbowPhaseShift(), (byte) -1, config.rainbowBrightness(), config.rainbowSpeed(), config.rainbowReverse(), priority);
             case ALL_WAVE -> sendWave(serialNumber, config.waveHue(), (byte) -1, config.waveBrightness(), config.waveSpeed(), config.waveReverse(), config.waveBounce(), priority);
             case ALL_BREATH -> sendBreath(serialNumber, config.breathHue(), (byte) -1, config.breathBrightness(), config.breathSpeed(), priority);
-            default -> log.error("unexpected lighting mode in deviceOutputHandler");
+            case CUSTOM -> sendRGBCustom(serialNumber, config, priority);
         }
     }
 

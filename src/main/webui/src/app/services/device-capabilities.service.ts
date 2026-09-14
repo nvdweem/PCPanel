@@ -9,7 +9,7 @@ import {
  *  live snapshot has no descriptor (defensive) and to drive the debug override.
  *  These encode exactly today's geometry/lighting matrix (see plan §2.2). */
 const PCPANEL_MODES_CUSTOM = ['ALL_COLOR', 'ALL_RAINBOW', 'ALL_WAVE', 'ALL_BREATH', 'CUSTOM'];
-const PCPANEL_MODES_RGB = ['ALL_COLOR', 'SINGLE_COLOR', 'ALL_RAINBOW', 'ALL_WAVE', 'ALL_BREATH'];
+const PCPANEL_MODES_RGB = ['ALL_COLOR', 'SINGLE_COLOR', 'ALL_RAINBOW', 'ALL_WAVE', 'ALL_BREATH', 'CUSTOM'];
 
 function knobInputs(count: number, sourceMax: number): AnalogInputSpec[] {
   return Array.from({ length: count }, (_, i) => ({
