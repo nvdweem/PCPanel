@@ -17,6 +17,7 @@ import com.getpcpanel.integration.wavelink.command.CommandWaveLinkChangeMute;
 import com.getpcpanel.integration.wavelink.command.WaveLinkCommandTarget;
 
 import dev.niels.wavelink.impl.model.WaveLinkChannel;
+import dev.niels.wavelink.impl.model.WaveLinkMix;
 
 /**
  * Tests the real {@link WaveLinkMuteResolver} against a Wave Link service that reports a given channel
@@ -44,6 +45,23 @@ class WaveLinkMuteResolverTest {
                 return new WaveLinkChannel(id, "Music", null, null, null, isMuted, null, null, null);
             }
         };
+    }
+
+    /** A WaveLinkService whose model knows exactly one mix with the given mute state. */
+    private static WaveLinkService waveLinkWithMix(String mixId, Boolean muted) {
+        return new WaveLinkService() {
+            @Override
+            public WaveLinkMix getMixFromId(String id) {
+                return new WaveLinkMix(id, "Personal Mix", null, mixId.equals(id) ? muted : null, null);
+            }
+        };
+    }
+
+    @Test
+    void mutedMasterMixResolvesTrue() {
+        Command cmd = new CommandWaveLinkChangeLevel(WaveLinkCommandTarget.MixMaster, "personal", null, null);
+        var resolver = new WaveLinkMuteResolver(waveLinkWithMix("personal", true));
+        assertEquals(Optional.of(true), resolver.resolve(new Commands(List.of(cmd), CommandsType.allAtOnce), MuteStateResolver.FOLLOW));
     }
 
     @Test

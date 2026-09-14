@@ -918,6 +918,7 @@ export interface WaveLinkInputDto {
 
 export interface WaveLinkMixDto {
     id: string;
+    image?: string;
     name?: string;
 }
 
