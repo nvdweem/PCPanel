@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, effect, HostListener, inject, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, HostListener, inject, signal, untracked } from '@angular/core';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient, httpResource } from '@angular/common/http';
@@ -23,6 +23,7 @@ import { COMMAND_BY_TYPE, CommandDef } from '../../features/commands/command-cat
 import { CurveEditorComponent } from '../../features/curves/curve-editor.component';
 import { CurveGraphComponent } from '../../features/curves/curve-graph.component';
 import { BUILT_IN_DEFAULTS, isBuiltIn } from '../../features/curves/curve.util';
+import { OverlayPreviewRenderer, overlayPreviewStyle } from './overlay-preview';
 
 type Cmd = Record<string, any>;
 type TabId = 'general' | 'curves' | 'focusoverride' | 'obs' | 'voicemeeter' | 'wavelink' | 'discord' | 'osc' | 'mqtt' | 'homeassistant' | 'overlay' | 'debug';
@@ -112,10 +113,12 @@ export class SettingsComponent {
   readonly local = signal<SettingsDto | null>(null);
   readonly dirty = signal(false);
 
-  /** Object-URL of the backend-rendered overlay preview (the real renderer → PNG), or null. */
-  readonly overlayPreviewUrl = signal<string | null>(null);
-  private previewObjUrl: string | null = null;
-  private previewTimer: ReturnType<typeof setTimeout> | null = null;
+  /**
+   * Backend-rendered overlay previews (the real renderer → PNG): the saved settings next to the local,
+   * possibly unsaved, edits so a style change can be compared against what is currently in effect.
+   */
+  readonly savedOverlayPreview = new OverlayPreviewRenderer(this.http);
+  readonly editedOverlayPreview = new OverlayPreviewRenderer(this.http);
 
   // OSC add-form fields
   readonly oscHost = signal('');
@@ -201,21 +204,8 @@ export class SettingsComponent {
     return [{ value: '', label: 'Default (Segoe UI)', font: 'Segoe UI' }, ...fonts.map(f => ({ value: f, label: f, font: f }))];
   });
 
-  /** Position the overlay live-preview card per overlayPosition + (scaled) padding. */
-  readonly overlayPreviewStyle = computed<Record<string, string>>(() => {
-    const pos = this.local()?.overlayPosition ?? 'bottomRight';
-    const pad = Math.max(6, Math.min(36, Math.round((this.local()?.overlayPadding ?? 16) * 0.6))) + 'px';
-    const st: Record<string, string> = {};
-    const tf: string[] = [];
-    if (pos.startsWith('top')) st['top'] = pad;
-    else if (pos.startsWith('bottom')) st['bottom'] = pad;
-    else { st['top'] = '50%'; tf.push('translateY(-50%)'); }
-    if (pos.endsWith('Left')) st['left'] = pad;
-    else if (pos.endsWith('Right')) st['right'] = pad;
-    else { st['left'] = '50%'; tf.push('translateX(-50%)'); }
-    if (tf.length) st['transform'] = tf.join(' ');
-    return st;
-  });
+  readonly savedOverlayPreviewStyle = computed(() => overlayPreviewStyle(this.settings.value()));
+  readonly editedOverlayPreviewStyle = computed(() => overlayPreviewStyle(this.local()));
 
   constructor() {
     // Seed the editable copy the first time real settings arrive, or whenever the
@@ -242,32 +232,22 @@ export class SettingsComponent {
       });
     });
 
-    // Live overlay preview: render the real overlay on the backend from the (possibly unsaved) settings,
-    // debounced so dragging a slider doesn't fire a request per tick. Guarantees the preview can't drift
-    // from what the on-screen overlay actually draws.
+    // Live overlay previews: render the real overlay on the backend, debounced so dragging a slider
+    // doesn't fire a request per tick. Guarantees the previews can't drift from what the on-screen
+    // overlay actually draws. The saved pane only re-renders when the server snapshot changes.
+    const overlayPreviewActive = computed(() => this.activeTab() === 'overlay' && this.overlayStylingSupported());
+    effect(() => {
+      const s = this.settings.value();
+      if (s && overlayPreviewActive()) untracked(() => this.savedOverlayPreview.schedule(s));
+    });
     effect(() => {
       const s = this.local();
-      const onOverlay = this.activeTab() === 'overlay';
-      const supported = this.overlayStylingSupported();
-      if (!s || !onOverlay || !supported) return;
-      untracked(() => this.scheduleOverlayPreview(s));
+      if (s && overlayPreviewActive()) untracked(() => this.editedOverlayPreview.schedule(s));
     });
-  }
-
-  private scheduleOverlayPreview(s: SettingsDto): void {
-    if (this.previewTimer) clearTimeout(this.previewTimer);
-    this.previewTimer = setTimeout(() => {
-      this.http.post('/api/overlay/preview', s, { responseType: 'blob' }).subscribe({
-        next: blob => this.setPreviewUrl(blob.size ? URL.createObjectURL(blob) : null),
-        error: () => this.setPreviewUrl(null),
-      });
-    }, 100);
-  }
-
-  private setPreviewUrl(url: string | null): void {
-    if (this.previewObjUrl) URL.revokeObjectURL(this.previewObjUrl);
-    this.previewObjUrl = url;
-    this.overlayPreviewUrl.set(url);
+    inject(DestroyRef).onDestroy(() => {
+      this.savedOverlayPreview.dispose();
+      this.editedOverlayPreview.dispose();
+    });
   }
 
   /** Browser refresh / tab close: warn if there are unsaved edits (in-app nav is guarded by back()). */

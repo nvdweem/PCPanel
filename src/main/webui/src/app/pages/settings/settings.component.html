@@ -876,12 +876,28 @@
               @if (!overlayStylingSupported()) {
                 <div class="pc-hint platform-note">Preview only — on Linux the real overlay is drawn and styled by your desktop.</div>
               }
-              <div class="desktop" [class.disabled-block]="!overlayStylingSupported()">
-                @if (overlayPreviewUrl(); as url) {
-                  <img class="ov-img" [src]="url" [style]="overlayPreviewStyle()" alt="overlay preview" />
-                } @else if (overlayStylingSupported()) {
-                  <div class="pc-hint" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%)">Rendering preview…</div>
-                }
+              <div class="preview-pane">
+                <div class="preview-pane-label">Saved</div>
+                <div class="desktop" [class.disabled-block]="!overlayStylingSupported()">
+                  @if (savedOverlayPreview.url(); as url) {
+                    <img class="ov-img" [src]="url" [style]="savedOverlayPreviewStyle()" alt="saved overlay preview" />
+                  } @else if (overlayStylingSupported()) {
+                    <div class="pc-hint preview-loading">Rendering preview…</div>
+                  }
+                </div>
+              </div>
+              <div class="preview-pane">
+                <div class="preview-pane-label">
+                  Edited
+                  @if (dirty()) { <span class="preview-pane-badge">unsaved</span> }
+                </div>
+                <div class="desktop" [class.disabled-block]="!overlayStylingSupported()">
+                  @if (editedOverlayPreview.url(); as url) {
+                    <img class="ov-img" [src]="url" [style]="editedOverlayPreviewStyle()" alt="edited overlay preview" />
+                  } @else if (overlayStylingSupported()) {
+                    <div class="pc-hint preview-loading">Rendering preview…</div>
+                  }
+                </div>
               </div>
             </div>
           </div>
