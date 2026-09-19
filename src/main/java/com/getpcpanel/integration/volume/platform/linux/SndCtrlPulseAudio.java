@@ -82,22 +82,28 @@ class SndCtrlPulseAudio implements ISndCtrl {
     }
 
     public void initSessions(@Observes @Nullable LinuxSessionChangedEvent event) {
+        List<AudioSessionEvent> events;
         synchronized (sessions) {
             var prevByIndex = StreamEx.of(sessions).mapToEntry(PulseAudioAudioSession::index).invert().toMap();
             sessions.clear();
             sessions.addAll(getSessionsFromCmd());
             var currByIndex = StreamEx.of(sessions).mapToEntry(PulseAudioAudioSession::index).invert().toMap();
 
-            // Trigger events
             var removed = StreamEx.of(prevByIndex.values()).remove(sessions::contains);
             var added = StreamEx.of(sessions).remove(prevByIndex.values()::contains);
             var changed = getChangedStream(event, prevByIndex, currByIndex);
 
-            added.map(sess -> new AudioSessionEvent(sess, EventType.ADDED))
-                 .append(removed.map(sess -> new AudioSessionEvent(sess, EventType.REMOVED)))
-                 .append(changed.map(sess -> new AudioSessionEvent(sess, EventType.CHANGED)))
-                 .forEach(e -> eventBus.fire(e));
+            events = added.map(sess -> new AudioSessionEvent(sess, EventType.ADDED))
+                          .append(removed.map(sess -> new AudioSessionEvent(sess, EventType.REMOVED)))
+                          .append(changed.map(sess -> new AudioSessionEvent(sess, EventType.CHANGED)))
+                          .toList();
         }
+        // Fired after the lock is released, like the initial-state notification above. An observer is
+        // foreign code: MuteColorService takes its own monitor and then calls back into getAllSessions,
+        // so firing from inside `sessions` inverts the lock order and deadlocks against any thread that
+        // already holds MuteColorService. That is reachable from the focus poller, which only fires when
+        // the focused app changes -- so it stayed hidden wherever the focused window never resolved.
+        events.forEach(e -> eventBus.fire(e));
     }
 
     private StreamEx<PulseAudioAudioSession> getChangedStream(@Nullable LinuxSessionChangedEvent event, Map<Integer, PulseAudioAudioSession> prevs, Map<Integer, PulseAudioAudioSession> currents) {
