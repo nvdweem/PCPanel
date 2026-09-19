@@ -271,7 +271,11 @@ backend stays authoritative for what the hardware does.
 the volume feature. Implementations are selected at **build time** by platform stereotypes:
 `@WindowsBuild` (`SndCtrlWindows` → JNI to `SndCtrl.dll` via `SndCtrlNative`, both in
 `integration/volume/platform/windows/`; C++ source in `src/main/cpp/`) and `@LinuxBuild`
-(`SndCtrlPulseAudio` in `platform/linux/`, via JNA/PulseAudio). These stereotypes wrap
+(`SndCtrlPulseAudio` in `platform/linux/`), which drives PulseAudio/PipeWire through the **`pactl` CLI** as
+subprocesses — `PulseAudioWrapper` runs `pactl list`/`set-*`, `PulseAudioEventListener` follows `pactl subscribe`
+for device/stream changes; there is no JNA binding to libpulse. Every `pactl` call runs to completion within a
+deadline (a hung one is killed), writes run one at a time so values apply in order, and a `pactl list` that times
+out keeps the cached devices/sessions rather than emptying them. These stereotypes wrap
 Quarkus `@IfBuildProperty(name="pcpanel.build.os", ...)` keyed off `pcpanel.build.os` (set at build
 time from `os.detected.name`), so **a given build only contains one platform's beans** — guard
 optional platform beans with `Instance<T>` injection, and use `CdiHelper` to fetch beans from
