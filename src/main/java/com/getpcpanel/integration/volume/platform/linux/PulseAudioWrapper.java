@@ -1,11 +1,15 @@
 package com.getpcpanel.integration.volume.platform.linux;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 import javax.annotation.Nonnull;
@@ -33,6 +37,7 @@ class PulseAudioWrapper {
     private static final Pattern pactlFirstLine = Pattern.compile("(.*) #(\\d+)");
     @Inject
     ProcessHelper processHelper;
+    long timeoutMillis = 2_000;
 
     public static int volumeFtoI(float volume) {
         return Math.round(volume * 65536);
@@ -81,7 +86,7 @@ class PulseAudioWrapper {
 
     List<PulseAudioTarget> execAndParse(InOutput type) {
         var ret = new ArrayList<PulseAudioTarget>();
-        var cmdOutput = runAndRead(processHelper.builder("pactl", "list", type.pulseType));
+        var cmdOutput = runAndRead("pactl", "list", type.pulseType);
 
         PulseAudioTarget.PulseAudioTargetBuilder paTarget = null;
         var properties = new HashMap<String, String>();
@@ -127,18 +132,21 @@ class PulseAudioWrapper {
         return ret;
     }
 
+    /**
+     * Runs a write and returns once pactl has finished. Together with {@code synchronized} this keeps exactly one
+     * write in flight, so successive values land in the order they were sent - the command thread coalesces knob
+     * values that arrive meanwhile, so only the newest one is applied next.
+     */
     private synchronized void pactl(String... cmd) {
         var fullCmd = new String[cmd.length + 1];
         fullCmd[0] = "pactl";
         System.arraycopy(cmd, 0, fullCmd, 1, cmd.length);
         log.debug("Executing: {}", String.join(" ", fullCmd));
         try {
-            var process = processHelper.builder(fullCmd).start();
-
-            if (log.isTraceEnabled()) {
-                var lines = IOUtils.readLines(process.getInputStream(), Charset.defaultCharset());
-                log.trace("Response: \n{}", String.join("\n", lines));
-            }
+            var lines = run(fullCmd);
+            log.trace("Response: \n{}", String.join("\n", lines));
+        } catch (PactlTimeoutException e) {
+            log.warn("{}; the change was not applied", e.getMessage());
         } catch (IOException e) {
             // A missing or non-functional pactl (no PulseAudio/PipeWire - e.g. a headless box or a CI
             // runner) must not abort the volume operation. Degrade to a no-op; the read paths return
@@ -147,16 +155,64 @@ class PulseAudioWrapper {
         }
     }
 
-    private List<String> runAndRead(ProcessBuilder pb) {
+    /**
+     * @throws PactlTimeoutException when pactl does not finish in time, so the caller can keep what it already
+     *                               knows instead of treating a stalled audio server as "no devices"
+     */
+    private List<String> runAndRead(String... command) {
         try {
-            var process = pb.start();
-            return IOUtils.readLines(process.getInputStream(), Charset.defaultCharset());
+            return run(command);
         } catch (IOException e) {
             // pactl missing/unrunnable: report no devices/sessions rather than crashing. On Linux audio
             // control is best-effort, so its absence degrades to a no-op ISndCtrl - the app still starts
             // and serves the UI (a system without PulseAudio/PipeWire, or CI without pactl installed).
             onPactlUnavailable(e);
             return List.of();
+        }
+    }
+
+    /**
+     * Runs {@code command} to completion within {@link #timeoutMillis} and returns its output (stdout and stderr).
+     * The output is read while the process runs, since a {@code pactl list} can exceed a pipe buffer; a process
+     * still running at the deadline is killed, which also ends that read.
+     */
+    private List<String> run(String... command) throws IOException {
+        var process = processHelper.builder(command).redirectErrorStream(true).start();
+        var timedOut = new AtomicBoolean();
+        var watchdog = CompletableFuture.runAsync(() -> {
+            if (process.isAlive()) {
+                timedOut.set(true);
+                process.destroyForcibly();
+            }
+        }, CompletableFuture.delayedExecutor(timeoutMillis, TimeUnit.MILLISECONDS));
+        try {
+            List<String> lines;
+            try {
+                lines = IOUtils.readLines(process.getInputStream(), Charset.defaultCharset());
+            } catch (UncheckedIOException e) {
+                if (!timedOut.get()) {
+                    throw e.getCause();
+                }
+                lines = List.of(); // The watchdog closed the stream under the read.
+            }
+            if (!process.waitFor(timeoutMillis, TimeUnit.MILLISECONDS)) {
+                timedOut.set(true);
+                process.destroyForcibly();
+            }
+            if (timedOut.get()) {
+                process.waitFor(timeoutMillis, TimeUnit.MILLISECONDS);
+                throw new PactlTimeoutException(String.join(" ", command) + " did not finish within " + timeoutMillis + "ms");
+            }
+            if (process.exitValue() != 0) {
+                log.debug("{} exited with {}: {}", String.join(" ", command), process.exitValue(), String.join("\n", lines));
+            }
+            return lines;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            process.destroyForcibly();
+            throw new PactlTimeoutException(String.join(" ", command) + " was interrupted");
+        } finally {
+            watchdog.cancel(false);
         }
     }
 
@@ -181,11 +237,25 @@ class PulseAudioWrapper {
     List<String> getDebugOutput() {
         return StreamEx.of(InOutput.values())
                        .map(t -> new String[] { "pactl", "list", t.pulseType })
-                       .mapToEntry(cmd -> runAndRead(processHelper.builder(cmd)))
+                       .mapToEntry(this::debugRun)
                        .mapKeys(cmd -> String.join(" ", cmd))
                        .mapValues(lines -> String.join("\n", lines))
                        .mapKeyValue((cmd, lns) -> cmd + ":\n" + lns)
                        .toList();
+    }
+
+    private List<String> debugRun(String[] cmd) {
+        try {
+            return runAndRead(cmd);
+        } catch (PactlTimeoutException e) {
+            return List.of(e.getMessage());
+        }
+    }
+
+    static final class PactlTimeoutException extends RuntimeException {
+        PactlTimeoutException(String message) {
+            super(message);
+        }
     }
 
     @Builder

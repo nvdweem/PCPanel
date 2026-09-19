@@ -32,6 +32,7 @@ import com.getpcpanel.platform.process.LinuxProcessHelper.ActiveWindow;
 import com.getpcpanel.integration.volume.platform.linux.PulseAudioEventListener.LinuxDeviceChangedEvent;
 import com.getpcpanel.integration.volume.platform.linux.PulseAudioEventListener.LinuxSessionChangedEvent;
 import com.getpcpanel.integration.volume.platform.linux.PulseAudioWrapper.InOutput;
+import com.getpcpanel.integration.volume.platform.linux.PulseAudioWrapper.PactlTimeoutException;
 import com.getpcpanel.integration.volume.platform.linux.PulseAudioWrapper.PulseAudioTarget;
 import com.getpcpanel.platform.LinuxBuild;
 
@@ -60,7 +61,7 @@ class SndCtrlPulseAudio implements ISndCtrl {
     public void init() {
         initDevices(null);
         synchronized (sessions) {
-            sessions.addAll(getSessionsFromCmd());
+            getSessionsFromCmd().ifPresent(sessions::addAll);
         }
     }
 
@@ -76,16 +77,24 @@ class SndCtrlPulseAudio implements ISndCtrl {
 
     public void initDevices(@Observes @Nullable LinuxDeviceChangedEvent event) {
         synchronized (devices) {
+            var found = getDevicesFromCmd();
+            if (found.isEmpty()) {
+                return;
+            }
             devices.clear();
-            StreamEx.of(getDevicesFromCmd()).mapToEntry(AudioDevice::id, Function.identity()).into(devices);
+            StreamEx.of(found.get()).mapToEntry(AudioDevice::id, Function.identity()).into(devices);
         }
     }
 
     public void initSessions(@Observes @Nullable LinuxSessionChangedEvent event) {
         synchronized (sessions) {
+            var found = getSessionsFromCmd();
+            if (found.isEmpty()) {
+                return;
+            }
             var prevByIndex = StreamEx.of(sessions).mapToEntry(PulseAudioAudioSession::index).invert().toMap();
             sessions.clear();
-            sessions.addAll(getSessionsFromCmd());
+            sessions.addAll(found.get());
             var currByIndex = StreamEx.of(sessions).mapToEntry(PulseAudioAudioSession::index).invert().toMap();
 
             // Trigger events
@@ -327,8 +336,14 @@ class SndCtrlPulseAudio implements ISndCtrl {
         return null;
     }
 
-    private Set<PulseAudioAudioDevice> getDevicesFromCmd() {
-        return StreamEx.of(cmd.devices()).mapPartial(this::toDevice).toSet();
+    /** Empty when pactl timed out: the caller keeps what it knows rather than reporting everything as gone. */
+    private Optional<Set<PulseAudioAudioDevice>> getDevicesFromCmd() {
+        try {
+            return Optional.of(StreamEx.of(cmd.devices()).mapPartial(this::toDevice).toSet());
+        } catch (PactlTimeoutException e) {
+            log.warn("{}; keeping the known audio devices", e.getMessage());
+            return Optional.empty();
+        }
     }
 
     private Optional<PulseAudioAudioDevice> toDevice(PulseAudioTarget pa) {
@@ -340,8 +355,14 @@ class SndCtrlPulseAudio implements ISndCtrl {
         return Optional.of(new PulseAudioAudioDevice(eventBus, pa.index(), pa.metas().get("Description"), (isOutput ? "" : INPUT_PREFIX) + pa.metas().get("Name"), pa.isDefault(), isOutput));
     }
 
-    private Set<PulseAudioAudioSession> getSessionsFromCmd() {
-        return StreamEx.of(cmd.getSessions()).map(this::toSession).toSet();
+    /** Empty when pactl timed out: the caller keeps what it knows rather than reporting every stream as removed. */
+    private Optional<Set<PulseAudioAudioSession>> getSessionsFromCmd() {
+        try {
+            return Optional.of(StreamEx.of(cmd.getSessions()).map(this::toSession).toSet());
+        } catch (PactlTimeoutException e) {
+            log.warn("{}; keeping the known audio sessions", e.getMessage());
+            return Optional.empty();
+        }
     }
 
     PulseAudioAudioSession toSession(PulseAudioTarget pa) {

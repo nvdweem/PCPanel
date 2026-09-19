@@ -1,17 +1,28 @@
 package com.getpcpanel.integration.volume.platform.linux;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import com.getpcpanel.platform.process.LinuxProcessHelper.ActiveWindow;
+import com.getpcpanel.integration.volume.platform.linux.PulseAudioWrapper.InOutput;
+import com.getpcpanel.integration.volume.platform.linux.PulseAudioWrapper.PactlTimeoutException;
 import com.getpcpanel.integration.volume.platform.linux.PulseAudioWrapper.PulseAudioTarget;
+
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.NotificationOptions;
+import jakarta.enterprise.util.TypeLiteral;
 
 class SndCtrlPulseAudioTest {
 
@@ -147,6 +158,89 @@ class SndCtrlPulseAudioTest {
 
         var mediaOnly = session(Map.of("media.name", "Discord"));
         assertEquals("Discord", SndCtrlPulseAudio.runningAppName(mediaOnly), "uses media.name when that is all there is");
+    }
+
+    /**
+     * A refresh whose pactl list times out (a wedged audio server) keeps the last known devices and sessions:
+     * clearing them would report every stream as removed and back, and the knobs would lose their targets.
+     */
+    @Test
+    void refreshKeepsTheKnownStateWhenPactlTimesOut() {
+        var fired = new ArrayList<Object>();
+        var cmd = new StubWrapper();
+        var sut = new SndCtrlPulseAudio();
+        sut.cmd = cmd;
+        sut.eventBus = new RecordingEventBus(fired);
+
+        cmd.sessions = List.of(PulseAudioTarget.builder().index(7).type(InOutput.session)
+                                               .properties(Map.of("application.name", "Firefox")).metas(Map.of()).build());
+        cmd.devices = List.of(PulseAudioTarget.builder().index(1).type(InOutput.output)
+                                              .properties(Map.of()).metas(Map.of("Name", "speakers", "Description", "Speakers")).build());
+        sut.initSessions(null);
+        sut.initDevices(null);
+        var eventsBefore = fired.size();
+
+        cmd.timeOut = true;
+        assertDoesNotThrow(() -> sut.initSessions(null));
+        assertDoesNotThrow(() -> sut.initDevices(null));
+
+        assertEquals(1, sut.getAllSessions().size(), "the known session must survive a timed-out refresh");
+        assertEquals(1, sut.devices().size(), "the known device must survive a timed-out refresh");
+        assertEquals(eventsBefore, fired.size(), "a timed-out refresh must not report sessions as removed/added");
+    }
+
+    private static final class StubWrapper extends PulseAudioWrapper {
+        private List<PulseAudioTarget> sessions = List.of();
+        private List<PulseAudioTarget> devices = List.of();
+        private boolean timeOut;
+
+        @Override
+        public List<PulseAudioTarget> getSessions() {
+            if (timeOut) {
+                throw new PactlTimeoutException("pactl list sink-inputs did not finish");
+            }
+            return sessions;
+        }
+
+        @Override
+        public List<PulseAudioTarget> devices() {
+            if (timeOut) {
+                throw new PactlTimeoutException("pactl list sinks did not finish");
+            }
+            return devices;
+        }
+    }
+
+    private record RecordingEventBus(List<Object> fired) implements Event<Object> {
+        @Override
+        public void fire(Object event) {
+            fired.add(event);
+        }
+
+        @Override
+        public <U> CompletionStage<U> fireAsync(U event) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public <U> CompletionStage<U> fireAsync(U event, NotificationOptions options) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Event<Object> select(Annotation... qualifiers) {
+            return this;
+        }
+
+        @Override
+        public <U> Event<U> select(Class<U> subtype, Annotation... qualifiers) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public <U> Event<U> select(TypeLiteral<U> subtype, Annotation... qualifiers) {
+            throw new UnsupportedOperationException();
+        }
     }
 
     private static PulseAudioAudioSession session(Map<String, String> properties) {
