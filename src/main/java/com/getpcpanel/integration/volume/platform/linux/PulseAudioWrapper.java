@@ -1,6 +1,7 @@
 package com.getpcpanel.integration.volume.platform.linux;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -137,8 +138,8 @@ class PulseAudioWrapper {
         System.arraycopy(cmd, 0, fullCmd, 1, cmd.length);
         log.debug("Executing: {}", String.join(" ", fullCmd));
         try {
-            var lines = run(fullCmd);
-            log.trace("Response: \n{}", String.join("\n", lines));
+            var result = run(fullCmd);
+            log.trace("Response: \n{}", String.join("\n", result.stdout()));
         } catch (PactlTimeoutException e) {
             log.warn("{}; the change was not applied", e.getMessage());
         } catch (IOException e) {
@@ -155,7 +156,7 @@ class PulseAudioWrapper {
      */
     private List<String> runAndRead(String... command) {
         try {
-            return run(command);
+            return run(command).stdout();
         } catch (IOException e) {
             // pactl missing/unrunnable: report no devices/sessions rather than crashing. On Linux audio
             // control is best-effort, so its absence degrades to a no-op ISndCtrl - the app still starts
@@ -165,16 +166,17 @@ class PulseAudioWrapper {
         }
     }
 
-    /** Runs {@code command} to completion within {@link #timeoutMillis} and returns its output (stdout and stderr). */
-    private List<String> run(String... command) throws IOException {
-        var process = processHelper.builder(command).redirectErrorStream(true).start();
+    /** Runs {@code command} to completion within {@link #timeoutMillis}; a failed run is logged with what pactl said. */
+    private ProcessHelper.Result run(String... command) throws IOException {
         try {
-            var lines = ProcessHelper.readWithDeadline(process, timeoutMillis)
-                                     .orElseThrow(() -> new PactlTimeoutException(String.join(" ", command) + " did not finish within " + timeoutMillis + "ms"));
-            if (process.exitValue() != 0) {
-                log.debug("{} exited with {}: {}", String.join(" ", command), process.exitValue(), String.join("\n", lines));
+            var result = processHelper.run(Duration.ofMillis(timeoutMillis), ProcessHelper.PARSEABLE_OUTPUT, command);
+            if (result.timedOut()) {
+                throw new PactlTimeoutException(String.join(" ", command) + " did not finish within " + timeoutMillis + "ms");
             }
-            return lines;
+            if (result.exitCode() != 0) {
+                log.debug("{} exited with {}: {}", String.join(" ", command), result.exitCode(), String.join("\n", result.stderr()));
+            }
+            return result;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new PactlTimeoutException(String.join(" ", command) + " was interrupted");
@@ -209,11 +211,16 @@ class PulseAudioWrapper {
                        .toList();
     }
 
+    /** Everything pactl wrote, errors included, for the debug dump. */
     private List<String> debugRun(String[] cmd) {
         try {
-            return runAndRead(cmd);
+            var result = run(cmd);
+            return StreamEx.of(result.stdout()).append(result.stderr()).toList();
         } catch (PactlTimeoutException e) {
             return List.of(e.getMessage());
+        } catch (IOException e) {
+            onPactlUnavailable(e);
+            return List.of();
         }
     }
 

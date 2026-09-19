@@ -3,11 +3,15 @@ package com.getpcpanel.util.version;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.getpcpanel.util.os.ProcessHelper;
+
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 
 /**
@@ -28,6 +32,9 @@ public class AppImageUpdater implements PlatformUpdater {
     // appimageupdatetool is itself distributed as an AppImage; bundled next to our binary and run with
     // APPIMAGE_EXTRACT_AND_RUN so it needs no FUSE on the user's machine.
     private static final String TOOL = "appimageupdatetool-x86_64.AppImage";
+
+    @Inject
+    ProcessHelper processes;
 
     @Override
     public boolean isSupported() {
@@ -55,16 +62,16 @@ public class AppImageUpdater implements PlatformUpdater {
         log.info("Updating AppImage {} via {}", appImage, tool);
         // -O overwrites the AppImage in place (the default writes a new file and leaves ours untouched);
         // -r removes the .zs-old backup once the new file verifies.
-        var pb = new ProcessBuilder(tool, "-O", "-r", appImage);
-        pb.environment().put("APPIMAGE_EXTRACT_AND_RUN", "1");
-        pb.redirectOutput(ProcessBuilder.Redirect.DISCARD).redirectError(ProcessBuilder.Redirect.DISCARD);
-        var code = pb.start().waitFor();
-        if (code != 0) {
-            throw new AutoUpdateService.UpdateException("The AppImage updater exited with code " + code + ".");
+        var result = processes.run(UPDATE_TIMEOUT, Map.of("APPIMAGE_EXTRACT_AND_RUN", "1"), tool, "-O", "-r", appImage);
+        if (result.timedOut()) {
+            throw new AutoUpdateService.UpdateException("The AppImage updater did not finish within " + UPDATE_TIMEOUT.toMinutes() + " minutes.");
+        }
+        if (result.exitCode() != 0) {
+            throw new AutoUpdateService.UpdateException("The AppImage updater exited with code " + result.exitCode() + ".");
         }
 
         // sh -c 'sleep 3; exec "$0"' <appimage> — $0 is the updated file; exec replaces the shell with it.
-        UpdaterRestart.relaunchAndExit(List.of("sh", "-c", "sleep 3; exec \"$0\"", appImage));
+        UpdaterRestart.relaunchAndExit(processes, List.of("sh", "-c", "sleep 3; exec \"$0\"", appImage));
         return new AutoUpdateService.UpdateTarget("the latest version", "");
     }
 

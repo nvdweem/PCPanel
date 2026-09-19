@@ -4,7 +4,10 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.getpcpanel.util.os.ProcessHelper;
+
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 
 /**
@@ -20,6 +23,9 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @ApplicationScoped
 public class FlatpakUpdater implements PlatformUpdater {
+    @Inject
+    ProcessHelper processes;
+
     @Override
     public boolean isSupported() {
         return StringUtils.isNotBlank(System.getenv("FLATPAK_ID"));
@@ -42,16 +48,16 @@ public class FlatpakUpdater implements PlatformUpdater {
         }
 
         log.info("Updating Flatpak {} via the host", appId);
-        var code = new ProcessBuilder("flatpak-spawn", "--host", "flatpak", "update", "-y", appId)
-                .redirectOutput(ProcessBuilder.Redirect.DISCARD)
-                .redirectError(ProcessBuilder.Redirect.DISCARD)
-                .start().waitFor();
-        if (code != 0) {
-            throw new AutoUpdateService.UpdateException("flatpak update exited with code " + code + ".");
+        var result = processes.run(UPDATE_TIMEOUT, "flatpak-spawn", "--host", "flatpak", "update", "-y", appId);
+        if (result.timedOut()) {
+            throw new AutoUpdateService.UpdateException("flatpak update did not finish within " + UPDATE_TIMEOUT.toMinutes() + " minutes.");
+        }
+        if (result.exitCode() != 0) {
+            throw new AutoUpdateService.UpdateException("flatpak update exited with code " + result.exitCode() + ".");
         }
 
         // Relaunch on the host so it survives the sandbox teardown when this instance exits.
-        UpdaterRestart.relaunchAndExit(List.of("flatpak-spawn", "--host", "sh", "-c", "sleep 3; flatpak run \"$0\"", appId));
+        UpdaterRestart.relaunchAndExit(processes, List.of("flatpak-spawn", "--host", "sh", "-c", "sleep 3; flatpak run \"$0\"", appId));
         return new AutoUpdateService.UpdateTarget("the latest version", "");
     }
 }

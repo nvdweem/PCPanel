@@ -2,6 +2,8 @@ package com.getpcpanel.util.version;
 
 import java.util.List;
 
+import com.getpcpanel.util.os.ProcessHelper;
+
 import io.quarkus.runtime.Quarkus;
 import lombok.extern.log4j.Log4j2;
 
@@ -24,12 +26,9 @@ final class UpdaterRestart {
      *                   AppImage this is a plain {@code sh -c 'sleep …; exec …'}; for a Flatpak it must be
      *                   host-spawned ({@code flatpak-spawn --host …}) so it survives the sandbox teardown.
      */
-    static void relaunchAndExit(List<String> relauncher) {
+    static void relaunchAndExit(ProcessHelper processes, List<String> relauncher) {
         try {
-            new ProcessBuilder(relauncher)
-                    .redirectOutput(ProcessBuilder.Redirect.DISCARD)
-                    .redirectError(ProcessBuilder.Redirect.DISCARD)
-                    .start();
+            processes.launch(relauncher.toArray(String[]::new));
         } catch (Exception e) {
             log.error("Could not schedule the post-update relaunch; the app will exit without restarting", e);
         }

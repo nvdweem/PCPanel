@@ -19,6 +19,7 @@ import com.getpcpanel.integration.volume.platform.ISndCtrl;
 import com.getpcpanel.platform.process.LinuxProcessHelper;
 import com.getpcpanel.platform.process.OsxProcessHelper;
 import com.getpcpanel.util.Util;
+import com.getpcpanel.util.os.ProcessHelper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -26,7 +27,6 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public abstract class IPlatformCommand {
     public static final String FOCUS = "FOCUS";
-    protected static final Runtime rt = Runtime.getRuntime();
 
     public abstract void exec(String shortcut);
 
@@ -38,15 +38,17 @@ public abstract class IPlatformCommand {
     public static class LinuxPlatformCommand extends IPlatformCommand {
         @Inject
         LinuxProcessHelper processHelper;
+        @Inject
+        ProcessHelper processes;
 
         @Override
         public void exec(String shortcut) {
             try {
                 var file = new File(shortcut);
                 if (file.isDirectory()) {
-                    processHelper.builder("gio", "open", shortcut).start();
+                    processes.launch("gio", "open", shortcut);
                 } else {
-                    rt.exec(shortcut);
+                    processes.launch(ProcessHelper.splitCommandLine(shortcut));
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -57,9 +59,9 @@ public abstract class IPlatformCommand {
         public void kill(String process) {
             try {
                 if (FOCUS.equals(process)) {
-                    processHelper.builder("kill", String.valueOf(processHelper.getActiveProcessPid())).start();
+                    processes.launch("kill", String.valueOf(processHelper.getActiveProcessPid()));
                 } else {
-                    processHelper.builder("pkill", process).start();
+                    processes.launch("pkill", process);
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -73,15 +75,16 @@ public abstract class IPlatformCommand {
     @RequiredArgsConstructor
     public static class OsxPlatformCommand extends IPlatformCommand {
         private final OsxProcessHelper processHelper;
+        private final ProcessHelper processes;
 
         @Override
         public void exec(String shortcut) {
             try {
                 var file = new File(shortcut);
                 if (file.exists()) {
-                    rt.exec(new String[] { "/usr/bin/open", file.getAbsolutePath() });
+                    processes.launch("/usr/bin/open", file.getAbsolutePath());
                 } else {
-                    rt.exec(shortcut);
+                    processes.launch(ProcessHelper.splitCommandLine(shortcut));
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -94,7 +97,7 @@ public abstract class IPlatformCommand {
                 var app = processHelper.getFrontmostApp();
                 if (app != null) {
                     try {
-                        rt.exec(new String[] { "/bin/kill", String.valueOf(app.pid()) });
+                        processes.launch("/bin/kill", String.valueOf(app.pid()));
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
@@ -116,6 +119,7 @@ public abstract class IPlatformCommand {
     @RequiredArgsConstructor
     public static class WindowsPlatformCommand extends IPlatformCommand {
         private final ISndCtrl sndCtrl;
+        private final ProcessHelper processes;
 
         // Extensions the OS can start directly via CreateProcess (ProcessBuilder). Everything else the
         // application picker accepts as "executable" (.lnk/.bat/.cmd/.msi/.ps1/.vbs/...) needs the shell
@@ -129,23 +133,23 @@ public abstract class IPlatformCommand {
                 if (file.isDirectory()) {
                     // Open the folder in Explorer without a shell, so spaces / & / % / ^ in the path are
                     // taken literally (cmd's "start" also mis-reads a quoted path as a window title).
-                    new ProcessBuilder(directoryArgv(file)).start();
+                    processes.launch(directoryArgv(file).toArray(String[]::new));
                 } else if (file.isFile() && Util.isFileExecutable(file)) {
                     if (canLaunchDirectly(file)) {
                         // A concrete .exe/.com the user pointed at: CreateProcess it directly. No shell
                         // means the whole path is one argument, so metacharacters pass through verbatim.
-                        new ProcessBuilder(executableArgv(file)).directory(file.getParentFile()).start();
+                        processes.launch(file.getParentFile(), executableArgv(file).toArray(String[]::new));
                     } else {
                         // .lnk/.bat/.msi/scripts can't be CreateProcess'd; the shell resolves their file
                         // association/interpreter. Run from the parent dir by bare name as before.
-                        rt.exec("cmd.exe /c \"" + file.getName() + "\"", null, file.getParentFile());
+                        processes.launch(file.getParentFile(), ProcessHelper.splitCommandLine("cmd.exe /c \"" + file.getName() + "\""));
                     }
                 } else {
                     // Free-form input: a bare program name resolved via PATH, a URL / protocol handler, or a
                     // full command line with arguments the user typed. The shell is doing real work here
                     // (PATH lookup, argument parsing, ShellExecute of URLs), so it stays. The binding comes
                     // from the trusted local user, so this is a robustness choice, not an injection boundary.
-                    rt.exec("cmd.exe /c \"" + shortcut + "\"");
+                    processes.launch(ProcessHelper.splitCommandLine("cmd.exe /c \"" + shortcut + "\""));
                 }
             } catch (IOException e) {
                 log.error("Unable to run {}", shortcut, e);
@@ -157,7 +161,7 @@ public abstract class IPlatformCommand {
             var toKill = stripFile(FOCUS.equals(process) ? sndCtrl.getFocusApplication() : process);
             try {
                 // taskkill.exe is a real executable — run it directly instead of via cmd.exe.
-                new ProcessBuilder("taskkill", "/IM", toKill, "/F").start();
+                processes.launch("taskkill", "/IM", toKill, "/F");
             } catch (IOException e) {
                 log.error("Unable to end '{}'", toKill, e);
             }

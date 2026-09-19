@@ -1,7 +1,7 @@
 package com.getpcpanel.platform.process;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,7 +11,6 @@ import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
@@ -38,6 +37,7 @@ public class OsxProcessHelper implements IProcessHelper {
     private static final Pattern EXECUTABLE_PATH = Pattern.compile("executable path=\"(.*)\"");
     private static final Pattern APP_TYPE = Pattern.compile("\\btype=\"(\\w+)\"");
     private static final Pattern APP_PID = Pattern.compile("\\bpid\\s*=\\s*(\\d+)");
+    private static final Duration TOOL_TIMEOUT = Duration.ofSeconds(3);
     private final ProcessHelper processHelper;
 
     public record FrontmostApp(int pid, String name, String executablePath) {
@@ -86,7 +86,7 @@ public class OsxProcessHelper implements IProcessHelper {
             String executable = null;
             String type = null;
             var pid = -1;
-            for (var line : IOUtils.readLines(processHelper.builder("lsappinfo", "list").start().getInputStream(), Charset.defaultCharset())) {
+            for (var line : output("lsappinfo", "list")) {
                 var header = APP_HEADER.matcher(line);
                 if (header.matches()) {
                     addApp(result, pid, name, executable, type);
@@ -125,7 +125,7 @@ public class OsxProcessHelper implements IProcessHelper {
 
     private Map<String, String> keyValuesFrom(String... cmd) throws IOException {
         var result = new HashMap<String, String>();
-        for (var line : IOUtils.readLines(processHelper.builder(cmd).start().getInputStream(), Charset.defaultCharset())) {
+        for (var line : output(cmd)) {
             var matcher = KEY_VALUE.matcher(line.trim());
             if (matcher.matches()) {
                 result.put(matcher.group(1), matcher.group(2));
@@ -135,7 +135,24 @@ public class OsxProcessHelper implements IProcessHelper {
     }
 
     private @Nullable String lineFrom(String... cmd) throws IOException {
-        var lines = IOUtils.readLines(processHelper.builder(cmd).start().getInputStream(), Charset.defaultCharset());
+        var lines = output(cmd);
         return lines.isEmpty() ? null : lines.getFirst();
+    }
+
+    /**
+     * The stdout of {@code cmd}. Focus volume asks for the frontmost app on the command thread, so a wedged
+     * lsappinfo is given up on at the deadline instead of stalling every knob.
+     */
+    private List<String> output(String... cmd) throws IOException {
+        try {
+            var result = processHelper.run(TOOL_TIMEOUT, ProcessHelper.PARSEABLE_OUTPUT, cmd);
+            if (result.timedOut()) {
+                throw new IOException(cmd[0] + " did not finish within " + TOOL_TIMEOUT.toMillis() + "ms");
+            }
+            return result.stdout();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException(cmd[0] + " was interrupted", e);
+        }
     }
 }

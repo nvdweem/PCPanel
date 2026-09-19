@@ -2,6 +2,7 @@ package com.getpcpanel.platform.autostart;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
@@ -11,6 +12,7 @@ import org.apache.commons.lang3.SystemUtils;
 
 import com.getpcpanel.Main;
 import com.getpcpanel.rest.model.dto.AutostartStateDto;
+import com.getpcpanel.util.os.ProcessHelper;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -39,6 +41,8 @@ public class WindowsAutostart {
     static final String RUN_KEY_PS = "HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Run";
     /** Value and task name; keep in sync with {@code packaging/windows/pcpanel.iss}. */
     static final String NAME = "PCPanel";
+    /** reg.exe and schtasks.exe answer at once; PowerShell can take a few seconds to start on a busy machine. */
+    private static final Duration COMMAND_TIMEOUT = Duration.ofSeconds(30);
 
     /** Runs a command to completion and returns its exit code; the output is not used. */
     @FunctionalInterface
@@ -57,8 +61,8 @@ public class WindowsAutostart {
     private final boolean platformSupported;
 
     @Inject
-    public WindowsAutostart() {
-        this(WindowsAutostart::exec, () -> ProcessHandle.current().info().command(), SystemUtils.IS_OS_WINDOWS && isNativeImage());
+    public WindowsAutostart(ProcessHelper processes) {
+        this(command -> exec(processes, command), () -> ProcessHandle.current().info().command(), SystemUtils.IS_OS_WINDOWS && isNativeImage());
     }
 
     WindowsAutostart(CommandRunner runner, Supplier<Optional<String>> exePath, boolean platformSupported) {
@@ -118,12 +122,12 @@ public class WindowsAutostart {
         }
     }
 
-    private static int exec(List<String> command) throws IOException, InterruptedException {
-        return new ProcessBuilder(command)
-                .redirectOutput(ProcessBuilder.Redirect.DISCARD)
-                .redirectError(ProcessBuilder.Redirect.DISCARD)
-                .start()
-                .waitFor();
+    private static int exec(ProcessHelper processes, List<String> command) throws IOException, InterruptedException {
+        var result = processes.run(COMMAND_TIMEOUT, command.toArray(String[]::new));
+        if (result.timedOut()) {
+            throw new IOException("it did not finish within " + COMMAND_TIMEOUT.toSeconds() + "s");
+        }
+        return result.exitCode();
     }
 
     @SuppressWarnings("AccessOfSystemProperties")

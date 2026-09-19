@@ -1,8 +1,6 @@
 package com.getpcpanel.integration.volume.platform.linux;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
@@ -87,22 +85,16 @@ class PulseAudioEventListener {
     private void run() {
         while (running) {
             try {
-                var process = processHelper.builder("pactl", "subscribe").start();
-                var reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
                 streamStartedAt = Instant.now();
-
                 var dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                String line;
-                //noinspection NestedAssignment
-                while ((line = reader.readLine()) != null) {
+                var exit = processHelper.stream(ProcessHelper.PARSEABLE_OUTPUT, line -> {
                     lastEventAt = Instant.now();
                     latestEvents.add(dateFormat.format(new Date()) + " - " + line);
                     checkTrigger(line);
-                }
+                }, "pactl", "subscribe");
                 // The stream ended. Until it is back, nothing updates the device/session lists from the OS,
                 // which shows up as an application picker frozen on whatever was playing at startup — so say
                 // so rather than restarting in silence (#151).
-                var exit = process.waitFor();
                 streamStartedAt = null;
                 lastEnded = "exit " + exit + " at " + Instant.now();
                 log.warn("'pactl subscribe' ended (exit {}); audio device/session changes are not being observed. "

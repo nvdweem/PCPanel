@@ -19,6 +19,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.getpcpanel.util.SharedHttpClient;
+import com.getpcpanel.util.os.ProcessHelper;
 import com.getpcpanel.util.version.Version.SemVer;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -49,6 +50,7 @@ public class WindowsInstallerUpdater implements PlatformUpdater {
     static final Pattern SETUP_ASSET = Pattern.compile("(?i)^pcpanel-.*setup\\.exe$");
 
     @Inject ObjectMapper objectMapper;
+    @Inject ProcessHelper processes;
     @Inject com.getpcpanel.profile.SaveService save;
 
     @ConfigProperty(name = "pcpanel.version") String version;
@@ -167,11 +169,7 @@ public class WindowsInstallerUpdater implements PlatformUpdater {
         var command = StreamEx.of(installer.toString()).append(SILENT_INSTALL_ARGS).toList();
         // Start detached: the installer must outlive this process, which it closes (WM_CLOSE) and then
         // relaunches. We do not wait for it.
-        new ProcessBuilder(command)
-                .directory(installer.getParent().toFile())
-                .redirectOutput(ProcessBuilder.Redirect.DISCARD)
-                .redirectError(ProcessBuilder.Redirect.DISCARD)
-                .start();
+        processes.launch(installer.getParent().toFile(), command.toArray(String[]::new));
         return target;
     }
 

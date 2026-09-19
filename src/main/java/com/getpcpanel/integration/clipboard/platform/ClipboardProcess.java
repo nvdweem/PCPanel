@@ -1,7 +1,10 @@
 package com.getpcpanel.integration.clipboard.platform;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
+
+import com.getpcpanel.util.os.ProcessHelper;
 
 /**
  * Shared helper for the process-based clipboard writers (macOS {@code pbcopy}, Linux
@@ -10,22 +13,16 @@ import java.util.concurrent.TimeUnit;
  * return, never an exception.
  */
 public final class ClipboardProcess {
+    private static final Duration TIMEOUT = Duration.ofSeconds(5);
+
     private ClipboardProcess() {
     }
 
     /** Pipes {@code text} (UTF-8) to {@code command}'s stdin. Returns true only if it exited 0 in time. */
-    public static boolean pipe(String text, String... command) {
+    public static boolean pipe(ProcessHelper processes, String text, String... command) {
         try {
-            var process = new ProcessBuilder(command).redirectErrorStream(true).start();
-            try (var stdin = process.getOutputStream()) {
-                stdin.write(text.getBytes(StandardCharsets.UTF_8));
-            }
-            if (!process.waitFor(5, TimeUnit.SECONDS)) {
-                process.destroyForcibly();
-                return false;
-            }
-            return process.exitValue() == 0;
-        } catch (java.io.IOException e) {
+            return processes.runWithInput(TIMEOUT, text.getBytes(StandardCharsets.UTF_8), command).succeeded();
+        } catch (IOException e) {
             return false; // tool not installed / not executable
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
