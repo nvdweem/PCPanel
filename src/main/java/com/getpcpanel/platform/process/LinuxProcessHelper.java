@@ -421,7 +421,7 @@ public class LinuxProcessHelper implements IProcessHelper {
      * stderr used to be discarded, which is precisely why a non-working tool looked identical to a working
      * one that found no window.
      */
-    private CommandOutput run(String... cmd) throws IOException {
+    CommandOutput run(String... cmd) throws IOException {
         var process = processHelper.builder(cmd).start();
         // Drain stderr on its own thread: a helper writing more than the pipe buffer would otherwise
         // deadlock against our stdout read.
@@ -437,19 +437,16 @@ public class LinuxProcessHelper implements IProcessHelper {
         drain.setDaemon(true);
         drain.start();
 
-        var stdout = IOUtils.readLines(process.getInputStream(), Charset.defaultCharset());
+        List<String> stdout;
         int exitCode;
         try {
-            if (process.waitFor(COMMAND_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-                exitCode = process.exitValue();
-            } else {
-                process.destroyForcibly();
-                exitCode = EXIT_TIMED_OUT;
-            }
+            var lines = ProcessHelper.readWithDeadline(process, COMMAND_TIMEOUT_MS);
+            stdout = lines.orElse(List.of());
+            exitCode = lines.isPresent() ? process.exitValue() : EXIT_TIMED_OUT;
             drain.join(200);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            process.destroyForcibly();
+            stdout = List.of();
             exitCode = EXIT_INTERRUPTED;
         }
         return new CommandOutput(exitCode, stdout, stderr.get());

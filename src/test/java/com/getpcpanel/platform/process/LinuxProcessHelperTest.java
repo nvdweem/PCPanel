@@ -4,8 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Set;
 
@@ -13,6 +15,8 @@ import org.junit.jupiter.api.Test;
 
 import com.getpcpanel.platform.process.LinuxProcessHelper.ActiveWindow;
 import com.getpcpanel.platform.process.LinuxProcessHelper.CommandOutput;
+import com.getpcpanel.util.os.FakeProcess;
+import com.getpcpanel.util.os.ProcessHelper;
 
 class LinuxProcessHelperTest {
 
@@ -121,5 +125,28 @@ class LinuxProcessHelperTest {
         var wayland = LinuxProcessHelper.focusUnavailableReason("GNOME", null, "not tried", "not tried");
         assertTrue(wayland.contains("GNOME"), wayland);
         assertTrue(wayland.contains("cannot work here"), "say it is unsupported rather than implying misconfiguration: " + wayland);
+    }
+
+    /**
+     * Focus volume resolves the window on the command thread, so a tool that hangs (kdotool waiting on an
+     * unresponsive KWin over D-Bus) must be killed at the deadline instead of stalling every knob.
+     */
+    @Test
+    void aHungToolIsKilledAtTheDeadline() {
+        var sut = new LinuxProcessHelper();
+        sut.processHelper = new ProcessHelper() {
+            @Override
+            public ProcessBuilder builder(String... command) {
+                return super.builder(FakeProcess.command("hang"));
+            }
+        };
+        var before = ProcessHandle.current().children().filter(ProcessHandle::isAlive).map(ProcessHandle::pid).toList();
+
+        var output = assertTimeoutPreemptively(Duration.ofSeconds(20), () -> sut.run("kdotool", "getactivewindow"));
+
+        assertTrue(output.failureDetail().startsWith("timed out"), output.failureDetail());
+        assertTrue(output.stdout().isEmpty(), "a killed tool's partial output must not be used");
+        assertEquals(before, ProcessHandle.current().children().filter(ProcessHandle::isAlive).map(ProcessHandle::pid).toList(),
+                "the hung tool must be killed, not leaked");
     }
 }
