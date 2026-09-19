@@ -189,10 +189,75 @@ class SndCtrlPulseAudioTest {
         assertEquals(eventsBefore, fired.size(), "a timed-out refresh must not report sessions as removed/added");
     }
 
+    /** Sources are inputs and sinks outputs, so the recording pickers (the input device list) show the sources. */
+    @Test
+    void sourcesAreInputsAndSinksAreOutputs() {
+        var sut = withDevices(device(1, InOutput.output, "speakers", false), device(2, InOutput.input, "mic", false));
+
+        var speakers = sut.getDevice("speakers");
+        var mic = sut.getDevice(SndCtrlPulseAudio.INPUT_PREFIX + "mic");
+        assertTrue(speakers.isOutput());
+        assertFalse(speakers.isInput());
+        assertTrue(mic.isInput());
+        assertFalse(mic.isOutput());
+    }
+
+    @Test
+    void reportsTheDefaultOutputAndInput() {
+        var sut = withDevices(
+                device(1, InOutput.output, "speakers", false), device(2, InOutput.output, "headset", true),
+                device(3, InOutput.input, "mic", true), device(4, InOutput.input, "headset.monitor", false));
+
+        assertEquals("headset", sut.defaultPlayer());
+        assertEquals(SndCtrlPulseAudio.INPUT_PREFIX + "mic", sut.defaultRecorder());
+    }
+
+    /**
+     * Cycling the default device asks for the current default before every step, so a change the app itself made
+     * must be visible at once, not only after pactl subscribe reports it.
+     */
+    @Test
+    void aDefaultChangeIsVisibleAtOnce() {
+        var cmd = new StubWrapper();
+        cmd.devices = List.of(device(1, InOutput.output, "speakers", true), device(2, InOutput.output, "headset", false));
+        var sut = new SndCtrlPulseAudio();
+        sut.cmd = cmd;
+        sut.eventBus = new RecordingEventBus(new ArrayList<>());
+        sut.initDevices(null);
+
+        sut.setDefaultDevice("headset");
+
+        assertEquals("headset", sut.defaultPlayer());
+    }
+
+    private static SndCtrlPulseAudio withDevices(PulseAudioTarget... devices) {
+        var cmd = new StubWrapper();
+        cmd.devices = List.of(devices);
+        var sut = new SndCtrlPulseAudio();
+        sut.cmd = cmd;
+        sut.eventBus = new RecordingEventBus(new ArrayList<>());
+        sut.initDevices(null);
+        return sut;
+    }
+
+    private static PulseAudioTarget device(int index, InOutput type, String name, boolean isDefault) {
+        return PulseAudioTarget.builder().index(index).type(type).isDefault(isDefault)
+                               .properties(Map.of()).metas(Map.of("Name", name, "Description", name)).build();
+    }
+
     private static final class StubWrapper extends PulseAudioWrapper {
         private List<PulseAudioTarget> sessions = List.of();
         private List<PulseAudioTarget> devices = List.of();
         private boolean timeOut;
+
+        /** Like the server: the chosen device of that kind becomes the default. */
+        @Override
+        public void setDefaultDevice(boolean output, int index) {
+            var type = output ? InOutput.output : InOutput.input;
+            devices = devices.stream()
+                             .map(d -> d.type() == type ? d.toBuilder().isDefault(d.index() == index).build() : d)
+                             .toList();
+        }
 
         @Override
         public List<PulseAudioTarget> getSessions() {
@@ -211,7 +276,7 @@ class SndCtrlPulseAudioTest {
         }
     }
 
-    private record RecordingEventBus(List<Object> fired) implements Event<Object> {
+    record RecordingEventBus(List<Object> fired) implements Event<Object> {
         @Override
         public void fire(Object event) {
             fired.add(event);

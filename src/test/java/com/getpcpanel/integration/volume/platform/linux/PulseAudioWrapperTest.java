@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.io.TempDir;
 import com.getpcpanel.integration.volume.platform.MuteType;
 import com.getpcpanel.integration.volume.platform.linux.PulseAudioWrapper.InOutput;
 import com.getpcpanel.integration.volume.platform.linux.PulseAudioWrapper.PactlTimeoutException;
+import com.getpcpanel.integration.volume.platform.linux.PulseAudioWrapper.PulseAudioTarget;
 import com.getpcpanel.util.os.FakeProcess;
 import com.getpcpanel.util.os.ProcessHelper;
 
@@ -110,5 +112,63 @@ class PulseAudioWrapperTest {
         assertDoesNotThrow(() -> sut.setDeviceVolume(true, 0, 0.5f), "a device volume write must not throw");
         assertDoesNotThrow(() -> sut.muteSession(0, MuteType.mute), "a mute write must not throw");
         assertDoesNotThrow(() -> sut.setDefaultDevice(true, 0), "setting the default device must not throw");
+    }
+
+    /** {@code pactl info} as PipeWire's pulse server prints it (PipeWire 1.0.5). */
+    @Test
+    void readsTheDefaultsFromPipeWire() {
+        var info = List.of(
+                "Server String: unix:/run/user/1000/pulse/native",
+                "Server Name: PulseAudio (on PipeWire 1.0.5)",
+                "Server Version: 15.0.0",
+                "Default Sample Specification: float32le 2ch 48000Hz",
+                "Default Channel Map: front-left,front-right",
+                "Default Sink: headset_b",
+                "Default Source: mic_b",
+                "Cookie: 2dd8:0fe8");
+
+        assertEquals(Map.of(InOutput.output, "headset_b", InOutput.input, "mic_b"), PulseAudioWrapper.parseDefaultDeviceNames(info));
+    }
+
+    /** {@code pactl info} as PulseAudio itself prints it (17.0). */
+    @Test
+    void readsTheDefaultsFromPulseAudio() {
+        var info = List.of(
+                "Server Name: pulseaudio",
+                "Server Version: 17.0-25-gc3305",
+                "Default Sample Specification: s16le 2ch 44100Hz",
+                "Default Channel Map: front-left,front-right",
+                "Default Sink: RDPSink",
+                "Default Source: RDPSource");
+
+        assertEquals(Map.of(InOutput.output, "RDPSink", InOutput.input, "RDPSource"), PulseAudioWrapper.parseDefaultDeviceNames(info));
+    }
+
+    /** The default sink and the default source are flagged; every other device, and a same-named one of the other kind, is not. */
+    @Test
+    void devicesFlagTheDefaultSinkAndSource() {
+        var sut = new PulseAudioWrapper() {
+            @Override
+            List<PulseAudioTarget> execAndParse(InOutput type) {
+                return switch (type) {
+                    case output -> List.of(target(1, type, "speakers"), target(2, type, "headset"));
+                    case input -> List.of(target(3, type, "mic"), target(4, type, "headset"), target(5, type, "speakers.monitor"));
+                    case session -> List.of();
+                };
+            }
+
+            @Override
+            Map<InOutput, String> defaultDeviceNames() {
+                return Map.of(InOutput.output, "headset", InOutput.input, "mic");
+            }
+        };
+
+        var defaults = sut.devices().stream().filter(PulseAudioTarget::isDefault).map(t -> t.type() + ":" + t.index()).toList();
+
+        assertEquals(List.of("output:2", "input:3"), defaults);
+    }
+
+    private static PulseAudioTarget target(int index, InOutput type, String name) {
+        return PulseAudioTarget.builder().index(index).type(type).metas(Map.of("Name", name)).properties(Map.of()).build();
     }
 }

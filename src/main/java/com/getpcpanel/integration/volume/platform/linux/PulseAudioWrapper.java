@@ -3,12 +3,14 @@ package com.getpcpanel.integration.volume.platform.linux;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -42,8 +44,40 @@ class PulseAudioWrapper {
         return volume / 65536f;
     }
 
+    /** Sinks and sources, with the server's default sink and default source flagged. */
     public List<PulseAudioTarget> devices() {
-        return StreamEx.of(execAndParse(InOutput.output)).append(execAndParse(InOutput.input)).toList();
+        var defaults = defaultDeviceNames();
+        return StreamEx.of(execAndParse(InOutput.output))
+                       .append(execAndParse(InOutput.input))
+                       .map(t -> t.toBuilder().isDefault(t.name() != null && t.name().equals(defaults.get(t.type()))).build())
+                       .toList();
+    }
+
+    /** The names of the default sink ({@link InOutput#output}) and default source ({@link InOutput#input}). */
+    Map<InOutput, String> defaultDeviceNames() {
+        return parseDefaultDeviceNames(runAndRead("pactl", "info"));
+    }
+
+    /**
+     * Reads {@code Default Sink:} and {@code Default Source:} from {@code pactl info}, which every pactl version
+     * prints ({@code get-default-sink} only exists since PulseAudio 15).
+     */
+    static Map<InOutput, String> parseDefaultDeviceNames(List<String> info) {
+        var names = new EnumMap<InOutput, String>(InOutput.class);
+        for (var line : info) {
+            var parts = line.split(":", 2);
+            if (parts.length < 2) {
+                continue;
+            }
+            var value = parts[1].trim();
+            switch (parts[0].trim()) {
+                case "Default Sink" -> names.put(InOutput.output, value);
+                case "Default Source" -> names.put(InOutput.input, value);
+                default -> {
+                }
+            }
+        }
+        return names;
     }
 
     public void setDeviceVolume(boolean output, int idx, float volume) {
@@ -230,8 +264,13 @@ class PulseAudioWrapper {
         }
     }
 
-    @Builder
+    @Builder(toBuilder = true)
     public record PulseAudioTarget(int index, boolean isDefault, Map<String, String> metas, Map<String, String> properties, InOutput type) {
+        /** The device's name ({@code Name:}), which is how {@code pactl info} refers to the default device. */
+        @Nullable
+        String name() {
+            return metas == null ? null : metas.get("Name");
+        }
     }
 
         enum InOutput {

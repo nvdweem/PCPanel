@@ -168,6 +168,9 @@ class SndCtrlPulseAudio implements ISndCtrl {
         if (device == null)
             return;
         cmd.setDefaultDevice(isOutput(deviceId), device.index());
+        // Read the new default back at once: a "cycle default device" pressed again before pactl subscribe reports
+        // the change must continue from this device, not from the one before it.
+        initDevices(null);
     }
 
     @Override
@@ -333,7 +336,9 @@ class SndCtrlPulseAudio implements ISndCtrl {
 
     @Override
     public @Nullable String defaultRecorder() {
-        return null;
+        synchronized (devices) {
+            return StreamEx.ofValues(devices).findFirst(PulseAudioAudioDevice::isDefaultInput).map(AudioDevice::id).orElse(null);
+        }
     }
 
     /** Empty when pactl timed out: the caller keeps what it knows rather than reporting everything as gone. */

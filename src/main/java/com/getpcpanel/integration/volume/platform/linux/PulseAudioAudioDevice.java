@@ -18,11 +18,15 @@ class PulseAudioAudioDevice extends AudioDevice {
         this.index = index;
         this.isDefault = isDefault;
         this.isOutput = isOutput;
-        dataflow(DataFlow.dfRender);
+        dataflow(isOutput ? DataFlow.dfRender : DataFlow.dfCapture);
     }
 
     public boolean isDefaultOutput() {
         return isDefault && isOutput;
+    }
+
+    public boolean isDefaultInput() {
+        return isDefault && !isOutput;
     }
 
     @Override

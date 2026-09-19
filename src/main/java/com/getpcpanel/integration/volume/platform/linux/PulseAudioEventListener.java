@@ -125,7 +125,7 @@ class PulseAudioEventListener {
         return "pactl subscribe:\n" + String.join("\n", latestEvents);
     }
 
-    private void checkTrigger(String line) {
+    void checkTrigger(String line) {
         if (StringUtils.containsAnyIgnoreCase(line
                 , "Event 'new' on sink-input"
                 , "Event 'remove' on sink-input"
@@ -133,7 +133,14 @@ class PulseAudioEventListener {
             var m = numberPattern.matcher(line);
             eventBus.fire(new LinuxSessionChangedEvent(m.find() ? NumberUtils.toInt(m.group(1)) : null));
         }
-        if (StringUtils.containsAnyIgnoreCase(line, "Event 'new' on sink", "Event 'remove' on sink")) {
+        // A source is matched with its '#' so recording streams ("source-output") don't count as devices. The server
+        // reports a change when its default sink or source changes.
+        if (StringUtils.containsAnyIgnoreCase(line
+                , "Event 'new' on sink"
+                , "Event 'remove' on sink"
+                , "Event 'new' on source #"
+                , "Event 'remove' on source #"
+                , "Event 'change' on server")) {
             eventBus.fire(new LinuxDeviceChangedEvent());
         }
     }
