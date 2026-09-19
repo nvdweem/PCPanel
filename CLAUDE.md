@@ -600,6 +600,14 @@ Full reference: [`docs/mcp-server.md`](docs/mcp-server.md).
   generator's optional-property detection.
 - `.editorconfig` defines formatting and a large set of IntelliJ inspection settings; follow it.
 - Linux device access needs udev rules and other setup — see `linux.md`.
+- **External processes only go through `util/os/ProcessHelper`**, never `ProcessBuilder`/`Runtime.exec` directly
+  (`ProcessUsageGuardTest` scans the compiled classes and fails the build otherwise). Pick the entry point by
+  how the process is treated: `run`/`runWithInput` wait with a **deadline** (killed at it) and return drained
+  stdout/stderr — use them for anything on the command thread; `launch` is fire-and-forget (output discarded,
+  stdin closed) for programs started on the user's behalf; `stream` follows a long-running process line by line.
+  The child inherits the environment unchanged unless the caller passes a map — pass
+  `ProcessHelper.PARSEABLE_OUTPUT` (`LC_ALL=C`) only when the output is parsed, so a launched program keeps the
+  user's locale. Tests redirect commands by overriding the protected `builder()` (see `FakeProcess`).
 
 ### Code comments
 
