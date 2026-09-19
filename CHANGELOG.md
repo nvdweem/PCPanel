@@ -14,6 +14,7 @@
 - (Windows) The **Start with Windows** switch gives up with an error after 30 seconds if Windows doesn't respond, instead of waiting forever.
 - (Linux) Fixed **microphones missing from the recording pickers** of the *Advanced default device* action: your inputs are listed there again, and *Cycle default device* works through a list of microphones.
 - (Linux) PCPanel now knows which output and input are your **default devices**. *Cycle default device* moves on from the one that is actually the default, also after you changed it in your system settings, and `{{ audio.defaultOutput }}` and `{{ audio.defaultInput }}` show them. A microphone you plug in shows up without restarting PCPanel.
+- (Linux) Fixed the **"focused-app control unavailable" notification appearing on Hyprland**, where focus volume works. Hyprland reports no focused window whenever focus is not on one — an empty workspace, or a launcher, notification or the lock screen — and that was mistaken for focus detection being impossible on your desktop. Since the notification is shown only once, one such moment left you told the feature doesn't work while it does.
 - When lighting changes come in faster than the panel can take them — a fast turn of a brightness dial, or quick colour changes — the panel now skips straight to the newest lighting instead of working through every step in between, so the lights keep up with the dial.
 
 ## [2.0.97]

@@ -3,6 +3,7 @@ package com.getpcpanel.platform.process;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -136,7 +137,7 @@ class LinuxProcessHelperTest {
      */
     @Test
     void parsesTheFocusedWindowFromHyprctlJson() {
-        var window = LinuxProcessHelper.parseHyprlandWindow("""
+        var window = LinuxProcessHelper.readHyprlandWindow("""
                 {
                     "address": "0x56528f356cf0",
                     "mapped": true,
@@ -145,26 +146,42 @@ class LinuxProcessHelperTest {
                     "title": "Among Us",
                     "pid": 8122,
                     "xwayland": false
-                }""").orElseThrow();
+                }""").window();
+        assertNotNull(window);
 
         assertEquals(8122, window.pid());
         assertEquals("steam_app_945360", window.windowClass());
         assertEquals("Among Us", window.title());
     }
 
-    /** With nothing focused hyprctl prints an empty object, which is an outcome and not a parse failure. */
+    /**
+     * With nothing focused hyprctl prints an empty object. That is hyprctl answering, not failing, and it must
+     * read differently from output we could not parse: an empty workspace or a focused layer surface (launcher,
+     * lock screen) is normal on a working Hyprland setup, and treating it as a failure fired the one-shot
+     * "focused-app control unavailable" notification at users whose focus volume works fine.
+     */
     @Test
-    void noFocusedWindowYieldsNothing() {
-        assertTrue(LinuxProcessHelper.parseHyprlandWindow("{}").isEmpty());
-        assertTrue(LinuxProcessHelper.parseHyprlandWindow("").isEmpty());
-        assertTrue(LinuxProcessHelper.parseHyprlandWindow("Invalid").isEmpty(), "non-JSON output must not throw");
+    void noFocusedWindowIsAnAnswerAndNotAFailure() {
+        var nothingFocused = LinuxProcessHelper.readHyprlandWindow("{}");
+        assertNull(nothingFocused.window());
+        assertTrue(nothingFocused.nothingFocused(), "an empty object is hyprctl saying nothing is focused");
+
+        assertNull(LinuxProcessHelper.readHyprlandWindow("{\"address\": \"0x1\"}").window(), "an absent pid is the same answer");
+        assertTrue(LinuxProcessHelper.readHyprlandWindow("{\"address\": \"0x1\"}").nothingFocused());
+
+        for (var unreadable : List.of("", "Invalid")) {
+            var answer = LinuxProcessHelper.readHyprlandWindow(unreadable);
+            assertNull(answer.window(), unreadable);
+            assertFalse(answer.nothingFocused(), "unreadable output must not pass as an answer: " + unreadable);
+        }
     }
 
     /** A window can legitimately carry no class or title; the pid alone still resolves it. */
     @Test
     void aWindowWithoutClassOrTitleStillResolves() {
-        var window = LinuxProcessHelper.parseHyprlandWindow("{\"pid\": 42, \"class\": \"\", \"title\": \"\"}").orElseThrow();
+        var window = LinuxProcessHelper.readHyprlandWindow("{\"pid\": 42, \"class\": \"\", \"title\": \"\"}").window();
 
+        assertNotNull(window);
         assertEquals(42, window.pid());
         assertNull(window.windowClass());
         assertNull(window.title());

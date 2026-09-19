@@ -108,10 +108,25 @@ public class LinuxProcessHelper implements IProcessHelper {
         var result = getActiveWindow(Tool.HyprCtl)
                 .or(() -> getActiveWindow(Tool.KDoTool))
                 .or(() -> getActiveWindow(Tool.XDoTool));
-        if (result.isEmpty()) {
+        if (result.isEmpty() && !nothingIsFocused()) {
             warnFocusUnavailable();
         }
         return result;
+    }
+
+    /** {@link #toolStatus} value for a tool that did its job and reported that no window is focused. */
+    private static final String NOTHING_FOCUSED = "no window is focused";
+
+    /**
+     * Whether a tool answered the question and the answer was simply that nothing is focused. Resolving no
+     * window then says nothing about the configuration, so it must not raise {@link #warnFocusUnavailable()}:
+     * that warning fires a one-shot desktop notification, so a single tick with focus on an empty workspace or
+     * a layer surface (launcher, notification, lock screen) left a Hyprland user - where focus volume works -
+     * permanently told that focused-app control is unavailable. Only hyprctl distinguishes the two cases: it
+     * answers {@code {}}, while a silent kdotool/xdotool may equally mean the desktop refused.
+     */
+    private boolean nothingIsFocused() {
+        return NOTHING_FOCUSED.equals(toolStatus.get(Tool.HyprCtl));
     }
 
     private static final long ACTIVE_WINDOW_CACHE_NANOS = TimeUnit.MILLISECONDS.toNanos(200);
@@ -198,12 +213,16 @@ public class LinuxProcessHelper implements IProcessHelper {
             log.error("Unable to resolve active window with {}", tool.tool, e);
             return Optional.empty();
         }
-        var parsed = parseHyprlandWindow(String.join("", output.stdout()));
-        if (parsed.isEmpty()) {
+        var answer = readHyprlandWindow(String.join("", output.stdout()));
+        if (answer.nothingFocused()) {
+            toolStatus.put(tool, NOTHING_FOCUSED);
+            return Optional.empty();
+        }
+        var window = answer.window();
+        if (window == null) {
             toolStatus.put(tool, command + ": " + output.failureDetail());
             return Optional.empty();
         }
-        var window = parsed.get();
         toolStatus.put(tool, "resolved the focused window (pid " + window.pid() + ")");
         return Optional.of(new ActiveWindow(window.pid(), processName(window.pid()), flatpakAppId(window.pid()),
                 window.windowClass(), window.title()));
@@ -211,24 +230,40 @@ public class LinuxProcessHelper implements IProcessHelper {
 
     private static final ObjectMapper HYPRCTL_JSON = new ObjectMapper();
 
-    /** {@code hyprctl -j activewindow} answers {@code {}} when nothing is focused, so a missing pid is a real outcome. */
-    static Optional<HyprlandWindow> parseHyprlandWindow(String json) {
+    /**
+     * What {@code hyprctl -j activewindow} said, which is three-valued. {@code {}} (or an absent pid) is
+     * Hyprland <em>answering</em> that nothing is focused right now - an empty workspace, or focus held by a
+     * layer surface such as a launcher, a notification or the lock screen. That is a normal, transient state
+     * on a working setup, and telling it apart from output we could not read at all is the point: only the
+     * latter means focused-window detection is broken here.
+     */
+    static HyprlandAnswer readHyprlandWindow(String json) {
         if (StringUtils.isBlank(json)) {
-            return Optional.empty();
+            return HyprlandAnswer.UNREADABLE;
         }
         JsonNode root;
         try {
             root = HYPRCTL_JSON.readTree(json);
         } catch (JsonProcessingException e) {
             log.debug("Could not parse hyprctl activewindow output", e);
-            return Optional.empty();
+            return HyprlandAnswer.UNREADABLE;
         }
         var pid = root.path("pid").asInt(-1);
         if (pid <= 0) {
-            return Optional.empty();
+            return HyprlandAnswer.NOTHING_FOCUSED;
         }
-        return Optional.of(new HyprlandWindow(pid, StringUtils.trimToNull(root.path("class").asText(null)),
+        return HyprlandAnswer.of(new HyprlandWindow(pid, StringUtils.trimToNull(root.path("class").asText(null)),
                 StringUtils.trimToNull(root.path("title").asText(null))));
+    }
+
+    /** A focused {@code window}, or - when there is none - whether hyprctl said so or could not be read. */
+    record HyprlandAnswer(@Nullable HyprlandWindow window, boolean nothingFocused) {
+        static final HyprlandAnswer UNREADABLE = new HyprlandAnswer(null, false);
+        static final HyprlandAnswer NOTHING_FOCUSED = new HyprlandAnswer(null, true);
+
+        static HyprlandAnswer of(HyprlandWindow window) {
+            return new HyprlandAnswer(window, false);
+        }
     }
 
     record HyprlandWindow(int pid, @Nullable String windowClass, @Nullable String title) {
@@ -410,6 +445,10 @@ public class LinuxProcessHelper implements IProcessHelper {
     public Optional<String> focusUnavailableReason() {
         if (getActiveWindow().isPresent()) {
             return Optional.empty();
+        }
+        if (nothingIsFocused()) {
+            return Optional.of("No window is focused right now, so there is no focused app to control. "
+                    + "Focus a window and try again.");
         }
         return Optional.of(focusUnavailableReason(env("XDG_CURRENT_DESKTOP"), System.getenv("DISPLAY"),
                 toolDetail(Tool.KDoTool), toolDetail(Tool.XDoTool), toolDetail(Tool.HyprCtl)));
