@@ -19,19 +19,20 @@ import org.junit.jupiter.api.io.TempDir;
 import com.getpcpanel.integration.volume.platform.MuteType;
 import com.getpcpanel.integration.volume.platform.linux.PulseAudioWrapper.InOutput;
 import com.getpcpanel.integration.volume.platform.linux.PulseAudioWrapper.PactlTimeoutException;
+import com.getpcpanel.util.os.FakeProcess;
 import com.getpcpanel.util.os.ProcessHelper;
 
 class PulseAudioWrapperTest {
     /** Generous upper bound for one call: the deadline itself plus starting a JVM for the fake pactl. */
     private static final Duration CALL_BUDGET = Duration.ofSeconds(20);
 
-    /** A wrapper whose every pactl invocation runs {@link FakePactl} with {@code args} instead. */
+    /** A wrapper whose every pactl invocation runs {@link FakeProcess} with {@code args} instead. */
     private static PulseAudioWrapper wrapperRunning(String... args) {
         var sut = new PulseAudioWrapper();
         sut.processHelper = new ProcessHelper() {
             @Override
             public ProcessBuilder builder(String... command) {
-                return super.builder(FakePactl.command(args));
+                return super.builder(FakeProcess.command(args));
             }
         };
         sut.timeoutMillis = 2_000;

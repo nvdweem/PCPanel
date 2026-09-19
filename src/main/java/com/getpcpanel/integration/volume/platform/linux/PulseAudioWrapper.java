@@ -1,20 +1,14 @@
 package com.getpcpanel.integration.volume.platform.linux;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 import javax.annotation.Nonnull;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import jakarta.inject.Inject;
@@ -171,48 +165,19 @@ class PulseAudioWrapper {
         }
     }
 
-    /**
-     * Runs {@code command} to completion within {@link #timeoutMillis} and returns its output (stdout and stderr).
-     * The output is read while the process runs, since a {@code pactl list} can exceed a pipe buffer; a process
-     * still running at the deadline is killed, which also ends that read.
-     */
+    /** Runs {@code command} to completion within {@link #timeoutMillis} and returns its output (stdout and stderr). */
     private List<String> run(String... command) throws IOException {
         var process = processHelper.builder(command).redirectErrorStream(true).start();
-        var timedOut = new AtomicBoolean();
-        var watchdog = CompletableFuture.runAsync(() -> {
-            if (process.isAlive()) {
-                timedOut.set(true);
-                process.destroyForcibly();
-            }
-        }, CompletableFuture.delayedExecutor(timeoutMillis, TimeUnit.MILLISECONDS));
         try {
-            List<String> lines;
-            try {
-                lines = IOUtils.readLines(process.getInputStream(), Charset.defaultCharset());
-            } catch (UncheckedIOException e) {
-                if (!timedOut.get()) {
-                    throw e.getCause();
-                }
-                lines = List.of(); // The watchdog closed the stream under the read.
-            }
-            if (!process.waitFor(timeoutMillis, TimeUnit.MILLISECONDS)) {
-                timedOut.set(true);
-                process.destroyForcibly();
-            }
-            if (timedOut.get()) {
-                process.waitFor(timeoutMillis, TimeUnit.MILLISECONDS);
-                throw new PactlTimeoutException(String.join(" ", command) + " did not finish within " + timeoutMillis + "ms");
-            }
+            var lines = ProcessHelper.readWithDeadline(process, timeoutMillis)
+                                     .orElseThrow(() -> new PactlTimeoutException(String.join(" ", command) + " did not finish within " + timeoutMillis + "ms"));
             if (process.exitValue() != 0) {
                 log.debug("{} exited with {}: {}", String.join(" ", command), process.exitValue(), String.join("\n", lines));
             }
             return lines;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            process.destroyForcibly();
             throw new PactlTimeoutException(String.join(" ", command) + " was interrupted");
-        } finally {
-            watchdog.cancel(false);
         }
     }
 

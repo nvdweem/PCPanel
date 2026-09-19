@@ -1,4 +1,4 @@
-package com.getpcpanel.integration.volume.platform.linux;
+package com.getpcpanel.util.os;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -6,16 +6,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Stand-in for the {@code pactl} binary, launched as a real subprocess so {@link PulseAudioWrapper}'s process
+ * Stand-in for an external tool ({@code pactl}, {@code kdotool}, ...), launched as a real subprocess so process
  * handling (waiting, deadlines, output draining) is exercised the way it runs against the real tool. Modes:
  * <ul>
- *     <li>{@code hang} - prints a line, then never exits (a pactl stuck on an unresponsive audio server)</li>
+ *     <li>{@code hang} - prints a line, then never exits (a tool stuck on an unresponsive audio server or D-Bus)</li>
  *     <li>{@code slow <millis> <markerFile>} - sleeps, then creates the marker file and exits</li>
  *     <li>{@code sinks <count>} - prints {@code count} sink entries in {@code pactl list} format and exits</li>
  * </ul>
  */
-public final class FakePactl {
-    private FakePactl() {
+public final class FakeProcess {
+    private FakeProcess() {
     }
 
     public static void main(String[] args) throws Exception {
@@ -44,11 +44,11 @@ public final class FakePactl {
     }
 
     /** A command line that runs this class in a fresh JVM with {@code args}. */
-    static String[] command(String... args) {
+    public static String[] command(String... args) {
         var command = new ArrayList<>(List.of(
                 ProcessHandle.current().info().command().orElseThrow(),
                 "-cp", System.getProperty("java.class.path"),
-                FakePactl.class.getName()));
+                FakeProcess.class.getName()));
         command.addAll(List.of(args));
         return command.toArray(String[]::new);
     }
