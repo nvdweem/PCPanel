@@ -116,9 +116,9 @@ public final class OutputInterpreter {
         if (handler == null)
             throw new IllegalArgumentException("invalid device");
         if (priority) {
-            handler.sendMessage(data);
+            handler.sendLighting(data);
         } else {
-            handler.sendMessage(new byte[][] { data });
+            handler.sendLighting(new byte[][] { data });
         }
     }
 
@@ -155,7 +155,7 @@ public final class OutputInterpreter {
             case ALL_BREATH -> writeAllBreath(handler, PREFIX_MINI, config);
             case CUSTOM -> {
                 var knobData = buildKnobData(serialNumber, PREFIX_MINI, config.getGlobalBrightness(), config.knobConfigs());
-                handler.sendMessage(new byte[][] { knobData });
+                handler.sendLighting(new byte[][] { knobData });
             }
         }
     }
@@ -177,7 +177,7 @@ public final class OutputInterpreter {
                 var sliderLabelData = buildSliderLabelData(serialNumber, config.getGlobalBrightness(), config.sliderLabelConfigs());
                 var sliderData = buildSliderData(serialNumber, config.getGlobalBrightness(), config.sliderConfigs());
                 var logoData = buildLogoData(serialNumber, config.getGlobalBrightness(), config.logoConfig());
-                handler.sendMessage(knobData, sliderLabelData, sliderData, logoData);
+                handler.sendLighting(knobData, sliderLabelData, sliderData, logoData);
             }
         }
     }
@@ -185,7 +185,7 @@ public final class OutputInterpreter {
     private void writeAllColor(DeviceCommunicationHandler handler, byte prefix, byte secondPrefix, LightingConfig config) {
         var c1 = config.allColor();
         var data = new ByteWriter(config.getGlobalBrightness()).append(prefix, MODE_LIGHT_ANIMATION, secondPrefix).appendHex(c1).get();
-        handler.sendMessage(new byte[][] { data });
+        handler.sendLighting(new byte[][] { data });
     }
 
     private void writeAllRainbow(DeviceCommunicationHandler handler, byte prefix, LightingConfig config) {
@@ -196,7 +196,7 @@ public final class OutputInterpreter {
                                                                .append(config.rainbowSpeed(),
                                                                        config.rainbowReverse())
                                                                .get();
-        handler.sendMessage(new byte[][] { data });
+        handler.sendLighting(new byte[][] { data });
     }
 
     private void writeAllWave(DeviceCommunicationHandler handler, byte prefix, LightingConfig config) {
@@ -208,7 +208,7 @@ public final class OutputInterpreter {
                 .append(config.waveSpeed(),
                         config.waveReverse(),
                         config.waveBounce());
-        handler.sendMessage(new byte[][] { data.get() });
+        handler.sendLighting(new byte[][] { data.get() });
     }
 
     private void writeAllBreath(DeviceCommunicationHandler handler, byte prefix, LightingConfig config) {
@@ -218,7 +218,7 @@ public final class OutputInterpreter {
                         -1)
                 .appendBrightness(config.breathBrightness())
                 .append(config.breathSpeed());
-        handler.sendMessage(new byte[][] { data.get() });
+        handler.sendLighting(new byte[][] { data.get() });
     }
 
     private byte[] buildKnobData(String deviceSerial, byte prefix, int brightness, SingleKnobLightingConfig[] knobConfigs) {
@@ -338,9 +338,9 @@ public final class OutputInterpreter {
             throw new IllegalArgumentException("invalid device");
         var data = new byte[] { OUTPUT_CODE_RGB, OUTPUT_CODE_RGB_RAINBOW, phase_shift, saturation, brightness, speed, reverse };
         if (priority) {
-            handler.sendMessage(data);
+            handler.sendLighting(data);
         } else {
-            handler.sendMessage(new byte[][] { data });
+            handler.sendLighting(new byte[][] { data });
         }
     }
 
@@ -350,9 +350,9 @@ public final class OutputInterpreter {
             throw new IllegalArgumentException("invalid device");
         var data = new byte[] { OUTPUT_CODE_RGB, OUTPUT_CODE_RGB_WAVE, hue, saturation, brightness, speed, reverse, bounce };
         if (priority) {
-            handler.sendMessage(data);
+            handler.sendLighting(data);
         } else {
-            handler.sendMessage(new byte[][] { data });
+            handler.sendLighting(new byte[][] { data });
         }
     }
 
@@ -362,9 +362,9 @@ public final class OutputInterpreter {
             throw new IllegalArgumentException("invalid device");
         var data = new byte[] { OUTPUT_CODE_RGB, OUTPUT_CODE_RGB_BREATH, hue, saturation, brightness, speed };
         if (priority) {
-            handler.sendMessage(data);
+            handler.sendLighting(data);
         } else {
-            handler.sendMessage(new byte[][] { data });
+            handler.sendLighting(new byte[][] { data });
         }
     }
 
@@ -395,9 +395,9 @@ public final class OutputInterpreter {
         for (var b : volumeTrack)
             data.append(b ? 1 : 0);
         if (priority) {
-            handler.sendMessage(data.get());
+            handler.sendLighting(data.get());
         } else {
-            handler.sendMessage(new byte[][] { data.get() });
+            handler.sendLighting(new byte[][] { data.get() });
         }
     }
 

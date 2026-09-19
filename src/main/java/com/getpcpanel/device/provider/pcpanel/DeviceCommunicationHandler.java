@@ -2,16 +2,12 @@ package com.getpcpanel.device.provider.pcpanel;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -52,7 +48,7 @@ public class DeviceCommunicationHandler {
     private final int buttonCount;
     private int readUntilNotInitial = FIRST_NON_INITIAL_READS;
 
-    private final BlockingQueue<byte[]> queue = new LinkedBlockingQueue<>();
+    private final HidOutputQueue output = new HidOutputQueue();
     private final KnobDebouncer debouncer = new KnobDebouncer();
     private final RollingAverageSetter rollingAverageSetter = new RollingAverageSetter();
     private final Map<Integer, Integer> prevSent = new ConcurrentHashMap<>();
@@ -87,7 +83,7 @@ public class DeviceCommunicationHandler {
             return;
         }
 
-        queue.clear();
+        output.clear();
         if (readerThread != null) {
             readerThread.interrupt();
         }
@@ -121,7 +117,12 @@ public class DeviceCommunicationHandler {
     }
 
     public void sendMessage(byte[]... data) {
-        Collections.addAll(queue, data);
+        output.enqueue(data);
+    }
+
+    /** Sets the complete LED state; replaces a previous state that has not been written yet. */
+    public void sendLighting(byte[]... data) {
+        output.replaceLighting(data);
     }
 
     public void reader() {
@@ -158,9 +159,15 @@ public class DeviceCommunicationHandler {
     private void writer() {
         while (isConnected()) {
             try {
-                var toSend = queue.poll(COM_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-                if (toSend != null) {
-                    sendMessageReal(toSend);
+                var reports = output.next(COM_TIMEOUT_MILLIS);
+                if (reports != null) {
+                    try {
+                        for (var report : reports) {
+                            sendMessageReal(report);
+                        }
+                    } finally {
+                        output.written();
+                    }
                 }
             } catch (InterruptedException e) {
                 if (stopping.get()) {
@@ -271,8 +278,9 @@ public class DeviceCommunicationHandler {
         }
     }
 
-    public Queue<byte[]> getQueue() {
-        return queue;
+    /** True once every message and lighting state handed to this device has been written to it. */
+    public boolean isOutputIdle() {
+        return output.isIdle();
     }
 
     public record KnobRotateEvent(String serialNum, int knob, int value, boolean initial) {
