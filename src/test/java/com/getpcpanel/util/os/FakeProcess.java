@@ -12,13 +12,14 @@ import java.util.Objects;
  * handling (waiting, deadlines, output draining) is exercised the way it runs against the real tool. Modes:
  * <ul>
  *     <li>{@code hang} - prints a line, then never exits (a tool stuck on an unresponsive audio server or D-Bus)</li>
+ *     <li>{@code idle} - never exits and writes nothing (a clipboard server left behind by {@code xclip})</li>
  *     <li>{@code slow <millis> <markerFile>} - sleeps, then creates the marker file and exits</li>
  *     <li>{@code sinks <count>} - prints {@code count} sink entries in {@code pactl list} format and exits</li>
  *     <li>{@code fail <code> <message>} - prints {@code message} to stderr and exits with {@code code}</li>
  *     <li>{@code echo-env <name>} - prints the value of environment variable {@code name}, or {@code <unset>}</li>
  *     <li>{@code env-to-file <name> <file>} - writes that value to {@code file} (for callers that discard output)</li>
  *     <li>{@code cat} - copies stdin to stdout</li>
- *     <li>{@code daemonize} - starts a {@code hang} that inherits this process's stdout and stderr, prints its
+ *     <li>{@code daemonize} - starts an {@code idle} that inherits this process's stdout and stderr, prints its
  *     pid, and exits 0 - the way {@code xclip} and {@code wl-copy} leave a clipboard server holding the pipes</li>
  * </ul>
  */
@@ -33,6 +34,7 @@ public final class FakeProcess {
                 System.out.flush();
                 Thread.sleep(Long.MAX_VALUE);
             }
+            case "idle" -> Thread.sleep(Long.MAX_VALUE);
             case "slow" -> {
                 Thread.sleep(Long.parseLong(args[1]));
                 Files.createFile(Path.of(args[2]));
@@ -55,7 +57,7 @@ public final class FakeProcess {
             case "env-to-file" -> Files.writeString(Path.of(args[2]), envValue(args[1]));
             case "cat" -> System.out.write(System.in.readAllBytes());
             case "daemonize" -> {
-                var server = new ProcessBuilder(command("hang")).inheritIO().start();
+                var server = new ProcessBuilder(command("idle")).inheritIO().start();
                 System.out.println(server.pid());
             }
             default -> throw new IllegalArgumentException("unknown mode " + args[0]);

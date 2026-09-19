@@ -77,7 +77,7 @@ class ProcessHelperTest {
             assertTrue(result.succeeded(), result.toString());
             assertTrue(elapsed.compareTo(DEADLINE) < 0, "must not wait for the leftover process: took " + elapsed);
         } finally {
-            result.stdout().stream().findFirst().map(Long::parseLong).flatMap(ProcessHandle::of).ifPresent(ProcessHandle::destroyForcibly);
+            result.stdout().stream().filter(line -> line.matches("\\d+")).findFirst().map(Long::parseLong).flatMap(ProcessHandle::of).ifPresent(ProcessHandle::destroyForcibly);
         }
     }
 
