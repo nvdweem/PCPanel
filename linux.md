@@ -5,11 +5,12 @@ stay/become more Linux compatible. If there are any issues please report them vi
 
 Due to there being a lot of Linux distributions there are bound to be features that won't work.
 Focus volume works on **KDE Plasma** (Wayland and X11) via `kdotool`, which is **bundled** with the
-`.deb`, AppImage and Flatpak — so it works out of the box without installing anything extra — and on
-**any X11 session** via `xdotool`. On a **non-KDE Wayland session such as GNOME it cannot work at all**:
-there is no API for an ordinary application to ask which window has focus (GNOME's is restricted to the
-desktop portals). Whenever the focused window can't be resolved, the app says why — in the log, in a
-desktop notification, and in the message the interface shows.
+`.deb`, AppImage and Flatpak — so it works out of the box without installing anything extra — on
+**Hyprland** via `hyprctl`, which ships with the compositor, and on **any X11 session** via `xdotool`.
+On the **remaining Wayland sessions, such as GNOME, it cannot work at all**: there is no API for an
+ordinary application to ask which window has focus (GNOME's is restricted to the desktop portals).
+Whenever the focused window can't be resolved, the app says why — in the log, in a desktop
+notification, and in the message the interface shows.
 
 ## Preparation
 
@@ -52,6 +53,7 @@ The software depends on:
   This is **bundled** with the `.deb`, AppImage and Flatpak, so you normally don't install it yourself.
   `kdotool` covers X11 too, so `xdotool` is not needed alongside it; `xdotool` only helps on non-KDE X11
   desktops (GNOME/XFCE on X11) and is purely optional.
+- `hyprctl` — the same, on Hyprland. It is part of Hyprland itself, so nothing extra is needed there.
 
 If there are no tray extensions available, the application will still hide when closed. To show
 the main window, just run the application again.
@@ -327,14 +329,18 @@ done | sort -rn | head
 
 To get the active window, the software uses `kdotool` (KDE Plasma, Wayland **and** X11). It is **bundled** with the `.deb`,
 AppImage and Flatpak, so this normally needs no setup. The app looks for a `kdotool` next to its own executable first, then on
-your `PATH`. On non-KDE X11 desktops it falls back to `xdotool` if that is installed.
+your `PATH`. On Hyprland it uses `hyprctl` instead, and on non-KDE X11 desktops it falls back to `xdotool` if that is installed.
 
-**Supported desktops.** Anything that can name the focused window needs cooperation from the desktop, and only two arrangements
-provide it: KDE Plasma (KWin's scripting API, which is what `kdotool` drives, on Wayland and X11) and any X11 session (the
-`_NET_ACTIVE_WINDOW` property, which is what `xdotool` reads). A **non-KDE Wayland session — GNOME, and wlroots compositors —
-offers no equivalent**: GNOME's `org.gnome.Shell.Introspect` is restricted to the xdg-desktop-portal implementations, so
-everything that depends on the focused app (focus volume, "add focused app", focus-volume overrides) cannot work there. Logging
-out into an X11 session, if your desktop still offers one, is the only workaround.
+**Supported desktops.** Anything that can name the focused window needs cooperation from the desktop, and three arrangements
+provide it: KDE Plasma (KWin's scripting API, which is what `kdotool` drives, on Wayland and X11), Hyprland (its own IPC
+socket, which is what `hyprctl activewindow` reads) and any X11 session (the `_NET_ACTIVE_WINDOW` property, which is what
+`xdotool` reads). The **remaining Wayland sessions — GNOME, and other wlroots compositors — offer no equivalent**: GNOME's
+`org.gnome.Shell.Introspect` is restricted to the xdg-desktop-portal implementations, so everything that depends on the
+focused app (focus volume, "add focused app", focus-volume overrides) cannot work there. Logging out into an X11 session, if
+your desktop still offers one, is the only workaround.
+
+Note that Hyprland works because it offers a compositor-specific API of its own, not because Wayland gained one — a different
+wlroots compositor still has nothing to read unless it exposes something similar.
 
 When the focused window can't be resolved the app does not fail silently: it logs a warning naming your desktop session and
 quoting what each helper reported, shows a desktop notification once, and the interface explains the reason instead of only

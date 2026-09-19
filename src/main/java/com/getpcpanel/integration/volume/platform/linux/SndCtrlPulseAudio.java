@@ -11,7 +11,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import javax.annotation.concurrent.GuardedBy;
@@ -87,6 +91,7 @@ class SndCtrlPulseAudio implements ISndCtrl {
     }
 
     public void initSessions(@Observes @Nullable LinuxSessionChangedEvent event) {
+        List<AudioSessionEvent> events;
         synchronized (sessions) {
             var found = getSessionsFromCmd();
             if (found.isEmpty()) {
@@ -97,16 +102,21 @@ class SndCtrlPulseAudio implements ISndCtrl {
             sessions.addAll(found.get());
             var currByIndex = StreamEx.of(sessions).mapToEntry(PulseAudioAudioSession::index).invert().toMap();
 
-            // Trigger events
             var removed = StreamEx.of(prevByIndex.values()).remove(sessions::contains);
             var added = StreamEx.of(sessions).remove(prevByIndex.values()::contains);
             var changed = getChangedStream(event, prevByIndex, currByIndex);
 
-            added.map(sess -> new AudioSessionEvent(sess, EventType.ADDED))
-                 .append(removed.map(sess -> new AudioSessionEvent(sess, EventType.REMOVED)))
-                 .append(changed.map(sess -> new AudioSessionEvent(sess, EventType.CHANGED)))
-                 .forEach(e -> eventBus.fire(e));
+            events = added.map(sess -> new AudioSessionEvent(sess, EventType.ADDED))
+                          .append(removed.map(sess -> new AudioSessionEvent(sess, EventType.REMOVED)))
+                          .append(changed.map(sess -> new AudioSessionEvent(sess, EventType.CHANGED)))
+                          .toList();
         }
+        // Fired after the lock is released, like the initial-state notification above. An observer is
+        // foreign code: MuteColorService takes its own monitor and then calls back into getAllSessions,
+        // so firing from inside `sessions` inverts the lock order and deadlocks against any thread that
+        // already holds MuteColorService. That is reachable from the focus poller, which only fires when
+        // the focused app changes -- so it stayed hidden wherever the focused window never resolved.
+        events.forEach(e -> eventBus.fire(e));
     }
 
     private StreamEx<PulseAudioAudioSession> getChangedStream(@Nullable LinuxSessionChangedEvent event, Map<Integer, PulseAudioAudioSession> prevs, Map<Integer, PulseAudioAudioSession> currents) {
@@ -115,10 +125,27 @@ class SndCtrlPulseAudio implements ISndCtrl {
         }
         var prev = prevs.get(event.sessionId());
         var current = currents.get(event.sessionId());
-        if (prev == null || current == null || (volumeFtoI(prev.volume()) == volumeFtoI(current.volume()) && prev.muted() == current.muted())) {
+        if (prev == null || current == null) {
+            return StreamEx.empty();
+        }
+        if (volumeUnchanged(event.sessionId(), prev, current) && prev.muted() == current.muted()) {
             return StreamEx.empty();
         }
         return StreamEx.of(current);
+    }
+
+    /**
+     * A volume we wrote ourselves is not a change worth reporting. {@code setVolumeNoTrigger} already
+     * updates the cached session so the usual diff sees nothing, but that only holds while the pactl
+     * event for a write arrives before the next one is issued. Turning a dial breaks that: writes go out
+     * every few milliseconds and their events land tens of milliseconds later, so the diff compares a
+     * stale cached value against an already-newer one, calls it a change, and force-volume re-asserts the
+     * position of whichever App-volume dial also targets that process -- fighting the dial mid-sweep.
+     */
+    private boolean volumeUnchanged(int sessionId, PulseAudioAudioSession prev, PulseAudioAudioSession current) {
+        var currentVolume = volumeFtoI(current.volume());
+        return volumeFtoI(prev.volume()) == currentVolume
+                || selfWrites.wrote(sessionId, currentVolume, System.nanoTime());
     }
 
     @Override
@@ -179,10 +206,7 @@ class SndCtrlPulseAudio implements ISndCtrl {
         synchronized (sessions) {
             todo = allSessions().filter(s -> matches(s, fileName)).toSet();
         }
-        todo.forEach(s -> {
-            s.setVolumeNoTrigger(volume); // Prevent sending the volume when 'force volume' is enabled
-            cmd.setSessionVolume(s.index(), volume);
-        });
+        todo.forEach(s -> setSessionVolume(s, volume));
     }
 
     @Override
@@ -199,10 +223,48 @@ class SndCtrlPulseAudio implements ISndCtrl {
         if (log.isDebugEnabled()) {
             logFocusMatch(window, todo);
         }
-        todo.forEach(s -> {
-            s.setVolumeNoTrigger(volume); // Prevent sending the volume when 'force volume' is enabled
-            cmd.setSessionVolume(s.index(), volume);
-        });
+        todo.forEach(s -> setSessionVolume(s, volume));
+    }
+
+    private final SelfWriteGuard selfWrites = new SelfWriteGuard();
+
+    /**
+     * The volumes this process recently wrote, per session index, so an event caused by our own write can
+     * be told apart from a real external change. Values rather than a single "expected" slot, because a
+     * dial sweep issues many writes before their events arrive, and they can arrive out of order.
+     */
+    static final class SelfWriteGuard {
+        private static final long TTL_NANOS = TimeUnit.MILLISECONDS.toNanos(750);
+
+        private record SelfWrite(int volume, long atNanos) {
+        }
+
+        private final Map<Integer, Queue<SelfWrite>> byIndex = new ConcurrentHashMap<>();
+
+        void record(int index, int volume, long now) {
+            byIndex.computeIfAbsent(index, k -> new ConcurrentLinkedQueue<>()).add(new SelfWrite(volume, now));
+            prune(now);
+        }
+
+        boolean wrote(int index, int volume, long now) {
+            var writes = byIndex.get(index);
+            return writes != null && StreamEx.of(writes).anyMatch(w -> w.volume() == volume && isLive(w, now));
+        }
+
+        private void prune(long now) {
+            byIndex.values().forEach(q -> q.removeIf(w -> !isLive(w, now)));
+            byIndex.values().removeIf(Queue::isEmpty);
+        }
+
+        private static boolean isLive(SelfWrite write, long now) {
+            return now - write.atNanos() <= TTL_NANOS;
+        }
+    }
+
+    private void setSessionVolume(PulseAudioAudioSession session, float volume) {
+        session.setVolumeNoTrigger(volume); // Prevent sending the volume when 'force volume' is enabled
+        selfWrites.record(session.index(), volumeFtoI(volume), System.nanoTime());
+        cmd.setSessionVolume(session.index(), volume);
     }
 
     /**

@@ -21,6 +21,9 @@ import org.eclipse.microprofile.config.ConfigProvider;
 
 import javax.annotation.Nullable;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.getpcpanel.platform.IProcessHelper;
 import com.getpcpanel.platform.LinuxBuild;
 import com.getpcpanel.util.os.ProcessHelper;
@@ -102,7 +105,9 @@ public class LinuxProcessHelper implements IProcessHelper {
 
     /** One resolution attempt across every tool, bypassing the burst cache. Also refreshes {@link #toolStatus}. */
     private Optional<ActiveWindow> resolveActiveWindow() {
-        var result = getActiveWindow(Tool.KDoTool).or(() -> getActiveWindow(Tool.XDoTool));
+        var result = getActiveWindow(Tool.HyprCtl)
+                .or(() -> getActiveWindow(Tool.KDoTool))
+                .or(() -> getActiveWindow(Tool.XDoTool));
         if (result.isEmpty()) {
             warnFocusUnavailable();
         }
@@ -133,9 +138,17 @@ public class LinuxProcessHelper implements IProcessHelper {
 
     private Optional<ActiveWindow> getActiveWindow(Tool tool) {
         var command = tool.command();
+        var unusable = tool.sessionMismatch();
+        if (unusable != null) {
+            toolStatus.put(tool, unusable);
+            return Optional.empty();
+        }
         if (!tool.available(processHelper, command)) {
             toolStatus.put(tool, "not installed (" + command + ")");
             return Optional.empty();
+        }
+        if (tool == Tool.HyprCtl) {
+            return queryHyprlandWindow(tool, command);
         }
         var withClass = windowClassSupported.getOrDefault(tool, Boolean.TRUE);
         var window = queryActiveWindow(tool, command, withClass);
@@ -174,6 +187,51 @@ public class LinuxProcessHelper implements IProcessHelper {
         var windowClass = withClass ? StringUtils.trimToNull(line(output.stdout(), 1)) : null;
         var windowName = StringUtils.trimToNull(line(output.stdout(), withClass ? 2 : 1));
         return Optional.of(new ActiveWindow(pid, processName(pid), flatpakAppId(pid), windowClass, windowName));
+    }
+
+    private Optional<ActiveWindow> queryHyprlandWindow(Tool tool, String command) {
+        CommandOutput output;
+        try {
+            output = run(command, "-j", "activewindow");
+        } catch (Exception e) {
+            toolStatus.put(tool, "could not be started: " + e);
+            log.error("Unable to resolve active window with {}", tool.tool, e);
+            return Optional.empty();
+        }
+        var parsed = parseHyprlandWindow(String.join("", output.stdout()));
+        if (parsed.isEmpty()) {
+            toolStatus.put(tool, command + ": " + output.failureDetail());
+            return Optional.empty();
+        }
+        var window = parsed.get();
+        toolStatus.put(tool, "resolved the focused window (pid " + window.pid() + ")");
+        return Optional.of(new ActiveWindow(window.pid(), processName(window.pid()), flatpakAppId(window.pid()),
+                window.windowClass(), window.title()));
+    }
+
+    private static final ObjectMapper HYPRCTL_JSON = new ObjectMapper();
+
+    /** {@code hyprctl -j activewindow} answers {@code {}} when nothing is focused, so a missing pid is a real outcome. */
+    static Optional<HyprlandWindow> parseHyprlandWindow(String json) {
+        if (StringUtils.isBlank(json)) {
+            return Optional.empty();
+        }
+        JsonNode root;
+        try {
+            root = HYPRCTL_JSON.readTree(json);
+        } catch (JsonProcessingException e) {
+            log.debug("Could not parse hyprctl activewindow output", e);
+            return Optional.empty();
+        }
+        var pid = root.path("pid").asInt(-1);
+        if (pid <= 0) {
+            return Optional.empty();
+        }
+        return Optional.of(new HyprlandWindow(pid, StringUtils.trimToNull(root.path("class").asText(null)),
+                StringUtils.trimToNull(root.path("title").asText(null))));
+    }
+
+    record HyprlandWindow(int pid, @Nullable String windowClass, @Nullable String title) {
     }
 
     /**
@@ -239,6 +297,12 @@ public class LinuxProcessHelper implements IProcessHelper {
         return null;
     }
 
+    /** HYPRLAND_INSTANCE_SIGNATURE is the definitive signal, but Flatpak does not pass it in; XDG_CURRENT_DESKTOP it does. */
+    private static boolean isHyprlandSession() {
+        return StringUtils.isNotBlank(System.getenv("HYPRLAND_INSTANCE_SIGNATURE"))
+                || StringUtils.containsIgnoreCase(System.getenv("XDG_CURRENT_DESKTOP"), "Hyprland");
+    }
+
     /** Inside the Flatpak sandbox host introspection (ps, /proc) must be forwarded to the host via flatpak-spawn. */
     private static boolean inFlatpakSandbox() {
         return StringUtils.isNotBlank(System.getenv("FLATPAK_ID"));
@@ -261,11 +325,13 @@ public class LinuxProcessHelper implements IProcessHelper {
 
     /**
      * Focus volume and the other focused-window features need a helper that can name the focused window.
-     * Only two desktops can be served: KDE Plasma (kdotool, over KWin's D-Bus scripting API, on both Wayland
-     * and X11) and any X11 session (xdotool). On a non-KDE Wayland session - GNOME above all - there is no
-     * API to use: GNOME's {@code org.gnome.Shell.Introspect} is allow-listed to the xdg-desktop-portal
-     * implementations, and wlroots exposes nothing equivalent. So this is a supported-configuration problem
-     * far more often than an installation problem.
+     * Three desktops can be served: KDE Plasma (kdotool, over KWin's D-Bus scripting API, on both Wayland
+     * and X11), Hyprland (hyprctl, over its own IPC socket) and any X11 session (xdotool). On the remaining
+     * Wayland sessions - GNOME above all - there is no API to use: GNOME's
+     * {@code org.gnome.Shell.Introspect} is allow-listed to the xdg-desktop-portal implementations, and
+     * wlroots exposes nothing equivalent. So this is a supported-configuration problem far more often than
+     * an installation problem. Hyprland's is a compositor-specific API, not a Wayland protocol, so it says
+     * nothing about wlroots compositors in general.
      *
      * <p>Reaching that conclusion used to be impossible from the outside, because the failure was silent in
      * exactly the case that matters: the old check only complained when <em>no tool was installed</em>, and
@@ -279,14 +345,14 @@ public class LinuxProcessHelper implements IProcessHelper {
             lastNoToolWarnAt = now;
             log.warn("Could not resolve the focused window - focus volume and the focused-app features cannot work. "
                     + "{}. Tools: {}. Focused-window detection needs KDE Plasma (kdotool, bundled with the "
-                    + ".deb/AppImage/Flatpak) or an X11 session (xdotool); a non-KDE Wayland session such as GNOME "
-                    + "exposes no API for it. See linux.md.", describeSession(), describeTools());
+                    + ".deb/AppImage/Flatpak), Hyprland (hyprctl) or an X11 session (xdotool); other Wayland "
+                    + "sessions such as GNOME expose no API for it. See linux.md.", describeSession(), describeTools());
         }
         if (!desktopNotified) {
             desktopNotified = true;
             sendDesktopNotification("PCPanel: focused-app control unavailable",
-                    "The focused window could not be resolved on this desktop. Focus volume needs KDE Plasma or an "
-                            + "X11 session; see the log for details.");
+                    "The focused window could not be resolved on this desktop. Focus volume needs KDE Plasma, "
+                            + "Hyprland or an X11 session; see the log for details.");
         }
     }
 
@@ -332,9 +398,11 @@ public class LinuxProcessHelper implements IProcessHelper {
      * <ul>
      *   <li>KDE Plasma — kdotool is the supported path and is bundled, so a failure here is a real fault and
      *       what kdotool printed is the useful part;</li>
+     *   <li>Hyprland — hyprctl is the supported path and ships with the compositor, so a failure here is also
+     *       a real fault;</li>
      *   <li>an X11 session on any other desktop — xdotool is the supported path, and it is not bundled, so
      *       "install it" is usually the answer;</li>
-     *   <li>a non-KDE Wayland session — nothing can work, and saying so is kinder than an error that implies
+     *   <li>any other Wayland session — nothing can work, and saying so is kinder than an error that implies
      *       the user misconfigured something (#151).</li>
      * </ul>
      */
@@ -344,19 +412,24 @@ public class LinuxProcessHelper implements IProcessHelper {
             return Optional.empty();
         }
         return Optional.of(focusUnavailableReason(env("XDG_CURRENT_DESKTOP"), System.getenv("DISPLAY"),
-                toolDetail(Tool.KDoTool), toolDetail(Tool.XDoTool)));
+                toolDetail(Tool.KDoTool), toolDetail(Tool.XDoTool), toolDetail(Tool.HyprCtl)));
     }
 
-    static String focusUnavailableReason(String desktop, @Nullable String x11Display, String kdotoolDetail, String xdotoolDetail) {
+    static String focusUnavailableReason(String desktop, @Nullable String x11Display, String kdotoolDetail,
+            String xdotoolDetail, String hyprctlDetail) {
         if (StringUtils.containsIgnoreCase(desktop, "KDE")) {
             return "kdotool could not read the focused window from KWin (" + kdotoolDetail + ").";
+        }
+        if (StringUtils.containsIgnoreCase(desktop, "Hyprland")) {
+            return "hyprctl could not read the focused window from Hyprland (" + hyprctlDetail + ").";
         }
         if (StringUtils.isNotBlank(x11Display)) {
             return "xdotool could not read the focused window on this X11 session (" + xdotoolDetail
                     + "). Installing xdotool usually fixes this.";
         }
-        return "This is a " + desktop + " Wayland session. Only KDE Plasma (via kdotool) and X11 sessions "
-                + "(via xdotool) let an application read the focused window, so the focused-app features cannot work here.";
+        return "This is a " + desktop + " Wayland session. Only KDE Plasma (via kdotool), Hyprland (via hyprctl) "
+                + "and X11 sessions (via xdotool) let an application read the focused window, so the focused-app "
+                + "features cannot work here.";
     }
 
     private String toolDetail(Tool tool) {
@@ -481,12 +554,21 @@ public class LinuxProcessHelper implements IProcessHelper {
     @Getter
     private enum Tool {
         XDoTool("xdotool"),
-        KDoTool("kdotool");
+        KDoTool("kdotool"),
+        HyprCtl("hyprctl");
 
         private final String tool;
 
         Tool(String tool) {
             this.tool = tool;
+        }
+
+        /** hyprctl is tried first, so on any other desktop it must be skipped without spawning it every focus poll. */
+        private @Nullable String sessionMismatch() {
+            if (this != HyprCtl || isHyprlandSession()) {
+                return null;
+            }
+            return "not a Hyprland session";
         }
 
         private String command() {

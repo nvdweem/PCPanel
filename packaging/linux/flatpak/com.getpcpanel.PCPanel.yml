@@ -54,7 +54,7 @@ finish-args:
   # MPRIS media player found on the session bus" even with a player running (seen in #151's report bundle).
   # `.*` is flatpak's dot-suffix wildcard, matching each player's own bus name.
   - --talk-name=org.mpris.MediaPlayer2.*
-  # Run remaining host tools (pactl/xdotool) via flatpak-spawn --host
+  # Run remaining host tools (pactl/xdotool/hyprctl) via flatpak-spawn --host
   - --talk-name=org.freedesktop.Flatpak
   # Bundled kdotool drives the host KWin's scripting API to resolve the focused window
   - --talk-name=org.kde.KWin
@@ -89,10 +89,11 @@ modules:
       - install -m 0755 PCPanel /app/pcpanel/PCPanel
       - install -d /app/bin
       - 'for so in *.so *.so.*; do [ -e "$so" ] && install -m 0644 "$so" /app/pcpanel/ || true; done'
-      # Launcher + host-tool shims (pactl/xdotool are forwarded to the host).
+      # Launcher + host-tool shims (pactl/xdotool/hyprctl are forwarded to the host).
       - install -m 0755 pcpanel-launcher.sh /app/bin/pcpanel
       - install -m 0755 host-spawn-wrapper.sh /app/bin/pactl
       - install -m 0755 host-spawn-wrapper.sh /app/bin/xdotool
+      - install -m 0755 host-spawn-wrapper.sh /app/bin/hyprctl
       # kdotool runs inside the sandbox (talks to the host KWin over D-Bus); the wrapper gives it a
       # host-visible TMPDIR so KWin can read its generated script. Apache-2.0 license shipped alongside.
       - install -m 0755 kdotool /app/pcpanel/kdotool
