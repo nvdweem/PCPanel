@@ -2,6 +2,8 @@
 
 <!-- Releasenotes without version are included in releases -->
 
+- **Focus volume now works on Hyprland.** Hyprland can be asked which window has focus (through `hyprctl`, which comes with the compositor), so the focused-app features — focus volume, "add focused app", focus-volume overrides and per-app profile switching — work there as they do on KDE Plasma and X11. Nothing to install or configure. Other Wayland desktops such as GNOME still have no way to provide this.
+
 - New **Report a problem** option, on the bug button next to the settings icon and in the tray menu. It asks what went wrong, how to reproduce it and what you expected, then saves a zip with the logs and details next to your settings and opens both the already filled-in GitHub issue and the folder holding the zip, so all you do is attach it. Passwords and tokens are removed from anything it collects, and you choose what goes in: the log and system details are included by default, your configuration only if you tick it. Open the zip and check it before attaching, especially if you use OBS, MQTT, Home Assistant or Discord.
 - When something goes wrong, the error message itself now offers **Report this**, which starts that report with the error already written down and the failure details attached.
 - PCPanel now records more about failed requests in its log, so a problem you report can be diagnosed from the log instead of guessed at. Requests are logged to a separate `access.log` next to the existing log file.

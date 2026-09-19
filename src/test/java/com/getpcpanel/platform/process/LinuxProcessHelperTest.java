@@ -112,14 +112,57 @@ class LinuxProcessHelperTest {
      */
     @Test
     void theReasonNamesTheHelperThatCouldHaveWorked() {
-        assertTrue(LinuxProcessHelper.focusUnavailableReason("KDE", null, "kdotool: exit 1 - no KWin", "not tried")
+        assertTrue(LinuxProcessHelper.focusUnavailableReason("KDE", null, "kdotool: exit 1 - no KWin", "not tried", "not tried")
                                      .contains("no KWin"), "on KDE, quote what kdotool said");
 
-        assertTrue(LinuxProcessHelper.focusUnavailableReason("XFCE", ":0", "not installed", "xdotool: exit 1")
+        assertTrue(LinuxProcessHelper.focusUnavailableReason("XFCE", ":0", "not installed", "xdotool: exit 1", "not tried")
                                      .contains("Installing xdotool"), "on X11, xdotool is installable and not bundled");
 
-        var wayland = LinuxProcessHelper.focusUnavailableReason("GNOME", null, "not tried", "not tried");
+        assertTrue(LinuxProcessHelper.focusUnavailableReason("Hyprland", null, "not tried", "not tried", "hyprctl: exit 1 - no socket")
+                                     .contains("no socket"), "on Hyprland, quote what hyprctl said");
+
+        var wayland = LinuxProcessHelper.focusUnavailableReason("GNOME", null, "not tried", "not tried", "not tried");
         assertTrue(wayland.contains("GNOME"), wayland);
         assertTrue(wayland.contains("cannot work here"), "say it is unsupported rather than implying misconfiguration: " + wayland);
+    }
+
+    /**
+     * Hyprland answers over its own IPC socket, so the identifiers arrive as one JSON object rather than the
+     * chained xdotool subcommands. pid, class and title are the three the matcher needs (#96).
+     */
+    @Test
+    void parsesTheFocusedWindowFromHyprctlJson() {
+        var window = LinuxProcessHelper.parseHyprlandWindow("""
+                {
+                    "address": "0x56528f356cf0",
+                    "mapped": true,
+                    "workspace": { "id": 3, "name": "3" },
+                    "class": "steam_app_945360",
+                    "title": "Among Us",
+                    "pid": 8122,
+                    "xwayland": false
+                }""").orElseThrow();
+
+        assertEquals(8122, window.pid());
+        assertEquals("steam_app_945360", window.windowClass());
+        assertEquals("Among Us", window.title());
+    }
+
+    /** With nothing focused hyprctl prints an empty object, which is an outcome and not a parse failure. */
+    @Test
+    void noFocusedWindowYieldsNothing() {
+        assertTrue(LinuxProcessHelper.parseHyprlandWindow("{}").isEmpty());
+        assertTrue(LinuxProcessHelper.parseHyprlandWindow("").isEmpty());
+        assertTrue(LinuxProcessHelper.parseHyprlandWindow("Invalid").isEmpty(), "non-JSON output must not throw");
+    }
+
+    /** A window can legitimately carry no class or title; the pid alone still resolves it. */
+    @Test
+    void aWindowWithoutClassOrTitleStillResolves() {
+        var window = LinuxProcessHelper.parseHyprlandWindow("{\"pid\": 42, \"class\": \"\", \"title\": \"\"}").orElseThrow();
+
+        assertEquals(42, window.pid());
+        assertNull(window.windowClass());
+        assertNull(window.title());
     }
 }
