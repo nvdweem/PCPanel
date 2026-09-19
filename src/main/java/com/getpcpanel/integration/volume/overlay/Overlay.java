@@ -2,6 +2,7 @@ package com.getpcpanel.integration.volume.overlay;
 
 import java.awt.Image;
 import java.io.File;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -20,12 +21,14 @@ import com.getpcpanel.device.descriptor.AnalogKind;
 import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
+import com.getpcpanel.profile.dto.KnobSetting;
 import com.getpcpanel.profile.dto.LightingConfig;
 import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
 import com.getpcpanel.profile.dto.SingleKnobLightingConfig.SINGLE_KNOB_MODE;
 import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
 import com.getpcpanel.util.coloroverride.OverrideColorService;
 import com.getpcpanel.integration.volume.VolumeCoordinatorService;
+import com.getpcpanel.template.TemplateService;
 import com.sun.jna.Platform;
 
 import jakarta.annotation.Nonnull;
@@ -47,6 +50,7 @@ public class Overlay {
     private final VolumeCoordinatorService volumeCoordinator;
     private final DeviceHolder deviceHolder;
     private final OverrideColorService overrideColorService;
+    private final TemplateService templates;
     // The AWT/Swing windowing toolkit is unsupported in the GraalVM native image (it segfaults the
     // native WToolkit event loop), so neither overlay uses it: Windows draws a JNA layered window and
     // Linux/Wayland asks the desktop to draw it over D-Bus (KDE volume OSD, else a notification).
@@ -163,8 +167,32 @@ public class Overlay {
             // Icon decoding needs libawt (Windows only); elsewhere the overlay is a no-op that ignores
             // the icon, so skip the BufferedImage lookup entirely to stay libawt-free.
             var icon = Platform.isWindows() ? iconService.getImageFrom(data, setting) : null;
-            return new CommandAndIcon(data, icon, targetName(data), barColorFromLight(event));
+            Supplier<String> detected = () -> targetName(data);
+            return new CommandAndIcon(data, icon, overlayName(setting, detected, (template, name) -> {
+                var scope = event.templateScope().withName(name);
+                var percent = event.vol() == null ? null : Math.round(event.vol().getValue(null, 0f, 100f));
+                return templates.render(template, scope.withValue(percent), () -> template);
+            }), barColorFromLight(event));
         }).orElse(CommandAndIcon.DEFAULT);
+    }
+
+    /**
+     * The name the overlay shows: the per-control override a user typed ({@link KnobSetting#getOverlayName()}),
+     * or the name derived from the control's actions when that is blank. {@code detected} is only resolved on
+     * the fallback path or when the override's template uses {@code {{ name }}}, since deriving it can query the
+     * OS for the focused application.
+     */
+    static String overlayName(@Nullable KnobSetting setting, Supplier<String> detected, BiFunction<String, Supplier<String>, String> render) {
+        var override = setting == null ? null : setting.getOverlayName();
+        if (StringUtils.isBlank(override)) {
+            return detected.get();
+        }
+        var text = StringUtils.strip(override);
+        return TemplateService.hasTags(text) ? StringUtils.strip(render.apply(text, detected)) : text;
+    }
+
+    static String overlayName(@Nullable KnobSetting setting, Supplier<String> detected) {
+        return overlayName(setting, detected, (template, name) -> template);
     }
 
     /** The bar colour to use, sourced from the moved control's current light, when "bar follows light"

@@ -2,9 +2,9 @@ package com.getpcpanel.platform.process;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,9 +14,7 @@ import java.util.OptionalInt;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.eclipse.microprofile.config.ConfigProvider;
@@ -56,12 +54,8 @@ public class LinuxProcessHelper implements IProcessHelper {
     void logResolvedTools() {
         for (var tool : Tool.values()) {
             var command = tool.command();
-            log.info("Active window tool {} command: {} (present: {})", tool.tool, command, tool.available(command));
+            log.info("Active window tool {} command: {} (present: {})", tool.tool, command, tool.available(processHelper, command));
         }
-    }
-
-    public ProcessBuilder builder(String... command) {
-        return processHelper.builder(command);
     }
 
     public int getActiveProcessPid() {
@@ -149,7 +143,7 @@ public class LinuxProcessHelper implements IProcessHelper {
             toolStatus.put(tool, unusable);
             return Optional.empty();
         }
-        if (!tool.available(command)) {
+        if (!tool.available(processHelper, command)) {
             toolStatus.put(tool, "not installed (" + command + ")");
             return Optional.empty();
         }
@@ -365,10 +359,7 @@ public class LinuxProcessHelper implements IProcessHelper {
     /** Best-effort desktop popup via notify-send. A missing notify-send is fine - the log line remains the signal. */
     private void sendDesktopNotification(String title, String body) {
         try {
-            processHelper.builder(hostCmd("notify-send", "-a", "PCPanel", title, body))
-                         .redirectOutput(ProcessBuilder.Redirect.DISCARD)
-                         .redirectError(ProcessBuilder.Redirect.DISCARD)
-                         .start();
+            processHelper.launch(hostCmd("notify-send", "-a", "PCPanel", title, body));
         } catch (Exception e) {
             log.debug("Could not show desktop notification (notify-send missing?)", e);
         }
@@ -494,38 +485,18 @@ public class LinuxProcessHelper implements IProcessHelper {
      * stderr used to be discarded, which is precisely why a non-working tool looked identical to a working
      * one that found no window.
      */
-    private CommandOutput run(String... cmd) throws IOException {
-        var process = processHelper.builder(cmd).start();
-        // Drain stderr on its own thread: a helper writing more than the pipe buffer would otherwise
-        // deadlock against our stdout read.
-        var stderr = new AtomicReference<>("");
-        var drain = new Thread(() -> {
-            try (var err = process.getErrorStream()) {
-                stderr.set(StringUtils.abbreviate(StringUtils.trimToEmpty(
-                        String.join(" ", IOUtils.readLines(err, Charset.defaultCharset()))), MAX_STDERR_CHARS));
-            } catch (IOException e) {
-                log.debug("Could not read stderr of {}", cmd[0], e);
-            }
-        }, "focus-tool-stderr");
-        drain.setDaemon(true);
-        drain.start();
-
-        var stdout = IOUtils.readLines(process.getInputStream(), Charset.defaultCharset());
-        int exitCode;
+    CommandOutput run(String... cmd) throws IOException {
         try {
-            if (process.waitFor(COMMAND_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-                exitCode = process.exitValue();
-            } else {
-                process.destroyForcibly();
-                exitCode = EXIT_TIMED_OUT;
+            var result = processHelper.run(Duration.ofMillis(COMMAND_TIMEOUT_MS), ProcessHelper.PARSEABLE_OUTPUT, cmd);
+            var stderr = StringUtils.abbreviate(StringUtils.trimToEmpty(String.join(" ", result.stderr())), MAX_STDERR_CHARS);
+            if (result.timedOut()) {
+                return new CommandOutput(EXIT_TIMED_OUT, List.of(), stderr); // A killed tool's partial answer is not one.
             }
-            drain.join(200);
+            return new CommandOutput(result.exitCode(), result.stdout(), stderr);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            process.destroyForcibly();
-            exitCode = EXIT_INTERRUPTED;
+            return new CommandOutput(EXIT_INTERRUPTED, List.of(), "");
         }
-        return new CommandOutput(exitCode, stdout, stderr.get());
     }
 
     /** A helper invocation's full outcome — stdout is the answer, the rest is why there wasn't one. */
@@ -617,8 +588,8 @@ public class LinuxProcessHelper implements IProcessHelper {
          * inside the Flatpak kdotool is bundled and xdotool is a host-spawn shim, so both are always
          * "available" even on a desktop where neither can resolve anything - see {@link #toolStatus}.
          */
-        private boolean available(String command) {
-            var available = ProcessConditionalHelper.isProcessAvailable(command);
+        private boolean available(ProcessHelper processes, String command) {
+            var available = ProcessConditionalHelper.isProcessAvailable(processes, command);
             log.debug("Active Window tool {} command {} enabled: {}", tool, command, available);
             return available;
         }

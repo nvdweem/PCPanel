@@ -28,7 +28,7 @@ import com.getpcpanel.profile.Save;
 
 /**
  * Produces the newest link in the fixture chain {@code LegacySaveCompatibilityTest} loads, currently
- * {@code src/test/resources/legacy-saves/profiles-2.0.json}. It upgrades the previous version's
+ * {@code src/test/resources/legacy-saves/profiles-2.1.json}. It upgrades the previous version's
  * fixture exactly as running this build over it would: read it with today's model, then write it back,
  * filling in properties this version added and assigning commands this version introduced.
  *
@@ -36,7 +36,7 @@ import com.getpcpanel.profile.Save;
  * <pre>{@code
  * mvn -q test-compile -Dquarkus.native.enabled=false -Dquarkus.quinoa.enabled=false
  * java -cp target/classes:target/test-classes:<deps> com.getpcpanel.profile.compat.SaveFixtureGenerator \
- *      src/test/resources/legacy-saves/profiles-1.8.json src/test/resources/legacy-saves/profiles-2.0.json
+ *      src/test/resources/legacy-saves/profiles-2.0.json src/test/resources/legacy-saves/profiles-2.1.json
  * }</pre>
  *
  * <p>The older fixtures are frozen artifacts of the versions that wrote them and must never be

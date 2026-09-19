@@ -1,5 +1,8 @@
 package com.getpcpanel.integration.homeassistant.command;
 
+import com.getpcpanel.template.TemplateContext;
+import com.getpcpanel.template.Templates;
+
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
@@ -44,7 +47,7 @@ public class CommandHomeAssistantAction extends CommandHomeAssistant implements 
         if (StringUtils.isBlank(action)) {
             return;
         }
-        service().callAction(server, action);
+        service().callAction(server, Templates.render(action, TemplateContext.current()));
     }
 
     @Override

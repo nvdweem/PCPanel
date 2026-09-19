@@ -7,15 +7,22 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import com.getpcpanel.platform.autostart.WindowsAutostart;
+import com.getpcpanel.rest.SystemResource.ErrorDto;
+import com.getpcpanel.rest.model.dto.AutostartRequestDto;
+import com.getpcpanel.rest.model.dto.AutostartStateDto;
 import com.getpcpanel.util.version.AutoUpdateService;
 
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import lombok.extern.log4j.Log4j2;
 
 /**
@@ -31,6 +38,7 @@ import lombok.extern.log4j.Log4j2;
 public class PlatformResource {
 
     @Inject AutoUpdateService autoUpdate;
+    @Inject WindowsAutostart autostart;
 
     @ConfigProperty(name = "quarkus.application.version", defaultValue = "dev")
     String version;
@@ -61,6 +69,31 @@ public class PlatformResource {
         // visible if Discord was already running when PCPanel (and so the sandbox) started.
         var flatpak = StringUtils.isNotBlank(System.getenv("FLATPAK_ID"));
         return new PlatformInfo(os, SystemUtils.IS_OS_WINDOWS, SystemUtils.IS_OS_WINDOWS || SystemUtils.IS_OS_MAC, flatpak, autoUpdate.isSupported(), version, branch, commit);
+    }
+
+    /** The start-with-Windows registration; {@code supported} is false outside an installed Windows build. */
+    @GET
+    @jakarta.ws.rs.Path("/autostart")
+    public AutostartStateDto autostart() {
+        return autostart.state();
+    }
+
+    /**
+     * Registers or removes the start-with-Windows entry. 409 when it cannot be changed from here: the
+     * installer's elevated scheduled task owns the registration, or the build is not an installed
+     * Windows one.
+     */
+    @PUT
+    @jakarta.ws.rs.Path("/autostart")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response setAutostart(AutostartRequestDto request) {
+        try {
+            autostart.set(request.enabled());
+            return Response.ok(autostart.state()).build();
+        } catch (WindowsAutostart.AutostartException e) {
+            log.warn("Start with Windows could not be changed: {}", e.getMessage());
+            return Response.status(Response.Status.CONFLICT).entity(new ErrorDto(e.getMessage())).build();
+        }
     }
 
     /**

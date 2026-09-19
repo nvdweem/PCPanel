@@ -22,6 +22,7 @@ import com.getpcpanel.profile.dto.LightingConfig;
 import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
 import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig;
 import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
+import com.getpcpanel.template.TemplateSaveMigration;
 import com.getpcpanel.util.concurrent.Debouncer;
 import com.getpcpanel.util.io.FileUtil;
 import com.getpcpanel.util.tray.win.WinUser32Ext;
@@ -47,6 +48,7 @@ public class SaveService {
     @Inject Json json;
     @Inject Debouncer debouncer;
     @Inject DeviceHolder devices;
+    @Inject TemplateSaveMigration templateMigration;
     @SuppressWarnings("StaticNonFinalField") private static String oldVersionEncountered;
 
     private Save save;
@@ -77,13 +79,17 @@ public class SaveService {
         }
 
         try {
-            save = json.read(FileUtils.readFileToString(saveFile, Charset.defaultCharset()), Save.class);
+            var document = json.readTree(FileUtils.readFileToString(saveFile, Charset.defaultCharset()));
+            var migratedTemplates = templateMigration.migrate(document);
+            save = json.read(document, Save.class);
             var migratedProviderIds = migrateProviderIds(save);
             var migratedMuteTargets = migrateMuteOverrideFollow(save);
             if (migratedProviderIds || migratedMuteTargets) {
                 // Both rewrite values an older file spells differently. Treat either as an old-version
                 // read so the existing backup(.bak) + one-time rewrite path persists the migration.
                 encounterOldVersion("2.0");
+            } else if (migratedTemplates) {
+                encounterOldVersion("2.1");
             }
             handleOldVersionEncountered();
             StreamEx.ofValues(save.getDevices()).forEach(d -> StreamEx.of(d.getProfiles()).findFirst(p -> p.isMainProfile()).ifPresent(p -> d.setCurrentProfile(p.getName())));

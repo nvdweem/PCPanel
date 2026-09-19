@@ -20,6 +20,7 @@ export { AppPickerComponent } from './app-picker/app-picker.component';
 export type { PickerItem } from './app-picker/app-picker.component';
 export { AutofocusDirective } from './autofocus.directive';
 export { KeyRecorderComponent } from './key-recorder/key-recorder.component';
+export { TemplateInputComponent } from './template-input/template-input.component';
 export { ToastService } from './toast/toast.service';
 export type { Toast, ToastKind } from './toast/toast.service';
 export { ToastHostComponent } from './toast/toast-host.component';

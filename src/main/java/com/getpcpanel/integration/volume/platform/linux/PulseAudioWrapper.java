@@ -1,16 +1,17 @@
 package com.getpcpanel.integration.volume.platform.linux;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.time.Duration;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import jakarta.inject.Inject;
@@ -33,6 +34,7 @@ class PulseAudioWrapper {
     private static final Pattern pactlFirstLine = Pattern.compile("(.*) #(\\d+)");
     @Inject
     ProcessHelper processHelper;
+    long timeoutMillis = 2_000;
 
     public static int volumeFtoI(float volume) {
         return Math.round(volume * 65536);
@@ -42,8 +44,40 @@ class PulseAudioWrapper {
         return volume / 65536f;
     }
 
+    /** Sinks and sources, with the server's default sink and default source flagged. */
     public List<PulseAudioTarget> devices() {
-        return StreamEx.of(execAndParse(InOutput.output)).append(execAndParse(InOutput.input)).toList();
+        var defaults = defaultDeviceNames();
+        return StreamEx.of(execAndParse(InOutput.output))
+                       .append(execAndParse(InOutput.input))
+                       .map(t -> t.toBuilder().isDefault(t.name() != null && t.name().equals(defaults.get(t.type()))).build())
+                       .toList();
+    }
+
+    /** The names of the default sink ({@link InOutput#output}) and default source ({@link InOutput#input}). */
+    Map<InOutput, String> defaultDeviceNames() {
+        return parseDefaultDeviceNames(runAndRead("pactl", "info"));
+    }
+
+    /**
+     * Reads {@code Default Sink:} and {@code Default Source:} from {@code pactl info}, which every pactl version
+     * prints ({@code get-default-sink} only exists since PulseAudio 15).
+     */
+    static Map<InOutput, String> parseDefaultDeviceNames(List<String> info) {
+        var names = new EnumMap<InOutput, String>(InOutput.class);
+        for (var line : info) {
+            var parts = line.split(":", 2);
+            if (parts.length < 2) {
+                continue;
+            }
+            var value = parts[1].trim();
+            switch (parts[0].trim()) {
+                case "Default Sink" -> names.put(InOutput.output, value);
+                case "Default Source" -> names.put(InOutput.input, value);
+                default -> {
+                }
+            }
+        }
+        return names;
     }
 
     public void setDeviceVolume(boolean output, int idx, float volume) {
@@ -81,7 +115,7 @@ class PulseAudioWrapper {
 
     List<PulseAudioTarget> execAndParse(InOutput type) {
         var ret = new ArrayList<PulseAudioTarget>();
-        var cmdOutput = runAndRead(processHelper.builder("pactl", "list", type.pulseType));
+        var cmdOutput = runAndRead("pactl", "list", type.pulseType);
 
         PulseAudioTarget.PulseAudioTargetBuilder paTarget = null;
         var properties = new HashMap<String, String>();
@@ -127,18 +161,21 @@ class PulseAudioWrapper {
         return ret;
     }
 
+    /**
+     * Runs a write and returns once pactl has finished. Together with {@code synchronized} this keeps exactly one
+     * write in flight, so successive values land in the order they were sent - the command thread coalesces knob
+     * values that arrive meanwhile, so only the newest one is applied next.
+     */
     private synchronized void pactl(String... cmd) {
         var fullCmd = new String[cmd.length + 1];
         fullCmd[0] = "pactl";
         System.arraycopy(cmd, 0, fullCmd, 1, cmd.length);
         log.debug("Executing: {}", String.join(" ", fullCmd));
         try {
-            var process = processHelper.builder(fullCmd).start();
-
-            if (log.isTraceEnabled()) {
-                var lines = IOUtils.readLines(process.getInputStream(), Charset.defaultCharset());
-                log.trace("Response: \n{}", String.join("\n", lines));
-            }
+            var result = run(fullCmd);
+            log.trace("Response: \n{}", String.join("\n", result.stdout()));
+        } catch (PactlTimeoutException e) {
+            log.warn("{}; the change was not applied", e.getMessage());
         } catch (IOException e) {
             // A missing or non-functional pactl (no PulseAudio/PipeWire - e.g. a headless box or a CI
             // runner) must not abort the volume operation. Degrade to a no-op; the read paths return
@@ -147,16 +184,36 @@ class PulseAudioWrapper {
         }
     }
 
-    private List<String> runAndRead(ProcessBuilder pb) {
+    /**
+     * @throws PactlTimeoutException when pactl does not finish in time, so the caller can keep what it already
+     *                               knows instead of treating a stalled audio server as "no devices"
+     */
+    private List<String> runAndRead(String... command) {
         try {
-            var process = pb.start();
-            return IOUtils.readLines(process.getInputStream(), Charset.defaultCharset());
+            return run(command).stdout();
         } catch (IOException e) {
             // pactl missing/unrunnable: report no devices/sessions rather than crashing. On Linux audio
             // control is best-effort, so its absence degrades to a no-op ISndCtrl - the app still starts
             // and serves the UI (a system without PulseAudio/PipeWire, or CI without pactl installed).
             onPactlUnavailable(e);
             return List.of();
+        }
+    }
+
+    /** Runs {@code command} to completion within {@link #timeoutMillis}; a failed run is logged with what pactl said. */
+    private ProcessHelper.Result run(String... command) throws IOException {
+        try {
+            var result = processHelper.run(Duration.ofMillis(timeoutMillis), ProcessHelper.PARSEABLE_OUTPUT, command);
+            if (result.timedOut()) {
+                throw new PactlTimeoutException(String.join(" ", command) + " did not finish within " + timeoutMillis + "ms");
+            }
+            if (result.exitCode() != 0) {
+                log.debug("{} exited with {}: {}", String.join(" ", command), result.exitCode(), String.join("\n", result.stderr()));
+            }
+            return result;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new PactlTimeoutException(String.join(" ", command) + " was interrupted");
         }
     }
 
@@ -181,15 +238,39 @@ class PulseAudioWrapper {
     List<String> getDebugOutput() {
         return StreamEx.of(InOutput.values())
                        .map(t -> new String[] { "pactl", "list", t.pulseType })
-                       .mapToEntry(cmd -> runAndRead(processHelper.builder(cmd)))
+                       .mapToEntry(this::debugRun)
                        .mapKeys(cmd -> String.join(" ", cmd))
                        .mapValues(lines -> String.join("\n", lines))
                        .mapKeyValue((cmd, lns) -> cmd + ":\n" + lns)
                        .toList();
     }
 
-    @Builder
+    /** Everything pactl wrote, errors included, for the debug dump. */
+    private List<String> debugRun(String[] cmd) {
+        try {
+            var result = run(cmd);
+            return StreamEx.of(result.stdout()).append(result.stderr()).toList();
+        } catch (PactlTimeoutException e) {
+            return List.of(e.getMessage());
+        } catch (IOException e) {
+            onPactlUnavailable(e);
+            return List.of();
+        }
+    }
+
+    static final class PactlTimeoutException extends RuntimeException {
+        PactlTimeoutException(String message) {
+            super(message);
+        }
+    }
+
+    @Builder(toBuilder = true)
     public record PulseAudioTarget(int index, boolean isDefault, Map<String, String> metas, Map<String, String> properties, InOutput type) {
+        /** The device's name ({@code Name:}), which is how {@code pactl info} refers to the default device. */
+        @Nullable
+        String name() {
+            return metas == null ? null : metas.get("Name");
+        }
     }
 
         enum InOutput {

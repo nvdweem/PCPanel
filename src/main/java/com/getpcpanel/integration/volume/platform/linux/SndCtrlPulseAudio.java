@@ -36,6 +36,7 @@ import com.getpcpanel.platform.process.LinuxProcessHelper.ActiveWindow;
 import com.getpcpanel.integration.volume.platform.linux.PulseAudioEventListener.LinuxDeviceChangedEvent;
 import com.getpcpanel.integration.volume.platform.linux.PulseAudioEventListener.LinuxSessionChangedEvent;
 import com.getpcpanel.integration.volume.platform.linux.PulseAudioWrapper.InOutput;
+import com.getpcpanel.integration.volume.platform.linux.PulseAudioWrapper.PactlTimeoutException;
 import com.getpcpanel.integration.volume.platform.linux.PulseAudioWrapper.PulseAudioTarget;
 import com.getpcpanel.platform.LinuxBuild;
 
@@ -64,7 +65,7 @@ class SndCtrlPulseAudio implements ISndCtrl {
     public void init() {
         initDevices(null);
         synchronized (sessions) {
-            sessions.addAll(getSessionsFromCmd());
+            getSessionsFromCmd().ifPresent(sessions::addAll);
         }
     }
 
@@ -80,17 +81,25 @@ class SndCtrlPulseAudio implements ISndCtrl {
 
     public void initDevices(@Observes @Nullable LinuxDeviceChangedEvent event) {
         synchronized (devices) {
+            var found = getDevicesFromCmd();
+            if (found.isEmpty()) {
+                return;
+            }
             devices.clear();
-            StreamEx.of(getDevicesFromCmd()).mapToEntry(AudioDevice::id, Function.identity()).into(devices);
+            StreamEx.of(found.get()).mapToEntry(AudioDevice::id, Function.identity()).into(devices);
         }
     }
 
     public void initSessions(@Observes @Nullable LinuxSessionChangedEvent event) {
         List<AudioSessionEvent> events;
         synchronized (sessions) {
+            var found = getSessionsFromCmd();
+            if (found.isEmpty()) {
+                return;
+            }
             var prevByIndex = StreamEx.of(sessions).mapToEntry(PulseAudioAudioSession::index).invert().toMap();
             sessions.clear();
-            sessions.addAll(getSessionsFromCmd());
+            sessions.addAll(found.get());
             var currByIndex = StreamEx.of(sessions).mapToEntry(PulseAudioAudioSession::index).invert().toMap();
 
             var removed = StreamEx.of(prevByIndex.values()).remove(sessions::contains);
@@ -186,6 +195,9 @@ class SndCtrlPulseAudio implements ISndCtrl {
         if (device == null)
             return;
         cmd.setDefaultDevice(isOutput(deviceId), device.index());
+        // Read the new default back at once: a "cycle default device" pressed again before pactl subscribe reports
+        // the change must continue from this device, not from the one before it.
+        initDevices(null);
     }
 
     @Override
@@ -301,24 +313,12 @@ class SndCtrlPulseAudio implements ISndCtrl {
     }
 
     /**
-     * A session matches a binding query against its executable name, its title, or its portal app id (#88, #92).
-     * A trailing {@code .exe} is ignored on both sides: Proton/Wine streams are reported as {@code <game>.exe}
-     * while the focused window's title/class is just {@code <game>} (e.g. window "Deadlock" vs stream
-     * "deadlock.exe"), so dropping the suffix lets focus volume bind them (#96). The portal app id is never an
-     * executable, so it is matched verbatim.
+     * A PulseAudio session matches a binding query against its executable name, its title, or its portal app id
+     * (#88, #92) - see {@link AudioSession#matches} for the rule and {@link PulseAudioAudioSession#matchKeys} for
+     * the identifiers.
      */
     static boolean matches(PulseAudioAudioSession s, @Nullable String query) {
-        if (StringUtils.isBlank(query)) {
-            return false;
-        }
-        var normalizedQuery = stripExe(query);
-        return (StringUtils.isNotBlank(normalizedQuery)
-                && StringUtils.equalsAnyIgnoreCase(normalizedQuery, stripExe(s.executable().getName()), stripExe(s.title())))
-                || StringUtils.equalsIgnoreCase(query, s.portalAppId());
-    }
-
-    private static String stripExe(@Nullable String value) {
-        return StringUtils.removeEndIgnoreCase(StringUtils.trimToEmpty(value), ".exe");
+        return s.matches(query);
     }
 
     private static boolean matchesAny(PulseAudioAudioSession s, Collection<String> queries) {
@@ -398,11 +398,19 @@ class SndCtrlPulseAudio implements ISndCtrl {
 
     @Override
     public @Nullable String defaultRecorder() {
-        return null;
+        synchronized (devices) {
+            return StreamEx.ofValues(devices).findFirst(PulseAudioAudioDevice::isDefaultInput).map(AudioDevice::id).orElse(null);
+        }
     }
 
-    private Set<PulseAudioAudioDevice> getDevicesFromCmd() {
-        return StreamEx.of(cmd.devices()).mapPartial(this::toDevice).toSet();
+    /** Empty when pactl timed out: the caller keeps what it knows rather than reporting everything as gone. */
+    private Optional<Set<PulseAudioAudioDevice>> getDevicesFromCmd() {
+        try {
+            return Optional.of(StreamEx.of(cmd.devices()).mapPartial(this::toDevice).toSet());
+        } catch (PactlTimeoutException e) {
+            log.warn("{}; keeping the known audio devices", e.getMessage());
+            return Optional.empty();
+        }
     }
 
     private Optional<PulseAudioAudioDevice> toDevice(PulseAudioTarget pa) {
@@ -414,8 +422,14 @@ class SndCtrlPulseAudio implements ISndCtrl {
         return Optional.of(new PulseAudioAudioDevice(eventBus, pa.index(), pa.metas().get("Description"), (isOutput ? "" : INPUT_PREFIX) + pa.metas().get("Name"), pa.isDefault(), isOutput));
     }
 
-    private Set<PulseAudioAudioSession> getSessionsFromCmd() {
-        return StreamEx.of(cmd.getSessions()).map(this::toSession).toSet();
+    /** Empty when pactl timed out: the caller keeps what it knows rather than reporting every stream as removed. */
+    private Optional<Set<PulseAudioAudioSession>> getSessionsFromCmd() {
+        try {
+            return Optional.of(StreamEx.of(cmd.getSessions()).map(this::toSession).toSet());
+        } catch (PactlTimeoutException e) {
+            log.warn("{}; keeping the known audio sessions", e.getMessage());
+            return Optional.empty();
+        }
     }
 
     PulseAudioAudioSession toSession(PulseAudioTarget pa) {

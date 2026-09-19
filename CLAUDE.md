@@ -114,6 +114,10 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
     forward** into `main` (`releases/2.0` → `main`), so ancestry is real and the same hunks don't
     re-conflict. Anything meant for both lines should be based on their merge base; anything
     release-only stays on the release branch. Patch by tagging `v2.0.85`, `v2.0.86`, … off that branch.
+  - **Current line: `main` (2.1.x).** `releases/2.0` is retired (last release `v2.0.97`) and gets no more
+    pushes; base work, fixes included, on `origin/main` and patch by tagging `v2.1.1`, `v2.1.2`, … off it.
+    Only once `main` takes on work that must not ship in a 2.1 patch does `releases/2.1` get cut from the
+    latest 2.1 tag, and the merge-forward flow above applies to it.
 - **Run two instances side by side:** pass the `skipfilecheck` arg (otherwise launching a second
   instance just focuses the already-installed one — see `Main`/`FileChecker`). For a separate dev
   data dir, set `pcpanel.root=${user.home}/.pcpaneldev/` (dev profile already does this).
@@ -124,6 +128,13 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
   duplicate, its own `ShutdownEvent` would `provider.stop()` and switch the LEDs off on the
   still-running first instance. Dev mode never runs `main()` (Quarkus calls `run()` directly), so the
   pre-boot check is inert there and `%dev.skip-file-check` only ever mattered to the old `run()`-time check.
+  A duplicate launch only asks the running instance to open the UI when a **person** started it. The OS
+  autostart entries (`HKCU\Run` and the elevated scheduled task) both pass the `quiet` arg —
+  `Main.isAutostartLaunch` — and a duplicate marked that way exits silently. Windows can legitimately
+  launch the app twice at logon (two autostart registrations, or session restore alongside one), and
+  treating that as a "show me" gesture opened the browser on every boot regardless of the user's
+  `openBrowserOnStartup` setting (#157). Both browser-opening paths log at INFO
+  (`StartupOnboarding` and `FileChecker`), so a user's `logging.log` says whether the app opened it.
 - **Self-update (`util/version/`):** `AutoUpdateService` is a thin façade that picks the one
   `PlatformUpdater` transport matching how the app is packaged (`isSupported()` is mutually exclusive) and
   delegates. The update **source** repo is `UpdateSource.GITHUB_REPO`, a hardcoded constant — *not* a
@@ -141,6 +152,20 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
     app down cleanly; `pcpanel.iss`'s `/UPDATE`-gated `[Run]` entry relaunches it with `/updated` (the
     normal "Launch now" entry is `skipifsilent`). `/updated` (`Main` → `StartupOnboarding`) flags the
     "just updated" dialog like `/postinstall` but opens no browser (the triggering UI is already open).
+    **The startup tasks on an upgrade come from the machine, not from Inno's memory:** `InitializeWizard`
+    preselects `startup`/`startup\admin` from whether the `HKCU\Run` value or the elevated scheduled task
+    actually exists (explicit `/TASKS`/`/MERGETASKS` still win). Inno's own default is the task selection
+    remembered from the previous install, which can disagree with what is registered, and the `[Registry]`
+    `deletevalue` entry enforces the selection — so a silent update seeded from a stale memory would
+    de-register autostart. `startup` is `checkablealone` and `startup\admin` `dontinheritcheck`, so the two
+    boxes toggle independently (a parent task is otherwise only selectable through its children).
+    The app exposes the same registration as the **Start with Windows** switch
+    (`platform/autostart/WindowsAutostart`, `GET`/`PUT /api/platform/autostart`, Settings → General and
+    the post-update dialog): it reads the `HKCU\Run` value and the elevated task via `reg.exe`/`schtasks.exe`
+    and writes the value through `powershell.exe -EncodedCommand` (the data carries quotes, which
+    `ProcessBuilder` rejects as an argument on Windows) — no JNA, so nothing to register for the native
+    image beyond the two DTOs. Supported only in an installed Windows build (the value points at the
+    running exe); refused while the elevated task exists, so the two registrations never coexist.
   - **AppImage** (`AppImageUpdater`, `$APPIMAGE` set): runs the bundled `appimageupdatetool -O -r
     "$APPIMAGE"` (zsync delta, in place) then relaunches via `UpdaterRestart`. The AppImage carries
     `gh-releases-zsync` update-info baked at build time (`appimagetool -u`) and the companion `.zsync` is
@@ -246,7 +271,11 @@ backend stays authoritative for what the hardware does.
 the volume feature. Implementations are selected at **build time** by platform stereotypes:
 `@WindowsBuild` (`SndCtrlWindows` → JNI to `SndCtrl.dll` via `SndCtrlNative`, both in
 `integration/volume/platform/windows/`; C++ source in `src/main/cpp/`) and `@LinuxBuild`
-(`SndCtrlPulseAudio` in `platform/linux/`, via JNA/PulseAudio). These stereotypes wrap
+(`SndCtrlPulseAudio` in `platform/linux/`), which drives PulseAudio/PipeWire through the **`pactl` CLI** as
+subprocesses — `PulseAudioWrapper` runs `pactl list`/`set-*`, `PulseAudioEventListener` follows `pactl subscribe`
+for device/stream changes; there is no JNA binding to libpulse. Every `pactl` call runs to completion within a
+deadline (a hung one is killed), writes run one at a time so values apply in order, and a `pactl list` that times
+out keeps the cached devices/sessions rather than emptying them. These stereotypes wrap
 Quarkus `@IfBuildProperty(name="pcpanel.build.os", ...)` keyed off `pcpanel.build.os` (set at build
 time from `os.detected.name`), so **a given build only contains one platform's beans** — guard
 optional platform beans with `Instance<T>` injection, and use `CdiHelper` to fetch beans from
@@ -390,6 +419,35 @@ the YAML into the `domain.service` + flat body the REST API wants. The dial comm
 the 0..1 dial position to a number via min/max or an `exp4j` formula (variable `x`) and substitutes it
 for the `{{ value }}` token in the YAML before sending.
 
+**Templates (`template/`):** the overlay name and the output commands' text fields (HTTP url/headers/body,
+MQTT topic/payload, OSC address, Home Assistant action YAML) are `{{ … }}` templates rendered by **Qute**
+(`quarkus-qute`). Qute's own delimiters are single braces, so `TemplateDialect` translates first: literal
+text becomes `{_lit.get(n)}` placeholders filled from data (Qute never lexes a user `{`, `}` or `\`), and a
+`{{ … }}` tag becomes a Qute tag only when **every** root, namespace and function in it is ours — so JSON,
+YAML flow maps, Home Assistant Jinja and Qute's built-in namespaces (`config:`, `inject:`, `str:`) stay text.
+Functions are `@EngineConfiguration` resolvers in `TemplateFunctions` (one implementation serves the app
+engine and the bare-engine unit tests). Variables: `CoreTemplateVariables` (`value`, `percent`, `raw`,
+`name`, `muted`, `device`, `profile`, `control`, `focusApp`) plus one `TemplateNamespace` bean per
+integration (`wl`, `audio`, `obs`, `vm`, `discord`, `mqtt`, `ha`) exposing its live state as views and a
+`target` for what the control acts on. Rules for a namespace:
+- **Accessors read state the app already holds** — no I/O, no process launch, no blocking lock: the overlay
+  renders on the HID input thread. That is why OBS offers only connection + source mute (its scenes/volumes
+  are websocket round-trips) and Home Assistant only server names (its `isConnected` can hit the network).
+- Views are lazy (a getter runs only when a template reaches it; id-keyed collections are `LazyMap`s), so a
+  namespace can expose everything without a per-render cost. Levels/volumes are exposed as 0–100 (0–200 where
+  the integration itself uses that), never 0..1.
+- Every view needs **`@TemplateData`** (Quarkus generates its resolver; unregistered types render on the JVM
+  but are "not found" in native) **and `@RegisterForReflection`** (the editor's `TemplateCatalog` lists
+  properties reflectively), with `@TemplateDoc` descriptions. `TemplateDataCoverageTest` enforces both.
+
+A control event carries its scope to the actions it runs via `TemplateContext` (set in
+`PCPanelControlEvent.buildRunnable`); code that defers work (the HTTP throttle) captures it first.
+`TemplateSaveMigration` runs once per save file (`Save.templateVersion`) on the raw JSON: in a save that predates
+this syntax it rewrites every tag that would now render to the literal form `{{ '{' }}{ … }}` (except
+`{{ value }}` in fields that always substituted it), keeping a rewrite only when it renders exactly what the
+field produced before, behind the usual `.bak`. The UI edits these fields with
+`TemplateInputComponent` (completion via `GET /api/templates/catalog`, preview via `POST /api/templates/preview`).
+
 ## GraalVM native image — important
 
 Native image config is the most fragile part of the build, and it lives in **two** places that
@@ -440,6 +498,8 @@ Key constraints baked into those args, change with care:
   the serializer by name in `NativeImageConfig.classNames`. The coverage tests don't catch this (it is
   Jackson-internal, not a project type), so the reliable check is to **run the native binary and curl the
   list/DTO REST endpoints** — JVM/dev mode never reproduces it.
+- **Template views** (anything a `{{ }}` template can reach) need `@TemplateData` + `@RegisterForReflection`;
+  `TemplateDataCoverageTest` walks every `TemplateNamespace` root and fails on a gap (see *Templates* above).
 - **Discovery guards catch the above automatically — keep them green.** `ReflectionRegistrationCoverageTest`
   walks the Jackson-serialised property graph from **two root sets** — the `Command` hierarchy and the
   return type of every JAX-RS resource method — and fails if any concrete subtype, or any concrete project
@@ -540,6 +600,14 @@ Full reference: [`docs/mcp-server.md`](docs/mcp-server.md).
   generator's optional-property detection.
 - `.editorconfig` defines formatting and a large set of IntelliJ inspection settings; follow it.
 - Linux device access needs udev rules and other setup — see `linux.md`.
+- **External processes only go through `util/os/ProcessHelper`**, never `ProcessBuilder`/`Runtime.exec` directly
+  (`ProcessUsageGuardTest` scans the compiled classes and fails the build otherwise). Pick the entry point by
+  how the process is treated: `run`/`runWithInput` wait with a **deadline** (killed at it) and return drained
+  stdout/stderr — use them for anything on the command thread; `launch` is fire-and-forget (output discarded,
+  stdin closed) for programs started on the user's behalf; `stream` follows a long-running process line by line.
+  The child inherits the environment unchanged unless the caller passes a map — pass
+  `ProcessHelper.PARSEABLE_OUTPUT` (`LC_ALL=C`) only when the output is parsed, so a launched program keeps the
+  user's locale. Tests redirect commands by overriding the protected `builder()` (see `FakeProcess`).
 
 ### Code comments
 

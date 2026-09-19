@@ -1,17 +1,28 @@
 package com.getpcpanel.integration.volume.platform.linux;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import com.getpcpanel.platform.process.LinuxProcessHelper.ActiveWindow;
+import com.getpcpanel.integration.volume.platform.linux.PulseAudioWrapper.InOutput;
+import com.getpcpanel.integration.volume.platform.linux.PulseAudioWrapper.PactlTimeoutException;
 import com.getpcpanel.integration.volume.platform.linux.PulseAudioWrapper.PulseAudioTarget;
+
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.NotificationOptions;
+import jakarta.enterprise.util.TypeLiteral;
 
 class SndCtrlPulseAudioTest {
 
@@ -117,6 +128,22 @@ class SndCtrlPulseAudioTest {
         assertFalse(SndCtrlPulseAudio.matches(session, ""), "blank query never matches");
     }
 
+    /**
+     * A stream that exposes both an application.name and a portal app id keeps the app name as its title, so the
+     * portal id is a match key in its own right rather than a by-product of the title fallback.
+     */
+    @Test
+    void matchesPortalAppIdAlongsideApplicationName() {
+        var session = session(Map.of(
+                "application.name", "Spotify",
+                "media.name", "audio-src",
+                "pipewire.access.portal.app_id", "com.spotify.Client"));
+
+        assertEquals("Spotify", session.title(), "the application name wins the title");
+        assertTrue(SndCtrlPulseAudio.matches(session, "Spotify"), "should match the application name");
+        assertTrue(SndCtrlPulseAudio.matches(session, "com.spotify.Client"), "should match the portal app id as well");
+    }
+
     /** The app selector must show a bindable name; metadata-sparse sink-inputs fall back to title/portal id (#71). */
     @Test
     void runningAppNamePrefersExecutableThenTitle() {
@@ -131,6 +158,154 @@ class SndCtrlPulseAudioTest {
 
         var mediaOnly = session(Map.of("media.name", "Discord"));
         assertEquals("Discord", SndCtrlPulseAudio.runningAppName(mediaOnly), "uses media.name when that is all there is");
+    }
+
+    /**
+     * A refresh whose pactl list times out (a wedged audio server) keeps the last known devices and sessions:
+     * clearing them would report every stream as removed and back, and the knobs would lose their targets.
+     */
+    @Test
+    void refreshKeepsTheKnownStateWhenPactlTimesOut() {
+        var fired = new ArrayList<Object>();
+        var cmd = new StubWrapper();
+        var sut = new SndCtrlPulseAudio();
+        sut.cmd = cmd;
+        sut.eventBus = new RecordingEventBus(fired);
+
+        cmd.sessions = List.of(PulseAudioTarget.builder().index(7).type(InOutput.session)
+                                               .properties(Map.of("application.name", "Firefox")).metas(Map.of()).build());
+        cmd.devices = List.of(PulseAudioTarget.builder().index(1).type(InOutput.output)
+                                              .properties(Map.of()).metas(Map.of("Name", "speakers", "Description", "Speakers")).build());
+        sut.initSessions(null);
+        sut.initDevices(null);
+        var eventsBefore = fired.size();
+
+        cmd.timeOut = true;
+        assertDoesNotThrow(() -> sut.initSessions(null));
+        assertDoesNotThrow(() -> sut.initDevices(null));
+
+        assertEquals(1, sut.getAllSessions().size(), "the known session must survive a timed-out refresh");
+        assertEquals(1, sut.devices().size(), "the known device must survive a timed-out refresh");
+        assertEquals(eventsBefore, fired.size(), "a timed-out refresh must not report sessions as removed/added");
+    }
+
+    /** Sources are inputs and sinks outputs, so the recording pickers (the input device list) show the sources. */
+    @Test
+    void sourcesAreInputsAndSinksAreOutputs() {
+        var sut = withDevices(device(1, InOutput.output, "speakers", false), device(2, InOutput.input, "mic", false));
+
+        var speakers = sut.getDevice("speakers");
+        var mic = sut.getDevice(SndCtrlPulseAudio.INPUT_PREFIX + "mic");
+        assertTrue(speakers.isOutput());
+        assertFalse(speakers.isInput());
+        assertTrue(mic.isInput());
+        assertFalse(mic.isOutput());
+    }
+
+    @Test
+    void reportsTheDefaultOutputAndInput() {
+        var sut = withDevices(
+                device(1, InOutput.output, "speakers", false), device(2, InOutput.output, "headset", true),
+                device(3, InOutput.input, "mic", true), device(4, InOutput.input, "headset.monitor", false));
+
+        assertEquals("headset", sut.defaultPlayer());
+        assertEquals(SndCtrlPulseAudio.INPUT_PREFIX + "mic", sut.defaultRecorder());
+    }
+
+    /**
+     * Cycling the default device asks for the current default before every step, so a change the app itself made
+     * must be visible at once, not only after pactl subscribe reports it.
+     */
+    @Test
+    void aDefaultChangeIsVisibleAtOnce() {
+        var cmd = new StubWrapper();
+        cmd.devices = List.of(device(1, InOutput.output, "speakers", true), device(2, InOutput.output, "headset", false));
+        var sut = new SndCtrlPulseAudio();
+        sut.cmd = cmd;
+        sut.eventBus = new RecordingEventBus(new ArrayList<>());
+        sut.initDevices(null);
+
+        sut.setDefaultDevice("headset");
+
+        assertEquals("headset", sut.defaultPlayer());
+    }
+
+    private static SndCtrlPulseAudio withDevices(PulseAudioTarget... devices) {
+        var cmd = new StubWrapper();
+        cmd.devices = List.of(devices);
+        var sut = new SndCtrlPulseAudio();
+        sut.cmd = cmd;
+        sut.eventBus = new RecordingEventBus(new ArrayList<>());
+        sut.initDevices(null);
+        return sut;
+    }
+
+    private static PulseAudioTarget device(int index, InOutput type, String name, boolean isDefault) {
+        return PulseAudioTarget.builder().index(index).type(type).isDefault(isDefault)
+                               .properties(Map.of()).metas(Map.of("Name", name, "Description", name)).build();
+    }
+
+    private static final class StubWrapper extends PulseAudioWrapper {
+        private List<PulseAudioTarget> sessions = List.of();
+        private List<PulseAudioTarget> devices = List.of();
+        private boolean timeOut;
+
+        /** Like the server: the chosen device of that kind becomes the default. */
+        @Override
+        public void setDefaultDevice(boolean output, int index) {
+            var type = output ? InOutput.output : InOutput.input;
+            devices = devices.stream()
+                             .map(d -> d.type() == type ? d.toBuilder().isDefault(d.index() == index).build() : d)
+                             .toList();
+        }
+
+        @Override
+        public List<PulseAudioTarget> getSessions() {
+            if (timeOut) {
+                throw new PactlTimeoutException("pactl list sink-inputs did not finish");
+            }
+            return sessions;
+        }
+
+        @Override
+        public List<PulseAudioTarget> devices() {
+            if (timeOut) {
+                throw new PactlTimeoutException("pactl list sinks did not finish");
+            }
+            return devices;
+        }
+    }
+
+    record RecordingEventBus(List<Object> fired) implements Event<Object> {
+        @Override
+        public void fire(Object event) {
+            fired.add(event);
+        }
+
+        @Override
+        public <U> CompletionStage<U> fireAsync(U event) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public <U> CompletionStage<U> fireAsync(U event, NotificationOptions options) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Event<Object> select(Annotation... qualifiers) {
+            return this;
+        }
+
+        @Override
+        public <U> Event<U> select(Class<U> subtype, Annotation... qualifiers) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public <U> Event<U> select(TypeLiteral<U> subtype, Annotation... qualifiers) {
+            throw new UnsupportedOperationException();
+        }
     }
 
     private static PulseAudioAudioSession session(Map<String, String> properties) {

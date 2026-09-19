@@ -55,7 +55,7 @@ public final class DescriptorFactory {
             lightOutputs.add(dialLight(i));
         }
         var global = new GlobalLightingSpec(
-                List.of("ALL_COLOR", "SINGLE_COLOR", "ALL_RAINBOW", "ALL_WAVE", "ALL_BREATH"),
+                List.of("ALL_COLOR", "SINGLE_COLOR", "ALL_RAINBOW", "ALL_WAVE", "ALL_BREATH", "CUSTOM"),
                 true, 0, 255, true);
         return new DeviceDescriptor(PROVIDER_ID, type.name(), type.getNiceName(),
                 List.copyOf(analogInputs), List.copyOf(digitalInputs), List.copyOf(lightOutputs), List.of(), global);

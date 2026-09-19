@@ -367,6 +367,22 @@ public final class Voicemeeter {
         disconnectIfDisconnectError(() -> api.setParameterFloat(fullParam, convertLevel(ct, level)));
     }
 
+    public boolean isConnected() {
+        return hasFinishedConnection;
+    }
+
+    /** A parameter's current value (e.g. {@code Strip[0].Gain}), or null while VoiceMeeter is not connected. */
+    @Nullable
+    public Float readFloat(String fullParam) {
+        return hasFinishedConnection ? disconnectIfDisconnectError(() -> api.getParameterFloat(fullParam), null) : null;
+    }
+
+    /** A text parameter's current value (e.g. {@code Strip[0].Label}), or null while VoiceMeeter is not connected. */
+    @Nullable
+    public String readString(String fullParam) {
+        return hasFinishedConnection ? disconnectIfDisconnectError(() -> api.getParameterStringW(fullParam), null) : null;
+    }
+
     public String makeParameterString(ControlType ct, int index, String parameter) {
         return ct.getName() + "[" + index + "]." + parameter;
     }

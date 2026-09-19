@@ -10,6 +10,7 @@ import org.apache.commons.lang3.SystemUtils;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import com.getpcpanel.rest.auth.SessionTokenService;
+import com.getpcpanel.util.os.ProcessHelper;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
@@ -27,6 +28,7 @@ public class ShowMainService {
     int port;
 
     @Inject SessionTokenService sessionTokens;
+    @Inject ProcessHelper processes;
 
     public void onShowMain(@Observes ShowMainEvent event) {
         // Open the UI via the bootstrap handshake carrying a single-use nonce: the endpoint swaps it for
@@ -66,7 +68,7 @@ public class ShowMainService {
             } else {
                 command = new String[] { "xdg-open", target };
             }
-            new ProcessBuilder(command).start();
+            processes.launch(command);
         } catch (IOException e) {
             // Drop the query string: the bootstrap URL carries the single-use session nonce there, and it
             // must never reach the log (which other same-user processes and shared bug reports can read).

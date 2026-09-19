@@ -10,7 +10,7 @@
     <description>PCPanel controller software</description>
 
     <properties>
-        <project.baseversion>2.1</project.baseversion>
+        <project.baseversion>2.1.0</project.baseversion>
         <project.snapshot>-SNAPSHOT</project.snapshot>
         <!--suppress UnresolvedMavenProperty -->
         <github.build>${env.GITHUB_RUN_NUMBER}</github.build>
@@ -128,6 +128,13 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-vertx</artifactId>
+        </dependency>
+        <!-- Qute renders the user-written {{ }} templates of the overlay and output commands (see
+             com.getpcpanel.template). Its build-time generated resolvers keep them reflection-free in the
+             native image. -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-qute</artifactId>
         </dependency>
         <!-- quarkus-awt is added only on Windows (see the os-windows-awt profile below): its native
              build step unconditionally fails on macOS ("MacOS AWT integration is not ready") and GraalVM

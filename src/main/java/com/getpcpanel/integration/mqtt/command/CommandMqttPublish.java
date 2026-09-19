@@ -13,14 +13,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.integration.mqtt.MqttService;
 import com.getpcpanel.commands.command.CommandValueOutput;
 import com.getpcpanel.util.CdiHelper;
-import com.getpcpanel.util.ValueInterpolator;
+import com.getpcpanel.template.TemplateContext;
+import com.getpcpanel.template.Templates;
 
 import lombok.Getter;
 import lombok.ToString;
 
 /**
- * Publishes an MQTT message to {@code topic}. The {@code payload} may contain <code>{{ value }}</code>,
- * which is replaced with the dial-mapped value (or the configured max on a button press). Uses the
+ * Publishes an MQTT message to {@code topic}. The topic and {@code payload} are templates; <code>{{ value }}</code>
+ * is the dial-mapped value (or the configured max on a button press). Uses the
  * existing MQTT connection from settings; a dial stream is debounced by {@link MqttService}.
  */
 @Getter
@@ -49,8 +50,9 @@ public class CommandMqttPublish extends CommandValueOutput {
         if (StringUtils.isBlank(topic)) {
             return;
         }
-        var body = ValueInterpolator.interpolate(StringUtils.defaultString(payload), value);
-        CdiHelper.getBean(MqttService.class).send(topic, body, immediate);
+        var scope = TemplateContext.current();
+        var body = Templates.renderValue(StringUtils.defaultString(payload), scope, value);
+        CdiHelper.getBean(MqttService.class).send(Templates.renderValue(topic, scope, value), body, immediate);
     }
 
     @Override

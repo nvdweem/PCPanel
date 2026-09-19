@@ -37,6 +37,16 @@ export interface AnalogOutputSpec {
     min: number;
 }
 
+export interface AutostartRequestDto {
+    enabled: boolean;
+}
+
+export interface AutostartStateDto {
+    elevatedTask: boolean;
+    enabled: boolean;
+    supported: boolean;
+}
+
 export interface BandTransition {
     band: number;
     changed: boolean;
@@ -661,6 +671,7 @@ export interface KnobSetting {
     maxTrim: number;
     minTrim: number;
     overlayIcon: string;
+    overlayName: string;
 }
 
 export interface LightingConfig {
@@ -871,6 +882,36 @@ export interface SingleSliderLightingConfig {
     muteOverrideDeviceOrFollow: string;
 }
 
+export interface TemplateCatalogDto {
+    items: TemplateVariableDto[];
+    path: string;
+}
+
+export interface TemplatePreviewDto {
+    error?: string;
+    literalTags: string[];
+    output: string;
+}
+
+export interface TemplatePreviewRequestDto {
+    control: number;
+    formula?: string;
+    max?: number;
+    min?: number;
+    serial?: string;
+    slot?: string;
+    source: string;
+}
+
+export interface TemplateVariableDto {
+    description?: string;
+    insert: string;
+    kind: string;
+    label?: string;
+    name: string;
+    value?: string;
+}
+
 export interface VoiceMeeterCommandModule extends CommandModule {
 }
 
@@ -908,6 +949,7 @@ export interface WaveLinkInputDto {
 
 export interface WaveLinkMixDto {
     id: string;
+    image?: string;
     name?: string;
 }
 
@@ -1071,6 +1113,6 @@ export type SINGLE_SLIDER_MODE = "NONE" | "STATIC" | "STATIC_GRADIENT" | "VOLUME
 
 export type VolumeButton = "mute" | "next" | "prev" | "stop" | "playPause";
 
-export type WaveLinkCommandTarget = "Input" | "Channel" | "Mix" | "Output";
+export type WaveLinkCommandTarget = "Input" | "Channel" | "Mix" | "Output" | "MixMaster";
 
 export type WsEventUnion = WsAssignmentChangedEvent | WsButtonEvent | WsDeviceConnectedEvent | WsDeviceDisconnectedEvent | WsDeviceRenamedEvent | WsKnobEvent | WsLightingChangedEvent | WsProfileSwitchedEvent | WsVisualColorsChangedEvent | DeviceSnapshotDto | WsControlSettingChangedEvent | WsNewVersionAvailableEvent;

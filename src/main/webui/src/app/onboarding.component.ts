@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } 
 import { OnboardingService } from './services/onboarding.service';
 import { SettingsService } from './services/settings.service';
 import { PlatformService } from './services/platform.service';
+import { AutostartService } from './services/autostart.service';
 import { DebugService } from './services/debug.service';
 import { DeviceStateService } from './services/device-state.service';
 import { IconComponent, ModalComponent, ToggleComponent } from './ui';
@@ -36,6 +37,20 @@ const GITHUB_URL = 'https://github.com/nvdweem/PCPanel';
           </div>
           <pc-toggle [value]="openOnStartup()" (valueChange)="setOpenOnStartup($event)"></pc-toggle>
         </div>
+        @if (autostart.supported()) {
+          <div class="startup-row">
+            <div class="startup-text">
+              <div class="startup-label">Start with Windows</div>
+              @if (autostart.elevatedTask()) {
+                <div class="startup-sub">Set up by the installer to run as administrator.</div>
+              } @else {
+                <div class="startup-sub">Starts PCPanel in the system tray when you sign in.</div>
+              }
+            </div>
+            <pc-toggle [value]="autostart.enabled()" [disabled]="autostart.elevatedTask()"
+                       (valueChange)="autostart.set($event)"></pc-toggle>
+          </div>
+        }
         <div class="actions"><button class="pc-btn primary" (click)="dismiss()">Get started</button></div>
       </div>
     </pc-modal>
@@ -57,6 +72,20 @@ const GITHUB_URL = 'https://github.com/nvdweem/PCPanel';
           </div>
           <pc-toggle [value]="openOnStartup()" (valueChange)="setOpenOnStartup($event)"></pc-toggle>
         </div>
+        @if (autostart.supported()) {
+          <div class="startup-row">
+            <div class="startup-text">
+              <div class="startup-label">Start with Windows</div>
+              @if (autostart.elevatedTask()) {
+                <div class="startup-sub">Set up by the installer to run as administrator.</div>
+              } @else {
+                <div class="startup-sub">Starts PCPanel in the system tray when you sign in.</div>
+              }
+            </div>
+            <pc-toggle [value]="autostart.enabled()" [disabled]="autostart.elevatedTask()"
+                       (valueChange)="autostart.set($event)"></pc-toggle>
+          </div>
+        }
         <div class="actions"><button class="pc-btn primary" (click)="dismiss()">Done</button></div>
       </div>
     </pc-modal>
@@ -79,6 +108,7 @@ export class OnboardingComponent {
   private readonly onboarding = inject(OnboardingService);
   private readonly settings = inject(SettingsService);
   private readonly platform = inject(PlatformService);
+  readonly autostart = inject(AutostartService);
   private readonly debug = inject(DebugService);
   private readonly deviceState = inject(DeviceStateService);
   private connectedWas = false;

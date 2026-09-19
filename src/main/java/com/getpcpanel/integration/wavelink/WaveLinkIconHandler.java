@@ -15,6 +15,7 @@ import com.getpcpanel.integration.wavelink.command.CommandWaveLinkMainOutput;
 
 import dev.niels.wavelink.impl.model.WaveLinkChannel;
 import dev.niels.wavelink.impl.model.WaveLinkImage;
+import dev.niels.wavelink.impl.model.WaveLinkMix;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
@@ -53,6 +54,9 @@ class WaveLinkIconHandler implements IIconHandler<CommandWaveLink> {
             case Channel, Mix -> {
                 return channelImage(change.getId1());
             }
+            case MixMaster -> {
+                return mixImage(change.getId1());
+            }
             case Output -> {
                 return Optional.of(outputImage());
             }
@@ -63,6 +67,12 @@ class WaveLinkIconHandler implements IIconHandler<CommandWaveLink> {
     private Optional<BufferedImage> channelImage(@Nullable String id) {
         return Optional.ofNullable(waveLinkService.getChannels().get(id))
                        .map(WaveLinkChannel::image)
+                       .map(WaveLinkImage::getImage);
+    }
+
+    private Optional<BufferedImage> mixImage(@Nullable String id) {
+        return Optional.ofNullable(waveLinkService.getMixes().get(id))
+                       .map(WaveLinkMix::image)
                        .map(WaveLinkImage::getImage);
     }
 

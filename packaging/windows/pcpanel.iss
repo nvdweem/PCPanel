@@ -71,10 +71,13 @@ RestartApplications=no
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "startup"; Description: "Start {#MyAppName} automatically when I sign in to Windows"; GroupDescription: "Startup:"
+; checkablealone: a parent task is otherwise only selectable through its children, which would tie this
+; box to the administrator sub-option below.
+Name: "startup"; Description: "Start {#MyAppName} automatically when I sign in to Windows"; GroupDescription: "Startup:"; Flags: checkablealone
 ; Sub-option: start elevated. A plain HKCU\Run entry always launches unelevated, so administrator
 ; startup is set up as a scheduled task with highest privileges (created via an elevation prompt).
-Name: "startup\admin"; Description: "Run it as administrator (needed to control apps that run elevated; you'll be asked to confirm)"; GroupDescription: "Startup:"; Flags: unchecked
+; dontinheritcheck: ticking the parent leaves this one alone, so the two toggle independently.
+Name: "startup\admin"; Description: "Run it as administrator (needed to control apps that run elevated; you'll be asked to confirm)"; GroupDescription: "Startup:"; Flags: unchecked dontinheritcheck
 Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription: "Additional shortcuts:"; Flags: unchecked
 
 [Files]
@@ -87,12 +90,18 @@ Name: "{group}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Registry]
-; Normal (unelevated) autostart for the current user. "quiet" launches without showing the main
-; window. Skipped when the administrator-startup sub-option is chosen (a scheduled task is used
-; instead) so the app does not start twice.
+; Normal (unelevated) autostart for the current user. The "quiet" argument marks the launch as one the
+; OS performed at logon rather than one the user performed, so a duplicate launch does not open the UI
+; (see Main.isAutostartLaunch). Skipped when the administrator-startup sub-option is chosen (a scheduled
+; task is used instead) so the app does not start twice.
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; \
     ValueName: "{#MyAppName}"; ValueData: """{app}\{#MyAppExeName}"" quiet"; \
-    Flags: uninsdeletevalue; Tasks: startup; Check: not WizardIsTaskSelected('startup\admin')
+    Flags: uninsdeletevalue; Check: WantsRunKeyAutostart
+; Drop the Run value again when this install does not want it — autostart switched off, or moved to the
+; administrator scheduled task. Inno only ever writes the entry above, so without this a re-install that
+; changes the choice leaves the old registration in place and the app is launched twice at logon.
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: none; \
+    ValueName: "{#MyAppName}"; Flags: deletevalue; Check: not WantsRunKeyAutostart
 
 [Run]
 ; Offer to launch the app right after installation finishes. The /postinstall argument tells the app
@@ -118,10 +127,22 @@ Filename: "{cmd}"; Parameters: "/C taskkill /IM ""{#MyAppExeName}"" /F"; \
 [Code]
 const
   StartupTaskName = 'PCPanel';
+  RunKey = 'Software\Microsoft\Windows\CurrentVersion\Run';
+  // Inno's uninstall key for this install; its presence is what makes a run an upgrade. Keep the GUID
+  // in sync with [Setup] AppId.
+  UninstallKey = 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{9421bff0-3840-414c-8563-407fbcd1d04d}_is1';
   // Win32 class name registered by TrayServiceWin for the app's (invisible) message window, and the
   // WM_CLOSE message we post to it. Keep the class name in sync with TrayServiceWin.WINDOW_CLASS.
   TrayWindowClass = 'PCPanelTrayWindow';
   WM_CLOSE = $0010;
+
+// True when this install wants the plain HKCU\Run autostart: the user asked for autostart and did not
+// pick the elevated variant, which uses a scheduled task instead. The two must never both be
+// registered — the app would be launched twice at every logon.
+function WantsRunKeyAutostart: Boolean;
+begin
+  Result := WizardIsTaskSelected('startup') and not WizardIsTaskSelected('startup\admin');
+end;
 
 // Handle to the running instance's tray window, or 0 if PCPanel is not running.
 function FindTrayWindow: HWND;
@@ -219,6 +240,55 @@ begin
   if CurStep = ssPostInstall then
     if WizardIsTaskSelected('startup\admin') then
       CreateAdminStartupTask;
+end;
+
+function RunKeyAutostartExists: Boolean;
+begin
+  Result := RegValueExists(HKCU, RunKey, '{#MyAppName}');
+end;
+
+function IsUpgrade: Boolean;
+begin
+  Result := RegKeyExists(HKA, UninstallKey);
+end;
+
+function TasksGivenOnCommandLine: Boolean;
+begin
+  Result := (ExpandConstant('{param:TASKS|}') <> '') or (ExpandConstant('{param:MERGETASKS|}') <> '');
+end;
+
+// On an upgrade the startup options start out as what is actually registered on this machine: the
+// elevated scheduled task, the HKCU\Run value, or neither. Inno's own starting point is the task
+// selection it remembered from the previous install, which can disagree with the registration (an
+// interactive install only records what its wizard showed; the entry the user relies on may predate
+// it or have been chosen through a different install). A silent auto-update never shows the task page,
+// so the preselection is what gets applied — starting from the machine state keeps autostart exactly
+// as the user has it, and also re-records that state as the remembered selection for the next
+// install. An explicit /TASKS or /MERGETASKS on the command line still wins.
+procedure SeedStartupTasksFromMachine;
+begin
+  if StartupTaskExists then
+    WizardSelectTasks('startup,startup\admin')
+  else if RunKeyAutostartExists then
+    WizardSelectTasks('startup,!startup\admin')
+  else
+    WizardSelectTasks('!startup,!startup\admin');
+end;
+
+var
+  StartupTasksSeeded: Boolean;
+
+// Inno fills the task list (from its remembered selection) when the tasks page is entered, so the seed
+// has to happen there, not in InitializeWizard. Silent runs enter the page too. Once only: a user who
+// changes the boxes, goes Back and comes Forward again keeps their own selection.
+procedure CurPageChanged(CurPageID: Integer);
+begin
+  if (CurPageID = wpSelectTasks) and not StartupTasksSeeded then
+  begin
+    StartupTasksSeeded := True;
+    if IsUpgrade and not TasksGivenOnCommandLine then
+      SeedStartupTasksFromMachine;
+  end;
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);

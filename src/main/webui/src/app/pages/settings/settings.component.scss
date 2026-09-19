@@ -173,6 +173,15 @@
 .ov-bar-fill { height: 100%; }
 // Backend-rendered overlay preview (the real OverlayRenderer → PNG), positioned by overlayPreviewStyle().
 .ov-img { position: absolute; max-width: calc(100% - 24px); height: auto; box-shadow: var(--sh-pop); }
+// Saved vs. edited previews, stacked so each keeps the full column width.
+.preview-pane { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.preview-pane .desktop { height: 220px; }
+.preview-pane-label { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 500; color: var(--text-soft); }
+.preview-pane-badge {
+  font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent);
+  border: 1px solid var(--accent); border-radius: 4px; padding: 1px 5px;
+}
+.preview-loading { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
 
 // Discord: Save + Connect & Authorize buttons side by side.
 .discord-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }

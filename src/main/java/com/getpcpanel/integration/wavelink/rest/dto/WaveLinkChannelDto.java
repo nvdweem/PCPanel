@@ -20,10 +20,10 @@ public record WaveLinkChannelDto(String id, @Nullable String name, @Nullable Str
         );
     }
 
-    /** Elgato sends the channel icon as base64 PNG; expose it as a data-URI the UI can drop straight
+    /** Elgato sends channel and mix icons as base64 PNG; expose it as a data-URI the UI can drop straight
      *  into an &lt;img&gt; so the device-preview chip shows the same icon the Windows overlay does. */
     @Nullable
-    private static String imageDataUri(@Nullable WaveLinkImage image) {
+    static String imageDataUri(@Nullable WaveLinkImage image) {
         var data = image == null ? null : image.imgData();
         return data == null || data.isBlank() ? null : "data:image/png;base64," + data;
     }

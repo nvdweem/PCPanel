@@ -1,8 +1,6 @@
 package com.getpcpanel.integration.volume.platform.linux;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
@@ -87,22 +85,16 @@ class PulseAudioEventListener {
     private void run() {
         while (running) {
             try {
-                var process = processHelper.builder("pactl", "subscribe").start();
-                var reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
                 streamStartedAt = Instant.now();
-
                 var dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                String line;
-                //noinspection NestedAssignment
-                while ((line = reader.readLine()) != null) {
+                var exit = processHelper.stream(ProcessHelper.PARSEABLE_OUTPUT, line -> {
                     lastEventAt = Instant.now();
                     latestEvents.add(dateFormat.format(new Date()) + " - " + line);
                     checkTrigger(line);
-                }
+                }, "pactl", "subscribe");
                 // The stream ended. Until it is back, nothing updates the device/session lists from the OS,
                 // which shows up as an application picker frozen on whatever was playing at startup — so say
                 // so rather than restarting in silence (#151).
-                var exit = process.waitFor();
                 streamStartedAt = null;
                 lastEnded = "exit " + exit + " at " + Instant.now();
                 log.warn("'pactl subscribe' ended (exit {}); audio device/session changes are not being observed. "
@@ -133,7 +125,7 @@ class PulseAudioEventListener {
         return "pactl subscribe:\n" + String.join("\n", latestEvents);
     }
 
-    private void checkTrigger(String line) {
+    void checkTrigger(String line) {
         if (StringUtils.containsAnyIgnoreCase(line
                 , "Event 'new' on sink-input"
                 , "Event 'remove' on sink-input"
@@ -141,7 +133,14 @@ class PulseAudioEventListener {
             var m = numberPattern.matcher(line);
             eventBus.fire(new LinuxSessionChangedEvent(m.find() ? NumberUtils.toInt(m.group(1)) : null));
         }
-        if (StringUtils.containsAnyIgnoreCase(line, "Event 'new' on sink", "Event 'remove' on sink")) {
+        // A source is matched with its '#' so recording streams ("source-output") don't count as devices. The server
+        // reports a change when its default sink or source changes.
+        if (StringUtils.containsAnyIgnoreCase(line
+                , "Event 'new' on sink"
+                , "Event 'remove' on sink"
+                , "Event 'new' on source #"
+                , "Event 'remove' on source #"
+                , "Event 'change' on server")) {
             eventBus.fire(new LinuxDeviceChangedEvent());
         }
     }

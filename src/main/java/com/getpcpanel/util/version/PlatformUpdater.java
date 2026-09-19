@@ -1,5 +1,7 @@
 package com.getpcpanel.util.version;
 
+import java.time.Duration;
+
 /**
  * One platform's self-update transport, selected at runtime by {@link AutoUpdateService} from the way the
  * app is packaged: the Windows Inno Setup installer, a Linux AppImage (zsync), or a Linux Flatpak
@@ -8,6 +10,9 @@ package com.getpcpanel.util.version;
  * {@code Instance<PlatformUpdater>}.
  */
 public interface PlatformUpdater {
+    /** How long an update tool may run - it downloads the new release, so slow connections are expected. */
+    Duration UPDATE_TIMEOUT = Duration.ofMinutes(15);
+
     /** True when this transport can perform an in-place update for the running install. */
     boolean isSupported();
 

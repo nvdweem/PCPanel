@@ -60,22 +60,65 @@ public final class OutputInterpreter {
     }
 
     public void sendFullLEDData(String deviceSerialNumber, int brightness, String[] colors, boolean[] volumeTrack, boolean priority) {
-        var handler = deviceScanner.getConnectedDevice(deviceSerialNumber);
+        var resolved = new String[colors.length];
+        for (var i = 0; i < colors.length; i++) {
+            resolved[i] = overrideColorService.getDialOverride(deviceSerialNumber, i).map(SingleKnobLightingConfig::getColor1).orElse(colors[i]);
+        }
+        sendRGBMessage(deviceSerialNumber, buildFullLEDData(brightness, resolved, volumeTrack), priority);
+    }
+
+    /**
+     * Per-knob lighting on the RGB. Its firmware has no per-knob gradient, so each knob is sent as a single
+     * colour: static knobs as their colour, volume-gradient knobs as their end colour with the LED brightness
+     * following the knob position, and off/unset knobs as black.
+     */
+    private void sendRGBCustom(String serialNumber, LightingConfig config, boolean priority) {
+        var knobConfigs = config.knobConfigs();
+        var resolved = new SingleKnobLightingConfig[DeviceType.PCPANEL_RGB.getAnalogCount()];
+        for (var i = 0; i < resolved.length; i++) {
+            var configured = knobConfigs != null && i < knobConfigs.length ? knobConfigs[i] : null;
+            resolved[i] = overrideColorService.getDialOverride(serialNumber, i).orElse(configured);
+        }
+        sendRGBMessage(serialNumber, buildRGBCustomData(config.getGlobalBrightness(), resolved), priority);
+    }
+
+    static byte[] buildRGBCustomData(int brightness, SingleKnobLightingConfig[] knobConfigs) {
+        var colors = new String[knobConfigs.length];
+        var volumeTrack = new boolean[knobConfigs.length];
+        for (var i = 0; i < knobConfigs.length; i++) {
+            var knob = knobConfigs[i];
+            var mode = knob == null || knob.getMode() == null ? SingleKnobLightingConfig.SINGLE_KNOB_MODE.NONE : knob.getMode();
+            switch (mode) {
+                case NONE -> colors[i] = "#000000";
+                case STATIC -> colors[i] = knob.getColor1();
+                case VOLUME_GRADIENT -> {
+                    colors[i] = knob.getColor2();
+                    volumeTrack[i] = true;
+                }
+            }
+        }
+        return buildFullLEDData(brightness, colors, volumeTrack);
+    }
+
+    static byte[] buildFullLEDData(int brightness, String[] colors, boolean[] volumeTrack) {
+        var data = new ByteWriter(brightness, 2 + 4 * colors.length + colors.length).append(OUTPUT_CODE_RGB, 0);
+        for (var color : colors) {
+            data.append(OUTPUT_CODE_RGB_RGB).appendHex(color);
+        }
+        for (var i = 0; i < colors.length; i++) {
+            data.append(volumeTrack != null && i < volumeTrack.length && volumeTrack[i] ? 1 : 0);
+        }
+        return data.get();
+    }
+
+    private void sendRGBMessage(String serialNumber, byte[] data, boolean priority) {
+        var handler = deviceScanner.getConnectedDevice(serialNumber);
         if (handler == null)
             throw new IllegalArgumentException("invalid device");
-
-        var data = new ByteWriter(brightness, 2 + 4 * colors.length + colors.length).append(2, 0);
-        for (var color : colors) {
-            var toSend = overrideColorService.getDialOverride(deviceSerialNumber, 0).map(SingleKnobLightingConfig::getColor1).orElse(color);
-            data.append(OUTPUT_CODE_RGB_RGB).appendHex(toSend);
-        }
-        for (var b : volumeTrack) {
-            data.append(b ? 1 : 0);
-        }
         if (priority) {
-            handler.sendMessage(data.get());
+            handler.sendLighting(data);
         } else {
-            handler.sendMessage(new byte[][] { data.get() });
+            handler.sendLighting(new byte[][] { data });
         }
     }
 
@@ -112,7 +155,7 @@ public final class OutputInterpreter {
             case ALL_BREATH -> writeAllBreath(handler, PREFIX_MINI, config);
             case CUSTOM -> {
                 var knobData = buildKnobData(serialNumber, PREFIX_MINI, config.getGlobalBrightness(), config.knobConfigs());
-                handler.sendMessage(new byte[][] { knobData });
+                handler.sendLighting(new byte[][] { knobData });
             }
         }
     }
@@ -134,7 +177,7 @@ public final class OutputInterpreter {
                 var sliderLabelData = buildSliderLabelData(serialNumber, config.getGlobalBrightness(), config.sliderLabelConfigs());
                 var sliderData = buildSliderData(serialNumber, config.getGlobalBrightness(), config.sliderConfigs());
                 var logoData = buildLogoData(serialNumber, config.getGlobalBrightness(), config.logoConfig());
-                handler.sendMessage(knobData, sliderLabelData, sliderData, logoData);
+                handler.sendLighting(knobData, sliderLabelData, sliderData, logoData);
             }
         }
     }
@@ -142,7 +185,7 @@ public final class OutputInterpreter {
     private void writeAllColor(DeviceCommunicationHandler handler, byte prefix, byte secondPrefix, LightingConfig config) {
         var c1 = config.allColor();
         var data = new ByteWriter(config.getGlobalBrightness()).append(prefix, MODE_LIGHT_ANIMATION, secondPrefix).appendHex(c1).get();
-        handler.sendMessage(new byte[][] { data });
+        handler.sendLighting(new byte[][] { data });
     }
 
     private void writeAllRainbow(DeviceCommunicationHandler handler, byte prefix, LightingConfig config) {
@@ -153,7 +196,7 @@ public final class OutputInterpreter {
                                                                .append(config.rainbowSpeed(),
                                                                        config.rainbowReverse())
                                                                .get();
-        handler.sendMessage(new byte[][] { data });
+        handler.sendLighting(new byte[][] { data });
     }
 
     private void writeAllWave(DeviceCommunicationHandler handler, byte prefix, LightingConfig config) {
@@ -165,7 +208,7 @@ public final class OutputInterpreter {
                 .append(config.waveSpeed(),
                         config.waveReverse(),
                         config.waveBounce());
-        handler.sendMessage(new byte[][] { data.get() });
+        handler.sendLighting(new byte[][] { data.get() });
     }
 
     private void writeAllBreath(DeviceCommunicationHandler handler, byte prefix, LightingConfig config) {
@@ -175,7 +218,7 @@ public final class OutputInterpreter {
                         -1)
                 .appendBrightness(config.breathBrightness())
                 .append(config.breathSpeed());
-        handler.sendMessage(new byte[][] { data.get() });
+        handler.sendLighting(new byte[][] { data.get() });
     }
 
     private byte[] buildKnobData(String deviceSerial, byte prefix, int brightness, SingleKnobLightingConfig[] knobConfigs) {
@@ -285,7 +328,7 @@ public final class OutputInterpreter {
             case ALL_RAINBOW -> sendRainbow(serialNumber, config.rainbowPhaseShift(), (byte) -1, config.rainbowBrightness(), config.rainbowSpeed(), config.rainbowReverse(), priority);
             case ALL_WAVE -> sendWave(serialNumber, config.waveHue(), (byte) -1, config.waveBrightness(), config.waveSpeed(), config.waveReverse(), config.waveBounce(), priority);
             case ALL_BREATH -> sendBreath(serialNumber, config.breathHue(), (byte) -1, config.breathBrightness(), config.breathSpeed(), priority);
-            default -> log.error("unexpected lighting mode in deviceOutputHandler");
+            case CUSTOM -> sendRGBCustom(serialNumber, config, priority);
         }
     }
 
@@ -295,9 +338,9 @@ public final class OutputInterpreter {
             throw new IllegalArgumentException("invalid device");
         var data = new byte[] { OUTPUT_CODE_RGB, OUTPUT_CODE_RGB_RAINBOW, phase_shift, saturation, brightness, speed, reverse };
         if (priority) {
-            handler.sendMessage(data);
+            handler.sendLighting(data);
         } else {
-            handler.sendMessage(new byte[][] { data });
+            handler.sendLighting(new byte[][] { data });
         }
     }
 
@@ -307,9 +350,9 @@ public final class OutputInterpreter {
             throw new IllegalArgumentException("invalid device");
         var data = new byte[] { OUTPUT_CODE_RGB, OUTPUT_CODE_RGB_WAVE, hue, saturation, brightness, speed, reverse, bounce };
         if (priority) {
-            handler.sendMessage(data);
+            handler.sendLighting(data);
         } else {
-            handler.sendMessage(new byte[][] { data });
+            handler.sendLighting(new byte[][] { data });
         }
     }
 
@@ -319,9 +362,9 @@ public final class OutputInterpreter {
             throw new IllegalArgumentException("invalid device");
         var data = new byte[] { OUTPUT_CODE_RGB, OUTPUT_CODE_RGB_BREATH, hue, saturation, brightness, speed };
         if (priority) {
-            handler.sendMessage(data);
+            handler.sendLighting(data);
         } else {
-            handler.sendMessage(new byte[][] { data });
+            handler.sendLighting(new byte[][] { data });
         }
     }
 
@@ -352,9 +395,9 @@ public final class OutputInterpreter {
         for (var b : volumeTrack)
             data.append(b ? 1 : 0);
         if (priority) {
-            handler.sendMessage(data.get());
+            handler.sendLighting(data.get());
         } else {
-            handler.sendMessage(new byte[][] { data.get() });
+            handler.sendLighting(new byte[][] { data.get() });
         }
     }
 

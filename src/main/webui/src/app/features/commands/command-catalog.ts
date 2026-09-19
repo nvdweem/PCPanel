@@ -20,8 +20,9 @@ export type LiveSource =
 // `showWhen` hides a field unless another field's current value matches — e.g. a process picker shown
 // only for the "specific app" mode. Intersected onto every variant so it stays optional everywhere.
 export type FieldDef = (
-  | { kind: 'text'; key: string; label: string; placeholder?: string; mono?: boolean }
-  | { kind: 'textarea'; key: string; label: string; placeholder?: string; rows?: number }
+  // template: the field is a {{ }} template, edited with variable completion and a live preview
+  | { kind: 'text'; key: string; label: string; placeholder?: string; mono?: boolean; template?: boolean }
+  | { kind: 'textarea'; key: string; label: string; placeholder?: string; rows?: number; template?: boolean }
   | { kind: 'number'; key: string; label: string; min?: number; max?: number }
   | { kind: 'toggle'; key: string; label: string }
   | { kind: 'select'; key: string; label: string; options: { value: string; label: string }[] }
@@ -184,15 +185,15 @@ const FIELD_DEFS: FieldDef_[] = [
     type: P + 'CommandHttpRequest',
     buildEmpty: () => ({ _type: P + 'CommandHttpRequest', url: '', method: 'GET', headers: '', body: '', min: 0, max: 100, formula: '', dialParams: dialParams(), invert: false }),
     fields: [
-      { kind: 'text', key: 'url', label: 'URL', placeholder: 'https://host/path?v={{ value }}', mono: true },
+      { kind: 'text', key: 'url', label: 'URL', placeholder: 'https://host/path?v={{ value }}', mono: true, template: true },
       {
         kind: 'select', key: 'method', label: 'Method', options: [
           { value: 'GET', label: 'GET' }, { value: 'POST', label: 'POST' }, { value: 'PUT', label: 'PUT' },
           { value: 'PATCH', label: 'PATCH' }, { value: 'DELETE', label: 'DELETE' },
         ],
       },
-      { kind: 'textarea', key: 'headers', label: 'Headers (one Name: Value per line)', rows: 3, placeholder: 'Content-Type: application/json\nAuthorization: Bearer …' },
-      { kind: 'textarea', key: 'body', label: 'Body', rows: 4, placeholder: '{ "value": {{ value }} }' },
+      { kind: 'textarea', key: 'headers', label: 'Headers (one Name: Value per line)', rows: 3, placeholder: 'Content-Type: application/json\nAuthorization: Bearer …', template: true },
+      { kind: 'textarea', key: 'body', label: 'Body', rows: 4, placeholder: '{ "value": {{ value }} }', template: true },
       { kind: 'number', key: 'min', label: 'Value at 0% (no formula)' },
       { kind: 'number', key: 'max', label: 'Value at 100% (no formula)' },
       { kind: 'text', key: 'formula', label: 'Translate formula (optional)', placeholder: 'x is 0..1 — e.g. x*255 or 2000+x*4000', mono: true },
@@ -202,8 +203,8 @@ const FIELD_DEFS: FieldDef_[] = [
     type: P + 'CommandMqttPublish',
     buildEmpty: () => ({ _type: P + 'CommandMqttPublish', topic: '', payload: '', min: 0, max: 100, formula: '', dialParams: dialParams(), invert: false }),
     fields: [
-      { kind: 'text', key: 'topic', label: 'Topic', placeholder: 'home/livingroom/light', mono: true },
-      { kind: 'textarea', key: 'payload', label: 'Payload', rows: 3, placeholder: '{{ value }} or e.g. {"brightness": {{ value }}}' },
+      { kind: 'text', key: 'topic', label: 'Topic', placeholder: 'home/livingroom/light', mono: true, template: true },
+      { kind: 'textarea', key: 'payload', label: 'Payload', rows: 3, placeholder: '{{ value }} or e.g. {"brightness": {{ value }}}', template: true },
       { kind: 'number', key: 'min', label: 'Value at 0% (no formula)' },
       { kind: 'number', key: 'max', label: 'Value at 100% (no formula)' },
       { kind: 'text', key: 'formula', label: 'Translate formula (optional)', placeholder: 'x is 0..1 — e.g. x*255', mono: true },
@@ -213,7 +214,7 @@ const FIELD_DEFS: FieldDef_[] = [
     type: P + 'CommandOscSend',
     buildEmpty: () => ({ _type: P + 'CommandOscSend', address: '', min: 0, max: 100, formula: '', dialParams: dialParams(), invert: false }),
     fields: [
-      { kind: 'text', key: 'address', label: 'OSC address', placeholder: '/track/1/volume', mono: true },
+      { kind: 'text', key: 'address', label: 'OSC address', placeholder: '/track/1/volume', mono: true, template: true },
       { kind: 'number', key: 'min', label: 'Value at 0% (no formula)' },
       { kind: 'number', key: 'max', label: 'Value at 100% (no formula)' },
       { kind: 'text', key: 'formula', label: 'Translate formula (optional)', placeholder: 'x is 0..1 — e.g. x or x*127', mono: true },
@@ -288,7 +289,7 @@ const FIELD_DEFS: FieldDef_[] = [
       {
         kind: 'select', key: 'commandType', label: 'Target', options: [
           { value: 'Channel', label: 'Channel' }, { value: 'Input', label: 'Input' },
-          { value: 'Mix', label: 'Mix' }, { value: 'Output', label: 'Output' },
+          { value: 'Mix', label: 'Mix' }, { value: 'MixMaster', label: 'Master Mix' }, { value: 'Output', label: 'Output' },
         ],
       },
       { kind: 'wavelink-target' },
@@ -301,7 +302,7 @@ const FIELD_DEFS: FieldDef_[] = [
       {
         kind: 'select', key: 'commandType', label: 'Target', options: [
           { value: 'Channel', label: 'Channel' }, { value: 'Input', label: 'Input' },
-          { value: 'Mix', label: 'Mix' }, { value: 'Output', label: 'Output' },
+          { value: 'Mix', label: 'Mix' }, { value: 'MixMaster', label: 'Master Mix' }, { value: 'Output', label: 'Output' },
         ],
       },
       { kind: 'wavelink-target' },
@@ -371,7 +372,7 @@ const FIELD_DEFS: FieldDef_[] = [
     buildEmpty: () => ({ _type: HA + 'CommandHomeAssistantValue', server: '', action: '', min: 0, max: 100, formula: '', dialParams: dialParams(), invert: false }),
     fields: [
       { kind: 'select-live', key: 'server', label: 'Server', source: 'ha-servers' },
-      { kind: 'textarea', key: 'action', label: 'Action (paste YAML from Home Assistant)', rows: 6, placeholder: 'action: light.turn_on\ntarget:\n  entity_id: light.living_room\ndata:\n  brightness: {{ value }}' },
+      { kind: 'textarea', key: 'action', label: 'Action (paste YAML from Home Assistant)', rows: 6, placeholder: 'action: light.turn_on\ntarget:\n  entity_id: light.living_room\ndata:\n  brightness: {{ value }}', template: true },
       { kind: 'ha-help', withValue: true },
       { kind: 'number', key: 'min', label: 'Value at 0% (no formula)' },
       { kind: 'number', key: 'max', label: 'Value at 100% (no formula)' },
@@ -383,7 +384,7 @@ const FIELD_DEFS: FieldDef_[] = [
     buildEmpty: () => ({ _type: HA + 'CommandHomeAssistantAction', server: '', action: '', overlayText: '' }),
     fields: [
       { kind: 'select-live', key: 'server', label: 'Server', source: 'ha-servers' },
-      { kind: 'textarea', key: 'action', label: 'Action (paste YAML from Home Assistant)', rows: 6, placeholder: 'action: light.toggle\ntarget:\n  entity_id: light.living_room' },
+      { kind: 'textarea', key: 'action', label: 'Action (paste YAML from Home Assistant)', rows: 6, placeholder: 'action: light.toggle\ntarget:\n  entity_id: light.living_room', template: true },
       { kind: 'ha-help' },
     ],
   },

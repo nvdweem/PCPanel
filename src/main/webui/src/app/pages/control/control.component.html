@@ -97,6 +97,11 @@
             </div>
           </ng-template>
         </div>
+        <div class="pc-field">
+          <div class="pc-field-label">Overlay name</div>
+          <pc-template-input [mono]="false" placeholder="Automatic" [context]="overlayTemplateContext()"
+                             [value]="knob().overlayName || ''" (valueChange)="setKnob('overlayName', $event)"></pc-template-input>
+        </div>
       </div>
 
       @if (!isSlider()) {
@@ -165,7 +170,7 @@
                   <div class="ai-body">
                     <pc-command-fields [def]="defFor(cmd)!" [command]="cmd" (commandChange)="updateCommand($index, $event)"
                                        [showMapping]="activeSlot() === 'rotate'" [responseCurve]="activeCurve()"
-                                       [trim]="knob()" [profiles]="s.profiles"></pc-command-fields>
+                                       [trim]="knob()" [profiles]="s.profiles" [templateContext]="templateContext()"></pc-command-fields>
                   </div>
                 }
               </div>

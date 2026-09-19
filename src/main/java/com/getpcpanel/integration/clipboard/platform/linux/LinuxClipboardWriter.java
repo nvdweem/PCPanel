@@ -3,9 +3,11 @@ package com.getpcpanel.integration.clipboard.platform.linux;
 import com.getpcpanel.integration.clipboard.ClipboardWriter;
 import com.getpcpanel.integration.clipboard.platform.ClipboardProcess;
 import com.getpcpanel.platform.LinuxBuild;
+import com.getpcpanel.util.os.ProcessHelper;
 
 import io.quarkus.arc.Unremovable;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 
 /**
@@ -19,14 +21,17 @@ import lombok.extern.log4j.Log4j2;
 @LinuxBuild
 @ApplicationScoped
 class LinuxClipboardWriter implements ClipboardWriter {
+    @Inject
+    ProcessHelper processes;
+
     @Override
     public void setText(String text) {
         if (text == null || text.isEmpty()) {
             return;
         }
-        if (ClipboardProcess.pipe(text, "wl-copy")
-                || ClipboardProcess.pipe(text, "xclip", "-selection", "clipboard")
-                || ClipboardProcess.pipe(text, "xsel", "--clipboard", "--input")) {
+        if (ClipboardProcess.pipe(processes, text, "wl-copy")
+                || ClipboardProcess.pipe(processes, text, "xclip", "-selection", "clipboard")
+                || ClipboardProcess.pipe(processes, text, "xsel", "--clipboard", "--input")) {
             return;
         }
         log.warn("Unable to set the clipboard: none of wl-copy, xclip or xsel is available on this desktop");

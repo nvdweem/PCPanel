@@ -2,21 +2,25 @@ package com.getpcpanel.platform.process;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.getpcpanel.util.os.ProcessHelper;
+
 public abstract class ProcessConditionalHelper {
+    private static final Duration WHICH_TIMEOUT = Duration.ofSeconds(5);
     private static final Map<String, Boolean> resultCache = new ConcurrentHashMap<>();
 
-    public static boolean isProcessAvailable(String process) {
+    public static boolean isProcessAvailable(ProcessHelper processes, String process) {
         var normalizedProcess = StringUtils.trimToNull(process);
         if (normalizedProcess == null) {
             return false;
         }
 
-        return resultCache.computeIfAbsent(normalizedProcess, k -> checkFileExists(k) || checkWhichProcess(k));
+        return resultCache.computeIfAbsent(normalizedProcess, k -> checkFileExists(k) || checkWhichProcess(processes, k));
     }
 
     private static boolean checkFileExists(String pathStr) {
@@ -28,11 +32,12 @@ public abstract class ProcessConditionalHelper {
         return false;
     }
 
-    private static boolean checkWhichProcess(String k) {
+    private static boolean checkWhichProcess(ProcessHelper processes, String k) {
         try {
-            return new ProcessBuilder("which", k)
-                    .start()
-                    .waitFor() == 0;
+            return processes.run(WHICH_TIMEOUT, "which", k).succeeded();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
         } catch (Exception e) {
             return false;
         }

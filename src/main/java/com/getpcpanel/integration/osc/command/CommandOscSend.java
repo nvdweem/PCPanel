@@ -1,5 +1,8 @@
 package com.getpcpanel.integration.osc.command;
 
+import com.getpcpanel.template.TemplateContext;
+import com.getpcpanel.template.Templates;
+
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
@@ -18,7 +21,7 @@ import lombok.Getter;
 import lombok.ToString;
 
 /**
- * Sends an OSC message (a single float argument) to {@code address} on every configured OSC send
+ * Sends an OSC message (a single float argument) to {@code address} (a template) on every configured OSC send
  * target. The argument is the dial-mapped value (or the configured max on a button press). Requires
  * OSC to be enabled with at least one send target in settings.
  */
@@ -43,7 +46,7 @@ public class CommandOscSend extends CommandValueOutput {
     @Override
     protected void send(double value, boolean immediate) {
         // UDP and cheap, so dial streams send every event rather than being rate-limited.
-        CdiHelper.getBean(OSCService.class).send(address, (float) value);
+        CdiHelper.getBean(OSCService.class).send(Templates.renderValue(address, TemplateContext.current(), value), (float) value);
     }
 
     @Override

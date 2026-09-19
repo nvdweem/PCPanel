@@ -49,7 +49,7 @@ import com.getpcpanel.profile.Save;
 class LegacySaveCompatibilityTest {
     private static final String FIXTURES = "/legacy-saves/";
     /** The fixture written by this version — the one that gains new properties and commands. */
-    private static final String CURRENT = "profiles-2.0.json";
+    private static final String CURRENT = "profiles-2.1.json";
 
     private final ObjectMapper mapper = AppLikeMapper.build();
 
@@ -61,7 +61,7 @@ class LegacySaveCompatibilityTest {
     }
 
     @ParameterizedTest(name = "{0}")
-    @ValueSource(strings = { "profiles-1.7.1.json", "profiles-1.8.json", CURRENT })
+    @ValueSource(strings = { "profiles-1.7.1.json", "profiles-1.8.json", "profiles-2.0.json", CURRENT })
     @DisplayName("loads, and every command in it resolves to a concrete type")
     void loadsWithEveryCommandResolved(String fixture) throws IOException {
         var json = read(fixture);

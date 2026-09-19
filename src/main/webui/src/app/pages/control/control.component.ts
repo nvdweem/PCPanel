@@ -8,8 +8,9 @@ import { IntegrationDataService } from '../../features/commands/integration-data
 import { DeviceCapabilitiesService } from '../../services/device-capabilities.service';
 import { Command, Commands, CurveDefinition, KnobSetting } from '../../models/generated/backend.types';
 import {
-  AppPickerComponent, IconComponent, SelectComponent, SelectOption, ToastService,
+  AppPickerComponent, IconComponent, SelectComponent, SelectOption, TemplateInputComponent, ToastService,
 } from '../../ui';
+import { TemplateContext } from '../../services/template.service';
 import { SettingsService } from '../../services/settings.service';
 import { CurveGraphComponent } from '../../features/curves/curve-graph.component';
 import { BUILT_IN_DEFAULTS, curveFn, LINEAR_ID, LOGARITHMIC_ID } from '../../features/curves/curve.util';
@@ -27,7 +28,7 @@ import { OverlayModule } from '@angular/cdk/overlay';
 type Slot = 'rotate' | 'press' | 'dblpress' | 'release';
 
 const EMPTY: Commands = { commands: [], type: 'allAtOnce' };
-const EMPTY_KNOB: KnobSetting = { minTrim: 0, maxTrim: 100, logarithmic: false, overlayIcon: '', buttonDebounce: 0 };
+const EMPTY_KNOB: KnobSetting = { minTrim: 0, maxTrim: 100, logarithmic: false, overlayIcon: '', overlayName: '', buttonDebounce: 0 };
 /** Last entry of the curve picker: opens the library rather than selecting a curve. */
 const EDIT_CURVES = '__edit-curves__';
 
@@ -38,7 +39,7 @@ const EDIT_CURVES = '__edit-curves__';
     DragDropModule, OverlayModule, RouterLink, IconComponent, SelectComponent,
     AppPickerComponent, PcKnobComponent, PcFaderComponent, CommandFieldsComponent,
     ControlLightingComponent, MappingPreviewComponent, CommandPickerComponent,
-    CurveGraphComponent,
+    CurveGraphComponent, TemplateInputComponent,
   ],
   templateUrl: './control.component.html',
   styleUrl: './control.component.scss',
@@ -80,6 +81,10 @@ export class ControlComponent {
   readonly sliderNum = computed(() => this.caps.sliderNumber(this.idx()));
 
   readonly activeSlot = signal<Slot>('rotate');
+  /** Template fields of the active slot's actions render against this control. */
+  readonly templateContext = computed<TemplateContext>(() => ({ serial: this.serial(), control: +this.index(), slot: this.activeSlot() }));
+  /** The overlay name renders against this control's turn actions and its current percentage. */
+  readonly overlayTemplateContext = computed<TemplateContext>(() => ({ serial: this.serial(), control: +this.index(), slot: 'overlay' }));
   readonly expanded = signal<number>(0);
   readonly lightingMode = computed(() => this.snap()?.lightingConfig?.lightingMode ?? null);
   readonly isCustomLighting = computed(() => this.lightingMode() === 'CUSTOM');

@@ -3,9 +3,11 @@ package com.getpcpanel.integration.clipboard.platform.mac;
 import com.getpcpanel.integration.clipboard.ClipboardWriter;
 import com.getpcpanel.integration.clipboard.platform.ClipboardProcess;
 import com.getpcpanel.platform.MacBuild;
+import com.getpcpanel.util.os.ProcessHelper;
 
 import io.quarkus.arc.Unremovable;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 
 /**
@@ -17,12 +19,15 @@ import lombok.extern.log4j.Log4j2;
 @MacBuild
 @ApplicationScoped
 class MacClipboardWriter implements ClipboardWriter {
+    @Inject
+    ProcessHelper processes;
+
     @Override
     public void setText(String text) {
         if (text == null || text.isEmpty()) {
             return;
         }
-        if (!ClipboardProcess.pipe(text, "pbcopy")) {
+        if (!ClipboardProcess.pipe(processes, text, "pbcopy")) {
             log.warn("Unable to set the clipboard via pbcopy");
         }
     }

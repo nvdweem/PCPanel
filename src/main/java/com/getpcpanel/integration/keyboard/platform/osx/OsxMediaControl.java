@@ -1,10 +1,9 @@
 package com.getpcpanel.integration.keyboard.platform.osx;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.time.Duration;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.StringUtils;
@@ -25,6 +24,7 @@ import lombok.extern.log4j.Log4j2;
 @MacBuild
 @RequiredArgsConstructor
 class OsxMediaControl {
+    private static final Duration OSASCRIPT_TIMEOUT = Duration.ofSeconds(10);
     private static final AtomicBoolean warnedFailure = new AtomicBoolean();
     private final ProcessHelper processHelper;
     private final Set<VolumeButton> warnedUnsupported = ConcurrentHashMap.newKeySet();
@@ -47,29 +47,23 @@ class OsxMediaControl {
         var app = spotify ? "Spotify" : "Music";
         // The 'is running' guard prevents AppleScript from launching the player as a side effect
         var script = "if application \"%s\" is running then tell application \"%s\" to %s".formatted(app, app, verb);
-        try {
-            var process = processHelper.builder("osascript", "-e", script).redirectErrorStream(true).start();
-            var watcher = new Thread(() -> warnOnFailure(process, verb, app), "osascript result watcher");
-            watcher.setDaemon(true);
-            watcher.start();
-        } catch (IOException e) {
-            log.error("Unable to send '{}' to {}", verb, app, e);
-        }
+        // Off the command thread: AppleScript waits on the player, which can take a moment to answer.
+        var sender = new Thread(() -> send(script, verb, app), "osascript sender");
+        sender.setDaemon(true);
+        sender.start();
     }
 
-    private static void warnOnFailure(Process process, String verb, String app) {
+    private void send(String script, String verb, String app) {
         try {
-            var output = new String(process.getInputStream().readAllBytes(), Charset.defaultCharset());
-            if (!process.waitFor(10, TimeUnit.SECONDS)) {
-                process.destroyForcibly();
-                return;
-            }
-            if (process.exitValue() != 0 && !warnedFailure.getAndSet(true)) {
+            var result = processHelper.run(OSASCRIPT_TIMEOUT, "osascript", "-e", script);
+            if (!result.timedOut() && result.exitCode() != 0 && !warnedFailure.getAndSet(true)) {
                 log.warn("Sending '{}' to {} failed: {}. Allow PCPanel to control Music/Spotify in System Settings > Privacy & Security > Automation",
-                        verb, app, StringUtils.trimToEmpty(output));
+                        verb, app, StringUtils.trimToEmpty(String.join("\n", result.stderr())));
             }
-        } catch (Exception e) {
-            log.debug("Unable to determine osascript result for '{}' to {}", verb, app, e);
+        } catch (IOException e) {
+            log.error("Unable to send '{}' to {}", verb, app, e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 }
