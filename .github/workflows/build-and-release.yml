@@ -489,6 +489,7 @@ jobs:
           cp packaging/linux/flatpak/com.getpcpanel.PCPanel.yml "$build/"
           cp packaging/linux/flatpak/pcpanel-launcher.sh "$build/"
           cp packaging/linux/flatpak/host-spawn-wrapper.sh "$build/"
+          cp packaging/linux/flatpak/hyprctl-wrapper.sh "$build/"
           cp packaging/linux/flatpak/kdotool-wrapper.sh "$build/"
           cp packaging/linux/com.getpcpanel.PCPanel.desktop "$build/"
           # Same as the .deb/AppImage job: the <release> entry is derived from the built version.

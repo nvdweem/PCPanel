@@ -58,6 +58,11 @@ finish-args:
   - --talk-name=org.freedesktop.Flatpak
   # Bundled kdotool drives the host KWin's scripting API to resolve the focused window
   - --talk-name=org.kde.KWin
+  # Hyprland's IPC socket directory, read-only. hyprctl runs on the host and locates the socket
+  # itself, so this grant is not about reaching the socket — it is how hyprctl-wrapper.sh learns the
+  # instance signature (the directory name) when the session did not put it in the environment. The
+  # sandbox otherwise gets its own $XDG_RUNTIME_DIR, in which hypr/ does not appear at all.
+  - --filesystem=xdg-run/hypr:ro
   # Discord integration (Rich Presence / RPC). Discord exposes an IPC *Unix domain socket* at
   # $XDG_RUNTIME_DIR/discord-ipc-N (DiscordIpcConnections probes indices 0-9). --share=ipc above only
   # shares the SysV/POSIX IPC namespace (shared memory), NOT filesystem sockets, and the sandbox gets
@@ -89,11 +94,13 @@ modules:
       - install -m 0755 PCPanel /app/pcpanel/PCPanel
       - install -d /app/bin
       - 'for so in *.so *.so.*; do [ -e "$so" ] && install -m 0644 "$so" /app/pcpanel/ || true; done'
-      # Launcher + host-tool shims (pactl/xdotool/hyprctl are forwarded to the host).
+      # Launcher + host-tool shims (pactl/xdotool are forwarded to the host).
       - install -m 0755 pcpanel-launcher.sh /app/bin/pcpanel
       - install -m 0755 host-spawn-wrapper.sh /app/bin/pactl
       - install -m 0755 host-spawn-wrapper.sh /app/bin/xdotool
-      - install -m 0755 host-spawn-wrapper.sh /app/bin/hyprctl
+      # hyprctl is also forwarded to the host, but needs the Hyprland instance signature handed to it
+      # explicitly — flatpak-spawn does not carry the sandbox environment over. See the wrapper.
+      - install -m 0755 hyprctl-wrapper.sh /app/bin/hyprctl
       # kdotool runs inside the sandbox (talks to the host KWin over D-Bus); the wrapper gives it a
       # host-visible TMPDIR so KWin can read its generated script. Apache-2.0 license shipped alongside.
       - install -m 0755 kdotool /app/pcpanel/kdotool
@@ -111,6 +118,8 @@ modules:
         path: pcpanel-launcher.sh
       - type: file
         path: host-spawn-wrapper.sh
+      - type: file
+        path: hyprctl-wrapper.sh
       - type: file
         path: kdotool-wrapper.sh
       # kdotool binary + its Apache-2.0 license, fetched by CI (packaging/linux/fetch-kdotool.sh)

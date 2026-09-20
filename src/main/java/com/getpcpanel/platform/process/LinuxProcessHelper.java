@@ -332,7 +332,12 @@ public class LinuxProcessHelper implements IProcessHelper {
         return null;
     }
 
-    /** HYPRLAND_INSTANCE_SIGNATURE is the definitive signal, but Flatpak does not pass it in; XDG_CURRENT_DESKTOP it does. */
+    /**
+     * HYPRLAND_INSTANCE_SIGNATURE is the definitive signal, but it is only there when the session put it in
+     * our environment — a D-Bus/systemd-activated launch has neither it nor any other Hyprland variable,
+     * because Hyprland does not run {@code dbus-update-activation-environment} by default.
+     * XDG_CURRENT_DESKTOP survives that route, so it is the backstop.
+     */
     private static boolean isHyprlandSession() {
         return StringUtils.isNotBlank(System.getenv("HYPRLAND_INSTANCE_SIGNATURE"))
                 || StringUtils.containsIgnoreCase(System.getenv("XDG_CURRENT_DESKTOP"), "Hyprland");
