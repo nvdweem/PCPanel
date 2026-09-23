@@ -19,6 +19,7 @@
 - **Focus volume now works on Hyprland.** Hyprland can be asked which window has focus (through `hyprctl`, which comes with the compositor), so the focused-app features — focus volume, "add focused app", focus-volume overrides and per-app profile switching — work there as they do on KDE Plasma and X11. Nothing to install or configure. Other Wayland desktops such as GNOME still have no way to provide this.
 - (Linux) Fixed **every knob and slider freezing** after switching windows while an app was starting or stopping audio. The two happening at once could leave PCPanel waiting on itself, and nothing on the panel responded again until it was restarted. Most likely to be seen on a desktop where focus volume works, which now includes Hyprland.
 - (Linux) Fixed the **volume stuttering while turning a dial** for an app that also has its own App-volume control, with *Force volume* on. PCPanel mistook its own volume changes for someone else's and kept resetting the app to the other control's position mid-turn.
+- #165 - Fixed **OBS source volume dials doing nothing**. OBS was connected and listed your sources, but turning a dial set to *OBS — source volume* left the source's volume unchanged, because OBS refused every change PCPanel sent. Dials now move the OBS fader again across its full range, and if OBS ever refuses a request the reason is written to the log. Other OBS actions sent in quick succession, such as the list of sources fetched right after connecting, also go through reliably now.
 
 ## [2.0.97]
 
