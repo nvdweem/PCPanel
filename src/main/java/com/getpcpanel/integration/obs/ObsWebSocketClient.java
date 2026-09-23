@@ -20,6 +20,9 @@ import java.util.function.Consumer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.getpcpanel.util.Util;
+
+import javax.annotation.Nullable;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -44,6 +47,7 @@ class ObsWebSocketClient implements WebSocket.Listener {
     private static final int EVENT_SUB_INPUTS = 1 << 3;
 
     private static final long REQUEST_TIMEOUT_MS = 5_000;
+    private static final double MIN_VOLUME_DB = -97;
 
     private final ObjectMapper mapper;
     private final String password;
@@ -53,6 +57,8 @@ class ObsWebSocketClient implements WebSocket.Listener {
     private volatile WebSocket webSocket;
     private final ConcurrentHashMap<String, CompletableFuture<JsonNode>> pending = new ConcurrentHashMap<>();
     private final StringBuilder textBuffer = new StringBuilder();
+    private final Object writeLock = new Object();
+    private CompletableFuture<?> writeChain = CompletableFuture.completedFuture(null);
     private volatile boolean connected = false;
 
     public ObsWebSocketClient(ObjectMapper mapper, String password,
@@ -147,7 +153,15 @@ class ObsWebSocketClient implements WebSocket.Listener {
                 var id = d.path("requestId").asText(null);
                 var future = id != null ? pending.remove(id) : null;
                 if (future != null) {
-                    future.complete(d.path("responseData"));
+                    // A rejected request still gets a response, flagged by requestStatus.result=false.
+                    var status = d.path("requestStatus");
+                    if (status.path("result").asBoolean(true)) {
+                        future.complete(d.path("responseData"));
+                    } else {
+                        future.completeExceptionally(new IllegalStateException(
+                                "OBS rejected " + d.path("requestType").asText() + " (" + status.path("code").asInt()
+                                        + "): " + status.path("comment").asText()));
+                    }
                 }
             }
             default -> log.trace("OBS: unhandled opcode {}", op);
@@ -189,10 +203,40 @@ class ObsWebSocketClient implements WebSocket.Listener {
     }
 
     private void send(Object obj) {
+        send(obj, null);
+    }
+
+    /**
+     * Puts one message on the wire once the previous one is there. {@link WebSocket#sendText} accepts a
+     * single write at a time and rejects any other with {@code IllegalStateException("Send pending")}
+     * without sending it, so messages issued in a burst — the run of commands a turning dial produces,
+     * or the connect-time volume sync racing the source-list request — are chained instead of fired off
+     * together. Each write is chained on the previous one's <em>outcome</em>, so one failure delays
+     * nothing but itself; a failed write fails {@code onFailure}'s request instead of leaving it hanging.
+     */
+    private void send(Object obj, @Nullable CompletableFuture<?> onFailure) {
+        String text;
         try {
-            webSocket.sendText(mapper.writeValueAsString(obj), true);
+            text = mapper.writeValueAsString(obj);
         } catch (Exception e) {
-            log.warn("OBS: failed to send message", e);
+            log.warn("OBS: failed to serialize message", e);
+            if (onFailure != null) {
+                onFailure.completeExceptionally(e);
+            }
+            return;
+        }
+        synchronized (writeLock) {
+            var socket = webSocket;
+            writeChain = writeChain.handle((ignored, ex) -> null)
+                                   .thenCompose(ignored -> socket.sendText(text, true))
+                                   .whenComplete((ignored, ex) -> {
+                                       if (ex != null) {
+                                           log.warn("OBS: failed to send message: {}", ex.getMessage());
+                                           if (onFailure != null) {
+                                               onFailure.completeExceptionally(ex);
+                                           }
+                                       }
+                                   });
         }
     }
 
@@ -202,7 +246,7 @@ class ObsWebSocketClient implements WebSocket.Listener {
      * error, or timeout), so a non-responding OBS can never grow the {@link #pending} map without
      * bound or leave a recycled request-id hanging.
      */
-    private CompletableFuture<JsonNode> requestAsync(String type, ObjectNode fields) {
+    CompletableFuture<JsonNode> requestAsync(String type, ObjectNode fields) {
         var id = UUID.randomUUID().toString();
         var msg = mapper.createObjectNode();
         msg.put("op", OP_REQUEST);
@@ -215,7 +259,7 @@ class ObsWebSocketClient implements WebSocket.Listener {
         var future = new CompletableFuture<JsonNode>();
         pending.put(id, future);
         future.whenComplete((resp, ex) -> pending.remove(id));
-        send(msg);
+        send(msg, future);
         return future.orTimeout(REQUEST_TIMEOUT_MS, TimeUnit.MILLISECONDS);
     }
 
@@ -276,11 +320,11 @@ class ObsWebSocketClient implements WebSocket.Listener {
         }
     }
 
-    /** vol is 0–100; converted to OBS volume multiplier 0.0–1.0. */
+    /** vol is 0–100; mapped linearly onto OBS's fader range of -97 dB (silent) to 0 dB (full). */
     public void setSourceVolume(String sourceName, int vol) {
         var fields = mapper.createObjectNode()
                 .put("inputName", sourceName)
-                .put("inputVolumeMultiplier", vol / 100.0);
+                .put("inputVolumeDb", Util.map((double) vol, 0, 100, MIN_VOLUME_DB, 0));
         fireAndForget("SetInputVolume", fields);
     }
 
