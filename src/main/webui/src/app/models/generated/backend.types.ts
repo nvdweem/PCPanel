@@ -96,7 +96,7 @@ export interface ClipboardCommandModule extends CommandModule {
 }
 
 export interface Command {
-    _type: "com.getpcpanel.commands.command.CommandNoOp" | "mqtt.publish" | "osc.send" | "output.http-request" | "analogbands.ranges" | "clipboard.set" | "device.brightness" | "discord.join-voice" | "discord.leave-voice" | "discord.mute" | "discord.screen-share" | "discord.self-deafen" | "com.getpcpanel.discord.command.CommandDiscordSelfInputVolume" | "com.getpcpanel.discord.command.CommandDiscordSelfMute" | "com.getpcpanel.discord.command.CommandDiscordSelfOutputVolume" | "discord.toggle-video" | "com.getpcpanel.discord.command.CommandDiscordUserMute" | "com.getpcpanel.discord.command.CommandDiscordUserVolume" | "discord.volume" | "homeassistant.action" | "homeassistant.value" | "keyboard.keystroke" | "keyboard.media" | "obs.action" | "obs.mute-source" | "obs.set-scene" | "obs.set-source-volume" | "profile.switch" | "program.end-program" | "program.run" | "program.shortcut" | "voicemeeter.advanced" | "voicemeeter.advanced-button" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasic" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton" | "com.getpcpanel.commands.command.CommandVolumeApplicationDeviceToggle" | "volume.default-device" | "volume.default-device-advanced" | "volume.default-device-toggle" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggleAdvanced" | "volume.device" | "volume.device-mute" | "volume.focus" | "volume.focus-mute" | "volume.process" | "volume.process-mute" | "wavelink.add-focus-to-channel" | "wavelink.change-level" | "wavelink.change-mute" | "com.getpcpanel.wavelink.command.CommandWaveLinkChannelEffect" | "wavelink.main-output" | "webui.open";
+    _type: "com.getpcpanel.commands.command.CommandNoOp" | "mqtt.publish" | "osc.send" | "output.http-request" | "analogbands.ranges" | "clipboard.set" | "device.brightness" | "discord.join-voice" | "discord.leave-voice" | "discord.mute" | "discord.screen-share" | "discord.self-deafen" | "com.getpcpanel.discord.command.CommandDiscordSelfInputVolume" | "com.getpcpanel.discord.command.CommandDiscordSelfMute" | "com.getpcpanel.discord.command.CommandDiscordSelfOutputVolume" | "discord.toggle-video" | "com.getpcpanel.discord.command.CommandDiscordUserMute" | "com.getpcpanel.discord.command.CommandDiscordUserVolume" | "discord.volume" | "homeassistant.action" | "homeassistant.value" | "keyboard.keystroke" | "keyboard.media" | "obs.action" | "obs.mute-source" | "obs.set-scene" | "obs.set-source-volume" | "profile.switch" | "program.end-program" | "program.run" | "program.shortcut" | "sonar.mute" | "sonar.volume" | "voicemeeter.advanced" | "voicemeeter.advanced-button" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasic" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton" | "com.getpcpanel.commands.command.CommandVolumeApplicationDeviceToggle" | "volume.default-device" | "volume.default-device-advanced" | "volume.default-device-toggle" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggleAdvanced" | "volume.device" | "volume.device-mute" | "volume.focus" | "volume.focus-mute" | "volume.process" | "volume.process-mute" | "wavelink.add-focus-to-channel" | "wavelink.change-level" | "wavelink.change-mute" | "com.getpcpanel.wavelink.command.CommandWaveLinkChannelEffect" | "wavelink.main-output" | "webui.open";
 }
 
 export interface CommandAnalogBands extends Command, DialAction {
@@ -294,6 +294,22 @@ export interface CommandSetClipboard extends Command, ButtonAction {
 export interface CommandShortcut extends Command, ButtonAction {
     _type: "program.shortcut";
     shortcut: string;
+}
+
+export interface CommandSonar extends Command {
+    _type: "sonar.mute" | "sonar.volume";
+    channel: SonarChannel;
+    mix: SonarMixSelection;
+}
+
+export interface CommandSonarMute extends CommandSonar, ButtonAction {
+    _type: "sonar.mute";
+    muteType: MuteType;
+}
+
+export interface CommandSonarVolume extends CommandSonar, DialAction {
+    _type: "sonar.volume";
+    unMuteOnVolumeChange: boolean;
 }
 
 export interface CommandValueOutput extends Command, DialAction, ButtonAction {
@@ -882,6 +898,27 @@ export interface SingleSliderLightingConfig {
     muteOverrideDeviceOrFollow: string;
 }
 
+export interface SonarChannelDto {
+    channel: string;
+    mix?: string;
+    muted: boolean;
+    volume: number;
+}
+
+export interface SonarCommandModule extends CommandModule {
+}
+
+export interface SonarSettings {
+    enabled: boolean;
+}
+
+export interface SonarStatusDto {
+    channels: SonarChannelDto[];
+    enabled: boolean;
+    mode?: string;
+    ready: boolean;
+}
+
 export interface TemplateCatalogDto {
     items: TemplateVariableDto[];
     path: string;
@@ -1110,6 +1147,10 @@ export type SINGLE_LOGO_MODE = "NONE" | "STATIC" | "RAINBOW" | "BREATH";
 export type SINGLE_SLIDER_LABEL_MODE = "NONE" | "STATIC";
 
 export type SINGLE_SLIDER_MODE = "NONE" | "STATIC" | "STATIC_GRADIENT" | "VOLUME_GRADIENT";
+
+export type SonarChannel = "Game" | "Chat" | "Mic" | "Media" | "Aux" | "Master";
+
+export type SonarMixSelection = "monitoring" | "streaming" | "both";
 
 export type VolumeButton = "mute" | "next" | "prev" | "stop" | "playPause";
 

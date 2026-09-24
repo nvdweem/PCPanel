@@ -2,7 +2,7 @@ import { computed, Injectable } from '@angular/core';
 import { httpResource } from '@angular/common/http';
 import { AudioDevice, AudioSession } from '../../models/models';
 import {
-  DiscordStatusDto, DiscordUserDto, DiscordVoiceChannelDto, HomeAssistantServerStatus, ProcessDto, WaveLinkResponseDto,
+  DiscordStatusDto, DiscordUserDto, DiscordVoiceChannelDto, HomeAssistantServerStatus, ProcessDto, SonarStatusDto, WaveLinkResponseDto,
 } from '../../models/generated/backend.types';
 import { PickerItem } from '../../ui';
 
@@ -56,6 +56,12 @@ export class IntegrationDataService {
   readonly haServers = httpResource<HomeAssistantServerStatus[]>(() => '/api/homeassistant/servers');
   readonly haStatus = httpResource<{ connected: boolean }>(() => '/api/homeassistant/status');
   readonly haConnected = computed(() => this.haStatus.value()?.connected ?? false);
+
+  // SteelSeries Sonar (ready = the backend's poll found Sonar and read its mode, which it does while Sonar is enabled)
+  readonly sonarStatus = httpResource<SonarStatusDto>(() => '/api/sonar/status');
+  readonly sonarConnected = computed(() => this.sonarStatus.value()?.ready ?? false);
+  /** First fetch only: a re-fetch keeps the last answer on screen instead of flashing "connecting". */
+  readonly sonarLoading = computed(() => this.sonarStatus.status() === 'loading');
 
   // ── Honest connection state (frontend-only) ─────────────────────────────────
   // OBS returns data ONLY while it is actually connected (empty otherwise), so
@@ -121,6 +127,21 @@ export class IntegrationDataService {
     this.processes.reload();
   }
 
+  /** Wall-clock time of the last Sonar status fetch, for {@link refreshSonarStatus}. */
+  private lastSonarRefresh = 0;
+
+  /**
+   * Re-reads Sonar's status for a view about to show it. The backend finds Sonar on a one-second poll, so a
+   * status fetched once goes stale as soon as GG starts, stops, or the integration is switched on. Throttled
+   * like {@link refreshProcesses}.
+   */
+  refreshSonarStatus(): void {
+    const now = Date.now();
+    if (now - this.lastSonarRefresh < 1000) return;
+    this.lastSonarRefresh = now;
+    this.sonarStatus.reload();
+  }
+
   /** Reload everything (call after a save that may change the lists). */
   reload(): void {
     this.audioDevices.reload();
@@ -140,5 +161,6 @@ export class IntegrationDataService {
     this.mqttStatus.reload();
     this.haServers.reload();
     this.haStatus.reload();
+    this.sonarStatus.reload();
   }
 }
