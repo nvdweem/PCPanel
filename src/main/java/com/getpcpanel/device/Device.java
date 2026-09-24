@@ -120,7 +120,18 @@ public abstract class Device {
             outputInterpreter.sendLightingConfig(serialNumber, deviceType(), config, priority);
         } catch (Exception e) {
             log.error("Unable to send lighting config", e);
-            setLighting(defaultLighting(), priority);
+            sendDefaultLighting(priority);
+        }
+    }
+
+    /** Fallback after a failed send. Tried once: if the default fails too (e.g. the device is gone), give up. */
+    private void sendDefaultLighting(boolean priority) {
+        var fallback = defaultLighting();
+        lightingConfig = fallback;
+        try {
+            outputInterpreter.sendLightingConfig(serialNumber, deviceType(), fallback, priority);
+        } catch (Exception e) {
+            log.error("Unable to send the default lighting config either", e);
         }
     }
 
