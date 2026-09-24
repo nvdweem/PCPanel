@@ -37,7 +37,7 @@ up to date when you add or remove an event or an observer.
 
 | Event | Fired by | Observed by |
 |-------|----------|-------------|
-| `SaveService.SaveEvent` | `SaveService` (on load and after saves) | `DeviceHolder`, `Overlay`, `MqttService`, `MqttDeviceService`, `OSCService`, `WaveLinkService`, `ShortcutHook`, `SleepDetector` (relights if sleep detection was switched off while dark) |
+| `SaveService.SaveEvent` | `SaveService` (on load and after saves) | `DeviceHolder`, `Overlay`, `MqttService`, `MqttDeviceService`, `OSCService`, `WaveLinkService`, `ShortcutHook`, `SleepDetector` (relights if sleep detection was switched off while dark), `SonarService` (recomputes the poll in-use gate from every profile's commands) |
 | `ProfileSwitchedEvent` | `Device`, `DeviceResource` | `EventBroadcaster` (→ UI), `MuteColorService` |
 | `LightingChangedEvent` (`EventBroadcaster.LightingChangedEvent`) | `DeviceResource` | `EventBroadcaster` (→ UI) |
 | `LightingChangedToDefaultEvent` | `Device`, `DeviceResource` | `MuteColorService`, `VoiceMeeterMuteService` |
@@ -69,6 +69,7 @@ up to date when you add or remove an event or an observer.
 | `DiscordChangedEvent` | `DiscordService` (Discord voice/mute/deafen state changed) | `MuteColorService` |
 | `MuteOverridesDirtyEvent` | mute-colour resolvers (e.g. `VoiceMeeterMuteResolver` after caching a mute change) | `MuteColorService` |
 | `MqttStatusEvent` | `MqttService` | `MqttDeviceService` |
+| `SonarChangedEvent` | `SonarService` (a local write changed a mute; a poll picked up a state change; the mode went away or Sonar was switched off) | `MuteColorService` |
 
 ## System & UI
 

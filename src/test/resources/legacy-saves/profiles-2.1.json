@@ -718,6 +718,15 @@
               "_type" : "webui.open"
             } ],
             "type" : "allAtOnce"
+          },
+          "35" : {
+            "commands" : [ {
+              "_type" : "sonar.mute",
+              "channel" : "Mic",
+              "mix" : "monitoring",
+              "muteType" : "unmute"
+            } ],
+            "type" : "allAtOnce"
           }
         },
         "dblButtonData" : {
@@ -1038,6 +1047,21 @@
                 "invert" : true,
                 "moveStart" : 151,
                 "moveEnd" : 152
+              },
+              "invert" : true
+            } ],
+            "type" : "allAtOnce"
+          },
+          "19" : {
+            "commands" : [ {
+              "_type" : "sonar.volume",
+              "channel" : "Master",
+              "mix" : "monitoring",
+              "unMuteOnVolumeChange" : true,
+              "dialParams" : {
+                "invert" : true,
+                "moveStart" : 61,
+                "moveEnd" : 62
               },
               "invert" : true
             } ],
@@ -2136,6 +2160,9 @@
     "focusVolumeRedirect" : true,
     "enforceControlledVolume" : false,
     "controlledVolumePercent" : 100
+  },
+  "sonar" : {
+    "enabled" : true
   },
   "homeAssistantServers" : [ {
     "id" : "id-70",

@@ -10,7 +10,7 @@ import { GENERATED_COMMANDS } from './command-registry.generated';
  */
 export type CommandCategory = 'audio' | 'system' | 'integration';
 export type CommandKind = 'dial' | 'button';
-export type Integration = 'obs' | 'voicemeeter' | 'wavelink' | 'discord' | 'homeassistant';
+export type Integration = 'obs' | 'voicemeeter' | 'wavelink' | 'discord' | 'homeassistant' | 'sonar';
 export type LiveSource =
   | 'obs-scenes' | 'obs-sources' | 'vm-advanced'
   | 'wl-channels' | 'wl-inputs' | 'wl-mixes' | 'wl-outputs' | 'profiles'
@@ -57,6 +57,14 @@ const HA = 'com.getpcpanel.homeassistant.command.';
 
 const MUTE_OPTS = [
   { value: 'toggle', label: 'Toggle' }, { value: 'mute', label: 'Mute' }, { value: 'unmute', label: 'Unmute' },
+];
+// Chat is incoming chat audio (chatRender), Mic is your own capture (chatCapture).
+const SONAR_CHANNEL_OPTS = [
+  { value: 'Game', label: 'Game' }, { value: 'Chat', label: 'Chat' }, { value: 'Mic', label: 'Mic' },
+  { value: 'Media', label: 'Media' }, { value: 'Aux', label: 'Aux' }, { value: 'Master', label: 'Master' },
+];
+const SONAR_MIX_OPTS = [
+  { value: 'monitoring', label: 'Personal Mix' }, { value: 'streaming', label: 'Stream Mix' }, { value: 'both', label: 'Both mixes' },
 ];
 const dialParams = () => ({ invert: false, moveStart: 0, moveEnd: 0 });
 
@@ -318,6 +326,24 @@ const FIELD_DEFS: FieldDef_[] = [
     type: WL + 'CommandWaveLinkAddFocusToChannel',
     buildEmpty: () => ({ _type: WL + 'CommandWaveLinkAddFocusToChannel', id: '', name: '', overlayText: '' }),
     fields: [{ kind: 'select-live', key: 'id', label: 'Channel', source: 'wl-channels' }],
+  },
+  {
+    type: 'sonar.volume',
+    buildEmpty: () => ({ _type: 'sonar.volume', channel: 'Game', mix: 'monitoring', unMuteOnVolumeChange: false, dialParams: dialParams(), invert: false }),
+    fields: [
+      { kind: 'select', key: 'channel', label: 'Channel', options: SONAR_CHANNEL_OPTS },
+      { kind: 'select', key: 'mix', label: 'Mix', options: SONAR_MIX_OPTS },
+      { kind: 'toggle', key: 'unMuteOnVolumeChange', label: 'Unmute on volume change' },
+    ],
+  },
+  {
+    type: 'sonar.mute',
+    buildEmpty: () => ({ _type: 'sonar.mute', channel: 'Game', mix: 'monitoring', muteType: 'toggle', overlayText: '' }),
+    fields: [
+      { kind: 'select', key: 'channel', label: 'Channel', options: SONAR_CHANNEL_OPTS },
+      { kind: 'select', key: 'mix', label: 'Mix', options: SONAR_MIX_OPTS },
+      { kind: 'mute', key: 'muteType', label: 'Action' },
+    ],
   },
   {
     type: DC + 'CommandDiscordMute',

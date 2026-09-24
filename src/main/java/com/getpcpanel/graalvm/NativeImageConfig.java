@@ -119,6 +119,7 @@ import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig;
 import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig.SINGLE_SLIDER_LABEL_MODE;
 import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
 import com.getpcpanel.profile.dto.SingleSliderLightingConfig.SINGLE_SLIDER_MODE;
+import com.getpcpanel.integration.sonar.dto.SonarSettings;
 import com.getpcpanel.integration.wavelink.dto.WaveLinkSettings;
 import com.getpcpanel.rest.PlatformResource;
 import com.getpcpanel.rest.model.dto.AddDeejDeviceDto;
@@ -139,6 +140,10 @@ import com.getpcpanel.integration.wavelink.command.CommandWaveLinkChangeMute;
 import com.getpcpanel.integration.wavelink.command.CommandWaveLinkChannelEffect;
 import com.getpcpanel.integration.wavelink.command.CommandWaveLinkMainOutput;
 import com.getpcpanel.integration.wavelink.command.WaveLinkCommandTarget;
+import com.getpcpanel.integration.sonar.command.CommandSonar;
+import com.getpcpanel.integration.sonar.command.CommandSonarMute;
+import com.getpcpanel.integration.sonar.command.CommandSonarVolume;
+import com.getpcpanel.integration.sonar.rest.dto.SonarStatusDto;
 
 import dev.niels.wavelink.impl.model.WaveLinkApp;
 import dev.niels.wavelink.impl.model.WaveLinkChannel;
@@ -280,6 +285,12 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         CommandWaveLinkMainOutput.class,
         WaveLinkCommandTarget.class,
 
+        // Sonar command hierarchy (also extends Command → ID.CLASS polymorphism). SonarChannel/SonarMixSelection
+        // are enums, which serialise by name and need no registration of their own.
+        CommandSonar.class,
+        CommandSonarVolume.class,
+        CommandSonarMute.class,
+
         // Discord command hierarchy (also extends Command → ID.CLASS polymorphism)
         CommandDiscord.class,
         CommandDiscordMute.class,
@@ -396,6 +407,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         MqttSettings.class,
         HomeAssistantSettings.class,
         WaveLinkSettings.class,
+        SonarSettings.class,
         // Discord config + machine-managed auth/roster persisted in the save file (List<record> needs the
         // element AND its array type reachable for Jackson in the native image).
         DiscordSettings.class,
@@ -444,6 +456,8 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         SerialPortDto[].class,
         OSCConnectionInfo[].class,
         DiscordStatusDto.class,
+        SonarStatusDto.class,
+        SonarStatusDto.SonarChannelDto.class, SonarStatusDto.SonarChannelDto[].class,
         PlatformResource.PlatformInfo.class,
         AutostartStateDto.class,
         AutostartRequestDto.class,

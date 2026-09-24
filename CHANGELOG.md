@@ -2,6 +2,7 @@
 
 <!-- Releasenotes without version are included in releases -->
 
+- (Windows) Added **SteelSeries Sonar** support: assign a dial to a Sonar channel's volume or a button to its mute, for Game, Chat, Mic, Media, Aux and Master. In Streamer mode you can target the Personal Mix or the Stream Mix independently, or both at once from one control; in Classic mode a control drives that channel's single volume. Turn on **Unmute on volume change** to have a muted channel unmute as soon as you move its dial. A control's **mute colour** follows the Sonar channel it targets, including when you mute it in Sonar itself. Enable it under Settings.
 - #159 - Wave Link: the **Wave Link volume** and **Wave Link mute** actions can now target a **Master Mix**, controlling a whole mix (e.g. *Personal Mix* or *Stream Mix*) instead of one channel within it. Thanks to @beanbeanjuice for the contribution.
 - The **overlay** settings now show two previews: **Saved**, the overlay as it looks right now, and **Edited**, the overlay with the changes you haven't saved yet. Compare them while you adjust the look, then save.
 - #161 - Fixed **per-control lighting turning all lights off on the PCPanel RGB**. Choosing *Per-control / custom* on the Lighting page now shows each knob's colour on the device. The RGB can't show a colour gradient on a single knob, so a knob set to *Volume gradient* shows its end colour and gets brighter as you turn the knob up.

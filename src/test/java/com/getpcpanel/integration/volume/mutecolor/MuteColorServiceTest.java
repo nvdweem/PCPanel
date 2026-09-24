@@ -7,12 +7,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
 
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.CommandsType;
 import com.getpcpanel.commands.command.Command;
+import com.getpcpanel.integration.sonar.SonarChangedEvent;
 import com.getpcpanel.profile.dto.LightingConfig;
 import com.getpcpanel.profile.dto.LightingConfig.LightingMode;
 import com.getpcpanel.integration.wavelink.command.CommandWaveLinkChangeLevel;
@@ -129,5 +131,19 @@ class MuteColorServiceTest {
 
         assertTrue(changed, "the legacy follow wording must resolve like a blank target");
         assertTrue(service.getOverrideColorProvider().getSliderOverride("serial", 0).isPresent());
+    }
+
+    @Test
+    void sonarStateChangeTriggersARecompute() {
+        var recomputed = new AtomicInteger();
+        var service = new MuteColorService() {
+            @Override public synchronized void recomputeAll() {
+                recomputed.incrementAndGet();
+            }
+        };
+
+        service.onSonar(new SonarChangedEvent());
+
+        assertEquals(1, recomputed.get());
     }
 }
