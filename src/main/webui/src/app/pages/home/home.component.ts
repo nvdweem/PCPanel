@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, signal, untracked, viewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { DeviceStateService } from '../../services/device-state.service';
 import { SelectedDeviceService } from '../../services/selected-device.service';
@@ -16,6 +16,11 @@ import { AddDeviceModalComponent } from './add-device-modal.component';
 import { DeviceRendererComponent } from '../../devices/visual/device-renderer.component';
 import { ControlClick } from '../../devices/visual/control-click';
 import { DeviceSnapshotDto } from '../../models/generated/backend.types';
+
+/** Size of the device on the main stage when there is room for it. 1 = native, 1.5 = 50% larger. */
+const MAX_DEVICE_ZOOM = 1.5;
+/** Below this the controls get too small to use, so the stage scrolls instead of shrinking further. */
+const MIN_DEVICE_ZOOM = 0.6;
 
 interface IntegrationRow { name: string; dot: 'ok' | 'idle' | 'connecting'; stateLabel: string; connected: boolean; }
 
@@ -50,6 +55,12 @@ export class HomeComponent {
   readonly os = computed(() => this.debug.osOverride() || this.platform.os());
   readonly selected = this.facade.selected;
   readonly selectedSerial = this.facade.selectedSerial;
+
+  private readonly stageEl = viewChild<ElementRef<HTMLElement>>('stage');
+  private readonly deviceStageEl = viewChild<ElementRef<HTMLElement>>('deviceStage');
+  private readonly hintEl = viewChild<ElementRef<HTMLElement>>('hint');
+  /** Zoom that makes the device (plus the hint below it) fit the stage, capped at {@link MAX_DEVICE_ZOOM}. */
+  readonly deviceZoom = signal(MAX_DEVICE_ZOOM);
 
   readonly editingName = signal(false);
   readonly newProfileOpen = signal(false);
@@ -101,6 +112,34 @@ export class HomeComponent {
     if (connected) return { name, dot: 'ok', stateLabel: 'connected', connected: true };
     if (loading) return { name, dot: 'connecting', stateLabel: 'connecting', connected: false };
     return { name, dot: 'idle', stateLabel: 'enabled', connected: false };
+  }
+
+  constructor() {
+    // Refit whenever the window resizes the stage or the device's own size changes (another device
+    // selected, assignment chips toggled). The device element exists only while one is selected.
+    effect(onCleanup => {
+      const stage = this.stageEl()?.nativeElement;
+      const device = this.deviceStageEl()?.nativeElement;
+      if (!stage || !device) return;
+      const observer = new ResizeObserver(() => untracked(() => this.fitDevice(stage, device)));
+      observer.observe(stage);
+      observer.observe(device);
+      onCleanup(() => observer.disconnect());
+    });
+  }
+
+  private fitDevice(stage: HTMLElement, device: HTMLElement): void {
+    const zoom = this.deviceZoom();
+    const rect = device.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const style = getComputedStyle(stage);
+    const hint = this.hintEl()?.nativeElement;
+    const hintHeight = hint ? hint.offsetHeight + parseFloat(getComputedStyle(hint).marginTop) : 0;
+    const availableWidth = stage.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    const availableHeight = stage.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom) - hintHeight;
+    const fit = Math.min(availableWidth / (rect.width / zoom), availableHeight / (rect.height / zoom));
+    const next = Math.max(MIN_DEVICE_ZOOM, Math.min(MAX_DEVICE_ZOOM, Math.floor(fit * 100) / 100));
+    if (Math.abs(next - zoom) >= 0.01) this.deviceZoom.set(next);
   }
 
   /** Human label for a device row: its descriptor displayName (falls back to a

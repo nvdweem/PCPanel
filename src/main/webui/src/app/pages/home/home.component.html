@@ -85,7 +85,7 @@
       </button>
     </header>
 
-    <section class="stage">
+    <section class="stage" #stage>
       @if (!ready()) {
         <div class="loading">
           <pc-spinner [size]="26"></pc-spinner>
@@ -113,10 +113,10 @@
           }
         </div>
       } @else if (selected()) {
-        <div class="device-stage">
+        <div class="device-stage" #deviceStage [style.zoom]="deviceZoom()">
           <pc-device-renderer [serial]="selected()!.serial" [showLabels]="true" [showChips]="showAssignments()" (controlClick)="onControlClick($event)"></pc-device-renderer>
         </div>
-        <div class="hint">Click a knob or slider to configure it · press a knob for its button action</div>
+        <div class="hint" #hint>Click a knob or slider to configure it · press a knob for its button action</div>
       }
     </section>
 
