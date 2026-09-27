@@ -12,6 +12,7 @@ import com.getpcpanel.integration.wavelink.command.CommandWaveLinkAddFocusToChan
 import com.getpcpanel.integration.wavelink.command.CommandWaveLinkChange;
 import com.getpcpanel.integration.wavelink.command.CommandWaveLinkChannelEffect;
 import com.getpcpanel.integration.wavelink.command.CommandWaveLinkMainOutput;
+import com.getpcpanel.util.image.PngDecoder;
 
 import dev.niels.wavelink.impl.model.WaveLinkChannel;
 import dev.niels.wavelink.impl.model.WaveLinkImage;
@@ -67,13 +68,15 @@ class WaveLinkIconHandler implements IIconHandler<CommandWaveLink> {
     private Optional<BufferedImage> channelImage(@Nullable String id) {
         return Optional.ofNullable(waveLinkService.getChannels().get(id))
                        .map(WaveLinkChannel::image)
-                       .map(WaveLinkImage::getImage);
+                       .map(WaveLinkImage::pngBytes)
+                       .map(PngDecoder::decode);
     }
 
     private Optional<BufferedImage> mixImage(@Nullable String id) {
         return Optional.ofNullable(waveLinkService.getMixes().get(id))
                        .map(WaveLinkMix::image)
-                       .map(WaveLinkImage::getImage);
+                       .map(WaveLinkImage::pngBytes)
+                       .map(PngDecoder::decode);
     }
 
     private BufferedImage outputImage() {

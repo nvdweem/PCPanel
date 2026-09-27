@@ -16,6 +16,7 @@ import com.getpcpanel.integration.volume.platform.ISndCtrl;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.util.concurrent.Debouncer;
+import com.getpcpanel.util.SharedHttpClient;
 import com.getpcpanel.util.concurrent.ReconnectBackoff;
 import com.getpcpanel.integration.volume.IFocusRedirector;
 
@@ -75,7 +76,7 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
     private final Map<String, WaveLinkApp> focusIdentityByProcess = new ConcurrentHashMap<>();
 
     WaveLinkService() {
-        super(false);
+        super(SharedHttpClient.get(), false);
         saveService = null;
     }
 
@@ -289,7 +290,7 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
 
     @Inject
     public WaveLinkService(SaveService saveService) {
-        super(false);
+        super(SharedHttpClient.get(), false);
         this.saveService = saveService;
         wasEnabled = isEnabled();
         addListener(this);
