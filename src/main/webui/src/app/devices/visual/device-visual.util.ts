@@ -15,6 +15,29 @@ export function analogPct(value: number | undefined, min = 0, max = 255): number
   return Math.max(0, Math.min(100, (((value ?? 0) - min) / span) * 100));
 }
 
+/** A per-control overlay icon as an <img> src when it names an image rather than an app: an inline data-URI,
+ *  a web URL or a bundled asset is used as is; a local file (an absolute path such as the v1 file picker
+ *  stored, or a file: URL) is rendered by the backend. Undefined for anything else, e.g. a process name. */
+export function overlayIconImageSrc(overlay: string | undefined): string | undefined {
+  if (!overlay) return undefined;
+  if (overlay.startsWith('data:') || overlay.startsWith('http') || overlay.startsWith('/')) return overlay;
+  const path = localPathOf(overlay);
+  return path ? `/api/icons?path=${encodeURIComponent(path)}&size=64` : undefined;
+}
+
+function localPathOf(value: string): string | undefined {
+  if (/^[a-z]:[\\/]/i.test(value) || value.startsWith('\\\\')) return value;
+  if (!/^file:/i.test(value)) return undefined;
+  try {
+    const url = new URL(value);
+    const path = decodeURIComponent(url.pathname);
+    if (url.host) return `\\\\${url.host}${path.replaceAll('/', '\\')}`;
+    return /^\/[a-z]:/i.test(path) ? path.slice(1) : path;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Resolve a backend color (possibly a $RAINBOW!/$BREATH token) + the device's
  *  global animation context into an SVG/CSS-ready {fill, animClass, ...}. */
 export function controlVisual(color: string | undefined, config: LightingConfig | null | undefined, fallback: string): ColorVisual {

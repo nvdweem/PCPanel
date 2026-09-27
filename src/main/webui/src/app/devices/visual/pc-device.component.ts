@@ -7,7 +7,7 @@ import { Commands, LightingConfig } from '../../models/generated/backend.types';
 import { PcKnobComponent } from './pc-knob.component';
 import { PcFaderComponent } from './pc-fader.component';
 import { PcLogoComponent } from './pc-logo.component';
-import { analogPct, controlVisual, knobColor, processNameOf, shortLabel } from './device-visual.util';
+import { analogPct, controlVisual, knobColor, overlayIconImageSrc, processNameOf, shortLabel } from './device-visual.util';
 import { resolveVolGrad } from '../pcpanel/lighting-animation';
 import { ControlClick, ControlKind } from './control-click';
 
@@ -215,12 +215,10 @@ export class PcDeviceComponent {
     return name ? this.processIconMap().get(name.toLowerCase()) : undefined;
   }
 
-  /** The per-control overlay-icon override as an <img> src: a process name resolves to its app
-   *  icon; an already-image value (data-URI / URL / asset path) is used directly. */
+  /** The per-control overlay-icon override as an <img> src: an image value (data-URI / URL / asset path /
+   *  local file) is shown as that image; a process name resolves to its app icon. */
   private overlayIconSrc(overlay: string | undefined): string | undefined {
-    if (!overlay) return undefined;
-    if (overlay.startsWith('data:') || overlay.startsWith('http') || overlay.startsWith('/')) return overlay;
-    return this.appIcon(overlay);
+    return overlayIconImageSrc(overlay) ?? this.appIcon(overlay);
   }
 
   /** Best icon for a slot's command, mirroring the Windows overlay: the controlled app's icon

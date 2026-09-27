@@ -4,6 +4,9 @@ import static com.getpcpanel.integration.volume.platform.AudioSession.SYSTEM;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.net.URI;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.Path;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
@@ -166,8 +169,9 @@ public class IconService {
             if (StringUtils.startsWith(iconStr, "data:")) {
                 return decodeImageDataUri(iconStr);
             }
-            if (StringUtils.endsWithAny(iconStr, "exe", "dll") && new File(iconStr).exists()) {
-                var result = iconService.getIconForFile(32, 32, new File(iconStr));
+            var file = localIconFile(iconStr);
+            if (file != null) {
+                var result = iconService.getIconForFile(32, 32, file);
                 if (result != null) {
                     return result;
                 }
@@ -185,6 +189,21 @@ public class IconService {
             log.trace("Unable to load overlay icon {}", iconStr, e);
         }
         return null;
+    }
+
+    /**
+     * The existing local file an overlay icon names, as an absolute path ({@code C:\icons\mic.png}, what the
+     * v1 file picker stored) or a {@code file:} URL. The shell renders it: an image file as its thumbnail, an
+     * exe/dll as its icon. Relative values are not files: they are process names or bundled asset paths.
+     */
+    @Nullable
+    static File localIconFile(String iconStr) {
+        try {
+            var file = StringUtils.startsWithIgnoreCase(iconStr, "file:") ? Path.of(URI.create(iconStr)).toFile() : new File(iconStr);
+            return file.isAbsolute() && file.isFile() ? file : null;
+        } catch (IllegalArgumentException | FileSystemNotFoundException e) {
+            return null;
+        }
     }
 
     @Nullable

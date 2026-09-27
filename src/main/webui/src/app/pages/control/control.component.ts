@@ -22,7 +22,7 @@ import { CommandPickerComponent } from '../../features/commands/command-picker.c
 import { MappingPreviewComponent } from '../../features/commands/mapping-preview.component';
 import { DialParams } from '../../features/commands/mapping-curve.util';
 import { ControlLightingComponent } from '../../features/lighting/control-lighting.component';
-import { analogPct, describeCommand } from '../../devices/visual/device-visual.util';
+import { analogPct, describeCommand, overlayIconImageSrc } from '../../devices/visual/device-visual.util';
 import { OverlayModule } from '@angular/cdk/overlay';
 
 type Slot = 'rotate' | 'press' | 'dblpress' | 'release';
@@ -269,12 +269,9 @@ export class ControlComponent {
     this.save();
   }
 
-  /** True when the stored overlay icon is a renderable image (custom upload data-URI, app-icon snapshot,
-   *  a bundled classpath asset, or an absolute path) rather than a bare letter fallback. */
-  readonly overlayIconPreview = computed(() => {
-    const v = this.knob().overlayIcon;
-    return v && (v.startsWith('data:') || v.startsWith('http') || v.startsWith('/')) ? v : null;
-  });
+  /** The stored overlay icon as an <img> src when it is a renderable image (custom upload data-URI, app-icon
+   *  snapshot, a bundled classpath asset, or a local image file) rather than a bare letter fallback. */
+  readonly overlayIconPreview = computed(() => overlayIconImageSrc(this.knob().overlayIcon) ?? null);
 
   setOverlayIcon(key: string): void {
     // Snapshot the picked app's real icon (a data-URI) so the overlay shows it even when that app is not
