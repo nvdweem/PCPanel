@@ -1,9 +1,13 @@
-package com.getpcpanel.integration.sonar;
+package dev.niels.sonar;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import dev.niels.sonar.model.SonarChannel;
+import dev.niels.sonar.model.SonarMix;
+import dev.niels.sonar.model.SonarMode;
+import dev.niels.sonar.model.SonarRoute;
 import org.junit.jupiter.api.Test;
 
 class SonarRouteTest {

@@ -1,4 +1,4 @@
-package com.getpcpanel.integration.sonar;
+package dev.niels.sonar;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

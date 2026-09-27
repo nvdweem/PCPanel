@@ -1,11 +1,11 @@
 package com.getpcpanel.integration.sonar.command;
 
 import com.getpcpanel.commands.command.Command;
-import com.getpcpanel.integration.sonar.SonarChannel;
 import com.getpcpanel.integration.sonar.SonarMixSelection;
 import com.getpcpanel.integration.sonar.SonarService;
 import com.getpcpanel.util.CdiHelper;
 
+import dev.niels.sonar.model.SonarChannel;
 import lombok.Getter;
 import lombok.ToString;
 

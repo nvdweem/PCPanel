@@ -1,4 +1,4 @@
-package com.getpcpanel.integration.sonar;
+package dev.niels.sonar.model;
 
 import java.util.Locale;
 

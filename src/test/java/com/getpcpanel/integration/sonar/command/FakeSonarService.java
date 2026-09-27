@@ -5,9 +5,10 @@ import java.util.List;
 
 import javax.annotation.Nullable;
 
-import com.getpcpanel.integration.sonar.SonarChannel;
 import com.getpcpanel.integration.sonar.SonarMixSelection;
 import com.getpcpanel.integration.sonar.SonarService;
+
+import dev.niels.sonar.model.SonarChannel;
 
 /**
  * Hand-written recording stub for {@link SonarService}, served through {@code FakeCdi} exactly like
@@ -28,7 +29,7 @@ final class FakeSonarService extends SonarService {
     @Nullable private Boolean currentMuted;
 
     FakeSonarService() {
-        super(null, null, null);
+        super(null, null, null, null);
     }
 
     void setReady(boolean ready) {

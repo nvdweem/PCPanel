@@ -16,6 +16,8 @@ import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.Save;
 import com.getpcpanel.profile.SaveService.SaveEvent;
 
+import dev.niels.sonar.SonarClient;
+import dev.niels.sonar.model.SonarChannel;
 import org.junit.jupiter.api.Test;
 
 /**

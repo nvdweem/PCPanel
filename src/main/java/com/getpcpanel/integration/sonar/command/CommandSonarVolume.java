@@ -9,10 +9,10 @@ import com.getpcpanel.commands.command.DialAction;
 import com.getpcpanel.commands.meta.CommandCategory;
 import com.getpcpanel.commands.meta.CommandKind;
 import com.getpcpanel.commands.meta.CommandMeta;
-import com.getpcpanel.integration.sonar.SonarChannel;
 import com.getpcpanel.integration.sonar.SonarMixSelection;
 import com.getpcpanel.integration.sonar.SonarService;
 
+import dev.niels.sonar.model.SonarChannel;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.log4j.Log4j2;

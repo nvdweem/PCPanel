@@ -2,6 +2,9 @@ package com.getpcpanel.integration.sonar;
 
 import java.util.List;
 
+import dev.niels.sonar.model.SonarMix;
+import dev.niels.sonar.model.SonarRoute;
+
 /**
  * Which mix a Sonar command drives: one of the two, or both at once. Only a command carries this; a
  * {@link SonarRoute} always names a single {@link SonarMix}, so {@link #mixes()} is the one way from a

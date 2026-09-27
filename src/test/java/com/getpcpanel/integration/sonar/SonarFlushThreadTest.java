@@ -8,6 +8,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import dev.niels.sonar.SonarClient;
+import dev.niels.sonar.model.SonarChannel;
+import dev.niels.sonar.model.SonarMix;
+import dev.niels.sonar.model.SonarMode;
+import dev.niels.sonar.model.SonarRoute;
+import dev.niels.sonar.model.SonarState;
 import org.junit.jupiter.api.Test;
 
 import com.getpcpanel.util.concurrent.AppThreads;

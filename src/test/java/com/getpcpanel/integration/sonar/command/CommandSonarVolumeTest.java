@@ -3,6 +3,7 @@ package com.getpcpanel.integration.sonar.command;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.niels.sonar.model.SonarChannel;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -11,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import com.getpcpanel.commands.DialValue;
 import com.getpcpanel.commands.command.DialAction.DialActionParameters;
 import com.getpcpanel.commands.curve.Curve;
-import com.getpcpanel.integration.sonar.SonarChannel;
 import com.getpcpanel.integration.sonar.SonarMixSelection;
 import com.getpcpanel.integration.sonar.SonarService;
 import com.getpcpanel.integration.testutil.FakeCdi;

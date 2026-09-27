@@ -1,4 +1,4 @@
-package com.getpcpanel.integration.sonar;
+package dev.niels.sonar;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -14,6 +14,10 @@ import java.util.Optional;
 
 import com.sun.net.httpserver.HttpServer;
 
+import dev.niels.sonar.model.SonarChannel;
+import dev.niels.sonar.model.SonarMix;
+import dev.niels.sonar.model.SonarMode;
+import dev.niels.sonar.model.SonarRoute;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

@@ -9,6 +9,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import dev.niels.sonar.SonarClient;
+import dev.niels.sonar.model.SonarChannel;
+import dev.niels.sonar.model.SonarLevel;
+import dev.niels.sonar.model.SonarMix;
+import dev.niels.sonar.model.SonarMode;
+import dev.niels.sonar.model.SonarRoute;
+import dev.niels.sonar.model.SonarState;
 import org.junit.jupiter.api.Test;
 
 class SonarServicePollTest {

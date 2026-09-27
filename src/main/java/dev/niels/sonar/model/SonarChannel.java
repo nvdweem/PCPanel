@@ -1,4 +1,4 @@
-package com.getpcpanel.integration.sonar;
+package dev.niels.sonar.model;
 
 /** A Sonar channel, named as Sonar's UI names it and mapped to the id its API uses. */
 public enum SonarChannel {

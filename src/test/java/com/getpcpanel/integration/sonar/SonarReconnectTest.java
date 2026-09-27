@@ -17,6 +17,11 @@ import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import dev.niels.sonar.SonarClient;
+import dev.niels.sonar.model.SonarChannel;
+import dev.niels.sonar.model.SonarMix;
+import dev.niels.sonar.model.SonarMode;
+
 /**
  * GG assigns Sonar's port per launch, so a GG restart moves Sonar to a new address that only
  * re-resolving through coreProps.json and /subApps finds. These run a real GG + Sonar pair on loopback

@@ -23,6 +23,14 @@ import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.util.concurrent.AppThreads;
 
+import dev.niels.sonar.ISonarClient;
+import dev.niels.sonar.SonarClient;
+import dev.niels.sonar.model.SonarChannel;
+import dev.niels.sonar.model.SonarLevel;
+import dev.niels.sonar.model.SonarMix;
+import dev.niels.sonar.model.SonarMode;
+import dev.niels.sonar.model.SonarRoute;
+import dev.niels.sonar.model.SonarState;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.scheduler.Scheduled;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -57,7 +65,7 @@ public class SonarService {
      *  so a poll already in flight when the write lands cannot win. */
     private static final long WRITE_PRECEDENCE_MS = 2_000;
 
-    private final SonarClient client;
+    private final ISonarClient client;
     private final SaveService saveService;
     @Nullable private final Event<SonarChangedEvent> changed;
     private final AtomicReference<SonarState> state = new AtomicReference<>(SonarState.UNKNOWN);
@@ -85,12 +93,12 @@ public class SonarService {
     }
 
     @Inject
-    public SonarService(SonarClient client, SaveService saveService, Event<SonarChangedEvent> changed) {
-        this(client, saveService, changed,
+    public SonarService(SaveService saveService, Event<SonarChangedEvent> changed) {
+        this(new SonarClient(), saveService, changed,
              Executors.newSingleThreadScheduledExecutor(AppThreads.factory("sonar-flush", true)));
     }
 
-    SonarService(SonarClient client, SaveService saveService, @Nullable Event<SonarChangedEvent> changed,
+    protected SonarService(ISonarClient client, SaveService saveService, @Nullable Event<SonarChangedEvent> changed,
                  @Nullable ScheduledExecutorService flushExecutor) {
         this.client = client;
         this.saveService = saveService;
@@ -421,9 +429,5 @@ public class SonarService {
 
     void replaceState(SonarState newState) {
         state.set(newState);
-    }
-
-    SonarClient client() {
-        return client;
     }
 }

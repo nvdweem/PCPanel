@@ -1,4 +1,4 @@
-package com.getpcpanel.integration.sonar;
+package dev.niels.sonar;
 
 import java.net.InetAddress;
 import java.net.URI;
@@ -22,7 +22,12 @@ import javax.net.ssl.X509TrustManager;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import jakarta.enterprise.context.ApplicationScoped;
+import dev.niels.sonar.model.SonarChannel;
+import dev.niels.sonar.model.SonarLevel;
+import dev.niels.sonar.model.SonarMix;
+import dev.niels.sonar.model.SonarMode;
+import dev.niels.sonar.model.SonarRoute;
+import dev.niels.sonar.model.SonarState;
 import lombok.extern.log4j.Log4j2;
 
 /**
@@ -40,9 +45,9 @@ import lombok.extern.log4j.Log4j2;
  * rejected rather than trusted.
  */
 @Log4j2
-@ApplicationScoped
-public class SonarClient {
-    private static final Path DEFAULT_CORE_PROPS = Path.of(
+public class SonarClient implements ISonarClient {
+    /** Where GG writes coreProps.json on Windows, the only platform Sonar runs on. */
+    public static final Path DEFAULT_CORE_PROPS = Path.of(
             System.getenv().getOrDefault("PROGRAMDATA", "C:\\ProgramData"),
             "SteelSeries", "SteelSeries Engine 3", "coreProps.json");
 
@@ -56,7 +61,7 @@ public class SonarClient {
         this(DEFAULT_CORE_PROPS);
     }
 
-    SonarClient(Path corePropsPath) {
+    public SonarClient(Path corePropsPath) {
         this.corePropsPath = corePropsPath;
         this.http = HttpClient.newBuilder()
                               .connectTimeout(Duration.ofSeconds(2))
