@@ -123,15 +123,17 @@ class SonarReconnectTest {
             launches.add(new GgLaunch(coreProps, 0.25));
             var service = SonarServiceFixtures.service(new SonarClient(coreProps), true);
             service.setInUse(true);
-            service.poll();
+            var now = System.currentTimeMillis();
+            service.poll(now);
             assertTrue(service.isReady(), "precondition: the first launch was found");
 
             launches.get(0).stop();
-            service.poll();
+            service.poll(now + 1_000);
             assertFalse(service.isReady(), "precondition: GG is gone");
 
             launches.add(new GgLaunch(coreProps, 0.75));
-            service.poll();
+            // Past the first discovery backoff step, which spaces out looking for a Sonar that is gone.
+            service.poll(now + 1_000 + 2_000);
 
             assertTrue(service.isReady());
             assertEquals(0.75, gameMonitoring(service), 0.0001);

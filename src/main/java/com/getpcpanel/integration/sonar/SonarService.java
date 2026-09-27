@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import javax.annotation.Nullable;
 
+import com.getpcpanel.commands.IntegrationConnection;
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.integration.analogbands.command.AnalogBand;
 import com.getpcpanel.integration.analogbands.command.CommandAnalogBands;
@@ -22,6 +23,8 @@ import com.getpcpanel.profile.Save;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.util.concurrent.AppThreads;
+import com.getpcpanel.util.concurrent.ReconnectBackoff;
+import com.getpcpanel.util.concurrent.ReconnectOnUse;
 
 import dev.niels.sonar.ISonarClient;
 import dev.niels.sonar.SonarClient;
@@ -58,7 +61,7 @@ import one.util.streamex.StreamEx;
  */
 @Log4j2
 @ApplicationScoped
-public class SonarService {
+public class SonarService implements IntegrationConnection {
     /** At most one write per route per this many ms; the trailing value of a sweep is always sent. */
     private static final long COALESCE_MS = 50;
     /** A poll result for a route written within this window is discarded. Longer than the poll interval
@@ -67,6 +70,14 @@ public class SonarService {
 
     private final ISonarClient client;
     private final SaveService saveService;
+    /**
+     * Spaces out looking for Sonar while it cannot be found (GG closed, or Sonar not running in it). The cap
+     * is short: GG usually starts with Windows, and finding it is a local file read and a loopback request.
+     */
+    private final ReconnectBackoff discoveryBackoff = new ReconnectBackoff(2_000, 10_000);
+    /** Using a Sonar control clears {@link #discoveryBackoff}, so the next one-second poll looks for Sonar. */
+    private final ReconnectOnUse reconnectOnUse = new ReconnectOnUse("sonar", ReconnectOnUse.DEFAULT_COOLDOWN_MS,
+            () -> isEnabled() && !isReady(), discoveryBackoff::reset);
     @Nullable private final Event<SonarChangedEvent> changed;
     private final AtomicReference<SonarState> state = new AtomicReference<>(SonarState.UNKNOWN);
     private final AtomicBoolean inUse = new AtomicBoolean();
@@ -108,6 +119,16 @@ public class SonarService {
 
     public boolean isEnabled() {
         return saveService.get().getSonar().enabled();
+    }
+
+    @Override
+    public boolean owns(Command command) {
+        return command instanceof CommandSonar;
+    }
+
+    @Override
+    public void onUsed() {
+        reconnectOnUse.request();
     }
 
     /** True once a poll has found Sonar and read its mode; commands check this before writing. */
@@ -338,15 +359,29 @@ public class SonarService {
     /** SKIP: discovery, mode and levels can take seconds under timeouts, and an overlapping poll could apply an older result. */
     @Scheduled(every = "1s", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
     public void poll() {
+        poll(System.currentTimeMillis());
+    }
+
+    /**
+     * Once Sonar is found every tick reads it, since polling is the only way to see changes made in GG.
+     * While it is not found, looking for it again waits out {@link #discoveryBackoff}.
+     */
+    void poll(long now) {
         if (!isEnabled()) {
+            discoveryBackoff.onSuccess(); // nothing to find → keep the gate clear so enabling finds Sonar at once
             resetToUnknown();
+            return;
+        }
+        if (!isReady() && !discoveryBackoff.ready(now)) {
             return;
         }
         var mode = fetchModeReResolving();
         if (mode == null) {
+            discoveryBackoff.onFailure(now);
             resetToUnknown();
             return;
         }
+        discoveryBackoff.onSuccess();
         if (!inUse.get()) {
             // Nothing reads the levels, so none are kept: a cached level would only go stale.
             applyPolled(new SonarState(mode, Map.of()));
