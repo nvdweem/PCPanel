@@ -38,7 +38,9 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
 ./mvnw clean package        # builds a NATIVE image by default (quarkus.native.enabled=true in pom)
 ./mvnw clean package -Dquarkus.native.enabled=false   # JVM-only jar, much faster, no GraalVM needed
 ./mvnw test                 # unit tests (surefire); ~10 test classes under src/test/java
-./mvnw test -Dtest=ClassName#method   # single test
+./mvnw test -Dtest=ClassName#method   # single test (tests run with a PER_CLASS instance lifecycle, see
+                                      # src/test/resources/junit-platform.properties: a test class's instance fields
+                                      # are shared by all its tests, so create per-test state in @BeforeEach)
 ./mvnw verify -Pnative      # native build + failsafe integration tests against the runner binary
 ```
 
