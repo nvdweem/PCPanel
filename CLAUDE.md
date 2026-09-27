@@ -391,7 +391,8 @@ lines), which remains out of scope — defeating a same-user attacker on a deskt
 
 **Integrations (`integration/*` — command-providing features only):** the external connectors
 `integration/obs/` (OBS websocket), `voicemeeter/` (JNA), `wavelink/` + `dev/niels/wavelink/` (Elgato
-Wave Link RPC client), `osc/`, `mqtt/` (Eclipse Paho mqttv5), `homeassistant/`, `discord/`; plus the
+Wave Link RPC client), `osc/`, `mqtt/` (Eclipse Paho mqttv5), `homeassistant/`, `discord/` +
+`dev/niels/discord/`, `sonar/` + `dev/niels/sonar/` (SteelSeries Sonar HTTP client, Windows-only); plus the
 feature families `volume/`, `keyboard/`, `program/`, `analogbands/`, `profile/`, and `device/` (the
 brightness command only). Each owns its `command/` + `CommandModule` and (where applicable) its REST,
 SPI impls, and service. The on-screen volume overlay lives in `integration/volume/overlay/`: a Win32 JNA
@@ -428,7 +429,7 @@ YAML flow maps, Home Assistant Jinja and Qute's built-in namespaces (`config:`, 
 Functions are `@EngineConfiguration` resolvers in `TemplateFunctions` (one implementation serves the app
 engine and the bare-engine unit tests). Variables: `CoreTemplateVariables` (`value`, `percent`, `raw`,
 `name`, `muted`, `device`, `profile`, `control`, `focusApp`) plus one `TemplateNamespace` bean per
-integration (`wl`, `audio`, `obs`, `vm`, `discord`, `mqtt`, `ha`) exposing its live state as views and a
+integration (`wl`, `audio`, `obs`, `vm`, `discord`, `mqtt`, `ha`, `sonar`) exposing its live state as views and a
 `target` for what the control acts on. Rules for a namespace:
 - **Accessors read state the app already holds** — no I/O, no process launch, no blocking lock: the overlay
   renders on the HID input thread. That is why OBS offers only connection + source mute (its scenes/volumes
@@ -608,6 +609,20 @@ Full reference: [`docs/mcp-server.md`](docs/mcp-server.md).
   The child inherits the environment unchanged unless the caller passes a map — pass
   `ProcessHelper.PARSEABLE_OUTPUT` (`LC_ALL=C`) only when the output is parsed, so a launched program keeps the
   user's locale. Tests redirect commands by overriding the protected `builder()` (see `FakeProcess`).
+- **An external app's client is a library in `dev.niels.<app>`; how PCPanel uses it lives in
+  `com.getpcpanel.integration.<app>`.** The library half is the protocol client and its model, plain Java
+  that another project could reuse: it never depends on `com.getpcpanel.*` nor on CDI/Quarkus, and the
+  integration's service constructs (or extends) it and passes in anything app-wide, such as the shared
+  `HttpClient`. Polling, batching, settings, commands, REST and templates are the app half. ArchUnit's
+  `LibraryIsolationArchTest` enforces the dependency rule.
+- **An integration that holds a connection reconnects as soon as one of its controls is used.** Implement
+  `commands/IntegrationConnection` on the integration's service: `owns(command)` names its commands, and
+  `onUsed()` hands the request to a `util/concurrent/ReconnectOnUse`, which starts one attempt on its own thread
+  and ignores further uses while it runs and for a cooldown after, so a dial sweep starts one reconnect.
+  `CommandDispatcher` reports every input (not the startup sync) through `IntegrationUseNotifier`, including
+  commands nested in a stepped-switch dial. The scheduled `ReconnectBackoff` loop stays for reconnects nobody
+  is waiting on: an app that normally starts with Windows (Wave Link, Sonar) keeps a short cap so it is found
+  soon after boot, while one started on demand (OBS, Discord) may back off longer.
 
 ### Code comments
 
