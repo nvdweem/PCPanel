@@ -7,6 +7,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 import com.getpcpanel.commands.Commands;
+import com.getpcpanel.profile.dto.KnobSetting;
 import com.getpcpanel.profile.dto.LightingConfig;
 import com.getpcpanel.profile.dto.LightingConfig.LightingMode;
 import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
@@ -30,6 +31,9 @@ import one.util.streamex.StreamEx;
  * <ul>
  *   <li><b>Commands</b> — a control with no command in the active profile falls back to the base layer's
  *       command for that control (works regardless of either profile's lighting mode).</li>
+ *   <li><b>Knob settings</b> — a dial's trims, response curve, overlay icon and overlay name come from the
+ *       profile that supplies its command, so a dial running the base layer's command uses the settings
+ *       configured alongside it.</li>
  *   <li><b>Lighting</b> — in per-control (CUSTOM) mode, any control whose active per-control lighting is
  *       {@code NONE} (off) falls back to the base layer's per-control lighting, mute-override colour
  *       included. Global lighting modes have no per-control "off" to fill, so they pass through.</li>
@@ -85,6 +89,10 @@ public class BaseLayerService {
         return effectiveReleaseButton(active, fallbackFor(serial, active), button);
     }
 
+    public KnobSetting effectiveKnobSetting(String serial, Profile active, int knob) {
+        return effectiveKnobSetting(active, fallbackFor(serial, active), knob);
+    }
+
     public Map<Integer, Commands> effectiveDialData(String serial, Profile active) {
         return effectiveDialData(active, fallbackFor(serial, active));
     }
@@ -107,6 +115,13 @@ public class BaseLayerService {
         }
         var fallback = base.getDialData(knob);
         return Commands.hasCommands(fallback) ? fallback : own;
+    }
+
+    static KnobSetting effectiveKnobSetting(Profile active, @Nullable Profile base, int knob) {
+        if (base == null || Commands.hasCommands(active.getDialData(knob)) || !Commands.hasCommands(base.getDialData(knob))) {
+            return active.getKnobSettings(knob);
+        }
+        return base.getKnobSettings(knob);
     }
 
     static Commands effectiveButton(Profile active, @Nullable Profile base, int button) {

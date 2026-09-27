@@ -51,6 +51,37 @@ class BaseLayerServiceTest {
         assertNull(BaseLayerService.effectiveDial(profile("active"), profile("base"), 9));
     }
 
+    // ── knob settings follow the command ─────────────────────────────────────────
+    @Test
+    void knobSettingComesFromBaseWhenItsCommandDoes() {
+        var active = profile("active");
+        var base = profile("base");
+        base.setDialData(0, cmds("baseProfile"));
+        base.getKnobSettings(0).setOverlayIcon("base-icon");
+        active.getKnobSettings(0).setOverlayIcon("active-icon");
+
+        assertSame(base.getKnobSettings(0), BaseLayerService.effectiveKnobSetting(active, base, 0));
+    }
+
+    @Test
+    void knobSettingComesFromActiveWhenItHasTheCommand() {
+        var active = profile("active");
+        var base = profile("base");
+        active.setDialData(0, cmds("activeProfile"));
+        base.setDialData(0, cmds("baseProfile"));
+
+        assertSame(active.getKnobSettings(0), BaseLayerService.effectiveKnobSetting(active, base, 0));
+    }
+
+    @Test
+    void knobSettingComesFromActiveWhenNeitherHasACommand() {
+        var active = profile("active");
+        var base = profile("base");
+
+        assertSame(active.getKnobSettings(0), BaseLayerService.effectiveKnobSetting(active, base, 0));
+        assertSame(active.getKnobSettings(1), BaseLayerService.effectiveKnobSetting(active, null, 1));
+    }
+
     @Test
     void releaseButtonFallsBackToBaseWhenActiveHasNoCommand() {
         var active = profile("active");

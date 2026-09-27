@@ -19,6 +19,7 @@ import com.getpcpanel.integration.volume.platform.ISndCtrl;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.device.descriptor.AnalogKind;
 import com.getpcpanel.device.DeviceHolder;
+import com.getpcpanel.profile.BaseLayerService;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.profile.dto.KnobSetting;
@@ -51,6 +52,7 @@ public class Overlay {
     private final DeviceHolder deviceHolder;
     private final OverrideColorService overrideColorService;
     private final TemplateService templates;
+    private final BaseLayerService baseLayer;
     // The AWT/Swing windowing toolkit is unsupported in the GraalVM native image (it segfaults the
     // native WToolkit event loop), so neither overlay uses it: Windows draws a JNA layered window and
     // Linux/Wayland asks the desktop to draw it over D-Bus (KDE volume OSD, else a notification).
@@ -163,7 +165,7 @@ public class Overlay {
     private CommandAndIcon determineIconImage(PCPanelControlEvent event) {
         return save.getProfile(event.serialNum()).map(profile -> {
             var data = event.cmd();
-            var setting = event.vol() == null ? null : profile.getKnobSettings(event.knob());
+            var setting = event.vol() == null ? null : baseLayer.effectiveKnobSetting(event.serialNum(), profile, event.knob());
             // Icon decoding needs libawt (Windows only); elsewhere the overlay is a no-op that ignores
             // the icon, so skip the BufferedImage lookup entirely to stay libawt-free.
             var icon = Platform.isWindows() ? iconService.getImageFrom(data, setting) : null;

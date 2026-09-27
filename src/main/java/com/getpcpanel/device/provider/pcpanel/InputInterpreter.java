@@ -47,7 +47,7 @@ public final class InputInterpreter {
         devices.getDevice(event.serialNum()).ifPresent(device -> {
             var value = event.value();
             device.setKnobRotation(event.knob(), value);
-            var settings = save.getProfile(event.serialNum()).map(p -> p.getKnobSettings(event.knob())).orElse(null);
+            var settings = save.getProfile(event.serialNum()).map(p -> baseLayer.effectiveKnobSetting(event.serialNum(), p, event.knob())).orElse(null);
             doDialAction(event.serialNum(), event.initial(), event.knob(), new DialValue(settings, curves.forControl(settings), value));
         });
     }

@@ -8,6 +8,7 @@ import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.DialValue;
 import com.getpcpanel.commands.curve.CurveService;
 import com.getpcpanel.device.DeviceHolder;
+import com.getpcpanel.profile.BaseLayerService;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.template.TemplateCatalog;
 import com.getpcpanel.template.TemplateFunctions;
@@ -37,6 +38,7 @@ public class TemplateResource {
     @Inject TemplateService templates;
     @Inject TemplateCatalog catalog;
     @Inject SaveService saveService;
+    @Inject BaseLayerService baseLayer;
     @Inject DeviceHolder devices;
     @Inject CurveService curves;
 
@@ -65,14 +67,14 @@ public class TemplateResource {
         var button = kind.equals("press") || kind.equals("dblpress") || kind.equals("release");
         var profile = saveService.getProfile(serial).orElse(null);
         Commands commands = profile == null ? null : switch (kind) {
-            case "press" -> profile.getButtonData(control);
-            case "dblpress" -> profile.getDblButtonData(control);
-            case "release" -> profile.getReleaseButtonData(control);
-            default -> profile.getDialData(control);
+            case "press" -> baseLayer.effectiveButton(serial, profile, control);
+            case "dblpress" -> baseLayer.effectiveDblButton(serial, profile, control);
+            case "release" -> baseLayer.effectiveReleaseButton(serial, profile, control);
+            default -> baseLayer.effectiveDial(serial, profile, control);
         };
         DialValue dial = null;
         if (!button && profile != null) {
-            var setting = profile.getKnobSettings(control);
+            var setting = baseLayer.effectiveKnobSetting(serial, profile, control);
             var raw = devices.getDevice(serial).map(d -> d.getKnobRotation(control)).orElse(0);
             dial = new DialValue(setting, curves.forControl(setting), raw);
         }
