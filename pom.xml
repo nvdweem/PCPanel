@@ -37,6 +37,7 @@
         <lombok.version>1.18.46</lombok.version>
         <typescript-generator.version>4.1.1</typescript-generator.version>
         <mcp-server.version>1.13.1</mcp-server.version>
+        <archunit.version>1.5.1</archunit.version>
 
         <!-- ── Native image: always build a native executable ─────────────── -->
         <!-- Use -Dquarkus.native.enabled=false to skip native (JVM-only build) -->
@@ -328,6 +329,12 @@
         <dependency>
             <groupId>io.rest-assured</groupId>
             <artifactId>rest-assured</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <version>${archunit.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
