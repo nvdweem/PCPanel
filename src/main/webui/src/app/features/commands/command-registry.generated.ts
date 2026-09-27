@@ -40,6 +40,8 @@ export const GENERATED_COMMANDS: GeneratedCommand[] = [
   { type: 'program.end-program', label: 'End program', category: 'system', kinds: ['button'], icon: 'x', legacy: 'com.getpcpanel.commands.command.CommandEndProgram' },
   { type: 'program.run', label: 'Run command', category: 'system', kinds: ['button'], icon: 'zap', legacy: 'com.getpcpanel.commands.command.CommandRun' },
   { type: 'program.shortcut', label: 'Run shortcut', category: 'system', kinds: ['button'], icon: 'zap', legacy: 'com.getpcpanel.commands.command.CommandShortcut' },
+  { type: 'sonar.mute', label: 'SteelSeries Sonar — mute', category: 'integration', kinds: ['button'], integration: 'sonar', icon: 'volume-x' },
+  { type: 'sonar.volume', label: 'SteelSeries Sonar — volume', category: 'integration', kinds: ['dial'], integration: 'sonar', icon: 'sliders' },
   { type: 'voicemeeter.advanced', label: 'Voicemeeter — parameter', category: 'integration', kinds: ['dial'], integration: 'voicemeeter', icon: 'sliders', legacy: 'com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced' },
   { type: 'voicemeeter.advanced-button', label: 'Voicemeeter — button', category: 'integration', kinds: ['button'], integration: 'voicemeeter', icon: 'sliders', legacy: 'com.getpcpanel.commands.command.CommandVoiceMeeterAdvancedButton' },
   { type: 'volume.default-device', label: 'Set default device', category: 'audio', kinds: ['button'], icon: 'monitor', legacy: 'com.getpcpanel.commands.command.CommandVolumeDefaultDevice' },

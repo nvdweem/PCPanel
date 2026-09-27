@@ -6,6 +6,7 @@ import com.getpcpanel.integration.mqtt.MqttService;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.integration.discord.dto.DiscordSettings;
 import com.getpcpanel.integration.mqtt.dto.MqttSettings;
+import com.getpcpanel.integration.sonar.dto.SonarSettings;
 import com.getpcpanel.integration.wavelink.dto.WaveLinkSettings;
 import com.getpcpanel.rest.model.dto.SettingsDto;
 import com.getpcpanel.util.SecretMasking;
@@ -72,6 +73,20 @@ public class SettingsResource {
     @Path("/wavelink")
     public Response updateWaveLinkSettings(WaveLinkSettings settings) {
         saveService.get().setWaveLink(settings);
+        saveService.save();
+        return Response.ok().build();
+    }
+
+    @GET
+    @Path("/sonar")
+    public SonarSettings getSonarSettings() {
+        return saveService.get().getSonar();
+    }
+
+    @PUT
+    @Path("/sonar")
+    public Response updateSonarSettings(SonarSettings settings) {
+        saveService.get().setSonar(settings);
         saveService.save();
         return Response.ok().build();
     }

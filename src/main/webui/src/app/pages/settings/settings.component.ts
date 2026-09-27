@@ -10,7 +10,8 @@ import { UpdateService } from '../../services/update.service';
 import { AutostartService } from '../../services/autostart.service';
 import { DeviceStateService } from '../../services/device-state.service';
 import {
-  CurveDefinition, DiscordSettings, DiscordStatusDto, FocusVolumeOverride, FocusVolumeTarget, OverlayPosition, SettingsDto, WaveLinkSettings,
+  CurveDefinition, DiscordSettings, DiscordStatusDto, FocusVolumeOverride, FocusVolumeTarget, OverlayPosition, SettingsDto, SonarSettings,
+  WaveLinkSettings,
 } from '../../models/generated/backend.types';
 import {
   AppPickerComponent,
@@ -26,7 +27,7 @@ import { BUILT_IN_DEFAULTS, isBuiltIn } from '../../features/curves/curve.util';
 import { OverlayPreviewRenderer, overlayPreviewStyle } from './overlay-preview';
 
 type Cmd = Record<string, any>;
-type TabId = 'general' | 'curves' | 'focusoverride' | 'obs' | 'voicemeeter' | 'wavelink' | 'discord' | 'osc' | 'mqtt' | 'homeassistant' | 'overlay' | 'debug';
+type TabId = 'general' | 'curves' | 'focusoverride' | 'obs' | 'voicemeeter' | 'wavelink' | 'discord' | 'osc' | 'mqtt' | 'homeassistant' | 'sonar' | 'overlay' | 'debug';
 interface TabDef { id: TabId; label: string; integration?: 'obs' | 'voicemeeter' | 'wavelink'; supported?: boolean; }
 
 @Component({
@@ -141,6 +142,7 @@ export class SettingsComponent {
     { id: 'osc', label: 'OSC' },
     { id: 'mqtt', label: 'MQTT' },
     { id: 'homeassistant', label: 'Home Assistant' },
+    { id: 'sonar', label: 'SteelSeries Sonar' },
     { id: 'debug', label: 'Debug' },
   ];
 
@@ -150,12 +152,14 @@ export class SettingsComponent {
   tabSupported(id: TabId): boolean {
     if (id === 'voicemeeter') return this.platform.voicemeeterSupported();
     if (id === 'wavelink') return this.platform.waveLinkSupported();
+    if (id === 'sonar') return this.platform.sonarSupported();
     return true;
   }
 
   platformNote(id: TabId): string {
     if (id === 'voicemeeter') return 'Voicemeeter is only available on Windows.';
     if (id === 'wavelink') return 'Elgato Wave Link is only available on Windows and macOS.';
+    if (id === 'sonar') return 'SteelSeries Sonar is only available on Windows.';
     return '';
   }
 
@@ -181,6 +185,14 @@ export class SettingsComponent {
 
   // Wave Link settings (not part of SettingsDto): enable + focus-control + controlled-volume options.
   readonly wavelinkSettings = httpResource<WaveLinkSettings>(() => '/api/settings/wavelink');
+
+  // SteelSeries Sonar settings (not part of SettingsDto): just an enable switch. Live connection status
+  // comes from the shared integrations status endpoint, same as OBS/Wave Link/Discord.
+  readonly sonarSettings = httpResource<SonarSettings>(() => '/api/settings/sonar');
+  readonly sonarTabStatus = computed<StatusKind>(() =>
+    this.integrations.sonarConnected() ? 'ok' : this.integrations.sonarLoading() ? 'connecting' : 'idle');
+  // Exposed for the template (the injected integrations service is private).
+  readonly sonarStatusValue = computed(() => this.integrations.sonarStatus.value());
 
   // Discord settings (not part of SettingsDto): enable + client id/secret. Edited in a local draft and
   // saved explicitly (credentials shouldn't PUT on every keystroke); status comes from the live endpoint.
@@ -244,9 +256,29 @@ export class SettingsComponent {
       const s = this.local();
       if (s && overlayPreviewActive()) untracked(() => this.editedOverlayPreview.schedule(s));
     });
+    // The backend finds Sonar on a one-second poll, so while its tab is open the status is re-read every
+    // couple of seconds: switching Sonar on, or starting and stopping GG, shows up without leaving the tab.
+    let sonarTimer: ReturnType<typeof setInterval> | undefined;
+    const stopSonarRefresh = () => {
+      if (sonarTimer) {
+        clearInterval(sonarTimer);
+        sonarTimer = undefined;
+      }
+    };
+    effect(() => {
+      if (this.activeTab() === 'sonar' && this.platform.sonarSupported()) {
+        untracked(() => {
+          this.integrations.refreshSonarStatus();
+          sonarTimer ??= setInterval(() => this.integrations.refreshSonarStatus(), 2000);
+        });
+      } else {
+        stopSonarRefresh();
+      }
+    });
     inject(DestroyRef).onDestroy(() => {
       this.savedOverlayPreview.dispose();
       this.editedOverlayPreview.dispose();
+      stopSonarRefresh();
     });
   }
 
@@ -294,6 +326,7 @@ export class SettingsComponent {
       case 'osc': return this.oscTabStatus();
       case 'mqtt': return this.mqttTabStatus();
       case 'homeassistant': return this.haTabStatus();
+      case 'sonar': return this.platform.sonarSupported() ? this.sonarTabStatus() : 'disabled';
       default: return null;
     }
   }
@@ -427,6 +460,23 @@ export class SettingsComponent {
   setWavelinkEnforceVolume(on: boolean): void { this.saveWavelink({ enforceControlledVolume: on }); }
   setWavelinkControlledPercent(pct: number): void {
     this.saveWavelink({ controlledVolumePercent: Math.max(0, Math.min(100, Math.round(pct || 0))) });
+  }
+
+  // ── Sonar settings ──────────────────────────────────────────────────────────
+  setSonarEnabled(on: boolean): void {
+    this.http.put<void>('/api/settings/sonar', { enabled: on }).subscribe({
+      next: () => {
+        this.sonarSettings.reload();
+        this.integrations.sonarStatus.reload();
+        this.toast.show(on ? 'SteelSeries Sonar enabled' : 'SteelSeries Sonar disabled', { kind: 'success' });
+      },
+      error: () => this.toast.show('Could not update SteelSeries Sonar', { kind: 'error' }),
+    });
+  }
+
+  /** User-facing name for a Sonar mode id ('stream'/'classic' as reported by the status endpoint). */
+  sonarModeLabel(mode: string | null | undefined): string {
+    return mode === 'stream' ? 'Streamer' : mode === 'classic' ? 'Classic' : '';
   }
 
   // ── Discord settings ─────────────────────────────────────────────────────────

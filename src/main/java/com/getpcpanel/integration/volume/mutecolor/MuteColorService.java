@@ -36,6 +36,7 @@ import com.getpcpanel.rest.EventBroadcaster.VisualColorsChangedEvent;
 import com.getpcpanel.util.coloroverride.ColorOverrideHolder;
 import com.getpcpanel.util.coloroverride.IOverrideColorProvider;
 import com.getpcpanel.util.coloroverride.IOverrideColorProviderProvider;
+import com.getpcpanel.integration.sonar.SonarChangedEvent;
 import com.getpcpanel.integration.wavelink.WaveLinkChangedEvent;
 
 import io.quarkus.arc.All;
@@ -123,6 +124,10 @@ class MuteColorService implements IOverrideColorProviderProvider {
     }
 
     public void onDiscord(@Observes DiscordChangedEvent event) {
+        recomputeAll();
+    }
+
+    public void onSonar(@Observes SonarChangedEvent event) {
         recomputeAll();
     }
 

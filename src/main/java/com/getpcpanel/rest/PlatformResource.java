@@ -29,7 +29,7 @@ import lombok.extern.log4j.Log4j2;
  * Reports the host platform so the UI can hide platform-specific integrations, plus the running
  * app version (so the UI doesn't hardcode it). This must come from the backend (where the device +
  * integrations actually run), not the browser — the UI may be opened from another machine on the
- * network. Voicemeeter is Windows-only; Elgato Wave Link is Windows/macOS only.
+ * network. Voicemeeter and SteelSeries Sonar are Windows-only; Elgato Wave Link is Windows/macOS only.
  */
 @Log4j2
 @jakarta.ws.rs.Path("/api/platform")
@@ -48,7 +48,7 @@ public class PlatformResource {
     /** Short HEAD commit of a local build, so the running build is identifiable in the UI; null for releases. */
     @Nullable private String commit;
 
-    public record PlatformInfo(String os, boolean voicemeeter, boolean waveLink, boolean flatpak, boolean autoUpdate, String version, @Nullable String branch, @Nullable String commit) {
+    public record PlatformInfo(String os, boolean voicemeeter, boolean waveLink, boolean sonar, boolean flatpak, boolean autoUpdate, String version, @Nullable String branch, @Nullable String commit) {
     }
 
     @PostConstruct
@@ -68,7 +68,7 @@ public class PlatformResource {
         // Running inside the Flatpak sandbox: the UI uses this to warn that Discord's IPC socket is only
         // visible if Discord was already running when PCPanel (and so the sandbox) started.
         var flatpak = StringUtils.isNotBlank(System.getenv("FLATPAK_ID"));
-        return new PlatformInfo(os, SystemUtils.IS_OS_WINDOWS, SystemUtils.IS_OS_WINDOWS || SystemUtils.IS_OS_MAC, flatpak, autoUpdate.isSupported(), version, branch, commit);
+        return new PlatformInfo(os, SystemUtils.IS_OS_WINDOWS, SystemUtils.IS_OS_WINDOWS || SystemUtils.IS_OS_MAC, SystemUtils.IS_OS_WINDOWS, flatpak, autoUpdate.isSupported(), version, branch, commit);
     }
 
     /** The start-with-Windows registration; {@code supported} is false outside an installed Windows build. */

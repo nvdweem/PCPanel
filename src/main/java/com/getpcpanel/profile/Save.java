@@ -19,6 +19,7 @@ import com.getpcpanel.integration.volume.FocusVolumeOverride;
 import com.getpcpanel.profile.dto.CurveDefinition;
 import com.getpcpanel.integration.mqtt.dto.MqttSettings;
 import com.getpcpanel.integration.osc.dto.OSCConnectionInfo;
+import com.getpcpanel.integration.sonar.dto.SonarSettings;
 import com.getpcpanel.integration.volume.overlay.OverlayPosition;
 import com.getpcpanel.integration.wavelink.dto.WaveLinkSettings;
 
@@ -85,6 +86,7 @@ public class Save {
     private List<OSCConnectionInfo> oscConnections;
     private MqttSettings mqtt;
     private WaveLinkSettings waveLink;
+    @Nullable private SonarSettings sonar;
     @Nullable private List<HomeAssistantServer> homeAssistantServers;
     /** Leading+trailing throttle window (ms) for analog Home Assistant sends; null/0 = disabled. */
     @Nullable private Integer homeAssistantDebounceMs;
@@ -206,6 +208,11 @@ public class Save {
     @Nonnull
     public MqttSettings getMqtt() {
         return Objects.requireNonNullElse(mqtt, MqttSettings.DEFAULT);
+    }
+
+    @Nonnull
+    public SonarSettings getSonar() {
+        return Objects.requireNonNullElse(sonar, SonarSettings.DEFAULT);
     }
 
     @Nonnull

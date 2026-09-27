@@ -13,7 +13,7 @@ interface PickerGroup { label: string; status?: Status; statusText?: string; off
  * The single filterable command picker, shared by every place that lets the user choose a command (the
  * control page's "Add action" and the stepped-switch band editor). Generic commands are grouped by
  * category (Audio, Device & System); integration commands are grouped by integration (OBS, Voicemeeter,
- * Wave Link, Home Assistant) with the live connection status shown once on the group header. Emits the
+ * Wave Link, Discord, Home Assistant, Sonar) with the live connection status shown once on the group header. Emits the
  * chosen {@link CommandDef}. Reusing it keeps those affordances (and their behaviour) in one place.
  */
 @Component({
@@ -96,6 +96,7 @@ export class CommandPickerComponent {
   toggle(trigger: HTMLElement): void {
     if (!this.open()) {
       this.menuWidth.set(Math.max(240, Math.round(trigger.getBoundingClientRect().width)));
+      this.integrations.refreshSonarStatus();
     }
     this.open.set(!this.open());
   }
@@ -107,6 +108,7 @@ export class CommandPickerComponent {
     { id: 'wavelink', label: 'Wave Link' },
     { id: 'discord', label: 'Discord' },
     { id: 'homeassistant', label: 'Home Assistant' },
+    { id: 'sonar', label: 'SteelSeries Sonar' },
   ];
 
   readonly menuGroups = computed<PickerGroup[]>(() => {
@@ -140,17 +142,20 @@ export class CommandPickerComponent {
       // Voicemeeter has no live connection signal; show it as available without a connected/offline claim.
       return this.platform.voicemeeterSupported() ? { offline: false } : { offline: false, unsupported: true, statusText: 'unavailable' };
     }
-    if (integration === 'wavelink' && !this.platform.waveLinkSupported()) {
+    if ((integration === 'wavelink' && !this.platform.waveLinkSupported())
+      || (integration === 'sonar' && !this.platform.sonarSupported())) {
       return { offline: false, unsupported: true, statusText: 'unavailable' };
     }
     const connected = integration === 'obs' ? this.integrations.obsConnected()
       : integration === 'homeassistant' ? this.integrations.haConnected()
         : integration === 'discord' ? this.integrations.discordConnected()
-          : this.integrations.waveLinkConnected();
+          : integration === 'sonar' ? this.integrations.sonarConnected()
+            : this.integrations.waveLinkConnected();
     const loading = integration === 'obs' ? this.integrations.obsScenes.isLoading()
       : integration === 'homeassistant' ? this.integrations.haStatus.isLoading()
         : integration === 'discord' ? this.integrations.discordStatus.isLoading()
-          : this.integrations.waveLink.isLoading();
+          : integration === 'sonar' ? this.integrations.sonarLoading()
+            : this.integrations.waveLink.isLoading();
     if (loading) return { status: 'connecting', statusText: 'connecting…', offline: false };
     return connected ? { status: 'ok', statusText: 'connected', offline: false } : { status: 'idle', statusText: 'not connected', offline: true };
   }

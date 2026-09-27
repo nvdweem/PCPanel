@@ -8,7 +8,7 @@ does not lose a user's configuration.
 | `profiles-1.7.1.json` | tag `v1.7.1` (Spring Boot + JavaFX) | 3 devices (Pro / RGB / Mini), 2 profiles each, 25 command types |
 | `profiles-1.8.json` | branch `releases/1.8` | the 1.7.1 file after 1.8 read and re-saved it, plus 1.8's Wave Link commands — 30 command types |
 | `profiles-2.0.json` | branch `releases/2.0` | the 1.8 file after 2.0 read and re-saved it, plus everything 2.0 added — 51 command types |
-| `profiles-2.1.json` | this branch | the 2.0 file after 2.1 read and re-saved it, plus everything 2.1 added — 51 command types |
+| `profiles-2.1.json` | this branch | the 2.0 file after 2.1 read and re-saved it, plus everything 2.1 added — 53 command types |
 
 Each file is the previous one carried forward by the release that follows it, which is exactly the
 path a user's file takes. They are not hand-written: each was produced by that version's own model
