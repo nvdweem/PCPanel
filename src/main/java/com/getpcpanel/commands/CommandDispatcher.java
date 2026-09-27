@@ -9,6 +9,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 
 @Log4j2
@@ -24,6 +25,8 @@ public final class CommandDispatcher {
      */
     static final long STUCK_COMMAND_THRESHOLD_MS = 5_000;
 
+    /** Null only in tests that construct the dispatcher without a container. */
+    @Inject @Nullable IntegrationUseNotifier useNotifier;
     final Map<String, Runnable> map = new ConcurrentHashMap<>();
     final HandlerThread handler = new HandlerThread();
     private final WatchdogThread watchdog = new WatchdogThread();
@@ -67,6 +70,11 @@ public final class CommandDispatcher {
     }
 
     public void onCommand(@Observes PCPanelControlEvent event) {
+        // A startup sync replays positions rather than acting on the user's input, and integrations
+        // connect on startup regardless; only real use asks an unavailable integration to reconnect.
+        if (useNotifier != null && !event.initial()) {
+            useNotifier.onUsed(event.cmd());
+        }
         // Key by source too (not just serial+knob): a button's press and release share the same knob
         // index, so without the discriminator a quick tap could have the release overwrite the still-
         // pending press in this coalescing map and the press would be lost. The separators also remove

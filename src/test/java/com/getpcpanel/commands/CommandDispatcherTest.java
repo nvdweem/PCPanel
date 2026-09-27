@@ -155,6 +155,29 @@ class CommandDispatcherTest {
         assertFalse(dispatcher().reportIfStuck(System.currentTimeMillis() + 60_000));
     }
 
+    @Test
+    @DisplayName("input tells the integrations used; a startup sync does not")
+    void onlyRealInputCountsAsIntegrationUse() {
+        var used = new ArrayList<String>();
+        var dispatcher = dispatcher();
+        dispatcher.useNotifier = new IntegrationUseNotifier(List.of(new IntegrationConnection() {
+            @Override public boolean owns(Command command) {
+                return command instanceof ButtonCommand;
+            }
+
+            @Override public void onUsed() {
+                used.add("used");
+            }
+        }));
+        var commands = new Commands(List.of(new ButtonCommand(() -> {})), CommandsType.allAtOnce);
+
+        dispatcher.onCommand(new PCPanelControlEvent("serial", 1, commands, true, dial(10), Source.DIAL));
+        assertEquals(List.of(), used, "a startup sync replays positions and is not use");
+
+        dispatcher.onCommand(new PCPanelControlEvent("serial", 1, commands, false, dial(20), Source.DIAL));
+        assertEquals(List.of("used"), used);
+    }
+
     private static void awaitQuietly(CountDownLatch latch) {
         try {
             latch.await(10, TimeUnit.SECONDS);

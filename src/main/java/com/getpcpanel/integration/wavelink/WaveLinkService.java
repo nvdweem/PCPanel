@@ -18,7 +18,11 @@ import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.util.concurrent.Debouncer;
 import com.getpcpanel.util.SharedHttpClient;
 import com.getpcpanel.util.concurrent.ReconnectBackoff;
+import com.getpcpanel.util.concurrent.ReconnectOnUse;
+import com.getpcpanel.commands.IntegrationConnection;
+import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.integration.volume.IFocusRedirector;
+import com.getpcpanel.integration.wavelink.command.CommandWaveLink;
 
 import jakarta.enterprise.inject.Instance;
 
@@ -41,8 +45,12 @@ import one.util.streamex.StreamEx;
 
 @Log4j2
 @ApplicationScoped
-public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEventListener, IFocusRedirector {
+public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEventListener, IFocusRedirector, IntegrationConnection {
     private final SaveService saveService;
+    /** Serialises the scheduled check with one started by {@link #reconnectOnUse}, so they never reconnect at once. */
+    private final Object connectionCheckLock = new Object();
+    private final ReconnectOnUse reconnectOnUse = new ReconnectOnUse("wavelink", ReconnectOnUse.DEFAULT_COOLDOWN_MS,
+            () -> isEnabled() && !isConnectionHealthy(System.currentTimeMillis()), this::reconnectNow);
     /**
      * Spaces out reconnect attempts when Wave Link is down (base = the scheduled interval). The cap is
      * deliberately short: the attempt is a loopback socket costing nothing, so the only thing a long cap
@@ -327,6 +335,29 @@ public class WaveLinkService extends WaveLinkClient implements IWaveLinkClientEv
     }
 
     void checkConnection(long now) {
+        synchronized (connectionCheckLock) {
+            checkConnectionLocked(now);
+        }
+    }
+
+    @Override
+    public boolean owns(Command command) {
+        return command instanceof CommandWaveLink;
+    }
+
+    @Override
+    public void onUsed() {
+        reconnectOnUse.request();
+    }
+
+    private void reconnectNow() {
+        synchronized (connectionCheckLock) {
+            backoff.reset();
+            checkConnectionLocked(System.currentTimeMillis());
+        }
+    }
+
+    private void checkConnectionLocked(long now) {
         if (!isEnabled()) {
             backoff.onSuccess(); // nothing to connect → keep the gate clear so enabling reconnects at once
             return;

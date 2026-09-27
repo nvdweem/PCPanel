@@ -4,9 +4,13 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.getpcpanel.commands.IntegrationConnection;
+import com.getpcpanel.commands.command.Command;
+import com.getpcpanel.integration.obs.command.CommandObs;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.util.concurrent.ReconnectBackoff;
+import com.getpcpanel.util.concurrent.ReconnectOnUse;
 
 import io.quarkus.scheduler.Scheduled;
 import jakarta.annotation.PreDestroy;
@@ -25,10 +29,15 @@ import lombok.extern.log4j.Log4j2;
  */
 @Log4j2
 @ApplicationScoped
-public final class OBS {
+public final class OBS implements IntegrationConnection {
     private static final long CONNECT_TIMEOUT_MS = 5_000;
-    /** Spaces out reconnect attempts when OBS is down (base = the scheduled interval, capped at 5 min). */
+    /**
+     * Spaces out reconnect attempts when OBS is down (base = the scheduled interval, capped at 5 min). The
+     * long cap is fine because using an OBS control reconnects at once ({@link #reconnectOnUse}).
+     */
     private final ReconnectBackoff backoff = new ReconnectBackoff(30_000, 300_000);
+    private final ReconnectOnUse reconnectOnUse = new ReconnectOnUse("obs", ReconnectOnUse.DEFAULT_COOLDOWN_MS,
+            this::isUnavailable, this::reconnectNow);
 
     @Inject SaveService save;
     @Inject Event<OBSConnectEvent> connectEvent;
@@ -94,6 +103,25 @@ public final class OBS {
         // OBS authentication completes asynchronously, so we can't tell success here; record an attempt
         // and let the next tick's isConnected() check clear the backoff once the handshake completes.
         backoff.onFailure(System.currentTimeMillis());
+    }
+
+    @Override
+    public boolean owns(Command command) {
+        return command instanceof CommandObs;
+    }
+
+    @Override
+    public void onUsed() {
+        reconnectOnUse.request();
+    }
+
+    private boolean isUnavailable() {
+        return save.get().isObsEnabled() && !isConnected();
+    }
+
+    private synchronized void reconnectNow() {
+        backoff.reset();
+        reconnectIfNeeded();
     }
 
     private synchronized void connect(String host, int port, String password) {

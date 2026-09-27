@@ -12,6 +12,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nullable;
 
+import com.getpcpanel.commands.IntegrationConnection;
+import com.getpcpanel.commands.command.Command;
+import com.getpcpanel.integration.discord.command.CommandDiscord;
 import com.getpcpanel.integration.volume.platform.MuteType;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
@@ -20,6 +23,7 @@ import com.getpcpanel.integration.discord.dto.DiscordSeenUser;
 import com.getpcpanel.integration.discord.dto.DiscordSettings;
 import com.getpcpanel.util.concurrent.Debouncer;
 import com.getpcpanel.util.concurrent.ReconnectBackoff;
+import com.getpcpanel.util.concurrent.ReconnectOnUse;
 
 import dev.niels.discord.DiscordRpcClient;
 import dev.niels.discord.DiscordRpcException;
@@ -43,7 +47,7 @@ import lombok.extern.log4j.Log4j2;
  */
 @Log4j2
 @ApplicationScoped
-public class DiscordService extends DiscordRpcClient implements IDiscordRpcListener {
+public class DiscordService extends DiscordRpcClient implements IDiscordRpcListener, IntegrationConnection {
     // The rpc.* scopes are owner-gated, so a self-registered app gets them without approval. relationships.read
     // (for the friends list) is NOT owner-gated: since 2026-01-21 it needs the app to accept the Discord Social
     // SDK Terms (https://discord.com/developers/applications/select/social-sdk/getting-started) — until then
@@ -62,6 +66,11 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
     // Discord is picked up within ~30s instead of minutes. The log stays quiet (INFO once per outage, DEBUG
     // after), so frequent attempts don't spam.
     private final ReconnectBackoff backoff = new ReconnectBackoff(10_000, 30_000);
+    /** Serialises the scheduled check with one started by {@link #reconnectOnUse}, so they never connect at once. */
+    private final Object connectionCheckLock = new Object();
+    /** Only a missing connection: a connected but unauthenticated client is authenticated by the next scheduled check. */
+    private final ReconnectOnUse reconnectOnUse = new ReconnectOnUse("discord", ReconnectOnUse.DEFAULT_COOLDOWN_MS,
+            () -> isEnabled() && !isConnected(), this::reconnectNow);
     private final AtomicBoolean authInProgress = new AtomicBoolean(false);
     private boolean wasEnabled;
     @Nullable private String lastClientId;
@@ -124,6 +133,29 @@ public class DiscordService extends DiscordRpcClient implements IDiscordRpcListe
 
     @Scheduled(every = "10s")
     public void checkConnection() {
+        synchronized (connectionCheckLock) {
+            checkConnectionLocked();
+        }
+    }
+
+    @Override
+    public boolean owns(Command command) {
+        return command instanceof CommandDiscord;
+    }
+
+    @Override
+    public void onUsed() {
+        reconnectOnUse.request();
+    }
+
+    private void reconnectNow() {
+        synchronized (connectionCheckLock) {
+            backoff.reset();
+            checkConnectionLocked();
+        }
+    }
+
+    private void checkConnectionLocked() {
         if (saveService == null || !isEnabled()) {
             backoff.onSuccess(); // nothing to connect → keep the gate clear so enabling reconnects at once
             return;

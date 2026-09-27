@@ -16,12 +16,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.integration.analogbands.AnalogBandColorService;
 import com.getpcpanel.integration.analogbands.command.BandTransition;
 import com.getpcpanel.commands.Commands;
+import com.getpcpanel.commands.NestedCommands;
 import com.getpcpanel.commands.PCPanelControlEvent;
 import com.getpcpanel.util.CdiHelper;
 
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
+import one.util.streamex.StreamEx;
 
 /**
  * Turns a single analog control (dial or slider) into a multi-position rotary switch. The control's
@@ -43,7 +45,7 @@ import lombok.extern.log4j.Log4j2;
 @ToString(callSuper = true)
 @JsonTypeName("analogbands.ranges")
 @CommandMeta(label = "Stepped switch (ranges)", category = CommandCategory.system, kinds = {CommandKind.dial}, icon = "sliders", legacyIds = {"com.getpcpanel.commands.command.CommandAnalogBands"})
-public class CommandAnalogBands extends Command implements DialAction {
+public class CommandAnalogBands extends Command implements DialAction, NestedCommands {
     private static final int MAX_RAW = 255;
 
     private final List<AnalogBand> bands;
@@ -56,6 +58,11 @@ public class CommandAnalogBands extends Command implements DialAction {
     @JsonCreator
     public CommandAnalogBands(@Nullable @JsonProperty("bands") List<AnalogBand> bands) {
         this.bands = bands == null ? List.of() : List.copyOf(bands);
+    }
+
+    @Override
+    public List<Commands> nestedCommands() {
+        return StreamEx.of(bands).map(AnalogBand::commands).nonNull().toList();
     }
 
     @Override
