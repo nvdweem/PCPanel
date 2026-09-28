@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PCPanel — Community Edition</title>
+<link rel="icon" href="app-icon.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5/github-markdown-dark.min.css">
+<style>
+  :root { color-scheme: dark; --bg:#0d1117; --panel:#161b22; --border:#30363d; --fg:#e6edf3; --muted:#9198a1; --accent:#4493f8; --accent2:#2ea043; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; line-height:1.5; }
+  .wrap { max-width: 920px; margin:0 auto; padding: 28px 20px 60px; }
+  .hero { display:flex; gap:18px; align-items:flex-start; justify-content:space-between; margin-bottom:22px; }
+  .hero-title { display:flex; gap:18px; align-items:center; flex:1 1 auto; min-width:0; }
+  .hero img { width:72px; height:72px; border-radius:16px; flex-shrink:0; }
+  .hero h1 { margin:0 0 4px; font-size:1.7rem; }
+  .hero p { margin:0; color:var(--muted); }
+  .gh-btn { display:inline-flex; align-items:center; gap:8px; white-space:nowrap; flex-shrink:0; text-decoration:none;
+            color:var(--fg); background:var(--panel); border:1px solid var(--border); border-radius:8px;
+            padding:8px 14px; font-size:.9rem; font-weight:600; }
+  .gh-btn:hover { border-color:var(--fg); }
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:22px; }
+  .osbar { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+  .osbar button { cursor:pointer; background:var(--bg); color:var(--fg); border:1px solid var(--border); border-radius:999px; padding:7px 16px; font-size:.92rem; }
+  .osbar button[aria-selected="true"] { border-color:var(--accent); color:#fff; background:#132033; font-weight:600; }
+  .os-panel { display:none; }
+  .os-panel.active { display:block; }
+  .os-panel h2 { margin:0 0 4px; font-size:1.15rem; }
+  .os-panel .lead { color:var(--muted); margin:0 0 16px; }
+  .method { border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin:12px 0; background:var(--bg); }
+  .method h3 { margin:0 0 6px; font-size:1rem; }
+  .method .note { color:var(--muted); font-size:.88rem; margin:6px 0 0; }
+  .rec { display:inline-block; font-size:.72rem; font-weight:700; color:#fff; background:var(--accent2); border-radius:999px; padding:1px 8px; margin-left:8px; vertical-align:middle; }
+  .cmd { position:relative; display:flex; align-items:center; gap:8px; margin-top:10px; }
+  .cmd code { flex:1; display:block; background:#010409; border:1px solid var(--border); border-radius:8px; padding:10px 12px; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.86rem; overflow-x:auto; white-space:pre; }
+  .cmd button, a.btn { cursor:pointer; white-space:nowrap; background:var(--accent); color:#fff; border:0; border-radius:8px; padding:10px 14px; font-size:.86rem; text-decoration:none; font-weight:600; }
+  .cmd button { background:#21262d; border:1px solid var(--border); color:var(--fg); }
+  a.btn { display:inline-block; margin-top:4px; }
+  a.btn.ghost { background:#21262d; border:1px solid var(--border); color:var(--fg); }
+  .dl-row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:8px; }
+  .ver { color:var(--muted); font-size:.85rem; }
+  .ver a { color:var(--accent); }
+  .links a { color:var(--accent); }
+  hr.sep { border:0; border-top:1px solid var(--border); margin:30px 0; }
+  .markdown-body { background:transparent; }
+  .markdown-body img { max-width:100%; }
+  h2.readme-head { font-size:1.2rem; color:var(--muted); margin:0 0 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <div class="hero-title">
+      <img src="app-icon.png" alt="PCPanel icon" onerror="this.style.display='none'">
+      <div>
+        <h1>PCPanel — Community Edition</h1>
+        <p>Community controller software for PCPanel USB audio devices — per-app volume, mute, OBS, media and more.</p>
+      </div>
+    </div>
+    <a class="gh-btn" href="https://github.com/nvdweem/PCPanel" title="View the source on GitHub">
+      <svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.65 7.65 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg>
+      <span>View on GitHub</span>
+    </a>
+  </div>
+
+  <div class="card">
+    <div class="osbar" id="osbar" role="tablist" aria-label="Choose your operating system">
+      <button data-os="windows" role="tab">Windows</button>
+      <button data-os="mac" role="tab">macOS</button>
+      <button data-os="linux" role="tab">Linux</button>
+    </div>
+    <p class="ver" id="ver">Looking up the latest release…</p>
+
+    <!-- Windows -->
+    <div class="os-panel" data-os="windows">
+      <h2>Install on Windows</h2>
+      <p class="lead">Download the installer and run it — no admin rights needed. It installs per-user and can start on sign-in.</p>
+      <div class="method">
+        <h3>Installer<span class="rec">recommended</span></h3>
+        <div class="dl-row">
+          <a class="btn" id="dl-win" href="https://github.com/nvdweem/PCPanel/releases/latest">Download the Windows installer</a>
+          <span class="ver" id="ver-win"></span>
+        </div>
+        <p class="note">Built-in one-click updates: when a new version ships, the in-app notification updates and restarts for you.</p>
+      </div>
+    </div>
+
+    <!-- macOS -->
+    <div class="os-panel" data-os="mac">
+      <h2>Install on macOS <span class="ver">(experimental)</span></h2>
+      <p class="lead">Download the disk image for your chip. The app is unsigned, so Gatekeeper needs a one-time right-click → Open.</p>
+      <div class="method">
+        <h3>Disk image (.dmg)</h3>
+        <div class="dl-row">
+          <a class="btn" id="dl-mac-arm" href="https://github.com/nvdweem/PCPanel/releases/latest">Apple Silicon (.dmg)</a>
+          <a class="btn ghost" id="dl-mac-intel" href="https://github.com/nvdweem/PCPanel/releases/latest">Intel (.dmg)</a>
+        </div>
+        <p class="note">macOS support is community-contributed and experimental — see the <a class="links" href="https://github.com/nvdweem/PCPanel/blob/main/mac.md">macOS notes</a>.</p>
+      </div>
+    </div>
+
+    <!-- Linux -->
+    <div class="os-panel" data-os="linux">
+      <h2>Install on Linux</h2>
+      <p class="lead">Best-effort. All formats need a one-time udev rule for device access (the <code>.deb</code> adds it for you) — see the <a class="links" href="https://github.com/nvdweem/PCPanel/blob/main/linux.md">Linux guide</a>.</p>
+
+      <div class="method">
+        <h3>Flatpak<span class="rec">auto-updates</span></h3>
+        <p class="note">Installs from this repository, so it updates through your software centre or <code>flatpak update</code>. Pick a channel:</p>
+        <div class="cmd">
+          <code id="fp-stable">flatpak install --user https://nvdweem.github.io/PCPanel/com.getpcpanel.PCPanel.stable.flatpakref</code>
+          <button data-copy="fp-stable">Copy</button>
+        </div>
+        <p class="note">Bleeding-edge snapshot channel instead:</p>
+        <div class="cmd">
+          <code id="fp-snap">flatpak install --user https://nvdweem.github.io/PCPanel/com.getpcpanel.PCPanel.snapshot.flatpakref</code>
+          <button data-copy="fp-snap">Copy</button>
+        </div>
+      </div>
+
+      <div class="method">
+        <h3>AppImage<span class="rec">auto-updates</span></h3>
+        <p class="note">A single self-contained file — best for immutable distros. It self-updates in place from the in-app notification.</p>
+        <div class="dl-row">
+          <a class="btn" id="dl-appimage" href="https://github.com/nvdweem/PCPanel/releases/latest">Download the AppImage</a>
+        </div>
+        <div class="cmd">
+          <code>chmod +x PCPanel-*.AppImage &amp;&amp; ./PCPanel-*.AppImage</code>
+          <button data-copy-text="chmod +x PCPanel-*.AppImage &amp;&amp; ./PCPanel-*.AppImage">Copy</button>
+        </div>
+      </div>
+
+      <div class="method">
+        <h3>Debian / Ubuntu (.deb)</h3>
+        <div class="dl-row">
+          <a class="btn ghost" id="dl-deb" href="https://github.com/nvdweem/PCPanel/releases/latest">Download the .deb</a>
+        </div>
+        <div class="cmd">
+          <code id="deb-cmd">sudo apt install ./pcpanel_*_amd64.deb</code>
+          <button data-copy="deb-cmd">Copy</button>
+        </div>
+        <p class="note">Updates come through your package manager (no in-app update).</p>
+      </div>
+    </div>
+
+    <p class="links" style="margin:14px 0 0">All downloads &amp; the changelog are on the <a href="https://github.com/nvdweem/PCPanel/releases">releases page</a>.</p>
+  </div>
+
+  <hr class="sep">
+  <h2 class="readme-head">Project README</h2>
+  <article id="readme" class="markdown-body">Loading README…</article>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<script>
+(function () {
+  const REPO = 'nvdweem/PCPanel', BRANCH = 'main';
+  const raw = 'https://raw.githubusercontent.com/' + REPO + '/' + BRANCH + '/';
+  const blob = 'https://github.com/' + REPO + '/blob/' + BRANCH + '/';
+
+  // ---- OS detection + tabs -------------------------------------------------
+  function detectOS() {
+    const s = (navigator.userAgent + ' ' + (navigator.platform || ''));
+    if (/Windows|Win64|Win32/i.test(s)) return 'windows';
+    if (/Mac|iPhone|iPad|iPod/i.test(s)) return 'mac';
+    return 'linux'; // sensible default for this repo's audience
+  }
+  function selectOS(os) {
+    document.querySelectorAll('.osbar button').forEach(b =>
+      b.setAttribute('aria-selected', String(b.dataset.os === os)));
+    document.querySelectorAll('.os-panel').forEach(p =>
+      p.classList.toggle('active', p.dataset.os === os));
+  }
+  document.querySelectorAll('.osbar button').forEach(b =>
+    b.addEventListener('click', () => selectOS(b.dataset.os)));
+  selectOS(detectOS());
+
+  // ---- Copy buttons --------------------------------------------------------
+  function copy(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+      const old = btn.textContent; btn.textContent = 'Copied'; setTimeout(() => btn.textContent = old, 1200);
+    });
+  }
+  document.querySelectorAll('[data-copy]').forEach(btn =>
+    btn.addEventListener('click', () => copy(document.getElementById(btn.dataset.copy).textContent, btn)));
+  document.querySelectorAll('[data-copy-text]').forEach(btn =>
+    btn.addEventListener('click', () => copy(btn.getAttribute('data-copy-text'), btn)));
+
+  // ---- Direct download links + a version that links to its release page --------------------
+  function setLink(id, url) { const a = document.getElementById(id); if (a && url) a.href = url; }
+  fetch('https://api.github.com/repos/' + REPO + '/releases?per_page=30')
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(rels => {
+      if (!rels.length) throw 0;
+      // Feature the newest STABLE release — stable is the download, snapshots stay opt-in (the Flatpak
+      // snapshot command above). Until 2.0 stable ships this is the old 1.7.x, whose assets predate the
+      // current installers, so some buttons fall back to that release's own page; that self-corrects the
+      // moment a modern stable is released.
+      const rel = rels.find(r => !r.prerelease) || rels[0];
+      const assets = rel.assets || [];
+      const find = re => (assets.find(x => re.test(x.name)) || {}).browser_download_url;
+      setLink('dl-win', find(/setup\.exe$/i) || rel.html_url);
+      setLink('dl-mac-arm', find(/arm64\.dmg$/i) || rel.html_url);
+      setLink('dl-mac-intel', find(/x86_64\.dmg$/i) || find(/intel.*\.dmg$/i) || rel.html_url);
+      setLink('dl-appimage', find(/x86_64\.AppImage$/i) || rel.html_url);
+      setLink('dl-deb', find(/\.deb$/i) || rel.html_url);
+      // The version text is a link to that release's page — the buttons download, the version navigates.
+      const label = rel.name || rel.tag_name || 'release';
+      const ver = document.getElementById('ver');
+      ver.textContent = 'Latest: ';
+      const link = document.createElement('a');
+      link.href = rel.html_url;
+      link.textContent = label;
+      ver.appendChild(link);
+    })
+    .catch(() => { document.getElementById('ver').textContent = 'See the releases page for the latest downloads.'; });
+
+  // ---- Render the README ---------------------------------------------------
+  fetch('./README.md').then(r => r.text()).then(md => {
+    const el = document.getElementById('readme');
+    el.innerHTML = marked.parse(md);
+    el.querySelectorAll('img[src]').forEach(img => {
+      const s = img.getAttribute('src');
+      if (s && !/^https?:|^\/\//i.test(s)) img.src = raw + s.replace(/^\.?\//, '');
+    });
+    el.querySelectorAll('a[href]').forEach(link => {
+      const h = link.getAttribute('href');
+      if (h && !/^https?:|^\/\/|^#|^mailto:/i.test(h)) link.href = blob + h.replace(/^\.?\//, '');
+    });
+  }).catch(() => { document.getElementById('readme').textContent = 'README could not be loaded — see the GitHub project.'; });
+})();
+</script>
+</body>
+</html>
