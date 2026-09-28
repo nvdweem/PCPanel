@@ -25,6 +25,7 @@
 - **Overlay icons set in version 1** show again. An icon picked as an image file on your computer (for example `C:\Icons\mic.png`) or written as a `file:` link is shown on the overlay, on the main screen and in the control's *Overlay icon* picker.
 - Fixed dials and sliders that run an action from the **base layer** ignoring the settings made with it: the *Overlay icon*, *Overlay name*, trim and response curve set for that control now apply, instead of those of the active profile.
 - Fixed the **device picture on the main screen running off the screen** in a small or short browser window, where its top was cut off and its sliders disappeared behind the bar at the bottom. The picture now shrinks to fit the window, and only in a very small window can you scroll to the rest of it.
+- (Linux) Fixed **focus volume on KDE Plasma not working on older distributions** such as Ubuntu 22.04 and Debian 12. The `kdotool` that comes with the .deb and AppImage needed a newer system library than those distributions have and didn't start at all. It now runs on every distribution PCPanel itself runs on, and the AppImage lists screenshots for app stores and catalogs.
 
 ## [2.0.97]
 
