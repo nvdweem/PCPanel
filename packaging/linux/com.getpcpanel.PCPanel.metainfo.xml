@@ -16,6 +16,20 @@
     </p>
   </description>
   <launchable type="desktop-id">com.getpcpanel.PCPanel.desktop</launchable>
+  <screenshots>
+    <screenshot type="default">
+      <caption>A device's knobs, sliders and buttons, with the connected integrations</caption>
+      <image>https://raw.githubusercontent.com/nvdweem/PCPanel/main/docs/images/main-window.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Binding an action to a knob</caption>
+      <image>https://raw.githubusercontent.com/nvdweem/PCPanel/main/docs/images/bind-control.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>RGB lighting with a live device preview</caption>
+      <image>https://raw.githubusercontent.com/nvdweem/PCPanel/main/docs/images/lighting.png</image>
+    </screenshot>
+  </screenshots>
   <url type="homepage">https://github.com/nvdweem/PCPanel</url>
   <url type="bugtracker">https://github.com/nvdweem/PCPanel/issues</url>
   <developer id="com.getpcpanel">

@@ -21,6 +21,8 @@
 #                   "gh-releases-zsync|<owner>|<repo>|<tag>|PCPanel-*-x86_64.AppImage.zsync". When set,
 #                   appimagetool also emits <output>.zsync, which MUST be uploaded to the release next to
 #                   the AppImage. Unset (local builds) → no update info, no .zsync, no self-update.
+#   GLIBC_MAX     - fail when any ELF in the AppDir needs a newer glibc than this (e.g. "2.35"); see
+#                   check-glibc.sh. Unset (local builds on a newer distro) → not checked.
 set -euo pipefail
 
 VERSION="${1:?usage: build-appimage.sh <version> <native-exe> <output-dir>}"
@@ -56,8 +58,7 @@ shopt -u nullglob
 # Bundle kdotool (Apache-2.0) next to the executable so "focus volume" works out of the box on KDE
 # Plasma (Wayland and X11) - the recommended AppImage runs unsandboxed, so the bundled kdotool reaches
 # the host KWin directly. LinuxProcessHelper prefers a kdotool sibling of its own binary over PATH.
-# No-op on non-x86_64 (no upstream prebuilt binary).
-bash "$PKG_LINUX/fetch-kdotool.sh" "$APPDIR/usr/bin" || \
+bash "$PKG_LINUX/build-kdotool.sh" "$APPDIR/usr/bin" || \
     echo ">> WARNING: could not bundle kdotool; focus volume will need a system kdotool/xdotool" >&2
 
 # Bundle appimageupdatetool next to the executable so the app can update itself in place (zsync). It reads
@@ -73,10 +74,18 @@ install -m 0755 "$PKG_LINUX/appimage/AppRun" "$APPDIR/AppRun"
 # standard locations for when the AppImage is integrated by a file manager / appimaged.
 install -m 0644 "$PKG_LINUX/com.getpcpanel.PCPanel.desktop"     "$APPDIR/com.getpcpanel.PCPanel.desktop"
 install -m 0644 "$PKG_LINUX/com.getpcpanel.PCPanel.desktop"     "$APPDIR/usr/share/applications/com.getpcpanel.PCPanel.desktop"
-install -m 0644 "$PKG_LINUX/com.getpcpanel.PCPanel.metainfo.xml" "$APPDIR/usr/share/metainfo/com.getpcpanel.PCPanel.metainfo.xml"
+# Named *.appdata.xml (the legacy suffix, still valid AppStream) only in the AppImage: the AppImage tooling
+# (appdir-lint.sh, the appimage.github.io catalog) looks for that name only, and otherwise reports "No appdata
+# file present" and ignores the summary and screenshots in it.
+install -m 0644 "$PKG_LINUX/com.getpcpanel.PCPanel.metainfo.xml" "$APPDIR/usr/share/metainfo/com.getpcpanel.PCPanel.appdata.xml"
 install -m 0644 "$REPO_ROOT/app-icon.png" "$APPDIR/com.getpcpanel.PCPanel.png"
 install -m 0644 "$REPO_ROOT/app-icon.png" "$APPDIR/usr/share/icons/hicolor/256x256/apps/com.getpcpanel.PCPanel.png"
 cp "$APPDIR/com.getpcpanel.PCPanel.png" "$APPDIR/.DirIcon"
+
+if [ -n "${GLIBC_MAX:-}" ]; then
+    echo ">> Checking that nothing in the AppDir needs a glibc newer than $GLIBC_MAX"
+    bash "$PKG_LINUX/check-glibc.sh" "$APPDIR" "$GLIBC_MAX"
+fi
 
 mkdir -p "$OUTPUT_DIR"
 OUTPUT_DIR="$(cd "$OUTPUT_DIR" && pwd)"

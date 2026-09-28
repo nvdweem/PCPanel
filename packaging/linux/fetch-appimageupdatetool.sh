@@ -15,7 +15,7 @@
 # Installs <dest-dir>/appimageupdatetool-x86_64.AppImage (executable) — the name AppImageUpdater looks for
 # next to the PCPanel binary.
 #
-# Caching: mirrors fetch-kdotool.sh — the asset is cached under
+# Caching: the asset is cached under
 # ${AUT_CACHE_DIR:-$HOME/.cache/pcpanel-appimageupdatetool} and reused (sha256-verified) on later runs. In
 # CI, wrap that dir with actions/cache keyed on this script's hash so it downloads once per pin.
 #

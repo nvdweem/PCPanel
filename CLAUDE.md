@@ -51,8 +51,11 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
   NOT self-contained: it loads companion `*.dll`/`*.so` libraries from its own directory, so every
   artifact must bundle them alongside the executable. The Linux artifacts also bundle **`kdotool`**
   (Apache-2.0) next to the executable — it resolves the focused window on KDE Plasma (Wayland and X11)
-  for focus volume. `packaging/linux/fetch-kdotool.sh` pins the version + sha256 and is cache-keyed in
-  CI on its own hash (download once per pin). `LinuxProcessHelper` prefers a `kdotool` sibling of its
+  for focus volume. `packaging/linux/build-kdotool.sh` builds it from the sha256-pinned crate (the
+  upstream prebuilt needs glibc 2.39) and is cache-keyed in CI on its own hash (compiled once per pin).
+  The Linux job runs on **`ubuntu-22.04`** on purpose: every bundled ELF inherits the build host's glibc,
+  and `packaging/linux/check-glibc.sh` (via `GLIBC_MAX` in the AppImage step) fails the build if anything
+  needs more than 2.35. `LinuxProcessHelper` prefers a `kdotool` sibling of its
   own binary over the `PATH` lookup; `xdotool` is only an optional non-KDE-X11 fallback (kdotool covers
   X11, so the two are never both required). Inside the Flatpak, kdotool runs in the sandbox and drives
   the host KWin over D-Bus (`--talk-name=org.kde.KWin`); `kdotool-wrapper.sh` points its `TMPDIR` at the

@@ -122,8 +122,8 @@ modules:
         path: hyprctl-wrapper.sh
       - type: file
         path: kdotool-wrapper.sh
-      # kdotool binary + its Apache-2.0 license, fetched by CI (packaging/linux/fetch-kdotool.sh)
-      # into the manifest's staging dir before the build.
+      # kdotool binary + its Apache-2.0 license, built by the buildLinux CI job
+      # (packaging/linux/build-kdotool.sh) and staged into the manifest's dir before the build.
       - type: file
         path: kdotool
       - type: file
