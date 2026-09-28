@@ -920,9 +920,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # linux-native (raw runner + .so) is the buildLinux -> buildFlatpak hand-off, not a release
-          # asset; drop it so only the installers/bundles are published.
+          # linux-native (raw runner + .so + kdotool/) is the buildLinux -> buildFlatpak hand-off, not a
+          # release asset; drop it so only the installers/bundles are published.
           rm -f dist/*-runner dist/*.so
+          rm -rf dist/kdotool
           # The snapshot-channel AppImage belongs to the rolling snapshot release, not to this one.
           if [ -d dist/snapshot-channel ]; then
             mv dist/snapshot-channel "$RUNNER_TEMP/snapshot-channel"
