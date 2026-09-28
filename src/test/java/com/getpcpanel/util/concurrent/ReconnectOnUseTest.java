@@ -35,6 +35,19 @@ class ReconnectOnUseTest {
         }
     }
 
+    /**
+     * Waits until {@code reconnect} no longer counts an attempt as running. {@link Attempts#finished} fires
+     * inside the attempt, before {@link ReconnectOnUse} clears its in-flight flag, so a request made right
+     * after it can still be refused as "an attempt is still in flight".
+     */
+    private static void awaitIdle(ReconnectOnUse reconnect) throws InterruptedException {
+        var deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        while (reconnect.attemptRunning()) {
+            assertTrue(System.nanoTime() < deadline, "the attempt never ended");
+            Thread.sleep(1);
+        }
+    }
+
     @Test
     void aRequestWhileAvailableStartsNothing() {
         var attempts = new Attempts();
@@ -78,6 +91,7 @@ class ReconnectOnUseTest {
 
         assertTrue(reconnect.request(1_000));
         attempts.awaitFinished();
+        awaitIdle(reconnect);
 
         assertFalse(reconnect.request(1_000 + COOLDOWN - 1));
         assertTrue(reconnect.request(1_000 + COOLDOWN));

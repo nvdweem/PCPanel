@@ -58,6 +58,11 @@ public final class ReconnectOnUse {
         return true;
     }
 
+    /** Whether an attempt has started and not yet ended; it ends only after {@code attempt} returned. */
+    boolean attemptRunning() {
+        return inFlight.get();
+    }
+
     private void runAttempt() {
         try {
             attempt.run();
