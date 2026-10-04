@@ -53,9 +53,18 @@ class NewSessionVolumeServiceTest {
     void honoursDeviceScope() {
         var mpv = event("mpv", "mpv");
 
-        assertTrue(sut.isProcessAndDevice(mpv, binding("", "mpv")));
+        assertTrue(sut.isProcessAndDevice(mpv, binding("", "mpv")), "blank is every device");
         assertTrue(sut.isProcessAndDevice(mpv, binding("*", "mpv")));
-        assertFalse(sut.isProcessAndDevice(mpv, binding("alsa_output.pci-0000_0c_00.4", "mpv")));
+        assertTrue(sut.isProcessAndDevice(mpv, binding("alsa_output.pci-0000_0c_00.4", "mpv")), "the platform does not say where it plays");
+
+        var onBrowsers = new AudioSessionEvent(new AudioSession(null, 1234, new File("msedge.exe"), "Edge", null, 1f, false) {
+            @Override
+            public String deviceId() {
+                return "browsers";
+            }
+        }, EventType.ADDED);
+        assertTrue(sut.isProcessAndDevice(onBrowsers, binding("browsers", "msedge")));
+        assertFalse(sut.isProcessAndDevice(onBrowsers, binding("speakers", "msedge")));
     }
 
     @Test

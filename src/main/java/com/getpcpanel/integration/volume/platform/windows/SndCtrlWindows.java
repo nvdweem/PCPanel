@@ -200,13 +200,17 @@ public class SndCtrlWindows implements ISndCtrl {
 
     @Override
     public void setProcessVolume(String fileName, String device, float volume) {
+        // No device (the default, "All devices" in the editor) means the app on every output, as on Linux and macOS and as App mute
+        // does: apps often play elsewhere than the default device (Wave Link routes a browser to its Browsers
+        // device). Only an explicit device - or "default", from older saves - limits it.
+        var everywhere = StringUtils.isBlank(device) || "*".equals(device);
         var deviceId = defaultDeviceOnEmpty(device);
         List<WindowsAudioSession> targets;
         synchronized (devices) {
             targets = StreamEx.ofValues(devices)
                     // deviceId is null until the first default-device callback arrives, and stays null
                     // while the machine has no default playback device; no device matches either way.
-                    .filter(d -> ("*".equals(device) && d.dataflow() == DataFlow.dfRender) || StringUtils.equals(deviceId, d.id()))
+                    .filter(d -> (everywhere && d.dataflow() == DataFlow.dfRender) || !everywhere && StringUtils.equals(deviceId, d.id()))
                     .flatCollection(d -> d.getSessions().values())
                     .filter(s -> (StringUtils.equalsIgnoreCase(fileName, AudioSession.SYSTEM) && s.isSystemSounds()) || (s.executable() != null && StringUtils.equalsIgnoreCase(fileName, s.executable().getName())))
                     .toList();

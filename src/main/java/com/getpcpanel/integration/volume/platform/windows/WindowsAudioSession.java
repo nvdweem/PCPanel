@@ -33,6 +33,11 @@ class WindowsAudioSession extends AudioSession {
      * device's off-thread bus so no observer runs on one.
      */
     @Override
+    public String deviceId() {
+        return device.id();
+    }
+
+    @Override
     protected void publish(Object event) {
         if (device instanceof WindowsAudioDevice windows) {
             windows.publish(event);

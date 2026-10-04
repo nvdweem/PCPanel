@@ -23,6 +23,7 @@ import lombok.ToString;
 @CommandMeta(label = "App volume", category = CommandCategory.audio, kinds = {CommandKind.dial}, icon = "volume", legacyIds = {"com.getpcpanel.commands.command.CommandVolumeProcess"})
 public class CommandVolumeProcess extends CommandVolume implements DialAction {
     private final List<String> processName;
+    /** The output device to control the apps on; blank (the default) is every output device. */
     private final String device;
     private final boolean unMuteOnVolumeChange;
     private final DialCommandParams dialParams;

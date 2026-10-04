@@ -35,6 +35,7 @@
 - Fixed the **device picture on the main screen running off the screen** in a small or short browser window, where its top was cut off and its sliders disappeared behind the bar at the bottom. The picture now shrinks to fit the window, and only in a very small window can you scroll to the rest of it.
 - (Linux) Fixed **focus volume on KDE Plasma not working on older distributions** such as Ubuntu 22.04 and Debian 12. The `kdotool` that comes with the .deb and AppImage needed a newer system library than those distributions have and didn't start at all. It now runs on every distribution PCPanel itself runs on, and the AppImage lists screenshots for app stores and catalogs.
 - **Force volume** (Settings → General → Volume) now works on Windows too, and on its own: it keeps an app at its control's level whenever the app or the system mixer changes its volume, without also needing *New apps start at their control's level*.
+- (Windows) Fixed **App volume doing nothing for apps that play on another device than the default one**, such as a browser that Wave Link routes to its *Browsers* device: it now sets the app's volume on every output device by default, as App mute and Linux already did. The action has its **Audio device** choice back, to limit it to one device.
 
 ## [2.0.97]
 

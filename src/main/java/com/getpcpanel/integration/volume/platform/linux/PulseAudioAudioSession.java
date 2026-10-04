@@ -25,10 +25,25 @@ class PulseAudioAudioSession extends AudioSession {
      */
     @EqualsAndHashCode.Exclude @Nullable private final String portalAppId;
 
+    /** The output this stream plays on (its sink's name), when known. */
+    @EqualsAndHashCode.Exclude @Nullable private final String sinkId;
+
     public PulseAudioAudioSession(Event<Object> eventBus, int index, int pid, File executable, String title, String icon, float volume, boolean muted, @Nullable String portalAppId) {
+        this(eventBus, index, pid, executable, title, icon, volume, muted, portalAppId, null);
+    }
+
+    public PulseAudioAudioSession(Event<Object> eventBus, int index, int pid, File executable, String title, String icon, float volume, boolean muted, @Nullable String portalAppId,
+            @Nullable String sinkId) {
         super(eventBus, pid, executable, title, icon, volume, muted);
         this.index = index;
         this.portalAppId = portalAppId;
+        this.sinkId = sinkId;
+    }
+
+    @Override
+    @Nullable
+    public String deviceId() {
+        return sinkId;
     }
 
     @Override

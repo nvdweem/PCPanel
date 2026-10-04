@@ -79,6 +79,7 @@ const FIELD_DEFS: FieldDef_[] = [
     buildEmpty: () => ({ _type: P + 'CommandVolumeProcess', device: '', processName: [], unMuteOnVolumeChange: false, dialParams: dialParams(), invert: false }),
     fields: [
       { kind: 'apps', key: 'processName', label: 'Applications', everythingElse: true },
+      { kind: 'device', key: 'device', label: 'Audio device', filter: 'output', defaultLabel: 'All devices' },
       { kind: 'toggle', key: 'unMuteOnVolumeChange', label: 'Unmute on volume change' },
     ],
   },

@@ -202,9 +202,11 @@ class SndCtrlPulseAudio implements ISndCtrl {
 
     @Override
     public void setProcessVolume(String fileName, @Nullable String device, float volume) {
+        // Blank or "*" is every output, as on Windows; otherwise only the app's streams on that output.
+        var anyDevice = StringUtils.isBlank(device) || "*".equals(device);
         Set<PulseAudioAudioSession> todo;
         synchronized (sessions) {
-            todo = allSessions().filter(s -> matches(s, fileName)).toSet();
+            todo = allSessions().filter(s -> matches(s, fileName) && (anyDevice || device.equals(s.deviceId()))).toSet();
         }
         todo.forEach(s -> setSessionVolume(s, volume));
     }
@@ -444,7 +446,16 @@ class SndCtrlPulseAudio implements ISndCtrl {
                 new File(props.getOrDefault("application.process.binary", "/")),
                 title,
                 "", extractVolume(pa), false,
-                portalAppId);
+                portalAppId,
+                sinkName(NumberUtils.toInt(pa.metas().get("Sink"), -1)));
+    }
+
+    /** The id of the output with this index, which for an output is its PulseAudio name. */
+    @Nullable
+    private String sinkName(int index) {
+        synchronized (devices) {
+            return StreamEx.ofValues(devices).findFirst(d -> d.isOutput() && d.index() == index).map(AudioDevice::id).orElse(null);
+        }
     }
 
     float extractVolume(PulseAudioTarget pa) {

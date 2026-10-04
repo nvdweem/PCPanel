@@ -73,6 +73,12 @@ public class AudioSession {
         return this;
     }
 
+    /** The id of the output device this session plays on, where the platform has one; null otherwise. */
+    @Nullable
+    public String deviceId() {
+        return null;
+    }
+
     public boolean isSystemSounds() {
         return pid == 0 || StringUtils.containsIgnoreCase(icon, "AudioSrv.Dll");
     }

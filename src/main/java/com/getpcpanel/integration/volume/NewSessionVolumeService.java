@@ -138,7 +138,8 @@ class NewSessionVolumeService implements IFocusRedirector {
         if (c.getProcessName().stream().noneMatch(session::matches)) {
             return false;
         }
+        // Blank is every output device; a chosen one only its own sessions (where the platform knows a session's device).
         var deviceId = c.getDevice();
-        return StringUtils.isBlank(deviceId) || "*".equals(deviceId);
+        return StringUtils.isBlank(deviceId) || "*".equals(deviceId) || session.deviceId() == null || deviceId.equals(session.deviceId());
     }
 }
