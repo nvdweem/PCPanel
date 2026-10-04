@@ -5,6 +5,7 @@ import {
   LightingConfig, SingleKnobLightingConfig, SingleSliderLabelLightingConfig, SingleSliderLightingConfig,
 } from '../../models/generated/backend.types';
 import { ColorPickerComponent, SelectComponent, SelectOption, ToastService } from '../../ui';
+import { LightTargetComponent } from './light-target.component';
 import { MuteOverrideFieldComponent } from './mute-override-field.component';
 import { normalizeLogo } from './lighting-util';
 import { DeviceCapabilitiesService } from '../../services/device-capabilities.service';
@@ -25,7 +26,7 @@ const LABEL_DEFAULT: SingleSliderLabelLightingConfig = { mode: 'STATIC', color: 
 @Component({
   selector: 'pc-control-lighting',
   standalone: true,
-  imports: [SelectComponent, ColorPickerComponent, MuteOverrideFieldComponent],
+  imports: [SelectComponent, ColorPickerComponent, MuteOverrideFieldComponent, LightTargetComponent],
   template: `
     @if (config(); as cfg) {
       <div class="cl">
@@ -36,8 +37,12 @@ const LABEL_DEFAULT: SingleSliderLabelLightingConfig = { mode: 'STATIC', color: 
           </div>
           @if (knobUi() !== 'off') {
             <pc-color-picker label="Color" [value]="knob().color1" (valueChange)="setKnob('color1', $event)"></pc-color-picker>
-            @if (knobUi() === 'gradient') {
-              <pc-color-picker label="Color 2" [value]="knob().color2" (valueChange)="setKnob('color2', $event)"></pc-color-picker>
+            @if (knobUi() === 'gradient' || knobUi() === 'level') {
+              <pc-color-picker [label]="knobUi() === 'level' ? 'Quiet color' : 'Color 2'" [value]="knob().color2" (valueChange)="setKnob('color2', $event)"></pc-color-picker>
+            }
+            @if (knobUi() === 'level') {
+              <pc-light-target label="Level of" followLabel="What this control controls (else default speakers)"
+                               [value]="knob().audioLevelSource" (valueChange)="setKnob('audioLevelSource', $event)"></pc-light-target>
             }
             <pc-mute-override-field [color]="knob().muteOverrideColor" (colorChange)="setKnob('muteOverrideColor', $event)"></pc-mute-override-field>
           }
@@ -49,8 +54,12 @@ const LABEL_DEFAULT: SingleSliderLabelLightingConfig = { mode: 'STATIC', color: 
           </div>
           @if (sliderUi() !== 'off') {
             <pc-color-picker label="Color" [value]="slider().color1" (valueChange)="setSlider('color1', $event)"></pc-color-picker>
-            @if (sliderUi() === 'static-gradient' || sliderUi() === 'gradient') {
-              <pc-color-picker label="Color 2" [value]="slider().color2" (valueChange)="setSlider('color2', $event)"></pc-color-picker>
+            @if (sliderUi() === 'static-gradient' || sliderUi() === 'gradient' || sliderUi() === 'level') {
+              <pc-color-picker [label]="sliderUi() === 'level' ? 'Quiet color' : 'Color 2'" [value]="slider().color2" (valueChange)="setSlider('color2', $event)"></pc-color-picker>
+            }
+            @if (sliderUi() === 'level') {
+              <pc-light-target label="Level of" followLabel="What this control controls (else default speakers)"
+                               [value]="slider().audioLevelSource" (valueChange)="setSlider('audioLevelSource', $event)"></pc-light-target>
             }
             <pc-mute-override-field [color]="slider().muteOverrideColor" (colorChange)="setSlider('muteOverrideColor', $event)"></pc-mute-override-field>
           }
@@ -98,10 +107,12 @@ export class ControlLightingComponent {
 
   readonly knobModes: SelectOption[] = [
     { value: 'off', label: 'Off' }, { value: 'static', label: 'Static color' }, { value: 'gradient', label: 'Volume gradient' },
+    { value: 'level', label: 'Audio level' },
   ];
   readonly sliderModes: SelectOption[] = [
     { value: 'off', label: 'Off' }, { value: 'static', label: 'Static color' },
     { value: 'static-gradient', label: 'Static gradient' }, { value: 'gradient', label: 'Volume gradient' },
+    { value: 'level', label: 'Audio level' },
   ];
   readonly labelModes: SelectOption[] = [
     { value: 'off', label: 'Off' }, { value: 'follow', label: 'Follow slider' }, { value: 'static', label: 'Static color' },
@@ -135,11 +146,12 @@ export class ControlLightingComponent {
     return arr;
   }
   knob(): SingleKnobLightingConfig { return this.config()?.knobConfigs?.[this.index()] ?? KNOB_DEFAULT; }
-  knobUi(): string { const c = this.knob(); if (c.mode === 'NONE' || (c.mode === 'STATIC' && isBlackHex(c.color1))) return 'off'; return c.mode === 'VOLUME_GRADIENT' ? 'gradient' : 'static'; }
+  knobUi(): string { const c = this.knob(); if (c.mode === 'NONE' || (c.mode === 'STATIC' && isBlackHex(c.color1))) return 'off'; return c.mode === 'VOLUME_GRADIENT' ? 'gradient' : c.mode === 'AUDIO_LEVEL' ? 'level' : 'static'; }
   setKnobUi(ui: string): void {
     const arr = this.padKnobs(this.index() + 1); const cur = arr[this.index()];
     if (ui === 'off') arr[this.index()] = { ...cur, mode: 'STATIC', color1: BLACK, color2: BLACK };
     else if (ui === 'gradient') arr[this.index()] = { ...cur, mode: 'VOLUME_GRADIENT', color1: isBlackHex(cur.color1) ? '#FFB020' : cur.color1, color2: isBlackHex(cur.color2) ? '#3B6BFF' : cur.color2 };
+    else if (ui === 'level') arr[this.index()] = { ...cur, mode: 'AUDIO_LEVEL', color1: isBlackHex(cur.color1) ? '#FFB020' : cur.color1, color2: BLACK };
     else arr[this.index()] = { ...cur, mode: 'STATIC', color1: isBlackHex(cur.color1) ? '#FFB020' : cur.color1 };
     this.patch({ knobConfigs: arr });
   }
@@ -156,13 +168,14 @@ export class ControlLightingComponent {
     return arr;
   }
   slider(): SingleSliderLightingConfig { return this.config()?.sliderConfigs?.[this.sliderIdx()] ?? SLIDER_DEFAULT; }
-  sliderUi(): string { const c = this.slider(); if (c.mode === 'NONE' || (c.mode === 'STATIC' && isBlackHex(c.color1))) return 'off'; return c.mode === 'STATIC_GRADIENT' ? 'static-gradient' : c.mode === 'VOLUME_GRADIENT' ? 'gradient' : 'static'; }
+  sliderUi(): string { const c = this.slider(); if (c.mode === 'NONE' || (c.mode === 'STATIC' && isBlackHex(c.color1))) return 'off'; return c.mode === 'STATIC_GRADIENT' ? 'static-gradient' : c.mode === 'VOLUME_GRADIENT' ? 'gradient' : c.mode === 'AUDIO_LEVEL' ? 'level' : 'static'; }
   setSliderUi(ui: string): void {
     const j = this.sliderIdx(); const arr = this.padSliders(j + 1); const cur = arr[j];
     const c1 = isBlackHex(cur.color1) ? '#FFB020' : cur.color1; const c2 = isBlackHex(cur.color2) ? '#3B6BFF' : cur.color2;
     if (ui === 'off') arr[j] = { ...cur, mode: 'STATIC', color1: BLACK, color2: BLACK };
     else if (ui === 'static-gradient') arr[j] = { ...cur, mode: 'STATIC_GRADIENT', color1: c1, color2: c2 };
     else if (ui === 'gradient') arr[j] = { ...cur, mode: 'VOLUME_GRADIENT', color1: c1, color2: c2 };
+    else if (ui === 'level') arr[j] = { ...cur, mode: 'AUDIO_LEVEL', color1: c1, color2: BLACK };
     else arr[j] = { ...cur, mode: 'STATIC', color1: c1 };
     this.patch({ sliderConfigs: arr });
   }

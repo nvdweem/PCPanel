@@ -527,6 +527,10 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         "com.sun.jna.ptr.ByteByReference",
         "com.sun.jna.ptr.ShortByReference",
         "com.sun.jna.ptr.IntByReference",
+        //   - FloatByReference: IAudioMeterInformation::GetPeakValue and IAudioEndpointVolume::GetMasterVolumeLevel in
+        //     WindowsAudioLevelMeter. Those are raw COM vtable calls, not Library methods, so the coverage test
+        //     above cannot see them.
+        "com.sun.jna.ptr.FloatByReference",
 })
 public class NativeImageConfig {
     private NativeImageConfig() {

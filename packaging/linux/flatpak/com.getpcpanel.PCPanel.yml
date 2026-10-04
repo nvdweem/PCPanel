@@ -13,8 +13,9 @@
 #
 # Known limitations (the app is primarily developed for Windows):
 #   * Volume control still relies on host pactl (forwarded via flatpak-spawn --host); xdotool (only
-#     useful on non-KDE X11), kscreen-doctor/xset and ddcutil (Turn displays off) are likewise
-#     forwarded to the host if present. All need the org.freedesktop.Flatpak talk permission below.
+#     useful on non-KDE X11), parec (audio-level lights), kscreen-doctor/xset and ddcutil (Turn displays off)
+#     are likewise forwarded to the host if present. All need the org.freedesktop.Flatpak talk
+#     permission below.
 #   * Autostart on login is not configured here; enable it via your desktop's autostart
 #     settings or `flatpak run` from a user systemd unit.
 app-id: com.getpcpanel.PCPanel
@@ -103,6 +104,8 @@ modules:
       - install -m 0755 host-spawn-wrapper.sh /app/bin/xset
       # Turning single monitors off and on over DDC/CI: the host's ddcutil, which needs the host's /dev/i2c-* access.
       - install -m 0755 host-spawn-wrapper.sh /app/bin/ddcutil
+      # Audio-level lights record levels with the host's parec; its wrapper ends the recording if PCPanel goes away.
+      - install -m 0755 parec-wrapper.sh /app/bin/parec
       # hyprctl is also forwarded to the host, but needs the Hyprland instance signature handed to it
       # explicitly — flatpak-spawn does not carry the sandbox environment over. See the wrapper.
       - install -m 0755 hyprctl-wrapper.sh /app/bin/hyprctl
@@ -123,6 +126,8 @@ modules:
         path: pcpanel-launcher.sh
       - type: file
         path: host-spawn-wrapper.sh
+      - type: file
+        path: parec-wrapper.sh
       - type: file
         path: hyprctl-wrapper.sh
       - type: file

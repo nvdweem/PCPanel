@@ -85,6 +85,25 @@ public class ProcessHelper {
         process.getOutputStream().close();
     }
 
+    /**
+     * Starts {@code command} and returns it running, for a caller that reads its output as bytes for as long as it
+     * likes (stderr discarded, stdin closed). The caller ends it with {@link #stop}.
+     */
+    public Process startReading(String... command) throws IOException {
+        var process = builder(command).redirectError(ProcessBuilder.Redirect.DISCARD).start();
+        process.getOutputStream().close();
+        return process;
+    }
+
+    /**
+     * Asks a process started by {@link #startReading} to end, its descendants too. A polite stop rather than a kill,
+     * so a wrapper that forwards signals (flatpak-spawn) can pass it on.
+     */
+    public static void stop(Process process) {
+        process.descendants().forEach(ProcessHandle::destroy);
+        process.destroy();
+    }
+
     public int stream(Consumer<String> onLine, String... command) throws IOException, InterruptedException {
         return stream(Map.of(), onLine, command);
     }

@@ -9,18 +9,21 @@ public class SingleSliderLightingConfig {
     private String color2;
     private String muteOverrideDeviceOrFollow;
     private String muteOverrideColor;
+    /** What an {@code AUDIO_LEVEL} light meters: blank follows the control (or the default output), else an audio-device name or {@code app:<exe>}. */
+    @javax.annotation.Nullable private String audioLevelSource;
 
     public SingleSliderLightingConfig() {
         mode = SINGLE_SLIDER_MODE.NONE;
     }
 
     public enum SINGLE_SLIDER_MODE {
-        NONE, STATIC, STATIC_GRADIENT, VOLUME_GRADIENT
+        NONE, STATIC, STATIC_GRADIENT, VOLUME_GRADIENT, AUDIO_LEVEL
     }
 
     public void set(SingleSliderLightingConfig c) {
         color1 = c.color1;
         color2 = c.color2;
+        audioLevelSource = c.audioLevelSource;
         mode = c.mode;
     }
 }

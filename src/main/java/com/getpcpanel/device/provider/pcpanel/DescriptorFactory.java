@@ -25,10 +25,10 @@ import com.getpcpanel.device.descriptor.LightOutputSpec;
 public final class DescriptorFactory {
     public static final String PROVIDER_ID = "pcpanel";
 
-    private static final List<String> ELEMENT_MODES_DIAL = List.of("NONE", "STATIC", "VOLUME_GRADIENT");
-    private static final List<String> ELEMENT_MODES_SLIDER = List.of("NONE", "STATIC", "STATIC_GRADIENT", "VOLUME_GRADIENT");
+    private static final List<String> ELEMENT_MODES_DIAL = List.of("NONE", "STATIC", "VOLUME_GRADIENT", "AUDIO_LEVEL");
+    private static final List<String> ELEMENT_MODES_SLIDER = List.of("NONE", "STATIC", "STATIC_GRADIENT", "VOLUME_GRADIENT", "AUDIO_LEVEL");
     private static final List<String> ELEMENT_MODES_SLIDER_LABEL = List.of("NONE", "STATIC");
-    private static final List<String> ELEMENT_MODES_LOGO = List.of("NONE", "STATIC", "RAINBOW", "BREATH");
+    private static final List<String> ELEMENT_MODES_LOGO = List.of("NONE", "STATIC", "RAINBOW", "BREATH", "AUDIO_LEVEL");
 
     // Index at which Pro analog inputs switch from dials to sliders (dials 0..4, sliders 5..8).
     private static final int PRO_DIAL_COUNT = 5;

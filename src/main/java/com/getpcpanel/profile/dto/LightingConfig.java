@@ -2,6 +2,8 @@ package com.getpcpanel.profile.dto;
 
 import java.util.Arrays;
 
+import javax.annotation.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.getpcpanel.device.provider.pcpanel.DeviceType;
@@ -45,6 +47,11 @@ public class LightingConfig {
     private SingleSliderLightingConfig[] sliderConfigs = {};
     private SingleLogoLightingConfig logoConfig;
     @Getter @Setter private int globalBrightness = 100;
+    /**
+     * The response curve (an id from the curve library) audio-level lights brighten along: one for the device, so a
+     * curve that spreads the loud end shows changes there. Blank is linear on the meter's dB scale.
+     */
+    @Getter @Setter @Nullable private String audioLevelCurve;
 
     public LightingConfig deepCopy() {
         return toBuilder()

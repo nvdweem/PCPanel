@@ -9,13 +9,15 @@ public class SingleLogoLightingConfig {
     private byte brightness;
     private byte speed;
     private byte hue;
+    /** What an {@code AUDIO_LEVEL} light meters: blank follows the control (or the default output), else an audio-device name or {@code app:<exe>}. */
+    @javax.annotation.Nullable private String audioLevelSource;
 
     public SingleLogoLightingConfig() {
         mode = SINGLE_LOGO_MODE.NONE;
     }
 
     public enum SINGLE_LOGO_MODE {
-        NONE, STATIC, RAINBOW, BREATH
+        NONE, STATIC, RAINBOW, BREATH, AUDIO_LEVEL
     }
 
     /**

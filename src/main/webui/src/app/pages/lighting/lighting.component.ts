@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { Router } from '@angular/router';
+import { SettingsService } from '../../services/settings.service';
+import { LINEAR_ID } from '../../features/curves/curve.util';
 import { DeviceStateService } from '../../services/device-state.service';
 import { DeviceService } from '../../services/device.service';
 import {
@@ -8,6 +10,7 @@ import {
 } from '../../ui';
 import { DeviceRendererComponent } from '../../devices/visual/device-renderer.component';
 import { MuteOverrideFieldComponent } from '../../features/lighting/mute-override-field.component';
+import { LightTargetComponent } from '../../features/lighting/light-target.component';
 import { normalizeLogo } from '../../features/lighting/lighting-util';
 import { DeviceCapabilitiesService } from '../../services/device-capabilities.service';
 import {
@@ -23,6 +26,7 @@ const SLIDER_LABEL_DEFAULT: SingleSliderLabelLightingConfig = { mode: 'STATIC', 
 // brightness/speed/hue are signed bytes (-128..127, read unsigned). -1 = full brightness.
 const LOGO_DEFAULT: SingleLogoLightingConfig = { mode: 'STATIC', color: '#FFB020', brightness: -1, hue: 0, speed: 32 };
 const BLACK = '#000000';
+const EDIT_CURVES = '__edit-curves__';
 const isBlackHex = (c: string | undefined): boolean => !c || /^#?0{3,8}$/i.test(c.trim());
 
 @Component({
@@ -31,6 +35,7 @@ const isBlackHex = (c: string | undefined): boolean => !c || /^#?0{3,8}$/i.test(
   imports: [
     IconComponent, StatusDotComponent, SliderComponent, ToggleComponent, SegmentedComponent,
     SelectComponent, ColorPickerComponent, DeviceRendererComponent, BottomBarComponent, MuteOverrideFieldComponent,
+    LightTargetComponent,
   ],
   templateUrl: './lighting.component.html',
   styleUrl: './lighting.component.scss',
@@ -42,6 +47,7 @@ export class LightingComponent {
   private readonly toast = inject(ToastService);
   private readonly capsService = inject(DeviceCapabilitiesService);
   private readonly router = inject(Router);
+  private readonly settings = inject(SettingsService);
 
   readonly serial = input.required<string>();
 
@@ -73,12 +79,14 @@ export class LightingComponent {
     { value: 'off', label: 'Off' },
     { value: 'static', label: 'Static color' },
     { value: 'gradient', label: 'Volume gradient' },
+    { value: 'level', label: 'Audio level' },
   ];
   readonly sliderModeOptions: SelectOption[] = [
     { value: 'off', label: 'Off' },
     { value: 'static', label: 'Static color' },
     { value: 'static-gradient', label: 'Static gradient' },
     { value: 'gradient', label: 'Volume gradient' },
+    { value: 'level', label: 'Audio level' },
   ];
   readonly sliderLabelModeOptions: SelectOption[] = [
     { value: 'off', label: 'Off' },
@@ -90,6 +98,7 @@ export class LightingComponent {
     { value: 'STATIC', label: 'Static color' },
     { value: 'RAINBOW', label: 'Rainbow' },
     { value: 'BREATH', label: 'Breath' },
+    { value: 'AUDIO_LEVEL', label: 'Audio level' },
   ];
 
   constructor() {
@@ -188,12 +197,13 @@ export class LightingComponent {
   knobUiMode(i: number): string {
     const c = this.knobAt(i);
     if (c.mode === 'NONE' || (c.mode === 'STATIC' && isBlackHex(c.color1))) return 'off';
-    return c.mode === 'VOLUME_GRADIENT' ? 'gradient' : 'static';
+    return c.mode === 'VOLUME_GRADIENT' ? 'gradient' : c.mode === 'AUDIO_LEVEL' ? 'level' : 'static';
   }
   setKnobUiMode(i: number, ui: string): void {
     const arr = this.padKnobs(i + 1); const cur = arr[i];
     if (ui === 'off') arr[i] = { ...cur, mode: 'STATIC', color1: BLACK, color2: BLACK };
     else if (ui === 'gradient') arr[i] = { ...cur, mode: 'VOLUME_GRADIENT', color1: isBlackHex(cur.color1) ? '#FFB020' : cur.color1, color2: isBlackHex(cur.color2) ? '#3B6BFF' : cur.color2 };
+    else if (ui === 'level') arr[i] = { ...cur, mode: 'AUDIO_LEVEL', color1: isBlackHex(cur.color1) ? '#FFB020' : cur.color1, color2: BLACK };
     else arr[i] = { ...cur, mode: 'STATIC', color1: isBlackHex(cur.color1) ? '#FFB020' : cur.color1 };
     this.patch({ knobConfigs: arr });
   }
@@ -218,7 +228,7 @@ export class LightingComponent {
   sliderUiMode(i: number): string {
     const c = this.sliderAt(i);
     if (c.mode === 'NONE' || (c.mode === 'STATIC' && isBlackHex(c.color1))) return 'off';
-    return c.mode === 'STATIC_GRADIENT' ? 'static-gradient' : c.mode === 'VOLUME_GRADIENT' ? 'gradient' : 'static';
+    return c.mode === 'STATIC_GRADIENT' ? 'static-gradient' : c.mode === 'VOLUME_GRADIENT' ? 'gradient' : c.mode === 'AUDIO_LEVEL' ? 'level' : 'static';
   }
   setSliderUiMode(i: number, ui: string): void {
     const arr = this.padSliders(i + 1); const cur = arr[i];
@@ -228,6 +238,7 @@ export class LightingComponent {
     if (ui === 'off') arr[i] = { ...cur, mode: 'STATIC', color1: BLACK, color2: BLACK };
     else if (ui === 'static-gradient') arr[i] = { ...cur, mode: 'STATIC_GRADIENT', color1: c1, color2: c2 };
     else if (ui === 'gradient') arr[i] = { ...cur, mode: 'VOLUME_GRADIENT', color1: c1, color2: c2 };
+    else if (ui === 'level') arr[i] = { ...cur, mode: 'AUDIO_LEVEL', color1: c1, color2: BLACK };
     else arr[i] = { ...cur, mode: 'STATIC', color1: c1 };
     this.patch(this.withFollowingLabel({ sliderConfigs: arr }, i, oldColor1, arr[i].color1));
   }
@@ -287,6 +298,26 @@ export class LightingComponent {
     const arr = this.padSliderLabels(i + 1);
     arr[i] = { ...arr[i], [key]: value };
     this.patch({ sliderLabelConfigs: arr });
+  }
+
+  // ── audio level response ──────────────────────────────────────────────────────
+  readonly linearId = LINEAR_ID;
+  /** Whether any light of this device follows an audio level, so its response curve matters. */
+  readonly usesAudioLevel = computed(() => {
+    const c = this.config();
+    return !!c && ((c.knobConfigs ?? []).some(k => k?.mode === 'AUDIO_LEVEL') || (c.sliderConfigs ?? []).some(s => s?.mode === 'AUDIO_LEVEL')
+      || c.logoConfig?.mode === 'AUDIO_LEVEL');
+  });
+  readonly curveOptions = computed<SelectOption<string>[]>(() => [
+    ...(this.settings.settings.value()?.curves ?? []).map(curve => ({ value: curve.id, label: curve.name || curve.id })),
+    { value: EDIT_CURVES, label: 'Edit curves…' },
+  ]);
+  setAudioLevelCurve(id: string): void {
+    if (id === EDIT_CURVES) {
+      this.router.navigate(['/settings'], { queryParams: { tab: 'curves' } });
+      return;
+    }
+    this.patch({ audioLevelCurve: id === LINEAR_ID ? '' : id });
   }
 
   // ── per-control: logo ─────────────────────────────────────────────────────────

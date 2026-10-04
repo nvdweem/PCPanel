@@ -48,7 +48,9 @@ The software depends on:
   app crashes during HID init with `libusb-1.0.so.0: cannot open shared object file`. The `.deb`
   declares it under `Depends:` so it is installed automatically; for a manual/AppImage install make
   sure it is present (`apt-get install libusb-1.0-0`). It is part of the Flatpak runtime already.
-- `pulseaudio-utils` (the `pactl` command) — for volume control.
+- `pulseaudio-utils` (the `pactl` command) — for volume control. Its `parec` command feeds the *Audio level* light
+  mode, and the *microphone in use* notification light reads `pactl` too. On PipeWire systems this package works
+  against PipeWire's PulseAudio server.
 - `kdotool` — to get the currently active window for focus volume on KDE Plasma (Wayland **and** X11).
   This is **bundled** with the `.deb`, AppImage and Flatpak, so you normally don't install it yourself.
   `kdotool` covers X11 too, so `xdotool` is not needed alongside it; `xdotool` only helps on non-KDE X11
@@ -103,8 +105,9 @@ will **not** receive updates — prefer the `.flatpakref` above unless you have 
 
 The sandbox is granted USB device access, audio (PulseAudio/PipeWire), network, X11/Wayland and tray permissions. `kdotool`
 for focus volume is **bundled inside the sandbox** and talks to the host KWin over D-Bus (`--talk-name=org.kde.KWin`), so KDE
-Plasma focus volume works without a host-installed kdotool. Volume control (`pactl`) and the optional non-KDE-X11 fallback
-(`xdotool`) are still forwarded to the host via `flatpak-spawn`, so those host tools need to be present for their features.
+Plasma focus volume works without a host-installed kdotool. Volume control (`pactl`), audio-level lights (`parec`),
+*Turn displays off* (`kscreen-doctor`, or `xset` on X11) and the optional non-KDE-X11 fallback (`xdotool`) are still
+forwarded to the host via `flatpak-spawn`, so those host tools need to be present for their features.
 
 > **Discord integration:** the sandbox is granted access to Discord's local IPC socket
 > (`$XDG_RUNTIME_DIR/discord-ipc-*`, plus the Flatpak/snap Discord locations). Because a Flatpak only

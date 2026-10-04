@@ -90,7 +90,7 @@ public final class OutputInterpreter {
             var mode = knob == null || knob.getMode() == null ? SingleKnobLightingConfig.SINGLE_KNOB_MODE.NONE : knob.getMode();
             switch (mode) {
                 case NONE -> colors[i] = "#000000";
-                case STATIC -> colors[i] = knob.getColor1();
+                case STATIC, AUDIO_LEVEL -> colors[i] = knob.getColor1();
                 case VOLUME_GRADIENT -> {
                     colors[i] = knob.getColor2();
                     volumeTrack[i] = true;
@@ -230,7 +230,8 @@ public final class OutputInterpreter {
             knobData.mark();
             var ignored = switch (knobConfig.getMode()) {
                 case NONE -> knobData;
-                case STATIC -> {
+                // An audio-level light without a live level (no meter here) shows its loud colour.
+                case STATIC, AUDIO_LEVEL -> {
                     var c1 = knobConfig.getColor1();
                     yield knobData.append(COLOR_STATIC)
                                   .appendHex(c1);
@@ -275,7 +276,7 @@ public final class OutputInterpreter {
             sliderData.mark();
             var ignored = switch (sliderConfig.getMode()) {
                 case NONE -> sliderData;
-                case STATIC -> {
+                case STATIC, AUDIO_LEVEL -> {
                     var c1 = sliderConfig.getColor1();
                     yield sliderData.append(1)
                                     .appendHex(c1)
@@ -298,7 +299,7 @@ public final class OutputInterpreter {
         var logoData = new ByteWriter(brightness).append(PREFIX_PRO, CUSTOM_LOGO);
         var ignored = switch (logoConfig.getMode()) {
             case NONE -> logoConfig;
-            case STATIC -> {
+            case STATIC, AUDIO_LEVEL -> {
                 var c1 = logoConfig.getColor();
                 yield logoData.append(COLOR_STATIC).appendHex(c1);
             }

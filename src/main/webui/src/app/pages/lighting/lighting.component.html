@@ -29,6 +29,15 @@
           </div>
         </div>
 
+        @if (cfg.lightingMode === 'CUSTOM' && usesAudioLevel()) {
+          <div class="block">
+            <span class="micro-label">AUDIO LEVEL RESPONSE</span>
+            <pc-select [options]="curveOptions()" [value]="cfg.audioLevelCurve || linearId" [block]="true"
+                       (valueChange)="setAudioLevelCurve($any($event))"></pc-select>
+            <span class="hint">How the audio-level lights brighten with loudness, for this whole device. A curve that rises slowly at first shows more of the changes in loud music.</span>
+          </div>
+        }
+
         <!-- Parameters for the active global mode -->
         @switch (cfg.lightingMode) {
           @case ('ALL_COLOR') {
@@ -147,8 +156,12 @@
                                    (valueChange)="setKnobUiMode(i, $any($event))"></pc-select>
                         @if (knobUiMode(i) !== 'off') {
                           <pc-color-picker label="Color" [value]="knobAt(i).color1" (valueChange)="setKnob(i, 'color1', $event)"></pc-color-picker>
-                          @if (knobUiMode(i) === 'gradient') {
-                            <pc-color-picker label="Color 2" [value]="knobAt(i).color2" (valueChange)="setKnob(i, 'color2', $event)"></pc-color-picker>
+                          @if (knobUiMode(i) === 'gradient' || knobUiMode(i) === 'level') {
+                            <pc-color-picker [label]="knobUiMode(i) === 'level' ? 'Quiet color' : 'Color 2'" [value]="knobAt(i).color2" (valueChange)="setKnob(i, 'color2', $event)"></pc-color-picker>
+                          }
+                          @if (knobUiMode(i) === 'level') {
+                            <pc-light-target label="Level of" followLabel="What this control controls (else default speakers)"
+                                             [value]="knobAt(i).audioLevelSource" (valueChange)="setKnob(i, 'audioLevelSource', $event)"></pc-light-target>
                           }
                           <pc-mute-override-field [color]="knobAt(i).muteOverrideColor" (colorChange)="setKnob(i, 'muteOverrideColor', $event)"></pc-mute-override-field>
                         }
@@ -170,9 +183,13 @@
                                      (valueChange)="setSliderUiMode(j, $any($event))"></pc-select>
                           @if (sliderUiMode(j) !== 'off') {
                             <pc-color-picker label="Color" [value]="sliderAt(j).color1" (valueChange)="setSlider(j, 'color1', $event)"></pc-color-picker>
-                            @if (sliderUiMode(j) === 'static-gradient' || sliderUiMode(j) === 'gradient') {
-                              <pc-color-picker label="Color 2" [value]="sliderAt(j).color2" (valueChange)="setSlider(j, 'color2', $event)"></pc-color-picker>
+                            @if (sliderUiMode(j) === 'static-gradient' || sliderUiMode(j) === 'gradient' || sliderUiMode(j) === 'level') {
+                              <pc-color-picker [label]="sliderUiMode(j) === 'level' ? 'Quiet color' : 'Color 2'" [value]="sliderAt(j).color2" (valueChange)="setSlider(j, 'color2', $event)"></pc-color-picker>
                             }
+                            @if (sliderUiMode(j) === 'level') {
+                            <pc-light-target label="Level of" followLabel="What this control controls (else default speakers)"
+                                             [value]="sliderAt(j).audioLevelSource" (valueChange)="setSlider(j, 'audioLevelSource', $event)"></pc-light-target>
+                          }
                             <pc-mute-override-field [color]="sliderAt(j).muteOverrideColor" (colorChange)="setSlider(j, 'muteOverrideColor', $event)"></pc-mute-override-field>
                           }
                         </div>
@@ -211,8 +228,12 @@
                       <div class="ctrl-fields">
                         <pc-select [options]="logoModeOptions" [value]="logo().mode" [block]="true"
                                    (valueChange)="setLogoMode($any($event))"></pc-select>
-                        @if (logo().mode === 'STATIC') {
+                        @if (logo().mode === 'STATIC' || logo().mode === 'AUDIO_LEVEL') {
                           <pc-color-picker label="Color" [value]="logo().color" (valueChange)="setLogo('color', $event)"></pc-color-picker>
+                        }
+                        @if (logo().mode === 'AUDIO_LEVEL') {
+                          <pc-light-target label="Level of" followLabel="Default speakers"
+                                           [value]="logo().audioLevelSource" (valueChange)="setLogo('audioLevelSource', $event)"></pc-light-target>
                         }
                       </div>
                     </div>

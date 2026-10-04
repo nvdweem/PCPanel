@@ -716,6 +716,7 @@ export interface LevelReadable {
 
 export interface LightingConfig {
     allColor: string;
+    audioLevelCurve?: string;
     breathBrightness: number;
     breathHue: number;
     breathSpeed: number;
@@ -904,6 +905,7 @@ export interface SettingsDto {
 }
 
 export interface SingleKnobLightingConfig {
+    audioLevelSource?: string;
     color1: string;
     color2: string;
     mode: SINGLE_KNOB_MODE;
@@ -912,6 +914,7 @@ export interface SingleKnobLightingConfig {
 }
 
 export interface SingleLogoLightingConfig {
+    audioLevelSource?: string;
     brightness: number;
     color: string;
     hue: number;
@@ -927,6 +930,7 @@ export interface SingleSliderLabelLightingConfig {
 }
 
 export interface SingleSliderLightingConfig {
+    audioLevelSource?: string;
     color1: string;
     color2: string;
     mode: SINGLE_SLIDER_MODE;
@@ -1176,13 +1180,13 @@ export type ObsActionType = "START_STREAM" | "STOP_STREAM" | "TOGGLE_STREAM" | "
 
 export type OverlayPosition = "topLeft" | "topMiddle" | "topRight" | "middleLeft" | "middleMiddle" | "middleRight" | "bottomLeft" | "bottomMiddle" | "bottomRight";
 
-export type SINGLE_KNOB_MODE = "NONE" | "STATIC" | "VOLUME_GRADIENT";
+export type SINGLE_KNOB_MODE = "NONE" | "STATIC" | "VOLUME_GRADIENT" | "AUDIO_LEVEL";
 
-export type SINGLE_LOGO_MODE = "NONE" | "STATIC" | "RAINBOW" | "BREATH";
+export type SINGLE_LOGO_MODE = "NONE" | "STATIC" | "RAINBOW" | "BREATH" | "AUDIO_LEVEL";
 
 export type SINGLE_SLIDER_LABEL_MODE = "NONE" | "STATIC";
 
-export type SINGLE_SLIDER_MODE = "NONE" | "STATIC" | "STATIC_GRADIENT" | "VOLUME_GRADIENT";
+export type SINGLE_SLIDER_MODE = "NONE" | "STATIC" | "STATIC_GRADIENT" | "VOLUME_GRADIENT" | "AUDIO_LEVEL";
 
 export type SonarChannel = "Game" | "Chat" | "Mic" | "Media" | "Aux" | "Master";
 

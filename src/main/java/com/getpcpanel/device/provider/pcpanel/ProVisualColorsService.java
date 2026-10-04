@@ -166,6 +166,7 @@ public class ProVisualColorsService {
         return switch (config.getMode()) {
             case NONE -> BLACK;
             case STATIC -> firstColor(config.getColor1(), config.getColor2());
+            case AUDIO_LEVEL -> colorOrDefault(config.getColor1());
             // A volume-gradient knob shows a single LED colour interpolated between color1 (at value 0)
             // and color2 (at value 100). The live knob value lives only on the frontend (a knob turn
             // pushes a value event, not recomputed colours), so emit a token the UI resolves per value.
@@ -190,7 +191,7 @@ public class ProVisualColorsService {
 
         return switch (config.getMode()) {
             case NONE -> nCopies(PRO_SLIDER_SEGMENT_COUNT, BLACK);
-            case STATIC -> nCopies(PRO_SLIDER_SEGMENT_COUNT, colorOrDefault(config.getColor1()));
+            case STATIC, AUDIO_LEVEL -> nCopies(PRO_SLIDER_SEGMENT_COUNT, colorOrDefault(config.getColor1()));
             case STATIC_GRADIENT, VOLUME_GRADIENT -> gradient(config.getColor1(), config.getColor2(), PRO_SLIDER_SEGMENT_COUNT);
         };
     }
@@ -202,7 +203,7 @@ public class ProVisualColorsService {
 
         return switch (config.getMode()) {
             case NONE -> BLACK;
-            case STATIC -> colorOrDefault(config.getColor());
+            case STATIC, AUDIO_LEVEL -> colorOrDefault(config.getColor());
             case RAINBOW -> "$RAINBOW!";
             case BREATH -> "$BREATH";
         };
