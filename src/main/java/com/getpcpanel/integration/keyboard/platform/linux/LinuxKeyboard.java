@@ -6,13 +6,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
-
 import com.getpcpanel.integration.keyboard.Keyboard;
 import com.getpcpanel.integration.keyboard.KeystrokeTokens;
 import com.getpcpanel.integration.keyboard.KeystrokeTokens.Wheel;
 import com.getpcpanel.integration.keyboard.command.CommandMedia.VolumeButton;
 import com.getpcpanel.platform.LinuxBuild;
+import com.getpcpanel.util.os.FlatpakHost;
 import com.getpcpanel.util.os.ProcessHelper;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
@@ -158,9 +157,7 @@ class LinuxKeyboard implements Keyboard {
     }
 
     private void lock() {
-        var command = StringUtils.isNotBlank(System.getenv("FLATPAK_ID"))
-                ? new String[] { "flatpak-spawn", "--host", "loginctl", "lock-session" }
-                : new String[] { "loginctl", "lock-session" };
+        var command = FlatpakHost.command("loginctl", "lock-session");
         try {
             var result = processes.run(LOCK_TIMEOUT, command);
             if (!result.succeeded()) {

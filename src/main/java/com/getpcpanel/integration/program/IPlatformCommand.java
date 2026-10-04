@@ -22,6 +22,7 @@ import com.getpcpanel.integration.volume.platform.ISndCtrl;
 import com.getpcpanel.platform.process.LinuxProcessHelper;
 import com.getpcpanel.platform.process.OsxProcessHelper;
 import com.getpcpanel.util.Util;
+import com.getpcpanel.util.os.FlatpakHost;
 import com.getpcpanel.util.os.ProcessHelper;
 import com.sun.jna.platform.win32.Shell32;
 import com.sun.jna.platform.win32.WinUser;
@@ -121,11 +122,7 @@ public abstract class IPlatformCommand {
         public void open(String target) {
             try {
                 // The desktop's handlers live on the host, so the Flatpak asks the host to open it.
-                if (StringUtils.isNotBlank(System.getenv("FLATPAK_ID"))) {
-                    processes.launch("flatpak-spawn", "--host", "xdg-open", target);
-                } else {
-                    processes.launch("xdg-open", target);
-                }
+                processes.launch(FlatpakHost.command("xdg-open", target));
             } catch (IOException e) {
                 log.error("Unable to open {}", target, e);
             }

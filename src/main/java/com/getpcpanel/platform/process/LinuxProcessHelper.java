@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.getpcpanel.platform.IProcessHelper;
 import com.getpcpanel.platform.LinuxBuild;
+import com.getpcpanel.util.os.FlatpakHost;
 import com.getpcpanel.util.os.ProcessHelper;
 
 import io.quarkus.arc.Unremovable;
@@ -286,7 +287,7 @@ public class LinuxProcessHelper implements IProcessHelper {
 
     private @Nullable String processName(int pid) {
         try {
-            return lineFrom(hostCmd("ps", "-p", String.valueOf(pid), "-o", "comm="));
+            return lineFrom(FlatpakHost.command("ps", "-p", String.valueOf(pid), "-o", "comm="));
         } catch (Exception e) {
             log.error("Unable to resolve process name for pid {}", pid, e);
             return null;
@@ -305,8 +306,8 @@ public class LinuxProcessHelper implements IProcessHelper {
             // different PID namespace, so the file must be read on the host (like pactl/kdotool are). Outside
             // a sandbox just read it directly.
             List<String> lines;
-            if (inFlatpakSandbox()) {
-                lines = run(hostCmd("cat", path)).stdout();
+            if (FlatpakHost.inSandbox()) {
+                lines = run(FlatpakHost.command("cat", path)).stdout();
             } else if (Files.isReadable(Path.of(path))) {
                 lines = Files.readAllLines(Path.of(path));
             } else {
@@ -363,22 +364,6 @@ public class LinuxProcessHelper implements IProcessHelper {
                 || StringUtils.containsIgnoreCase(System.getenv("XDG_CURRENT_DESKTOP"), "Hyprland");
     }
 
-    /** Inside the Flatpak sandbox host introspection (ps, /proc) must be forwarded to the host via flatpak-spawn. */
-    private static boolean inFlatpakSandbox() {
-        return StringUtils.isNotBlank(System.getenv("FLATPAK_ID"));
-    }
-
-    private static String[] hostCmd(String... cmd) {
-        if (!inFlatpakSandbox()) {
-            return cmd;
-        }
-        var full = new String[cmd.length + 2];
-        full[0] = "flatpak-spawn";
-        full[1] = "--host";
-        System.arraycopy(cmd, 0, full, 2, cmd.length);
-        return full;
-    }
-
     private static final long WARN_LOG_INTERVAL_MS = 5L * 60 * 1000;
     private volatile long lastNoToolWarnAt;
     private volatile boolean desktopNotified;
@@ -419,7 +404,7 @@ public class LinuxProcessHelper implements IProcessHelper {
     /** Best-effort desktop popup via notify-send. A missing notify-send is fine - the log line remains the signal. */
     private void sendDesktopNotification(String title, String body) {
         try {
-            processHelper.launch(hostCmd("notify-send", "-a", "PCPanel", title, body));
+            processHelper.launch(FlatpakHost.command("notify-send", "-a", "PCPanel", title, body));
         } catch (Exception e) {
             log.debug("Could not show desktop notification (notify-send missing?)", e);
         }
@@ -438,7 +423,7 @@ public class LinuxProcessHelper implements IProcessHelper {
         out.put("session type", env("XDG_SESSION_TYPE"));
         out.put("wayland display", env("WAYLAND_DISPLAY"));
         out.put("x11 display", env("DISPLAY"));
-        out.put("flatpak sandbox", inFlatpakSandbox() ? System.getenv("FLATPAK_ID") : "no");
+        out.put("flatpak sandbox", FlatpakHost.inSandbox() ? System.getenv("FLATPAK_ID") : "no");
 
         var window = resolveActiveWindow();
         for (var tool : Tool.values()) {
@@ -504,7 +489,7 @@ public class LinuxProcessHelper implements IProcessHelper {
     private static String describeSession() {
         return "desktop=" + env("XDG_CURRENT_DESKTOP") + ", session=" + env("XDG_SESSION_TYPE")
                 + ", wayland=" + env("WAYLAND_DISPLAY") + ", x11=" + env("DISPLAY")
-                + (inFlatpakSandbox() ? ", flatpak=" + System.getenv("FLATPAK_ID") : "");
+                + (FlatpakHost.inSandbox() ? ", flatpak=" + System.getenv("FLATPAK_ID") : "");
     }
 
     private String describeTools() {
