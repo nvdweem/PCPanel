@@ -15,4 +15,12 @@ public interface IOverrideColorProvider {
     Optional<SingleSliderLabelLightingConfig> getSliderLabelOverride(String deviceSerial, int slider);
 
     Optional<SingleLogoLightingConfig> getLogoOverride(String deviceSerial);
+
+    /**
+     * Whether these overrides show while the panels are dark for a lock or screens off (see
+     * {@link com.getpcpanel.sleepdetection.SleepDetector#showsDarkFrames()}); the others are left out meanwhile.
+     */
+    default boolean showsWhileDark() {
+        return false;
+    }
 }

@@ -346,9 +346,21 @@ the device (`VisualizerService.isShowing`): the visualizer's substituted `CUSTOM
 which outranks it, so drawing too would only double the frames; the next alert tick after the visualizer stops starts
 drawing again. Overrides the services hold for that device show
 during those frames (including stale ones kept while it was not `CUSTOM`). It draws nothing while the panels are dark
-(`sleepdetection/PanelsDarkEvent`, fired before the lights-off and after the wake relight) and stops on
-`ShutdownEvent` (priority 1) before `SleepDetector`'s lights-off; `AlertService` likewise sends no relight while dark
-(its overrides still change, and the wake relight shows them) and stops on the same priority-1 `ShutdownEvent`. `device/lightshow/LightShow` plays frame-by-frame
+(`sleepdetection/PanelsDarkEvent`, fired before the lights-off, again when a dark PC goes to sleep or wakes still dark,
+and after the wake relight) and stops on `ShutdownEvent` (priority 1) before `SleepDetector`'s lights-off;
+`AlertService` likewise sends no relight while dark (its overrides still change, and the wake relight shows them) and
+stops on the same priority-1 `ShutdownEvent`. **Dark frames:** with `Save.visualizerWhileLocked` /
+`notificationLightsWhileLocked` on and the panels dark for a lock or screens off only (`SleepDetector.isDarkButAwake`,
+never with suspend among the reasons), `SleepDetector.showsDarkFrames()` is true: `OverrideColorService` then consults
+only providers whose `IOverrideColorProvider.showsWhileDark()` is true (`AlertService`, `VisualizerService` per their
+toggle), and those features call `SleepDetector.showDarkFrame(serial)` instead of relighting. That queues, on the sleep
+detector's single lighting queue (so a frame decided before the wake relight lands before it, and one asked for after
+is dropped), an all-black `CUSTOM` frame (every slot `STATIC #000000`, so the base layer fills nothing; the device's
+brightness, runtime brightness still applied) through `sendLightingConfig` with the overrides on top while any
+dark-showing override is set on the device, else `ALL_OFF`; each only when it differs from what it sent last (overrides
+and brightness compared), or after `SleepDetector.panelChanged` (from `OutputInterpreter.sendInit` on connect and
+`sendTemporaryLighting`, which `Device.showTemporaryLighting` uses) said the panel may show something else. `OutputInterpreter.sendDeviceLighting` sends that dark
+frame instead of any device lighting meanwhile, so nothing else lights a dark panel. `device/lightshow/LightShow` plays frame-by-frame
 animations (start-up animation, panel self-test) the same way and holds every override back for that device while it
 runs; it is the painter during the show (lighting set meanwhile is not sent), then puts the previous painter back and
 relights, so notification frames resume after it. Other frame senders go through `LightShow.ifIdle`, so no show
@@ -358,7 +370,8 @@ per thread, so the visualizer owns its own.
 
 **Music visualizer (`integration/visualizer/`):** `VisualizerService` runs one thread that is *parked* (no capture,
 woken by profile/lighting/device/system events) unless a connected device's active profile has
-`LightingConfig.visualizer` on and the lights aren't off for a lock; it then *watches* `PlaybackGate` 2×/s (1×/s while
+`LightingConfig.visualizer` on and the lights aren't off for a lock or sleep (with `Save.visualizerWhileLocked` on it
+keeps going while they are off for a lock or screens off only, painting onto dark frames); it then *watches* `PlaybackGate` 2×/s (1×/s while
 capturing; Windows: peak meters of SndCtrl's live, unmuted sessions only — every meter read is a call into the audio
 service; Linux: un-corked sink inputs, no recording) and only *captures* (`LoopbackCapture`: Windows WASAPI loopback over
 raw COM, polled, no callbacks; Linux `parec` on a sink's monitor, or on a source for an input, at 22050 Hz) at 20 fps while something plays, plus 3 s.
@@ -376,7 +389,7 @@ every 3 s, so the next source gets its turn. `BandAnalyzer` (pure, allocation-fr
 `VisualizerPainter` (pure) turn a frame into colours. A profile whose lighting isn't `CUSTOM` is sent as a substituted
 `CUSTOM` config while the visualizer shows (`VisualizerService.substitute`, applied in
 `OutputInterpreter.sendDeviceLighting`, which `Device` uses); lighting that overrules the device — `SleepDetector`'s
-all-off — calls `sendLightingConfig` directly and is never substituted. Like `AlertService`, it stops on the priority-1 `ShutdownEvent` (a step in progress finishes, nothing is sent after), so it can't relight a panel after `SleepDetector`'s lights-off at exit, and `PanelsDarkEvent` wakes it to park. `VisualizerBenchmark` (test scope, a `main`) times
+all-off — calls `sendLightingConfig` directly and is never substituted. Like `AlertService`, it stops on the priority-1 `ShutdownEvent` (a step in progress finishes, nothing is sent after), so it can't relight a panel after `SleepDetector`'s lights-off at exit, and `PanelsDarkEvent` wakes it to park (or carry on, see dark frames above). `VisualizerBenchmark` (test scope, a `main`) times
 the per-frame work; about 9 µs per frame in the native image.
 
 **Input gating:** `InputInterpreter` is where a reading becomes actions. A button's raw edges first pass a per-button

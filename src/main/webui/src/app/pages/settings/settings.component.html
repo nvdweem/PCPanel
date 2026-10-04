@@ -81,6 +81,22 @@
             </div>
             <div class="row">
               <div class="row-text">
+                <div class="row-label">Keep the music visualizer running while locked</div>
+                <div class="row-sub">Also while the screens are off. Never while the PC sleeps.</div>
+              </div>
+              <pc-toggle [value]="s.visualizerWhileLocked" [disabled]="!s.sleepDetectionEnabled"
+                         (valueChange)="patch('visualizerWhileLocked', $event)"></pc-toggle>
+            </div>
+            <div class="row">
+              <div class="row-text">
+                <div class="row-label">Keep notification lights on while locked</div>
+                <div class="row-sub">Also while the screens are off. Never while the PC sleeps.</div>
+              </div>
+              <pc-toggle [value]="s.notificationLightsWhileLocked" [disabled]="!s.sleepDetectionEnabled"
+                         (valueChange)="patch('notificationLightsWhileLocked', $event)"></pc-toggle>
+            </div>
+            <div class="row">
+              <div class="row-text">
                 <div class="row-label">Start-up animation</div>
                 <div class="row-sub">A short light show when the panel connects, before your own lighting comes on.</div>
               </div>

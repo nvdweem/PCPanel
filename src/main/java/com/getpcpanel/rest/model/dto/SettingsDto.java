@@ -31,6 +31,8 @@ public class SettingsDto {
     private boolean newAppsAtDialLevel;
     private List<String> newAppsAtDialLevelExceptions;
     private boolean sleepDetectionEnabled;
+    private boolean visualizerWhileLocked;
+    private boolean notificationLightsWhileLocked;
     private Long dblClickInterval;
     private long holdInterval;
     private boolean softTakeoverKnobs;
@@ -104,6 +106,8 @@ public class SettingsDto {
         dto.newAppsAtDialLevel = save.effectiveNewAppsAtDialLevel();
         dto.newAppsAtDialLevelExceptions = save.getNewAppsAtDialLevelExceptions();
         dto.sleepDetectionEnabled = save.isSleepDetectionEnabled();
+        dto.visualizerWhileLocked = save.isVisualizerWhileLocked();
+        dto.notificationLightsWhileLocked = save.isNotificationLightsWhileLocked();
         dto.dblClickInterval = save.getDblClickInterval();
         dto.holdInterval = save.getHoldInterval();
         dto.softTakeoverKnobs = save.isSoftTakeoverKnobs();
@@ -167,6 +171,8 @@ public class SettingsDto {
         save.setNewAppsAtDialLevel(newAppsAtDialLevel);
         save.setNewAppsAtDialLevelExceptions(newAppsAtDialLevelExceptions);
         save.setSleepDetectionEnabled(sleepDetectionEnabled);
+        save.setVisualizerWhileLocked(visualizerWhileLocked);
+        save.setNotificationLightsWhileLocked(notificationLightsWhileLocked);
         save.setDblClickInterval(dblClickInterval);
         save.setHoldInterval(holdInterval);
         save.setSoftTakeoverKnobs(softTakeoverKnobs);

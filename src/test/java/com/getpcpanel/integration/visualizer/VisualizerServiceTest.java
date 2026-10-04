@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -32,6 +34,8 @@ import com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandler.KnobRot
 import com.getpcpanel.device.provider.pcpanel.DeviceType;
 import com.getpcpanel.integration.volume.platform.LoopbackCapture;
 import com.getpcpanel.integration.volume.platform.PlaybackGate;
+import com.getpcpanel.profile.Save;
+import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.dto.LightingConfig;
 import com.getpcpanel.profile.dto.LightingConfig.LightingMode;
 import com.getpcpanel.profile.dto.VisualizerConfig;
@@ -51,6 +55,7 @@ class VisualizerServiceTest {
     private Device device;
     private LightingConfig lighting;
     private SleepDetector sleep;
+    private Save save;
     private long now;
 
     @BeforeEach
@@ -75,6 +80,9 @@ class VisualizerServiceTest {
         service.capture = capture;
         service.gate = gate;
         service.sleep = sleep;
+        save = new Save();
+        service.save = mock(SaveService.class);
+        when(service.save.get()).thenReturn(save);
         service.visualColorsChanged = mock(Event.class);
         service.clock = () -> now;
     }
@@ -256,6 +264,81 @@ class VisualizerServiceTest {
         assertEquals(-1, step(50));
         assertFalse(capture.open);
         assertFalse(knobDriven());
+    }
+
+    private void lockedButAwake() {
+        when(sleep.isDark()).thenReturn(true);
+        when(sleep.isDarkButAwake()).thenReturn(true);
+    }
+
+    @Test
+    void withTheToggleOnItKeepsShowingWhileLockedOnTheDarkPanel() {
+        save.setVisualizerWhileLocked(true);
+        visualizer(VisualizerWhen.PLAYING);
+        gate.playing = List.of("spotify.exe");
+        capture.loud = true;
+        lockedButAwake();
+        assertEquals(VisualizerService.FRAME_MS, step(0));
+        assertTrue(capture.open);
+        assertTrue(knobDriven());
+        assertTrue(service.isShowing(SERIAL));
+        verify(sleep, atLeastOnce()).showDarkFrame(SERIAL);
+        verify(device, never()).setLighting(any(), anyBoolean());
+    }
+
+    @Test
+    void withTheToggleOnItStillParksWhileAsleep() {
+        save.setVisualizerWhileLocked(true);
+        visualizer(VisualizerWhen.PLAYING);
+        gate.playing = List.of("spotify.exe");
+        capture.loud = true;
+        step(0);
+        when(sleep.isDark()).thenReturn(true);
+        assertEquals(-1, step(50));
+        assertFalse(capture.open);
+        assertFalse(knobDriven());
+        verify(sleep, never()).showDarkFrame(anyString());
+    }
+
+    @Test
+    void stoppingWhileLockedHandsTheDarkPanelBack() {
+        save.setVisualizerWhileLocked(true);
+        visualizer(VisualizerWhen.PLAYING);
+        gate.playing = List.of("spotify.exe");
+        capture.loud = true;
+        lockedButAwake();
+        step(0);
+        clearInvocations(sleep);
+        gate.playing = List.of();
+        capture.loud = false;
+        for (var t = 0; t <= VisualizerService.HOLD_MS + VisualizerService.WATCH_MS; t += 50) {
+            step(50);
+        }
+        assertFalse(knobDriven());
+        assertFalse(service.isShowing(SERIAL));
+        verify(sleep, atLeastOnce()).showDarkFrame(SERIAL); // with nothing left to show, the panel goes off
+        verify(device, never()).setLighting(any(), anyBoolean());
+    }
+
+    @Test
+    void afterTheWakeItSendsItsLightingAgainEvenWhenNothingChanged() {
+        save.setVisualizerWhileLocked(true);
+        visualizer(VisualizerWhen.ALWAYS);
+        lighting.getVisualizer().setStyle(VisualizerConfig.VisualizerStyle.TWO_COLORS);
+        lockedButAwake();
+        step(0);
+        when(sleep.isDark()).thenReturn(false);
+        when(sleep.isDarkButAwake()).thenReturn(false);
+        service.onPanelsDark(new com.getpcpanel.sleepdetection.PanelsDarkEvent(false, true));
+        step(VisualizerService.WATCH_MS);
+        verify(device).setLighting(any(), anyBoolean()); // the wake relight sent the profile's lighting without it
+    }
+
+    @Test
+    void itShowsOnDarkPanelsOnlyWithTheToggleOn() {
+        assertFalse(service.showsWhileDark());
+        save.setVisualizerWhileLocked(true);
+        assertTrue(service.showsWhileDark());
     }
 
     @Test

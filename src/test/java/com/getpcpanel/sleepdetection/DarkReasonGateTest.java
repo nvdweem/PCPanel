@@ -1,6 +1,7 @@
 package com.getpcpanel.sleepdetection;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
@@ -22,7 +23,7 @@ class DarkReasonGateTest {
     @BeforeEach
     void setUp() {
         events = new ArrayList<>();
-        gate = new DarkReasonGate(() -> events.add("dark"), () -> events.add("light"), Runnable::run);
+        gate = new DarkReasonGate(awake -> events.add(awake ? "dark" : "asleep"), () -> events.add("light"), Runnable::run);
     }
 
     @Test
@@ -72,7 +73,7 @@ class DarkReasonGateTest {
         assertEquals(List.of("dark", "light"), events);
         // After a reset every reason is cleared, so a fresh reason darkens again.
         gate.add(Reason.suspend);
-        assertEquals(List.of("dark", "light", "dark"), events);
+        assertEquals(List.of("dark", "light", "asleep"), events);
     }
 
     /** Switching sleep detection off while dark relights; the reasons are gone so nothing re-darkens. */
@@ -107,7 +108,7 @@ class DarkReasonGateTest {
         var order = Collections.synchronizedList(new ArrayList<String>());
         var executor = Executors.newSingleThreadExecutor();
         try {
-            var slowGate = new DarkReasonGate(() -> {
+            var slowGate = new DarkReasonGate(awake -> {
                 try {
                     Thread.sleep(150); // the spawned-thread scheduling delay that inverted the order at boot
                 } catch (InterruptedException e) {
@@ -124,5 +125,48 @@ class DarkReasonGateTest {
         } finally {
             executor.shutdownNow();
         }
+    }
+
+    @Test
+    void lockAndDisplayOffAreDarkButAwake() {
+        gate.add(Reason.lock);
+        assertTrue(gate.isDarkButAwake());
+        gate.add(Reason.display); // still awake: no second announcement
+        assertTrue(gate.isDarkButAwake());
+        assertEquals(List.of("dark"), events);
+    }
+
+    @Test
+    void suspendingWhileLockedIsAnnouncedAgainAsAsleep() {
+        gate.add(Reason.lock);
+        gate.add(Reason.suspend);
+        assertTrue(gate.isDark());
+        assertFalse(gate.isDarkButAwake());
+        gate.add(Reason.display); // still asleep
+        assertEquals(List.of("dark", "asleep"), events);
+    }
+
+    @Test
+    void suspendThenResumeRelights() {
+        gate.add(Reason.suspend);
+        assertFalse(gate.isDarkButAwake());
+        gate.reset();
+        assertFalse(gate.isDark());
+        assertFalse(gate.isDarkButAwake());
+        assertEquals(List.of("asleep", "light"), events);
+    }
+
+    @Test
+    void clearingTheSuspendWhileStillLockedIsAnnouncedAsAwake() {
+        gate.add(Reason.suspend);
+        gate.add(Reason.lock);
+        gate.clear(Reason.suspend);
+        assertTrue(gate.isDarkButAwake());
+        assertEquals(List.of("asleep", "dark"), events);
+    }
+
+    @Test
+    void litIsNotDarkButAwake() {
+        assertFalse(gate.isDarkButAwake());
     }
 }

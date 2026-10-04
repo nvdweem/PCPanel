@@ -14,6 +14,7 @@ import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
 import com.getpcpanel.profile.dto.SingleLogoLightingConfig;
 import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig;
 import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
+import com.getpcpanel.sleepdetection.SleepDetector;
 import com.getpcpanel.util.coloroverride.OverrideColorService;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -33,6 +34,8 @@ public final class OutputInterpreter {
     BrightnessService brightnessService;
     @Inject
     VisualizerService visualizer;
+    @Inject
+    SleepDetector sleep;
 
     private static final byte[] OUTPUT_CODE_INIT = { 1 };
     private static final byte ANIMATION_RAINBOW_HORIZONTAL = 1;
@@ -62,6 +65,9 @@ public final class OutputInterpreter {
         if (handler == null)
             throw new IllegalArgumentException("invalid device");
         handler.sendMessage(OUTPUT_CODE_INIT);
+        if (sleep != null) {
+            sleep.panelChanged(deviceSerialNumber); // it shows its power-on lighting now
+        }
     }
 
     public void sendFullLEDData(String deviceSerialNumber, int brightness, String[] colors, boolean[] volumeTrack, boolean priority) {
@@ -137,11 +143,25 @@ public final class OutputInterpreter {
     /**
      * A device's own lighting (its profile, a light show frame): like {@link #sendLightingConfig}, but while the music
      * visualizer shows on a profile whose lighting is a single colour or animation, sent as the per-control lighting
-     * the visualizer paints. Lighting that overrules the device's (lights off while locked) goes through
-     * {@link #sendLightingConfig} and is never replaced.
+     * the visualizer paints, and while the panels show dark frames ({@link SleepDetector#showsDarkFrames()}: locked,
+     * with the visualizer or notification lights kept going), the device's dark frame instead. Lighting that overrules
+     * the device's (lights off while locked, the dark frame) goes through {@link #sendLightingConfig} and is never
+     * replaced.
      */
     public void sendDeviceLighting(String serialNumber, DeviceType dt, LightingConfig config, boolean priority) {
+        if (sleep != null && sleep.showsDarkFrames()) {
+            sleep.showDarkFrame(serialNumber);
+            return;
+        }
         sendLightingConfig(serialNumber, dt, visualizer.substitute(serialNumber, config), priority);
+    }
+
+    /** A temporary frame (a light show, notification lights over whole-panel lighting), sent as it is. */
+    public void sendTemporaryLighting(String serialNumber, DeviceType dt, LightingConfig frame) {
+        sendLightingConfig(serialNumber, dt, frame, true);
+        if (sleep != null) {
+            sleep.panelChanged(serialNumber); // so the next dark frame is sent in full
+        }
     }
 
     public void sendLightingConfig(String serialNumber, DeviceType dt, LightingConfig config, boolean priority) {

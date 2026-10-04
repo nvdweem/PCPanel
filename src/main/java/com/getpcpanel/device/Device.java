@@ -150,7 +150,7 @@ public abstract class Device {
             return;
         }
         try {
-            outputInterpreter.sendLightingConfig(serialNumber, deviceType(), frame, true);
+            outputInterpreter.sendTemporaryLighting(serialNumber, deviceType(), frame);
         } catch (Exception e) {
             log.debug("Unable to show temporary lighting on {}", serialNumber, e);
         }

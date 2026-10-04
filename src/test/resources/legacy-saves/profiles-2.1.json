@@ -2255,6 +2255,8 @@
   "newAppsAtDialLevel" : true,
   "newAppsAtDialLevelExceptions" : [ "newAppsAtDialLevelExceptions-196", "newAppsAtDialLevelExceptions-197" ],
   "sleepDetectionEnabled" : true,
+  "visualizerWhileLocked" : true,
+  "notificationLightsWhileLocked" : true,
   "dblClickInterval" : 10,
   "softTakeoverKnobs" : true,
   "softTakeoverSliders" : true,

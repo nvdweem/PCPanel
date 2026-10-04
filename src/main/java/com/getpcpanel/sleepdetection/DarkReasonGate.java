@@ -3,10 +3,13 @@ package com.getpcpanel.sleepdetection;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.concurrent.Executor;
+import java.util.function.Consumer;
 
 /**
- * Tracks the independent reasons the panels should be dark and collapses them into two transitions:
- * go dark when the first reason appears, relight only when the last one clears. The reasons overlap in
+ * Tracks the independent reasons the panels should be dark and collapses them into transitions: go dark
+ * when the first reason appears, relight only when the last one clears. While dark, the PC is either
+ * awake (only a lock and/or screens off) or asleep (suspended); a change between the two is announced
+ * as going dark again, with the new state. The reasons overlap in
  * practice — locking the workstation usually also sends the monitors to sleep — so without this a
  * "monitor on" event would relight the panels while the workstation is still locked.
  *
@@ -25,11 +28,12 @@ final class DarkReasonGate {
     }
 
     private final Set<Reason> active = EnumSet.noneOf(Reason.class);
-    private final Runnable onDark;
+    /** Takes whether the PC is awake (no suspend among the reasons). */
+    private final Consumer<Boolean> onDark;
     private final Runnable onLight;
     private final Executor executor;
 
-    DarkReasonGate(Runnable onDark, Runnable onLight, Executor executor) {
+    DarkReasonGate(Consumer<Boolean> onDark, Runnable onLight, Executor executor) {
         this.onDark = onDark;
         this.onLight = onLight;
         this.executor = executor;
@@ -40,19 +44,39 @@ final class DarkReasonGate {
         return !active.isEmpty();
     }
 
-    /** Register a reason; goes dark only on the transition from "no reasons" to "some reason". */
+    /** Whether the panels are dark for a lock and/or screens off only, with the PC awake. */
+    synchronized boolean isDarkButAwake() {
+        return !active.isEmpty() && !active.contains(Reason.suspend);
+    }
+
+    /**
+     * Register a reason; goes dark on the transition from "no reasons" to "some reason", and again when the PC goes
+     * from awake to asleep while dark.
+     */
     synchronized void add(Reason reason) {
         var wasLit = active.isEmpty();
-        if (active.add(reason) && wasLit) {
-            executor.execute(onDark);
+        var wasAwake = isDarkButAwake();
+        if (active.add(reason) && (wasLit || wasAwake != isDarkButAwake())) {
+            announceDark();
         }
     }
 
-    /** Clear a reason; relights only once the last remaining reason is gone. */
+    /** Clear a reason; relights only once the last remaining reason is gone, and goes dark again from asleep to awake. */
     synchronized void clear(Reason reason) {
-        if (active.remove(reason) && active.isEmpty()) {
-            executor.execute(onLight);
+        var wasAwake = isDarkButAwake();
+        if (!active.remove(reason)) {
+            return;
         }
+        if (active.isEmpty()) {
+            executor.execute(onLight);
+        } else if (wasAwake != isDarkButAwake()) {
+            announceDark();
+        }
+    }
+
+    private void announceDark() {
+        var awake = isDarkButAwake();
+        executor.execute(() -> onDark.accept(awake));
     }
 
     /**

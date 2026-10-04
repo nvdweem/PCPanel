@@ -911,6 +911,7 @@ export interface SettingsDto {
     newAppsAtDialLevel: boolean;
     newAppsAtDialLevelExceptions: string[];
     notificationAlerts: NotificationAlert[];
+    notificationLightsWhileLocked: boolean;
     obsAddress: string;
     obsEnabled: boolean;
     obsPassword: string;
@@ -953,6 +954,7 @@ export interface SettingsDto {
     softTakeoverSliders: boolean;
     startupAnimation: boolean;
     startupVersionCheck: boolean;
+    visualizerWhileLocked: boolean;
     voicemeeterEnabled: boolean;
     voicemeeterPath: string;
     workaroundsOnlySliders: boolean;

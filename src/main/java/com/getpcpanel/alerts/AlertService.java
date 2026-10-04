@@ -26,6 +26,7 @@ import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
 import com.getpcpanel.profile.dto.SingleSliderLightingConfig.SINGLE_SLIDER_MODE;
 import com.getpcpanel.rest.EventBroadcaster.VisualColorsChangedEvent;
 import com.getpcpanel.sleepdetection.PanelsDarkEvent;
+import com.getpcpanel.sleepdetection.SleepDetector;
 import com.getpcpanel.util.coloroverride.ColorOverrideHolder;
 import com.getpcpanel.util.coloroverride.IOverrideColorProvider;
 import com.getpcpanel.util.coloroverride.IOverrideColorProviderProvider;
@@ -47,7 +48,9 @@ import lombok.extern.log4j.Log4j2;
  * title that matches, or for a few seconds on request ({@link #preview}). Shown as a colour override above the mute
  * colours, on every device and profile, at the alert's own brightness when it has one; over whole-panel lighting {@link AlertLighting} draws that lighting as
  * per-control frames while an alert is lit, so the override shows there too. Nothing is sent to a panel while the panels
- * are dark ({@link PanelsDarkEvent}) or once the app shuts down.
+ * are dark ({@link PanelsDarkEvent}), except, with {@code Save.notificationLightsWhileLocked} on and the PC awake, the
+ * sleep detector's dark frame with the lit lights on it ({@link SleepDetector#showDarkFrame}); nor once the app shuts
+ * down.
  *
  * <p>Window titles are read on a thread of their own, once a second while a window-title light is switched on, so a
  * slow look at the windows never holds up a blink or pulse.
@@ -70,6 +73,7 @@ public class AlertService implements IOverrideColorProviderProvider {
     @Inject NotificationWatch notificationWatch;
     @Inject WindowTitles windowTitles;
     @Inject AlertLighting alertLighting;
+    @Inject SleepDetector sleep;
     @Inject Event<VisualColorsChangedEvent> visualColorsChanged;
     @Inject Event<AlertsLitEvent> alertsLit;
 
@@ -77,6 +81,8 @@ public class AlertService implements IOverrideColorProviderProvider {
     private final ColorOverrideHolder holder = new ColorOverrideHolder();
     private volatile boolean running;
     private volatile boolean dark;
+    /** While {@link #dark}, whether the PC is awake (locked or screens off, not asleep). */
+    private volatile boolean awake = true;
     private volatile boolean shutDown;
     /** Held for a whole tick, so the shutdown observer can wait for one in progress. */
     private final Object ticking = new Object();
@@ -114,8 +120,12 @@ public class AlertService implements IOverrideColorProviderProvider {
         }
     }
 
-    /** While the panels are dark the overrides still follow the alerts, but nothing is sent; the wake relight shows them. */
+    /**
+     * While the panels are dark the overrides still follow the alerts and the wake relight shows them; meanwhile only a
+     * dark frame is sent, when they show on dark panels.
+     */
     void onPanelsDark(@Observes PanelsDarkEvent event) {
+        awake = event.awake();
         dark = event.dark();
     }
 
@@ -130,6 +140,11 @@ public class AlertService implements IOverrideColorProviderProvider {
     @Override
     public IOverrideColorProvider getOverrideColorProvider() {
         return holder;
+    }
+
+    @Override
+    public boolean showsWhileDark() {
+        return save.get().isNotificationLightsWhileLocked();
     }
 
     void onFlash(@Observes TaskbarFlashEvent event) {
@@ -329,8 +344,8 @@ public class AlertService implements IOverrideColorProviderProvider {
 
     /**
      * Sends the lights to the panel and tells the UI. While a light pulses the panel gets every frame but the UI
-     * at most every {@link #PULSE_UI_MS}; the frame that ends the pulse always reaches it. Nothing is sent while the
-     * panels are dark.
+     * at most every {@link #PULSE_UI_MS}; the frame that ends the pulse always reaches it. While the panels are dark
+     * only the dark frame is sent, and only while they show on dark panels.
      */
     private void relight(Device device, long now, boolean pulsing) {
         if (!dark) {
@@ -340,6 +355,8 @@ public class AlertService implements IOverrideColorProviderProvider {
                 log.debug("Unable to re-send notification lights for {}", device.getSerialNumber(), e);
                 return;
             }
+        } else if (awake && showsWhileDark()) {
+            sleep.showDarkFrame(device.getSerialNumber());
         }
         var serial = device.getSerialNumber();
         var last = uiNotifiedAt.get(serial);

@@ -70,6 +70,10 @@ public class Save {
      *  on afterwards. Opt-out escape hatch for #145-class detection trouble; the lights-off on app
      *  shutdown is unaffected. */
     private boolean sleepDetectionEnabled = true;
+    /** While the lights are off for a lock or screens off (not sleep), the music visualizer keeps showing on them. */
+    private boolean visualizerWhileLocked;
+    /** While the lights are off for a lock or screens off (not sleep), notification lights keep showing on them. */
+    private boolean notificationLightsWhileLocked;
     private Long dblClickInterval = 500L;
     /** "No volume jumps" for knobs / sliders: after their target changed elsewhere, wait until the control reaches it. */
     private boolean softTakeoverKnobs;

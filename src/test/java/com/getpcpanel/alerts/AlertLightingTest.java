@@ -255,13 +255,13 @@ class AlertLightingTest {
         var base = LightingConfig.createAllColor("#123456");
         var device = new FakeDevice(DeviceType.PCPANEL_PRO, base);
         sut.update(device, true);
-        sut.onPanelsDark(new PanelsDarkEvent(true));
+        sut.onPanelsDark(new PanelsDarkEvent(true, true));
         var frames = device.frames().size();
         device.relight();
         Thread.sleep(150);
         assertEquals(frames, device.frames().size(), "no frames while dark");
 
-        sut.onPanelsDark(new PanelsDarkEvent(false));
+        sut.onPanelsDark(new PanelsDarkEvent(false, true));
         waitFor(() -> device.frames().size() > frames, "drawn again once lit, still lighting too");
     }
 
@@ -269,11 +269,11 @@ class AlertLightingTest {
     void lightingSetWhileDarkIsWhatIsDrawnAfterWake() throws InterruptedException {
         var device = new FakeDevice(DeviceType.PCPANEL_PRO, rainbow());
         sut.update(device, true);
-        sut.onPanelsDark(new PanelsDarkEvent(true));
+        sut.onPanelsDark(new PanelsDarkEvent(true, true));
         var changed = LightingConfig.createAllColor("#654321");
         device.setLighting(changed, true); // e.g. a profile switch while locked
         var frames = device.frames().size();
-        sut.onPanelsDark(new PanelsDarkEvent(false));
+        sut.onPanelsDark(new PanelsDarkEvent(false, true));
         waitFor(() -> device.frames().size() > frames, "drawn again once lit");
         assertEquals("#654321", device.lastFrame().knobConfigs()[0].getColor1(), "the lighting set while dark, not the one before");
         sut.update(device, false);
@@ -284,11 +284,11 @@ class AlertLightingTest {
     void switchingToCustomWhileDarkEndsIt() throws InterruptedException {
         var device = new FakeDevice(DeviceType.PCPANEL_PRO, rainbow());
         sut.update(device, true);
-        sut.onPanelsDark(new PanelsDarkEvent(true));
+        sut.onPanelsDark(new PanelsDarkEvent(true, true));
         device.setLighting(custom(), true);
         assertNull(device.painter(), "per-control lighting shows the overrides itself");
         var frames = device.frames().size();
-        sut.onPanelsDark(new PanelsDarkEvent(false));
+        sut.onPanelsDark(new PanelsDarkEvent(false, true));
         Thread.sleep(150);
         assertEquals(frames, device.frames().size(), "no frames after wake");
     }
@@ -297,13 +297,13 @@ class AlertLightingTest {
     void goingOffWhileDarkLeavesTheRelightToWake() throws InterruptedException {
         var device = new FakeDevice(DeviceType.PCPANEL_PRO, rainbow());
         sut.update(device, true);
-        sut.onPanelsDark(new PanelsDarkEvent(true));
+        sut.onPanelsDark(new PanelsDarkEvent(true, true));
         sut.update(device, false);
         var frames = device.frames().size();
         Thread.sleep(150);
         assertEquals(frames, device.frames().size());
         assertEquals(List.of(), device.sends(), "the panels stay dark");
-        sut.onPanelsDark(new PanelsDarkEvent(false));
+        sut.onPanelsDark(new PanelsDarkEvent(false, true));
         sut.update(device, true);
         assertTrue(device.frames().size() > frames, "a new alert draws again once lit");
     }
@@ -311,7 +311,7 @@ class AlertLightingTest {
     @Test
     void nothingIsDrawnWhileDarkEvenForANewAlert() throws InterruptedException {
         var device = new FakeDevice(DeviceType.PCPANEL_PRO, rainbow());
-        sut.onPanelsDark(new PanelsDarkEvent(true));
+        sut.onPanelsDark(new PanelsDarkEvent(true, true));
         sut.update(device, true);
         Thread.sleep(100);
         assertEquals(List.of(), device.sent);

@@ -64,8 +64,9 @@ import lombok.extern.log4j.Log4j2;
  * <p>One thread, in one of three states:
  * <ul>
  *     <li><b>parked</b> while no connected device's active profile has the visualizer on, or the lights are off for a
- *     lock or sleep: it waits to be woken by a profile, lighting, device or system event (with a slow safety
- *     timeout), and nothing is captured;</li>
+ *     lock or sleep (for a lock or screens off only with {@code Save.visualizerWhileLocked} off; with it on, it keeps
+ *     going and shows on the dark panels through {@link SleepDetector#showDarkFrame}): it waits to be woken by a
+ *     profile, lighting, device or system event (with a slow safety timeout), and nothing is captured;</li>
  *     <li><b>watching</b> a few times a second whether one of its sources has sound ({@link PlaybackGate}, no
  *     capture);</li>
  *     <li><b>capturing</b> the first source with sound ({@link LoopbackCapture}: an output by loopback, an input
@@ -114,6 +115,7 @@ public class VisualizerService implements IOverrideColorProviderProvider {
     @Inject LoopbackCapture capture;
     @Inject PlaybackGate gate;
     @Inject SleepDetector sleep;
+    @Inject SaveService save;
     @Inject Event<VisualColorsChangedEvent> visualColorsChanged;
 
     LongSupplier clock = System::currentTimeMillis;
@@ -122,6 +124,8 @@ public class VisualizerService implements IOverrideColorProviderProvider {
     private boolean wakeRequested;
     private volatile boolean running;
     private volatile boolean shutDown;
+    /** Set when the panels light up again: the wake relight sent the device's lighting without the colours. */
+    private volatile boolean repaint;
     private final Object stepping = new Object();
     @Nullable private Thread thread;
 
@@ -174,6 +178,11 @@ public class VisualizerService implements IOverrideColorProviderProvider {
     @Override
     public IOverrideColorProvider getOverrideColorProvider() {
         return holder;
+    }
+
+    @Override
+    public boolean showsWhileDark() {
+        return save.get().isVisualizerWhileLocked();
     }
 
     /** Whether it is showing on {@code serial} right now. */
@@ -233,6 +242,9 @@ public class VisualizerService implements IOverrideColorProviderProvider {
     }
 
     void onPanelsDark(@Observes PanelsDarkEvent e) {
+        if (!e.dark()) {
+            repaint = true;
+        }
         wake();
     }
 
@@ -301,8 +313,12 @@ public class VisualizerService implements IOverrideColorProviderProvider {
     /** One update. Returns how long to wait before the next, or -1 to park until woken. */
     long step() {
         var now = clock.getAsLong();
+        if (repaint) {
+            repaint = false;
+            painted.clear(); // send the next frame even if it looks the same
+        }
         var wants = wanted();
-        if (wants.isEmpty() || sleep.isDark() || !capture.supported()) {
+        if (wants.isEmpty() || sleep.isDark() && !showsOnDarkPanels() || !capture.supported()) {
             stopCapture();
             clearExcept(Set.of());
             return -1;
@@ -371,6 +387,11 @@ public class VisualizerService implements IOverrideColorProviderProvider {
         }
         clearExcept(Set.copyOf(shown));
         return capturing || animating ? FRAME_MS : WATCH_MS;
+    }
+
+    /** Whether it keeps going while the panels are dark: switched on for that, and the PC is only locked or its screens off. */
+    private boolean showsOnDarkPanels() {
+        return showsWhileDark() && sleep.isDarkButAwake();
     }
 
     private List<Want> wanted() {
@@ -580,13 +601,17 @@ public class VisualizerService implements IOverrideColorProviderProvider {
         }
     }
 
+    /** Sends a device's lighting with the colours on it; while the panels are dark, its dark frame (or nothing, asleep). */
     private void relight(Device device, long now, boolean forceUi) {
         var serial = device.getSerialNumber();
-        if (sleep.isDark()) {
-            return;
-        }
         try {
-            device.setLighting(device.lightingConfig(), true);
+            if (!sleep.isDark()) {
+                device.setLighting(device.lightingConfig(), true);
+            } else if (showsOnDarkPanels()) {
+                sleep.showDarkFrame(serial);
+            } else {
+                return;
+            }
         } catch (Exception e) {
             log.debug("Unable to send visualizer lighting to {}", serial, e);
             return;
