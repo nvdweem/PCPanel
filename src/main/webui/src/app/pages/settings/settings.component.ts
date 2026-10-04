@@ -10,7 +10,7 @@ import { UpdateService } from '../../services/update.service';
 import { AutostartService } from '../../services/autostart.service';
 import { DeviceStateService } from '../../services/device-state.service';
 import {
-  CurveDefinition, DiscordSettings, DiscordStatusDto, FocusVolumeOverride, FocusVolumeTarget, OverlayPosition, SettingsDto, SonarSettings,
+  CurveDefinition, DiscordSettings, SaveBackup, DiscordStatusDto, FocusVolumeOverride, FocusVolumeTarget, OverlayPosition, SettingsDto, SonarSettings,
   WaveLinkSettings,
 } from '../../models/generated/backend.types';
 import {
@@ -750,6 +750,29 @@ export class SettingsComponent {
     return this.fvTargetDef(t)?.label ?? String((t?.command as Cmd)?.['_type'] ?? '').split('.').pop() ?? 'Target';
   }
   fvTargetIcon(t: FocusVolumeTarget): IconName { return this.fvTargetDef(t)?.icon ?? 'volume'; }
+
+  // ── Backups ────────────────────────────────────────────────────────────────
+  readonly backups = httpResource<SaveBackup[]>(() => '/api/settings/backups');
+  /** The backup waiting on a confirmed restore; null when nothing is pending. */
+  readonly backupPendingRestore = signal<SaveBackup | null>(null);
+
+  backupDate(ts: number): string { return new Date(ts).toLocaleString(); }
+  backupSize(bytes: number): string { return `${Math.max(1, Math.round(bytes / 1024))} KB`; }
+
+  restoreBackup(): void {
+    const b = this.backupPendingRestore();
+    if (!b) return;
+    this.backupPendingRestore.set(null);
+    this.http.post<void>(`/api/settings/backups/${encodeURIComponent(b.name)}/restore`, {}).subscribe({
+      next: () => {
+        this.dirty.set(false);
+        this.settings.reload();
+        this.backups.reload();
+        this.toast.show('Backup restored', { kind: 'success' });
+      },
+      error: () => this.toast.show('Could not restore the backup', { kind: 'error' }),
+    });
+  }
 
   // ── save ────────────────────────────────────────────────────────────────────
   /** Copy of the settings with masked secrets replaced by '' — never send the mask back as a value. */

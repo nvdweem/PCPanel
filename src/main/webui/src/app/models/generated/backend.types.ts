@@ -809,6 +809,12 @@ export interface ProfileSnapshotDto {
 export interface ProgramCommandModule extends CommandModule {
 }
 
+export interface SaveBackup {
+    name: string;
+    size: number;
+    timestamp: number;
+}
+
 export interface SerialPortDto {
     description: string;
     port: string;

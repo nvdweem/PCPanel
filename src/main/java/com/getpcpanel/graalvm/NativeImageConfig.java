@@ -101,6 +101,7 @@ import com.getpcpanel.integration.discord.dto.DiscordSettings;
 import com.getpcpanel.integration.volume.FocusVolumeOverride;
 import com.getpcpanel.integration.volume.FocusVolumeTarget;
 import com.getpcpanel.profile.dto.CurveDefinition;
+import com.getpcpanel.profile.dto.SaveBackup;
 import com.getpcpanel.profile.dto.CurveMode;
 import com.getpcpanel.profile.dto.CurvePoint;
 import com.getpcpanel.profile.dto.KnobSetting;
@@ -462,6 +463,8 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         AutostartStateDto.class,
         AutostartRequestDto.class,
         VoiceMeeterResource.VoiceMeeterParam[].class,
+        SaveBackup.class,
+        SaveBackup[].class,
 }, classNames = {
         // Jackson selects FileSerializer at runtime to serialise a java.io.File field (e.g.
         // ISndCtrl.RunningApplication.file, returned by GET /api/audio/applications). Its no-arg

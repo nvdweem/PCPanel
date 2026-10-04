@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.time.Clock;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
@@ -16,9 +18,11 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.Json;
 import com.getpcpanel.device.provider.pcpanel.DescriptorFactory;
+import com.getpcpanel.device.provider.pcpanel.DeviceScanner;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.profile.dto.LightingConfig;
+import com.getpcpanel.profile.dto.SaveBackup;
 import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
 import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig;
 import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
@@ -52,6 +56,7 @@ public class SaveService {
     @SuppressWarnings("StaticNonFinalField") private static String oldVersionEncountered;
 
     private Save save;
+    private SaveBackups backups;
     private boolean isNew = false;
     private volatile boolean loadFailed;
 
@@ -67,6 +72,7 @@ public class SaveService {
 
     @PostConstruct
     public void load() {
+        backups = new SaveBackups(fileUtil.getFile("backups"), Clock.systemDefaultZone());
         var saveFile = fileUtil.getFile(saveFileName);
         if (!saveFile.exists()) {
             tryMigrate(saveFile);
@@ -79,18 +85,7 @@ public class SaveService {
         }
 
         try {
-            var document = json.readTree(FileUtils.readFileToString(saveFile, Charset.defaultCharset()));
-            var migratedTemplates = templateMigration.migrate(document);
-            save = json.read(document, Save.class);
-            var migratedProviderIds = migrateProviderIds(save);
-            var migratedMuteTargets = migrateMuteOverrideFollow(save);
-            if (migratedProviderIds || migratedMuteTargets) {
-                // Both rewrite values an older file spells differently. Treat either as an old-version
-                // read so the existing backup(.bak) + one-time rewrite path persists the migration.
-                encounterOldVersion("2.0");
-            } else if (migratedTemplates) {
-                encounterOldVersion("2.1");
-            }
+            save = read(saveFile);
             handleOldVersionEncountered();
             StreamEx.ofValues(save.getDevices()).forEach(d -> StreamEx.of(d.getProfiles()).findFirst(p -> p.isMainProfile()).ifPresent(p -> d.setCurrentProfile(p.getName())));
         } catch (Exception e) {
@@ -99,6 +94,51 @@ public class SaveService {
             save = new Save();
             isNew = true;
         }
+    }
+
+    /** Reads and migrates a save file; flags an old-version read for {@link #handleOldVersionEncountered()}. */
+    private Save read(File file) throws IOException {
+        var document = json.readTree(FileUtils.readFileToString(file, Charset.defaultCharset()));
+        var migratedTemplates = templateMigration.migrate(document);
+        var read = json.read(document, Save.class);
+        var migratedProviderIds = migrateProviderIds(read);
+        var migratedMuteTargets = migrateMuteOverrideFollow(read);
+        if (migratedProviderIds || migratedMuteTargets) {
+            // Both rewrite values an older file spells differently. Treat either as an old-version
+            // read so the existing backup(.bak) + one-time rewrite path persists the migration.
+            encounterOldVersion("2.0");
+        } else if (migratedTemplates) {
+            encounterOldVersion("2.1");
+        }
+        return read;
+    }
+
+    public List<SaveBackup> backups() {
+        return backups.list();
+    }
+
+    /**
+     * Replaces the configuration with the snapshot called {@code name}. The current file is snapshotted first,
+     * so a restore can itself be undone. Connected devices are re-announced so each is rebuilt on its restored
+     * {@link DeviceSave} (a {@link Device} holds its own reference) and relit.
+     */
+    public synchronized boolean restore(String name) throws IOException {
+        var file = backups.find(name);
+        if (file.isEmpty()) {
+            return false;
+        }
+        var restored = read(file.get());
+        oldVersionEncountered = null; // the restored file is rewritten below in the current format
+        backups.snapshot(fileUtil.getFile(saveFileName));
+        save = restored;
+        loadFailed = false;
+        FileUtils.writeStringToFile(fileUtil.getFile(saveFileName), json.writePretty(save), Charset.defaultCharset());
+        log.info("Restored configuration from backup {}", name);
+        for (var device : List.copyOf(devices.all())) {
+            eventBus.fire(new DeviceScanner.DeviceConnectedEvent(device.getSerialNumber(), device.deviceType(), device.descriptor()));
+        }
+        eventBus.fire(new SaveEvent(save, false));
+        return true;
     }
 
     /**
@@ -188,6 +228,7 @@ public class SaveService {
 
     private synchronized void writeToFile() { // Synchronized: a pending debounced save may run concurrently with the shutdown write
         var saveFile = fileUtil.getFile(saveFileName);
+        backups.snapshotIfDue(saveFile);
         try {
             FileUtils.writeStringToFile(saveFile, json.writePretty(save), Charset.defaultCharset());
             loadFailed = false; // The file now holds the in-memory state, so save-on-exit can no longer destroy anything

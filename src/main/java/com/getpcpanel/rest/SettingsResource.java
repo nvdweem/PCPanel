@@ -1,8 +1,11 @@
 package com.getpcpanel.rest;
 
+import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import com.getpcpanel.integration.mqtt.MqttService;
+import com.getpcpanel.profile.dto.SaveBackup;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.integration.discord.dto.DiscordSettings;
 import com.getpcpanel.integration.mqtt.dto.MqttSettings;
@@ -15,8 +18,10 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -40,6 +45,18 @@ public class SettingsResource {
         dto.applyTo(save);
         saveService.save();
         return Response.ok().build();
+    }
+
+    @GET
+    @Path("/backups")
+    public List<SaveBackup> getBackups() {
+        return saveService.backups();
+    }
+
+    @POST
+    @Path("/backups/{name}/restore")
+    public Response restoreBackup(@PathParam("name") String name) throws IOException {
+        return saveService.restore(name) ? Response.ok().build() : Response.status(Response.Status.NOT_FOUND).build();
     }
 
     @GET
