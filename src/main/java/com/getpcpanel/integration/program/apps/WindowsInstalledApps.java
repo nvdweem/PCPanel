@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -158,7 +159,8 @@ public class WindowsInstalledApps implements InstalledAppScanner {
 
     /** The app {@code lnk} starts when its {@code target} is a program, unless it is an uninstaller. */
     static @Nullable InstalledApp toApp(Path lnk, @Nullable String target) {
-        var name = StringUtils.removeEndIgnoreCase(lnk.getFileName().toString(), ".lnk");
+        // FilenameUtils reads both separators, so a Windows path gives the same name on every OS (the tests run on all three).
+        var name = StringUtils.removeEndIgnoreCase(FilenameUtils.getName(lnk.toString()), ".lnk");
         if (target == null || !StringUtils.endsWithIgnoreCase(target, ".exe") || StringUtils.containsIgnoreCase(name, "uninstall")) {
             return null;
         }
