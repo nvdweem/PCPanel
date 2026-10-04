@@ -44,8 +44,14 @@ public class CommandVolumeAppOutput extends CommandVolume implements ButtonActio
     public void execute() {
         CdiHelper.getOptionalBean(AppOutputRouter.class).ifPresent(router -> {
             var apps = CdiHelper.getBean(EverythingElse.class).expand(processName);
-            if (!apps.isEmpty() && router.route(apps, device) == null) {
+            if (apps.isEmpty()) {
+                return;
+            }
+            var routedTo = router.route(apps, device);
+            if (routedTo == null) {
                 log.debug("Send app to audio device: none of {} is playing", apps);
+            } else {
+                fireFeedback("Now on " + routedTo);
             }
         });
     }

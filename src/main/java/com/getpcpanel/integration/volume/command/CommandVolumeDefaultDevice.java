@@ -28,6 +28,10 @@ public class CommandVolumeDefaultDevice extends CommandVolume implements ButtonA
     @Override
     public void execute() {
         getSndCtrl().setDefaultDevice(deviceId);
+        var name = getOverlayText();
+        if (name != null) {
+            fireFeedback("Default: " + name);
+        }
     }
 
     @Override

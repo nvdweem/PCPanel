@@ -2325,5 +2325,6 @@
   "overlayContentPadding" : 78,
   "overlayBarFollowsLight" : true,
   "overlayFontFamily" : "overlayFontFamily-80",
-  "overlayFontBold" : true
+  "overlayFontBold" : true,
+  "overlayButtonFeedback" : true
 }

@@ -9,6 +9,7 @@ import com.getpcpanel.commands.meta.CommandCategory;
 import com.getpcpanel.commands.meta.CommandKind;
 import com.getpcpanel.commands.meta.CommandMeta;
 import com.getpcpanel.integration.volume.EverythingElse;
+import com.getpcpanel.integration.volume.MuteFeedback;
 import com.getpcpanel.integration.volume.platform.MuteType;
 import com.getpcpanel.util.CdiHelper;
 
@@ -30,7 +31,11 @@ public class CommandVolumeProcessMute extends CommandVolume implements ButtonAct
 
     @Override
     public void execute() {
-        getSndCtrl().muteProcesses(CdiHelper.getBean(EverythingElse.class).expand(processName), muteType);
+        var snd = getSndCtrl();
+        var apps = CdiHelper.getBean(EverythingElse.class).expand(processName);
+        var feedback = feedback(() -> MuteFeedback.forSessions(snd.getAllSessions(), apps, muteType));
+        snd.muteProcesses(apps, muteType);
+        fireFeedback(feedback);
     }
 
     @Override

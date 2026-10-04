@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.getpcpanel.commands.ButtonFeedbackEvent;
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.CommandsType;
 import com.getpcpanel.commands.DialValue;
@@ -88,6 +89,7 @@ public class CommandSetDialValue extends Command implements DeviceAction, Nested
                 }
             }
         });
+        ButtonFeedbackEvent.forCurrentControl(targets.getFirst().buildLabel(), percent / 100f).ifPresent(CdiHelper::fire);
     }
 
     /**

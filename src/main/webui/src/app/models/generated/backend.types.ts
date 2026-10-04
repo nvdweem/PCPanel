@@ -906,6 +906,7 @@ export interface SettingsDto {
     overlayBarCornerRounding?: number;
     overlayBarFollowsLight: boolean;
     overlayBarHeight?: number;
+    overlayButtonFeedback: boolean;
     overlayContentPadding?: number;
     overlayElementGap?: number;
     overlayEnabled: boolean;

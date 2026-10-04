@@ -7,6 +7,7 @@ import com.getpcpanel.commands.meta.CommandCategory;
 import com.getpcpanel.commands.meta.CommandKind;
 import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.getpcpanel.integration.volume.MuteFeedback;
 import com.getpcpanel.integration.volume.platform.MuteType;
 
 import lombok.Getter;
@@ -28,7 +29,10 @@ public class CommandVolumeDeviceMute extends CommandVolume implements ButtonActi
 
     @Override
     public void execute() {
-        getSndCtrl().muteDevice(deviceId, muteType);
+        var snd = getSndCtrl();
+        var feedback = feedback(() -> MuteFeedback.forDevice(snd.getDevice(snd.defaultDeviceOnEmpty(deviceId)), muteType));
+        snd.muteDevice(deviceId, muteType);
+        fireFeedback(feedback);
     }
 
     @Override

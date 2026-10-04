@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.getpcpanel.commands.meta.CommandCategory;
 import com.getpcpanel.commands.meta.CommandKind;
 import com.getpcpanel.commands.meta.CommandMeta;
+import com.getpcpanel.integration.volume.MuteFeedback;
 import com.getpcpanel.integration.volume.platform.MuteType;
 
 import lombok.Getter;
@@ -26,7 +27,11 @@ public class CommandVolumeFocusMute extends CommandVolume implements ButtonActio
 
     @Override
     public void execute() {
-        getSndCtrl().muteProcesses(Set.of(getSndCtrl().getFocusApplication()), muteType);
+        var snd = getSndCtrl();
+        var apps = Set.of(snd.getFocusApplication());
+        var feedback = feedback(() -> MuteFeedback.forSessions(snd.getAllSessions(), apps, muteType));
+        snd.muteProcesses(apps, muteType);
+        fireFeedback(feedback);
     }
 
     @Override

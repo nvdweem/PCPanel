@@ -8,12 +8,15 @@ import java.util.function.Supplier;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.getpcpanel.commands.ButtonFeedbackEvent;
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.IconService;
 import com.getpcpanel.commands.PCPanelControlEvent;
 import com.getpcpanel.commands.TakeoverPendingEvent;
 import com.getpcpanel.commands.command.ButtonAction;
 import com.getpcpanel.commands.command.Command;
+import com.getpcpanel.integration.volume.command.CommandVolumeDefaultDevice;
+import com.getpcpanel.integration.volume.command.CommandVolumeDefaultDeviceToggle;
 import com.getpcpanel.integration.volume.command.CommandVolumeFocus;
 import com.getpcpanel.commands.command.DialAction;
 import com.getpcpanel.integration.volume.platform.ISndCtrl;
@@ -30,6 +33,7 @@ import com.getpcpanel.profile.dto.SingleKnobLightingConfig.SINGLE_KNOB_MODE;
 import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
 import com.getpcpanel.util.coloroverride.OverrideColorService;
 import com.getpcpanel.integration.volume.VolumeCoordinatorService;
+import com.getpcpanel.template.TemplateContext;
 import com.getpcpanel.template.TemplateService;
 import com.sun.jna.Platform;
 
@@ -38,13 +42,15 @@ import jakarta.annotation.Nullable;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
 @Log4j2
 @ApplicationScoped
-@RequiredArgsConstructor
+@RequiredArgsConstructor(access = AccessLevel.PACKAGE) // with the window, for tests
 public class Overlay {
     private final SaveService save;
     private final IconService iconService;
@@ -58,7 +64,13 @@ public class Overlay {
     // native WToolkit event loop), so neither overlay uses it: Windows draws a JNA layered window and
     // Linux/Wayland asks the desktop to draw it over D-Bus (KDE volume OSD, else a notification).
     // macOS still has no AWT-free overlay.
-    private final OverlayWindow overlay = createOverlay();
+    private final OverlayWindow overlay;
+
+    @Inject
+    public Overlay(SaveService save, IconService iconService, Instance<ISndCtrl> sndCtrl, VolumeCoordinatorService volumeCoordinator,
+            DeviceHolder deviceHolder, OverrideColorService overrideColorService, TemplateService templates, BaseLayerService baseLayer) {
+        this(save, iconService, sndCtrl, volumeCoordinator, deviceHolder, overrideColorService, templates, baseLayer, createOverlay());
+    }
 
     private static OverlayWindow createOverlay() {
         if (Platform.isWindows()) {
@@ -144,6 +156,47 @@ public class Overlay {
         } catch (Throwable t) {
             log.warn("Overlay failed to show a takeover hint; ignoring (hardware control is unaffected)", t);
         }
+    }
+
+    /**
+     * What a button action did ("Spotify · Muted", "Default: Headphones"). Skipped when the button's actions carry an
+     * overlay text the user typed: {@link #handleControl} already shows the overlay for that press. The event is fired
+     * inside the press's {@link TemplateContext}, which holds the actions that ran.
+     */
+    public void onButtonFeedback(@Observes ButtonFeedbackEvent event) {
+        try {
+            var settings = save.get();
+            if (!settings.isOverlayEnabled() || !settings.isOverlayButtonFeedback()) {
+                return;
+            }
+            var commands = commandsThatRan(event);
+            if (hasTypedOverlayText(commands)) {
+                return;
+            }
+            // Icon decoding needs libawt (Windows only), as in determineIconImage.
+            var icon = Platform.isWindows() && commands != null && iconService != null ? iconService.getImageFrom(commands, null) : null;
+            overlay.show(new OverlayContent(event.level() == null ? -1 : event.level(), icon, event.text(), null));
+        } catch (Throwable t) {
+            log.warn("Overlay failed to show button feedback; ignoring (hardware control is unaffected)", t);
+        }
+    }
+
+    /** The actions of the press that fired {@code event}, or null when it was fired outside that press. */
+    @Nullable
+    private static Commands commandsThatRan(ButtonFeedbackEvent event) {
+        var scope = TemplateContext.current();
+        var same = scope.button() && scope.control() == event.button() && event.serial().equals(scope.serial());
+        return same ? scope.commands() : null;
+    }
+
+    /**
+     * Whether a button action carries an overlay text the user typed. The default-device actions derive theirs from
+     * the device they switch to, which their feedback already names, so theirs does not count.
+     */
+    private static boolean hasTypedOverlayText(@Nullable Commands commands) {
+        return Commands.hasCommands(commands) && StreamEx.of(commands.getCommands())
+                .anyMatch(c -> c instanceof ButtonAction ba && ba.hasOverlay()
+                        && !(c instanceof CommandVolumeDefaultDevice) && !(c instanceof CommandVolumeDefaultDeviceToggle));
     }
 
     private void showDebounced(float value, Supplier<CommandAndIcon> pre, Predicate<Commands> pred) {

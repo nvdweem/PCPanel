@@ -149,6 +149,8 @@ public class Save {
     @Nullable private String overlayFontFamily;
     /** Render the overlay text bold. */
     private boolean overlayFontBold = true;
+    /** Show what a button action did ("Spotify · Muted", the new default device, the profile switched to). */
+    private boolean overlayButtonFeedback = true;
 
     public int getOverlayWidth() {
         return overlayWidth == null ? DEFAULT_OVERLAY_WIDTH : overlayWidth;

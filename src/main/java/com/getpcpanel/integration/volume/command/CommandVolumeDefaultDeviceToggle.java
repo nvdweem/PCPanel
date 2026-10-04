@@ -44,6 +44,10 @@ public class CommandVolumeDefaultDeviceToggle extends CommandVolume implements B
 
         var nextDeviceId = devices.get(currentIdx);
         getSndCtrl().setDefaultDevice(nextDeviceId);
+        var name = getOverlayText();
+        if (name != null) {
+            fireFeedback("Default: " + name);
+        }
     }
 
     @Override

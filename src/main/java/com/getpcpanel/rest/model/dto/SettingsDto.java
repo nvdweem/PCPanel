@@ -84,6 +84,7 @@ public class SettingsDto {
     private boolean overlayBarFollowsLight;
     @Nullable private String overlayFontFamily;
     private boolean overlayFontBold;
+    private boolean overlayButtonFeedback;
     private MqttSettings mqtt;
 
     // Home Assistant
@@ -146,6 +147,7 @@ public class SettingsDto {
         dto.overlayBarFollowsLight = save.isOverlayBarFollowsLight();
         dto.overlayFontFamily = save.getOverlayFontFamily();
         dto.overlayFontBold = save.isOverlayFontBold();
+        dto.overlayButtonFeedback = save.isOverlayButtonFeedback();
         dto.mqtt = SecretMasking.mask(save.getMqtt());
         dto.homeAssistantServers = SecretMasking.maskHaServers(save.getHomeAssistantServers());
         dto.homeAssistantDebounceMs = save.getHomeAssistantDebounceMs();
@@ -207,6 +209,7 @@ public class SettingsDto {
         save.setOverlayBarFollowsLight(overlayBarFollowsLight);
         save.setOverlayFontFamily(overlayFontFamily);
         save.setOverlayFontBold(overlayFontBold);
+        save.setOverlayButtonFeedback(overlayButtonFeedback);
         save.setMqtt(SecretMasking.unmask(mqtt, save.getMqtt()));
         save.setHomeAssistantServers(SecretMasking.unmaskHaServers(homeAssistantServers, save.getHomeAssistantServers()));
         save.setHomeAssistantDebounceMs(homeAssistantDebounceMs);

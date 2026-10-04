@@ -1,5 +1,6 @@
 package com.getpcpanel.integration.profile.command;
 
+import com.getpcpanel.commands.ButtonFeedbackEvent;
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.DeviceAction;
 import javax.annotation.Nullable;
@@ -31,7 +32,10 @@ public class CommandProfile extends Command implements DeviceAction {
 
     @Override
     public void execute(DeviceActionParameters context) {
-        CdiHelper.getBean(DeviceHolder.class).getDevice(context.device()).ifPresent(device -> device.switchProfile(profile));
+        CdiHelper.getBean(DeviceHolder.class).getDevice(context.device()).ifPresent(device -> {
+            device.switchProfile(profile);
+            ButtonFeedbackEvent.forCurrentControl(profile, null).ifPresent(CdiHelper::fire);
+        });
     }
 
     @Override

@@ -22,6 +22,7 @@ up to date when you add or remove an event or an observer.
 |-------|----------|-------------|
 | `PCPanelControlEvent` | `InputInterpreter` | `CommandDispatcher` (runs the configured commands), `Overlay` |
 | `TakeoverPendingEvent` | `InputInterpreter` (via `SoftTakeover`) | `Overlay` ("move to N% to take over") |
+| `ButtonFeedbackEvent` | button actions, from inside the press's `TemplateContext`: the mute actions, *Set default device*, *Cycle default device*, *Send app to audio device*, *Switch profile*, *Run dial actions at a level* | `Overlay` (shows what the button did, unless the button's actions carry a typed overlay text) |
 | `ButtonClickEvent` | `InputInterpreter` | `InputInterpreter` (self, click resolution), `MqttDeviceService` |
 | `DeviceCommunicationHandler.KnobRotateEvent` | `DeviceHolder` (re-fires from the HID handler) | `InputInterpreter`, `EventBroadcaster` (→ UI), `MqttDeviceService`, `OSCService` |
 | `DeviceCommunicationHandler.ButtonPressEvent` | `DeviceCommunicationHandler` | `InputInterpreter`, `EventBroadcaster` (→ UI), `MqttDeviceService`, `OSCService` |

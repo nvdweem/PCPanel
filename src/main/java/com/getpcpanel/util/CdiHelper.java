@@ -26,4 +26,9 @@ public class CdiHelper {
         }
         return Optional.empty();
     }
+
+    /** Fires {@code event} on the CDI event bus from non-CDI code (e.g. a command object). */
+    public static void fire(Object event) {
+        CDI.current().getBeanManager().getEvent().fire(event);
+    }
 }
