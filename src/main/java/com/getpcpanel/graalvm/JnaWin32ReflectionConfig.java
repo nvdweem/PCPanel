@@ -2,6 +2,8 @@ package com.getpcpanel.graalvm;
 
 import com.getpcpanel.integration.clipboard.platform.windows.WinClipboardKernel32;
 import com.getpcpanel.integration.clipboard.platform.windows.WinClipboardUser32;
+import com.getpcpanel.integration.display.platform.windows.WinDisplayUser32;
+import com.getpcpanel.integration.display.platform.windows.WinDxva2;
 import com.getpcpanel.sleepdetection.Win32Desktop;
 import com.getpcpanel.sleepdetection.Win32PowerNotify;
 import com.getpcpanel.util.tray.win.WinShell32;
@@ -32,6 +34,8 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         WinClipboardKernel32.class,
         Win32Desktop.class,
         Win32PowerNotify.class,
+        WinDisplayUser32.class,
+        WinDxva2.class,
 }, classNames = {
         "com.sun.jna.platform.win32.WinDef$HMODULE",
         "com.sun.jna.platform.win32.WinDef$HINSTANCE",

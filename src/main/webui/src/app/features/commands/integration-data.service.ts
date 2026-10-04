@@ -2,7 +2,7 @@ import { computed, Injectable } from '@angular/core';
 import { httpResource } from '@angular/common/http';
 import { AudioDevice, AudioSession } from '../../models/models';
 import {
-  DiscordStatusDto, DiscordUserDto, DiscordVoiceChannelDto, HomeAssistantServerStatus, ProcessDto, SonarStatusDto, WaveLinkResponseDto,
+  DiscordStatusDto, DiscordUserDto, DiscordVoiceChannelDto, DisplayDto, HomeAssistantServerStatus, ProcessDto, SonarStatusDto, WaveLinkResponseDto,
 } from '../../models/generated/backend.types';
 import { PickerItem } from '../../ui';
 
@@ -27,6 +27,9 @@ export class IntegrationDataService {
   readonly inputDevices = httpResource<AudioDevice[]>(() => '/api/audio/devices/input');
   readonly sessions = httpResource<AudioSession[]>(() => '/api/audio/sessions');
   readonly processes = httpResource<ProcessDto[]>(() => '/api/processes');
+
+  // Monitors Turn displays off can switch on their own (DDC/CI)
+  readonly displays = httpResource<DisplayDto[]>(() => '/api/displays');
 
   // OBS
   readonly obsScenes = httpResource<string[]>(() => '/api/obs/scenes');
@@ -157,6 +160,7 @@ export class IntegrationDataService {
     this.inputDevices.reload();
     this.sessions.reload();
     this.processes.reload();
+    this.displays.reload();
     this.obsScenes.reload();
     this.obsSources.reload();
     this.vmBasic.reload();

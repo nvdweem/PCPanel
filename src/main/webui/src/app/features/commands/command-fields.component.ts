@@ -141,6 +141,23 @@ type Cmd = Record<string, any>;
                              placeholder="Search devices…"></pc-app-picker>
             </div>
           }
+          @case ('displays') {
+            <div class="field-block displays">
+              <div class="row-between">
+                <span class="rlabel">All displays</span>
+                <pc-toggle [value]="asArray($any(f).key).length === 0" [disabled]="asArray($any(f).key).length === 0"
+                           (valueChange)="$event && set($any(f).key, [])"></pc-toggle>
+              </div>
+              @for (d of displayOptions(asArray($any(f).key)); track d.id) {
+                <div class="row-between">
+                  <span class="rlabel">{{ d.name }}</span>
+                  <pc-toggle [value]="asArray($any(f).key).includes(d.id)" (valueChange)="toggleInArray($any(f).key, d.id, $event)"></pc-toggle>
+                </div>
+              }
+              <div class="bands-hint">All displays: the PC puts every screen to sleep, as after a while unused; moving the mouse or a key wakes them.</div>
+              <div class="bands-hint">Chosen displays: a press turns them off, the next one back on, through the monitor cable (DDC/CI, on in the monitor's menu). It depends on the monitor: some switch fully off and only come back with their power button, some ignore it. Laptop screens only turn off with All displays.</div>
+            </div>
+          }
           @case ('wavelink-target') {
             <div class="field-block">
               <div class="flabel">{{ wlPrimaryLabel() }}</div>
@@ -313,6 +330,7 @@ type Cmd = Record<string, any>;
     .row-between { display: flex; align-items: center; justify-content: space-between; }
     .rlabel { font-size: 12.5px; color: var(--text-soft); }
     .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .displays { gap: 10px; }
     textarea.ta { resize: vertical; min-height: 60px; font-family: var(--font-mono, monospace); white-space: pre; }
     .ha-help { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: -6px; }
     .ha-link { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--accent, #FFB020); text-decoration: none; }
@@ -414,6 +432,19 @@ export class CommandFieldsComponent {
 
   val(key: string): any { return this.command()[key]; }
   asArray(key: string): string[] { const v = this.command()[key]; return Array.isArray(v) ? v : []; }
+
+  /** Adds {@code item} to the list under {@code key}, or takes it out. */
+  toggleInArray(key: string, item: string, on: boolean): void {
+    const rest = this.asArray(key).filter(x => x !== item);
+    this.set(key, on ? [...rest, item] : rest);
+  }
+
+  /** The connected monitors, then any chosen one that is not connected now (by its stored id), so it can be unchosen. */
+  displayOptions(chosen: string[]): { id: string; name: string }[] {
+    const connected = this.data.displays.value() ?? [];
+    const missing = chosen.filter(id => !connected.some(d => d.id === id)).map(id => ({ id, name: id }));
+    return [...connected, ...missing];
+  }
 
   /**
    * Tab types a tab into the text being composed, so a typed sequence can contain one.

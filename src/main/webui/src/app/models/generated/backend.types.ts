@@ -180,6 +180,7 @@ export interface CommandDiscordVolume extends CommandDiscord, DialAction {
 
 export interface CommandDisplaysOff extends Command, ButtonAction {
     _type: "display.off";
+    displays?: string[];
 }
 
 export interface CommandEndProgram extends Command, ButtonAction {
@@ -645,6 +646,11 @@ export interface DiscordVoiceChannelDto {
 }
 
 export interface DisplayCommandModule extends CommandModule {
+}
+
+export interface DisplayDto {
+    id: string;
+    name: string;
 }
 
 export interface EngineCommandModule extends CommandModule {

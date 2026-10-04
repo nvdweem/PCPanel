@@ -37,6 +37,7 @@ export type FieldDef = (
   | { kind: 'wavelink-target' }                 // id1 (+id2 for Mix), with the source driven by commandType
   | { kind: 'ha-help'; withValue?: boolean }    // links to HA's action builder + server config (+ {{ value }} hint)
   | { kind: 'devices-list'; key: string; label: string }  // cycle list of device ids
+  | { kind: 'displays'; key: string }          // CommandDisplaysOff: "All displays" (empty list) or monitor ids from /api/displays
   | { kind: 'analog-bands' }                    // CommandAnalogBands: ordered ranges, each with a colour + nested action
   | { kind: 'step-actions' }                    // CommandStepActions: step size + nested up/down actions
 ) & { showWhen?: { key: string; equals: string } };
@@ -430,8 +431,8 @@ const FIELD_DEFS: FieldDef_[] = [
   },
   {
     type: 'display.off',
-    buildEmpty: () => ({ _type: 'display.off' }),
-    fields: [],
+    buildEmpty: () => ({ _type: 'display.off', displays: [] }),
+    fields: [{ kind: 'displays', key: 'displays' }],
   },
   {
     type: 'webui.open',
