@@ -137,6 +137,14 @@ const FIELD_DEFS: FieldDef_[] = [
       { kind: 'device', key: 'communicationRec', label: 'Comms — recording', filter: 'input', byName: true },
     ],
   },
+  {
+    type: 'volume.app-output',
+    buildEmpty: () => ({ _type: 'volume.app-output', processName: [], device: '', overlayText: '' }),
+    fields: [
+      { kind: 'apps', key: 'processName', label: 'Applications', everythingElse: true },
+      { kind: 'device', key: 'device', label: 'Audio device', filter: 'output', defaultLabel: 'Default output' },
+    ],
+  },
 
   // ── DEVICE & SYSTEM ────────────────────────────────────────────────────────
   {

@@ -56,6 +56,7 @@ import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterBasic;
 import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterBasicButton;
 import com.getpcpanel.integration.volume.command.CommandVolume;
 import com.getpcpanel.integration.volume.command.CommandVolumeApplicationDeviceToggle;
+import com.getpcpanel.integration.volume.command.CommandVolumeAppOutput;
 import com.getpcpanel.integration.volume.command.CommandVolumeDefaultDevice;
 import com.getpcpanel.integration.volume.command.CommandVolumeDefaultDeviceAdvanced;
 import com.getpcpanel.integration.volume.command.CommandVolumeDefaultDeviceToggle;
@@ -266,6 +267,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         CommandVoiceMeeterBasicButton.class,
         CommandVolume.class,
         CommandVolumeApplicationDeviceToggle.class,
+        CommandVolumeAppOutput.class,
         CommandVolumeDefaultDevice.class,
         CommandVolumeDefaultDeviceAdvanced.class,
         CommandVolumeDefaultDeviceToggle.class,

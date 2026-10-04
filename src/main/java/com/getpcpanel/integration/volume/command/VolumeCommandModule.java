@@ -26,6 +26,7 @@ public class VolumeCommandModule implements CommandModule {
                 CommandVolumeDefaultDeviceToggle.class,
                 CommandVolumeDefaultDeviceAdvanced.class,
                 CommandVolumeDefaultDeviceToggleAdvanced.class,
-                CommandVolumeApplicationDeviceToggle.class);
+                CommandVolumeApplicationDeviceToggle.class,
+                CommandVolumeAppOutput.class);
     }
 }

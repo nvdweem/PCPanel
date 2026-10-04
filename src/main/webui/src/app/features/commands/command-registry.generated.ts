@@ -46,6 +46,7 @@ export const GENERATED_COMMANDS: GeneratedCommand[] = [
   { type: 'sonar.volume', label: 'SteelSeries Sonar — volume', category: 'integration', kinds: ['dial'], integration: 'sonar', icon: 'sliders' },
   { type: 'voicemeeter.advanced', label: 'Voicemeeter — parameter', category: 'integration', kinds: ['dial'], integration: 'voicemeeter', icon: 'sliders', legacy: 'com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced' },
   { type: 'voicemeeter.advanced-button', label: 'Voicemeeter — button', category: 'integration', kinds: ['button'], integration: 'voicemeeter', icon: 'sliders', legacy: 'com.getpcpanel.commands.command.CommandVoiceMeeterAdvancedButton' },
+  { type: 'volume.app-output', label: 'Send app to audio device', category: 'audio', kinds: ['button'], icon: 'cable' },
   { type: 'volume.default-device', label: 'Set default device', category: 'audio', kinds: ['button'], icon: 'monitor', legacy: 'com.getpcpanel.commands.command.CommandVolumeDefaultDevice' },
   { type: 'volume.default-device-advanced', label: 'Advanced default device', category: 'audio', kinds: ['button'], icon: 'monitor', legacy: 'com.getpcpanel.commands.command.CommandVolumeDefaultDeviceAdvanced' },
   { type: 'volume.default-device-toggle', label: 'Cycle default device', category: 'audio', kinds: ['button'], icon: 'refresh', legacy: 'com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggle' },

@@ -113,6 +113,11 @@ class PulseAudioWrapper {
         pactl("set-sink-input-mute", String.valueOf(index), muteTypeToMute(mute));
     }
 
+    /** Moves a stream (sink input) to the sink named {@code sinkName}. */
+    public void moveSession(int index, String sinkName) {
+        pactl("move-sink-input", String.valueOf(index), sinkName);
+    }
+
     List<PulseAudioTarget> execAndParse(InOutput type) {
         var ret = new ArrayList<PulseAudioTarget>();
         var cmdOutput = runAndRead("pactl", "list", type.pulseType);

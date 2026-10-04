@@ -747,6 +747,14 @@
               "muteType" : "unmute"
             } ],
             "type" : "allAtOnce"
+          },
+          "37" : {
+            "commands" : [ {
+              "_type" : "volume.app-output",
+              "processName" : [ "arg0-138", "arg0-139" ],
+              "device" : "arg1-140"
+            } ],
+            "type" : "allAtOnce"
           }
         },
         "dblButtonData" : {

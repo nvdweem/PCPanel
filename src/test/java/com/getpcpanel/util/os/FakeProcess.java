@@ -19,6 +19,7 @@ import java.util.Objects;
  *     <li>{@code echo-env <name>} - prints the value of environment variable {@code name}, or {@code <unset>}</li>
  *     <li>{@code env-to-file <name> <file>} - writes that value to {@code file} (for callers that discard output)</li>
  *     <li>{@code cat} - copies stdin to stdout</li>
+ *     <li>{@code print-file <file>} - prints the contents of {@code file} (a canned tool answer)</li>
  *     <li>{@code daemonize} - starts an {@code idle} that inherits this process's stdout and stderr, prints its
  *     pid, and exits 0 - the way {@code xclip} and {@code wl-copy} leave a clipboard server holding the pipes</li>
  * </ul>
@@ -56,6 +57,7 @@ public final class FakeProcess {
             case "echo-env" -> System.out.println(envValue(args[1]));
             case "env-to-file" -> Files.writeString(Path.of(args[2]), envValue(args[1]));
             case "cat" -> System.out.write(System.in.readAllBytes());
+            case "print-file" -> System.out.write(Files.readAllBytes(Path.of(args[1])));
             case "daemonize" -> {
                 var server = new ProcessBuilder(command("idle")).inheritIO().start();
                 System.out.println(server.pid());
