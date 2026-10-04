@@ -75,6 +75,54 @@ class OverlayRendererBarTest {
         assertNotEquals(image.getRGB(BAR_X + 85, MID), image.getRGB(BAR_X + 95, MID), "the fill ends at half the bar");
     }
 
+    /** A whole overlay with a red bar and knob, a 4 px padding and a knob much wider than that. */
+    private static BufferedImage overlay(boolean showAppName, boolean showNumber, int percent) {
+        var save = new Save();
+        save.setOverlayShowAppName(showAppName);
+        save.setOverlayShowNumber(showNumber);
+        save.setOverlayShowIcon(false);
+        save.setOverlayContentPadding(4);
+        save.setOverlayKnobSize(24);
+        save.setOverlayBarColor("#FF0000");
+        save.setOverlayBarBackgroundColor("#FF0000");
+        save.setOverlayBackgroundColor("#000000");
+        save.setOverlayWindowCornerRounding(0);
+        var renderer = new OverlayRenderer();
+        var h = renderer.setStyles(save);
+        renderer.setValue(percent);
+        var image = new BufferedImage(renderer.width(), h, BufferedImage.TYPE_INT_ARGB);
+        var g2 = image.createGraphics();
+        renderer.render(g2, image.getWidth(), image.getHeight());
+        g2.dispose();
+        return image;
+    }
+
+    /** Whether any pixel within {@code pad} of the image's edges is reddish: the bar or knob (text and gloss are grey). */
+    private static boolean redNearTheEdge(BufferedImage image, int pad) {
+        for (var y = 0; y < image.getHeight(); y++) {
+            for (var x = 0; x < image.getWidth(); x++) {
+                var nearEdge = x < pad || y < pad || x >= image.getWidth() - pad || y >= image.getHeight() - pad;
+                var rgb = image.getRGB(x, y);
+                if (nearEdge && ((rgb >> 16) & 0xFF) > ((rgb >> 8) & 0xFF) + 16) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @Test
+    void theKnobKeepsThePaddingAtBothEnds() {
+        for (var showAppName : new boolean[]{true, false}) {
+            for (var showNumber : new boolean[]{true, false}) {
+                for (var percent : new int[]{0, 100}) {
+                    assertEquals(false, redNearTheEdge(overlay(showAppName, showNumber, percent), 4),
+                            "name " + showAppName + ", number " + showNumber + ", at " + percent + "%");
+                }
+            }
+        }
+    }
+
     private static BufferedImage styled(int barRounding, int knob, int percent) {
         var save = new Save();
         save.setOverlayBarHeight(10);

@@ -119,11 +119,15 @@ class OverlayRenderer {
         var pad = contentPadding;
         var effIcon = showIcon ? iconSize : 0;
         if (showAppName) {
-            var topRow = Math.max(effIcon, textSize + 4);
-            // The thumb stands out below the bar; room for it however small the padding is.
-            return pad + Math.max(pad, thumbOverhang()) + topRow + elementGap + barHeight;
+            // The thumb stands out below the bar; the padding comes below it.
+            return pad + topRow() + elementGap + barHeight + thumbOverhang() + pad;
         }
         return Math.max(DEFAULT_HEIGHT, pad * 2 + Math.max(Math.max(effIcon, textSize + 4), barHeight + 2 * thumbOverhang()));
+    }
+
+    /** The two-line layout's top row: the icon (when shown) or the text, whichever is taller. */
+    private int topRow() {
+        return Math.max(showIcon ? iconSize : 0, textSize + 4);
     }
 
     /** Half the knob's width: how far it reaches past the bar's ends at 0% and 100%. */
@@ -174,7 +178,7 @@ class OverlayRenderer {
     /** [icon] [name] [percent] on the top row, full-width bar beneath. Matches the settings preview. */
     private void renderTwoLine(Graphics2D g2, int w, int h) {
         var pad = contentPadding;
-        var topRow = Math.max(iconSize, textSize + 4);
+        var topRow = topRow();
         var rowTop = pad;
 
         var x = pad;
@@ -209,8 +213,8 @@ class OverlayRenderer {
         }
 
         var barY = rowTop + topRow + elementGap;
-        // The knob sits half past the bar's ends at 0% and 100%: keep that half inside the window.
-        var inset = Math.max(0, knobHalf() - pad);
+        // The knob sits half past the bar's ends at 0% and 100%: shorten the bar by that half, so the knob keeps the padding.
+        var inset = knobHalf();
         drawBar(g2, pad + inset, barY, w - 2 * (pad + inset));
     }
 
@@ -227,9 +231,10 @@ class OverlayRenderer {
         var fm = g2.getFontMetrics();
         var valueWidth = showNumber ? fm.stringWidth("100%") : 0;
         var barEndX = w - pad - (showNumber ? valueWidth + VALUE_GAP : 0);
-        // The knob sits half past the bar's ends at 0% and 100%: room for that half beside the bar.
-        var leftInset = Math.max(0, knobHalf() - (x == pad ? pad : elementGap));
-        var rightInset = Math.max(0, knobHalf() - (showNumber ? VALUE_GAP : pad));
+        // The knob sits half past the bar's ends at 0% and 100%: shorten the bar by that half, so the knob keeps the
+        // padding, the gap after the icon and the gap before the number.
+        var leftInset = knobHalf();
+        var rightInset = knobHalf();
         var barY = (h - barHeight) / 2;
         drawBar(g2, x + leftInset, barY, barEndX - rightInset - x - leftInset);
 
