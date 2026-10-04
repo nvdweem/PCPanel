@@ -165,6 +165,13 @@
               </div>
             </div>
             <div class="row">
+              <div class="row-text"><div class="row-label">Hold time</div><div class="row-sub">milliseconds a button stays down to run its hold actions</div></div>
+              <div class="pc-field num-field">
+                <input class="pc-field-input" type="number" min="100" [value]="s.holdInterval"
+                       (input)="patchNum('holdInterval', $any($event.target).value, 500)">
+              </div>
+            </div>
+            <div class="row">
               <div class="row-text"><div class="row-label">Prevent click when double-click</div></div>
               <pc-toggle [value]="s.preventClickWhenDblClick" (valueChange)="patch('preventClickWhenDblClick', $event)"></pc-toggle>
             </div>

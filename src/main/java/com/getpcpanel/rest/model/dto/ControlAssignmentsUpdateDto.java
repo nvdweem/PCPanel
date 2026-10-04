@@ -10,6 +10,7 @@ public record ControlAssignmentsUpdateDto(
         @Nullable Commands button,
         @Nullable Commands dblButton,
         @Nullable Commands releaseButton,
+        @Nullable Commands holdButton,
         @Nullable KnobSetting knobSetting
 ) {
 }

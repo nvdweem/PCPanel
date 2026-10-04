@@ -396,6 +396,12 @@ public class DeviceResource {
             changed = true;
         }
 
+        if (update.holdButton() != null) {
+            profile.setHoldButtonData(index, update.holdButton());
+            eventBus.fire(new AssignmentChangedEvent(serial, profileName, Kinds.holdbutton, index, update.holdButton()));
+            changed = true;
+        }
+
         if (update.knobSetting() != null) {
             var knob = profile.getKnobSettings(index);
             knob.copyFrom(update.knobSetting());

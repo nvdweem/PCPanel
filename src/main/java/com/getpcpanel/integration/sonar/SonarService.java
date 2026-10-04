@@ -172,12 +172,13 @@ public class SonarService implements IntegrationConnection {
                        .anyMatch(CommandSonar.class::isInstance);
     }
 
-    /** Every place a profile can hold a control's commands: dial, button, double-click and release. */
+    /** Every place a profile can hold a control's commands: dial, button, double-click, release and hold. */
     private static StreamEx<Command> controlCommands(Profile profile) {
         return StreamEx.of(profile.getDialData().values())
                        .append(profile.getButtonData().values())
                        .append(profile.getDblButtonData().values())
                        .append(profile.getReleaseButtonData().values())
+                       .append(profile.getHoldButtonData().values())
                        .nonNull()
                        .flatMap(c -> StreamEx.of(c.getCommands()))
                        .flatMap(SonarService::withNested);

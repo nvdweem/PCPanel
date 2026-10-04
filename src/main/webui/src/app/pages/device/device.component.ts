@@ -93,7 +93,10 @@ export class DeviceComponent {
       { label: 'PRESS', text: this.slotText(p?.buttonData?.[key]), cls: 'press' },
       { label: '2× PRESS', text: this.slotText(p?.dblButtonData?.[key]), cls: 'dbl' },
     ];
-    // Release (push-to-talk) is opt-in and uncommon, so only surface it once something is bound.
+    // Hold and release (push-to-talk) are opt-in and uncommon, so only surface them once something is bound.
+    if (p?.holdButtonData?.[key]?.commands?.length) {
+      lines.push({ label: 'HOLD', text: this.slotText(p.holdButtonData[key]), cls: 'hold' });
+    }
     if (p?.releaseButtonData?.[key]?.commands?.length) {
       lines.push({ label: 'RELEASE', text: this.slotText(p.releaseButtonData[key]), cls: 'release' });
     }
@@ -161,6 +164,7 @@ export class DeviceComponent {
       button: { ...EMPTY },
       dblButton: { ...EMPTY },
       releaseButton: { ...EMPTY },
+      holdButton: { ...EMPTY },
     }).subscribe({ error: () => this.toast.show('Could not clear control', { kind: 'error' }) });
   }
 

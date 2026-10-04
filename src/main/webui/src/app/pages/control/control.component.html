@@ -105,7 +105,7 @@
       </div>
 
       @if (!isSlider()) {
-        <div class="pc-hint">Knobs have four independent slots: turn, single-press, double-press, and on-release.</div>
+        <div class="pc-hint">Knobs have five independent slots: turn, single press, double press, hold and on release.</div>
       }
     </aside>
 
@@ -123,6 +123,7 @@
           <button class="tab" [class.active]="activeSlot() === 'rotate'" (click)="setSlot('rotate')">↻ Rotate</button>
           <button class="tab" [class.active]="activeSlot() === 'press'" (click)="setSlot('press')">Single press</button>
           <button class="tab" [class.active]="activeSlot() === 'dblpress'" (click)="setSlot('dblpress')">Double press</button>
+          <button class="tab" [class.active]="activeSlot() === 'hold'" (click)="setSlot('hold')">Hold</button>
           <button class="tab" [class.active]="activeSlot() === 'release'" (click)="setSlot('release')">On release</button>
         }
       </div>
@@ -132,7 +133,7 @@
         <div class="action-list">
           <div class="al-head">
             <span class="al-head-left">
-              <span class="micro-label">{{ activeSlot() === 'release' ? 'BUTTON ACTIONS · ON RELEASE' : activeSlot() !== 'rotate' ? 'BUTTON ACTIONS · ON PRESS' : isSlider() ? 'FADER ACTIONS · 0–100%' : 'DIAL ACTIONS · 0–100%' }}</span>
+              <span class="micro-label">{{ activeSlot() === 'release' ? 'BUTTON ACTIONS · ON RELEASE' : activeSlot() === 'hold' ? 'BUTTON ACTIONS · ON HOLD' : activeSlot() !== 'rotate' ? 'BUTTON ACTIONS · ON PRESS' : isSlider() ? 'FADER ACTIONS · 0–100%' : 'DIAL ACTIONS · 0–100%' }}</span>
               @if (showSeqToggle()) {
                 <button class="seq-toggle" (click)="toggleSlotMode()"
                         [title]="currentSlotSignal()().type === 'sequential' ? 'One action per press, advancing each time. Click to run every action at once.' : 'Every action runs on each press. Click to advance one action per press instead.'">

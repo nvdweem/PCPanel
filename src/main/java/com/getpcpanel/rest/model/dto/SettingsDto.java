@@ -31,6 +31,7 @@ public class SettingsDto {
     private List<String> newAppsAtDialLevelExceptions;
     private boolean sleepDetectionEnabled;
     private Long dblClickInterval;
+    private long holdInterval;
     private boolean preventClickWhenDblClick;
     private boolean skipControlledFocusApps;
     private List<FocusVolumeOverride> focusVolumeOverrides;
@@ -97,6 +98,7 @@ public class SettingsDto {
         dto.newAppsAtDialLevelExceptions = save.getNewAppsAtDialLevelExceptions();
         dto.sleepDetectionEnabled = save.isSleepDetectionEnabled();
         dto.dblClickInterval = save.getDblClickInterval();
+        dto.holdInterval = save.getHoldInterval();
         dto.preventClickWhenDblClick = save.isPreventClickWhenDblClick();
         dto.skipControlledFocusApps = save.isSkipControlledFocusApps();
         dto.focusVolumeOverrides = save.getFocusVolumeOverrides();
@@ -153,6 +155,7 @@ public class SettingsDto {
         save.setNewAppsAtDialLevelExceptions(newAppsAtDialLevelExceptions);
         save.setSleepDetectionEnabled(sleepDetectionEnabled);
         save.setDblClickInterval(dblClickInterval);
+        save.setHoldInterval(holdInterval);
         save.setPreventClickWhenDblClick(preventClickWhenDblClick);
         save.setSkipControlledFocusApps(skipControlledFocusApps);
         save.setFocusVolumeOverrides(focusVolumeOverrides);

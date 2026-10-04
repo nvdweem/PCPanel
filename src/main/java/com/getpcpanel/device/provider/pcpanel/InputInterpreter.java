@@ -8,7 +8,9 @@ import static java.util.Objects.requireNonNullElse;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import jakarta.enterprise.event.Event;
@@ -42,6 +44,10 @@ public final class InputInterpreter {
     @Inject
     CurveService curves;
     private final Map<ClickId, Long> lastClicks = new HashMap<>();
+    /** Buttons pressed while they had a hold action, whose press is not decided yet. */
+    private final Set<ClickId> holdArmed = new HashSet<>();
+    /** Buttons whose hold actions ran during the current press. */
+    private final Set<ClickId> holdFired = new HashSet<>();
 
         public void onKnobRotate(@Observes DeviceCommunicationHandler.KnobRotateEvent event) {
         devices.getDevice(event.serialNum()).ifPresent(device -> {
@@ -55,10 +61,62 @@ public final class InputInterpreter {
         public void onButtonPress(@Observes DeviceCommunicationHandler.ButtonPressEvent event) throws IOException {
         devices.getDevice(event.serialNum()).ifPresent(device -> device.setButtonPressed(event.button(), event.pressed()));
         if (event.pressed()) {
-            doClickAction(event.serialNum(), event.button());
+            doPress(event.serialNum(), event.button());
         } else {
-            doReleaseAction(event.serialNum(), event.button());
+            doRelease(event.serialNum(), event.button());
         }
+    }
+
+    /**
+     * A button with hold actions is decided when it comes up or when it has been down for {@code holdInterval},
+     * whichever is first: held that long it runs its hold actions, released sooner it is an ordinary press.
+     * A button without hold actions is a press the moment it goes down.
+     */
+    void doPress(String serialNum, int button) {
+        if (!hasHoldAction(serialNum, button)) {
+            doClickAction(serialNum, button);
+            return;
+        }
+        var id = new ClickId(serialNum, button);
+        synchronized (this) {
+            holdArmed.add(id);
+            holdFired.remove(id);
+        }
+        debouncer.debounce(new HoldKey(id), () -> onHeld(id), save.get().getHoldInterval(), TimeUnit.MILLISECONDS);
+    }
+
+    void doRelease(String serialNum, int button) {
+        var id = new ClickId(serialNum, button);
+        boolean wasArmed;
+        boolean held;
+        synchronized (this) {
+            wasArmed = holdArmed.remove(id);
+            held = holdFired.remove(id);
+        }
+        if (wasArmed) {
+            debouncer.cancel(new HoldKey(id));
+            if (!held) {
+                doClickAction(serialNum, button);
+            }
+        }
+        doReleaseAction(serialNum, button);
+    }
+
+    private void onHeld(ClickId id) {
+        synchronized (this) {
+            if (!holdArmed.remove(id)) {
+                return; // released in the meantime
+            }
+            holdFired.add(id);
+        }
+        save.getProfile(id.serialNum())
+            .map(p -> baseLayer.effectiveHoldButton(id.serialNum(), p, id.button()))
+            .filter(data -> hasCommands(data))
+            .ifPresent(data -> eventBus.fire(new PCPanelControlEvent(id.serialNum(), id.button(), data, false, null, PCPanelControlEvent.Source.HOLD)));
+    }
+
+    private boolean hasHoldAction(String serialNum, int button) {
+        return save.getProfile(serialNum).map(p -> baseLayer.effectiveHoldButton(serialNum, p, button)).filter(d -> hasCommands(d)).isPresent();
     }
 
     /**
@@ -132,5 +190,8 @@ public final class InputInterpreter {
     }
 
     private record ClickId(String serialNum, int button) {
+    }
+
+    private record HoldKey(ClickId id) {
     }
 }

@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.CommandsType;
+import com.getpcpanel.commands.PCPanelControlEvent;
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.integration.volume.command.CommandVolumeProcessMute;
 import com.getpcpanel.integration.volume.platform.MuteType;
@@ -64,6 +65,36 @@ class InputInterpreterTest {
                 "a button with a configured double-click action still reports a double-click");
     }
 
+    /** A quick tap on a button with hold actions is an ordinary press; its hold actions never run. */
+    @Test
+    void tapOnHoldButtonIsAPress() throws InterruptedException {
+        var events = new CapturingEventBus();
+        var sut = interpreter(profileWithHoldAction(), events);
+        sut.save.get().setHoldInterval(100L);
+
+        sut.doPress(SERIAL, BUTTON);
+        sut.doRelease(SERIAL, BUTTON);
+        Thread.sleep(200);
+
+        assertEquals(1, events.clicks().size(), "a tap is a press");
+        assertTrue(events.holds().isEmpty(), "a tap never runs the hold actions");
+    }
+
+    /** Held past the hold interval, the hold actions run and the press does not. */
+    @Test
+    void longPressRunsHoldInsteadOfPress() throws InterruptedException {
+        var events = new CapturingEventBus();
+        var sut = interpreter(profileWithHoldAction(), events);
+        sut.save.get().setHoldInterval(30L);
+
+        sut.doPress(SERIAL, BUTTON);
+        Thread.sleep(200);
+        sut.doRelease(SERIAL, BUTTON);
+
+        assertEquals(1, events.holds().size(), "held long enough runs the hold actions");
+        assertTrue(events.clicks().isEmpty(), "a hold is not also a press");
+    }
+
     private static InputInterpreter interpreter(Profile profile, CapturingEventBus events) {
         var sut = new InputInterpreter();
         sut.save = new FixedSaveService(profile);
@@ -82,6 +113,12 @@ class InputInterpreterTest {
     private static Profile profileWithDblAction() {
         var profile = profileWithoutDblAction();
         profile.setDblButtonData(BUTTON, mute());
+        return profile;
+    }
+
+    private static Profile profileWithHoldAction() {
+        var profile = profileWithoutDblAction();
+        profile.setHoldButtonData(BUTTON, mute());
         return profile;
     }
 
@@ -115,6 +152,11 @@ class InputInterpreterTest {
 
         private List<ButtonClickEvent> clicks() {
             return fired.stream().filter(ButtonClickEvent.class::isInstance).map(ButtonClickEvent.class::cast).toList();
+        }
+
+        private List<PCPanelControlEvent> holds() {
+            return fired.stream().filter(PCPanelControlEvent.class::isInstance).map(PCPanelControlEvent.class::cast)
+                        .filter(e -> e.source() == PCPanelControlEvent.Source.HOLD).toList();
         }
 
         @Override

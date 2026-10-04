@@ -7,7 +7,7 @@ import { TemplateCatalogDto, TemplatePreviewDto, TemplatePreviewRequestDto } fro
 export interface TemplateContext {
   serial?: string | null;
   control?: number | null;
-  /** overlay | rotate | press | dblpress | release */
+  /** overlay | rotate | press | dblpress | hold | release */
   slot?: string | null;
   min?: number | null;
   max?: number | null;

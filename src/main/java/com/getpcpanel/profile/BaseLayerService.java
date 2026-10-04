@@ -89,6 +89,11 @@ public class BaseLayerService {
         return effectiveReleaseButton(active, fallbackFor(serial, active), button);
     }
 
+    @Nullable
+    public Commands effectiveHoldButton(String serial, Profile active, int button) {
+        return effectiveHoldButton(active, fallbackFor(serial, active), button);
+    }
+
     public KnobSetting effectiveKnobSetting(String serial, Profile active, int knob) {
         return effectiveKnobSetting(active, fallbackFor(serial, active), knob);
     }
@@ -150,6 +155,16 @@ public class BaseLayerService {
             return own;
         }
         var fallback = base.getReleaseButtonData(button);
+        return Commands.hasCommands(fallback) ? fallback : own;
+    }
+
+    @Nullable
+    static Commands effectiveHoldButton(Profile active, @Nullable Profile base, int button) {
+        var own = active.getHoldButtonData(button);
+        if (Commands.hasCommands(own) || base == null) {
+            return own;
+        }
+        var fallback = base.getHoldButtonData(button);
         return Commands.hasCommands(fallback) ? fallback : own;
     }
 

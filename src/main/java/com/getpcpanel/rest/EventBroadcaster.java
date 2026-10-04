@@ -159,7 +159,7 @@ public class EventBroadcaster {
 
     public record AssignmentChangedEvent(String serial, String profile, Kinds kind, int index, Commands commands) {
         public enum Kinds {
-            dial, button, dblbutton, releasebutton
+            dial, button, dblbutton, releasebutton, holdbutton
         }
     }
 

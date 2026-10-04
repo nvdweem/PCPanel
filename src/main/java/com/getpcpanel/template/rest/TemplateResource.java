@@ -64,12 +64,13 @@ public class TemplateResource {
             return TemplateScope.EMPTY;
         }
         var kind = StringUtils.defaultIfBlank(slot, "rotate");
-        var button = kind.equals("press") || kind.equals("dblpress") || kind.equals("release");
+        var button = kind.equals("press") || kind.equals("dblpress") || kind.equals("release") || kind.equals("hold");
         var profile = saveService.getProfile(serial).orElse(null);
         Commands commands = profile == null ? null : switch (kind) {
             case "press" -> baseLayer.effectiveButton(serial, profile, control);
             case "dblpress" -> baseLayer.effectiveDblButton(serial, profile, control);
             case "release" -> baseLayer.effectiveReleaseButton(serial, profile, control);
+            case "hold" -> baseLayer.effectiveHoldButton(serial, profile, control);
             default -> baseLayer.effectiveDial(serial, profile, control);
         };
         DialValue dial = null;

@@ -91,6 +91,7 @@ public class VolumeCoordinatorService {
                        .append(p.getButtonData().values())
                        .append(p.getDblButtonData().values())
                        .append(p.getReleaseButtonData().values())
+                       .append(p.getHoldButtonData().values())
                        .nonNull()
                        .flatMap(c -> StreamEx.of(c.getCommands()));
     }

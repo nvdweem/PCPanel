@@ -68,6 +68,8 @@ public class Save {
      *  shutdown is unaffected. */
     private boolean sleepDetectionEnabled = true;
     private Long dblClickInterval = 500L;
+    /** How long (ms) a button must stay down to run its hold actions instead of its press actions. */
+    @Nullable private Long holdInterval;
     private boolean preventClickWhenDblClick = true;
     /** When set, focused-app volume does nothing for apps already controlled elsewhere (a per-app
      *  volume command on another control, or a Wave Link channel). */
@@ -245,6 +247,10 @@ public class Save {
     /** {@link #newAppsAtDialLevel} with the platform default filled in. Not a bean getter, so it is not serialised. */
     public boolean effectiveNewAppsAtDialLevel() {
         return newAppsAtDialLevel != null ? newAppsAtDialLevel : Platform.isLinux();
+    }
+
+    public long getHoldInterval() {
+        return holdInterval == null ? 500L : holdInterval;
     }
 
     @Nonnull

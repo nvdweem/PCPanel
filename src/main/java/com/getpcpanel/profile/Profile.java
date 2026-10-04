@@ -29,6 +29,7 @@ public class Profile {
     @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Commands> buttonData = new HashMap<>();
     @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Commands> dblButtonData = new HashMap<>();
     @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Commands> releaseButtonData = new HashMap<>();
+    @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Commands> holdButtonData = new HashMap<>();
     @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Commands> dialData = new HashMap<>();
     @JsonDeserialize(using = KnobSettingMapDeserializer.class) private Map<Integer, KnobSetting> knobSettings = new HashMap<>();
     private LightingConfig lightingConfig;
@@ -93,6 +94,15 @@ public class Profile {
 
     public void setReleaseButtonData(int button, Commands data) {
         releaseButtonData.put(button, data);
+    }
+
+    /** Commands run when the button is held down for {@code Save.holdInterval}; null when nothing is bound. */
+    public Commands getHoldButtonData(int button) {
+        return holdButtonData.get(button);
+    }
+
+    public void setHoldButtonData(int button, Commands data) {
+        holdButtonData.put(button, data);
     }
 
     public Commands getDialData(int dial) {

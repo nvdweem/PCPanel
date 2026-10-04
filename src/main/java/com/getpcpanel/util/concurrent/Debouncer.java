@@ -56,6 +56,14 @@ public class Debouncer {
         });
     }
 
+    /** Drops the pending {@link #debounce} run for {@code key}, if any. */
+    public void cancel(Object key) {
+        var pending = debounces.remove(key);
+        if (pending != null) {
+            pending.cancel(false);
+        }
+    }
+
     /**
      * Trailing rate-limit: runs at most once per {@code delay} window, always using the most recent
      * {@code runnable} supplied during that window.

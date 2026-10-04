@@ -364,6 +364,8 @@ function applyAssignment(
       return {...snapshot, dblButtonData: {...snapshot.dblButtonData, [event.index]: event.commands}};
     case 'releasebutton':
       return {...snapshot, releaseButtonData: {...snapshot.releaseButtonData, [event.index]: event.commands}};
+    case 'holdbutton':
+      return {...snapshot, holdButtonData: {...snapshot.holdButtonData, [event.index]: event.commands}};
   }
 }
 

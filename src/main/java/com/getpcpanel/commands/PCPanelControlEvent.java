@@ -13,7 +13,7 @@ public record PCPanelControlEvent(String serialNum, int knob, Commands cmd, bool
      *  press and release — which share the same {@code knob} index — never overwrite each other on a
      *  quick tap (the press would otherwise be dropped). */
     public enum Source {
-        DIAL, PRESS, RELEASE
+        DIAL, PRESS, RELEASE, HOLD
     }
 
     public Runnable buildRunnable() {

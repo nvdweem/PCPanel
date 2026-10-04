@@ -19,6 +19,7 @@ public record ProfileSnapshotDto(
         Map<Integer, Commands> buttonData,
         Map<Integer, Commands> dblButtonData,
         Map<Integer, Commands> releaseButtonData,
+        Map<Integer, Commands> holdButtonData,
         Map<Integer, KnobSetting> knobSettings
 ) {
     public static ProfileSnapshotDto from(Profile profile) {
@@ -28,6 +29,7 @@ public record ProfileSnapshotDto(
                 profile.getButtonData(),
                 profile.getDblButtonData(),
                 profile.getReleaseButtonData(),
+                profile.getHoldButtonData(),
                 profile.getKnobSettings()
         );
     }

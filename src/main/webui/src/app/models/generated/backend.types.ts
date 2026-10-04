@@ -472,6 +472,7 @@ export interface ControlAssignmentsUpdateDto {
     analog?: Commands;
     button?: Commands;
     dblButton?: Commands;
+    holdButton?: Commands;
     knobSetting?: KnobSetting;
     releaseButton?: Commands;
 }
@@ -801,6 +802,7 @@ export interface ProfileSnapshotDto {
     buttonData: { [index: string]: Commands };
     dblButtonData: { [index: string]: Commands };
     dialData: { [index: string]: Commands };
+    holdButtonData: { [index: string]: Commands };
     knobSettings: { [index: string]: KnobSetting };
     name: string;
     releaseButtonData: { [index: string]: Commands };
@@ -827,6 +829,7 @@ export interface SettingsDto {
     dblClickInterval: number;
     focusVolumeOverrides: FocusVolumeOverride[];
     forceVolume: boolean;
+    holdInterval: number;
     homeAssistantDebounceMs?: number;
     homeAssistantServers: HomeAssistantServer[];
     mainUIIcons: boolean;
@@ -1132,7 +1135,7 @@ export type DiscoveryMode = "AUTO" | "MANUAL";
 
 export type KeystrokeType = "KEY" | "TEXT";
 
-export type Kinds = "dial" | "button" | "dblbutton" | "releasebutton";
+export type Kinds = "dial" | "button" | "dblbutton" | "releasebutton" | "holdbutton";
 
 export type LightColorModel = "NONE" | "MONOCHROME" | "RGB" | "SCALAR_0_254";
 
