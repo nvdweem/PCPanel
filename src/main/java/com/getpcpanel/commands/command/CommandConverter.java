@@ -75,7 +75,7 @@ public final class CommandConverter {
                     yield NOOP;
                 yield new CommandKeystroke(CommandKeystroke.KeystrokeType.KEY, data[1], null);
             }
-            case "shortcut" -> new CommandShortcut(data[1]);
+            case "shortcut" -> new CommandShortcut(data[1], null, false, false);
             case "media" -> VolumeButton.tryValueOf(data[1]).map(v -> new CommandMedia(v, List.of(), false)).map(Command.class::cast).orElse(NOOP);
             case "end_program" -> new CommandEndProgram(StringUtils.equals("specific", data[1]), data[2]);
             case "sound_device" -> new CommandVolumeDefaultDevice(data[1]);

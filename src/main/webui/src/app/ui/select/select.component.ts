@@ -12,6 +12,8 @@ export interface SelectOption<T = string> {
   hint?: string;        // e.g. "auto", "offline"
   disabled?: boolean;
   font?: string;        // render this option's label in the given font-family (e.g. a font picker)
+  icon?: string | null; // data-URI image shown before the label (e.g. an app's icon)
+  group?: string;       // heading shown above the first option of a run of options with this group
 }
 
 let nextOptionId = 0;
@@ -39,6 +41,7 @@ class ManagedOption<T> implements Highlightable {
     <button type="button" class="trigger" [class.block]="block()" cdkOverlayOrigin #trigger="cdkOverlayOrigin"
             role="combobox" [attr.aria-expanded]="open()" (click)="toggle()" (keydown)="onKey($event)">
       @if (microLabel()) { <span class="micro-label">{{ microLabel() }}</span> }
+      @if (selectedIcon(); as icon) { <img class="ico" [src]="icon" alt=""> }
       <span class="val" [style.font-family]="selectedFont()">{{ selectedLabel() }}</span>
       <pc-icon name="chevron-down" [size]="13" [strokeWidth]="2.5"></pc-icon>
     </button>
@@ -51,15 +54,21 @@ class ManagedOption<T> implements Highlightable {
         @if (showFilter()) {
           <input class="filter" type="text" [value]="filter()" [placeholder]="filterPlaceholder()" cdkFocusInitial
                  role="combobox" aria-controls="pc-select-list" [attr.aria-activedescendant]="keyManager.activeItem?.id"
-                 (input)="setFilter($event)" (keydown)="onKey($event)" />
+                 (input)="setFilter($event)" (keydown)="onKey($event)" (focus)="$any($event.target).select()" />
         }
         <div class="opts" id="pc-select-list" role="listbox">
           @for (item of items(); track item.id; let i = $index) {
+            @if (item.opt.group && item.opt.group !== items()[i - 1]?.opt?.group) {
+              <div class="group">{{ item.opt.group }}</div>
+            } @else if (!item.opt.group && items()[i - 1]?.opt?.group) {
+              <div class="divider"></div>
+            }
             <button type="button" class="opt" role="option" [attr.id]="item.id"
                     [class.selected]="item.opt.value === value()" [class.active]="item.active"
                     [attr.aria-selected]="item.opt.value === value()" [disabled]="item.disabled"
                     (click)="pick(item.opt)" (mouseenter)="setActive(i)">
               @if (item.opt.status) { <pc-status-dot [kind]="item.opt.status" [size]="7"></pc-status-dot> }
+              @if (item.opt.icon) { <img class="ico" [src]="item.opt.icon" alt=""> }
               <span class="opt-label" [style.font-family]="item.opt.font">{{ item.opt.label }}</span>
               @if (item.opt.hint) { <span class="hint">{{ item.opt.hint }}</span> }
               @if (item.opt.badge) { <span class="badge">{{ item.opt.badge }}</span> }
@@ -91,6 +100,8 @@ class ManagedOption<T> implements Highlightable {
     .trigger:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
     .micro-label { font-family: var(--font-mono); font-size: 10px; color: var(--text-3); letter-spacing: .04em; }
     .val { flex: 1; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ico { width: 18px; height: 18px; object-fit: contain; flex: none; }
+    .group { padding: 8px 11px 4px; font-family: var(--font-mono); font-size: 10px; letter-spacing: .04em; color: var(--text-3); text-transform: uppercase; }
     pc-icon { color: var(--text-2); }
     .panel {
       background: var(--popover); border: 1px solid var(--raised-line); border-radius: var(--r-lg);
@@ -209,6 +220,7 @@ export class SelectComponent<T = string> {
     return v === undefined || v === null || v === '' ? this.placeholder() : String(v);
   });
   readonly selectedFont = computed(() => this.options().find(o => o.value === this.value())?.font);
+  readonly selectedIcon = computed(() => this.options().find(o => o.value === this.value())?.icon ?? null);
 
   toggle(): void {
     this.open() ? this.open.set(false) : this.openPanel();

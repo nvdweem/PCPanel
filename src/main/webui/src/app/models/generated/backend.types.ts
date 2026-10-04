@@ -305,6 +305,9 @@ export interface CommandSetDialValue extends Command, DeviceAction {
 
 export interface CommandShortcut extends Command, ButtonAction {
     _type: "program.shortcut";
+    focusApp?: string;
+    focusIfRunning: boolean;
+    minimizeIfFocused: boolean;
     shortcut: string;
 }
 
@@ -718,6 +721,13 @@ export interface HomeAssistantSettings {
     availability: boolean;
     baseTopic: string;
     enableDiscovery: boolean;
+}
+
+export interface InstalledAppDto {
+    exe: string;
+    icon?: string;
+    name: string;
+    target: string;
 }
 
 export interface KeyboardCommandModule extends CommandModule {

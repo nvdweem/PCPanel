@@ -4,6 +4,7 @@ import com.getpcpanel.integration.clipboard.platform.windows.WinClipboardKernel3
 import com.getpcpanel.integration.clipboard.platform.windows.WinClipboardUser32;
 import com.getpcpanel.integration.display.platform.windows.WinDisplayUser32;
 import com.getpcpanel.integration.display.platform.windows.WinDxva2;
+import com.getpcpanel.integration.program.platform.windows.WinDwmapi;
 import com.getpcpanel.sleepdetection.Win32Desktop;
 import com.getpcpanel.sleepdetection.Win32PowerNotify;
 import com.getpcpanel.util.tray.win.WinShell32;
@@ -34,6 +35,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         WinClipboardKernel32.class,
         Win32Desktop.class,
         Win32PowerNotify.class,
+        WinDwmapi.class,
         WinDisplayUser32.class,
         WinDxva2.class,
 }, classNames = {
@@ -53,6 +55,8 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         "com.sun.jna.platform.win32.WinDef$WORD",
         "com.sun.jna.platform.win32.WinDef$DWORD",
         "com.sun.jna.platform.win32.WinDef$LPVOID",
+        // ShellExecute's return type (IPlatformCommand.open on Windows: websites, folders and documents).
+        "com.sun.jna.platform.win32.WinDef$INT_PTR",
         "com.sun.jna.platform.win32.WinNT$HANDLE",
         "com.sun.jna.platform.win32.WinUser$WNDCLASSEX",
         "com.sun.jna.platform.win32.WinUser$MSG",

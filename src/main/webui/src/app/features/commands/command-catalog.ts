@@ -36,6 +36,7 @@ export type FieldDef = (
   | { kind: 'device'; key: string; label: string; filter?: 'output' | 'input' | 'all'; defaultLabel?: string; byName?: boolean }
   | { kind: 'mute'; key: string; label: string }
   | { kind: 'keystroke' }                       // CommandKeystroke: KEY/TEXT toggle + combo/text
+  | { kind: 'open-or-focus' }                   // CommandShortcut: App / Website / File or folder; for an app, don't-start-twice and minimise toggles
   | { kind: 'wavelink-target' }                 // id1 (+id2 for Mix), with the source driven by commandType
   | { kind: 'ha-help'; withValue?: boolean }    // links to HA's action builder + server config (+ {{ value }} hint)
   | { kind: 'devices-list'; key: string; label: string }  // cycle list of device ids
@@ -74,6 +75,12 @@ const SONAR_MIX_OPTS = [
   { value: 'monitoring', label: 'Personal Mix' }, { value: 'streaming', label: 'Stream Mix' }, { value: 'both', label: 'Both mixes' },
 ];
 const dialParams = () => ({ invert: false, moveStart: 0, moveEnd: 0 });
+
+/** The file name of a path ending in `.exe` (any case), else null — the rule `CommandShortcut.defaultFocusApp` applies. */
+export function defaultFocusApp(shortcut: string | null | undefined): string | null {
+  const name = (shortcut ?? '').trim().split(/[\\/]/).pop() ?? '';
+  return name.toLowerCase().endsWith('.exe') ? name : null;
+}
 
 interface FieldDef_ { type: string; buildEmpty: () => Record<string, any>; fields: FieldDef[]; }
 const FIELD_DEFS: FieldDef_[] = [
@@ -187,8 +194,8 @@ const FIELD_DEFS: FieldDef_[] = [
   },
   {
     type: P + 'CommandShortcut',
-    buildEmpty: () => ({ _type: P + 'CommandShortcut', shortcut: '', overlayText: '' }),
-    fields: [{ kind: 'text', key: 'shortcut', label: 'Shortcut path', placeholder: '…/app.lnk', mono: true }],
+    buildEmpty: () => ({ _type: P + 'CommandShortcut', shortcut: '', focusApp: '', focusIfRunning: false, minimizeIfFocused: false, overlayText: '' }),
+    fields: [{ kind: 'open-or-focus' }],
   },
   {
     type: P + 'CommandEndProgram',

@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
+
+import javax.annotation.Nullable;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -20,6 +23,8 @@ import com.getpcpanel.platform.process.LinuxProcessHelper;
 import com.getpcpanel.platform.process.OsxProcessHelper;
 import com.getpcpanel.util.Util;
 import com.getpcpanel.util.os.ProcessHelper;
+import com.sun.jna.platform.win32.Shell32;
+import com.sun.jna.platform.win32.WinUser;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -27,10 +32,39 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 public abstract class IPlatformCommand {
     public static final String FOCUS = "FOCUS";
+    /**
+     * A URL ({@code https://…}, {@code mailto:…}, {@code ms-settings:…}): opened by whatever app handles the scheme. A
+     * scheme has at least two characters, so a Windows drive path ({@code C:\…}) is not one.
+     */
+    private static final Pattern URL = Pattern.compile("^[A-Za-z][A-Za-z0-9+.-]+:.*");
 
+    /** Runs a program or a command line. */
     public abstract void exec(String shortcut);
 
+    /** Opens a website, folder or document in the app the desktop has for it. */
+    public abstract void open(String target);
+
     public abstract void kill(String process);
+
+    /** Whether {@code file} is a program to run rather than a document to open. */
+    protected abstract boolean isExecutable(File file);
+
+    /** Opens websites, folders and documents in their default app; runs programs and command lines. */
+    public void openOrRun(String target) {
+        if (opensWithDefaultApp(target)) {
+            open(target);
+        } else {
+            exec(target);
+        }
+    }
+
+    private boolean opensWithDefaultApp(String target) {
+        if (URL.matcher(target).matches()) {
+            return true;
+        }
+        var file = new File(target);
+        return file.isDirectory() || (file.isFile() && !isExecutable(file));
+    }
 
     @ApplicationScoped
     @Unremovable
@@ -40,6 +74,34 @@ public abstract class IPlatformCommand {
         LinuxProcessHelper processHelper;
         @Inject
         ProcessHelper processes;
+
+        private static final String DESKTOP_ENTRY_LAUNCH = "gio launch \"$1\" 2>/dev/null || gtk-launch \"$(basename \"$1\" .desktop)\"";
+
+        /** An installed app's desktop entry is launched as the app, not opened as a text file. */
+        @Override
+        public void openOrRun(String target) {
+            if (isDesktopEntry(target)) {
+                try {
+                    processes.launch(desktopEntryLaunch(target));
+                } catch (IOException e) {
+                    log.error("Unable to launch {}", target, e);
+                }
+            } else {
+                super.openOrRun(target);
+            }
+        }
+
+        static boolean isDesktopEntry(String target) {
+            return target.startsWith("/") && StringUtils.endsWithIgnoreCase(target, ".desktop");
+        }
+
+        /**
+         * The entry lives on the host (the installed-app list is read there), so the host launches it: with
+         * {@code gio launch}, else by its id with {@code gtk-launch} for a GLib without that command.
+         */
+        static String[] desktopEntryLaunch(String desktopFile) {
+            return FlatpakHost.command("sh", "-c", DESKTOP_ENTRY_LAUNCH, "sh", desktopFile);
+        }
 
         @Override
         public void exec(String shortcut) {
@@ -53,6 +115,25 @@ public abstract class IPlatformCommand {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+        }
+
+        @Override
+        public void open(String target) {
+            try {
+                // The desktop's handlers live on the host, so the Flatpak asks the host to open it.
+                if (StringUtils.isNotBlank(System.getenv("FLATPAK_ID"))) {
+                    processes.launch("flatpak-spawn", "--host", "xdg-open", target);
+                } else {
+                    processes.launch("xdg-open", target);
+                }
+            } catch (IOException e) {
+                log.error("Unable to open {}", target, e);
+            }
+        }
+
+        @Override
+        protected boolean isExecutable(File file) {
+            return file.canExecute();
         }
 
         @Override
@@ -89,6 +170,20 @@ public abstract class IPlatformCommand {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+        }
+
+        @Override
+        public void open(String target) {
+            try {
+                processes.launch("/usr/bin/open", target);
+            } catch (IOException e) {
+                log.error("Unable to open {}", target, e);
+            }
+        }
+
+        @Override
+        protected boolean isExecutable(File file) {
+            return file.canExecute();
         }
 
         @Override
@@ -140,9 +235,10 @@ public abstract class IPlatformCommand {
                         // means the whole path is one argument, so metacharacters pass through verbatim.
                         processes.launch(file.getParentFile(), executableArgv(file).toArray(String[]::new));
                     } else {
-                        // .lnk/.bat/.msi/scripts can't be CreateProcess'd; the shell resolves their file
-                        // association/interpreter. Run from the parent dir by bare name as before.
-                        processes.launch(file.getParentFile(), ProcessHelper.splitCommandLine("cmd.exe /c \"" + file.getName() + "\""));
+                        // .lnk/.bat/.msi/scripts can't be CreateProcess'd: ShellExecute opens them as a double-click
+                        // does (a shortcut with its own target, arguments and folder). cmd.exe can't: it does not run
+                        // a .lnk ("not recognized as a command").
+                        shellExecute(file.getAbsolutePath(), file.getParent());
                     }
                 } else {
                     // Free-form input: a bare program name resolved via PATH, a URL / protocol handler, or a
@@ -154,6 +250,24 @@ public abstract class IPlatformCommand {
             } catch (IOException e) {
                 log.error("Unable to run {}", shortcut, e);
             }
+        }
+
+        @Override
+        public void open(String target) {
+            shellExecute(target, null);
+        }
+
+        private static void shellExecute(String target, @Nullable String directory) {
+            // ShellExecute values at or below 32 are error codes.
+            var result = Shell32.INSTANCE.ShellExecute(null, "open", target, null, directory, WinUser.SW_SHOWNORMAL);
+            if (result.longValue() <= 32) {
+                log.error("Unable to open {} (ShellExecute error {})", target, result.longValue());
+            }
+        }
+
+        @Override
+        protected boolean isExecutable(File file) {
+            return Util.isFileExecutable(file);
         }
 
         @Override

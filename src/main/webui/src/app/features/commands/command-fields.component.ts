@@ -1,8 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, model } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, model, signal } from '@angular/core';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { RouterLink } from '@angular/router';
-import { CommandDef, COMMAND_BY_TYPE, FieldDef, isLevelReadable, LiveSource } from './command-catalog';
+import { CommandDef, COMMAND_BY_TYPE, defaultFocusApp, FieldDef, isLevelReadable, LiveSource } from './command-catalog';
 import { CommandPickerComponent } from './command-picker.component';
 import { mappingCurve, TrimRange } from './mapping-curve.util';
 import { IntegrationDataService } from './integration-data.service';
@@ -196,6 +196,48 @@ type Cmd = Record<string, any>;
               }
             </div>
           }
+          @case ('open-or-focus') {
+            <div class="field-block">
+              <pc-segmented [options]="openModes" [value]="openMode()" (valueChange)="setOpenMode($event)"></pc-segmented>
+            </div>
+            @switch (openMode()) {
+              @case ('app') {
+                <div class="field-block">
+                  <div class="flabel">App</div>
+                  <pc-select [block]="true" [options]="openTargets()" [value]="val('shortcut') || ''" [allowCustom]="true"
+                             [panelWidth]="360" placeholder="Pick an app"
+                             (openChange)="$event && loadOpenTargets()" (valueChange)="pickApp($event ?? '')"></pc-select>
+                </div>
+                <div class="row-between">
+                  <span class="rlabel">Don't start it twice</span>
+                  <pc-toggle [value]="!!val('focusIfRunning')" (valueChange)="setFocusIfRunning($event)"></pc-toggle>
+                </div>
+                <div class="bands-hint focus-hint">When {{ appName() }} is already running, a press brings its window to the front instead of starting it again.</div>
+                <div class="row-between">
+                  <span class="rlabel">Minimise when in front</span>
+                  <pc-toggle [value]="!!val('minimizeIfFocused')" [disabled]="!val('focusIfRunning')"
+                             (valueChange)="set('minimizeIfFocused', $event)"></pc-toggle>
+                </div>
+                <div class="bands-hint focus-hint">When its window is already in front, a press minimises it, so the button toggles {{ appName() }}.</div>
+              }
+              @case ('website') {
+                <div class="field-block">
+                  <div class="flabel">Web address</div>
+                  <input class="pc-input mono" placeholder="https://example.com" [value]="val('shortcut') || ''"
+                         (input)="setTarget($any($event.target).value)" (blur)="normaliseWebsite()">
+                  <div class="bands-hint focus-hint">Opens in your default browser.</div>
+                </div>
+              }
+              @case ('file') {
+                <div class="field-block">
+                  <div class="flabel">Path</div>
+                  <input class="pc-input mono" placeholder="A folder or file" [value]="val('shortcut') || ''"
+                         (input)="setTarget($any($event.target).value)">
+                  <div class="bands-hint focus-hint">A folder opens in your file manager, a file in the app that opens that kind of file.</div>
+                </div>
+              }
+            }
+          }
           @case ('analog-bands') {
             <div class="bands">
               <div class="bands-hint">Split the travel into positions. Entering a position runs its actions once; moving within it does nothing. Leave gaps between positions for a dead zone.</div>
@@ -368,6 +410,8 @@ type Cmd = Record<string, any>;
     .rlabel { font-size: 12.5px; color: var(--text-soft); }
     .chips { display: flex; gap: 8px; flex-wrap: wrap; }
     .displays { gap: 10px; }
+    .focus-hint { margin-top: 6px; }
+    .fhint { color: var(--text-3); margin-left: 4px; }
     textarea.ta { resize: vertical; min-height: 60px; font-family: var(--font-mono, monospace); white-space: pre; }
     .ha-help { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-top: -6px; }
     .ha-link { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--accent, #FFB020); text-decoration: none; }
@@ -448,6 +492,11 @@ export class CommandFieldsComponent {
     if (!this.command()['server'] && servers.length === 1) {
       this.set('server', servers[0].id);
     }
+  });
+
+  // A saved target that is an installed app shows as that app, so the list is needed as soon as the editor is.
+  private readonly _installedApps = effect(() => {
+    if (this.def().fields.some(f => f.kind === 'open-or-focus')) this.data.wantInstalledApps();
   });
 
   /** The selected server's Developer Tools → Actions page (single server auto-resolves), or null. */
@@ -700,11 +749,112 @@ export class CommandFieldsComponent {
     this.setNestedCmds(key, this.nestedCmds(key).map((c, k) => k === j ? cmd : c));
   }
 
+  // ── Open app, file or website ──────────────────────────────────────────────
+  /** What "Open" offers: the installed apps (opened by their shortcut, desktop entry or bundle), then the running ones. */
+  readonly openTargets = computed<SelectOption[]>(() => {
+    const installed = (this.data.installedApps.value() ?? [])
+      .map(a => ({ value: a.target, label: a.name, icon: a.icon ?? null, group: 'Installed apps' }));
+    // A running app that is also installed is listed once, under Installed apps.
+    const seen = new Set((this.data.installedApps.value() ?? []).map(a => exeName(a.exe)));
+    const running: SelectOption[] = [];
+    for (const p of this.data.processes.value() ?? []) {
+      // A Store app's program can't be started directly; it is listed under Installed apps instead.
+      if (!p.path || seen.has(exeName(p.path)) || /[\\/]WindowsApps[\\/]/i.test(p.path)) continue;
+      seen.add(exeName(p.path));
+      running.push({ value: p.path, label: p.name, icon: p.icon ?? null, group: 'Running apps' });
+    }
+    running.sort((a, b) => a.label.localeCompare(b.label));
+    return [...installed, ...running];
+  });
+
+  loadOpenTargets(): void {
+    this.data.loadInstalledApps();
+    this.data.refreshProcesses();
+  }
+
+  /** The app whose window a target brings to the front: a listed app's, else the executable the path names. */
+  private focusAppOf(shortcut: string | null | undefined): string | null {
+    const target = (shortcut ?? '').trim().toLowerCase();
+    if (!target) return null;
+    const app = (this.data.installedApps.value() ?? []).find(a => a.target.toLowerCase() === target);
+    if (app) return app.exe;
+    const running = (this.data.processes.value() ?? []).find(p => p.path?.toLowerCase() === target);
+    return running?.name || defaultFocusApp(shortcut);
+  }
+
+  readonly openModes = [{ value: 'app', label: 'App' }, { value: 'website', label: 'Website' }, { value: 'file', label: 'File or folder' }];
+  /**
+   * The kind the user picked, with the target typed since: it holds only while the target is still that one (this editor
+   * is reused for other actions). Otherwise the kind the saved target looks like.
+   */
+  private readonly pickedOpenMode = signal<{ mode: OpenMode; target: string } | null>(null);
+  readonly openMode = computed<OpenMode>(() => {
+    const picked = this.pickedOpenMode();
+    const target = this.val('shortcut') ?? '';
+    return picked && picked.target === target ? picked.mode : this.openModeOf(target, !!this.val('focusIfRunning'));
+  });
+
+  /** Sets a typed target, keeping the kind it was typed under. */
+  setTarget(target: string): void {
+    this.pickedOpenMode.set({ mode: this.openMode(), target });
+    this.set('shortcut', target);
+  }
+
+  private openModeOf(shortcut: string | null | undefined, focus: boolean): OpenMode {
+    const target = (shortcut ?? '').trim();
+    if (!target || focus || this.openTargets().some(o => o.value === target) || /\.(exe|lnk|desktop|app)$/i.test(target) || /^shell:AppsFolder\\/i.test(target)) return 'app';
+    return /^[a-z][a-z0-9+.-]*:/i.test(target) && !/^[a-z]:[\\/]/i.test(target) || /^www\./i.test(target) ? 'website' : 'file';
+  }
+
+  /** Switching kind starts over: the target and the window options belong to one kind. */
+  setOpenMode(value: string | undefined): void {
+    const mode = value as OpenMode;
+    if (!mode || mode === this.openMode()) return;
+    this.pickedOpenMode.set({ mode, target: '' });
+    this.command.update(c => ({ ...c, shortcut: '', focusApp: '', focusIfRunning: false, minimizeIfFocused: false }));
+  }
+
+  /** The picked app, by the name people know it by. */
+  readonly appName = computed(() => {
+    const target = (this.val('shortcut') ?? '').trim();
+    const listed = this.openTargets().find(o => o.value === target);
+    if (listed) return listed.label;
+    return target ? stripExe(target) : 'the app';
+  });
+
+  /** Picks the app; its window is the one a press brings to the front. */
+  pickApp(shortcut: string): void {
+    this.pickedOpenMode.set({ mode: 'app', target: shortcut });
+    this.command.update(c => ({ ...c, shortcut, focusApp: this.focusAppOf(shortcut) ?? '' }));
+  }
+
+  setFocusIfRunning(on: boolean): void {
+    this.command.update(c => ({ ...c, focusIfRunning: on, focusApp: this.focusAppOf(c['shortcut']) ?? '', ...(on ? {} : { minimizeIfFocused: false }) }));
+  }
+
+  /** A web address without a scheme would open as a file: give it https://. */
+  normaliseWebsite(): void {
+    const url = (this.val('shortcut') ?? '').trim();
+    if (url && !/^[a-z][a-z0-9+.-]*:/i.test(url)) this.setTarget('https://' + url);
+  }
+
   toggleDisabled(f: { enabledWhenReadable?: string }): boolean {
     return !!f.enabledWhenReadable && !this.nestedCmds(f.enabledWhenReadable).some(c => isLevelReadable(c?.['_type']));
   }
 
   readonly clamp = clamp;
+}
+
+type OpenMode = 'app' | 'website' | 'file';
+
+/** The file name of a path, lower-cased. */
+function exeName(path: string): string {
+  return (path.trim().split(/[\\/]/).pop() ?? '').toLowerCase();
+}
+
+/** The file name of a path without a trailing `.exe`, case kept. */
+function stripExe(path: string): string {
+  return (path.trim().split(/[\\/]/).pop() ?? '').replace(/\.exe$/i, '');
 }
 
 function clamp(v: number): number { return Math.max(0, Math.min(100, v ?? 0)); }

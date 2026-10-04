@@ -135,6 +135,7 @@ import com.getpcpanel.rest.model.dto.AutostartStateDto;
 import com.getpcpanel.rest.model.dto.DeviceDto;
 import com.getpcpanel.rest.model.dto.MidiDeviceDto;
 import com.getpcpanel.rest.model.dto.OnboardingDto;
+import com.getpcpanel.rest.model.dto.InstalledAppDto;
 import com.getpcpanel.rest.model.dto.ProcessDto;
 import com.getpcpanel.rest.model.dto.ProfileDto;
 import com.getpcpanel.rest.model.dto.ProfileSettingsDto;
@@ -462,6 +463,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         DeviceDto[].class,
         MidiDeviceDto[].class,
         ProcessDto[].class,
+        InstalledAppDto.class, InstalledAppDto[].class,
         ProfileDto[].class,
         ProfileSettingsDto.class,
         SerialPortDto[].class,

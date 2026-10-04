@@ -1,8 +1,8 @@
-import { computed, Injectable } from '@angular/core';
+import { computed, Injectable, signal } from '@angular/core';
 import { httpResource } from '@angular/common/http';
 import { AudioDevice, AudioSession } from '../../models/models';
 import {
-  DiscordStatusDto, DiscordUserDto, DiscordVoiceChannelDto, DisplayDto, HomeAssistantServerStatus, ProcessDto, SonarStatusDto, WaveLinkResponseDto,
+  DiscordStatusDto, DiscordUserDto, DiscordVoiceChannelDto, DisplayDto, HomeAssistantServerStatus, InstalledAppDto, ProcessDto, SonarStatusDto, WaveLinkResponseDto,
 } from '../../models/generated/backend.types';
 import { PickerItem } from '../../ui';
 
@@ -27,6 +27,9 @@ export class IntegrationDataService {
   readonly inputDevices = httpResource<AudioDevice[]>(() => '/api/audio/devices/input');
   readonly sessions = httpResource<AudioSession[]>(() => '/api/audio/sessions');
   readonly processes = httpResource<ProcessDto[]>(() => '/api/processes');
+  /** The installed apps, read once something asks for them ({@link loadInstalledApps}): listing them walks the disk. */
+  private readonly installedAppsWanted = signal(false);
+  readonly installedApps = httpResource<InstalledAppDto[]>(() => this.installedAppsWanted() ? '/api/apps/installed' : undefined);
 
   // Monitors Turn displays off can switch on their own (DDC/CI)
   readonly displays = httpResource<DisplayDto[]>(() => '/api/displays');
@@ -138,6 +141,20 @@ export class IntegrationDataService {
     this.processes.reload();
   }
 
+  /** Fetches the installed apps unless they already are. */
+  wantInstalledApps(): void {
+    this.installedAppsWanted.set(true);
+  }
+
+  /** Fetches the installed apps the first time, and re-reads them when asked again (the backend caches the list briefly). */
+  loadInstalledApps(): void {
+    if (this.installedAppsWanted()) {
+      this.installedApps.reload();
+    } else {
+      this.installedAppsWanted.set(true);
+    }
+  }
+
   /** Wall-clock time of the last Sonar status fetch, for {@link refreshSonarStatus}. */
   private lastSonarRefresh = 0;
 
@@ -160,6 +177,7 @@ export class IntegrationDataService {
     this.inputDevices.reload();
     this.sessions.reload();
     this.processes.reload();
+    this.installedApps.reload();
     this.displays.reload();
     this.obsScenes.reload();
     this.obsSources.reload();

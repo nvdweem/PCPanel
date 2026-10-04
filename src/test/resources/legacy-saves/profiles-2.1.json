@@ -469,7 +469,10 @@
           "7" : {
             "commands" : [ {
               "_type" : "program.shortcut",
-              "shortcut" : "shortcut-147"
+              "shortcut" : "shortcut-147",
+              "focusApp" : null,
+              "focusIfRunning" : false,
+              "minimizeIfFocused" : false
             } ],
             "type" : "allAtOnce"
           },

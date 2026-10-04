@@ -44,7 +44,7 @@ export const GENERATED_COMMANDS: GeneratedCommand[] = [
   { type: 'profile.switch', label: 'Switch profile', category: 'system', kinds: ['button'], icon: 'refresh', legacy: 'com.getpcpanel.commands.command.CommandProfile' },
   { type: 'program.end-program', label: 'End program', category: 'system', kinds: ['button'], icon: 'x', legacy: 'com.getpcpanel.commands.command.CommandEndProgram' },
   { type: 'program.run', label: 'Run command', category: 'system', kinds: ['button'], icon: 'zap', legacy: 'com.getpcpanel.commands.command.CommandRun' },
-  { type: 'program.shortcut', label: 'Run shortcut', category: 'system', kinds: ['button'], icon: 'zap', legacy: 'com.getpcpanel.commands.command.CommandShortcut' },
+  { type: 'program.shortcut', label: 'Open app, file or website', category: 'system', kinds: ['button'], icon: 'zap', legacy: 'com.getpcpanel.commands.command.CommandShortcut' },
   { type: 'sonar.mute', label: 'SteelSeries Sonar — mute', category: 'integration', kinds: ['button'], integration: 'sonar', icon: 'volume-x' },
   { type: 'sonar.volume', label: 'SteelSeries Sonar — volume', category: 'integration', kinds: ['dial'], integration: 'sonar', icon: 'sliders' },
   { type: 'voicemeeter.advanced', label: 'Voicemeeter — parameter', category: 'integration', kinds: ['dial'], integration: 'voicemeeter', icon: 'sliders', legacy: 'com.getpcpanel.commands.command.CommandVoiceMeeterAdvanced' },

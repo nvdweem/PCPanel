@@ -11,6 +11,7 @@
   {"interfaces": ["com.getpcpanel.integration.clipboard.platform.windows.WinClipboardKernel32"]},
   {"interfaces": ["com.getpcpanel.sleepdetection.Win32Desktop"]},
   {"interfaces": ["com.getpcpanel.sleepdetection.Win32PowerNotify"]},
+  {"interfaces": ["com.getpcpanel.integration.program.platform.windows.WinDwmapi"]},
   {"interfaces": ["com.getpcpanel.integration.display.platform.windows.WinDisplayUser32"]},
   {"interfaces": ["com.getpcpanel.integration.display.platform.windows.WinDxva2"]},
   {"interfaces": ["com.getpcpanel.sleepdetection.LinuxX11$LibX11"]},

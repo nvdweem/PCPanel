@@ -332,6 +332,26 @@ public class LinuxProcessHelper implements IProcessHelper {
         return null;
     }
 
+    /** A tool that finds and raises windows on this desktop, and the command that runs it. */
+    public record WindowTool(Kind kind, String command) {
+        public enum Kind { HYPRCTL, KDOTOOL, XDOTOOL }
+    }
+
+    /**
+     * The window tool for this desktop, chosen as the focused-window lookup chooses: hyprctl on Hyprland, kdotool on
+     * KDE Plasma (Wayland and X11), else xdotool. The command resolves the same way (configured path, the copy bundled
+     * next to the executable, then {@code PATH}), so in the Flatpak it is the sandboxed kdotool or a host wrapper.
+     */
+    public WindowTool windowTool() {
+        if (isHyprlandSession()) {
+            return new WindowTool(WindowTool.Kind.HYPRCTL, Tool.HyprCtl.command());
+        }
+        if (StringUtils.containsIgnoreCase(System.getenv("XDG_CURRENT_DESKTOP"), "KDE")) {
+            return new WindowTool(WindowTool.Kind.KDOTOOL, Tool.KDoTool.command());
+        }
+        return new WindowTool(WindowTool.Kind.XDOTOOL, Tool.XDoTool.command());
+    }
+
     /**
      * HYPRLAND_INSTANCE_SIGNATURE is the definitive signal, but it is only there when the session put it in
      * our environment — a D-Bus/systemd-activated launch has neither it nor any other Hyprland variable,
