@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { A11yModule } from '@angular/cdk/a11y';
 import { CommandCategory, CommandDef, CommandKind, COMMANDS, categoryLabel, Integration } from './command-catalog';
@@ -15,37 +16,56 @@ interface PickerGroup { label: string; status?: Status; statusText?: string; off
  * category (Audio, Device & System); integration commands are grouped by integration (OBS, Voicemeeter,
  * Wave Link, Discord, Home Assistant, Sonar) with the live connection status shown once on the group header. Emits the
  * chosen {@link CommandDef}. Reusing it keeps those affordances (and their behaviour) in one place.
+ *
+ * <p>{@code inline}: the list is always shown under a heading instead of opening from a button (the control
+ * page's add column, where it has room); the nested editors keep the small button.
  */
 @Component({
   selector: 'pc-command-picker',
   standalone: true,
-  imports: [OverlayModule, A11yModule, IconComponent, StatusDotComponent],
+  imports: [NgTemplateOutlet, OverlayModule, A11yModule, IconComponent, StatusDotComponent],
   template: `
-    <button #trigBtn class="pc-btn trigger" [class.primary]="variant() === 'primary'" [class.subtle]="variant() === 'subtle'"
-            cdkOverlayOrigin #trig="cdkOverlayOrigin" (click)="toggle(trigBtn)">
-      <pc-icon name="plus" [size]="variant() === 'subtle' ? 13 : 16" [strokeWidth]="2.4"></pc-icon> {{ triggerLabel() }}
-    </button>
-    <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="trig" [cdkConnectedOverlayOpen]="open()"
-                 [cdkConnectedOverlayHasBackdrop]="true" cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
-                 [cdkConnectedOverlayWidth]="menuWidth()" [cdkConnectedOverlayOffsetY]="6"
-                 (backdropClick)="open.set(false)" (detach)="open.set(false)">
-      <div class="menu" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
+    @if (inline()) {
+      <div class="inline">
+        <div class="micro-label inline-head">{{ triggerLabel() }}</div>
+        <ng-container [ngTemplateOutlet]="menu"></ng-container>
+      </div>
+    } @else {
+      <button #trigBtn class="pc-btn trigger" [class.primary]="variant() === 'primary'" [class.subtle]="variant() === 'subtle'"
+              cdkOverlayOrigin #trig="cdkOverlayOrigin" (click)="toggle(trigBtn)">
+        <pc-icon name="plus" [size]="variant() === 'subtle' ? 13 : 16" [strokeWidth]="2.4"></pc-icon> {{ triggerLabel() }}
+      </button>
+      <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="trig" [cdkConnectedOverlayOpen]="open()"
+                   [cdkConnectedOverlayHasBackdrop]="true" cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+                   [cdkConnectedOverlayWidth]="menuWidth()" [cdkConnectedOverlayOffsetY]="6"
+                   (backdropClick)="open.set(false)" (detach)="open.set(false)">
+        <div class="popup" cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
+          <ng-container [ngTemplateOutlet]="menu"></ng-container>
+        </div>
+      </ng-template>
+    }
+    <ng-template #menu>
+      <div class="menu">
         <div class="filter">
           <pc-icon name="search" [size]="13"></pc-icon>
           <input class="filter-in" placeholder="Filter…" [value]="query()" (input)="query.set($any($event.target).value)">
         </div>
-        @for (g of menuGroups(); track g.label) {
-          <div class="grp-label">
-            @if (g.status) { <pc-status-dot [kind]="g.status" [size]="6"></pc-status-dot> }
-            <span class="grp-name">{{ g.label }}</span>
-            @if (g.statusText) { <span class="grp-status">{{ g.statusText }}</span> }
-          </div>
-          @for (def of g.rows; track def.type) {
-            <button class="row" [class.offline]="g.offline || g.unsupported" [disabled]="g.unsupported" (click)="choose(def)">
-              <span>{{ def.label }}</span>
-            </button>
+        <div class="rows">
+          @for (g of menuGroups(); track g.label) {
+            <div class="grp-label">
+              @if (g.status) { <pc-status-dot [kind]="g.status" [size]="6"></pc-status-dot> }
+              <span class="grp-name">{{ g.label }}</span>
+              @if (g.statusText) { <span class="grp-status">{{ g.statusText }}</span> }
+            </div>
+            @for (def of g.rows; track def.type) {
+              <button class="row" [class.offline]="g.offline || g.unsupported" [disabled]="g.unsupported" (click)="choose(def)">
+                <span>{{ def.label }}</span>
+              </button>
+            }
+          } @empty {
+            <div class="none">Nothing matches.</div>
           }
-        }
+        </div>
       </div>
     </ng-template>
   `,
@@ -59,7 +79,14 @@ interface PickerGroup { label: string; status?: Status; statusText?: string; off
     .trigger.subtle:hover { border-color: var(--accent, #FFB020); color: var(--text-1); }
     /* Rendered in the global cdk-overlay container, so it is never clipped by a scrolling/overflow
        ancestor (e.g. a nested .ai-body action body). Width is matched to the trigger via the overlay. */
-    .menu { width: 100%; box-sizing: border-box; background: var(--popover); border: 1px solid var(--raised-line); border-radius: var(--r-lg); padding: 8px; box-shadow: var(--sh-pop); max-height: 360px; overflow: auto; }
+    .menu { width: 100%; box-sizing: border-box; background: var(--popover); border: 1px solid var(--raised-line); border-radius: var(--r-lg); padding: 8px; display: flex; flex-direction: column; min-height: 0; }
+    .rows { overflow: auto; min-height: 0; }
+    .popup .menu { box-shadow: var(--sh-pop); max-height: 360px; }
+    /* Inline: fills its column; the filter stays put and the rows scroll. */
+    :host(.inline-host) { height: 100%; }
+    .inline { display: flex; flex-direction: column; gap: 8px; height: 100%; min-height: 0; }
+    .inline .menu { flex: 1; }
+    .none { padding: 8px 9px; font-size: 12px; color: var(--text-3); }
     .filter { display: flex; align-items: center; gap: 8px; background: var(--input); border: 1px solid var(--line); border-radius: 8px; padding: 8px 11px; margin-bottom: 6px; color: var(--text-3); }
     .filter-in { flex: 1; min-width: 0; background: transparent; border: none; outline: none; color: var(--text-1); font-size: 12px; }
     .grp-label { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em; color: var(--text-3); padding: 10px 9px 3px; }
@@ -72,6 +99,7 @@ interface PickerGroup { label: string; status?: Status; statusText?: string; off
     .row:disabled:hover { background: transparent; color: var(--text-3); }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '[class.inline-host]': 'inline()' },
 })
 export class CommandPickerComponent {
   private readonly integrations = inject(IntegrationDataService);
@@ -85,6 +113,8 @@ export class CommandPickerComponent {
   readonly triggerLabel = input<string>('Add action');
   /** 'primary' = the prominent full-width CTA (control page); 'subtle' = a small dashed button (band editor). */
   readonly variant = input<'primary' | 'subtle'>('primary');
+  /** Always show the list under a {@link triggerLabel} heading instead of a button that opens it. */
+  readonly inline = input(false);
   readonly pick = output<CommandDef>();
 
   readonly query = signal('');

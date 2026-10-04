@@ -154,7 +154,7 @@
           @if (!activeCommands().length) {
             <div class="al-empty">
               <pc-icon name="plus" [size]="18"></pc-icon>
-              <span>No actions yet — add one from the right.</span>
+              <span>No actions yet — pick one on the right.</span>
             </div>
           }
 
@@ -187,7 +187,7 @@
 
         <!-- Add column -->
         <div class="add-col">
-          <pc-command-picker [kind]="slotKind()" (pick)="addCommand($event)"></pc-command-picker>
+          <pc-command-picker [kind]="slotKind()" [inline]="true" (pick)="addCommand($event)"></pc-command-picker>
         </div>
       </div>
     </main>
