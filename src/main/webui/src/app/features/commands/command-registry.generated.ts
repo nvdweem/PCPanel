@@ -16,6 +16,7 @@ export interface GeneratedCommand {
 
 export const GENERATED_COMMANDS: GeneratedCommand[] = [
   { type: 'analogbands.ranges', label: 'Stepped switch (ranges)', category: 'system', kinds: ['dial'], icon: 'sliders', legacy: 'com.getpcpanel.commands.command.CommandAnalogBands' },
+  { type: 'analogbands.steps', label: 'Action per step', category: 'system', kinds: ['dial'], icon: 'sliders' },
   { type: 'clipboard.set', label: 'Set clipboard', category: 'system', kinds: ['button'], icon: 'clipboard' },
   { type: 'device.brightness', label: 'Brightness', category: 'system', kinds: ['dial'], icon: 'sun', legacy: 'com.getpcpanel.commands.command.CommandBrightness' },
   { type: 'discord.join-voice', label: 'Discord — join voice', category: 'integration', kinds: ['button'], integration: 'discord', icon: 'plug', legacy: 'com.getpcpanel.discord.command.CommandDiscordJoinVoice' },

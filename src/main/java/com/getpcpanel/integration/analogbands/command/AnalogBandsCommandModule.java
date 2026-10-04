@@ -16,6 +16,7 @@ public class AnalogBandsCommandModule implements CommandModule {
     @Override
     public List<Class<? extends Command>> commandTypes() {
         return List.of(
-                CommandAnalogBands.class);
+                CommandAnalogBands.class,
+                CommandStepActions.class);
     }
 }

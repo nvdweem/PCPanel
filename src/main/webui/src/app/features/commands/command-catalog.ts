@@ -37,6 +37,7 @@ export type FieldDef = (
   | { kind: 'ha-help'; withValue?: boolean }    // links to HA's action builder + server config (+ {{ value }} hint)
   | { kind: 'devices-list'; key: string; label: string }  // cycle list of device ids
   | { kind: 'analog-bands' }                    // CommandAnalogBands: ordered ranges, each with a colour + nested action
+  | { kind: 'step-actions' }                    // CommandStepActions: step size + nested up/down actions
 ) & { showWhen?: { key: string; equals: string } };
 
 export interface CommandDef {
@@ -149,6 +150,11 @@ const FIELD_DEFS: FieldDef_[] = [
     type: P + 'CommandAnalogBands',
     buildEmpty: () => ({ _type: P + 'CommandAnalogBands', bands: [] }),
     fields: [{ kind: 'analog-bands' }],
+  },
+  {
+    type: 'analogbands.steps',
+    buildEmpty: () => ({ _type: 'analogbands.steps', stepsPerTurn: 20, up: { commands: [], type: 'allAtOnce' }, down: { commands: [], type: 'allAtOnce' } }),
+    fields: [{ kind: 'step-actions' }],
   },
   {
     type: P + 'CommandRun',

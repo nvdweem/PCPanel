@@ -219,6 +219,43 @@ type Cmd = Record<string, any>;
               <button class="pc-btn add-band" (click)="addBand()"><pc-icon name="plus" [size]="14"></pc-icon> Add position</button>
             </div>
           }
+          @case ('step-actions') {
+            <div class="bands">
+              <div class="bands-hint">Runs the actions once for every step the control moves: for example the Up arrow per step up and the Down arrow per step down, or Ctrl + scroll to zoom.</div>
+              <div class="pc-field">
+                <div class="pc-field-label">Steps per full turn (up to 255, every position)</div>
+                <input class="pc-field-input" type="number" min="1" max="255" [value]="val('stepsPerTurn') ?? 20" (input)="set('stepsPerTurn', +$any($event.target).value)">
+              </div>
+              @if ((val('stepsPerTurn') ?? 20) > 100) {
+                <div class="bands-hint warn">Above about 100 steps, turn slowly: a quick turn sends several keystrokes at once and apps can miss some of them.</div>
+              }
+              @for (side of stepSides; track side.key) {
+                <div class="field-block">
+                  <div class="flabel">{{ side.label }}</div>
+                  @if (stepCmds(side.key).length) {
+                    <div class="band-actions">
+                      @for (cmd of stepCmds(side.key); track $index; let ci = $index) {
+                        <div class="band-action-item" [class.expanded]="bandExpanded() === side.key + ':' + ci">
+                          <div class="bai-head" (click)="toggleStepAction(side.key, ci)">
+                            <pc-icon class="bai-icon" [name]="bandCmdIcon(cmd)" [size]="13"></pc-icon>
+                            <span class="bai-name">{{ bandCmdLabel(cmd) }}</span>
+                            <pc-icon class="bai-chev" [name]="bandExpanded() === side.key + ':' + ci ? 'chevron-up' : 'chevron-down'" [size]="13"></pc-icon>
+                            <button class="bai-del" (click)="$event.stopPropagation(); removeStepCmd(side.key, ci)"><pc-icon name="trash" [size]="12"></pc-icon></button>
+                          </div>
+                          @if (bandExpanded() === side.key + ':' + ci && bandCmdDef(cmd); as cdef) {
+                            <div class="bai-body">
+                              <pc-command-fields [def]="cdef" [command]="cmd" (commandChange)="setStepCmd(side.key, ci, $event)" [profiles]="profiles()" [templateContext]="templateContext()"></pc-command-fields>
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+                  <pc-command-picker kind="button" triggerLabel="Add action" variant="subtle" (pick)="addStepCmd(side.key, $event)"></pc-command-picker>
+                </div>
+              }
+            </div>
+          }
         }
       }
 
@@ -289,7 +326,8 @@ type Cmd = Record<string, any>;
     .map-fields .pc-field { flex: 1; }
     .no-fields { font-size: 12.5px; color: var(--text-3); }
     .bands { display: flex; flex-direction: column; gap: 12px; }
-    .bands-hint { font-size: 11.5px; color: var(--text-3); line-height: 1.45; }
+    .bands-hint { font-size: 11.5px; color: var(--text-2); line-height: 1.45; }
+    .bands-hint.warn { color: var(--warn-text); }
     .band { display: flex; flex-direction: column; gap: 12px; padding: 12px; border: 1px solid var(--line-hair); border-radius: 10px; background: var(--surface-1, #15171C); }
     .band-head { display: flex; align-items: center; gap: 10px; }
     .band-no { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 6px; font-size: 11.5px; font-weight: 600; color: #000; flex: none; }
@@ -557,6 +595,38 @@ export class CommandFieldsComponent {
 
   setBandCmd(i: number, j: number, cmd: Cmd): void {
     this.setBandCmds(i, this.bandCmds(this.bands()[i]).map((c, k) => k === j ? cmd : c));
+  }
+
+  // ── per-step actions ───────────────────────────────────────────────────────
+  // Same nested action list as a band, once for each direction; expansion shares bandExpanded keyed "{side}:{cmdIndex}".
+  readonly stepSides = [
+    { key: 'up' as const, label: 'Actions per step up' },
+    { key: 'down' as const, label: 'Actions per step down' },
+  ];
+
+  stepCmds(side: 'up' | 'down'): Cmd[] { const c = this.command()[side]?.commands; return Array.isArray(c) ? c : []; }
+
+  private setStepCmds(side: 'up' | 'down', cmds: Cmd[]): void {
+    this.set(side, { commands: cmds, type: this.command()[side]?.type ?? 'allAtOnce' });
+  }
+
+  toggleStepAction(side: 'up' | 'down', cmdIdx: number): void {
+    const key = side + ':' + cmdIdx;
+    this.bandExpanded.set(this.bandExpanded() === key ? null : key);
+  }
+
+  addStepCmd(side: 'up' | 'down', def: CommandDef): void {
+    const cmds = [...this.stepCmds(side), def.buildEmpty() as Cmd];
+    this.setStepCmds(side, cmds);
+    this.bandExpanded.set(side + ':' + (cmds.length - 1));
+  }
+
+  removeStepCmd(side: 'up' | 'down', j: number): void {
+    this.setStepCmds(side, this.stepCmds(side).filter((_, k) => k !== j));
+  }
+
+  setStepCmd(side: 'up' | 'down', j: number, cmd: Cmd): void {
+    this.setStepCmds(side, this.stepCmds(side).map((c, k) => k === j ? cmd : c));
   }
 }
 

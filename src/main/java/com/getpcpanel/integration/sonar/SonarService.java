@@ -14,9 +14,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
 import com.getpcpanel.commands.IntegrationConnection;
+import com.getpcpanel.commands.NestedCommands;
 import com.getpcpanel.commands.command.Command;
-import com.getpcpanel.integration.analogbands.command.AnalogBand;
-import com.getpcpanel.integration.analogbands.command.CommandAnalogBands;
 import com.getpcpanel.integration.sonar.command.CommandSonar;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.Save;
@@ -185,15 +184,13 @@ public class SonarService implements IntegrationConnection {
     }
 
     /**
-     * A stepped-switch dial ({@link CommandAnalogBands}) holds its own {@link Commands} per band, so a
-     * Sonar command placed inside a band (the band editor reuses the normal command picker) is only
-     * reachable by descending into it; recurses in case a band's commands nest another level.
+     * A command that runs commands of its own ({@link NestedCommands}: the bands of a stepped switch, the up/down
+     * actions of a per-step dial) can hold a Sonar command that is only reachable by descending into it; recurses
+     * in case those nest another level.
      */
     private static StreamEx<Command> withNested(Command command) {
-        if (command instanceof CommandAnalogBands bands) {
-            return StreamEx.of(bands.getBands())
-                           .map(AnalogBand::commands)
-                           .nonNull()
+        if (command instanceof NestedCommands nested) {
+            return StreamEx.of(nested.nestedCommands())
                            .flatMap(c -> StreamEx.of(c.getCommands()))
                            .flatMap(SonarService::withNested)
                            .prepend(command);

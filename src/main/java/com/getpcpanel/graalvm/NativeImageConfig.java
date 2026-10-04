@@ -15,6 +15,7 @@ import com.getpcpanel.commands.DeviceSet;
 import com.getpcpanel.integration.analogbands.command.AnalogBand;
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.integration.analogbands.command.CommandAnalogBands;
+import com.getpcpanel.integration.analogbands.command.CommandStepActions;
 import com.getpcpanel.integration.device.command.CommandBrightness;
 import com.getpcpanel.integration.program.command.CommandEndProgram;
 import com.getpcpanel.integration.output.command.CommandHttpRequest;
@@ -230,6 +231,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         // Command type hierarchy
         Command.class,
         CommandAnalogBands.class,
+        CommandStepActions.class,
         CommandBrightness.class,
         CommandEndProgram.class,
         CommandKeystroke.class,
