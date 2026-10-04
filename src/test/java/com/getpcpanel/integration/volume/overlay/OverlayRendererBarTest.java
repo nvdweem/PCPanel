@@ -2,20 +2,24 @@ package com.getpcpanel.integration.volume.overlay;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 
 import com.getpcpanel.profile.Save;
-import com.sun.jna.Platform;
 
 /**
  * The bar fills from its left end to its share of the whole bar; the round knob rides on the end of the fill, solid,
  * standing out above and below the bar when it is the taller of the two.
  */
+// Drawing into an image starts AWT's desktop integration on macOS when a display is present, as in the release build's
+// native-image metadata run: com.apple.eawt then lands in the metadata and the macOS native image (no AWT, no overlay)
+// refuses it.
+@DisabledOnOs(value = OS.MAC, disabledReason = "the overlay is drawn on Windows only")
 class OverlayRendererBarTest {
     private static final int BAR_X = 10;
     private static final int BAR_WIDTH = 180;
@@ -201,9 +205,6 @@ class OverlayRendererBarTest {
 
     @Test
     void theKnobKeepsThePaddingAtBothEnds() {
-        // The whole overlay draws text, which on macOS starts AWT's desktop integration when a display is present (the
-        // native-image metadata run): its classes then land in the macOS native image, which has no AWT and no overlay.
-        assumeFalse(Platform.isMac(), "the overlay is drawn on Windows only");
         for (var showAppName : new boolean[]{true, false}) {
             for (var showNumber : new boolean[]{true, false}) {
                 for (var percent : new int[]{0, 100}) {
