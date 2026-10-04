@@ -6,7 +6,9 @@ import java.awt.GradientPaint;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.RenderingHints;
+import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.util.regex.Pattern;
 
@@ -29,6 +31,7 @@ class OverlayRenderer {
     private static final int ICON_SIZE = 36;
     private static final int DEFAULT_BAR_HEIGHT = 10;
     private static final int DEFAULT_BAR_CORNER_RADIUS = DEFAULT_BAR_HEIGHT;
+    private static final int DEFAULT_KNOB_SIZE = 14;
     private static final int VALUE_GAP = 8;
     private static final Pattern RGB_PATTERN = Pattern.compile("rgba?\\(([^)]+)\\)", Pattern.CASE_INSENSITIVE);
     private static final Pattern COLOR_COMPONENT_SEPARATOR = Pattern.compile("\\s*,\\s*");
@@ -56,6 +59,7 @@ class OverlayRenderer {
     private int windowCornerRadius = DEFAULT_CORNER_RADIUS;
     private int barHeight = DEFAULT_BAR_HEIGHT;
     private int barCornerRadius = DEFAULT_BAR_CORNER_RADIUS;
+    private int knobSize = DEFAULT_KNOB_SIZE;
     private Color backgroundColor = DEFAULT_BG_COLOR;
     private Color barColor = DEFAULT_BAR_COLOR;
     private Color barTrackColor = DEFAULT_BAR_TRACK_COLOR;
@@ -103,6 +107,7 @@ class OverlayRenderer {
         windowCornerRadius = Math.max(0, save.getOverlayWindowCornerRounding());
         barHeight = Math.max(2, save.getOverlayBarHeight());
         barCornerRadius = Math.max(0, save.getOverlayBarCornerRounding());
+        knobSize = Math.max(0, save.getOverlayKnobSize());
         return computeHeight();
     }
 
@@ -115,9 +120,20 @@ class OverlayRenderer {
         var effIcon = showIcon ? iconSize : 0;
         if (showAppName) {
             var topRow = Math.max(effIcon, textSize + 4);
-            return pad * 2 + topRow + elementGap + barHeight;
+            // The thumb stands out below the bar; room for it however small the padding is.
+            return pad + Math.max(pad, thumbOverhang()) + topRow + elementGap + barHeight;
         }
-        return Math.max(DEFAULT_HEIGHT, pad * 2 + Math.max(Math.max(effIcon, textSize + 4), barHeight));
+        return Math.max(DEFAULT_HEIGHT, pad * 2 + Math.max(Math.max(effIcon, textSize + 4), barHeight + 2 * thumbOverhang()));
+    }
+
+    /** Half the knob's width: how far it reaches past the bar's ends at 0% and 100%. */
+    private int knobHalf() {
+        return (knobSize + 1) / 2;
+    }
+
+    /** How far the bar's knob stands out above and below the bar (none when it is no taller). */
+    private int thumbOverhang() {
+        return Math.max(0, (knobSize - barHeight + 1) / 2);
     }
 
     /** The bar colour actually used: the control-light override when present, otherwise the configured one. */
@@ -193,7 +209,9 @@ class OverlayRenderer {
         }
 
         var barY = rowTop + topRow + elementGap;
-        drawBar(g2, pad, barY, w - 2 * pad);
+        // The knob sits half past the bar's ends at 0% and 100%: keep that half inside the window.
+        var inset = Math.max(0, knobHalf() - pad);
+        drawBar(g2, pad + inset, barY, w - 2 * (pad + inset));
     }
 
     /** [icon] [bar] [percent] on a single row (compact). */
@@ -209,8 +227,11 @@ class OverlayRenderer {
         var fm = g2.getFontMetrics();
         var valueWidth = showNumber ? fm.stringWidth("100%") : 0;
         var barEndX = w - pad - (showNumber ? valueWidth + VALUE_GAP : 0);
+        // The knob sits half past the bar's ends at 0% and 100%: room for that half beside the bar.
+        var leftInset = Math.max(0, knobHalf() - (x == pad ? pad : elementGap));
+        var rightInset = Math.max(0, knobHalf() - (showNumber ? VALUE_GAP : pad));
         var barY = (h - barHeight) / 2;
-        drawBar(g2, x, barY, barEndX - x);
+        drawBar(g2, x + leftInset, barY, barEndX - rightInset - x - leftInset);
 
         if (showNumber) {
             var label = valueLabel();
@@ -221,29 +242,32 @@ class OverlayRenderer {
         }
     }
 
-    /** Draws the progress-bar track + gradient fill + leading cap at the given position/width. */
-    private void drawBar(Graphics2D g2, int x, int y, int barWidth) {
+    /** Draws the progress-bar track + gradient fill + thumb at the given position/width. */
+    void drawBar(Graphics2D g2, int x, int y, int barWidth) {
         if (barWidth <= 0) {
             return;
         }
         var barArc = Math.min(barCornerRadius, barHeight);
         var bar = effectiveBarColor();
 
+        var track = new RoundRectangle2D.Float(x, y, barWidth, barHeight, barArc, barArc);
         g2.setColor(barTrackColor);
-        g2.fill(new RoundRectangle2D.Float(x, y, barWidth, barHeight, barArc, barArc));
+        g2.fill(track);
 
-        var fillWidth = Math.round(barWidth * (value / 100f));
-        if (fillWidth > 0) {
-            var fillGrad = new GradientPaint(
-                    x, 0, scaleColor(bar, 1.15f),
-                    x + fillWidth, 0, scaleColor(bar, 0.82f));
-            g2.setPaint(fillGrad);
-            g2.fill(new RoundRectangle2D.Float(x, y, fillWidth, barHeight, barArc, barArc));
+        // The fill runs from the bar's left end to its share of the whole bar, in the bar's own outline; the knob is
+        // centred on the fill's end, so at 0% and 100% it sits half past the bar's ends.
+        var fillEnd = x + barWidth * (value / 100f);
+        if (fillEnd > x) {
+            var fill = new Area(track);
+            fill.intersect(new Area(new Rectangle2D.Float(x, y, fillEnd - x, barHeight)));
+            g2.setPaint(new GradientPaint(x, 0, scaleColor(bar, 1.15f), fillEnd, 0, scaleColor(bar, 0.82f)));
+            g2.fill(fill);
+        }
 
-            if (fillWidth >= barHeight) {
-                g2.setColor(withAlpha(scaleColor(bar, 1.35f), Math.clamp(bar.getAlpha(), 120, 220)));
-                g2.fill(new Ellipse2D.Float(x + fillWidth - barHeight, y, barHeight, barHeight));
-            }
+        // The knob: as solid as the bar so the fill does not show through it.
+        if (knobSize > 0) {
+            g2.setColor(withAlpha(scaleColor(bar, 1.35f), bar.getAlpha()));
+            g2.fill(new Ellipse2D.Float(fillEnd - knobSize / 2f, y + (barHeight - knobSize) / 2f, knobSize, knobSize));
         }
     }
 

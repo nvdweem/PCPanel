@@ -36,6 +36,8 @@ public class Save {
     public static final String DEFAULT_OVERLAY_BAR_COLOR = "rgb(0, 148, 197)";
     public static final String DEFAULT_OVERLAY_BAR_BACKGROUND_COLOR = "rgb(249, 249, 249)";
     public static final int DEFAULT_OVERLAY_BAR_HEIGHT = 18;
+    /** Diameter of the overlay bar's knob, in pixels; 0 is no knob. */
+    public static final int DEFAULT_OVERLAY_KNOB_SIZE = 24;
     public static final int DEFAULT_OVERLAY_PADDING = 10;
     public static final int DEFAULT_OVERLAY_TEXT_SIZE = 14;
     public static final int DEFAULT_OVERLAY_ICON_SIZE = 32;
@@ -124,6 +126,8 @@ public class Save {
     private int overlayWindowCornerRounding;
     @Nullable private Integer overlayBarHeight = DEFAULT_OVERLAY_BAR_HEIGHT;
     @Nullable private Integer overlayBarCornerRounding = 0;
+    /** Diameter of the knob on the overlay's bar, in pixels; 0 hides it. */
+    @Nullable private Integer overlayKnobSize = DEFAULT_OVERLAY_KNOB_SIZE;
     @Nullable private OverlayPosition overlayPosition = DEFAULT_OVERLAY_POSITION;
     @Nullable private Integer overlayPadding = DEFAULT_OVERLAY_PADDING;
     /**
@@ -208,6 +212,10 @@ public class Save {
 
     public int getOverlayPadding() {
         return overlayPadding == null ? DEFAULT_OVERLAY_PADDING : overlayPadding;
+    }
+
+    public int getOverlayKnobSize() {
+        return overlayKnobSize == null ? DEFAULT_OVERLAY_KNOB_SIZE : overlayKnobSize;
     }
 
     public int getOverlayBarHeight() {

@@ -43,6 +43,7 @@
 - (Linux) Fixed **focus volume on KDE Plasma not working on older distributions** such as Ubuntu 22.04 and Debian 12. The `kdotool` that comes with the .deb and AppImage needed a newer system library than those distributions have and didn't start at all. It now runs on every distribution PCPanel itself runs on, and the AppImage lists screenshots for app stores and catalogs.
 - **Force volume** (Settings → General → Volume) now works on Windows too, and on its own: it keeps an app at its control's level whenever the app or the system mixer changes its volume, without also needing *New apps start at their control's level*.
 - (Windows) Fixed **App volume doing nothing for apps that play on another device than the default one**, such as a browser that Wave Link routes to its *Browsers* device: it now sets the app's volume on every output device by default, as App mute and Linux already did. The action has its **Audio device** choice back, to limit it to one device.
+- The round knob on the **overlay**'s bar now rides on the end of the level all the way from 0% to 100%, and is solid, so the bar no longer shows through it. The bar fills to exactly its share, in the bar's own shape, so a full square bar is filled to its corners. Set its size under Settings → Overlay → Shape → *Knob size*: larger than the bar height makes it stand out, the same as the bar height blends it in, and 0 turns it off.
 
 ## [2.0.97]
 

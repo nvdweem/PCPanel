@@ -886,6 +886,7 @@ export interface SettingsDto {
     overlayFontBold: boolean;
     overlayFontFamily?: string;
     overlayIconSize?: number;
+    overlayKnobSize?: number;
     overlayPadding?: number;
     overlayPosition?: OverlayPosition;
     overlayShowAppName: boolean;

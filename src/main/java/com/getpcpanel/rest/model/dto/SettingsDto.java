@@ -71,6 +71,7 @@ public class SettingsDto {
     private int overlayWindowCornerRounding;
     @Nullable private Integer overlayBarHeight;
     @Nullable private Integer overlayBarCornerRounding;
+    @Nullable private Integer overlayKnobSize;
     @Nullable private OverlayPosition overlayPosition;
     @Nullable private Integer overlayPadding;
     private boolean overlayShowAppName;
@@ -132,6 +133,7 @@ public class SettingsDto {
         dto.overlayWindowCornerRounding = save.getOverlayWindowCornerRounding();
         dto.overlayBarHeight = save.getOverlayBarHeight();
         dto.overlayBarCornerRounding = save.getOverlayBarCornerRounding();
+        dto.overlayKnobSize = save.getOverlayKnobSize();
         dto.overlayPosition = save.getOverlayPosition();
         dto.overlayPadding = save.getOverlayPadding();
         dto.overlayShowAppName = save.isOverlayShowAppName();
@@ -192,6 +194,7 @@ public class SettingsDto {
         save.setOverlayWindowCornerRounding(overlayWindowCornerRounding);
         save.setOverlayBarHeight(overlayBarHeight);
         save.setOverlayBarCornerRounding(overlayBarCornerRounding);
+        save.setOverlayKnobSize(overlayKnobSize);
         save.setOverlayPosition(overlayPosition);
         save.setOverlayPadding(overlayPadding);
         save.setOverlayShowAppName(overlayShowAppName);

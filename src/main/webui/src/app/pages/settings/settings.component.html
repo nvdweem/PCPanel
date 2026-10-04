@@ -970,6 +970,11 @@
                   <pc-slider [value]="s.overlayBarCornerRounding ?? 0" [min]="0" [max]="20" [disabled]="!overlayStylingSupported()"
                              (valueChange)="patch('overlayBarCornerRounding', $event)" (changeEnd)="patch('overlayBarCornerRounding', $event)"></pc-slider>
                 </div>
+                <div class="slider-row">
+                  <div class="sr-head"><span class="sr-label">Knob size</span><span class="sr-val mono">{{ (s.overlayKnobSize ?? 24) === 0 ? 'off' : (s.overlayKnobSize ?? 24) + 'px' }}</span></div>
+                  <pc-slider [value]="s.overlayKnobSize ?? 24" [min]="0" [max]="60" [disabled]="!overlayStylingSupported()"
+                             (valueChange)="patch('overlayKnobSize', $event)" (changeEnd)="patch('overlayKnobSize', $event)"></pc-slider>
+                </div>
               </div>
 
               <div class="micro-label section-label">FONT</div>
