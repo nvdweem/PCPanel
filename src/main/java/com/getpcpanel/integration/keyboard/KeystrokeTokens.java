@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -23,12 +24,25 @@ import javax.annotation.Nullable;
  * <p>Punctuation is resolved against the US layout, matching the platform tables: a shifted character
  * maps to the physical key that produces it ({@code "<"} → {@code COMMA}), which the {@code Shift} the
  * recorder captured alongside it then modifies.
+ *
+ * <p>Some final tokens name an action rather than a key. {@code scroll_up}, {@code scroll_down},
+ * {@code scroll_left} and {@code scroll_right} turn the mouse wheel one notch with the modifiers held
+ * ({@code ctrl+scroll_up} zooms in). {@code lock} locks the PC whatever modifiers precede it, since Windows
+ * does not let a synthesised {@code Win+L} through.
  */
 public final class KeystrokeTokens {
     /** The modifiers a combo can carry, independent of how a platform encodes them. */
     public enum Modifier {
         CTRL, SHIFT, ALT, META
     }
+
+    /** The direction a {@code scroll_*} token turns the mouse wheel. */
+    public enum Wheel {
+        UP, DOWN, LEFT, RIGHT
+    }
+
+    private static final String SCROLL_PREFIX = "scroll_";
+    private static final String LOCK = "lock";
 
     private static final Map<String, Modifier> MODIFIERS = buildModifiers();
     private static final Map<String, String> KEY_ALIASES = buildKeyAliases();
@@ -70,6 +84,27 @@ public final class KeystrokeTokens {
         }
         var upper = token.trim().toUpperCase(Locale.ROOT);
         return KEY_ALIASES.getOrDefault(upper, upper);
+    }
+
+    /** The wheel direction a {@code scroll_*} token names, empty for any other token. */
+    public static Optional<Wheel> wheel(String token) {
+        var t = token.trim().toLowerCase(Locale.ROOT);
+        if (!t.startsWith(SCROLL_PREFIX)) {
+            return Optional.empty();
+        }
+        return switch (t.substring(SCROLL_PREFIX.length())) {
+            case "up" -> Optional.of(Wheel.UP);
+            case "down" -> Optional.of(Wheel.DOWN);
+            case "left" -> Optional.of(Wheel.LEFT);
+            case "right" -> Optional.of(Wheel.RIGHT);
+            default -> Optional.empty();
+        };
+    }
+
+    /** Whether the input asks to lock the PC: its key is {@code lock}, and any modifiers are ignored. */
+    public static boolean isLock(String input) {
+        var tokens = split(input);
+        return !tokens.isEmpty() && LOCK.equals(tokens.getLast().toLowerCase(Locale.ROOT));
     }
 
     private static Map<String, Modifier> buildModifiers() {

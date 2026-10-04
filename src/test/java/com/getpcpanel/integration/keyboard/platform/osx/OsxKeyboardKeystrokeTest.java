@@ -1,5 +1,6 @@
 package com.getpcpanel.integration.keyboard.platform.osx;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
@@ -8,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import com.getpcpanel.integration.keyboard.KeystrokeTokens.Wheel;
 
 /**
  * Functional tests for the macOS keystroke feature's pure token -> CGEventFlags / virtual-keycode
@@ -66,5 +69,26 @@ class OsxKeyboardKeystrokeTest {
         var s2 = OsxKeyboard.keyCode("ALSO_NOT_A_KEY");
         assertEquals(s1, s2, "unknown keys should map to the same sentinel");
         assertNotEquals(OsxKeyboard.keyCode("A"), s1, "a real key must not collide with the sentinel");
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "F13, 0x69", "F14, 0x6B", "F15, 0x71", "F16, 0x6A", "F17, 0x40", "F18, 0x4F", "F19, 0x50", "F20, 0x5A" })
+    @DisplayName("F13-F20 map to the keycodes macOS defines for them")
+    void extendedFunctionKeysMap(String token, String expectedHex) {
+        assertEquals((short) Integer.decode(expectedHex).intValue(), OsxKeyboard.keyCode(token));
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "UP, 1, 0", "DOWN, -1, 0", "LEFT, 0, 1", "RIGHT, 0, -1" })
+    @DisplayName("each wheel direction is one line on the matching axis")
+    void wheelLines(Wheel wheel, int vertical, int horizontal) {
+        assertArrayEquals(new int[] { vertical, horizontal }, OsxKeyboard.wheelLines(wheel));
+    }
+
+    @Test
+    @DisplayName("lock posts the system lock-screen shortcut Ctrl+Cmd+Q")
+    void lockIsTheLockScreenShortcut() {
+        assertEquals((short) 0x0C, OsxKeyboard.LOCK_KEY);
+        assertEquals(0x40000L | 0x100000L, OsxKeyboard.LOCK_FLAGS);
     }
 }

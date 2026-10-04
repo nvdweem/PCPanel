@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.getpcpanel.integration.keyboard.Keyboard;
 import com.getpcpanel.integration.keyboard.KeystrokeTokens;
+import com.getpcpanel.integration.keyboard.KeystrokeTokens.Wheel;
 import com.getpcpanel.integration.keyboard.command.CommandMedia.VolumeButton;
 import com.getpcpanel.platform.MacBuild;
 import com.getpcpanel.util.os.OsxPermissionHelper;
@@ -24,7 +25,8 @@ import lombok.extern.log4j.Log4j2;
  * macOS {@link Keyboard} backend: synthesises keystrokes through CoreGraphics {@code CGEvent}s,
  * replacing {@link java.awt.Robot} (AWT is unavailable in the macOS GraalVM native image). Media keys
  * delegate to {@link OsxMediaControl} (AppleScript), since macOS has no media-key API safely reachable
- * from Java.
+ * from Java. A combo ending in a {@code scroll_*} token posts a scroll-wheel {@code CGEvent} carrying the
+ * modifier flags, and {@code lock} posts the system lock-screen shortcut {@code Ctrl+Cmd+Q}.
  *
  * <p>Architecture independent: every native handle is passed as an opaque {@link Pointer} and every
  * scalar uses a fixed C width (CGKeyCode = uint16, CGEventTapLocation = uint32, CGEventFlags = uint64),
@@ -51,6 +53,12 @@ class OsxKeyboard implements Keyboard {
         // CGEventRef CGEventCreateKeyboardEvent(CGEventSourceRef source, CGKeyCode virtualKey, bool keyDown)
         Pointer CGEventCreateKeyboardEvent(Pointer source, short virtualKey, boolean keyDown);
 
+        // CGEventRef CGEventCreateScrollWheelEvent2(CGEventSourceRef source, CGScrollEventUnit units,
+        //         uint32_t wheelCount, int32_t wheel1, int32_t wheel2, int32_t wheel3)
+        // The non-variadic twin of CGEventCreateScrollWheelEvent: variadic arguments are passed differently
+        // on arm64, so a fixed-arity binding of the variadic one would scroll garbage on Apple Silicon.
+        Pointer CGEventCreateScrollWheelEvent2(Pointer source, int units, int wheelCount, int wheel1, int wheel2, int wheel3);
+
         // void CGEventSetFlags(CGEventRef event, CGEventFlags flags)
         void CGEventSetFlags(Pointer event, long flags);
 
@@ -69,6 +77,7 @@ class OsxKeyboard implements Keyboard {
     }
 
     private static final int K_CG_HID_EVENT_TAP = 0;
+    private static final int K_CG_SCROLL_EVENT_UNIT_LINE = 1;
 
     // CGEventFlags (uint64) modifier masks.
     private static final long FLAG_SHIFT = 0x00020000L;
@@ -77,6 +86,10 @@ class OsxKeyboard implements Keyboard {
     private static final long FLAG_COMMAND = 0x00100000L;
 
     private static final short UNKNOWN = -1;
+
+    /** The system lock-screen shortcut, Ctrl+Cmd+Q (kVK_ANSI_Q). */
+    static final short LOCK_KEY = 0x0C;
+    static final long LOCK_FLAGS = FLAG_CONTROL | FLAG_COMMAND;
 
     /** AWT-VK-style token (the part after {@code VK_}) → macOS virtual key code (kVK_ANSI_*). */
     private static final Map<String, Short> KEY_CODES = buildKeyCodes();
@@ -92,6 +105,14 @@ class OsxKeyboard implements Keyboard {
             return;
         }
         warnIfAccessibilityNotGranted();
+        if (KeystrokeTokens.isLock(input)) {
+            try {
+                postKey(LOCK_KEY, LOCK_FLAGS);
+            } catch (Throwable e) { // UnsatisfiedLinkError if the frameworks are somehow missing
+                log.error("Unable to post the macOS lock shortcut", e);
+            }
+            return;
+        }
         var tokens = KeystrokeTokens.split(input);
         if (tokens.isEmpty()) {
             return;
@@ -106,6 +127,15 @@ class OsxKeyboard implements Keyboard {
             }
         }
         var last = tokens.get(tokens.size() - 1);
+        var wheel = KeystrokeTokens.wheel(last);
+        if (wheel.isPresent()) {
+            try {
+                postScroll(wheel.get(), flags);
+            } catch (Throwable e) { // UnsatisfiedLinkError if the frameworks are somehow missing
+                log.error("Unable to post macOS scroll '{}'", input, e);
+            }
+            return;
+        }
         var keyCode = keyCode(last);
         if (keyCode == UNKNOWN) {
             log.error("Unsupported macOS keystroke key '{}' in '{}'", last, input);
@@ -155,6 +185,27 @@ class OsxKeyboard implements Keyboard {
         if (!OsxPermissionHelper.isAccessibilityGranted() && accessibilityWarned.compareAndSet(false, true)) {
             log.warn("Keystrokes require Accessibility permission: System Settings > Privacy & Security > Accessibility > enable PCPanel");
         }
+    }
+
+    private static void postScroll(Wheel wheel, long flags) {
+        var cg = CoreGraphics.INSTANCE;
+        var lines = wheelLines(wheel);
+        var event = cg.CGEventCreateScrollWheelEvent2(null, K_CG_SCROLL_EVENT_UNIT_LINE, 2, lines[0], lines[1], 0);
+        if (event != null) {
+            cg.CGEventSetFlags(event, flags);
+            cg.CGEventPost(K_CG_HID_EVENT_TAP, event);
+            CoreFoundation.INSTANCE.CFRelease(event);
+        }
+    }
+
+    /** {vertical, horizontal} lines for one notch: positive scrolls up and left, as CoreGraphics counts them. */
+    static int[] wheelLines(Wheel wheel) {
+        return switch (wheel) {
+            case UP -> new int[] { 1, 0 };
+            case DOWN -> new int[] { -1, 0 };
+            case LEFT -> new int[] { 0, 1 };
+            case RIGHT -> new int[] { 0, -1 };
+        };
     }
 
     private static void postChar(char c) {
@@ -237,6 +288,8 @@ class OsxKeyboard implements Keyboard {
         m.put("F1", (short) 0x7A); m.put("F2", (short) 0x78); m.put("F3", (short) 0x63); m.put("F4", (short) 0x76);
         m.put("F5", (short) 0x60); m.put("F6", (short) 0x61); m.put("F7", (short) 0x62); m.put("F8", (short) 0x64);
         m.put("F9", (short) 0x65); m.put("F10", (short) 0x6D); m.put("F11", (short) 0x67); m.put("F12", (short) 0x6F);
+        m.put("F13", (short) 0x69); m.put("F14", (short) 0x6B); m.put("F15", (short) 0x71); m.put("F16", (short) 0x6A);
+        m.put("F17", (short) 0x40); m.put("F18", (short) 0x4F); m.put("F19", (short) 0x50); m.put("F20", (short) 0x5A);
         return m;
     }
 }

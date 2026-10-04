@@ -8,6 +8,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import com.getpcpanel.integration.keyboard.KeystrokeTokens.Wheel;
 import com.getpcpanel.integration.keyboard.command.CommandMedia.VolumeButton;
 
 /**
@@ -112,9 +113,24 @@ class WindowsKeyboardKeystrokeTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "UNDEFINED", "NOPE", "F13" })
-    @DisplayName("unrecognised keys resolve to 0 (note: F13-F24 are not yet mapped on Windows)")
+    @ValueSource(strings = { "UNDEFINED", "NOPE", "F25", "scroll_up", "lock" })
+    @DisplayName("unrecognised keys resolve to 0")
     void unknownKeysAreZero(String token) {
         assertEquals(0, WindowsKeyboard.keyVk(token));
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "F13, 0x7C", "F16, 0x7F", "F20, 0x83", "F24, 0x87" })
+    @DisplayName("F13-F24 map to their virtual keys, so they work as free shortcut keys")
+    void extendedFunctionKeysMap(String token, String expectedHex) {
+        assertEquals(Integer.decode(expectedHex).intValue(), WindowsKeyboard.keyVk(token));
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "UP, 0x0800, 120", "DOWN, 0x0800, -120", "RIGHT, 0x1000, 120", "LEFT, 0x1000, -120" })
+    @DisplayName("each wheel direction is one notch on the matching wheel")
+    void wheelNotches(Wheel wheel, String expectedFlags, int expectedData) {
+        assertEquals(Integer.decode(expectedFlags).intValue(), WindowsKeyboard.wheelFlags(wheel));
+        assertEquals(expectedData, WindowsKeyboard.wheelData(wheel));
     }
 }

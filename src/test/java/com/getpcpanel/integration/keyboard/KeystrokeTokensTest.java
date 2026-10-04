@@ -1,10 +1,13 @@
 package com.getpcpanel.integration.keyboard;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
@@ -16,6 +19,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import com.getpcpanel.integration.keyboard.KeystrokeTokens.Modifier;
+import com.getpcpanel.integration.keyboard.KeystrokeTokens.Wheel;
 
 /** Functional tests for the keystroke token vocabulary shared by the three platform backends. */
 @DisplayName("Keystroke token canonicalisation")
@@ -147,6 +151,51 @@ class KeystrokeTokensTest {
                         return mod != null ? mod.name() : KeystrokeTokens.key(t);
                     })
                     .collect(Collectors.joining("+"));
+        }
+    }
+
+    @Nested
+    @DisplayName("mouse wheel")
+    class MouseWheel {
+        @ParameterizedTest
+        @CsvSource({ "scroll_up, UP", "scroll_down, DOWN", "scroll_left, LEFT", "scroll_right, RIGHT", "SCROLL_LEFT, LEFT", " Scroll_Up , UP" })
+        @DisplayName("resolves each scroll token regardless of case")
+        void scrollTokens(String token, Wheel expected) {
+            assertEquals(Optional.of(expected), KeystrokeTokens.wheel(token));
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = { "a", "UP", "scroll", "scroll_upward", "" })
+        @DisplayName("is absent for a token that names a key")
+        void otherTokensAreNotWheel(String token) {
+            assertEquals(Optional.empty(), KeystrokeTokens.wheel(token));
+        }
+
+        @Test
+        @DisplayName("carries its modifiers, so Ctrl+scroll up zooms")
+        void modifiedWheel() {
+            var tokens = KeystrokeTokens.split("ctrl+scroll_up");
+            assertEquals(2, tokens.size());
+            assertEquals(Modifier.CTRL, KeystrokeTokens.modifier(tokens.get(0)));
+            assertEquals(Optional.of(Wheel.UP), KeystrokeTokens.wheel(tokens.get(1)));
+        }
+    }
+
+    @Nested
+    @DisplayName("lock")
+    class Lock {
+        @ParameterizedTest
+        @ValueSource(strings = { "lock", "LOCK", " Lock ", "ctrl+lock", "Ctrl+Shift+lock" })
+        @DisplayName("is an input whose key is lock, so modifier toggles cannot break it")
+        void keyIsLock(String input) {
+            assertTrue(KeystrokeTokens.isLock(input));
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = { "lock+a", "l", "", "win+l", "unlock" })
+        @DisplayName("is not a combo whose key is something else")
+        void comboIsNotLock(String input) {
+            assertFalse(KeystrokeTokens.isLock(input));
         }
     }
 

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, model, signal } from '@angular/core';
 
-import { formatCombo, MOD_ORDER, parseCombo } from './key-combo';
+import { SelectComponent, SelectOption } from '../select/select.component';
+import { formatCombo, KEY_SUGGESTIONS, MOD_ORDER, parseCombo, suggestionFor } from './key-combo';
 
 const MODS = ['Control', 'Shift', 'Alt', 'Meta'];
 const MOD_LABEL: Record<string, string> = { Control: 'Ctrl', Shift: 'Shift', Alt: 'Alt', Meta: 'Win' };
@@ -15,10 +16,14 @@ const KEY_LABEL: Record<string, string> = { ' ': 'Space', '+': 'Plus' };
  * <p>The modifiers are also toggle buttons. The OS and the browser claim some combos before the page
  * sees them — Windows takes every Win chord, the browser takes Alt+Left for history — so those are
  * built by recording the plain key and switching the modifiers on.
+ *
+ * <p>Below the recorder a searchable list offers ready-made combos (KEY_SUGGESTIONS): common shortcuts, every
+ * function key (F13–F24 are rare on keyboards) and what no key can express: locking the PC and turning the mouse wheel.
  */
 @Component({
   selector: 'pc-key-recorder',
   standalone: true,
+  imports: [SelectComponent],
   template: `
     <div class="mods">
       @for (m of modKeys; track m) {
@@ -41,6 +46,8 @@ const KEY_LABEL: Record<string, string> = { ' ': 'Space', '+': 'Plus' };
         <span class="rec-text">Recording… press the keys now</span>
       </button>
     }
+    <pc-select class="suggest" [block]="true" [searchable]="true" [options]="suggestions" placeholder="Pick a ready-made key…"
+               [value]="suggested()" (valueChange)="value.set($event ?? '')"></pc-select>
   `,
   styles: [`
     :host { display: block; }
@@ -71,6 +78,7 @@ const KEY_LABEL: Record<string, string> = { ' ': 'Space', '+': 'Plus' };
     .field.recording { background: rgba(242,82,104,0.08); border-color: rgba(242,82,104,0.4); cursor: default; }
     .rec-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--err); animation: pcp-blink 1s steps(1) infinite; }
     .rec-text { font-size: 13px; color: #FF9AA8; }
+    .suggest { display: flex; margin-top: 8px; }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -78,6 +86,7 @@ export class KeyRecorderComponent {
   readonly value = model<string>('');
   readonly recording = signal(false);
   readonly modKeys = MOD_ORDER;
+  readonly suggestions: SelectOption[] = KEY_SUGGESTIONS.map(s => ({ value: s.value, label: s.label, hint: s.group.toUpperCase() }));
 
   private readonly combo = computed(() => parseCombo(this.value()));
 
@@ -85,6 +94,8 @@ export class KeyRecorderComponent {
   readonly mods = computed(() => this.combo().mods);
   /** The key the combo ends on, empty when only modifiers are set so far. */
   readonly mainKey = computed(() => this.combo().key);
+  /** The ready-made combo the value is, so the list shows it picked; empty for anything else. */
+  readonly suggested = computed(() => suggestionFor(this.value())?.value ?? '');
 
   start(): void { this.recording.set(true); }
   stop(): void { this.recording.set(false); }

@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.integration.keyboard.Keyboard;
 import com.getpcpanel.integration.keyboard.KeystrokeTokens;
+import com.getpcpanel.integration.keyboard.KeystrokeTokens.Wheel;
 import com.getpcpanel.integration.keyboard.command.CommandMedia.VolumeButton;
 import com.getpcpanel.integration.volume.platform.ISndCtrl;
 import com.getpcpanel.integration.volume.platform.windows.SndCtrlWindows;
@@ -34,7 +35,9 @@ import one.util.streamex.StreamEx;
  *
  * <p>The keystroke input is the cross-platform "{@code modifier+modifier+key}" format, canonicalised by
  * {@link KeystrokeTokens} and mapped here to Win32 virtual-key codes, then posted as keydown/keyup
- * {@code KEYBDINPUT} events. Media keys post the global multimedia virtual key, except when a list of
+ * {@code KEYBDINPUT} events. A combo ending in a {@code scroll_*} token posts a {@code MOUSEINPUT} wheel notch
+ * between the modifier presses and releases instead, and {@code lock} calls {@code LockWorkStation} (the
+ * system drops a synthesised {@code Win+L}). Media keys post the global multimedia virtual key, except when a list of
  * preferred target apps is given: the first one running is located and sent a {@code WM_APPCOMMAND}
  * directly, so the action reaches (say) Spotify even when a browser would otherwise grab the key.
  */
@@ -46,6 +49,9 @@ class WindowsKeyboard implements Keyboard {
     private static final int KEYEVENTF_EXTENDEDKEY = 0x0001;
     private static final int KEYEVENTF_KEYUP = 0x0002;
     private static final int KEYEVENTF_UNICODE = 0x0004;
+    private static final int MOUSEEVENTF_WHEEL = 0x0800;
+    private static final int MOUSEEVENTF_HWHEEL = 0x1000;
+    private static final int WHEEL_DELTA = 120; // one notch
     private static final int WM_APPCOMMAND = 0x0319;
     private static final int WINDOW_WALK_LIMIT = 20_000; // safety bound on the top-level window walk
 
@@ -72,6 +78,10 @@ class WindowsKeyboard implements Keyboard {
         if (input == null || input.contains("UNDEFINED")) {
             return;
         }
+        if (KeystrokeTokens.isLock(input)) {
+            lock();
+            return;
+        }
         var tokens = KeystrokeTokens.split(input);
         if (tokens.isEmpty()) {
             return;
@@ -88,8 +98,11 @@ class WindowsKeyboard implements Keyboard {
                 }
             }
             var last = tokens.get(tokens.size() - 1);
+            var wheel = KeystrokeTokens.wheel(last);
             var keyVk = keyVk(last);
-            if (keyVk == 0) {
+            if (wheel.isPresent()) {
+                sendWheel(wheel.get());
+            } else if (keyVk == 0) {
                 log.error("Unsupported Windows keystroke key '{}' in '{}'", last, input);
             } else {
                 sendVk(keyVk, false);
@@ -107,6 +120,46 @@ class WindowsKeyboard implements Keyboard {
                 }
             }
         }
+    }
+
+    private static void lock() {
+        try {
+            if (!User32.INSTANCE.LockWorkStation().booleanValue()) {
+                log.error("LockWorkStation failed");
+            }
+        } catch (Throwable e) { // UnsatisfiedLinkError if user32 is somehow missing
+            log.error("Unable to lock the workstation", e);
+        }
+    }
+
+    /** Turns the vertical or horizontal mouse wheel one notch. */
+    private static void sendWheel(Wheel wheel) {
+        var input = new WinUser.INPUT();
+        input.type = new WinDef.DWORD(WinUser.INPUT.INPUT_MOUSE);
+        input.input.setType("mi");
+        input.input.mi.dx = new WinDef.LONG(0);
+        input.input.mi.dy = new WinDef.LONG(0);
+        input.input.mi.mouseData = new WinDef.DWORD(wheelData(wheel));
+        input.input.mi.dwFlags = new WinDef.DWORD(wheelFlags(wheel));
+        input.input.mi.time = new WinDef.DWORD(0);
+        input.input.mi.dwExtraInfo = new BaseTSD.ULONG_PTR(0);
+        User32.INSTANCE.SendInput(new WinDef.DWORD(1), (WinUser.INPUT[]) input.toArray(1), input.size());
+    }
+
+    /** {@code MOUSEINPUT.dwFlags} selecting the wheel a direction turns. */
+    static int wheelFlags(Wheel wheel) {
+        return switch (wheel) {
+            case UP, DOWN -> MOUSEEVENTF_WHEEL;
+            case LEFT, RIGHT -> MOUSEEVENTF_HWHEEL;
+        };
+    }
+
+    /** {@code MOUSEINPUT.mouseData} for one notch: positive scrolls up (vertical) or right (horizontal). */
+    static int wheelData(Wheel wheel) {
+        return switch (wheel) {
+            case UP, RIGHT -> WHEEL_DELTA;
+            case DOWN, LEFT -> -WHEEL_DELTA;
+        };
     }
 
     /**
@@ -292,8 +345,8 @@ class WindowsKeyboard implements Keyboard {
     @SuppressWarnings("java:S138") // long but flat lookup table
     private static Map<String, Integer> buildKeyCodes() {
         Map<String, Integer> m = new HashMap<>();
-        // Function keys (VK_F1..VK_F12 are contiguous)
-        for (var i = 1; i <= 12; i++) {
+        // Function keys (VK_F1..VK_F24 are contiguous)
+        for (var i = 1; i <= 24; i++) {
             m.put("F" + i, Win32VK.VK_F1.code + (i - 1));
         }
         // Control / navigation

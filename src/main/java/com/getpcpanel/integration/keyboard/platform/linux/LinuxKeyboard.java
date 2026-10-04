@@ -1,14 +1,19 @@
 package com.getpcpanel.integration.keyboard.platform.linux;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.getpcpanel.integration.keyboard.Keyboard;
 import com.getpcpanel.integration.keyboard.KeystrokeTokens;
+import com.getpcpanel.integration.keyboard.KeystrokeTokens.Wheel;
 import com.getpcpanel.integration.keyboard.command.CommandMedia.VolumeButton;
 import com.getpcpanel.platform.LinuxBuild;
+import com.getpcpanel.util.os.ProcessHelper;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
@@ -17,6 +22,7 @@ import com.sun.jna.ptr.IntByReference;
 
 import io.quarkus.arc.Unremovable;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 
 /**
@@ -26,7 +32,9 @@ import lombok.extern.log4j.Log4j2;
  *
  * <p>The input string is the cross-platform "{@code modifier+modifier+key}" format, canonicalised by
  * {@link KeystrokeTokens} and mapped to X11 keysyms, resolved to keycodes via the current keyboard
- * mapping, then pressed/released.
+ * mapping, then pressed/released. A combo ending in a {@code scroll_*} token clicks the X wheel button
+ * ({@code XTestFakeButtonEvent}, buttons 4-7) with the modifiers held, and {@code lock} runs
+ * {@code loginctl lock-session} (on the host, from the Flatpak).
  *
  * <p>Works against an X server (native X11 or XWayland). On a pure Wayland session with no X server
  * {@code XOpenDisplay} returns null and keystrokes are skipped with a warning.
@@ -62,6 +70,8 @@ class LinuxKeyboard implements Keyboard {
         XTest INSTANCE = Native.load("Xtst", XTest.class);
 
         int XTestFakeKeyEvent(Pointer display, int keycode, boolean isPress, NativeLong delay);
+
+        int XTestFakeButtonEvent(Pointer display, int button, boolean isPress, NativeLong delay);
     }
 
     /** AWT-VK-style token (the part after {@code VK_}) → X11 keysym. */
@@ -83,10 +93,18 @@ class LinuxKeyboard implements Keyboard {
     private static final Map<Long, int[]> LAYOUT = new HashMap<>();
     private static byte shiftKeycode;
     private static byte altGrKeycode;
+    private static final Duration LOCK_TIMEOUT = Duration.ofSeconds(5);
+
+    @Inject
+    ProcessHelper processes;
 
     @Override
     public void executeKeyStroke(String input) {
         if (input == null || input.contains("UNDEFINED")) {
+            return;
+        }
+        if (KeystrokeTokens.isLock(input)) {
+            lock();
             return;
         }
         var tokens = KeystrokeTokens.split(input);
@@ -110,8 +128,13 @@ class LinuxKeyboard implements Keyboard {
                     }
                 }
                 var last = tokens.get(tokens.size() - 1);
+                var wheel = KeystrokeTokens.wheel(last);
                 var keySym = keysym(last);
-                if (keySym == 0) {
+                if (wheel.isPresent()) {
+                    var button = wheelButton(wheel.get());
+                    XTest.INSTANCE.XTestFakeButtonEvent(disp, button, true, new NativeLong(0));
+                    XTest.INSTANCE.XTestFakeButtonEvent(disp, button, false, new NativeLong(0));
+                } else if (keySym == 0) {
                     log.error("Unsupported Linux keystroke key '{}' in '{}'", last, input);
                 } else {
                     pressed.add(sendKeysym(disp, keySym, true));
@@ -132,6 +155,32 @@ class LinuxKeyboard implements Keyboard {
                 X11.INSTANCE.XFlush(disp);
             }
         }
+    }
+
+    private void lock() {
+        var command = StringUtils.isNotBlank(System.getenv("FLATPAK_ID"))
+                ? new String[] { "flatpak-spawn", "--host", "loginctl", "lock-session" }
+                : new String[] { "loginctl", "lock-session" };
+        try {
+            var result = processes.run(LOCK_TIMEOUT, command);
+            if (!result.succeeded()) {
+                log.error("loginctl lock-session failed: {}", result.stderr());
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (Exception e) {
+            log.error("Unable to lock the session", e);
+        }
+    }
+
+    /** The X pointer button that scrolls one notch in a direction. */
+    static int wheelButton(Wheel wheel) {
+        return switch (wheel) {
+            case UP -> 4;
+            case DOWN -> 5;
+            case LEFT -> 6;
+            case RIGHT -> 7;
+        };
     }
 
     /**

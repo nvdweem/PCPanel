@@ -11,6 +11,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import com.getpcpanel.integration.keyboard.KeystrokeTokens.Wheel;
 import com.getpcpanel.integration.keyboard.command.CommandMedia.VolumeButton;
 
 /**
@@ -125,5 +126,12 @@ class LinuxKeyboardKeystrokeTest {
     @DisplayName("every media button resolves to a non-zero keysym so none silently no-ops")
     void everyMediaButtonResolves(VolumeButton button) {
         assertNotEquals(0L, LinuxKeyboard.mediaKeysym(button), button + " should map to a keysym");
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "UP, 4", "DOWN, 5", "LEFT, 6", "RIGHT, 7" })
+    @DisplayName("each wheel direction is the X button that scrolls that way")
+    void wheelButtons(Wheel wheel, int expected) {
+        assertEquals(expected, LinuxKeyboard.wheelButton(wheel));
     }
 }
