@@ -9,13 +9,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import dev.niels.sonar.SonarClient;
-import dev.niels.sonar.model.SonarChannel;
-import dev.niels.sonar.model.SonarLevel;
-import dev.niels.sonar.model.SonarMix;
-import dev.niels.sonar.model.SonarMode;
-import dev.niels.sonar.model.SonarRoute;
-import dev.niels.sonar.model.SonarState;
+import re.walk.sonar.SonarClient;
+import re.walk.sonar.model.SonarChannel;
+import re.walk.sonar.model.SonarLevel;
+import re.walk.sonar.model.SonarMix;
+import re.walk.sonar.model.SonarMode;
+import re.walk.sonar.model.SonarRoute;
+import re.walk.sonar.model.SonarState;
 import org.junit.jupiter.api.Test;
 
 import com.getpcpanel.integration.sonar.dto.SonarSettings;

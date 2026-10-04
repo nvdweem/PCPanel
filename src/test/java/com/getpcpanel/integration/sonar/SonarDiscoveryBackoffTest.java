@@ -14,9 +14,9 @@ import com.getpcpanel.integration.sonar.dto.SonarSettings;
 import com.getpcpanel.profile.Save;
 import com.getpcpanel.profile.SaveService;
 
-import dev.niels.sonar.SonarClient;
-import dev.niels.sonar.model.SonarMode;
-import dev.niels.sonar.model.SonarState;
+import re.walk.sonar.SonarClient;
+import re.walk.sonar.model.SonarMode;
+import re.walk.sonar.model.SonarState;
 
 /**
  * While Sonar cannot be found the poll looks for it at a growing interval (2 s, 4 s, … capped at 10 s);

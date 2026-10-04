@@ -11,7 +11,7 @@ import com.getpcpanel.integration.sonar.dto.SonarSettings;
 import com.getpcpanel.profile.Save;
 import com.getpcpanel.profile.SaveService;
 
-import dev.niels.sonar.SonarClient;
+import re.walk.sonar.SonarClient;
 import jakarta.enterprise.event.Event;
 import jakarta.enterprise.event.NotificationOptions;
 import jakarta.enterprise.util.TypeLiteral;

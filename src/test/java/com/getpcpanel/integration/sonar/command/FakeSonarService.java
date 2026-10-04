@@ -8,7 +8,7 @@ import javax.annotation.Nullable;
 import com.getpcpanel.integration.sonar.SonarMixSelection;
 import com.getpcpanel.integration.sonar.SonarService;
 
-import dev.niels.sonar.model.SonarChannel;
+import re.walk.sonar.model.SonarChannel;
 
 /**
  * Hand-written recording stub for {@link SonarService}, served through {@code FakeCdi} exactly like

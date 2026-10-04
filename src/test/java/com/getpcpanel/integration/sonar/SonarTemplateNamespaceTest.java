@@ -17,13 +17,13 @@ import com.getpcpanel.integration.volume.platform.MuteType;
 import com.getpcpanel.template.TemplateScope;
 import com.getpcpanel.template.TestTemplates;
 
-import dev.niels.sonar.SonarClient;
-import dev.niels.sonar.model.SonarChannel;
-import dev.niels.sonar.model.SonarLevel;
-import dev.niels.sonar.model.SonarMix;
-import dev.niels.sonar.model.SonarMode;
-import dev.niels.sonar.model.SonarRoute;
-import dev.niels.sonar.model.SonarState;
+import re.walk.sonar.SonarClient;
+import re.walk.sonar.model.SonarChannel;
+import re.walk.sonar.model.SonarLevel;
+import re.walk.sonar.model.SonarMix;
+import re.walk.sonar.model.SonarMode;
+import re.walk.sonar.model.SonarRoute;
+import re.walk.sonar.model.SonarState;
 
 class SonarTemplateNamespaceTest {
     private static final Commands NONE = new Commands(List.of(), CommandsType.allAtOnce);

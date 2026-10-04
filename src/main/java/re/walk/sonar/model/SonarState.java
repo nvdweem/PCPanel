@@ -1,4 +1,4 @@
-package dev.niels.sonar.model;
+package re.walk.sonar.model;
 
 import java.util.Map;
 import java.util.Optional;

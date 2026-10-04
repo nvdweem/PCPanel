@@ -5,7 +5,7 @@ import com.getpcpanel.integration.sonar.SonarMixSelection;
 import com.getpcpanel.integration.sonar.SonarService;
 import com.getpcpanel.util.CdiHelper;
 
-import dev.niels.sonar.model.SonarChannel;
+import re.walk.sonar.model.SonarChannel;
 import lombok.Getter;
 import lombok.ToString;
 

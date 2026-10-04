@@ -1,13 +1,13 @@
-package dev.niels.sonar;
+package re.walk.sonar;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-import dev.niels.sonar.model.SonarChannel;
-import dev.niels.sonar.model.SonarMix;
-import dev.niels.sonar.model.SonarMode;
-import dev.niels.sonar.model.SonarRoute;
+import re.walk.sonar.model.SonarChannel;
+import re.walk.sonar.model.SonarMix;
+import re.walk.sonar.model.SonarMode;
+import re.walk.sonar.model.SonarRoute;
 import org.junit.jupiter.api.Test;
 
 class SonarRouteTest {

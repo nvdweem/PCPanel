@@ -397,7 +397,7 @@ lines), which remains out of scope — defeating a same-user attacker on a deskt
 **Integrations (`integration/*` — command-providing features only):** the external connectors
 `integration/obs/` (OBS websocket), `voicemeeter/` (JNA), `wavelink/` + `dev/niels/wavelink/` (Elgato
 Wave Link RPC client), `osc/`, `mqtt/` (Eclipse Paho mqttv5), `homeassistant/`, `discord/` +
-`dev/niels/discord/`, `sonar/` + `dev/niels/sonar/` (SteelSeries Sonar HTTP client, Windows-only); plus the
+`dev/niels/discord/`, `sonar/` + `re/walk/sonar/` (SteelSeries Sonar HTTP client, Windows-only); plus the
 feature families `volume/`, `keyboard/`, `program/`, `analogbands/`, `profile/`, and `device/` (the
 brightness command only). Each owns its `command/` + `CommandModule` and (where applicable) its REST,
 SPI impls, and service. The on-screen volume overlay lives in `integration/volume/overlay/`: a Win32 JNA
@@ -614,7 +614,8 @@ Full reference: [`docs/mcp-server.md`](docs/mcp-server.md).
   The child inherits the environment unchanged unless the caller passes a map — pass
   `ProcessHelper.PARSEABLE_OUTPUT` (`LC_ALL=C`) only when the output is parsed, so a launched program keeps the
   user's locale. Tests redirect commands by overriding the protected `builder()` (see `FakeProcess`).
-- **An external app's client is a library in `dev.niels.<app>`; how PCPanel uses it lives in
+- **An external app's client is a library in `dev.niels.<app>` (the Sonar client, by its contributor's choice, in
+  `re.walk.sonar`); how PCPanel uses it lives in
   `com.getpcpanel.integration.<app>`.** The library half is the protocol client and its model, plain Java
   that another project could reuse: it never depends on `com.getpcpanel.*` nor on CDI/Quarkus, and the
   integration's service constructs (or extends) it and passes in anything app-wide, such as the shared

@@ -1,4 +1,4 @@
-package dev.niels.sonar.model;
+package re.walk.sonar.model;
 
 /**
  * The two independent mixes Streamer mode exposes per channel. Classic mode has neither. The constant is

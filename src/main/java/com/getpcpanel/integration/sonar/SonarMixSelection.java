@@ -2,8 +2,8 @@ package com.getpcpanel.integration.sonar;
 
 import java.util.List;
 
-import dev.niels.sonar.model.SonarMix;
-import dev.niels.sonar.model.SonarRoute;
+import re.walk.sonar.model.SonarMix;
+import re.walk.sonar.model.SonarRoute;
 
 /**
  * Which mix a Sonar command drives: one of the two, or both at once. Only a command carries this; a

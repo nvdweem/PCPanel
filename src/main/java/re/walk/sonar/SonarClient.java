@@ -1,4 +1,4 @@
-package dev.niels.sonar;
+package re.walk.sonar;
 
 import java.net.InetAddress;
 import java.net.URI;
@@ -22,12 +22,12 @@ import javax.net.ssl.X509TrustManager;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import dev.niels.sonar.model.SonarChannel;
-import dev.niels.sonar.model.SonarLevel;
-import dev.niels.sonar.model.SonarMix;
-import dev.niels.sonar.model.SonarMode;
-import dev.niels.sonar.model.SonarRoute;
-import dev.niels.sonar.model.SonarState;
+import re.walk.sonar.model.SonarChannel;
+import re.walk.sonar.model.SonarLevel;
+import re.walk.sonar.model.SonarMix;
+import re.walk.sonar.model.SonarMode;
+import re.walk.sonar.model.SonarRoute;
+import re.walk.sonar.model.SonarState;
 import lombok.extern.log4j.Log4j2;
 
 /**

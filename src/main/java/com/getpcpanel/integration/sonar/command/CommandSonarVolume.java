@@ -12,7 +12,7 @@ import com.getpcpanel.commands.meta.CommandMeta;
 import com.getpcpanel.integration.sonar.SonarMixSelection;
 import com.getpcpanel.integration.sonar.SonarService;
 
-import dev.niels.sonar.model.SonarChannel;
+import re.walk.sonar.model.SonarChannel;
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.log4j.Log4j2;

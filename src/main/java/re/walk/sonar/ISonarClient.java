@@ -1,10 +1,10 @@
-package dev.niels.sonar;
+package re.walk.sonar;
 
 import java.util.Optional;
 
-import dev.niels.sonar.model.SonarMode;
-import dev.niels.sonar.model.SonarRoute;
-import dev.niels.sonar.model.SonarState;
+import re.walk.sonar.model.SonarMode;
+import re.walk.sonar.model.SonarRoute;
+import re.walk.sonar.model.SonarState;
 
 /**
  * SteelSeries Sonar's local HTTP API. Sonar has no push channel, so a caller that wants to follow changes

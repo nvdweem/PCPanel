@@ -17,7 +17,7 @@ import com.getpcpanel.integration.sonar.SonarMixSelection;
 import com.getpcpanel.integration.sonar.command.CommandSonar;
 import com.getpcpanel.integration.sonar.command.CommandSonarVolume;
 
-import dev.niels.sonar.model.SonarChannel;
+import re.walk.sonar.model.SonarChannel;
 
 class IntegrationUseNotifierTest {
     private static final class RecordingConnection implements IntegrationConnection {

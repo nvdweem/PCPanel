@@ -12,10 +12,10 @@ import com.getpcpanel.template.TemplateDoc;
 import com.getpcpanel.template.TemplateNamespace;
 import com.getpcpanel.template.TemplateScope;
 
-import dev.niels.sonar.model.SonarChannel;
-import dev.niels.sonar.model.SonarLevel;
-import dev.niels.sonar.model.SonarMix;
-import dev.niels.sonar.model.SonarMode;
+import re.walk.sonar.model.SonarChannel;
+import re.walk.sonar.model.SonarLevel;
+import re.walk.sonar.model.SonarMix;
+import re.walk.sonar.model.SonarMode;
 import io.quarkus.qute.TemplateData;
 import io.quarkus.runtime.annotations.RegisterForReflection;
 import jakarta.enterprise.context.ApplicationScoped;

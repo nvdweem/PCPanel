@@ -3,7 +3,7 @@ package com.getpcpanel.integration.sonar.command;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import dev.niels.sonar.model.SonarChannel;
+import re.walk.sonar.model.SonarChannel;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
