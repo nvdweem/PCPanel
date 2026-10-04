@@ -490,7 +490,8 @@ class SndCtrlPulseAudio implements ISndCtrl {
                 title,
                 "", extractVolume(pa), isMuted(pa),
                 portalAppId,
-                sinkName(NumberUtils.toInt(pa.metas().get("Sink"), -1)));
+                sinkName(NumberUtils.toInt(pa.metas().get("Sink"), -1)))
+                .corked("yes".equalsIgnoreCase(StringUtils.trim(pa.metas().get("Corked"))));
     }
 
     static boolean isMuted(PulseAudioTarget pa) {

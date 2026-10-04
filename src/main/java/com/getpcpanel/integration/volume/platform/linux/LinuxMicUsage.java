@@ -45,7 +45,7 @@ class LinuxMicUsage implements MicUsage {
         var result = new HashSet<String>();
         for (var r : recordings) {
             var props = r.properties();
-            if (LinuxAudioLevelMeter.CLIENT_NAME.equals(props.get("application.name"))
+            if (LinuxAudioLevelMeter.CLIENT_NAME.equals(props.get("application.name")) || LinuxLoopbackCapture.CLIENT_NAME.equals(props.get("application.name"))
                     || monitors.contains(NumberUtils.toInt(r.metas().get("Source"), -1))) {
                 continue;
             }

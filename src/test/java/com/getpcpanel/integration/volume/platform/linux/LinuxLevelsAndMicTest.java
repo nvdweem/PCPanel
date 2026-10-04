@@ -50,6 +50,31 @@ class LinuxLevelsAndMicTest {
     }
 
     @Test
+    void aPausedStreamIsCorked() {
+        assertTrue(new SndCtrlPulseAudio().toSession(target(InOutput.session, 9, Map.of("Corked", "yes"), Map.of())).corked());
+        assertFalse(new SndCtrlPulseAudio().toSession(target(InOutput.session, 9, Map.of("Corked", "no"), Map.of())).corked());
+        assertFalse(new SndCtrlPulseAudio().toSession(target(InOutput.session, 9, Map.of(), Map.of())).corked(), "unknown counts as playing");
+    }
+
+    @Test
+    void theVisualizerRecordsAnOutputsMonitor() {
+        var following = LinuxLoopbackCapture.command(null, false);
+        assertEquals("parec", following.getFirst());
+        assertTrue(following.contains("--device=@DEFAULT_MONITOR@"));
+        assertTrue(following.contains("--rate=" + LinuxLoopbackCapture.RATE));
+        assertTrue(following.contains("--client-name=" + LinuxLoopbackCapture.CLIENT_NAME));
+        assertTrue(LinuxLoopbackCapture.command("alsa_output.usb-headset", false).contains("--device=alsa_output.usb-headset.monitor"));
+    }
+
+    @Test
+    void theVisualizerRecordsAnInputItself() {
+        assertTrue(LinuxLoopbackCapture.command(null, true).contains("--device=@DEFAULT_SOURCE@"));
+        assertTrue(LinuxLoopbackCapture.command("alsa_input.usb-mic", true).contains("--device=alsa_input.usb-mic"));
+        assertEquals("@DEFAULT_MONITOR@", LinuxLoopbackCapture.parecDevice(null, false));
+        assertEquals("alsa_output.speakers.monitor", LinuxLoopbackCapture.parecDevice("alsa_output.speakers", false));
+    }
+
+    @Test
     void micUsersLeaveOutMonitorsAndOurOwnMeters() {
         var sources = List.of(
                 target(InOutput.input, 1, Map.of("Name", "alsa_input.usb-mic"), Map.of()),
@@ -58,7 +83,8 @@ class LinuxLevelsAndMicTest {
                 target(InOutput.recording, 10, Map.of("Source", "1"), Map.of("application.process.binary", "Discord")),
                 target(InOutput.recording, 11, Map.of("Source", "2"), Map.of("application.process.binary", "obs")),
                 target(InOutput.recording, 12, Map.of("Source", "1"), Map.of("application.name", LinuxAudioLevelMeter.CLIENT_NAME, "application.process.binary", "parec")),
-                target(InOutput.recording, 13, Map.of("Source", "1"), Map.of("pipewire.access.portal.app_id", "us.zoom.Zoom")));
+                target(InOutput.recording, 13, Map.of("Source", "1"), Map.of("pipewire.access.portal.app_id", "us.zoom.Zoom")),
+                target(InOutput.recording, 14, Map.of("Source", "1"), Map.of("application.name", LinuxLoopbackCapture.CLIENT_NAME, "application.process.binary", "parec")));
 
         assertEquals(Set.of("discord", "us.zoom.zoom"), LinuxMicUsage.appsUsingMic(recordings, sources));
     }

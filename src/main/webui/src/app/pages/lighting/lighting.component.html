@@ -127,6 +127,12 @@
             </div>
           }
         }
+
+        @if (hasGlobalLighting()) {
+          <pc-visualizer-card [config]="cfg.visualizer" [knobCount]="knobCount()" [sliderCount]="sliderCount()"
+                              [hasLabels]="isPro()" [hasLogo]="hasLogo()" [perControl]="isCustom()"
+                              (configChange)="set('visualizer', $event)"></pc-visualizer-card>
+        }
       </aside>
 
       <!-- ── Right: preview + per-control options ─────────────────────────────── -->

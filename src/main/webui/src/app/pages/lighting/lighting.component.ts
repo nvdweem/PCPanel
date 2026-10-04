@@ -13,6 +13,7 @@ import {
 import { DeviceRendererComponent } from '../../devices/visual/device-renderer.component';
 import { MuteOverrideFieldComponent } from '../../features/lighting/mute-override-field.component';
 import { LightTargetComponent } from '../../features/lighting/light-target.component';
+import { VisualizerCardComponent } from '../../features/lighting/visualizer-card.component';
 import { normalizeLogo } from '../../features/lighting/lighting-util';
 import { DeviceCapabilitiesService } from '../../services/device-capabilities.service';
 import {
@@ -37,7 +38,7 @@ const isBlackHex = (c: string | undefined): boolean => !c || /^#?0{3,8}$/i.test(
   imports: [HistoryButtonsComponent, 
     IconComponent, StatusDotComponent, SliderComponent, ToggleComponent, SegmentedComponent,
     SelectComponent, ColorPickerComponent, DeviceRendererComponent, BottomBarComponent, MuteOverrideFieldComponent,
-    LightTargetComponent,
+    LightTargetComponent, VisualizerCardComponent,
   ],
   templateUrl: './lighting.component.html',
   styleUrl: './lighting.component.scss',
@@ -137,6 +138,7 @@ export class LightingComponent {
   /** Vertical rainbow is a PCPanel Mini-only hardware feature (Pro/RGB show white if mode 2 is sent). */
   readonly isMini = computed(() => this.caps.descriptor()?.deviceKindId === 'PCPANEL_MINI');
   readonly knobCount = this.caps.knobCount;
+  readonly sliderCount = this.caps.sliderCount;
   readonly knobIndexes = computed(() => Array.from({ length: this.knobCount() }, (_, i) => i));
   /** Slider positions (0-based) for the per-control editor grid. */
   readonly sliderIndexes = computed(() => Array.from({ length: this.caps.sliderCount() }, (_, j) => j));

@@ -52,12 +52,15 @@ public class LightingConfig {
      * curve that spreads the loud end shows changes there. Blank is linear on the meter's dB scale.
      */
     @Getter @Setter @Nullable private String audioLevelCurve;
+    /** The music visualizer on this profile's lights; null is off. */
+    @Getter @Setter @Nullable private VisualizerConfig visualizer;
 
     public LightingConfig deepCopy() {
         return toBuilder()
                 .knobConfigs(knobConfigs == null ? null : Arrays.copyOf(knobConfigs, knobConfigs.length))
                 .sliderLabelConfigs(sliderLabelConfigs == null ? null : Arrays.copyOf(sliderLabelConfigs, sliderLabelConfigs.length))
                 .sliderConfigs(sliderConfigs == null ? null : Arrays.copyOf(sliderConfigs, sliderConfigs.length))
+                .visualizer(visualizer == null ? null : visualizer.copy())
                 .build();
     }
 

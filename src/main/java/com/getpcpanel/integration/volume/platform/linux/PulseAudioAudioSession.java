@@ -28,6 +28,9 @@ class PulseAudioAudioSession extends AudioSession {
     /** The output this stream plays on (its sink's name), when known. */
     @EqualsAndHashCode.Exclude @Nullable private final String sinkId;
 
+    /** Paused: the app holds the stream but sends nothing (PulseAudio's "Corked"). */
+    @EqualsAndHashCode.Exclude private boolean corked;
+
     public PulseAudioAudioSession(Event<Object> eventBus, int index, int pid, File executable, String title, String icon, float volume, boolean muted, @Nullable String portalAppId) {
         this(eventBus, index, pid, executable, title, icon, volume, muted, portalAppId, null);
     }
@@ -38,6 +41,11 @@ class PulseAudioAudioSession extends AudioSession {
         this.index = index;
         this.portalAppId = portalAppId;
         this.sinkId = sinkId;
+    }
+
+    PulseAudioAudioSession corked(boolean corked) {
+        this.corked = corked;
+        return this;
     }
 
     @Override

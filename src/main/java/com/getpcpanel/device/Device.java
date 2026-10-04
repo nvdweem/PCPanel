@@ -117,7 +117,7 @@ public abstract class Device {
             saveService.save();
         }
         try {
-            outputInterpreter.sendLightingConfig(serialNumber, deviceType(), config, priority);
+            outputInterpreter.sendDeviceLighting(serialNumber, deviceType(), config, priority);
         } catch (Exception e) {
             log.error("Unable to send lighting config", e);
             sendDefaultLighting(priority);
@@ -129,7 +129,7 @@ public abstract class Device {
         var fallback = defaultLighting();
         lightingConfig = fallback;
         try {
-            outputInterpreter.sendLightingConfig(serialNumber, deviceType(), fallback, priority);
+            outputInterpreter.sendDeviceLighting(serialNumber, deviceType(), fallback, priority);
         } catch (Exception e) {
             log.error("Unable to send the default lighting config either", e);
         }

@@ -124,6 +124,9 @@ import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
 import com.getpcpanel.profile.dto.SingleKnobLightingConfig.SINGLE_KNOB_MODE;
 import com.getpcpanel.profile.dto.SingleLogoLightingConfig;
 import com.getpcpanel.profile.dto.SingleLogoLightingConfig.SINGLE_LOGO_MODE;
+import com.getpcpanel.profile.dto.VisualizerConfig;
+import com.getpcpanel.profile.dto.VisualizerSource;
+import com.getpcpanel.integration.visualizer.rest.VisualizerResource;
 import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig;
 import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig.SINGLE_SLIDER_LABEL_MODE;
 import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
@@ -417,6 +420,13 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         SINGLE_SLIDER_LABEL_MODE.class,
         SingleLogoLightingConfig.class,
         SINGLE_LOGO_MODE.class,
+        VisualizerConfig.class,
+        VisualizerConfig.VisualizerWhen.class,
+        VisualizerConfig.VisualizerStyle.class,
+        VisualizerSource.class,
+        VisualizerSource[].class,
+        VisualizerSource.SourceKind.class,
+        VisualizerResource.VisualizerStatusDto.class,
         KnobSetting.class,
         MqttSettings.class,
         HomeAssistantSettings.class,

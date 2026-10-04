@@ -35,6 +35,11 @@ final class DarkReasonGate {
         this.executor = executor;
     }
 
+    /** Whether any reason keeps the panels dark right now. */
+    synchronized boolean isDark() {
+        return !active.isEmpty();
+    }
+
     /** Register a reason; goes dark only on the transition from "no reasons" to "some reason". */
     synchronized void add(Reason reason) {
         var wasLit = active.isEmpty();

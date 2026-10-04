@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.getpcpanel.device.Device;
 import com.getpcpanel.device.provider.pcpanel.DeviceType;
+import com.getpcpanel.integration.visualizer.VisualizerService;
 import com.getpcpanel.profile.BaseLayerService;
 import com.getpcpanel.profile.dto.LightingConfig;
 import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
@@ -31,6 +32,8 @@ public class ProVisualColorsService {
     OverrideColorService overrideColorService;
     @Inject
     BaseLayerService baseLayer;
+    @Inject
+    VisualizerService visualizer;
 
     public ProVisualColors resolve(Device device) {
         if (device == null || device.deviceType() != DeviceType.PCPANEL_PRO) {
@@ -43,6 +46,8 @@ public class ProVisualColorsService {
         }
         // Preview the same base-layer fallback the hardware shows (no-op outside CUSTOM mode / no base).
         config = baseLayer.effectiveLighting(device.getSerialNumber(), config);
+        // While the music visualizer drives an animated profile's lights, show what the panel shows.
+        config = visualizer.substitute(device.getSerialNumber(), config);
 
         return switch (config.lightingMode()) {
             case ALL_COLOR -> monochrome(colorOrDefault(config.allColor()));

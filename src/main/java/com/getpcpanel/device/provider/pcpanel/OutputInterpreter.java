@@ -1,6 +1,7 @@
 package com.getpcpanel.device.provider.pcpanel;
 
 import com.getpcpanel.integration.device.BrightnessService;
+import com.getpcpanel.integration.visualizer.VisualizerService;
 
 import java.util.Arrays;
 
@@ -28,6 +29,8 @@ public final class OutputInterpreter {
     BaseLayerService baseLayer;
     @Inject
     BrightnessService brightnessService;
+    @Inject
+    VisualizerService visualizer;
 
     private static final byte[] OUTPUT_CODE_INIT = { 1 };
     private static final byte ANIMATION_RAINBOW_HORIZONTAL = 1;
@@ -120,6 +123,16 @@ public final class OutputInterpreter {
         } else {
             handler.sendLighting(new byte[][] { data });
         }
+    }
+
+    /**
+     * A device's own lighting (its profile, a light show frame): like {@link #sendLightingConfig}, but while the music
+     * visualizer shows on a profile whose lighting is a single colour or animation, sent as the per-control lighting
+     * the visualizer paints. Lighting that overrules the device's (lights off while locked) goes through
+     * {@link #sendLightingConfig} and is never replaced.
+     */
+    public void sendDeviceLighting(String serialNumber, DeviceType dt, LightingConfig config, boolean priority) {
+        sendLightingConfig(serialNumber, dt, visualizer.substitute(serialNumber, config), priority);
     }
 
     public void sendLightingConfig(String serialNumber, DeviceType dt, LightingConfig config, boolean priority) {

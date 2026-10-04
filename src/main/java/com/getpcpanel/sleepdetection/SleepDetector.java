@@ -47,6 +47,11 @@ public final class SleepDetector {
     @Inject
     SaveService saveService;
 
+    /** Whether the panels are dark for a lock, sleep or screens off; nothing should light them up meanwhile. */
+    public boolean isDark() {
+        return gate.isDark();
+    }
+
     public void onShutdown(@Observes ShutdownEvent event) {
         // Same queue as every other write, so a decided-but-not-yet-sent relight cannot land after
         // this final off. Waiting is required: the app is about to exit and the off must be flushed.

@@ -328,12 +328,36 @@ command lists them in `@CommandMeta.legacyIds`.
 
 **Light overrides and light shows:** per-control colours that change at runtime are `IOverrideColorProvider`s
 aggregated by `OverrideColorService` (`@Priority` descending, first hit wins): notification lights
-(`alerts/AlertService`, 50) above mute colours (`MuteColorService`, 0) above stepped-switch positions (-100) above the
+(`alerts/AlertService`, 50) above the music visualizer (`integration/visualizer/VisualizerService`, 25) above mute colours (`MuteColorService`, 0) above stepped-switch positions (-100) above the
 *Audio level* light mode (`integration/volume/level/AudioLevelLightService`, -200). They are only consulted in
 `CUSTOM` lighting. `device/lightshow/LightShow` plays frame-by-frame animations (start-up animation, panel self-test)
 as temporary, never-saved `CUSTOM` configs and holds every override back for that device while it runs, then
 restores what was showing. The Windows peak meter (`WindowsAudioLevelMeter`) is raw JNA COM on the light service's
-own MTA thread, deliberately apart from `SndCtrl.dll`.
+own MTA thread, deliberately apart from `SndCtrl.dll`; its plumbing (`ComPtr`, `CoreAudioMeterReader`) is one instance
+per thread, so the visualizer owns its own.
+
+**Music visualizer (`integration/visualizer/`):** `VisualizerService` runs one thread that is *parked* (no capture,
+woken by profile/lighting/device/system events) unless a connected device's active profile has
+`LightingConfig.visualizer` on and the lights aren't off for a lock; it then *watches* `PlaybackGate` 2×/s (1×/s while
+capturing; Windows: peak meters of SndCtrl's live, unmuted sessions only — every meter read is a call into the audio
+service; Linux: un-corked sink inputs, no recording) and only *captures* (`LoopbackCapture`: Windows WASAPI loopback over
+raw COM, polled, no callbacks; Linux `parec` on a sink's monitor, or on a source for an input, at 22050 Hz) at 20 fps while something plays, plus 3 s.
+What it captures is the profile's choice: `VisualizerConfig.sources` is an ordered list of `VisualizerSource`s
+(`OUTPUT`/`INPUT` + device id, null = the default one; `APP` = the output that app plays on while it plays;
+`ANY_APP` = the output the loudest playing app uses, `Playing.device` — with Wave Link apps play on virtual outputs).
+It captures the first source that has sound (`VisualizerService.pick`): apps by their session meters, outputs/inputs by
+`Playing.output`/`input` — on Windows the endpoint's own peak meter (`CoreAudioMeterReader.endpointPeak`, capture
+endpoints too; inputs are recorded directly, no loopback), on Linux a stream playing on the sink, and for an input
+merely that it exists unmuted (no level without recording). A source higher up that gets sound takes over at once,
+one further down only once the current capture is quiet. Saves from before the list carry `apps`, read by
+`@JsonAnySetter` and migrated by `getSources()` (apps → one `APP` each, none → `ANY_APP`); new configs default to the
+default output. A source that stays silent while it counts as having sound is skipped for 30 s rather than reopened
+every 3 s, so the next source gets its turn. `BandAnalyzer` (pure, allocation-free; needs ≥ ~22 kHz for its 3 kHz crossover) and
+`VisualizerPainter` (pure) turn a frame into colours. A profile whose lighting isn't `CUSTOM` is sent as a substituted
+`CUSTOM` config while the visualizer shows (`VisualizerService.substitute`, applied in
+`OutputInterpreter.sendDeviceLighting`, which `Device` uses); lighting that overrules the device — `SleepDetector`'s
+all-off — calls `sendLightingConfig` directly and is never substituted. Like `AlertService`, it stops on the priority-1 `ShutdownEvent` (a step in progress finishes, nothing is sent after), so it can't relight a panel after `SleepDetector`'s lights-off at exit, and `PanelsDarkEvent` wakes it to park. `VisualizerBenchmark` (test scope, a `main`) times
+the per-frame work; about 9 µs per frame in the native image.
 
 **Input gating:** `InputInterpreter` is where a reading becomes actions. A button's raw edges first pass a per-button
 `device/ButtonDebouncer` (the first edge at once, bounces within the window absorbed; window from

@@ -764,6 +764,7 @@ export interface LightingConfig {
     rainbowVertical: number;
     sliderConfigs: SingleSliderLightingConfig[];
     sliderLabelConfigs: SingleSliderLabelLightingConfig[];
+    visualizer?: VisualizerConfig;
     volumeBrightnessTrackingEnabled: boolean[];
     waveBounce: number;
     waveBrightness: number;
@@ -1040,6 +1041,21 @@ export interface TemplateVariableDto {
     value?: string;
 }
 
+export interface VisualizerConfig {
+    highColor?: string;
+    lights: string[];
+    lowColor?: string;
+    sources: VisualizerSource[];
+    style: VisualizerStyle;
+    when: VisualizerWhen;
+}
+
+export interface VisualizerSource {
+    app?: string;
+    device?: string;
+    kind: SourceKind;
+}
+
 export interface VoiceMeeterCommandModule extends CommandModule {
 }
 
@@ -1257,6 +1273,12 @@ export type SINGLE_SLIDER_MODE = "NONE" | "STATIC" | "STATIC_GRADIENT" | "VOLUME
 export type SonarChannel = "Game" | "Chat" | "Mic" | "Media" | "Aux" | "Master";
 
 export type SonarMixSelection = "monitoring" | "streaming" | "both";
+
+export type SourceKind = "OUTPUT" | "INPUT" | "APP" | "ANY_APP";
+
+export type VisualizerStyle = "RAINBOW" | "TWO_COLORS" | "PULSE";
+
+export type VisualizerWhen = "OFF" | "PLAYING" | "ALWAYS";
 
 export type VolumeButton = "mute" | "next" | "prev" | "stop" | "playPause";
 
