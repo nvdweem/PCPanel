@@ -33,4 +33,15 @@ class StaticCacheControlTest {
         assertTrue(StaticCacheControl.isUiPath("/index.html"));
         assertTrue(StaticCacheControl.isUiPath("/control/ABC123/4"));
     }
+
+    @Test
+    void deepLinksServeTheApp() {
+        assertTrue(StaticCacheControl.isSpaRoute("/control/5D43E1353833/2"));
+        assertTrue(StaticCacheControl.isSpaRoute("/settings"));
+        assertFalse(StaticCacheControl.isSpaRoute("/"), "already the app");
+        assertFalse(StaticCacheControl.isSpaRoute("/main-FKWEF7SU.js"), "a missing file stays a 404");
+        assertFalse(StaticCacheControl.isSpaRoute("/api/nope"));
+        assertFalse(StaticCacheControl.isSpaRoute("/ws/events"));
+        assertFalse(StaticCacheControl.isSpaRoute("/q/health"));
+    }
 }

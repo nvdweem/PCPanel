@@ -16,10 +16,10 @@ import lombok.extern.log4j.Log4j2;
  * produced both by a resource reporting that a named thing does not exist and by a request whose path
  * matched no resource at all.
  *
- * <p>This mapper separates the two. It fires only for exceptions thrown <em>by</em> a matched resource
- * method, and logs the reason the resource gave ({@code Profile not found: work}). A path that matches
- * no resource never reaches it, and appears only in the access log — so the presence or absence of a
- * WARN next to the access-log line is itself the diagnosis.
+ * <p>It logs the reason the resource gave ({@code Profile not found: work}); a path that matches no resource
+ * logs a bare {@code HTTP 404 Not Found}. Installing a mapper also means the REST layer answers such a path
+ * itself instead of passing it on, which is why app deep links are routed before it (see
+ * {@link StaticCacheControl}).
  *
  * <p>The response is the exception's own, returned untouched, so the API behaves exactly as it does
  * without this mapper.

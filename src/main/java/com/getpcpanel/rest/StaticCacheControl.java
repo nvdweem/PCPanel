@@ -3,6 +3,7 @@ package com.getpcpanel.rest;
 import java.util.regex.Pattern;
 
 import io.vertx.core.http.HttpHeaders;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -26,6 +27,26 @@ public class StaticCacheControl {
     void register(@Observes Router router) {
         // After the loopback guard (MIN_VALUE), before the REST/static handlers.
         router.route().order(Integer.MIN_VALUE + 1).handler(StaticCacheControl::stampCacheControl);
+        router.route().order(Integer.MIN_VALUE + 2).handler(StaticCacheControl::serveAppForDeepLinks);
+    }
+
+    /**
+     * A reload or a bookmark of an app page ({@code /control/<serial>/2}) gets the app, which then shows that page.
+     * Quinoa's own SPA routing runs after the REST layer, and the REST layer answers a path it does not know with
+     * 404 itself (an exception mapper is installed), so it never got the chance.
+     */
+    private static void serveAppForDeepLinks(RoutingContext ctx) {
+        var method = ctx.request().method();
+        if ((method == HttpMethod.GET || method == HttpMethod.HEAD) && isSpaRoute(ctx.normalizedPath())) {
+            ctx.reroute("/");
+            return;
+        }
+        ctx.next();
+    }
+
+    /** A page of the app rather than a file: a UI path whose last segment has no extension. */
+    static boolean isSpaRoute(String path) {
+        return isUiPath(path) && !"/".equals(path) && !path.substring(path.lastIndexOf('/') + 1).contains(".");
     }
 
     private static void stampCacheControl(RoutingContext ctx) {
