@@ -751,6 +751,13 @@ export class SettingsComponent {
   }
   fvTargetIcon(t: FocusVolumeTarget): IconName { return this.fvTargetDef(t)?.icon ?? 'volume'; }
 
+  // ── New apps at their control's level ─────────────────────────────────────
+  readonly newAppExceptionsOpen = signal(false);
+
+  removeNewAppException(app: string): void {
+    this.patch('newAppsAtDialLevelExceptions', (this.local()?.newAppsAtDialLevelExceptions ?? []).filter(a => a !== app));
+  }
+
   // ── Backups ────────────────────────────────────────────────────────────────
   readonly backups = httpResource<SaveBackup[]>(() => '/api/settings/backups');
   /** The backup waiting on a confirmed restore; null when nothing is pending. */

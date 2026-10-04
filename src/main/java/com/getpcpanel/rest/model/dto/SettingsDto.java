@@ -27,6 +27,8 @@ public class SettingsDto {
     private boolean checkForPreReleases;
     private boolean autoUpdate;
     private boolean forceVolume;
+    private boolean newAppsAtDialLevel;
+    private List<String> newAppsAtDialLevelExceptions;
     private boolean sleepDetectionEnabled;
     private Long dblClickInterval;
     private boolean preventClickWhenDblClick;
@@ -91,6 +93,8 @@ public class SettingsDto {
         dto.checkForPreReleases = save.isCheckForPreReleases();
         dto.autoUpdate = save.isAutoUpdate();
         dto.forceVolume = save.isForceVolume();
+        dto.newAppsAtDialLevel = save.effectiveNewAppsAtDialLevel();
+        dto.newAppsAtDialLevelExceptions = save.getNewAppsAtDialLevelExceptions();
         dto.sleepDetectionEnabled = save.isSleepDetectionEnabled();
         dto.dblClickInterval = save.getDblClickInterval();
         dto.preventClickWhenDblClick = save.isPreventClickWhenDblClick();
@@ -145,6 +149,8 @@ public class SettingsDto {
         save.setCheckForPreReleases(checkForPreReleases);
         save.setAutoUpdate(autoUpdate);
         save.setForceVolume(forceVolume);
+        save.setNewAppsAtDialLevel(newAppsAtDialLevel);
+        save.setNewAppsAtDialLevelExceptions(newAppsAtDialLevelExceptions);
         save.setSleepDetectionEnabled(sleepDetectionEnabled);
         save.setDblClickInterval(dblClickInterval);
         save.setPreventClickWhenDblClick(preventClickWhenDblClick);

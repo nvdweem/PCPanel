@@ -831,6 +831,8 @@ export interface SettingsDto {
     homeAssistantServers: HomeAssistantServer[];
     mainUIIcons: boolean;
     mqtt: MqttSettings;
+    newAppsAtDialLevel: boolean;
+    newAppsAtDialLevelExceptions: string[];
     obsAddress: string;
     obsEnabled: boolean;
     obsPassword: string;

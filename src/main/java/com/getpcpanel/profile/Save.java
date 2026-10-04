@@ -23,6 +23,8 @@ import com.getpcpanel.integration.sonar.dto.SonarSettings;
 import com.getpcpanel.integration.volume.overlay.OverlayPosition;
 import com.getpcpanel.integration.wavelink.dto.WaveLinkSettings;
 
+import com.sun.jna.Platform;
+
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
 
@@ -56,6 +58,11 @@ public class Save {
      *  then restart. Off by default; only meaningful when startupVersionCheck is on. */
     private boolean autoUpdate;
     private boolean forceVolume; // Linux only
+    /** An app that starts playing sound takes the level of the App-volume control (or focus dial) that names it.
+     *  Null is the platform default: on for Linux, off for Windows, which restores each app's own volume. */
+    @Nullable private Boolean newAppsAtDialLevel;
+    /** Apps for which {@link #newAppsAtDialLevel} is inverted. */
+    @Nullable private List<String> newAppsAtDialLevelExceptions;
     /** Switch the panel lights off when the PC locks / the monitors sleep / the PC suspends, and back
      *  on afterwards. Opt-out escape hatch for #145-class detection trouble; the lights-off on app
      *  shutdown is unaffected. */
@@ -233,6 +240,16 @@ public class Save {
     @Nonnull
     public List<FocusVolumeOverride> getFocusVolumeOverrides() {
         return Objects.requireNonNullElseGet(focusVolumeOverrides, List::of);
+    }
+
+    /** {@link #newAppsAtDialLevel} with the platform default filled in. Not a bean getter, so it is not serialised. */
+    public boolean effectiveNewAppsAtDialLevel() {
+        return newAppsAtDialLevel != null ? newAppsAtDialLevel : Platform.isLinux();
+    }
+
+    @Nonnull
+    public List<String> getNewAppsAtDialLevelExceptions() {
+        return Objects.requireNonNullElseGet(newAppsAtDialLevelExceptions, List::of);
     }
 
     @Nonnull

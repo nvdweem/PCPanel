@@ -52,7 +52,7 @@ up to date when you add or remove an event or an observer.
 | Event | Fired by | Observed by |
 |-------|----------|-------------|
 | `AudioDeviceEvent` | `AudioDevice` / `OsxAudioDevice` | `MuteColorService` |
-| `AudioSessionEvent` | `AudioSession` / `WindowsAudioDevice` | `MuteColorService`, `LinuxNewSessionVolumeService` |
+| `AudioSessionEvent` | `AudioSession` / `WindowsAudioDevice` | `MuteColorService`, `NewSessionVolumeService` |
 | `LinuxDeviceChangedEvent` | `PulseAudioEventListener` | `SndCtrlPulseAudio` |
 | `LinuxSessionChangedEvent` | `PulseAudioEventListener` | `SndCtrlPulseAudio` |
 

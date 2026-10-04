@@ -121,8 +121,33 @@
             </div>
             <div class="row">
               <div class="row-text">
+                <div class="row-label">New apps start at their control's level</div>
+                <div class="row-sub">When an app starts playing sound, it gets the level of the App-volume control or focus dial that controls it.</div>
+              </div>
+              <pc-toggle [value]="s.newAppsAtDialLevel" (valueChange)="patch('newAppsAtDialLevel', $event)"></pc-toggle>
+            </div>
+            <div class="field-block">
+              <div class="row-sub">{{ s.newAppsAtDialLevel ? 'Except these apps' : 'Only these apps' }}</div>
+              <div class="chips">
+                @for (app of s.newAppsAtDialLevelExceptions ?? []; track app) {
+                  <span class="pc-chip">{{ app }}<span class="x" (click)="removeNewAppException(app)"><pc-icon name="x" [size]="11" [strokeWidth]="2.5"></pc-icon></span></span>
+                }
+                <button class="pc-chip dashed" cdkOverlayOrigin #nae="cdkOverlayOrigin" (click)="newAppExceptionsOpen.set(true); refreshProcesses()">
+                  <pc-icon name="plus" [size]="12"></pc-icon> add app
+                </button>
+                <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="nae" [cdkConnectedOverlayOpen]="newAppExceptionsOpen()"
+                             [cdkConnectedOverlayHasBackdrop]="true" cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+                             [cdkConnectedOverlayWidth]="300" [cdkConnectedOverlayOffsetY]="6"
+                             (backdropClick)="newAppExceptionsOpen.set(false)" (detach)="newAppExceptionsOpen.set(false)">
+                  <pc-app-picker [items]="processItems()" [multi]="true"
+                                 [value]="s.newAppsAtDialLevelExceptions ?? []" (valueChange)="patch('newAppsAtDialLevelExceptions', $event)"></pc-app-picker>
+                </ng-template>
+              </div>
+            </div>
+            <div class="row">
+              <div class="row-text">
                 <div class="row-label">Force volume</div>
-                <div class="row-sub">Linux only — keep re-applying the knob's volume when an app re-opens its audio session, not just when it first appears. Fixes apps that reset their own volume.</div>
+                <div class="row-sub">Keep an app at its control's level: whenever its volume changes — the app resetting it itself (some go back to 100% with every new song) or a change in the system mixer — the control's level is put back.</div>
               </div>
               <pc-toggle [value]="s.forceVolume" (valueChange)="patch('forceVolume', $event)"></pc-toggle>
             </div>
