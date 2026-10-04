@@ -4,12 +4,14 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.getpcpanel.AppLikeMapper;
@@ -75,6 +77,9 @@ public final class SaveFixtureGenerator {
                 populator.topUp(profile);
                 var lighting = profile.lightingConfig();
                 populator.topUp(lighting);
+                // The per-control configs already exist, so topUp(lighting) leaves them alone; fill fields added to them since.
+                Stream.of(lighting.knobConfigs(), lighting.sliderConfigs(), lighting.sliderLabelConfigs(), new Object[] { lighting.logoConfig() })
+                      .flatMap(Arrays::stream).forEach(populator::topUp);
                 profile.setLightingConfig(lighting);
                 for (var knob : profile.getKnobSettings().values()) {
                     populator.topUp(knob);

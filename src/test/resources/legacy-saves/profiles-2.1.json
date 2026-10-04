@@ -7,6 +7,7 @@
         "buttonData" : { },
         "dblButtonData" : { },
         "releaseButtonData" : { },
+        "holdButtonData" : { },
         "dialData" : { },
         "knobSettings" : {
           "0" : {
@@ -14,7 +15,7 @@
             "maxTrim" : 533,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-535",
-            "overlayName" : "overlayName-5",
+            "overlayName" : "overlayName-16",
             "buttonDebounce" : 532,
             "logarithmic" : true
           },
@@ -23,7 +24,7 @@
             "maxTrim" : 537,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-539",
-            "overlayName" : "overlayName-6",
+            "overlayName" : "overlayName-17",
             "buttonDebounce" : 536,
             "logarithmic" : true
           },
@@ -32,7 +33,7 @@
             "maxTrim" : 541,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-543",
-            "overlayName" : "overlayName-7",
+            "overlayName" : "overlayName-18",
             "buttonDebounce" : 540,
             "logarithmic" : true
           },
@@ -41,7 +42,7 @@
             "maxTrim" : 545,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-547",
-            "overlayName" : "overlayName-8",
+            "overlayName" : "overlayName-19",
             "buttonDebounce" : 544,
             "logarithmic" : true
           }
@@ -69,16 +70,18 @@
             "color1" : "color1-488",
             "color2" : "color2-489",
             "muteOverrideDeviceOrFollow" : "Follow what is controlled by this knob/slider",
-            "muteOverrideColor" : "muteOverrideColor-491"
+            "muteOverrideColor" : "muteOverrideColor-491",
+            "audioLevelSource" : "audioLevelSource-7"
           }, {
-            "mode" : "NONE",
+            "mode" : "STATIC",
             "color1" : "color1-493",
             "color2" : "color2-494",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-497",
-            "muteOverrideColor" : "muteOverrideColor-496"
+            "muteOverrideColor" : "muteOverrideColor-496",
+            "audioLevelSource" : "audioLevelSource-8"
           } ],
           "sliderLabelConfigs" : [ {
-            "mode" : "NONE",
+            "mode" : "STATIC",
             "color" : "color-519",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-522",
             "muteOverrideColor" : "muteOverrideColor-521"
@@ -93,22 +96,26 @@
             "color1" : "color1-509",
             "color2" : "color2-510",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-513",
-            "muteOverrideColor" : "muteOverrideColor-512"
+            "muteOverrideColor" : "muteOverrideColor-512",
+            "audioLevelSource" : "audioLevelSource-10"
           }, {
-            "mode" : "NONE",
+            "mode" : "STATIC_GRADIENT",
             "color1" : "color1-514",
             "color2" : "color2-515",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-518",
-            "muteOverrideColor" : "muteOverrideColor-517"
+            "muteOverrideColor" : "muteOverrideColor-517",
+            "audioLevelSource" : "audioLevelSource-11"
           } ],
           "logoConfig" : {
             "mode" : "RAINBOW",
             "color" : "color-500",
             "brightness" : 20,
             "speed" : 24,
-            "hue" : 22
+            "hue" : 22,
+            "audioLevelSource" : "audioLevelSource-15"
           },
-          "globalBrightness" : 485
+          "globalBrightness" : 485,
+          "audioLevelCurve" : "audioLevelCurve-6"
         },
         "focusBackOnLost" : true,
         "activateApplications" : [ "activateApplications-478", "activateApplications-479" ],
@@ -148,6 +155,7 @@
         "buttonData" : { },
         "dblButtonData" : { },
         "releaseButtonData" : { },
+        "holdButtonData" : { },
         "dialData" : { },
         "knobSettings" : {
           "0" : {
@@ -155,7 +163,7 @@
             "maxTrim" : 615,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-617",
-            "overlayName" : "overlayName-13",
+            "overlayName" : "overlayName-34",
             "buttonDebounce" : 614,
             "logarithmic" : true
           },
@@ -164,7 +172,7 @@
             "maxTrim" : 619,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-621",
-            "overlayName" : "overlayName-14",
+            "overlayName" : "overlayName-35",
             "buttonDebounce" : 618,
             "logarithmic" : true
           },
@@ -173,7 +181,7 @@
             "maxTrim" : 623,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-625",
-            "overlayName" : "overlayName-15",
+            "overlayName" : "overlayName-36",
             "buttonDebounce" : 622,
             "logarithmic" : true
           },
@@ -182,7 +190,7 @@
             "maxTrim" : 627,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-629",
-            "overlayName" : "overlayName-16",
+            "overlayName" : "overlayName-37",
             "buttonDebounce" : 626,
             "logarithmic" : true
           }
@@ -210,13 +218,15 @@
             "color1" : "color1-570",
             "color2" : "color2-571",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-574",
-            "muteOverrideColor" : "muteOverrideColor-573"
+            "muteOverrideColor" : "muteOverrideColor-573",
+            "audioLevelSource" : "audioLevelSource-26"
           }, {
             "mode" : "STATIC",
             "color1" : "color1-575",
             "color2" : "color2-576",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-579",
-            "muteOverrideColor" : "muteOverrideColor-578"
+            "muteOverrideColor" : "muteOverrideColor-578",
+            "audioLevelSource" : "audioLevelSource-27"
           } ],
           "sliderLabelConfigs" : [ {
             "mode" : "NONE",
@@ -224,7 +234,7 @@
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-604",
             "muteOverrideColor" : "muteOverrideColor-603"
           }, {
-            "mode" : "NONE",
+            "mode" : "STATIC",
             "color" : "color-605",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-608",
             "muteOverrideColor" : "muteOverrideColor-607"
@@ -234,22 +244,26 @@
             "color1" : "color1-591",
             "color2" : "color2-592",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-595",
-            "muteOverrideColor" : "muteOverrideColor-594"
+            "muteOverrideColor" : "muteOverrideColor-594",
+            "audioLevelSource" : "audioLevelSource-28"
           }, {
             "mode" : "STATIC_GRADIENT",
             "color1" : "color1-596",
             "color2" : "color2-597",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-600",
-            "muteOverrideColor" : "muteOverrideColor-599"
+            "muteOverrideColor" : "muteOverrideColor-599",
+            "audioLevelSource" : "audioLevelSource-29"
           } ],
           "logoConfig" : {
-            "mode" : "NONE",
+            "mode" : "BREATH",
             "color" : "color-582",
             "brightness" : 102,
             "speed" : 106,
-            "hue" : 104
+            "hue" : 104,
+            "audioLevelSource" : "audioLevelSource-32"
           },
-          "globalBrightness" : 567
+          "globalBrightness" : 567,
+          "audioLevelCurve" : "audioLevelCurve-25"
         },
         "focusBackOnLost" : true,
         "activateApplications" : [ "activateApplications-560", "activateApplications-561" ],
@@ -356,28 +370,28 @@
           "label" : "K1",
           "colorModel" : "RGB",
           "group" : "DIAL",
-          "supportedElementModes" : [ "NONE", "STATIC", "VOLUME_GRADIENT" ]
+          "supportedElementModes" : [ "NONE", "STATIC", "VOLUME_GRADIENT", "AUDIO_LEVEL" ]
         }, {
           "index" : 1,
           "id" : "dialLight1",
           "label" : "K2",
           "colorModel" : "RGB",
           "group" : "DIAL",
-          "supportedElementModes" : [ "NONE", "STATIC", "VOLUME_GRADIENT" ]
+          "supportedElementModes" : [ "NONE", "STATIC", "VOLUME_GRADIENT", "AUDIO_LEVEL" ]
         }, {
           "index" : 2,
           "id" : "dialLight2",
           "label" : "K3",
           "colorModel" : "RGB",
           "group" : "DIAL",
-          "supportedElementModes" : [ "NONE", "STATIC", "VOLUME_GRADIENT" ]
+          "supportedElementModes" : [ "NONE", "STATIC", "VOLUME_GRADIENT", "AUDIO_LEVEL" ]
         }, {
           "index" : 3,
           "id" : "dialLight3",
           "label" : "K4",
           "colorModel" : "RGB",
           "group" : "DIAL",
-          "supportedElementModes" : [ "NONE", "STATIC", "VOLUME_GRADIENT" ]
+          "supportedElementModes" : [ "NONE", "STATIC", "VOLUME_GRADIENT", "AUDIO_LEVEL" ]
         } ],
         "analogOutputs" : [ ],
         "globalLighting" : {
@@ -721,8 +735,14 @@
           },
           "35" : {
             "commands" : [ {
+              "_type" : "display.off"
+            } ],
+            "type" : "allAtOnce"
+          },
+          "36" : {
+            "commands" : [ {
               "_type" : "sonar.mute",
-              "channel" : "Mic",
+              "channel" : "Master",
               "mix" : "monitoring",
               "muteType" : "unmute"
             } ],
@@ -775,6 +795,7 @@
             "type" : "sequential"
           }
         },
+        "holdButtonData" : { },
         "dialData" : {
           "0" : {
             "commands" : [ {
@@ -1054,14 +1075,25 @@
           },
           "19" : {
             "commands" : [ {
+              "_type" : "analogbands.steps",
+              "stepsPerTurn" : 130,
+              "up" : null,
+              "down" : null,
+              "dialParams" : null,
+              "invert" : false
+            } ],
+            "type" : "allAtOnce"
+          },
+          "20" : {
+            "commands" : [ {
               "_type" : "sonar.volume",
-              "channel" : "Master",
+              "channel" : "Mic",
               "mix" : "monitoring",
               "unMuteOnVolumeChange" : true,
               "dialParams" : {
                 "invert" : true,
-                "moveStart" : 61,
-                "moveEnd" : 62
+                "moveStart" : 136,
+                "moveEnd" : 137
               },
               "invert" : true
             } ],
@@ -1074,7 +1106,7 @@
             "maxTrim" : 84,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-86",
-            "overlayName" : "overlayName-17",
+            "overlayName" : "overlayName-45",
             "buttonDebounce" : 83,
             "logarithmic" : true
           },
@@ -1083,7 +1115,7 @@
             "maxTrim" : 88,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-90",
-            "overlayName" : "overlayName-18",
+            "overlayName" : "overlayName-46",
             "buttonDebounce" : 87,
             "logarithmic" : true
           },
@@ -1092,7 +1124,7 @@
             "maxTrim" : 92,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-94",
-            "overlayName" : "overlayName-19",
+            "overlayName" : "overlayName-47",
             "buttonDebounce" : 91,
             "logarithmic" : true
           },
@@ -1101,7 +1133,7 @@
             "maxTrim" : 96,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-98",
-            "overlayName" : "overlayName-20",
+            "overlayName" : "overlayName-48",
             "buttonDebounce" : 95,
             "logarithmic" : true
           },
@@ -1110,7 +1142,7 @@
             "maxTrim" : 1,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-102",
-            "overlayName" : "overlayName-21",
+            "overlayName" : "overlayName-49",
             "buttonDebounce" : 99,
             "logarithmic" : true
           },
@@ -1119,7 +1151,7 @@
             "maxTrim" : 104,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-106",
-            "overlayName" : "overlayName-22",
+            "overlayName" : "overlayName-50",
             "buttonDebounce" : 103,
             "logarithmic" : true
           },
@@ -1128,7 +1160,7 @@
             "maxTrim" : 108,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-110",
-            "overlayName" : "overlayName-23",
+            "overlayName" : "overlayName-51",
             "buttonDebounce" : 107,
             "logarithmic" : true
           },
@@ -1137,7 +1169,7 @@
             "maxTrim" : 112,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-114",
-            "overlayName" : "overlayName-24",
+            "overlayName" : "overlayName-52",
             "buttonDebounce" : 111,
             "logarithmic" : true
           },
@@ -1146,7 +1178,7 @@
             "maxTrim" : 116,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-118",
-            "overlayName" : "overlayName-25",
+            "overlayName" : "overlayName-53",
             "buttonDebounce" : 115,
             "logarithmic" : true
           }
@@ -1174,13 +1206,15 @@
             "color1" : "color1-39",
             "color2" : "color2-40",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-43",
-            "muteOverrideColor" : "muteOverrideColor-42"
+            "muteOverrideColor" : "muteOverrideColor-42",
+            "audioLevelSource" : "audioLevelSource-40"
           }, {
             "mode" : "STATIC",
             "color1" : "color1-44",
             "color2" : "color2-45",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-48",
-            "muteOverrideColor" : "muteOverrideColor-47"
+            "muteOverrideColor" : "muteOverrideColor-47",
+            "audioLevelSource" : "audioLevelSource-41"
           } ],
           "sliderLabelConfigs" : [ {
             "mode" : "STATIC",
@@ -1198,22 +1232,26 @@
             "color1" : "color1-60",
             "color2" : "color2-61",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-64",
-            "muteOverrideColor" : "muteOverrideColor-63"
+            "muteOverrideColor" : "muteOverrideColor-63",
+            "audioLevelSource" : "audioLevelSource-42"
           }, {
             "mode" : "VOLUME_GRADIENT",
             "color1" : "color1-65",
             "color2" : "color2-66",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-69",
-            "muteOverrideColor" : "muteOverrideColor-68"
+            "muteOverrideColor" : "muteOverrideColor-68",
+            "audioLevelSource" : "audioLevelSource-43"
           } ],
           "logoConfig" : {
             "mode" : "STATIC",
             "color" : "color-51",
             "brightness" : 51,
             "speed" : 55,
-            "hue" : 53
+            "hue" : 53,
+            "audioLevelSource" : "audioLevelSource-44"
           },
-          "globalBrightness" : 36
+          "globalBrightness" : 36,
+          "audioLevelCurve" : "audioLevelCurve-39"
         },
         "focusBackOnLost" : true,
         "activateApplications" : [ "activateApplications-29", "activateApplications-30" ],
@@ -1259,6 +1297,7 @@
         "buttonData" : { },
         "dblButtonData" : { },
         "releaseButtonData" : { },
+        "holdButtonData" : { },
         "dialData" : { },
         "knobSettings" : {
           "0" : {
@@ -1266,7 +1305,7 @@
             "maxTrim" : 264,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-266",
-            "overlayName" : "overlayName-30",
+            "overlayName" : "overlayName-65",
             "buttonDebounce" : 263,
             "logarithmic" : true
           },
@@ -1275,7 +1314,7 @@
             "maxTrim" : 268,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-270",
-            "overlayName" : "overlayName-31",
+            "overlayName" : "overlayName-66",
             "buttonDebounce" : 267,
             "logarithmic" : true
           },
@@ -1284,7 +1323,7 @@
             "maxTrim" : 272,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-274",
-            "overlayName" : "overlayName-32",
+            "overlayName" : "overlayName-67",
             "buttonDebounce" : 271,
             "logarithmic" : true
           },
@@ -1293,7 +1332,7 @@
             "maxTrim" : 276,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-278",
-            "overlayName" : "overlayName-33",
+            "overlayName" : "overlayName-68",
             "buttonDebounce" : 275,
             "logarithmic" : true
           },
@@ -1302,7 +1341,7 @@
             "maxTrim" : 280,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-282",
-            "overlayName" : "overlayName-34",
+            "overlayName" : "overlayName-69",
             "buttonDebounce" : 279,
             "logarithmic" : true
           },
@@ -1311,7 +1350,7 @@
             "maxTrim" : 284,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-286",
-            "overlayName" : "overlayName-35",
+            "overlayName" : "overlayName-70",
             "buttonDebounce" : 283,
             "logarithmic" : true
           },
@@ -1320,7 +1359,7 @@
             "maxTrim" : 288,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-290",
-            "overlayName" : "overlayName-36",
+            "overlayName" : "overlayName-71",
             "buttonDebounce" : 287,
             "logarithmic" : true
           },
@@ -1329,7 +1368,7 @@
             "maxTrim" : 292,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-294",
-            "overlayName" : "overlayName-37",
+            "overlayName" : "overlayName-72",
             "buttonDebounce" : 291,
             "logarithmic" : true
           },
@@ -1338,7 +1377,7 @@
             "maxTrim" : 296,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-298",
-            "overlayName" : "overlayName-38",
+            "overlayName" : "overlayName-73",
             "buttonDebounce" : 295,
             "logarithmic" : true
           }
@@ -1366,13 +1405,15 @@
             "color1" : "color1-219",
             "color2" : "color2-220",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-223",
-            "muteOverrideColor" : "muteOverrideColor-222"
+            "muteOverrideColor" : "muteOverrideColor-222",
+            "audioLevelSource" : "audioLevelSource-60"
           }, {
             "mode" : "STATIC",
             "color1" : "color1-224",
             "color2" : "color2-225",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-228",
-            "muteOverrideColor" : "muteOverrideColor-227"
+            "muteOverrideColor" : "muteOverrideColor-227",
+            "audioLevelSource" : "audioLevelSource-61"
           } ],
           "sliderLabelConfigs" : [ {
             "mode" : "STATIC",
@@ -1390,22 +1431,26 @@
             "color1" : "color1-240",
             "color2" : "color2-241",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-244",
-            "muteOverrideColor" : "muteOverrideColor-243"
+            "muteOverrideColor" : "muteOverrideColor-243",
+            "audioLevelSource" : "audioLevelSource-62"
           }, {
             "mode" : "VOLUME_GRADIENT",
             "color1" : "color1-245",
             "color2" : "color2-246",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-249",
-            "muteOverrideColor" : "muteOverrideColor-248"
+            "muteOverrideColor" : "muteOverrideColor-248",
+            "audioLevelSource" : "audioLevelSource-63"
           } ],
           "logoConfig" : {
             "mode" : "STATIC",
             "color" : "color-231",
             "brightness" : 111,
             "speed" : 115,
-            "hue" : 113
+            "hue" : 113,
+            "audioLevelSource" : "audioLevelSource-64"
           },
-          "globalBrightness" : 216
+          "globalBrightness" : 216,
+          "audioLevelCurve" : "audioLevelCurve-59"
         },
         "focusBackOnLost" : true,
         "activateApplications" : [ "activateApplications-209", "activateApplications-210" ],
@@ -1568,42 +1613,42 @@
           "label" : "K1",
           "colorModel" : "RGB",
           "group" : "DIAL",
-          "supportedElementModes" : [ "NONE", "STATIC", "VOLUME_GRADIENT" ]
+          "supportedElementModes" : [ "NONE", "STATIC", "VOLUME_GRADIENT", "AUDIO_LEVEL" ]
         }, {
           "index" : 1,
           "id" : "dialLight1",
           "label" : "K2",
           "colorModel" : "RGB",
           "group" : "DIAL",
-          "supportedElementModes" : [ "NONE", "STATIC", "VOLUME_GRADIENT" ]
+          "supportedElementModes" : [ "NONE", "STATIC", "VOLUME_GRADIENT", "AUDIO_LEVEL" ]
         }, {
           "index" : 2,
           "id" : "dialLight2",
           "label" : "K3",
           "colorModel" : "RGB",
           "group" : "DIAL",
-          "supportedElementModes" : [ "NONE", "STATIC", "VOLUME_GRADIENT" ]
+          "supportedElementModes" : [ "NONE", "STATIC", "VOLUME_GRADIENT", "AUDIO_LEVEL" ]
         }, {
           "index" : 3,
           "id" : "dialLight3",
           "label" : "K4",
           "colorModel" : "RGB",
           "group" : "DIAL",
-          "supportedElementModes" : [ "NONE", "STATIC", "VOLUME_GRADIENT" ]
+          "supportedElementModes" : [ "NONE", "STATIC", "VOLUME_GRADIENT", "AUDIO_LEVEL" ]
         }, {
           "index" : 4,
           "id" : "dialLight4",
           "label" : "K5",
           "colorModel" : "RGB",
           "group" : "DIAL",
-          "supportedElementModes" : [ "NONE", "STATIC", "VOLUME_GRADIENT" ]
+          "supportedElementModes" : [ "NONE", "STATIC", "VOLUME_GRADIENT", "AUDIO_LEVEL" ]
         }, {
           "index" : 5,
           "id" : "sliderLight0",
           "label" : "S1",
           "colorModel" : "RGB",
           "group" : "SLIDER",
-          "supportedElementModes" : [ "NONE", "STATIC", "STATIC_GRADIENT", "VOLUME_GRADIENT" ]
+          "supportedElementModes" : [ "NONE", "STATIC", "STATIC_GRADIENT", "VOLUME_GRADIENT", "AUDIO_LEVEL" ]
         }, {
           "index" : 6,
           "id" : "sliderLabel0",
@@ -1617,7 +1662,7 @@
           "label" : "S2",
           "colorModel" : "RGB",
           "group" : "SLIDER",
-          "supportedElementModes" : [ "NONE", "STATIC", "STATIC_GRADIENT", "VOLUME_GRADIENT" ]
+          "supportedElementModes" : [ "NONE", "STATIC", "STATIC_GRADIENT", "VOLUME_GRADIENT", "AUDIO_LEVEL" ]
         }, {
           "index" : 8,
           "id" : "sliderLabel1",
@@ -1631,7 +1676,7 @@
           "label" : "S3",
           "colorModel" : "RGB",
           "group" : "SLIDER",
-          "supportedElementModes" : [ "NONE", "STATIC", "STATIC_GRADIENT", "VOLUME_GRADIENT" ]
+          "supportedElementModes" : [ "NONE", "STATIC", "STATIC_GRADIENT", "VOLUME_GRADIENT", "AUDIO_LEVEL" ]
         }, {
           "index" : 10,
           "id" : "sliderLabel2",
@@ -1645,7 +1690,7 @@
           "label" : "S4",
           "colorModel" : "RGB",
           "group" : "SLIDER",
-          "supportedElementModes" : [ "NONE", "STATIC", "STATIC_GRADIENT", "VOLUME_GRADIENT" ]
+          "supportedElementModes" : [ "NONE", "STATIC", "STATIC_GRADIENT", "VOLUME_GRADIENT", "AUDIO_LEVEL" ]
         }, {
           "index" : 12,
           "id" : "sliderLabel3",
@@ -1659,7 +1704,7 @@
           "label" : "Logo",
           "colorModel" : "RGB",
           "group" : "LOGO",
-          "supportedElementModes" : [ "NONE", "STATIC", "RAINBOW", "BREATH" ]
+          "supportedElementModes" : [ "NONE", "STATIC", "RAINBOW", "BREATH", "AUDIO_LEVEL" ]
         } ],
         "analogOutputs" : [ ],
         "globalLighting" : {
@@ -1682,6 +1727,7 @@
         "buttonData" : { },
         "dblButtonData" : { },
         "releaseButtonData" : { },
+        "holdButtonData" : { },
         "dialData" : { },
         "knobSettings" : {
           "0" : {
@@ -1689,7 +1735,7 @@
             "maxTrim" : 369,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-371",
-            "overlayName" : "overlayName-43",
+            "overlayName" : "overlayName-88",
             "buttonDebounce" : 368,
             "logarithmic" : true
           },
@@ -1698,7 +1744,7 @@
             "maxTrim" : 373,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-375",
-            "overlayName" : "overlayName-44",
+            "overlayName" : "overlayName-89",
             "buttonDebounce" : 372,
             "logarithmic" : true
           },
@@ -1707,7 +1753,7 @@
             "maxTrim" : 377,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-379",
-            "overlayName" : "overlayName-45",
+            "overlayName" : "overlayName-90",
             "buttonDebounce" : 376,
             "logarithmic" : true
           },
@@ -1716,7 +1762,7 @@
             "maxTrim" : 381,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-383",
-            "overlayName" : "overlayName-46",
+            "overlayName" : "overlayName-91",
             "buttonDebounce" : 380,
             "logarithmic" : true
           }
@@ -1744,16 +1790,18 @@
             "color1" : "color1-324",
             "color2" : "color2-325",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-328",
-            "muteOverrideColor" : "muteOverrideColor-327"
+            "muteOverrideColor" : "muteOverrideColor-327",
+            "audioLevelSource" : "audioLevelSource-80"
           }, {
             "mode" : "STATIC",
             "color1" : "color1-329",
             "color2" : "color2-330",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-333",
-            "muteOverrideColor" : "muteOverrideColor-332"
+            "muteOverrideColor" : "muteOverrideColor-332",
+            "audioLevelSource" : "audioLevelSource-81"
           } ],
           "sliderLabelConfigs" : [ {
-            "mode" : "NONE",
+            "mode" : "STATIC",
             "color" : "color-355",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-358",
             "muteOverrideColor" : "muteOverrideColor-357"
@@ -1768,22 +1816,26 @@
             "color1" : "color1-345",
             "color2" : "color2-346",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-349",
-            "muteOverrideColor" : "muteOverrideColor-348"
+            "muteOverrideColor" : "muteOverrideColor-348",
+            "audioLevelSource" : "audioLevelSource-82"
           }, {
-            "mode" : "NONE",
+            "mode" : "AUDIO_LEVEL",
             "color1" : "color1-350",
             "color2" : "color2-351",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-354",
-            "muteOverrideColor" : "muteOverrideColor-353"
+            "muteOverrideColor" : "muteOverrideColor-353",
+            "audioLevelSource" : "audioLevelSource-83"
           } ],
           "logoConfig" : {
             "mode" : "RAINBOW",
             "color" : "color-336",
             "brightness" : 96,
             "speed" : 100,
-            "hue" : 98
+            "hue" : 98,
+            "audioLevelSource" : "audioLevelSource-87"
           },
-          "globalBrightness" : 321
+          "globalBrightness" : 321,
+          "audioLevelCurve" : "audioLevelCurve-79"
         },
         "focusBackOnLost" : true,
         "activateApplications" : [ "activateApplications-314", "activateApplications-315" ],
@@ -1823,6 +1875,7 @@
         "buttonData" : { },
         "dblButtonData" : { },
         "releaseButtonData" : { },
+        "holdButtonData" : { },
         "dialData" : { },
         "knobSettings" : {
           "0" : {
@@ -1830,7 +1883,7 @@
             "maxTrim" : 451,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-453",
-            "overlayName" : "overlayName-51",
+            "overlayName" : "overlayName-107",
             "buttonDebounce" : 450,
             "logarithmic" : true
           },
@@ -1839,7 +1892,7 @@
             "maxTrim" : 455,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-457",
-            "overlayName" : "overlayName-52",
+            "overlayName" : "overlayName-108",
             "buttonDebounce" : 454,
             "logarithmic" : true
           },
@@ -1848,7 +1901,7 @@
             "maxTrim" : 459,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-461",
-            "overlayName" : "overlayName-53",
+            "overlayName" : "overlayName-109",
             "buttonDebounce" : 458,
             "logarithmic" : true
           },
@@ -1857,7 +1910,7 @@
             "maxTrim" : 463,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-465",
-            "overlayName" : "overlayName-54",
+            "overlayName" : "overlayName-110",
             "buttonDebounce" : 462,
             "logarithmic" : true
           }
@@ -1881,20 +1934,22 @@
           "breathBrightness" : 41,
           "breathSpeed" : 43,
           "knobConfigs" : [ {
-            "mode" : "NONE",
+            "mode" : "AUDIO_LEVEL",
             "color1" : "color1-406",
             "color2" : "color2-407",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-410",
-            "muteOverrideColor" : "muteOverrideColor-409"
+            "muteOverrideColor" : "muteOverrideColor-409",
+            "audioLevelSource" : "audioLevelSource-98"
           }, {
             "mode" : "VOLUME_GRADIENT",
             "color1" : "color1-411",
             "color2" : "color2-412",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-415",
-            "muteOverrideColor" : "muteOverrideColor-414"
+            "muteOverrideColor" : "muteOverrideColor-414",
+            "audioLevelSource" : "audioLevelSource-100"
           } ],
           "sliderLabelConfigs" : [ {
-            "mode" : "NONE",
+            "mode" : "STATIC",
             "color" : "color-437",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-440",
             "muteOverrideColor" : "muteOverrideColor-439"
@@ -1909,22 +1964,26 @@
             "color1" : "color1-427",
             "color2" : "color2-428",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-431",
-            "muteOverrideColor" : "muteOverrideColor-430"
+            "muteOverrideColor" : "muteOverrideColor-430",
+            "audioLevelSource" : "audioLevelSource-101"
           }, {
             "mode" : "STATIC_GRADIENT",
             "color1" : "color1-432",
             "color2" : "color2-433",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-436",
-            "muteOverrideColor" : "muteOverrideColor-435"
+            "muteOverrideColor" : "muteOverrideColor-435",
+            "audioLevelSource" : "audioLevelSource-102"
           } ],
           "logoConfig" : {
-            "mode" : "NONE",
+            "mode" : "STATIC",
             "color" : "color-418",
             "brightness" : 58,
             "speed" : 62,
-            "hue" : 60
+            "hue" : 60,
+            "audioLevelSource" : "audioLevelSource-105"
           },
-          "globalBrightness" : 403
+          "globalBrightness" : 403,
+          "audioLevelCurve" : "audioLevelCurve-97"
         },
         "focusBackOnLost" : true,
         "activateApplications" : [ "activateApplications-396", "activateApplications-397" ],
@@ -2031,28 +2090,28 @@
           "label" : "K1",
           "colorModel" : "RGB",
           "group" : "DIAL",
-          "supportedElementModes" : [ "NONE", "STATIC", "VOLUME_GRADIENT" ]
+          "supportedElementModes" : [ "NONE", "STATIC", "VOLUME_GRADIENT", "AUDIO_LEVEL" ]
         }, {
           "index" : 1,
           "id" : "dialLight1",
           "label" : "K2",
           "colorModel" : "RGB",
           "group" : "DIAL",
-          "supportedElementModes" : [ "NONE", "STATIC", "VOLUME_GRADIENT" ]
+          "supportedElementModes" : [ "NONE", "STATIC", "VOLUME_GRADIENT", "AUDIO_LEVEL" ]
         }, {
           "index" : 2,
           "id" : "dialLight2",
           "label" : "K3",
           "colorModel" : "RGB",
           "group" : "DIAL",
-          "supportedElementModes" : [ "NONE", "STATIC", "VOLUME_GRADIENT" ]
+          "supportedElementModes" : [ "NONE", "STATIC", "VOLUME_GRADIENT", "AUDIO_LEVEL" ]
         }, {
           "index" : 3,
           "id" : "dialLight3",
           "label" : "K4",
           "colorModel" : "RGB",
           "group" : "DIAL",
-          "supportedElementModes" : [ "NONE", "STATIC", "VOLUME_GRADIENT" ]
+          "supportedElementModes" : [ "NONE", "STATIC", "VOLUME_GRADIENT", "AUDIO_LEVEL" ]
         } ],
         "analogOutputs" : [ ],
         "globalLighting" : {
@@ -2069,15 +2128,40 @@
       }
     }
   },
-  "templateVersion" : 55,
+  "templateVersion" : 129,
   "mainUIIcons" : true,
   "openBrowserOnStartup" : true,
   "startupVersionCheck" : true,
   "checkForPreReleases" : true,
   "autoUpdate" : true,
   "forceVolume" : true,
+  "newAppsAtDialLevel" : true,
+  "newAppsAtDialLevelExceptions" : [ "newAppsAtDialLevelExceptions-112", "newAppsAtDialLevelExceptions-113" ],
   "sleepDetectionEnabled" : true,
   "dblClickInterval" : 10,
+  "softTakeoverKnobs" : true,
+  "softTakeoverSliders" : true,
+  "startupAnimation" : true,
+  "notificationAlerts" : [ {
+    "trigger" : "TASKBAR_FLASH",
+    "app" : "app-115",
+    "target" : "target-116",
+    "color" : "color-117",
+    "blink" : true,
+    "stopAfterSeconds" : 118,
+    "disabled" : true,
+    "exceptApps" : [ "exceptApps-119", "exceptApps-120" ]
+  }, {
+    "trigger" : "MIC_IN_USE",
+    "app" : "app-122",
+    "target" : "target-123",
+    "color" : "color-124",
+    "blink" : true,
+    "stopAfterSeconds" : 125,
+    "disabled" : true,
+    "exceptApps" : [ "exceptApps-126", "exceptApps-127" ]
+  } ],
+  "holdInterval" : 1110,
   "preventClickWhenDblClick" : true,
   "skipControlledFocusApps" : true,
   "focusVolumeOverrides" : [ {
@@ -2210,6 +2294,7 @@
   "overlayWindowCornerRounding" : 24,
   "overlayBarHeight" : 20,
   "overlayBarCornerRounding" : 19,
+  "overlayKnobSize" : 128,
   "overlayPosition" : "middleMiddle",
   "overlayPadding" : 21,
   "overlayShowAppName" : true,
