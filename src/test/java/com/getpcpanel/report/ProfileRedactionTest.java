@@ -107,7 +107,7 @@ class ProfileRedactionTest {
     private static final Set<String> REVIEWED_NON_SECRET = Set.of(
             // Save — connection targets, local paths and overlay styling
             "obsAddress", "obsPort", "voicemeeterPath",
-            "overlayBackgroundColor", "overlayBarBackgroundColor", "overlayBarColor", "overlayTextColor", "overlayFontFamily",
+            "overlayBackgroundColor", "overlayBarBackgroundColor", "overlayBarColor", "overlayTextColor", "overlayTakeoverMarkerColor", "overlayFontFamily",
             // MqttSettings (+ its Home Assistant discovery block)
             "host", "baseTopic",
             // HomeAssistantServer

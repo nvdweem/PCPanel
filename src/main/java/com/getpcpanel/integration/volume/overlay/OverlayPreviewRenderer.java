@@ -37,6 +37,10 @@ public final class OverlayPreviewRenderer {
             var w = renderer.width();
             renderer.setValue(valuePercent);
             renderer.setName(name);
+            // With soft takeover on, show its marker line too, a little past the level, so its look can be set here.
+            if (save.isSoftTakeoverKnobs() || save.isSoftTakeoverSliders()) {
+                renderer.setMarker(Math.min(100, valuePercent + 20));
+            }
             renderer.setIcon(sampleIcon(save.getOverlayIconSize()));
 
             var img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB_PRE);

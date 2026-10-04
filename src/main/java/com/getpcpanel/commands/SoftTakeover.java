@@ -35,8 +35,11 @@ public class SoftTakeover {
     public record Result(Commands allowed, @Nullable Waiting waiting) {
     }
 
-    /** A held-back action's target level and where the control sits now, both 0..1. */
-    public record Waiting(float current, float control) {
+    /**
+     * A held-back action's target level and where the control sits now, both 0..1 (after the control's curve and trim),
+     * and the raw control position (0..255) at which the control would reach that level.
+     */
+    public record Waiting(float current, float control, int position) {
     }
 
     /**
@@ -68,13 +71,30 @@ public class SoftTakeover {
             if (pickup.allow(target, current, now, readable.levelTarget())) {
                 allowed.add(cmd);
             } else if (waiting == null && current != null) {
-                waiting = new Waiting(current, target);
+                waiting = new Waiting(current, target, positionFor(dial, cmd, current));
             }
         }
         if (allowed.size() == list.size()) {
             return new Result(commands, waiting);
         }
         return new Result(new Commands(allowed, commands.getType()), waiting);
+    }
+
+    /**
+     * The raw control position (0..255) whose level for {@code cmd} comes closest to {@code level}: where the control has
+     * to go, in the units the control and the overlay use, whatever curve, trim or inversion sits in between.
+     */
+    static int positionFor(DialValue dial, Command cmd, float level) {
+        var best = 0;
+        var bestDistance = Float.MAX_VALUE;
+        for (var position = 0; position <= 255; position++) {
+            var distance = Math.abs(dial.settings().calcValue(cmd, position, 0, 1) - level);
+            if (distance < bestDistance) {
+                best = position;
+                bestDistance = distance;
+            }
+        }
+        return best;
     }
 
     private boolean enabledFor(String serial, int knob) {

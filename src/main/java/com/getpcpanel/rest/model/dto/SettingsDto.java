@@ -76,6 +76,11 @@ public class SettingsDto {
     @Nullable private Integer overlayBarHeight;
     @Nullable private Integer overlayBarCornerRounding;
     @Nullable private Integer overlayKnobSize;
+    @Nullable private Integer overlayTakeoverMarkerWidth;
+    @Nullable private String overlayTakeoverMarkerColor;
+    @Nullable private Integer overlayTakeoverMarkerHeight;
+    @Nullable private Integer overlayTakeoverMarkerRounding;
+    private boolean overlayTakeoverText;
     @Nullable private OverlayPosition overlayPosition;
     @Nullable private Integer overlayPadding;
     private boolean overlayShowAppName;
@@ -142,6 +147,11 @@ public class SettingsDto {
         dto.overlayBarHeight = save.getOverlayBarHeight();
         dto.overlayBarCornerRounding = save.getOverlayBarCornerRounding();
         dto.overlayKnobSize = save.getOverlayKnobSize();
+        dto.overlayTakeoverMarkerWidth = save.getOverlayTakeoverMarkerWidth();
+        dto.overlayTakeoverMarkerColor = save.getOverlayTakeoverMarkerColor();
+        dto.overlayTakeoverMarkerHeight = save.getOverlayTakeoverMarkerHeight();
+        dto.overlayTakeoverMarkerRounding = save.getOverlayTakeoverMarkerRounding();
+        dto.overlayTakeoverText = save.isOverlayTakeoverText();
         dto.overlayPosition = save.getOverlayPosition();
         dto.overlayPadding = save.getOverlayPadding();
         dto.overlayShowAppName = save.isOverlayShowAppName();
@@ -207,6 +217,11 @@ public class SettingsDto {
         save.setOverlayBarHeight(overlayBarHeight);
         save.setOverlayBarCornerRounding(overlayBarCornerRounding);
         save.setOverlayKnobSize(overlayKnobSize);
+        save.setOverlayTakeoverMarkerWidth(overlayTakeoverMarkerWidth);
+        save.setOverlayTakeoverMarkerColor(overlayTakeoverMarkerColor);
+        save.setOverlayTakeoverMarkerHeight(overlayTakeoverMarkerHeight);
+        save.setOverlayTakeoverMarkerRounding(overlayTakeoverMarkerRounding);
+        save.setOverlayTakeoverText(overlayTakeoverText);
         save.setOverlayPosition(overlayPosition);
         save.setOverlayPadding(overlayPadding);
         save.setOverlayShowAppName(overlayShowAppName);

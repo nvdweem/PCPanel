@@ -39,6 +39,7 @@ class OverlayRenderer {
     private static final Color DEFAULT_BG_COLOR = new Color(80, 80, 90, 210);
     private static final Color DEFAULT_BAR_COLOR = new Color(0, 200, 230, 255);
     private static final Color DEFAULT_BAR_TRACK_COLOR = new Color(255, 255, 255, 50);
+    private static final Color DEFAULT_MARKER_COLOR = new Color(255, 128, 0);
     private static final Color DEFAULT_TEXT_COLOR = new Color(230, 230, 230, 255);
 
     private int value;
@@ -60,6 +61,14 @@ class OverlayRenderer {
     private int barHeight = DEFAULT_BAR_HEIGHT;
     private int barCornerRadius = DEFAULT_BAR_CORNER_RADIUS;
     private int knobSize = DEFAULT_KNOB_SIZE;
+    /** Where a control waiting for soft takeover takes over, 0..100, or -1 for none; with its line's look. */
+    private int marker = -1;
+    private int markerWidth = Save.DEFAULT_OVERLAY_TAKEOVER_MARKER_WIDTH;
+    private int markerHeight = Save.DEFAULT_OVERLAY_TAKEOVER_MARKER_HEIGHT;
+    private int markerRounding;
+    /** Whether a marker can show at all: soft takeover is on and the line has a width; the layout leaves room for it. */
+    private boolean markerShown;
+    private Color markerColor = DEFAULT_MARKER_COLOR;
     private Color backgroundColor = DEFAULT_BG_COLOR;
     private Color barColor = DEFAULT_BAR_COLOR;
     private Color barTrackColor = DEFAULT_BAR_TRACK_COLOR;
@@ -67,6 +76,11 @@ class OverlayRenderer {
 
     void setValue(int value) {
         this.value = Math.clamp(value, 0, 100);
+    }
+
+    /** The soft-takeover point to mark, 0..100, or a negative value for none. */
+    void setMarker(int percent) {
+        this.marker = percent < 0 ? -1 : Math.clamp(percent, 0, 100);
     }
 
     void setIcon(Image icon) {
@@ -108,6 +122,11 @@ class OverlayRenderer {
         barHeight = Math.max(2, save.getOverlayBarHeight());
         barCornerRadius = Math.max(0, save.getOverlayBarCornerRounding());
         knobSize = Math.max(0, save.getOverlayKnobSize());
+        markerWidth = Math.max(0, save.getOverlayTakeoverMarkerWidth());
+        markerHeight = Math.max(1, save.getOverlayTakeoverMarkerHeight());
+        markerRounding = Math.max(0, save.getOverlayTakeoverMarkerRounding());
+        markerShown = markerWidth > 0 && (save.isSoftTakeoverKnobs() || save.isSoftTakeoverSliders());
+        markerColor = parseColor(save.getOverlayTakeoverMarkerColor(), DEFAULT_MARKER_COLOR);
         return computeHeight();
     }
 
@@ -130,14 +149,15 @@ class OverlayRenderer {
         return Math.max(showIcon ? iconSize : 0, textSize + 4);
     }
 
-    /** Half the knob's width: how far it reaches past the bar's ends at 0% and 100%. */
+    /** How far the knob, or the takeover marker, reaches past the bar's ends at 0% and 100%: half its width. */
     private int knobHalf() {
-        return (knobSize + 1) / 2;
+        return Math.max((knobSize + 1) / 2, markerShown ? (markerWidth + 1) / 2 : 0);
     }
 
-    /** How far the bar's knob stands out above and below the bar (none when it is no taller). */
+    /** How far the bar's knob, or the takeover marker, stands out above and below the bar (none when no taller). */
     private int thumbOverhang() {
-        return Math.max(0, (knobSize - barHeight + 1) / 2);
+        var tallest = Math.max(knobSize, markerShown ? markerHeight : 0);
+        return Math.max(0, (tallest - barHeight + 1) / 2);
     }
 
     /** The bar colour actually used: the control-light override when present, otherwise the configured one. */
@@ -273,6 +293,14 @@ class OverlayRenderer {
         if (knobSize > 0) {
             g2.setColor(withAlpha(scaleColor(bar, 1.35f), bar.getAlpha()));
             g2.fill(new Ellipse2D.Float(fillEnd - knobSize / 2f, y + (barHeight - knobSize) / 2f, knobSize, knobSize));
+        }
+
+        // The soft-takeover point: a line centred on the bar, over the knob so it stays visible.
+        if (marker >= 0 && markerWidth > 0) {
+            var markX = x + barWidth * (marker / 100f);
+            var arc = Math.min(markerRounding, Math.min(markerWidth, markerHeight));
+            g2.setColor(markerColor);
+            g2.fill(new RoundRectangle2D.Float(markX - markerWidth / 2f, y + (barHeight - markerHeight) / 2f, markerWidth, markerHeight, arc, arc));
         }
     }
 

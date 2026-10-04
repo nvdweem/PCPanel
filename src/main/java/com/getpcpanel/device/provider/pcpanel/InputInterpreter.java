@@ -192,7 +192,7 @@ public final class InputInterpreter {
                 }
                 if (result.waiting() != null) {
                     var control = new PCPanelControlEvent(serialNum, knob, data, initial, v, PCPanelControlEvent.Source.DIAL);
-                    eventBus.fire(new TakeoverPendingEvent(control, result.waiting().current()));
+                    eventBus.fire(new TakeoverPendingEvent(control, result.waiting().position()));
                 }
             });
     }

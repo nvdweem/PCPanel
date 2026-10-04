@@ -40,6 +40,11 @@ public class Save {
     /** Diameter of the overlay bar's knob, in pixels; 0 is no knob. */
     public static final int DEFAULT_OVERLAY_KNOB_SIZE = 24;
     public static final int DEFAULT_OVERLAY_PADDING = 10;
+    /** Width of the line that marks the soft-takeover point on the overlay's bar, in pixels; 0 is no line. */
+    public static final int DEFAULT_OVERLAY_TAKEOVER_MARKER_WIDTH = 3;
+    public static final String DEFAULT_OVERLAY_TAKEOVER_MARKER_COLOR = "rgb(255, 128, 0)";
+    /** Height of that line, in pixels: the knob's default size. */
+    public static final int DEFAULT_OVERLAY_TAKEOVER_MARKER_HEIGHT = 24;
     public static final int DEFAULT_OVERLAY_TEXT_SIZE = 14;
     public static final int DEFAULT_OVERLAY_ICON_SIZE = 32;
     public static final int DEFAULT_OVERLAY_ELEMENT_GAP = 10;
@@ -135,6 +140,14 @@ public class Save {
     @Nullable private Integer overlayBarCornerRounding = 0;
     /** Diameter of the knob on the overlay's bar, in pixels; 0 hides it. */
     @Nullable private Integer overlayKnobSize = DEFAULT_OVERLAY_KNOB_SIZE;
+    /** Width of the line on the overlay's bar that marks where a control waiting for soft takeover takes over; 0 hides it. */
+    @Nullable private Integer overlayTakeoverMarkerWidth = DEFAULT_OVERLAY_TAKEOVER_MARKER_WIDTH;
+    @Nullable private String overlayTakeoverMarkerColor = DEFAULT_OVERLAY_TAKEOVER_MARKER_COLOR;
+    @Nullable private Integer overlayTakeoverMarkerHeight = DEFAULT_OVERLAY_TAKEOVER_MARKER_HEIGHT;
+    /** Corner rounding of that line, in pixels; 0 is square. */
+    @Nullable private Integer overlayTakeoverMarkerRounding = 0;
+    /** Whether the overlay names where a control waiting for soft takeover has to go ("move to 40% to take over"). */
+    private boolean overlayTakeoverText = true;
     @Nullable private OverlayPosition overlayPosition = DEFAULT_OVERLAY_POSITION;
     @Nullable private Integer overlayPadding = DEFAULT_OVERLAY_PADDING;
     /**
@@ -225,6 +238,22 @@ public class Save {
 
     public int getOverlayKnobSize() {
         return overlayKnobSize == null ? DEFAULT_OVERLAY_KNOB_SIZE : overlayKnobSize;
+    }
+
+    public int getOverlayTakeoverMarkerWidth() {
+        return overlayTakeoverMarkerWidth == null ? DEFAULT_OVERLAY_TAKEOVER_MARKER_WIDTH : overlayTakeoverMarkerWidth;
+    }
+
+    public int getOverlayTakeoverMarkerHeight() {
+        return overlayTakeoverMarkerHeight == null ? DEFAULT_OVERLAY_TAKEOVER_MARKER_HEIGHT : overlayTakeoverMarkerHeight;
+    }
+
+    public int getOverlayTakeoverMarkerRounding() {
+        return overlayTakeoverMarkerRounding == null ? 0 : overlayTakeoverMarkerRounding;
+    }
+
+    public String getOverlayTakeoverMarkerColor() {
+        return overlayTakeoverMarkerColor == null || overlayTakeoverMarkerColor.isBlank() ? DEFAULT_OVERLAY_TAKEOVER_MARKER_COLOR : overlayTakeoverMarkerColor;
     }
 
     public int getOverlayBarHeight() {

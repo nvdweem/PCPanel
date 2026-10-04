@@ -940,6 +940,11 @@ export interface SettingsDto {
     overlayShowAppName: boolean;
     overlayShowIcon: boolean;
     overlayShowNumber: boolean;
+    overlayTakeoverMarkerColor?: string;
+    overlayTakeoverMarkerHeight?: number;
+    overlayTakeoverMarkerRounding?: number;
+    overlayTakeoverMarkerWidth?: number;
+    overlayTakeoverText: boolean;
     overlayTextColor: string;
     overlayTextSize?: number;
     overlayUseLog: boolean;

@@ -75,6 +75,92 @@ class OverlayRendererBarTest {
         assertNotEquals(image.getRGB(BAR_X + 85, MID), image.getRGB(BAR_X + 95, MID), "the fill ends at half the bar");
     }
 
+    /** A bar at {@code percent} with no knob, a green takeover line {@code markerWidth} wide at {@code marker}. */
+    private static BufferedImage marked(int percent, int marker, int markerWidth) {
+        var save = new Save();
+        save.setOverlayBarHeight(10);
+        save.setOverlayKnobSize(0);
+        save.setOverlayTakeoverMarkerWidth(markerWidth);
+        save.setOverlayTakeoverMarkerColor("#00FF00");
+        var renderer = new OverlayRenderer();
+        renderer.setStyles(save);
+        renderer.setValue(percent);
+        renderer.setMarker(marker);
+        var image = new BufferedImage(200, 30, BufferedImage.TYPE_INT_ARGB);
+        var g2 = image.createGraphics();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+        renderer.drawBar(g2, BAR_X, BAR_Y, BAR_WIDTH);
+        g2.dispose();
+        return image;
+    }
+
+    @Test
+    void theTakeoverLineMarksItsPointOnTheBar() {
+        var image = marked(20, 60, 4); // the line is centred on x = 10 + 180 * 0.6 = 118
+        assertEquals(0xFF00FF00, image.getRGB(118, MID), "the line");
+        assertEquals(0xFF00FF00, image.getRGB(117, BAR_Y), "across the bar's height");
+        assertNotEquals(0xFF00FF00, image.getRGB(125, MID), "only that wide");
+        assertNotEquals(0xFF00FF00, image.getRGB(BAR_X + 10, MID), "the fill is not the line");
+    }
+
+    /** A green takeover line at 60% (x = 118) with the given look, on a 10 px bar without a knob. */
+    private static BufferedImage shaped(int width, int height, int rounding) {
+        var save = new Save();
+        save.setOverlayBarHeight(10);
+        save.setOverlayKnobSize(0);
+        save.setOverlayTakeoverMarkerWidth(width);
+        save.setOverlayTakeoverMarkerHeight(height);
+        save.setOverlayTakeoverMarkerRounding(rounding);
+        save.setOverlayTakeoverMarkerColor("#00FF00");
+        var renderer = new OverlayRenderer();
+        renderer.setStyles(save);
+        renderer.setValue(20);
+        renderer.setMarker(60);
+        var image = new BufferedImage(200, 30, BufferedImage.TYPE_INT_ARGB);
+        var g2 = image.createGraphics();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+        renderer.drawBar(g2, BAR_X, BAR_Y, BAR_WIDTH);
+        g2.dispose();
+        return image;
+    }
+
+    @Test
+    void theTakeoverLineHasItsOwnHeightCentredOnTheBar() {
+        var short_ = shaped(4, 6, 0); // y 12..17
+        assertEquals(0xFF00FF00, short_.getRGB(118, MID));
+        assertNotEquals(0xFF00FF00, short_.getRGB(118, BAR_Y), "shorter than the bar");
+
+        var tall = shaped(4, 20, 0); // y 5..24
+        assertEquals(0xFF00FF00, tall.getRGB(118, BAR_Y - 4), "above the bar");
+        assertEquals(0xFF00FF00, tall.getRGB(118, BAR_Y + 13), "below the bar");
+    }
+
+    @Test
+    void theTakeoverLineCanBeRounded() {
+        // A 8x20 line at x 114..121, y 5..24.
+        assertEquals(0xFF00FF00, shaped(8, 20, 0).getRGB(114, 5), "square: the corner is filled");
+        assertNotEquals(0xFF00FF00, shaped(8, 20, 8).getRGB(114, 5), "rounded: the corner is cut");
+        assertEquals(0xFF00FF00, shaped(8, 20, 8).getRGB(117, 15), "the middle stays");
+    }
+
+    @Test
+    void aTallTakeoverLineMakesRoomInTheWindow() {
+        var save = new Save();
+        save.setOverlayShowAppName(false);
+        save.setOverlayKnobSize(0);
+        save.setOverlayTakeoverMarkerHeight(60);
+        var withoutTakeover = new OverlayRenderer().setStyles(save);
+        save.setSoftTakeoverSliders(true);
+        var withTakeover = new OverlayRenderer().setStyles(save);
+        assertEquals(true, withTakeover > withoutTakeover, withoutTakeover + " -> " + withTakeover);
+    }
+
+    @Test
+    void noTakeoverLineAtWidthZeroOrWithoutATakeover() {
+        assertNotEquals(0xFF00FF00, marked(20, 60, 0).getRGB(118, MID), "width 0 hides it");
+        assertNotEquals(0xFF00FF00, marked(20, -1, 4).getRGB(118, MID), "no takeover, no line");
+    }
+
     /** A whole overlay with a red bar and knob, a 4 px padding and a knob much wider than that. */
     private static BufferedImage overlay(boolean showAppName, boolean showNumber, int percent) {
         var save = new Save();

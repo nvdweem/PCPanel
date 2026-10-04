@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.commands.ButtonFeedbackEvent;
 import com.getpcpanel.commands.Commands;
+import com.getpcpanel.commands.DialValue;
 import com.getpcpanel.commands.IconService;
 import com.getpcpanel.commands.PCPanelControlEvent;
 import com.getpcpanel.commands.TakeoverPendingEvent;
@@ -131,31 +132,52 @@ public class Overlay {
         // never runs) and kill the input thread, freezing ALL hardware control. The icon path depends on
         // AWT/Java2D, which is fragile in the native image, so isolate it: on any failure, log and move on.
         try {
-            var vol = event.vol();
-            // The log/linear scale only shapes our own custom-rendered bar (Windows). On Linux the
-            // desktop's native OSD shows the true volume, so the scale doesn't apply there (the setting
-            // is disabled in the UI) — always report the real linear level.
-            var useLog = save.get().isOverlayUseLog() && !Platform.isLinux();
-            var value = vol == null ? -1 : useLog ? vol.getValue(null, 0, 1) : vol.value() / 255f;
+            var value = barValue(event.vol());
             showDebounced(value, () -> determineIconImage(event), this::shouldShow);
         } catch (Throwable t) {
             log.warn("Overlay failed to handle control event; ignoring (hardware control is unaffected)", t);
         }
     }
 
-    /** A control waiting for soft takeover: the bar shows the target's real level and the name where to move to. */
+    /** Where the bar stands for a control reading (0..1), or -1 without one. */
+    private float barValue(@Nullable DialValue vol) {
+        // The log/linear scale only shapes our own custom-rendered bar (Windows). On Linux the
+        // desktop's native OSD shows the true volume, so the scale doesn't apply there (the setting
+        // is disabled in the UI) — always report the real linear level.
+        var useLog = save.get().isOverlayUseLog() && !Platform.isLinux();
+        return vol == null ? -1 : useLog ? vol.getValue(null, 0, 1) : vol.value() / 255f;
+    }
+
+    /**
+     * A control waiting for soft takeover: the bar follows the control, as it always does, a line marks the control
+     * position at which it takes over, and (with {@code Save.overlayTakeoverText}) the name says where to move to —
+     * all on the same scale as the overlay's bar, not the target's level after the control's curve.
+     */
     public void handleTakeover(@Observes TakeoverPendingEvent event) {
         if (!save.get().isOverlayEnabled()) {
             return;
         }
         try {
+            var vol = event.control().vol();
+            if (vol == null) {
+                return;
+            }
+            var takeover = barValue(new DialValue(vol.settings(), event.position()));
             var cai = determineIconImage(event.control());
-            var hint = "move to " + Math.round(event.current() * 100) + "% to take over";
-            var name = StringUtils.isBlank(cai.name) ? StringUtils.capitalize(hint) : cai.name.strip() + " \u00b7 " + hint;
-            overlay.show(new OverlayContent(event.current(), cai.icon, name, cai.barColorCss));
+            var name = takeoverName(cai.name, takeover, save.get().isOverlayTakeoverText());
+            overlay.show(new OverlayContent(barValue(vol), cai.icon, name, cai.barColorCss, takeover));
         } catch (Throwable t) {
             log.warn("Overlay failed to show a takeover hint; ignoring (hardware control is unaffected)", t);
         }
+    }
+
+    /** The overlay's name while a control waits for takeover: its own name, with "move to X% to take over" when {@code withText}. */
+    static String takeoverName(@Nullable String name, float current, boolean withText) {
+        if (!withText) {
+            return StringUtils.defaultString(name).strip();
+        }
+        var hint = "move to " + Math.round(current * 100) + "% to take over";
+        return StringUtils.isBlank(name) ? StringUtils.capitalize(hint) : name.strip() + " · " + hint;
     }
 
     /**

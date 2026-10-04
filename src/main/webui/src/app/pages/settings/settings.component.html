@@ -147,7 +147,7 @@
             <div class="row">
               <div class="row-text">
                 <div class="row-label">No volume jumps on knobs</div>
-                <div class="row-sub">After an app or device volume was changed elsewhere, a knob takes over only once it reaches that volume. The overlay shows where to move to.</div>
+                <div class="row-sub">After an app or device volume was changed elsewhere, a knob takes over only once it reaches that volume.</div>
               </div>
               <pc-toggle [value]="s.softTakeoverKnobs" (valueChange)="patch('softTakeoverKnobs', $event)"></pc-toggle>
             </div>
@@ -1124,6 +1124,35 @@
                   <pc-slider [value]="s.overlayKnobSize ?? 24" [min]="0" [max]="60" [disabled]="!overlayStylingSupported()"
                              (valueChange)="patch('overlayKnobSize', $event)" (changeEnd)="patch('overlayKnobSize', $event)"></pc-slider>
                 </div>
+              </div>
+
+              <div class="micro-label section-label">SOFT TAKEOVER</div>
+              <div class="pc-card pad stack" [class.disabled-block]="!(s.softTakeoverKnobs || s.softTakeoverSliders)">
+                <div class="row-sub">While a control waits to take over (<em>No volume jumps</em>, under General), the bar follows the control.</div>
+                <div class="row">
+                  <div class="row-text"><div class="row-label">Say where to move</div><div class="row-sub">Adds "move to 40% to take over" to the name.</div></div>
+                  <pc-toggle [value]="s.overlayTakeoverText ?? true" [disabled]="!(s.softTakeoverKnobs || s.softTakeoverSliders)"
+                             (valueChange)="patch('overlayTakeoverText', $event)"></pc-toggle>
+                </div>
+                <div class="slider-row">
+                  <div class="sr-head"><span class="sr-label">Marker line</span><span class="sr-val mono">{{ (s.overlayTakeoverMarkerWidth ?? 3) === 0 ? 'off' : (s.overlayTakeoverMarkerWidth ?? 3) + 'px' }}</span></div>
+                  <pc-slider [value]="s.overlayTakeoverMarkerWidth ?? 3" [min]="0" [max]="10" [disabled]="!overlayStylingSupported() || !(s.softTakeoverKnobs || s.softTakeoverSliders)"
+                             (valueChange)="patch('overlayTakeoverMarkerWidth', $event)" (changeEnd)="patch('overlayTakeoverMarkerWidth', $event)"></pc-slider>
+                  <div class="row-sub">A line on the bar where the control takes over; 0 hides it.</div>
+                </div>
+                <div class="slider-row">
+                  <div class="sr-head"><span class="sr-label">Marker height</span><span class="sr-val mono">{{ s.overlayTakeoverMarkerHeight ?? 24 }}px</span></div>
+                  <pc-slider [value]="s.overlayTakeoverMarkerHeight ?? 24" [min]="2" [max]="60" [disabled]="!overlayStylingSupported() || !(s.softTakeoverKnobs || s.softTakeoverSliders) || (s.overlayTakeoverMarkerWidth ?? 3) === 0"
+                             (valueChange)="patch('overlayTakeoverMarkerHeight', $event)" (changeEnd)="patch('overlayTakeoverMarkerHeight', $event)"></pc-slider>
+                </div>
+                <div class="slider-row">
+                  <div class="sr-head"><span class="sr-label">Marker rounding</span><span class="sr-val mono">{{ s.overlayTakeoverMarkerRounding ?? 0 }}px</span></div>
+                  <pc-slider [value]="s.overlayTakeoverMarkerRounding ?? 0" [min]="0" [max]="10" [disabled]="!overlayStylingSupported() || !(s.softTakeoverKnobs || s.softTakeoverSliders) || (s.overlayTakeoverMarkerWidth ?? 3) === 0"
+                             (valueChange)="patch('overlayTakeoverMarkerRounding', $event)" (changeEnd)="patch('overlayTakeoverMarkerRounding', $event)"></pc-slider>
+                </div>
+                <pc-color-picker label="Marker colour" [value]="s.overlayTakeoverMarkerColor ?? 'rgb(255, 128, 0)'"
+                                 [disabled]="!overlayStylingSupported() || !(s.softTakeoverKnobs || s.softTakeoverSliders) || (s.overlayTakeoverMarkerWidth ?? 3) === 0"
+                                 (valueChange)="patch('overlayTakeoverMarkerColor', $event)"></pc-color-picker>
               </div>
 
               <div class="micro-label section-label">FONT</div>
