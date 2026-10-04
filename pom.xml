@@ -55,6 +55,7 @@
         <quarkus.native.additional-build-args>
             -Os,
             -R:MaxHeapSize=67108864,
+            -R:MaxNewSize=4194304,
             --initialize-at-run-time=com.getpcpanel.util.os.Kernel32Console,
             --initialize-at-run-time=com.getpcpanel.integration.keyboard.platform.linux.LinuxKeyboard$X11,
             --initialize-at-run-time=com.getpcpanel.integration.keyboard.platform.linux.LinuxKeyboard$XTest,
