@@ -25,11 +25,17 @@ import jakarta.inject.Inject;
  */
 @ApplicationScoped
 class ProcessMuteResolver implements MuteStateResolver {
+    /** A fixed app target, as the lighting editor writes it: {@code app:<exe>}. */
+    static final String APP_PREFIX = "app:";
+
     @Inject
     ISndCtrl sndCtrl;
 
     @Override
     public Optional<Boolean> resolve(Commands command, String target) {
+        if (StringUtils.startsWith(target, APP_PREFIX)) {
+            return muteForProcesses(List.of(target.substring(APP_PREFIX.length())));
+        }
         if (!FOLLOW.equals(target)) {
             return Optional.empty();
         }

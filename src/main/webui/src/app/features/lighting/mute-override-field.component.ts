@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { ColorPickerComponent, ToggleComponent } from '../../ui';
+import { LightTargetComponent } from './light-target.component';
 
 /** Off is its own state: only a blank/absent colour means off, so black (#000000) is a usable mute colour. */
 const isOff = (c: string | undefined): boolean => !c || !c.trim();
@@ -11,12 +12,12 @@ const isOff = (c: string | undefined): boolean => !c || !c.trim();
  *
  * Enabled/disabled is a separate state from the colour: a blank colour means off, while any explicit
  * colour — including black — is honoured. Enabling defaults to red rather than a confusing black swatch.
- * Binds via `[color]` / `(colorChange)`.
+ * Binds via `[color]` / `(colorChange)`, and what it follows via `[target]` / `(targetChange)`.
  */
 @Component({
   selector: 'pc-mute-override-field',
   standalone: true,
-  imports: [ColorPickerComponent, ToggleComponent],
+  imports: [ColorPickerComponent, ToggleComponent, LightTargetComponent],
   template: `
     <div class="mute-row">
       <span class="mute-lbl">Change colour when muted</span>
@@ -24,6 +25,8 @@ const isOff = (c: string | undefined): boolean => !c || !c.trim();
     </div>
     @if (on()) {
       <pc-color-picker label="Muted colour" [value]="color() || '#FF0000'" (valueChange)="colorChange.emit($event)"></pc-color-picker>
+      <pc-light-target label="Muted when this is muted" followLabel="What this control controls"
+                       [value]="target()" (valueChange)="targetChange.emit($event)"></pc-light-target>
     }
   `,
   styles: [`
@@ -37,6 +40,9 @@ export class MuteOverrideFieldComponent {
   readonly color = input<string>();
   /** Emits the new muted colour: a hex when enabled, '' when disabled. */
   readonly colorChange = output<string>();
+  /** What the muted colour follows ('' = what this control controls). */
+  readonly target = input<string | null>();
+  readonly targetChange = output<string>();
 
   readonly on = computed(() => !isOff(this.color()));
 

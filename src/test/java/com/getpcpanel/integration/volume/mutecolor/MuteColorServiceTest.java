@@ -146,4 +146,20 @@ class MuteColorServiceTest {
 
         assertEquals(1, recomputed.get());
     }
+
+    @Test
+    void aFixedTargetWorksOnAControlWithoutAnAction() {
+        var service = new MuteColorService();
+        service.resolvers = List.of((command, target) -> "Yeti".equals(target) ? Optional.of(true) : Optional.empty());
+        var lc = new LightingConfig(5, 4);
+        lc.setLightingMode(LightingMode.CUSTOM);
+        lc.knobConfigs()[4].setMuteOverrideColor("#FF0000");
+        lc.knobConfigs()[4].setMuteOverrideDeviceOrFollow("Yeti");
+        lc.sliderLabelConfigs()[1].setMuteOverrideColor("#00FF00");
+        lc.sliderLabelConfigs()[1].setMuteOverrideDeviceOrFollow("Yeti");
+
+        assertTrue(service.applyOverrides("serial", lc, Map.of()));
+        assertEquals("#FF0000", service.getOverrideColorProvider().getDialOverride("serial", 4).orElseThrow().getColor1());
+        assertEquals("#00FF00", service.getOverrideColorProvider().getSliderLabelOverride("serial", 1).orElseThrow().getColor());
+    }
 }

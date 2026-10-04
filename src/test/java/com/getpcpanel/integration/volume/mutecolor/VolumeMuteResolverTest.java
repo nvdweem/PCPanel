@@ -116,6 +116,18 @@ class VolumeMuteResolverTest {
         }
     }
 
+    // ── a fixed device chosen by name ───────────────────────────────────────────
+    @Test
+    void anExactDeviceNameWinsOverOneThatContainsIt() {
+        var resolver = new NamedDeviceMuteResolver();
+        // Wave Link names its virtual output after the mic it carries, so that name contains the mic's own.
+        resolver.sndCtrl = new FakeSndCtrl().withDevice("id-wl", "Microphone (Yeti Stereo Microphone) (Elgato Virtual Audio)", false)
+                                            .withDevice("id-yeti", "Microphone (Yeti Stereo Microphone)", true);
+
+        assertEquals(true, resolver.resolve(commands(), "Microphone (Yeti Stereo Microphone)").orElseThrow());
+        assertEquals(false, resolver.resolve(commands(), "Elgato Virtual Audio").orElseThrow(), "a part of a name still matches");
+    }
+
     private static final class FakeSndCtrl implements ISndCtrl {
         private final List<AudioDevice> devices = new ArrayList<>();
         private final List<AudioSession> sessions = new ArrayList<>();

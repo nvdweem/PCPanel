@@ -15,7 +15,10 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 import javax.annotation.concurrent.GuardedBy;
@@ -26,6 +29,7 @@ import org.apache.commons.lang3.math.NumberUtils;
 import javax.annotation.Nullable;
 
 import com.getpcpanel.integration.volume.platform.AudioDevice;
+import com.getpcpanel.integration.volume.platform.AudioDeviceEvent;
 import com.getpcpanel.integration.volume.platform.AudioSession;
 import com.getpcpanel.integration.volume.platform.AudioSessionEvent;
 import com.getpcpanel.integration.volume.platform.EventType;
@@ -34,6 +38,7 @@ import com.getpcpanel.integration.volume.platform.MuteType;
 import com.getpcpanel.platform.process.LinuxProcessHelper;
 import com.getpcpanel.platform.process.LinuxProcessHelper.ActiveWindow;
 import com.getpcpanel.integration.volume.platform.linux.PulseAudioEventListener.LinuxDeviceChangedEvent;
+import com.getpcpanel.integration.volume.platform.linux.PulseAudioEventListener.LinuxDeviceStateChangedEvent;
 import com.getpcpanel.integration.volume.platform.linux.PulseAudioEventListener.LinuxSessionChangedEvent;
 import com.getpcpanel.integration.volume.platform.linux.PulseAudioWrapper.InOutput;
 import com.getpcpanel.integration.volume.platform.linux.PulseAudioWrapper.PactlTimeoutException;
@@ -80,13 +85,45 @@ class SndCtrlPulseAudio implements ISndCtrl {
     }
 
     public void initDevices(@Observes @Nullable LinuxDeviceChangedEvent event) {
+        List<AudioDeviceEvent> changed;
         synchronized (devices) {
             var found = getDevicesFromCmd();
             if (found.isEmpty()) {
                 return;
             }
+            var before = new HashMap<>(devices);
             devices.clear();
             StreamEx.of(found.get()).mapToEntry(AudioDevice::id, Function.identity()).into(devices);
+            changed = StreamEx.ofValues(devices)
+                              .filter(d -> before.containsKey(d.id()) && stateDiffers(before.get(d.id()), d))
+                              .map(d -> new AudioDeviceEvent(d, EventType.CHANGED))
+                              .toList();
+        }
+        // Fired outside the lock, like the session events below; the mute colours and "no volume jumps" read these.
+        changed.forEach(e -> eventBus.fire(e));
+    }
+
+    private static boolean stateDiffers(AudioDevice a, AudioDevice b) {
+        return volumeFtoI(a.volume()) != volumeFtoI(b.volume()) || a.muted() != b.muted();
+    }
+
+    private final AtomicBoolean deviceStateRefreshPending = new AtomicBoolean();
+    private final ExecutorService deviceStateRefresh = Executors.newSingleThreadExecutor(r -> {
+        var t = new Thread(r, "pactl-device-state");
+        t.setDaemon(true);
+        return t;
+    });
+
+    /**
+     * A device's volume or mute changed. A turning Device-volume dial causes one of these per write, so they are
+     * coalesced: while a re-read is queued, more changes need no re-read of their own.
+     */
+    public void onDeviceStateChanged(@Observes LinuxDeviceStateChangedEvent event) {
+        if (deviceStateRefreshPending.compareAndSet(false, true)) {
+            deviceStateRefresh.execute(() -> {
+                deviceStateRefreshPending.set(false);
+                initDevices(null);
+            });
         }
     }
 
@@ -388,7 +425,11 @@ class SndCtrlPulseAudio implements ISndCtrl {
 
     @Override
     public @Nullable String defaultDeviceOnEmpty(String deviceId) {
-        return null;
+        // As on Windows: no device (or "default") is the default output, so its level and mute state can be read.
+        if (StringUtils.isNotBlank(deviceId) && !"default".equals(deviceId)) {
+            return deviceId;
+        }
+        return defaultPlayer();
     }
 
     @Override
@@ -421,7 +462,9 @@ class SndCtrlPulseAudio implements ISndCtrl {
         if (StringUtils.isBlank(name)) {
             return Optional.empty();
         }
-        return Optional.of(new PulseAudioAudioDevice(eventBus, pa.index(), pa.metas().get("Description"), (isOutput ? "" : INPUT_PREFIX) + pa.metas().get("Name"), pa.isDefault(), isOutput));
+        var device = new PulseAudioAudioDevice(eventBus, pa.index(), pa.metas().get("Description"), (isOutput ? "" : INPUT_PREFIX) + pa.metas().get("Name"), pa.isDefault(), isOutput);
+        device.state(extractVolume(pa), isMuted(pa));
+        return Optional.of(device);
     }
 
     /** Empty when pactl timed out: the caller keeps what it knows rather than reporting every stream as removed. */
@@ -445,9 +488,13 @@ class SndCtrlPulseAudio implements ISndCtrl {
                 NumberUtils.toInt(props.get("application.process.id"), -1),
                 new File(props.getOrDefault("application.process.binary", "/")),
                 title,
-                "", extractVolume(pa), false,
+                "", extractVolume(pa), isMuted(pa),
                 portalAppId,
                 sinkName(NumberUtils.toInt(pa.metas().get("Sink"), -1)));
+    }
+
+    static boolean isMuted(PulseAudioTarget pa) {
+        return "yes".equalsIgnoreCase(StringUtils.trim(pa.metas().get("Mute")));
     }
 
     /** The id of the output with this index, which for an output is its PulseAudio name. */

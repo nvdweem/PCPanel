@@ -143,9 +143,17 @@ class PulseAudioEventListener {
                 , "Event 'change' on server")) {
             eventBus.fire(new LinuxDeviceChangedEvent());
         }
+        // A volume or mute change on an output or input; kept apart from the list changes above because a turning dial
+        // reports one per write, so the receiver coalesces them.
+        if (StringUtils.containsAnyIgnoreCase(line, "Event 'change' on sink #", "Event 'change' on source #")) {
+            eventBus.fire(new LinuxDeviceStateChangedEvent());
+        }
     }
 
     public static class LinuxDeviceChangedEvent {
+    }
+
+    public static class LinuxDeviceStateChangedEvent {
     }
 
     public record LinuxSessionChangedEvent(@Nullable Integer sessionId) {

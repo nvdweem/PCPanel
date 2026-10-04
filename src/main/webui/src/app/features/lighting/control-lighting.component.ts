@@ -44,7 +44,8 @@ const LABEL_DEFAULT: SingleSliderLabelLightingConfig = { mode: 'STATIC', color: 
               <pc-light-target label="Level of" followLabel="What this control controls (else default speakers)"
                                [value]="knob().audioLevelSource" (valueChange)="setKnob('audioLevelSource', $event)"></pc-light-target>
             }
-            <pc-mute-override-field [color]="knob().muteOverrideColor" (colorChange)="setKnob('muteOverrideColor', $event)"></pc-mute-override-field>
+            <pc-mute-override-field [color]="knob().muteOverrideColor" (colorChange)="setKnob('muteOverrideColor', $event)"
+                                    [target]="knob().muteOverrideDeviceOrFollow" (targetChange)="setKnob('muteOverrideDeviceOrFollow', $event)"></pc-mute-override-field>
           }
         } @else {
           <!-- Slider -->
@@ -61,7 +62,8 @@ const LABEL_DEFAULT: SingleSliderLabelLightingConfig = { mode: 'STATIC', color: 
               <pc-light-target label="Level of" followLabel="What this control controls (else default speakers)"
                                [value]="slider().audioLevelSource" (valueChange)="setSlider('audioLevelSource', $event)"></pc-light-target>
             }
-            <pc-mute-override-field [color]="slider().muteOverrideColor" (colorChange)="setSlider('muteOverrideColor', $event)"></pc-mute-override-field>
+            <pc-mute-override-field [color]="slider().muteOverrideColor" (colorChange)="setSlider('muteOverrideColor', $event)"
+                                    [target]="slider().muteOverrideDeviceOrFollow" (targetChange)="setSlider('muteOverrideDeviceOrFollow', $event)"></pc-mute-override-field>
           }
           <div class="grp-label">LABEL</div>
           <div class="row">
@@ -71,7 +73,8 @@ const LABEL_DEFAULT: SingleSliderLabelLightingConfig = { mode: 'STATIC', color: 
             <pc-color-picker label="Color" [value]="label().color" (valueChange)="setLabel('color', $event)"></pc-color-picker>
           }
           @if (labelUi() !== 'off') {
-            <pc-mute-override-field [color]="label().muteOverrideColor" (colorChange)="setLabel('muteOverrideColor', $event)"></pc-mute-override-field>
+            <pc-mute-override-field [color]="label().muteOverrideColor" (colorChange)="setLabel('muteOverrideColor', $event)"
+                                    [target]="label().muteOverrideDeviceOrFollow" (targetChange)="setLabel('muteOverrideDeviceOrFollow', $event)"></pc-mute-override-field>
           }
         }
       </div>

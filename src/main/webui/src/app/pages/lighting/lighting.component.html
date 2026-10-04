@@ -163,7 +163,8 @@
                             <pc-light-target label="Level of" followLabel="What this control controls (else default speakers)"
                                              [value]="knobAt(i).audioLevelSource" (valueChange)="setKnob(i, 'audioLevelSource', $event)"></pc-light-target>
                           }
-                          <pc-mute-override-field [color]="knobAt(i).muteOverrideColor" (colorChange)="setKnob(i, 'muteOverrideColor', $event)"></pc-mute-override-field>
+                          <pc-mute-override-field [color]="knobAt(i).muteOverrideColor" (colorChange)="setKnob(i, 'muteOverrideColor', $event)"
+                                                  [target]="knobAt(i).muteOverrideDeviceOrFollow" (targetChange)="setKnob(i, 'muteOverrideDeviceOrFollow', $event)"></pc-mute-override-field>
                         }
                       </div>
                     </div>
@@ -190,7 +191,8 @@
                             <pc-light-target label="Level of" followLabel="What this control controls (else default speakers)"
                                              [value]="sliderAt(j).audioLevelSource" (valueChange)="setSlider(j, 'audioLevelSource', $event)"></pc-light-target>
                           }
-                            <pc-mute-override-field [color]="sliderAt(j).muteOverrideColor" (colorChange)="setSlider(j, 'muteOverrideColor', $event)"></pc-mute-override-field>
+                          <pc-mute-override-field [color]="sliderAt(j).muteOverrideColor" (colorChange)="setSlider(j, 'muteOverrideColor', $event)"
+                                                  [target]="sliderAt(j).muteOverrideDeviceOrFollow" (targetChange)="setSlider(j, 'muteOverrideDeviceOrFollow', $event)"></pc-mute-override-field>
                           }
                         </div>
                       </div>
@@ -211,7 +213,8 @@
                             <pc-color-picker label="Color" [value]="sliderLabelAt(j).color" (valueChange)="setSliderLabel(j, 'color', $event)"></pc-color-picker>
                           }
                           @if (sliderLabelUiMode(j) !== 'off') {
-                            <pc-mute-override-field [color]="sliderLabelAt(j).muteOverrideColor" (colorChange)="setSliderLabel(j, 'muteOverrideColor', $event)"></pc-mute-override-field>
+                            <pc-mute-override-field [color]="sliderLabelAt(j).muteOverrideColor" (colorChange)="setSliderLabel(j, 'muteOverrideColor', $event)"
+                                                  [target]="sliderLabelAt(j).muteOverrideDeviceOrFollow" (targetChange)="setSliderLabel(j, 'muteOverrideDeviceOrFollow', $event)"></pc-mute-override-field>
                           }
                         </div>
                       </div>

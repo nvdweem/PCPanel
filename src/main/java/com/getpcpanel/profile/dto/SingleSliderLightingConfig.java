@@ -23,6 +23,8 @@ public class SingleSliderLightingConfig {
     public void set(SingleSliderLightingConfig c) {
         color1 = c.color1;
         color2 = c.color2;
+        muteOverrideColor = c.muteOverrideColor;
+        muteOverrideDeviceOrFollow = c.muteOverrideDeviceOrFollow;
         audioLevelSource = c.audioLevelSource;
         mode = c.mode;
     }

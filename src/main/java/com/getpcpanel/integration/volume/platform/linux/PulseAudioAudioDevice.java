@@ -21,6 +21,12 @@ class PulseAudioAudioDevice extends AudioDevice {
         dataflow(isOutput ? DataFlow.dfRender : DataFlow.dfCapture);
     }
 
+    /** The volume and mute state as read from pactl, without announcing a change. */
+    void state(float volume, boolean muted) {
+        volume(volume);
+        muted(muted);
+    }
+
     public boolean isDefaultOutput() {
         return isDefault && isOutput;
     }

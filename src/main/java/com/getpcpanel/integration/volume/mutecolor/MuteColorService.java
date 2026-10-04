@@ -203,7 +203,7 @@ class MuteColorService implements IOverrideColorProviderProvider {
         return new Commands(all, dial.getType());
     }
 
-    /** Applies/clears overrides for one device's controls from its lighting config + per-control
+    /** Applies/clears overrides for every control from its lighting config + per-control
      *  (dial + mute-button) assignments; returns whether any control's override colour changed.
      *  Package-visible for unit testing. */
     boolean applyOverrides(String serial, LightingConfig lc, Map<Integer, Commands> dialData) {
@@ -213,9 +213,10 @@ class MuteColorService implements IOverrideColorProviderProvider {
         var knobLen = knobConfigs.length;
         var changed = false;
 
-        for (var entry : dialData.entrySet()) {
-            var idx = entry.getKey();
-            var command = entry.getValue();
+        // Every control, not only those with an action: a muted colour that follows a fixed device or app needs none.
+        var count = knobLen + Math.max(sliderConfigs.length, labelConfigs.length);
+        for (var idx = 0; idx < count; idx++) {
+            var command = dialData.getOrDefault(idx, Commands.EMPTY);
             if (idx < knobLen) {
                 changed |= applyDial(serial, idx, knobConfigs[idx], command);
             } else {

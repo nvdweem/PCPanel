@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.integration.voicemeeter.VoiceMeeterMuteResolver;
+import com.getpcpanel.integration.volume.platform.AudioDevice;
 import com.getpcpanel.integration.volume.platform.ISndCtrl;
 
 import jakarta.annotation.Priority;
@@ -29,14 +30,13 @@ class NamedDeviceMuteResolver implements MuteStateResolver {
         if (FOLLOW.equals(target) || StringUtils.isBlank(target)) {
             return Optional.empty();
         }
-        if (VoiceMeeterMuteResolver.VM_PATTERN.matcher(target).matches()) {
+        if (target.startsWith(ProcessMuteResolver.APP_PREFIX) || VoiceMeeterMuteResolver.VM_PATTERN.matcher(target).matches()) {
             return Optional.empty();
         }
-        for (var device : sndCtrl.devices()) {
-            if (StringUtils.containsIgnoreCase(device.name(), target)) {
-                return Optional.of(device.muted());
-            }
-        }
-        return Optional.empty();
+        // An exact name first: Wave Link names a virtual device after the mic it carries, so the mic's name is part of it.
+        var devices = sndCtrl.devices();
+        return devices.stream().filter(d -> StringUtils.equalsIgnoreCase(d.name(), target)).findFirst()
+                      .or(() -> devices.stream().filter(d -> StringUtils.containsIgnoreCase(d.name(), target)).findFirst())
+                      .map(AudioDevice::muted);
     }
 }

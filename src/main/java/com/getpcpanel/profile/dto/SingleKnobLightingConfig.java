@@ -26,6 +26,7 @@ public class SingleKnobLightingConfig {
         color1 = c.color1;
         color2 = c.color2;
         muteOverrideColor = c.muteOverrideColor;
+        muteOverrideDeviceOrFollow = c.muteOverrideDeviceOrFollow;
         audioLevelSource = c.audioLevelSource;
         mode = c.mode;
     }
