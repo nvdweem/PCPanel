@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
@@ -110,17 +112,28 @@ class ProcessHelperTest {
     @Test
     void launchLeavesTheEnvironmentAlone(@TempDir Path dir) throws Exception {
         var file = dir.resolve("env.txt");
+        var before = aliveChildren();
 
         sut.launch(FakeProcess.command("env-to-file", "LC_ALL", file.toString()));
 
-        assertEquals(ownValue("LC_ALL"), awaitFile(file));
+        try {
+            assertEquals(ownValue("LC_ALL"), awaitFile(file));
+        } finally {
+            awaitExitOfChildrenSince(before);
+        }
     }
 
     @Test
     void launchInRunsInThatDirectory(@TempDir Path dir) throws Exception {
+        var before = aliveChildren();
+
         sut.launch(dir.toFile(), FakeProcess.command("env-to-file", "LC_ALL", "relative.txt"));
 
-        assertEquals(ownValue("LC_ALL"), awaitFile(dir.resolve("relative.txt")));
+        try {
+            assertEquals(ownValue("LC_ALL"), awaitFile(dir.resolve("relative.txt")));
+        } finally {
+            awaitExitOfChildrenSince(before);
+        }
     }
 
     @Test
@@ -165,5 +178,28 @@ class ProcessHelperTest {
             Thread.sleep(50);
         }
         throw new AssertionError("the launched process never wrote " + file);
+    }
+
+    /**
+     * Waits for every process started since {@code before} (and anything it started) to exit. {@link ProcessHelper#launch}
+     * doesn't wait, and on Windows a running process keeps its working directory and open files from being deleted,
+     * so the {@code @TempDir} cleanup would otherwise race the launched process's shutdown.
+     */
+    private static void awaitExitOfChildrenSince(Set<Long> before) throws Exception {
+        var launched = ProcessHandle.current().children().filter(child -> !before.contains(child.pid())).toList();
+        var processes = new ArrayList<ProcessHandle>();
+        for (var child : launched) {
+            child.descendants().forEach(processes::add);
+            processes.add(child);
+        }
+        var deadline = System.nanoTime() + CALL_BUDGET.toNanos();
+        for (var process : processes) {
+            try {
+                process.onExit().get(Math.max(0, deadline - System.nanoTime()), TimeUnit.NANOSECONDS);
+            } catch (TimeoutException e) {
+                processes.forEach(ProcessHandle::destroyForcibly);
+                throw new AssertionError("the launched process " + process.pid() + " did not exit", e);
+            }
+        }
     }
 }
