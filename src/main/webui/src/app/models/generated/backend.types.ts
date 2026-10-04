@@ -451,6 +451,7 @@ export interface CommandVolumeProcess extends CommandVolume, DialAction, LevelRe
 
 export interface CommandVolumeProcessMute extends CommandVolume, ButtonAction {
     _type: "volume.process-mute";
+    device?: string;
     muteType: MuteType;
     processName: string[];
 }

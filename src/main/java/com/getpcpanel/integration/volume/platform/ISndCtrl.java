@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Nullable;
+
 public interface ISndCtrl {
     Map<String, AudioDevice> getDevicesMap();
 
@@ -26,6 +28,14 @@ public interface ISndCtrl {
     void setFocusVolume(float volume);
 
     void muteProcesses(Set<String> fileName, MuteType mute);
+
+    /**
+     * Mutes the apps only where they play on {@code device}; blank or {@code *} is every device, as
+     * {@link #muteProcesses(Set, MuteType)}. Platforms without per-device app sessions (macOS) ignore the device.
+     */
+    default void muteProcesses(Set<String> fileName, @Nullable String device, MuteType mute) {
+        muteProcesses(fileName, mute);
+    }
 
     String getFocusApplication();
 

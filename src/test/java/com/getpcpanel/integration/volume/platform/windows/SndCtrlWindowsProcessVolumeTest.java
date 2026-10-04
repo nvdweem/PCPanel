@@ -4,10 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
 import com.getpcpanel.integration.volume.platform.DataFlow;
+import com.getpcpanel.integration.volume.platform.MuteType;
 
 /**
  * Which sessions an App-volume action reaches. No device (the default) reaches the app on every output, as on Linux
@@ -36,6 +38,33 @@ class SndCtrlWindowsProcessVolumeTest {
         assertEquals(List.of(BROWSERS_ID + ":2"), snd.set);
     }
 
+    @Test
+    void muteWithoutADeviceReachesEveryDevice() {
+        var snd = withEdgeOnTwoDevices();
+
+        snd.muteProcesses(Set.of("msedge.exe"), MuteType.mute);
+
+        assertEquals(List.of(GAME_ID + ":1", BROWSERS_ID + ":2"), snd.muted);
+    }
+
+    @Test
+    void muteOnAChosenDeviceStaysScoped() {
+        var snd = withEdgeOnTwoDevices();
+
+        snd.muteProcesses(Set.of("msedge.exe"), BROWSERS_ID, MuteType.mute);
+
+        assertEquals(List.of(BROWSERS_ID + ":2"), snd.muted);
+    }
+
+    @Test
+    void muteOnTheDefaultDeviceFollowsTheDefault() {
+        var snd = withEdgeOnTwoDevices();
+
+        snd.muteProcesses(Set.of("msedge.exe"), "default", MuteType.mute);
+
+        assertEquals(List.of(GAME_ID + ":1"), snd.muted);
+    }
+
     private static RecordingSndCtrl withEdgeOnTwoDevices() {
         var snd = new RecordingSndCtrl();
         var game = (WindowsAudioDevice) snd.deviceAdded("Game (Elgato Virtual Audio)", GAME_ID, 1f, false, DataFlow.dfRender.ordinal());
@@ -50,6 +79,12 @@ class SndCtrlWindowsProcessVolumeTest {
     /** Records the sessions the real class would hand to the DLL, so no native library is needed. */
     private static final class RecordingSndCtrl extends SndCtrlWindows {
         private final List<String> set = new ArrayList<>();
+        private final List<String> muted = new ArrayList<>();
+
+        @Override
+        public void muteProcess(WindowsAudioSession session, MuteType mute) {
+            muted.add(session.device().id() + ":" + session.pid());
+        }
 
         @Override
         public void setProcessVolume(WindowsAudioSession session, float volume) {

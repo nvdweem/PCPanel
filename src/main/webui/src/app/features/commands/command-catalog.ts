@@ -96,9 +96,10 @@ const FIELD_DEFS: FieldDef_[] = [
   },
   {
     type: P + 'CommandVolumeProcessMute',
-    buildEmpty: () => ({ _type: P + 'CommandVolumeProcessMute', muteType: 'toggle', processName: [], overlayText: '' }),
+    buildEmpty: () => ({ _type: P + 'CommandVolumeProcessMute', muteType: 'toggle', processName: [], device: '', overlayText: '' }),
     fields: [
       { kind: 'apps', key: 'processName', label: 'Applications', everythingElse: true },
+      { kind: 'device', key: 'device', label: 'Audio device', filter: 'output', defaultLabel: 'All devices' },
       { kind: 'mute', key: 'muteType', label: 'Action' },
     ],
   },

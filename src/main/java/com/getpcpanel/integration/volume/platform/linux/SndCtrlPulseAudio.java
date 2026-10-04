@@ -344,9 +344,16 @@ class SndCtrlPulseAudio implements ISndCtrl {
 
     @Override
     public void muteProcesses(Set<String> fileName, MuteType mute) {
+        muteProcesses(fileName, null, mute);
+    }
+
+    @Override
+    public void muteProcesses(Set<String> fileName, @Nullable String device, MuteType mute) {
+        // Blank or "*" is every output, as for App volume; otherwise only the app's streams on that output.
+        var anyDevice = StringUtils.isBlank(device) || "*".equals(device);
         Set<PulseAudioAudioSession> todo;
         synchronized (sessions) {
-            todo = allSessions().filter(s -> matchesAny(s, fileName)).toSet();
+            todo = allSessions().filter(s -> matchesAny(s, fileName) && (anyDevice || device.equals(s.deviceId()))).toSet();
         }
         todo.forEach(s -> cmd.muteSession(s.index(), mute));
     }

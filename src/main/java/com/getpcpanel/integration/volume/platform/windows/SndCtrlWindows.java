@@ -230,11 +230,19 @@ public class SndCtrlWindows implements ISndCtrl {
 
     @Override
     public void muteProcesses(Set<String> fileName, MuteType mute) {
+        muteProcesses(fileName, null, mute);
+    }
+
+    @Override
+    public void muteProcesses(Set<String> fileName, @Nullable String device, MuteType mute) {
         var lcFileNames = StreamEx.of(fileName).map(String::toLowerCase).toImmutableSet();
         var systemSounds = lcFileNames.contains(AudioSession.SYSTEM.toLowerCase());
+        // No device is every device; "default" (as App volume saves it) is the current default output.
+        var everywhere = StringUtils.isBlank(device) || "*".equals(device);
+        var deviceId = everywhere ? null : defaultDeviceOnEmpty(device);
         List<WindowsAudioSession> targets;
         synchronized (devices) {
-            targets = StreamEx.ofValues(devices).flatCollection(d -> d.getSessions().values())
+            targets = StreamEx.ofValues(devices).filter(d -> everywhere || StringUtils.equals(deviceId, d.id())).flatCollection(d -> d.getSessions().values())
                     .filter(s -> (systemSounds && s.isSystemSounds())
                             || (s.executable() != null && (lcFileNames.contains(s.executable().getName().toLowerCase()) || lcFileNames.contains(s.executable().getAbsolutePath().toLowerCase()))))
                     .toList();
