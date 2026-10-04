@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -31,7 +32,7 @@ public class Profile {
     @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Commands> releaseButtonData = new HashMap<>();
     @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Commands> holdButtonData = new HashMap<>();
     @JsonDeserialize(using = CommandMapDeserializer.class) private Map<Integer, Commands> dialData = new HashMap<>();
-    @JsonDeserialize(using = KnobSettingMapDeserializer.class) private Map<Integer, KnobSetting> knobSettings = new HashMap<>();
+    @JsonDeserialize(using = KnobSettingMapDeserializer.class) private Map<Integer, KnobSetting> knobSettings = new ConcurrentHashMap<>();
     private LightingConfig lightingConfig;
     private boolean focusBackOnLost;
     private List<String> activateApplications = new ArrayList<>();
@@ -67,7 +68,19 @@ public class Profile {
         return name;
     }
 
+    /**
+     * A control's settings, created on first use. The map is concurrent because that first use can come from the
+     * input thread while a device snapshot is being serialised on another; a map read from the save file is
+     * swapped for a concurrent copy before the first insert.
+     */
     public KnobSetting getKnobSettings(int knob) {
+        if (!(knobSettings instanceof ConcurrentHashMap)) {
+            synchronized (this) {
+                if (!(knobSettings instanceof ConcurrentHashMap)) {
+                    knobSettings = new ConcurrentHashMap<>(knobSettings);
+                }
+            }
+        }
         return knobSettings.computeIfAbsent(knob, k -> new KnobSetting());
     }
 
