@@ -10,7 +10,9 @@ import com.getpcpanel.commands.meta.CommandCategory;
 import com.getpcpanel.commands.meta.CommandKind;
 import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.getpcpanel.integration.volume.EverythingElse;
 import com.getpcpanel.integration.volume.platform.MuteType;
+import com.getpcpanel.util.CdiHelper;
 
 import lombok.Getter;
 import lombok.ToString;
@@ -40,10 +42,11 @@ public class CommandVolumeProcess extends CommandVolume implements DialAction {
     @Override
     public void execute(DialActionParameters context) {
         var snd = getSndCtrl();
+        var targets = CdiHelper.getBean(EverythingElse.class).expand(processName);
         if (!context.initial() && unMuteOnVolumeChange) {
-            snd.muteProcesses(new HashSet<>(processName), MuteType.unmute);
+            snd.muteProcesses(new HashSet<>(targets), MuteType.unmute);
         }
-        processName.forEach(process -> snd.setProcessVolume(process, device, context.dial().getValue(this, 0, 1)));
+        targets.forEach(process -> snd.setProcessVolume(process, device, context.dial().getValue(this, 0, 1)));
     }
 
     @Override

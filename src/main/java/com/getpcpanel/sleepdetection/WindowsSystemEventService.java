@@ -40,6 +40,7 @@ import lombok.extern.log4j.Log4j2;
 @WindowsBuild
 public class WindowsSystemEventService {
     private static final long LOCK_POLL_INTERVAL_MS = 1_000L;
+    private static final long DISPLAY_OFF_DELAY_MS = 500L;
     /** While falling back, re-try the WTS session-notification registration once per this many poll ticks. */
     private static final int SESSION_REGISTRATION_RETRY_TICKS = 5;
 
@@ -60,6 +61,26 @@ public class WindowsSystemEventService {
         lockPoller.setDaemon(true);
         lockPoller.start();
         log.info("Windows sleep/session detection started");
+    }
+
+    /**
+     * Puts the monitors to sleep. Waits a moment first, so the button release that triggered it is not the input
+     * that wakes them straight back up.
+     */
+    public void turnDisplaysOff() {
+        var t = new Thread(() -> {
+            try {
+                Thread.sleep(DISPLAY_OFF_DELAY_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+            if (!powerEventMonitor.postMonitorOff()) {
+                log.warn("Unable to turn the displays off: the helper window is not running");
+            }
+        }, "displays-off");
+        t.setDaemon(true);
+        t.start();
     }
 
     @PreDestroy

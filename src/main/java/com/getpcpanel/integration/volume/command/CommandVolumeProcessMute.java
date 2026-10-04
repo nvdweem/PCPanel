@@ -8,7 +8,9 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.getpcpanel.commands.meta.CommandCategory;
 import com.getpcpanel.commands.meta.CommandKind;
 import com.getpcpanel.commands.meta.CommandMeta;
+import com.getpcpanel.integration.volume.EverythingElse;
 import com.getpcpanel.integration.volume.platform.MuteType;
+import com.getpcpanel.util.CdiHelper;
 
 import lombok.Getter;
 import lombok.ToString;
@@ -28,7 +30,7 @@ public class CommandVolumeProcessMute extends CommandVolume implements ButtonAct
 
     @Override
     public void execute() {
-        getSndCtrl().muteProcesses(processName, muteType);
+        getSndCtrl().muteProcesses(CdiHelper.getBean(EverythingElse.class).expand(processName), muteType);
     }
 
     @Override

@@ -20,6 +20,7 @@ import com.getpcpanel.integration.device.command.CommandBrightness;
 import com.getpcpanel.integration.program.command.CommandEndProgram;
 import com.getpcpanel.integration.output.command.CommandHttpRequest;
 import com.getpcpanel.integration.clipboard.command.CommandSetClipboard;
+import com.getpcpanel.integration.display.command.CommandDisplaysOff;
 import com.getpcpanel.integration.webui.command.CommandOpenWebUi;
 import com.getpcpanel.integration.keyboard.command.CommandKeystroke;
 import com.getpcpanel.integration.keyboard.command.CommandMedia;
@@ -238,6 +239,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         CommandMedia.class,
         VolumeButton.class,
         CommandSetClipboard.class,
+        CommandDisplaysOff.class,
         CommandOpenWebUi.class,
         CommandNoOp.class,
         CommandObs.class,

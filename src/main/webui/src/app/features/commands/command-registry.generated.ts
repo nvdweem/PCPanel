@@ -26,6 +26,7 @@ export const GENERATED_COMMANDS: GeneratedCommand[] = [
   { type: 'discord.self-deafen', label: 'Discord — deafen self', category: 'integration', kinds: ['button'], integration: 'discord', icon: 'volume-x', legacy: 'com.getpcpanel.discord.command.CommandDiscordSelfDeafen' },
   { type: 'discord.toggle-video', label: 'Discord — toggle camera', category: 'integration', kinds: ['button'], integration: 'discord', icon: 'film', legacy: 'com.getpcpanel.discord.command.CommandDiscordToggleVideo' },
   { type: 'discord.volume', label: 'Discord — volume', category: 'integration', kinds: ['dial'], integration: 'discord', icon: 'volume', legacy: 'com.getpcpanel.discord.command.CommandDiscordVolume' },
+  { type: 'display.off', label: 'Turn displays off', category: 'system', kinds: ['button'], icon: 'monitor' },
   { type: 'homeassistant.action', label: 'Home Assistant — perform action', category: 'integration', kinds: ['button'], integration: 'homeassistant', icon: 'zap', legacy: 'com.getpcpanel.homeassistant.command.CommandHomeAssistantAction' },
   { type: 'homeassistant.value', label: 'Home Assistant — set value', category: 'integration', kinds: ['dial'], integration: 'homeassistant', icon: 'sliders', legacy: 'com.getpcpanel.homeassistant.command.CommandHomeAssistantValue' },
   { type: 'keyboard.keystroke', label: 'Keystroke', category: 'system', kinds: ['button'], icon: 'keyboard', legacy: 'com.getpcpanel.commands.command.CommandKeystroke' },

@@ -27,7 +27,8 @@ export type FieldDef = (
   | { kind: 'toggle'; key: string; label: string }
   | { kind: 'select'; key: string; label: string; options: { value: string; label: string }[] }
   | { kind: 'select-live'; key: string; label: string; source: LiveSource; searchable?: boolean }
-  | { kind: 'apps'; key: string; label: string; single?: boolean }  // single: pick exactly one app (still stored as a 1-element array)
+  // everythingElse: offers the app groups "All apps", "All apps without their own control" and "All apps except the focused one"
+  | { kind: 'apps'; key: string; label: string; single?: boolean; everythingElse?: boolean }  // single: pick exactly one app (still stored as a 1-element array)
   // defaultLabel: adds a selectable empty option (e.g. "Default device") for commands where blank = the default
   // byName: stores the device's *name* and accepts free text, which the backend matches on part of a name
   | { kind: 'device'; key: string; label: string; filter?: 'output' | 'input' | 'all'; defaultLabel?: string; byName?: boolean }
@@ -76,7 +77,7 @@ const FIELD_DEFS: FieldDef_[] = [
     type: P + 'CommandVolumeProcess',
     buildEmpty: () => ({ _type: P + 'CommandVolumeProcess', device: '', processName: [], unMuteOnVolumeChange: false, dialParams: dialParams(), invert: false }),
     fields: [
-      { kind: 'apps', key: 'processName', label: 'Applications' },
+      { kind: 'apps', key: 'processName', label: 'Applications', everythingElse: true },
       { kind: 'toggle', key: 'unMuteOnVolumeChange', label: 'Unmute on volume change' },
     ],
   },
@@ -84,7 +85,7 @@ const FIELD_DEFS: FieldDef_[] = [
     type: P + 'CommandVolumeProcessMute',
     buildEmpty: () => ({ _type: P + 'CommandVolumeProcessMute', muteType: 'toggle', processName: [], overlayText: '' }),
     fields: [
-      { kind: 'apps', key: 'processName', label: 'Applications' },
+      { kind: 'apps', key: 'processName', label: 'Applications', everythingElse: true },
       { kind: 'mute', key: 'muteType', label: 'Action' },
     ],
   },
@@ -426,6 +427,11 @@ const FIELD_DEFS: FieldDef_[] = [
     fields: [
       { kind: 'text', key: 'text', label: 'Text', placeholder: 'Text to copy to the clipboard' },
     ],
+  },
+  {
+    type: 'display.off',
+    buildEmpty: () => ({ _type: 'display.off' }),
+    fields: [],
   },
   {
     type: 'webui.open',

@@ -10,6 +10,9 @@ export interface VoiceMeeterParams { name: string; params: string[]; }
 
 /** The name the backend matches for the Windows System Sounds audio session (AudioSession.SYSTEM). */
 const SYSTEM_SOUNDS = 'System Sounds';
+const UNCONTROLLED_APPS = 'All apps without their own control';
+const ALL_APPS = 'All apps';
+const ALL_BUT_FOCUSED = 'All apps except the focused one';
 
 /**
  * Live data sources for the command editor's dropdowns and pickers. Wraps the
@@ -99,6 +102,11 @@ export class IntegrationDataService {
     out.unshift({ key: SYSTEM_SOUNDS, label: SYSTEM_SOUNDS, icon: sysIcon });
     return out;
   });
+
+  /** App targets for App volume / App mute: the app groups (must match EverythingElse.TOKEN, FOCUS_TOKEN and ALL_TOKEN) and the running apps. */
+  readonly volumeTargetItems = computed<PickerItem[]>(() =>
+    [{ key: ALL_APPS, label: ALL_APPS, sub: 'GROUP' }, { key: UNCONTROLLED_APPS, label: UNCONTROLLED_APPS, sub: 'GROUP' }, { key: ALL_BUT_FOCUSED, label: ALL_BUT_FOCUSED, sub: 'GROUP' },
+     ...this.processItems()]);
 
   /** Audio devices as picker items, tagged OUTPUT/INPUT. */
   readonly deviceItems = computed<PickerItem[]>(() =>

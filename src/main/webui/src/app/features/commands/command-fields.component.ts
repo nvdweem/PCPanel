@@ -126,7 +126,7 @@ type Cmd = Record<string, any>;
                              [cdkConnectedOverlayHasBackdrop]="true" cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
                              [cdkConnectedOverlayWidth]="300" [cdkConnectedOverlayOffsetY]="6"
                              (backdropClick)="appsOpen.set(null)" (detach)="appsOpen.set(null)">
-                  <pc-app-picker [items]="data.processItems()" [multi]="!$any(f).single"
+                  <pc-app-picker [items]="$any(f).everythingElse ? data.volumeTargetItems() : data.processItems()" [multi]="!$any(f).single"
                                  [value]="asArray($any(f).key)" (valueChange)="set($any(f).key, $event)"
                                  (picked)="appsOpen.set(null)"></pc-app-picker>
                 </ng-template>

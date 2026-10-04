@@ -64,6 +64,10 @@ public class WindowsPowerEventMonitor {
 
     private static final int WM_DESTROY = 0x0002;
     private static final int WM_CLOSE = 0x0010;
+    private static final int WM_SYSCOMMAND = 0x0112;
+    private static final int SC_MONITORPOWER = 0xF170;
+    /** {@code SC_MONITORPOWER} argument: 2 = the display is being shut off. */
+    private static final int MONITOR_OFF = 2;
     private static final int WM_POWERBROADCAST = 0x0218;
     private static final int WM_WTSSESSION_CHANGE = 0x02B1;
     private static final int PBT_APMSUSPEND = 0x0004;
@@ -133,6 +137,19 @@ public class WindowsPowerEventMonitor {
         thread = new Thread(this::run, "windows-power-event-monitor");
         thread.setDaemon(true);
         thread.start();
+    }
+
+    /**
+     * Puts the monitors to sleep: {@code SC_MONITORPOWER} posted to this window, whose default handling performs it.
+     * Returns false while the window does not exist.
+     */
+    public boolean postMonitorOff() {
+        var h = hwnd;
+        if (h == null) {
+            return false;
+        }
+        User32.INSTANCE.PostMessage(h, WM_SYSCOMMAND, new WPARAM(SC_MONITORPOWER), new LPARAM(MONITOR_OFF));
+        return true;
     }
 
     public void stop() {

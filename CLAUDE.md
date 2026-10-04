@@ -398,7 +398,7 @@ lines), which remains out of scope — defeating a same-user attacker on a deskt
 `integration/obs/` (OBS websocket), `voicemeeter/` (JNA), `wavelink/` + `dev/niels/wavelink/` (Elgato
 Wave Link RPC client), `osc/`, `mqtt/` (Eclipse Paho mqttv5), `homeassistant/`, `discord/` +
 `dev/niels/discord/`, `sonar/` + `re/walk/sonar/` (SteelSeries Sonar HTTP client, Windows-only); plus the
-feature families `volume/`, `keyboard/`, `program/`, `analogbands/`, `profile/`, and `device/` (the
+feature families `volume/`, `keyboard/`, `program/`, `analogbands/`, `display/`, `profile/`, and `device/` (the
 brightness command only). Each owns its `command/` + `CommandModule` and (where applicable) its REST,
 SPI impls, and service. The on-screen volume overlay lives in `integration/volume/overlay/`: a Win32 JNA
 layered window on Windows (`Win32VolumeOverlay`) and a
