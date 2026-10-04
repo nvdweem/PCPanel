@@ -73,18 +73,17 @@
             }
             <div class="row">
               <div class="row-text">
-                <div class="row-label">Focus volume skips controlled apps</div>
-                <div class="row-sub">When the focused app is already controlled elsewhere — an App-volume action on another control, or a Wave Link channel — the focused-app volume dial leaves it alone.</div>
-              </div>
-              <pc-toggle [value]="s.skipControlledFocusApps" (valueChange)="patch('skipControlledFocusApps', $event)"></pc-toggle>
-            </div>
-            <div class="row">
-              <div class="row-text">
                 <div class="row-label">Lights off when locked or asleep</div>
                 <div class="row-sub">Switch the panel lights off when you lock the PC, the monitors go to sleep or the PC suspends — and back on when you return. Turn this off if your lights ever switch off when they shouldn't; the lights still turn off when the app closes.</div>
               </div>
               <pc-toggle [value]="s.sleepDetectionEnabled" (valueChange)="patch('sleepDetectionEnabled', $event)"></pc-toggle>
             </div>
+          </div>
+
+          <div class="divider"></div>
+          <div class="micro-label section-label">UPDATES</div>
+
+          <div class="pc-card pad stack">
             <div class="row">
               <div class="row-text"><div class="row-label">Check for updates on startup</div></div>
               <pc-toggle [value]="s.startupVersionCheck" (valueChange)="patch('startupVersionCheck', $event)"></pc-toggle>
@@ -107,12 +106,42 @@
                            (valueChange)="patch('autoUpdate', $event)"></pc-toggle>
               </div>
             }
+          </div>
+
+          <div class="divider"></div>
+          <div class="micro-label section-label">VOLUME</div>
+
+          <div class="pc-card pad stack">
+            <div class="row">
+              <div class="row-text">
+                <div class="row-label">Focus volume skips controlled apps</div>
+                <div class="row-sub">When the focused app is already controlled elsewhere — an App-volume action on another control, or a Wave Link channel — the focused-app volume dial leaves it alone.</div>
+              </div>
+              <pc-toggle [value]="s.skipControlledFocusApps" (valueChange)="patch('skipControlledFocusApps', $event)"></pc-toggle>
+            </div>
+            <div class="row">
+              <div class="row-text">
+                <div class="row-label">Force volume</div>
+                <div class="row-sub">Linux only — keep re-applying the knob's volume when an app re-opens its audio session, not just when it first appears. Fixes apps that reset their own volume.</div>
+              </div>
+              <pc-toggle [value]="s.forceVolume" (valueChange)="patch('forceVolume', $event)"></pc-toggle>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+          <div class="micro-label section-label">CONTROLS</div>
+
+          <div class="pc-card pad stack">
             <div class="row">
               <div class="row-text"><div class="row-label">Double-click interval</div><div class="row-sub">milliseconds</div></div>
               <div class="pc-field num-field">
                 <input class="pc-field-input" type="number" min="0" [value]="s.dblClickInterval ?? 0"
                        (input)="patchNum('dblClickInterval', $any($event.target).value)">
               </div>
+            </div>
+            <div class="row">
+              <div class="row-text"><div class="row-label">Prevent click when double-click</div></div>
+              <pc-toggle [value]="s.preventClickWhenDblClick" (valueChange)="patch('preventClickWhenDblClick', $event)"></pc-toggle>
             </div>
           </div>
 
@@ -137,17 +166,6 @@
             <div class="row">
               <div class="row-text"><div class="row-label">Send only on change</div><div class="row-sub">suppress unchanged values</div></div>
               <pc-toggle [value]="sendOnlyOnChange()" (valueChange)="setSendOnlyOnChange($event)"></pc-toggle>
-            </div>
-            <div class="row">
-              <div class="row-text">
-                <div class="row-label">Force volume</div>
-                <div class="row-sub">Linux only — keep re-applying the knob's volume when an app re-opens its audio session, not just when it first appears. Fixes apps that reset their own volume.</div>
-              </div>
-              <pc-toggle [value]="s.forceVolume" (valueChange)="patch('forceVolume', $event)"></pc-toggle>
-            </div>
-            <div class="row">
-              <div class="row-text"><div class="row-label">Prevent click when double-click</div></div>
-              <pc-toggle [value]="s.preventClickWhenDblClick" (valueChange)="patch('preventClickWhenDblClick', $event)"></pc-toggle>
             </div>
             <div class="row">
               <div class="row-text"><div class="row-label">Workarounds only on sliders</div></div>

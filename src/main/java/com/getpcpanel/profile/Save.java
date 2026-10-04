@@ -44,7 +44,7 @@ public class Save {
     private Map<String, DeviceSave> devices = new ConcurrentHashMap<>();
     /** Which template syntax the saved text fields are written for; see {@code TemplateSaveMigration}. */
     private int templateVersion = TemplateSaveMigration.CURRENT_VERSION;
-    private boolean mainUIIcons;
+    private boolean mainUIIcons = true;
     /** Open the UI in the default browser every time the app starts. Default off — PCPanel runs in the
      *  tray and the UI is opened on demand; a first run and an installer launch open it regardless. */
     private boolean openBrowserOnStartup;
