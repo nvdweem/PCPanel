@@ -78,6 +78,14 @@
               </div>
               <pc-toggle [value]="s.sleepDetectionEnabled" (valueChange)="patch('sleepDetectionEnabled', $event)"></pc-toggle>
             </div>
+            <div class="row">
+              <div class="row-text">
+                <div class="row-label">Start-up animation</div>
+                <div class="row-sub">A short light show when the panel connects, before your own lighting comes on.</div>
+              </div>
+              <button class="pc-btn ghost" (click)="previewStartupAnimation()"><pc-icon name="play" [size]="13"></pc-icon> Preview</button>
+              <pc-toggle [value]="s.startupAnimation" (valueChange)="patch('startupAnimation', $event)"></pc-toggle>
+            </div>
           </div>
 
           <div class="divider"></div>
@@ -1031,6 +1039,16 @@
         <!-- ── DEBUG ───────────────────────────────────────────────────────── -->
         @case ('debug') {
           <h2 class="page-title">Debug</h2>
+          <div class="pc-card pad stack">
+            <div class="row">
+              <div class="row-text">
+                <div class="row-label">Test my panel</div>
+                <div class="row-sub">Checks every light, knob, slider and button in about a minute. Your volumes don't change while it runs.</div>
+              </div>
+              <button class="pc-btn" (click)="panelTestOpen.set(true)"><pc-icon name="play" [size]="13"></pc-icon> Test</button>
+            </div>
+          </div>
+
           <div class="pc-hint platform-note">Frontend-only — affects how devices render in this UI. The backend and the physical device are untouched.</div>
           <div class="pc-card pad stack">
             <div class="row">
@@ -1125,6 +1143,8 @@
       </div>
     </div>
   </pc-modal>
+
+  <pc-panel-test [(open)]="panelTestOpen"></pc-panel-test>
 
   <pc-modal [open]="backupPendingRestore() !== null" heading="Restore this backup?" [width]="440" (dismiss)="backupPendingRestore.set(null)">
     <div class="leave-body">

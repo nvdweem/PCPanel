@@ -898,6 +898,7 @@ export interface SettingsDto {
     sliderRollingAverage?: number;
     softTakeoverKnobs: boolean;
     softTakeoverSliders: boolean;
+    startupAnimation: boolean;
     startupVersionCheck: boolean;
     voicemeeterEnabled: boolean;
     voicemeeterPath: string;

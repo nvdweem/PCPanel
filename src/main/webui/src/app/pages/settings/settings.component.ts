@@ -25,6 +25,7 @@ import { CurveEditorComponent } from '../../features/curves/curve-editor.compone
 import { CurveGraphComponent } from '../../features/curves/curve-graph.component';
 import { BUILT_IN_DEFAULTS, isBuiltIn } from '../../features/curves/curve.util';
 import { OverlayPreviewRenderer, overlayPreviewStyle } from './overlay-preview';
+import { PanelTestComponent } from '../../features/panel-test/panel-test.component';
 
 type Cmd = Record<string, any>;
 type TabId = 'general' | 'curves' | 'focusoverride' | 'obs' | 'voicemeeter' | 'wavelink' | 'discord' | 'osc' | 'mqtt' | 'homeassistant' | 'sonar' | 'overlay' | 'debug';
@@ -37,7 +38,7 @@ interface TabDef { id: TabId; label: string; integration?: 'obs' | 'voicemeeter'
     IconComponent, StatusDotComponent, SpinnerComponent, ToggleComponent,
     SegmentedComponent, SliderComponent, ColorPickerComponent, ModalComponent, SelectComponent,
     OverlayModule, AppPickerComponent, CommandPickerComponent, CommandFieldsComponent,
-    CurveEditorComponent, CurveGraphComponent,
+    CurveEditorComponent, CurveGraphComponent, PanelTestComponent,
   ],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.scss',
@@ -756,6 +757,15 @@ export class SettingsComponent {
 
   removeNewAppException(app: string): void {
     this.patch('newAppsAtDialLevelExceptions', (this.local()?.newAppsAtDialLevelExceptions ?? []).filter(a => a !== app));
+  }
+
+  // ── Panel test & start-up animation ───────────────────────────────────────
+  readonly panelTestOpen = signal(false);
+
+  previewStartupAnimation(): void {
+    this.http.post<void>('/api/panel-test/startup-animation', {}).subscribe({
+      error: () => this.toast.show('Could not play the animation', { kind: 'error' }),
+    });
   }
 
   // ── Backups ────────────────────────────────────────────────────────────────

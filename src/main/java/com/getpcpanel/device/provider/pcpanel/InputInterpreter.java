@@ -1,6 +1,9 @@
 package com.getpcpanel.device.provider.pcpanel;
 
 import com.getpcpanel.device.DeviceHolder;
+import com.getpcpanel.device.PanelTestService;
+
+import javax.annotation.Nullable;
 import com.getpcpanel.commands.DialValue;
 
 import static com.getpcpanel.commands.Commands.hasCommands;
@@ -47,6 +50,10 @@ public final class InputInterpreter {
     CurveService curves;
     @Inject
     SoftTakeover takeover;
+    /** Null only in tests that build the interpreter by hand. */
+    @Inject
+    @Nullable
+    PanelTestService panelTest;
     private final Map<ClickId, Long> lastClicks = new HashMap<>();
     /** Buttons pressed while they had a hold action, whose press is not decided yet. */
     private final Set<ClickId> holdArmed = new HashSet<>();
@@ -57,6 +64,9 @@ public final class InputInterpreter {
         devices.getDevice(event.serialNum()).ifPresent(device -> {
             var value = event.value();
             device.setKnobRotation(event.knob(), value);
+            if (panelTest != null && panelTest.isTesting(event.serialNum())) {
+                return; // a panel test follows the controls without acting on them
+            }
             var settings = save.getProfile(event.serialNum()).map(p -> baseLayer.effectiveKnobSetting(event.serialNum(), p, event.knob())).orElse(null);
             doDialAction(event.serialNum(), event.initial(), event.knob(), new DialValue(settings, curves.forControl(settings), value));
         });
@@ -64,6 +74,9 @@ public final class InputInterpreter {
 
         public void onButtonPress(@Observes DeviceCommunicationHandler.ButtonPressEvent event) throws IOException {
         devices.getDevice(event.serialNum()).ifPresent(device -> device.setButtonPressed(event.button(), event.pressed()));
+        if (panelTest != null && panelTest.isTesting(event.serialNum())) {
+            return;
+        }
         if (event.pressed()) {
             doPress(event.serialNum(), event.button());
         } else {

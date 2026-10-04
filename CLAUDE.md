@@ -322,6 +322,20 @@ README next to the fixtures. The main thing this guards is the `_type` discrimin
 fully-qualified class names (`JsonTypeInfo.Id.CLASS`), which today are accepted only because each
 command lists them in `@CommandMeta.legacyIds`.
 
+**Light overrides and light shows:** per-control colours that change at runtime are `IOverrideColorProvider`s
+aggregated by `OverrideColorService` (`@Priority` descending, first hit wins): notification lights
+(`alerts/AlertService`, 50) above mute colours (`MuteColorService`, 0) above stepped-switch positions (-100) above the
+*Audio level* light mode (`integration/volume/level/AudioLevelLightService`, -200). They are only consulted in
+`CUSTOM` lighting. `device/lightshow/LightShow` plays frame-by-frame animations (start-up animation, panel self-test)
+as temporary, never-saved `CUSTOM` configs and holds every override back for that device while it runs, then
+restores what was showing. The Windows peak meter (`WindowsAudioLevelMeter`) is raw JNA COM on the light service's
+own MTA thread, deliberately apart from `SndCtrl.dll`.
+
+**Input gating:** `InputInterpreter` is where a reading becomes actions. `SoftTakeover` drops `LevelReadable` dial
+actions whose target changed elsewhere until the control reaches it (`TakeoverPendingEvent` drives the overlay
+hint); `PanelTestService` swallows all actions of a device under test; a button with *Hold* actions is decided on
+release or after `Save.holdInterval`.
+
 **Frontend bridge (`rest/`):** the **shared** JAX-RS + websocket bridge: `SettingsResource`,
 `PlatformResource`, `SystemResource`, `IconResource`/`ProcessResource` (the app/process picker, shared
 across features), `EventWebSocket` at `/ws/events`, `EventBroadcaster`, `LocalHttpGuard`, and the

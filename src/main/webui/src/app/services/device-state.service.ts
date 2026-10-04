@@ -45,6 +45,9 @@ export class DeviceStateService implements OnDestroy {
    */
   readonly ready = signal(false);
 
+  /** The most recent physical button press or release, for pages that follow the panel live (the panel test). */
+  readonly lastButton = signal<{ serial: string; button: number; pressed: boolean; at: number } | null>(null);
+
   readonly connected = signal(false);
   readonly reconnecting = signal(false);
   readonly lastError = signal<string | null>(null);
@@ -272,6 +275,7 @@ export class DeviceStateService implements OnDestroy {
         return true;
 
       case 'button_press':
+        this.lastButton.set({ serial: event.serial, button: event.button, pressed: event.pressed, at: Date.now() });
         return false;
     }
   }

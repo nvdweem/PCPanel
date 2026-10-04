@@ -71,6 +71,8 @@ public class Save {
     /** "No volume jumps" for knobs / sliders: after their target changed elsewhere, wait until the control reaches it. */
     private boolean softTakeoverKnobs;
     private boolean softTakeoverSliders;
+    /** Play a short light show when a device connects. */
+    private boolean startupAnimation;
     /** How long (ms) a button must stay down to run its hold actions instead of its press actions. */
     @Nullable private Long holdInterval;
     private boolean preventClickWhenDblClick = true;
