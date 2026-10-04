@@ -6,9 +6,11 @@ import com.getpcpanel.commands.curve.CurveService;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.Nullable;
 
@@ -32,7 +34,10 @@ import lombok.extern.log4j.Log4j2;
  * <p>When several brightness controls exist, one is chosen deterministically — preferring a logarithmic
  * curve (finer low-end control), then the lowest analog index — so the behaviour is predictable.
  *
- * <p>The {@code OptionalInt} is empty when no brightness control is configured, in which case the saved
+ * <p>A button can set the brightness too ({@link #setButtonBrightness}, from "Run dial actions at a level"): that value wins
+ * until the brightness dial on the same device moves again ({@link #clearButtonBrightness}). It lives in memory only.
+ *
+ * <p>The {@code OptionalInt} is empty when neither a button nor a brightness control sets it, in which case the saved
  * {@code globalBrightness} is used as before.
  */
 @Log4j2
@@ -44,9 +49,24 @@ public class BrightnessService {
     DeviceHolder devices;
     @Inject
     CurveService curves;
+    private final Map<String, Integer> buttonBrightness = new ConcurrentHashMap<>();
 
-    /** The runtime global brightness (0-100) for a device, or empty when no analog input controls it. */
+    /** Sets the device's brightness (0-100) from a button; it wins over the brightness dial until that moves. */
+    public void setButtonBrightness(String serial, int percent) {
+        buttonBrightness.put(serial, Math.clamp(percent, 0, 100));
+    }
+
+    /** Hands the device's brightness back to its brightness dial (or the saved value). */
+    public void clearButtonBrightness(String serial) {
+        buttonBrightness.remove(serial);
+    }
+
+    /** The runtime global brightness (0-100) for a device, or empty when neither a button nor an analog input sets it. */
     public OptionalInt runtimeBrightness(String serial) {
+        var fromButton = buttonBrightness.get(serial);
+        if (fromButton != null) {
+            return OptionalInt.of(fromButton);
+        }
         if (saveService == null || saveService.get() == null) {
             return OptionalInt.empty();
         }

@@ -17,6 +17,7 @@ import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.integration.analogbands.command.CommandAnalogBands;
 import com.getpcpanel.integration.analogbands.command.CommandStepActions;
 import com.getpcpanel.integration.device.command.CommandBrightness;
+import com.getpcpanel.integration.dialvalue.command.CommandSetDialValue;
 import com.getpcpanel.integration.program.command.CommandEndProgram;
 import com.getpcpanel.integration.output.command.CommandHttpRequest;
 import com.getpcpanel.integration.clipboard.command.CommandSetClipboard;
@@ -237,6 +238,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         CommandAnalogBands.class,
         CommandStepActions.class,
         CommandBrightness.class,
+        CommandSetDialValue.class,
         CommandEndProgram.class,
         CommandKeystroke.class,
         CommandMedia.class,

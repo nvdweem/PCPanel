@@ -32,6 +32,11 @@ public record TemplateScope(
         return new TemplateScope(serial, control, button, commands, dial, value, name);
     }
 
+    /** This scope with {@code dial} as its analog value, for actions run as if a dial stood there; the control is kept. */
+    public TemplateScope withDial(DialValue dial) {
+        return new TemplateScope(serial, control, button, commands, dial, value, name);
+    }
+
     public TemplateScope withName(@Nullable Supplier<String> name) {
         return new TemplateScope(serial, control, button, commands, dial, value, name);
     }

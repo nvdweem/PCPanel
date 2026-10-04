@@ -24,7 +24,9 @@ export type FieldDef = (
   | { kind: 'text'; key: string; label: string; placeholder?: string; mono?: boolean; template?: boolean }
   | { kind: 'textarea'; key: string; label: string; placeholder?: string; rows?: number; template?: boolean }
   | { kind: 'number'; key: string; label: string; min?: number; max?: number }
-  | { kind: 'toggle'; key: string; label: string }
+  | { kind: 'percent'; key: string; label: string }    // 0–100: number box beside a slider
+  // enabledWhenReadable: the toggle is disabled unless an action in the nested Commands under this key has a readable level
+  | { kind: 'toggle'; key: string; label: string; enabledWhenReadable?: string }
   | { kind: 'select'; key: string; label: string; options: { value: string; label: string }[] }
   | { kind: 'select-live'; key: string; label: string; source: LiveSource; searchable?: boolean }
   // everythingElse: offers the app groups "All apps", "All apps without their own control" and "All apps except the focused one"
@@ -40,6 +42,7 @@ export type FieldDef = (
   | { kind: 'displays'; key: string }          // CommandDisplaysOff: "All displays" (empty list) or monitor ids from /api/displays
   | { kind: 'analog-bands' }                    // CommandAnalogBands: ordered ranges, each with a colour + nested action
   | { kind: 'step-actions' }                    // CommandStepActions: step size + nested up/down actions
+  | { kind: 'nested-commands'; key: string; label: string; commandKind: CommandKind }  // a Commands list of actions of one kind
 ) & { showWhen?: { key: string; equals: string } };
 
 export interface CommandDef {
@@ -49,6 +52,7 @@ export interface CommandDef {
   kinds: CommandKind[];
   integration?: Integration;
   icon: IconName;
+  levelReadable?: boolean;
   buildEmpty: () => Record<string, any>;
   fields: FieldDef[];
 }
@@ -151,6 +155,15 @@ const FIELD_DEFS: FieldDef_[] = [
     type: P + 'CommandBrightness',
     buildEmpty: () => ({ _type: P + 'CommandBrightness', dialParams: dialParams(), invert: false }),
     fields: [],
+  },
+  {
+    type: 'dial.set-value',
+    buildEmpty: () => ({ _type: 'dial.set-value', value: 0, commands: { commands: [], type: 'allAtOnce' }, toggleBack: false }),
+    fields: [
+      { kind: 'percent', key: 'value', label: 'Value' },
+      { kind: 'nested-commands', key: 'commands', label: 'Dial actions to run at this value', commandKind: 'dial' },
+      { kind: 'toggle', key: 'toggleBack', label: 'Toggle back on the next press', enabledWhenReadable: 'commands' },
+    ],
   },
   {
     type: P + 'CommandProfile',
@@ -462,6 +475,14 @@ export const COMMANDS: CommandDef[] = GENERATED_COMMANDS.map(g => {
 });
 
 export const COMMAND_BY_TYPE = new Map(COMMANDS.map(c => [c.type, c]));
+
+/**
+ * Whether "Run dial actions at a level" can read the current level of an action of this type: brightness (the device's
+ * runtime brightness) or a dial action implementing LevelReadable.
+ */
+export function isLevelReadable(type: string | undefined): boolean {
+  return type === 'device.brightness' || !!(type && COMMAND_BY_TYPE.get(type)?.levelReadable);
+}
 
 export function commandsForKind(kind: CommandKind): CommandDef[] {
   return COMMANDS.filter(c => c.kinds.includes(kind));

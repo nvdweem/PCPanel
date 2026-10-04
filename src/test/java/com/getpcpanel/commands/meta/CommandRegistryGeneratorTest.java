@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.getpcpanel.commands.command.Command;
+import com.getpcpanel.commands.command.LevelReadable;
 
 /**
  * Generates the frontend command registry from the {@link CommandMeta} annotations and guards that the
@@ -71,7 +72,7 @@ class CommandRegistryGeneratorTest {
                 var typeName = c.getAnnotation(JsonTypeName.class);
                 assertTrue(typeName != null && !typeName.value().isBlank(),
                         () -> c.getName() + " has @CommandMeta but no @JsonTypeName id");
-                result.add(new Entry(typeName.value(), meta));
+                result.add(new Entry(typeName.value(), meta, LevelReadable.class.isAssignableFrom(c)));
             }
         }
         result.sort(Comparator.comparing(Entry::type));
@@ -86,7 +87,8 @@ class CommandRegistryGeneratorTest {
         sb.append("import type { CommandCategory, CommandKind, Integration } from './command-catalog';\n\n");
         sb.append("export interface GeneratedCommand {\n");
         sb.append("  type: string;\n  label: string;\n  category: CommandCategory;\n");
-        sb.append("  kinds: CommandKind[];\n  integration?: Integration;\n  icon: IconName;\n  /** previous _type id(s) for joining hand-written field schemas keyed by the old id */\n  legacy?: string;\n}\n\n");
+        sb.append("  kinds: CommandKind[];\n  integration?: Integration;\n  icon: IconName;\n  /** previous _type id(s) for joining hand-written field schemas keyed by the old id */\n  legacy?: string;\n");
+        sb.append("  /** the action's current level can be read back (LevelReadable) */\n  levelReadable?: boolean;\n}\n\n");
         sb.append("export const GENERATED_COMMANDS: GeneratedCommand[] = [\n");
         for (var e : entries) {
             sb.append("  { type: ").append(q(e.type()));
@@ -108,6 +110,9 @@ class CommandRegistryGeneratorTest {
             if (e.meta().legacyIds().length > 0) {
                 sb.append(", legacy: ").append(q(e.meta().legacyIds()[0]));
             }
+            if (e.levelReadable()) {
+                sb.append(", levelReadable: true");
+            }
             sb.append(" },\n");
         }
         sb.append("];\n");
@@ -122,6 +127,6 @@ class CommandRegistryGeneratorTest {
         return "'" + s.replace("\\", "\\\\").replace("'", "\\'") + "'";
     }
 
-    private record Entry(String type, CommandMeta meta) {
+    private record Entry(String type, CommandMeta meta, boolean levelReadable) {
     }
 }

@@ -10,6 +10,7 @@ import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.util.CdiHelper;
 import com.getpcpanel.device.DeviceHolder;
+import com.getpcpanel.integration.device.BrightnessService;
 
 import lombok.Getter;
 import lombok.ToString;
@@ -33,7 +34,10 @@ public class CommandBrightness extends Command implements DialAction {
         // Global brightness is now a runtime override resolved from this control's live position in the
         // lighting output path (BrightnessService): it wins over the saved per-profile value and survives
         // profile switches. Turning the dial just re-applies the current lighting so the new brightness
-        // shows; nothing is persisted.
+        // shows; nothing is persisted. Moving the dial takes over from a brightness a button set.
+        if (!context.initial()) {
+            CdiHelper.getBean(BrightnessService.class).clearButtonBrightness(context.device());
+        }
         CdiHelper.getBean(DeviceHolder.class).getDevice(context.device())
                  .ifPresent(device -> device.setLighting(device.lightingConfig(), false));
     }

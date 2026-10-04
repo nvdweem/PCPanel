@@ -49,6 +49,7 @@ com.getpcpanel
 │   ├── program/              #   command/ + IPlatformCommand (per-OS exec/kill backend)
 │   ├── device/               #   ONLY the brightness command module (command/) — the device HAL is separate
 │   ├── analogbands/  profile/                                  # former "core" command families
+│   ├── dialvalue/            #   "Run dial actions at a level": a button runs dial actions at a fixed value
 │   └── obs/ voicemeeter/ wavelink/ discord/ homeassistant/ mqtt/ osc/   # external connectors
 │         # each: command/(+CommandModule), rest/(+dto), Mute/Icon SPI impls, service/client
 │

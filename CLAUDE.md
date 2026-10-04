@@ -252,6 +252,10 @@ engine — `Command`, the `Dial/Button/DeviceAction` SPIs, `CommandDispatcher`, 
 `CommandMedia`, `integration.obs.command.CommandObs`. Commands are JSON-polymorphic (`@JsonTypeName`
 ids, decentralized registry — see `docs/feature-module-structure.md`) and part of the generated TS
 contract. **A package is an `integration` only if it provides commands** — providers/HAL/infra are not.
+A button action that needs to know its device implements `DeviceAction` instead of `ButtonAction`
+(`Command.toRunnable` hands it the serial); the control it runs for (index, button or dial) is
+`TemplateContext.current()`, which `PCPanelControlEvent.buildRunnable()` sets around every action.
+A command that runs other commands implements `NestedCommands`, so `IntegrationUseNotifier` reaches them.
 
 **Response curves (`commands/curve/`):** how far a control moves → how much output, applied by
 `DialValueCalculator` **before** trim and invert. A `Curve` maps 0..1 → 0..1 and comes in two shapes:

@@ -735,24 +735,33 @@
           },
           "35" : {
             "commands" : [ {
-              "_type" : "display.off"
+              "_type" : "dial.set-value",
+              "value" : 100,
+              "commands" : null,
+              "toggleBack" : true
             } ],
             "type" : "allAtOnce"
           },
           "36" : {
             "commands" : [ {
-              "_type" : "sonar.mute",
-              "channel" : "Master",
-              "mix" : "monitoring",
-              "muteType" : "unmute"
+              "_type" : "display.off"
             } ],
             "type" : "allAtOnce"
           },
           "37" : {
             "commands" : [ {
+              "_type" : "sonar.mute",
+              "channel" : "Game",
+              "mix" : "streaming",
+              "muteType" : "toggle"
+            } ],
+            "type" : "allAtOnce"
+          },
+          "38" : {
+            "commands" : [ {
               "_type" : "volume.app-output",
-              "processName" : [ "arg0-138", "arg0-139" ],
-              "device" : "arg1-140"
+              "processName" : [ "arg0-139", "arg0-140" ],
+              "device" : "arg1-141"
             } ],
             "type" : "allAtOnce"
           }
@@ -1095,13 +1104,13 @@
           "20" : {
             "commands" : [ {
               "_type" : "sonar.volume",
-              "channel" : "Mic",
-              "mix" : "monitoring",
+              "channel" : "Media",
+              "mix" : "streaming",
               "unMuteOnVolumeChange" : true,
               "dialParams" : {
                 "invert" : true,
-                "moveStart" : 136,
-                "moveEnd" : 137
+                "moveStart" : 137,
+                "moveEnd" : 138
               },
               "invert" : true
             } ],

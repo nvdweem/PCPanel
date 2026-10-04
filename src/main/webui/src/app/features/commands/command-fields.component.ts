@@ -2,14 +2,14 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, input, mo
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { RouterLink } from '@angular/router';
-import { CommandDef, COMMAND_BY_TYPE, FieldDef, LiveSource } from './command-catalog';
+import { CommandDef, COMMAND_BY_TYPE, FieldDef, isLevelReadable, LiveSource } from './command-catalog';
 import { CommandPickerComponent } from './command-picker.component';
 import { mappingCurve, TrimRange } from './mapping-curve.util';
 import { IntegrationDataService } from './integration-data.service';
 import { CurveDefinition } from '../../models/generated/backend.types';
 import {
   AppPickerComponent, ColorPickerComponent, IconComponent, IconName, KeyRecorderComponent, SegmentedComponent,
-  SelectComponent, SelectOption, TemplateInputComponent, ToggleComponent,
+  SelectComponent, SelectOption, SliderComponent, TemplateInputComponent, ToggleComponent,
 } from '../../ui';
 import { TemplateContext } from '../../services/template.service';
 
@@ -24,7 +24,7 @@ type Cmd = Record<string, any>;
   selector: 'pc-command-fields',
   standalone: true,
   // Self-referenced (CommandFieldsComponent) so each stepped-switch band can host a nested action editor.
-  imports: [OverlayModule, DragDropModule, RouterLink, IconComponent, ToggleComponent, SelectComponent, AppPickerComponent, KeyRecorderComponent, SegmentedComponent, ColorPickerComponent, TemplateInputComponent, CommandFieldsComponent, CommandPickerComponent],
+  imports: [OverlayModule, DragDropModule, RouterLink, IconComponent, ToggleComponent, SelectComponent, AppPickerComponent, KeyRecorderComponent, SegmentedComponent, ColorPickerComponent, SliderComponent, TemplateInputComponent, CommandFieldsComponent, CommandPickerComponent],
   template: `
     <div class="fields">
       @for (f of visibleFields(); track f.kind + ($any(f).key || '')) {
@@ -75,10 +75,20 @@ type Cmd = Record<string, any>;
                      [value]="val($any(f).key)" (input)="set($any(f).key, +$any($event.target).value)">
             </div>
           }
+          @case ('percent') {
+            <div class="field-block">
+              <div class="flabel">{{ $any(f).label }}</div>
+              <div class="percent-row">
+                <pc-slider [value]="val($any(f).key) ?? 0" [min]="0" [max]="100" (valueChange)="set($any(f).key, $event)"></pc-slider>
+                <input class="pc-input mono percent-input" type="number" min="0" max="100"
+                       [value]="val($any(f).key) ?? 0" (input)="set($any(f).key, clamp(+$any($event.target).value))">
+              </div>
+            </div>
+          }
           @case ('toggle') {
             <div class="row-between">
               <span class="rlabel">{{ $any(f).label }}</span>
-              <pc-toggle [value]="!!val($any(f).key)" (valueChange)="set($any(f).key, $event)"></pc-toggle>
+              <pc-toggle [value]="!!val($any(f).key)" [disabled]="toggleDisabled($any(f))" (valueChange)="set($any(f).key, $event)"></pc-toggle>
             </div>
           }
           @case ('select') {
@@ -249,28 +259,53 @@ type Cmd = Record<string, any>;
               @for (side of stepSides; track side.key) {
                 <div class="field-block">
                   <div class="flabel">{{ side.label }}</div>
-                  @if (stepCmds(side.key).length) {
+                  @if (nestedCmds(side.key).length) {
                     <div class="band-actions">
-                      @for (cmd of stepCmds(side.key); track $index; let ci = $index) {
+                      @for (cmd of nestedCmds(side.key); track $index; let ci = $index) {
                         <div class="band-action-item" [class.expanded]="bandExpanded() === side.key + ':' + ci">
-                          <div class="bai-head" (click)="toggleStepAction(side.key, ci)">
+                          <div class="bai-head" (click)="toggleNestedCmd(side.key, ci)">
                             <pc-icon class="bai-icon" [name]="bandCmdIcon(cmd)" [size]="13"></pc-icon>
                             <span class="bai-name">{{ bandCmdLabel(cmd) }}</span>
                             <pc-icon class="bai-chev" [name]="bandExpanded() === side.key + ':' + ci ? 'chevron-up' : 'chevron-down'" [size]="13"></pc-icon>
-                            <button class="bai-del" (click)="$event.stopPropagation(); removeStepCmd(side.key, ci)"><pc-icon name="trash" [size]="12"></pc-icon></button>
+                            <button class="bai-del" (click)="$event.stopPropagation(); removeNestedCmd(side.key, ci)"><pc-icon name="trash" [size]="12"></pc-icon></button>
                           </div>
                           @if (bandExpanded() === side.key + ':' + ci && bandCmdDef(cmd); as cdef) {
                             <div class="bai-body">
-                              <pc-command-fields [def]="cdef" [command]="cmd" (commandChange)="setStepCmd(side.key, ci, $event)" [profiles]="profiles()" [templateContext]="templateContext()"></pc-command-fields>
+                              <pc-command-fields [def]="cdef" [command]="cmd" (commandChange)="setNestedCmd(side.key, ci, $event)" [profiles]="profiles()" [templateContext]="templateContext()"></pc-command-fields>
                             </div>
                           }
                         </div>
                       }
                     </div>
                   }
-                  <pc-command-picker kind="button" triggerLabel="Add action" variant="subtle" (pick)="addStepCmd(side.key, $event)"></pc-command-picker>
+                  <pc-command-picker kind="button" triggerLabel="Add action" variant="subtle" (pick)="addNestedCmd(side.key, $event)"></pc-command-picker>
                 </div>
               }
+            </div>
+          }
+          @case ('nested-commands') {
+            <div class="field-block">
+              <div class="flabel">{{ $any(f).label }}</div>
+              @if (nestedCmds($any(f).key).length) {
+                <div class="band-actions">
+                  @for (cmd of nestedCmds($any(f).key); track $index; let ci = $index) {
+                    <div class="band-action-item" [class.expanded]="bandExpanded() === $any(f).key + ':' + ci">
+                      <div class="bai-head" (click)="toggleNestedCmd($any(f).key, ci)">
+                        <pc-icon class="bai-icon" [name]="bandCmdIcon(cmd)" [size]="13"></pc-icon>
+                        <span class="bai-name">{{ bandCmdLabel(cmd) }}</span>
+                        <pc-icon class="bai-chev" [name]="bandExpanded() === $any(f).key + ':' + ci ? 'chevron-up' : 'chevron-down'" [size]="13"></pc-icon>
+                        <button class="bai-del" (click)="$event.stopPropagation(); removeNestedCmd($any(f).key, ci)"><pc-icon name="trash" [size]="12"></pc-icon></button>
+                      </div>
+                      @if (bandExpanded() === $any(f).key + ':' + ci && bandCmdDef(cmd); as cdef) {
+                        <div class="bai-body">
+                          <pc-command-fields [def]="cdef" [command]="cmd" (commandChange)="setNestedCmd($any(f).key, ci, $event)" [profiles]="profiles()" [templateContext]="templateContext()"></pc-command-fields>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+              <pc-command-picker [kind]="$any(f).commandKind" triggerLabel="Add action" variant="subtle" (pick)="addNestedCmd($any(f).key, $event)"></pc-command-picker>
             </div>
           }
         }
@@ -328,6 +363,8 @@ type Cmd = Record<string, any>;
     .field-block { display: flex; flex-direction: column; }
     .flabel { font-size: 11.5px; color: var(--text-2); margin-bottom: 8px; }
     .row-between { display: flex; align-items: center; justify-content: space-between; }
+    .percent-row { display: flex; align-items: center; gap: 12px; }
+    .percent-input { width: 72px; flex: none; }
     .rlabel { font-size: 12.5px; color: var(--text-soft); }
     .chips { display: flex; gap: 8px; flex-wrap: wrap; }
     .displays { gap: 10px; }
@@ -629,36 +666,45 @@ export class CommandFieldsComponent {
   }
 
   // ── per-step actions ───────────────────────────────────────────────────────
-  // Same nested action list as a band, once for each direction; expansion shares bandExpanded keyed "{side}:{cmdIndex}".
+  // Same nested action list as a band, once for each direction.
   readonly stepSides = [
     { key: 'up' as const, label: 'Actions per step up' },
     { key: 'down' as const, label: 'Actions per step down' },
   ];
 
-  stepCmds(side: 'up' | 'down'): Cmd[] { const c = this.command()[side]?.commands; return Array.isArray(c) ? c : []; }
+  // ── nested action lists ────────────────────────────────────────────────────
+  // A Commands value ({ commands: [...], type }) under `key`: the per-step sides and "Run dial actions at a level"'s actions.
+  // Expansion shares bandExpanded keyed "{key}:{cmdIndex}".
+  nestedCmds(key: string): Cmd[] { const c = this.command()[key]?.commands; return Array.isArray(c) ? c : []; }
 
-  private setStepCmds(side: 'up' | 'down', cmds: Cmd[]): void {
-    this.set(side, { commands: cmds, type: this.command()[side]?.type ?? 'allAtOnce' });
+  private setNestedCmds(key: string, cmds: Cmd[]): void {
+    this.set(key, { commands: cmds, type: this.command()[key]?.type ?? 'allAtOnce' });
   }
 
-  toggleStepAction(side: 'up' | 'down', cmdIdx: number): void {
-    const key = side + ':' + cmdIdx;
-    this.bandExpanded.set(this.bandExpanded() === key ? null : key);
+  toggleNestedCmd(key: string, cmdIdx: number): void {
+    const k = key + ':' + cmdIdx;
+    this.bandExpanded.set(this.bandExpanded() === k ? null : k);
   }
 
-  addStepCmd(side: 'up' | 'down', def: CommandDef): void {
-    const cmds = [...this.stepCmds(side), def.buildEmpty() as Cmd];
-    this.setStepCmds(side, cmds);
-    this.bandExpanded.set(side + ':' + (cmds.length - 1));
+  addNestedCmd(key: string, def: CommandDef): void {
+    const cmds = [...this.nestedCmds(key), def.buildEmpty() as Cmd];
+    this.setNestedCmds(key, cmds);
+    this.bandExpanded.set(key + ':' + (cmds.length - 1));
   }
 
-  removeStepCmd(side: 'up' | 'down', j: number): void {
-    this.setStepCmds(side, this.stepCmds(side).filter((_, k) => k !== j));
+  removeNestedCmd(key: string, j: number): void {
+    this.setNestedCmds(key, this.nestedCmds(key).filter((_, k) => k !== j));
   }
 
-  setStepCmd(side: 'up' | 'down', j: number, cmd: Cmd): void {
-    this.setStepCmds(side, this.stepCmds(side).map((c, k) => k === j ? cmd : c));
+  setNestedCmd(key: string, j: number, cmd: Cmd): void {
+    this.setNestedCmds(key, this.nestedCmds(key).map((c, k) => k === j ? cmd : c));
   }
+
+  toggleDisabled(f: { enabledWhenReadable?: string }): boolean {
+    return !!f.enabledWhenReadable && !this.nestedCmds(f.enabledWhenReadable).some(c => isLevelReadable(c?.['_type']));
+  }
+
+  readonly clamp = clamp;
 }
 
 function clamp(v: number): number { return Math.max(0, Math.min(100, v ?? 0)); }

@@ -12,6 +12,8 @@ export interface GeneratedCommand {
   icon: IconName;
   /** previous _type id(s) for joining hand-written field schemas keyed by the old id */
   legacy?: string;
+  /** the action's current level can be read back (LevelReadable) */
+  levelReadable?: boolean;
 }
 
 export const GENERATED_COMMANDS: GeneratedCommand[] = [
@@ -19,6 +21,7 @@ export const GENERATED_COMMANDS: GeneratedCommand[] = [
   { type: 'analogbands.steps', label: 'Action per step', category: 'system', kinds: ['dial'], icon: 'sliders' },
   { type: 'clipboard.set', label: 'Set clipboard', category: 'system', kinds: ['button'], icon: 'clipboard' },
   { type: 'device.brightness', label: 'Brightness', category: 'system', kinds: ['dial'], icon: 'sun', legacy: 'com.getpcpanel.commands.command.CommandBrightness' },
+  { type: 'dial.set-value', label: 'Run dial actions at a level', category: 'system', kinds: ['button'], icon: 'sliders' },
   { type: 'discord.join-voice', label: 'Discord — join voice', category: 'integration', kinds: ['button'], integration: 'discord', icon: 'plug', legacy: 'com.getpcpanel.discord.command.CommandDiscordJoinVoice' },
   { type: 'discord.leave-voice', label: 'Discord — leave voice', category: 'integration', kinds: ['button'], integration: 'discord', icon: 'log-out', legacy: 'com.getpcpanel.discord.command.CommandDiscordLeaveVoice' },
   { type: 'discord.mute', label: 'Discord — mute', category: 'integration', kinds: ['button'], integration: 'discord', icon: 'mic-off', legacy: 'com.getpcpanel.discord.command.CommandDiscordMute' },
@@ -50,11 +53,11 @@ export const GENERATED_COMMANDS: GeneratedCommand[] = [
   { type: 'volume.default-device', label: 'Set default device', category: 'audio', kinds: ['button'], icon: 'monitor', legacy: 'com.getpcpanel.commands.command.CommandVolumeDefaultDevice' },
   { type: 'volume.default-device-advanced', label: 'Advanced default device', category: 'audio', kinds: ['button'], icon: 'monitor', legacy: 'com.getpcpanel.commands.command.CommandVolumeDefaultDeviceAdvanced' },
   { type: 'volume.default-device-toggle', label: 'Cycle default device', category: 'audio', kinds: ['button'], icon: 'refresh', legacy: 'com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggle' },
-  { type: 'volume.device', label: 'Device volume', category: 'audio', kinds: ['dial'], icon: 'volume', legacy: 'com.getpcpanel.commands.command.CommandVolumeDevice' },
+  { type: 'volume.device', label: 'Device volume', category: 'audio', kinds: ['dial'], icon: 'volume', legacy: 'com.getpcpanel.commands.command.CommandVolumeDevice', levelReadable: true },
   { type: 'volume.device-mute', label: 'Device mute', category: 'audio', kinds: ['button'], icon: 'volume-x', legacy: 'com.getpcpanel.commands.command.CommandVolumeDeviceMute' },
-  { type: 'volume.focus', label: 'Focused-app volume', category: 'audio', kinds: ['dial'], icon: 'volume', legacy: 'com.getpcpanel.commands.command.CommandVolumeFocus' },
+  { type: 'volume.focus', label: 'Focused-app volume', category: 'audio', kinds: ['dial'], icon: 'volume', legacy: 'com.getpcpanel.commands.command.CommandVolumeFocus', levelReadable: true },
   { type: 'volume.focus-mute', label: 'Focused-app mute', category: 'audio', kinds: ['button'], icon: 'volume-x', legacy: 'com.getpcpanel.commands.command.CommandVolumeFocusMute' },
-  { type: 'volume.process', label: 'App volume', category: 'audio', kinds: ['dial'], icon: 'volume', legacy: 'com.getpcpanel.commands.command.CommandVolumeProcess' },
+  { type: 'volume.process', label: 'App volume', category: 'audio', kinds: ['dial'], icon: 'volume', legacy: 'com.getpcpanel.commands.command.CommandVolumeProcess', levelReadable: true },
   { type: 'volume.process-mute', label: 'App mute', category: 'audio', kinds: ['button'], icon: 'volume-x', legacy: 'com.getpcpanel.commands.command.CommandVolumeProcessMute' },
   { type: 'wavelink.add-focus-to-channel', label: 'Wave Link — add focused app', category: 'integration', kinds: ['button'], integration: 'wavelink', icon: 'plus', legacy: 'com.getpcpanel.wavelink.command.CommandWaveLinkAddFocusToChannel' },
   { type: 'wavelink.change-level', label: 'Wave Link — level', category: 'integration', kinds: ['dial'], integration: 'wavelink', icon: 'sliders', legacy: 'com.getpcpanel.wavelink.command.CommandWaveLinkChangeLevel' },

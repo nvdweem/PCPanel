@@ -96,7 +96,7 @@ export interface ClipboardCommandModule extends CommandModule {
 }
 
 export interface Command {
-    _type: "com.getpcpanel.commands.command.CommandNoOp" | "mqtt.publish" | "osc.send" | "output.http-request" | "analogbands.ranges" | "analogbands.steps" | "clipboard.set" | "device.brightness" | "discord.join-voice" | "discord.leave-voice" | "discord.mute" | "discord.screen-share" | "discord.self-deafen" | "com.getpcpanel.discord.command.CommandDiscordSelfInputVolume" | "com.getpcpanel.discord.command.CommandDiscordSelfMute" | "com.getpcpanel.discord.command.CommandDiscordSelfOutputVolume" | "discord.toggle-video" | "com.getpcpanel.discord.command.CommandDiscordUserMute" | "com.getpcpanel.discord.command.CommandDiscordUserVolume" | "discord.volume" | "display.off" | "homeassistant.action" | "homeassistant.value" | "keyboard.keystroke" | "keyboard.media" | "obs.action" | "obs.mute-source" | "obs.set-scene" | "obs.set-source-volume" | "profile.switch" | "program.end-program" | "program.run" | "program.shortcut" | "sonar.mute" | "sonar.volume" | "voicemeeter.advanced" | "voicemeeter.advanced-button" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasic" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton" | "volume.app-output" | "com.getpcpanel.commands.command.CommandVolumeApplicationDeviceToggle" | "volume.default-device" | "volume.default-device-advanced" | "volume.default-device-toggle" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggleAdvanced" | "volume.device" | "volume.device-mute" | "volume.focus" | "volume.focus-mute" | "volume.process" | "volume.process-mute" | "wavelink.add-focus-to-channel" | "wavelink.change-level" | "wavelink.change-mute" | "com.getpcpanel.wavelink.command.CommandWaveLinkChannelEffect" | "wavelink.main-output" | "webui.open";
+    _type: "com.getpcpanel.commands.command.CommandNoOp" | "mqtt.publish" | "osc.send" | "output.http-request" | "analogbands.ranges" | "analogbands.steps" | "clipboard.set" | "device.brightness" | "dial.set-value" | "discord.join-voice" | "discord.leave-voice" | "discord.mute" | "discord.screen-share" | "discord.self-deafen" | "com.getpcpanel.discord.command.CommandDiscordSelfInputVolume" | "com.getpcpanel.discord.command.CommandDiscordSelfMute" | "com.getpcpanel.discord.command.CommandDiscordSelfOutputVolume" | "discord.toggle-video" | "com.getpcpanel.discord.command.CommandDiscordUserMute" | "com.getpcpanel.discord.command.CommandDiscordUserVolume" | "discord.volume" | "display.off" | "homeassistant.action" | "homeassistant.value" | "keyboard.keystroke" | "keyboard.media" | "obs.action" | "obs.mute-source" | "obs.set-scene" | "obs.set-source-volume" | "profile.switch" | "program.end-program" | "program.run" | "program.shortcut" | "sonar.mute" | "sonar.volume" | "voicemeeter.advanced" | "voicemeeter.advanced-button" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasic" | "com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton" | "volume.app-output" | "com.getpcpanel.commands.command.CommandVolumeApplicationDeviceToggle" | "volume.default-device" | "volume.default-device-advanced" | "volume.default-device-toggle" | "com.getpcpanel.commands.command.CommandVolumeDefaultDeviceToggleAdvanced" | "volume.device" | "volume.device-mute" | "volume.focus" | "volume.focus-mute" | "volume.process" | "volume.process-mute" | "wavelink.add-focus-to-channel" | "wavelink.change-level" | "wavelink.change-mute" | "com.getpcpanel.wavelink.command.CommandWaveLinkChannelEffect" | "wavelink.main-output" | "webui.open";
 }
 
 export interface CommandAnalogBands extends Command, DialAction {
@@ -294,6 +294,13 @@ export interface Commands {
 export interface CommandSetClipboard extends Command, ButtonAction {
     _type: "clipboard.set";
     text: string;
+}
+
+export interface CommandSetDialValue extends Command, DeviceAction {
+    _type: "dial.set-value";
+    commands?: Commands;
+    toggleBack: boolean;
+    value: number;
 }
 
 export interface CommandShortcut extends Command, ButtonAction {
@@ -594,6 +601,9 @@ export interface DialValue {
 }
 
 export interface DialValueCalculator {
+}
+
+export interface DialValueCommandModule extends CommandModule {
 }
 
 export interface DigitalInputSpec {
