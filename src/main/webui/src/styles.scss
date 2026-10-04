@@ -175,6 +175,7 @@ input, textarea, select { font-family: inherit; }
 }
 .pc-icon-btn.sm { width: 30px; height: 30px; }
 .pc-icon-btn:hover { color: var(--text-1); background: #16181D; }
+.pc-icon-btn:disabled { opacity: 0.35; cursor: default; background: transparent; color: var(--text-3); }
 
 /* Text inputs */
 .pc-input {

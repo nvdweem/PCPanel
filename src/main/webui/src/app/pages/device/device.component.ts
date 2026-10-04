@@ -1,4 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal } from '@angular/core';
+import { HistoryButtonsComponent } from '../../features/history/history-buttons.component';
+import { HistoryService } from '../../services/history.service';
 import { Router } from '@angular/router';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
@@ -17,12 +19,13 @@ interface SlotLine { label: string; text: string; cls: string; }
 @Component({
   selector: 'app-device',
   standalone: true,
-  imports: [OverlayModule, DragDropModule, IconComponent, MenuComponent, ModalComponent, ToggleComponent, AppPickerComponent, BottomBarComponent],
+  imports: [HistoryButtonsComponent, OverlayModule, DragDropModule, IconComponent, MenuComponent, ModalComponent, ToggleComponent, AppPickerComponent, BottomBarComponent],
   templateUrl: './device.component.html',
   styleUrl: './device.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DeviceComponent {
+  private readonly history = inject(HistoryService);
   private readonly state = inject(DeviceStateService);
   private readonly deviceService = inject(DeviceService);
   private readonly integrations = inject(IntegrationDataService);
@@ -165,7 +168,7 @@ export class DeviceComponent {
       dblButton: { ...EMPTY },
       releaseButton: { ...EMPTY },
       holdButton: { ...EMPTY },
-    }).subscribe({ error: () => this.toast.show('Could not clear control', { kind: 'error' }) });
+    }).subscribe({ next: () => this.history.checkpoint(), error: () => this.toast.show('Could not clear control', { kind: 'error' }) });
   }
 
   /** Drag-reorder the profile chips; persist the new order (no WS echo for this). */

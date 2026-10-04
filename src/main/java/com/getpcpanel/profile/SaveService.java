@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.time.Clock;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -16,6 +18,8 @@ import javax.annotation.Nullable;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.getpcpanel.Json;
 import com.getpcpanel.device.provider.pcpanel.DescriptorFactory;
 import com.getpcpanel.device.provider.pcpanel.DeviceScanner;
@@ -47,6 +51,8 @@ import one.util.streamex.StreamEx;
 @ApplicationScoped
 public class SaveService {
     private static final String saveFileName = "profiles.json";
+    /** Undo steps kept. */
+    private static final int HISTORY = 30;
     @Inject Event<Object> eventBus;
     @Inject FileUtil fileUtil;
     @Inject Json json;
@@ -57,6 +63,18 @@ public class SaveService {
 
     private Save save;
     private SaveBackups backups;
+    private final Deque<String> undo = new ArrayDeque<>();
+    private final Deque<String> redo = new ArrayDeque<>();
+    /**
+     * Whether changes still join the current undo step. The UI closes it with {@link #checkpoint()} when the user moves
+     * away from what they were editing (another action, another page, a saved settings form), so editing five fields of
+     * one action is one step.
+     */
+    private boolean groupOpen;
+    /** A change is waiting for its debounced write (see {@link #debouncedSave()}). */
+    private volatile boolean unwritten;
+    /** What the last undo or redo changed, in a few words for the UI. */
+    private List<String> lastChange = List.of();
     private boolean isNew = false;
     private volatile boolean loadFailed;
 
@@ -98,7 +116,11 @@ public class SaveService {
 
     /** Reads and migrates a save file; flags an old-version read for {@link #handleOldVersionEncountered()}. */
     private Save read(File file) throws IOException {
-        var document = json.readTree(FileUtils.readFileToString(file, Charset.defaultCharset()));
+        return read(FileUtils.readFileToString(file, Charset.defaultCharset()));
+    }
+
+    private Save read(String text) {
+        var document = json.readTree(text);
         var migratedTemplates = templateMigration.migrate(document);
         var read = json.read(document, Save.class);
         var migratedProviderIds = migrateProviderIds(read);
@@ -128,17 +150,161 @@ public class SaveService {
             return false;
         }
         var restored = read(file.get());
-        oldVersionEncountered = null; // the restored file is rewritten below in the current format
         backups.snapshot(fileUtil.getFile(saveFileName));
+        push(undo, json.writePretty(save));
+        redo.clear();
+        apply(restored);
+        log.info("Restored configuration from backup {}", name);
+        return true;
+    }
+
+    /** The user moved away from what they were editing: the next change starts a new undo step. */
+    public void checkpoint() {
+        synchronized (this) {
+            writePending(); // the debounced write of the edit just finished still belongs to its step
+            groupOpen = false;
+        }
+        announceHistory();
+    }
+
+    /** A change still waiting for its write can be undone too: {@link #undo()} writes it first. */
+    public synchronized boolean canUndo() {
+        return !undo.isEmpty() || hasUnwrittenEdit();
+    }
+
+    /** An edit clears what there was to redo, also before it is written. */
+    public synchronized boolean canRedo() {
+        return !redo.isEmpty() && !hasUnwrittenEdit();
+    }
+
+    /** What the last {@link #undo()} or {@link #redo()} changed, such as {@code K3 actions · Gaming}. */
+    public synchronized List<String> lastChange() {
+        return lastChange;
+    }
+
+    /** Goes back to the configuration before the last change. */
+    public boolean undo() {
+        boolean done;
+        synchronized (this) {
+            done = step(undo, redo);
+        }
+        announceHistory();
+        return done;
+    }
+
+    /** Re-applies the change {@link #undo()} took back. */
+    public boolean redo() {
+        boolean done;
+        synchronized (this) {
+            done = step(redo, undo);
+        }
+        announceHistory();
+        return done;
+    }
+
+    /** Tells the UI what can be undone or redone now. */
+    private void announceHistory() {
+        eventBus.fire(new HistoryChangedEvent(canUndo(), canRedo()));
+    }
+
+    /** The in-memory configuration holds an edit (not just another active profile) that is not in the file yet. */
+    private boolean hasUnwrittenEdit() {
+        var saveFile = fileUtil.getFile(saveFileName);
+        if (!unwritten || save == null || !saveFile.isFile()) {
+            return false;
+        }
+        try {
+            var written = FileUtils.readFileToString(saveFile, Charset.defaultCharset());
+            return !withoutCurrentProfiles(written).equals(withoutCurrentProfiles(json.writePretty(save)));
+        } catch (IOException | RuntimeException e) {
+            return false;
+        }
+    }
+
+    private boolean step(Deque<String> from, Deque<String> to) {
+        writePending(); // a change still waiting for its debounced write is what the user wants undone
+        var target = from.pollFirst();
+        if (target == null) {
+            return false;
+        }
+        var now = json.writePretty(save);
+        push(to, now);
+        groupOpen = false;
+        try {
+            lastChange = HistoryChanges.describe(json.readTree(now), json.readTree(target));
+        } catch (RuntimeException e) {
+            lastChange = List.of();
+        }
+        var restored = read(target);
+        // Which profile is active is not part of the history: stay on the current one where it still exists.
+        save.getDevices().forEach((serial, current) -> {
+            var ds = restored.getDeviceSave(serial);
+            if (ds != null && ds.getProfile(current.getCurrentProfileName()).isPresent()) {
+                ds.setCurrentProfileName(current.getCurrentProfileName());
+            }
+        });
+        try {
+            apply(restored);
+        } catch (IOException e) {
+            log.error("Unable to write the configuration", e);
+        }
+        return true;
+    }
+
+    /**
+     * Makes {@code restored} the configuration and writes it, outside the undo history. Connected devices are
+     * re-announced so each is rebuilt on its restored {@link DeviceSave} (a {@link Device} holds its own reference)
+     * and relit.
+     */
+    private void apply(Save restored) throws IOException {
+        oldVersionEncountered = null; // the file is rewritten below in the current format
         save = restored;
         loadFailed = false;
         FileUtils.writeStringToFile(fileUtil.getFile(saveFileName), json.writePretty(save), Charset.defaultCharset());
-        log.info("Restored configuration from backup {}", name);
         for (var device : List.copyOf(devices.all())) {
             eventBus.fire(new DeviceScanner.DeviceConnectedEvent(device.getSerialNumber(), device.deviceType(), device.descriptor()));
         }
         eventBus.fire(new SaveEvent(save, false));
-        return true;
+    }
+
+    private static void push(Deque<String> stack, String state) {
+        stack.addFirst(state);
+        while (stack.size() > HISTORY) {
+            stack.removeLast();
+        }
+    }
+
+    /**
+     * Remembers the file as it was before this write, unless the write only switched profiles (not an edit anyone
+     * wants to undo) or continues the open group of changes (see {@link #groupOpen}).
+     */
+    private void recordHistory(File saveFile, String next) {
+        if (!saveFile.isFile()) {
+            return;
+        }
+        try {
+            var previous = FileUtils.readFileToString(saveFile, Charset.defaultCharset());
+            if (!withoutCurrentProfiles(previous).equals(withoutCurrentProfiles(next))) {
+                if (!groupOpen || undo.isEmpty()) {
+                    push(undo, previous); // the state before this group of changes
+                }
+                groupOpen = true;
+                redo.clear();
+            }
+        } catch (IOException | RuntimeException e) {
+            log.debug("Unable to record undo history", e);
+        }
+    }
+
+    private JsonNode withoutCurrentProfiles(String text) {
+        var tree = json.readTree(text);
+        var devicesNode = tree.path("devices");
+        devicesNode.forEach(d -> {
+            if (d instanceof ObjectNode o) {
+                o.remove("currentProfileName");
+            }
+        });
+        return tree;
     }
 
     /**
@@ -226,11 +392,30 @@ public class SaveService {
         }
     }
 
+    /** Writes the in-memory configuration now if it differs from the file, recording it in the history. */
+    private void writePending() {
+        var saveFile = fileUtil.getFile(saveFileName);
+        if (save == null || !saveFile.isFile()) {
+            return;
+        }
+        try {
+            var next = json.writePretty(save);
+            if (!next.equals(FileUtils.readFileToString(saveFile, Charset.defaultCharset()))) {
+                writeToFile();
+            }
+        } catch (IOException e) {
+            log.debug("Unable to compare the configuration with its file", e);
+        }
+    }
+
     private synchronized void writeToFile() { // Synchronized: a pending debounced save may run concurrently with the shutdown write
         var saveFile = fileUtil.getFile(saveFileName);
         backups.snapshotIfDue(saveFile);
         try {
-            FileUtils.writeStringToFile(saveFile, json.writePretty(save), Charset.defaultCharset());
+            var next = json.writePretty(save);
+            recordHistory(saveFile, next);
+            FileUtils.writeStringToFile(saveFile, next, Charset.defaultCharset());
+            unwritten = false;
             loadFailed = false; // The file now holds the in-memory state, so save-on-exit can no longer destroy anything
         } catch (IOException e) {
             log.error("Unable to save file", e);
@@ -287,9 +472,15 @@ public class SaveService {
     public void save() {
         writeToFile();
         eventBus.fire(new SaveEvent(save, false));
+        announceHistory();
     }
 
     public void debouncedSave() {
+        var first = !unwritten;
+        unwritten = true;
+        if (first) {
+            announceHistory(); // undo is available from the moment of the change, not from its write
+        }
         debouncer.debounce(this, this::save, 1, TimeUnit.SECONDS);
     }
 

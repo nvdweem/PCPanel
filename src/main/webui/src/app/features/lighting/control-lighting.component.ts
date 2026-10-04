@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { HistoryService } from '../../services/history.service';
 import { DeviceStateService } from '../../services/device-state.service';
 import { DeviceService } from '../../services/device.service';
 import {
@@ -90,6 +91,7 @@ const LABEL_DEFAULT: SingleSliderLabelLightingConfig = { mode: 'STATIC', color: 
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ControlLightingComponent {
+  private readonly history = inject(HistoryService);
   private readonly state = inject(DeviceStateService);
   private readonly deviceService = inject(DeviceService);
   private readonly toast = inject(ToastService);
@@ -122,11 +124,13 @@ export class ControlLightingComponent {
   ];
 
   constructor() {
+    inject(DestroyRef).onDestroy(this.history.registerPending(() => this.saveNow()));
     effect(() => {
       const s = this.snap();
-      const key = `${this.serial()}:${this.index()}`;
+      const key = `${this.serial()}:${this.index()}:${this.history.applied()}`;
       if (!s || key === this.loadedKey) return;
       this.loadedKey = key;
+      if (this.timer) clearTimeout(this.timer);
       untracked(() => this.config.set(JSON.parse(JSON.stringify(s.lightingConfig))));
     });
   }
@@ -136,10 +140,22 @@ export class ControlLightingComponent {
     if (!cur) return;
     this.config.set({ ...cur, ...part });
     if (this.timer) clearTimeout(this.timer);
-    this.timer = setTimeout(() => {
-      const cfg = this.config();
-      if (cfg) this.deviceService.setLighting(this.serial(), normalizeLogo(cfg)).subscribe({ error: () => this.toast.show('Could not save lighting', { kind: 'error' }) });
-    }, 350);
+    this.timer = setTimeout(() => this.flush(), 350);
+  }
+
+  /** Saves a pending edit at once (before an undo or redo); resolves whether there was one. */
+  private saveNow(): Promise<boolean> {
+    if (!this.timer) return Promise.resolve(false);
+    clearTimeout(this.timer);
+    return new Promise(resolve => this.flush(() => resolve(true), () => resolve(false)));
+  }
+
+  private flush(then?: () => void, failed?: () => void): void {
+    this.timer = undefined;
+    const cfg = this.config();
+    if (!cfg) { failed?.(); return; }
+    this.deviceService.setLighting(this.serial(), normalizeLogo(cfg))
+      .subscribe({ next: () => then?.(), error: () => { this.toast.show('Could not save lighting', { kind: 'error' }); failed?.(); } });
   }
 
   // ── knob ──────────────────────────────────────────────────────────────────

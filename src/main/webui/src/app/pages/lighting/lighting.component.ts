@@ -1,4 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { HistoryButtonsComponent } from '../../features/history/history-buttons.component';
+import { HistoryService } from '../../services/history.service';
 import { Router } from '@angular/router';
 import { SettingsService } from '../../services/settings.service';
 import { LINEAR_ID } from '../../features/curves/curve.util';
@@ -32,7 +34,7 @@ const isBlackHex = (c: string | undefined): boolean => !c || /^#?0{3,8}$/i.test(
 @Component({
   selector: 'app-lighting',
   standalone: true,
-  imports: [
+  imports: [HistoryButtonsComponent, 
     IconComponent, StatusDotComponent, SliderComponent, ToggleComponent, SegmentedComponent,
     SelectComponent, ColorPickerComponent, DeviceRendererComponent, BottomBarComponent, MuteOverrideFieldComponent,
     LightTargetComponent,
@@ -42,6 +44,7 @@ const isBlackHex = (c: string | undefined): boolean => !c || /^#?0{3,8}$/i.test(
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LightingComponent {
+  private readonly history = inject(HistoryService);
   private readonly state = inject(DeviceStateService);
   private readonly deviceService = inject(DeviceService);
   private readonly toast = inject(ToastService);
@@ -102,12 +105,13 @@ export class LightingComponent {
   ];
 
   constructor() {
+    inject(DestroyRef).onDestroy(this.history.registerPending(() => this.saveNow()));
     effect(() => {
       const s = this.snapshot();
       if (!s) return;
       // Re-seed per (serial, profile) — lighting is per-profile, so switching profiles must reload it.
       // Same-profile WS echoes keep the key stable, so live edits aren't clobbered.
-      const key = `${this.serial()}:${s.currentProfile}`;
+      const key = `${this.serial()}:${s.currentProfile}:${this.history.applied()}`;
       if (key === this.loadedKey) return;
       this.loadedKey = key;
       untracked(() => {
@@ -344,11 +348,19 @@ export class LightingComponent {
     this.saveTimer = setTimeout(() => this.flush(), 350);
   }
 
-  private flush(): void {
+  /** Saves a pending edit at once (before an undo or redo); resolves whether there was one. */
+  private saveNow(): Promise<boolean> {
+    if (!this.saveTimer) return Promise.resolve(false);
+    clearTimeout(this.saveTimer);
+    return new Promise(resolve => this.flush(() => resolve(true), () => resolve(false)));
+  }
+
+  private flush(then?: () => void, failed?: () => void): void {
+    this.saveTimer = undefined;
     const cfg = this.config();
-    if (!cfg) return;
+    if (!cfg) { failed?.(); return; }
     this.deviceService.setLighting(this.serial(), this.normalize(cfg))
-      .subscribe({ error: () => this.toast.show('Could not save lighting', { kind: 'error' }) });
+      .subscribe({ next: () => then?.(), error: () => { this.toast.show('Could not save lighting', { kind: 'error' }); failed?.(); } });
   }
 
   /** Apply all save-time normalizations: logo defaults, Mini-only vertical rainbow, follow-labels. */

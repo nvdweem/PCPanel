@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, ElementRef, inject, signal, untracked, viewChild } from '@angular/core';
+import { HistoryButtonsComponent } from '../../features/history/history-buttons.component';
 import { Router } from '@angular/router';
 import { DeviceStateService } from '../../services/device-state.service';
 import { SelectedDeviceService } from '../../services/selected-device.service';
@@ -27,7 +28,7 @@ interface IntegrationRow { name: string; dot: 'ok' | 'idle' | 'connecting'; stat
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [
+  imports: [HistoryButtonsComponent, 
     IconComponent, StatusDotComponent, ConnectionBadgeComponent, BottomBarComponent,
     SpinnerComponent, ModalComponent, DeviceRendererComponent, AddDeviceModalComponent,
   ],

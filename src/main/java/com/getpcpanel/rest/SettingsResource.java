@@ -11,6 +11,7 @@ import com.getpcpanel.integration.discord.dto.DiscordSettings;
 import com.getpcpanel.integration.mqtt.dto.MqttSettings;
 import com.getpcpanel.integration.sonar.dto.SonarSettings;
 import com.getpcpanel.integration.wavelink.dto.WaveLinkSettings;
+import com.getpcpanel.rest.model.dto.HistoryDto;
 import com.getpcpanel.rest.model.dto.SettingsDto;
 import com.getpcpanel.util.SecretMasking;
 
@@ -57,6 +58,34 @@ public class SettingsResource {
     @Path("/backups/{name}/restore")
     public Response restoreBackup(@PathParam("name") String name) throws IOException {
         return saveService.restore(name) ? Response.ok().build() : Response.status(Response.Status.NOT_FOUND).build();
+    }
+
+    @GET
+    @Path("/history")
+    public HistoryDto getHistory() {
+        return new HistoryDto(saveService.canUndo(), saveService.canRedo(), List.of());
+    }
+
+    /** The user moved away from what they were editing: the next change is a new undo step. */
+    @POST
+    @Path("/history/checkpoint")
+    public Response checkpoint() {
+        saveService.checkpoint();
+        return Response.ok().build();
+    }
+
+    @POST
+    @Path("/undo")
+    public HistoryDto undo() {
+        var done = saveService.undo();
+        return new HistoryDto(saveService.canUndo(), saveService.canRedo(), done ? saveService.lastChange() : List.of());
+    }
+
+    @POST
+    @Path("/redo")
+    public HistoryDto redo() {
+        var done = saveService.redo();
+        return new HistoryDto(saveService.canUndo(), saveService.canRedo(), done ? saveService.lastChange() : List.of());
     }
 
     @GET

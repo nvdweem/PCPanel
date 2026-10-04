@@ -1,4 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { HistoryButtonsComponent } from '../../features/history/history-buttons.component';
+import { HistoryService } from '../../services/history.service';
 import { Location } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
@@ -35,7 +37,7 @@ const EDIT_CURVES = '__edit-curves__';
 @Component({
   selector: 'app-control',
   standalone: true,
-  imports: [
+  imports: [HistoryButtonsComponent, 
     DragDropModule, OverlayModule, RouterLink, IconComponent, SelectComponent,
     AppPickerComponent, PcKnobComponent, PcFaderComponent, CommandFieldsComponent,
     ControlLightingComponent, MappingPreviewComponent, CommandPickerComponent,
@@ -46,6 +48,7 @@ const EDIT_CURVES = '__edit-curves__';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ControlComponent {
+  private readonly history = inject(HistoryService);
   private readonly state = inject(DeviceStateService);
   private readonly deviceService = inject(DeviceService);
   private readonly integrations = inject(IntegrationDataService);
@@ -105,13 +108,23 @@ export class ControlComponent {
   private saveTimer?: ReturnType<typeof setTimeout>;
 
   constructor() {
+    const unregister = this.history.registerPending(() => this.saveNow());
+    inject(DestroyRef).onDestroy(() => {
+      unregister();
+      if (this.saveTimer) {
+        clearTimeout(this.saveTimer);
+        this.flush(() => this.history.checkpoint());
+      }
+    });
     effect(() => {
       const s = this.snap();
       const i = this.idx();
       const editing = this.editProfile();
-      const key = `${this.serial()}:${i}:${editing}`;
+      // An undo or redo (history.applied) re-seeds from the restored snapshot, dropping any pending save.
+      const key = `${this.serial()}:${i}:${editing}:${this.history.applied()}`;
       if (!s || key === this.loadedKey) return;
       this.loadedKey = key;
+      if (this.saveTimer) clearTimeout(this.saveTimer);
       // Seed from the profile being edited: the base-layer snapshot when ?profile= targets it, else the active one.
       const snapProfile = editing && s.baseLayerSnapshot?.name === editing ? s.baseLayerSnapshot : s.currentProfileSnapshot;
       untracked(() => {
@@ -199,7 +212,7 @@ export class ControlComponent {
     }
   }
 
-  setSlot(slot: Slot): void { this.activeSlot.set(slot); this.expanded.set(0); }
+  setSlot(slot: Slot): void { this.endEdit(); this.activeSlot.set(slot); this.expanded.set(0); }
 
   /** Flip the active slot between firing every action at once and firing one per press (rotating). */
   toggleSlotMode(): void {
@@ -231,7 +244,21 @@ export class ControlComponent {
     this.save();
   }
 
-  toggleExpand(i: number): void { this.expanded.set(this.expanded() === i ? -1 : i); }
+  toggleExpand(i: number): void { this.endEdit(); this.expanded.set(this.expanded() === i ? -1 : i); }
+
+  /**
+   * Moving away from an action ends its edit: save what is pending, then mark an undo checkpoint, so all changes to
+   * one action are one undo step.
+   */
+  private endEdit(): void {
+    if (this.saveTimer) {
+      clearTimeout(this.saveTimer);
+      this.saveTimer = undefined;
+      this.flush(() => this.history.checkpoint());
+    } else {
+      this.history.checkpoint();
+    }
+  }
 
   // The whole header row is both a drag handle and a click target; the browser fires a
   // click after a real drag, so swallow that one so reordering doesn't also toggle expand.
@@ -311,7 +338,15 @@ export class ControlComponent {
     this.saveTimer = setTimeout(() => this.flush(), 350);
   }
 
-  private flush(): void {
+  /** Saves a pending edit at once; resolves whether there was one. */
+  private saveNow(): Promise<boolean> {
+    if (!this.saveTimer) return Promise.resolve(false);
+    clearTimeout(this.saveTimer);
+    return new Promise(resolve => this.flush(() => resolve(true), () => resolve(false)));
+  }
+
+  private flush(then?: () => void, failed?: () => void): void {
+    this.saveTimer = undefined;
     const s = this.snap();
     if (!s) return;
     // Save to the profile being edited (the active one, or the base layer when reached via its chip).
@@ -322,7 +357,7 @@ export class ControlComponent {
       releaseButton: this.release(),
       holdButton: this.hold(),
       knobSetting: this.knob(),
-    }).subscribe({ error: () => this.toast.show('Could not save assignment', { kind: 'error' }) });
+    }).subscribe({ next: () => then?.(), error: () => { this.toast.show('Could not save assignment', { kind: 'error' }); failed?.(); } });
   }
 
   /** Return to wherever we came from (Home or Advanced), not always Advanced. */

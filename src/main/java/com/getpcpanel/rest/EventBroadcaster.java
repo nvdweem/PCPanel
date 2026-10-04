@@ -9,6 +9,7 @@ import com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandler.KnobRot
 import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.device.DeviceHolder.DeviceFullyConnectedEvent;
 import com.getpcpanel.device.provider.pcpanel.DeviceScanner.DeviceDisconnectedEvent;
+import com.getpcpanel.profile.HistoryChangedEvent;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.ProfileSwitchedEvent;
 import com.getpcpanel.profile.SaveService;
@@ -27,6 +28,7 @@ import com.getpcpanel.rest.model.ws.WsKnobEvent;
 import com.getpcpanel.rest.model.ws.WsLightingChangedEvent;
 import com.getpcpanel.rest.model.ws.WsNewVersionAvailableEvent;
 import com.getpcpanel.rest.model.ws.WsProfileSwitchedEvent;
+import com.getpcpanel.rest.model.ws.WsHistoryChangedEvent;
 import com.getpcpanel.rest.model.ws.WsVisualColorsChangedEvent;
 import com.getpcpanel.util.app.AppShutdownState;
 import com.getpcpanel.util.version.VersionChecker.NewVersionAvailableEvent;
@@ -130,6 +132,10 @@ public class EventBroadcaster {
 
     public void onSettingChanged(@Observes KnobSettingChangedEvent event) {
         broadcast(new WsControlSettingChangedEvent(event.serial(), event.profile(), event.index(), event.settings()));
+    }
+
+    public void onHistoryChanged(@Observes HistoryChangedEvent event) {
+        broadcast(new WsHistoryChangedEvent(event.canUndo(), event.canRedo()));
     }
 
     public void onNewVersionAvailable(@Observes NewVersionAvailableEvent event) {

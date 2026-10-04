@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, HostListener, inject, signal, untracked } from '@angular/core';
+import { HistoryButtonsComponent } from '../../features/history/history-buttons.component';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient, httpResource } from '@angular/common/http';
@@ -9,6 +10,7 @@ import { DebugService, DeviceTypeOverride, OsOverride } from '../../services/deb
 import { UpdateService } from '../../services/update.service';
 import { AutostartService } from '../../services/autostart.service';
 import { DeviceStateService } from '../../services/device-state.service';
+import { HistoryService } from '../../services/history.service';
 import {
   CurveDefinition, DiscordSettings, SaveBackup, DiscordStatusDto, FocusVolumeOverride, FocusVolumeTarget, OverlayPosition, SettingsDto, SonarSettings,
   WaveLinkSettings,
@@ -34,7 +36,7 @@ interface TabDef { id: TabId; label: string; integration?: 'obs' | 'voicemeeter'
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [
+  imports: [HistoryButtonsComponent, 
     IconComponent, StatusDotComponent, SpinnerComponent, ToggleComponent,
     SegmentedComponent, SliderComponent, ColorPickerComponent, ModalComponent, SelectComponent,
     OverlayModule, AppPickerComponent, CommandPickerComponent, CommandFieldsComponent,
@@ -56,6 +58,7 @@ export class SettingsComponent {
   readonly updates = inject(UpdateService);
   readonly autostart = inject(AutostartService);
   readonly state = inject(DeviceStateService);
+  private readonly history = inject(HistoryService);
 
   readonly deviceOverrideOptions: SelectOption<DeviceTypeOverride>[] = [
     { value: '', label: 'Off — show real device' },
@@ -229,6 +232,15 @@ export class SettingsComponent {
       untracked(() => {
         if (this.local() && this.dirty()) return;
         this.local.set(structuredClone(v));
+      });
+    });
+
+    // An undo or redo replaced the configuration: show it, unless there are unsaved edits here.
+    effect(() => {
+      if (!this.history.applied()) return;
+      untracked(() => {
+        if (!this.dirty()) this.settings.reload();
+        this.backups.reload();
       });
     });
 
@@ -813,6 +825,8 @@ export class SettingsComponent {
         this.confirmLeaveOpen.set(false);
         this.settings.reload();
         this.integrations.reload();
+        this.history.checkpoint(); // a saved settings form is one undo step
+        this.history.refreshSoon();
         this.toast.show('Settings saved', { kind: 'success' });
         if (thenLeave) this.router.navigate(['/']);
       },

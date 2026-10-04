@@ -674,6 +674,12 @@ export interface GlobalLightingSpec {
     supportedModes: string[];
 }
 
+export interface HistoryDto {
+    canRedo: boolean;
+    canUndo: boolean;
+    changed: string[];
+}
+
 export interface HomeAssistantCommandModule extends CommandModule {
 }
 
@@ -1095,7 +1101,13 @@ export interface WsDeviceRenamedEvent extends WsEvent {
 }
 
 export interface WsEvent {
-    type: "device_snapshot" | "assignment_changed" | "button_press" | "control_setting_changed" | "device_connected" | "device_disconnected" | "device_renamed" | "knob_rotate" | "lighting_changed" | "new_version_available" | "profile_switched" | "visual_colors_changed";
+    type: "device_snapshot" | "assignment_changed" | "button_press" | "control_setting_changed" | "device_connected" | "device_disconnected" | "device_renamed" | "history_changed" | "knob_rotate" | "lighting_changed" | "new_version_available" | "profile_switched" | "visual_colors_changed";
+}
+
+export interface WsHistoryChangedEvent extends WsEvent {
+    canRedo: boolean;
+    canUndo: boolean;
+    type: "history_changed";
 }
 
 export interface WsKnobEvent extends WsEvent {
@@ -1197,4 +1209,4 @@ export type VolumeButton = "mute" | "next" | "prev" | "stop" | "playPause";
 
 export type WaveLinkCommandTarget = "Input" | "Channel" | "Mix" | "Output" | "MixMaster";
 
-export type WsEventUnion = WsAssignmentChangedEvent | WsButtonEvent | WsDeviceConnectedEvent | WsDeviceDisconnectedEvent | WsDeviceRenamedEvent | WsKnobEvent | WsLightingChangedEvent | WsProfileSwitchedEvent | WsVisualColorsChangedEvent | DeviceSnapshotDto | WsControlSettingChangedEvent | WsNewVersionAvailableEvent;
+export type WsEventUnion = WsAssignmentChangedEvent | WsButtonEvent | WsDeviceConnectedEvent | WsDeviceDisconnectedEvent | WsDeviceRenamedEvent | WsKnobEvent | WsLightingChangedEvent | WsProfileSwitchedEvent | WsVisualColorsChangedEvent | DeviceSnapshotDto | WsControlSettingChangedEvent | WsNewVersionAvailableEvent | WsHistoryChangedEvent;

@@ -336,6 +336,11 @@ actions whose target changed elsewhere until the control reaches it (`TakeoverPe
 hint); `PanelTestService` swallows all actions of a device under test; a button with *Hold* actions is decided on
 release or after `Save.holdInterval`.
 
+**Undo / backups (`profile/SaveService`):** every write keeps the previous file text on an in-memory undo stack
+(30 steps), except a write that only changed `currentProfileName`; undo, redo and backup restore all swap the whole
+`Save` and re-fire `DeviceConnectedEvent` for connected devices so each is rebuilt on its new `DeviceSave`.
+`SaveBackups` keeps rolling file snapshots in `${pcpanel.root}/backups`.
+
 **Frontend bridge (`rest/`):** the **shared** JAX-RS + websocket bridge: `SettingsResource`,
 `PlatformResource`, `SystemResource`, `IconResource`/`ProcessResource` (the app/process picker, shared
 across features), `EventWebSocket` at `/ws/events`, `EventBroadcaster`, `LocalHttpGuard`, and the

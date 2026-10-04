@@ -45,6 +45,11 @@ export class DeviceStateService implements OnDestroy {
    */
   readonly ready = signal(false);
 
+  /** Bumped when a device's whole state is (re)sent: a connect, or a rebuild after undo, redo or a restore. */
+  readonly connectEpoch = signal(0);
+
+  /** What can be undone or redone, as the backend last announced it. */
+  readonly history = signal<{ canUndo: boolean; canRedo: boolean } | null>(null);
   /** The most recent physical button press or release, for pages that follow the panel live (the panel test). */
   readonly lastButton = signal<{ serial: string; button: number; pressed: boolean; at: number } | null>(null);
 
@@ -178,6 +183,7 @@ export class DeviceStateService implements OnDestroy {
       case 'assignment_changed':
       case 'control_setting_changed':
       case 'new_version_available':
+      case 'history_changed':
         return true;
       case true:
         return false;
@@ -190,6 +196,7 @@ export class DeviceStateService implements OnDestroy {
     switch (event.type) {
       case 'device_connected':
         this.updateDevice(event.deviceSnapshot);
+        this.connectEpoch.update(n => n + 1);
         return true;
       case 'device_snapshot':
         this.updateDevice(event);
@@ -273,6 +280,10 @@ export class DeviceStateService implements OnDestroy {
       case 'new_version_available':
         this.announceNewVersion(event.version, event.url);
         return true;
+
+      case 'history_changed':
+        this.history.set({ canUndo: event.canUndo, canRedo: event.canRedo });
+        return false;
 
       case 'button_press':
         this.lastButton.set({ serial: event.serial, button: event.button, pressed: event.pressed, at: Date.now() });

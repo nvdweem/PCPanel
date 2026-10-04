@@ -14,7 +14,7 @@ export type IconName =
   | 'window' | 'sliders' | 'grid' | 'refresh' | 'download' | 'alert-triangle'
   | 'plug' | 'usb' | 'keyboard' | 'play' | 'film' | 'wave' | 'lightbulb'
   | 'cable' | 'zap' | 'copy' | 'clipboard' | 'eraser' | 'arrow-down' | 'gamepad' | 'external-link'
-  | 'bug';
+  | 'bug' | 'undo' | 'redo';
 
 const PATHS: Record<string, string> = {
   'chevron-down': '<polyline points="6 9 12 15 18 9"/>',
@@ -44,6 +44,8 @@ const PATHS: Record<string, string> = {
   'sliders': '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>',
   'grid': '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
   'refresh': '<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>',
+  'undo': '<polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 00-4-4H4"/>',
+  'redo': '<polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 014-4h12"/>',
   'download': '<path d="M12 3v12"/><polyline points="7 10 12 15 17 10"/><path d="M5 21h14"/>',
   'alert-triangle': '<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
   'plug': '<path d="M12 22v-5M9 8V2M15 8V2M5 8h14v3a7 7 0 01-14 0z"/>',
