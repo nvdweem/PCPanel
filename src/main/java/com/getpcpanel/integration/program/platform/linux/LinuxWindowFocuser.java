@@ -13,6 +13,7 @@ import com.getpcpanel.integration.program.WindowFocuser;
 import com.getpcpanel.platform.LinuxBuild;
 import com.getpcpanel.platform.process.LinuxProcessHelper;
 import com.getpcpanel.platform.process.LinuxProcessHelper.WindowTool;
+import com.getpcpanel.util.ExeNames;
 import com.getpcpanel.util.os.ProcessHelper;
 
 import io.quarkus.arc.Unremovable;
@@ -48,7 +49,7 @@ class LinuxWindowFocuser implements WindowFocuser {
     }
 
     Result focusOrMinimize(WindowTool tool, String exe, boolean minimizeIfFocused) {
-        var stem = WindowFocuser.appStem(exe);
+        var stem = ExeNames.stem(exe);
         if (stem.isEmpty()) {
             return Result.NOT_RUNNING;
         }

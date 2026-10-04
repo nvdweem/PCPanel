@@ -1,8 +1,5 @@
 package com.getpcpanel.integration.program;
 
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
-
 /**
  * Brings a running app's window to the front. One build-time implementation per platform, reached from the command
  * layer via {@link com.getpcpanel.util.CdiHelper}. Best-effort: a failure is logged and reported as
@@ -24,9 +21,4 @@ public interface WindowFocuser {
      * @param minimizeIfFocused minimise the app instead when one of its windows is already in front
      */
     Result focusOrMinimize(String exe, boolean minimizeIfFocused);
-
-    /** The bare app name of {@code exe}: no directory, no trailing {@code .exe}. */
-    static String appStem(String exe) {
-        return StringUtils.removeEndIgnoreCase(FilenameUtils.getName(StringUtils.strip(exe)), ".exe");
-    }
 }

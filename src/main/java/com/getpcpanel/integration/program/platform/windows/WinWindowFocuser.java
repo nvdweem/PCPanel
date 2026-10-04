@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.integration.program.WindowFocuser;
 import com.getpcpanel.platform.WindowsBuild;
+import com.getpcpanel.util.ExeNames;
 import com.sun.jna.platform.win32.BaseTSD;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef;
@@ -30,7 +31,7 @@ class WinWindowFocuser implements WindowFocuser {
 
     @Override
     public Result focusOrMinimize(String exe, boolean minimizeIfFocused) {
-        var stem = WindowFocuser.appStem(exe);
+        var stem = ExeNames.stem(exe);
         if (stem.isEmpty()) {
             return Result.NOT_RUNNING;
         }

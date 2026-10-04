@@ -5,7 +5,7 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang3.StringUtils;
+import com.getpcpanel.util.ExeNames;
 
 /**
  * Sends apps to an output device: every audio stream of the named apps plays on that device from then on. One
@@ -23,15 +23,6 @@ public interface AppOutputRouter {
 
     /** Whether one of {@code names} names the app {@code actual} (a path or a name): no path, no case, no {@code .exe}. */
     static boolean namesApp(Collection<String> names, @Nullable String actual) {
-        var normalized = normalize(actual);
-        return StringUtils.isNotEmpty(normalized) && names.stream().anyMatch(n -> StringUtils.equalsIgnoreCase(normalize(n), normalized));
-    }
-
-    private static String normalize(@Nullable String name) {
-        if (StringUtils.isBlank(name)) {
-            return "";
-        }
-        var base = StringUtils.substringAfterLast("/" + name.replace('\\', '/'), "/");
-        return StringUtils.removeEndIgnoreCase(base.strip(), ".exe");
+        return names.stream().anyMatch(n -> ExeNames.sameApp(actual, n));
     }
 }

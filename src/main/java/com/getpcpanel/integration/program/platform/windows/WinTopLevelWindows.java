@@ -7,7 +7,7 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
-import com.getpcpanel.integration.program.WindowFocuser;
+import com.getpcpanel.util.ExeNames;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef;
@@ -83,7 +83,7 @@ public final class WinTopLevelWindows {
     private static String exeStem(Map<Integer, String> cache, int pid) {
         return cache.computeIfAbsent(pid, p -> {
             var path = imagePath(p);
-            return path == null ? "" : WindowFocuser.appStem(path);
+            return path == null ? "" : ExeNames.stem(path);
         });
     }
 
