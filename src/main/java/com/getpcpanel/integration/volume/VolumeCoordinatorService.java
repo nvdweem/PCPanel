@@ -3,10 +3,13 @@ package com.getpcpanel.integration.volume;
 import java.io.File;
 import java.util.Optional;
 
+import javax.annotation.Nullable;
+
 import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.integration.volume.command.CommandVolumeProcess;
+import com.getpcpanel.integration.volume.platform.AudioSession;
 import com.getpcpanel.integration.volume.platform.ISndCtrl;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
@@ -58,6 +61,35 @@ public class VolumeCoordinatorService {
         }
         log.debug("Focus volume: resolving OS audio stream for focused app {}", application);
         sndCtrl.setFocusVolume(floatValue);
+    }
+
+    /** The app with focus, as the focus dial sees it. */
+    @Nullable
+    public String focusApplication() {
+        return sndCtrl.getFocusApplication();
+    }
+
+    /**
+     * The volume of the app the focus dial would change now, for "no volume jumps". Null — the dial is never held
+     * back — when it would act on something else: an override rule's targets, a redirector such as Wave Link, or
+     * nothing at all ("skip controlled apps", or the focused app plays no sound).
+     */
+    @Nullable
+    public Float focusLevel() {
+        var application = sndCtrl.getFocusApplication();
+        if (StringUtils.isBlank(application) || focusOverride.controls(application)) {
+            return null;
+        }
+        if (saveService.get().isSkipControlledFocusApps() && isOtherwiseControlled(application)) {
+            return null;
+        }
+        if (StreamEx.of(focusRedirectors.handlesStream()).anyMatch(fr -> fr.get().managesFocusApp(application))) {
+            return null;
+        }
+        return StreamEx.of(sndCtrl.getAllSessions())
+                       .findFirst(s -> s.executable() != null && StringUtils.equalsIgnoreCase(s.executable().getPath(), application) || s.matches(application))
+                       .map(AudioSession::volume)
+                       .orElse(null);
     }
 
     /**

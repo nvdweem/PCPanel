@@ -21,6 +21,7 @@ up to date when you add or remove an event or an observer.
 | Event | Fired by | Observed by |
 |-------|----------|-------------|
 | `PCPanelControlEvent` | `InputInterpreter` | `CommandDispatcher` (runs the configured commands), `Overlay` |
+| `TakeoverPendingEvent` | `InputInterpreter` (via `SoftTakeover`) | `Overlay` ("move to N% to take over") |
 | `ButtonClickEvent` | `InputInterpreter` | `InputInterpreter` (self, click resolution), `MqttDeviceService` |
 | `DeviceCommunicationHandler.KnobRotateEvent` | `DeviceHolder` (re-fires from the HID handler) | `InputInterpreter`, `EventBroadcaster` (→ UI), `MqttDeviceService`, `OSCService` |
 | `DeviceCommunicationHandler.ButtonPressEvent` | `DeviceCommunicationHandler` | `InputInterpreter`, `EventBroadcaster` (→ UI), `MqttDeviceService`, `OSCService` |

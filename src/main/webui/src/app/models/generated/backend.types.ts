@@ -403,7 +403,7 @@ export interface CommandVolumeDefaultDeviceToggleAdvanced extends CommandVolume,
     devices: DeviceSet[];
 }
 
-export interface CommandVolumeDevice extends CommandVolume, DialAction {
+export interface CommandVolumeDevice extends CommandVolume, DialAction, LevelReadable {
     _type: "volume.device";
     deviceId: string;
     isUnMuteOnVolumeChange: boolean;
@@ -416,7 +416,7 @@ export interface CommandVolumeDeviceMute extends CommandVolume, ButtonAction {
     muteType: MuteType;
 }
 
-export interface CommandVolumeFocus extends CommandVolume, DialAction {
+export interface CommandVolumeFocus extends CommandVolume, DialAction, LevelReadable {
     _type: "volume.focus";
 }
 
@@ -425,7 +425,7 @@ export interface CommandVolumeFocusMute extends CommandVolume, ButtonAction {
     muteType: MuteType;
 }
 
-export interface CommandVolumeProcess extends CommandVolume, DialAction {
+export interface CommandVolumeProcess extends CommandVolume, DialAction, LevelReadable {
     _type: "volume.process";
     device: string;
     isUnMuteOnVolumeChange: boolean;
@@ -711,6 +711,9 @@ export interface KnobSetting {
     overlayName: string;
 }
 
+export interface LevelReadable {
+}
+
 export interface LightingConfig {
     allColor: string;
     breathBrightness: number;
@@ -892,6 +895,8 @@ export interface SettingsDto {
     skipControlledFocusApps: boolean;
     sleepDetectionEnabled: boolean;
     sliderRollingAverage?: number;
+    softTakeoverKnobs: boolean;
+    softTakeoverSliders: boolean;
     startupVersionCheck: boolean;
     voicemeeterEnabled: boolean;
     voicemeeterPath: string;

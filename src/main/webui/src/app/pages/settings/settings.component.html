@@ -121,6 +121,20 @@
             </div>
             <div class="row">
               <div class="row-text">
+                <div class="row-label">No volume jumps on knobs</div>
+                <div class="row-sub">After an app or device volume was changed elsewhere, a knob takes over only once it reaches that volume. The overlay shows where to move to.</div>
+              </div>
+              <pc-toggle [value]="s.softTakeoverKnobs" (valueChange)="patch('softTakeoverKnobs', $event)"></pc-toggle>
+            </div>
+            <div class="row">
+              <div class="row-text">
+                <div class="row-label">No volume jumps on sliders</div>
+                <div class="row-sub">The same for sliders.</div>
+              </div>
+              <pc-toggle [value]="s.softTakeoverSliders" (valueChange)="patch('softTakeoverSliders', $event)"></pc-toggle>
+            </div>
+            <div class="row">
+              <div class="row-text">
                 <div class="row-label">New apps start at their control's level</div>
                 <div class="row-sub">When an app starts playing sound, it gets the level of the App-volume control or focus dial that controls it.</div>
               </div>

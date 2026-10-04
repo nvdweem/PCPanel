@@ -68,6 +68,9 @@ public class Save {
      *  shutdown is unaffected. */
     private boolean sleepDetectionEnabled = true;
     private Long dblClickInterval = 500L;
+    /** "No volume jumps" for knobs / sliders: after their target changed elsewhere, wait until the control reaches it. */
+    private boolean softTakeoverKnobs;
+    private boolean softTakeoverSliders;
     /** How long (ms) a button must stay down to run its hold actions instead of its press actions. */
     @Nullable private Long holdInterval;
     private boolean preventClickWhenDblClick = true;

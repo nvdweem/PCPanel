@@ -32,6 +32,8 @@ public class SettingsDto {
     private boolean sleepDetectionEnabled;
     private Long dblClickInterval;
     private long holdInterval;
+    private boolean softTakeoverKnobs;
+    private boolean softTakeoverSliders;
     private boolean preventClickWhenDblClick;
     private boolean skipControlledFocusApps;
     private List<FocusVolumeOverride> focusVolumeOverrides;
@@ -99,6 +101,8 @@ public class SettingsDto {
         dto.sleepDetectionEnabled = save.isSleepDetectionEnabled();
         dto.dblClickInterval = save.getDblClickInterval();
         dto.holdInterval = save.getHoldInterval();
+        dto.softTakeoverKnobs = save.isSoftTakeoverKnobs();
+        dto.softTakeoverSliders = save.isSoftTakeoverSliders();
         dto.preventClickWhenDblClick = save.isPreventClickWhenDblClick();
         dto.skipControlledFocusApps = save.isSkipControlledFocusApps();
         dto.focusVolumeOverrides = save.getFocusVolumeOverrides();
@@ -156,6 +160,8 @@ public class SettingsDto {
         save.setSleepDetectionEnabled(sleepDetectionEnabled);
         save.setDblClickInterval(dblClickInterval);
         save.setHoldInterval(holdInterval);
+        save.setSoftTakeoverKnobs(softTakeoverKnobs);
+        save.setSoftTakeoverSliders(softTakeoverSliders);
         save.setPreventClickWhenDblClick(preventClickWhenDblClick);
         save.setSkipControlledFocusApps(skipControlledFocusApps);
         save.setFocusVolumeOverrides(focusVolumeOverrides);

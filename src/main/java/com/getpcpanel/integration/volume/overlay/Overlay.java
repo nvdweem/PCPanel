@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.IconService;
 import com.getpcpanel.commands.PCPanelControlEvent;
+import com.getpcpanel.commands.TakeoverPendingEvent;
 import com.getpcpanel.commands.command.ButtonAction;
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.integration.volume.command.CommandVolumeFocus;
@@ -127,6 +128,21 @@ public class Overlay {
             showDebounced(value, () -> determineIconImage(event), this::shouldShow);
         } catch (Throwable t) {
             log.warn("Overlay failed to handle control event; ignoring (hardware control is unaffected)", t);
+        }
+    }
+
+    /** A control waiting for soft takeover: the bar shows the target's real level and the name where to move to. */
+    public void handleTakeover(@Observes TakeoverPendingEvent event) {
+        if (!save.get().isOverlayEnabled()) {
+            return;
+        }
+        try {
+            var cai = determineIconImage(event.control());
+            var hint = "move to " + Math.round(event.current() * 100) + "% to take over";
+            var name = StringUtils.isBlank(cai.name) ? StringUtils.capitalize(hint) : cai.name.strip() + " \u00b7 " + hint;
+            overlay.show(new OverlayContent(event.current(), cai.icon, name, cai.barColorCss));
+        } catch (Throwable t) {
+            log.warn("Overlay failed to show a takeover hint; ignoring (hardware control is unaffected)", t);
         }
     }
 

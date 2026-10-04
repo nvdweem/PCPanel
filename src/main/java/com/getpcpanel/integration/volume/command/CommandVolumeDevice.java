@@ -1,6 +1,9 @@
 package com.getpcpanel.integration.volume.command;
 
+import javax.annotation.Nullable;
+
 import com.getpcpanel.commands.command.DialAction;
+import com.getpcpanel.commands.command.LevelReadable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.getpcpanel.commands.meta.CommandCategory;
@@ -16,7 +19,7 @@ import lombok.ToString;
 @ToString(callSuper = true)
 @JsonTypeName("volume.device")
 @CommandMeta(label = "Device volume", category = CommandCategory.audio, kinds = {CommandKind.dial}, icon = "volume", legacyIds = {"com.getpcpanel.commands.command.CommandVolumeDevice"})
-public class CommandVolumeDevice extends CommandVolume implements DialAction {
+public class CommandVolumeDevice extends CommandVolume implements DialAction, LevelReadable {
     private final String deviceId;
     private final boolean unMuteOnVolumeChange;
     private final DialCommandParams dialParams;
@@ -37,6 +40,14 @@ public class CommandVolumeDevice extends CommandVolume implements DialAction {
             getSndCtrl().muteDevice(deviceId, MuteType.unmute);
         }
         getSndCtrl().setDeviceVolume(deviceId, context.dial().getValue(this, 0, 1));
+    }
+
+    @Override
+    @Nullable
+    public Float readLevel() {
+        var snd = getSndCtrl();
+        var device = snd.getDevice(snd.defaultDeviceOnEmpty(deviceId));
+        return device == null ? null : device.volume();
     }
 
     @Override

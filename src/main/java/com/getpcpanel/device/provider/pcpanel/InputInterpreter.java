@@ -20,6 +20,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.commands.PCPanelControlEvent;
+import com.getpcpanel.commands.SoftTakeover;
+import com.getpcpanel.commands.TakeoverPendingEvent;
 import com.getpcpanel.commands.curve.CurveService;
 import com.getpcpanel.profile.BaseLayerService;
 import com.getpcpanel.profile.SaveService;
@@ -43,6 +45,8 @@ public final class InputInterpreter {
     Debouncer debouncer;
     @Inject
     CurveService curves;
+    @Inject
+    SoftTakeover takeover;
     private final Map<ClickId, Long> lastClicks = new HashMap<>();
     /** Buttons pressed while they had a hold action, whose press is not decided yet. */
     private final Set<ClickId> holdArmed = new HashSet<>();
@@ -134,7 +138,16 @@ public final class InputInterpreter {
         save.getProfile(serialNum)
             .map(p -> baseLayer.effectiveDial(serialNum, p, knob))
             .filter(Commands::hasCommands)
-            .ifPresent(data -> eventBus.fire(new PCPanelControlEvent(serialNum, knob, data, initial, v, PCPanelControlEvent.Source.DIAL)));
+            .ifPresent(data -> {
+                var result = takeover.filter(serialNum, knob, data, v, initial);
+                if (hasCommands(result.allowed())) {
+                    eventBus.fire(new PCPanelControlEvent(serialNum, knob, result.allowed(), initial, v, PCPanelControlEvent.Source.DIAL));
+                }
+                if (result.waiting() != null) {
+                    var control = new PCPanelControlEvent(serialNum, knob, data, initial, v, PCPanelControlEvent.Source.DIAL);
+                    eventBus.fire(new TakeoverPendingEvent(control, result.waiting().current()));
+                }
+            });
     }
 
     void doClickAction(String serialNum, int button) {
