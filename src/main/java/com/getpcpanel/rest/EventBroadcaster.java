@@ -1,8 +1,11 @@
 package com.getpcpanel.rest;
 
+import java.util.List;
+
 import com.getpcpanel.device.provider.pcpanel.ProVisualColorsService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.getpcpanel.alerts.AlertsLitEvent;
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandler.ButtonPressEvent;
 import com.getpcpanel.device.provider.pcpanel.DeviceCommunicationHandler.KnobRotateEvent;
@@ -18,6 +21,7 @@ import com.getpcpanel.profile.dto.LightingConfig;
 import com.getpcpanel.device.provider.pcpanel.ProVisualColorsService.ProVisualColors;
 import com.getpcpanel.rest.model.dto.DeviceSnapshotDto;
 import com.getpcpanel.rest.model.dto.ProfileSnapshotDto;
+import com.getpcpanel.rest.model.ws.WsAlertsLitEvent;
 import com.getpcpanel.rest.model.ws.WsAssignmentChangedEvent;
 import com.getpcpanel.rest.model.ws.WsButtonEvent;
 import com.getpcpanel.rest.model.ws.WsControlSettingChangedEvent;
@@ -50,6 +54,8 @@ public class EventBroadcaster {
     // The version check runs once at startup and may complete before any browser opens the
     // websocket. Cache the result so EventWebSocket can replay it to clients that connect later.
     private volatile WsNewVersionAvailableEvent latestNewVersion;
+    /** Same for the notification lights showing now: a client that connects later still sees them. */
+    private volatile WsAlertsLitEvent latestAlertsLit = new WsAlertsLitEvent(List.of());
 
     private boolean shouldSkipBroadcast() {
         return AppShutdownState.isShuttingDown();
@@ -142,6 +148,17 @@ public class EventBroadcaster {
         var ws = new WsNewVersionAvailableEvent(event.version().versionDisplay(), event.version().html_url());
         latestNewVersion = ws;
         broadcast(ws);
+    }
+
+    public void onAlertsLit(@Observes AlertsLitEvent event) {
+        var ws = new WsAlertsLitEvent(event.indexes());
+        latestAlertsLit = ws;
+        broadcast(ws);
+    }
+
+    /** The notification lights showing now; replayed to new WS clients. */
+    public WsAlertsLitEvent latestAlertsLit() {
+        return latestAlertsLit;
     }
 
     /** Latest new-version notice, or {@code null} if none was detected; replayed to new WS clients. */

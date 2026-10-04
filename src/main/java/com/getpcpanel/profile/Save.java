@@ -17,6 +17,7 @@ import com.getpcpanel.integration.discord.dto.DiscordSeenUser;
 import com.getpcpanel.integration.discord.dto.DiscordSettings;
 import com.getpcpanel.integration.volume.FocusVolumeOverride;
 import com.getpcpanel.profile.dto.CurveDefinition;
+import com.getpcpanel.profile.dto.NotificationAlert;
 import com.getpcpanel.integration.mqtt.dto.MqttSettings;
 import com.getpcpanel.integration.osc.dto.OSCConnectionInfo;
 import com.getpcpanel.integration.sonar.dto.SonarSettings;
@@ -75,6 +76,8 @@ public class Save {
     private boolean softTakeoverSliders;
     /** Play a short light show when a device connects. */
     private boolean startupAnimation;
+    /** Notification lights; see {@link NotificationAlert}. */
+    @Nullable private List<NotificationAlert> notificationAlerts;
     /** How long (ms) a button must stay down to run its hold actions instead of its press actions. */
     @Nullable private Long holdInterval;
     private boolean preventClickWhenDblClick = true;
@@ -271,6 +274,11 @@ public class Save {
     @Nonnull
     public List<String> getNewAppsAtDialLevelExceptions() {
         return Objects.requireNonNullElseGet(newAppsAtDialLevelExceptions, List::of);
+    }
+
+    @Nonnull
+    public List<NotificationAlert> getNotificationAlerts() {
+        return Objects.requireNonNullElseGet(notificationAlerts, List::of);
     }
 
     @Nonnull

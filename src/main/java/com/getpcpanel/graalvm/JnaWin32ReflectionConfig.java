@@ -1,5 +1,6 @@
 package com.getpcpanel.graalvm;
 
+import com.getpcpanel.alerts.platform.windows.WinSqlite3;
 import com.getpcpanel.integration.clipboard.platform.windows.WinClipboardKernel32;
 import com.getpcpanel.integration.clipboard.platform.windows.WinClipboardUser32;
 import com.getpcpanel.integration.display.platform.windows.WinDisplayUser32;
@@ -38,6 +39,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         WinDwmapi.class,
         WinDisplayUser32.class,
         WinDxva2.class,
+        WinSqlite3.class,
 }, classNames = {
         "com.sun.jna.platform.win32.WinDef$HMODULE",
         "com.sun.jna.platform.win32.WinDef$HINSTANCE",
@@ -82,6 +84,13 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         // EnumWindows callback for CommandMedia's Spotify-window lookup; JNA builds its CallbackProxy
         // from this concrete type reflectively (CallbackProxy itself is jniAccessible).
         "com.sun.jna.platform.win32.WinUser$WNDENUMPROC",
+        // Registry reads through Advapi32Util (WindowsMicUsage, the microphone-in-use lights): JNA builds the
+        // returned key handles and their by-reference holders reflectively.
+        "com.sun.jna.platform.win32.WinReg$HKEY",
+        "com.sun.jna.platform.win32.WinReg$HKEYByReference",
+        "com.sun.jna.platform.win32.WinNT$HANDLE",
+        "com.sun.jna.platform.win32.WinNT$HANDLEByReference",
+        "com.sun.jna.platform.win32.WinBase$FILETIME",
         // NB: IntByReference (the JNA out-parameter for EnumProcesses/GetWindowThreadProcessId here, and
         // for CoreAudio/X11/keyboard on macOS/Linux) is registered centrally in NativeImageConfig, not
         // here — it is cross-platform, so it must not depend on this Windows-named config.

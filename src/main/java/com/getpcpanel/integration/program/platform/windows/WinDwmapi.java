@@ -7,7 +7,7 @@ import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
 
 /**
- * JNA binding for {@code DwmGetWindowAttribute}, which JNA's bundled libraries omit. {@link WinWindowFocuser} reads
+ * JNA binding for {@code DwmGetWindowAttribute}, which JNA's bundled libraries omit. {@link WinTopLevelWindows} reads
  * {@code DWMWA_CLOAKED} with it: a cloaked window (a suspended store app, a window on another virtual desktop) counts
  * as visible to {@code IsWindowVisible} but is not on screen.
  *

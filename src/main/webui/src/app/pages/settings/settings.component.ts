@@ -12,7 +12,7 @@ import { AutostartService } from '../../services/autostart.service';
 import { DeviceStateService } from '../../services/device-state.service';
 import { HistoryService } from '../../services/history.service';
 import {
-  CurveDefinition, DiscordSettings, SaveBackup, DiscordStatusDto, FocusVolumeOverride, FocusVolumeTarget, OverlayPosition, SettingsDto, SonarSettings,
+  AlertEffect, CurveDefinition, DiscordSettings, NotificationAlert, SaveBackup, DiscordStatusDto, FocusVolumeOverride, FocusVolumeTarget, OverlayPosition, SettingsDto, SonarSettings,
   WaveLinkSettings,
 } from '../../models/generated/backend.types';
 import {
@@ -30,7 +30,7 @@ import { OverlayPreviewRenderer, overlayPreviewStyle } from './overlay-preview';
 import { PanelTestComponent } from '../../features/panel-test/panel-test.component';
 
 type Cmd = Record<string, any>;
-type TabId = 'general' | 'curves' | 'focusoverride' | 'obs' | 'voicemeeter' | 'wavelink' | 'discord' | 'osc' | 'mqtt' | 'homeassistant' | 'sonar' | 'overlay' | 'debug';
+type TabId = 'general' | 'alerts' | 'curves' | 'focusoverride' | 'obs' | 'voicemeeter' | 'wavelink' | 'discord' | 'osc' | 'mqtt' | 'homeassistant' | 'sonar' | 'overlay' | 'debug';
 interface TabDef { id: TabId; label: string; integration?: 'obs' | 'voicemeeter' | 'wavelink'; supported?: boolean; }
 
 @Component({
@@ -136,6 +136,7 @@ export class SettingsComponent {
 
   private readonly allTabs: TabDef[] = [
     { id: 'general', label: 'General' },
+    { id: 'alerts', label: 'Notification lights' },
     { id: 'curves', label: 'Curves' },
     { id: 'focusoverride', label: 'Focus Override' },
     { id: 'overlay', label: 'Overlay' },
@@ -769,6 +770,123 @@ export class SettingsComponent {
 
   removeNewAppException(app: string): void {
     this.patch('newAppsAtDialLevelExceptions', (this.local()?.newAppsAtDialLevelExceptions ?? []).filter(a => a !== app));
+  }
+
+  // ── Notification lights ───────────────────────────────────────────────────
+  readonly alertTriggerOptions: SegmentOption<string>[] = [
+    { value: 'TASKBAR_FLASH', label: 'Taskbar flash' },
+    { value: 'MIC_IN_USE', label: 'Microphone in use' },
+    { value: 'NOTIFICATION', label: 'Shows a notification' },
+    { value: 'WINDOW_TITLE', label: 'Its window title contains' },
+  ];
+
+  /** Triggers read from Windows or Linux only (notifications, window titles). */
+  private static readonly NOT_ON_MAC = new Set(['NOTIFICATION', 'WINDOW_TITLE']);
+
+  /** The triggers offered on this platform, plus the alert's own so a saved one still shows. */
+  alertTriggerOptionsFor(alert: NotificationAlert): SegmentOption<string>[] {
+    if (this.platform.os() !== 'mac') return this.alertTriggerOptions;
+    return this.alertTriggerOptions.filter(o => !SettingsComponent.NOT_ON_MAC.has(o.value) || o.value === alert.trigger);
+  }
+
+  alertTriggerLabel(alert: NotificationAlert): string {
+    return this.alertTriggerOptions.find(o => o.value === alert.trigger)?.label ?? alert.trigger;
+  }
+
+  /** Notification senders the app has seen, for an alert's source. */
+  readonly notificationSources = signal<string[]>([]);
+
+  refreshNotificationSources(): void {
+    this.http.get<string[]>('/api/alerts/notification-sources').subscribe({
+      next: sources => this.notificationSources.set(sources ?? []),
+      error: () => {},
+    });
+  }
+
+  /** The seen senders plus the alert's own source, after a choice to go back to matching by app name. */
+  notificationSourceOptions(alert: NotificationAlert): SelectOption<string>[] {
+    const sources = [...this.notificationSources()];
+    if (alert.source && !sources.some(s => s.toLowerCase() === alert.source!.toLowerCase())) sources.unshift(alert.source);
+    return [{ value: '', label: 'From the app name' }, ...sources.map(s => ({ value: s, label: s }))];
+  }
+  readonly alertTargetOptions: SelectOption<string>[] = [
+    ...[0, 1, 2, 3, 4].map(i => ({ value: `knob:${i}`, label: `Knob ${i + 1}` })),
+    ...[0, 1, 2, 3].map(i => ({ value: `slider:${i}`, label: `Slider ${i + 1}` })),
+    { value: 'logo', label: 'Logo' },
+  ];
+  readonly alertAppOptions = computed<SelectOption<string>[]>(() =>
+    this.integrations.processItems().map(p => ({ value: p.key, label: p.label })));
+
+  alerts(): NotificationAlert[] { return this.local()?.notificationAlerts ?? []; }
+
+  readonly alertEffectOptions: SegmentOption<AlertEffect>[] = [
+    { value: 'STEADY', label: 'Steady' },
+    { value: 'BLINK', label: 'Blink' },
+    { value: 'PULSE', label: 'Pulse' },
+  ];
+
+  alertEffect(alert: NotificationAlert): AlertEffect { return alert.effect ?? (alert.blink ? 'BLINK' : 'STEADY'); }
+
+  /**
+   * Sets the effect; {@code blink} follows it so an older version still blinks a blinking light, and the period
+   * in effect is written down so an older save's blink keeps its rhythm.
+   */
+  setAlertEffect(i: number, effect: AlertEffect): void {
+    const alert = this.alerts()[i];
+    if (!alert) return;
+    this.patchAlert(i, { effect, blink: effect === 'BLINK', periodMs: this.alertPeriod(alert) });
+  }
+
+  addAlert(): void {
+    this.patch('notificationAlerts', [...this.alerts(), { trigger: 'TASKBAR_FLASH', app: '', target: 'knob:0', color: '#8A5CFF', blink: true, effect: 'BLINK', stopAfterSeconds: 0, disabled: false }]);
+  }
+
+  /** A red light that is on while any app uses the microphone (no app = any app), on the logo when a panel has one. */
+  addOnAirAlert(): void {
+    const hasLogo = Object.values(this.state.devices()).some(d => d.hasLogoLed);
+    this.patch('notificationAlerts', [...this.alerts(), {
+      trigger: 'MIC_IN_USE', target: hasLogo ? 'logo' : 'knob:0', color: '#ff1a1a', blink: false, effect: 'STEADY', disabled: false,
+    }]);
+  }
+
+  /** Whether the notification lights differ from the saved ones; the panel only knows the saved list. */
+  readonly alertsEdited = computed(() =>
+    JSON.stringify(this.local()?.notificationAlerts ?? []) !== JSON.stringify(this.settings.value()?.notificationAlerts ?? []));
+
+  /** Whether alert {@code i} is showing on the panel now; only known for the saved list, so not while it is edited. */
+  alertShowing(i: number): boolean { return !this.alertsEdited() && this.state.alertsLit().includes(i); }
+
+  /** The period in effect, as the backend reads it: an older save's blink keeps its 1000 ms rhythm. */
+  alertPeriod(alert: NotificationAlert): number { return alert.periodMs ?? (alert.effect == null && alert.blink ? 1000 : 1200); }
+
+  /** Takes a typed period, kept within 200–10000 ms; a cleared or unreadable field keeps the previous period. */
+  setAlertPeriod(i: number, input: HTMLInputElement): void {
+    const alert = this.alerts()[i];
+    if (!alert) return;
+    const previous = this.alertPeriod(alert);
+    const typed = input.value.trim() === '' ? NaN : Number(input.value);
+    const periodMs = Number.isFinite(typed) ? Math.min(10000, Math.max(200, Math.round(typed))) : previous;
+    input.value = String(periodMs);
+    if (periodMs !== previous) this.patchAlert(i, { periodMs });
+  }
+
+  previewAlert(i: number): void {
+    this.http.post<void>(`/api/alerts/${i}/preview`, {}).subscribe({
+      error: () => this.toast.show('Could not show the light', { kind: 'error' }),
+    });
+  }
+
+  removeAlert(i: number): void { this.patch('notificationAlerts', this.alerts().filter((_, k) => k !== i)); }
+
+  /** Which alert's "except these apps" picker is open. */
+  readonly alertExceptOpen = signal<number | null>(null);
+
+  removeAlertExcept(i: number, app: string): void {
+    this.patchAlert(i, { exceptApps: (this.alerts()[i]?.exceptApps ?? []).filter(a => a !== app) });
+  }
+
+  patchAlert(i: number, part: Partial<NotificationAlert>): void {
+    this.patch('notificationAlerts', this.alerts().map((a, k) => (k === i ? { ...a, ...part } : a)));
   }
 
   // ── Panel test & start-up animation ───────────────────────────────────────

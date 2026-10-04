@@ -335,7 +335,9 @@ as temporary, never-saved `CUSTOM` configs and holds every override back for tha
 restores what was showing. The Windows peak meter (`WindowsAudioLevelMeter`) is raw JNA COM on the light service's
 own MTA thread, deliberately apart from `SndCtrl.dll`.
 
-**Input gating:** `InputInterpreter` is where a reading becomes actions. `SoftTakeover` drops `LevelReadable` dial
+**Input gating:** `InputInterpreter` is where a reading becomes actions. A button's raw edges first pass a per-button
+`device/ButtonDebouncer` (the first edge at once, bounces within the window absorbed; window from
+`KnobSetting.buttonDebounce`, clamped to 0..200 ms, 0 = off), in front of press, hold and double-click. `SoftTakeover` drops `LevelReadable` dial
 actions whose target changed elsewhere until the control reaches it (`TakeoverPendingEvent` drives the overlay
 hint); `PanelTestService` swallows all actions of a device under test; a button with *Hold* actions is decided on
 release or after `Save.holdInterval`.
@@ -421,8 +423,8 @@ lines), which remains out of scope — defeating a same-user attacker on a deskt
 `integration/obs/` (OBS websocket), `voicemeeter/` (JNA), `wavelink/` + `dev/niels/wavelink/` (Elgato
 Wave Link RPC client), `osc/`, `mqtt/` (Eclipse Paho mqttv5), `homeassistant/`, `discord/` +
 `dev/niels/discord/`, `sonar/` + `re/walk/sonar/` (SteelSeries Sonar HTTP client, Windows-only); plus the
-feature families `volume/`, `keyboard/`, `program/`, `analogbands/`, `display/`, `profile/`, and `device/` (the
-brightness command only). Each owns its `command/` + `CommandModule` and (where applicable) its REST,
+feature families `volume/`, `keyboard/`, `program/`, `analogbands/`, `display/`, `profile/`, `dialvalue/` (the *Set dial
+value* button action), and `device/` (the brightness command only). Each owns its `command/` + `CommandModule` and (where applicable) its REST,
 SPI impls, and service. The on-screen volume overlay lives in `integration/volume/overlay/`: a Win32 JNA
 layered window on Windows (`Win32VolumeOverlay`) and a
 desktop-drawn OSD over D-Bus on Linux/Wayland (`LinuxOverlay`, AWT-free) — KDE Plasma's native volume

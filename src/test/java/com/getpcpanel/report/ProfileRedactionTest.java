@@ -113,7 +113,9 @@ class ProfileRedactionTest {
             // HomeAssistantServer
             "id", "name", "url",
             // DiscordSettings / DiscordAuth — identity, not authorisation
-            "clientId", "redirectUri", "scope", "userId", "userName");
+            "clientId", "redirectUri", "scope", "userId", "userName",
+            // NotificationAlert — an app name, a light, a colour, text to match and a notification sender id
+            "app", "target", "color", "pattern", "source");
 
     /**
      * Walks the settings side of {@link Save} and returns the name of every string-valued field or

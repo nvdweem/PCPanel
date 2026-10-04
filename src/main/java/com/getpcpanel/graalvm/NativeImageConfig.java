@@ -106,6 +106,8 @@ import com.getpcpanel.integration.discord.dto.DiscordSettings;
 import com.getpcpanel.integration.volume.FocusVolumeOverride;
 import com.getpcpanel.integration.volume.FocusVolumeTarget;
 import com.getpcpanel.profile.dto.CurveDefinition;
+import com.getpcpanel.profile.dto.NotificationAlert;
+import com.getpcpanel.rest.model.ws.WsAlertsLitEvent;
 import com.getpcpanel.profile.dto.SaveBackup;
 import com.getpcpanel.rest.model.dto.HistoryDto;
 import com.getpcpanel.profile.dto.CurveMode;
@@ -444,6 +446,12 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         // ReflectionRegistrationCoverageTest does not reach them — they are registered by hand.
         CurveDefinition.class,
         CurveDefinition[].class,
+        NotificationAlert.class,
+        NotificationAlert[].class,
+        NotificationAlert.AlertTrigger.class,
+        NotificationAlert.AlertEffect.class,
+        // Pushed over the WebSocket as "alerts_lit"; not reached by the REST or Command walks.
+        WsAlertsLitEvent.class,
         CurvePoint.class,
         CurvePoint[].class,
         CurveMode.class,

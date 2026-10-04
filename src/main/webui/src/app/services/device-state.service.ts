@@ -52,6 +52,8 @@ export class DeviceStateService implements OnDestroy {
   readonly history = signal<{ canUndo: boolean; canRedo: boolean } | null>(null);
   /** The most recent physical button press or release, for pages that follow the panel live (the panel test). */
   readonly lastButton = signal<{ serial: string; button: number; pressed: boolean; at: number } | null>(null);
+  /** The notification lights showing now, as positions in the saved notification light list. */
+  readonly alertsLit = signal<number[]>([]);
 
   readonly connected = signal(false);
   readonly reconnecting = signal(false);
@@ -184,6 +186,7 @@ export class DeviceStateService implements OnDestroy {
       case 'control_setting_changed':
       case 'new_version_available':
       case 'history_changed':
+      case 'alerts_lit':
         return true;
       case true:
         return false;
@@ -283,6 +286,10 @@ export class DeviceStateService implements OnDestroy {
 
       case 'history_changed':
         this.history.set({ canUndo: event.canUndo, canRedo: event.canRedo });
+        return false;
+
+      case 'alerts_lit':
+        this.alertsLit.set(event.indexes);
         return false;
 
       case 'button_press':

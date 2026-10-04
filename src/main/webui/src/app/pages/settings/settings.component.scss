@@ -61,6 +61,7 @@
 /* Numeric inset fields aligned to the right of a row */
 .num-field { width: 110px; flex: none; }
 .num-field .pc-field-input { text-align: right; }
+.text-field { width: 220px; flex: none; }
 
 .field-block { display: flex; flex-direction: column; gap: 8px; }
 .field-block .micro-label { padding-left: 2px; }
@@ -82,6 +83,11 @@
 .pc-chip.dashed:disabled { opacity: 0.6; cursor: default; }
 .fv-rule-head { display: flex; align-items: center; gap: 10px; }
 .fv-rule-no { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 6px; font-size: 11.5px; font-weight: 600; color: #000; background: var(--accent, #FFB020); flex: none; }
+.alert-showing {
+  font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ok-text);
+  border: 1px solid var(--ok); border-radius: 4px; padding: 1px 5px; flex: none;
+}
+.alert-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .fv-rule-title { flex: 1; font-size: 13px; font-weight: 500; color: var(--text-1); text-transform: uppercase; letter-spacing: 0.06em; }
 .fv-del { background: none; border: none; color: var(--text-3); cursor: pointer; padding: 2px; display: inline-flex; }
 .fv-del:hover { color: var(--danger, #FF453A); }

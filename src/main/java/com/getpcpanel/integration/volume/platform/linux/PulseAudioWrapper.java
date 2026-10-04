@@ -105,6 +105,16 @@ class PulseAudioWrapper {
         return execAndParse(InOutput.session);
     }
 
+    /** The streams recording from an input or a monitor. */
+    public List<PulseAudioTarget> getRecordings() {
+        return execAndParse(InOutput.recording);
+    }
+
+    /** Inputs and monitors, without asking which is the default. */
+    public List<PulseAudioTarget> getSources() {
+        return execAndParse(InOutput.input);
+    }
+
     public void setSessionVolume(int index, float volume) {
         pactl("set-sink-input-volume", String.valueOf(index), String.valueOf(volumeFtoI(volume)));
     }
@@ -279,7 +289,7 @@ class PulseAudioWrapper {
     }
 
         enum InOutput {
-        input("sources"), output("sinks"), session("sink-inputs");
+        input("sources"), output("sinks"), session("sink-inputs"), recording("source-outputs");
 
         private final String pulseType;
 

@@ -21,6 +21,7 @@ up to date when you add or remove an event or an observer.
 | Event | Fired by | Observed by |
 |-------|----------|-------------|
 | `PCPanelControlEvent` | `InputInterpreter` | `CommandDispatcher` (runs the configured commands), `Overlay` |
+| `TaskbarFlashEvent` | `WindowsShellHookMonitor` | `AlertService` (notification lights) |
 | `TakeoverPendingEvent` | `InputInterpreter` (via `SoftTakeover`) | `Overlay` ("move to N% to take over") |
 | `ButtonFeedbackEvent` | button actions, from inside the press's `TemplateContext`: the mute actions, *Set default device*, *Cycle default device*, *Send app to audio device*, *Switch profile*, *Run dial actions at a level* | `Overlay` (shows what the button did, unless the button's actions carry a typed overlay text) |
 | `ButtonClickEvent` | `InputInterpreter` | `InputInterpreter` (self, click resolution), `MqttDeviceService` |
@@ -78,10 +79,11 @@ up to date when you add or remove an event or an observer.
 | Event | Fired by | Observed by |
 |-------|----------|-------------|
 | `SystemEvent` (sleep/wake/lock/display-off/display-on) | `WindowsSystemEventService` / `LinuxSystemEventService` / `MacSystemEventService` | `SleepDetector` |
-| `WindowFocusChangedEvent` | focus watchers | `DeviceHolder`, `ProfileWindowFocusService`, `MuteColorService` (a focused-app control's muted colour tracks the app that now has focus) |
+| `WindowFocusChangedEvent` | focus watchers | `DeviceHolder`, `ProfileWindowFocusService`, `MuteColorService` (a focused-app control's muted colour tracks the app that now has focus), `AlertService` (clears the focused app's taskbar-flash lights) |
 | `ShowMainEvent` | `FileChecker`, `StatusNotifierItemImpl`, `TrayServiceWin`, `DBusMenuImpl`, `CommandOpenWebUi`, `StartupOnboarding` | `ShowMainService` (optional `redirect` lands the browser on a named in-app path, e.g. the tray's "Report a problem" → `/?report=1`) |
 | `OpenFolderEvent` | `TrayServiceWin`, `DBusMenuImpl` (tray "Open settings folder") | `ShowMainService` (reveals the folder in the OS file manager) |
 | `NewVersionAvailableEvent` | `VersionChecker` | (UI/notification consumers) |
+| `AlertsLitEvent` | `AlertService` (when the notification lights showing change, previews included) | `EventBroadcaster` (→ UI `alerts_lit`, replayed to clients that connect later) |
 
 ---
 

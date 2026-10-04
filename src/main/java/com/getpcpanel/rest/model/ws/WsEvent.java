@@ -21,7 +21,8 @@ import com.getpcpanel.rest.model.dto.DeviceSnapshotDto;
         @Type(value = DeviceSnapshotDto.class, name = "device_snapshot"),
         @Type(value = WsControlSettingChangedEvent.class, name = "control_setting_changed"),
         @Type(value = WsNewVersionAvailableEvent.class, name = "new_version_available"),
-        @Type(value = WsHistoryChangedEvent.class, name = "history_changed")
+        @Type(value = WsHistoryChangedEvent.class, name = "history_changed"),
+        @Type(value = WsAlertsLitEvent.class, name = "alerts_lit")
 })
 public interface WsEvent {
 }

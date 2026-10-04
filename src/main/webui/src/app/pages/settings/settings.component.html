@@ -264,6 +264,119 @@
           </div>
         }
 
+        <!-- ── ALERTS ──────────────────────────────────────────────────────── -->
+        @case ('alerts') {
+          <h2 class="page-title">Notification lights</h2>
+          <p class="page-sub">Light up a knob, slider or the logo while an app wants your attention: when it flashes its taskbar
+            button (how Discord, Teams and most chat apps signal a new message), when it shows a notification, while its window
+            title shows an unread count or other text, or while it uses your microphone. Shown in per-control lighting, on every
+            profile.</p>
+          @if (platform.os() === 'linux') {
+            <div class="pc-hint platform-note">On Linux a "taskbar flash" is a window asking for attention, and window titles are read from
+              the same windows. That works on X11, and on Wayland
+              for apps that run through XWayland (Electron apps such as Discord usually do); other Wayland apps can't be seen. The
+              microphone light works on every desktop.</div>
+          }
+
+          @for (alert of alerts(); track $index; let ai = $index) {
+            <div class="pc-card pad stack fv-rule">
+              <div class="fv-rule-head">
+                <span class="fv-rule-no" [style.background]="alert.color">{{ ai + 1 }}</span>
+                <span class="fv-rule-title">{{ alertTriggerLabel(alert) }}</span>
+                @if (alertShowing(ai)) { <span class="alert-showing">Showing now</span> }
+                <button class="pc-btn ghost" [disabled]="alertsEdited()" (click)="previewAlert(ai)"
+                        [title]="alertsEdited() ? 'Save your changes to preview this light' : 'Show this light on the panel for 5 seconds'">Preview 5 s</button>
+                <pc-toggle [value]="!alert.disabled" title="On / off" (valueChange)="patchAlert(ai, { disabled: !$event })"></pc-toggle>
+                <button class="fv-del" (click)="removeAlert(ai)" title="Remove"><pc-icon name="trash" [size]="14"></pc-icon></button>
+              </div>
+              <div class="row">
+                <div class="row-text"><div class="row-label">When</div></div>
+                <pc-segmented [options]="alertTriggerOptionsFor(alert)" [value]="alert.trigger" (valueChange)="patchAlert(ai, { trigger: $any($event) })"></pc-segmented>
+              </div>
+              <div class="row">
+                <div class="row-text">
+                  <div class="row-label">App</div>
+                  @if (alert.trigger === 'MIC_IN_USE' || alert.trigger === 'WINDOW_TITLE') { <div class="row-sub">Leave empty for any app.</div> }
+                </div>
+                <pc-select [options]="alertAppOptions()" [value]="alert.app ?? ''" [searchable]="true" [allowCustom]="true"
+                           placeholder="Choose an app" (valueChange)="patchAlert(ai, { app: $any($event) })"></pc-select>
+              </div>
+              @if (alert.trigger === 'NOTIFICATION') {
+                <div class="row">
+                  <div class="row-text">
+                    <div class="row-label">Source</div>
+                    <div class="row-sub">The sender of the notifications, when it isn't named after the app</div>
+                  </div>
+                  <pc-select [options]="notificationSourceOptions(alert)" [value]="alert.source ?? ''" [searchable]="true" [allowCustom]="true"
+                             placeholder="From the app name" (openChange)="$event && refreshNotificationSources()"
+                             (valueChange)="patchAlert(ai, { source: $any($event) || null })"></pc-select>
+                </div>
+              }
+              @if (alert.trigger === 'WINDOW_TITLE') {
+                <div class="row">
+                  <div class="row-text">
+                    <div class="row-label">Text</div>
+                    <div class="row-sub">Lit while one of the app's window titles contains it, ignoring case</div>
+                  </div>
+                  <div class="pc-field text-field">
+                    <input class="pc-field-input" type="text" placeholder="An unread count like (3)" [value]="alert.pattern ?? ''"
+                           (input)="patchAlert(ai, { pattern: $any($event.target).value || null })">
+                  </div>
+                </div>
+              }
+              @if (alert.trigger === 'MIC_IN_USE' && !alert.app) {
+                <div class="field-block">
+                  <div class="row-sub">Except these apps (for example a mixer that always holds the microphone)</div>
+                  <div class="chips">
+                    @for (app of alert.exceptApps ?? []; track app) {
+                      <span class="pc-chip">{{ app }}<span class="x" (click)="removeAlertExcept(ai, app)"><pc-icon name="x" [size]="11" [strokeWidth]="2.5"></pc-icon></span></span>
+                    }
+                    <button class="pc-chip dashed" cdkOverlayOrigin #aex="cdkOverlayOrigin" (click)="alertExceptOpen.set(ai); refreshProcesses()">
+                      <pc-icon name="plus" [size]="12"></pc-icon> add app
+                    </button>
+                    <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="aex" [cdkConnectedOverlayOpen]="alertExceptOpen() === ai"
+                                 [cdkConnectedOverlayHasBackdrop]="true" cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+                                 [cdkConnectedOverlayWidth]="300" [cdkConnectedOverlayOffsetY]="6"
+                                 (backdropClick)="alertExceptOpen.set(null)" (detach)="alertExceptOpen.set(null)">
+                      <pc-app-picker [items]="processItems()" [multi]="true"
+                                     [value]="alert.exceptApps ?? []" (valueChange)="patchAlert(ai, { exceptApps: $event })"></pc-app-picker>
+                    </ng-template>
+                  </div>
+                </div>
+              }
+              <div class="row">
+                <div class="row-text"><div class="row-label">Light</div></div>
+                <pc-select [options]="alertTargetOptions" [value]="alert.target" (valueChange)="patchAlert(ai, { target: $any($event) })"></pc-select>
+              </div>
+              <pc-color-picker label="Colour" [value]="alert.color" (valueChange)="patchAlert(ai, { color: $event })"></pc-color-picker>
+              <div class="row">
+                <div class="row-text"><div class="row-label">Effect</div></div>
+                <pc-segmented [options]="alertEffectOptions" [value]="alertEffect(alert)" (valueChange)="setAlertEffect(ai, $any($event))"></pc-segmented>
+              </div>
+              <div class="row">
+                <div class="row-text"><div class="row-label">Period</div><div class="row-sub">ms for one blink or pulse, 200–10000</div></div>
+                <div class="pc-field num-field">
+                  <input class="pc-field-input" type="number" min="200" max="10000" step="100" [disabled]="alertEffect(alert) === 'STEADY'"
+                         [value]="alertPeriod(alert)" (change)="setAlertPeriod(ai, $any($event.target))">
+                </div>
+              </div>
+              @if (alert.trigger === 'TASKBAR_FLASH' || alert.trigger === 'NOTIFICATION') {
+                <div class="row">
+                  <div class="row-text"><div class="row-label">Stop after</div><div class="row-sub">seconds; 0 keeps it on until you open the app</div></div>
+                  <div class="pc-field num-field">
+                    <input class="pc-field-input" type="number" min="0" [value]="alert.stopAfterSeconds ?? 0"
+                           (input)="patchAlert(ai, { stopAfterSeconds: num($any($event.target).value) })">
+                  </div>
+                </div>
+              }
+            </div>
+          }
+          <div class="alert-actions">
+            <button class="pc-btn" (click)="addAlert()"><pc-icon name="plus" [size]="14"></pc-icon> Add notification light</button>
+            <button class="pc-btn ghost" (click)="addOnAirAlert()" title="A red light while any app uses your microphone"><pc-icon name="plus" [size]="14"></pc-icon> On-air light</button>
+          </div>
+        }
+
         <!-- ── CURVES ──────────────────────────────────────────────────────── -->
         @case ('curves') {
           <h2 class="page-title">Curves</h2>

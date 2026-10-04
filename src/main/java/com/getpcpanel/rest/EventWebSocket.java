@@ -105,6 +105,13 @@ public class EventWebSocket {
                 log.warn("Failed to send new-version notice to new WS connection {}", connection.id(), e);
             }
         }
+
+        // The notification lights showing now, also when none are, so a reconnecting client drops what it had.
+        try {
+            connection.sendText(objectMapper.writeValueAsString(eventBroadcaster.latestAlertsLit())).await().atMost(WebSocketBroadcastQueue.SEND_TIMEOUT);
+        } catch (Exception e) {
+            log.warn("Failed to send the notification lights showing to new WS connection {}", connection.id(), e);
+        }
     }
 
     /**

@@ -60,4 +60,8 @@ public interface WinUser32Ext extends StdCallLibrary {
 
     /** Registers the system-wide {@code "TaskbarCreated"} message so the icon can be re-added when Explorer restarts. */
     int RegisterWindowMessageW(WString lpString);
+
+    boolean RegisterShellHookWindow(HWND hWnd);
+
+    boolean DeregisterShellHookWindow(HWND hWnd);
 }

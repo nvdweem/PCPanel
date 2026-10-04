@@ -804,6 +804,21 @@ export interface MqttSettings {
     username: string;
 }
 
+export interface NotificationAlert {
+    app?: string;
+    blink: boolean;
+    color: string;
+    disabled: boolean;
+    effect?: AlertEffect;
+    exceptApps?: string[];
+    pattern?: string;
+    periodMs?: number;
+    source?: string;
+    stopAfterSeconds?: number;
+    target: string;
+    trigger: AlertTrigger;
+}
+
 export interface ObsCommandModule extends CommandModule {
 }
 
@@ -892,6 +907,7 @@ export interface SettingsDto {
     mqtt: MqttSettings;
     newAppsAtDialLevel: boolean;
     newAppsAtDialLevelExceptions: string[];
+    notificationAlerts: NotificationAlert[];
     obsAddress: string;
     obsEnabled: boolean;
     obsPassword: string;
@@ -1088,6 +1104,11 @@ export interface WaveLinkSettings {
 export interface WebUiCommandModule extends CommandModule {
 }
 
+export interface WsAlertsLitEvent extends WsEvent {
+    indexes: number[];
+    type: "alerts_lit";
+}
+
 export interface WsAssignmentChangedEvent extends WsEvent {
     commands: Commands;
     index: number;
@@ -1129,7 +1150,7 @@ export interface WsDeviceRenamedEvent extends WsEvent {
 }
 
 export interface WsEvent {
-    type: "device_snapshot" | "assignment_changed" | "button_press" | "control_setting_changed" | "device_connected" | "device_disconnected" | "device_renamed" | "history_changed" | "knob_rotate" | "lighting_changed" | "new_version_available" | "profile_switched" | "visual_colors_changed";
+    type: "device_snapshot" | "alerts_lit" | "assignment_changed" | "button_press" | "control_setting_changed" | "device_connected" | "device_disconnected" | "device_renamed" | "history_changed" | "knob_rotate" | "lighting_changed" | "new_version_available" | "profile_switched" | "visual_colors_changed";
 }
 
 export interface WsHistoryChangedEvent extends WsEvent {
@@ -1182,6 +1203,10 @@ export interface WsVisualColorsChangedEvent extends WsEvent {
     sliderLabelColors: string[];
     type: "visual_colors_changed";
 }
+
+export type AlertEffect = "STEADY" | "BLINK" | "PULSE";
+
+export type AlertTrigger = "TASKBAR_FLASH" | "MIC_IN_USE" | "NOTIFICATION" | "WINDOW_TITLE";
 
 export type AnalogKind = "KNOB" | "SLIDER" | "ENCODER";
 
@@ -1237,4 +1262,4 @@ export type VolumeButton = "mute" | "next" | "prev" | "stop" | "playPause";
 
 export type WaveLinkCommandTarget = "Input" | "Channel" | "Mix" | "Output" | "MixMaster";
 
-export type WsEventUnion = WsAssignmentChangedEvent | WsButtonEvent | WsDeviceConnectedEvent | WsDeviceDisconnectedEvent | WsDeviceRenamedEvent | WsKnobEvent | WsLightingChangedEvent | WsProfileSwitchedEvent | WsVisualColorsChangedEvent | DeviceSnapshotDto | WsControlSettingChangedEvent | WsNewVersionAvailableEvent | WsHistoryChangedEvent;
+export type WsEventUnion = WsAssignmentChangedEvent | WsButtonEvent | WsDeviceConnectedEvent | WsDeviceDisconnectedEvent | WsDeviceRenamedEvent | WsKnobEvent | WsLightingChangedEvent | WsProfileSwitchedEvent | WsVisualColorsChangedEvent | DeviceSnapshotDto | WsControlSettingChangedEvent | WsNewVersionAvailableEvent | WsHistoryChangedEvent | WsAlertsLitEvent;

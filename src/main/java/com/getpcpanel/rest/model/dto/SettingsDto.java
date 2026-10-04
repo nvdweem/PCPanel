@@ -8,6 +8,7 @@ import com.getpcpanel.commands.curve.Curves;
 import com.getpcpanel.integration.homeassistant.dto.HomeAssistantServer;
 import com.getpcpanel.profile.Save;
 import com.getpcpanel.profile.dto.CurveDefinition;
+import com.getpcpanel.profile.dto.NotificationAlert;
 import com.getpcpanel.integration.volume.FocusVolumeOverride;
 import com.getpcpanel.integration.mqtt.dto.MqttSettings;
 import com.getpcpanel.integration.osc.dto.OSCConnectionInfo;
@@ -34,6 +35,7 @@ public class SettingsDto {
     private long holdInterval;
     private boolean softTakeoverKnobs;
     private boolean softTakeoverSliders;
+    private List<NotificationAlert> notificationAlerts;
     private boolean startupAnimation;
     private boolean preventClickWhenDblClick;
     private boolean skipControlledFocusApps;
@@ -106,6 +108,7 @@ public class SettingsDto {
         dto.holdInterval = save.getHoldInterval();
         dto.softTakeoverKnobs = save.isSoftTakeoverKnobs();
         dto.softTakeoverSliders = save.isSoftTakeoverSliders();
+        dto.notificationAlerts = save.getNotificationAlerts();
         dto.startupAnimation = save.isStartupAnimation();
         dto.preventClickWhenDblClick = save.isPreventClickWhenDblClick();
         dto.skipControlledFocusApps = save.isSkipControlledFocusApps();
@@ -168,6 +171,7 @@ public class SettingsDto {
         save.setHoldInterval(holdInterval);
         save.setSoftTakeoverKnobs(softTakeoverKnobs);
         save.setSoftTakeoverSliders(softTakeoverSliders);
+        save.setNotificationAlerts(notificationAlerts);
         save.setStartupAnimation(startupAnimation);
         save.setPreventClickWhenDblClick(preventClickWhenDblClick);
         save.setSkipControlledFocusApps(skipControlledFocusApps);

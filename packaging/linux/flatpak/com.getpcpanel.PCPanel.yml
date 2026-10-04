@@ -106,6 +106,8 @@ modules:
       - install -m 0755 host-spawn-wrapper.sh /app/bin/ddcutil
       # Audio-level lights record levels with the host's parec; its wrapper ends the recording if PCPanel goes away.
       - install -m 0755 parec-wrapper.sh /app/bin/parec
+      # Notification lights follow the desktop's notifications with the host's dbus-monitor (same lifetime handling).
+      - install -m 0755 dbus-monitor-wrapper.sh /app/bin/dbus-monitor
       # hyprctl is also forwarded to the host, but needs the Hyprland instance signature handed to it
       # explicitly — flatpak-spawn does not carry the sandbox environment over. See the wrapper.
       - install -m 0755 hyprctl-wrapper.sh /app/bin/hyprctl
@@ -128,6 +130,8 @@ modules:
         path: host-spawn-wrapper.sh
       - type: file
         path: parec-wrapper.sh
+      - type: file
+        path: dbus-monitor-wrapper.sh
       - type: file
         path: hyprctl-wrapper.sh
       - type: file

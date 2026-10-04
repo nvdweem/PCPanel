@@ -56,6 +56,8 @@ The software depends on:
   `kdotool` covers X11 too, so `xdotool` is not needed alongside it; `xdotool` only helps on non-KDE X11
   desktops (GNOME/XFCE on X11) and is purely optional.
 - `hyprctl` — the same, on Hyprland. It is part of Hyprland itself, so nothing extra is needed there.
+- `dbus-monitor` — for notification lights that follow an app's notifications (package `dbus-tools` on Fedora,
+  `dbus-bin` on Debian/Ubuntu). Most desktops have it installed already.
 
 If there are no tray extensions available, the application will still hide when closed. To show
 the main window, just run the application again.

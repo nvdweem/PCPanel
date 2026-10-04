@@ -153,7 +153,7 @@ class PulseAudioWrapperTest {
                 return switch (type) {
                     case output -> List.of(target(1, type, "speakers"), target(2, type, "headset"));
                     case input -> List.of(target(3, type, "mic"), target(4, type, "headset"), target(5, type, "speakers.monitor"));
-                    case session -> List.of();
+                    case session, recording -> List.of();
                 };
             }
 

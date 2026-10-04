@@ -747,24 +747,25 @@
           },
           "36" : {
             "commands" : [ {
-              "_type" : "display.off"
+              "_type" : "display.off",
+              "displays" : [ "arg0-140", "arg0-141" ]
             } ],
             "type" : "allAtOnce"
           },
           "37" : {
             "commands" : [ {
               "_type" : "sonar.mute",
-              "channel" : "Game",
-              "mix" : "streaming",
-              "muteType" : "toggle"
+              "channel" : "Aux",
+              "mix" : "both",
+              "muteType" : "mute"
             } ],
             "type" : "allAtOnce"
           },
           "38" : {
             "commands" : [ {
               "_type" : "volume.app-output",
-              "processName" : [ "arg0-139", "arg0-140" ],
-              "device" : "arg1-141"
+              "processName" : [ "arg0-149", "arg0-150" ],
+              "device" : "arg1-151"
             } ],
             "type" : "allAtOnce"
           }
@@ -1096,7 +1097,7 @@
           "19" : {
             "commands" : [ {
               "_type" : "analogbands.steps",
-              "stepsPerTurn" : 130,
+              "stepsPerTurn" : 138,
               "up" : null,
               "down" : null,
               "dialParams" : null,
@@ -1107,13 +1108,13 @@
           "20" : {
             "commands" : [ {
               "_type" : "sonar.volume",
-              "channel" : "Media",
-              "mix" : "streaming",
+              "channel" : "Chat",
+              "mix" : "both",
               "unMuteOnVolumeChange" : true,
               "dialParams" : {
                 "invert" : true,
-                "moveStart" : 137,
-                "moveEnd" : 138
+                "moveStart" : 147,
+                "moveEnd" : 148
               },
               "invert" : true
             } ],
@@ -2148,7 +2149,7 @@
       }
     }
   },
-  "templateVersion" : 129,
+  "templateVersion" : 137,
   "mainUIIcons" : true,
   "openBrowserOnStartup" : true,
   "startupVersionCheck" : true,
@@ -2170,16 +2171,24 @@
     "blink" : true,
     "stopAfterSeconds" : 118,
     "disabled" : true,
-    "exceptApps" : [ "exceptApps-119", "exceptApps-120" ]
+    "exceptApps" : [ "exceptApps-119", "exceptApps-120" ],
+    "effect" : "BLINK",
+    "periodMs" : 122,
+    "pattern" : "pattern-123",
+    "source" : "source-124"
   }, {
     "trigger" : "MIC_IN_USE",
-    "app" : "app-122",
-    "target" : "target-123",
-    "color" : "color-124",
+    "app" : "app-126",
+    "target" : "target-127",
+    "color" : "color-128",
     "blink" : true,
-    "stopAfterSeconds" : 125,
+    "stopAfterSeconds" : 129,
     "disabled" : true,
-    "exceptApps" : [ "exceptApps-126", "exceptApps-127" ]
+    "exceptApps" : [ "exceptApps-130", "exceptApps-131" ],
+    "effect" : "STEADY",
+    "periodMs" : 133,
+    "pattern" : "pattern-134",
+    "source" : "source-135"
   } ],
   "holdInterval" : 1110,
   "preventClickWhenDblClick" : true,
@@ -2314,7 +2323,7 @@
   "overlayWindowCornerRounding" : 24,
   "overlayBarHeight" : 20,
   "overlayBarCornerRounding" : 19,
-  "overlayKnobSize" : 128,
+  "overlayKnobSize" : 136,
   "overlayPosition" : "middleMiddle",
   "overlayPadding" : 21,
   "overlayShowAppName" : true,
