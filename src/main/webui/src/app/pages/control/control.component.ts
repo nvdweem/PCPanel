@@ -30,7 +30,7 @@ import { OverlayModule } from '@angular/cdk/overlay';
 type Slot = 'rotate' | 'press' | 'dblpress' | 'hold' | 'release';
 
 const EMPTY: Commands = { commands: [], type: 'allAtOnce' };
-const EMPTY_KNOB: KnobSetting = { minTrim: 0, maxTrim: 100, logarithmic: false, overlayIcon: '', overlayName: '', buttonDebounce: 0 };
+const EMPTY_KNOB: KnobSetting = { minTrim: 0, maxTrim: 100, logarithmic: false, overlayIcon: '', overlayName: '', buttonDebounce: 50 };
 /** Last entry of the curve picker: opens the library rather than selecting a curve. */
 const EDIT_CURVES = '__edit-curves__';
 
@@ -282,6 +282,10 @@ export class ControlComponent {
   }
 
   // ── knob settings ──────────────────────────────────────────────────────────
+  clampDebounce(ms: number): number {
+    return Number.isFinite(ms) ? Math.min(200, Math.max(0, Math.round(ms))) : 0;
+  }
+
   setKnob<K extends keyof KnobSetting>(key: K, value: KnobSetting[K]): void {
     this.knob.update(k => ({ ...k, [key]: value }));
     this.save();

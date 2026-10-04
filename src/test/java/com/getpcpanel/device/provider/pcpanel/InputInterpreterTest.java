@@ -95,18 +95,72 @@ class InputInterpreterTest {
         assertTrue(events.clicks().isEmpty(), "a hold is not also a press");
     }
 
+    /** Contact bounce on a button is absorbed: one press, and the release is applied once the contact has settled. */
+    @Test
+    void bouncingButtonIsOnePress() throws Exception {
+        var events = new CapturingEventBus();
+        var sut = interpreter(profileWithRelease(), events);
+        sut.save.getProfile(SERIAL).orElseThrow().getKnobSettings(BUTTON).setButtonDebounce(80);
+
+        sut.onButtonPress(new DeviceCommunicationHandler.ButtonPressEvent(SERIAL, BUTTON, true));
+        sut.onButtonPress(new DeviceCommunicationHandler.ButtonPressEvent(SERIAL, BUTTON, false));
+        sut.onButtonPress(new DeviceCommunicationHandler.ButtonPressEvent(SERIAL, BUTTON, true));
+        sut.onButtonPress(new DeviceCommunicationHandler.ButtonPressEvent(SERIAL, BUTTON, false));
+        assertEquals(0, events.releases().size(), "the release waits for the contact to settle");
+        Thread.sleep(250);
+
+        assertEquals(1, events.clicks().size(), "bounce inside the window is one press");
+        assertEquals(1, events.releases().size(), "the settled release is applied");
+    }
+
+    /** A stored window beyond 200 ms behaves as 200 ms. */
+    @Test
+    void oversizedWindowIsClamped() throws Exception {
+        var events = new CapturingEventBus();
+        var sut = interpreter(profileWithRelease(), events);
+        sut.save.getProfile(SERIAL).orElseThrow().getKnobSettings(BUTTON).setButtonDebounce(1000);
+
+        sut.onButtonPress(new DeviceCommunicationHandler.ButtonPressEvent(SERIAL, BUTTON, true));
+        sut.onButtonPress(new DeviceCommunicationHandler.ButtonPressEvent(SERIAL, BUTTON, false));
+        Thread.sleep(500);
+
+        assertEquals(1, events.releases().size(), "released after the 200 ms cap, not 1000 ms");
+    }
+
+    /** A zero window passes every edge, so a fast second press is a second click. */
+    @Test
+    void zeroDebounceKeepsEveryPress() throws Exception {
+        var events = new CapturingEventBus();
+        var sut = interpreter(profileWithoutDblAction(), events);
+        sut.save.getProfile(SERIAL).orElseThrow().getKnobSettings(BUTTON).setButtonDebounce(0);
+
+        for (var i = 0; i < 2; i++) {
+            sut.onButtonPress(new DeviceCommunicationHandler.ButtonPressEvent(SERIAL, BUTTON, true));
+            sut.onButtonPress(new DeviceCommunicationHandler.ButtonPressEvent(SERIAL, BUTTON, false));
+        }
+
+        assertEquals(2, events.clicks().size());
+    }
+
     private static InputInterpreter interpreter(Profile profile, CapturingEventBus events) {
         var sut = new InputInterpreter();
         sut.save = new FixedSaveService(profile);
         sut.baseLayer = new BaseLayerService(); // no device save -> no base layer, dispatch behaves as the active profile alone
         sut.eventBus = events;
         sut.debouncer = new Debouncer();
+        sut.devices = new com.getpcpanel.device.DeviceHolder();
         return sut;
     }
 
     private static Profile profileWithoutDblAction() {
         var profile = new Profile("p", DeviceType.PCPANEL_PRO);
         profile.setButtonData(BUTTON, mute());
+        return profile;
+    }
+
+    private static Profile profileWithRelease() {
+        var profile = profileWithoutDblAction();
+        profile.setReleaseButtonData(BUTTON, mute());
         return profile;
     }
 
@@ -152,6 +206,11 @@ class InputInterpreterTest {
 
         private List<ButtonClickEvent> clicks() {
             return fired.stream().filter(ButtonClickEvent.class::isInstance).map(ButtonClickEvent.class::cast).toList();
+        }
+
+        private List<PCPanelControlEvent> releases() {
+            return fired.stream().filter(PCPanelControlEvent.class::isInstance).map(PCPanelControlEvent.class::cast)
+                        .filter(e -> e.source() == PCPanelControlEvent.Source.RELEASE).toList();
         }
 
         private List<PCPanelControlEvent> holds() {

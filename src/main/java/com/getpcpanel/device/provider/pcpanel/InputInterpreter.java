@@ -1,5 +1,6 @@
 package com.getpcpanel.device.provider.pcpanel;
 
+import com.getpcpanel.device.ButtonDebouncer;
 import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.device.PanelTestService;
 
@@ -10,10 +11,11 @@ import static com.getpcpanel.commands.Commands.hasCommands;
 import static java.util.Objects.requireNonNullElse;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import jakarta.enterprise.event.Event;
@@ -36,6 +38,7 @@ import lombok.extern.log4j.Log4j2;
 @Log4j2
 @ApplicationScoped
 public final class InputInterpreter {
+    private static final int MAX_DEBOUNCE_MS = 200;
     @Inject
     SaveService save;
     @Inject
@@ -54,11 +57,13 @@ public final class InputInterpreter {
     @Inject
     @Nullable
     PanelTestService panelTest;
-    private final Map<ClickId, Long> lastClicks = new HashMap<>();
+    private final Map<ClickId, Long> lastClicks = new ConcurrentHashMap<>();
     /** Buttons pressed while they had a hold action, whose press is not decided yet. */
     private final Set<ClickId> holdArmed = new HashSet<>();
     /** Buttons whose hold actions ran during the current press. */
     private final Set<ClickId> holdFired = new HashSet<>();
+    /** Contact-bounce filter per button, in front of press, hold and double-click handling. */
+    private final Map<ClickId, ButtonDebouncer> edgeFilters = new ConcurrentHashMap<>();
 
         public void onKnobRotate(@Observes DeviceCommunicationHandler.KnobRotateEvent event) {
         devices.getDevice(event.serialNum()).ifPresent(device -> {
@@ -77,11 +82,40 @@ public final class InputInterpreter {
         if (panelTest != null && panelTest.isTesting(event.serialNum())) {
             return;
         }
-        if (event.pressed()) {
-            doPress(event.serialNum(), event.button());
-        } else {
-            doRelease(event.serialNum(), event.button());
+        var id = new ClickId(event.serialNum(), event.button());
+        var filter = edgeFilters.computeIfAbsent(id, k -> new ButtonDebouncer(InputInterpreter::nowMs));
+        applyEdges(id, filter.onEdge(event.pressed(), debounceWindow(id)));
+        scheduleEdgeTimer(id, filter);
+    }
+
+    private void onEdgeTimer(ClickId id, ButtonDebouncer filter) {
+        applyEdges(id, filter.onTimer());
+        scheduleEdgeTimer(id, filter);
+    }
+
+    private void applyEdges(ClickId id, List<Boolean> edges) {
+        for (var pressed : edges) {
+            if (pressed) {
+                doPress(id.serialNum(), id.button());
+            } else {
+                doRelease(id.serialNum(), id.button());
+            }
         }
+    }
+
+    private void scheduleEdgeTimer(ClickId id, ButtonDebouncer filter) {
+        var deadline = filter.nextDeadline();
+        if (deadline != ButtonDebouncer.NO_DEADLINE) {
+            debouncer.debounce(new EdgeKey(id), () -> onEdgeTimer(id, filter), Math.max(0, deadline - nowMs()), TimeUnit.MILLISECONDS);
+        }
+    }
+
+    private int debounceWindow(ClickId id) {
+        return save.getProfile(id.serialNum()).map(p -> baseLayer.effectiveKnobSetting(id.serialNum(), p, id.button()).getButtonDebounce()).map(ms -> Math.clamp(ms, 0, MAX_DEBOUNCE_MS)).orElse(50);
+    }
+
+    private static long nowMs() {
+        return TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
     }
 
     /**
@@ -219,5 +253,8 @@ public final class InputInterpreter {
     }
 
     private record HoldKey(ClickId id) {
+    }
+
+    private record EdgeKey(ClickId id) {
     }
 }

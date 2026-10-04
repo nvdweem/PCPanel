@@ -63,6 +63,11 @@
                    (input)="setKnob('maxTrim', +$any($event.target).value)">
           </div>
         </div>
+        <div class="pc-field">
+          <div class="pc-field-label">Debounce (ms)</div>
+          <input class="pc-field-input" type="number" min="0" max="200" [value]="knob().buttonDebounce"
+                 (input)="setKnob('buttonDebounce', clampDebounce(+$any($event.target).value))">
+        </div>
         <div class="setting-row overlay-icon">
           <div>
             <div class="oi-title">Overlay icon</div>
