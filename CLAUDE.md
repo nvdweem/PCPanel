@@ -330,9 +330,29 @@ command lists them in `@CommandMeta.legacyIds`.
 aggregated by `OverrideColorService` (`@Priority` descending, first hit wins): notification lights
 (`alerts/AlertService`, 50) above the music visualizer (`integration/visualizer/VisualizerService`, 25) above mute colours (`MuteColorService`, 0) above stepped-switch positions (-100) above the
 *Audio level* light mode (`integration/volume/level/AudioLevelLightService`, -200). They are only consulted in
-`CUSTOM` lighting. `device/lightshow/LightShow` plays frame-by-frame animations (start-up animation, panel self-test)
-as temporary, never-saved `CUSTOM` configs and holds every override back for that device while it runs, then
-restores what was showing. The Windows peak meter (`WindowsAudioLevelMeter`) is raw JNA COM on the light service's
+`CUSTOM` lighting. An override config may carry `overrideBrightness` (`@JsonIgnore`, never saved): `OutputInterpreter`
+then scales that one light by it instead of the panel's brightness (`ByteWriter.light`) — how a notification light with
+its own brightness shows bright on a dimmed panel; every other override follows the panel. A lit notification light
+holds its light for its whole blink period (the second half shows its `blinkColor`, or black), so nothing below shows
+through between blinks. Temporary frames never replace a device's lighting: they go out through
+`Device.showTemporaryLighting` (overrides applied, `lightingConfig()` untouched), and whoever draws them is the
+device's `Device.LightingPainter` meanwhile, so every `setLighting`/`relight` (a relight, brightness, a profile
+switch) still updates `lightingConfig()` but reaches the painter instead of the panel. While a notification light is
+lit on a device in whole-panel lighting (solid, per-LED, rainbow, wave, breath), `alerts/AlertLighting` draws that
+lighting in software (`device/lightshow/SoftwareAnimation`) as `CUSTOM` frames (50 ms while it moves, once when
+still) with the overrides on top; lighting set meanwhile is drawn instead (or ends it, if `CUSTOM`), and when no
+alert is lit it relights the device so the firmware animates it. It steps aside while the music visualizer shows on
+the device (`VisualizerService.isShowing`): the visualizer's substituted `CUSTOM` lighting already shows the alert,
+which outranks it, so drawing too would only double the frames; the next alert tick after the visualizer stops starts
+drawing again. Overrides the services hold for that device show
+during those frames (including stale ones kept while it was not `CUSTOM`). It draws nothing while the panels are dark
+(`sleepdetection/PanelsDarkEvent`, fired before the lights-off and after the wake relight) and stops on
+`ShutdownEvent` (priority 1) before `SleepDetector`'s lights-off; `AlertService` likewise sends no relight while dark
+(its overrides still change, and the wake relight shows them) and stops on the same priority-1 `ShutdownEvent`. `device/lightshow/LightShow` plays frame-by-frame
+animations (start-up animation, panel self-test) the same way and holds every override back for that device while it
+runs; it is the painter during the show (lighting set meanwhile is not sent), then puts the previous painter back and
+relights, so notification frames resume after it. Other frame senders go through `LightShow.ifIdle`, so no show
+starts or ends between their check and their send. The Windows peak meter (`WindowsAudioLevelMeter`) is raw JNA COM on the light service's
 own MTA thread, deliberately apart from `SndCtrl.dll`; its plumbing (`ComPtr`, `CoreAudioMeterReader`) is one instance
 per thread, so the visualizer owns its own.
 

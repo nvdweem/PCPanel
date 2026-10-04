@@ -5,6 +5,8 @@ import com.getpcpanel.integration.visualizer.VisualizerService;
 
 import java.util.Arrays;
 
+import javax.annotation.Nullable;
+
 import com.getpcpanel.device.provider.pcpanel.DeviceType;
 import com.getpcpanel.profile.BaseLayerService;
 import com.getpcpanel.profile.dto.LightingConfig;
@@ -64,10 +66,13 @@ public final class OutputInterpreter {
 
     public void sendFullLEDData(String deviceSerialNumber, int brightness, String[] colors, boolean[] volumeTrack, boolean priority) {
         var resolved = new String[colors.length];
+        var lightBrightness = new Integer[colors.length];
         for (var i = 0; i < colors.length; i++) {
-            resolved[i] = overrideColorService.getDialOverride(deviceSerialNumber, i).map(SingleKnobLightingConfig::getColor1).orElse(colors[i]);
+            var override = overrideColorService.getDialOverride(deviceSerialNumber, i);
+            resolved[i] = override.map(SingleKnobLightingConfig::getColor1).orElse(colors[i]);
+            lightBrightness[i] = override.map(SingleKnobLightingConfig::getOverrideBrightness).orElse(null);
         }
-        sendRGBMessage(deviceSerialNumber, buildFullLEDData(brightness, resolved, volumeTrack), priority);
+        sendRGBMessage(deviceSerialNumber, buildFullLEDData(brightness, resolved, lightBrightness, volumeTrack), priority);
     }
 
     /**
@@ -87,9 +92,11 @@ public final class OutputInterpreter {
 
     static byte[] buildRGBCustomData(int brightness, SingleKnobLightingConfig[] knobConfigs) {
         var colors = new String[knobConfigs.length];
+        var lightBrightness = new Integer[knobConfigs.length];
         var volumeTrack = new boolean[knobConfigs.length];
         for (var i = 0; i < knobConfigs.length; i++) {
             var knob = knobConfigs[i];
+            lightBrightness[i] = knob == null ? null : knob.getOverrideBrightness();
             var mode = knob == null || knob.getMode() == null ? SingleKnobLightingConfig.SINGLE_KNOB_MODE.NONE : knob.getMode();
             switch (mode) {
                 case NONE -> colors[i] = "#000000";
@@ -100,13 +107,15 @@ public final class OutputInterpreter {
                 }
             }
         }
-        return buildFullLEDData(brightness, colors, volumeTrack);
+        return buildFullLEDData(brightness, colors, lightBrightness, volumeTrack);
     }
 
-    static byte[] buildFullLEDData(int brightness, String[] colors, boolean[] volumeTrack) {
+    /** {@code lightBrightness} holds, per light, its own brightness; a null entry, or a null array, follows {@code brightness}. */
+    static byte[] buildFullLEDData(int brightness, String[] colors, @Nullable Integer[] lightBrightness, boolean[] volumeTrack) {
         var data = new ByteWriter(brightness, 2 + 4 * colors.length + colors.length).append(OUTPUT_CODE_RGB, 0);
-        for (var color : colors) {
-            data.append(OUTPUT_CODE_RGB_RGB).appendHex(color);
+        for (var i = 0; i < colors.length; i++) {
+            data.light(lightBrightness != null && i < lightBrightness.length ? lightBrightness[i] : null)
+                .append(OUTPUT_CODE_RGB_RGB).appendHex(colors[i]);
         }
         for (var i = 0; i < colors.length; i++) {
             data.append(volumeTrack != null && i < volumeTrack.length && volumeTrack[i] ? 1 : 0);
@@ -235,12 +244,19 @@ public final class OutputInterpreter {
     }
 
     private byte[] buildKnobData(String deviceSerial, byte prefix, int brightness, SingleKnobLightingConfig[] knobConfigs) {
+        var resolved = new SingleKnobLightingConfig[knobConfigs.length];
+        for (var i = 0; i < knobConfigs.length; i++) {
+            resolved[i] = overrideColorService.getDialOverride(deviceSerial, i).orElse(knobConfigs[i]);
+        }
+        return buildKnobData(prefix, brightness, resolved);
+    }
+
+    /** The knob lights, overrides already applied; each at its own brightness when it has one. */
+    static byte[] buildKnobData(byte prefix, int brightness, SingleKnobLightingConfig[] knobConfigs) {
         var knobData = new ByteWriter(brightness).append(prefix, CUSTOM_KNOB);
 
-        for (var i = 0; i < knobConfigs.length; i++) {
-            var knobConfig = overrideColorService.getDialOverride(deviceSerial, i).orElse(knobConfigs[i]);
-
-            knobData.mark();
+        for (var knobConfig : knobConfigs) {
+            knobData.light(knobConfig.getOverrideBrightness()).mark();
             var ignored = switch (knobConfig.getMode()) {
                 case NONE -> knobData;
                 // An audio-level light without a live level (no meter here) shows its loud colour.
@@ -282,11 +298,19 @@ public final class OutputInterpreter {
     }
 
     private byte[] buildSliderData(String deviceSerial, int brightness, SingleSliderLightingConfig[] sliderConfigs) {
+        var resolved = new SingleSliderLightingConfig[sliderConfigs.length];
+        for (var i = 0; i < sliderConfigs.length; i++) {
+            resolved[i] = overrideColorService.getSliderOverride(deviceSerial, i).orElse(sliderConfigs[i]);
+        }
+        return buildSliderData(brightness, resolved);
+    }
+
+    /** The slider lights, overrides already applied; each at its own brightness when it has one. */
+    static byte[] buildSliderData(int brightness, SingleSliderLightingConfig[] sliderConfigs) {
         var sliderData = new ByteWriter(brightness).append(PREFIX_PRO, CUSTOM_SLIDER);
 
-        for (var i = 0; i < sliderConfigs.length; i++) {
-            var sliderConfig = overrideColorService.getSliderOverride(deviceSerial, i).orElse(sliderConfigs[i]);
-            sliderData.mark();
+        for (var sliderConfig : sliderConfigs) {
+            sliderData.light(sliderConfig.getOverrideBrightness()).mark();
             var ignored = switch (sliderConfig.getMode()) {
                 case NONE -> sliderData;
                 case STATIC, AUDIO_LEVEL -> {
@@ -308,8 +332,12 @@ public final class OutputInterpreter {
     }
 
     private byte[] buildLogoData(String deviceSerial, int brightness, SingleLogoLightingConfig config) {
-        var logoConfig = overrideColorService.getLogoOverride(deviceSerial).orElse(config);
-        var logoData = new ByteWriter(brightness).append(PREFIX_PRO, CUSTOM_LOGO);
+        return buildLogoData(brightness, overrideColorService.getLogoOverride(deviceSerial).orElse(config));
+    }
+
+    /** The logo light, an override already applied; at its own brightness when it has one. */
+    static byte[] buildLogoData(int brightness, SingleLogoLightingConfig logoConfig) {
+        var logoData = new ByteWriter(brightness).light(logoConfig.getOverrideBrightness()).append(PREFIX_PRO, CUSTOM_LOGO);
         var ignored = switch (logoConfig.getMode()) {
             case NONE -> logoConfig;
             case STATIC, AUDIO_LEVEL -> {

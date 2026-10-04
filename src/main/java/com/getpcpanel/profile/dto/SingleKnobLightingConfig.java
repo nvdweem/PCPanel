@@ -2,6 +2,8 @@ package com.getpcpanel.profile.dto;
 
 import javax.annotation.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.Data;
 
 @Data
@@ -13,6 +15,11 @@ public class SingleKnobLightingConfig {
     @Nullable private String muteOverrideColor;
     /** What an {@code AUDIO_LEVEL} light meters: blank follows the control (or the default output), else an audio-device name or {@code app:<exe>}. */
     @Nullable private String audioLevelSource;
+    /**
+     * The brightness (1–100) this light shows at instead of the panel's; null follows the panel. Only a colour override
+     * sets it (a notification light with a brightness of its own), so it is never saved.
+     */
+    @JsonIgnore @Nullable private Integer overrideBrightness;
 
     public SingleKnobLightingConfig() {
         mode = SINGLE_KNOB_MODE.NONE;
@@ -28,6 +35,7 @@ public class SingleKnobLightingConfig {
         muteOverrideColor = c.muteOverrideColor;
         muteOverrideDeviceOrFollow = c.muteOverrideDeviceOrFollow;
         audioLevelSource = c.audioLevelSource;
+        overrideBrightness = c.overrideBrightness;
         mode = c.mode;
     }
 }

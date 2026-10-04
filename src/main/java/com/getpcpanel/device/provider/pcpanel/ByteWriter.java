@@ -2,13 +2,17 @@ package com.getpcpanel.device.provider.pcpanel;
 
 import java.util.stream.Stream;
 
+import javax.annotation.Nullable;
+
 /**
  * Builds byte arrays for HID lighting commands.
- * Colors are passed as hex strings (e.g. "#rrggbb") or as separate R/G/B int components.
+ * Colors are passed as hex strings (e.g. "#rrggbb") or as separate R/G/B int components, scaled by the brightness
+ * (0-100): the panel's, or for one light its own ({@link #light}).
  */
 class ByteWriter {
     private final byte[] buff;
-    private final int brightnessMultiplier;
+    private final int panelBrightness;
+    private int brightnessMultiplier;
     private int pos;
     private int marked;
 
@@ -18,7 +22,14 @@ class ByteWriter {
 
     public ByteWriter(int brightness, int length) {
         buff = new byte[length];
+        panelBrightness = brightness;
         brightnessMultiplier = brightness;
+    }
+
+    /** Colours appended from here on show at {@code brightness} (0-100), or at the panel's when null. */
+    public ByteWriter light(@Nullable Integer brightness) {
+        brightnessMultiplier = brightness == null ? panelBrightness : Math.clamp(brightness, 0, 100);
+        return this;
     }
 
     public ByteWriter append(Number... bytes) {

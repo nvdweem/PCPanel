@@ -210,3 +210,4 @@
 .curve-name { font-size: 13px; font-weight: 500; color: var(--text-1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .curve-sum { font-size: 11px; color: var(--text-3); font-variant-numeric: tabular-nums; }
 .curve-tag { font-size: 9.5px; letter-spacing: 0.08em; color: var(--text-3); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; flex: none; }
+.alert-inline { display: flex; align-items: center; gap: 8px; }

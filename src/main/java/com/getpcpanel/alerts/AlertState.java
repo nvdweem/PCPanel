@@ -48,8 +48,12 @@ final class AlertState {
     /** The apps with notifications at the last look, each with its newest; null before the first look. */
     @Nullable private Map<String, Long> notificationsSeen;
 
-    /** What the lights show at one moment, read in one go so a list change in between cannot mix two lists. */
-    record Frame(Set<Integer> indexes, Map<String, String> colors, boolean pulsing, long nextTickMs) {
+    /**
+     * What the lights show at one moment, read in one go so a list change in between cannot mix two lists.
+     * {@code targets} are the lights of the lit alerts; {@code brightness} holds, per target, the brightness of an alert
+     * that sets its own.
+     */
+    record Frame(Set<Integer> indexes, Set<String> targets, Map<String, String> colors, Map<String, Integer> brightness, boolean pulsing, long nextTickMs) {
     }
 
     /**
@@ -230,8 +234,7 @@ final class AlertState {
 
     /**
      * The alerts showing at {@code now}, by position in the configured list, after dropping those whose time is
-     * up: the first lit alert for a target wins, a previewed one ahead of the rest. A blinking alert counts in its
-     * off half too.
+     * up: the first lit alert for a target wins, a previewed one ahead of the rest.
      */
     synchronized Set<Integer> litIndexes(long now) {
         for (var trigger : UNTIL_FOCUSED) {
@@ -264,20 +267,41 @@ final class AlertState {
     /** What is showing at {@code now}: which alerts, their colours, and when to redraw. */
     synchronized Frame frame(long now) {
         var indexes = litIndexes(now);
-        return new Frame(indexes, lit(indexes, now), pulsing(indexes), nextTickMs(indexes, now));
+        var targets = indexes.stream().map(i -> alerts.get(i).target()).collect(Collectors.toUnmodifiableSet());
+        var brightness = new LinkedHashMap<String, Integer>();
+        for (var i : indexes) {
+            var a = alerts.get(i);
+            if (a.brightnessOrNull() != null) {
+                brightness.put(a.target(), a.brightnessOrNull());
+            }
+        }
+        return new Frame(indexes, targets, lit(indexes, now), Map.copyOf(brightness), pulsing(indexes), nextTickMs(indexes, now));
     }
 
-    /** The colour each target of {@code indexes} shows at {@code now}, scaled by its effect; absent while fully off. */
+    /**
+     * The colour each target of {@code indexes} shows at {@code now}: a blink shows its colour for the first half of
+     * the period and its second colour (black when it has none) for the other, a pulse its colour scaled.
+     */
     private Map<String, String> lit(Set<Integer> indexes, long now) {
         var result = new LinkedHashMap<String, String>();
         for (var i : indexes) {
             var a = alerts.get(i);
-            var color = scale(a.color(), intensity(a.effectOrDefault(), now, a.periodOrDefault()));
-            if (color != null) {
-                result.put(a.target(), color);
-            }
+            result.put(a.target(), color(a, now));
         }
         return result;
+    }
+
+    /** The colour {@code alert} shows at {@code now}. */
+    static String color(NotificationAlert alert, long now) {
+        var effect = alert.effectOrDefault();
+        if (effect == AlertEffect.BLINK) {
+            return firstHalf(now, alert.periodOrDefault()) ? alert.color() : alert.blinkColorOrOff();
+        }
+        return scale(alert.color(), intensity(effect, now, alert.periodOrDefault()));
+    }
+
+    private static boolean firstHalf(long now, int periodMs) {
+        return Math.floorMod(now, periodMs) < periodMs / 2.0;
     }
 
     /** Whether one of {@code indexes} pulses, so its light changes on every redraw. */
@@ -306,7 +330,10 @@ final class AlertState {
         return Math.max(1, (long) Math.ceil(edge - phase));
     }
 
-    /** How bright an effect is at {@code now}, from 0 (off) to 1 (full colour). */
+    /**
+     * How bright an effect is at {@code now}, from 0 to 1 (full colour). A blink is at 1 in its first half and 0 in its
+     * second, which shows its second colour ({@link #color}).
+     */
     static double intensity(AlertEffect effect, long now, int periodMs) {
         var phase = (double) Math.floorMod(now, periodMs) / periodMs;
         return switch (effect) {
@@ -316,12 +343,8 @@ final class AlertState {
         };
     }
 
-    /** {@code color} with each channel scaled by {@code intensity}; null when off, unchanged at full intensity. */
-    @Nullable
+    /** {@code color} with each channel scaled by {@code intensity}; unchanged at full intensity. */
     private static String scale(String color, double intensity) {
-        if (intensity <= 0) {
-            return null;
-        }
         var rgb = intensity >= 1 ? null : Util.parseColorComponents(color);
         if (rgb == null) {
             return color;

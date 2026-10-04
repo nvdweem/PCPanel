@@ -15,6 +15,7 @@ import com.getpcpanel.util.concurrent.AppThreads;
 
 import io.quarkus.runtime.ShutdownEvent;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
@@ -46,6 +47,8 @@ public final class SleepDetector {
     DeviceHolder devices;
     @Inject
     SaveService saveService;
+    @Inject
+    Event<PanelsDarkEvent> panelsDark;
 
     /** Whether the panels are dark for a lock, sleep or screens off; nothing should light them up meanwhile. */
     public boolean isDark() {
@@ -94,6 +97,7 @@ public final class SleepDetector {
     }
 
     private void onSuspended() {
+        panelsDark.fire(new PanelsDarkEvent(true)); // temporary frames stop before the lights go off
         allOff(false);
     }
 
@@ -143,5 +147,6 @@ public final class SleepDetector {
                 log.error("Unable to restore lighting for {}", device.getSerialNumber(), e);
             }
         }
+        panelsDark.fire(new PanelsDarkEvent(false)); // after the relight, so temporary frames paint over it
     }
 }

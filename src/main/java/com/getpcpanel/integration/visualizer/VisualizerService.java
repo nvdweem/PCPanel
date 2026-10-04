@@ -176,6 +176,11 @@ public class VisualizerService implements IOverrideColorProviderProvider {
         return holder;
     }
 
+    /** Whether it is showing on {@code serial} right now. */
+    public boolean isShowing(String serial) {
+        return showing.containsKey(serial);
+    }
+
     /** The source it is listening to right now; null while it isn't capturing. */
     public @Nullable VisualizerSource listeningTo() {
         return listening;

@@ -29,6 +29,8 @@ import org.apache.commons.lang3.StringUtils;
  * @param source           where the trigger comes from when that is not the app itself: for
  *                         {@link AlertTrigger#NOTIFICATION}, the notification sender (a Windows handler id such as
  *                         {@code Microsoft.Teams}, or a Linux app name), compared ignoring case; blank uses the app
+ * @param blinkColor       for {@link AlertEffect#BLINK}, the colour of the second half of each period; null shows black
+ * @param brightness       how bright the light shows, 1–100, whatever the panel's brightness is; null follows the panel
  */
 public record NotificationAlert(
         AlertTrigger trigger,
@@ -42,12 +44,20 @@ public record NotificationAlert(
         @Nullable AlertEffect effect,
         @Nullable Integer periodMs,
         @Nullable String pattern,
-        @Nullable String source) {
+        @Nullable String source,
+        @Nullable String blinkColor,
+        @Nullable Integer brightness) {
     public static final int DEFAULT_PERIOD_MS = 1_200;
     /** The blink rhythm before effects existed: half a second on, half a second off. */
     public static final int LEGACY_BLINK_PERIOD_MS = 1_000;
     public static final int MIN_PERIOD_MS = 200;
     public static final int MAX_PERIOD_MS = 10_000;
+    public static final int MIN_BRIGHTNESS = 1;
+    public static final int MAX_BRIGHTNESS = 100;
+    /** The colour of a blink's second half when it has none of its own. */
+    public static final String BLINK_OFF_COLOR = "#000000";
+    /** The wildcard in a window-title pattern: any text, including none. */
+    public static final char TITLE_WILDCARD = '*';
     /** An unread count in a window title, such as the {@code (3)} in {@code Inbox (3) - Outlook}. */
     private static final Pattern UNREAD_COUNT = Pattern.compile("\\(\\d+\\)");
 
@@ -58,6 +68,23 @@ public record NotificationAlert(
     public NotificationAlert(AlertTrigger trigger, @Nullable String app, String target, String color, boolean blink, @Nullable Integer stopAfterSeconds,
             boolean disabled, @Nullable List<String> exceptApps) {
         this(trigger, app, target, color, blink, stopAfterSeconds, disabled, exceptApps, null, null, null, null);
+    }
+
+    public NotificationAlert(AlertTrigger trigger, @Nullable String app, String target, String color, boolean blink, @Nullable Integer stopAfterSeconds,
+            boolean disabled, @Nullable List<String> exceptApps, @Nullable AlertEffect effect, @Nullable Integer periodMs, @Nullable String pattern,
+            @Nullable String source) {
+        this(trigger, app, target, color, blink, stopAfterSeconds, disabled, exceptApps, effect, periodMs, pattern, source, null, null);
+    }
+
+    /** The colour of a blink's second half: {@code blinkColor}, or black. */
+    public String blinkColorOrOff() {
+        return StringUtils.isBlank(blinkColor) ? BLINK_OFF_COLOR : blinkColor;
+    }
+
+    /** The brightness, clamped to {@value #MIN_BRIGHTNESS}–{@value #MAX_BRIGHTNESS}; null follows the panel. */
+    @Nullable
+    public Integer brightnessOrNull() {
+        return brightness == null ? null : Math.clamp(brightness, MIN_BRIGHTNESS, MAX_BRIGHTNESS);
     }
 
     public AlertEffect effectOrDefault() {
@@ -76,14 +103,29 @@ public record NotificationAlert(
     }
 
     /**
-     * Whether a window title matches {@code pattern}: a blank one wants an unread count like {@code (3)}, any other
-     * the text anywhere in the title, ignoring case.
+     * Whether a window title matches {@code pattern}, ignoring case: a blank one wants an unread count like
+     * {@code (3)}; one with {@code *} is matched as a whole against some part of the title, each {@code *} standing for
+     * any text (none included), so {@code (*)} matches {@code Inbox (3) - Mail}; any other is looked for anywhere in the
+     * title. Every other character stands for itself.
      */
     public static boolean titleMatches(@Nullable String pattern, String title) {
         if (StringUtils.isBlank(pattern)) {
             return UNREAD_COUNT.matcher(title).find();
         }
-        return title.toLowerCase(Locale.ROOT).contains(pattern.strip().toLowerCase(Locale.ROOT));
+        var text = pattern.strip().toLowerCase(Locale.ROOT);
+        var lower = title.toLowerCase(Locale.ROOT);
+        if (text.indexOf(TITLE_WILDCARD) < 0) {
+            return lower.contains(text);
+        }
+        var from = 0;
+        for (var part : StringUtils.split(text, TITLE_WILDCARD)) {
+            var at = lower.indexOf(part, from);
+            if (at < 0) {
+                return false;
+            }
+            from = at + part.length();
+        }
+        return true;
     }
 
     public List<String> exceptAppsOrEmpty() {

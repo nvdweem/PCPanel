@@ -48,13 +48,51 @@ class AlertStateTest {
     }
 
     @Test
-    void blinkAlternates() {
+    void blinkAlternatesWithBlackByDefault() {
         var sut = new AlertState();
         sut.configure(List.of(new NotificationAlert(AlertTrigger.TASKBAR_FLASH, "Discord", "knob:1", "#8000FF", true, null)));
         sut.onFlash("Discord.exe", 0);
-        assertEquals(1, sut.lit(0).size());
-        assertTrue(sut.lit(500).isEmpty());
-        assertEquals(1, sut.lit(1_000).size());
+        assertEquals(Map.of("knob:1", "#8000FF"), sut.lit(0));
+        assertEquals(Map.of("knob:1", "#000000"), sut.lit(500), "the light stays claimed, so nothing below shows through");
+        assertEquals(Map.of("knob:1", "#8000FF"), sut.lit(1_000));
+    }
+
+    @Test
+    void blinkAlternatesWithItsSecondColour() {
+        var sut = new AlertState();
+        sut.configure(List.of(new NotificationAlert(AlertTrigger.MIC_IN_USE, "", "logo", "#FF0000", false, null, false, null,
+                AlertEffect.BLINK, 1_000, null, null, "#0000FF", null)));
+        sut.onMicUsers(Set.of("zoom.exe"), 0);
+        assertEquals(Map.of("logo", "#FF0000"), sut.lit(0));
+        assertEquals(Map.of("logo", "#FF0000"), sut.lit(499));
+        assertEquals(Map.of("logo", "#0000FF"), sut.lit(500));
+        assertEquals(Map.of("logo", "#0000FF"), sut.lit(999));
+        assertEquals(Map.of("logo", "#FF0000"), sut.lit(1_000));
+    }
+
+    @Test
+    void aBlankSecondColourIsBlack() {
+        var alert = new NotificationAlert(AlertTrigger.MIC_IN_USE, "", "logo", "#FF0000", false, null, false, null,
+                AlertEffect.BLINK, 1_000, null, null, " ", null);
+        assertEquals("#000000", AlertState.color(alert, 600));
+    }
+
+    @Test
+    void aSecondColourOnlyChangesABlink() {
+        var steady = new NotificationAlert(AlertTrigger.MIC_IN_USE, "", "logo", "#FF0000", false, null, false, null,
+                AlertEffect.STEADY, 1_000, null, null, "#0000FF", null);
+        assertEquals("#FF0000", AlertState.color(steady, 600));
+    }
+
+    @Test
+    void theFrameCarriesAnAlertsOwnBrightness() {
+        var sut = new AlertState();
+        sut.configure(List.of(
+                new NotificationAlert(AlertTrigger.MIC_IN_USE, "", "logo", "#FF0000", false, null, false, null, null, null, null, null, null, 100),
+                new NotificationAlert(AlertTrigger.MIC_IN_USE, "", "knob:0", "#00FF00", false, null, false, null, null, null, null, null, null, null),
+                new NotificationAlert(AlertTrigger.MIC_IN_USE, "", "knob:1", "#0000FF", false, null, false, null, null, null, null, null, null, 500)));
+        sut.onMicUsers(Set.of("zoom.exe"), 0);
+        assertEquals(Map.of("logo", 100, "knob:1", 100), sut.frame(0).brightness(), "absent follows the panel; clamped to 100");
     }
 
     @Test
@@ -179,7 +217,7 @@ class AlertStateTest {
         var sut = new AlertState();
         sut.configure(List.of(new NotificationAlert(AlertTrigger.TASKBAR_FLASH, "Discord", "knob:1", "#8000FF", true, null)));
         sut.onFlash("Discord.exe", 0);
-        assertTrue(sut.lit(600).isEmpty());
+        assertEquals(Map.of("knob:1", "#000000"), sut.lit(600));
         assertEquals(Set.of(0), sut.litIndexes(600));
     }
 
@@ -342,6 +380,43 @@ class AlertStateTest {
     void aPatternMatchesAnywhereIgnoringCase() {
         assertTrue(NotificationAlert.titleMatches("ringing", "Teams - Call RINGING"));
         assertFalse(NotificationAlert.titleMatches("ringing", "Teams - Chat"));
+    }
+
+    @Test
+    void aStarMatchesAnyText() {
+        assertTrue(NotificationAlert.titleMatches("(*)", "Inbox (3) - Mail"));
+        assertTrue(NotificationAlert.titleMatches("(*)", "Inbox (12) - Mail"));
+        assertTrue(NotificationAlert.titleMatches("(*)", "Inbox () - Mail"), "a star also matches no text");
+        assertFalse(NotificationAlert.titleMatches("(*)", "Inbox - Mail"));
+        assertFalse(NotificationAlert.titleMatches("(*)", "Inbox )3( - Mail"), "the parts in order");
+        assertTrue(NotificationAlert.titleMatches("inbox*mail", "INBOX (3) - MAIL"));
+    }
+
+    @Test
+    void aLoneStarMatchesEveryTitle() {
+        assertTrue(NotificationAlert.titleMatches("*", "Anything"));
+        assertTrue(NotificationAlert.titleMatches("**", ""));
+    }
+
+    @Test
+    void leadingAndTrailingStarsChangeNothingInAContainsMatch() {
+        assertTrue(NotificationAlert.titleMatches("*ringing", "Teams - Call ringing now"));
+        assertTrue(NotificationAlert.titleMatches("ringing*", "Teams - Call ringing"));
+        assertTrue(NotificationAlert.titleMatches("*call*ringing*", "Teams - Call ringing"));
+        assertFalse(NotificationAlert.titleMatches("*ringing*", "Teams - Chat"));
+    }
+
+    @Test
+    void everyOtherCharacterIsLiteral() {
+        assertTrue(NotificationAlert.titleMatches("v1.2*", "App v1.2 beta"));
+        assertFalse(NotificationAlert.titleMatches("v1.2*", "App v152 beta"), "a dot is a dot");
+        assertTrue(NotificationAlert.titleMatches("c++*", "C++ editor"));
+        assertFalse(NotificationAlert.titleMatches("c+*", "cc editor"), "a plus is a plus");
+        assertTrue(NotificationAlert.titleMatches("[*]", "Chat [2 new]"));
+        assertFalse(NotificationAlert.titleMatches("[ab]*", "a chat"), "brackets are not a character class");
+        assertTrue(NotificationAlert.titleMatches("^$*\\", "x ^$ y \\"));
+        assertTrue(NotificationAlert.titleMatches("?", "Who?"));
+        assertFalse(NotificationAlert.titleMatches("?", "Who"), "a question mark is not a wildcard");
     }
 
     @Test

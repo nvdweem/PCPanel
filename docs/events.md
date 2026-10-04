@@ -14,7 +14,7 @@ up to date when you add or remove an event or an observer.
 | Event | Fired by | Observed by |
 |-------|----------|-------------|
 | `StartupEvent` | Quarkus | `SaveService` (priority 1, fires the initial `SaveEvent`), `DeviceScanner`, `AppShutdownState`, `TrayInitializer`, `SndCtrlPulseAudio`, `OverlayDemoTrigger` |
-| `ShutdownEvent` | Quarkus | `SaveService`, `DeviceScanner`, `AppShutdownState`, `SleepDetector` |
+| `ShutdownEvent` | Quarkus | `SaveService`, `DeviceScanner`, `AppShutdownState`, `AlertLighting` and `AlertService` (priority 1: stop notification-light frames and relights before the lights-off), `SleepDetector` |
 
 ## Hardware input
 
@@ -79,6 +79,7 @@ up to date when you add or remove an event or an observer.
 | Event | Fired by | Observed by |
 |-------|----------|-------------|
 | `SystemEvent` (sleep/wake/lock/display-off/display-on) | `WindowsSystemEventService` / `LinuxSystemEventService` / `MacSystemEventService` | `SleepDetector` |
+| `PanelsDarkEvent` | `SleepDetector` (before the lights-off for sleep/lock/display-off; after the relight on wake) | `AlertLighting` (no notification-light frames while dark; repaints on wake), `AlertService` (no notification-light relights while dark) |
 | `WindowFocusChangedEvent` | focus watchers | `DeviceHolder`, `ProfileWindowFocusService`, `MuteColorService` (a focused-app control's muted colour tracks the app that now has focus), `AlertService` (clears the focused app's taskbar-flash lights) |
 | `ShowMainEvent` | `FileChecker`, `StatusNotifierItemImpl`, `TrayServiceWin`, `DBusMenuImpl`, `CommandOpenWebUi`, `StartupOnboarding` | `ShowMainService` (optional `redirect` lands the browser on a named in-app path, e.g. the tray's "Report a problem" → `/?report=1`) |
 | `OpenFolderEvent` | `TrayServiceWin`, `DBusMenuImpl` (tray "Open settings folder") | `ShowMainService` (reveals the folder in the OS file manager) |

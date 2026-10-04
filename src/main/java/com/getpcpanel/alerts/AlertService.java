@@ -1,6 +1,7 @@
 package com.getpcpanel.alerts;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -13,6 +14,7 @@ import javax.annotation.Nullable;
 
 import com.getpcpanel.device.Device;
 import com.getpcpanel.device.DeviceHolder;
+import com.getpcpanel.device.lightshow.LightShow.Layout;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.WindowFocusChangedEvent;
 import com.getpcpanel.profile.dto.NotificationAlert.AlertTrigger;
@@ -23,10 +25,12 @@ import com.getpcpanel.profile.dto.SingleLogoLightingConfig.SINGLE_LOGO_MODE;
 import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
 import com.getpcpanel.profile.dto.SingleSliderLightingConfig.SINGLE_SLIDER_MODE;
 import com.getpcpanel.rest.EventBroadcaster.VisualColorsChangedEvent;
+import com.getpcpanel.sleepdetection.PanelsDarkEvent;
 import com.getpcpanel.util.coloroverride.ColorOverrideHolder;
 import com.getpcpanel.util.coloroverride.IOverrideColorProvider;
 import com.getpcpanel.util.coloroverride.IOverrideColorProviderProvider;
 
+import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.Startup;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -38,10 +42,12 @@ import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 
 /**
- * Notification lights ({@link com.getpcpanel.profile.dto.NotificationAlert}): a knob, slider or the logo lights up
+ * Notification lights ({@link com.getpcpanel.profile.dto.NotificationAlert}): a knob, slider or the logo lights up,
  * blinks or pulses while an app flashes its taskbar button, shows a notification, uses the microphone or has a window
  * title that matches, or for a few seconds on request ({@link #preview}). Shown as a colour override above the mute
- * colours, on every device and profile, in per-control lighting.
+ * colours, on every device and profile, at the alert's own brightness when it has one; over whole-panel lighting {@link AlertLighting} draws that lighting as
+ * per-control frames while an alert is lit, so the override shows there too. Nothing is sent to a panel while the panels
+ * are dark ({@link PanelsDarkEvent}) or once the app shuts down.
  *
  * <p>Window titles are read on a thread of their own, once a second while a window-title light is switched on, so a
  * slow look at the windows never holds up a blink or pulse.
@@ -63,12 +69,17 @@ public class AlertService implements IOverrideColorProviderProvider {
     @Inject MicUsage micUsage;
     @Inject NotificationWatch notificationWatch;
     @Inject WindowTitles windowTitles;
+    @Inject AlertLighting alertLighting;
     @Inject Event<VisualColorsChangedEvent> visualColorsChanged;
     @Inject Event<AlertsLitEvent> alertsLit;
 
     private final AlertState state = new AlertState();
     private final ColorOverrideHolder holder = new ColorOverrideHolder();
     private volatile boolean running;
+    private volatile boolean dark;
+    private volatile boolean shutDown;
+    /** Held for a whole tick, so the shutdown observer can wait for one in progress. */
+    private final Object ticking = new Object();
     @Nullable private volatile Thread thread;
     @Nullable private volatile Thread titleThread;
     /** The last failure reading window titles, reported once at warning level; null after a good read. */
@@ -76,6 +87,7 @@ public class AlertService implements IOverrideColorProviderProvider {
     private long micPolledAt;
     private long notificationsPolledAt;
     private Map<String, String> shown = Map.of();
+    private Map<String, Integer> shownBrightness = Map.of();
     private Set<Integer> shownIndexes = Set.of();
     /** Per device serial, when the UI was last told its colours changed. */
     private final Map<String, Long> uiNotifiedAt = new HashMap<>();
@@ -100,6 +112,19 @@ public class AlertService implements IOverrideColorProviderProvider {
         if (titleThread != null) {
             titleThread.interrupt();
         }
+    }
+
+    /** While the panels are dark the overrides still follow the alerts, but nothing is sent; the wake relight shows them. */
+    void onPanelsDark(@Observes PanelsDarkEvent event) {
+        dark = event.dark();
+    }
+
+    /** Before the lights-off at shutdown ({@code SleepDetector}): waits for a tick in progress, then sends nothing more. */
+    void onShutdown(@Observes @Priority(1) ShutdownEvent event) {
+        synchronized (ticking) {
+            shutDown = true;
+        }
+        stop();
     }
 
     @Override
@@ -183,7 +208,13 @@ public class AlertService implements IOverrideColorProviderProvider {
     }
 
     /** Brings the lights up to date; returns how many milliseconds until they need it again. */
-    private long tick(long now) {
+    long tick(long now) {
+        synchronized (ticking) {
+            return shutDown ? AlertState.TICK_MS : update(now);
+        }
+    }
+
+    private long update(long now) {
         state.configure(save.get().getNotificationAlerts());
         if (now - micPolledAt >= MIC_POLL_MS) {
             micPolledAt = now;
@@ -203,66 +234,112 @@ public class AlertService implements IOverrideColorProviderProvider {
             alertsLit.fire(new AlertsLitEvent(List.copyOf(frame.indexes())));
         }
         var lit = frame.colors();
-        if (!lit.equals(shown)) {
-            shown = lit;
-            for (var device : devices.all()) {
-                if (apply(device, lit)) {
-                    relight(device, now, frame.pulsing());
-                }
+        var brightness = frame.brightness();
+        var litChanged = !lit.equals(shown) || !brightness.equals(shownBrightness);
+        shown = lit;
+        shownBrightness = brightness;
+        var serials = new HashSet<String>();
+        for (var device : devices.all()) {
+            serials.add(device.getSerialNumber());
+            var changed = litChanged && apply(device, lit, brightness);
+            try {
+                alertLighting.update(device, litOn(device, frame.targets()));
+            } catch (Exception e) {
+                log.debug("Unable to draw notification lights over the lighting of {}", device.getSerialNumber(), e);
+            }
+            if (changed) {
+                relight(device, now, frame.pulsing());
             }
         }
+        alertLighting.retain(serials);
         return frame.nextTickMs();
     }
 
-    /** Sets this device's overrides to {@code lit}; returns whether anything changed. */
-    private boolean apply(Device device, Map<String, String> lit) {
+    /** Whether one of {@code targets} is a light {@code device} has. */
+    static boolean litOn(Device device, Set<String> targets) {
+        if (targets.isEmpty()) {
+            return false;
+        }
+        var layout = Layout.of(device.descriptor());
+        var type = device.deviceType();
+        for (var target : targets) {
+            if ("logo".equals(target) ? type != null && type.isHasLogoLed() : lightIndexIn(target, "knob:", layout.knobs()) || lightIndexIn(target, "slider:", layout.sliders())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean lightIndexIn(String target, String prefix, int count) {
+        if (!target.startsWith(prefix)) {
+            return false;
+        }
+        try {
+            var i = Integer.parseInt(target.substring(prefix.length()));
+            return i >= 0 && i < count;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Sets this device's overrides to {@code lit}, each light at its alert's own brightness when {@code brightness} has
+     * one for it; returns whether anything changed.
+     */
+    private boolean apply(Device device, Map<String, String> lit, Map<String, Integer> brightness) {
         var serial = device.getSerialNumber();
         var changed = false;
         var knobs = device.descriptor().analogInputs().size();
         for (var i = 0; i < knobs; i++) {
-            changed |= setDial(serial, i, lit.get("knob:" + i));
-            changed |= setSlider(serial, i, lit.get("slider:" + i));
+            changed |= setDial(serial, i, lit.get("knob:" + i), brightness.get("knob:" + i));
+            changed |= setSlider(serial, i, lit.get("slider:" + i), brightness.get("slider:" + i));
         }
         var logo = lit.get("logo");
-        var currentLogo = holder.getLogoOverride(serial).map(SingleLogoLightingConfig::getColor).orElse(null);
-        if (!Objects.equals(currentLogo, logo)) {
-            holder.setLogoOverride(serial, logo == null ? null : new SingleLogoLightingConfig().setMode(SINGLE_LOGO_MODE.STATIC).setColor(logo));
+        var logoBrightness = brightness.get("logo");
+        var current = holder.getLogoOverride(serial);
+        if (!Objects.equals(current.map(SingleLogoLightingConfig::getColor).orElse(null), logo)
+                || !Objects.equals(current.map(SingleLogoLightingConfig::getOverrideBrightness).orElse(null), logo == null ? null : logoBrightness)) {
+            holder.setLogoOverride(serial, logo == null ? null : new SingleLogoLightingConfig().setMode(SINGLE_LOGO_MODE.STATIC).setColor(logo).setOverrideBrightness(logoBrightness));
             changed = true;
         }
         return changed;
     }
 
-    private boolean setDial(String serial, int idx, @Nullable String color) {
-        var current = holder.getDialOverride(serial, idx).map(SingleKnobLightingConfig::getColor1).orElse(null);
-        if (Objects.equals(current, color)) {
+    private boolean setDial(String serial, int idx, @Nullable String color, @Nullable Integer brightness) {
+        var current = holder.getDialOverride(serial, idx);
+        if (Objects.equals(current.map(SingleKnobLightingConfig::getColor1).orElse(null), color)
+                && Objects.equals(current.map(SingleKnobLightingConfig::getOverrideBrightness).orElse(null), color == null ? null : brightness)) {
             return false;
         }
-        holder.setDialOverride(serial, idx, color == null ? null : new SingleKnobLightingConfig().setMode(SINGLE_KNOB_MODE.STATIC).setColor1(color));
+        holder.setDialOverride(serial, idx, color == null ? null
+                : new SingleKnobLightingConfig().setMode(SINGLE_KNOB_MODE.STATIC).setColor1(color).setOverrideBrightness(brightness));
         return true;
     }
 
-    private boolean setSlider(String serial, int idx, @Nullable String color) {
-        var current = holder.getSliderOverride(serial, idx).map(SingleSliderLightingConfig::getColor1).orElse(null);
-        if (Objects.equals(current, color)) {
+    private boolean setSlider(String serial, int idx, @Nullable String color, @Nullable Integer brightness) {
+        var current = holder.getSliderOverride(serial, idx);
+        if (Objects.equals(current.map(SingleSliderLightingConfig::getColor1).orElse(null), color)
+                && Objects.equals(current.map(SingleSliderLightingConfig::getOverrideBrightness).orElse(null), color == null ? null : brightness)) {
             return false;
         }
-        holder.setSliderOverride(serial, idx, color == null ? null : new SingleSliderLightingConfig().setMode(SINGLE_SLIDER_MODE.STATIC).setColor1(color));
+        holder.setSliderOverride(serial, idx, color == null ? null
+                : new SingleSliderLightingConfig().setMode(SINGLE_SLIDER_MODE.STATIC).setColor1(color).setOverrideBrightness(brightness));
         return true;
     }
 
     /**
      * Sends the lights to the panel and tells the UI. While a light pulses the panel gets every frame but the UI
-     * at most every {@link #PULSE_UI_MS}; the frame that ends the pulse always reaches it.
+     * at most every {@link #PULSE_UI_MS}; the frame that ends the pulse always reaches it. Nothing is sent while the
+     * panels are dark.
      */
     private void relight(Device device, long now, boolean pulsing) {
-        try {
-            var lc = device.lightingConfig();
-            if (lc != null) {
-                device.setLighting(lc, true);
+        if (!dark) {
+            try {
+                device.relight();
+            } catch (Exception e) {
+                log.debug("Unable to re-send notification lights for {}", device.getSerialNumber(), e);
+                return;
             }
-        } catch (Exception e) {
-            log.debug("Unable to re-send notification lights for {}", device.getSerialNumber(), e);
-            return;
         }
         var serial = device.getSerialNumber();
         var last = uiNotifiedAt.get(serial);

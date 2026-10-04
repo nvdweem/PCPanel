@@ -808,6 +808,8 @@ export interface MqttSettings {
 export interface NotificationAlert {
     app?: string;
     blink: boolean;
+    blinkColor?: string;
+    brightness?: number;
     color: string;
     disabled: boolean;
     effect?: AlertEffect;

@@ -16,6 +16,8 @@ import com.getpcpanel.profile.ProfileSwitchedEvent;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.dto.LightingConfig;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 import jakarta.enterprise.event.Event;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
@@ -30,7 +32,9 @@ public abstract class Device {
     @Getter protected String serialNumber;
     private final DeviceDescriptor descriptor;
     protected DeviceSave save;
-    private LightingConfig lightingConfig;
+    private volatile LightingConfig lightingConfig;
+    /** Draws temporary frames over this device's lighting (a light show, notification lights); null when none does. */
+    private final AtomicReference<LightingPainter> painter = new AtomicReference<>();
 
     protected Device(SaveService saveService, OutputInterpreter outputInterpreter, IconService iconService, Event<Object> eventBus, String serialNum, DeviceSave deviceSave, DeviceDescriptor descriptor) {
         this.saveService = saveService;
@@ -116,12 +120,73 @@ public abstract class Device {
             config = defaultLighting();
             saveService.save();
         }
+        paintOrSend(config, priority);
+    }
+
+    private void paintOrSend(LightingConfig config, boolean priority) {
+        var p = painter.get();
+        if (p != null && p.paint(config)) {
+            return;
+        }
+        sendToDevice(config, priority);
+    }
+
+    /** Sends {@code config} to the hardware, falling back to the default lighting once if that fails. */
+    protected void sendToDevice(LightingConfig config, boolean priority) {
         try {
             outputInterpreter.sendDeviceLighting(serialNumber, deviceType(), config, priority);
         } catch (Exception e) {
             log.error("Unable to send lighting config", e);
             sendDefaultLighting(priority);
         }
+    }
+
+    /**
+     * Shows {@code frame} on the hardware (colour overrides applied as for any lighting) without making it this
+     * device's lighting: {@link #lightingConfig()} keeps returning the lighting set last.
+     */
+    public void showTemporaryLighting(LightingConfig frame) {
+        if (descriptor.globalLighting() == null) {
+            return;
+        }
+        try {
+            outputInterpreter.sendLightingConfig(serialNumber, deviceType(), frame, true);
+        } catch (Exception e) {
+            log.debug("Unable to show temporary lighting on {}", serialNumber, e);
+        }
+    }
+
+    /** Sends this device's lighting again (through the painter, if one draws over it). */
+    public void relight() {
+        if (descriptor.globalLighting() == null) {
+            return;
+        }
+        var lc = lightingConfig();
+        if (lc == null) {
+            setLighting(null, true); // falls back to the default lighting
+            return;
+        }
+        paintOrSend(lc, true);
+    }
+
+    @Nullable
+    public LightingPainter painter() {
+        return painter.get();
+    }
+
+    /** Makes {@code next} the painter if {@code expected} is the current one; returns whether it did. */
+    public boolean replacePainter(@Nullable LightingPainter expected, @Nullable LightingPainter next) {
+        return painter.compareAndSet(expected, next);
+    }
+
+    /**
+     * Draws temporary frames over a device's lighting. While one is set, every {@link #setLighting} call still makes
+     * its config the device's lighting, but goes to the painter first; a painter that returns true has sent what the
+     * device should show (its frame for that lighting) and the config itself is not sent.
+     */
+    @FunctionalInterface
+    public interface LightingPainter {
+        boolean paint(LightingConfig lighting);
     }
 
     /** Fallback after a failed send. Tried once: if the default fails too (e.g. the device is gone), give up. */

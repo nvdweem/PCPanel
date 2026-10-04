@@ -827,6 +827,32 @@ export class SettingsComponent {
 
   alertEffect(alert: NotificationAlert): AlertEffect { return alert.effect ?? (alert.blink ? 'BLINK' : 'STEADY'); }
 
+  readonly alertBlinkOptions: SegmentOption<'OFF' | 'COLOR'>[] = [
+    { value: 'OFF', label: 'Off' },
+    { value: 'COLOR', label: 'Colour' },
+  ];
+
+  /** Off leaves a blink's second half dark; a colour starts at white, to be picked next. */
+  setAlertBlinkColor(i: number, mode: 'OFF' | 'COLOR'): void {
+    const alert = this.alerts()[i];
+    if (!alert) return;
+    if (mode === 'OFF') this.patchAlert(i, { blinkColor: undefined });
+    else if (!alert.blinkColor) this.patchAlert(i, { blinkColor: '#FFFFFF' });
+  }
+
+  readonly alertBrightnessOptions: SegmentOption<'PANEL' | 'OWN'>[] = [
+    { value: 'PANEL', label: 'As the panel' },
+    { value: 'OWN', label: 'Own' },
+  ];
+
+  /** As the panel follows the panel's brightness; its own starts at full, to be lowered with the slider. */
+  setAlertBrightnessMode(i: number, mode: 'PANEL' | 'OWN'): void {
+    const alert = this.alerts()[i];
+    if (!alert) return;
+    if (mode === 'PANEL') this.patchAlert(i, { brightness: undefined });
+    else if (alert.brightness == null) this.patchAlert(i, { brightness: 100 });
+  }
+
   /**
    * Sets the effect; {@code blink} follows it so an older version still blinks a blinking light, and the period
    * in effect is written down so an older save's blink keeps its rhythm.
