@@ -419,6 +419,25 @@ frontend for up to a day after an app update, without revalidating even on reloa
 Production builds ship the frontend source maps (`sourceMap` in `angular.json`'s production config) so
 user-reported console errors carry readable TS stack traces.
 
+**App window (`appwindow/`):** the UI can open in a window of its own instead of a browser tab
+(`Save.appWindow`; Settings → General, the onboarding dialogs and a tray check item, all going through
+`ShowMainService`, which switches over when a save changes the setting). The window is a **separate process**: the
+app's own executable started with the `appwindow` arg (`Main.main` hands over to `AppWindowMain` before Quarkus or
+the single-instance check), or on the JVM a `java -cp <classes+JNA>` of the same class. `AppWindowService` starts it,
+keeps at most one, raises it on a second open, and talks to it over **stdin** (the first line is the bootstrap URL,
+so the session nonce never reaches a command line; then `show <url>` / `raise` / `close`; EOF closes the window, so it
+goes away with the app). Its stderr is `logs/appwindow.log`; its own state (web view profile, `window.properties`)
+is `${pcpanel.root}/appwindow/`. Exit status 3 (`EXIT_UNAVAILABLE`), or a non-zero exit within 10 s, makes the app
+open the browser instead. Both backends are **pure Java over JNA, no native code of ours** — nothing third-party is
+compiled for this (the signing certificate is why): `WebView2Window` is a Win32 window with the WebView2 COM API called
+by vtable index (`ComHandler` implements the completion/event handler objects as JNA callbacks; the indices and IIDs
+come from `WebView2.h`), loaded through Microsoft's own signed `WebView2Loader.dll`, committed at
+`src/main/resources/win32-x86-64/` (NuGet `Microsoft.Web.WebView2` 1.0.4258.31, `runtimes/win-x64/native`, sha256
+`3426dcc5…8abee`; BSD-3 licence shipped from `packaging/windows/licenses/`) and extracted by JNA like hidapi.
+`WebKitGtkWindow` picks **at run time** WebKitGTK 6.0 + GTK 4, else 4.1 + GTK 3 (never both: GTK 3 and 4 cannot
+share a process); the `.deb` recommends either and the Flatpak uses the GNOME runtime, which has both. Links away from
+the app's origin open in the default browser (`Links`). macOS has no backend, so the UI hides the option there.
+
 **Bug reports + diagnosability (`report/`):** `BugReportService` writes `${pcpanel.root}/reports/
 pcpanel-report-<stamp>.zip` (newest 5 kept) holding the reporter's answers plus the attachments they
 opted into — `system.txt`, the logs, the configuration, and the browser's console/failed-request
