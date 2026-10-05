@@ -59,15 +59,15 @@ public final class AppWindowMain {
             log("No URL on stdin");
             return EXIT_USAGE;
         }
-        var window = windows.get();
-        if (window == null) {
-            log("No app window on this platform");
-            return EXIT_UNAVAILABLE;
-        }
-        var reader = new Thread(() -> readCommands(input, window), "App window input");
-        reader.setDaemon(true);
-        reader.start();
         try {
+            var window = windows.get();
+            if (window == null) {
+                log("No app window on this platform");
+                return EXIT_UNAVAILABLE;
+            }
+            var reader = new Thread(() -> readCommands(input, window), "App window input");
+            reader.setDaemon(true);
+            reader.start();
             return window.run(url);
         } catch (Throwable t) { // NOSONAR - anything that keeps the window from showing means: use the browser
             log("The app window failed: " + t);
