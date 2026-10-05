@@ -439,9 +439,10 @@ jobs:
             target/kdotool/*
           if-no-files-found: error
 
-  # Flatpak runs in its own job inside bilelmoussaoui/flatpak-github-actions:freedesktop-24.08, which
-  # already ships the freedesktop Platform + SDK. That removes the ~16 min `flatpak install` download
-  # the old host-based step paid on every run (the module itself is buildsystem: simple — no compile).
+  # Flatpak runs in its own job inside bilelmoussaoui/flatpak-github-actions:gnome-48, which already
+  # ships the GNOME Platform + SDK (GNOME rather than plain freedesktop for the WebKitGTK the app window
+  # uses). That removes the ~16 min `flatpak install` download the old host-based step paid on every run
+  # (the module itself is buildsystem: simple — no compile).
   # Best-effort: the flatpak-builder step is continue-on-error so a failure never blocks the release.
   buildFlatpak:
     name: Linux Flatpak (best-effort)
@@ -454,7 +455,7 @@ jobs:
     permissions:
       contents: write
     container:
-      image: bilelmoussaoui/flatpak-github-actions:freedesktop-24.08
+      image: bilelmoussaoui/flatpak-github-actions:gnome-48
       options: --privileged
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
