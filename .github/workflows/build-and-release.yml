@@ -137,6 +137,8 @@ jobs:
           Copy-Item $runner.FullName "$dist/PCPanel.exe"
           # native-image drops the companion DLLs next to the runner in target/.
           Copy-Item target/*.dll $dist/ -ErrorAction SilentlyContinue
+          # Licences of bundled third-party binaries that ask for their notice to travel with them.
+          Copy-Item -Recurse packaging/windows/licenses "$dist/licenses"
           Write-Host "Distribution contents:"
           Get-ChildItem $dist | ForEach-Object { Write-Host "  $($_.Name)" }
           if (-not (Get-ChildItem "$dist/*.dll" -ErrorAction SilentlyContinue)) {

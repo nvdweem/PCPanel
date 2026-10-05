@@ -1,9 +1,11 @@
 package com.getpcpanel;
 
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
 
+import com.getpcpanel.appwindow.AppWindowMain;
 import com.getpcpanel.device.provider.pcpanel.HidDebug;
 import com.getpcpanel.util.os.ConsoleSupport;
 import com.getpcpanel.util.io.FileChecker;
@@ -27,6 +29,11 @@ public class Main implements QuarkusApplication {
     private static final String UPDATED_PROPERTY = "pcpanel.updated";
 
     static void main(String... args) {
+        if (args.length > 0 && AppWindowMain.ARG.equals(args[0])) {
+            // The app window: this executable started again as a window around the UI. No Quarkus, no device access.
+            AppWindowMain.main(Arrays.copyOfRange(args, 1, args.length));
+            return;
+        }
         forceHeadlessAwt();
         overrideBakedPathsForNativeImage();
         redirectWorkingDirectoryForNativeImage();

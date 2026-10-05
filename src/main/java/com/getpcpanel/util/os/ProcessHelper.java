@@ -28,6 +28,7 @@ import lombok.extern.log4j.Log4j2;
  *     <li>{@link #launch} starts a process that is meant to outlive the call (a program started from a button, a
  *     file manager, an installer) and walks away. Its output is discarded, so it can't block on a full pipe.</li>
  *     <li>{@link #stream} follows a long-running process line by line until it exits.</li>
+ *     <li>{@link #startWithInput} starts a long-running child the caller keeps talking to over its stdin.</li>
  * </ul>
  * The environment is inherited unchanged unless the caller passes variables to set. Commands whose output is
  * parsed pass {@link #PARSEABLE_OUTPUT}; anything started on the user's behalf keeps the user's own settings.
@@ -93,6 +94,17 @@ public class ProcessHelper {
         var process = builder(command).redirectError(ProcessBuilder.Redirect.DISCARD).start();
         process.getOutputStream().close();
         return process;
+    }
+
+    /**
+     * Starts {@code command} and returns it running with its stdin open, for a child the caller keeps sending input
+     * to (stdout discarded, stderr written to {@code errorLog}). The caller ends it with {@link #stop}.
+     */
+    public Process startWithInput(File errorLog, String... command) throws IOException {
+        return builder(command)
+                .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+                .redirectError(ProcessBuilder.Redirect.to(errorLog))
+                .start();
     }
 
     /**

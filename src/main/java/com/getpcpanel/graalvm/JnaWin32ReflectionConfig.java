@@ -63,6 +63,9 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         "com.sun.jna.platform.win32.WinUser$WNDCLASSEX",
         "com.sun.jna.platform.win32.WinUser$MSG",
         "com.sun.jna.platform.win32.WinDef$POINT",
+        // The app window (WebView2Window): its bounds and the placement it restores and saves.
+        "com.sun.jna.platform.win32.WinDef$RECT",
+        "com.sun.jna.platform.win32.WinUser$WINDOWPLACEMENT",
         "com.sun.jna.platform.win32.WinUser$BLENDFUNCTION",
         // The GUID embedded in the tray NOTIFYICONDATA struct (the struct itself is a .class target above).
         "com.sun.jna.platform.win32.Guid$GUID",

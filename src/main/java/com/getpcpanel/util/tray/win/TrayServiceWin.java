@@ -1,19 +1,14 @@
 package com.getpcpanel.util.tray.win;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-
 import com.getpcpanel.platform.WindowsBuild;
 import com.getpcpanel.util.io.FileUtil;
 import com.getpcpanel.util.app.CopyUiLinkEvent;
 import com.getpcpanel.util.app.OpenFolderEvent;
 import com.getpcpanel.util.app.ShowMainEvent;
+import com.getpcpanel.util.app.ShowMainService;
 import com.getpcpanel.util.concurrent.AppThreads;
 import com.getpcpanel.util.tray.ITrayService;
 import com.getpcpanel.util.tray.awt.AwtTrayImpl;
-import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
 import com.sun.jna.WString;
 import com.sun.jna.platform.win32.Kernel32;
@@ -56,7 +51,6 @@ import lombok.extern.log4j.Log4j2;
 @AwtTrayImpl
 public class TrayServiceWin implements ITrayService, WindowProc {
     private static final String WINDOW_CLASS = "PCPanelTrayWindow";
-    private static final String ICON_RESOURCE = "/assets/app-icon.ico";
     private static final int WM_TRAY_CALLBACK = WinUser.WM_USER + 1;
     private static final int TRAY_ID = 1;
     private static final int MENU_OPEN = 1;
@@ -64,6 +58,7 @@ public class TrayServiceWin implements ITrayService, WindowProc {
     private static final int MENU_SETTINGS = 3;
     private static final int MENU_COPY_LINK = 4;
     private static final int MENU_REPORT = 5;
+    private static final int MENU_APP_WINDOW = 6;
     private static final int IDI_APPLICATION = 32512;
 
     // Mouse messages delivered in the low word of the callback's lParam (NOTIFYICON_VERSION 0).
@@ -83,6 +78,7 @@ public class TrayServiceWin implements ITrayService, WindowProc {
 
     @Inject Event<Object> eventBus;
     @Inject FileUtil fileUtil;
+    @Inject ShowMainService showMain;
 
     private volatile WinShell32.NOTIFYICONDATA nid;
     private volatile int taskbarCreatedMsg;
@@ -203,6 +199,8 @@ public class TrayServiceWin implements ITrayService, WindowProc {
         }
         try {
             ext.AppendMenuW(menu, WinUser32Ext.MF_STRING, MENU_OPEN, new WString("Open PCPanel"));
+            ext.AppendMenuW(menu, WinUser32Ext.MF_STRING | (showMain.isAppWindow() ? WinUser32Ext.MF_CHECKED : 0),
+                    MENU_APP_WINDOW, new WString("Open in app window"));
             ext.AppendMenuW(menu, WinUser32Ext.MF_STRING, MENU_COPY_LINK, new WString("Copy UI link"));
             ext.AppendMenuW(menu, WinUser32Ext.MF_STRING, MENU_SETTINGS, new WString("Open settings folder"));
             ext.AppendMenuW(menu, WinUser32Ext.MF_STRING, MENU_REPORT, new WString("Report a problem"));
@@ -219,6 +217,7 @@ public class TrayServiceWin implements ITrayService, WindowProc {
             user32.PostMessage(hWnd, WM_NULL, new WPARAM(0), new LPARAM(0));
             switch (cmd) {
                 case MENU_OPEN -> eventBus.fire(new ShowMainEvent());
+                case MENU_APP_WINDOW -> showMain.toggleAppWindow();
                 case MENU_COPY_LINK -> eventBus.fire(new CopyUiLinkEvent());
                 case MENU_SETTINGS -> eventBus.fire(new OpenFolderEvent(fileUtil.getRoot().toString()));
                 case MENU_REPORT -> eventBus.fire(new ShowMainEvent(ShowMainEvent.REPORT_PATH));
@@ -236,16 +235,16 @@ public class TrayServiceWin implements ITrayService, WindowProc {
     }
 
     /**
-     * Loads the PCPanel icon for the tray. Prefers the bundled multi-size {@code app-icon.ico} (parsed
-     * to the entry closest to the small-icon size, so it is crisp), then the executable's own icon, and
-     * finally the generic application icon.
+     * Loads the PCPanel icon for the tray. Prefers the bundled multi-size {@code app-icon.ico} (its entry
+     * closest to the small-icon size, so it is crisp), then the executable's own icon, and finally the
+     * generic application icon.
      */
     private HICON loadAppIcon(User32 user32) {
         var desired = user32.GetSystemMetrics(WinUser.SM_CXSMICON);
         if (desired <= 0) {
             desired = 16;
         }
-        var fromResource = loadIconFromResource(desired);
+        var fromResource = WinAppIcon.load(desired);
         if (fromResource != null) {
             return fromResource;
         }
@@ -267,62 +266,5 @@ public class TrayServiceWin implements ITrayService, WindowProc {
             log.trace("Unable to extract the application icon for the tray", e);
         }
         return WinUser32Ext.INSTANCE.LoadIconW(null, new Pointer(IDI_APPLICATION));
-    }
-
-    /**
-     * Parses the bundled {@code .ico} and builds an {@link HICON} from the directory entry whose size is
-     * closest to {@code desired}, via {@code CreateIconFromResourceEx}. Returns {@code null} on any
-     * problem so the caller can fall back.
-     */
-    private HICON loadIconFromResource(int desired) {
-        try (InputStream in = TrayServiceWin.class.getResourceAsStream(ICON_RESOURCE)) {
-            if (in == null) {
-                return null;
-            }
-            var ico = in.readAllBytes();
-            var bb = ByteBuffer.wrap(ico).order(ByteOrder.LITTLE_ENDIAN);
-            var count = bb.getShort(4) & 0xFFFF;
-            if (count <= 0 || ico.length < 6 + count * 16) {
-                return null;
-            }
-            var bestOffset = -1;
-            var bestSize = 0;
-            var bestWidth = 0;
-            var bestScore = Integer.MAX_VALUE;
-            for (var i = 0; i < count; i++) {
-                var off = 6 + i * 16;
-                var w = ico[off] & 0xFF;
-                if (w == 0) {
-                    w = 256;
-                }
-                var bytesInRes = bb.getInt(off + 8);
-                var imageOffset = bb.getInt(off + 12);
-                if (imageOffset < 0 || bytesInRes <= 0 || imageOffset + bytesInRes > ico.length) {
-                    continue;
-                }
-                var score = Math.abs(w - desired);
-                if (score < bestScore) {
-                    bestScore = score;
-                    bestOffset = imageOffset;
-                    bestSize = bytesInRes;
-                    bestWidth = w;
-                }
-            }
-            if (bestOffset < 0) {
-                return null;
-            }
-            try (var mem = new Memory(bestSize)) {
-                mem.write(0, ico, bestOffset, bestSize);
-                var icon = WinUser32Ext.INSTANCE.CreateIconFromResourceEx(mem, bestSize, true, 0x00030000,
-                        bestWidth, bestWidth, WinUser32Ext.LR_DEFAULTCOLOR);
-                if (icon == null) {
-                    log.trace("CreateIconFromResourceEx failed (error {})", Kernel32.INSTANCE.GetLastError());
-                }
-                return icon;
-            }
-        } catch (IOException | RuntimeException e) {
-            log.trace("Unable to load the bundled tray icon", e);
-            return null;
-        }
     }
 }

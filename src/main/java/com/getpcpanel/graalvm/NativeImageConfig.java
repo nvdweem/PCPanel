@@ -239,6 +239,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         CoreAudioLib.AudioObjectPropertyListenerProc.class,
         CoreAudioTapLib.AudioDeviceIOProc.class,
 
+
         // Command type hierarchy
         Command.class,
         CommandAnalogBands.class,
@@ -535,6 +536,14 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         "com.sun.jna.platform.mac.CoreFoundation$CFStringRef$ByReference",
         "com.sun.jna.platform.mac.CoreFoundation$CFTypeID",
         "com.sun.jna.platform.mac.CoreFoundation$CFTypeRef",
+        // The app window's JNA callbacks (package-private classes, hence by name): the COM handlers WebView2 calls
+        // (Windows) and the GTK signal and idle handlers (Linux). JNA invokes their one method reflectively.
+        "com.getpcpanel.appwindow.ComHandler$QueryInterfaceProc",
+        "com.getpcpanel.appwindow.ComHandler$RefCountProc",
+        "com.getpcpanel.appwindow.ComHandler$CompletedProc",
+        "com.getpcpanel.appwindow.ComHandler$EventProc",
+        "com.getpcpanel.appwindow.WebKitGtkWindow$SignalProc",
+        "com.getpcpanel.appwindow.WebKitGtkWindow$SourceProc",
         // JNA by-reference pointer types that appear in project Library method signatures. JNA
         // reflectively instantiates these via their public no-arg constructor when marshalling the
         // call, so each must be registered or the call throws IllegalArgumentException /
