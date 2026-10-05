@@ -25,8 +25,11 @@ final class WebKitGtkWindow implements WindowBackend {
     /** Matches the desktop entry, so the desktop shows the application's name and icon for the window. */
     private static final String APP_ID = "com.getpcpanel.PCPanel";
     private static final String TITLE = "PCPanel";
-    private static final int DEFAULT_WIDTH = 1280;
-    private static final int DEFAULT_HEIGHT = 860;
+    private static final int DEFAULT_WIDTH = 1400;
+    private static final int DEFAULT_HEIGHT = 900;
+    /** The smallest window the UI lays out well in. */
+    private static final int MIN_WIDTH = 1300;
+    private static final int MIN_HEIGHT = 700;
     private static final int POLICY_NAVIGATION_ACTION = 0;
     private static final int POLICY_NEW_WINDOW_ACTION = 1;
 
@@ -103,6 +106,7 @@ final class WebKitGtkWindow implements WindowBackend {
                 ? gtk.getFunction("gtk_window_new").invokePointer(new Object[0])
                 : gtk.getFunction("gtk_window_new").invokePointer(new Object[] { 0 }); // GTK_WINDOW_TOPLEVEL
         call(gtk, "gtk_window_set_title", window, TITLE);
+        call(gtk, "gtk_widget_set_size_request", window, MIN_WIDTH, MIN_HEIGHT);
         var placement = WindowPlacement.load(dataDir);
         call(gtk, "gtk_window_set_default_size", window,
                 placement != null ? placement.width() : DEFAULT_WIDTH, placement != null ? placement.height() : DEFAULT_HEIGHT);

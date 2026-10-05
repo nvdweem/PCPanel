@@ -5,12 +5,14 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import javax.annotation.Nullable;
 
+import com.getpcpanel.integration.program.platform.windows.WinDwmapi;
 import com.getpcpanel.util.tray.win.WinAppIcon;
 import com.sun.jna.Function;
 import com.sun.jna.Memory;
 import com.sun.jna.NativeLibrary;
 import com.sun.jna.Pointer;
 import com.sun.jna.WString;
+import com.sun.jna.platform.win32.Advapi32Util;
 import com.sun.jna.platform.win32.Guid.GUID;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.Ole32;
@@ -22,11 +24,13 @@ import com.sun.jna.platform.win32.WinDef.LPARAM;
 import com.sun.jna.platform.win32.WinDef.LRESULT;
 import com.sun.jna.platform.win32.WinDef.RECT;
 import com.sun.jna.platform.win32.WinDef.WPARAM;
+import com.sun.jna.platform.win32.WinReg;
 import com.sun.jna.platform.win32.WinUser;
 import com.sun.jna.platform.win32.WinUser.MSG;
 import com.sun.jna.platform.win32.WinUser.WINDOWPLACEMENT;
 import com.sun.jna.platform.win32.WinUser.WNDCLASSEX;
 import com.sun.jna.platform.win32.WinUser.WindowProc;
+import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 
 /**
@@ -41,8 +45,11 @@ import com.sun.jna.ptr.PointerByReference;
 final class WebView2Window implements WindowBackend, WindowProc {
     private static final String WINDOW_CLASS = "PCPanelAppWindow";
     private static final String TITLE = "PCPanel";
-    private static final int DEFAULT_WIDTH = 1280;
-    private static final int DEFAULT_HEIGHT = 860;
+    private static final int DEFAULT_WIDTH = 1400;
+    private static final int DEFAULT_HEIGHT = 900;
+    /** The smallest window the UI lays out well in, in 96-DPI pixels. */
+    private static final int MIN_WIDTH = 1300;
+    private static final int MIN_HEIGHT = 700;
     /** The UI's own background ({@code --canvas}), shown until the page paints, as COREWEBVIEW2_COLOR (A, R, G, B bytes). */
     private static final int BACKGROUND = 0xFF | 0x0B << 8 | 0x0C << 16 | 0x0F << 24;
 
@@ -50,6 +57,10 @@ final class WebView2Window implements WindowBackend, WindowProc {
     private static final int WM_SIZE = 0x0005;
     private static final int WM_SETFOCUS = 0x0007;
     private static final int WM_CLOSE = 0x0010;
+    private static final int WM_SETTINGCHANGE = 0x001A;
+    private static final int WM_GETMINMAXINFO = 0x0024;
+    /** Offset of {@code ptMinTrackSize} in MINMAXINFO: after three POINTs. */
+    private static final int MINMAXINFO_MIN_TRACK_SIZE = 24;
     private static final int WM_SETICON = 0x0080;
     private static final int WM_COMMANDS = 0x8000 + 1; // WM_APP + 1
     private static final int WS_OVERLAPPEDWINDOW = 0x00CF0000;
@@ -193,9 +204,27 @@ final class WebView2Window implements WindowBackend, WindowProc {
             AppWindowMain.log("Could not create the window (error " + Kernel32.INSTANCE.GetLastError() + ")");
             return null;
         }
+        applyTheme(window);
         setIcon(window, ICON_SMALL, user32.GetSystemMetrics(WinUser.SM_CXSMICON));
         setIcon(window, ICON_BIG, user32.GetSystemMetrics(WinUser.SM_CXICON));
         return window;
+    }
+
+    /** A dark title bar while Windows is set to dark for apps, a light one otherwise. */
+    private static void applyTheme(HWND window) {
+        var dark = false;
+        try {
+            dark = Advapi32Util.registryGetIntValue(WinReg.HKEY_CURRENT_USER,
+                    "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", "AppsUseLightTheme") == 0;
+        } catch (RuntimeException e) {
+            // No such value: Windows has been light for apps all along.
+        }
+        WinDwmapi.INSTANCE.DwmSetWindowAttribute(window, WinDwmapi.DWMWA_USE_IMMERSIVE_DARK_MODE, new IntByReference(dark ? 1 : 0), 4);
+    }
+
+    private static double scale(HWND window) {
+        var dpi = Function.getFunction("user32", "GetDpiForWindow").invokeInt(new Object[] { window });
+        return (dpi > 0 ? dpi : 96) / 96.0;
     }
 
     private static void setIcon(HWND window, int which, int size) {
@@ -304,13 +333,16 @@ final class WebView2Window implements WindowBackend, WindowProc {
         var window = hwnd;
         var saved = placement;
         if (saved != null) {
+            var scale = scale(window);
+            var width = Math.max(saved.width(), (int) (MIN_WIDTH * scale));
+            var height = Math.max(saved.height(), (int) (MIN_HEIGHT * scale));
             var wp = new WINDOWPLACEMENT();
             wp.showCmd = saved.maximized() ? SW_SHOWMAXIMIZED : SW_SHOWNORMAL;
             wp.rcNormalPosition = new RECT();
             wp.rcNormalPosition.left = saved.x();
             wp.rcNormalPosition.top = saved.y();
-            wp.rcNormalPosition.right = saved.x() + saved.width();
-            wp.rcNormalPosition.bottom = saved.y() + saved.height();
+            wp.rcNormalPosition.right = saved.x() + width;
+            wp.rcNormalPosition.bottom = saved.y() + height;
             // Windows moves a placement that ended up off-screen (a monitor since unplugged) back onto one.
             User32.INSTANCE.SetWindowPlacement(window, wp);
         } else {
@@ -384,6 +416,19 @@ final class WebView2Window implements WindowBackend, WindowProc {
             case WM_COMMANDS -> {
                 runCommands();
                 return new LRESULT(0);
+            }
+            case WM_GETMINMAXINFO -> {
+                var scale = scale(window);
+                var info = new Pointer(lParam.longValue());
+                info.setInt(MINMAXINFO_MIN_TRACK_SIZE, (int) (MIN_WIDTH * scale));
+                info.setInt(MINMAXINFO_MIN_TRACK_SIZE + 4, (int) (MIN_HEIGHT * scale));
+                return new LRESULT(0);
+            }
+            case WM_SETTINGCHANGE -> {
+                // Sent with "ImmersiveColorSet" when the Windows theme changes.
+                if (lParam.longValue() != 0 && "ImmersiveColorSet".equals(new Pointer(lParam.longValue()).getWideString(0))) {
+                    applyTheme(window);
+                }
             }
             case WM_CLOSE -> savePlacement();
             case WinUser.WM_DESTROY -> {
