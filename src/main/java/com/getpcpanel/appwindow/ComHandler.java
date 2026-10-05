@@ -15,7 +15,8 @@ import com.sun.jna.platform.win32.Guid.GUID;
  * freed.
  */
 final class ComHandler {
-    private static final GUID IID_IUNKNOWN = new GUID("00000000-0000-0000-C000-000000000046");
+    // IIDs are kept as text: a JNA structure in a static field would end up in the native image heap.
+    private static final String IID_IUNKNOWN = "00000000-0000-0000-C000-000000000046";
     private static final int S_OK = 0;
     private static final int E_NOINTERFACE = 0x80004002;
     private static final int E_POINTER = 0x80004003;
@@ -38,7 +39,7 @@ final class ComHandler {
         int invoke(Pointer self, Pointer sender, Pointer args);
     }
 
-    private final GUID iid;
+    private final String iid;
     // Held so the callbacks, and the native stubs JNA made for them, stay alive while WebView2 may call them.
     private final QueryInterfaceProc queryInterface = this::queryInterface;
     private final RefCountProc refCount = self -> 1;
@@ -47,7 +48,7 @@ final class ComHandler {
     private final Memory object = new Memory(Native.POINTER_SIZE);
 
     private ComHandler(String iid, Callback invoke) {
-        this.iid = new GUID(iid);
+        this.iid = iid;
         this.invoke = invoke;
         vtable.setPointer(0, CallbackReference.getFunctionPointer(queryInterface));
         vtable.setPointer(Native.POINTER_SIZE, CallbackReference.getFunctionPointer(refCount));
@@ -73,8 +74,9 @@ final class ComHandler {
         if (ppv == null) {
             return E_POINTER;
         }
-        var requested = new GUID(riid);
-        if (requested.equals(iid) || requested.equals(IID_IUNKNOWN)) {
+        // toGuidString gives "{XXXXXXXX-...}".
+        var requested = new GUID(riid).toGuidString();
+        if (requested.equalsIgnoreCase("{" + iid + "}") || requested.equalsIgnoreCase("{" + IID_IUNKNOWN + "}")) {
             ppv.setPointer(0, self);
             return S_OK;
         }
