@@ -6,12 +6,13 @@ import { AutostartService } from './services/autostart.service';
 import { DebugService } from './services/debug.service';
 import { DeviceStateService } from './services/device-state.service';
 import { IconComponent, ModalComponent, ToggleComponent } from './ui';
+import { ToastService } from './ui/toast/toast.service';
 
 const GITHUB_URL = 'https://github.com/nvdweem/PCPanel';
 
 /**
  * Shows the first-run welcome dialog or the post-install/update dialog once on startup, based on the
- * backend onboarding hint. Both offer the "open in the browser on startup" setting and explain that the
+ * backend onboarding hint. Both offer the "open on startup" and "own window" settings and explain that the
  * app keeps running in the tray. Hosted at the app root so it overlays regardless of route.
  */
 @Component({
@@ -32,11 +33,20 @@ const GITHUB_URL = 'https://github.com/nvdweem/PCPanel';
         <div class="tray-note">{{ trayNote() }}</div>
         <div class="startup-row">
           <div class="startup-text">
-            <div class="startup-label">Open PCPanel in your browser when it starts</div>
+            <div class="startup-label">Open PCPanel when it starts</div>
             <div class="startup-sub">Off by default — PCPanel runs in the background and you reopen this page when you need it.</div>
           </div>
           <pc-toggle [value]="openOnStartup()" (valueChange)="setOpenOnStartup($event)"></pc-toggle>
         </div>
+        @if (platform.os() !== 'mac') {
+          <div class="startup-row">
+            <div class="startup-text">
+              <div class="startup-label">Open in its own window</div>
+              <div class="startup-sub">Shows PCPanel in an app window instead of a browser tab. Also in the tray menu.</div>
+            </div>
+            <pc-toggle [value]="appWindow()" (valueChange)="setAppWindow($event)"></pc-toggle>
+          </div>
+        }
         @if (autostart.supported()) {
           <div class="startup-row">
             <div class="startup-text">
@@ -67,11 +77,20 @@ const GITHUB_URL = 'https://github.com/nvdweem/PCPanel';
         <div class="tray-note">{{ trayNote() }}</div>
         <div class="startup-row">
           <div class="startup-text">
-            <div class="startup-label">Open PCPanel in your browser when it starts</div>
+            <div class="startup-label">Open PCPanel when it starts</div>
             <div class="startup-sub">Off by default — PCPanel runs in the background and you reopen this page when you need it.</div>
           </div>
           <pc-toggle [value]="openOnStartup()" (valueChange)="setOpenOnStartup($event)"></pc-toggle>
         </div>
+        @if (platform.os() !== 'mac') {
+          <div class="startup-row">
+            <div class="startup-text">
+              <div class="startup-label">Open in its own window</div>
+              <div class="startup-sub">Shows PCPanel in an app window instead of a browser tab. Also in the tray menu.</div>
+            </div>
+            <pc-toggle [value]="appWindow()" (valueChange)="setAppWindow($event)"></pc-toggle>
+          </div>
+        }
         @if (autostart.supported()) {
           <div class="startup-row">
             <div class="startup-text">
@@ -107,7 +126,8 @@ const GITHUB_URL = 'https://github.com/nvdweem/PCPanel';
 export class OnboardingComponent {
   private readonly onboarding = inject(OnboardingService);
   private readonly settings = inject(SettingsService);
-  private readonly platform = inject(PlatformService);
+  readonly platform = inject(PlatformService);
+  private readonly toast = inject(ToastService);
   readonly autostart = inject(AutostartService);
   private readonly debug = inject(DebugService);
   private readonly deviceState = inject(DeviceStateService);
@@ -120,6 +140,7 @@ export class OnboardingComponent {
   readonly version = computed(() => this.info()?.version ?? '');
   readonly changelogUrl = computed(() => this.info()?.changelogUrl ?? '');
   readonly openOnStartup = computed(() => this.settings.settings.value()?.openBrowserOnStartup ?? false);
+  readonly appWindow = computed(() => this.settings.settings.value()?.appWindow ?? false);
 
   /** Which dialog to show, or null. A Debug-page preview wins; otherwise the backend onboarding intent
    *  (until dismissed). */
@@ -156,6 +177,17 @@ export class OnboardingComponent {
     if (!cur) return;
     this.settings.updateSettings({ ...cur, openBrowserOnStartup: on }).subscribe({
       next: () => this.settings.settings.reload(),
+    });
+  }
+
+  setAppWindow(on: boolean): void {
+    const cur = this.settings.settings.value();
+    if (!cur) return;
+    this.settings.updateSettings({ ...cur, appWindow: on }).subscribe({
+      next: () => {
+        this.settings.settings.reload();
+        if (on) this.toast.show('PCPanel opened in its own window', { sub: 'You can close this tab.' });
+      },
     });
   }
 

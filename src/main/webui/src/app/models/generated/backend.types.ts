@@ -898,6 +898,7 @@ export interface SerialPortDto {
 }
 
 export interface SettingsDto {
+    appWindow: boolean;
     autoUpdate: boolean;
     checkForPreReleases: boolean;
     curves: CurveDefinition[];

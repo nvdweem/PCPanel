@@ -962,6 +962,7 @@ export class SettingsComponent {
     const dto = this.local();
     if (!dto || this.saving()) return;
     this.saving.set(true);
+    const openedWindow = dto.appWindow && !this.settings.value()?.appWindow;
     this.settingsService.updateSettings(this.sanitizeSecrets(dto)).subscribe({
       next: () => {
         this.saving.set(false);
@@ -972,6 +973,7 @@ export class SettingsComponent {
         this.history.checkpoint(); // a saved settings form is one undo step
         this.history.refreshSoon();
         this.toast.show('Settings saved', { kind: 'success' });
+        if (openedWindow) this.toast.show('PCPanel opened in its own window', { sub: 'You can close this tab.' });
         if (thenLeave) this.router.navigate(['/']);
       },
       error: () => {

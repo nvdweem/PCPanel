@@ -24,6 +24,7 @@ public class SettingsDto {
     // General
     private boolean mainUIIcons;
     private boolean openBrowserOnStartup;
+    private boolean appWindow;
     private boolean startupVersionCheck;
     private boolean checkForPreReleases;
     private boolean autoUpdate;
@@ -104,6 +105,7 @@ public class SettingsDto {
         var dto = new SettingsDto();
         dto.mainUIIcons = save.isMainUIIcons();
         dto.openBrowserOnStartup = save.isOpenBrowserOnStartup();
+        dto.appWindow = save.isAppWindow();
         dto.startupVersionCheck = save.isStartupVersionCheck();
         dto.checkForPreReleases = save.isCheckForPreReleases();
         dto.autoUpdate = save.isAutoUpdate();
@@ -174,6 +176,7 @@ public class SettingsDto {
     public void applyTo(Save save) {
         save.setMainUIIcons(mainUIIcons);
         save.setOpenBrowserOnStartup(openBrowserOnStartup);
+        save.setAppWindow(appWindow);
         save.setStartupVersionCheck(startupVersionCheck);
         save.setCheckForPreReleases(checkForPreReleases);
         save.setAutoUpdate(autoUpdate);

@@ -23,6 +23,7 @@ public interface WinUser32Ext extends StdCallLibrary {
     WinUser32Ext INSTANCE = Native.load("user32", WinUser32Ext.class, W32APIOptions.DEFAULT_OPTIONS);
 
     int MF_STRING = 0x0;
+    int MF_CHECKED = 0x8;
     int MF_DEFAULT = 0x1000; // marks the default (bold) menu item, invoked on a double-click
     int TPM_RIGHTBUTTON = 0x0002;
     int TPM_RETURNCMD = 0x0100;

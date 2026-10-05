@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.annotation.Nullable;
 
 import org.freedesktop.dbus.types.UInt32;
 import org.freedesktop.dbus.types.Variant;
@@ -14,6 +17,7 @@ import com.getpcpanel.util.io.FileUtil;
 import com.getpcpanel.util.app.CopyUiLinkEvent;
 import com.getpcpanel.util.app.OpenFolderEvent;
 import com.getpcpanel.util.app.ShowMainEvent;
+import com.getpcpanel.util.app.ShowMainService;
 
 import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.annotations.RegisterForReflection;
@@ -21,7 +25,8 @@ import lombok.extern.log4j.Log4j2;
 
 /**
  * The tray context menu shown on right-click. Mirrors the Windows tray: <b>Open PCPanel</b> (opens the
- * UI), <b>Open settings folder</b> (reveals the data dir holding {@code profiles.json}, with the
+ * UI), <b>Open in app window</b> (a check item: the UI opens in its own window instead of the browser),
+ * <b>Open settings folder</b> (reveals the data dir holding {@code profiles.json}, with the
  * {@code logs/} subdir inside it) and <b>Quit</b> (shuts the app down, like the in-UI Quit button).
  * Exported at {@code /MenuBar}, which the StatusNotifierItem advertises via its {@code Menu} property.
  */
@@ -33,7 +38,13 @@ public class DBusMenuImpl implements DBusMenu {
     private static final int ID_QUIT = 3;
     private static final int ID_COPY_LINK = 4;
     private static final int ID_REPORT = 5;
-    private static final int[] ITEM_IDS = {ID_OPEN, ID_COPY_LINK, ID_SETTINGS, ID_REPORT, ID_QUIT};
+    private static final int ID_APP_WINDOW = 6;
+    private static final int[] ITEM_IDS = {ID_OPEN, ID_APP_WINDOW, ID_COPY_LINK, ID_SETTINGS, ID_REPORT, ID_QUIT};
+
+    /** Bumped when an item changes (the app window check mark, set here or in the UI), so the host fetches the menu again. */
+    private final AtomicInteger revision = new AtomicInteger(1);
+    /** The app window setting the host's copy of the menu shows; null before it fetched one. */
+    private volatile @Nullable Boolean servedAppWindow;
 
     @Override
     public String getObjectPath() {
@@ -44,24 +55,31 @@ public class DBusMenuImpl implements DBusMenu {
     public MenuLayoutReturn<UInt32, MenuItemLayout> GetLayout(int parentId, int recursionDepth, List<String> propertyNames) {
         var children = new ArrayList<Variant<?>>(ITEM_IDS.length);
         for (var id : ITEM_IDS) {
-            children.add(new Variant<>(new MenuItemLayout(id, labelProps(label(id)), List.of())));
+            children.add(new Variant<>(new MenuItemLayout(id, props(id), List.of())));
         }
         var root = new MenuItemLayout(0, Map.of("children-display", new Variant<>("submenu")), children);
-        return new MenuLayoutReturn<>(new UInt32(1), root);
+        var appWindow = showMain().isAppWindow();
+        var served = servedAppWindow;
+        if (served != null && served != appWindow) {
+            revision.incrementAndGet();
+        }
+        servedAppWindow = appWindow;
+        return new MenuLayoutReturn<>(new UInt32(revision.get()), root);
     }
 
     @Override
     public List<MenuItemProperties> GetGroupProperties(List<Integer> ids, List<String> propertyNames) {
         var result = new ArrayList<MenuItemProperties>(ITEM_IDS.length);
         for (var id : ITEM_IDS) {
-            result.add(new MenuItemProperties(id, labelProps(label(id))));
+            result.add(new MenuItemProperties(id, props(id)));
         }
         return result;
     }
 
     @Override
     public Variant<?> GetProperty(int id, String name) {
-        return "label".equals(name) ? new Variant<>(label(id)) : new Variant<>(true);
+        var value = props(id).get(name);
+        return value != null ? value : new Variant<>(true);
     }
 
     @Override
@@ -82,6 +100,10 @@ public class DBusMenuImpl implements DBusMenu {
                 log.debug("Copy UI link selected from the tray menu");
                 AppEvents.fire(new CopyUiLinkEvent());
             }
+            case ID_APP_WINDOW -> {
+                log.debug("App window toggled from the tray menu");
+                showMain().toggleAppWindow();
+            }
             case ID_REPORT -> {
                 log.debug("Report a problem selected from the tray menu");
                 AppEvents.fire(new ShowMainEvent(ShowMainEvent.REPORT_PATH));
@@ -95,7 +117,8 @@ public class DBusMenuImpl implements DBusMenu {
 
     @Override
     public boolean AboutToShow(int id) {
-        return false;
+        var served = servedAppWindow;
+        return served == null || served != showMain().isAppWindow();
     }
 
     /**
@@ -108,8 +131,22 @@ public class DBusMenuImpl implements DBusMenu {
         return CdiHelper.getBean(FileUtil.class);
     }
 
+    private static ShowMainService showMain() {
+        return CdiHelper.getBean(ShowMainService.class);
+    }
+
+    private static Map<String, Variant<?>> props(int id) {
+        var props = labelProps(label(id));
+        if (id == ID_APP_WINDOW) {
+            props.put("toggle-type", new Variant<>("checkmark"));
+            props.put("toggle-state", new Variant<>(showMain().isAppWindow() ? 1 : 0));
+        }
+        return props;
+    }
+
     private static String label(int id) {
         return switch (id) {
+            case ID_APP_WINDOW -> "Open in app window";
             case ID_COPY_LINK -> "Copy UI link";
             case ID_REPORT -> "Report a problem";
             case ID_SETTINGS -> "Open settings folder";

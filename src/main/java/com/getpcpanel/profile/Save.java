@@ -58,6 +58,8 @@ public class Save {
     /** Open the UI in the default browser every time the app starts. Default off — PCPanel runs in the
      *  tray and the UI is opened on demand; a first run and an installer launch open it regardless. */
     private boolean openBrowserOnStartup;
+    /** Show the UI in a window of its own (a web view, see {@code AppWindowService}) instead of a browser tab. */
+    private boolean appWindow;
     private boolean startupVersionCheck = true;
     /** Include pre-release (snapshot) builds when checking for updates. Explicit choice — the running
      *  build's own snapshot-ness no longer decides this. Only meaningful when startupVersionCheck is on. */

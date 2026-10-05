@@ -15,9 +15,9 @@ import org.freedesktop.dbus.types.Variant;
  * host at the object that implements this; the host then reads the layout and reports clicks back
  * through {@link #Event}.
  *
- * <p>Only the methods a host needs for a small static menu are implemented (GetLayout,
- * GetGroupProperties, GetProperty, Event, AboutToShow); the optional update signals are omitted because
- * the menu never changes.
+ * <p>Only the methods a host needs for a small menu are implemented (GetLayout, GetGroupProperties,
+ * GetProperty, Event, AboutToShow). The optional update signals are omitted: the one item that changes (the
+ * app window check mark) reaches the host through {@link #AboutToShow}, which asks it to fetch the menu again.
  *
  * @see <a href="https://github.com/AyatanaIndicators/libdbusmenu/blob/master/libdbusmenu-glib/dbus-menu.xml">dbusmenu spec</a>
  */

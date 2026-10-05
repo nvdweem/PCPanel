@@ -15,7 +15,7 @@
             "maxTrim" : 533,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-535",
-            "overlayName" : "overlayName-30",
+            "overlayName" : "overlayName-35",
             "buttonDebounce" : 532,
             "logarithmic" : true
           },
@@ -24,7 +24,7 @@
             "maxTrim" : 537,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-539",
-            "overlayName" : "overlayName-31",
+            "overlayName" : "overlayName-36",
             "buttonDebounce" : 536,
             "logarithmic" : true
           },
@@ -33,7 +33,7 @@
             "maxTrim" : 541,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-543",
-            "overlayName" : "overlayName-32",
+            "overlayName" : "overlayName-37",
             "buttonDebounce" : 540,
             "logarithmic" : true
           },
@@ -42,7 +42,7 @@
             "maxTrim" : 545,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-547",
-            "overlayName" : "overlayName-33",
+            "overlayName" : "overlayName-38",
             "buttonDebounce" : 544,
             "logarithmic" : true
           }
@@ -73,12 +73,12 @@
             "muteOverrideColor" : "muteOverrideColor-491",
             "audioLevelSource" : "audioLevelSource-21"
           }, {
-            "mode" : "AUDIO_LEVEL",
+            "mode" : "NONE",
             "color1" : "color1-493",
             "color2" : "color2-494",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-497",
             "muteOverrideColor" : "muteOverrideColor-496",
-            "audioLevelSource" : "audioLevelSource-22"
+            "audioLevelSource" : "audioLevelSource-23"
           } ],
           "sliderLabelConfigs" : [ {
             "mode" : "STATIC",
@@ -97,14 +97,14 @@
             "color2" : "color2-510",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-513",
             "muteOverrideColor" : "muteOverrideColor-512",
-            "audioLevelSource" : "audioLevelSource-24"
+            "audioLevelSource" : "audioLevelSource-26"
           }, {
-            "mode" : "STATIC",
+            "mode" : "AUDIO_LEVEL",
             "color1" : "color1-514",
             "color2" : "color2-515",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-518",
             "muteOverrideColor" : "muteOverrideColor-517",
-            "audioLevelSource" : "audioLevelSource-25"
+            "audioLevelSource" : "audioLevelSource-28"
           } ],
           "logoConfig" : {
             "mode" : "RAINBOW",
@@ -112,7 +112,7 @@
             "brightness" : 20,
             "speed" : 24,
             "hue" : 22,
-            "audioLevelSource" : "audioLevelSource-29"
+            "audioLevelSource" : "audioLevelSource-33"
           },
           "globalBrightness" : 485,
           "audioLevelCurve" : "audioLevelCurve-6",
@@ -179,7 +179,7 @@
             "maxTrim" : 615,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-617",
-            "overlayName" : "overlayName-62",
+            "overlayName" : "overlayName-72",
             "buttonDebounce" : 614,
             "logarithmic" : true
           },
@@ -188,7 +188,7 @@
             "maxTrim" : 619,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-621",
-            "overlayName" : "overlayName-63",
+            "overlayName" : "overlayName-73",
             "buttonDebounce" : 618,
             "logarithmic" : true
           },
@@ -197,7 +197,7 @@
             "maxTrim" : 623,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-625",
-            "overlayName" : "overlayName-64",
+            "overlayName" : "overlayName-74",
             "buttonDebounce" : 622,
             "logarithmic" : true
           },
@@ -206,7 +206,7 @@
             "maxTrim" : 627,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-629",
-            "overlayName" : "overlayName-65",
+            "overlayName" : "overlayName-75",
             "buttonDebounce" : 626,
             "logarithmic" : true
           }
@@ -235,22 +235,22 @@
             "color2" : "color2-571",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-574",
             "muteOverrideColor" : "muteOverrideColor-573",
-            "audioLevelSource" : "audioLevelSource-54"
+            "audioLevelSource" : "audioLevelSource-59"
           }, {
             "mode" : "STATIC",
             "color1" : "color1-575",
             "color2" : "color2-576",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-579",
             "muteOverrideColor" : "muteOverrideColor-578",
-            "audioLevelSource" : "audioLevelSource-55"
+            "audioLevelSource" : "audioLevelSource-61"
           } ],
           "sliderLabelConfigs" : [ {
-            "mode" : "NONE",
+            "mode" : "STATIC",
             "color" : "color-601",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-604",
             "muteOverrideColor" : "muteOverrideColor-603"
           }, {
-            "mode" : "STATIC",
+            "mode" : "NONE",
             "color" : "color-605",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-608",
             "muteOverrideColor" : "muteOverrideColor-607"
@@ -261,40 +261,40 @@
             "color2" : "color2-592",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-595",
             "muteOverrideColor" : "muteOverrideColor-594",
-            "audioLevelSource" : "audioLevelSource-56"
+            "audioLevelSource" : "audioLevelSource-63"
           }, {
             "mode" : "STATIC_GRADIENT",
             "color1" : "color1-596",
             "color2" : "color2-597",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-600",
             "muteOverrideColor" : "muteOverrideColor-599",
-            "audioLevelSource" : "audioLevelSource-57"
+            "audioLevelSource" : "audioLevelSource-65"
           } ],
           "logoConfig" : {
-            "mode" : "STATIC",
+            "mode" : "NONE",
             "color" : "color-582",
             "brightness" : 102,
             "speed" : 106,
             "hue" : 104,
-            "audioLevelSource" : "audioLevelSource-60"
+            "audioLevelSource" : "audioLevelSource-69"
           },
           "globalBrightness" : 567,
-          "audioLevelCurve" : "audioLevelCurve-39",
+          "audioLevelCurve" : "audioLevelCurve-44",
           "visualizer" : {
-            "when" : "ALWAYS",
+            "when" : "PLAYING",
             "sources" : [ {
-              "kind" : "APP",
-              "device" : "device-47",
-              "app" : "app-48"
+              "kind" : "ANY_APP",
+              "device" : "device-52",
+              "app" : "app-53"
             }, {
-              "kind" : "INPUT",
-              "device" : "device-50",
-              "app" : "app-51"
+              "kind" : "APP",
+              "device" : "device-55",
+              "app" : "app-56"
             } ],
-            "lights" : [ "lights-43", "lights-44" ],
-            "style" : "TWO_COLORS",
-            "lowColor" : "lowColor-45",
-            "highColor" : "highColor-42"
+            "lights" : [ "lights-48", "lights-49" ],
+            "style" : "RAINBOW",
+            "lowColor" : "lowColor-50",
+            "highColor" : "highColor-47"
           }
         },
         "focusBackOnLost" : true,
@@ -615,6 +615,7 @@
             "commands" : [ {
               "_type" : "volume.process-mute",
               "processName" : [ "processName-206", "processName-207" ],
+              "device" : null,
               "muteType" : "unmute"
             } ],
             "type" : "allAtOnce"
@@ -780,24 +781,24 @@
           "36" : {
             "commands" : [ {
               "_type" : "display.off",
-              "displays" : [ "arg0-224", "arg0-225" ]
+              "displays" : [ "arg0-262", "arg0-263" ]
             } ],
             "type" : "allAtOnce"
           },
           "37" : {
             "commands" : [ {
               "_type" : "sonar.mute",
-              "channel" : "Aux",
-              "mix" : "both",
-              "muteType" : "mute"
+              "channel" : "Game",
+              "mix" : "streaming",
+              "muteType" : "toggle"
             } ],
             "type" : "allAtOnce"
           },
           "38" : {
             "commands" : [ {
               "_type" : "volume.app-output",
-              "processName" : [ "arg0-233", "arg0-234" ],
-              "device" : "arg1-235"
+              "processName" : [ "arg0-271", "arg0-272" ],
+              "device" : "arg1-273"
             } ],
             "type" : "allAtOnce"
           }
@@ -1129,7 +1130,7 @@
           "19" : {
             "commands" : [ {
               "_type" : "analogbands.steps",
-              "stepsPerTurn" : 222,
+              "stepsPerTurn" : 255,
               "up" : null,
               "down" : null,
               "dialParams" : null,
@@ -1140,13 +1141,13 @@
           "20" : {
             "commands" : [ {
               "_type" : "sonar.volume",
-              "channel" : "Chat",
-              "mix" : "both",
+              "channel" : "Media",
+              "mix" : "streaming",
               "unMuteOnVolumeChange" : true,
               "dialParams" : {
                 "invert" : true,
-                "moveStart" : 231,
-                "moveEnd" : 232
+                "moveStart" : 269,
+                "moveEnd" : 270
               },
               "invert" : true
             } ],
@@ -1159,7 +1160,7 @@
             "maxTrim" : 84,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-86",
-            "overlayName" : "overlayName-87",
+            "overlayName" : "overlayName-102",
             "buttonDebounce" : 83,
             "logarithmic" : true
           },
@@ -1168,7 +1169,7 @@
             "maxTrim" : 88,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-90",
-            "overlayName" : "overlayName-88",
+            "overlayName" : "overlayName-103",
             "buttonDebounce" : 87,
             "logarithmic" : true
           },
@@ -1177,7 +1178,7 @@
             "maxTrim" : 92,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-94",
-            "overlayName" : "overlayName-89",
+            "overlayName" : "overlayName-104",
             "buttonDebounce" : 91,
             "logarithmic" : true
           },
@@ -1186,7 +1187,7 @@
             "maxTrim" : 96,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-98",
-            "overlayName" : "overlayName-90",
+            "overlayName" : "overlayName-105",
             "buttonDebounce" : 95,
             "logarithmic" : true
           },
@@ -1195,7 +1196,7 @@
             "maxTrim" : 1,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-102",
-            "overlayName" : "overlayName-91",
+            "overlayName" : "overlayName-106",
             "buttonDebounce" : 99,
             "logarithmic" : true
           },
@@ -1204,7 +1205,7 @@
             "maxTrim" : 104,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-106",
-            "overlayName" : "overlayName-92",
+            "overlayName" : "overlayName-107",
             "buttonDebounce" : 103,
             "logarithmic" : true
           },
@@ -1213,7 +1214,7 @@
             "maxTrim" : 108,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-110",
-            "overlayName" : "overlayName-93",
+            "overlayName" : "overlayName-108",
             "buttonDebounce" : 107,
             "logarithmic" : true
           },
@@ -1222,7 +1223,7 @@
             "maxTrim" : 112,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-114",
-            "overlayName" : "overlayName-94",
+            "overlayName" : "overlayName-109",
             "buttonDebounce" : 111,
             "logarithmic" : true
           },
@@ -1231,7 +1232,7 @@
             "maxTrim" : 116,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-118",
-            "overlayName" : "overlayName-95",
+            "overlayName" : "overlayName-110",
             "buttonDebounce" : 115,
             "logarithmic" : true
           }
@@ -1260,14 +1261,14 @@
             "color2" : "color2-40",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-43",
             "muteOverrideColor" : "muteOverrideColor-42",
-            "audioLevelSource" : "audioLevelSource-82"
+            "audioLevelSource" : "audioLevelSource-92"
           }, {
             "mode" : "STATIC",
             "color1" : "color1-44",
             "color2" : "color2-45",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-48",
             "muteOverrideColor" : "muteOverrideColor-47",
-            "audioLevelSource" : "audioLevelSource-83"
+            "audioLevelSource" : "audioLevelSource-94"
           } ],
           "sliderLabelConfigs" : [ {
             "mode" : "STATIC",
@@ -1286,14 +1287,14 @@
             "color2" : "color2-61",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-64",
             "muteOverrideColor" : "muteOverrideColor-63",
-            "audioLevelSource" : "audioLevelSource-84"
+            "audioLevelSource" : "audioLevelSource-96"
           }, {
             "mode" : "VOLUME_GRADIENT",
             "color1" : "color1-65",
             "color2" : "color2-66",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-69",
             "muteOverrideColor" : "muteOverrideColor-68",
-            "audioLevelSource" : "audioLevelSource-85"
+            "audioLevelSource" : "audioLevelSource-98"
           } ],
           "logoConfig" : {
             "mode" : "STATIC",
@@ -1301,25 +1302,25 @@
             "brightness" : 51,
             "speed" : 55,
             "hue" : 53,
-            "audioLevelSource" : "audioLevelSource-86"
+            "audioLevelSource" : "audioLevelSource-100"
           },
           "globalBrightness" : 36,
-          "audioLevelCurve" : "audioLevelCurve-67",
+          "audioLevelCurve" : "audioLevelCurve-77",
           "visualizer" : {
-            "when" : "OFF",
+            "when" : "PLAYING",
             "sources" : [ {
-              "kind" : "APP",
-              "device" : "device-75",
-              "app" : "app-76"
+              "kind" : "OUTPUT",
+              "device" : "device-85",
+              "app" : "app-86"
             }, {
-              "kind" : "INPUT",
-              "device" : "device-78",
-              "app" : "app-79"
+              "kind" : "ANY_APP",
+              "device" : "device-88",
+              "app" : "app-89"
             } ],
-            "lights" : [ "lights-71", "lights-72" ],
-            "style" : "PULSE",
-            "lowColor" : "lowColor-73",
-            "highColor" : "highColor-70"
+            "lights" : [ "lights-81", "lights-82" ],
+            "style" : "RAINBOW",
+            "lowColor" : "lowColor-83",
+            "highColor" : "highColor-80"
           }
         },
         "focusBackOnLost" : true,
@@ -1374,7 +1375,7 @@
             "maxTrim" : 264,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-266",
-            "overlayName" : "overlayName-121",
+            "overlayName" : "overlayName-141",
             "buttonDebounce" : 263,
             "logarithmic" : true
           },
@@ -1383,7 +1384,7 @@
             "maxTrim" : 268,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-270",
-            "overlayName" : "overlayName-122",
+            "overlayName" : "overlayName-142",
             "buttonDebounce" : 267,
             "logarithmic" : true
           },
@@ -1392,7 +1393,7 @@
             "maxTrim" : 272,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-274",
-            "overlayName" : "overlayName-123",
+            "overlayName" : "overlayName-143",
             "buttonDebounce" : 271,
             "logarithmic" : true
           },
@@ -1401,7 +1402,7 @@
             "maxTrim" : 276,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-278",
-            "overlayName" : "overlayName-124",
+            "overlayName" : "overlayName-144",
             "buttonDebounce" : 275,
             "logarithmic" : true
           },
@@ -1410,7 +1411,7 @@
             "maxTrim" : 280,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-282",
-            "overlayName" : "overlayName-125",
+            "overlayName" : "overlayName-145",
             "buttonDebounce" : 279,
             "logarithmic" : true
           },
@@ -1419,7 +1420,7 @@
             "maxTrim" : 284,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-286",
-            "overlayName" : "overlayName-126",
+            "overlayName" : "overlayName-146",
             "buttonDebounce" : 283,
             "logarithmic" : true
           },
@@ -1428,7 +1429,7 @@
             "maxTrim" : 288,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-290",
-            "overlayName" : "overlayName-127",
+            "overlayName" : "overlayName-147",
             "buttonDebounce" : 287,
             "logarithmic" : true
           },
@@ -1437,7 +1438,7 @@
             "maxTrim" : 292,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-294",
-            "overlayName" : "overlayName-128",
+            "overlayName" : "overlayName-148",
             "buttonDebounce" : 291,
             "logarithmic" : true
           },
@@ -1446,7 +1447,7 @@
             "maxTrim" : 296,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-298",
-            "overlayName" : "overlayName-129",
+            "overlayName" : "overlayName-149",
             "buttonDebounce" : 295,
             "logarithmic" : true
           }
@@ -1475,14 +1476,14 @@
             "color2" : "color2-220",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-223",
             "muteOverrideColor" : "muteOverrideColor-222",
-            "audioLevelSource" : "audioLevelSource-116"
+            "audioLevelSource" : "audioLevelSource-131"
           }, {
             "mode" : "STATIC",
             "color1" : "color1-224",
             "color2" : "color2-225",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-228",
             "muteOverrideColor" : "muteOverrideColor-227",
-            "audioLevelSource" : "audioLevelSource-117"
+            "audioLevelSource" : "audioLevelSource-133"
           } ],
           "sliderLabelConfigs" : [ {
             "mode" : "STATIC",
@@ -1501,14 +1502,14 @@
             "color2" : "color2-241",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-244",
             "muteOverrideColor" : "muteOverrideColor-243",
-            "audioLevelSource" : "audioLevelSource-118"
+            "audioLevelSource" : "audioLevelSource-135"
           }, {
             "mode" : "VOLUME_GRADIENT",
             "color1" : "color1-245",
             "color2" : "color2-246",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-249",
             "muteOverrideColor" : "muteOverrideColor-248",
-            "audioLevelSource" : "audioLevelSource-119"
+            "audioLevelSource" : "audioLevelSource-137"
           } ],
           "logoConfig" : {
             "mode" : "STATIC",
@@ -1516,25 +1517,25 @@
             "brightness" : 111,
             "speed" : 115,
             "hue" : 113,
-            "audioLevelSource" : "audioLevelSource-120"
+            "audioLevelSource" : "audioLevelSource-139"
           },
           "globalBrightness" : 216,
-          "audioLevelCurve" : "audioLevelCurve-101",
+          "audioLevelCurve" : "audioLevelCurve-116",
           "visualizer" : {
             "when" : "PLAYING",
             "sources" : [ {
-              "kind" : "OUTPUT",
-              "device" : "device-109",
-              "app" : "app-110"
-            }, {
               "kind" : "ANY_APP",
-              "device" : "device-112",
-              "app" : "app-113"
+              "device" : "device-124",
+              "app" : "app-125"
+            }, {
+              "kind" : "APP",
+              "device" : "device-127",
+              "app" : "app-128"
             } ],
-            "lights" : [ "lights-105", "lights-106" ],
+            "lights" : [ "lights-120", "lights-121" ],
             "style" : "RAINBOW",
-            "lowColor" : "lowColor-107",
-            "highColor" : "highColor-104"
+            "lowColor" : "lowColor-122",
+            "highColor" : "highColor-119"
           }
         },
         "focusBackOnLost" : true,
@@ -1820,7 +1821,7 @@
             "maxTrim" : 369,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-371",
-            "overlayName" : "overlayName-158",
+            "overlayName" : "overlayName-183",
             "buttonDebounce" : 368,
             "logarithmic" : true
           },
@@ -1829,7 +1830,7 @@
             "maxTrim" : 373,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-375",
-            "overlayName" : "overlayName-159",
+            "overlayName" : "overlayName-184",
             "buttonDebounce" : 372,
             "logarithmic" : true
           },
@@ -1838,7 +1839,7 @@
             "maxTrim" : 377,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-379",
-            "overlayName" : "overlayName-160",
+            "overlayName" : "overlayName-185",
             "buttonDebounce" : 376,
             "logarithmic" : true
           },
@@ -1847,7 +1848,7 @@
             "maxTrim" : 381,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-383",
-            "overlayName" : "overlayName-161",
+            "overlayName" : "overlayName-186",
             "buttonDebounce" : 380,
             "logarithmic" : true
           }
@@ -1876,14 +1877,14 @@
             "color2" : "color2-325",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-328",
             "muteOverrideColor" : "muteOverrideColor-327",
-            "audioLevelSource" : "audioLevelSource-150"
+            "audioLevelSource" : "audioLevelSource-170"
           }, {
             "mode" : "STATIC",
             "color1" : "color1-329",
             "color2" : "color2-330",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-333",
             "muteOverrideColor" : "muteOverrideColor-332",
-            "audioLevelSource" : "audioLevelSource-151"
+            "audioLevelSource" : "audioLevelSource-172"
           } ],
           "sliderLabelConfigs" : [ {
             "mode" : "STATIC",
@@ -1902,14 +1903,14 @@
             "color2" : "color2-346",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-349",
             "muteOverrideColor" : "muteOverrideColor-348",
-            "audioLevelSource" : "audioLevelSource-152"
+            "audioLevelSource" : "audioLevelSource-174"
           }, {
-            "mode" : "AUDIO_LEVEL",
+            "mode" : "STATIC_GRADIENT",
             "color1" : "color1-350",
             "color2" : "color2-351",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-354",
             "muteOverrideColor" : "muteOverrideColor-353",
-            "audioLevelSource" : "audioLevelSource-153"
+            "audioLevelSource" : "audioLevelSource-176"
           } ],
           "logoConfig" : {
             "mode" : "RAINBOW",
@@ -1917,25 +1918,25 @@
             "brightness" : 96,
             "speed" : 100,
             "hue" : 98,
-            "audioLevelSource" : "audioLevelSource-157"
+            "audioLevelSource" : "audioLevelSource-181"
           },
           "globalBrightness" : 321,
-          "audioLevelCurve" : "audioLevelCurve-135",
+          "audioLevelCurve" : "audioLevelCurve-155",
           "visualizer" : {
-            "when" : "ALWAYS",
+            "when" : "PLAYING",
             "sources" : [ {
               "kind" : "APP",
-              "device" : "device-143",
-              "app" : "app-144"
+              "device" : "device-163",
+              "app" : "app-164"
             }, {
               "kind" : "INPUT",
-              "device" : "device-146",
-              "app" : "app-147"
+              "device" : "device-166",
+              "app" : "app-167"
             } ],
-            "lights" : [ "lights-139", "lights-140" ],
-            "style" : "TWO_COLORS",
-            "lowColor" : "lowColor-141",
-            "highColor" : "highColor-138"
+            "lights" : [ "lights-159", "lights-160" ],
+            "style" : "RAINBOW",
+            "lowColor" : "lowColor-161",
+            "highColor" : "highColor-158"
           }
         },
         "focusBackOnLost" : true,
@@ -1984,7 +1985,7 @@
             "maxTrim" : 451,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-453",
-            "overlayName" : "overlayName-191",
+            "overlayName" : "overlayName-221",
             "buttonDebounce" : 450,
             "logarithmic" : true
           },
@@ -1993,7 +1994,7 @@
             "maxTrim" : 455,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-457",
-            "overlayName" : "overlayName-192",
+            "overlayName" : "overlayName-222",
             "buttonDebounce" : 454,
             "logarithmic" : true
           },
@@ -2002,7 +2003,7 @@
             "maxTrim" : 459,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-461",
-            "overlayName" : "overlayName-193",
+            "overlayName" : "overlayName-223",
             "buttonDebounce" : 458,
             "logarithmic" : true
           },
@@ -2011,7 +2012,7 @@
             "maxTrim" : 463,
             "curve" : "logarithmic",
             "overlayIcon" : "overlayIcon-465",
-            "overlayName" : "overlayName-194",
+            "overlayName" : "overlayName-224",
             "buttonDebounce" : 462,
             "logarithmic" : true
           }
@@ -2035,27 +2036,27 @@
           "breathBrightness" : 41,
           "breathSpeed" : 43,
           "knobConfigs" : [ {
-            "mode" : "AUDIO_LEVEL",
+            "mode" : "NONE",
             "color1" : "color1-406",
             "color2" : "color2-407",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-410",
             "muteOverrideColor" : "muteOverrideColor-409",
-            "audioLevelSource" : "audioLevelSource-182"
+            "audioLevelSource" : "audioLevelSource-207"
           }, {
             "mode" : "VOLUME_GRADIENT",
             "color1" : "color1-411",
             "color2" : "color2-412",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-415",
             "muteOverrideColor" : "muteOverrideColor-414",
-            "audioLevelSource" : "audioLevelSource-184"
+            "audioLevelSource" : "audioLevelSource-210"
           } ],
           "sliderLabelConfigs" : [ {
-            "mode" : "STATIC",
+            "mode" : "NONE",
             "color" : "color-437",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-440",
             "muteOverrideColor" : "muteOverrideColor-439"
           }, {
-            "mode" : "NONE",
+            "mode" : "STATIC",
             "color" : "color-441",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-444",
             "muteOverrideColor" : "muteOverrideColor-443"
@@ -2066,40 +2067,40 @@
             "color2" : "color2-428",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-431",
             "muteOverrideColor" : "muteOverrideColor-430",
-            "audioLevelSource" : "audioLevelSource-185"
+            "audioLevelSource" : "audioLevelSource-212"
           }, {
             "mode" : "STATIC_GRADIENT",
             "color1" : "color1-432",
             "color2" : "color2-433",
             "muteOverrideDeviceOrFollow" : "muteOverrideDeviceOrFollow-436",
             "muteOverrideColor" : "muteOverrideColor-435",
-            "audioLevelSource" : "audioLevelSource-186"
+            "audioLevelSource" : "audioLevelSource-214"
           } ],
           "logoConfig" : {
-            "mode" : "NONE",
+            "mode" : "AUDIO_LEVEL",
             "color" : "color-418",
             "brightness" : 58,
             "speed" : 62,
             "hue" : 60,
-            "audioLevelSource" : "audioLevelSource-189"
+            "audioLevelSource" : "audioLevelSource-218"
           },
           "globalBrightness" : 403,
-          "audioLevelCurve" : "audioLevelCurve-167",
+          "audioLevelCurve" : "audioLevelCurve-192",
           "visualizer" : {
-            "when" : "PLAYING",
+            "when" : "ALWAYS",
             "sources" : [ {
-              "kind" : "APP",
-              "device" : "device-175",
-              "app" : "app-176"
+              "kind" : "ANY_APP",
+              "device" : "device-200",
+              "app" : "app-201"
             }, {
-              "kind" : "INPUT",
-              "device" : "device-178",
-              "app" : "app-179"
+              "kind" : "APP",
+              "device" : "device-203",
+              "app" : "app-204"
             } ],
-            "lights" : [ "lights-171", "lights-172" ],
-            "style" : "RAINBOW",
-            "lowColor" : "lowColor-173",
-            "highColor" : "highColor-170"
+            "lights" : [ "lights-196", "lights-197" ],
+            "style" : "TWO_COLORS",
+            "lowColor" : "lowColor-198",
+            "highColor" : "highColor-195"
           }
         },
         "focusBackOnLost" : true,
@@ -2245,15 +2246,16 @@
       }
     }
   },
-  "templateVersion" : 221,
+  "templateVersion" : 259,
   "mainUIIcons" : true,
   "openBrowserOnStartup" : true,
+  "appWindow" : true,
   "startupVersionCheck" : true,
   "checkForPreReleases" : true,
   "autoUpdate" : true,
   "forceVolume" : true,
   "newAppsAtDialLevel" : true,
-  "newAppsAtDialLevelExceptions" : [ "newAppsAtDialLevelExceptions-196", "newAppsAtDialLevelExceptions-197" ],
+  "newAppsAtDialLevelExceptions" : [ "newAppsAtDialLevelExceptions-226", "newAppsAtDialLevelExceptions-227" ],
   "sleepDetectionEnabled" : true,
   "visualizerWhileLocked" : true,
   "notificationLightsWhileLocked" : true,
@@ -2262,33 +2264,37 @@
   "softTakeoverSliders" : true,
   "startupAnimation" : true,
   "notificationAlerts" : [ {
-    "trigger" : "NOTIFICATION",
-    "app" : "app-199",
-    "target" : "target-200",
-    "color" : "color-201",
+    "trigger" : "TASKBAR_FLASH",
+    "app" : "app-229",
+    "target" : "target-230",
+    "color" : "color-231",
     "blink" : true,
-    "stopAfterSeconds" : 202,
+    "stopAfterSeconds" : 232,
     "disabled" : true,
-    "exceptApps" : [ "exceptApps-203", "exceptApps-204" ],
+    "exceptApps" : [ "exceptApps-233", "exceptApps-234" ],
     "effect" : "BLINK",
-    "periodMs" : 206,
-    "pattern" : "pattern-207",
-    "source" : "source-208"
+    "periodMs" : 236,
+    "pattern" : "pattern-237",
+    "source" : "source-238",
+    "blinkColor" : "blinkColor-239",
+    "brightness" : 240
   }, {
     "trigger" : "MIC_IN_USE",
-    "app" : "app-210",
-    "target" : "target-211",
-    "color" : "color-212",
+    "app" : "app-242",
+    "target" : "target-243",
+    "color" : "color-244",
     "blink" : true,
-    "stopAfterSeconds" : 213,
+    "stopAfterSeconds" : 245,
     "disabled" : true,
-    "exceptApps" : [ "exceptApps-214", "exceptApps-215" ],
-    "effect" : "STEADY",
-    "periodMs" : 217,
-    "pattern" : "pattern-218",
-    "source" : "source-219"
+    "exceptApps" : [ "exceptApps-246", "exceptApps-247" ],
+    "effect" : "PULSE",
+    "periodMs" : 249,
+    "pattern" : "pattern-250",
+    "source" : "source-251",
+    "blinkColor" : "blinkColor-252",
+    "brightness" : 253
   } ],
-  "holdInterval" : 1950,
+  "holdInterval" : 2250,
   "preventClickWhenDblClick" : true,
   "skipControlledFocusApps" : true,
   "focusVolumeOverrides" : [ {
@@ -2421,12 +2427,12 @@
   "overlayWindowCornerRounding" : 24,
   "overlayBarHeight" : 20,
   "overlayBarCornerRounding" : 19,
-  "overlayKnobSize" : 220,
-  "overlayTakeoverMarkerWidth" : 221,
-  "overlayTakeoverMarkerColor" : "overlayTakeoverMarkerColor-222",
+  "overlayKnobSize" : 254,
+  "overlayTakeoverMarkerWidth" : 258,
+  "overlayTakeoverMarkerColor" : "overlayTakeoverMarkerColor-255",
+  "overlayTakeoverMarkerHeight" : 256,
+  "overlayTakeoverMarkerRounding" : 257,
   "overlayTakeoverText" : true,
-  "overlayTakeoverMarkerHeight" : 223,
-  "overlayTakeoverMarkerRounding" : 224,
   "overlayPosition" : "middleMiddle",
   "overlayPadding" : 21,
   "overlayShowAppName" : true,
