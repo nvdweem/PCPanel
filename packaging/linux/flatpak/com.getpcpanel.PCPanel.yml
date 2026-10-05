@@ -21,7 +21,7 @@
 app-id: com.getpcpanel.PCPanel
 # GNOME rather than the plain freedesktop runtime: it carries WebKitGTK, which the app window shows the UI in.
 runtime: org.gnome.Platform
-runtime-version: '48'
+runtime-version: '50'
 sdk: org.gnome.Sdk
 command: pcpanel
 
