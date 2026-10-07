@@ -281,11 +281,18 @@ backend stays authoritative for what the hardware does.
 the volume feature. Implementations are selected at **build time** by platform stereotypes:
 `@WindowsBuild` (`SndCtrlWindows` → JNI to `SndCtrl.dll` via `SndCtrlNative`, both in
 `integration/volume/platform/windows/`; C++ source in `src/main/cpp/`) and `@LinuxBuild`
-(`SndCtrlPulseAudio` in `platform/linux/`), which drives PulseAudio/PipeWire through the **`pactl` CLI** as
-subprocesses — `PulseAudioWrapper` runs `pactl list`/`set-*`, `PulseAudioEventListener` follows `pactl subscribe`
-for device/stream changes; there is no JNA binding to libpulse. Every `pactl` call runs to completion within a
-deadline (a hung one is killed), writes run one at a time so values apply in order, and a `pactl list` that times
-out keeps the cached devices/sessions rather than emptying them. These stereotypes wrap
+(`SndCtrlPulseAudio` in `platform/linux/`), which drives PulseAudio/PipeWire over the **PulseAudio native
+protocol** — `dev.niels.pulse.PulseClient`, a pure-Java client on the server's Unix socket (served by PulseAudio and
+by PipeWire's pipewire-pulse alike; no JNA, no libpulse, no shared memory). `PulseConnection` holds the app's one
+connection (reconnecting at most every 5 s; `pcpanel.pulse.native=false` turns it off), `PulseAudioWrapper` reads
+and writes through it, and `PulseAudioEventListener` follows its subscription. While there is no connection both
+fall back to the **`pactl` CLI** as subprocesses (`pactl list`/`set-*`/`subscribe`). `NativePulseTargets` turns the
+protocol's objects into the same `PulseAudioTarget`s pactl parsing produces (pactl's header fields and the property
+list), so everything downstream reads both alike; `PulseParityCheck` (test scope, a `main`) compares the two against
+a live server. The client asks for protocol 32 so the server answers in the reply layouts `Replies` reads. Every
+request and every `pactl` call completes within a deadline (a hung `pactl` is killed), writes run one at a time so
+values apply in order, and a read that times out keeps the cached devices/sessions rather than emptying them. The
+music visualizer and audio-level meters still record through `parec`. These stereotypes wrap
 Quarkus `@IfBuildProperty(name="pcpanel.build.os", ...)` keyed off `pcpanel.build.os` (set at build
 time from `os.detected.name`), so **a given build only contains one platform's beans** — guard
 optional platform beans with `Instance<T>` injection, and use `CdiHelper` to fetch beans from

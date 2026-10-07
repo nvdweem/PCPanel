@@ -32,6 +32,21 @@ public final class PulseProbe {
                 client.subscribe(Set.of(Facility.values()), e -> System.out.println("Event '" + e.type().pactlName() + "' on " + e.facility().pactlName() + " #" + e.index()));
                 Thread.sleep(Long.parseLong(args[1]) * 1000);
             }
+            if (args.length >= 2 && args[0].equals("ops")) {
+                for (var i = 1; i < args.length; i++) {
+                    var op = args[i].split(":", 2);
+                    var ref = DeviceRef.byName(op[1]);
+                    switch (op[0]) {
+                        case "vol" -> client.setSinkVolume(ref, ChannelVolumes.uniform(client.sink(ref).volume().channels(), 30000));
+                        case "mute" -> client.setSinkMute(ref, !client.sink(ref).muted());
+                        case "default" -> client.setDefaultSink(op[1]);
+                        default -> throw new IllegalArgumentException(op[0]);
+                    }
+                    System.out.println(System.currentTimeMillis() % 100000 + " done " + args[i]);
+                    Thread.sleep(500);
+                }
+                Thread.sleep(8000);
+            }
             if (args.length >= 3 && args[0].equals("bench")) {
                 var sink = client.sink(DeviceRef.byName(args[1]));
                 var count = Integer.parseInt(args[2]);

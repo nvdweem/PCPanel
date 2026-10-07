@@ -163,6 +163,11 @@ public final class PulseClient implements Closeable {
         return Replies.list(reader, r -> Replies.sinkInput(r, version));
     }
 
+    /** The playback stream with this index. */
+    public StreamInfo sinkInput(int index) {
+        return Replies.sinkInput(request(Command.GET_SINK_INPUT_INFO, w -> w.putU32(index)), version);
+    }
+
     /** The recording streams. */
     public List<StreamInfo> sourceOutputs() {
         var reader = request(Command.GET_SOURCE_OUTPUT_INFO_LIST, w -> {
@@ -383,6 +388,7 @@ public final class PulseClient implements Closeable {
         static final int GET_SINK_INFO_LIST = 22;
         static final int GET_SOURCE_INFO = 23;
         static final int GET_SOURCE_INFO_LIST = 24;
+        static final int GET_SINK_INPUT_INFO = 29;
         static final int GET_SINK_INPUT_INFO_LIST = 30;
         static final int GET_SOURCE_OUTPUT_INFO_LIST = 32;
         static final int SUBSCRIBE = 35;

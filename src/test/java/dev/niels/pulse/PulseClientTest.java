@@ -164,6 +164,16 @@ class PulseClientTest {
     }
 
     @Test
+    void readsOneSinkInput() throws IOException {
+        server.on(Command.GET_SINK_INPUT_INFO, (in, out) -> writeSinkInput(out, (int) in.getU32(), 0, 40000, false, false, Map.of()));
+
+        var stream = connect().sinkInput(21);
+
+        assertEquals(21, stream.index());
+        assertEquals(new ChannelVolumes(40000, 40000), stream.volume());
+    }
+
+    @Test
     void writesVolumeAndMuteArguments() throws IOException {
         var seen = new LinkedBlockingQueue<String>();
         server.on(Command.SET_SINK_VOLUME, (in, out) -> seen.add(in.getU32() + " " + in.getString() + " " + in.getCVolume()))
