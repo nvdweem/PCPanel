@@ -13,6 +13,9 @@ import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 
+import com.getpcpanel.integration.sonar.dto.SonarSettings;
+import com.getpcpanel.profile.Save;
+
 import re.walk.sonar.SonarClient;
 import re.walk.sonar.model.SonarChannel;
 import re.walk.sonar.model.SonarLevel;
@@ -23,6 +26,9 @@ import re.walk.sonar.model.SonarState;
 import org.junit.jupiter.api.Test;
 
 class SonarServiceWriteTest {
+    /** 83 ms per route (round(1000 / 12)): the timing tests below are written against this interval. */
+    private static final int TWELVE_A_SECOND = 12;
+
     private static class RecordingClient extends SonarClient {
         final List<String> writes = new ArrayList<>();
         @Nullable SonarMode mode = SonarMode.stream;
@@ -155,14 +161,14 @@ class SonarServiceWriteTest {
     @Test
     void aWriteWaitsOutItsCoalescingWindow() {
         var client = new RecordingClient();
-        var service = SonarServiceFixtures.service(client, true);
+        var service = SonarServiceFixtures.service(client, TWELVE_A_SECOND);
         service.replaceState(new SonarState(SonarMode.stream, Map.of()));
 
         service.setVolumeAt(SonarChannel.Game, SonarMix.monitoring, 0.30, 1_000);
-        service.flushDue(1_049);
+        service.flushDue(1_082);
         assertEquals(List.of(), client.writes);
 
-        service.flushDue(1_050);
+        service.flushDue(1_083);
         assertEquals(List.of("/volumeSettings/streamer/monitoring/game/Volume/0.3000"), client.writes);
     }
 
@@ -184,22 +190,22 @@ class SonarServiceWriteTest {
     @Test
     void aSteadySweepIsThrottledNotDebounced() {
         var client = new RecordingClient();
-        var service = SonarServiceFixtures.service(client, true);
+        var service = SonarServiceFixtures.service(client, TWELVE_A_SECOND);
         service.replaceState(new SonarState(SonarMode.stream, Map.of()));
 
-        for (var t = 1_000; t <= 1_050; t += 10) {
+        for (var t = 1_000; t <= 1_080; t += 10) {
             service.setVolumeAt(SonarChannel.Game, SonarMix.monitoring, t / 10_000.0, t);
         }
-        // The sweep never pauses, yet the first write of it is due 50 ms in and carries the latest value.
-        service.flushDue(1_050);
+        // The sweep never pauses, yet the first write of it is due 83 ms in and carries the latest value.
+        service.flushDue(1_083);
 
-        assertEquals(List.of("/volumeSettings/streamer/monitoring/game/Volume/0.1050"), client.writes);
+        assertEquals(List.of("/volumeSettings/streamer/monitoring/game/Volume/0.1080"), client.writes);
     }
 
     @Test
     void aValueQueuedDuringAFlushIsSentInsteadOfTheStaleOne() {
         var client = new RecordingClient();
-        var service = SonarServiceFixtures.service(client, true);
+        var service = SonarServiceFixtures.service(client, TWELVE_A_SECOND);
         service.replaceState(new SonarState(SonarMode.stream, Map.of()));
         service.setVolumeAt(SonarChannel.Game, SonarMix.monitoring, 0.30, 1_000);
         service.setVolumeAt(SonarChannel.Chat, SonarMix.monitoring, 0.30, 1_000);
@@ -208,10 +214,10 @@ class SonarServiceWriteTest {
         client.duringFirstWrite = sent -> {
             var target = sent.channel() == SonarChannel.Game ? SonarChannel.Chat : SonarChannel.Game;
             movedLater.add(target);
-            service.setVolumeAt(target, SonarMix.monitoring, 0.40, 1_060);
+            service.setVolumeAt(target, SonarMix.monitoring, 0.40, 1_090);
         };
 
-        service.flushDue(1_060);
+        service.flushDue(1_090);
         var other = SonarRoute.of(SonarMode.stream, SonarMix.monitoring, movedLater.get(0));
         // The other route goes out once, carrying the value that arrived mid-flush, never the stale 0.30.
         assertEquals(other.volumePath(0.40), client.writes.get(1), () -> "first flush: " + client.writes);
@@ -224,7 +230,7 @@ class SonarServiceWriteTest {
     @Test
     void twoRoutesDueTogetherBothKeepFlowingWhileTheDialMoves() {
         var client = new RecordingClient();
-        var service = SonarServiceFixtures.service(client, true);
+        var service = SonarServiceFixtures.service(client, TWELVE_A_SECOND);
         service.replaceState(new SonarState(SonarMode.stream, Map.of()));
         var personal = SonarRoute.of(SonarMode.stream, SonarMix.monitoring, SonarChannel.Chat);
         var stream = SonarRoute.of(SonarMode.stream, SonarMix.streaming, SonarChannel.Chat);
@@ -238,7 +244,7 @@ class SonarServiceWriteTest {
             service.setVolumeAt(SonarChannel.Chat, SonarMix.streaming, tick[0], 1_000);
         };
 
-        for (var now = 1_050; now <= 1_500; now += 50) {
+        for (var now = 1_083; now <= 1_830; now += 83) {
             service.flushDue(now);
         }
 
@@ -416,5 +422,136 @@ class SonarServiceWriteTest {
 
         assertEquals(Boolean.TRUE, service.mutedOrNull(SonarChannel.Game, SonarMix.monitoring),
                 "no invented level may shield the real mute state from the poll");
+    }
+
+    @Test
+    void atTwelveASecondARouteIsWrittenAtMostEvery83Ms() {
+        var client = new RecordingClient();
+        var service = SonarServiceFixtures.service(client, 12);
+        service.replaceState(new SonarState(SonarMode.stream, Map.of()));
+        var game = SonarRoute.of(SonarMode.stream, SonarMix.monitoring, SonarChannel.Game);
+
+        service.setVolumeAt(SonarChannel.Game, SonarMix.monitoring, 0.10, 1_000);
+        service.setVolumeAt(SonarChannel.Game, SonarMix.monitoring, 0.20, 1_040);
+        service.flushDue(1_082);
+        assertEquals(List.of(), client.writes);
+        service.flushDue(1_083);
+        assertEquals(List.of(game.volumePath(0.20)), client.writes);
+
+        service.setVolumeAt(SonarChannel.Game, SonarMix.monitoring, 0.30, 1_090);
+        service.flushDue(1_172);
+        assertEquals(1, client.writes.size(), () -> "writes: " + client.writes);
+        service.flushDue(1_173);
+        assertEquals(List.of(game.volumePath(0.20), game.volumePath(0.30)), client.writes);
+    }
+
+    @Test
+    void atSixASecondARouteIsWrittenAtMostEvery167Ms() {
+        var client = new RecordingClient();
+        var service = SonarServiceFixtures.service(client, 6);
+        service.replaceState(new SonarState(SonarMode.stream, Map.of()));
+        var game = SonarRoute.of(SonarMode.stream, SonarMix.monitoring, SonarChannel.Game);
+
+        service.setVolumeAt(SonarChannel.Game, SonarMix.monitoring, 0.10, 1_000);
+        service.setVolumeAt(SonarChannel.Game, SonarMix.monitoring, 0.20, 1_100);
+        service.flushDue(1_166);
+        assertEquals(List.of(), client.writes);
+        service.flushDue(1_167);
+        assertEquals(List.of(game.volumePath(0.20)), client.writes);
+    }
+
+    @Test
+    void atTwentyASecondARouteIsWrittenAtMostEvery50Ms() {
+        var client = new RecordingClient();
+        var service = SonarServiceFixtures.service(client, 20);
+        service.replaceState(new SonarState(SonarMode.stream, Map.of()));
+        var game = SonarRoute.of(SonarMode.stream, SonarMix.monitoring, SonarChannel.Game);
+
+        service.setVolumeAt(SonarChannel.Game, SonarMix.monitoring, 0.10, 1_000);
+        service.setVolumeAt(SonarChannel.Game, SonarMix.monitoring, 0.20, 1_030);
+        service.flushDue(1_049);
+        assertEquals(List.of(), client.writes);
+        service.flushDue(1_050);
+        assertEquals(List.of(game.volumePath(0.20)), client.writes);
+    }
+
+    @Test
+    void atTwentyFiveASecondARouteIsWrittenAtMostEvery40Ms() {
+        var client = new RecordingClient();
+        var service = SonarServiceFixtures.service(client, 25);
+        service.replaceState(new SonarState(SonarMode.stream, Map.of()));
+        var game = SonarRoute.of(SonarMode.stream, SonarMix.monitoring, SonarChannel.Game);
+
+        service.setVolumeAt(SonarChannel.Game, SonarMix.monitoring, 0.10, 1_000);
+        service.setVolumeAt(SonarChannel.Game, SonarMix.monitoring, 0.20, 1_020);
+        service.flushDue(1_039);
+        assertEquals(List.of(), client.writes);
+        service.flushDue(1_040);
+        assertEquals(List.of(game.volumePath(0.20)), client.writes);
+    }
+
+    /** A save that never set a rate sends at the default, 12 a second. */
+    @Test
+    void theDefaultRateWritesARouteAtMostEvery83Ms() {
+        var client = new RecordingClient();
+        var service = SonarServiceFixtures.service(client, true);
+        service.replaceState(new SonarState(SonarMode.stream, Map.of()));
+
+        service.setVolumeAt(SonarChannel.Game, SonarMix.monitoring, 0.10, 1_000);
+        service.flushDue(1_082);
+        assertEquals(List.of(), client.writes);
+        service.flushDue(1_083);
+        assertEquals(1, client.writes.size());
+    }
+
+    @Test
+    void atSixASecondAMutePressIsSentOnTheNextFlushNotAnIntervalLater() {
+        var client = new RecordingClient();
+        var service = SonarServiceFixtures.service(client, 6);
+        var route = SonarRoute.of(SonarMode.stream, SonarMix.monitoring, SonarChannel.Chat);
+        service.replaceState(new SonarState(SonarMode.stream, Map.of(route, new SonarLevel(0.6, false))));
+
+        service.setMuteAt(SonarChannel.Chat, SonarMix.monitoring, true, 1_000);
+        service.flushDue(1_000);
+
+        assertEquals(List.of(route.mutePath(true)), client.writes);
+    }
+
+    @Test
+    void aMutePressTakesAQueuedVolumeOnTheSameRouteWithIt() {
+        var client = new RecordingClient();
+        var service = SonarServiceFixtures.service(client, 6);
+        var route = SonarRoute.of(SonarMode.stream, SonarMix.monitoring, SonarChannel.Chat);
+        service.replaceState(new SonarState(SonarMode.stream, Map.of(route, new SonarLevel(0.6, false))));
+
+        service.setVolumeAt(SonarChannel.Chat, SonarMix.monitoring, 0.4, 1_000);
+        service.flushDue(1_010);
+        assertEquals(List.of(), client.writes, "a volume alone still waits out the interval");
+        service.setMuteAt(SonarChannel.Chat, SonarMix.monitoring, true, 1_020);
+        service.flushDue(1_020);
+
+        assertEquals(List.of(route.volumePath(0.4), route.mutePath(true)), client.writes);
+    }
+
+    @Test
+    void aChangedRateAppliesToTheNextWriteWithoutARestart() {
+        var client = new RecordingClient();
+        var save = new Save();
+        save.setSonar(new SonarSettings(true, 12));
+        var service = SonarServiceFixtures.service(client, save, null, null);
+        service.replaceState(new SonarState(SonarMode.stream, Map.of()));
+
+        service.setVolumeAt(SonarChannel.Game, SonarMix.monitoring, 0.10, 1_000);
+        service.flushDue(1_083);
+        assertEquals(1, client.writes.size());
+
+        // The user moves the Update rate slider in Settings while PCPanel runs.
+        save.setSonar(new SonarSettings(true, 6));
+        service.setVolumeAt(SonarChannel.Game, SonarMix.monitoring, 0.20, 1_100);
+        service.flushDue(1_183);
+        service.flushDue(1_266);
+        assertEquals(1, client.writes.size(), () -> "writes: " + client.writes);
+        service.flushDue(1_267);
+        assertEquals(2, client.writes.size(), () -> "writes: " + client.writes);
     }
 }

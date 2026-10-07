@@ -1013,6 +1013,7 @@ export interface SonarCommandModule extends CommandModule {
 
 export interface SonarSettings {
     enabled: boolean;
+    updatesPerSecond?: number;
 }
 
 export interface SonarStatusDto {

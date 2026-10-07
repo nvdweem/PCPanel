@@ -781,24 +781,24 @@
           "36" : {
             "commands" : [ {
               "_type" : "display.off",
-              "displays" : [ "arg0-262", "arg0-263" ]
+              "displays" : [ "arg0-263", "arg0-264" ]
             } ],
             "type" : "allAtOnce"
           },
           "37" : {
             "commands" : [ {
               "_type" : "sonar.mute",
-              "channel" : "Game",
-              "mix" : "streaming",
-              "muteType" : "toggle"
+              "channel" : "Chat",
+              "mix" : "both",
+              "muteType" : "mute"
             } ],
             "type" : "allAtOnce"
           },
           "38" : {
             "commands" : [ {
               "_type" : "volume.app-output",
-              "processName" : [ "arg0-271", "arg0-272" ],
-              "device" : "arg1-273"
+              "processName" : [ "arg0-272", "arg0-273" ],
+              "device" : "arg1-274"
             } ],
             "type" : "allAtOnce"
           }
@@ -1141,13 +1141,13 @@
           "20" : {
             "commands" : [ {
               "_type" : "sonar.volume",
-              "channel" : "Media",
-              "mix" : "streaming",
+              "channel" : "Aux",
+              "mix" : "both",
               "unMuteOnVolumeChange" : true,
               "dialParams" : {
                 "invert" : true,
-                "moveStart" : 269,
-                "moveEnd" : 270
+                "moveStart" : 270,
+                "moveEnd" : 271
               },
               "invert" : true
             } ],
@@ -2246,7 +2246,7 @@
       }
     }
   },
-  "templateVersion" : 259,
+  "templateVersion" : 260,
   "mainUIIcons" : true,
   "openBrowserOnStartup" : true,
   "appWindow" : true,
@@ -2379,7 +2379,8 @@
     "controlledVolumePercent" : 100
   },
   "sonar" : {
-    "enabled" : true
+    "enabled" : true,
+    "updatesPerSecond" : 25
   },
   "homeAssistantServers" : [ {
     "id" : "id-70",

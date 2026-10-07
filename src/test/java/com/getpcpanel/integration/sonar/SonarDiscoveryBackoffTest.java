@@ -100,7 +100,7 @@ class SonarDiscoveryBackoffTest {
     void switchingSonarBackOnLooksForItAtOnce() {
         var client = new SwitchableClient();
         var save = new Save();
-        save.setSonar(new SonarSettings(true));
+        save.setSonar(new SonarSettings(true, SonarSettings.DEFAULT_UPDATES_PER_SECOND));
         var service = new SonarService(client, new SaveService() {
             @Override public Save get() {
                 return save;
@@ -108,9 +108,9 @@ class SonarDiscoveryBackoffTest {
         }, null, null);
         var t = 100_000L;
         service.poll(t);                    // a miss starts the backoff
-        save.setSonar(new SonarSettings(false));
+        save.setSonar(new SonarSettings(false, SonarSettings.DEFAULT_UPDATES_PER_SECOND));
         service.poll(t + 500);              // switched off: nothing to find, the backoff is cleared
-        save.setSonar(new SonarSettings(true));
+        save.setSonar(new SonarSettings(true, SonarSettings.DEFAULT_UPDATES_PER_SECOND));
         var readsBefore = client.modeReads.get();
 
         service.poll(t + 1_000);            // still inside the first backoff step had it not been cleared

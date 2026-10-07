@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -17,6 +18,7 @@ import com.getpcpanel.commands.IntegrationConnection;
 import com.getpcpanel.commands.NestedCommands;
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.integration.sonar.command.CommandSonar;
+import com.getpcpanel.integration.sonar.dto.SonarSettings;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.Save;
 import com.getpcpanel.profile.SaveService;
@@ -52,17 +54,26 @@ import one.util.streamex.StreamEx;
  * so the settings and the action picker can report whether Sonar is there before any control uses it.
  * The full level read runs only while a control targets Sonar ({@link #isInUse()}).
  *
- * <p>Writes are coalesced per {@link SonarRoute}: at most one HTTP write per route per
- * {@value #COALESCE_MS} ms, always carrying the latest value, and sent only by the flush thread so
- * the thread handling dial input never blocks on the network. Every read-modify-write of the cached
+ * <p>Volume writes are coalesced per {@link SonarRoute}: at most {@link SonarSettings#updatesPerSecond()}
+ * HTTP writes a second per route, always carrying the latest value, and sent only by the flush thread so
+ * the thread handling dial input never blocks on the network. Each write costs SteelSeries GG CPU, which
+ * is why the rate is the user's choice. A mute change goes out on the next tick instead, since a press is
+ * one write and should not wait out a sweep's interval. The flush thread sends one write at a time and
+ * Sonar answers each in about 30–40 ms, so a single mix tops out near 25–30 writes a second, and a Both
+ * control on Master, which writes two mixes per interval, near 12 a second per mix, whatever the setting.
+ *
+ * <p>Every read-modify-write of the cached
  * state, together with the write bookkeeping, happens under {@code stateLock}, so a poll and a dial
  * write cannot overwrite each other's result; events are fired outside it.
  */
 @Log4j2
 @ApplicationScoped
 public class SonarService implements IntegrationConnection {
-    /** At most one write per route per this many ms; the trailing value of a sweep is always sent. */
-    private static final long COALESCE_MS = 50;
+    /**
+     * How often the flush thread looks for due writes while any are queued. Fine enough that every
+     * coalescing interval the update rate allows (40–167 ms) is kept to within one tick.
+     */
+    private static final long FLUSH_TICK_MS = 10;
     /** A poll result for a route written within this window is discarded. Longer than the poll interval
      *  so a poll already in flight when the write lands cannot win. */
     private static final long WRITE_PRECEDENCE_MS = 2_000;
@@ -85,13 +96,16 @@ public class SonarService implements IntegrationConnection {
     /** Guarded by {@code stateLock}. */
     private final Map<SonarRoute, Long> lastWrittenAt = new HashMap<>();
     /**
-     * Runs {@link #flushDue()} every {@value #COALESCE_MS} ms, from the first queued write on. A dedicated
-     * thread rather than {@code @Scheduled}, whose scheduler checks its triggers once a second. One thread
-     * with a fixed delay never runs two flushes at once: a slow write only postpones the next tick. Null
-     * when the caller flushes by hand.
+     * Runs {@link #flushTick()} {@value #FLUSH_TICK_MS} ms after the previous one ended, for as long as
+     * writes are queued, and not at all while none are. A dedicated thread rather than {@code @Scheduled},
+     * whose scheduler checks its triggers once a second. One thread with one tick scheduled at a time never
+     * runs two flushes at once: a slow write only postpones the next tick. Null when the caller flushes by
+     * hand.
      */
     @Nullable private final ScheduledExecutorService flushExecutor;
-    private final AtomicBoolean flushStarted = new AtomicBoolean();
+    /** Set while a tick is scheduled or running; only a tick that finds nothing queued clears it. */
+    private final AtomicBoolean tickScheduled = new AtomicBoolean();
+    private volatile boolean shuttingDown;
 
     /** A write waiting out its coalescing window; a null field is left untouched on Sonar. */
     private record Pending(@Nullable Double volume, @Nullable Boolean muted, long dueAt) {
@@ -299,8 +313,10 @@ public class SonarService implements IntegrationConnection {
                 }
                 lastWrittenAt.put(route, now);
             }
-            // Keyed on the route, so in Classic mode both mixes of a channel share one pending write.
-            pending.merge(route, new Pending(volume, muted, now + COALESCE_MS), Pending::mergedWith);
+            // Keyed on the route, so in Classic mode both mixes of a channel share one pending write. A mute
+            // change is due at once; a volume queued on the same route goes out with it.
+            var dueAt = muted != null ? now : now + coalesceMs();
+            pending.merge(route, new Pending(volume, muted, dueAt), Pending::mergedWith);
         }
         startFlushing();
         if (muteChanged) {
@@ -308,20 +324,54 @@ public class SonarService implements IntegrationConnection {
         }
     }
 
+    /**
+     * At most one write per route per this many ms; the trailing value of a sweep is always sent. Read from
+     * the settings on every write, so a change in Settings applies to the next write.
+     */
+    private long coalesceMs() {
+        return Math.round(1000.0 / saveService.get().getSonar().updatesPerSecond());
+    }
+
+    /** Called after a write is queued: starts the ticker unless a tick is already scheduled or running. */
     private void startFlushing() {
-        if (flushExecutor != null && flushStarted.compareAndSet(false, true)) {
-            flushExecutor.scheduleWithFixedDelay(this::flushDue, COALESCE_MS, COALESCE_MS, TimeUnit.MILLISECONDS);
+        if (flushExecutor != null && !shuttingDown && tickScheduled.compareAndSet(false, true)) {
+            scheduleTick();
+        }
+    }
+
+    private void scheduleTick() {
+        if (flushExecutor == null || shuttingDown) {
+            return;
+        }
+        try {
+            flushExecutor.schedule(this::flushTick, FLUSH_TICK_MS, TimeUnit.MILLISECONDS);
+        } catch (RejectedExecutionException e) {
+            log.debug("Sonar: flush executor stopped, write not scheduled");
+        }
+    }
+
+    /**
+     * One flush, then the next tick only while anything is still queued. The flag is cleared before looking
+     * at the queue: a write queued before the clear found the flag set and left scheduling to this tick, which
+     * then sees it; a write queued after the clear takes the flag itself. Only the one that wins the flag
+     * schedules, so a write is never stranded and two ticks are never pending at once.
+     */
+    void flushTick() {
+        flushDue();
+        tickScheduled.set(false);
+        if (!pending.isEmpty() && tickScheduled.compareAndSet(false, true)) {
+            scheduleTick();
         }
     }
 
     void onShutdown(@Observes ShutdownEvent event) {
-        flushStarted.set(true); // a write arriving during shutdown must not schedule on a stopped executor
+        shuttingDown = true; // a write arriving during shutdown must not schedule on a stopped executor
         if (flushExecutor != null) {
             flushExecutor.shutdownNow();
         }
     }
 
-    /** Catches everything: an exception escaping a fixed-delay task would cancel every later flush. */
+    /** Catches everything: an exception escaping the tick would stop it from scheduling the next one. */
     void flushDue() {
         try {
             flushDue(System.currentTimeMillis());
@@ -332,7 +382,7 @@ public class SonarService implements IntegrationConnection {
 
     void flushDue(long now) {
         if (pending.isEmpty()) {
-            return; // runs at 20 Hz; don't allocate a copy on every idle tick
+            return;
         }
         for (var route : List.copyOf(pending.keySet())) {
             var queued = pending.get(route);
