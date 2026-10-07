@@ -39,6 +39,7 @@ class PulseConnection {
     private long nextAttempt;
     private volatile String state = "not connected yet";
     private boolean failureLogged;
+    private volatile boolean closed;
 
     /** The open connection, connecting first when there is none; {@code null} when the server can't be reached. */
     @Nullable
@@ -49,6 +50,9 @@ class PulseConnection {
         }
         if (!enabled) {
             state = "off (pcpanel.pulse.native=false)";
+            return null;
+        }
+        if (closed) {
             return null;
         }
         return connect();
@@ -113,8 +117,14 @@ class PulseConnection {
         return state;
     }
 
+    /** Whether the app is shutting down, so a connection closing is expected. */
+    boolean isClosed() {
+        return closed;
+    }
+
     @PreDestroy
     void close() {
+        closed = true;
         var current = client;
         if (current != null) {
             current.close();

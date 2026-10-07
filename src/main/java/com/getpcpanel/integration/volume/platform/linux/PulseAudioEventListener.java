@@ -144,6 +144,9 @@ class PulseAudioEventListener {
                 eventBus.fire(new LinuxSessionChangedEvent(null));
             }
             var reason = client.closed().get();
+            if (!running || pulse.isClosed()) {
+                return;
+            }
             lastEnded = "connection closed at " + Instant.now() + " (" + reason + ")";
             log.warn("PulseAudio protocol connection closed; audio device/session changes are not being observed until it is back: {}", reason.toString());
         } catch (PulseException e) {
