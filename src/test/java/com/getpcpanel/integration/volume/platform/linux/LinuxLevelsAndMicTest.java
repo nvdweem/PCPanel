@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,21 +20,32 @@ import com.getpcpanel.integration.volume.platform.linux.PulseAudioWrapper.PulseA
 class LinuxLevelsAndMicTest {
     @Test
     void loudestSampleOfAChunk() {
-        var buffer = ByteBuffer.allocate(16).order(ByteOrder.LITTLE_ENDIAN);
-        buffer.putFloat(0.1f).putFloat(-0.7f).putFloat(0.3f).putFloat(1.5f);
-        var bytes = buffer.array();
+        assertEquals(0.7f, LinuxAudioLevelMeter.loudest(FloatBuffer.wrap(new float[] { 0.1f, -0.7f, 0.3f })), 1e-6);
+        assertEquals(1f, LinuxAudioLevelMeter.loudest(FloatBuffer.wrap(new float[] { 0.1f, 1.5f })), "clipped samples count as full scale");
+        assertEquals(0f, LinuxAudioLevelMeter.loudest(FloatBuffer.allocate(0)));
+    }
 
-        assertEquals(0.7f, LinuxAudioLevelMeter.loudest(bytes, 12), 1e-6);
-        assertEquals(1f, LinuxAudioLevelMeter.loudest(bytes, 16), "clipped samples count as full scale");
-        assertEquals(0.1f, LinuxAudioLevelMeter.loudest(bytes, 7), 1e-6, "a partial sample is left out");
+    /** parec reads whole little-endian samples; a piece that ends mid-sample leaves that sample out. */
+    @Test
+    void parecPiecesAreWholeSamples() {
+        var bytes = ByteBuffer.allocate(16).order(ByteOrder.LITTLE_ENDIAN).putFloat(0.1f).putFloat(-0.7f).array();
+        var pieces = new java.util.ArrayList<Float>();
+        LinuxRecorder.readParec(new java.io.ByteArrayInputStream(bytes, 0, 7), 16, f -> {
+            while (f.hasRemaining()) {
+                pieces.add(f.get());
+            }
+        });
+        assertEquals(List.of(0.1f), pieces);
     }
 
     @Test
-    void recordingsCarryTheMeterName() {
-        var command = LinuxAudioLevelMeter.command("--monitor-stream=12");
+    void parecRecordingsCarryTheirName() {
+        var command = LinuxRecorder.parecCommand(LinuxRecorder.Target.stream(12), LinuxAudioLevelMeter.CLIENT_NAME, 8000, 20);
         assertEquals("parec", command.getFirst());
         assertTrue(command.contains("--monitor-stream=12"));
         assertTrue(command.contains("--client-name=" + LinuxAudioLevelMeter.CLIENT_NAME));
+        assertTrue(command.contains("--rate=8000"));
+        assertTrue(command.contains("--latency-msec=20"));
     }
 
     @Test
@@ -58,20 +70,16 @@ class LinuxLevelsAndMicTest {
 
     @Test
     void theVisualizerRecordsAnOutputsMonitor() {
-        var following = LinuxLoopbackCapture.command(null, false);
-        assertEquals("parec", following.getFirst());
-        assertTrue(following.contains("--device=@DEFAULT_MONITOR@"));
-        assertTrue(following.contains("--rate=" + LinuxLoopbackCapture.RATE));
-        assertTrue(following.contains("--client-name=" + LinuxLoopbackCapture.CLIENT_NAME));
-        assertTrue(LinuxLoopbackCapture.command("alsa_output.usb-headset", false).contains("--device=alsa_output.usb-headset.monitor"));
+        assertEquals(LinuxRecorder.Target.source("@DEFAULT_MONITOR@"), LinuxLoopbackCapture.target(null, false));
+        assertEquals("--device=alsa_output.usb-headset.monitor", LinuxLoopbackCapture.target("alsa_output.usb-headset", false).parecArgument());
     }
 
     @Test
     void theVisualizerRecordsAnInputItself() {
-        assertTrue(LinuxLoopbackCapture.command(null, true).contains("--device=@DEFAULT_SOURCE@"));
-        assertTrue(LinuxLoopbackCapture.command("alsa_input.usb-mic", true).contains("--device=alsa_input.usb-mic"));
-        assertEquals("@DEFAULT_MONITOR@", LinuxLoopbackCapture.parecDevice(null, false));
-        assertEquals("alsa_output.speakers.monitor", LinuxLoopbackCapture.parecDevice("alsa_output.speakers", false));
+        assertEquals("@DEFAULT_SOURCE@", LinuxLoopbackCapture.sourceName(null, true));
+        assertEquals("alsa_input.usb-mic", LinuxLoopbackCapture.sourceName("alsa_input.usb-mic", true));
+        assertEquals("@DEFAULT_MONITOR@", LinuxLoopbackCapture.sourceName(null, false));
+        assertEquals("alsa_output.speakers.monitor", LinuxLoopbackCapture.sourceName("alsa_output.speakers", false));
     }
 
     @Test

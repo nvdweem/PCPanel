@@ -386,6 +386,32 @@ class PulseClientTest {
         assertFalse(stream.isOpen());
     }
 
+    /**
+     * A consumer waiting for a lock that its owner holds while it closes the recording must not keep the reply to that
+     * close from being read.
+     */
+    @Test
+    void aBlockedConsumerDoesNotHoldUpReplies() throws Exception {
+        var deleted = new LinkedBlockingQueue<Long>();
+        server.on(Command.CREATE_RECORD_STREAM, (in, out) -> out.putU32(3).putU32(41))
+              .on(Command.DELETE_RECORD_STREAM, (in, out) -> deleted.add(in.getU32()));
+        var lock = new Object();
+        var stream = connect().record(RecordRequest.source(null, SampleSpec.float32Mono(8000), Duration.ofMillis(20), Map.of()), data -> {
+            synchronized (lock) {
+                data.position(data.limit());
+            }
+        });
+
+        synchronized (lock) {
+            server.data(3, new byte[8]);
+            Thread.sleep(100); // the consumer is now waiting for the lock
+            var start = System.nanoTime();
+            stream.close();
+            assertTrue(System.nanoTime() - start < TIMEOUT.toNanos() / 2, "close waited for the blocked consumer");
+        }
+        assertEquals(3L, deleted.poll(2, TimeUnit.SECONDS));
+    }
+
     @Test
     void recordingsEndWithTheConnection() throws Exception {
         server.on(Command.CREATE_RECORD_STREAM, (in, out) -> out.putU32(3).putU32(41));

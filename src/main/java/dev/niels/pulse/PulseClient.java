@@ -65,6 +65,15 @@ public final class PulseClient implements Closeable {
         t.setDaemon(true);
         return t;
     });
+    /**
+     * Hands recorded audio to its consumers, so a consumer that waits (for a lock its owner holds while that owner waits
+     * for a reply) never stops the reader from reading that reply.
+     */
+    private final ExecutorService audio = Executors.newSingleThreadExecutor(r -> {
+        var t = new Thread(r, "pulse-audio");
+        t.setDaemon(true);
+        return t;
+    });
     private volatile Consumer<SubscriptionEvent> listener = e -> {
     };
     private int version;
@@ -215,8 +224,8 @@ public final class PulseClient implements Closeable {
     }
 
     /**
-     * Starts a recording; {@code samples} receives each piece of audio (little-endian, in the request's sample spec) on
-     * the reader thread, as a buffer that is only valid during the call.
+     * Starts a recording; {@code samples} receives each piece of audio (a little-endian buffer in the request's sample
+     * spec), in order, on a thread of the client's own that every recording shares.
      */
     public RecordStream record(RecordRequest request, Consumer<ByteBuffer> samples) {
         var reply = request(Command.CREATE_RECORD_STREAM, w -> request.write(w, version));
@@ -312,7 +321,8 @@ public final class PulseClient implements Closeable {
                 } else {
                     var recording = recordings.get(channelId);
                     if (recording != null) {
-                        recording.deliver(payload.flip().order(ByteOrder.LITTLE_ENDIAN));
+                        var data = payload.flip().order(ByteOrder.LITTLE_ENDIAN);
+                        audio.execute(() -> recording.deliver(data));
                     }
                 }
             }
@@ -379,6 +389,7 @@ public final class PulseClient implements Closeable {
         pending.values().forEach(f -> f.completeExceptionally(error));
         recordings.values().forEach(RecordStream::end);
         recordings.clear();
+        audio.shutdown();
         events.shutdown();
     }
 

@@ -292,7 +292,10 @@ list), so everything downstream reads both alike; `PulseParityCheck` (test scope
 a live server. The client asks for protocol 32 so the server answers in the reply layouts `Replies` reads. Every
 request and every `pactl` call completes within a deadline (a hung `pactl` is killed), writes run one at a time so
 values apply in order, and a read that times out keeps the cached devices/sessions rather than emptying them. The
-music visualizer and audio-level meters still record through `parec`. These stereotypes wrap
+music visualizer and audio-level meters record through `LinuxRecorder`: a protocol record stream (audio arrives inline
+on the same socket and is handed over on the client's own `pulse-audio` thread, never the reader, so a consumer
+blocked on a lock its owner holds while awaiting a reply cannot stall that reply), or `parec` without a connection.
+`LinuxRecordingCheck` (test scope) compares the two against a live server. These stereotypes wrap
 Quarkus `@IfBuildProperty(name="pcpanel.build.os", ...)` keyed off `pcpanel.build.os` (set at build
 time from `os.detected.name`), so **a given build only contains one platform's beans** — guard
 optional platform beans with `Instance<T>` injection, and use `CdiHelper` to fetch beans from
@@ -382,7 +385,7 @@ woken by profile/lighting/device/system events) unless a connected device's acti
 keeps going while they are off for a lock or screens off only, painting onto dark frames); it then *watches* `PlaybackGate` 2×/s (1×/s while
 capturing; Windows: peak meters of SndCtrl's live, unmuted sessions only — every meter read is a call into the audio
 service; Linux: un-corked sink inputs, no recording) and only *captures* (`LoopbackCapture`: Windows WASAPI loopback over
-raw COM, polled, no callbacks; Linux `parec` on a sink's monitor, or on a source for an input, at 22050 Hz) at 20 fps while something plays, plus 3 s.
+raw COM, polled, no callbacks; Linux a record stream on a sink's monitor, or on a source for an input, at 22050 Hz) at 20 fps while something plays, plus 3 s.
 What it captures is the profile's choice: `VisualizerConfig.sources` is an ordered list of `VisualizerSource`s
 (`OUTPUT`/`INPUT` + device id, null = the default one; `APP` = the output that app plays on while it plays;
 `ANY_APP` = the output the loudest playing app uses, `Playing.device` — with Wave Link apps play on virtual outputs).

@@ -8,9 +8,10 @@ import java.util.function.Consumer;
 import lombok.extern.log4j.Log4j2;
 
 /**
- * A recording on a {@link PulseClient} connection. Its samples arrive on the client's reader thread, so the consumer
- * must hand them on quickly. It ends when {@link #close()}d, when the server ends it (its source went away) or with the
- * connection; {@link #ended()} completes then.
+ * A recording on a {@link PulseClient} connection. Its samples arrive on the client's audio thread, which every
+ * recording on the connection shares, so a consumer should hand them on quickly. It ends when {@link #close()}d, when
+ * the server ends it (its source went away) or with the connection; {@link #ended()} completes then, and no samples
+ * are delivered after.
  */
 @Log4j2
 public final class RecordStream implements Closeable {

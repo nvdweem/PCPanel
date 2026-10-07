@@ -12,10 +12,10 @@
 # (XDG_CACHE_HOME = ~/.var/app/<id>/cache, identity-mapped into the sandbox); see that script. See #88.
 #
 # Known limitations (the app is primarily developed for Windows):
-#   * Volume control still relies on host pactl (forwarded via flatpak-spawn --host); xdotool (only
-#     useful on non-KDE X11), parec (audio-level lights), kscreen-doctor/xset and ddcutil (Turn displays off)
-#     are likewise forwarded to the host if present. All need the org.freedesktop.Flatpak talk
-#     permission below.
+#   * Volume control, audio-level lights and the visualizer use the PulseAudio socket granted below; the
+#     host pactl/parec shims are only their fallback for when that connection fails. xdotool (only useful on
+#     non-KDE X11), kscreen-doctor/xset and ddcutil (Turn displays off) are forwarded to the host if present.
+#     These need the org.freedesktop.Flatpak talk permission below.
 #   * Autostart on login is not configured here; enable it via your desktop's autostart
 #     settings or `flatpak run` from a user systemd unit.
 app-id: com.getpcpanel.PCPanel
