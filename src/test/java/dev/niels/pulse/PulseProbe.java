@@ -32,6 +32,29 @@ public final class PulseProbe {
                 client.subscribe(Set.of(Facility.values()), e -> System.out.println("Event '" + e.type().pactlName() + "' on " + e.facility().pactlName() + " #" + e.index()));
                 Thread.sleep(Long.parseLong(args[1]) * 1000);
             }
+            if (args.length >= 3 && args[0].equals("rec")) {
+                var spec = SampleSpec.float32Mono(8000);
+                var properties = Map.of("application.name", "PulseProbe recorder");
+                var request = args[1].startsWith("stream:")
+                        ? RecordRequest.stream(Integer.parseInt(args[1].substring(7)), spec, Duration.ofMillis(20), properties)
+                        : RecordRequest.source(args[1].equals("default") ? null : args[1], spec, Duration.ofMillis(20), properties);
+                var samples = new java.util.concurrent.atomic.AtomicLong();
+                var packets = new java.util.concurrent.atomic.AtomicLong();
+                var peak = new java.util.concurrent.atomic.AtomicReference<>(0f);
+                var stream = client.record(request, data -> {
+                    packets.incrementAndGet();
+                    while (data.remaining() >= Float.BYTES) {
+                        var v = Math.abs(data.getFloat());
+                        samples.incrementAndGet();
+                        peak.updateAndGet(p -> Math.max(p, v));
+                    }
+                });
+                System.out.println("recording as source output #" + stream.index());
+                Thread.sleep(Long.parseLong(args[2]) * 1000);
+                System.out.println("rec " + args[1] + ": " + samples.get() + " samples in " + packets.get() + " packets, peak " + peak.get()
+                        + ", open " + stream.isOpen());
+                stream.close();
+            }
             if (args.length >= 2 && args[0].equals("ops")) {
                 for (var i = 1; i < args.length; i++) {
                     var op = args[i].split(":", 2);

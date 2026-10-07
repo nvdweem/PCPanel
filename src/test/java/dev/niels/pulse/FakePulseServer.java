@@ -67,6 +67,16 @@ final class FakePulseServer implements Closeable {
         send(new TagWriter().putU32(PulseClient.Command.SUBSCRIBE_EVENT).putU32(0xFFFFFFFFL).putU32(type).putU32(index).toByteArray());
     }
 
+    /** Sends audio on a stream's channel, as the server does for a recording. */
+    void data(int channel, byte[] audio) throws IOException {
+        send(channel, audio);
+    }
+
+    /** Ends a recording from the server's side, as when its source goes away. */
+    void killRecording(int channel) throws IOException {
+        send(new TagWriter().putU32(PulseClient.Command.RECORD_STREAM_KILLED).putU32(0xFFFFFFFFL).putU32(channel).toByteArray());
+    }
+
     /** Drops the connection, as a restarting server does. */
     void disconnect() throws IOException {
         client.close();
@@ -111,11 +121,19 @@ final class FakePulseServer implements Closeable {
             send(new TagWriter().putU32(PulseClient.Command.ERROR).putU32(tag).putU32(e.code).toByteArray());
         } catch (NoReply e) {
             // Leave the client waiting.
+        } catch (RuntimeException e) {
+            // A handler that could not read the request: answer with an error so the test fails with the reason.
+            e.printStackTrace();
+            send(new TagWriter().putU32(PulseClient.Command.ERROR).putU32(tag).putU32(7).toByteArray());
         }
     }
 
-    private synchronized void send(byte[] payload) throws IOException {
-        var header = ByteBuffer.allocate(20).putInt(payload.length).putInt(-1).putInt(0).putInt(0).putInt(0).flip();
+    private void send(byte[] payload) throws IOException {
+        send(-1, payload);
+    }
+
+    private synchronized void send(int channel, byte[] payload) throws IOException {
+        var header = ByteBuffer.allocate(20).putInt(payload.length).putInt(channel).putInt(0).putInt(0).putInt(0).flip();
         var body = ByteBuffer.wrap(payload);
         while (header.hasRemaining() || body.hasRemaining()) {
             client.write(new ByteBuffer[] { header, body });

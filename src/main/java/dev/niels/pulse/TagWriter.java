@@ -48,6 +48,24 @@ public final class TagWriter {
         return this;
     }
 
+    public TagWriter putSampleSpec(SampleSpec spec) {
+        out.write(Tag.SAMPLE_SPEC);
+        out.write(spec.format());
+        out.write(spec.channels());
+        rawU32(spec.rate());
+        return this;
+    }
+
+    /** The standard layout for {@code channels}: mono, or front-left, front-right, … ({@code pa_channel_position_t}). */
+    public TagWriter putChannelMap(int channels) {
+        out.write(Tag.CHANNEL_MAP);
+        out.write(channels);
+        for (var i = 0; i < channels; i++) {
+            out.write(channels == 1 ? 0 : i + 1);
+        }
+        return this;
+    }
+
     public TagWriter putCVolume(ChannelVolumes volumes) {
         out.write(Tag.CVOLUME);
         out.write(volumes.channels());

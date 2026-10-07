@@ -5,6 +5,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.UnixDomainSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.channels.SocketChannel;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -33,8 +34,8 @@ import lombok.extern.log4j.Log4j2;
 /**
  * A client for the PulseAudio native protocol over its Unix socket — the protocol {@code libpulse} and {@code pactl}
  * speak, served by PulseAudio itself and by PipeWire's {@code pipewire-pulse}. One connection carries any number of
- * concurrent requests (matched to their replies by tag) and the subscription events; it uses no shared memory and
- * creates no streams.
+ * concurrent requests (matched to their replies by tag), the subscription events and any recordings
+ * ({@link #record}); it uses no shared memory, so recorded audio arrives inline on the socket.
  * <p>
  * Replies are read on a thread of the client's own; subscription events are handed to the listener on another, so a
  * listener may make requests of its own.
@@ -57,6 +58,7 @@ public final class PulseClient implements Closeable {
     private final Object writeLock = new Object();
     private final AtomicInteger nextTag = new AtomicInteger();
     private final Map<Integer, CompletableFuture<TagReader>> pending = new ConcurrentHashMap<>();
+    private final Map<Integer, RecordStream> recordings = new ConcurrentHashMap<>();
     private final CompletableFuture<Throwable> closed = new CompletableFuture<>();
     private final ExecutorService events = Executors.newSingleThreadExecutor(r -> {
         var t = new Thread(r, "pulse-events");
@@ -213,6 +215,30 @@ public final class PulseClient implements Closeable {
     }
 
     /**
+     * Starts a recording; {@code samples} receives each piece of audio (little-endian, in the request's sample spec) on
+     * the reader thread, as a buffer that is only valid during the call.
+     */
+    public RecordStream record(RecordRequest request, Consumer<ByteBuffer> samples) {
+        var reply = request(Command.CREATE_RECORD_STREAM, w -> request.write(w, version));
+        var stream = new RecordStream(this, reply.getIndex(), reply.getIndex(), samples);
+        // The rest of the reply (buffer sizes, the source it ended up on, latency) is not needed here.
+        recordings.put(stream.channel(), stream);
+        return stream;
+    }
+
+    void deleteRecordStream(RecordStream stream) {
+        recordings.remove(stream.channel());
+        if (!isOpen()) {
+            return;
+        }
+        try {
+            request(Command.DELETE_RECORD_STREAM, w -> w.putU32(stream.channel()));
+        } catch (PulseException e) {
+            log.debug("Unable to end recording {}: {}", stream.index(), e.getMessage());
+        }
+    }
+
+    /**
      * Asks for the events of {@code facilities} and hands them to {@code listener} from then on, one at a time and in
      * the order the server sent them. A later call replaces both.
      */
@@ -281,9 +307,13 @@ public final class PulseClient implements Closeable {
                 }
                 var payload = ByteBuffer.allocate(length);
                 readFully(payload);
-                // Anything not on the control channel is stream audio, and this client has no streams.
                 if (channelId == CONTROL_CHANNEL) {
                     dispatch(new TagReader(payload.array()));
+                } else {
+                    var recording = recordings.get(channelId);
+                    if (recording != null) {
+                        recording.deliver(payload.flip().order(ByteOrder.LITTLE_ENDIAN));
+                    }
                 }
             }
         } catch (IOException | RuntimeException e) {
@@ -305,6 +335,13 @@ public final class PulseClient implements Closeable {
         if (command == Command.SUBSCRIBE_EVENT) {
             var event = SubscriptionEvent.decode(packet.getU32(), packet.getIndex());
             events.execute(() -> deliver(event));
+            return;
+        }
+        if (command == Command.RECORD_STREAM_KILLED) {
+            var recording = recordings.remove(packet.getIndex());
+            if (recording != null) {
+                recording.end();
+            }
             return;
         }
         var reply = pending.get(tag);
@@ -340,6 +377,8 @@ public final class PulseClient implements Closeable {
         closeChannel();
         var error = new PulseException("Connection closed", reason);
         pending.values().forEach(f -> f.completeExceptionally(error));
+        recordings.values().forEach(RecordStream::end);
+        recordings.clear();
         events.shutdown();
     }
 
@@ -381,6 +420,8 @@ public final class PulseClient implements Closeable {
     static final class Command {
         static final int ERROR = 0;
         static final int REPLY = 2;
+        static final int CREATE_RECORD_STREAM = 5;
+        static final int DELETE_RECORD_STREAM = 6;
         static final int AUTH = 8;
         static final int SET_CLIENT_NAME = 9;
         static final int GET_SERVER_INFO = 20;
@@ -399,6 +440,7 @@ public final class PulseClient implements Closeable {
         static final int SET_SOURCE_MUTE = 40;
         static final int SET_DEFAULT_SINK = 44;
         static final int SET_DEFAULT_SOURCE = 45;
+        static final int RECORD_STREAM_KILLED = 65;
         static final int SUBSCRIBE_EVENT = 66;
         static final int MOVE_SINK_INPUT = 67;
         static final int SET_SINK_INPUT_MUTE = 69;

@@ -284,6 +284,119 @@ class PulseClientTest {
         assertEquals("host", info.hostName());
     }
 
+    /** Reads a version-32 {@code CREATE_RECORD_STREAM} the way the server does ({@code command_create_record_stream}). */
+    private static String readRecordRequest(TagReader in) {
+        var spec = in.getSampleSpec();
+        var channels = in.getChannelMap();
+        in.getU32(); // source index
+        var source = in.getString();
+        in.getU32(); // max length
+        in.getBoolean(); // corked
+        var fragment = in.getU32();
+        for (var i = 0; i < 7; i++) {
+            in.getBoolean();
+        }
+        in.getBoolean(); // peak detect
+        var adjustLatency = in.getBoolean();
+        var properties = in.getProplist();
+        var directOnInput = in.getIndex();
+        in.getBoolean(); // early requests
+        in.getBoolean();
+        in.getBoolean();
+        var formats = in.getU8();
+        var volume = in.getCVolume();
+        for (var i = 0; i < 5; i++) {
+            in.getBoolean();
+        }
+        if (formats != 0 || !volume.equals(ChannelVolumes.uniform(channels, ChannelVolumes.NORM))) {
+            throw new IllegalStateException("formats " + formats + ", volume " + volume);
+        }
+        if (in.hasMore()) {
+            throw new IllegalStateException("trailing arguments");
+        }
+        return spec + " map=" + channels + " source=" + source + " fragment=" + fragment + " adjust=" + adjustLatency + " "
+                + properties.get("application.name") + " stream=" + directOnInput;
+    }
+
+    @Test
+    void recordsAndHandsOverTheAudio() throws Exception {
+        var requests = new LinkedBlockingQueue<String>();
+        server.on(Command.CREATE_RECORD_STREAM, (in, out) -> {
+            requests.add(readRecordRequest(in));
+            out.putU32(3).putU32(41); // channel, source output index
+        });
+        var received = new LinkedBlockingQueue<Float>();
+
+        var stream = connect().record(RecordRequest.source("@DEFAULT_MONITOR@", SampleSpec.float32Mono(8000), Duration.ofMillis(20),
+                Map.of("application.name", "meter")), data -> {
+            while (data.remaining() >= Float.BYTES) {
+                received.add(data.getFloat());
+            }
+        });
+        var audio = java.nio.ByteBuffer.allocate(8).order(java.nio.ByteOrder.LITTLE_ENDIAN).putFloat(0.25f).putFloat(-0.5f).array();
+        server.data(3, audio);
+        server.data(9, audio); // another stream's channel
+
+        assertEquals("SampleSpec[format=5, channels=1, rate=8000] map=1 source=@DEFAULT_MONITOR@ fragment=640 adjust=true meter stream=-1",
+                requests.poll(2, TimeUnit.SECONDS));
+        assertEquals(41, stream.index());
+        assertEquals(0.25f, received.poll(2, TimeUnit.SECONDS));
+        assertEquals(-0.5f, received.poll(2, TimeUnit.SECONDS));
+        assertNull(received.poll(200, TimeUnit.MILLISECONDS), "audio for another channel is not this recording's");
+    }
+
+    @Test
+    void monitorsOneStream() throws Exception {
+        var requests = new LinkedBlockingQueue<String>();
+        server.on(Command.CREATE_RECORD_STREAM, (in, out) -> {
+            requests.add(readRecordRequest(in));
+            out.putU32(0).putU32(1);
+        });
+
+        connect().record(RecordRequest.stream(12, SampleSpec.float32Mono(8000), Duration.ofMillis(20), Map.of()), data -> {
+        });
+
+        assertTrue(requests.poll(2, TimeUnit.SECONDS).endsWith("source=null fragment=640 adjust=true null stream=12"));
+    }
+
+    @Test
+    void aRecordingEndsWhenTheServerKillsIt() throws Exception {
+        server.on(Command.CREATE_RECORD_STREAM, (in, out) -> out.putU32(3).putU32(41));
+        var stream = connect().record(RecordRequest.source(null, SampleSpec.float32Mono(8000), Duration.ofMillis(20), Map.of()), data -> {
+        });
+
+        server.killRecording(3);
+
+        stream.ended().get(2, TimeUnit.SECONDS);
+        assertFalse(stream.isOpen());
+        assertTrue(client.isOpen());
+    }
+
+    @Test
+    void closingARecordingDeletesItOnTheServer() throws Exception {
+        var deleted = new LinkedBlockingQueue<Long>();
+        server.on(Command.CREATE_RECORD_STREAM, (in, out) -> out.putU32(3).putU32(41))
+              .on(Command.DELETE_RECORD_STREAM, (in, out) -> deleted.add(in.getU32()));
+        var stream = connect().record(RecordRequest.source(null, SampleSpec.float32Mono(8000), Duration.ofMillis(20), Map.of()), data -> {
+        });
+
+        stream.close();
+
+        assertEquals(3L, deleted.poll(2, TimeUnit.SECONDS));
+        assertFalse(stream.isOpen());
+    }
+
+    @Test
+    void recordingsEndWithTheConnection() throws Exception {
+        server.on(Command.CREATE_RECORD_STREAM, (in, out) -> out.putU32(3).putU32(41));
+        var stream = connect().record(RecordRequest.source(null, SampleSpec.float32Mono(8000), Duration.ofMillis(20), Map.of()), data -> {
+        });
+
+        server.disconnect();
+
+        stream.ended().get(2, TimeUnit.SECONDS);
+    }
+
     @Test
     void nullStringsRoundTrip() {
         var reader = new TagReader(new TagWriter().putString(null).putString("ü").toByteArray());
