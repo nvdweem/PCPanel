@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SignPath artifact configuration "app": the PCPanel.exe built by the Windows job of
+  .github/workflows/build-and-release.yml, signed before it goes into the installer.
+  GitHub artifacts always arrive zipped, hence the zip-file root.
+
+  Only our own binary is signed. The companion DLLs next to it come from GraalVM and
+  are not ours to sign (SignPath Foundation: "sign your own binaries only").
+
+  The product name is set by packaging/windows/stamp-exe.ps1.
+  This file is the source of truth; paste it into the SignPath project when it changes.
+-->
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <zip-file>
+    <pe-file path="PCPanel.exe" product-name="PCPanel">
+      <authenticode-sign/>
+    </pe-file>
+  </zip-file>
+</artifact-configuration>

@@ -49,7 +49,19 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
   `mvn -B package -Pnative`, wraps it in installers (Windows Inno Setup `.exe`, Linux `.deb` /
   AppImage / Flatpak — see `packaging/`), and publishes a per-branch pre-release. The native image is
   NOT self-contained: it loads companion `*.dll`/`*.so` libraries from its own directory, so every
-  artifact must bundle them alongside the executable. The Linux artifacts also bundle **`kdotool`**
+  artifact must bundle them alongside the executable. **Windows code signing** goes through SignPath
+  (SignPath Foundation, free for open source): the Windows job stamps `PCPanel.exe`'s icon + version info
+  (`packaging/windows/stamp-exe.ps1`, rcedit — the product name `PCPanel` is what the artifact
+  configurations check), signs it, smoke-tests the signed exe, builds the installer from it and signs the
+  installer — two signing requests, because SignPath cannot open an Inno installer. The artifact
+  configurations are `packaging/windows/signpath/{app,installer}.xml`, which must be pasted into the
+  SignPath project when they change. Only our own binaries may be signed (Foundation rule), so the GraalVM
+  companion DLLs stay unsigned. Signing is on when `vars.SIGNPATH_ORGANIZATION_ID` and
+  `secrets.SIGNPATH_API_TOKEN` exist (a fork builds unsigned with a warning); a `v*` tag uses the
+  `release-signing` policy (manual approval in SignPath, the job waits up to 2 h) and a snapshot
+  `test-signing`, both overridable with `vars.SIGNPATH_RELEASE_POLICY`/`SIGNPATH_SNAPSHOT_POLICY`. The
+  unsigned upload artifacts are deleted after signing, because the release job downloads every artifact
+  of the run into one folder. The Linux artifacts also bundle **`kdotool`**
   (Apache-2.0) next to the executable — it resolves the focused window on KDE Plasma (Wayland and X11)
   for focus volume. `packaging/linux/build-kdotool.sh` builds it from the sha256-pinned crate (the
   upstream prebuilt needs glibc 2.39) and is cache-keyed in CI on its own hash (compiled once per pin).

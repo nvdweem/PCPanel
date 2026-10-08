@@ -113,9 +113,9 @@ and offers to start PCPanel automatically when you sign in to Windows. You can o
 administrator privileges at login (set up as a scheduled task), which is required if you want PCPanel
 to control the volume of apps that run elevated.
 
-> **"Windows protected your PC"?** The installer isn't code-signed yet, so SmartScreen may warn you
-> the first time. Click **More info → Run anyway**. Signing is on its way, see
-> [Code signing policy](#code-signing-policy).
+> **"Windows protected your PC"?** The installer is code-signed (see
+> [Code signing policy](#code-signing-policy)), but SmartScreen trusts a signature only once enough
+> people have run it, so it may still warn you about a new release. Click **More info → Run anyway**.
 
 ### Linux
 
@@ -151,14 +151,14 @@ to:    %userprofile%\.pcpanel\profiles.json
 
 ## Code signing policy
 
-**Status: not signed yet.** We have applied to the [SignPath Foundation](https://signpath.org) for free
-code signing of open-source projects. Once approved, Windows releases will be signed through SignPath:
-*Free code signing provided by [SignPath.io](https://signpath.io), certificate by
-[SignPath Foundation](https://signpath.org).*
+Free code signing provided by [SignPath.io](https://signpath.io), certificate by
+[SignPath Foundation](https://signpath.org).
 
+- Windows releases are signed: `PCPanel.exe` and the `PCPanel-<version>-setup.exe` installer. Only
+  files built from this repository's source are signed.
 - Every release is built from this repository's source by GitHub Actions
   ([`build-and-release.yml`](.github/workflows/build-and-release.yml)); nothing is built or uploaded by
-  hand. Signed releases are approved by an approver before they are signed.
+  hand. Each release is approved by an approver before it is signed.
 - Committers and reviewers: [nvdweem](https://github.com/nvdweem). Contributions from others arrive as
   pull requests and are reviewed before they are merged.
 - Approvers: [nvdweem](https://github.com/nvdweem).

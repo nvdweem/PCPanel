@@ -53,6 +53,23 @@ jobs:
     # Exposed so the pre-release job can flag when metadata generation degraded to committed metadata.
     outputs:
       genStatus: ${{ steps.gen.outcome }}
+    # Code signing through SignPath (free for open source via SignPath Foundation). PCPanel.exe is signed
+    # before it goes into the installer, then the installer itself: SignPath cannot open an Inno Setup
+    # installer to sign what is inside it, so these are two signing requests. The artifact configurations
+    # are packaging/windows/signpath/*.xml. A repository without the SignPath variable and secret (a fork)
+    # builds unsigned, with a warning.
+    #   vars.SIGNPATH_ORGANIZATION_ID   SignPath organization id; signing is on when it and the token are set
+    #   secrets.SIGNPATH_API_TOKEN      API token of the CI user (submitter on the project)
+    #   vars.SIGNPATH_PROJECT_SLUG      default `pcpanel`
+    #   vars.SIGNPATH_RELEASE_POLICY    signing policy for a v* tag, default `release-signing` (manual approval)
+    #   vars.SIGNPATH_SNAPSHOT_POLICY   signing policy for a snapshot, default `test-signing`
+    # actions: write deletes the unsigned artifacts once they are signed (see "Drop the unsigned artifacts").
+    permissions:
+      contents: read
+      actions: write
+    env:
+      SIGNPATH_ENABLED: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' && secrets.SIGNPATH_API_TOKEN != '' }}
+      SIGNPATH_POLICY: ${{ startsWith(github.ref, 'refs/tags/v') && (vars.SIGNPATH_RELEASE_POLICY || 'release-signing') || (vars.SIGNPATH_SNAPSHOT_POLICY || 'test-signing') }}
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
@@ -148,9 +165,49 @@ jobs:
           # name; renaming the exe to PCPanel.exe (above) breaks that, so awt.dll can't load at runtime.
           # Rewrite the shim import name to match the renamed exe.
           & packaging/windows/patch-shim-imports.ps1 -DistDir $dist -OldName $runner.Name -NewName "PCPanel.exe"
-          # native-image produces the exe without an icon; embed the app icon so the binary
-          # (and the installer's shortcuts, which reference it) show the PCPanel logo.
-          & packaging/windows/embed-icon.ps1 -ExePath "$dist/PCPanel.exe" -IconPath app-icon.ico
+          # native-image produces the exe without an icon or version info; embed the app icon so the
+          # binary (and the installer's shortcuts, which reference it) show the PCPanel logo, and the
+          # version info whose product name the code signing checks.
+          & packaging/windows/stamp-exe.ps1 -ExePath "$dist/PCPanel.exe" -IconPath app-icon.ico -Version "${{ steps.ver.outputs.version }}"
+
+      - name: Warn that the build is unsigned
+        if: env.SIGNPATH_ENABLED != 'true'
+        shell: pwsh
+        run: Write-Output "::warning::SignPath is not configured for this repository (vars.SIGNPATH_ORGANIZATION_ID / secrets.SIGNPATH_API_TOKEN); PCPanel.exe and the installer are unsigned."
+
+      - name: Upload PCPanel.exe for signing
+        id: uploadExe
+        if: env.SIGNPATH_ENABLED == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: windows-exe-unsigned
+          path: target/windows-dist/PCPanel.exe
+          if-no-files-found: error
+
+      # A release-signing request waits for a person to approve it in SignPath, hence the long timeout.
+      - name: Sign PCPanel.exe
+        if: env.SIGNPATH_ENABLED == 'true'
+        uses: signpath/github-action-submit-signing-request@f6d04783b4569d051e0c80105fe66e82819d0092 # v3.0
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'pcpanel' }}
+          signing-policy-slug: ${{ env.SIGNPATH_POLICY }}
+          artifact-configuration-slug: app
+          github-artifact-id: ${{ steps.uploadExe.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 7200
+          output-artifact-directory: target/signed-exe
+
+      # The smoke test below then runs the signed exe, the one the installer ships.
+      - name: Use the signed PCPanel.exe
+        if: env.SIGNPATH_ENABLED == 'true'
+        shell: pwsh
+        run: |
+          Copy-Item target/signed-exe/PCPanel.exe target/windows-dist/PCPanel.exe -Force
+          $sig = Get-AuthenticodeSignature target/windows-dist/PCPanel.exe
+          Write-Host "PCPanel.exe signature: $($sig.Status) by $($sig.SignerCertificate.Subject)"
+          if (-not $sig.SignerCertificate) { throw "PCPanel.exe came back from SignPath without a signature" }
 
       - name: Smoke-test the assembled exe (AWT loads)
         shell: pwsh
@@ -230,6 +287,51 @@ jobs:
             "/DSourceDir=$(Resolve-Path target/windows-dist)" `
             "/DOutputDir=$(Resolve-Path target)" `
             packaging/windows/pcpanel.iss
+
+      - name: Upload installer for signing
+        id: uploadInstaller
+        if: env.SIGNPATH_ENABLED == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: windows-installer-unsigned
+          path: ./target/PCPanel-*-setup.exe
+          if-no-files-found: error
+
+      - name: Sign installer
+        if: env.SIGNPATH_ENABLED == 'true'
+        uses: signpath/github-action-submit-signing-request@f6d04783b4569d051e0c80105fe66e82819d0092 # v3.0
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'pcpanel' }}
+          signing-policy-slug: ${{ env.SIGNPATH_POLICY }}
+          artifact-configuration-slug: installer
+          github-artifact-id: ${{ steps.uploadInstaller.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 7200
+          output-artifact-directory: target/signed-installer
+
+      - name: Use the signed installer
+        if: env.SIGNPATH_ENABLED == 'true'
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem target/signed-installer/PCPanel-*-setup.exe | Select-Object -First 1
+          $sig = Get-AuthenticodeSignature $installer.FullName
+          Write-Host "$($installer.Name) signature: $($sig.Status) by $($sig.SignerCertificate.Subject)"
+          if (-not $sig.SignerCertificate) { throw "$($installer.Name) came back from SignPath without a signature" }
+          Copy-Item $installer.FullName "target/$($installer.Name)" -Force
+
+      # The release job downloads every artifact of the run into one folder, where the unsigned installer
+      # would collide with the signed one and the bare PCPanel.exe would become a release asset.
+      - name: Drop the unsigned artifacts
+        if: always() && env.SIGNPATH_ENABLED == 'true'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          foreach ($id in '${{ steps.uploadExe.outputs.artifact-id }}', '${{ steps.uploadInstaller.outputs.artifact-id }}') {
+            if ($id) { gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/$id" }
+          }
 
       - name: Store artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
