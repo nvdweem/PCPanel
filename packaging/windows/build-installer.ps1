@@ -126,12 +126,13 @@ if (-not $dlls) {
 # shim import name to match. Same step CI runs.
 & (Join-Path $PSScriptRoot 'patch-shim-imports.ps1') -DistDir $dist -OldName $runner.Name -NewName 'PCPanel.exe'
 
-# native-image emits the exe without an icon; embed the app icon so Explorer/taskbar
-# and the shortcuts (which point at the exe) show it. Same step CI runs.
-Write-Step "Embedding application icon"
-& (Join-Path $PSScriptRoot 'embed-icon.ps1') `
+# native-image emits the exe without an icon or version info; embed both so Explorer/taskbar
+# and the shortcuts (which point at the exe) show the icon. Same step CI runs.
+Write-Step "Embedding application icon and version"
+& (Join-Path $PSScriptRoot 'stamp-exe.ps1') `
     -ExePath (Join-Path $dist 'PCPanel.exe') `
-    -IconPath (Join-Path $repoRoot 'app-icon.ico')
+    -IconPath (Join-Path $repoRoot 'app-icon.ico') `
+    -Version $Version
 
 # ── 4. Inno Setup ────────────────────────────────────────────────────────────
 if (-not $InnoSetup) {

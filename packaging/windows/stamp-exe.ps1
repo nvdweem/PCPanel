@@ -1,13 +1,18 @@
 <#
 .SYNOPSIS
-    Embeds a Windows application icon into an existing .exe.
+    Embeds the application icon and version information into an existing .exe.
 
 .DESCRIPTION
-    The GraalVM native image (PCPanel.exe) is produced WITHOUT an embedded icon
-    resource, so Explorer, the taskbar and any shortcut pointing at it show the
-    generic default executable icon. native-image offers no built-in way to set
-    one, so we post-process the finished binary with rcedit (the same tool
-    electron-builder/pkg use) to write an RT_GROUP_ICON resource into the PE.
+    The GraalVM native image (PCPanel.exe) is produced WITHOUT an icon or a
+    version resource. Without the icon, Explorer, the taskbar and any shortcut
+    pointing at it show the generic default executable icon; without the version
+    resource, the file's Properties → Details tab is empty and code signing has no
+    product name to check (the SignPath artifact configurations under
+    packaging/windows/signpath restrict signing to files whose product name is
+    PCPanel). native-image offers no built-in way to set either, so we
+    post-process the finished binary with rcedit (the same tool
+    electron-builder/pkg use) to write the RT_GROUP_ICON and VS_VERSIONINFO
+    resources into the PE.
 
     This is invoked both by the "Assemble distribution" step in
     .github/workflows/build-and-release.yml and by the local build-installer.ps1,
@@ -25,6 +30,10 @@
     The .ico to embed. Should be a multi-resolution icon (16..256px) so the icon
     stays sharp at every size Windows asks for.
 
+.PARAMETER Version
+    The app version (e.g. 2.5.0.83 or 2.5.0). Its leading numeric part becomes the
+    file and product version; Windows keeps at most four numbers.
+
 .PARAMETER RcEdit
     Path to rcedit(-x64).exe. If omitted, PATH is searched and, failing that, the
     script tries to install rcedit via Chocolatey/winget/scoop if one is present.
@@ -33,6 +42,7 @@
 param(
     [Parameter(Mandatory)] [string]$ExePath,
     [Parameter(Mandatory)] [string]$IconPath,
+    [Parameter(Mandatory)] [string]$Version,
     [string]$RcEdit
 )
 
@@ -93,7 +103,16 @@ $rcedit = Resolve-RcEdit
 $exe = (Resolve-Path $ExePath).Path
 $icon = (Resolve-Path $IconPath).Path
 
-Write-Host "Embedding icon '$icon' into '$exe' (rcedit: $rcedit)"
-& $rcedit $exe --set-icon $icon
-if ($LASTEXITCODE -ne 0) { throw "rcedit failed to set the icon (exit $LASTEXITCODE)" }
-Write-Host "Icon embedded."
+if ($Version -notmatch '^\d+(\.\d+){0,3}') { throw "Version '$Version' does not start with a numeric version" }
+$numericVersion = $Matches[0]
+
+Write-Host "Embedding icon '$icon' and version $numericVersion into '$exe' (rcedit: $rcedit)"
+& $rcedit $exe --set-icon $icon `
+    --set-file-version $numericVersion `
+    --set-product-version $numericVersion `
+    --set-version-string ProductName 'PCPanel' `
+    --set-version-string FileDescription 'PCPanel' `
+    --set-version-string OriginalFilename 'PCPanel.exe' `
+    --set-version-string InternalName 'PCPanel'
+if ($LASTEXITCODE -ne 0) { throw "rcedit failed to set the icon and version (exit $LASTEXITCODE)" }
+Write-Host "Icon and version embedded."
