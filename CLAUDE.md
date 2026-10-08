@@ -54,9 +54,9 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
   (`packaging/windows/stamp-exe.ps1`, rcedit — the product name `PCPanel` is what the artifact
   configurations check), signs it, smoke-tests the signed exe, builds the installer from it and signs the
   installer — two signing requests, because SignPath cannot open an Inno installer. The artifact
-  configurations are `packaging/windows/signpath/{app,installer}.xml`, which must be pasted into the
-  SignPath project when they change. Only our own binaries may be signed (Foundation rule), so the GraalVM
-  companion DLLs stay unsigned. Signing is on when `vars.SIGNPATH_ORGANIZATION_ID` and
+  configurations are `packaging/windows/signpath/{app,installer,sndctrl}.xml`, which must be pasted into
+  the SignPath project when they change. Only our own binaries may be signed (Foundation rule), so the
+  GraalVM companion DLLs stay unsigned; our `SndCtrl.dll` is signed by its own workflow (see *Native C++*). Signing is on when `vars.SIGNPATH_ORGANIZATION_ID` and
   `secrets.SIGNPATH_API_TOKEN` exist (a fork builds unsigned with a warning); a `v*` tag uses the
   `release-signing` policy (manual approval in SignPath, the job waits up to 2 h) and a snapshot
   `test-signing`, both overridable with `vars.SIGNPATH_RELEASE_POLICY`/`SIGNPATH_SNAPSHOT_POLICY`. The
@@ -658,7 +658,11 @@ build is the manual `Build SndCtrl.dll (Windows)` workflow
 the change, download the `SndCtrl-dll` artifact and commit it over
 `src/main/resources/SndCtrl.dll`. It uploads an artifact only — it neither commits nor attaches it
 to a release. Building locally works too, but the workflow is the reference toolchain, so prefer it
-for anything that ships.
+for anything that ships — it also **signs** the DLL through SignPath (artifact configuration
+`packaging/windows/signpath/sndctrl.xml`, policy chosen at dispatch, `release-signing` by default) and
+stamps a version resource (`SndCtrl/SndCtrl.rc.in`, product name `PCPanel` — what signing checks;
+version `1.0.0.<run>`, CMake's `SNDCTRL_VERSION`). The release build warns when the committed DLL is
+unsigned.
 
 The sources are compiler-portable and build via **CMake** (`src/main/cpp/CMakeLists.txt`) with
 either MSVC or MinGW-w64 — including a **cross-compile from Linux** (no Visual Studio needed). See

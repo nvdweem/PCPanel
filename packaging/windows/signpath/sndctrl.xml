@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SignPath artifact configuration "sndctrl": SndCtrl.dll, the Windows audio library built by
+  .github/workflows/build-sndctrl-dll.yml. The signed DLL is committed to
+  src/main/resources/SndCtrl.dll and embedded in PCPanel.exe. GitHub artifacts always arrive
+  zipped, hence the zip-file root.
+
+  The product name comes from the DLL's version resource (src/main/cpp/SndCtrl/SndCtrl.rc.in).
+  This file is the source of truth; paste it into the SignPath project when it changes.
+-->
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <zip-file>
+    <pe-file path="SndCtrl.dll" product-name="PCPanel">
+      <authenticode-sign/>
+    </pe-file>
+  </zip-file>
+</artifact-configuration>

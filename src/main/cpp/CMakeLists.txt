@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(SndCtrl CXX)
+project(SndCtrl CXX RC)
 
 # ---------------------------------------------------------------------------
 # Builds SndCtrl.dll, the Windows Core Audio control library loaded over JNI by
@@ -57,7 +57,18 @@ endif()
 # The DLL.
 # ---------------------------------------------------------------------------
 set(SNDCTRL_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/SndCtrl)
+
+# Version resource (product name + version), which code signing checks. The CI build passes its own
+# SNDCTRL_VERSION so a DLL can be traced back to the run that built it.
+set(SNDCTRL_VERSION "1.0.0.0" CACHE STRING "Version stamped into SndCtrl.dll (four numbers)")
+if(NOT SNDCTRL_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+$")
+    message(FATAL_ERROR "SNDCTRL_VERSION must be four numbers (a.b.c.d), got '${SNDCTRL_VERSION}'")
+endif()
+string(REPLACE "." "," SNDCTRL_VERSION_COMMAS "${SNDCTRL_VERSION}")
+configure_file(${SNDCTRL_SRC_DIR}/SndCtrl.rc.in ${CMAKE_CURRENT_BINARY_DIR}/SndCtrl.rc @ONLY)
+
 add_library(SndCtrl SHARED
+    ${CMAKE_CURRENT_BINARY_DIR}/SndCtrl.rc
     ${SNDCTRL_SRC_DIR}/AudioDevice.cpp
     ${SNDCTRL_SRC_DIR}/AudioSession.cpp
     ${SNDCTRL_SRC_DIR}/com_getpcpanel_integration_volume_platform_windows_SndCtrlNative.cpp

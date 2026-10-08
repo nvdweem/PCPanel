@@ -175,6 +175,15 @@ jobs:
         shell: pwsh
         run: Write-Output "::warning::SignPath is not configured for this repository (vars.SIGNPATH_ORGANIZATION_ID / secrets.SIGNPATH_API_TOKEN); PCPanel.exe and the installer are unsigned."
 
+      # SndCtrl.dll is not built here: the committed binary is embedded in PCPanel.exe, and it is signed
+      # when build-sndctrl-dll.yml builds it. Flag a committed DLL that skipped that signing.
+      - name: Check that the committed SndCtrl.dll is signed
+        shell: pwsh
+        run: |
+          $sig = Get-AuthenticodeSignature src/main/resources/SndCtrl.dll
+          if ($sig.SignerCertificate) { Write-Host "SndCtrl.dll signature: $($sig.Status) by $($sig.SignerCertificate.Subject)" }
+          else { Write-Output "::warning::src/main/resources/SndCtrl.dll is unsigned; rebuild it with the 'Build SndCtrl.dll (Windows)' workflow and commit the signed DLL." }
+
       - name: Upload PCPanel.exe for signing
         id: uploadExe
         if: env.SIGNPATH_ENABLED == 'true'

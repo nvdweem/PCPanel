@@ -6,6 +6,13 @@ app). The compiled DLL is committed at `src/main/resources/SndCtrl.dll`; the
 Maven/CI build only bundles it — it does **not** rebuild it. You only need to
 rebuild this DLL when you change the C++ sources under `cpp/SndCtrl/`.
 
+The DLL that gets committed comes from the **Build SndCtrl.dll (Windows)** workflow
+(`.github/workflows/build-sndctrl-dll.yml`), which code-signs it through SignPath. A
+local build is unsigned, so use it for testing and commit the workflow's artifact.
+The CMake build stamps a version resource from `SndCtrl/SndCtrl.rc.in` (product name
+`PCPanel`, which signing checks; version from `-DSNDCTRL_VERSION=a.b.c.d`, default
+`1.0.0.0`); the legacy `.vcxproj` build has no version resource.
+
 It used to require a full **Visual Studio** install (for the `.sln`/`.vcxproj`
 project and, more fundamentally, for **ATL**). That's no longer the case: the
 sources are now compiler-portable and build with **CMake**, so all you need is

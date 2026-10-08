@@ -1,15 +1,33 @@
 name: Build SndCtrl.dll (Windows)
 
-# Manual, on-demand build of the Windows native audio library SndCtrl.dll with MSVC.
-# It ONLY builds the DLL and holds it as a workflow artifact — it does not attach it to a
-# release or commit it. Download the artifact and commit src/main/resources/SndCtrl.dll by hand
-# after changing the C++ sources under src/main/cpp/ (e.g. when SndCtrlNative's package changes).
+# Manual, on-demand build of the Windows native audio library SndCtrl.dll with MSVC, signed through
+# SignPath. It ONLY builds the DLL and holds it as a workflow artifact — it does not attach it to a
+# release or commit it. Download the `SndCtrl-dll` artifact and commit src/main/resources/SndCtrl.dll by
+# hand after changing the C++ sources under src/main/cpp/ (e.g. when SndCtrlNative's package changes).
+#
+# Signing uses the same repository settings as the Windows job of build-and-release.yml (see there) and
+# the artifact configuration packaging/windows/signpath/sndctrl.xml. Without them the DLL is unsigned,
+# with a warning. The DLL ships inside every release, so it is signed with the release policy by default.
 on:
   workflow_dispatch:
+    inputs:
+      signing-policy:
+        description: SignPath signing policy (release-signing asks for approval in SignPath)
+        type: choice
+        options:
+          - release-signing
+          - test-signing
+        default: release-signing
 
 jobs:
   build:
     runs-on: windows-2022
+    # actions: write deletes the unsigned upload once it is signed, so only the signed DLL is offered.
+    permissions:
+      contents: read
+      actions: write
+    env:
+      SIGNPATH_ENABLED: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' && secrets.SIGNPATH_API_TOKEN != '' }}
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
@@ -22,7 +40,8 @@ jobs:
 
       - name: Configure (CMake + MSVC)
         shell: pwsh
-        run: cmake -S src/main/cpp -B build -G "Visual Studio 17 2022" -A x64 "-DWIN_JDK_HOME=$env:JAVA_HOME"
+        # The run number in the version resource ties a committed DLL to the run that built it.
+        run: cmake -S src/main/cpp -B build -G "Visual Studio 17 2022" -A x64 "-DWIN_JDK_HOME=$env:JAVA_HOME" "-DSNDCTRL_VERSION=1.0.0.${{ github.run_number }}"
 
       - name: Build (Release)
         shell: pwsh
@@ -42,6 +61,50 @@ jobs:
           $install = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
           $dumpbin = Get-ChildItem -Path "$install\VC\Tools\MSVC" -Recurse -Filter dumpbin.exe | Where-Object { $_.FullName -match 'Hostx64\\x64' } | Select-Object -First 1 -ExpandProperty FullName
           & $dumpbin /exports build\Release\SndCtrl.dll | Select-String "Java_|JNI_"
+
+      - name: Warn that the DLL is unsigned
+        if: env.SIGNPATH_ENABLED != 'true'
+        shell: pwsh
+        run: Write-Output "::warning::SignPath is not configured for this repository (vars.SIGNPATH_ORGANIZATION_ID / secrets.SIGNPATH_API_TOKEN); SndCtrl.dll is unsigned."
+
+      - name: Upload SndCtrl.dll for signing
+        id: uploadDll
+        if: env.SIGNPATH_ENABLED == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: SndCtrl-dll-unsigned
+          path: build/Release/SndCtrl.dll
+          if-no-files-found: error
+
+      - name: Sign SndCtrl.dll
+        if: env.SIGNPATH_ENABLED == 'true'
+        uses: signpath/github-action-submit-signing-request@f6d04783b4569d051e0c80105fe66e82819d0092 # v3.0
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'pcpanel' }}
+          signing-policy-slug: ${{ inputs.signing-policy }}
+          artifact-configuration-slug: sndctrl
+          github-artifact-id: ${{ steps.uploadDll.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 7200
+          output-artifact-directory: build/signed
+
+      - name: Use the signed SndCtrl.dll
+        if: env.SIGNPATH_ENABLED == 'true'
+        shell: pwsh
+        run: |
+          $sig = Get-AuthenticodeSignature build/signed/SndCtrl.dll
+          Write-Host "SndCtrl.dll signature: $($sig.Status) by $($sig.SignerCertificate.Subject)"
+          if (-not $sig.SignerCertificate) { throw "SndCtrl.dll came back from SignPath without a signature" }
+          Copy-Item build/signed/SndCtrl.dll build/Release/SndCtrl.dll -Force
+
+      - name: Drop the unsigned upload
+        if: always() && steps.uploadDll.outputs.artifact-id != ''
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/${{ steps.uploadDll.outputs.artifact-id }}"
 
       - name: Upload SndCtrl.dll
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

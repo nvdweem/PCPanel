@@ -154,8 +154,8 @@ to:    %userprofile%\.pcpanel\profiles.json
 Free code signing provided by [SignPath.io](https://signpath.io), certificate by
 [SignPath Foundation](https://signpath.org).
 
-- Windows releases are signed: `PCPanel.exe` and the `PCPanel-<version>-setup.exe` installer. Only
-  files built from this repository's source are signed.
+- Windows releases are signed: `PCPanel.exe`, its audio library `SndCtrl.dll`, and the
+  `PCPanel-<version>-setup.exe` installer. Only files built from this repository's source are signed.
 - Every release is built from this repository's source by GitHub Actions
   ([`build-and-release.yml`](.github/workflows/build-and-release.yml)); nothing is built or uploaded by
   hand. Each release is approved by an approver before it is signed.
