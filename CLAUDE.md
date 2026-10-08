@@ -53,7 +53,12 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
   (SignPath Foundation, free for open source): the Windows job stamps `PCPanel.exe`'s icon + version info
   (`packaging/windows/stamp-exe.ps1`, rcedit — the product name `PCPanel` is what the artifact
   configurations check), signs it, smoke-tests the signed exe, builds the installer from it and signs the
-  installer — two signing requests, because SignPath cannot open an Inno installer. The artifact
+  installer — two signing requests, because SignPath cannot open an Inno installer. SignPath compares
+  product names exactly (no wildcards), and Inno pads the installer's to 60 characters with spaces, so
+  `installer.xml` restricts on `PCPanel` + 53 `&#32;`; rcedit cannot fix the padding (it strips the
+  data Inno appends to the exe). SignPath also refuses requests from a run re-run more than 3 times, so
+  test with a fresh run (`skip-macos` keeps it cheap). The GitHub job needs the SignPath GitHub App
+  installed on the repository. The artifact
   configurations are `packaging/windows/signpath/{app,installer,sndctrl}.xml`, which must be pasted into
   the SignPath project when they change. Only our own binaries may be signed (Foundation rule), so the
   GraalVM companion DLLs stay unsigned; our `SndCtrl.dll` is signed by its own workflow (see *Native C++*). Signing is on when `vars.SIGNPATH_ORGANIZATION_ID` and
