@@ -4,12 +4,14 @@
   Windows job of .github/workflows/build-and-release.yml from the already signed
   PCPanel.exe. GitHub artifacts always arrive zipped, hence the zip-file root.
 
-  The product name is Inno's AppName (packaging/windows/pcpanel.iss).
+  The product name is Inno's AppName (packaging/windows/pcpanel.iss). Inno pads it with spaces
+  to 60 characters, and SignPath compares it exactly (no wildcards), so the restriction is
+  "PCPanel" followed by 53 spaces, written as &#32; so no editor trims them.
   This file is the source of truth; paste it into the SignPath project when it changes.
 -->
 <artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
   <zip-file>
-    <pe-file path="PCPanel-*-setup.exe" product-name="PCPanel">
+    <pe-file path="PCPanel-*-setup.exe" product-name="PCPanel&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;">
       <authenticode-sign/>
     </pe-file>
   </zip-file>
