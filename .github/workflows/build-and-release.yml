@@ -212,6 +212,9 @@ jobs:
           wait-for-completion: true
           wait-for-completion-timeout-in-seconds: 7200
           output-artifact-directory: target/signed-exe
+          # The artifact configuration only signs a file carrying this build's product version.
+          parameters: |
+            version: "${{ steps.ver.outputs.version }}"
 
       # The smoke test below then runs the signed exe, the one the installer ships.
       - name: Use the signed PCPanel.exe
@@ -302,6 +305,17 @@ jobs:
             "/DOutputDir=$(Resolve-Path target)" `
             packaging/windows/pcpanel.iss
 
+      # Inno pads the installer's product version with spaces to 50 characters, and SignPath compares
+      # it exactly, so the installer's signing request carries the version padded the same way. A
+      # multiline output keeps the trailing spaces that a key=value line could lose.
+      - name: Installer product version
+        id: installerVersion
+        if: env.SIGNPATH_ENABLED == 'true'
+        shell: pwsh
+        run: |
+          $padded = '${{ steps.ver.outputs.version }}'.PadRight(50)
+          "padded<<EOF`n$padded`nEOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
       - name: Upload installer for signing
         id: uploadInstaller
         if: env.SIGNPATH_ENABLED == 'true'
@@ -324,6 +338,8 @@ jobs:
           wait-for-completion: true
           wait-for-completion-timeout-in-seconds: 7200
           output-artifact-directory: target/signed-installer
+          parameters: |
+            version: "${{ steps.installerVersion.outputs.padded }}"
 
       - name: Use the signed installer
         if: env.SIGNPATH_ENABLED == 'true'

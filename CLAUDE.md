@@ -55,7 +55,9 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
   configurations check), signs it, smoke-tests the signed exe, builds the installer from it and signs the
   installer — two signing requests, because SignPath cannot open an Inno installer. SignPath compares
   product names exactly (no wildcards), and Inno pads the installer's to 60 characters with spaces, so
-  `installer.xml` restricts on `PCPanel` + 53 `&#32;`; rcedit cannot fix the padding (it strips the
+  `installer.xml` restricts on `PCPanel` + 53 `&#32;`. Every configuration also restricts the product
+  version (a Foundation rule) through a required `version` parameter the signing steps pass — the
+  installer's padded to 50 characters, again because of Inno. rcedit cannot fix the padding (it strips the
   data Inno appends to the exe). SignPath also refuses requests from a run re-run more than 3 times, so
   test with a fresh run (`skip-macos` keeps it cheap). The GitHub job needs the SignPath GitHub App
   installed on the repository. The artifact

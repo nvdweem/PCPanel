@@ -7,12 +7,16 @@
   Only our own binary is signed. The companion DLLs next to it come from GraalVM and
   are not ours to sign (SignPath Foundation: "sign your own binaries only").
 
-  The product name is set by packaging/windows/stamp-exe.ps1.
+  The product name and version are set by packaging/windows/stamp-exe.ps1; the workflow passes
+  the build's version as the "version" parameter.
   This file is the source of truth; paste it into the SignPath project when it changes.
 -->
 <artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <parameters>
+    <parameter name="version" required="true"/>
+  </parameters>
   <zip-file>
-    <pe-file path="PCPanel.exe" product-name="PCPanel">
+    <pe-file path="PCPanel.exe" product-name="PCPanel" product-version="${version}">
       <authenticode-sign/>
     </pe-file>
   </zip-file>

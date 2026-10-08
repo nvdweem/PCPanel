@@ -5,12 +5,16 @@
   src/main/resources/SndCtrl.dll and embedded in PCPanel.exe. GitHub artifacts always arrive
   zipped, hence the zip-file root.
 
-  The product name comes from the DLL's version resource (src/main/cpp/SndCtrl/SndCtrl.rc.in).
+  The product name and version come from the DLL's version resource (src/main/cpp/SndCtrl/SndCtrl.rc.in);
+  the workflow passes the version it stamped (1.0.0.<run>) as the "version" parameter.
   This file is the source of truth; paste it into the SignPath project when it changes.
 -->
 <artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <parameters>
+    <parameter name="version" required="true"/>
+  </parameters>
   <zip-file>
-    <pe-file path="SndCtrl.dll" product-name="PCPanel">
+    <pe-file path="SndCtrl.dll" product-name="PCPanel" product-version="${version}">
       <authenticode-sign/>
     </pe-file>
   </zip-file>

@@ -89,6 +89,9 @@ jobs:
           wait-for-completion: true
           wait-for-completion-timeout-in-seconds: 7200
           output-artifact-directory: build/signed
+          # The artifact configuration only signs a DLL carrying the version stamped by the configure step.
+          parameters: |
+            version: "1.0.0.${{ github.run_number }}"
 
       - name: Use the signed SndCtrl.dll
         if: env.SIGNPATH_ENABLED == 'true'
