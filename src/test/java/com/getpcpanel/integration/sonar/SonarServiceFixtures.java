@@ -32,7 +32,20 @@ final class SonarServiceFixtures {
     static SonarService service(SonarClient client, boolean enabled, @Nullable Event<SonarChangedEvent> changed,
                                 @Nullable ScheduledExecutorService flushExecutor) {
         var save = new Save();
-        save.setSonar(new SonarSettings(enabled));
+        save.setSonar(new SonarSettings(enabled, SonarSettings.DEFAULT_UPDATES_PER_SECOND));
+        return service(client, save, changed, flushExecutor);
+    }
+
+    /** Enabled, at the given update rate, flushed by hand. */
+    static SonarService service(SonarClient client, int updatesPerSecond) {
+        var save = new Save();
+        save.setSonar(new SonarSettings(true, updatesPerSecond));
+        return service(client, save, null, null);
+    }
+
+    /** Over a caller-held Save, so a test can change the settings while the service runs. */
+    static SonarService service(SonarClient client, Save save, @Nullable Event<SonarChangedEvent> changed,
+                                @Nullable ScheduledExecutorService flushExecutor) {
         var saveService = new SaveService() {
             @Override public Save get() {
                 return save;

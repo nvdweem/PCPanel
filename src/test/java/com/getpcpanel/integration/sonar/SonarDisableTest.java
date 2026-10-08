@@ -44,7 +44,7 @@ class SonarDisableTest {
 
     private static SaveEvent saveWithSonar(boolean enabled) {
         var save = new Save();
-        save.setSonar(new SonarSettings(enabled));
+        save.setSonar(new SonarSettings(enabled, SonarSettings.DEFAULT_UPDATES_PER_SECOND));
         return new SaveEvent(save, false);
     }
 

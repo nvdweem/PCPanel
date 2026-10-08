@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, HostListener, inject, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, DestroyRef, effect, HostListener, inject, linkedSignal, signal, untracked } from '@angular/core';
 import { HistoryButtonsComponent } from '../../features/history/history-buttons.component';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -30,6 +30,13 @@ import { OverlayPreviewRenderer, overlayPreviewStyle } from './overlay-preview';
 import { PanelTestComponent } from '../../features/panel-test/panel-test.component';
 
 type Cmd = Record<string, any>;
+/** Mirror SonarSettings' DEFAULT/MIN/MAX_UPDATES_PER_SECOND (6–25); the backend clamps as well. */
+const SONAR_DEFAULT_RATE = 12;
+const SONAR_MIN_RATE = 6;
+const SONAR_MAX_RATE = 25;
+/** Above this rate the Update rate row warns about SteelSeries GG's CPU use. */
+const SONAR_HIGH_CPU_RATE = 20;
+
 type TabId = 'general' | 'alerts' | 'curves' | 'focusoverride' | 'obs' | 'voicemeeter' | 'wavelink' | 'discord' | 'osc' | 'mqtt' | 'homeassistant' | 'sonar' | 'overlay' | 'debug';
 interface TabDef { id: TabId; label: string; integration?: 'obs' | 'voicemeeter' | 'wavelink'; supported?: boolean; }
 
@@ -191,9 +198,15 @@ export class SettingsComponent {
   // Wave Link settings (not part of SettingsDto): enable + focus-control + controlled-volume options.
   readonly wavelinkSettings = httpResource<WaveLinkSettings>(() => '/api/settings/wavelink');
 
-  // SteelSeries Sonar settings (not part of SettingsDto): just an enable switch. Live connection status
-  // comes from the shared integrations status endpoint, same as OBS/Wave Link/Discord.
+  // SteelSeries Sonar settings (not part of SettingsDto): an enable switch and the update rate. Live connection
+  // status comes from the shared integrations status endpoint, same as OBS/Wave Link/Discord.
   readonly sonarSettings = httpResource<SonarSettings>(() => '/api/settings/sonar');
+  /** The rate the slider shows: follows the saved value, and the drag in progress until it is released. */
+  readonly sonarRate = linkedSignal(() => this.sonarSettings.value()?.updatesPerSecond ?? SONAR_DEFAULT_RATE);
+  /** Follows the drag in progress, so the warning shows as soon as the slider passes the threshold. */
+  readonly sonarRateHigh = computed(() => this.sonarRate() > SONAR_HIGH_CPU_RATE);
+  readonly sonarMinRate = SONAR_MIN_RATE;
+  readonly sonarMaxRate = SONAR_MAX_RATE;
   readonly sonarTabStatus = computed<StatusKind>(() =>
     this.integrations.sonarConnected() ? 'ok' : this.integrations.sonarLoading() ? 'connecting' : 'idle');
   // Exposed for the template (the injected integrations service is private).
@@ -477,15 +490,40 @@ export class SettingsComponent {
   }
 
   // ── Sonar settings ──────────────────────────────────────────────────────────
-  setSonarEnabled(on: boolean): void {
-    this.http.put<void>('/api/settings/sonar', { enabled: on }).subscribe({
+  /**
+   * Sends the whole settings object, so changing one field never resets the other. The local copy takes the
+   * new state before the request goes out, so a second save made while the first is in flight builds on it
+   * rather than on the last state read from the server. A failed save reloads the server's state.
+   */
+  private saveSonar(patch: Partial<SonarSettings>, successMsg?: string): void {
+    const cur = this.sonarSettings.value();
+    const next: SonarSettings = {
+      enabled: cur?.enabled ?? false,
+      updatesPerSecond: cur?.updatesPerSecond ?? SONAR_DEFAULT_RATE,
+      ...patch,
+    };
+    this.sonarSettings.set(next);
+    this.http.put<void>('/api/settings/sonar', next).subscribe({
       next: () => {
         this.sonarSettings.reload();
         this.integrations.sonarStatus.reload();
-        this.toast.show(on ? 'SteelSeries Sonar enabled' : 'SteelSeries Sonar disabled', { kind: 'success' });
+        if (successMsg) this.toast.show(successMsg, { kind: 'success' });
       },
-      error: () => this.toast.show('Could not update SteelSeries Sonar', { kind: 'error' }),
+      error: () => {
+        this.sonarSettings.reload();
+        this.toast.show('Could not update SteelSeries Sonar', { kind: 'error' });
+      },
     });
+  }
+
+  setSonarEnabled(on: boolean): void {
+    this.saveSonar({ enabled: on }, on ? 'SteelSeries Sonar enabled' : 'SteelSeries Sonar disabled');
+  }
+
+  /** Saved once, when the slider is released, and only when the value changed. */
+  setSonarRate(rate: number): void {
+    if (rate === (this.sonarSettings.value()?.updatesPerSecond ?? SONAR_DEFAULT_RATE)) return;
+    this.saveSonar({ updatesPerSecond: rate });
   }
 
   /** User-facing name for a Sonar mode id ('stream'/'classic' as reported by the status endpoint). */

@@ -1002,6 +1002,16 @@
                 <pc-toggle [value]="sonarSettings.value()?.enabled ?? false" [disabled]="!platform.sonarSupported()"
                            (valueChange)="setSonarEnabled($event)"></pc-toggle>
               </div>
+              <div class="slider-row">
+                <div class="sr-head"><span class="sr-label">Update rate</span><span class="sr-val mono">{{ sonarRate() }} per second</span></div>
+                <div class="row-sub">Higher is smoother, but SteelSeries GG uses more CPU while the volume changes</div>
+                <pc-slider [value]="sonarRate()" [min]="sonarMinRate" [max]="sonarMaxRate" [step]="1"
+                           [disabled]="!platform.sonarSupported()"
+                           (valueChange)="sonarRate.set($event)" (changeEnd)="setSonarRate($event)"></pc-slider>
+                @if (sonarRateHigh()) {
+                  <div class="pc-hint">Above 20, SteelSeries GG uses noticeably more CPU</div>
+                }
+              </div>
               @if (sonarStatusValue(); as st) {
                 <div class="row">
                   <div class="row-text">
