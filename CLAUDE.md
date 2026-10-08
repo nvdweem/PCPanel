@@ -79,7 +79,8 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
   label snapshots. `packaging/ci-version.sh` is the single place that decides a build's version (all
   four CI jobs call it; `CiVersionScriptTest` guards it). Two build kinds, keyed off the ref (see
   `docs/superpowers/specs/2026-07-15-release-versioning-strategy-design.md`):
-  - **Snapshots** (manual `workflow_dispatch` of any branch) → a rolling **pre-release**, versioned
+  - **Snapshots** (manual `workflow_dispatch` of any branch; its `skip-macos` input leaves out the
+    costly macOS jobs, and the release then has no `.dmg`) → a rolling **pre-release**, versioned
     `<baseversion>.<run>` (e.g. `2.0.89.83`), with `pcpanel.version = <baseversion>-SNAPSHOT`. The
     development line (`main`, `releases/**`) publishes to the shared `latest-snapshot` channel; every
     other branch gets its own self-contained `latest-<branch>` so a test build cannot take a channel

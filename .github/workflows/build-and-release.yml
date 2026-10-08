@@ -36,6 +36,11 @@ on:
     tags:
       - 'v[0-9]*'
   workflow_dispatch:
+    inputs:
+      skip-macos:
+        description: Skip the macOS builds (the release then has no .dmg)
+        type: boolean
+        default: false
 
 # One run per rolling release that a build publishes to, so two runs can never race on the same
 # release: every dev-line ref (main, releases/**) publishes to `latest-snapshot` and therefore shares
@@ -744,6 +749,8 @@ jobs:
       fail-fast: false
       matrix:
         runner: [macos-latest, macos-15-intel]
+    # macOS runners are the expensive ones; a manual run can leave them out (a tag push has no inputs).
+    if: ${{ !inputs.skip-macos }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 45
     steps:
