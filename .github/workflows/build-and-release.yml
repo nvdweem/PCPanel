@@ -60,7 +60,7 @@ jobs:
     # builds unsigned, with a warning.
     #   vars.SIGNPATH_ORGANIZATION_ID   SignPath organization id; signing is on when it and the token are set
     #   secrets.SIGNPATH_API_TOKEN      API token of the CI user (submitter on the project)
-    #   vars.SIGNPATH_PROJECT_SLUG      default `pcpanel`
+    #   vars.SIGNPATH_PROJECT_SLUG      default `PCPanel`
     #   vars.SIGNPATH_RELEASE_POLICY    signing policy for a v* tag, default `release-signing` (manual approval)
     #   vars.SIGNPATH_SNAPSHOT_POLICY   signing policy for a snapshot, default `test-signing`
     # actions: write deletes the unsigned artifacts once they are signed (see "Drop the unsigned artifacts").
@@ -200,7 +200,7 @@ jobs:
         with:
           api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
           organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
-          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'pcpanel' }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'PCPanel' }}
           signing-policy-slug: ${{ env.SIGNPATH_POLICY }}
           artifact-configuration-slug: app
           github-artifact-id: ${{ steps.uploadExe.outputs.artifact-id }}
@@ -312,7 +312,7 @@ jobs:
         with:
           api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
           organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
-          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'pcpanel' }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'PCPanel' }}
           signing-policy-slug: ${{ env.SIGNPATH_POLICY }}
           artifact-configuration-slug: installer
           github-artifact-id: ${{ steps.uploadInstaller.outputs.artifact-id }}

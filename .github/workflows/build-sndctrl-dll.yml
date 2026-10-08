@@ -82,7 +82,7 @@ jobs:
         with:
           api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
           organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
-          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'pcpanel' }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'PCPanel' }}
           signing-policy-slug: ${{ inputs.signing-policy }}
           artifact-configuration-slug: sndctrl
           github-artifact-id: ${{ steps.uploadDll.outputs.artifact-id }}
