@@ -306,15 +306,16 @@ jobs:
             packaging/windows/pcpanel.iss
 
       # Inno pads the installer's product version with spaces to 50 characters, and SignPath compares
-      # it exactly, so the installer's signing request carries the version padded the same way. A
-      # multiline output keeps the trailing spaces that a key=value line could lose.
+      # it exactly, so the installer's signing request carries the version padded the same way. SignPath
+      # trims parameter values, so the padding goes in as &#32;, which becomes a space once the value is
+      # in the artifact configuration's XML.
       - name: Installer product version
         id: installerVersion
         if: env.SIGNPATH_ENABLED == 'true'
         shell: pwsh
         run: |
-          $padded = '${{ steps.ver.outputs.version }}'.PadRight(50)
-          "padded<<EOF`n$padded`nEOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          $version = '${{ steps.ver.outputs.version }}'
+          "padded=$version$('&#32;' * (50 - $version.Length))" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
       - name: Upload installer for signing
         id: uploadInstaller
