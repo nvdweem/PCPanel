@@ -6,16 +6,15 @@
 
   The product name is Inno's AppName (packaging/windows/pcpanel.iss). Inno pads it with spaces
   to 60 characters, and SignPath compares it exactly (no wildcards), so the restriction is
-  "PCPanel" followed by 53 spaces, written as &#32; so no editor trims them. The product version
-  is padded to 50 characters the same way; the workflow passes it padded as the "version" parameter.
+  "PCPanel" followed by 53 spaces, written as &#32; so no editor trims them. Its product version is
+  padded to 50 characters the same way, and a padded value cannot be passed: SignPath trims parameter
+  values and fills them in after parsing, so &#32; stays literal. The version restriction is on the
+  signed PCPanel.exe inside it (app.xml).
   This file is the source of truth; paste it into the SignPath project when it changes.
 -->
 <artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
-  <parameters>
-    <parameter name="version" required="true"/>
-  </parameters>
   <zip-file>
-    <pe-file path="PCPanel-*-setup.exe" product-name="PCPanel&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;" product-version="${version}">
+    <pe-file path="PCPanel-*-setup.exe" product-name="PCPanel&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;&#32;">
       <authenticode-sign/>
     </pe-file>
   </zip-file>
