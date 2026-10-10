@@ -31,7 +31,6 @@ public class OverlayResource {
 
     @GET
     public Response testOverlay() {
-        System.out.println("Overlay!");
         overlay.show(0);
         return Response.ok().build();
     }
