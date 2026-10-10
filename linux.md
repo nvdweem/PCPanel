@@ -111,7 +111,9 @@ will **not** receive updates — prefer the `.flatpakref` above unless you have 
 > the device but cannot grant itself permission to open it. If the device is detected but never connects (`Unable to open
 > device …` in the log), that rule is missing.
 
-The sandbox is granted USB device access, audio (PulseAudio/PipeWire), network, X11/Wayland and tray permissions. `kdotool`
+The sandbox is granted USB device access, audio (PulseAudio/PipeWire), network, X11/Wayland and tray permissions, plus
+KDE Plasma's volume OSD (`--talk-name=org.kde.plasmashell`, for the overlay) and systemd-logind on the system bus
+(`--system-talk-name=org.freedesktop.login1`, for *Lights off when locked or asleep*). `kdotool`
 for focus volume is **bundled inside the sandbox** and talks to the host KWin over D-Bus (`--talk-name=org.kde.KWin`), so KDE
 Plasma focus volume works without a host-installed kdotool. Volume control, audio-level lights and the music visualizer
 talk to the sound server through the sandbox's audio socket. *Turn displays off* (`kscreen-doctor`, or `xset` on X11)

@@ -34,16 +34,25 @@ public class LinuxSystemEventService {
     @Inject
     Event<Object> eventBus;
 
-    private DBusConnection connection;
+    private volatile DBusConnection connection;
+    private volatile boolean closed;
     private final LinuxDisplayPowerMonitor displayPowerMonitor = new LinuxDisplayPowerMonitor(this::fire);
 
     @PostConstruct
     public void init() {
         displayPowerMonitor.start();
+        // Connecting waits out dbus-java's retries when there is no system bus (a Flatpak without a system-bus
+        // grant took ~9 s), so it must not hold up startup.
+        var thread = new Thread(this::connect, "logind-connect");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    private void connect() {
         // Catch Throwable, not just Exception: in a native image a missing/unreachable class surfaces
         // as a LinkageError, and sleep detection is non-essential — it must never crash startup.
         try {
-            connection = DBusConnectionBuilder.forSystemBus()
+            var built = DBusConnectionBuilder.forSystemBus()
                                               .transportConfig()
                                               .configureSasl()
                                               // Resolve the uid ourselves so dbus-java never falls back to
@@ -53,10 +62,16 @@ public class LinuxSystemEventService {
                                               .back()
                                               .build();
 
-            connection.addSigHandler(Login1Manager.PrepareForSleep.class, signal ->
+            built.addSigHandler(Login1Manager.PrepareForSleep.class, signal ->
                     fire(signal.start ? SystemEventType.goingToSuspend : SystemEventType.resumedFromSuspend));
-            connection.addSigHandler(Login1Session.Lock.class, signal -> fire(SystemEventType.locked));
-            connection.addSigHandler(Login1Session.Unlock.class, signal -> fire(SystemEventType.unlocked));
+            built.addSigHandler(Login1Session.Lock.class, signal -> fire(SystemEventType.locked));
+            built.addSigHandler(Login1Session.Unlock.class, signal -> fire(SystemEventType.unlocked));
+            connection = built;
+            if (closed) {
+                // The app shut down while this was still connecting.
+                closeConnection();
+                return;
+            }
 
             log.info("Linux sleep/session detection started (systemd-logind)");
         } catch (Throwable e) { // NOSONAR - intentionally broad; sleep detection must never take down the app
@@ -67,7 +82,13 @@ public class LinuxSystemEventService {
 
     @PreDestroy
     public void shutdown() {
+        closed = true;
         displayPowerMonitor.stop();
+        closeConnection();
+    }
+
+    private void closeConnection() {
+        var connection = this.connection;
         if (connection != null) {
             try {
                 connection.close();

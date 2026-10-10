@@ -60,6 +60,12 @@ finish-args:
   - --talk-name=org.freedesktop.Flatpak
   # Bundled kdotool drives the host KWin's scripting API to resolve the focused window
   - --talk-name=org.kde.KWin
+  # The volume overlay is KDE Plasma's own OSD (org.kde.osdService on plasmashell). Without this the proxy
+  # hides plasmashell, so the overlay concludes there is no supported desktop and stays off.
+  - --talk-name=org.kde.plasmashell
+  # Sleep, resume, lock and unlock come from systemd-logind on the system bus ("Lights off when locked or
+  # asleep"). Without this the sandbox has no system bus at all.
+  - --system-talk-name=org.freedesktop.login1
   # Hyprland's IPC socket directory, read-only. hyprctl runs on the host and locates the socket
   # itself, so this grant is not about reaching the socket — it is how hyprctl-wrapper.sh learns the
   # instance signature (the directory name) when the session did not put it in the environment. The
