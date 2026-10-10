@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
@@ -16,6 +18,10 @@ import javax.annotation.Nullable;
 import com.getpcpanel.platform.LinuxBuild;
 import com.getpcpanel.util.os.ProcessHelper;
 
+import dev.niels.pulse.PulseClient;
+import dev.niels.pulse.PulseException;
+import dev.niels.pulse.model.SubscriptionEvent;
+import dev.niels.pulse.model.SubscriptionEvent.Facility;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.event.Event;
@@ -24,15 +30,24 @@ import jakarta.inject.Singleton;
 import io.quarkus.runtime.Startup;
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * Follows the server's change events and turns them into the device/session events the rest of the Linux backend
+ * reacts to: over the protocol connection's subscription while there is one ({@link PulseConnection}), otherwise from
+ * {@code pactl subscribe}. Both are read as pactl's event lines, so {@link #checkTrigger} serves both.
+ */
 @Log4j2
 @Startup
 @Singleton
 @LinuxBuild
 class PulseAudioEventListener {
+    private static final Set<Facility> FACILITIES = Set.of(Facility.SINK, Facility.SOURCE, Facility.SINK_INPUT, Facility.SOURCE_OUTPUT, Facility.SERVER);
+
     @Inject
     Event<Object> eventBus;
     @Inject
     ProcessHelper processHelper;
+    @Inject
+    PulseConnection pulse;
     private final CircularFifoQueue<String> latestEvents = new CircularFifoQueue<>(50);
     private final Pattern numberPattern = Pattern.compile("#(\\d+)");
 
@@ -69,6 +84,7 @@ class PulseAudioEventListener {
     private volatile Instant streamStartedAt;
     private volatile Instant lastEventAt;
     private volatile String lastEnded;
+    private volatile String source = "none";
     private final AtomicInteger restarts = new AtomicInteger();
 
     String healthSummary() {
@@ -76,7 +92,7 @@ class PulseAudioEventListener {
         if (started == null) {
             return "never started" + (lastEnded == null ? "" : " (" + lastEnded + ")");
         }
-        return "running since " + started
+        return source + ", running since " + started
                 + ", last event " + (lastEventAt == null ? "none yet" : lastEventAt)
                 + ", restarts " + restarts.get()
                 + (lastEnded == null ? "" : ", last ended: " + lastEnded);
@@ -84,14 +100,15 @@ class PulseAudioEventListener {
 
     private void run() {
         while (running) {
+            var client = pulse.client();
+            if (client != null) {
+                followProtocol(client);
+                continue;
+            }
             try {
                 streamStartedAt = Instant.now();
-                var dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                var exit = processHelper.stream(ProcessHelper.PARSEABLE_OUTPUT, line -> {
-                    lastEventAt = Instant.now();
-                    latestEvents.add(dateFormat.format(new Date()) + " - " + line);
-                    checkTrigger(line);
-                }, "pactl", "subscribe");
+                source = "pactl subscribe";
+                var exit = processHelper.stream(ProcessHelper.PARSEABLE_OUTPUT, this::onLine, "pactl", "subscribe");
                 // The stream ended. Until it is back, nothing updates the device/session lists from the OS,
                 // which shows up as an application picker frozen on whatever was playing at startup — so say
                 // so rather than restarting in silence (#151).
@@ -112,6 +129,51 @@ class PulseAudioEventListener {
         }
     }
 
+    /**
+     * Follows the connection's subscription until the connection is gone. Changes made while a previous connection
+     * was down are not replayed, so a resubscription asks for a full re-read; the first one needn't, the backend reads
+     * everything when it starts.
+     */
+    private void followProtocol(PulseClient client) {
+        try {
+            client.subscribe(FACILITIES, this::onEvent);
+            streamStartedAt = Instant.now();
+            source = "protocol subscription";
+            if (restarts.get() > 0) {
+                eventBus.fire(new LinuxDeviceChangedEvent());
+                eventBus.fire(new LinuxSessionChangedEvent(null));
+            }
+            var reason = client.closed().get();
+            if (!running || pulse.isClosed()) {
+                return;
+            }
+            lastEnded = "connection closed at " + Instant.now() + " (" + reason + ")";
+            log.warn("PulseAudio protocol connection closed; audio device/session changes are not being observed until it is back: {}", reason.toString());
+        } catch (PulseException e) {
+            lastEnded = "subscribe failed: " + e.getMessage();
+            pulse.lost(client, e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            running = false;
+            return;
+        } catch (ExecutionException e) {
+            lastEnded = "connection failed: " + e.getCause();
+        }
+        streamStartedAt = null;
+        restarts.incrementAndGet();
+        sleepBeforeRestart();
+    }
+
+    private void onEvent(SubscriptionEvent event) {
+        onLine("Event '" + event.type().pactlName() + "' on " + event.facility().pactlName() + " #" + event.index());
+    }
+
+    private void onLine(String line) {
+        lastEventAt = Instant.now();
+        latestEvents.add(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()) + " - " + line);
+        checkTrigger(line);
+    }
+
     private void sleepBeforeRestart() {
         try {
             Thread.sleep(RESTART_DELAY_MS);
@@ -122,7 +184,7 @@ class PulseAudioEventListener {
     }
 
     String getDebugOutput() {
-        return "pactl subscribe:\n" + String.join("\n", latestEvents);
+        return "change events (" + source + "):\n" + String.join("\n", latestEvents);
     }
 
     void checkTrigger(String line) {

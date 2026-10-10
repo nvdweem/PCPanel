@@ -62,6 +62,7 @@ class SndCtrlPulseAudio implements ISndCtrl {
     @Inject PulseAudioWrapper cmd;
     @Inject LinuxProcessHelper processHelper;
     @Inject PulseAudioEventListener eventListener;
+    @Inject PulseConnection pulse;
     @Inject Event<Object> eventBus;
     @GuardedBy("devices") private final Map<String, PulseAudioAudioDevice> devices = new HashMap<>();
     @GuardedBy("sessions") private final Set<PulseAudioAudioSession> sessions = new HashSet<>();
@@ -395,6 +396,7 @@ class SndCtrlPulseAudio implements ISndCtrl {
     @Override
     public Map<String, String> audioDiagnostics() {
         var out = new LinkedHashMap<String, String>();
+        out.put("pulse protocol", pulse == null ? "off" : pulse.state());
         out.put("change stream", eventListener.healthSummary());
         synchronized (sessions) {
             out.put("audio sessions", String.valueOf(sessions.size()));

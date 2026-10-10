@@ -7,6 +7,9 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 import javax.annotation.Nonnull;
@@ -21,10 +24,20 @@ import com.getpcpanel.integration.volume.platform.MuteType;
 import com.getpcpanel.platform.LinuxBuild;
 import com.getpcpanel.util.os.ProcessHelper;
 
+import dev.niels.pulse.ChannelVolumes;
+import dev.niels.pulse.PulseClient;
+import dev.niels.pulse.PulseClient.DeviceRef;
+import dev.niels.pulse.PulseException;
+import dev.niels.pulse.PulseTimeoutException;
 import lombok.Builder;
 import lombok.extern.log4j.Log4j2;
 import one.util.streamex.StreamEx;
 
+/**
+ * Reads and changes the PulseAudio/PipeWire state. Everything goes over the app's protocol connection
+ * ({@link PulseConnection}) while there is one, and through {@code pactl} otherwise; both produce the same
+ * {@link PulseAudioTarget}s.
+ */
 @Log4j2
 @ApplicationScoped
 @LinuxBuild
@@ -34,6 +47,9 @@ class PulseAudioWrapper {
     private static final Pattern pactlFirstLine = Pattern.compile("(.*) #(\\d+)");
     @Inject
     ProcessHelper processHelper;
+    /** {@code null} in tests that exercise the pactl path. */
+    @Inject
+    @Nullable PulseConnection pulse;
     long timeoutMillis = 2_000;
 
     public static int volumeFtoI(float volume) {
@@ -46,6 +62,15 @@ class PulseAudioWrapper {
 
     /** Sinks and sources, with the server's default sink and default source flagged. */
     public List<PulseAudioTarget> devices() {
+        var viaNative = nativeRead(c -> {
+            var server = c.serverInfo();
+            return StreamEx.of(NativePulseTargets.devices(c.sinks(), InOutput.output, server.defaultSinkName()))
+                           .append(NativePulseTargets.devices(c.sources(), InOutput.input, server.defaultSourceName()))
+                           .toList();
+        });
+        if (viaNative.isPresent()) {
+            return viaNative.get();
+        }
         var defaults = defaultDeviceNames();
         return StreamEx.of(execAndParse(InOutput.output))
                        .append(execAndParse(InOutput.input))
@@ -55,7 +80,18 @@ class PulseAudioWrapper {
 
     /** The names of the default sink ({@link InOutput#output}) and default source ({@link InOutput#input}). */
     Map<InOutput, String> defaultDeviceNames() {
-        return parseDefaultDeviceNames(runAndRead("pactl", "info"));
+        var viaNative = nativeRead(c -> {
+            var server = c.serverInfo();
+            Map<InOutput, String> names = new EnumMap<>(InOutput.class);
+            if (server.defaultSinkName() != null) {
+                names.put(InOutput.output, server.defaultSinkName());
+            }
+            if (server.defaultSourceName() != null) {
+                names.put(InOutput.input, server.defaultSourceName());
+            }
+            return names;
+        });
+        return viaNative.orElseGet(() -> parseDefaultDeviceNames(runAndRead("pactl", "info")));
     }
 
     /**
@@ -85,7 +121,16 @@ class PulseAudioWrapper {
             return;
         }
         var target = output ? "set-sink-volume" : "set-source-volume";
-        pactl(target, idxOrDefaultDevice(idx), String.valueOf(volumeFtoI(volume)));
+        write(target, c -> {
+            var ref = deviceRef(output, idx);
+            var channels = (output ? c.sink(ref) : c.source(ref)).volume().channels();
+            var volumes = ChannelVolumes.uniform(channels, volumeFtoI(volume));
+            if (output) {
+                c.setSinkVolume(ref, volumes);
+            } else {
+                c.setSourceVolume(ref, volumes);
+            }
+        }, () -> pactl(target, idxOrDefaultDevice(idx), String.valueOf(volumeFtoI(volume))));
     }
 
     public void muteDevice(boolean output, int idx, MuteType type) {
@@ -93,12 +138,27 @@ class PulseAudioWrapper {
             return;
         }
         var target = output ? "set-sink-mute" : "set-source-mute";
-        pactl(target, idxOrDefaultDevice(idx), muteTypeToMute(type));
+        write(target, c -> {
+            var ref = deviceRef(output, idx);
+            var mute = type == MuteType.toggle ? !(output ? c.sink(ref) : c.source(ref)).muted() : type == MuteType.mute;
+            if (output) {
+                c.setSinkMute(ref, mute);
+            } else {
+                c.setSourceMute(ref, mute);
+            }
+        }, () -> pactl(target, idxOrDefaultDevice(idx), muteTypeToMute(type)));
     }
 
     public void setDefaultDevice(boolean output, int index) {
         var target = output ? "set-default-sink" : "set-default-source";
-        pactl(target, String.valueOf(index));
+        write(target, c -> {
+            var ref = DeviceRef.byIndex(index);
+            if (output) {
+                c.setDefaultSink(c.sink(ref).name());
+            } else {
+                c.setDefaultSource(c.source(ref).name());
+            }
+        }, () -> pactl(target, String.valueOf(index)));
     }
 
     public List<PulseAudioTarget> getSessions() {
@@ -116,19 +176,30 @@ class PulseAudioWrapper {
     }
 
     public void setSessionVolume(int index, float volume) {
-        pactl("set-sink-input-volume", String.valueOf(index), String.valueOf(volumeFtoI(volume)));
+        write("set-sink-input-volume", c -> c.setSinkInputVolume(index, ChannelVolumes.uniform(c.sinkInput(index).volume().channels(), volumeFtoI(volume))),
+                () -> pactl("set-sink-input-volume", String.valueOf(index), String.valueOf(volumeFtoI(volume))));
     }
 
     public void muteSession(int index, MuteType mute) {
-        pactl("set-sink-input-mute", String.valueOf(index), muteTypeToMute(mute));
+        write("set-sink-input-mute", c -> c.setSinkInputMute(index, mute == MuteType.toggle ? !c.sinkInput(index).muted() : mute == MuteType.mute),
+                () -> pactl("set-sink-input-mute", String.valueOf(index), muteTypeToMute(mute)));
     }
 
     /** Moves a stream (sink input) to the sink named {@code sinkName}. */
     public void moveSession(int index, String sinkName) {
-        pactl("move-sink-input", String.valueOf(index), sinkName);
+        write("move-sink-input", c -> c.moveSinkInput(index, sinkName), () -> pactl("move-sink-input", String.valueOf(index), sinkName));
     }
 
     List<PulseAudioTarget> execAndParse(InOutput type) {
+        return nativeRead(c -> switch (type) {
+            case output -> NativePulseTargets.devices(c.sinks(), type, null);
+            case input -> NativePulseTargets.devices(c.sources(), type, null);
+            case session -> NativePulseTargets.streams(c.sinkInputs(), type);
+            case recording -> NativePulseTargets.streams(c.sourceOutputs(), type);
+        }).orElseGet(() -> pactlList(type));
+    }
+
+    private List<PulseAudioTarget> pactlList(InOutput type) {
         var ret = new ArrayList<PulseAudioTarget>();
         var cmdOutput = runAndRead("pactl", "list", type.pulseType);
 
@@ -174,6 +245,68 @@ class PulseAudioWrapper {
         }
 
         return ret;
+    }
+
+    @Nullable
+    private PulseClient nativeClient() {
+        return pulse == null ? null : pulse.client();
+    }
+
+    /**
+     * Reads over the protocol connection; empty when there is none, or it broke during the read, so the caller asks
+     * pactl instead.
+     *
+     * @throws PactlTimeoutException when the server does not answer in time
+     */
+    private <T> Optional<T> nativeRead(Function<PulseClient, T> read) {
+        var client = nativeClient();
+        if (client == null) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(read.apply(client));
+        } catch (PulseTimeoutException e) {
+            throw new PactlTimeoutException(e.getMessage());
+        } catch (PulseException e) {
+            if (!e.isServerError()) {
+                pulse.lost(client, e);
+            }
+            log.debug("Protocol read failed, asking pactl: {}", e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Applies a change over the protocol connection, or through {@code viaPactl} when there is none or it broke. Like
+     * pactl, it returns once the server has applied the change, and {@code synchronized} keeps one change in flight,
+     * so successive values land in the order they were sent.
+     */
+    private synchronized void write(String description, Consumer<PulseClient> viaNative, Runnable viaPactl) {
+        var client = nativeClient();
+        if (client != null) {
+            try {
+                viaNative.accept(client);
+                return;
+            } catch (PulseTimeoutException e) {
+                log.warn("{}: {}; the change was not applied", description, e.getMessage());
+                return;
+            } catch (PulseException e) {
+                if (e.isServerError()) {
+                    // The target is gone or refused the change; pactl would get the same answer.
+                    log.debug("{} refused: {}", description, e.getMessage());
+                    return;
+                }
+                pulse.lost(client, e);
+            }
+        }
+        viaPactl.run();
+    }
+
+    private static DeviceRef deviceRef(boolean output, int idx) {
+        if (idx == DEFAULT_DEVICE) {
+            return output ? DeviceRef.DEFAULT_SINK : DeviceRef.DEFAULT_SOURCE;
+        }
+        return DeviceRef.byIndex(idx);
     }
 
     /**
@@ -251,6 +384,17 @@ class PulseAudioWrapper {
 
     @Nonnull
     List<String> getDebugOutput() {
+        var protocol = pulse == null ? "off" : pulse.state();
+        var nativeLists = nativeRead(c -> StreamEx.of(InOutput.values())
+                                                  .map(t -> "protocol " + t.pulseType + ":\n" + StreamEx.of(execAndParse(t)).joining("\n"))
+                                                  .toList()).orElse(List.of());
+        return StreamEx.of("PulseAudio protocol: " + protocol)
+                       .append(nativeLists)
+                       .append(pactlDebugOutput())
+                       .toList();
+    }
+
+    private List<String> pactlDebugOutput() {
         return StreamEx.of(InOutput.values())
                        .map(t -> new String[] { "pactl", "list", t.pulseType })
                        .mapToEntry(this::debugRun)

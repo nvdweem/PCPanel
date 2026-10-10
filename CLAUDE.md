@@ -303,11 +303,21 @@ backend stays authoritative for what the hardware does.
 the volume feature. Implementations are selected at **build time** by platform stereotypes:
 `@WindowsBuild` (`SndCtrlWindows` → JNI to `SndCtrl.dll` via `SndCtrlNative`, both in
 `integration/volume/platform/windows/`; C++ source in `src/main/cpp/`) and `@LinuxBuild`
-(`SndCtrlPulseAudio` in `platform/linux/`), which drives PulseAudio/PipeWire through the **`pactl` CLI** as
-subprocesses — `PulseAudioWrapper` runs `pactl list`/`set-*`, `PulseAudioEventListener` follows `pactl subscribe`
-for device/stream changes; there is no JNA binding to libpulse. Every `pactl` call runs to completion within a
-deadline (a hung one is killed), writes run one at a time so values apply in order, and a `pactl list` that times
-out keeps the cached devices/sessions rather than emptying them. These stereotypes wrap
+(`SndCtrlPulseAudio` in `platform/linux/`), which drives PulseAudio/PipeWire over the **PulseAudio native
+protocol** — `dev.niels.pulse.PulseClient`, a pure-Java client on the server's Unix socket (served by PulseAudio and
+by PipeWire's pipewire-pulse alike; no JNA, no libpulse, no shared memory). `PulseConnection` holds the app's one
+connection (reconnecting at most every 5 s; `pcpanel.pulse.native=false` turns it off), `PulseAudioWrapper` reads
+and writes through it, and `PulseAudioEventListener` follows its subscription. While there is no connection both
+fall back to the **`pactl` CLI** as subprocesses (`pactl list`/`set-*`/`subscribe`). `NativePulseTargets` turns the
+protocol's objects into the same `PulseAudioTarget`s pactl parsing produces (pactl's header fields and the property
+list), so everything downstream reads both alike; `PulseParityCheck` (test scope, a `main`) compares the two against
+a live server. The client asks for protocol 32 so the server answers in the reply layouts `Replies` reads. Every
+request and every `pactl` call completes within a deadline (a hung `pactl` is killed), writes run one at a time so
+values apply in order, and a read that times out keeps the cached devices/sessions rather than emptying them. The
+music visualizer and audio-level meters record through `LinuxRecorder`: a protocol record stream (audio arrives inline
+on the same socket and is handed over on the client's own `pulse-audio` thread, never the reader, so a consumer
+blocked on a lock its owner holds while awaiting a reply cannot stall that reply), or `parec` without a connection.
+`LinuxRecordingCheck` (test scope) compares the two against a live server. These stereotypes wrap
 Quarkus `@IfBuildProperty(name="pcpanel.build.os", ...)` keyed off `pcpanel.build.os` (set at build
 time from `os.detected.name`), so **a given build only contains one platform's beans** — guard
 optional platform beans with `Instance<T>` injection, and use `CdiHelper` to fetch beans from
@@ -397,7 +407,7 @@ woken by profile/lighting/device/system events) unless a connected device's acti
 keeps going while they are off for a lock or screens off only, painting onto dark frames); it then *watches* `PlaybackGate` 2×/s (1×/s while
 capturing; Windows: peak meters of SndCtrl's live, unmuted sessions only — every meter read is a call into the audio
 service; Linux: un-corked sink inputs, no recording) and only *captures* (`LoopbackCapture`: Windows WASAPI loopback over
-raw COM, polled, no callbacks; Linux `parec` on a sink's monitor, or on a source for an input, at 22050 Hz) at 20 fps while something plays, plus 3 s.
+raw COM, polled, no callbacks; Linux a record stream on a sink's monitor, or on a source for an input, at 22050 Hz) at 20 fps while something plays, plus 3 s.
 What it captures is the profile's choice: `VisualizerConfig.sources` is an ordered list of `VisualizerSource`s
 (`OUTPUT`/`INPUT` + device id, null = the default one; `APP` = the output that app plays on while it plays;
 `ANY_APP` = the output the loudest playing app uses, `Playing.device` — with Wave Link apps play on virtual outputs).
