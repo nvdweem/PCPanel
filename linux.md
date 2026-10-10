@@ -58,6 +58,11 @@ The software depends on:
 - `hyprctl` — the same, on Hyprland. It is part of Hyprland itself, so nothing extra is needed there.
 - `dbus-monitor` — for notification lights that follow an app's notifications (package `dbus-tools` on Fedora,
   `dbus-bin` on Debian/Ubuntu). Most desktops have it installed already.
+- WebKitGTK (`libwebkitgtk-6.0-4` or `libwebkit2gtk-4.1-0`) — for *Open PCPanel in its own window*. Without it the
+  UI opens in your browser. The `.deb` recommends it and the Flatpak includes it.
+- *Turn displays off* uses `kscreen-doctor` on KDE Plasma (or `xset` on X11) to turn off all displays. Turning off
+  single monitors uses `ddcutil` over DDC/CI: install it and give your user read/write access to `/dev/i2c-*`
+  (usually by adding it to the `i2c` group). Without it the monitor list stays empty.
 
 If there are no tray extensions available, the application will still hide when closed. To show
 the main window, just run the application again.
