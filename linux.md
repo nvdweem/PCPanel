@@ -33,11 +33,11 @@ the "No PCPanel connected" empty state even though the device was detected. Set 
    ```
    These grant your user access to the device's hidraw node (`/dev/hidrawN`). Without them the device is
    detected but never opens (`Unable to open device …` in the log).
-1. Then run
+1. Load the rule and **unplug the PCPanel and plug it back in**:
    ```shell
-   sudo udevadm control --reload-rules && sudo udevadm trigger
+   sudo udevadm control --reload-rules
    ```
-   (`udevadm trigger` applies the rule to the already-connected device, so a replug is not needed.)
+   (To apply it without replugging, run `sudo udevadm trigger` instead of unplugging.)
 1. (Optional) Make the software startup automatically. Add the `quiet` parameter when you do: it marks the launch as one your system performed at login, so if PCPanel is somehow started twice the second start does not open the interface in your browser.
 
 If it still doesn't work, try restarting your computer (logging out is not enough).

@@ -192,8 +192,8 @@ public class DeviceScanner implements HidServicesListener, DeviceProvider {
                         // the node but cannot change its host ACL).
                         log.error("Linux needs a hidraw udev access rule for the PCPanel device — it is detected but " +
                                 "cannot be opened. Add the KERNEL==\"hidraw*\", SUBSYSTEM==\"hidraw\", ATTRS{idVendor}==... " +
-                                "lines (see linux.md / 70-pcpanel.rules), then run 'sudo udevadm control --reload-rules " +
-                                "&& sudo udevadm trigger'.");
+                                "lines (see linux.md / 70-pcpanel.rules), run 'sudo udevadm control --reload-rules' and " +
+                                "unplug and replug the device (or run 'sudo udevadm trigger').");
                     }
                 } else {
                     log.debug("Retry to open device {} still failing", k);

@@ -102,7 +102,7 @@
           @if (os() === 'linux') {
             <div class="empty-hint">
               <div class="empty-hint-title">Plugged in but not showing up?</div>
-              <div class="empty-hint-body">Linux needs a one-time udev rule so PCPanel can open the device — without it the device is detected but won't connect. The <strong>.deb</strong> installs it automatically; for the <strong>Flatpak</strong> or <strong>AppImage</strong> you have to add the rule yourself, then unplug and replug the device.</div>
+              <div class="empty-hint-body">Linux needs a one-time udev rule so PCPanel can open the device — without it the device is detected but won't connect. The <strong>.deb</strong> installs it automatically; for the <strong>Flatpak</strong> or <strong>AppImage</strong> add the rule from the setup guide yourself, then simply <strong>unplug the PCPanel and plug it back in</strong> — no restart needed.</div>
               <a class="empty-hint-link" href="https://github.com/nvdweem/PCPanel/blob/main/linux.md" target="_blank" rel="noopener noreferrer">Linux setup guide <pc-icon name="external-link" [size]="12"></pc-icon></a>
             </div>
           }
