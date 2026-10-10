@@ -308,7 +308,10 @@ protocol** — `dev.niels.pulse.PulseClient`, a pure-Java client on the server's
 by PipeWire's pipewire-pulse alike; no JNA, no libpulse, no shared memory). `PulseConnection` holds the app's one
 connection (reconnecting at most every 5 s; `pcpanel.pulse.native=false` turns it off), `PulseAudioWrapper` reads
 and writes through it, and `PulseAudioEventListener` follows its subscription. While there is no connection both
-fall back to the **`pactl` CLI** as subprocesses (`pactl list`/`set-*`/`subscribe`). `NativePulseTargets` turns the
+fall back to the **`pactl` CLI** as subprocesses (`pactl list`/`set-*`/`subscribe`). The connection announces
+`media.category=Manager`: WirePlumber gives a sandboxed (Flatpak) client read-only access unless it is a "Manager"
+(`access-default.lua`), refusing every volume/mute/default-device/move with "access denied"; a write still refused
+that way falls back to `pactl` (host-forwarded in the Flatpak). `NativePulseTargets` turns the
 protocol's objects into the same `PulseAudioTarget`s pactl parsing produces (pactl's header fields and the property
 list), so everything downstream reads both alike; `PulseParityCheck` (test scope, a `main`) compares the two against
 a live server. The client asks for protocol 32 so the server answers in the reply layouts `Replies` reads. Every
