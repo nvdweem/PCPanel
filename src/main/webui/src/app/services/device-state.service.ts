@@ -1,7 +1,7 @@
 import { computed, inject, Injectable, OnDestroy, Signal, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { DeviceSnapshotDto, ProfileSnapshotDto, WsAssignmentChangedEvent, WsControlSettingChangedEvent, WsEvent, WsEventUnion } from '../models/generated/backend.types';
+import { DeviceDto, DeviceSnapshotDto, ProfileSnapshotDto, WsAssignmentChangedEvent, WsControlSettingChangedEvent, WsEvent, WsEventUnion } from '../models/generated/backend.types';
 import { ToastService } from '../ui/toast/toast.service';
 import { PlatformService } from './platform.service';
 import { UpdateService } from './update.service';
@@ -109,6 +109,15 @@ export class DeviceStateService implements OnDestroy {
       // If the backend came back on a new version (e.g. after an auto-update), reload to swap the stale
       // frontend bundle for the matching one instead of running the old UI against the new backend.
       void this.versionGuard.checkOnConnect();
+      // Devices arrive on this socket as one snapshot per connected device, so with none connected (no panel
+      // plugged in, or on Linux one that can't be opened without its udev rule) nothing ever arrives. Ask once,
+      // so the page shows its "no PCPanel connected" help instead of loading forever.
+      this.http.get<DeviceDto[]>('/api/devices').subscribe({
+        next: devices => {
+          if (!devices.some(d => d.connected)) this.ready.set(true);
+        },
+        error: () => { /* the socket's own reconnect and the auth gate handle a failing backend */ },
+      });
     };
 
     this.socket.onmessage = (event) => {
