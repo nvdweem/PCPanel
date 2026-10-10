@@ -54,6 +54,10 @@ public class LinuxNotificationWatch implements NotificationWatch {
     /** {@code NotificationClosed} reason: the notification expired. */
     private static final String EXPIRED = "uint32 1";
     private static final int MAX_WAITING = 100;
+    private static final boolean IN_FLATPAK = System.getenv("FLATPAK_ID") != null;
+    private static final String MISSING = "Lights for notifications need dbus-monitor, which isn't available" + (IN_FLATPAK ? " on this computer" : "")
+            + ": install the dbus-bin package (Debian/Ubuntu) or dbus-tools (Fedora), then open this page again. Taskbar flashes,"
+            + " window titles and the microphone light work without it.";
 
     @Inject ProcessHelper processHelper;
     /** Whether a thread of its own starts and stops the monitor; tests call {@link #supervise} themselves. */
@@ -77,6 +81,10 @@ public class LinuxNotificationWatch implements NotificationWatch {
     private volatile boolean stopped;
     @Nullable private volatile Thread supervisor;
     @Nullable private volatile Process process;
+    /** The monitor being stopped on purpose, so its ending is not taken for dbus-monitor being unusable. */
+    @Nullable private volatile Process stopping;
+    /** Why notifications can't be followed, for the settings page; {@code null} while they can (or nobody asked yet). */
+    @Nullable private volatile String unavailable;
     // Only touched by supervise(), which runs on one thread.
     private long processStartedAt;
     private long restartAt;
@@ -199,13 +207,17 @@ public class LinuxNotificationWatch implements NotificationWatch {
             reader.setDaemon(true);
             reader.start();
         } catch (IOException e) {
-            log.debug("dbus-monitor could not be started; notification lights need it (package dbus-tools on Fedora, dbus-bin on Debian/Ubuntu): {}", e.toString());
+            if (unavailable == null) {
+                log.warn("dbus-monitor could not be started; notification lights need it (package dbus-tools on Fedora, dbus-bin on Debian/Ubuntu): {}", e.toString());
+            }
+            unavailable = MISSING;
             restartAt = now + backoff;
             backoff = Math.min(backoff * 2, MAX_RESTART_MS);
         }
     }
 
     private void read(Process from) {
+        var any = false;
         try (var reader = new BufferedReader(new InputStreamReader(from.getInputStream(), Charset.defaultCharset()))) {
             String line;
             //noinspection NestedAssignment
@@ -213,17 +225,35 @@ public class LinuxNotificationWatch implements NotificationWatch {
                 if (process != from) {
                     return; // stopped; what it still writes no longer counts
                 }
+                any = true;
+                unavailable = null;
                 onLine(line);
             }
         } catch (IOException e) {
             // ended or stopped
         }
+        if (!any && stopping != from && !stopped) {
+            // It ended without saying anything: not installed (in the Flatpak the host's is run, and flatpak-spawn starts
+            // fine without it) or unable to reach the session bus.
+            if (unavailable == null) {
+                log.warn("dbus-monitor ended without any output; notification lights need it (package dbus-tools on Fedora, dbus-bin on Debian/Ubuntu{})",
+                        IN_FLATPAK ? ", installed on the host" : "");
+            }
+            unavailable = MISSING;
+        }
+    }
+
+    @Override
+    @Nullable
+    public String unavailable() {
+        return unavailable;
     }
 
     private void stopProcess() {
         var running = process;
         process = null;
         if (running != null) {
+            stopping = running;
             ProcessHelper.stop(running);
         }
         reset();

@@ -850,6 +850,12 @@ export interface OSCConnectionInfo {
 export interface OutputCommandModule extends CommandModule {
 }
 
+export interface PlatformLimitsDto {
+    lockAndSleep?: string;
+    notifications?: string;
+    screensOff?: string;
+}
+
 export interface ProcessDto {
     icon?: string;
     name: string;

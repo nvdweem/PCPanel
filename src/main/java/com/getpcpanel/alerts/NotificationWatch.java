@@ -5,6 +5,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
+
 /** The desktop notifications apps are showing. One implementation per platform; best-effort, never throws. */
 public interface NotificationWatch {
     /** Apps (exe stem or handler id, lower-case) with at least one live notification right now. */
@@ -21,5 +23,11 @@ public interface NotificationWatch {
     /** Handler ids seen, for the UI's source picker. */
     default Set<String> sources() {
         return Set.of();
+    }
+
+    /** Why notifications can't be followed here, for the settings page; {@code null} when they can. */
+    @Nullable
+    default String unavailable() {
+        return null;
     }
 }

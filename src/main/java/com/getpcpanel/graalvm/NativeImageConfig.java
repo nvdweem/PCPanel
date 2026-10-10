@@ -137,6 +137,7 @@ import com.getpcpanel.rest.PlatformResource;
 import com.getpcpanel.rest.model.dto.AddDeejDeviceDto;
 import com.getpcpanel.rest.model.dto.AutostartRequestDto;
 import com.getpcpanel.rest.model.dto.AutostartStateDto;
+import com.getpcpanel.rest.model.dto.PlatformLimitsDto;
 import com.getpcpanel.rest.model.dto.DeviceDto;
 import com.getpcpanel.rest.model.dto.MidiDeviceDto;
 import com.getpcpanel.rest.model.dto.OnboardingDto;
@@ -493,6 +494,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         DisplayDto.class, DisplayDto[].class,
         PlatformResource.PlatformInfo.class,
         AutostartStateDto.class,
+        PlatformLimitsDto.class,
         AutostartRequestDto.class,
         VoiceMeeterResource.VoiceMeeterParam[].class,
         SaveBackup.class,

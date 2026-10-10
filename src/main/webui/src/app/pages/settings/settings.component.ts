@@ -13,7 +13,7 @@ import { DeviceStateService } from '../../services/device-state.service';
 import { HistoryService } from '../../services/history.service';
 import {
   AlertEffect, CurveDefinition, DiscordSettings, NotificationAlert, SaveBackup, DiscordStatusDto, FocusVolumeOverride, FocusVolumeTarget, OverlayPosition, SettingsDto, SonarSettings,
-  WaveLinkSettings,
+  PlatformLimitsDto, WaveLinkSettings,
 } from '../../models/generated/backend.types';
 import {
   AppPickerComponent,
@@ -302,12 +302,28 @@ export class SettingsComponent {
         stopSonarRefresh();
       }
     });
+    // Notifications are only followed once something asks, so whether that works is known a moment after the
+    // notification-lights page first asks: look again shortly after opening it.
+    let limitsTimer: ReturnType<typeof setTimeout> | undefined;
+    effect(() => {
+      if (this.activeTab() === 'alerts') {
+        untracked(() => {
+          this.limits.reload();
+          clearTimeout(limitsTimer);
+          limitsTimer = setTimeout(() => this.limits.reload(), 3000);
+        });
+      }
+    });
     inject(DestroyRef).onDestroy(() => {
       this.savedOverlayPreview.dispose();
       this.editedOverlayPreview.dispose();
       stopSonarRefresh();
+      clearTimeout(limitsTimer);
     });
   }
+
+  /** What this desktop can't detect (screens off, locking, notifications), shown next to the options that rely on it. */
+  readonly limits = httpResource<PlatformLimitsDto>(() => '/api/platform/limits');
 
   /** Browser refresh / tab close: warn if there are unsaved edits (in-app nav is guarded by back()). */
   @HostListener('window:beforeunload', ['$event'])
@@ -835,6 +851,7 @@ export class SettingsComponent {
   readonly notificationSources = signal<string[]>([]);
 
   refreshNotificationSources(): void {
+    this.limits.reload();
     this.http.get<string[]>('/api/alerts/notification-sources').subscribe({
       next: sources => this.notificationSources.set(sources ?? []),
       error: () => {},

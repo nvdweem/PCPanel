@@ -285,6 +285,13 @@ over MPRIS on the session D-Bus (the same mechanism `playerctl` uses), so these 
 
 ## Notes
 
+### Lights off when locked or asleep
+
+Locking the PC and sleep are followed through systemd-logind, on every desktop that uses it (the lock shortcut, idle
+lock and `loginctl lock-session` alike). The screens turning off on their own is only detected in X11 sessions: Wayland
+offers no way to see it, so on Wayland the lights stay on while the screens are off but the PC is not locked. A desktop
+without systemd-logind can't report locking or sleep either. Settings → General shows these limits under the option.
+
 ### Disabling the tray icon
 
 The tray icon can be turned off entirely (both the Wayland StatusNotifierItem and the X11/AWT tray,

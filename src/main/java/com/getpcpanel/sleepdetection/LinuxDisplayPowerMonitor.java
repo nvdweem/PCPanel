@@ -2,6 +2,10 @@ package com.getpcpanel.sleepdetection;
 
 import java.util.function.Consumer;
 
+import javax.annotation.Nullable;
+
+import org.apache.commons.lang3.StringUtils;
+
 import com.getpcpanel.sleepdetection.LinuxX11.LibX11;
 import com.getpcpanel.sleepdetection.LinuxX11.LibXext;
 import com.sun.jna.Pointer;
@@ -26,6 +30,8 @@ public class LinuxDisplayPowerMonitor {
     private final Consumer<SystemEventType> sink;
     private volatile boolean running;
     private Thread thread;
+    /** Why the screens turning off can't be followed, for the settings page; {@code null} while it can (or is still finding out). */
+    @Nullable private volatile String unavailable;
 
     public LinuxDisplayPowerMonitor(Consumer<SystemEventType> sink) {
         this.sink = sink;
@@ -45,23 +51,42 @@ public class LinuxDisplayPowerMonitor {
         }
     }
 
+    /** Why the screens turning off can't be followed here, or {@code null} when they can. */
+    @Nullable
+    public String unavailable() {
+        return unavailable;
+    }
+
+    /**
+     * The screens' power state comes from X11's DPMS. A Wayland session has no X display, or only XWayland, which
+     * reports none.
+     */
+    private static String unavailableReason() {
+        return StringUtils.isNotBlank(System.getenv("WAYLAND_DISPLAY"))
+                ? "The screens turning off can't be detected on Wayland; locking the PC and sleep still switch the lights off."
+                : "The screens turning off can't be detected here (the X server reports no DPMS power state); locking the PC and sleep still switch the lights off.";
+    }
+
     private void run() {
         Pointer display = null;
         try {
             display = LibX11.INSTANCE.XOpenDisplay(null);
             if (display == null) {
                 log.info("No X display available; Linux display-power detection disabled");
+                unavailable = unavailableReason();
                 return;
             }
             if (!LibXext.INSTANCE.DPMSQueryExtension(display, new IntByReference(), new IntByReference())
                     || !LibXext.INSTANCE.DPMSCapable(display)) {
                 log.info("X server is not DPMS-capable; Linux display-power detection disabled");
+                unavailable = unavailableReason();
                 return;
             }
             log.info("Linux display-power detection started (X11 DPMS)");
             pollLoop(display);
         } catch (Throwable e) { // NOSONAR - display-power detection is non-essential, must never crash the app
             log.warn("Linux display-power detection unavailable: {}", e.toString());
+            unavailable = unavailableReason();
             log.debug("display-power monitor failure", e);
         } finally {
             if (display != null) {

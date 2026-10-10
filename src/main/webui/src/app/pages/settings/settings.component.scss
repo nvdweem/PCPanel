@@ -136,6 +136,8 @@
 /* Platform-unsupported integrations: shown but disabled */
 .tab.unsupported .tab-label { color: var(--text-3); }
 .platform-note { margin-bottom: 16px; }
+/* Something this desktop can't detect, next to the option that relies on it. */
+.limit-note { color: var(--warn-text, var(--warn)); }
 .disabled-block { opacity: 0.55; pointer-events: none; }
 
 /* Leave-without-saving modal */

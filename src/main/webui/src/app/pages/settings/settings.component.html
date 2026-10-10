@@ -85,6 +85,8 @@
               <div class="row-text">
                 <div class="row-label">Lights off when locked or asleep</div>
                 <div class="row-sub">Switch the panel lights off when you lock the PC, the monitors go to sleep or the PC suspends — and back on when you return. Turn this off if your lights ever switch off when they shouldn't; the lights still turn off when the app closes.</div>
+                @if (limits.value()?.lockAndSleep; as note) { <div class="row-sub limit-note">{{ note }}</div> }
+                @if (limits.value()?.screensOff; as note) { <div class="row-sub limit-note">{{ note }}</div> }
               </div>
               <pc-toggle [value]="s.sleepDetectionEnabled" (valueChange)="patch('sleepDetectionEnabled', $event)"></pc-toggle>
             </div>
@@ -301,6 +303,9 @@
               the same windows. That works on X11, and on Wayland
               for apps that run through XWayland (Electron apps such as Discord usually do); other Wayland apps can't be seen. The
               microphone light works on every desktop.</div>
+          }
+          @if (limits.value()?.notifications; as note) {
+            <div class="pc-hint platform-note limit-note">{{ note }}</div>
           }
 
           @for (alert of alerts(); track $index; let ai = $index) {

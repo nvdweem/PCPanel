@@ -38,12 +38,16 @@ import lombok.extern.log4j.Log4j2;
 public class LinuxSystemEventService {
     private static final String LOGIN1 = "org.freedesktop.login1";
     private static final String SESSION_INTERFACE = "org.freedesktop.login1.Session";
+    private static final String DEFAULT_SYSTEM_BUS = "/var/run/dbus/system_bus_socket";
+    private static final String NO_LOGIND = "Locking the PC and sleep can't be detected: systemd-logind isn't reachable (a distribution without systemd, or a sandbox without access to it).";
 
     @Inject
     Event<Object> eventBus;
 
     private volatile DBusConnection connection;
     private volatile boolean closed;
+    /** Why locking or sleep can't be followed, for the settings page; {@code null} when they can. */
+    @Nullable private volatile String lockAndSleepUnavailable;
     private final LinuxDisplayPowerMonitor displayPowerMonitor = new LinuxDisplayPowerMonitor(this::fire);
 
     @PostConstruct
@@ -57,6 +61,13 @@ public class LinuxSystemEventService {
     }
 
     private void connect() {
+        if (!systemBusPresent(System.getenv("DBUS_SYSTEM_BUS_ADDRESS"))) {
+            // dbus-java waits out its retries on a missing socket (~9 s), and every other D-Bus connection, such as the
+            // tray's, waits with it: don't try.
+            log.warn("No system D-Bus socket; running without systemd-logind sleep detection");
+            lockAndSleepUnavailable = NO_LOGIND;
+            return;
+        }
         // Catch Throwable, not just Exception: in a native image a missing/unreachable class surfaces
         // as a LinkageError, and sleep detection is non-essential — it must never crash startup.
         try {
@@ -80,6 +91,8 @@ public class LinuxSystemEventService {
             var session = sessionPath(built);
             if (session != null) {
                 built.addSigHandler(Properties.PropertiesChanged.class, signal -> onSessionChanged(session, signal));
+            } else {
+                lockAndSleepUnavailable = "Locking the PC with your desktop's own lock can't be detected (systemd-logind doesn't know this session); sleep still switches the lights off.";
             }
             connection = built;
             if (closed) {
@@ -91,8 +104,41 @@ public class LinuxSystemEventService {
             log.info("Linux sleep/session detection started (systemd-logind)");
         } catch (Throwable e) { // NOSONAR - intentionally broad; sleep detection must never take down the app
             log.warn("Could not initialize systemd-logind sleep detection, running without it: {}", e.toString());
+            lockAndSleepUnavailable = NO_LOGIND;
             log.debug("logind sleep detection initialization failure", e);
         }
+    }
+
+    /**
+     * Whether the system bus's socket is there: the one {@code DBUS_SYSTEM_BUS_ADDRESS} names, or else the standard one.
+     * An address that is not a plain socket path (abstract, tcp) is taken to be there.
+     */
+    static boolean systemBusPresent(@Nullable String address) {
+        if (StringUtils.isBlank(address)) {
+            return Files.exists(Path.of(DEFAULT_SYSTEM_BUS));
+        }
+        for (var part : StringUtils.split(StringUtils.substringBefore(address, ';'), ',')) {
+            var path = StringUtils.substringAfter(part, "unix:path=");
+            if (path.isEmpty() && part.startsWith("path=")) {
+                path = part.substring("path=".length());
+            }
+            if (!path.isEmpty()) {
+                return Files.exists(Path.of(path));
+            }
+        }
+        return true;
+    }
+
+    /** Why locking the PC or sleep can't be followed here, or {@code null} when they can. */
+    @Nullable
+    public String lockAndSleepUnavailable() {
+        return lockAndSleepUnavailable;
+    }
+
+    /** Why the screens turning off can't be followed here, or {@code null} when they can. */
+    @Nullable
+    public String screensOffUnavailable() {
+        return displayPowerMonitor.unavailable();
     }
 
     /** This app's logind session: the one the desktop says it runs in, or else the one logind picks for it. */

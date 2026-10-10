@@ -7,15 +7,19 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+import com.getpcpanel.alerts.NotificationWatch;
 import com.getpcpanel.platform.autostart.WindowsAutostart;
 import com.getpcpanel.rest.SystemResource.ErrorDto;
 import com.getpcpanel.rest.model.dto.AutostartRequestDto;
 import com.getpcpanel.rest.model.dto.AutostartStateDto;
+import com.getpcpanel.rest.model.dto.PlatformLimitsDto;
+import com.getpcpanel.sleepdetection.LinuxSystemEventService;
 import com.getpcpanel.util.version.AutoUpdateService;
 
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -39,6 +43,9 @@ public class PlatformResource {
 
     @Inject AutoUpdateService autoUpdate;
     @Inject WindowsAutostart autostart;
+    @Inject NotificationWatch notificationWatch;
+    /** Linux builds only. */
+    @Inject Instance<LinuxSystemEventService> linuxSystemEvents;
 
     @ConfigProperty(name = "quarkus.application.version", defaultValue = "dev")
     String version;
@@ -69,6 +76,21 @@ public class PlatformResource {
         // visible if Discord was already running when PCPanel (and so the sandbox) started.
         var flatpak = StringUtils.isNotBlank(System.getenv("FLATPAK_ID"));
         return new PlatformInfo(os, SystemUtils.IS_OS_WINDOWS, SystemUtils.IS_OS_WINDOWS || SystemUtils.IS_OS_MAC, SystemUtils.IS_OS_WINDOWS, flatpak, autoUpdate.isSupported(), version, branch, commit);
+    }
+
+    /**
+     * What this desktop can't detect. Asking also starts following notifications when nothing else has yet, so a
+     * missing dbus-monitor shows up from the second look on.
+     */
+    @GET
+    @jakarta.ws.rs.Path("/limits")
+    public PlatformLimitsDto limits() {
+        notificationWatch.sources();
+        var linux = linuxSystemEvents.isResolvable() ? linuxSystemEvents.get() : null;
+        return new PlatformLimitsDto(
+                linux == null ? null : linux.screensOffUnavailable(),
+                linux == null ? null : linux.lockAndSleepUnavailable(),
+                notificationWatch.unavailable());
     }
 
     /** The start-with-Windows registration; {@code supported} is false outside an installed Windows build. */
