@@ -69,11 +69,14 @@ class NewSessionVolumeService implements IFocusRedirector {
         }
 
         var exe = session.executable().getName();
-        if (triggerCommandVolumeProcessIfAvailable(event, exe)) {
-            return true;
+        var applied = triggerCommandVolumeProcessIfAvailable(event, exe) || triggerStoredFocusAppVolume(session);
+        if (applied && forced) {
+            // Linux does not report PCPanel's own write back, so the volume recorded here would stay at the one the
+            // app was moved to, and moving it to that same volume again would not count as a change. Forget it: the
+            // next volume seen is a change (on Windows, which does report it, that is one more write of the same level).
+            lastVolumes.remove(key(session));
         }
-
-        return triggerStoredFocusAppVolume(session);
+        return applied;
     }
 
     /** Records the session's volume; returns whether it differs from the last one seen (or is the first). */

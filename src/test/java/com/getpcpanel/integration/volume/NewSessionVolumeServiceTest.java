@@ -8,9 +8,14 @@ import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
 
+import com.getpcpanel.commands.command.Command;
+import com.getpcpanel.device.DeviceHolder;
+import com.getpcpanel.device.DeviceHolder.DeviceAndDial;
 import com.getpcpanel.integration.volume.command.CommandVolumeProcess;
 import com.getpcpanel.integration.volume.platform.AudioSession;
 import com.getpcpanel.integration.volume.platform.AudioSessionEvent;
@@ -18,6 +23,7 @@ import com.getpcpanel.integration.volume.platform.EventType;
 import com.getpcpanel.profile.Save;
 import com.getpcpanel.profile.SaveService;
 
+import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 
 class NewSessionVolumeServiceTest {
@@ -155,5 +161,46 @@ class NewSessionVolumeServiceTest {
         session.setVolume(0.64f);
         assertTrue(sut.volumeChanged(session), "PCPanel put it back");
         assertFalse(sut.volumeChanged(session), "the echo of putting it back");
+    }
+
+    /**
+     * Linux does not report PCPanel's own write, so after forcing the level back the only volume seen is the one the
+     * app was moved to. Moving it to that same volume again must still be forced back.
+     */
+    @Test
+    void forcesTheSameVolumeAgainWhenPcpanelsOwnWriteIsNotReported() {
+        var s = new Save();
+        s.setForceVolume(true);
+        sut.save = new SaveService() {
+            @Override
+            public Save get() {
+                return s;
+            }
+        };
+        var triggered = new int[1];
+        sut.devices = new DeviceHolder() {
+            @Override
+            public <T extends Command> boolean hasCommandsOf(Class<T> clazz, Predicate<T> filter) {
+                return true;
+            }
+
+            @Override
+            public <T extends Command> void triggerCommandsOf(Class<T> clazz, Function<EntryStream<DeviceAndDial, T>, EntryStream<DeviceAndDial, T>> chain, boolean initial) {
+                triggered[0]++;
+            }
+        };
+        var session = new AudioSession(null, 1234, new File("firefox"), "Firefox", null, 0.74f, false) {
+            void setVolume(float v) {
+                setVolumeNoTrigger(v);
+            }
+        };
+        sut.onNewAudioSession(new AudioSessionEvent(session, EventType.ADDED));
+        triggered[0] = 0;
+
+        session.setVolume(0.33f);
+        assertTrue(sut.onNewAudioSession(new AudioSessionEvent(session, EventType.CHANGED)), "moved in the mixer");
+        session.setVolume(0.33f);
+        assertTrue(sut.onNewAudioSession(new AudioSessionEvent(session, EventType.CHANGED)), "moved to the same volume again");
+        assertEquals(2, triggered[0]);
     }
 }
