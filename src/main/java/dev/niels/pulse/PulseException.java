@@ -4,6 +4,7 @@ package dev.niels.pulse;
 public class PulseException extends RuntimeException {
     /** The code of an error that did not come from the server. */
     public static final int NO_SERVER_CODE = -1;
+    public static final int ERR_ACCESS = 1;
     public static final int ERR_NOENTITY = 5;
 
     private final int code;
@@ -29,7 +30,7 @@ public class PulseException extends RuntimeException {
 
     static String describe(int code) {
         return switch (code) {
-            case 1 -> "access denied";
+            case ERR_ACCESS -> "access denied";
             case 2 -> "unknown command";
             case 3 -> "invalid argument";
             case 4 -> "entity exists";

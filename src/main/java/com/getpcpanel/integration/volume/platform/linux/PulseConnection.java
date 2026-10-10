@@ -74,19 +74,26 @@ class PulseConnection {
             onFailure("no PulseAudio socket found ($PULSE_SERVER, $XDG_RUNTIME_DIR/pulse/native)");
             return null;
         }
+        PulseClient connected = null;
         try {
+            // media.category=Manager: WirePlumber lets a sandboxed (Flatpak) client only read unless it says it is a
+            // mixer; without it every volume, mute and default-device change is refused with "access denied".
             var properties = Map.of(
                     "application.name", CLIENT_NAME,
                     "application.id", "com.getpcpanel.PCPanel",
-                    "application.process.id", String.valueOf(ProcessHandle.current().pid()));
-            current = PulseClient.connect(socket, PulseServerLocator.cookie(env, Path.of(System.getProperty("user.home"))), properties, REQUEST_TIMEOUT);
-            var server = current.serverInfo();
-            state = "connected to " + server.serverName() + " " + server.serverVersion() + " at " + socket + ", protocol " + current.version();
+                    "application.process.id", String.valueOf(ProcessHandle.current().pid()),
+                    "media.category", "Manager");
+            connected = PulseClient.connect(socket, PulseServerLocator.cookie(env, Path.of(System.getProperty("user.home"))), properties, REQUEST_TIMEOUT);
+            var server = connected.serverInfo();
+            state = "connected to " + server.serverName() + " " + server.serverVersion() + " at " + socket + ", protocol " + connected.version();
             log.info("PulseAudio protocol: {}", state);
             failureLogged = false;
-            client = current;
-            return current;
-        } catch (IOException | PulseException e) {
+            client = connected;
+            return connected;
+        } catch (IOException | RuntimeException e) {
+            if (connected != null) {
+                connected.close();
+            }
             onFailure("unable to connect to " + socket + ": " + e.getMessage());
             return null;
         }

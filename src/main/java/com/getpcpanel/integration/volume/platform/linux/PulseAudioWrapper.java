@@ -291,12 +291,16 @@ class PulseAudioWrapper {
                 log.warn("{}: {}; the change was not applied", description, e.getMessage());
                 return;
             } catch (PulseException e) {
-                if (e.isServerError()) {
+                if (e.getCode() == PulseException.ERR_ACCESS) {
+                    // The server lets this connection read but not change (a sandbox policy); pactl may be allowed to.
+                    log.debug("{} refused over the protocol, trying pactl: {}", description, e.getMessage());
+                } else if (e.isServerError()) {
                     // The target is gone or refused the change; pactl would get the same answer.
                     log.debug("{} refused: {}", description, e.getMessage());
                     return;
+                } else {
+                    pulse.lost(client, e);
                 }
-                pulse.lost(client, e);
             }
         }
         viaPactl.run();
