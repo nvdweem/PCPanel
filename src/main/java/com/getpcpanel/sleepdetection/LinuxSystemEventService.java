@@ -3,8 +3,12 @@ package com.getpcpanel.sleepdetection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import javax.annotation.Nullable;
+
+import org.apache.commons.lang3.StringUtils;
 import org.freedesktop.dbus.connections.impl.DBusConnection;
 import org.freedesktop.dbus.connections.impl.DBusConnectionBuilder;
+import org.freedesktop.dbus.interfaces.Properties;
 
 import com.getpcpanel.platform.LinuxBuild;
 
@@ -19,8 +23,9 @@ import lombok.extern.log4j.Log4j2;
 /**
  * Linux sleep/session detection via systemd-logind on the system D-Bus. Truly native and event-driven
  * (no JNA callbacks, which crash the native image): the {@code PrepareForSleep} signal gives advance
- * suspend notice and a resume signal, and the per-session {@code Lock}/{@code Unlock} signals give
- * best-effort lock detection. dbus-java is the same stack the system tray already uses, so it works
+ * suspend notice and a resume signal. Locking is followed through the app's session: its {@code LockedHint}
+ * property (set by the desktop's own screen locker, as on KDE Plasma and GNOME) and its {@code Lock}/{@code Unlock}
+ * signals (logind asked to lock, e.g. {@code loginctl lock-session}). dbus-java is the same stack the system tray already uses, so it works
  * in the GraalVM native image.
  *
  * <p>Display power off/on (monitors sleeping) is detected separately by {@link LinuxDisplayPowerMonitor}
@@ -31,6 +36,9 @@ import lombok.extern.log4j.Log4j2;
 @ApplicationScoped
 @LinuxBuild
 public class LinuxSystemEventService {
+    private static final String LOGIN1 = "org.freedesktop.login1";
+    private static final String SESSION_INTERFACE = "org.freedesktop.login1.Session";
+
     @Inject
     Event<Object> eventBus;
 
@@ -66,6 +74,13 @@ public class LinuxSystemEventService {
                     fire(signal.start ? SystemEventType.goingToSuspend : SystemEventType.resumedFromSuspend));
             built.addSigHandler(Login1Session.Lock.class, signal -> fire(SystemEventType.locked));
             built.addSigHandler(Login1Session.Unlock.class, signal -> fire(SystemEventType.unlocked));
+            // Lock/Unlock are logind asking the desktop to lock (loginctl lock-session). A desktop that locks on its
+            // own, as KDE Plasma and GNOME do for their lock shortcut and idle lock, only sets the session's
+            // LockedHint, so follow that too.
+            var session = sessionPath(built);
+            if (session != null) {
+                built.addSigHandler(Properties.PropertiesChanged.class, signal -> onSessionChanged(session, signal));
+            }
             connection = built;
             if (closed) {
                 // The app shut down while this was still connecting.
@@ -77,6 +92,46 @@ public class LinuxSystemEventService {
         } catch (Throwable e) { // NOSONAR - intentionally broad; sleep detection must never take down the app
             log.warn("Could not initialize systemd-logind sleep detection, running without it: {}", e.toString());
             log.debug("logind sleep detection initialization failure", e);
+        }
+    }
+
+    /** This app's logind session: the one the desktop says it runs in, or else the one logind picks for it. */
+    @Nullable
+    private static String sessionPath(DBusConnection connection) {
+        try {
+            var manager = connection.getRemoteObject(LOGIN1, "/org/freedesktop/login1", Login1Manager.class);
+            for (var id : new String[] { System.getenv("XDG_SESSION_ID"), "auto" }) {
+                if (StringUtils.isBlank(id)) {
+                    continue;
+                }
+                try {
+                    return manager.GetSession(id).getPath();
+                } catch (RuntimeException e) {
+                    log.debug("logind has no session '{}': {}", id, e.toString());
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Unable to look up the logind session", e);
+        }
+        log.info("No logind session found; locking is only noticed when logind is asked to lock");
+        return null;
+    }
+
+    static @Nullable SystemEventType lockedHintChange(String session, Properties.PropertiesChanged signal) {
+        if (!session.equals(signal.getPath()) || !SESSION_INTERFACE.equals(signal.getInterfaceName())) {
+            return null;
+        }
+        var hint = signal.getPropertiesChanged().get("LockedHint");
+        if (hint != null && hint.getValue() instanceof Boolean locked) {
+            return locked ? SystemEventType.locked : SystemEventType.unlocked;
+        }
+        return null;
+    }
+
+    private void onSessionChanged(String session, Properties.PropertiesChanged signal) {
+        var type = lockedHintChange(session, signal);
+        if (type != null) {
+            fire(type);
         }
     }
 
