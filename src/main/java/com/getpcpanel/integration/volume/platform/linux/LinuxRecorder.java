@@ -16,6 +16,7 @@ import com.getpcpanel.platform.LinuxBuild;
 import com.getpcpanel.util.os.ProcessHelper;
 
 import dev.niels.pulse.PulseException;
+import dev.niels.pulse.PulseTimeoutException;
 import dev.niels.pulse.RecordRequest;
 import dev.niels.pulse.RecordStream;
 import dev.niels.pulse.SampleSpec;
@@ -104,6 +105,12 @@ class LinuxRecorder {
                     : RecordRequest.source(target.source(), SampleSpec.float32Mono(rate), Duration.ofMillis(latencyMs), properties(clientName));
             try {
                 return new ProtocolRecording(client.record(request, data -> samples.accept(data.asFloatBuffer())));
+            } catch (PulseTimeoutException e) {
+                // PipeWire answers once the stream is linked, which a source that is slow to wake (a Bluetooth headset)
+                // can take longer than the timeout for. The connection is fine and shared with everything else: keep it,
+                // and let the caller try again later.
+                log.debug("Recording {} did not start in time: {}", target, e.getMessage());
+                return null;
             } catch (PulseException e) {
                 if (e.isServerError()) {
                     // The source or stream is not there (any more); parec would be told the same.

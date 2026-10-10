@@ -102,7 +102,14 @@ class PulseAudioEventListener {
         while (running) {
             var client = pulse.client();
             if (client != null) {
-                followProtocol(client);
+                try {
+                    followProtocol(client);
+                } catch (RuntimeException e) {
+                    // An observer or the connection failing in an unexpected way must not end this thread: nothing else
+                    // would follow device and session changes any more.
+                    log.warn("Following PulseAudio changes failed; retrying in {}ms", RESTART_DELAY_MS, e);
+                    sleepBeforeRestart();
+                }
                 continue;
             }
             try {
