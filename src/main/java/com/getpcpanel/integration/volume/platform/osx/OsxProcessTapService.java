@@ -3,7 +3,6 @@ package com.getpcpanel.integration.volume.platform.osx;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.SystemUtils;
@@ -36,13 +35,13 @@ class OsxProcessTapService {
     private final CoreAudioWrapper wrapper;
     // Command operations are serialized so application intent and its taps change together.
     private final Map<ProcessIdentity, Entry> taps = new HashMap<>();
-    // Presence means mute is desired. Pending attempts must not count as successful toggles.
-    private final Map<ProcessIdentity, MuteStatus> applicationMutes = new HashMap<>();
+    // Also records which adjusted owners already have an exit notification. No general process monitor.
+    private final Map<ProcessIdentity, MuteStatus> applications = new HashMap<>();
 
-    private enum MuteStatus { PENDING, APPLIED }
+    private enum MuteStatus { UNMUTED, PENDING, APPLIED }
     private final AtomicBoolean creationFailureLogged = new AtomicBoolean();
 
-    private record Entry(ProcessTap tap, int outputDeviceId) {
+    private record Entry(ProcessTap tap, int outputDeviceId, ProcessIdentity owner, int processObject) {
     }
 
     /** Process taps shipped in macOS 14.4 (Sonoma); anything older has no per-process audio hooks. */
@@ -66,7 +65,7 @@ class OsxProcessTapService {
             return;
         }
         var entry = taps.get(identity);
-        update(identity, volume, entry != null && entry.tap().muted());
+        update(identity, entry == null ? identity : entry.owner(), volume, entry != null && entry.tap().muted());
     }
 
     public synchronized boolean isMuted(int pid) {
@@ -76,17 +75,19 @@ class OsxProcessTapService {
     }
 
     public synchronized boolean setMuted(int pid, boolean muted) {
+        cleanUpDeadProcesses();
+        var identity = ProcessIdentity.find(pid);
+        var entry = taps.get(identity);
+        return identity == null ? !muted : setMuted(entry == null ? identity : entry.owner(), identity, muted);
+    }
+
+    private boolean setMuted(ProcessIdentity owner, ProcessIdentity identity, boolean muted) {
         if (!isSupported()) {
             return false;
         }
-        cleanUpDeadProcesses();
-        var identity = ProcessIdentity.find(pid);
-        if (identity == null) {
-            return !muted;
-        }
         var entry = taps.get(identity);
-        update(identity, entry == null ? 1 : entry.tap().gain(), muted);
-        return isMuted(pid) == muted;
+        update(identity, owner, entry == null ? 1 : entry.tap().gain(), muted);
+        return isMuted(identity.pid()) == muted;
     }
 
     public synchronized void mute(int pid, MuteType muteType) {
@@ -94,21 +95,39 @@ class OsxProcessTapService {
     }
 
     public synchronized void muteApplication(int ownerPid, List<Integer> pids, MuteType mute) {
-        cleanUpDeadProcesses();
         var owner = ProcessIdentity.find(ownerPid);
-        if (owner == null || !isSupported()) {
+        var status = applications.get(owner);
+        // Snapshot the live audio state before cleanup releases expired-owner mute. A late exit callback
+        // must not turn the user's first "unmute" toggle into a new mute. The GUI PID may have no audio.
+        var audioPids = pids.stream().filter(pid -> wrapper.translatePidToProcessObject(pid) != 0).toList();
+        var audioEntries = audioPids.stream().map(pid -> taps.get(ProcessIdentity.find(pid))).toList();
+        var expiredOwnerMute = audioEntries.stream().anyMatch(entry -> entry != null && entry.tap().muted()
+                && !entry.owner().equals(ProcessIdentity.find(entry.owner().pid())));
+        var muted = status == MuteStatus.APPLIED
+                || (status == null || status == MuteStatus.UNMUTED) && (expiredOwnerMute
+                    || !audioEntries.isEmpty() && audioEntries.stream().allMatch(entry -> entry != null && entry.tap().muted()));
+        cleanUpDeadProcesses();
+        if (owner == null || !isSupported() || !owner.equals(ProcessIdentity.find(ownerPid))) {
             return;
         }
-        var status = applicationMutes.get(owner);
-        var muted = status == MuteStatus.APPLIED
-                || status == null && !pids.isEmpty() && pids.stream().allMatch(this::isMuted);
         var target = mute.convert(muted);
+        log.debug("Application mute: owner={}, operation={}, previousMute={}, target={}, expiredOwnerMute={}, audioPids={}", owner, mute, muted, target, expiredOwnerMute, audioPids);
         if (target) {
-            applicationMutes.put(owner, MuteStatus.PENDING);
+            if (!observeOwner(owner)) {
+                return;
+            }
+            applications.put(owner, MuteStatus.PENDING);
             restoreApplicationMute(ownerPid, pids);
         } else {
-            pids.forEach(pid -> setMuted(pid, false));
-            applicationMutes.remove(owner);
+            for (var pid : pids) {
+                var identity = ProcessIdentity.find(pid);
+                if (identity != null) {
+                    setMuted(owner, identity, false);
+                }
+            }
+            if (applications.containsKey(owner)) {
+                applications.put(owner, MuteStatus.UNMUTED);
+            }
         }
     }
 
@@ -116,15 +135,18 @@ class OsxProcessTapService {
     public synchronized void restoreApplicationMute(int ownerPid, List<Integer> pids) {
         cleanUpDeadProcesses();
         var owner = ProcessIdentity.find(ownerPid);
-        if (owner == null || !applicationMutes.containsKey(owner)) {
+        if (owner == null || applications.getOrDefault(owner, MuteStatus.UNMUTED) == MuteStatus.UNMUTED) {
             return;
         }
-        var applied = applicationMutes.get(owner) == MuteStatus.APPLIED;
+        var applied = applications.get(owner) == MuteStatus.APPLIED;
         for (var pid : pids) {
-            applied |= isMuted(pid) || setMuted(pid, true);
+            var identity = ProcessIdentity.find(pid);
+            if (identity != null) {
+                applied |= setMuted(owner, identity, true);
+            }
         }
         if (applied) {
-            applicationMutes.put(owner, MuteStatus.APPLIED);
+            applications.put(owner, MuteStatus.APPLIED);
         }
     }
 
@@ -134,16 +156,16 @@ class OsxProcessTapService {
         if (owner == null || !isSupported()) {
             return;
         }
-        var muted = applicationMutes.containsKey(owner);
+        var muted = applications.getOrDefault(owner, MuteStatus.UNMUTED) != MuteStatus.UNMUTED;
         for (var pid : pids) {
             var identity = ProcessIdentity.find(pid);
             if (identity != null) {
                 var entry = taps.get(identity);
-                update(identity, volume, muted || entry != null && entry.tap().muted());
+                update(identity, owner, volume, muted || entry != null && entry.tap().muted());
             }
         }
         if (muted && pids.stream().anyMatch(this::isMuted)) {
-            applicationMutes.put(owner, MuteStatus.APPLIED);
+            applications.put(owner, MuteStatus.APPLIED);
         }
     }
 
@@ -151,36 +173,49 @@ class OsxProcessTapService {
     synchronized void destroy() {
         taps.values().forEach(entry -> entry.tap().close());
         taps.clear();
-        applicationMutes.clear();
+        applications.clear();
     }
 
     /** Apply the requested state directly when recreating a tap; a failed recreation leaves no live entry. */
-    private void update(ProcessIdentity identity, float gain, boolean muted) {
+    private void update(ProcessIdentity identity, ProcessIdentity owner, float gain, boolean muted) {
+        if (!owner.equals(ProcessIdentity.find(owner.pid()))) {
+            return;
+        }
         var entry = taps.get(identity);
+        if (entry != null && !entry.owner().equals(owner) && !observeOwner(owner)) {
+            return;
+        }
         if (entry != null && (entry.outputDeviceId() != wrapper.getDefaultDevice(true) || gain >= FULL_VOLUME && !muted)) {
-            entry.tap().close();
+            closeEntry(identity, entry, "output change or full unmuted volume");
             taps.remove(identity);
             entry = null;
         }
         if (entry == null) {
             if (gain < FULL_VOLUME || muted) {
-                entry = createEntry(identity.pid(), gain, muted);
+                if (!observeOwner(owner)) {
+                    return;
+                }
+                entry = createEntry(identity, owner, gain, muted);
                 if (entry != null) {
                     // Do not retain a tap if the PID changed lifetime during its creation.
-                    if (identity.equals(ProcessIdentity.find(identity.pid()))) {
+                    if (identity.equals(ProcessIdentity.find(identity.pid())) && owner.equals(ProcessIdentity.find(owner.pid()))) {
                         taps.put(identity, entry);
                     } else {
-                        entry.tap().close();
+                        closeEntry(identity, entry, "process or owner changed during creation");
                     }
                 }
             }
         } else {
             entry.tap().setGain(gain);
             entry.tap().setMuted(muted);
+            if (!entry.owner().equals(owner)) {
+                taps.put(identity, new Entry(entry.tap(), entry.outputDeviceId(), owner, entry.processObject()));
+            }
         }
     }
 
-    private Entry createEntry(int pid, float gain, boolean muted) {
+    private Entry createEntry(ProcessIdentity identity, ProcessIdentity owner, float gain, boolean muted) {
+        var pid = identity.pid();
         var processObject = wrapper.translatePidToProcessObject(pid);
         if (processObject == 0) {
             log.debug("No CoreAudio process object for pid {}, not tapping", pid);
@@ -195,8 +230,8 @@ class OsxProcessTapService {
         try {
             var tap = ProcessTap.create(processObject, outputUid, gain);
             tap.setMuted(muted);
-            log.debug("Tapped pid {} (process object {}) on '{}'", pid, processObject, outputUid);
-            return new Entry(tap, outputDeviceId);
+            log.debug("Tapped process={} owner={} processObject={} output='{}' gain={} muted={}", identity, owner, processObject, outputUid, gain, muted);
+            return new Entry(tap, outputDeviceId, owner, processObject);
         } catch (ProcessTap.TapCreationException e) {
             if (creationFailureLogged.compareAndSet(false, true)) {
                 log.warn("Unable to create a process tap for pid {}. Per-app volume needs the System Audio Recording permission: "
@@ -208,14 +243,57 @@ class OsxProcessTapService {
         }
     }
 
+    private boolean observeOwner(ProcessIdentity owner) {
+        if (applications.putIfAbsent(owner, MuteStatus.UNMUTED) == null) {
+            ProcessIdentity.onExit(owner, () -> ownerExited(owner, "exit notification"));
+        }
+        return applications.containsKey(owner) && owner.equals(ProcessIdentity.find(owner.pid()));
+    }
+
+    /** Exit notifications and command-time identity checks share the same owner release. */
+    private synchronized void ownerExited(ProcessIdentity owner, String reason) {
+        applications.remove(owner);
+        log.debug("Releasing audio owner {}: {}", owner, reason);
+        for (var identity : List.copyOf(taps.keySet())) {
+            var entry = taps.get(identity);
+            if (entry == null || !entry.owner().equals(owner)) {
+                continue;
+            }
+            if (!identity.equals(owner) && identity.equals(ProcessIdentity.find(identity.pid())) && entry.tap().gain() < FULL_VOLUME) {
+                // The audio process genuinely survived. Release the departed owner's mute without
+                // discarding this live tap's gain; this is not volume persistence for a new process.
+                entry.tap().setMuted(false);
+                taps.put(identity, new Entry(entry.tap(), entry.outputDeviceId(), identity, entry.processObject()));
+                observeOwner(identity);
+                if (log.isDebugEnabled()) {
+                    log.debug("Released owner mute; retaining live process={} tappedProcessObject={} currentProcessObject={} gain={}",
+                            identity, entry.processObject(), wrapper.translatePidToProcessObject(identity.pid()), entry.tap().gain());
+                }
+            } else {
+                closeEntry(identity, entry, "owner exited");
+                taps.remove(identity);
+            }
+        }
+    }
+
+    private void closeEntry(ProcessIdentity identity, Entry entry, String reason) {
+        log.debug("Closing audio tap: process={} owner={} processObject={} gain={} muted={} reason={}",
+                identity, entry.owner(), entry.processObject(), entry.tap().gain(), entry.tap().muted(), reason);
+        entry.tap().close();
+    }
+
     private void cleanUpDeadProcesses() {
-        taps.entrySet().removeIf(entry -> {
-            if (entry.getKey().equals(ProcessIdentity.find(entry.getKey().pid()))) {
+        for (var owner : List.copyOf(applications.keySet())) {
+            if (!owner.equals(ProcessIdentity.find(owner.pid()))) {
+                ownerExited(owner, "identity check");
+            }
+        }
+        taps.entrySet().removeIf(control -> {
+            if (control.getKey().equals(ProcessIdentity.find(control.getKey().pid()))) {
                 return false;
             }
-            entry.getValue().tap().close();
+            closeEntry(control.getKey(), control.getValue(), "audio process exited or changed identity");
             return true;
         });
-        applicationMutes.keySet().removeIf(owner -> !Objects.equals(owner, ProcessIdentity.find(owner.pid())));
     }
 }

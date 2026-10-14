@@ -1,6 +1,7 @@
 # macOS audio fixes: independent review and controlled testing
 
-Branch: `fix-macos-safari-pwa-volume`. Baseline: `35f20c4a`.
+Branch: `fix-macos-safari-pwa-volume`. Initial fixes baseline: `35f20c4a`; application-owner lifecycle
+follow-up baseline: `bd70328b`.
 
 ## Verified defect reproduction
 
@@ -19,19 +20,34 @@ list. Removing the list cache also prevents retaining old coalition membership a
 `SndCtrlOsx` resolves applications and audio-producing coalition PIDs. The existing tap service owns
 application mute intent and actual tap state. There is no bundle/path/PID string mute map and no
 per-helper applied flag. Application intent is keyed by the main process's PID and start instant;
-live taps use the same identity model for their individual processes.
+live taps use the same identity model for their individual processes and record their application
+owner's identity.
 
 Mute intent is pending until at least one tap successfully mutes. A completely failed toggle can be
 retried as mute. Once applied, application mute survives helper replacement while its main process
 lives. Resolution and volume commands retry missing helper taps. Volume tap creation receives the
 desired mute state directly, so recovery cannot create an unmuted volume tap for a muted application.
 Unmute clears the application intent; actual mute queries read live taps. Cleanup runs on commands,
-including mute queries, and closes taps from expired identities. No background monitor was added.
+including mute queries, and closes taps from expired identities. Adjusted owners also receive one
+`ProcessHandle.onExit()` notification per lifetime, reusing the same owner-release logic. Command-only
+cleanup cannot release a mute while no further input arrives; this scoped notification addresses that
+gap without a polling loop or general application monitor.
+
+Owner release closes mute-only taps even if their audio helper survives. For a genuinely surviving
+helper with an attenuated tap, it clears mute and retains that live tap's gain. The retained tap is
+then scoped to the audio process's own lifetime until another application command claims it. An
+expired-owner callback cannot affect a new owner's tap after PID reuse. A late notification is handled
+by command-time identity checks; the first toggle snapshots relevant live audio state before cleanup
+so releasing a stale mute cannot turn that toggle into a new mute. An untapped GUI PID does not count
+as an unmuted audio stream.
 
 The automated tests cover rapid focus switching and focused termination (with process launch mocked),
 mixed-state toggles, failed initial mute recovery, pending mute recovery through volume, output-device
 recreation failure, same-app restart, unrelated PID reuse, helper replacement, unavailable identity,
-and identity changes during tap creation. Existing Safari/PWA matching and isolation tests remain.
+and identity changes during tap creation. Additional lifecycle tests cover surviving helpers,
+notification-driven release without another audio command, attenuation retention on a live helper,
+restart and its first toggle, delayed notifications, and owner PID reuse. Existing Safari/PWA matching
+and isolation tests remain.
 
 Fresh `lsappinfo front` + `info` + `list` took a median of 12.9 ms and a maximum of 19.0 ms over 20
 read-only samples on the implementation machine (Apple Silicon, macOS 27.0.1). This is a local
@@ -55,12 +71,14 @@ The explicit Mockito agent avoids JDK 25 self-attachment failures. The full suit
 for its mock servers. The tests above do not opt into `pcpanel.mactest`; that opt-in includes tests
 which open/quit Calculator and switch the default audio output to BlackHole.
 
-Validation used Homebrew OpenJDK 25.0.4.1 and Maven 3.9.12: all 38 focused tests passed; the full
-Maven test suite reported 1,781 tests, zero failures/errors, and 22 skips. Native integration tests
-and opt-in macOS audio tests were not run. The installed PCPanel application and configuration were
+Baseline `bd70328b` validation used Homebrew OpenJDK 25.0.4.1 and Maven 3.9.12: all 38 focused tests
+passed; the full Maven test suite reported 1,781 tests, zero failures/errors, and 22 skips. The
+application-owner lifecycle follow-up passed 52 focused tests and the full 1,795-test Maven suite,
+with zero failures/errors and 22 skips. Native integration tests and opt-in macOS audio tests were
+not run. The installed PCPanel application and configuration were
 not modified, and no test build was launched.
 
-One repeat full run exposed an intermittent failure in the unchanged
+One repeat full run during baseline validation exposed an intermittent failure in the unchanged
 `AlertLightingTest.aLightShowInterruptsTheDrawingAndItResumesAfterwards` (the notification frame was
 checked immediately after the asynchronous light show ended). Its isolated 20-test class recheck
 passed. This is separate from the audio regressions; no lighting code was changed.
@@ -75,6 +93,7 @@ workflow to avoid competing for the device. Build a JVM staging artifact with th
 ./mvnw -B -Dquarkus.native.enabled=false -DskipTests package
 mkdir -p target/mac-audio-manual/root
 "$JAVA_HOME/bin/java" -Dpcpanel.root="$PWD/target/mac-audio-manual/root" \
+  '-Dquarkus.log.category."com.getpcpanel.integration.volume.platform.osx".level=DEBUG' \
   -Dquarkus.http.port=17654 -jar target/quarkus-app/quarkus-run.jar skipfilecheck
 ```
 
@@ -95,6 +114,38 @@ build before release. No build or test launch should replace `/Applications/PCPa
 
 Record the macOS version, launch type, permission status, main/helper PIDs, commands, and observed
 audio for any failure. Finish by stopping the test process and checking that normal audio resumes.
+
+## One focused native restart experiment
+
+Use the disposable test launch above (which enables the macOS audio category at DEBUG), and leave
+all sliders untouched throughout the experiment.
+
+1. Play and mute YT Music. Save `lsappinfo list` output, noting the main application's PID and its
+   coalition's Graphics and Media/audio helper PIDs.
+2. Quit YT Music with Cmd-Q, wait briefly for the owner-exit message, and save `lsappinfo list` again.
+   Reopen the same PWA and repeat that read before pressing any mute button.
+3. Check `Releasing audio owner ...: exit notification` and its subsequent tap-close or live-gain
+   retention messages. Creation/cleanup logs include PID/start identities, owner, HAL process object,
+   native tap/aggregate IDs, gain, mute, and output UID. Native destruction failures retain their
+   existing DEBUG status logs. Retained live taps also log their tapped HAL object and the currently
+   translated HAL object; a difference distinguishes native audio-object replacement from an unchanged
+   helper lifetime. Press mute once and correlate the logged target with audible output.
+
+Interpretation: an unchanged live helper identity plus an old muted tap explains the baseline Java
+lifecycle defect without assuming any native destruction failure. If the helper also exits, the
+owner release must close its old resources. If every relevant close succeeded but the reopened PWA
+is still silent before any new mute command, or native destroy calls log errors, collect that trace
+for separate native-resource investigation. Do not infer PID reuse from equal names alone.
+If the main application's PID/start identity itself does not change across Cmd-Q and reopening,
+its process did not terminate; capture that result rather than assuming an owner-exit callback was
+missed. GUI lifetime notifications would need separate evaluation for that case.
+
+After prompt cleanup, a reopened application starts without the old mute: its first toggle normally
+mutes it. If the first command arrives before the exit callback and a surviving helper is still
+muted by the old owner, that toggle releases the stale mute once instead of muting again.
+
+The three unchanged upstream behaviors and the demonstrated mute-startup risk are documented in
+[macOS audio upstream limitations](macos-audio-upstream-limitations.md).
 
 ## Limits of automated verification
 

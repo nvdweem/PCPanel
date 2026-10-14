@@ -3,11 +3,13 @@ package com.getpcpanel.integration.volume.platform.osx;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyFloat;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doAnswer;
@@ -20,7 +22,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -47,6 +52,8 @@ class SndCtrlOsxTest {
     private MockedStatic<ProcessIdentity> identities;
     private MockedStatic<ProcessTap> tapFactory;
     private MockedStatic<OsxProcessTapService> support;
+    private Map<ProcessIdentity, Runnable> exits;
+    private List<ProcessTap> createdTaps;
 
     @BeforeEach
     void setUp() {
@@ -55,11 +62,18 @@ class SndCtrlOsxTest {
         identities = mockStatic(ProcessIdentity.class);
         identities.when(() -> ProcessIdentity.find(anyInt()))
                 .thenAnswer(call -> new ProcessIdentity(call.getArgument(0), Instant.EPOCH));
+        exits = new HashMap<>();
+        identities.when(() -> ProcessIdentity.onExit(any(ProcessIdentity.class), any(Runnable.class))).thenAnswer(call -> {
+            exits.put(call.getArgument(0), call.getArgument(1));
+            return null;
+        });
         support = mockStatic(OsxProcessTapService.class, CALLS_REAL_METHODS);
         support.when(OsxProcessTapService::isSupported).thenReturn(true);
+        createdTaps = new ArrayList<>();
         tapFactory = mockStatic(ProcessTap.class);
         tapFactory.when(() -> ProcessTap.create(anyInt(), anyString(), anyFloat())).thenAnswer(call -> {
             var tap = mock(ProcessTap.class);
+            createdTaps.add(tap);
             var muted = new AtomicBoolean();
             var gain = new AtomicReference<Float>(call.getArgument(2));
             when(tap.muted()).thenAnswer(ignored -> muted.get());
@@ -388,17 +402,17 @@ class SndCtrlOsxTest {
         sndCtrl.muteFocus(MuteType.toggle);
 
         // PWA 1 audio processes are muted
-        verify(tapService).setMuted(64765, true);
-        verify(tapService).setMuted(64772, true);
+        assertTrue(tapService.isMuted(64765));
+        assertTrue(tapService.isMuted(64772));
 
         // PWA 2 audio processes are NEVER muted or touched
-        verify(tapService, never()).setMuted(77777, true);
-        verify(tapService, never()).setMuted(77778, true);
+        assertFalse(tapService.isMuted(77777));
+        assertFalse(tapService.isMuted(77778));
 
         // Targeted mute by bundleId specifically targets PWA 2
         sndCtrl.muteProcesses(Set.of("com.apple.Safari.WebApp.BBB"), MuteType.toggle);
-        verify(tapService).setMuted(77777, true);
-        verify(tapService).setMuted(77778, true);
+        assertTrue(tapService.isMuted(77777));
+        assertTrue(tapService.isMuted(77778));
     }
 
     @Test
@@ -455,8 +469,8 @@ class SndCtrlOsxTest {
 
         // Explicitly mute Safari
         sndCtrl.muteProcesses(Set.of("Safari"), MuteType.mute);
-        verify(tapService).setMuted(31430, true);
-        verify(tapService).setMuted(31452, true);
+        assertTrue(tapService.isMuted(31430));
+        assertTrue(tapService.isMuted(31452));
 
         // Helper 31452 dies and replacement helper 31455 spawns in Safari's coalition
         var safariReplaced = new OsxProcessHelper.RunningApp(
@@ -473,12 +487,12 @@ class SndCtrlOsxTest {
         // Discovering PIDs for Safari (or setting volume) must automatically mute the replacement helper
         var pids = sndCtrl.pidsFor("Safari");
         assertEquals(List.of(31430, 31455), pids);
-        verify(tapService).setMuted(31455, true);
+        assertTrue(tapService.isMuted(31455));
 
         // Setting volume on the muted application sets gain but does not unmute
         sndCtrl.setProcessVolume("Safari", null, 0.7f);
         verify(tapService).setApplicationVolume(31430, List.of(31430, 31455), 0.7f);
-        verify(tapService, never()).setMuted(31455, false);
+        assertTrue(tapService.isMuted(31455));
     }
     @Test
     void failedHelperMuteIsRetriedOnNextResolution() {
@@ -491,7 +505,7 @@ class SndCtrlOsxTest {
         sndCtrl.muteProcesses(Set.of("Safari"), MuteType.mute);
         // A failed tap leaves actual mute false. Discovery must try again.
         sndCtrl.pidsFor("Safari");
-        verify(tapService, times(2)).setMuted(101, true);
+        tapFactory.verify(() -> ProcessTap.create(1, "output", 1f), times(2));
     }
 
     @Test
@@ -505,7 +519,7 @@ class SndCtrlOsxTest {
                 "Foreground", "com.apple.Music", Set.of(100, 102));
         when(wrapper.translatePidToProcessObject(102)).thenReturn(2);
         sndCtrl.audioPidsFor(newApp);
-        verify(tapService, never()).setMuted(102, true);
+        assertFalse(tapService.isMuted(102));
     }
 
     @Test
@@ -523,7 +537,7 @@ class SndCtrlOsxTest {
         tapService.muteApplication(100, List.of(100, 101), MuteType.toggle);
         assertTrue(tapService.isMuted(101));
         verify(recovered).setMuted(true);
-        verify(tapService, never()).setMuted(101, false);
+        verify(recovered, never()).setMuted(false);
     }
 
     @Test
@@ -582,11 +596,12 @@ class SndCtrlOsxTest {
     }
 
     @Test
-    void deadOwnerIntentIsRemovedWhileSurvivingHelpersKeepTheirOwnLifetime() {
+    void deadOwnerIntentAndHelperMuteAreReleasedTogether() {
         when(wrapper.translatePidToProcessObject(101)).thenReturn(1);
         tapService.muteApplication(100, List.of(100, 101), MuteType.mute);
         identities.when(() -> ProcessIdentity.find(100)).thenReturn(null);
         tapService.restoreApplicationMute(100, List.of(100, 101));
+        assertFalse(tapService.isMuted(101));
         // A new application at the owner PID must not inherit intent, even with the same helper PID.
         identities.when(() -> ProcessIdentity.find(100)).thenReturn(new ProcessIdentity(100, Instant.EPOCH.plusSeconds(1)));
         when(wrapper.translatePidToProcessObject(102)).thenReturn(2);
@@ -651,6 +666,151 @@ class SndCtrlOsxTest {
         tapService.setVolume(100, 0.5f);
         verify(tap).close();
         assertFalse(tapService.isMuted(100));
+    }
+
+    @Test
+    void ownerTerminationReleasesSurvivingHelperMute() {
+        when(wrapper.translatePidToProcessObject(101)).thenReturn(1);
+        tapService.muteApplication(100, List.of(100, 101), MuteType.mute);
+        assertTrue(tapService.isMuted(101));
+        identities.when(() -> ProcessIdentity.find(100)).thenReturn(null);
+        assertFalse(tapService.isMuted(101), "a live helper must not keep its expired owner's mute");
+    }
+
+    @Test
+    void restartingOwnerDoesNotCarryHelperMuteIntoVolumeCommand() {
+        when(wrapper.translatePidToProcessObject(101)).thenReturn(1);
+        tapService.muteApplication(100, List.of(100, 101), MuteType.mute);
+        identities.when(() -> ProcessIdentity.find(100)).thenReturn(new ProcessIdentity(100, Instant.EPOCH.plusSeconds(1)));
+        tapService.setApplicationVolume(100, List.of(100, 101), 0.5f);
+        assertFalse(tapService.isMuted(101));
+    }
+
+    @Test
+    void firstToggleUnmutesAudioHelperWhenMainProcessHasNoAudioTap() {
+        when(wrapper.translatePidToProcessObject(101)).thenReturn(1);
+        tapService.setMuted(101, true);
+        tapService.muteApplication(100, List.of(100, 101), MuteType.toggle);
+        assertFalse(tapService.isMuted(101), "the untapped GUI PID is not an unmuted audio stream");
+    }
+
+    @Test
+    void ownerExitNotificationClosesMuteOnlyTapWithoutAnotherAudioCommand() {
+        when(wrapper.translatePidToProcessObject(101)).thenReturn(1);
+        tapService.muteApplication(100, List.of(100, 101), MuteType.mute);
+        var helperTap = createdTaps.getLast();
+        identities.when(() -> ProcessIdentity.find(100)).thenReturn(null);
+        exits.get(new ProcessIdentity(100, Instant.EPOCH)).run();
+        // Verify native release before any service query could perform lazy cleanup.
+        verify(helperTap).close();
+        assertFalse(tapService.isMuted(101));
+    }
+
+    @Test
+    void ownerExitUnmutesButPreservesGainOnAGenuinelySurvivingAudioProcess() {
+        when(wrapper.translatePidToProcessObject(101)).thenReturn(1);
+        tapService.setApplicationVolume(100, List.of(100, 101), 0.3f);
+        tapService.muteApplication(100, List.of(100, 101), MuteType.mute);
+        var helperTap = createdTaps.getLast();
+        identities.when(() -> ProcessIdentity.find(100)).thenReturn(null);
+        exits.get(new ProcessIdentity(100, Instant.EPOCH)).run();
+        assertFalse(helperTap.muted());
+        assertEquals(0.3f, helperTap.gain());
+        verify(helperTap, never()).close();
+        // Reopening must not restore the old mute, but may continue controlling the same live helper.
+        identities.when(() -> ProcessIdentity.find(100)).thenReturn(new ProcessIdentity(100, Instant.EPOCH.plusSeconds(1)));
+        tapService.restoreApplicationMute(100, List.of(100, 101));
+        assertFalse(helperTap.muted());
+        tapService.muteApplication(100, List.of(100, 101), MuteType.toggle);
+        assertTrue(helperTap.muted());
+        tapService.muteApplication(100, List.of(100, 101), MuteType.toggle);
+        assertFalse(helperTap.muted());
+        assertEquals(0.3f, helperTap.gain());
+    }
+
+    @Test
+    void firstToggleAfterRestartReleasesStaleHelperMuteBeforeLateExitNotification() {
+        when(wrapper.translatePidToProcessObject(101)).thenReturn(1);
+        tapService.muteApplication(100, List.of(100, 101), MuteType.mute);
+        identities.when(() -> ProcessIdentity.find(100)).thenReturn(null);
+        // New GUI process and the surviving helper; no exit callback or earlier query has run.
+        tapService.muteApplication(200, List.of(200, 101), MuteType.toggle);
+        assertFalse(tapService.isMuted(101));
+        exits.get(new ProcessIdentity(100, Instant.EPOCH)).run();
+        assertFalse(tapService.isMuted(101));
+    }
+
+    @Test
+    void firstToggleAfterRestartUnmutesStaleHelperEvenIfNewMainHasAudioPresence() {
+        when(wrapper.translatePidToProcessObject(101)).thenReturn(1);
+        when(wrapper.translatePidToProcessObject(200)).thenReturn(2);
+        tapService.muteApplication(100, List.of(100, 101), MuteType.mute);
+        identities.when(() -> ProcessIdentity.find(100)).thenReturn(null);
+        tapService.muteApplication(200, List.of(200, 101), MuteType.toggle);
+        assertFalse(tapService.isMuted(101));
+        assertFalse(tapService.isMuted(200));
+    }
+
+    @Test
+    void oldOwnerExitCannotUnmuteAReopenedOwnersTapAtTheSamePid() {
+        when(wrapper.translatePidToProcessObject(101)).thenReturn(1);
+        var oldOwner = new ProcessIdentity(100, Instant.EPOCH);
+        tapService.setApplicationVolume(100, List.of(100, 101), 0.3f);
+        tapService.muteApplication(100, List.of(100, 101), MuteType.mute);
+        var oldExit = exits.get(oldOwner);
+        identities.when(() -> ProcessIdentity.find(100)).thenReturn(new ProcessIdentity(100, Instant.EPOCH.plusSeconds(1)));
+        tapService.setApplicationVolume(100, List.of(100, 101), 0.5f);
+        tapService.muteApplication(100, List.of(100, 101), MuteType.mute);
+        var helperTap = createdTaps.getLast();
+        oldExit.run();
+        assertTrue(helperTap.muted());
+        assertEquals(0.5f, helperTap.gain());
+        verify(helperTap, never()).close();
+    }
+
+    @Test
+    void terminatingOnePwaDoesNotReleaseAnotherPwasMute() {
+        when(wrapper.translatePidToProcessObject(101)).thenReturn(1);
+        when(wrapper.translatePidToProcessObject(201)).thenReturn(2);
+        tapService.muteApplication(100, List.of(100, 101), MuteType.mute);
+        tapService.muteApplication(200, List.of(200, 201), MuteType.mute);
+        var otherTap = createdTaps.getLast();
+        identities.when(() -> ProcessIdentity.find(100)).thenReturn(null);
+        exits.get(new ProcessIdentity(100, Instant.EPOCH)).run();
+        assertFalse(tapService.isMuted(101));
+        assertTrue(otherTap.muted());
+        verify(otherTap, never()).close();
+    }
+
+    @Test
+    void helperReplacementDoesNotRegisterAnotherOwnerExitNotification() {
+        when(wrapper.translatePidToProcessObject(101)).thenReturn(1);
+        when(wrapper.translatePidToProcessObject(102)).thenReturn(2);
+        tapService.muteApplication(100, List.of(100, 101), MuteType.mute);
+        identities.when(() -> ProcessIdentity.find(101)).thenReturn(null);
+        tapService.restoreApplicationMute(100, List.of(100, 102));
+        assertTrue(tapService.isMuted(102));
+        identities.verify(() -> ProcessIdentity.onExit(eq(new ProcessIdentity(100, Instant.EPOCH)), any(Runnable.class)), times(1));
+    }
+
+    @Test
+    void noTapAtFullVolumeDoesNotRegisterAnExitNotification() {
+        when(wrapper.translatePidToProcessObject(101)).thenReturn(1);
+        tapService.setApplicationVolume(100, List.of(100, 101), 1f);
+        identities.verify(() -> ProcessIdentity.onExit(any(ProcessIdentity.class), any(Runnable.class)), never());
+    }
+
+    @Test
+    void ownerChangeDuringHelperCreationDisposesTap() {
+        when(wrapper.translatePidToProcessObject(101)).thenReturn(1);
+        var tap = mock(ProcessTap.class);
+        tapFactory.when(() -> ProcessTap.create(1, "output", 0.5f)).thenAnswer(call -> {
+            identities.when(() -> ProcessIdentity.find(100)).thenReturn(new ProcessIdentity(100, Instant.EPOCH.plusSeconds(1)));
+            return tap;
+        });
+        tapService.setApplicationVolume(100, List.of(100, 101), 0.5f);
+        verify(tap).close();
+        assertFalse(tapService.isMuted(101));
     }
 
 }
