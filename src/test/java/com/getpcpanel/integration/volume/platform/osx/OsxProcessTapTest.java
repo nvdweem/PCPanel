@@ -70,7 +70,7 @@ class OsxProcessTapTest {
     /** Direct {@link ProcessTap} phases: explicit gains against a tap-active reference level. */
     private static double runTapPhases(int processObject, LoopbackRecorder recorder, double baseline) {
         double rms1;
-        try (var tap = ProcessTap.create(processObject, BLACKHOLE_UID, 1)) {
+        try (var tap = ProcessTap.create(processObject, BLACKHOLE_UID, 1, false)) {
             rms1 = recorder.measure("tap active, gain 1.0");
             assertTrue(rms1 > AUDIBLE, "playthrough reaches the output, rms=" + rms1);
 

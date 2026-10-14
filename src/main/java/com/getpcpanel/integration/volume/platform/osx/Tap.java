@@ -12,7 +12,11 @@ interface Tap extends AutoCloseable {
     /** Creates a tap on a HAL process object rendering to the output device with the given UID. */
     @FunctionalInterface
     interface Factory {
-        /** @throws ProcessTap.TapCreationException when CoreAudio refuses the tap */
-        Tap create(int processObject, String outputDeviceUid, float initialGain);
+        /**
+         * The gain and mute are in place before the tap renders anything.
+         *
+         * @throws ProcessTap.TapCreationException when CoreAudio refuses the tap
+         */
+        Tap create(int processObject, String outputDeviceUid, float initialGain, boolean initialMuted);
     }
 }

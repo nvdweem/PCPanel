@@ -1,18 +1,19 @@
 package com.getpcpanel.integration.volume.platform.osx;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntPredicate;
 
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.GuardedBy;
 
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -33,10 +34,14 @@ import lombok.extern.log4j.Log4j2;
  * the audio path back to the OS (no re-render overhead, no lingering permission use).
  *
  * <p>A tap renders to the output that was default when it was created, so {@link #defaultOutputChanged()}
- * moves every tap to the new default output, keeping its volume and mute. That happens on a thread of its own:
+ * moves every tap to the new default output, keeping its volume and mute. The move runs on a thread of its own:
  * the notification arrives on CoreAudio's notification thread, where creating and stopping devices may block.
- * A tap that cannot be recreated keeps its volume and mute and is retried a few times, again on the next
+ * Moving closes the old tap before creating the new one (what a process does with two taps at once is not
+ * documented), so the app plays untouched for the moment the new tap takes to start. A tap that cannot be moved
+ * goes back to its previous output; until it reaches the new one it is retried a few times, again on the next
  * default-output change, and whenever its app's volume or mute is used.
+ *
+ * <p>Every tap change happens under one lock, so a move, a dial change and shutdown never interleave.
  *
  * <p>Requires the one-time "System Audio Recording" consent; when the user declines (or the macOS
  * version predates taps) every call degrades to a logged no-op.
@@ -54,15 +59,19 @@ class OsxProcessTapService {
     private final IntPredicate isAlive;
     private final boolean supported;
     private final Duration retryDelay;
-    private final Map<Integer, Entry> taps = new ConcurrentHashMap<>();
+    private final Object lock = new Object();
+    @GuardedBy("lock") private final Map<Integer, Entry> taps = new HashMap<>();
+    @GuardedBy("lock") private boolean destroyed;
     private final AtomicBoolean creationFailureLogged = new AtomicBoolean();
     private final ScheduledExecutorService migrator = Executors.newSingleThreadScheduledExecutor(AppThreads.factory("tap-migration", true));
     private final AtomicBoolean migrationQueued = new AtomicBoolean();
-    private final AtomicInteger retries = new AtomicInteger();
+    // Only touched on the migrator thread.
+    private int retries;
+    private @Nullable ScheduledFuture<?> retry;
 
     /**
      * The volume and mute wanted for one process, and the tap applying them to {@code outputDeviceId}. Without a
-     * tap (it could not be recreated on a new output) the process plays untouched until a retry succeeds.
+     * tap (it could not be recreated on any output) the process plays untouched until a retry succeeds.
      */
     private record Entry(@Nullable Tap tap, int outputDeviceId, float gain, boolean muted) {
         static Entry detached(float gain, boolean muted) {
@@ -82,6 +91,10 @@ class OsxProcessTapService {
                 tap.close();
             }
         }
+    }
+
+    /** What a tap for one process on one output needs, resolved before any existing tap is closed. */
+    private record Target(int pid, int processObject, int outputDeviceId, String outputUid) {
     }
 
     @Inject
@@ -113,9 +126,14 @@ class OsxProcessTapService {
             log.trace("Process taps unavailable on this macOS version, not setting volume for {}", pid);
             return;
         }
-        cleanUpDeadProcesses();
         var gain = Math.clamp(volume, 0, 1);
-        taps.compute(pid, (key, entry) -> apply(pid, entry, gain, entry != null && entry.muted()));
+        synchronized (lock) {
+            if (destroyed) {
+                return;
+            }
+            cleanUpDeadProcesses();
+            taps.compute(pid, (key, entry) -> apply(pid, entry, gain, entry != null && entry.muted()));
+        }
     }
 
     public void mute(int pid, MuteType muteType) {
@@ -123,8 +141,13 @@ class OsxProcessTapService {
             log.trace("Process taps unavailable on this macOS version, not muting {}", pid);
             return;
         }
-        cleanUpDeadProcesses();
-        taps.compute(pid, (key, entry) -> apply(pid, entry, entry == null ? 1 : entry.gain(), muteType.convert(entry != null && entry.muted())));
+        synchronized (lock) {
+            if (destroyed) {
+                return;
+            }
+            cleanUpDeadProcesses();
+            taps.compute(pid, (key, entry) -> apply(pid, entry, entry == null ? 1 : entry.gain(), muteType.convert(entry != null && entry.muted())));
+        }
     }
 
     /**
@@ -132,65 +155,77 @@ class OsxProcessTapService {
      * queues the move; changes arriving while one is queued are covered by it.
      */
     void defaultOutputChanged() {
-        if (!supported) {
-            return;
-        }
-        retries.set(0);
-        queueMigration();
-    }
-
-    private void queueMigration() {
-        if (!migrationQueued.compareAndSet(false, true)) {
+        if (!supported || !migrationQueued.compareAndSet(false, true)) {
             return;
         }
         try {
-            migrator.execute(this::runMigration);
+            migrator.execute(this::migrateAfterChange);
         } catch (RejectedExecutionException e) {
             log.trace("Tap migration not queued, shutting down");
         }
     }
 
-    private void runMigration() {
+    /** A new change replaces whatever retries the previous one still had pending. */
+    private void migrateAfterChange() {
         // Cleared before reading the default output, so a change during this run queues another one.
         migrationQueued.set(false);
+        if (retry != null) {
+            retry.cancel(false);
+        }
+        retries = 0;
+        migrateOrRetry();
+    }
+
+    private void migrateOrRetry() {
+        retry = null;
+        boolean settled;
         try {
-            migrateToDefaultOutput();
+            settled = migrateToDefaultOutput();
         } catch (RuntimeException e) {
             log.warn("Unable to move per-app volume to the new default output", e);
+            settled = false;
         }
-        var attempt = retries.incrementAndGet();
-        if (attempt <= MAX_RETRIES && taps.values().stream().anyMatch(entry -> entry.tap() == null)) {
-            try {
-                // 1, 2, 4 × the delay: long enough for a just-connected output (Bluetooth) to come up.
-                migrator.schedule(this::queueMigration, retryDelay.toMillis() << (attempt - 1), TimeUnit.MILLISECONDS);
-            } catch (RejectedExecutionException e) {
-                log.trace("Tap migration retry not scheduled, shutting down");
-            }
+        if (settled || retries >= MAX_RETRIES) {
+            return;
+        }
+        try {
+            // 1, 2, 4 × the delay: long enough for a just-connected output (Bluetooth) to come up.
+            retry = migrator.schedule(this::migrateOrRetry, retryDelay.toMillis() << retries++, TimeUnit.MILLISECONDS);
+        } catch (RejectedExecutionException e) {
+            log.trace("Tap migration retry not scheduled, shutting down");
         }
     }
 
-    /** Recreates every tap that does not render to the current default output, keeping its volume and mute. */
-    void migrateToDefaultOutput() {
-        for (var pid : List.copyOf(taps.keySet())) {
-            taps.computeIfPresent(pid, (key, entry) -> refresh(pid, entry));
+    /**
+     * Recreates every tap that does not render to the current default output, keeping its volume and mute.
+     *
+     * @return whether every tap now renders to the default output
+     */
+    boolean migrateToDefaultOutput() {
+        synchronized (lock) {
+            if (destroyed) {
+                return true;
+            }
+            for (var pid : List.copyOf(taps.keySet())) {
+                taps.computeIfPresent(pid, (key, entry) -> refresh(pid, entry));
+            }
+            var output = wrapper.getDefaultDevice(true);
+            return taps.values().stream().allMatch(entry -> entry.tap() != null && entry.outputDeviceId() == output);
         }
     }
 
     @PreDestroy
     void destroy() {
         migrator.shutdownNow();
-        try {
-            if (!migrator.awaitTermination(2, TimeUnit.SECONDS)) {
-                log.debug("Tap migration still running at shutdown");
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+        synchronized (lock) {
+            destroyed = true;
+            taps.values().forEach(Entry::close);
+            taps.clear();
         }
-        taps.values().forEach(Entry::close);
-        taps.clear();
     }
 
     /** The entry for {@code pid} after asking for {@code gain} and {@code muted}; null when the process plays untapped. */
+    @GuardedBy("lock")
     private @Nullable Entry apply(int pid, @Nullable Entry entry, float gain, boolean muted) {
         if (gain >= FULL_VOLUME && !muted) {
             if (entry != null) {
@@ -199,16 +234,20 @@ class OsxProcessTapService {
             return null;
         }
         entry = refresh(pid, entry);
-        if (entry == null) {
-            return createEntry(pid, wrapper.getDefaultDevice(true), gain, muted);
+        if (entry != null) {
+            return entry.with(gain, muted);
         }
-        return entry.with(gain, muted);
+        var target = resolve(pid, wrapper.getDefaultDevice(true));
+        return target == null ? null : create(target, gain, muted);
     }
 
     /**
-     * A tap renders to the device that was default at creation; recreate it when the default moved (or a
-     * recreation failed before), and drop it when the process died. A failed recreation keeps the wanted state.
+     * A tap renders to the device that was default at creation; recreate it when the default moved (or an earlier
+     * move failed), and drop it when the process died. Everything the new tap needs is resolved before the old one
+     * closes; when the new tap cannot be created the old output gets one back, so the app keeps its volume and
+     * mute while the move is retried.
      */
+    @GuardedBy("lock")
     private @Nullable Entry refresh(int pid, @Nullable Entry entry) {
         if (entry == null) {
             return null;
@@ -217,20 +256,26 @@ class OsxProcessTapService {
             entry.close();
             return null;
         }
-        var defaultOutput = wrapper.getDefaultDevice(true);
-        if (defaultOutput == 0 || entry.tap() != null && entry.outputDeviceId() == defaultOutput) {
+        var output = wrapper.getDefaultDevice(true);
+        if (output == 0 || entry.tap() != null && entry.outputDeviceId() == output) {
             return entry;
         }
-        entry.close();
-        var recreated = createEntry(pid, defaultOutput, entry.gain(), entry.muted());
-        if (recreated == null) {
-            log.debug("Unable to move the tap of pid {} to output {}, retrying later", pid, defaultOutput);
-            return Entry.detached(entry.gain(), entry.muted());
+        var target = resolve(pid, output);
+        if (target == null) {
+            return entry;
         }
-        return recreated;
+        var previous = entry.tap() == null ? null : resolve(pid, entry.outputDeviceId());
+        entry.close();
+        var moved = create(target, entry.gain(), entry.muted());
+        if (moved != null) {
+            return moved;
+        }
+        var restored = previous == null ? null : create(previous, entry.gain(), entry.muted());
+        log.debug("Unable to move the tap of pid {} to output {}, {}", pid, output, restored == null ? "untapped until a retry" : "kept on its previous output");
+        return restored != null ? restored : Entry.detached(entry.gain(), entry.muted());
     }
 
-    private @Nullable Entry createEntry(int pid, int outputDeviceId, float gain, boolean muted) {
+    private @Nullable Target resolve(int pid, int outputDeviceId) {
         var processObject = wrapper.translatePidToProcessObject(pid);
         if (processObject == 0) {
             log.debug("No CoreAudio process object for pid {}, not tapping", pid);
@@ -238,33 +283,36 @@ class OsxProcessTapService {
         }
         var outputUid = outputDeviceId == 0 ? null : wrapper.deviceUid(outputDeviceId);
         if (outputUid == null) {
-            log.warn("No default output device UID, not tapping pid {}", pid);
+            log.debug("No UID for output device {}, not tapping pid {}", outputDeviceId, pid);
             return null;
         }
+        return new Target(pid, processObject, outputDeviceId, outputUid);
+    }
+
+    private @Nullable Entry create(Target target, float gain, boolean muted) {
         try {
-            var tap = tapFactory.create(processObject, outputUid, gain);
-            tap.setMuted(muted);
-            log.debug("Tapped pid {} (process object {}) on '{}'", pid, processObject, outputUid);
-            return new Entry(tap, outputDeviceId, gain, muted);
+            var tap = tapFactory.create(target.processObject(), target.outputUid(), gain, muted);
+            log.debug("Tapped pid {} (process object {}) on '{}'", target.pid(), target.processObject(), target.outputUid());
+            return new Entry(tap, target.outputDeviceId(), gain, muted);
         } catch (RuntimeException e) {
             if (e instanceof ProcessTap.TapCreationException && creationFailureLogged.compareAndSet(false, true)) {
                 log.warn("Unable to create a process tap for pid {}. Per-app volume needs the System Audio Recording permission: "
-                        + "System Settings > Privacy & Security > Screen & System Audio Recording > enable PCPanel", pid, e);
+                        + "System Settings > Privacy & Security > Screen & System Audio Recording > enable PCPanel", target.pid(), e);
             } else {
-                log.debug("Unable to create a process tap for pid {}", pid, e);
+                log.debug("Unable to create a process tap for pid {}", target.pid(), e);
             }
             return null;
         }
     }
 
+    @GuardedBy("lock")
     private void cleanUpDeadProcesses() {
-        for (var pid : List.copyOf(taps.keySet())) {
-            if (!isAlive.test(pid)) {
-                taps.computeIfPresent(pid, (key, entry) -> {
-                    entry.close();
-                    return null;
-                });
+        taps.entrySet().removeIf(entry -> {
+            if (isAlive.test(entry.getKey())) {
+                return false;
             }
-        }
+            entry.getValue().close();
+            return true;
+        });
     }
 }

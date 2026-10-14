@@ -48,19 +48,21 @@ final class ProcessTap implements Tap {
         }
     }
 
-    private ProcessTap(int tapId, int aggregateId, float gain) {
+    private ProcessTap(int tapId, int aggregateId, float gain, boolean muted) {
         this.tapId = tapId;
         this.aggregateId = aggregateId;
-        this.gain = gain;
+        this.gain = Math.clamp(gain, 0, 1);
+        this.muted = muted;
     }
 
     /**
      * Taps the given HAL process object (see {@link CoreAudioWrapper#translatePidToProcessObject}) and
-     * starts re-rendering its audio to the device with the given UID at {@code initialGain}.
+     * starts re-rendering its audio to the device with the given UID at {@code initialGain} and
+     * {@code initialMuted}, both in place before the first render.
      *
      * @throws TapCreationException when any CoreAudio call fails (missing TCC consent, dead process, …)
      */
-    static ProcessTap create(int processObject, String outputDeviceUid, float initialGain) {
+    static ProcessTap create(int processObject, String outputDeviceUid, float initialGain, boolean initialMuted) {
         var lib = CoreAudioTapLib.INSTANCE;
         var tapId = 0;
         var aggregateId = 0;
@@ -85,7 +87,7 @@ final class ProcessTap implements Tap {
                 ObjcFoundation.release(description);
             }
 
-            var result = new ProcessTap(tapId, aggregateId, initialGain);
+            var result = new ProcessTap(tapId, aggregateId, initialGain, initialMuted);
             result.startRendering();
             return result;
         } catch (RuntimeException e) {
