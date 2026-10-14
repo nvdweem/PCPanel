@@ -44,6 +44,9 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
 ./mvnw verify -Pnative      # native build + failsafe integration tests against the runner binary
 ```
 
+- macOS-only behaviour can be checked without a Mac: the manual `macOS lsappinfo` workflow
+  (`.github/workflows/macos-lsappinfo.yml`) runs the `-Dpcpanel.mactest=true` tests for the process lookup
+  (`OsxProcessHelperMacTest`) on GitHub's macOS images, printing the raw `lsappinfo` output of each.
 - `package` produces a native executable at `target/*-runner` (Linux) / `target/*-runner.exe` (Windows).
 - CI (`.github/workflows/build-and-release.yml`) builds the native image on Windows and Linux via
   `mvn -B package -Pnative`, wraps it in installers (Windows Inno Setup `.exe`, Linux `.deb` /

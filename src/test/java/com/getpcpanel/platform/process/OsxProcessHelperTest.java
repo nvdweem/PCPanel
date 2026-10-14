@@ -2,6 +2,7 @@ package com.getpcpanel.platform.process;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -17,9 +18,45 @@ import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.getpcpanel.platform.process.OsxProcessHelper.FrontmostApp;
 import com.getpcpanel.util.os.ProcessHelper;
 
 class OsxProcessHelperTest {
+    @Test
+    void parsesQuotedKeyValuePairs() {
+        var app = OsxProcessHelper.parseFrontmostApp(List.of(
+                "\"LSDisplayName\"=\"Stremio\"",
+                "\"pid\"=50104",
+                "\"CFBundleExecutablePath\"=\"/Applications/Stremio.app/Contents/MacOS/Stremio\""));
+
+        assertEquals(new FrontmostApp(50104, "Stremio", "/Applications/Stremio.app/Contents/MacOS/Stremio"), app);
+    }
+
+    @Test
+    void parsesQuotedKeyValuePairsOnOneLine() {
+        var app = OsxProcessHelper.parseFrontmostApp(List.of(
+                "\"LSDisplayName\"=\"Stremio\" \"pid\"=50104 \"CFBundleExecutablePath\"=\"/Applications/Stremio.app/Contents/MacOS/Stremio\""));
+
+        assertEquals(new FrontmostApp(50104, "Stremio", "/Applications/Stremio.app/Contents/MacOS/Stremio"), app);
+    }
+
+    @Test
+    void parsesHumanReadableInfoBlock() {
+        var app = OsxProcessHelper.parseFrontmostApp(List.of(
+                "\"Stremio\" ASN:0x0-0xe3ee3e: (in front) ",
+                "    bundleID=\"com.stremio.stremio\"",
+                "    bundle path=\"/Applications/Stremio.app\"",
+                "    executable path=\"/Applications/Stremio.app/Contents/MacOS/Stremio\"",
+                "    pid = 50104 !cgsConnection type=\"Foreground\" flavor=3 Version=\"5.1.28\" fileType=\"APPL\" creator=\"????\" Arch=ARM64 "));
+
+        assertEquals(new FrontmostApp(50104, "Stremio", "/Applications/Stremio.app/Contents/MacOS/Stremio"), app);
+    }
+
+    @Test
+    void nothingUsableIsNull() {
+        assertNull(OsxProcessHelper.parseFrontmostApp(List.of()));
+        assertNull(OsxProcessHelper.parseFrontmostApp(List.of("\"Stremio\" ASN:0x0-0xe3ee3e: (in front) ")));
+    }
 
     @Test
     @DisplayName("listApps parses conventional applications and Safari coalitions")
