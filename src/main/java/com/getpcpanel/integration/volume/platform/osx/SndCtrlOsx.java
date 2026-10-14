@@ -211,20 +211,14 @@ class SndCtrlOsx implements ISndCtrl {
         var baseName = new File(fileName).getName();
         var apps = processHelper.listApps();
         if (apps.isEmpty()) {
-            return StreamEx.of(getRunningApplications())
-                           .filter(app -> app.name().equalsIgnoreCase(fileName)
-                                       || app.name().equalsIgnoreCase(baseName)
-                                       || app.file().getName().equalsIgnoreCase(baseName)
-                                       || app.file().getPath().equalsIgnoreCase(fileName))
+            return StreamEx.of(fallbackProcesses())
+                           .filter(app -> matchesFallbackApp(app, fileName, baseName))
                            .map(RunningApplication::pid)
                            .toList();
         }
         var matched = StreamEx.of(apps)
                               .filter(OsxProcessHelper.RunningApp::foreground)
-                              .filter(app -> app.name().equalsIgnoreCase(fileName)
-                                          || app.name().equalsIgnoreCase(baseName)
-                                          || new File(app.executablePath()).getName().equalsIgnoreCase(baseName)
-                                          || app.executablePath().equalsIgnoreCase(fileName))
+                              .filter(app -> matchesApp(app, fileName, baseName))
                               .toList();
         var pids = new LinkedHashSet<Integer>();
         for (var app : matched) {
@@ -238,10 +232,40 @@ class SndCtrlOsx implements ISndCtrl {
         return new ArrayList<>(pids);
     }
 
+    private static boolean isWebApp(@Nullable String executablePath) {
+        return executablePath != null && executablePath.contains("/Web App.app/");
+    }
+
+    private static boolean matchesApp(OsxProcessHelper.RunningApp app, String fileName, String baseName) {
+        if (isWebApp(app.executablePath())) {
+            return app.name().equalsIgnoreCase(fileName) || app.name().equalsIgnoreCase(baseName);
+        }
+        return app.name().equalsIgnoreCase(fileName)
+                || app.name().equalsIgnoreCase(baseName)
+                || new File(app.executablePath()).getName().equalsIgnoreCase(baseName)
+                || app.executablePath().equalsIgnoreCase(fileName);
+    }
+
+    private static boolean matchesFallbackApp(RunningApplication app, String fileName, String baseName) {
+        if (isWebApp(app.file().getPath())) {
+            return app.name().equalsIgnoreCase(fileName) || app.name().equalsIgnoreCase(baseName);
+        }
+        return app.name().equalsIgnoreCase(fileName)
+                || app.name().equalsIgnoreCase(baseName)
+                || app.file().getName().equalsIgnoreCase(baseName)
+                || app.file().getPath().equalsIgnoreCase(fileName);
+    }
+
     @Override
     public String getFocusApplication() {
         var app = processHelper.getFrontmostApp();
-        return app == null ? "" : StringUtils.firstNonBlank(app.executablePath(), app.name(), "");
+        if (app == null) {
+            return "";
+        }
+        if (isWebApp(app.executablePath())) {
+            return StringUtils.firstNonBlank(app.name(), app.executablePath(), "");
+        }
+        return StringUtils.firstNonBlank(app.executablePath(), app.name(), "");
     }
 
     @Override
@@ -254,6 +278,10 @@ class SndCtrlOsx implements ISndCtrl {
         if (!apps.isEmpty()) {
             return apps;
         }
+        return fallbackProcesses();
+    }
+
+    private List<RunningApplication> fallbackProcesses() {
         return StreamEx.of(ProcessHandle.allProcesses())
                        .mapPartial(ph -> ph.info().command().map(cmd -> new RunningApplication((int) ph.pid(), new File(cmd), appName(cmd))))
                        .filter(app -> app.file().getPath().contains(".app/Contents/MacOS/"))

@@ -1,9 +1,12 @@
 package com.getpcpanel.integration.volume.platform.osx;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
@@ -55,6 +58,47 @@ class SndCtrlOsxTest {
         var pids = sndCtrl.pidsFor("YT Music");
 
         assertEquals(List.of(64765, 64772), pids);
+    }
+
+    @Test
+    @DisplayName("pidsFor strictly isolates multiple simultaneously running Safari PWAs")
+    void pidsForIsolatesMultipleSimultaneousPwas() {
+        var ytMusic = new OsxProcessHelper.RunningApp(
+            64765,
+            "YT Music",
+            "/System/Library/CoreServices/Web App.app/Contents/MacOS/Web App",
+            "Foreground",
+            Set.of(64765, 64772)
+        );
+        var slack = new OsxProcessHelper.RunningApp(
+            70001,
+            "Slack",
+            "/System/Library/CoreServices/Web App.app/Contents/MacOS/Web App",
+            "Foreground",
+            Set.of(70001, 70002)
+        );
+        when(processHelper.listApps()).thenReturn(List.of(ytMusic, slack));
+
+        when(wrapper.translatePidToProcessObject(64765)).thenReturn(101);
+        when(wrapper.translatePidToProcessObject(64772)).thenReturn(102);
+        when(wrapper.translatePidToProcessObject(70001)).thenReturn(201);
+        when(wrapper.translatePidToProcessObject(70002)).thenReturn(202);
+
+        // Controlling YT Music must never touch Slack
+        var ytPids = sndCtrl.pidsFor("YT Music");
+        assertEquals(List.of(64765, 64772), ytPids);
+        assertFalse(ytPids.contains(70001));
+        assertFalse(ytPids.contains(70002));
+
+        // Controlling Slack must never touch YT Music
+        var slackPids = sndCtrl.pidsFor("Slack");
+        assertEquals(List.of(70001, 70002), slackPids);
+        assertFalse(slackPids.contains(64765));
+        assertFalse(slackPids.contains(64772));
+
+        // Generic "Web App" must not inadvertently match all PWAs
+        assertTrue(sndCtrl.pidsFor("Web App").isEmpty());
+        assertTrue(sndCtrl.pidsFor("/System/Library/CoreServices/Web App.app/Contents/MacOS/Web App").isEmpty());
     }
 
     @Test
@@ -114,12 +158,60 @@ class SndCtrlOsxTest {
     }
 
     @Test
-    @DisplayName("pidsFor falls back gracefully when listApps is empty")
-    void pidsForFallsBackGracefullyWhenListAppsIsEmpty() {
+    @DisplayName("getFocusApplication resolves PWA display name and isolates focus mute")
+    void getFocusApplicationResolvesPwaDisplayName() {
+        var pwa = new OsxProcessHelper.RunningApp(
+            64765,
+            "YT Music",
+            "/System/Library/CoreServices/Web App.app/Contents/MacOS/Web App",
+            "Foreground",
+            Set.of(64765, 64772)
+        );
+        var slack = new OsxProcessHelper.RunningApp(
+            70001,
+            "Slack",
+            "/System/Library/CoreServices/Web App.app/Contents/MacOS/Web App",
+            "Foreground",
+            Set.of(70001, 70002)
+        );
+        when(processHelper.listApps()).thenReturn(List.of(pwa, slack));
+        when(wrapper.translatePidToProcessObject(64765)).thenReturn(101);
+        when(wrapper.translatePidToProcessObject(64772)).thenReturn(102);
+
+        // Frontmost is YT Music PWA
+        when(processHelper.getFrontmostApp()).thenReturn(new OsxProcessHelper.FrontmostApp(
+            64765,
+            "YT Music",
+            "/System/Library/CoreServices/Web App.app/Contents/MacOS/Web App"
+        ));
+
+        // getFocusApplication must return display name for Web Apps, avoiding the generic executable path
+        var focusTarget = sndCtrl.getFocusApplication();
+        assertEquals("YT Music", focusTarget);
+
+        // Focus mute passing getFocusApplication() must resolve only YT Music's PIDs
+        var focusPids = sndCtrl.pidsFor(focusTarget);
+        assertEquals(List.of(64765, 64772), focusPids);
+        assertFalse(focusPids.contains(70001));
+
+        // Frontmost is conventional app (Safari)
+        when(processHelper.getFrontmostApp()).thenReturn(new OsxProcessHelper.FrontmostApp(
+            31430,
+            "Safari",
+            "/Applications/Safari.app/Contents/MacOS/Safari"
+        ));
+        assertEquals("/Applications/Safari.app/Contents/MacOS/Safari", sndCtrl.getFocusApplication());
+    }
+
+    @Test
+    @DisplayName("pidsFor queries listApps only once and falls back cleanly without duplicate enumeration")
+    void pidsForQueriesListAppsOnlyOnceOnFallback() {
         when(processHelper.listApps()).thenReturn(List.of());
 
-        // When listApps is empty, pidsFor uses getRunningApplications() fallback
         var pids = sndCtrl.pidsFor("NonExistentApp");
         assertTrue(pids.isEmpty());
+
+        // Must query listApps exactly once (no duplicate call via getRunningApplications)
+        verify(processHelper, times(1)).listApps();
     }
 }

@@ -9,7 +9,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.DisplayName;
@@ -42,7 +44,7 @@ class OsxProcessHelperTest {
             "    pid = 31452 type=\"UIElement\""
         );
 
-        when(processHelper.run(any(), any(), eq("lsappinfo"), eq("list")))
+        when(processHelper.run(any(Duration.class), eq(ProcessHelper.PARSEABLE_OUTPUT), eq("lsappinfo"), eq("list")))
             .thenReturn(new ProcessHelper.Result(false, 0, lines, List.of()));
 
         var osxHelper = new OsxProcessHelper(processHelper);
@@ -88,7 +90,7 @@ class OsxProcessHelperTest {
             "    pid = 64772 type=\"UIElement\""
         );
 
-        when(processHelper.run(any(), any(), eq("lsappinfo"), eq("list")))
+        when(processHelper.run(any(Duration.class), eq(ProcessHelper.PARSEABLE_OUTPUT), eq("lsappinfo"), eq("list")))
             .thenReturn(new ProcessHelper.Result(false, 0, lines, List.of()));
 
         var osxHelper = new OsxProcessHelper(processHelper);
@@ -118,7 +120,7 @@ class OsxProcessHelperTest {
             "    pid = 10000 type=\"Foreground\""
         );
 
-        when(processHelper.run(any(), any(), eq("lsappinfo"), eq("list")))
+        when(processHelper.run(any(Duration.class), eq(ProcessHelper.PARSEABLE_OUTPUT), eq("lsappinfo"), eq("list")))
             .thenReturn(new ProcessHelper.Result(false, 0, lines, List.of()));
 
         var osxHelper = new OsxProcessHelper(processHelper);
