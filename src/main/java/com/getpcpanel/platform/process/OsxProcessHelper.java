@@ -36,19 +36,39 @@ public class OsxProcessHelper implements IProcessHelper {
     private static final Pattern KEY_VALUE = Pattern.compile("\"(\\w+)\"\\s*=\\s*(?:\"([^\"]*)\"|(\\S+))");
     private static final Pattern INFO_HEADER = Pattern.compile("^\\s*\"(.*)\"\\s+ASN:.*");
     private static final Pattern APP_HEADER = Pattern.compile("^\\s*\\d+\\)\\s+\"(.*)\"\\s+ASN:.*");
+    private static final Pattern BUNDLE_ID = Pattern.compile("(?i)bundleid=\"([^\"]*)\"");
     private static final Pattern EXECUTABLE_PATH = Pattern.compile("executable path=\"(.*)\"");
     private static final Pattern APP_TYPE = Pattern.compile("\\btype=\"(\\w+)\"");
     private static final Pattern APP_PID = Pattern.compile("\\bpid\\s*=\\s*(\\d+)");
     private static final Pattern COALITION_PIDS = Pattern.compile("coalition:\\s*\\d+\\s*\\{\\s*([^}]+)\\s*\\}");
     private static final Duration TOOL_TIMEOUT = Duration.ofSeconds(3);
+    private static final long CACHE_DURATION_MS = 200;
     private final ProcessHelper processHelper;
 
-    public record FrontmostApp(int pid, String name, String executablePath) {
+    private volatile CachedFrontmost cachedFrontmost;
+    private volatile CachedApps cachedApps;
+
+    private record CachedFrontmost(long timestamp, @Nullable FrontmostApp app) {}
+    private record CachedApps(long timestamp, List<RunningApp> apps) {}
+
+    void clearCache() {
+        cachedFrontmost = null;
+        cachedApps = null;
     }
 
-    public record RunningApp(int pid, String name, String executablePath, String type, Set<Integer> coalitionPids) {
+    public record FrontmostApp(int pid, String name, String executablePath, @Nullable String bundleId) {
+        public FrontmostApp(int pid, String name, String executablePath) {
+            this(pid, name, executablePath, null);
+        }
+    }
+
+    public record RunningApp(int pid, String name, String executablePath, String type, @Nullable String bundleId, Set<Integer> coalitionPids) {
+        public RunningApp(int pid, String name, String executablePath, String type, Set<Integer> coalitionPids) {
+            this(pid, name, executablePath, type, null, coalitionPids);
+        }
+
         public RunningApp(int pid, String name, String executablePath, String type) {
-            this(pid, name, executablePath, type, Set.of());
+            this(pid, name, executablePath, type, null, Set.of());
         }
 
         /** Regular GUI applications (Dock/app switcher), as opposed to UIElement agents and BackgroundOnly daemons. */
@@ -64,15 +84,21 @@ public class OsxProcessHelper implements IProcessHelper {
     }
 
     public @Nullable FrontmostApp getFrontmostApp() {
+        var cached = cachedFrontmost;
+        var now = System.currentTimeMillis();
+        if (cached != null && now - cached.timestamp < CACHE_DURATION_MS) {
+            return cached.app;
+        }
         try {
             var asn = lineFrom("lsappinfo", "front");
             if (StringUtils.isBlank(asn)) {
                 return null;
             }
-            var app = parseFrontmostApp(output("lsappinfo", "info", "-only", "name,pid,executablepath", asn.trim()));
+            var app = parseFrontmostApp(output("lsappinfo", "info", "-only", "name,pid,executablepath,bundleid", asn.trim()));
             if (app == null) {
                 log.debug("lsappinfo gave no pid or executable for the frontmost application {}", asn.trim());
             }
+            cachedFrontmost = new CachedFrontmost(now, app);
             return app;
         } catch (Exception e) {
             log.error("Unable to determine frontmost application", e);
@@ -84,24 +110,32 @@ public class OsxProcessHelper implements IProcessHelper {
      * Lists the applications known to the launch services database. Returns an empty list when lsappinfo fails.
      */
     public List<RunningApp> listApps() {
+        var cached = cachedApps;
+        var now = System.currentTimeMillis();
+        if (cached != null && now - cached.timestamp < CACHE_DURATION_MS) {
+            return cached.apps;
+        }
         try {
             var result = new ArrayList<RunningApp>();
             String name = null;
             String executable = null;
             String type = null;
+            String bundleId = null;
             var pid = -1;
             Set<Integer> coalitionPids = Set.of();
             for (var line : output("lsappinfo", "list")) {
                 var header = APP_HEADER.matcher(line);
                 if (header.matches()) {
-                    addApp(result, pid, name, executable, type, coalitionPids);
+                    addApp(result, pid, name, executable, type, bundleId, coalitionPids);
                     name = header.group(1);
                     executable = null;
                     type = null;
+                    bundleId = null;
                     pid = -1;
                     coalitionPids = Set.of();
                     continue;
                 }
+                bundleId = firstGroup(BUNDLE_ID, line, bundleId);
                 executable = firstGroup(EXECUTABLE_PATH, line, executable);
                 type = firstGroup(APP_TYPE, line, type);
                 var pidMatch = firstGroup(APP_PID, line, pid == -1 ? null : String.valueOf(pid));
@@ -113,7 +147,8 @@ public class OsxProcessHelper implements IProcessHelper {
                     }
                 }
             }
-            addApp(result, pid, name, executable, type, coalitionPids);
+            addApp(result, pid, name, executable, type, bundleId, coalitionPids);
+            cachedApps = new CachedApps(now, result);
             return result;
         } catch (Exception e) {
             log.error("Unable to list applications", e);
@@ -121,9 +156,9 @@ public class OsxProcessHelper implements IProcessHelper {
         }
     }
 
-    private static void addApp(List<RunningApp> result, int pid, @Nullable String name, @Nullable String executable, @Nullable String type, Set<Integer> coalitionPids) {
+    private static void addApp(List<RunningApp> result, int pid, @Nullable String name, @Nullable String executable, @Nullable String type, @Nullable String bundleId, Set<Integer> coalitionPids) {
         if (name != null && StringUtils.isNotBlank(executable)) {
-            result.add(new RunningApp(pid, name, executable, StringUtils.defaultString(type), coalitionPids));
+            result.add(new RunningApp(pid, name, executable, StringUtils.defaultString(type), bundleId, coalitionPids));
         }
     }
 
@@ -156,6 +191,7 @@ public class OsxProcessHelper implements IProcessHelper {
         String headerName = null;
         String executable = null;
         String pid = null;
+        String bundleId = null;
         for (var line : lines) {
             var matcher = KEY_VALUE.matcher(line);
             while (matcher.find()) {
@@ -165,16 +201,18 @@ public class OsxProcessHelper implements IProcessHelper {
             if (headerName == null && header.matches()) {
                 headerName = header.group(1);
             }
+            bundleId = firstGroup(BUNDLE_ID, line, bundleId);
             executable = firstGroup(EXECUTABLE_PATH, line, executable);
             pid = firstGroup(APP_PID, line, pid);
         }
         var pidValue = NumberUtils.toInt(StringUtils.firstNonBlank(info.get("pid"), pid), -1);
         var name = StringUtils.firstNonBlank(info.get("LSDisplayName"), headerName, "");
         var executablePath = StringUtils.firstNonBlank(info.get("CFBundleExecutablePath"), executable, "");
+        var bundleIdValue = StringUtils.firstNonBlank(info.get("bundleID"), info.get("bundleid"), info.get("CFBundleIdentifier"), bundleId);
         if (pidValue == -1 && StringUtils.isBlank(executablePath)) {
             return null;
         }
-        return new FrontmostApp(pidValue, name, executablePath);
+        return new FrontmostApp(pidValue, name, executablePath, bundleIdValue);
     }
 
     private @Nullable String lineFrom(String... cmd) throws IOException {

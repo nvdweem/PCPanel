@@ -69,7 +69,12 @@ class OsxProcessTapService {
         });
     }
 
-    public void mute(int pid, MuteType muteType) {
+    public boolean isMuted(int pid) {
+        var entry = taps.get(pid);
+        return entry != null && entry.tap().muted();
+    }
+
+    public void setMuted(int pid, boolean muted) {
         if (!isSupported()) {
             log.trace("Process taps unavailable on this macOS version, not muting {}", pid);
             return;
@@ -77,17 +82,20 @@ class OsxProcessTapService {
         cleanUpDeadProcesses();
         taps.compute(pid, (key, entry) -> {
             entry = recreateIfStale(pid, entry);
-            var target = muteType.convert(entry != null && entry.tap().muted());
             if (entry == null) {
-                return target ? createEntry(pid, 1, true) : null;
+                return muted ? createEntry(pid, 1, true) : null;
             }
-            entry.tap().setMuted(target);
-            if (!target && entry.tap().gain() >= FULL_VOLUME) {
+            entry.tap().setMuted(muted);
+            if (!muted && entry.tap().gain() >= FULL_VOLUME) {
                 entry.tap().close();
                 return null;
             }
             return entry;
         });
+    }
+
+    public void mute(int pid, MuteType muteType) {
+        setMuted(pid, muteType.convert(isMuted(pid)));
     }
 
     @PreDestroy

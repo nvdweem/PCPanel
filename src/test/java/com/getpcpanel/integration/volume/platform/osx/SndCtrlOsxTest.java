@@ -3,10 +3,12 @@ package com.getpcpanel.integration.volume.platform.osx;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyFloat;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -20,6 +22,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import com.getpcpanel.integration.volume.platform.MuteType;
 import com.getpcpanel.platform.process.OsxProcessHelper;
 
 import jakarta.enterprise.event.Event;
@@ -323,5 +326,139 @@ class SndCtrlOsxTest {
         sndCtrl.setFocusVolume(0.4f);
 
         verify(tapService, never()).setVolume(anyInt(), anyFloat());
+    }
+
+    @Test
+    @DisplayName("muteFocus strictly isolates identically-named PWAs by frontmost PID and coalition")
+    void muteFocusIsolatesIdenticallyNamedPwasByFrontmostCoalition() {
+        var pwa1 = new OsxProcessHelper.RunningApp(
+            64765,
+            "YT Music",
+            "/System/Library/CoreServices/Web App.app/Contents/MacOS/Web App",
+            "Foreground",
+            "com.apple.Safari.WebApp.AAA",
+            Set.of(64765, 64772)
+        );
+        var pwa2 = new OsxProcessHelper.RunningApp(
+            77777,
+            "YT Music",
+            "/System/Library/CoreServices/Web App.app/Contents/MacOS/Web App",
+            "Foreground",
+            "com.apple.Safari.WebApp.BBB",
+            Set.of(77777, 77778)
+        );
+        when(processHelper.listApps()).thenReturn(List.of(pwa1, pwa2));
+        when(processHelper.getFrontmostApp()).thenReturn(new OsxProcessHelper.FrontmostApp(
+            64765,
+            "YT Music",
+            "/System/Library/CoreServices/Web App.app/Contents/MacOS/Web App",
+            "com.apple.Safari.WebApp.AAA"
+        ));
+
+        when(wrapper.translatePidToProcessObject(64765)).thenReturn(101);
+        when(wrapper.translatePidToProcessObject(64772)).thenReturn(102);
+        when(wrapper.translatePidToProcessObject(77777)).thenReturn(201);
+        when(wrapper.translatePidToProcessObject(77778)).thenReturn(202);
+
+        // Muting focused app (PWA 1)
+        sndCtrl.muteFocus(MuteType.toggle);
+
+        // PWA 1 audio processes are muted
+        verify(tapService).setMuted(64765, true);
+        verify(tapService).setMuted(64772, true);
+
+        // PWA 2 audio processes are NEVER muted or touched
+        verify(tapService, never()).setMuted(77777, true);
+        verify(tapService, never()).setMuted(77778, true);
+
+        // Targeted mute by bundleId specifically targets PWA 2
+        sndCtrl.muteProcesses(Set.of("com.apple.Safari.WebApp.BBB"), MuteType.toggle);
+        verify(tapService).setMuted(77777, true);
+        verify(tapService).setMuted(77778, true);
+    }
+
+    @Test
+    @DisplayName("mute toggle heals mixed initial states and maintains consistent repeated toggles")
+    void muteApplicationHealsMixedInitialStateAndMaintainsRepeatedToggles() {
+        var safari = new OsxProcessHelper.RunningApp(
+            31430,
+            "Safari",
+            "/Applications/Safari.app/Contents/MacOS/Safari",
+            "Foreground",
+            "com.apple.Safari",
+            Set.of(31430, 31452)
+        );
+        when(processHelper.listApps()).thenReturn(List.of(safari));
+        when(processHelper.getFrontmostApp()).thenReturn(new OsxProcessHelper.FrontmostApp(
+            31430,
+            "Safari",
+            "/Applications/Safari.app/Contents/MacOS/Safari",
+            "com.apple.Safari"
+        ));
+        when(wrapper.translatePidToProcessObject(31430)).thenReturn(101);
+        when(wrapper.translatePidToProcessObject(31452)).thenReturn(102);
+
+        // Mixed initial state: 31430 is unmuted, 31452 is muted
+        when(tapService.isMuted(31430)).thenReturn(false);
+        when(tapService.isMuted(31452)).thenReturn(true);
+
+        // Toggle 1: Since app is not fully muted, toggle must mute both processes
+        sndCtrl.muteFocus(MuteType.toggle);
+        verify(tapService).setMuted(31430, true);
+        verify(tapService).setMuted(31452, true);
+
+        // Toggle 2: App is now recorded as muted, toggle must unmute both processes
+        sndCtrl.muteFocus(MuteType.toggle);
+        verify(tapService).setMuted(31430, false);
+        verify(tapService).setMuted(31452, false);
+
+        // Toggle 3: App is now unmuted, toggle must mute both processes again
+        sndCtrl.muteFocus(MuteType.toggle);
+        verify(tapService, times(2)).setMuted(31430, true);
+        verify(tapService, times(2)).setMuted(31452, true);
+    }
+
+    @Test
+    @DisplayName("helper replacement inherits application mute state without audio leak")
+    void helperReplacementInheritsApplicationMuteState() {
+        var safariInitial = new OsxProcessHelper.RunningApp(
+            31430,
+            "Safari",
+            "/Applications/Safari.app/Contents/MacOS/Safari",
+            "Foreground",
+            "com.apple.Safari",
+            Set.of(31430, 31452)
+        );
+        when(processHelper.listApps()).thenReturn(List.of(safariInitial));
+        when(wrapper.translatePidToProcessObject(31430)).thenReturn(101);
+        when(wrapper.translatePidToProcessObject(31452)).thenReturn(102);
+
+        // Explicitly mute Safari
+        sndCtrl.muteProcesses(Set.of("Safari"), MuteType.mute);
+        verify(tapService).setMuted(31430, true);
+        verify(tapService).setMuted(31452, true);
+
+        // Helper 31452 dies and replacement helper 31455 spawns in Safari's coalition
+        var safariReplaced = new OsxProcessHelper.RunningApp(
+            31430,
+            "Safari",
+            "/Applications/Safari.app/Contents/MacOS/Safari",
+            "Foreground",
+            "com.apple.Safari",
+            Set.of(31430, 31455)
+        );
+        when(processHelper.listApps()).thenReturn(List.of(safariReplaced));
+        when(wrapper.translatePidToProcessObject(31455)).thenReturn(103);
+        when(tapService.isMuted(31455)).thenReturn(false);
+
+        // Discovering PIDs for Safari (or setting volume) must automatically mute the replacement helper
+        var pids = sndCtrl.pidsFor("Safari");
+        assertEquals(List.of(31430, 31455), pids);
+        verify(tapService).setMuted(31455, true);
+
+        // Setting volume on the muted application sets gain but does not unmute
+        sndCtrl.setProcessVolume("Safari", null, 0.7f);
+        verify(tapService).setVolume(31455, 0.7f);
+        verify(tapService, never()).setMuted(31455, false);
     }
 }

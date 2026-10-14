@@ -30,7 +30,7 @@ public class CommandVolumeFocusMute extends CommandVolume implements ButtonActio
         var snd = getSndCtrl();
         var apps = Set.of(snd.getFocusApplication());
         var feedback = feedback(() -> MuteFeedback.forSessions(snd.getAllSessions(), apps, muteType));
-        snd.muteProcesses(apps, muteType);
+        snd.muteFocus(muteType);
         fireFeedback(feedback);
     }
 
