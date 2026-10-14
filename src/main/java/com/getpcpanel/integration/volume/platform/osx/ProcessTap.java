@@ -20,7 +20,7 @@ import lombok.extern.log4j.Log4j2;
  * ({@code NSAudioCaptureUsageDescription}); without it creation fails with an OSStatus error.
  */
 @Log4j2
-final class ProcessTap implements AutoCloseable {
+final class ProcessTap implements Tap {
     // CATapMuteBehavior.mutedWhenTapped
     private static final long MUTED_WHEN_TAPPED = 2;
     private static final int BYTES_PER_FLOAT = 4;
@@ -144,20 +144,14 @@ final class ProcessTap implements AutoCloseable {
         }
     }
 
-    void setGain(float gain) {
+    @Override
+    public void setGain(float gain) {
         this.gain = Math.clamp(gain, 0, 1);
     }
 
-    float gain() {
-        return gain;
-    }
-
-    void setMuted(boolean muted) {
+    @Override
+    public void setMuted(boolean muted) {
         this.muted = muted;
-    }
-
-    boolean muted() {
-        return muted;
     }
 
     /**

@@ -70,7 +70,7 @@ class SndCtrlOsx implements ISndCtrl {
     @PostConstruct
     public void init() {
         systemListeners.add(wrapper.addListener(CoreAudioLib.kAudioObjectSystemObject, PROP_DEVICES, SCOPE_GLOBAL, this::initDevices));
-        systemListeners.add(wrapper.addListener(CoreAudioLib.kAudioObjectSystemObject, PROP_DEFAULT_OUTPUT_DEVICE, SCOPE_GLOBAL, this::initDevices));
+        systemListeners.add(wrapper.addListener(CoreAudioLib.kAudioObjectSystemObject, PROP_DEFAULT_OUTPUT_DEVICE, SCOPE_GLOBAL, this::defaultOutputChanged));
         systemListeners.add(wrapper.addListener(CoreAudioLib.kAudioObjectSystemObject, PROP_DEFAULT_INPUT_DEVICE, SCOPE_GLOBAL, this::initDevices));
         systemListeners.removeIf(Objects::isNull);
         initDevices();
@@ -80,6 +80,11 @@ class SndCtrlOsx implements ISndCtrl {
     public void destroy() {
         systemListeners.forEach(wrapper::removeListener);
         systemListeners.clear();
+    }
+
+    private void defaultOutputChanged() {
+        tapService.defaultOutputChanged();
+        initDevices();
     }
 
     private void initDevices() {
