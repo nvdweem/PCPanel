@@ -198,7 +198,24 @@ class SndCtrlOsx implements ISndCtrl {
 
     @Override
     public void setFocusVolume(float volume) {
-        processHelper.foregroundPid().ifPresent(pid -> tapService.setVolume(pid, volume));
+        focusPids().forEach(pid -> tapService.setVolume(pid, volume));
+    }
+
+    /**
+     * PIDs for the currently focused application, including any audio-producing coalition processes.
+     */
+    List<Integer> focusPids() {
+        var front = processHelper.getFrontmostApp();
+        if (front == null || front.pid() <= 0) {
+            return processHelper.foregroundPid().stream().boxed().toList();
+        }
+        var apps = processHelper.listApps();
+        for (var app : apps) {
+            if (app.pid() == front.pid()) {
+                return audioPidsFor(app);
+            }
+        }
+        return List.of(front.pid());
     }
 
     @Override
@@ -216,17 +233,20 @@ class SndCtrlOsx implements ISndCtrl {
                            .map(RunningApplication::pid)
                            .toList();
         }
-        var matched = StreamEx.of(apps)
-                              .filter(OsxProcessHelper.RunningApp::foreground)
-                              .filter(app -> matchesApp(app, fileName, baseName))
-                              .toList();
+        return StreamEx.of(apps)
+                       .filter(OsxProcessHelper.RunningApp::foreground)
+                       .filter(app -> matchesApp(app, fileName, baseName))
+                       .flatCollection(this::audioPidsFor)
+                       .distinct()
+                       .toList();
+    }
+
+    private List<Integer> audioPidsFor(OsxProcessHelper.RunningApp app) {
         var pids = new LinkedHashSet<Integer>();
-        for (var app : matched) {
-            pids.add(app.pid());
-            for (var childPid : app.coalitionPids()) {
-                if (childPid != app.pid() && wrapper.translatePidToProcessObject(childPid) != 0) {
-                    pids.add(childPid);
-                }
+        pids.add(app.pid());
+        for (var childPid : app.coalitionPids()) {
+            if (childPid != app.pid() && wrapper.translatePidToProcessObject(childPid) != 0) {
+                pids.add(childPid);
             }
         }
         return new ArrayList<>(pids);

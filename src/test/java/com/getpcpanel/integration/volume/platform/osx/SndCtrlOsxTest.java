@@ -3,14 +3,17 @@ package com.getpcpanel.integration.volume.platform.osx;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyFloat;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.util.List;
+import java.util.OptionalInt;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -213,5 +216,112 @@ class SndCtrlOsxTest {
 
         // Must query listApps exactly once (no duplicate call via getRunningApplications)
         verify(processHelper, times(1)).listApps();
+    }
+
+    @Test
+    @DisplayName("setFocusVolume resolves Safari coalition and sets volume for GPU process")
+    void setFocusVolumeControlsSafariAndGpuProcess() {
+        var safari = new OsxProcessHelper.RunningApp(
+            31430,
+            "Safari",
+            "/Applications/Safari.app/Contents/MacOS/Safari",
+            "Foreground",
+            Set.of(31430, 31439, 31452, 31454)
+        );
+        when(processHelper.getFrontmostApp()).thenReturn(new OsxProcessHelper.FrontmostApp(
+            31430,
+            "Safari",
+            "/Applications/Safari.app/Contents/MacOS/Safari"
+        ));
+        when(processHelper.listApps()).thenReturn(List.of(safari));
+
+        when(wrapper.translatePidToProcessObject(31430)).thenReturn(201);
+        when(wrapper.translatePidToProcessObject(31452)).thenReturn(202);
+        when(wrapper.translatePidToProcessObject(31439)).thenReturn(0);
+        when(wrapper.translatePidToProcessObject(31454)).thenReturn(0);
+
+        sndCtrl.setFocusVolume(0.5f);
+
+        verify(tapService).setVolume(31430, 0.5f);
+        verify(tapService).setVolume(31452, 0.5f);
+        verify(tapService, never()).setVolume(31439, 0.5f);
+        verify(tapService, never()).setVolume(31454, 0.5f);
+    }
+
+    @Test
+    @DisplayName("setFocusVolume resolves Safari PWA and isolates other running PWAs")
+    void setFocusVolumeControlsPwaAndIsolatesSimultaneousPwas() {
+        var ytMusic = new OsxProcessHelper.RunningApp(
+            64765,
+            "YT Music",
+            "/System/Library/CoreServices/Web App.app/Contents/MacOS/Web App",
+            "Foreground",
+            Set.of(64765, 64772)
+        );
+        var slack = new OsxProcessHelper.RunningApp(
+            70001,
+            "Slack",
+            "/System/Library/CoreServices/Web App.app/Contents/MacOS/Web App",
+            "Foreground",
+            Set.of(70001, 70002)
+        );
+        when(processHelper.getFrontmostApp()).thenReturn(new OsxProcessHelper.FrontmostApp(
+            64765,
+            "YT Music",
+            "/System/Library/CoreServices/Web App.app/Contents/MacOS/Web App"
+        ));
+        when(processHelper.listApps()).thenReturn(List.of(ytMusic, slack));
+
+        when(wrapper.translatePidToProcessObject(64765)).thenReturn(101);
+        when(wrapper.translatePidToProcessObject(64772)).thenReturn(102);
+        when(wrapper.translatePidToProcessObject(70001)).thenReturn(201);
+        when(wrapper.translatePidToProcessObject(70002)).thenReturn(202);
+
+        sndCtrl.setFocusVolume(0.8f);
+
+        // YT Music main and GPU process are adjusted
+        verify(tapService).setVolume(64765, 0.8f);
+        verify(tapService).setVolume(64772, 0.8f);
+
+        // Unrelated Slack PWA is completely untouched
+        verify(tapService, never()).setVolume(70001, 0.8f);
+        verify(tapService, never()).setVolume(70002, 0.8f);
+    }
+
+    @Test
+    @DisplayName("setFocusVolume falls back to frontmost PID when listApps returns empty")
+    void setFocusVolumeFallsBackGracefullyWhenListAppsEmpty() {
+        when(processHelper.getFrontmostApp()).thenReturn(new OsxProcessHelper.FrontmostApp(
+            55555,
+            "Notes",
+            "/System/Applications/Notes.app/Contents/MacOS/Notes"
+        ));
+        when(processHelper.listApps()).thenReturn(List.of());
+
+        sndCtrl.setFocusVolume(0.6f);
+
+        verify(tapService).setVolume(55555, 0.6f);
+    }
+
+    @Test
+    @DisplayName("setFocusVolume falls back to foregroundPid when frontmostApp is null")
+    void setFocusVolumeFallsBackToForegroundPid() {
+        when(processHelper.getFrontmostApp()).thenReturn(null);
+        when(processHelper.foregroundPid()).thenReturn(OptionalInt.of(9999));
+
+        sndCtrl.setFocusVolume(0.4f);
+
+        verify(tapService).setVolume(9999, 0.4f);
+    }
+
+    @Test
+    @DisplayName("setFocusVolume does nothing when both frontmostApp and foregroundPid are empty")
+    void setFocusVolumeDoesNothingWhenNoForegroundProcess() {
+        when(processHelper.getFrontmostApp()).thenReturn(null);
+        when(processHelper.foregroundPid()).thenReturn(OptionalInt.empty());
+
+        sndCtrl.setFocusVolume(0.4f);
+
+        verify(tapService, never()).setVolume(anyInt(), anyFloat());
     }
 }
