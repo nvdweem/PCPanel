@@ -117,7 +117,7 @@ class OsxProcessHelperTest {
         var lines = List.of(
             "1) \"YT Music\" ASN:0x0-0x33033:",
             "    bundleID=\"com.apple.Safari.WebApp.D20677F6-5596-4F70-BE3A-A6DFDE29ECB5\"",
-            "    bundle path=\"/Users/cameron/Applications/YT Music.app\"",
+            "    bundle path=\"/Users/user/Applications/YT Music.app\"",
             "    executable path=\"/System/Library/CoreServices/Web App.app/Contents/MacOS/Web App\"",
             "    pid = 64765 type=\"Foreground\"",
             "    coalition: 20488  { 64765 64772 }",
