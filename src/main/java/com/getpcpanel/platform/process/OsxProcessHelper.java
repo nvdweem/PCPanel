@@ -4,9 +4,11 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
@@ -37,13 +39,18 @@ public class OsxProcessHelper implements IProcessHelper {
     private static final Pattern EXECUTABLE_PATH = Pattern.compile("executable path=\"(.*)\"");
     private static final Pattern APP_TYPE = Pattern.compile("\\btype=\"(\\w+)\"");
     private static final Pattern APP_PID = Pattern.compile("\\bpid\\s*=\\s*(\\d+)");
+    private static final Pattern COALITION_PIDS = Pattern.compile("coalition:\\s*\\d+\\s*\\{\\s*([^}]+)\\s*\\}");
     private static final Duration TOOL_TIMEOUT = Duration.ofSeconds(3);
     private final ProcessHelper processHelper;
 
     public record FrontmostApp(int pid, String name, String executablePath) {
     }
 
-    public record RunningApp(int pid, String name, String executablePath, String type) {
+    public record RunningApp(int pid, String name, String executablePath, String type, Set<Integer> coalitionPids) {
+        public RunningApp(int pid, String name, String executablePath, String type) {
+            this(pid, name, executablePath, type, Set.of());
+        }
+
         /** Regular GUI applications (Dock/app switcher), as opposed to UIElement agents and BackgroundOnly daemons. */
         public boolean foreground() {
             return "Foreground".equals(type);
@@ -86,22 +93,30 @@ public class OsxProcessHelper implements IProcessHelper {
             String executable = null;
             String type = null;
             var pid = -1;
+            Set<Integer> coalitionPids = Set.of();
             for (var line : output("lsappinfo", "list")) {
                 var header = APP_HEADER.matcher(line);
                 if (header.matches()) {
-                    addApp(result, pid, name, executable, type);
+                    addApp(result, pid, name, executable, type, coalitionPids);
                     name = header.group(1);
                     executable = null;
                     type = null;
                     pid = -1;
+                    coalitionPids = Set.of();
                     continue;
                 }
                 executable = firstGroup(EXECUTABLE_PATH, line, executable);
                 type = firstGroup(APP_TYPE, line, type);
                 var pidMatch = firstGroup(APP_PID, line, pid == -1 ? null : String.valueOf(pid));
                 pid = NumberUtils.toInt(pidMatch, -1);
+                if (coalitionPids.isEmpty()) {
+                    var coalitionMatch = firstGroup(COALITION_PIDS, line, null);
+                    if (coalitionMatch != null) {
+                        coalitionPids = parsePids(coalitionMatch);
+                    }
+                }
             }
-            addApp(result, pid, name, executable, type);
+            addApp(result, pid, name, executable, type, coalitionPids);
             return result;
         } catch (Exception e) {
             log.error("Unable to list applications", e);
@@ -109,10 +124,21 @@ public class OsxProcessHelper implements IProcessHelper {
         }
     }
 
-    private static void addApp(List<RunningApp> result, int pid, @Nullable String name, @Nullable String executable, @Nullable String type) {
+    private static void addApp(List<RunningApp> result, int pid, @Nullable String name, @Nullable String executable, @Nullable String type, Set<Integer> coalitionPids) {
         if (name != null && StringUtils.isNotBlank(executable)) {
-            result.add(new RunningApp(pid, name, executable, StringUtils.defaultString(type)));
+            result.add(new RunningApp(pid, name, executable, StringUtils.defaultString(type), coalitionPids));
         }
+    }
+
+    private static Set<Integer> parsePids(String pidList) {
+        var set = new LinkedHashSet<Integer>();
+        for (var token : pidList.trim().split("\\s+")) {
+            var p = NumberUtils.toInt(token, -1);
+            if (p > 0) {
+                set.add(p);
+            }
+        }
+        return Set.copyOf(set);
     }
 
     private static @Nullable String firstGroup(Pattern pattern, String line, @Nullable String current) {
