@@ -1,7 +1,9 @@
 package com.getpcpanel.integration.volume.platform.osx;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.SystemUtils;
@@ -32,7 +34,12 @@ class OsxProcessTapService {
     /** Gains at/above this remove the tap: full volume is byte-identical to not being tapped at all. */
     private static final float FULL_VOLUME = 0.995f;
     private final CoreAudioWrapper wrapper;
-    private final Map<Integer, Entry> taps = new ConcurrentHashMap<>();
+    // Command operations are serialized so application intent and its taps change together.
+    private final Map<ProcessIdentity, Entry> taps = new HashMap<>();
+    // Presence means mute is desired. Pending attempts must not count as successful toggles.
+    private final Map<ProcessIdentity, MuteStatus> applicationMutes = new HashMap<>();
+
+    private enum MuteStatus { PENDING, APPLIED }
     private final AtomicBoolean creationFailureLogged = new AtomicBoolean();
 
     private record Entry(ProcessTap tap, int outputDeviceId) {
@@ -49,77 +56,128 @@ class OsxProcessTapService {
         return major > 14 || major == 14 && minor >= 4;
     }
 
-    public void setVolume(int pid, float volume) {
+    public synchronized void setVolume(int pid, float volume) {
         if (!isSupported()) {
-            log.trace("Process taps unavailable on this macOS version, not setting volume for {}", pid);
             return;
         }
         cleanUpDeadProcesses();
-        taps.compute(pid, (key, entry) -> {
-            entry = recreateIfStale(pid, entry);
-            if (entry == null) {
-                return volume >= FULL_VOLUME ? null : createEntry(pid, volume, false);
-            }
-            entry.tap().setGain(volume);
-            if (volume >= FULL_VOLUME && !entry.tap().muted()) {
-                entry.tap().close();
-                return null;
-            }
-            return entry;
-        });
+        var identity = ProcessIdentity.find(pid);
+        if (identity == null) {
+            return;
+        }
+        var entry = taps.get(identity);
+        update(identity, volume, entry != null && entry.tap().muted());
     }
 
-    public boolean isMuted(int pid) {
-        var entry = taps.get(pid);
+    public synchronized boolean isMuted(int pid) {
+        cleanUpDeadProcesses();
+        var entry = taps.get(ProcessIdentity.find(pid));
         return entry != null && entry.tap().muted();
     }
 
-    public void setMuted(int pid, boolean muted) {
+    public synchronized boolean setMuted(int pid, boolean muted) {
         if (!isSupported()) {
-            log.trace("Process taps unavailable on this macOS version, not muting {}", pid);
-            return;
+            return false;
         }
         cleanUpDeadProcesses();
-        taps.compute(pid, (key, entry) -> {
-            entry = recreateIfStale(pid, entry);
-            if (entry == null) {
-                return muted ? createEntry(pid, 1, true) : null;
-            }
-            entry.tap().setMuted(muted);
-            if (!muted && entry.tap().gain() >= FULL_VOLUME) {
-                entry.tap().close();
-                return null;
-            }
-            return entry;
-        });
+        var identity = ProcessIdentity.find(pid);
+        if (identity == null) {
+            return !muted;
+        }
+        var entry = taps.get(identity);
+        update(identity, entry == null ? 1 : entry.tap().gain(), muted);
+        return isMuted(pid) == muted;
     }
 
-    public void mute(int pid, MuteType muteType) {
+    public synchronized void mute(int pid, MuteType muteType) {
         setMuted(pid, muteType.convert(isMuted(pid)));
     }
 
-    @PreDestroy
-    void destroy() {
-        taps.values().forEach(entry -> entry.tap().close());
-        taps.clear();
+    public synchronized void muteApplication(int ownerPid, List<Integer> pids, MuteType mute) {
+        cleanUpDeadProcesses();
+        var owner = ProcessIdentity.find(ownerPid);
+        if (owner == null || !isSupported()) {
+            return;
+        }
+        var status = applicationMutes.get(owner);
+        var muted = status == MuteStatus.APPLIED
+                || status == null && !pids.isEmpty() && pids.stream().allMatch(this::isMuted);
+        var target = mute.convert(muted);
+        if (target) {
+            applicationMutes.put(owner, MuteStatus.PENDING);
+            restoreApplicationMute(ownerPid, pids);
+        } else {
+            pids.forEach(pid -> setMuted(pid, false));
+            applicationMutes.remove(owner);
+        }
     }
 
-    /** A tap renders to the device that was default at creation; recreate when the default moved or the process died. */
-    private Entry recreateIfStale(int pid, Entry entry) {
-        if (entry == null) {
-            return null;
+    /** Retry missing taps on commands, including newly discovered WebKit helpers, without a PID applied-state map. */
+    public synchronized void restoreApplicationMute(int ownerPid, List<Integer> pids) {
+        cleanUpDeadProcesses();
+        var owner = ProcessIdentity.find(ownerPid);
+        if (owner == null || !applicationMutes.containsKey(owner)) {
+            return;
         }
-        if (ProcessHandle.of(pid).isEmpty()) {
+        var applied = applicationMutes.get(owner) == MuteStatus.APPLIED;
+        for (var pid : pids) {
+            applied |= isMuted(pid) || setMuted(pid, true);
+        }
+        if (applied) {
+            applicationMutes.put(owner, MuteStatus.APPLIED);
+        }
+    }
+
+    public synchronized void setApplicationVolume(int ownerPid, List<Integer> pids, float volume) {
+        cleanUpDeadProcesses();
+        var owner = ProcessIdentity.find(ownerPid);
+        if (owner == null || !isSupported()) {
+            return;
+        }
+        var muted = applicationMutes.containsKey(owner);
+        for (var pid : pids) {
+            var identity = ProcessIdentity.find(pid);
+            if (identity != null) {
+                var entry = taps.get(identity);
+                update(identity, volume, muted || entry != null && entry.tap().muted());
+            }
+        }
+        if (muted && pids.stream().anyMatch(this::isMuted)) {
+            applicationMutes.put(owner, MuteStatus.APPLIED);
+        }
+    }
+
+    @PreDestroy
+    synchronized void destroy() {
+        taps.values().forEach(entry -> entry.tap().close());
+        taps.clear();
+        applicationMutes.clear();
+    }
+
+    /** Apply the requested state directly when recreating a tap; a failed recreation leaves no live entry. */
+    private void update(ProcessIdentity identity, float gain, boolean muted) {
+        var entry = taps.get(identity);
+        if (entry != null && (entry.outputDeviceId() != wrapper.getDefaultDevice(true) || gain >= FULL_VOLUME && !muted)) {
             entry.tap().close();
-            return null;
+            taps.remove(identity);
+            entry = null;
         }
-        if (entry.outputDeviceId() == wrapper.getDefaultDevice(true)) {
-            return entry;
+        if (entry == null) {
+            if (gain < FULL_VOLUME || muted) {
+                entry = createEntry(identity.pid(), gain, muted);
+                if (entry != null) {
+                    // Do not retain a tap if the PID changed lifetime during its creation.
+                    if (identity.equals(ProcessIdentity.find(identity.pid()))) {
+                        taps.put(identity, entry);
+                    } else {
+                        entry.tap().close();
+                    }
+                }
+            }
+        } else {
+            entry.tap().setGain(gain);
+            entry.tap().setMuted(muted);
         }
-        var gain = entry.tap().gain();
-        var muted = entry.tap().muted();
-        entry.tap().close();
-        return createEntry(pid, gain, muted);
     }
 
     private Entry createEntry(int pid, float gain, boolean muted) {
@@ -152,11 +210,12 @@ class OsxProcessTapService {
 
     private void cleanUpDeadProcesses() {
         taps.entrySet().removeIf(entry -> {
-            if (ProcessHandle.of(entry.getKey()).isPresent()) {
+            if (entry.getKey().equals(ProcessIdentity.find(entry.getKey().pid()))) {
                 return false;
             }
             entry.getValue().tap().close();
             return true;
         });
+        applicationMutes.keySet().removeIf(owner -> !Objects.equals(owner, ProcessIdentity.find(owner.pid())));
     }
 }

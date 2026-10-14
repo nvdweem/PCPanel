@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
@@ -64,7 +63,6 @@ class SndCtrlOsx implements ISndCtrl {
     private final Event<Object> eventBus;
     @GuardedBy("devices") private final Map<String, OsxAudioDevice> devices = new HashMap<>();
     @GuardedBy("devices") private final Map<Integer, List<CoreAudioWrapper.ListenerHandle>> deviceListeners = new HashMap<>();
-    private final Map<String, Boolean> appMuted = new ConcurrentHashMap<>();
     // The handles strongly reference the JNA callbacks; without them JNA's WeakHashMap lets the GC collect the
     // callback while CoreAudio still holds the function pointer.
     private final List<CoreAudioWrapper.ListenerHandle> systemListeners = new ArrayList<>();
@@ -195,134 +193,80 @@ class SndCtrlOsx implements ISndCtrl {
 
     @Override
     public void setProcessVolume(String fileName, @Nullable String device, float volume) {
-        pidsFor(fileName).forEach(pid -> tapService.setVolume(pid, volume));
+        var apps = processHelper.listApps();
+        if (apps.isEmpty()) {
+            fallbackPids(fileName).forEach(pid -> tapService.setVolume(pid, volume));
+        } else {
+            matchingApps(fileName, apps).forEach(app -> tapService.setApplicationVolume(app.pid(), resolveAudioPids(app), volume));
+        }
     }
 
     @Override
     public void setFocusVolume(float volume) {
-        focusPids().forEach(pid -> tapService.setVolume(pid, volume));
+        var app = focusedApp();
+        if (app != null) {
+            tapService.setApplicationVolume(app.pid(), resolveAudioPids(app), volume);
+        }
     }
 
-    /**
-     * PIDs for the currently focused application, including any audio-producing coalition processes.
-     */
-    List<Integer> focusPids() {
+    private @Nullable OsxProcessHelper.RunningApp focusedApp() {
         var front = processHelper.getFrontmostApp();
         if (front == null || front.pid() <= 0) {
-            return processHelper.foregroundPid().stream().boxed().toList();
+            return null;
         }
-        var apps = processHelper.listApps();
-        for (var app : apps) {
-            if (app.pid() == front.pid()) {
-                return audioPidsFor(app);
-            }
-        }
-        return List.of(front.pid());
+        return processHelper.listApps().stream()
+                .filter(app -> app.pid() == front.pid())
+                .findFirst()
+                .orElseGet(() -> new OsxProcessHelper.RunningApp(front.pid(), front.name(), front.executablePath(),
+                        "Foreground", front.bundleId(), Set.of()));
     }
 
     @Override
     public void muteFocus(MuteType mute) {
-        var front = processHelper.getFrontmostApp();
-        if (front == null || front.pid() <= 0) {
-            processHelper.foregroundPid().ifPresent(pid -> mutePids(List.of(pid), mute, null));
-            return;
+        var app = focusedApp();
+        if (app != null) {
+            muteApp(app, mute);
         }
-        var apps = processHelper.listApps();
-        for (var app : apps) {
-            if (app.pid() == front.pid()) {
-                muteApp(app, mute);
-                return;
-            }
-        }
-        mutePids(List.of(front.pid()), mute, front.bundleId());
     }
 
     @Override
     public void muteProcesses(Set<String> fileNames, MuteType mute) {
         var apps = processHelper.listApps();
-        if (apps.isEmpty()) {
-            for (var fileName : fileNames) {
-                var pids = pidsFor(fileName);
-                mutePids(pids, mute, fileName);
-            }
-            return;
-        }
         for (var fileName : fileNames) {
-            var baseName = new File(fileName).getName();
-            var matched = StreamEx.of(apps)
-                                  .filter(OsxProcessHelper.RunningApp::foreground)
-                                  .filter(app -> matchesApp(app, fileName, baseName))
-                                  .toList();
-            if (matched.isEmpty()) {
-                var pids = pidsFor(fileName);
-                mutePids(pids, mute, fileName);
+            if (apps.isEmpty()) {
+                fallbackPids(fileName).forEach(pid -> tapService.mute(pid, mute));
             } else {
-                for (var app : matched) {
-                    muteApp(app, mute);
-                }
+                matchingApps(fileName, apps).forEach(app -> muteApp(app, mute));
             }
         }
     }
 
     void muteApp(OsxProcessHelper.RunningApp app, MuteType mute) {
-        var pids = audioPidsFor(app);
-        mutePids(pids, mute, appKeyFor(app));
-    }
-
-    private void mutePids(List<Integer> pids, MuteType mute, @Nullable String appKey) {
-        if (pids.isEmpty()) {
-            return;
-        }
-        var isMuted = isApplicationMuted(appKey, pids);
-        var target = mute.convert(isMuted);
-        if (appKey != null) {
-            appMuted.put(appKey, target);
-        }
-        for (var pid : pids) {
-            appMuted.put(String.valueOf(pid), target);
-            tapService.setMuted(pid, target);
-        }
-    }
-
-    private boolean isApplicationMuted(@Nullable String appKey, List<Integer> pids) {
-        if (appKey != null && appMuted.containsKey(appKey)) {
-            return appMuted.get(appKey);
-        }
-        for (var pid : pids) {
-            var muted = appMuted.get(String.valueOf(pid));
-            if (muted != null) {
-                return muted;
-            }
-        }
-        return !pids.isEmpty() && pids.stream().allMatch(tapService::isMuted);
-    }
-
-    private static String appKeyFor(OsxProcessHelper.RunningApp app) {
-        if (StringUtils.isNotBlank(app.bundleId())) {
-            return app.bundleId();
-        }
-        return StringUtils.isNotBlank(app.executablePath()) ? app.executablePath() : String.valueOf(app.pid());
+        tapService.muteApplication(app.pid(), resolveAudioPids(app), mute);
     }
 
     /** PIDs whose application name or executable matches, including any audio-producing coalition processes. */
     List<Integer> pidsFor(String fileName) {
-        var baseName = new File(fileName).getName();
         var apps = processHelper.listApps();
         if (apps.isEmpty()) {
-            return StreamEx.of(fallbackProcesses())
-                           .filter(app -> matchesFallbackApp(app, fileName, baseName))
-                           .map(RunningApplication::pid)
-                           .toList();
+            return fallbackPids(fileName);
         }
-        return StreamEx.of(apps)
-                       .filter(OsxProcessHelper.RunningApp::foreground)
-                       .filter(app -> matchesApp(app, fileName, baseName))
-                       .flatCollection(this::audioPidsFor)
-                       .distinct()
-                       .toList();
+        return matchingApps(fileName, apps).stream().flatMap(app -> audioPidsFor(app).stream()).distinct().toList();
+    }
+
+    private List<Integer> fallbackPids(String fileName) {
+        var baseName = new File(fileName).getName();
+        return fallbackProcesses().stream().filter(app -> matchesFallbackApp(app, fileName, baseName))
+                .map(RunningApplication::pid).toList();
     }
 
     List<Integer> audioPidsFor(OsxProcessHelper.RunningApp app) {
+        var pids = resolveAudioPids(app);
+        tapService.restoreApplicationMute(app.pid(), pids);
+        return pids;
+    }
+
+    private List<Integer> resolveAudioPids(OsxProcessHelper.RunningApp app) {
         var pids = new LinkedHashSet<Integer>();
         pids.add(app.pid());
         for (var childPid : app.coalitionPids()) {
@@ -330,18 +274,13 @@ class SndCtrlOsx implements ISndCtrl {
                 pids.add(childPid);
             }
         }
-        var appKey = appKeyFor(app);
-        var isMuted = isApplicationMuted(appKey, List.of(app.pid()));
-        if (isMuted) {
-            // Helper replacement: ensure any newly discovered audio process in coalition inherits mute
-            for (var pid : pids) {
-                if (!appMuted.containsKey(String.valueOf(pid))) {
-                    appMuted.put(String.valueOf(pid), true);
-                    tapService.setMuted(pid, true);
-                }
-            }
-        }
         return new ArrayList<>(pids);
+    }
+
+    private static List<OsxProcessHelper.RunningApp> matchingApps(String fileName, List<OsxProcessHelper.RunningApp> apps) {
+        var baseName = new File(fileName).getName();
+        return apps.stream().filter(OsxProcessHelper.RunningApp::foreground)
+                .filter(app -> matchesApp(app, fileName, baseName)).toList();
     }
 
     private static boolean isWebApp(@Nullable String executablePath) {

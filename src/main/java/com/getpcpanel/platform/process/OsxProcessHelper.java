@@ -42,19 +42,7 @@ public class OsxProcessHelper implements IProcessHelper {
     private static final Pattern APP_PID = Pattern.compile("\\bpid\\s*=\\s*(\\d+)");
     private static final Pattern COALITION_PIDS = Pattern.compile("coalition:\\s*\\d+\\s*\\{\\s*([^}]+)\\s*\\}");
     private static final Duration TOOL_TIMEOUT = Duration.ofSeconds(3);
-    private static final long CACHE_DURATION_MS = 200;
     private final ProcessHelper processHelper;
-
-    private volatile CachedFrontmost cachedFrontmost;
-    private volatile CachedApps cachedApps;
-
-    private record CachedFrontmost(long timestamp, @Nullable FrontmostApp app) {}
-    private record CachedApps(long timestamp, List<RunningApp> apps) {}
-
-    void clearCache() {
-        cachedFrontmost = null;
-        cachedApps = null;
-    }
 
     public record FrontmostApp(int pid, String name, String executablePath, @Nullable String bundleId) {
         public FrontmostApp(int pid, String name, String executablePath) {
@@ -84,11 +72,6 @@ public class OsxProcessHelper implements IProcessHelper {
     }
 
     public @Nullable FrontmostApp getFrontmostApp() {
-        var cached = cachedFrontmost;
-        var now = System.currentTimeMillis();
-        if (cached != null && now - cached.timestamp < CACHE_DURATION_MS) {
-            return cached.app;
-        }
         try {
             var asn = lineFrom("lsappinfo", "front");
             if (StringUtils.isBlank(asn)) {
@@ -98,7 +81,6 @@ public class OsxProcessHelper implements IProcessHelper {
             if (app == null) {
                 log.debug("lsappinfo gave no pid or executable for the frontmost application {}", asn.trim());
             }
-            cachedFrontmost = new CachedFrontmost(now, app);
             return app;
         } catch (Exception e) {
             log.error("Unable to determine frontmost application", e);
@@ -110,11 +92,6 @@ public class OsxProcessHelper implements IProcessHelper {
      * Lists the applications known to the launch services database. Returns an empty list when lsappinfo fails.
      */
     public List<RunningApp> listApps() {
-        var cached = cachedApps;
-        var now = System.currentTimeMillis();
-        if (cached != null && now - cached.timestamp < CACHE_DURATION_MS) {
-            return cached.apps;
-        }
         try {
             var result = new ArrayList<RunningApp>();
             String name = null;
@@ -148,7 +125,6 @@ public class OsxProcessHelper implements IProcessHelper {
                 }
             }
             addApp(result, pid, name, executable, type, bundleId, coalitionPids);
-            cachedApps = new CachedApps(now, result);
             return result;
         } catch (Exception e) {
             log.error("Unable to list applications", e);

@@ -170,42 +170,46 @@ class OsxProcessHelperTest {
     }
 
     @Test
-    @DisplayName("getFrontmostApp caches result within cache window eliminating duplicate subprocesses")
-    void getFrontmostAppCachesResult() throws Exception {
-        var processHelper = mock(ProcessHelper.class);
-        when(processHelper.run(any(Duration.class), eq(ProcessHelper.PARSEABLE_OUTPUT), eq("lsappinfo"), eq("front")))
-            .thenReturn(new ProcessHelper.Result(false, 0, List.of("ASN:0x0-0x123:"), List.of()));
-        when(processHelper.run(any(Duration.class), eq(ProcessHelper.PARSEABLE_OUTPUT), eq("lsappinfo"), eq("info"), eq("-only"), eq("name,pid,executablepath,bundleid"), eq("ASN:0x0-0x123:")))
-            .thenReturn(new ProcessHelper.Result(false, 0, List.of("\"LSDisplayName\"=\"Safari\"", "\"pid\"=31430", "\"CFBundleExecutablePath\"=\"/Applications/Safari.app/Contents/MacOS/Safari\""), List.of()));
-
-        var osxHelper = new OsxProcessHelper(processHelper);
-        var app1 = osxHelper.getFrontmostApp();
-        var app2 = osxHelper.getFrontmostApp();
-
-        assertEquals(app1, app2);
-        // Only 1 execution of each command, second call served from cache
-        org.mockito.Mockito.verify(processHelper, org.mockito.Mockito.times(1))
-            .run(any(Duration.class), eq(ProcessHelper.PARSEABLE_OUTPUT), eq("lsappinfo"), eq("front"));
+    @DisplayName("rapid focus switching is fresh for lookup and foreground PID consumers")
+    void rapidFocusSwitchingIsFresh() throws Exception {
+        var processes = mock(ProcessHelper.class);
+        when(processes.run(any(Duration.class), eq(ProcessHelper.PARSEABLE_OUTPUT), eq("lsappinfo"), eq("front")))
+            .thenReturn(new ProcessHelper.Result(false, 0, List.of("ASN:A"), List.of()),
+                        new ProcessHelper.Result(false, 0, List.of("ASN:B"), List.of()));
+        when(processes.run(any(Duration.class), eq(ProcessHelper.PARSEABLE_OUTPUT), eq("lsappinfo"), eq("info"), eq("-only"), eq("name,pid,executablepath,bundleid"), eq("ASN:A")))
+            .thenReturn(new ProcessHelper.Result(false, 0, List.of("\"pid\"=100"), List.of()));
+        when(processes.run(any(Duration.class), eq(ProcessHelper.PARSEABLE_OUTPUT), eq("lsappinfo"), eq("info"), eq("-only"), eq("name,pid,executablepath,bundleid"), eq("ASN:B")))
+            .thenReturn(new ProcessHelper.Result(false, 0, List.of("\"pid\"=200"), List.of()));
+        var helper = new OsxProcessHelper(processes);
+        assertEquals(100, helper.getFrontmostApp().pid());
+        assertEquals(200, helper.foregroundPid().orElseThrow());
     }
 
     @Test
-    @DisplayName("listApps caches result within cache window eliminating duplicate subprocesses")
-    void listAppsCachesResult() throws Exception {
+    @DisplayName("listApps is fresh across commands so coalitions cannot retain reused PIDs")
+    void listAppsIsFresh() throws Exception {
         var processHelper = mock(ProcessHelper.class);
         var lines = List.of(
             "1) \"Safari\" ASN:0x0-0x111:",
             "    executable path=\"/Applications/Safari.app/Contents/MacOS/Safari\"",
-            "    pid = 31430 type=\"Foreground\""
+            "    pid = 31430 type=\"Foreground\"",
+            "    coalition: 500 { 31430 31452 }"
         );
         when(processHelper.run(any(Duration.class), eq(ProcessHelper.PARSEABLE_OUTPUT), eq("lsappinfo"), eq("list")))
-            .thenReturn(new ProcessHelper.Result(false, 0, lines, List.of()));
+            .thenReturn(new ProcessHelper.Result(false, 0, lines, List.of()),
+                        new ProcessHelper.Result(false, 0, List.of(
+                            "1) \"Safari\" ASN:0x0-0x111:",
+                            "    executable path=\"/Applications/Safari.app/Contents/MacOS/Safari\"",
+                            "    pid = 31430 type=\"Foreground\"",
+                            "    coalition: 500 { 31430 31455 }"), List.of()));
 
         var osxHelper = new OsxProcessHelper(processHelper);
         var apps1 = osxHelper.listApps();
         var apps2 = osxHelper.listApps();
 
-        assertEquals(apps1, apps2);
-        org.mockito.Mockito.verify(processHelper, org.mockito.Mockito.times(1))
+        assertEquals(Set.of(31430, 31452), apps1.getFirst().coalitionPids());
+        assertEquals(Set.of(31430, 31455), apps2.getFirst().coalitionPids());
+        org.mockito.Mockito.verify(processHelper, org.mockito.Mockito.times(2))
             .run(any(Duration.class), eq(ProcessHelper.PARSEABLE_OUTPUT), eq("lsappinfo"), eq("list"));
     }
 }
