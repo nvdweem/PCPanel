@@ -43,6 +43,7 @@
 - (Windows) Fixed **App volume doing nothing for apps that play on another device than the default one**, such as a browser that Wave Link routes to its *Browsers* device: it now sets the app's volume on every output device by default, as App mute and Linux already did. The action has its **Audio device** choice back, to limit it to one device, and **App mute** has the same choice, for example to mute music only on your speakers (#170).
 - The round knob on the **overlay**'s bar now rides on the end of the level all the way from 0% to 100%, keeps the overlay's padding at both ends, and is solid, so the bar no longer shows through it. The bar fills to exactly its share, in the bar's own shape, so a full square bar is filled to its corners. Set its size under Settings → Overlay → Shape → *Knob size*: larger than the bar height makes it stand out, the same as the bar height blends it in, and 0 turns it off.
 - (Windows) SteelSeries Sonar: an **Update rate** setting (Settings → SteelSeries Sonar, default 12 per second) controls how often volume changes are sent to Sonar; lower values reduce CPU use in SteelSeries GG.
+- (macOS) Fixed **Focused-app volume doing nothing on newer macOS versions**: PCPanel couldn't tell which app was in front, so the focused-app volume, *Focus volume override* and closing the focused app had no effect. (#172)
 
 ## [2.1.0]
 

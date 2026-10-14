@@ -5,7 +5,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.OptionalInt;
 import java.util.regex.Pattern;
 
@@ -32,7 +31,8 @@ import lombok.extern.log4j.Log4j2;
 @MacBuild
 @RequiredArgsConstructor
 public class OsxProcessHelper implements IProcessHelper {
-    private static final Pattern KEY_VALUE = Pattern.compile("\"(\\w+)\"\\s*=\\s*\"?(.*?)\"?\\s*$");
+    private static final Pattern KEY_VALUE = Pattern.compile("\"(\\w+)\"\\s*=\\s*(?:\"([^\"]*)\"|(\\S+))");
+    private static final Pattern INFO_HEADER = Pattern.compile("^\\s*\"(.*)\"\\s+ASN:.*");
     private static final Pattern APP_HEADER = Pattern.compile("^\\s*\\d+\\)\\s+\"(.*)\"\\s+ASN:.*");
     private static final Pattern EXECUTABLE_PATH = Pattern.compile("executable path=\"(.*)\"");
     private static final Pattern APP_TYPE = Pattern.compile("\\btype=\"(\\w+)\"");
@@ -62,14 +62,11 @@ public class OsxProcessHelper implements IProcessHelper {
             if (StringUtils.isBlank(asn)) {
                 return null;
             }
-            var info = keyValuesFrom("lsappinfo", "info", "-only", "name,pid,executablepath", asn.trim());
-            var pid = NumberUtils.toInt(info.get("pid"), -1);
-            var name = info.getOrDefault("LSDisplayName", "");
-            var executable = info.getOrDefault("CFBundleExecutablePath", "");
-            if (pid == -1 && StringUtils.isBlank(executable)) {
-                return null;
+            var app = parseFrontmostApp(output("lsappinfo", "info", "-only", "name,pid,executablepath", asn.trim()));
+            if (app == null) {
+                log.debug("lsappinfo gave no pid or executable for the frontmost application {}", asn.trim());
             }
-            return new FrontmostApp(pid, name, executable);
+            return app;
         } catch (Exception e) {
             log.error("Unable to determine frontmost application", e);
             return null;
@@ -123,15 +120,35 @@ public class OsxProcessHelper implements IProcessHelper {
         return matcher.find() ? matcher.group(1) : null;
     }
 
-    private Map<String, String> keyValuesFrom(String... cmd) throws IOException {
-        var result = new HashMap<String, String>();
-        for (var line : output(cmd)) {
-            var matcher = KEY_VALUE.matcher(line.trim());
-            if (matcher.matches()) {
-                result.put(matcher.group(1), matcher.group(2));
+    /**
+     * Reads {@code lsappinfo info} output. Depending on the macOS version it answers {@code -only} with
+     * {@code "key"="value"} pairs or with its full human-readable block ({@code "Name" ASN:...} header,
+     * {@code executable path="..."}, {@code pid = 123 ...}), so both are understood.
+     */
+    static @Nullable FrontmostApp parseFrontmostApp(List<String> lines) {
+        var info = new HashMap<String, String>();
+        String headerName = null;
+        String executable = null;
+        String pid = null;
+        for (var line : lines) {
+            var matcher = KEY_VALUE.matcher(line);
+            while (matcher.find()) {
+                info.putIfAbsent(matcher.group(1), matcher.group(2) != null ? matcher.group(2) : matcher.group(3));
             }
+            var header = INFO_HEADER.matcher(line);
+            if (headerName == null && header.matches()) {
+                headerName = header.group(1);
+            }
+            executable = firstGroup(EXECUTABLE_PATH, line, executable);
+            pid = firstGroup(APP_PID, line, pid);
         }
-        return result;
+        var pidValue = NumberUtils.toInt(StringUtils.firstNonBlank(info.get("pid"), pid), -1);
+        var name = StringUtils.firstNonBlank(info.get("LSDisplayName"), headerName, "");
+        var executablePath = StringUtils.firstNonBlank(info.get("CFBundleExecutablePath"), executable, "");
+        if (pidValue == -1 && StringUtils.isBlank(executablePath)) {
+            return null;
+        }
+        return new FrontmostApp(pidValue, name, executablePath);
     }
 
     private @Nullable String lineFrom(String... cmd) throws IOException {
