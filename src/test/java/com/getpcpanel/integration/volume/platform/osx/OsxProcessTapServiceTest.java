@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,7 +57,7 @@ class OsxProcessTapServiceTest {
     }
 
     private OsxProcessTapService service(Duration retryDelay) {
-        return new OsxProcessTapService(coreAudio, factory, alive::contains, true, retryDelay);
+        return new OsxProcessTapService(coreAudio, factory, processes(), true, retryDelay);
     }
 
     @Test
@@ -77,6 +78,27 @@ class OsxProcessTapServiceTest {
         assertEquals(0.6f, music.gain);
         assertTrue(music.createdMuted, "the moved tap is muted before it renders");
         assertEquals(2, factory.liveCount(), "the taps on the speakers are closed");
+    }
+
+    @Test
+    void anApplicationMuteMovesWithTheOutputAndStillTogglesAndEndsWithTheApp() {
+        // FIREFOX owns the app, MUSIC plays as its helper (like Safari and its WebKit process).
+        service.muteApplication(FIREFOX, List.of(FIREFOX, MUSIC), MuteType.mute);
+        coreAudio.defaultOutput = HEADPHONES;
+        assertTrue(service.migrateToDefaultOutput());
+        assertTrue(factory.liveOn(MUSIC, HEADPHONES));
+        assertTrue(factory.live(MUSIC).createdMuted);
+        assertEquals(2, factory.liveCount());
+
+        service.muteApplication(FIREFOX, List.of(FIREFOX, MUSIC), MuteType.toggle);
+        assertEquals(0, factory.liveCount(), "unmuted at full volume, nothing stays tapped");
+
+        service.muteApplication(FIREFOX, List.of(FIREFOX, MUSIC), MuteType.toggle);
+        coreAudio.defaultOutput = MONITOR;
+        assertTrue(service.migrateToDefaultOutput());
+        alive.remove(FIREFOX);
+        assertFalse(service.isMuted(MUSIC), "the moved helper's mute ends with its app");
+        assertEquals(0, factory.liveCount());
     }
 
     @Test
@@ -355,7 +377,7 @@ class OsxProcessTapServiceTest {
 
     @Test
     void doesNothingWhereProcessTapsAreUnsupported() throws InterruptedException {
-        var unsupported = new OsxProcessTapService(coreAudio, factory, alive::contains, false, Duration.ofMillis(20));
+        var unsupported = new OsxProcessTapService(coreAudio, factory, processes(), false, Duration.ofMillis(20));
         try {
             unsupported.setVolume(FIREFOX, 0.3f);
             coreAudio.defaultOutput = HEADPHONES;
@@ -365,6 +387,20 @@ class OsxProcessTapServiceTest {
         } finally {
             unsupported.destroy();
         }
+    }
+
+    /** Every process in {@link #alive} is the same lifetime throughout; exit notifications are left to the identity checks. */
+    private ProcessIdentity.Lookup processes() {
+        return new ProcessIdentity.Lookup() {
+            @Override
+            public @Nullable ProcessIdentity find(int pid) {
+                return alive.contains(pid) ? new ProcessIdentity(pid, Instant.EPOCH) : null;
+            }
+
+            @Override
+            public void onExit(ProcessIdentity identity, Runnable action) {
+            }
+        };
     }
 
     private static String uid(int deviceId) {

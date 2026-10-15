@@ -44,6 +44,7 @@
 - The round knob on the **overlay**'s bar now rides on the end of the level all the way from 0% to 100%, keeps the overlay's padding at both ends, and is solid, so the bar no longer shows through it. The bar fills to exactly its share, in the bar's own shape, so a full square bar is filled to its corners. Set its size under Settings → Overlay → Shape → *Knob size*: larger than the bar height makes it stand out, the same as the bar height blends it in, and 0 turns it off.
 - (Windows) SteelSeries Sonar: an **Update rate** setting (Settings → SteelSeries Sonar, default 12 per second) controls how often volume changes are sent to Sonar; lower values reduce CPU use in SteelSeries GG.
 - (macOS) Fixed **Focused-app volume doing nothing on newer macOS versions**: PCPanel couldn't tell which app was in front, so the focused-app volume, *Focus volume override* and closing the focused app had no effect. (#172)
+- (macOS) **App volume, App mute and the focused-app controls now work for Safari and web apps added to the Dock** (such as YouTube Music), which play their sound through separate helper processes. Each web app is controlled on its own, also when two have the same name and you use the focused-app controls.
 - (macOS) Fixed **an app whose volume or mute PCPanel controls staying on the old speakers or headphones** when you switch the sound output: its sound now moves to the new output straight away, at the same volume and mute.
 
 ## [2.1.0]

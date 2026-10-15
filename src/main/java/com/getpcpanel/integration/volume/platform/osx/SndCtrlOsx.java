@@ -198,32 +198,133 @@ class SndCtrlOsx implements ISndCtrl {
 
     @Override
     public void setProcessVolume(String fileName, @Nullable String device, float volume) {
-        pidsFor(fileName).forEach(pid -> tapService.setVolume(pid, volume));
+        var apps = processHelper.listApps();
+        if (apps.isEmpty()) {
+            fallbackPids(fileName).forEach(pid -> tapService.setVolume(pid, volume));
+        } else {
+            matchingApps(fileName, apps).forEach(app -> tapService.setApplicationVolume(app.pid(), resolveAudioPids(app), volume));
+        }
     }
 
     @Override
     public void setFocusVolume(float volume) {
-        processHelper.foregroundPid().ifPresent(pid -> tapService.setVolume(pid, volume));
+        var app = focusedApp();
+        if (app != null) {
+            tapService.setApplicationVolume(app.pid(), resolveAudioPids(app), volume);
+        }
+    }
+
+    private @Nullable OsxProcessHelper.RunningApp focusedApp() {
+        var front = processHelper.getFrontmostApp();
+        if (front == null || front.pid() <= 0) {
+            return null;
+        }
+        return processHelper.listApps().stream()
+                .filter(app -> app.pid() == front.pid())
+                .findFirst()
+                .orElseGet(() -> new OsxProcessHelper.RunningApp(front.pid(), front.name(), front.executablePath(),
+                        "Foreground", front.bundleId(), Set.of()));
+    }
+
+    @Override
+    public void muteFocus(MuteType mute) {
+        var app = focusedApp();
+        if (app != null) {
+            muteApp(app, mute);
+        }
     }
 
     @Override
     public void muteProcesses(Set<String> fileNames, MuteType mute) {
-        StreamEx.of(fileNames).flatCollection(this::pidsFor).forEach(pid -> tapService.mute(pid, mute));
+        var apps = processHelper.listApps();
+        for (var fileName : fileNames) {
+            if (apps.isEmpty()) {
+                fallbackPids(fileName).forEach(pid -> tapService.mute(pid, mute));
+            } else {
+                matchingApps(fileName, apps).forEach(app -> muteApp(app, mute));
+            }
+        }
     }
 
-    /** PIDs whose executable matches, by base name (mirroring the Windows session match) or full path. */
-    private List<Integer> pidsFor(String fileName) {
+    void muteApp(OsxProcessHelper.RunningApp app, MuteType mute) {
+        tapService.muteApplication(app.pid(), resolveAudioPids(app), mute);
+    }
+
+    /** PIDs whose application name or executable matches, including any audio-producing coalition processes. */
+    List<Integer> pidsFor(String fileName) {
+        var apps = processHelper.listApps();
+        if (apps.isEmpty()) {
+            return fallbackPids(fileName);
+        }
+        return matchingApps(fileName, apps).stream().flatMap(app -> audioPidsFor(app).stream()).distinct().toList();
+    }
+
+    private List<Integer> fallbackPids(String fileName) {
         var baseName = new File(fileName).getName();
-        return StreamEx.of(getRunningApplications())
-                       .filter(app -> app.file().getName().equalsIgnoreCase(baseName) || app.file().getPath().equalsIgnoreCase(fileName))
-                       .map(RunningApplication::pid)
-                       .toList();
+        return fallbackProcesses().stream().filter(app -> matchesFallbackApp(app, fileName, baseName))
+                .map(RunningApplication::pid).toList();
+    }
+
+    List<Integer> audioPidsFor(OsxProcessHelper.RunningApp app) {
+        var pids = resolveAudioPids(app);
+        tapService.restoreApplicationMute(app.pid(), pids);
+        return pids;
+    }
+
+    private List<Integer> resolveAudioPids(OsxProcessHelper.RunningApp app) {
+        var pids = new LinkedHashSet<Integer>();
+        pids.add(app.pid());
+        for (var childPid : app.coalitionPids()) {
+            if (childPid != app.pid() && wrapper.translatePidToProcessObject(childPid) != 0) {
+                pids.add(childPid);
+            }
+        }
+        return new ArrayList<>(pids);
+    }
+
+    private static List<OsxProcessHelper.RunningApp> matchingApps(String fileName, List<OsxProcessHelper.RunningApp> apps) {
+        var baseName = new File(fileName).getName();
+        return apps.stream().filter(OsxProcessHelper.RunningApp::foreground)
+                .filter(app -> matchesApp(app, fileName, baseName)).toList();
+    }
+
+    private static boolean isWebApp(@Nullable String executablePath) {
+        return executablePath != null && executablePath.contains("/Web App.app/");
+    }
+
+    private static boolean matchesApp(OsxProcessHelper.RunningApp app, String fileName, String baseName) {
+        if (StringUtils.isNotBlank(app.bundleId()) && app.bundleId().equalsIgnoreCase(fileName)) {
+            return true;
+        }
+        if (isWebApp(app.executablePath())) {
+            return app.name().equalsIgnoreCase(fileName) || app.name().equalsIgnoreCase(baseName);
+        }
+        return app.name().equalsIgnoreCase(fileName)
+                || app.name().equalsIgnoreCase(baseName)
+                || new File(app.executablePath()).getName().equalsIgnoreCase(baseName)
+                || app.executablePath().equalsIgnoreCase(fileName);
+    }
+
+    private static boolean matchesFallbackApp(RunningApplication app, String fileName, String baseName) {
+        if (isWebApp(app.file().getPath())) {
+            return app.name().equalsIgnoreCase(fileName) || app.name().equalsIgnoreCase(baseName);
+        }
+        return app.name().equalsIgnoreCase(fileName)
+                || app.name().equalsIgnoreCase(baseName)
+                || app.file().getName().equalsIgnoreCase(baseName)
+                || app.file().getPath().equalsIgnoreCase(fileName);
     }
 
     @Override
     public String getFocusApplication() {
         var app = processHelper.getFrontmostApp();
-        return app == null ? "" : StringUtils.firstNonBlank(app.executablePath(), app.name(), "");
+        if (app == null) {
+            return "";
+        }
+        if (isWebApp(app.executablePath())) {
+            return StringUtils.firstNonBlank(app.name(), app.executablePath(), "");
+        }
+        return StringUtils.firstNonBlank(app.executablePath(), app.name(), "");
     }
 
     @Override
@@ -236,6 +337,10 @@ class SndCtrlOsx implements ISndCtrl {
         if (!apps.isEmpty()) {
             return apps;
         }
+        return fallbackProcesses();
+    }
+
+    private List<RunningApplication> fallbackProcesses() {
         return StreamEx.of(ProcessHandle.allProcesses())
                        .mapPartial(ph -> ph.info().command().map(cmd -> new RunningApplication((int) ph.pid(), new File(cmd), appName(cmd))))
                        .filter(app -> app.file().getPath().contains(".app/Contents/MacOS/"))
