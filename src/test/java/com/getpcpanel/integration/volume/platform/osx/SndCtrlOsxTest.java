@@ -10,9 +10,10 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
@@ -27,14 +28,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import org.mockito.stubbing.Answer;
 
 import com.getpcpanel.integration.volume.platform.MuteType;
 import com.getpcpanel.platform.process.OsxProcessHelper;
@@ -50,10 +50,10 @@ class SndCtrlOsxTest {
     private Event<Object> eventBus;
     private SndCtrlOsx sndCtrl;
     private MockedStatic<ProcessIdentity> identities;
-    private MockedStatic<ProcessTap> tapFactory;
-    private MockedStatic<OsxProcessTapService> support;
+    private Tap.Factory tapFactory;
+    private Answer<Tap> newTap;
     private Map<ProcessIdentity, Runnable> exits;
-    private List<ProcessTap> createdTaps;
+    private List<RecordingTap> createdTaps;
 
     @BeforeEach
     void setUp() {
@@ -67,23 +67,17 @@ class SndCtrlOsxTest {
             exits.put(call.getArgument(0), call.getArgument(1));
             return null;
         });
-        support = mockStatic(OsxProcessTapService.class, CALLS_REAL_METHODS);
-        support.when(OsxProcessTapService::isSupported).thenReturn(true);
         createdTaps = new ArrayList<>();
-        tapFactory = mockStatic(ProcessTap.class);
-        tapFactory.when(() -> ProcessTap.create(anyInt(), anyString(), anyFloat())).thenAnswer(call -> {
-            var tap = mock(ProcessTap.class);
+        tapFactory = mock(Tap.Factory.class);
+        newTap = call -> {
+            var tap = spy(new RecordingTap(call.getArgument(1), call.getArgument(2), call.getArgument(3)));
             createdTaps.add(tap);
-            var muted = new AtomicBoolean();
-            var gain = new AtomicReference<Float>(call.getArgument(2));
-            when(tap.muted()).thenAnswer(ignored -> muted.get());
-            when(tap.gain()).thenAnswer(ignored -> gain.get());
-            doAnswer(change -> { muted.set(change.getArgument(0)); return null; }).when(tap).setMuted(anyBoolean());
-            doAnswer(change -> { gain.set(change.getArgument(0)); return null; }).when(tap).setGain(anyFloat());
             return tap;
-        });
+        };
+        doAnswer(newTap).when(tapFactory).create(anyInt(), anyString(), anyFloat(), anyBoolean());
         when(wrapper.deviceUid(anyInt())).thenReturn("output");
-        tapService = spy(new OsxProcessTapService(wrapper));
+        when(wrapper.getDefaultDevice(true)).thenReturn(1);
+        tapService = spy(new OsxProcessTapService(wrapper, tapFactory, ProcessIdentity.Lookup.SYSTEM, true, OsxProcessTapService.RETRY_DELAY));
         eventBus = mock(Event.class);
         sndCtrl = new SndCtrlOsx(wrapper, processHelper, tapService, eventBus);
     }
@@ -91,9 +85,7 @@ class SndCtrlOsxTest {
     @AfterEach
     void tearDown() {
         tapService.destroy();
-        tapFactory.close();
         identities.close();
-        support.close();
     }
 
     @Test
@@ -299,7 +291,7 @@ class SndCtrlOsxTest {
         sndCtrl.setFocusVolume(0.5f);
 
         verify(tapService).setApplicationVolume(31430, List.of(31430, 31452), 0.5f);
-        tapFactory.verify(() -> ProcessTap.create(0, "output", 0.5f), never());
+        verify(tapFactory, never()).create(eq(0), eq("output"), eq(0.5f), anyBoolean());
     }
 
     @Test
@@ -337,8 +329,8 @@ class SndCtrlOsxTest {
         verify(tapService).setApplicationVolume(64765, List.of(64765, 64772), 0.8f);
 
         // Unrelated Slack PWA is completely untouched
-        tapFactory.verify(() -> ProcessTap.create(201, "output", 0.8f), never());
-        tapFactory.verify(() -> ProcessTap.create(202, "output", 0.8f), never());
+        verify(tapFactory, never()).create(eq(201), eq("output"), eq(0.8f), anyBoolean());
+        verify(tapFactory, never()).create(eq(202), eq("output"), eq(0.8f), anyBoolean());
     }
 
     @Test
@@ -501,11 +493,11 @@ class SndCtrlOsxTest {
         when(processHelper.listApps()).thenReturn(List.of(app));
         when(wrapper.translatePidToProcessObject(101)).thenReturn(1);
         var failure = new ProcessTap.TapCreationException("create", -1);
-        tapFactory.when(() -> ProcessTap.create(1, "output", 1f)).thenThrow(failure);
+        doThrow(failure).when(tapFactory).create(eq(1), eq("output"), eq(1f), anyBoolean());
         sndCtrl.muteProcesses(Set.of("Safari"), MuteType.mute);
         // A failed tap leaves actual mute false. Discovery must try again.
         sndCtrl.pidsFor("Safari");
-        tapFactory.verify(() -> ProcessTap.create(1, "output", 1f), times(2));
+        verify(tapFactory, times(2)).create(eq(1), eq("output"), eq(1f), anyBoolean());
     }
 
     @Test
@@ -526,17 +518,14 @@ class SndCtrlOsxTest {
     void failedInitialMuteToggleRetriesInsteadOfUnmuting() {
         when(wrapper.translatePidToProcessObject(101)).thenReturn(1);
         var failure = new ProcessTap.TapCreationException("create", -1);
-        tapFactory.when(() -> ProcessTap.create(1, "output", 1f)).thenThrow(failure);
+        doThrow(failure).when(tapFactory).create(eq(1), eq("output"), eq(1f), anyBoolean());
         tapService.muteApplication(100, List.of(100, 101), MuteType.toggle);
         assertFalse(tapService.isMuted(101));
-        // Restore the mocked factory without loading native audio libraries.
-        var recovered = mock(ProcessTap.class);
-        when(recovered.muted()).thenReturn(true);
-        when(recovered.gain()).thenReturn(1f);
-        tapFactory.when(() -> ProcessTap.create(1, "output", 1f)).thenReturn(recovered);
+        var recovered = mock(Tap.class);
+        doReturn(recovered).when(tapFactory).create(eq(1), eq("output"), eq(1f), anyBoolean());
         tapService.muteApplication(100, List.of(100, 101), MuteType.toggle);
         assertTrue(tapService.isMuted(101));
-        verify(recovered).setMuted(true);
+        verify(tapFactory, times(2)).create(1, "output", 1f, true);
         verify(recovered, never()).setMuted(false);
     }
 
@@ -554,7 +543,7 @@ class SndCtrlOsxTest {
     void pendingMuteSurvivesFailedCreationAndRecoversWithVolume() {
         when(wrapper.translatePidToProcessObject(101)).thenReturn(1);
         var failure = new ProcessTap.TapCreationException("create", -1);
-        tapFactory.when(() -> ProcessTap.create(1, "output", 1f)).thenThrow(failure);
+        doThrow(failure).when(tapFactory).create(eq(1), eq("output"), eq(1f), anyBoolean());
         tapService.muteApplication(100, List.of(100, 101), MuteType.mute);
         assertFalse(tapService.isMuted(101));
         tapService.setApplicationVolume(100, List.of(100, 101), 0.6f);
@@ -564,18 +553,21 @@ class SndCtrlOsxTest {
     }
 
     @Test
-    void outputDeviceRecreationFailureIsRetriedWithMuteIntent() {
+    void aMuteThatCannotMoveToANewOutputStaysOnThePreviousOneUntilRetried() {
         when(wrapper.translatePidToProcessObject(101)).thenReturn(1);
         tapService.muteApplication(100, List.of(100, 101), MuteType.mute);
         assertTrue(tapService.isMuted(101));
         when(wrapper.getDefaultDevice(true)).thenReturn(2);
         when(wrapper.deviceUid(2)).thenReturn("new-output");
         var failure = new ProcessTap.TapCreationException("create", -1);
-        tapFactory.when(() -> ProcessTap.create(1, "new-output", 0.5f)).thenThrow(failure);
+        doThrow(failure).doAnswer(newTap).when(tapFactory).create(eq(1), eq("new-output"), eq(0.5f), anyBoolean());
         tapService.setApplicationVolume(100, List.of(100, 101), 0.5f);
-        assertFalse(tapService.isMuted(101));
+        assertTrue(tapService.isMuted(101), "kept muted on the previous output");
+        assertEquals("output", createdTaps.getLast().outputUid);
         tapService.restoreApplicationMute(100, List.of(100, 101));
         assertTrue(tapService.isMuted(101));
+        assertEquals("new-output", createdTaps.getLast().outputUid);
+        assertEquals(0.5f, createdTaps.getLast().gain());
     }
 
     @Test
@@ -621,18 +613,16 @@ class SndCtrlOsxTest {
 
     @Test
     void reusedPidDisposesOldTapAndDoesNotInheritItsGainOrMute() {
-        var tap = mock(ProcessTap.class);
-        when(tap.muted()).thenReturn(true);
-        when(tap.gain()).thenReturn(0.3f);
         when(wrapper.translatePidToProcessObject(101)).thenReturn(1);
-        tapFactory.when(() -> ProcessTap.create(1, "output", 0.3f)).thenReturn(tap);
         tapService.setVolume(101, 0.3f);
+        tapService.setMuted(101, true);
+        var tap = createdTaps.getLast();
         assertTrue(tapService.isMuted(101));
         identities.when(() -> ProcessIdentity.find(101)).thenReturn(new ProcessIdentity(101, Instant.EPOCH.plusSeconds(1)));
         tapService.setVolume(101, 0.6f);
         verify(tap).close();
         assertFalse(tapService.isMuted(101));
-        tapFactory.verify(() -> ProcessTap.create(1, "output", 0.6f));
+        verify(tapFactory).create(1, "output", 0.6f, false);
     }
 
     @Test
@@ -668,11 +658,11 @@ class SndCtrlOsxTest {
     @Test
     void identityChangeDuringTapCreationClosesUnownedTap() {
         when(wrapper.translatePidToProcessObject(100)).thenReturn(1);
-        var tap = mock(ProcessTap.class);
-        tapFactory.when(() -> ProcessTap.create(1, "output", 0.5f)).thenAnswer(call -> {
+        var tap = mock(Tap.class);
+        doAnswer(call -> {
             identities.when(() -> ProcessIdentity.find(100)).thenReturn(new ProcessIdentity(100, Instant.EPOCH.plusSeconds(1)));
             return tap;
-        });
+        }).when(tapFactory).create(eq(1), eq("output"), eq(0.5f), anyBoolean());
         tapService.setVolume(100, 0.5f);
         verify(tap).close();
         assertFalse(tapService.isMuted(100));
@@ -813,14 +803,48 @@ class SndCtrlOsxTest {
     @Test
     void ownerChangeDuringHelperCreationDisposesTap() {
         when(wrapper.translatePidToProcessObject(101)).thenReturn(1);
-        var tap = mock(ProcessTap.class);
-        tapFactory.when(() -> ProcessTap.create(1, "output", 0.5f)).thenAnswer(call -> {
+        var tap = mock(Tap.class);
+        doAnswer(call -> {
             identities.when(() -> ProcessIdentity.find(100)).thenReturn(new ProcessIdentity(100, Instant.EPOCH.plusSeconds(1)));
             return tap;
-        });
+        }).when(tapFactory).create(eq(1), eq("output"), eq(0.5f), anyBoolean());
         tapService.setApplicationVolume(100, List.of(100, 101), 0.5f);
         verify(tap).close();
         assertFalse(tapService.isMuted(101));
     }
 
+    /** A tap that only records what it was told; spied, so a test can also verify calls on it. */
+    static class RecordingTap implements Tap {
+        final String outputUid;
+        private float gain;
+        private boolean muted;
+
+        RecordingTap(String outputUid, float gain, boolean muted) {
+            this.outputUid = outputUid;
+            this.gain = gain;
+            this.muted = muted;
+        }
+
+        float gain() {
+            return gain;
+        }
+
+        boolean muted() {
+            return muted;
+        }
+
+        @Override
+        public void setGain(float gain) {
+            this.gain = gain;
+        }
+
+        @Override
+        public void setMuted(boolean muted) {
+            this.muted = muted;
+        }
+
+        @Override
+        public void close() {
+        }
+    }
 }

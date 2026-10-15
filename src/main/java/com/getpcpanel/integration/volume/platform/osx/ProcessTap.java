@@ -20,7 +20,7 @@ import lombok.extern.log4j.Log4j2;
  * ({@code NSAudioCaptureUsageDescription}); without it creation fails with an OSStatus error.
  */
 @Log4j2
-final class ProcessTap implements AutoCloseable {
+final class ProcessTap implements Tap {
     // CATapMuteBehavior.mutedWhenTapped
     private static final long MUTED_WHEN_TAPPED = 2;
     private static final int BYTES_PER_FLOAT = 4;
@@ -48,19 +48,21 @@ final class ProcessTap implements AutoCloseable {
         }
     }
 
-    private ProcessTap(int tapId, int aggregateId, float gain) {
+    private ProcessTap(int tapId, int aggregateId, float gain, boolean muted) {
         this.tapId = tapId;
         this.aggregateId = aggregateId;
-        this.gain = gain;
+        this.gain = Math.clamp(gain, 0, 1);
+        this.muted = muted;
     }
 
     /**
      * Taps the given HAL process object (see {@link CoreAudioWrapper#translatePidToProcessObject}) and
-     * starts re-rendering its audio to the device with the given UID at {@code initialGain}.
+     * starts re-rendering its audio to the device with the given UID at {@code initialGain} and
+     * {@code initialMuted}, both in place before the first render.
      *
      * @throws TapCreationException when any CoreAudio call fails (missing TCC consent, dead process, …)
      */
-    static ProcessTap create(int processObject, String outputDeviceUid, float initialGain) {
+    static ProcessTap create(int processObject, String outputDeviceUid, float initialGain, boolean initialMuted) {
         var lib = CoreAudioTapLib.INSTANCE;
         var tapId = 0;
         var aggregateId = 0;
@@ -85,8 +87,8 @@ final class ProcessTap implements AutoCloseable {
                 ObjcFoundation.release(description);
             }
 
-            var result = new ProcessTap(tapId, aggregateId, initialGain);
-            log.debug("Starting process tap {} aggregate {} process object {} output '{}' initial gain {}", tapId, aggregateId, processObject, outputDeviceUid, initialGain);
+            var result = new ProcessTap(tapId, aggregateId, initialGain, initialMuted);
+            log.debug("Starting process tap {} aggregate {} process object {} output '{}' initial gain {} muted {}", tapId, aggregateId, processObject, outputDeviceUid, initialGain, initialMuted);
             result.startRendering();
             return result;
         } catch (RuntimeException e) {
@@ -145,20 +147,14 @@ final class ProcessTap implements AutoCloseable {
         }
     }
 
-    void setGain(float gain) {
+    @Override
+    public void setGain(float gain) {
         this.gain = Math.clamp(gain, 0, 1);
     }
 
-    float gain() {
-        return gain;
-    }
-
-    void setMuted(boolean muted) {
+    @Override
+    public void setMuted(boolean muted) {
         this.muted = muted;
-    }
-
-    boolean muted() {
-        return muted;
     }
 
     /**

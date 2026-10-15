@@ -6,6 +6,25 @@ import javax.annotation.Nullable;
 
 /** A PID is reusable; the start instant scopes audio state to one process lifetime. */
 record ProcessIdentity(int pid, Instant startedAt) {
+    /** Where {@link OsxProcessTapService} looks processes up; {@link #SYSTEM} asks the OS. */
+    interface Lookup {
+        Lookup SYSTEM = new Lookup() {
+            @Override
+            public @Nullable ProcessIdentity find(int pid) {
+                return ProcessIdentity.find(pid);
+            }
+
+            @Override
+            public void onExit(ProcessIdentity identity, Runnable action) {
+                ProcessIdentity.onExit(identity, action);
+            }
+        };
+
+        @Nullable ProcessIdentity find(int pid);
+
+        void onExit(ProcessIdentity identity, Runnable action);
+    }
+
     static @Nullable ProcessIdentity find(int pid) {
         if (pid <= 0) {
             return null;
