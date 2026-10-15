@@ -541,6 +541,16 @@ class SndCtrlOsxTest {
     }
 
     @Test
+    void toggleCancelsAMuteThatIsStillPending() {
+        // Nothing plays yet: no process has a CoreAudio object, so the first toggle can only record the mute.
+        tapService.muteApplication(100, List.of(100, 101), MuteType.toggle);
+        tapService.muteApplication(100, List.of(100, 101), MuteType.toggle);
+        when(wrapper.translatePidToProcessObject(101)).thenReturn(1);
+        tapService.setApplicationVolume(100, List.of(100, 101), 0.6f);
+        assertFalse(tapService.isMuted(101));
+    }
+
+    @Test
     void pendingMuteSurvivesFailedCreationAndRecoversWithVolume() {
         when(wrapper.translatePidToProcessObject(101)).thenReturn(1);
         var failure = new ProcessTap.TapCreationException("create", -1);

@@ -35,7 +35,7 @@ class OsxProcessTapService {
     private final CoreAudioWrapper wrapper;
     // Command operations are serialized so application intent and its taps change together.
     private final Map<ProcessIdentity, Entry> taps = new HashMap<>();
-    // Also records which adjusted owners already have an exit notification. No general process monitor.
+    // Mute intent per application; an owner is in here exactly while it has an exit notification registered.
     private final Map<ProcessIdentity, MuteStatus> applications = new HashMap<>();
 
     private enum MuteStatus { UNMUTED, PENDING, APPLIED }
@@ -103,7 +103,9 @@ class OsxProcessTapService {
         var audioEntries = audioPids.stream().map(pid -> taps.get(ProcessIdentity.find(pid))).toList();
         var expiredOwnerMute = audioEntries.stream().anyMatch(entry -> entry != null && entry.tap().muted()
                 && !entry.owner().equals(ProcessIdentity.find(entry.owner().pid())));
-        var muted = status == MuteStatus.APPLIED
+        // A pending mute of an app that has no audio yet counts as muted, so toggling again cancels it. While the app
+        // has audio that could not be muted, it is still heard, so a toggle tries to mute it again.
+        var muted = status == MuteStatus.APPLIED || status == MuteStatus.PENDING && audioPids.isEmpty()
                 || (status == null || status == MuteStatus.UNMUTED) && (expiredOwnerMute
                     || !audioEntries.isEmpty() && audioEntries.stream().allMatch(entry -> entry != null && entry.tap().muted()));
         cleanUpDeadProcesses();
@@ -131,7 +133,7 @@ class OsxProcessTapService {
         }
     }
 
-    /** Retry missing taps on commands, including newly discovered WebKit helpers, without a PID applied-state map. */
+    /** Mutes the processes of an application with mute intent that are not muted yet, such as a WebKit helper that started playing later. */
     public synchronized void restoreApplicationMute(int ownerPid, List<Integer> pids) {
         cleanUpDeadProcesses();
         var owner = ProcessIdentity.find(ownerPid);
@@ -261,7 +263,7 @@ class OsxProcessTapService {
             }
             if (!identity.equals(owner) && identity.equals(ProcessIdentity.find(identity.pid())) && entry.tap().gain() < FULL_VOLUME) {
                 // The audio process genuinely survived. Release the departed owner's mute without
-                // discarding this live tap's gain; this is not volume persistence for a new process.
+                // discarding this live tap's gain.
                 entry.tap().setMuted(false);
                 taps.put(identity, new Entry(entry.tap(), entry.outputDeviceId(), identity, entry.processObject()));
                 observeOwner(identity);
