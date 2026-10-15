@@ -27,6 +27,16 @@ public interface ISndCtrl {
 
     void setFocusVolume(float volume);
 
+    /**
+     * Mutes or toggles mute for the currently focused application.
+     */
+    default void muteFocus(MuteType mute) {
+        var focus = getFocusApplication();
+        if (focus != null) {
+            muteProcesses(Set.of(focus), mute);
+        }
+    }
+
     void muteProcesses(Set<String> fileName, MuteType mute);
 
     /**

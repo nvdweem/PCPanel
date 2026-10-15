@@ -86,6 +86,7 @@ final class ProcessTap implements AutoCloseable {
             }
 
             var result = new ProcessTap(tapId, aggregateId, initialGain);
+            log.debug("Starting process tap {} aggregate {} process object {} output '{}' initial gain {}", tapId, aggregateId, processObject, outputDeviceUid, initialGain);
             result.startRendering();
             return result;
         } catch (RuntimeException e) {
@@ -232,6 +233,7 @@ final class ProcessTap implements AutoCloseable {
             return;
         }
         closed = true;
+        log.debug("Closing process tap {} aggregate {} gain {} muted {}", tapId, aggregateId, gain, muted);
         var lib = CoreAudioTapLib.INSTANCE;
         logOnError(lib.AudioDeviceStop(aggregateId, ioProcId), "AudioDeviceStop");
         logOnError(lib.AudioDeviceDestroyIOProcID(aggregateId, ioProcId), "AudioDeviceDestroyIOProcID");
