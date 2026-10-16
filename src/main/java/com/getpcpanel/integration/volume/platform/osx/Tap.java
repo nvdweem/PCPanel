@@ -1,7 +1,11 @@
 package com.getpcpanel.integration.volume.platform.osx;
 
-/** A live per-process volume control rendering one process's audio to one output device; see {@link ProcessTap}. */
-interface Tap extends AutoCloseable {
+/**
+ * A live per-process volume control rendering one process's audio to one output device; see {@link ProcessTap}.
+ * Public so Mockito can mock {@link Factory} under the native-image tracing agent (the Windows CI test run), which
+ * otherwise yields mocks that don't implement {@code create}.
+ */
+public interface Tap extends AutoCloseable {
     void setGain(float gain);
 
     void setMuted(boolean muted);
