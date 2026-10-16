@@ -11,10 +11,11 @@ import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 
 /**
- * macOS sleep detection (best-effort). The native IOKit/NSWorkspace power notifications require an
- * Objective-C callback + CFRunLoop, and JNA callbacks crash the GraalVM native image, so this relies
- * on the callback-free {@link SuspendResumeWatchdog} to restore lighting on wake. There is no native
- * lock/unlock source here.
+ * macOS sleep detection. IOKit system power notifications ({@link MacPowerNotifications}) report every sleep and
+ * wake, however short, as {@link SystemEventType#goingToSuspend} and {@link SystemEventType#resumedFromSuspend}.
+ * The clock-based {@link SuspendResumeWatchdog} runs alongside as a fallback that sees only longer sleeps; a wake
+ * both report reaches the listeners once ({@link MacSleepEvents}). If IOKit registration fails the watchdog
+ * stands alone. There is no native lock/unlock source here.
  */
 @Log4j2
 @Startup
@@ -24,21 +25,39 @@ public class MacSystemEventService {
     @Inject
     Event<Object> eventBus;
 
-    private final SuspendResumeWatchdog watchdog = new SuspendResumeWatchdog(this::fire);
+    private final MacSleepEvents events = new MacSleepEvents(this::fire);
+    private final SuspendResumeWatchdog watchdog = new SuspendResumeWatchdog(events::fromWatchdog);
+    private MacPowerNotifications power;
 
     @PostConstruct
     public void init() {
+        try {
+            var notifications = new MacPowerNotifications(events::fromIoKit, events::ioKitStopped);
+            if (notifications.start()) {
+                power = notifications;
+            } else {
+                notifications.close();
+            }
+        } catch (Throwable t) {
+            log.warn("macOS power notifications unavailable", t);
+        }
         watchdog.start();
-        log.info("macOS sleep detection started (resume-from-suspend only)");
+        log.info(power != null
+                ? "macOS sleep detection started (IOKit power notifications, clock watchdog as fallback)"
+                : "macOS sleep detection started (clock watchdog only: resume from longer sleeps)");
     }
 
     @PreDestroy
     public void shutdown() {
         watchdog.stop();
+        if (power != null) {
+            power.close();
+        }
+        events.close();
     }
 
     private void fire(SystemEventType type) {
-        log.debug("macOS system event: {}", type);
+        log.info("macOS system event: {}", type);
         eventBus.fire(new SystemEvent(type));
     }
 }

@@ -5,13 +5,12 @@ import java.util.function.Consumer;
 import lombok.extern.log4j.Log4j2;
 
 /**
- * Callback-free, cross-platform resume-from-suspend detector.
+ * Cross-platform resume-from-suspend detector.
  *
  * <p>A daemon thread sleeps in short ticks and watches the wall clock. While the machine is
  * suspended the thread is frozen with it, so on resume a single {@link Thread#sleep} returns having
  * "lasted" far longer than asked — a gap well beyond {@link #SUSPEND_THRESHOLD_MS} means the host
- * slept and just woke. This needs no native callbacks (which crash the GraalVM native image), so it
- * works identically on Windows, Linux and macOS. It can only observe a resume after the fact, never
+ * slept and just woke. This needs no native calls, so it works identically on Windows, Linux and macOS. It can only observe a resume after the fact, never
  * an impending suspend — platforms that have a real "about to sleep" signal (Linux logind) fire
  * {@link SystemEventType#goingToSuspend} themselves.
  */

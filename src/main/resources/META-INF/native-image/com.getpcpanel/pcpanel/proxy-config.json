@@ -38,6 +38,8 @@
 
   {"interfaces": ["com.getpcpanel.integration.volume.platform.osx.CoreAudioLib"]},
   {"interfaces": ["com.getpcpanel.integration.volume.platform.osx.CoreAudioTapLib"]},
+  {"interfaces": ["com.getpcpanel.sleepdetection.MacPowerLib$IOKit"]},
+  {"interfaces": ["com.getpcpanel.sleepdetection.MacPowerLib$CoreFoundation"]},
   {"interfaces": ["com.getpcpanel.integration.volume.platform.osx.ObjcFoundation$ObjcLib"]},
   {"interfaces": ["com.getpcpanel.util.tray.mac.MacAppKit$Objc"]},
   {"interfaces": ["com.getpcpanel.util.tray.mac.MacAppKit$LibSystem"]},
