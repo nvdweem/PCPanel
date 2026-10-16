@@ -49,6 +49,7 @@ import com.getpcpanel.integration.profile.command.CommandProfile;
 import com.getpcpanel.integration.program.command.CommandRun;
 import com.getpcpanel.integration.program.command.CommandShortcut;
 import com.getpcpanel.commands.command.CommandValueOutput;
+import com.getpcpanel.sleepdetection.MacPowerLib;
 import com.getpcpanel.util.version.Version;
 import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeter;
 import com.getpcpanel.integration.voicemeeter.command.CommandVoiceMeeterAdvanced;
@@ -239,6 +240,8 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         CoreAudioLib.AudioObjectPropertyAddress.class,
         CoreAudioLib.AudioObjectPropertyListenerProc.class,
         CoreAudioTapLib.AudioDeviceIOProc.class,
+        // macOS IOKit power-notification callback (sleep/wake).
+        MacPowerLib.IOKit.PowerCallback.class,
 
 
         // Command type hierarchy
