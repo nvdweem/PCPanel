@@ -4,6 +4,13 @@ import { HttpClient } from '@angular/common/http';
 import { AuthStateService } from './services/auth-state.service';
 
 /**
+ * The host name the backend's bootstrap links use ({@code ShowMainService}, {@code CopyUiLinkService}), and so
+ * the host the session cookie is set on.
+ */
+const SESSION_HOST = 'localhost';
+const OTHER_LOOPBACK_HOSTS = ['127.0.0.1', '[::1]'];
+
+/**
  * Full-screen block shown when the page has no valid session with the local API. Hosted at the app root
  * so it overlays regardless of route.
  *
@@ -11,7 +18,11 @@ import { AuthStateService } from './services/auth-state.service';
  * session cookie browser-wide (cookies are shared across tabs of the same host). While the gate is up we
  * poll the gated status endpoint and, the moment it accepts us again, reload once into the working app.
  * We deliberately never reload blindly — a reload while the session is still invalid would just return
- * here, which is the "stuck reloading" the button used to cause.
+ * here.
+ *
+ * A cookie belongs to a host name, not to an address, so a page on {@code 127.0.0.1} never sees the cookie
+ * the handshake sets on {@link SESSION_HOST}. A locked page on another loopback name therefore moves itself
+ * to {@link SESSION_HOST} first, where it unlocks with the next handshake.
  */
 @Component({
   selector: 'app-auth-gate',
@@ -54,6 +65,11 @@ export class AuthGateComponent implements OnDestroy {
     // of returning here; a still-invalid session stays 401 and the gate simply keeps waiting.
     effect(() => {
       if (this.authState.unauthenticated()) {
+        if (OTHER_LOOPBACK_HOSTS.includes(location.hostname)) {
+          location.replace(`${location.protocol}//${SESSION_HOST}${location.port ? ':' + location.port : ''}`
+            + location.pathname + location.search + location.hash);
+          return;
+        }
         this.timer ??= setInterval(() => this.check(), 2000);
       } else {
         this.stop();
