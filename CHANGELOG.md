@@ -4,6 +4,7 @@
 
 **Why 2.5?** The version jumps from 2.1 straight to 2.5 so that no release of this software shares a version number with the original PCPanel software, whose releases went up to 2.3.3.
 
+- (macOS) **PCPanel has a menu bar icon**: click it to open PCPanel, copy a one-time UI link, open the settings folder, report a problem or quit PCPanel. Opening PCPanel.app again while it runs opens the UI too, PCPanel no longer sits in the Dock while it runs in the background, and the *PCPanel is locked* page now points to the menu bar icon.
 - A *PCPanel is locked* page opened as `http://127.0.0.1:7654` now unlocks itself once you reopen PCPanel, like one opened as `http://localhost:7654`.
 - (Windows) **The installer and `PCPanel.exe` are code-signed**, so Windows shows *PCPanel* as a verified program instead of an unknown publisher. Free code signing provided by [SignPath.io](https://signpath.io), certificate by [SignPath Foundation](https://signpath.org).
 - **Open PCPanel in its own window** (Settings → General, the welcome and update dialogs, and the tray menu): the UI shows in an app window of its own instead of a browser tab. Switching it on or off opens the UI the new way straight away. Windows uses the Edge WebView2 built into Windows; Linux uses WebKitGTK (`libwebkitgtk-6.0` or `libwebkit2gtk-4.1`; the Flatpak includes it). If the window can't be shown, PCPanel opens the browser as before.

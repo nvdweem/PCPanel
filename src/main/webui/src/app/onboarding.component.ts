@@ -154,7 +154,7 @@ export class OnboardingComponent {
 
   readonly trayNote = computed(() =>
     this.platform.os() === 'mac'
-      ? `PCPanel keeps running in the background. There's no menu-bar icon yet, so reopen this page any time at ${location.origin}.`
+      ? 'PCPanel keeps running in the menu bar — click its icon any time to reopen this page.'
       : 'PCPanel keeps running in your system tray — click its icon any time to reopen this page.');
 
   constructor() {

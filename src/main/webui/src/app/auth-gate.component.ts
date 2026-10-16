@@ -10,15 +10,22 @@ import { AuthStateService } from './services/auth-state.service';
 const SESSION_HOST = 'localhost';
 const OTHER_LOOPBACK_HOSTS = ['127.0.0.1', '[::1]'];
 
+/** Whether the browser runs on macOS, where PCPanel's icon is in the menu bar rather than a system tray. */
+function isMac(): boolean {
+  const nav = navigator as Navigator & { userAgentData?: { platform?: string } };
+  const platform = nav.userAgentData?.platform || nav.platform || nav.userAgent;
+  return /mac/i.test(platform);
+}
+
 /**
  * Full-screen block shown when the page has no valid session with the local API. Hosted at the app root
  * so it overlays regardless of route.
  *
- * Recovery is automatic: reopening PCPanel from the tray runs the bootstrap handshake, which sets the
- * session cookie browser-wide (cookies are shared across tabs of the same host). While the gate is up we
- * poll the gated status endpoint and, the moment it accepts us again, reload once into the working app.
- * We deliberately never reload blindly — a reload while the session is still invalid would just return
- * here.
+ * Recovery is automatic: reopening PCPanel from the tray (on macOS: the menu bar icon) runs the
+ * bootstrap handshake, which sets the session cookie browser-wide (cookies are shared across tabs of the
+ * same host). While the gate is up we poll the gated status endpoint and, the moment it accepts us again,
+ * reload once into the working app. We deliberately never reload blindly — a reload while the session is
+ * still invalid would just return here.
  *
  * A cookie belongs to a host name, not to an address, so a page on {@code 127.0.0.1} never sees the cookie
  * the handshake sets on {@link SESSION_HOST}. A locked page on another loopback name therefore moves itself
@@ -35,8 +42,13 @@ const OTHER_LOOPBACK_HOSTS = ['127.0.0.1', '[::1]'];
           <h1>PCPanel is locked</h1>
           <p>This page isn't authorised to control PCPanel. For your security, access is only granted to
              the window PCPanel opens itself.</p>
-          <p class="how">Open PCPanel from its <strong>system tray icon</strong> — this page unlocks itself
-             once you do.</p>
+          @if (mac) {
+            <p class="how">Open PCPanel from its <strong>menu bar icon</strong> — this page unlocks itself once
+               you do.</p>
+          } @else {
+            <p class="how">Open PCPanel from its <strong>system tray icon</strong> — this page unlocks itself
+               once you do.</p>
+          }
           <button class="pc-btn primary" (click)="check()">Check again</button>
         </div>
       </div>
@@ -55,6 +67,7 @@ const OTHER_LOOPBACK_HOSTS = ['127.0.0.1', '[::1]'];
 })
 export class AuthGateComponent implements OnDestroy {
   readonly authState = inject(AuthStateService);
+  readonly mac = isMac();
   private readonly http = inject(HttpClient);
   private timer?: ReturnType<typeof setInterval>;
 

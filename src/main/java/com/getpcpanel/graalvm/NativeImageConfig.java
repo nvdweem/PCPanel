@@ -516,6 +516,12 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         "org.eclipse.paho.mqttv5.client.websocket.WebSocketNetworkModuleFactory",
         "org.eclipse.paho.mqttv5.client.websocket.WebSocketSecureNetworkModuleFactory",
 
+        // macOS menu bar icon: JNA looks up the callback method of each of these reflectively when AppKit calls
+        // back for a menu item or the application delegate (package-private, hence by name).
+        "com.getpcpanel.util.tray.mac.MacAppKit$ActionImp",
+        "com.getpcpanel.util.tray.mac.MacAppKit$ReopenImp",
+        "com.getpcpanel.util.tray.mac.MacAppKit$TerminateImp",
+
         // macOS CoreAudio path (GET /api/audio/*, default-device switching). JNA reflectively
         // instantiates these Structures (no-arg constructor + field access). The CoreFoundation class
         // initializer itself builds a CFTypeID, so the whole jna-platform CoreFoundation inner-class
