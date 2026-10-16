@@ -4,6 +4,7 @@
 
 **Why 2.5?** The version jumps from 2.1 straight to 2.5 so that no release of this software shares a version number with the original PCPanel software, whose releases went up to 2.3.3.
 
+- A *PCPanel is locked* page opened as `http://127.0.0.1:7654` now unlocks itself once you reopen PCPanel, like one opened as `http://localhost:7654`.
 - (Windows) **The installer and `PCPanel.exe` are code-signed**, so Windows shows *PCPanel* as a verified program instead of an unknown publisher. Free code signing provided by [SignPath.io](https://signpath.io), certificate by [SignPath Foundation](https://signpath.org).
 - **Open PCPanel in its own window** (Settings → General, the welcome and update dialogs, and the tray menu): the UI shows in an app window of its own instead of a browser tab. Switching it on or off opens the UI the new way straight away. Windows uses the Edge WebView2 built into Windows; Linux uses WebKitGTK (`libwebkitgtk-6.0` or `libwebkit2gtk-4.1`; the Flatpak includes it). If the window can't be shown, PCPanel opens the browser as before.
 - (Linux) Volume, mute and the list of apps and devices respond faster: PCPanel talks to PulseAudio or PipeWire directly instead of starting `pactl` for every change, about ten times quicker per knob step, and picks up a restarted sound server by itself. The music visualizer and *Audio level* lights record the same way, so `pulseaudio-utils` (`pactl`, `parec`) is no longer needed; PCPanel still uses it when it can't reach the sound server directly.

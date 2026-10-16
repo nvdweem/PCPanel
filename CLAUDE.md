@@ -528,7 +528,9 @@ decide on the same path form the router dispatches on**, or it is a full auth by
 closed, so a path is gated when *either* form names the API/WS surface (unrecognised forms fail closed),
 and a new protected prefix must go through the same normalization. All session state
 is in-memory, so a restart forces re-auth (the frontend `AuthGateComponent` shows a 401 gate pointing
-the user back to the tray). Toggle with `pcpanel.http.require-session` (default true; **off in `%dev`**
+the user back to the tray). The cookie is host-only on the bootstrap URL's `localhost`, so the gate moves a
+locked page on `127.0.0.1`/`[::1]` to `localhost` (`SESSION_HOST`; keep it in step with `ShowMainService`).
+Toggle with `pcpanel.http.require-session` (default true; **off in `%dev`**
 so `quarkus:dev` and a standalone Angular dev server work without the handshake). **Scope/limits:** this
 fully closes the *website* vector and stops *opportunistic* local processes; it is **not** sound against
 a same-user process that specifically targets the app (it can read the served page/cookie files/command

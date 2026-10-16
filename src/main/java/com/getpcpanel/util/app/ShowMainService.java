@@ -90,7 +90,8 @@ public class ShowMainService {
     /**
      * The UI behind the bootstrap handshake, carrying a single-use nonce: the endpoint swaps it for an HttpOnly
      * session cookie and redirects to the app, so only the browser or window opened here is authenticated to the
-     * local API. The nonce is worthless once consumed.
+     * local API. The nonce is worthless once consumed. The cookie lands on this URL's host name, which the UI's auth
+     * gate ({@code auth-gate.component.ts}) moves a locked page to.
      */
     private String bootstrapUrl(@Nullable String redirect) {
         var nonce = sessionTokens.issueNonce();
