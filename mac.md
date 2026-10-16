@@ -63,6 +63,9 @@ after upgrading. PCPanel logs a hint when it detects a missing permission.
 
 - Per-application and focus volume need macOS 14.4+ (the CoreAudio process-tap API); on older versions
   those commands do nothing.
+- Another app that changes the volume of individual apps, such as the volume mixer of
+  [Vorssaint](https://github.com/vorssaint/vorssaint-utils), conflicts with PCPanel's per-application and
+  focus volume. Turn that app's mixer off and the rest of it keeps working alongside PCPanel.
 - Voicemeeter is Windows-only.
 - The Media button's `mute` action has no AppleScript equivalent and is ignored.
 - **No AWT/Swing-based UI features.** GraalVM/Quarkus cannot bundle AWT (`libawt`) in a macOS native
