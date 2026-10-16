@@ -7,9 +7,11 @@ import java.util.Set;
 
 import com.getpcpanel.appwindow.AppWindowMain;
 import com.getpcpanel.device.provider.pcpanel.HidDebug;
+import com.getpcpanel.util.CdiHelper;
 import com.getpcpanel.util.os.ConsoleSupport;
 import com.getpcpanel.util.io.FileChecker;
 import com.getpcpanel.util.io.PcPanelRoot;
+import com.getpcpanel.util.tray.mac.MacMenuBar;
 
 import io.quarkus.runtime.Quarkus;
 import io.quarkus.runtime.QuarkusApplication;
@@ -168,7 +170,11 @@ public class Main implements QuarkusApplication {
         // begin watching for a later relaunch so we can raise the window. No-op when the check was skipped
         // (skipfilecheck / %dev), so nothing holds the lock.
         FileChecker.startWatching();
-        Quarkus.waitForExit();
+        // On macOS this thread is the process's first, the only one AppKit runs on: the menu bar icon runs its event
+        // loop here until Quarkus is asked to exit. Anywhere else, or without the icon, this thread just waits.
+        if (!CdiHelper.getOptionalBean(MacMenuBar.class).map(MacMenuBar::runOnMainThread).orElse(false)) {
+            Quarkus.waitForExit();
+        }
         return 0;
     }
 }

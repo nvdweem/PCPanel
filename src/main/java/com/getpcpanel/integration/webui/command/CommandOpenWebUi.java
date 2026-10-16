@@ -14,8 +14,7 @@ import lombok.ToString;
 
 /**
  * Button action that opens the PCPanel web UI in the browser, by firing the same {@link ShowMainEvent}
- * the tray "Open PCPanel" action uses. This is the on-demand way to open the UI on any platform — notably
- * macOS, which has no tray icon.
+ * the tray "Open PCPanel" action uses: opens the UI from the panel itself, on any platform.
  */
 @ToString(callSuper = true)
 @JsonTypeName("webui.open")

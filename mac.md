@@ -70,22 +70,32 @@ after upgrading. PCPanel logs a hint when it detects a missing permission.
 - The Media button's `mute` action has no AppleScript equivalent and is ignored.
 - **No AWT/Swing-based UI features.** GraalVM/Quarkus cannot bundle AWT (`libawt`) in a macOS native
   image, so anything that relied on it is disabled on macOS: the on-screen volume **overlay**, the
-  per-application **icons** in the configuration UI, and the **menu-bar (tray) icon**. These could be
-  reimplemented later with native Cocoa/Quartz via JNA (the way the Windows overlay uses a Win32 layered
-  window). Audio control and keystrokes are unaffected.
+  per-application **icons** in the configuration UI. These could be reimplemented later with native
+  Cocoa/Quartz via JNA (the way the Windows overlay uses a Win32 layered window, and the menu bar icon
+  uses AppKit). Audio control and keystrokes are unaffected.
 
-## Closing the window
+## The menu bar icon and opening the window
 
-Closing the browser window only closes the UI; the backend keeps running. Launch `PCPanel.app` again to
-reopen the window (a second launch reopens the UI rather than starting a second instance). Pass the
-`quiet` argument to start hidden. There is currently no menu-bar icon on macOS (see Limitations).
+Closing the browser window only closes the UI; PCPanel keeps running, with its icon (a knob) in the menu
+bar. Click it and choose **Open PCPanel** to open the UI again; launching `PCPanel.app` again (from
+Applications, Spotlight or the Dock) does the same. The menu also copies a one-time UI link, opens the
+settings folder, reports a problem and quits PCPanel.
+
+The page PCPanel opens signs your browser in, and the sign-in lasts until PCPanel or the browser restarts.
+A page without it (a tab left open across a PCPanel restart, or another browser) shows *PCPanel is
+locked*. Open PCPanel from the menu bar icon and a locked page in your default browser unlocks itself; for
+another browser, choose **Copy UI link** and open the link there.
+
+Do not set `PCPANEL_HTTP_REQUIRE_SESSION=false` (or `-Dpcpanel.http.require-session=false`) to skip this:
+it lets any program running on your Mac control PCPanel through its local API.
 
 ## Autostart on login
 
-Add `PCPanel.app` under **System Settings → General → Login Items**. To start hidden, create a
-LaunchAgent that passes the `quiet` argument instead. Save the following as
-`~/Library/LaunchAgents/com.getpcpanel.PCPanel.plist` and run
-`launchctl load ~/Library/LaunchAgents/com.getpcpanel.PCPanel.plist`:
+Add `PCPanel.app` under **System Settings → General → Login Items** to start it on every login. Whether
+the UI opens then follows the **Open when PCPanel starts** setting. To have PCPanel restarted if it
+crashes, use a LaunchAgent that passes the `quiet` argument instead. Save the following
+as `~/Library/LaunchAgents/com.getpcpanel.PCPanel.plist` and run
+`launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.getpcpanel.PCPanel.plist`:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -101,9 +111,19 @@ LaunchAgent that passes the `quiet` argument instead. Save the following as
     </array>
     <key>RunAtLoad</key>
     <true/>
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
 </dict>
 </plist>
 ```
+
+`quiet` marks the launch as automatic: without it, launchd starting PCPanel while it is already running
+counts as you asking for the UI, and opens it. `KeepAlive` restarts PCPanel if it crashes, but not when
+it exits normally (**Quit PCPanel** in the menu, or a duplicate launch stepping aside). The menu bar icon
+shows either way.
 
 ## Building from source
 
@@ -116,7 +136,8 @@ mvn -B package -Pnative
 ```
 
 The native executable and its companion `.dylib` files end up under `target/`. The CI workflow
-(`.github/workflows/build-and-release.yml`) wraps them into `PCPanel.app` and a `.dmg`; the macOS job is
+(`.github/workflows/build-and-release.yml`) wraps them into `PCPanel.app` and a `.dmg` (its `Info.plist`
+sets `LSUIElement`, so the menu bar app has no Dock icon); the macOS job is
 best-effort and may need tweaking for a given runner image.
 
 The CI job ad-hoc signs the assembled bundle (`codesign --sign -`) as its final packaging step —

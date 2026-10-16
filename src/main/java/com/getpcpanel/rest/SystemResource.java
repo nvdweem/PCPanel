@@ -19,10 +19,8 @@ import io.quarkus.runtime.Quarkus;
 import lombok.extern.log4j.Log4j2;
 
 /**
- * Application lifecycle control exposed to the web UI. PCPanel runs headless (a tray app on
- * Windows/Linux, nothing visible on macOS), so the browser UI is the one place every platform can
- * quit it from without resorting to a terminal — see #104 (macOS has no tray) and #100 (the Linux
- * tray had no Quit entry).
+ * Application lifecycle control exposed to the web UI. PCPanel runs in the background (a tray or menu bar
+ * app), and the browser UI quits it as well, alongside the tray's own Quit (see #104 and #100).
  */
 @Log4j2
 @Path("/api/system")

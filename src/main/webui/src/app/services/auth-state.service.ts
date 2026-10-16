@@ -5,7 +5,7 @@ import { Injectable, signal } from '@angular/core';
  * the API rejects a request with HTTP 401 (see {@link authInterceptor}) — which happens when the page
  * was opened outside the tray bootstrap handshake, or after the app restarted (a restart clears the
  * in-memory sessions, invalidating the cookie). The {@link AuthGateComponent} then blocks the UI and
- * tells the user to reopen PCPanel from the tray.
+ * tells the user how to reopen PCPanel (the tray, or the menu bar on macOS).
  */
 @Injectable({ providedIn: 'root' })
 export class AuthStateService {

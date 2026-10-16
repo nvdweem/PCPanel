@@ -528,9 +528,9 @@ decide on the same path form the router dispatches on**, or it is a full auth by
 closed, so a path is gated when *either* form names the API/WS surface (unrecognised forms fail closed),
 and a new protected prefix must go through the same normalization. All session state
 is in-memory, so a restart forces re-auth (the frontend `AuthGateComponent` shows a 401 gate pointing
-the user back to the tray). The cookie is host-only on the bootstrap URL's `localhost`, so the gate moves a
-locked page on `127.0.0.1`/`[::1]` to `localhost` (`SESSION_HOST`; keep it in step with `ShowMainService`).
-Toggle with `pcpanel.http.require-session` (default true; **off in `%dev`**
+the user back to the tray, or the menu bar icon on macOS). The cookie is host-only on the bootstrap URL's
+`localhost`, so the gate moves a locked page on `127.0.0.1`/`[::1]` to `localhost` (`SESSION_HOST`; keep it in step
+with `ShowMainService`). Toggle with `pcpanel.http.require-session` (default true; **off in `%dev`**
 so `quarkus:dev` and a standalone Angular dev server work without the handshake). **Scope/limits:** this
 fully closes the *website* vector and stops *opportunistic* local processes; it is **not** sound against
 a same-user process that specifically targets the app (it can read the served page/cookie files/command
@@ -552,6 +552,23 @@ it risks spamming one notification per knob tick — worse than nothing. The des
 so those `Save` settings don't apply on Linux (the settings UI greys them out). macOS stays a no-op.
 Selection is the runtime `Platform` check in `Overlay.createOverlay()`.
 `util/tray/` is the system tray (Wayland uses the D-Bus StatusNotifierItem protocol via dbus-java).
+On macOS it is the menu bar icon (`util/tray/mac/`): AppKit (`NSStatusItem`) over JNA, its own Objective-C
+binding apart from the CoreAudio one (`ObjcFoundation`), so the menu bar cannot affect the audio path. AppKit only
+runs on the process's first thread, so `TrayInitializer` only asks for the icon and `Main.run()` — which Quarkus calls
+on that thread once the app has started — runs AppKit's event loop instead of `Quarkus.waitForExit()`; a watcher
+thread waits for exit and stops the loop, so `run()` returns and Quarkus shuts down as usual. The native image does
+not link AppKit: `MacAppKit.start` loads it, or every AppKit class is `nil` and every message silently does
+nothing. Creating the app object (`sharedApplication` alone, before `finishLaunching`) checks the app in with macOS,
+which from then on delivers a launch from Finder/Spotlight/the Dock to the running instance as a *reopen* Apple event
+(no new process, so `FileChecker` never sees it, and while no event loop runs `open` fails with -600); the application
+delegate opens the UI for it. So everything that can fail happens before `sharedApplication`, and a failure there
+leaves the app as without the icon (as are `quarkus:dev`, the JVM without `-XstartOnFirstThread`, and a disabled
+tray): a second launch starts a process and reopens the UI through `FileChecker`. After it, the event loop runs
+whatever else fails, and survives a failing iteration. A quit from macOS (logout, restart) answers
+`NSTerminateLater`, which holds the main thread in AppKit's own loop, so it exits through `System.exit` (Quarkus'
+shutdown hook stops the app without the main thread); the menu's Quit uses `Quarkus.asyncExit()` and returns from
+`run()`. `MacAppKitMacTest` (`-Dpcpanel.mactest=true`) drives the
+callback class against the real runtime.
 
 `integration/homeassistant/` is *outbound* control (the app drives Home Assistant), distinct from the
 MQTT auto-discovery in `integration/mqtt/` (which lets Home Assistant discover the app). It holds both
@@ -622,7 +639,7 @@ Key constraints baked into those args, change with care:
   AWT/Java2D/Swing/ImageIO subsystem to run-time). So macOS must never *call* AWT: the overlay is a
   no-op (`NoOpOverlayWindow`), icons are disabled, keystrokes use CoreGraphics `CGEvent`
   (`com.getpcpanel.integration.keyboard.platform.osx.OsxKeyboard`, the macOS `Keyboard` impl), the tray
-  and `java.awt.Desktop` are skipped. JNA classes
+  is AppKit over JNA (`MacMenuBar`, below) and `java.awt.Desktop` is skipped. JNA classes
   that run `Native.load` in their initializer must be `--initialize-at-run-time` (narrowly, by class —
   a package-wide directive would wrongly catch Quarkus's build-time CDI `_Bean` objects).
 - Windows-only GUI-subsystem linker flags (`/SUBSYSTEM:WINDOWS`, `/ENTRY:mainCRTStartup`) are MSVC
