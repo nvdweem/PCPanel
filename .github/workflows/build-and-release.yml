@@ -58,6 +58,7 @@ jobs:
     # Exposed so the pre-release job can flag when metadata generation degraded to committed metadata.
     outputs:
       genStatus: ${{ steps.gen.outcome }}
+      signature: ${{ steps.signed.outputs.signature }}
     # Code signing through SignPath (free for open source via SignPath Foundation). PCPanel.exe is signed
     # before it goes into the installer, then the installer itself: SignPath cannot open an Inno Setup
     # installer to sign what is inside it, so these are two signing requests. The artifact configurations
@@ -328,7 +329,10 @@ jobs:
           wait-for-completion-timeout-in-seconds: 7200
           output-artifact-directory: target/signed-installer
 
+      # `signature` tells the release notes how the build is signed: `trusted` when Windows accepts the
+      # certificate (release-signing), `test` when it does not (the test-signing certificate).
       - name: Use the signed installer
+        id: signed
         if: env.SIGNPATH_ENABLED == 'true'
         shell: pwsh
         run: |
@@ -337,6 +341,7 @@ jobs:
           Write-Host "$($installer.Name) signature: $($sig.Status) by $($sig.SignerCertificate.Subject)"
           if (-not $sig.SignerCertificate) { throw "$($installer.Name) came back from SignPath without a signature" }
           Copy-Item $installer.FullName "target/$($installer.Name)" -Force
+          "signature=$(if ($sig.Status -eq 'Valid') { 'trusted' } else { 'test' })" >> $env:GITHUB_OUTPUT
 
       # The release job downloads every artifact of the run into one folder, where the unsigned installer
       # would collide with the signed one and the bare PCPanel.exe would become a release asset.
@@ -1006,6 +1011,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WIN_GEN: ${{ needs.buildWindows.outputs.genStatus }}
           LIN_GEN: ${{ needs.buildLinux.outputs.genStatus }}
+          WIN_SIGNATURE: ${{ needs.buildWindows.outputs.signature }}
         run: |
           notes="$(sed '/##/Q' CHANGELOG.md)"
           # The gen step is non-blocking, so a build can still succeed while its native-image
@@ -1021,6 +1027,13 @@ jobs:
           if [ -n "$warnings" ]; then
             notes="${notes}"$'\n\n'"### ⚠️ Build warnings"$'\n'"${warnings}"
           fi
+          # How the Windows build is signed, as a footer on every release rather than a changelog entry.
+          case "$WIN_SIGNATURE" in
+            trusted)
+              notes="${notes}"$'\n\n> [!TIP]\n> ✅ This release\'s PCPanel.exe and Windows-installer are code-signed.\n>\n> Free code signing provided by [SignPath.io](https://signpath.io), certificate by [SignPath Foundation](https://signpath.org).' ;;
+            test)
+              notes="${notes}"$'\n\n> [!CAUTION]\n> ❌ This release\'s PCPanel.exe and Windows-installer are signed with an untrusted test certificate, so Windows shows an unknown publisher.' ;;
+          esac
           printf '%s' "$notes" > "$RUNNER_TEMP/release-notes.md"
           # A stable release is NOT a pre-release; a snapshot is a rolling pre-release. "Latest" is
           # claimed only by the highest released version — a 2.0.x maintenance patch cut after 2.1 is

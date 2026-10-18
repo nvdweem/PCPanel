@@ -135,7 +135,9 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
     the UI footer reports it (local/dev stays at `-SNAPSHOT`).
   - **Release notes come from `CHANGELOG.md`:** the publish job uses `sed '/##/Q' CHANGELOG.md` — i.e.
     everything **above the first `## [version]` heading** — verbatim as the GitHub release body (a
-    degraded-metadata build appends a warnings section). So a **user-facing** change must add a bullet to
+    degraded-metadata build appends a warnings section, and a signed Windows build a footer saying
+    whether its certificate is trusted or the SignPath test one — taken from the installer's actual
+    signature, the Windows job's `signature` output, so signing is never a changelog entry). So a **user-facing** change must add a bullet to
     that top (unversioned) section in the same PR, written for users not developers, or it ships with
     release notes that omit it. Internal-only changes (native config, build plumbing, refactors with no
     visible effect) stay out of it. When a version is finally cut, that top block is what gets the
