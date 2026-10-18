@@ -950,7 +950,13 @@ jobs:
           # then convert to the compressed read-only UDZO we ship.
           appkb=$(du -sk "$app" | awk '{print $1}')
           sizemb=$(( appkb / 1024 + 300 ))
-          hdiutil create -volname PCPanel -srcfolder "$app" -ov -format UDRW -size "${sizemb}m" target/PCPanel-rw.dmg
+          # hdiutil intermittently fails with "Resource busy" on the hosted runners (something else still
+          # holds the freshly signed bundle), so retry it a few times before giving up.
+          for attempt in 1 2 3 4 5; do
+            if hdiutil create -volname PCPanel -srcfolder "$app" -ov -format UDRW -size "${sizemb}m" target/PCPanel-rw.dmg; then break; fi
+            if [ "$attempt" = 5 ]; then exit 1; fi
+            sleep $(( attempt * 5 ))
+          done
           hdiutil convert target/PCPanel-rw.dmg -format UDZO -ov -o "$dmg"
           rm -f target/PCPanel-rw.dmg
           ls -lh "$dmg"
