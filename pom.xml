@@ -39,6 +39,11 @@
         <mcp-server.version>1.13.1</mcp-server.version>
         <archunit.version>1.5.1</archunit.version>
 
+        <!-- -DskipUnitTests skips the surefire unit tests but keeps the failsafe native integration tests;
+             -DskipTests still skips both. CI's native build sets it when the metadata step already ran the suite. -->
+        <skipTests>false</skipTests>
+        <skipUnitTests>${skipTests}</skipUnitTests>
+
         <!-- ── Native image: always build a native executable ─────────────── -->
         <!-- Use -Dquarkus.native.enabled=false to skip native (JVM-only build) -->
         <quarkus.native.enabled>true</quarkus.native.enabled>
@@ -444,6 +449,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
+                    <skipTests>${skipUnitTests}</skipTests>
                     <systemPropertyVariables>
                         <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                         <maven.home>${maven.home}</maven.home>

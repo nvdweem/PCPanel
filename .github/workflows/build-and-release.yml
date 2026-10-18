@@ -145,11 +145,13 @@ jobs:
         # native image whose awt.dll won't load (empty GraalVM java.dll/jvm.dll shim → dead overlay and
         # font picker). Bake the build-numbered version (<baseversion>.<run>) so the UI footer reports
         # it instead of the bare ${project.version} (2.0-SNAPSHOT). Quote the -D so PowerShell doesn't split it.
+        # The unit tests already ran (and passed) in the metadata step, so they are skipped here unless
+        # that step failed; skipUnitTests leaves the failsafe integration tests running.
         run: |
           # Splat the release-only -D args via an array so PowerShell passes each as ONE intact
           # argument — a bare token gets split at the dot into "-Dproject" + ".snapshot=". Empty = no args.
           $verArgs = @(); $s = '${{ steps.ver.outputs.mvnVersionArgs }}'; if ($s) { $verArgs = $s -split ' ' }
-          mvn -B verify -Pnative "-Dquarkus.application.version=${{ steps.ver.outputs.version }}" @verArgs --file pom.xml
+          mvn -B verify -Pnative "-Dquarkus.application.version=${{ steps.ver.outputs.version }}" "-DskipUnitTests=${{ steps.gen.outcome == 'success' }}" @verArgs --file pom.xml
 
       - name: Assemble distribution (exe + companion DLLs)
         shell: pwsh
@@ -431,8 +433,8 @@ jobs:
         # so the AWT/Swing tests have a display; native-image compilation itself is headless-safe.
         # Bake the build-numbered version (<baseversion>.<run>) into the app so the UI footer reports it
         # instead of the bare ${project.version} (2.0-SNAPSHOT). The Flatpak job reuses this binary, so it
-        # inherits the same version.
-        run: xvfb-run -a mvn -B package -Pnative -Dquarkus.application.version=${{ steps.ver.outputs.version }} ${{ steps.ver.outputs.mvnVersionArgs }} --file pom.xml
+        # inherits the same version. Unit tests are skipped when the metadata step already passed them.
+        run: xvfb-run -a mvn -B package -Pnative -Dquarkus.application.version=${{ steps.ver.outputs.version }} -DskipUnitTests=${{ steps.gen.outcome == 'success' }} ${{ steps.ver.outputs.mvnVersionArgs }} --file pom.xml
 
       - name: Smoke-test the native binary (boots and serves)
         # Boot the freshly built runner and assert the REST API answers — the same cheap, high-value
@@ -807,8 +809,9 @@ jobs:
         id: build
         continue-on-error: true
         # Bake the build-numbered version (<baseversion>.<run>) into the app so the UI footer reports it
-        # instead of the bare ${project.version} (2.0-SNAPSHOT).
-        run: mvn -B package -Pnative -Dquarkus.application.version=${{ steps.ver.outputs.version }} ${{ steps.ver.outputs.mvnVersionArgs }} --file pom.xml
+        # instead of the bare ${project.version} (2.0-SNAPSHOT). Unit tests are skipped when the metadata
+        # step already passed them.
+        run: mvn -B package -Pnative -Dquarkus.application.version=${{ steps.ver.outputs.version }} -DskipUnitTests=${{ steps.gen.outcome == 'success' }} ${{ steps.ver.outputs.mvnVersionArgs }} --file pom.xml
 
       - name: Assemble .app bundle
         id: assemble
