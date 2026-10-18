@@ -1030,9 +1030,9 @@ jobs:
           # How the Windows build is signed, as a footer on every release rather than a changelog entry.
           case "$WIN_SIGNATURE" in
             trusted)
-              notes="${notes}"$'\n\n> [!TIP]\n> ✅ This release\'s PCPanel.exe and Windows-installer are code-signed.\n>\n> Free code signing provided by [SignPath.io](https://signpath.io), certificate by [SignPath Foundation](https://signpath.org).' ;;
+              notes="${notes}"$'\n\n> [!TIP]\n> ✅ This release\'s PCPanel.exe and Windows installer are signed with a trusted certificate.\n>\n> Free code signing provided by [SignPath.io](https://signpath.io), certificate by [SignPath Foundation](https://signpath.org).' ;;
             test)
-              notes="${notes}"$'\n\n> [!CAUTION]\n> ❌ This release\'s PCPanel.exe and Windows-installer are signed with an untrusted test certificate, so Windows shows an unknown publisher.' ;;
+              notes="${notes}"$'\n\n> [!CAUTION]\n> ❌ This release\'s PCPanel.exe and Windows installer are signed with a test certificate that Windows doesn\'t trust, so Windows shows them as coming from an unknown publisher.\n>\n> Future releases may be signed with a trusted certificate, provided for free by [SignPath.io](https://signpath.io) and [SignPath Foundation](https://signpath.org).' ;;
           esac
           printf '%s' "$notes" > "$RUNNER_TEMP/release-notes.md"
           # A stable release is NOT a pre-release; a snapshot is a rolling pre-release. "Latest" is
