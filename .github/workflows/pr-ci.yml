@@ -33,7 +33,15 @@ jobs:
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'graalvm-community'
-          cache: 'maven'
+
+      # Same cache as build-and-release.yml (see the comment there), so a PR starts from the newest build's
+      # repository; a PR run saves into its own PR-scoped cache.
+      - name: Cache Maven repository
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: maven-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: maven-build-${{ runner.os }}-${{ runner.arch }}-
 
       # Quinoa builds the frontend with the system Node (package-manager-install=false); Angular
       # CLI 22 refuses Node older than 22.22.3 / 24.15, so pin a new-enough Node explicitly instead

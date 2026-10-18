@@ -90,7 +90,18 @@ jobs:
         with:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'graalvm-community'
-          cache: 'maven'
+
+      # The Maven repository is cached here rather than through setup-graalvm's `cache: maven`, which keys
+      # on the pom hash alone with no fallback (a pom edit means an empty cache) and shares that key with
+      # other workflows' smaller caches (dependency submission, CodeQL): an exact hit is never re-saved, so
+      # whichever saved first is what every build gets. This key is the build's own, and restore-keys
+      # falls back to the newest earlier cache, so a pom edit only downloads what changed.
+      - name: Cache Maven repository
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: maven-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: maven-build-${{ runner.os }}-${{ runner.arch }}-
 
       # Quinoa builds the frontend with the system Node (package-manager-install=false); Angular
       # CLI 22 refuses Node older than 22.22.3 / 24.15, so pin a new-enough Node explicitly instead
@@ -383,7 +394,14 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'graalvm-community'
           native-image-job-reports: 'true'
-          cache: 'maven'
+
+      # See the Windows job.
+      - name: Cache Maven repository
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: maven-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: maven-build-${{ runner.os }}-${{ runner.arch }}-
 
       # Quinoa builds the frontend with the system Node (package-manager-install=false); Angular
       # CLI 22 refuses Node older than 22.22.3 / 24.15, so pin a new-enough Node explicitly instead
@@ -772,7 +790,14 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'graalvm-community'
           native-image-job-reports: 'true'
-          cache: 'maven'
+
+      # See the Windows job. runner.arch keeps the Apple Silicon and Intel legs apart.
+      - name: Cache Maven repository
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: maven-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: maven-build-${{ runner.os }}-${{ runner.arch }}-
 
       # Quinoa builds the frontend with the system Node (package-manager-install=false); Angular
       # CLI 22 refuses Node older than 22.22.3 / 24.15, so pin a new-enough Node explicitly instead
