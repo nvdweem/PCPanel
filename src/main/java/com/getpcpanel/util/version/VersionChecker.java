@@ -7,13 +7,17 @@ import java.net.URI;
 import com.getpcpanel.util.SharedHttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Files;
 import java.util.Comparator;
 import java.util.Optional;
+
+import javax.annotation.Nullable;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.util.io.FileUtil;
 import com.getpcpanel.util.version.Version.SemVer;
 
 import io.quarkus.runtime.Startup;
@@ -33,10 +37,14 @@ import one.util.streamex.StreamEx;
 @Startup
 @Singleton
 public class VersionChecker extends Thread {
+    /** Records the last startup auto-update ({@link #startupUpdateAttempt}), so a failed one is not retried on every start. */
+    static final String LAST_STARTUP_UPDATE = "last-startup-update.txt";
+
     @Inject Event<Object> eventBus;
     @Inject SaveService save;
     @Inject ObjectMapper objectMapper;
     @Inject AutoUpdateService autoUpdate;
+    @Inject FileUtil fileUtil;
 
     @ConfigProperty(name = "pcpanel.version")
     String version;
@@ -95,15 +103,44 @@ public class VersionChecker extends Thread {
      */
     private void onNewVersion(Version correctVersion) {
         if (save.get().isAutoUpdate() && autoUpdate.isSupported()) {
-            try {
-                log.info("Auto-updating to {} on startup", correctVersion.versionDisplay());
-                autoUpdate.updateToLatest();
-                return; // the installer closes and relaunches the app
-            } catch (Exception e) {
-                log.error("Auto-update on startup failed; falling back to a notification", e);
+            var attempt = startupUpdateAttempt(correctVersion);
+            if (attempt.equals(readLastStartupUpdate())) {
+                // The same update was started on an earlier start and this is still the old version: it did not take
+                // (an update transport that found nothing, or one that failed after relaunching). Trying again would
+                // restart PCPanel over and over, so leave it to the user.
+                log.warn("Not auto-updating to {} again: an earlier start already tried ({})", correctVersion.versionDisplay(), attempt);
+            } else {
+                try {
+                    writeLastStartupUpdate(attempt);
+                    log.info("Auto-updating to {} on startup", correctVersion.versionDisplay());
+                    autoUpdate.updateToLatest();
+                    return; // the installer closes and relaunches the app
+                } catch (Exception e) {
+                    log.error("Auto-update on startup failed; falling back to a notification", e);
+                }
             }
         }
         eventBus.fire(new NewVersionAvailableEvent(correctVersion));
+    }
+
+    /** Which update a startup auto-update starts: from this exact build to that release. */
+    String startupUpdateAttempt(Version target) {
+        return version + (currentIsSnapshot ? "-" + build : "") + " -> " + target.versionDisplay();
+    }
+
+    private @Nullable String readLastStartupUpdate() {
+        try {
+            var file = fileUtil.getFile(LAST_STARTUP_UPDATE).toPath();
+            return Files.isRegularFile(file) ? Files.readString(file).trim() : null;
+        } catch (IOException e) {
+            log.warn("Could not read {}: {}", LAST_STARTUP_UPDATE, e.toString());
+            return null;
+        }
+    }
+
+    /** Throws when the attempt can't be recorded: without the record a failing update could repeat on every start. */
+    private void writeLastStartupUpdate(String attempt) throws IOException {
+        Files.writeString(fileUtil.getFile(LAST_STARTUP_UPDATE).toPath(), attempt);
     }
 
     // Whether to consider pre-release (snapshot) builds is now an explicit user setting, not derived from

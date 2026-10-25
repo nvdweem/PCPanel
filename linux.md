@@ -143,7 +143,11 @@ one is available. Whether the popup can update in place depends on how you insta
 - **Flatpak** — self-updating **when installed from the `.flatpakref`** (which adds the hosted remote). **Update &
   restart** runs `flatpak update` on the host and relaunches; your desktop's software centre (GNOME Software / KDE
   Discover) also updates it automatically in the background. An install from the one-shot `.flatpak` bundle has no
-  remote and cannot update — reinstall from the `.flatpakref` to switch.
+  remote and cannot update — reinstall from the `.flatpakref` to switch. A system-wide install (made without
+  `--user`) can only be updated as root, because the PCPanel repository is not GPG-signed: run
+  `sudo flatpak update --system com.getpcpanel.PCPanel`.
+- **If an update finds nothing** (a bundle install, or a release that hasn't reached your channel yet), PCPanel
+  says so instead of restarting, and an automatic update on startup is not tried again for the same version.
 - **`.deb`** — updated through your package manager as usual; the popup links to the download page (no in-app update).
 
 Stable installs follow the stable releases; snapshot/`snapshot`-channel installs follow the rolling pre-releases.

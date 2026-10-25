@@ -1,10 +1,15 @@
 package com.getpcpanel.util.version;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -44,21 +49,22 @@ public class AppImageUpdater implements PlatformUpdater {
 
     @Override
     public AutoUpdateService.UpdateTarget updateToLatest() throws Exception {
-        return runUpdate();
+        return runUpdate(true);
     }
 
     @Override
     public AutoUpdateService.UpdateTarget reinstallCurrent() throws Exception {
-        return runUpdate();
+        return runUpdate(false);
     }
 
-    private AutoUpdateService.UpdateTarget runUpdate() throws Exception {
+    private AutoUpdateService.UpdateTarget runUpdate(boolean onlyWhenChanged) throws Exception {
         var appImage = System.getenv("APPIMAGE");
         var tool = tool();
         if (StringUtils.isBlank(appImage) || tool == null) {
             throw new AutoUpdateService.UpdateException("AppImage self-update is only available when running as an AppImage.");
         }
 
+        var before = identity(Path.of(appImage));
         log.info("Updating AppImage {} via {}", appImage, tool);
         // -O overwrites the AppImage in place (the default writes a new file and leaves ours untouched);
         // -r removes the .zs-old backup once the new file verifies.
@@ -69,10 +75,27 @@ public class AppImageUpdater implements PlatformUpdater {
         if (result.exitCode() != 0) {
             throw new AutoUpdateService.UpdateException("The AppImage updater exited with code " + result.exitCode() + ".");
         }
+        // Already up to date as far as its zsync channel goes: the file is untouched, and relaunching would only have the
+        // new instance find the same newer release and update again, in a loop.
+        if (onlyWhenChanged && before != null && before.equals(identity(Path.of(appImage)))) {
+            log.warn("The AppImage updater left {} unchanged; not relaunching", appImage);
+            throw new AutoUpdateService.UpdateException("The AppImage updater found no update for this AppImage, so PCPanel was not restarted.");
+        }
 
         // sh -c 'sleep 3; exec "$0"' <appimage> — $0 is the updated file; exec replaces the shell with it.
         UpdaterRestart.relaunchAndExit(processes, List.of("sh", "-c", "sleep 3; exec \"$0\"", appImage));
         return new AutoUpdateService.UpdateTarget("the latest version", "");
+    }
+
+    /** The file's inode, size and modification time: an in-place update changes them, an up-to-date run does not. */
+    private static @Nullable List<Object> identity(Path file) {
+        try {
+            var attributes = Files.readAttributes(file, BasicFileAttributes.class);
+            return Arrays.asList(attributes.fileKey(), attributes.size(), attributes.lastModifiedTime());
+        } catch (IOException e) {
+            log.warn("Could not read {}: {}", file, e.toString());
+            return null;
+        }
     }
 
     /** The bundled appimageupdatetool next to our own executable, or null when it is not present. */
