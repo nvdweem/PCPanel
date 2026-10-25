@@ -68,7 +68,10 @@ public class TrayServiceWayland implements ITrayService {
         connection.exportObject(new DBusMenuImpl()); // the right-click menu at /MenuBar
         connection.exportObject(new StatusNotifierItemImpl());
         if (registerWithWatcher(wellKnownName)) {
-            labelPlasmaBackgroundEntry();
+            // The portal is started on demand and can be slow to answer (at login especially), so it must not hold up startup.
+            var thread = new Thread(this::labelPlasmaBackgroundEntry, "tray-background-status");
+            thread.setDaemon(true);
+            thread.start();
         }
     }
 
@@ -123,8 +126,8 @@ public class TrayServiceWayland implements ITrayService {
         try {
             connection.getRemoteObject(PortalBackground.BUS_NAME, PortalBackground.OBJECT_PATH, PortalBackground.class)
                       .SetStatus(Map.of("message", new Variant<>(DUPLICATE_ENTRY_MESSAGE)));
-        } catch (DBusException | DBusExecutionException e) {
-            log.debug("Could not set the background status message: {}", e.getMessage());
+        } catch (Throwable e) { // NOSONAR - runs on its own thread with nothing above it; the label is cosmetic
+            log.debug("Could not set the background status message: {}", e.toString());
         }
     }
 
