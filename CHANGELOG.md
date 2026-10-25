@@ -40,6 +40,7 @@
 - Fixed the main page **loading forever when no PCPanel is connected**, instead of showing *No PCPanel connected* and its setup help (on Linux, the udev hint for a panel that is detected but can't be opened).
 - (Linux) **Settings show what your desktop can't detect**, next to the options that rely on it: the screens turning off on Wayland, locking and sleep without systemd-logind, and notifications without the `dbus-monitor` tool.
 - (Linux, Flatpak) On KDE Plasma 6.7 and later, Plasma can show a **second PCPanel tray icon** (a KDE bug, #181). That icon's tooltip now says so and links to the explanation in linux.md, which also shows how to hide it.
+- (Linux) Fixed PCPanel **restarting over and over after an update that found nothing**, for example in a Flatpak installed from the `.flatpak` file, which has no repository to update from. It now says the update found nothing, and doesn't try the same update again on the next start. A system-wide Flatpak install that can only be updated as root now says so, with the command to run.
 - (Linux) Fixed **Lights off when locked** doing nothing when the screen was locked with the desktop's own lock (the lock shortcut or idle lock on KDE Plasma and GNOME).
 - (Flatpak) The **volume overlay** and **Lights off when locked or asleep** now work in the Flatpak, and it no longer takes about 10 seconds to find the panel at startup.
 - (Linux) Fixed **Force volume** letting an app keep a volume when it was moved to that same volume a second time: the first time it was put back, the second time not.
