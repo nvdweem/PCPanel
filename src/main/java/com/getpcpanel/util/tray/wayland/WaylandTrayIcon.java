@@ -14,14 +14,15 @@ import lombok.extern.log4j.Log4j2;
  *
  * <p>Decoding a PNG at runtime would need {@code javax.imageio.ImageIO} (libawt), which the Linux
  * native image no longer bundles. Instead the build ships a pre-decoded raw-ARGB resource at
- * {@code /assets/tray-icon.argb} - the same artwork as the web favicon - and this class reads its
+ * {@code /assets/tray-icon.argb} - generated from {@code app-icon.png} by
+ * {@code packaging/make-icon-assets.py}, together with the web favicon - and this class reads its
  * bytes directly, so no AWT is involved. Without a pixmap the SNI host falls back to a blank
  * default icon.
  *
  * <p>Resource format (all integers big-endian, matching the {@code IconPixmap} {@code a(iiay)}
  * ARGB-in-network-byte-order layout): {@code int count}, then for each frame {@code int width},
- * {@code int height}, {@code width*height*4} bytes of ARGB. Multiple sizes (16x16, 32x32) let the
- * host pick the best for the panel.
+ * {@code int height}, {@code width*height*4} bytes of ARGB. Multiple sizes (16 to 64 pixels) let
+ * the host pick the best for the panel and its scale.
  */
 @Log4j2
 final class WaylandTrayIcon {
