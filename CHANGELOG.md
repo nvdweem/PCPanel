@@ -2,6 +2,8 @@
 
 <!-- Releasenotes without version are included in releases -->
 
+## [2.5.0]
+
 **Why 2.5?** The version jumps from 2.1 straight to 2.5 so that no release of this software shares a version number with the original PCPanel software, whose releases went up to 2.3.3.
 
 - (macOS) The panel's lights come back after every sleep, including short ones of a few seconds: PCPanel now follows the Mac's own sleep and wake notifications instead of only noticing longer sleeps.
