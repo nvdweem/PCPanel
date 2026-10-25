@@ -305,6 +305,33 @@ which can leave a stray 'JavaEmbeddedFrame'). Either:
 If the tray is disabled, the close button still only hides the application; starting it again shows
 the main window.
 
+### Duplicate tray icon
+
+On KDE Plasma 6.7 and later the Flatpak can show two PCPanel icons in the system tray. One is PCPanel's own tray
+icon. The other is Plasma's "background app" entry: Plasma adds one for every Flatpak that runs without a window of
+its own, and PCPanel always does, because its UI opens in the browser. That entry uses the app's installed icon, its
+tooltip reads "Extra icon from a KDE bug", and its right-click menu only offers "Quit PCPanel".
+
+Plasma is meant to hide that entry when the Flatpak already has a tray icon. It decides this by reading
+`/proc/<pid>/root/.flatpak-info` of the process that owns the tray icon's D-Bus name, and when that fails both icons
+stay. This is a Plasma bug, not a PCPanel one:
+
+- [KDE bug 521540](https://bugs.kde.org/show_bug.cgi?id=521540) collects the duplicate-icon reports (many Flatpak
+  apps are affected) and has more than one cause.
+- [KDE bug 522230](https://bugs.kde.org/show_bug.cgi?id=522230): with AppArmor, plasmashell is denied the read that
+  check needs.
+- [KDE bug 522864](https://bugs.kde.org/show_bug.cgi?id=522864): on X11 every Flatpak showed the entry; fixed in
+  Plasma 6.7.3.
+
+What to do:
+
+- Hide it: System Tray → Configure System Tray → Entries, set the PCPanel entry that has the app icon to "Always
+  hidden". Left-clicking it instead opens PCPanel and removes it only until the next start.
+- Don't use its "Quit PCPanel": it stops PCPanel itself.
+- To help get it fixed, add your Plasma version and the tray's debug output to KDE bug 521540: run
+  `QT_LOGGING_RULES="kde.systemtray.debug=true" plasmashell --replace` in a terminal, start PCPanel, and check whether a
+  line saying `StatusNotifierItem "org.kde.StatusNotifierItem-PCPanel…" is a flatpak` appears.
+
 ## Development gotchas
 
 ### `quarkus:dev` fails to start: `EMFILE: too many open files` (Watchpack)

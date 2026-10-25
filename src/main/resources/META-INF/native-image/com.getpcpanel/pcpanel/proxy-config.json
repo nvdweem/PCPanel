@@ -29,6 +29,7 @@
   {"interfaces": ["com.sun.jna.platform.win32.Advapi32"]},
   {"interfaces": ["com.sun.jna.platform.win32.Wtsapi32"]},
   {"interfaces": ["com.getpcpanel.util.tray.wayland.StatusNotifierWatcher"]},
+  {"interfaces": ["com.getpcpanel.util.tray.wayland.PortalBackground"]},
   {"interfaces": ["com.getpcpanel.sleepdetection.Login1Manager"]},
   {"interfaces": ["com.getpcpanel.sleepdetection.Login1Session"]},
   {"interfaces": ["com.getpcpanel.integration.keyboard.platform.linux.MprisPlayer"]},

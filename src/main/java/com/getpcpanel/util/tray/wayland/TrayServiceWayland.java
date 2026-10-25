@@ -2,13 +2,17 @@ package com.getpcpanel.util.tray.wayland;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.freedesktop.dbus.connections.impl.DBusConnection;
 import org.freedesktop.dbus.connections.impl.DBusConnectionBuilder;
 import org.freedesktop.dbus.exceptions.DBusException;
 import org.freedesktop.dbus.exceptions.DBusExecutionException;
+import org.freedesktop.dbus.types.Variant;
 
 import com.getpcpanel.platform.LinuxBuild;
+import com.getpcpanel.util.os.FlatpakHost;
 import com.getpcpanel.util.tray.ITrayService;
 
 import jakarta.annotation.Nullable;
@@ -24,6 +28,8 @@ public class TrayServiceWayland implements ITrayService {
     static final String SNI_BUS_NAME = "org.kde.StatusNotifierItem";
     static final String WATCHER_BUS_NAME = "org.kde.StatusNotifierWatcher";
     static final String WATCHER_OBJECT_PATH = "/StatusNotifierWatcher";
+    /** Shown under Plasma's duplicate tray entry; the portal rejects messages over 96 characters or with line breaks. */
+    static final String DUPLICATE_ENTRY_MESSAGE = "Extra icon from a KDE bug: github.com/nvdweem/PCPanel/blob/main/linux.md#duplicate-tray-icon";
 
     @Inject Event<Object> eventBus;
     private DBusConnection connection;
@@ -61,7 +67,9 @@ public class TrayServiceWayland implements ITrayService {
         }
         connection.exportObject(new DBusMenuImpl()); // the right-click menu at /MenuBar
         connection.exportObject(new StatusNotifierItemImpl());
-        registerWithWatcher(wellKnownName);
+        if (registerWithWatcher(wellKnownName)) {
+            labelPlasmaBackgroundEntry();
+        }
     }
 
     private @Nullable String requestSniBus() {
@@ -86,15 +94,37 @@ public class TrayServiceWayland implements ITrayService {
         }
     }
 
-    private void registerWithWatcher(String wellKnownName) {
+    private boolean registerWithWatcher(String wellKnownName) {
         // RegisterStatusNotifierItem throws a ServiceUnknown (a DBusExecutionException, i.e. an
         // unchecked RuntimeException) when no StatusNotifierWatcher is registered on the connected
         // bus - common inside Distrobox/Flatpak sandboxes or on desktops without an SNI host (#89).
         // Log it as a concise one-liner instead of a noisy multi-line stack trace.
         try {
             getStatusNotifierWatcher().RegisterStatusNotifierItem(wellKnownName);
+            return true;
         } catch (DBusException | DBusExecutionException e) {
             log.warn("No system tray available on this D-Bus session; running without a tray icon ({})", e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Plasma 6.7+ shows a tray entry of its own for every Flatpak running without a window, which PCPanel always is (its
+     * UI is in the browser). Plasma hides that entry when it can tell the Flatpak already has a tray icon, but on some
+     * systems that check fails (KDE bug 521540) and the user sees two PCPanel icons (#181). The only part of Plasma's
+     * entry an app can change is the status message under its name, so point it at the explanation there. It is set
+     * only once this tray icon is registered, so the message can only be seen on that duplicate - and only on KDE: GNOME
+     * lists background apps with their message too, where nothing is duplicated.
+     */
+    private void labelPlasmaBackgroundEntry() {
+        if (!FlatpakHost.inSandbox() || !StringUtils.containsIgnoreCase(System.getenv("XDG_CURRENT_DESKTOP"), "KDE")) {
+            return;
+        }
+        try {
+            connection.getRemoteObject(PortalBackground.BUS_NAME, PortalBackground.OBJECT_PATH, PortalBackground.class)
+                      .SetStatus(Map.of("message", new Variant<>(DUPLICATE_ENTRY_MESSAGE)));
+        } catch (DBusException | DBusExecutionException e) {
+            log.debug("Could not set the background status message: {}", e.getMessage());
         }
     }
 

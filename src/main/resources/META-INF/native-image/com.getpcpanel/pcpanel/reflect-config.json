@@ -43,6 +43,10 @@
     "allDeclaredMethods": true
   },
   {
+    "name": "com.getpcpanel.util.tray.wayland.PortalBackground",
+    "allDeclaredMethods": true
+  },
+  {
     "name": "com.getpcpanel.integration.keyboard.platform.linux.MprisPlayer",
     "allDeclaredMethods": true
   },
