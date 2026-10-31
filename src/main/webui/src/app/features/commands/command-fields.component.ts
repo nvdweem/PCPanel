@@ -5,7 +5,7 @@ import { RouterLink } from '@angular/router';
 import { CommandDef, COMMAND_BY_TYPE, defaultFocusApp, FieldDef, isLevelReadable, LiveSource } from './command-catalog';
 import { CommandPickerComponent } from './command-picker.component';
 import { mappingCurve, TrimRange } from './mapping-curve.util';
-import { IntegrationDataService } from './integration-data.service';
+import { IntegrationDataService, VoiceMeeterParams } from './integration-data.service';
 import { CurveDefinition } from '../../models/generated/backend.types';
 import {
   AppPickerComponent, ColorPickerComponent, IconComponent, IconName, KeyRecorderComponent, SegmentedComponent,
@@ -109,7 +109,8 @@ type Cmd = Record<string, any>;
             <div class="field-block">
               <div class="flabel">{{ $any(f).label }}</div>
               <pc-select [block]="true" [options]="liveOptions($any(f).source)" [value]="val($any(f).key)"
-                         [searchable]="!!$any(f).searchable" placeholder="—" (valueChange)="set($any(f).key, $event)"></pc-select>
+                         [searchable]="!!$any(f).searchable" [allowCustom]="!!$any(f).allowCustom"
+                         placeholder="—" (valueChange)="set($any(f).key, $event)"></pc-select>
             </div>
           }
           @case ('device') {
@@ -566,7 +567,8 @@ export class CommandFieldsComponent {
     switch (source) {
       case 'obs-scenes': return strOpts(this.data.obsScenes.value());
       case 'obs-sources': return strOpts(this.data.obsSources.value());
-      case 'vm-advanced': return (this.data.vmAdvanced.value() ?? []).flatMap(g => g.params.map(p => ({ value: p, label: p })));
+      case 'vm-advanced': return vmOpts(this.data.vmAdvanced.value());
+      case 'vm-advanced-buttons': return vmOpts(this.data.vmAdvancedButtons.value());
       case 'wl-channels': return wlOpts(this.data.wlChannels());
       case 'wl-inputs': return wlOpts(this.data.wlInputs());
       case 'wl-mixes': return wlOpts(this.data.wlMixes());
@@ -860,3 +862,6 @@ function stripExe(path: string): string {
 function clamp(v: number): number { return Math.max(0, Math.min(100, v ?? 0)); }
 function strOpts(arr: string[] | undefined): SelectOption[] { return (arr ?? []).map(s => ({ value: s, label: s })); }
 function wlOpts(arr: { id: string; name?: string }[]): SelectOption[] { return arr.map(i => ({ value: i.id, label: i.name ?? i.id })); }
+function vmOpts(groups: VoiceMeeterParams[] | undefined): SelectOption[] {
+  return (groups ?? []).flatMap(g => g.params.map(p => ({ value: p, label: p, group: g.name })));
+}

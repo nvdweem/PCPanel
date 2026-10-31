@@ -12,7 +12,7 @@ export type CommandCategory = 'audio' | 'system' | 'integration';
 export type CommandKind = 'dial' | 'button';
 export type Integration = 'obs' | 'voicemeeter' | 'wavelink' | 'discord' | 'homeassistant' | 'sonar';
 export type LiveSource =
-  | 'obs-scenes' | 'obs-sources' | 'vm-advanced'
+  | 'obs-scenes' | 'obs-sources' | 'vm-advanced' | 'vm-advanced-buttons'
   | 'wl-channels' | 'wl-inputs' | 'wl-mixes' | 'wl-outputs' | 'profiles'
   | 'discord-users' | 'discord-channels' | 'discord-mute-targets' | 'discord-volume-targets'
   | 'ha-servers';
@@ -28,7 +28,8 @@ export type FieldDef = (
   // enabledWhenReadable: the toggle is disabled unless an action in the nested Commands under this key has a readable level
   | { kind: 'toggle'; key: string; label: string; enabledWhenReadable?: string }
   | { kind: 'select'; key: string; label: string; options: { value: string; label: string }[] }
-  | { kind: 'select-live'; key: string; label: string; source: LiveSource; searchable?: boolean }
+  // allowCustom: the options are suggestions; typed text that matches none is accepted as the value
+  | { kind: 'select-live'; key: string; label: string; source: LiveSource; searchable?: boolean; allowCustom?: boolean }
   // everythingElse: offers the app groups "All apps", "All apps without their own control" and "All apps except the focused one"
   | { kind: 'apps'; key: string; label: string; single?: boolean; everythingElse?: boolean }  // single: pick exactly one app (still stored as a 1-element array)
   // defaultLabel: adds a selectable empty option (e.g. "Default device") for commands where blank = the default
@@ -305,7 +306,7 @@ const FIELD_DEFS: FieldDef_[] = [
     type: P + 'CommandVoiceMeeterAdvanced',
     buildEmpty: () => ({ _type: P + 'CommandVoiceMeeterAdvanced', ct: 'NEG_12_TO_12', fullParam: '', dialParams: dialParams(), invert: false }),
     fields: [
-      { kind: 'select-live', key: 'fullParam', label: 'Parameter', source: 'vm-advanced' },
+      { kind: 'select-live', key: 'fullParam', label: 'Parameter', source: 'vm-advanced', allowCustom: true },
       {
         kind: 'select', key: 'ct', label: 'Range', options: [
           { value: 'NEG_12_TO_12', label: '-12 … +12' }, { value: 'ZERO_TO_10', label: '0 … 10' },
@@ -319,10 +320,11 @@ const FIELD_DEFS: FieldDef_[] = [
     type: P + 'CommandVoiceMeeterAdvancedButton',
     buildEmpty: () => ({ _type: P + 'CommandVoiceMeeterAdvancedButton', bt: 'TOGGLE', fullParam: '', stringValue: '', overlayText: '' }),
     fields: [
-      { kind: 'select-live', key: 'fullParam', label: 'Parameter', source: 'vm-advanced' },
+      { kind: 'select-live', key: 'fullParam', label: 'Parameter', source: 'vm-advanced-buttons', allowCustom: true },
       {
         kind: 'select', key: 'bt', label: 'Action', options: [
-          { value: 'TOGGLE', label: 'Toggle' }, { value: 'SET', label: 'Set value' },
+          { value: 'TOGGLE', label: 'Toggle' }, { value: 'ENABLE', label: 'Turn on' },
+          { value: 'DISABLE', label: 'Turn off' }, { value: 'STRING', label: 'Set value' },
         ],
       },
       { kind: 'text', key: 'stringValue', label: 'Value (for Set)', mono: true },
