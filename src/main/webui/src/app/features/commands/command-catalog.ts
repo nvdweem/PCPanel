@@ -12,7 +12,7 @@ export type CommandCategory = 'audio' | 'system' | 'integration';
 export type CommandKind = 'dial' | 'button';
 export type Integration = 'obs' | 'voicemeeter' | 'wavelink' | 'discord' | 'homeassistant' | 'sonar';
 export type LiveSource =
-  | 'obs-scenes' | 'obs-sources' | 'vm-advanced' | 'vm-advanced-buttons'
+  | 'obs-scenes' | 'obs-sources' | 'vm-advanced' | 'vm-advanced-buttons' | 'vm-indices'
   | 'wl-channels' | 'wl-inputs' | 'wl-mixes' | 'wl-outputs' | 'profiles'
   | 'discord-users' | 'discord-channels' | 'discord-mute-targets' | 'discord-volume-targets'
   | 'ha-servers';
@@ -76,6 +76,20 @@ const SONAR_MIX_OPTS = [
   { value: 'monitoring', label: 'Personal Mix' }, { value: 'streaming', label: 'Stream Mix' }, { value: 'both', label: 'Both mixes' },
 ];
 const dialParams = () => ({ invert: false, moveStart: 0, moveEnd: 0 });
+
+// Voicemeeter.ControlType / DialType / ButtonType. A strip or bus ignores a parameter it does not have.
+const VM_CONTROL_TYPES = [{ value: 'STRIP', label: 'Input (strip)' }, { value: 'BUS', label: 'Output (bus)' }];
+const VM_DIAL_TYPES = [
+  ['GAIN', 'Gain'], ['AUDIBILITY', 'Audibility'], ['COMP', 'Comp'], ['GATE', 'Gate'], ['LIMIT', 'Limit'],
+  ['EQGAIN1', 'EQ gain 1'], ['EQGAIN2', 'EQ gain 2'], ['EQGAIN3', 'EQ gain 3'], ['REVERB', 'Reverb'], ['DELAY', 'Delay'],
+  ['FX1', 'FX 1'], ['FX2', 'FX 2'], ['RETURNREVERB', 'Return reverb'], ['RETURNDELAY', 'Return delay'],
+  ['RETURNFX1', 'Return FX 1'], ['RETURNFX2', 'Return FX 2'],
+].map(([value, label]) => ({ value, label }));
+const VM_BUTTON_TYPES = [
+  ['MUTE', 'Mute'], ['SOLO', 'Solo'], ['MONO', 'Mono'], ['MC', 'M.C'], ['EQ', 'EQ'], ['SEL', 'Sel'],
+  ['A1', 'A1'], ['A2', 'A2'], ['A3', 'A3'], ['A4', 'A4'], ['A5', 'A5'], ['B1', 'B1'], ['B2', 'B2'], ['B3', 'B3'],
+  ['MIXA', 'Mix A'], ['MIXB', 'Mix B'], ['REPEAT', 'Repeat'], ['COMPOSITE', 'Composite'],
+].map(([value, label]) => ({ value, label }));
 
 /** The file name of a path ending in `.exe` (any case), else null — the rule `CommandShortcut.defaultFocusApp` applies. */
 export function defaultFocusApp(shortcut: string | null | undefined): string | null {
@@ -300,6 +314,24 @@ const FIELD_DEFS: FieldDef_[] = [
           { value: 'TOGGLE_REPLAY_BUFFER', label: 'Toggle replay buffer' }, { value: 'SAVE_REPLAY_BUFFER', label: 'Save replay buffer' },
         ],
       },
+    ],
+  },
+  {
+    type: 'com.getpcpanel.commands.command.CommandVoiceMeeterBasic',
+    buildEmpty: () => ({ _type: 'com.getpcpanel.commands.command.CommandVoiceMeeterBasic', ct: 'STRIP', index: 0, dt: 'GAIN', dialParams: dialParams(), invert: false }),
+    fields: [
+      { kind: 'select', key: 'ct', label: 'Type', options: VM_CONTROL_TYPES },
+      { kind: 'select-live', key: 'index', label: 'Strip or bus', source: 'vm-indices' },
+      { kind: 'select', key: 'dt', label: 'Parameter', options: VM_DIAL_TYPES },
+    ],
+  },
+  {
+    type: 'com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton',
+    buildEmpty: () => ({ _type: 'com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton', ct: 'STRIP', index: 0, bt: 'MUTE', overlayText: '' }),
+    fields: [
+      { kind: 'select', key: 'ct', label: 'Type', options: VM_CONTROL_TYPES },
+      { kind: 'select-live', key: 'index', label: 'Strip or bus', source: 'vm-indices' },
+      { kind: 'select', key: 'bt', label: 'Button', options: VM_BUTTON_TYPES },
     ],
   },
   {

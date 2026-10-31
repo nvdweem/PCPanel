@@ -569,6 +569,7 @@ export class CommandFieldsComponent {
       case 'obs-sources': return strOpts(this.data.obsSources.value());
       case 'vm-advanced': return vmOpts(this.data.vmAdvanced.value());
       case 'vm-advanced-buttons': return vmOpts(this.data.vmAdvancedButtons.value());
+      case 'vm-indices': return this.vmIndexOptions();
       case 'wl-channels': return wlOpts(this.data.wlChannels());
       case 'wl-inputs': return wlOpts(this.data.wlInputs());
       case 'wl-mixes': return wlOpts(this.data.wlMixes());
@@ -587,6 +588,15 @@ export class CommandFieldsComponent {
       case 'ha-servers': return (this.data.haServers.value() ?? []).map(s => ({ value: s.id, label: s.name }));
       default: return [];
     }
+  }
+
+  /** The strips or buses (per the command's `ct`) by 0-based index, named as Voicemeeter labels them when connected. */
+  private vmIndexOptions(): SelectOption[] {
+    const bus = this.val('ct') === 'BUS';
+    const prefix = bus ? 'Output ' : 'Input ';
+    const names = (this.data.vmAdvanced.value() ?? []).filter(g => g.name.startsWith(prefix)).map(g => g.name);
+    const count = Math.max(names.length, VM_MAX_STRIPS, (this.val('index') ?? 0) + 1);
+    return Array.from({ length: count }, (_, i) => ({ value: i as any, label: names[i] ?? prefix + (i + 1) }));
   }
 
   /** User targets ordered friends-first (by name), then everyone else (by name) — appended after the fixed options. */
@@ -862,6 +872,8 @@ function stripExe(path: string): string {
 function clamp(v: number): number { return Math.max(0, Math.min(100, v ?? 0)); }
 function strOpts(arr: string[] | undefined): SelectOption[] { return (arr ?? []).map(s => ({ value: s, label: s })); }
 function wlOpts(arr: { id: string; name?: string }[]): SelectOption[] { return arr.map(i => ({ value: i.id, label: i.name ?? i.id })); }
+/** Potato, the largest Voicemeeter, has 8 strips and 8 buses: the choices while Voicemeeter is not connected. */
+const VM_MAX_STRIPS = 8;
 function vmOpts(groups: VoiceMeeterParams[] | undefined): SelectOption[] {
   return (groups ?? []).flatMap(g => g.params.map(p => ({ value: p, label: p, group: g.name })));
 }
