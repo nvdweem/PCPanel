@@ -1129,6 +1129,16 @@
           },
           "19" : {
             "commands" : [ {
+              "_type" : "analogbands.change",
+              "up" : null,
+              "down" : null,
+              "dialParams" : null,
+              "invert" : false
+            } ],
+            "type" : "allAtOnce"
+          },
+          "20" : {
+            "commands" : [ {
               "_type" : "analogbands.steps",
               "stepsPerTurn" : 255,
               "up" : null,
@@ -1138,7 +1148,7 @@
             } ],
             "type" : "allAtOnce"
           },
-          "20" : {
+          "21" : {
             "commands" : [ {
               "_type" : "sonar.volume",
               "channel" : "Aux",

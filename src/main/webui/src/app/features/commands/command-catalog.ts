@@ -204,9 +204,17 @@ const FIELD_DEFS: FieldDef_[] = [
     fields: [{ kind: 'step-actions' }],
   },
   {
+    type: 'analogbands.change',
+    buildEmpty: () => ({ _type: 'analogbands.change', up: { commands: [], type: 'allAtOnce' }, down: { commands: [], type: 'allAtOnce' } }),
+    fields: [
+      { kind: 'nested-commands', key: 'up', label: 'When it moves up', commandKind: 'button' },
+      { kind: 'nested-commands', key: 'down', label: 'When it moves down', commandKind: 'button' },
+    ],
+  },
+  {
     type: P + 'CommandRun',
     buildEmpty: () => ({ _type: P + 'CommandRun', command: '', overlayText: '' }),
-    fields: [{ kind: 'text', key: 'command', label: 'Command / program', placeholder: 'e.g. notepad.exe', mono: true }],
+    fields: [{ kind: 'text', key: 'command', label: 'Command / program', placeholder: 'e.g. notepad.exe', mono: true, template: true }],
   },
   {
     type: P + 'CommandShortcut',

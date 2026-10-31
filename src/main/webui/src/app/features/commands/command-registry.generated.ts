@@ -17,6 +17,7 @@ export interface GeneratedCommand {
 }
 
 export const GENERATED_COMMANDS: GeneratedCommand[] = [
+  { type: 'analogbands.change', label: 'Action on change', category: 'system', kinds: ['dial'], icon: 'sliders' },
   { type: 'analogbands.ranges', label: 'Stepped switch (ranges)', category: 'system', kinds: ['dial'], icon: 'sliders', legacy: 'com.getpcpanel.commands.command.CommandAnalogBands' },
   { type: 'analogbands.steps', label: 'Action per step', category: 'system', kinds: ['dial'], icon: 'sliders' },
   { type: 'clipboard.set', label: 'Set clipboard', category: 'system', kinds: ['button'], icon: 'clipboard' },
