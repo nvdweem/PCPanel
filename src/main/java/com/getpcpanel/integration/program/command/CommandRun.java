@@ -10,11 +10,17 @@ import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.util.CdiHelper;
 import com.getpcpanel.integration.program.IPlatformCommand;
+import com.getpcpanel.template.TemplateContext;
+import com.getpcpanel.template.Templates;
 
 import lombok.Getter;
 import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
 
+/**
+ * Runs a program or command line. The command is a template, so run from a dial (as an action of
+ * {@code Action on change}) it can pass the position on, e.g. <code>--Set={{ percent }}</code>.
+ */
 @Getter
 @Log4j2
 @ToString(callSuper = true)
@@ -30,7 +36,7 @@ public class CommandRun extends Command implements ButtonAction {
 
     @Override
     public void execute() {
-        CdiHelper.getBean(IPlatformCommand.class).exec(command);
+        CdiHelper.getBean(IPlatformCommand.class).exec(Templates.render(command, TemplateContext.current()));
     }
 
     @Override

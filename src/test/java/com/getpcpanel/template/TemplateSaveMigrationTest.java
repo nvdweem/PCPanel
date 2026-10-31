@@ -71,7 +71,8 @@ class TemplateSaveMigrationTest {
                       } ] }
                     },
                     "buttonData": {
-                      "0": { "commands": [ { "_type": "homeassistant.action", "action": "data: {{ states('x') }} {{ profile }}" } ] }
+                      "0": { "commands": [ { "_type": "homeassistant.action", "action": "data: {{ states('x') }} {{ profile }}" } ] },
+                      "1": { "commands": [ { "_type": "program.run", "command": "tool --level={{ percent }}" } ] }
                     },
                     "knobSettings": { "0": { "overlayName": "{{ name }} plain" }, "1": { "overlayName": "Music" } }
                   } ]
@@ -102,6 +103,7 @@ class TemplateSaveMigrationTest {
         assertEquals("{{ value }} {{ '{' }}{ device.name }}", mqtt.path("payload").asText());
         assertEquals("/{{ '{' }}{ control }}", profile.at("/dialData/2/commands/0/bands/0/commands/commands/0/address").asText());
         assertEquals("data: {{ states('x') }} {{ '{' }}{ profile }}", profile.at("/buttonData/0/commands/0/action").asText());
+        assertEquals("tool --level={{ '{' }}{ percent }}", profile.at("/buttonData/1/commands/0/command").asText());
         assertEquals("{{ '{' }}{ name }} plain", profile.at("/knobSettings/0/overlayName").asText());
         assertEquals("Music", profile.at("/knobSettings/1/overlayName").asText());
         assertEquals(TemplateSaveMigration.CURRENT_VERSION, doc.path(TemplateSaveMigration.VERSION_FIELD).asInt());
@@ -118,7 +120,7 @@ class TemplateSaveMigrationTest {
             for (var path : List.of("/dialData/0/commands/0/url", "/dialData/0/commands/0/body", "/dialData/1/commands/0/payload")) {
                 assertEquals(ValueInterpolator.interpolate(before.at(path).asText(), value), render(after.at(path).asText(), value), path);
             }
-            for (var path : List.of("/dialData/1/commands/0/topic", "/buttonData/0/commands/0/action", "/knobSettings/0/overlayName")) {
+            for (var path : List.of("/dialData/1/commands/0/topic", "/buttonData/0/commands/0/action", "/buttonData/1/commands/0/command", "/knobSettings/0/overlayName")) {
                 assertEquals(before.at(path).asText(), render(after.at(path).asText(), value), path);
             }
         }
@@ -133,5 +135,17 @@ class TemplateSaveMigrationTest {
         assertFalse(migration.migrate(doc));
         assertEquals("{{ name }} written after the upgrade", doc.at("/devices/serial/profiles/0/knobSettings/1/overlayName").asText());
         assertTrue(once.contains("templateVersion"));
+    }
+
+    @Test
+    void aVersionOneSaveOnlyRewritesTheFieldsThatBecameTemplatesSince() throws Exception {
+        var doc = document();
+        doc.put(TemplateSaveMigration.VERSION_FIELD, 1);
+        assertTrue(migration.migrate(doc));
+        var profile = doc.at("/devices/serial/profiles/0");
+        assertEquals("tool --level={{ '{' }}{ percent }}", profile.at("/buttonData/1/commands/0/command").asText());
+        assertEquals("home/{{ value }}/set", profile.at("/dialData/1/commands/0/topic").asText(), "written for version 1, so already a template");
+        assertEquals("{{ name }} plain", profile.at("/knobSettings/0/overlayName").asText());
+        assertEquals(TemplateSaveMigration.CURRENT_VERSION, doc.path(TemplateSaveMigration.VERSION_FIELD).asInt());
     }
 }

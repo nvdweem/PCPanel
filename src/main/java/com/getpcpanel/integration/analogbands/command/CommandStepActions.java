@@ -69,7 +69,7 @@ public class CommandStepActions extends Command implements DialAction, NestedCom
             return;
         }
         // Built and run inline as button actions, so a keystroke presses once per step.
-        var event = new PCPanelControlEvent(context.device(), 0, commands, false, null, PCPanelControlEvent.Source.DIAL);
+        var event = new PCPanelControlEvent(context.device(), 0, commands, false, context.dial(), PCPanelControlEvent.Source.DIAL);
         for (var i = 0; i < Math.abs(steps); i++) {
             event.buildRunnable().run();
         }

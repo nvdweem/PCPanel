@@ -587,7 +587,7 @@ the 0..1 dial position to a number via min/max or an `exp4j` formula (variable `
 for the `{{ value }}` token in the YAML before sending.
 
 **Templates (`template/`):** the overlay name and the output commands' text fields (HTTP url/headers/body,
-MQTT topic/payload, OSC address, Home Assistant action YAML) are `{{ … }}` templates rendered by **Qute**
+MQTT topic/payload, OSC address, Home Assistant action YAML, the Run command) are `{{ … }}` templates rendered by **Qute**
 (`quarkus-qute`). Qute's own delimiters are single braces, so `TemplateDialect` translates first: literal
 text becomes `{_lit.get(n)}` placeholders filled from data (Qute never lexes a user `{`, `}` or `\`), and a
 `{{ … }}` tag becomes a Qute tag only when **every** root, namespace and function in it is ours — so JSON,
@@ -609,7 +609,7 @@ integration (`wl`, `audio`, `obs`, `vm`, `discord`, `mqtt`, `ha`, `sonar`) expos
 
 A control event carries its scope to the actions it runs via `TemplateContext` (set in
 `PCPanelControlEvent.buildRunnable`); code that defers work (the HTTP throttle) captures it first.
-`TemplateSaveMigration` runs once per save file (`Save.templateVersion`) on the raw JSON: in a save that predates
+`TemplateSaveMigration` runs once per template version (`Save.templateVersion`; v2 made the Run command a template, migrating only that field) on the raw JSON: in a save that predates
 this syntax it rewrites every tag that would now render to the literal form `{{ '{' }}{ … }}` (except
 `{{ value }}` in fields that always substituted it), keeping a rewrite only when it renders exactly what the
 field produced before, behind the usual `.bak`. The UI edits these fields with
