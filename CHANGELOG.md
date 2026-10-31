@@ -2,6 +2,8 @@
 
 <!-- Releasenotes without version are included in releases -->
 
+- (Windows) The **Voicemeeter** dial and button actions list the parameters of every strip and bus again, grouped per strip and bus with its label (e.g. *Input 1 · Mic*); you can also type any other Voicemeeter parameter. The button action can turn a parameter on or off and set a value again, and Voicemeeter shows *connected* when PCPanel reaches it. Voicemeeter actions set up in PCPanel 1.x (pick an input or output, then a parameter or button) show their settings and can be edited again, and are back in the action list as *Voicemeeter — strip or bus*.
+
 ## [2.5.0]
 
 **Why 2.5?** The version jumps from 2.1 straight to 2.5 so that no release of this software shares a version number with the original PCPanel software, whose releases went up to 2.3.3.

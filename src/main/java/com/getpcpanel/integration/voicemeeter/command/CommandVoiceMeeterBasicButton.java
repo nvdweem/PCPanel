@@ -2,6 +2,9 @@ package com.getpcpanel.integration.voicemeeter.command;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.getpcpanel.commands.meta.CommandCategory;
+import com.getpcpanel.commands.meta.CommandKind;
+import com.getpcpanel.commands.meta.CommandMeta;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.commands.command.ButtonAction;
 import com.getpcpanel.util.CdiHelper;
@@ -13,6 +16,7 @@ import lombok.ToString;
 @Getter
 @ToString(callSuper = true)
 @JsonTypeName("com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton")
+@CommandMeta(label = "Voicemeeter — strip or bus button", category = CommandCategory.integration, kinds = {CommandKind.button}, integration = "voicemeeter", icon = "sliders")
 public class CommandVoiceMeeterBasicButton extends CommandVoiceMeeter implements ButtonAction {
     private final Voicemeeter.ControlType ct;
     private final int index;
