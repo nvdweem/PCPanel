@@ -595,7 +595,7 @@ export class CommandFieldsComponent {
     const bus = this.val('ct') === 'BUS';
     const prefix = bus ? 'Output ' : 'Input ';
     const names = (this.data.vmAdvanced.value() ?? []).filter(g => g.name.startsWith(prefix)).map(g => g.name);
-    const count = Math.max(names.length, VM_MAX_STRIPS, (this.val('index') ?? 0) + 1);
+    const count = Math.max(names.length || VM_MAX_STRIPS, (this.val('index') ?? 0) + 1);
     return Array.from({ length: count }, (_, i) => ({ value: i as any, label: names[i] ?? prefix + (i + 1) }));
   }
 

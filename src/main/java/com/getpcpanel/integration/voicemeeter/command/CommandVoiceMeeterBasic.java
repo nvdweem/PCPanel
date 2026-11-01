@@ -1,12 +1,12 @@
 package com.getpcpanel.integration.voicemeeter.command;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.getpcpanel.commands.command.DialAction;
 import com.getpcpanel.commands.meta.CommandCategory;
 import com.getpcpanel.commands.meta.CommandKind;
 import com.getpcpanel.commands.meta.CommandMeta;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.getpcpanel.commands.command.DialAction;
 import com.getpcpanel.util.CdiHelper;
 import com.getpcpanel.integration.voicemeeter.Voicemeeter;
 
