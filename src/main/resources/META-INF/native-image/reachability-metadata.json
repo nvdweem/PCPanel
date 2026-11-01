@@ -449,7 +449,17 @@
       ]
     },
     {
-      "type": "com.getpcpanel.integration.volume.platform.AudioDevice"
+      "type": "com.getpcpanel.integration.volume.platform.AudioDevice",
+      "jniAccessible": true,
+      "methods": [
+        {
+          "name": "setState",
+          "parameterTypes": [
+            "float",
+            "boolean"
+          ]
+        }
+      ]
     },
     {
       "type": "com.getpcpanel.integration.volume.platform.AudioDeviceEvent"
@@ -459,9 +469,21 @@
       "jniAccessible": true,
       "methods": [
         {
+          "name": "icon",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
           "name": "muted",
           "parameterTypes": [
             "boolean"
+          ]
+        },
+        {
+          "name": "name",
+          "parameterTypes": [
+            "java.lang.String"
           ]
         },
         {
@@ -633,6 +655,12 @@
           ]
         },
         {
+          "name": "deviceRemoved",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
           "name": "focusChanged",
           "parameterTypes": [
             "java.lang.String"
@@ -665,6 +693,13 @@
             "java.lang.String",
             "float",
             "boolean"
+          ]
+        },
+        {
+          "name": "removeSession",
+          "parameterTypes": [
+            "long",
+            "int"
           ]
         }
       ]

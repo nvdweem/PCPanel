@@ -673,7 +673,9 @@ Key constraints baked into those args, change with care:
   record/class it reaches (plus the `Foo[]` array form for `List`/`Set` of a concrete element), is missing
   from the `@RegisterForReflection`/reachability-metadata registrations. So neither a new command, a record
   nested in one, nor a new REST DTO can ship unregistered. `ProxyRegistrationCoverageTest` does the same
-  for JNA `Library` proxies. Both run on every OS/JVM build, so the platform that forgot a registration
+  for JNA `Library` proxies, and `SndCtrlJniCallbackCoverageTest` reads every Java callback out of the
+  `SndCtrl.dll` C++ sources and fails unless it is registered `jniAccessible` (the native image cannot find
+  any other, and the DLL then silently skips the call). Both run on every OS/JVM build, so the platform that forgot a registration
   need not be the one running the test. When one fails, add the named type to `NativeImageConfig`.
 - **Declare REST DTO registrations even when Quarkus would add them anyway.** Quarkus registers REST
   signature types itself, so some entries in `NativeImageConfig` are redundant in practice — declare them
