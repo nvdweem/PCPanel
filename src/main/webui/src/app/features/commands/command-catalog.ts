@@ -205,8 +205,11 @@ const FIELD_DEFS: FieldDef_[] = [
   },
   {
     type: 'analogbands.change',
-    buildEmpty: () => ({ _type: 'analogbands.change', commands: { commands: [], type: 'allAtOnce' } }),
-    fields: [{ kind: 'nested-commands', key: 'commands', label: 'Actions to run when it moves', commandKind: 'button' }],
+    buildEmpty: () => ({ _type: 'analogbands.change', commands: { commands: [], type: 'allAtOnce' }, throttleMs: 150 }),
+    fields: [
+      { kind: 'nested-commands', key: 'commands', label: 'Actions to run when it moves', commandKind: 'button' },
+      { kind: 'number', key: 'throttleMs', label: 'Run at most every (ms, 0 = every move)', min: 0, max: 10000 },
+    ],
   },
   {
     type: P + 'CommandRun',

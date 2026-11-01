@@ -781,24 +781,24 @@
           "36" : {
             "commands" : [ {
               "_type" : "display.off",
-              "displays" : [ "arg0-263", "arg0-264" ]
+              "displays" : [ "arg0-264", "arg0-265" ]
             } ],
             "type" : "allAtOnce"
           },
           "37" : {
             "commands" : [ {
               "_type" : "sonar.mute",
-              "channel" : "Chat",
-              "mix" : "both",
-              "muteType" : "mute"
+              "channel" : "Mic",
+              "mix" : "monitoring",
+              "muteType" : "unmute"
             } ],
             "type" : "allAtOnce"
           },
           "38" : {
             "commands" : [ {
               "_type" : "volume.app-output",
-              "processName" : [ "arg0-272", "arg0-273" ],
-              "device" : "arg1-274"
+              "processName" : [ "arg0-273", "arg0-274" ],
+              "device" : "arg1-275"
             } ],
             "type" : "allAtOnce"
           }
@@ -1131,6 +1131,7 @@
             "commands" : [ {
               "_type" : "analogbands.change",
               "commands" : null,
+              "throttleMs" : 261,
               "dialParams" : null,
               "invert" : false
             } ],
@@ -1150,13 +1151,13 @@
           "21" : {
             "commands" : [ {
               "_type" : "sonar.volume",
-              "channel" : "Aux",
-              "mix" : "both",
+              "channel" : "Master",
+              "mix" : "monitoring",
               "unMuteOnVolumeChange" : true,
               "dialParams" : {
                 "invert" : true,
-                "moveStart" : 270,
-                "moveEnd" : 271
+                "moveStart" : 271,
+                "moveEnd" : 272
               },
               "invert" : true
             } ],

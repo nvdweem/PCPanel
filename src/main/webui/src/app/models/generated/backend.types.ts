@@ -111,6 +111,7 @@ export interface CommandBrightness extends Command, DialAction {
 export interface CommandChangeActions extends Command, DialAction {
     _type: "analogbands.change";
     commands?: Commands;
+    throttleMs?: number;
 }
 
 export interface CommandConverter {
