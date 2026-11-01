@@ -40,6 +40,13 @@ SndCtrl::SndCtrl(JNIEnv* env, jobject obj) :
     BuildAudioPolicyConfigFactory();
 }
 
+void SndCtrl::Ready() {
+    JThread thread;
+    if (*thread) {
+        pJni->CallVoid(thread, "audioReady", "()V");
+    }
+}
+
 void SndCtrl::InitDevices() {
     auto cpDevices = EnumAudioEndpoints(*cpEnumerator);
     NULLRETURN(cpDevices);

@@ -307,7 +307,7 @@ backend stays authoritative for what the hardware does.
 (volume/mute/default device, focus app) — it is the backend the volume commands drive, so it lives in
 the volume feature. Implementations are selected at **build time** by platform stereotypes:
 `@WindowsBuild` (`SndCtrlWindows` → JNI to `SndCtrl.dll` via `SndCtrlNative`, both in
-`integration/volume/platform/windows/`; C++ source in `src/main/cpp/`) and `@LinuxBuild`
+`integration/volume/platform/windows/`; C++ source in `src/main/cpp/`; the DLL lists devices and sessions on a thread of its own and every call is a no-op until then, so it calls `audioReady()` once it takes calls and `AudioReadyVolumeService` replays the volume dials' startup sync) and `@LinuxBuild`
 (`SndCtrlPulseAudio` in `platform/linux/`), which drives PulseAudio/PipeWire over the **PulseAudio native
 protocol** — `dev.niels.pulse.PulseClient`, a pure-Java client on the server's Unix socket (served by PulseAudio and
 by PipeWire's pipewire-pulse alike; no JNA, no libpulse, no shared memory). `PulseConnection` holds the app's one

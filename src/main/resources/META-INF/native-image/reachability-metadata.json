@@ -619,6 +619,10 @@
       "jniAccessible": true,
       "methods": [
         {
+          "name": "audioReady",
+          "parameterTypes": []
+        },
+        {
           "name": "deviceAdded",
           "parameterTypes": [
             "java.lang.String",

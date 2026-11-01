@@ -26,6 +26,7 @@ private:
 
 public:
     SndCtrl(JNIEnv* env, jobject obj);
+    void Ready();
 
     virtual void SetDefaultDevice(wstring id, EDataFlow dataFlow, ERole role);
     virtual void DeviceAdded(CComPtr<IMMDevice> cpDevice);

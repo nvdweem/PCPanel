@@ -17,6 +17,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.integration.volume.platform.AudioDevice;
 import com.getpcpanel.integration.volume.platform.AudioDeviceEvent;
+import com.getpcpanel.integration.volume.platform.AudioReadyEvent;
 import com.getpcpanel.integration.volume.platform.AudioSession;
 import com.getpcpanel.integration.volume.platform.DataFlow;
 import com.getpcpanel.integration.volume.platform.EventType;
@@ -55,12 +56,23 @@ public class SndCtrlWindows implements ISndCtrl {
         callbackEvents = new CallbackEventBus(eventBus);
         loadLibrary();
         SndCtrlNative.start(this);
+    }
 
-        if (SndCtrlNative.instance.hasAudioPolicyConfigFactory()) {
+    /**
+     * Called by the DLL once it has listed the devices and their sessions and takes calls. It builds that on a thread
+     * of its own, so until now a volume set from here reached nothing.
+     */
+    public void audioReady() {
+        if (hasAudioPolicyConfigFactory()) {
             log.info("AudioPolicyConfigFactory is available");
         } else {
             log.warn("AudioPolicyConfigFactory is not available");
         }
+        fireEvent(new AudioReadyEvent());
+    }
+
+    boolean hasAudioPolicyConfigFactory() {
+        return SndCtrlNative.instance.hasAudioPolicyConfigFactory();
     }
 
     private void loadLibrary() {
@@ -298,7 +310,7 @@ public class SndCtrlWindows implements ISndCtrl {
         return result;
     }
 
-    private void fireEvent(Object result) {
+    void fireEvent(Object result) {
         CallbackEventBus.fire(callbackEvents, result);
     }
 

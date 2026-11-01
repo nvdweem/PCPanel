@@ -46,8 +46,11 @@ JNIEXPORT void JNICALL Java_com_getpcpanel_integration_volume_platform_windows_S
     std::thread([globalObj]() {
         JThread thread; // attaches this thread to the JVM for its whole lifetime
         if (*thread) {
-            pSndCtrl.store(new SndCtrl(thread.raw(), globalObj));
+            auto* ctrl = new SndCtrl(thread.raw(), globalObj);
+            pSndCtrl.store(ctrl);
             thread->DeleteGlobalRef(globalObj);
+            // Only now do the calls from Java reach it; Java waits for this to apply what it set before.
+            ctrl->Ready();
         }
         MSG msg;
         while (GetMessage(&msg, nullptr, 0, 0) > 0) {

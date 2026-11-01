@@ -56,6 +56,7 @@ up to date when you add or remove an event or an observer.
 |-------|----------|-------------|
 | `AudioDeviceEvent` | `AudioDevice` / `OsxAudioDevice` | `MuteColorService` |
 | `AudioSessionEvent` | `AudioSession` / `WindowsAudioDevice` | `MuteColorService`, `NewSessionVolumeService` |
+| `AudioReadyEvent` | `SndCtrlWindows` (once the DLL has listed devices and sessions) | `AudioReadyVolumeService` |
 | `LinuxDeviceChangedEvent` | `PulseAudioEventListener` | `SndCtrlPulseAudio` |
 | `LinuxSessionChangedEvent` | `PulseAudioEventListener` | `SndCtrlPulseAudio` |
 

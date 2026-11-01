@@ -174,12 +174,13 @@ public class DeviceHolder {
 
     /**
      * Re-runs the dials holding such a command at their current position. {@code initial} runs them as a sync rather
-     * than a movement: no overlay, and "no volume jumps" does not hold them back.
+     * than a movement: no overlay, and "no volume jumps" does not hold them back. A dial that has not reported its
+     * position yet is left to its own first reading.
      */
     public <T extends Command> void triggerCommandsOf(Class<T> clazz, Function<EntryStream<DeviceAndDial, T>, EntryStream<DeviceAndDial, T>> chain, boolean initial) {
         buildCommandStream(clazz)
                 .chain(chain)
-                .forKeyValue((idAndDial, cmd) -> getDevice(idAndDial.id()).ifPresent(device -> {
+                .forKeyValue((idAndDial, cmd) -> getDevice(idAndDial.id()).filter(d -> d.hasKnobRotation(idAndDial.dial())).ifPresent(device -> {
                     var current = device.getKnobRotation(idAndDial.dial());
                     eventBus.fire(new DeviceCommunicationHandler.KnobRotateEvent(idAndDial.id(), idAndDial.dial(), current, initial));
                 }));
