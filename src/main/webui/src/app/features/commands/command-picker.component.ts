@@ -168,11 +168,8 @@ export class CommandPickerComponent {
 
   /** Live connection status for an integration, shown once on its group header. */
   private integrationStatus(integration: Integration): { status?: Status; statusText?: string; offline: boolean; unsupported?: boolean } {
-    if (integration === 'voicemeeter') {
-      // Voicemeeter has no live connection signal; show it as available without a connected/offline claim.
-      return this.platform.voicemeeterSupported() ? { offline: false } : { offline: false, unsupported: true, statusText: 'unavailable' };
-    }
-    if ((integration === 'wavelink' && !this.platform.waveLinkSupported())
+    if ((integration === 'voicemeeter' && !this.platform.voicemeeterSupported())
+      || (integration === 'wavelink' && !this.platform.waveLinkSupported())
       || (integration === 'sonar' && !this.platform.sonarSupported())) {
       return { offline: false, unsupported: true, statusText: 'unavailable' };
     }
@@ -180,12 +177,14 @@ export class CommandPickerComponent {
       : integration === 'homeassistant' ? this.integrations.haConnected()
         : integration === 'discord' ? this.integrations.discordConnected()
           : integration === 'sonar' ? this.integrations.sonarConnected()
-            : this.integrations.waveLinkConnected();
+            : integration === 'voicemeeter' ? this.integrations.voicemeeterConnected()
+              : this.integrations.waveLinkConnected();
     const loading = integration === 'obs' ? this.integrations.obsScenes.isLoading()
       : integration === 'homeassistant' ? this.integrations.haStatus.isLoading()
         : integration === 'discord' ? this.integrations.discordStatus.isLoading()
           : integration === 'sonar' ? this.integrations.sonarLoading()
-            : this.integrations.waveLink.isLoading();
+            : integration === 'voicemeeter' ? this.integrations.vmAdvanced.isLoading()
+              : this.integrations.waveLink.isLoading();
     if (loading) return { status: 'connecting', statusText: 'connecting…', offline: false };
     return connected ? { status: 'ok', statusText: 'connected', offline: false } : { status: 'idle', statusText: 'not connected', offline: true };
   }

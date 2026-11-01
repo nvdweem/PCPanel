@@ -25,6 +25,8 @@ final class VoicemeeterAPI {
     private VoicemeeterInstance instance;
     public final String DEFAULT_VM_WINDOWS_64BIT_PATH = "VoicemeeterRemote64.dll";
     public final String DEFAULT_VM_WINDOWS_32BIT_PATH = "VoicemeeterRemote.dll";
+    /** VoicemeeterRemote.h: string parameters are written into a caller buffer of up to 512 characters. */
+    private static final int STRING_PARAM_MAX_CHARS = 512;
 
     public void init() {
         init(true);
@@ -90,16 +92,16 @@ final class VoicemeeterAPI {
 
     public String getParameterStringA(String parameterName) throws VoicemeeterException {
         var paramName = getStringPointer(parameterName);
-        var paramValue = getPointer(8);
+        var paramValue = getPointer(STRING_PARAM_MAX_CHARS);
         ensureNoError(instance.VBVMR_GetParameterStringA(paramName, paramValue), 0);
         return paramValue.getString(0L);
     }
 
     public String getParameterStringW(String parameterName) throws VoicemeeterException {
         var paramName = getStringPointer(parameterName);
-        var paramValue = getPointer(8);
+        var paramValue = getPointer(STRING_PARAM_MAX_CHARS * 2);
         ensureNoError(instance.VBVMR_GetParameterStringW(paramName, paramValue), 0);
-        return paramValue.getString(0L);
+        return paramValue.getWideString(0L);
     }
 
     public float getLevel(int type, int channel) throws VoicemeeterException {

@@ -20,6 +20,8 @@ export const GENERATED_COMMANDS: GeneratedCommand[] = [
   { type: 'analogbands.ranges', label: 'Stepped switch (ranges)', category: 'system', kinds: ['dial'], icon: 'sliders', legacy: 'com.getpcpanel.commands.command.CommandAnalogBands' },
   { type: 'analogbands.steps', label: 'Action per step', category: 'system', kinds: ['dial'], icon: 'sliders' },
   { type: 'clipboard.set', label: 'Set clipboard', category: 'system', kinds: ['button'], icon: 'clipboard' },
+  { type: 'com.getpcpanel.commands.command.CommandVoiceMeeterBasic', label: 'Voicemeeter — strip or bus', category: 'integration', kinds: ['dial'], integration: 'voicemeeter', icon: 'sliders' },
+  { type: 'com.getpcpanel.commands.command.CommandVoiceMeeterBasicButton', label: 'Voicemeeter — strip or bus button', category: 'integration', kinds: ['button'], integration: 'voicemeeter', icon: 'sliders' },
   { type: 'device.brightness', label: 'Brightness', category: 'system', kinds: ['dial'], icon: 'sun', legacy: 'com.getpcpanel.commands.command.CommandBrightness' },
   { type: 'dial.set-value', label: 'Run dial actions at a level', category: 'system', kinds: ['button'], icon: 'sliders' },
   { type: 'discord.join-voice', label: 'Discord — join voice', category: 'integration', kinds: ['button'], integration: 'discord', icon: 'plug', legacy: 'com.getpcpanel.discord.command.CommandDiscordJoinVoice' },

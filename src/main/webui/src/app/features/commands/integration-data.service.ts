@@ -41,6 +41,7 @@ export class IntegrationDataService {
   // Voicemeeter
   readonly vmBasic = httpResource<VoiceMeeterParams[]>(() => '/api/voicemeeter/basic');
   readonly vmAdvanced = httpResource<VoiceMeeterParams[]>(() => '/api/voicemeeter/advanced');
+  readonly vmAdvancedButtons = httpResource<VoiceMeeterParams[]>(() => '/api/voicemeeter/advanced-buttons');
 
   // OSC / MQTT live status (the backend only reports a positive state when actually connected/listening)
   readonly oscStatus = httpResource<{ enabled: boolean; listening: boolean }>(() => '/api/osc/status');
@@ -76,8 +77,8 @@ export class IntegrationDataService {
   // OBS returns data ONLY while it is actually connected (empty otherwise), so
   // non-empty data is a reliable "connected" signal for it. Integrations whose
   // data outlives the connection report their state themselves, as a field on
-  // the response. Voicemeeter's REST endpoint is a stub that
-  // always returns [], so there is no live signal — we never claim it connected.
+  // the response. Voicemeeter lists its strips and buses only while it is
+  // connected, so the same holds for it.
   readonly obsConnected = computed(() =>
     (this.obsScenes.value()?.length ?? 0) > 0 || (this.obsSources.value()?.length ?? 0) > 0);
   /**
@@ -85,8 +86,7 @@ export class IntegrationDataService {
    * targets a command is configured against), so a populated list is no evidence the connection is up.
    */
   readonly waveLinkConnected = computed(() => this.waveLink.value()?.connected ?? false);
-  /** No live Voicemeeter signal exists (REST stub) — connection state is unknown. */
-  readonly voicemeeterConnected = computed(() => false);
+  readonly voicemeeterConnected = computed(() => (this.vmAdvanced.value()?.length ?? 0) > 0);
   /** OSC is "connected" when its listen socket is actually bound. */
   readonly oscListening = computed(() => this.oscStatus.value()?.listening ?? false);
   /** MQTT broker connection state (Paho client). */
@@ -183,6 +183,7 @@ export class IntegrationDataService {
     this.obsSources.reload();
     this.vmBasic.reload();
     this.vmAdvanced.reload();
+    this.vmAdvancedButtons.reload();
     this.waveLink.reload();
     this.waveLinkSettings.reload();
     this.discordUsers.reload();

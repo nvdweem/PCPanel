@@ -344,7 +344,7 @@ export class SettingsComponent {
     if (integration === 'wavelink') {
       return this.integrations.waveLinkConnected() ? 'ok' : this.integrations.waveLink.isLoading() ? 'connecting' : 'idle';
     }
-    return 'idle'; // voicemeeter: no live REST signal
+    return this.integrations.voicemeeterConnected() ? 'ok' : this.integrations.vmAdvanced.isLoading() ? 'connecting' : 'idle';
   }
 
   /** OSC tab dot: green when the listener is bound, else neutral (idle/connecting), like OBS. */

@@ -100,7 +100,7 @@ export class HomeComponent {
     // Green "connected" only with positive evidence of a live connection; otherwise
     // an enabled integration is shown neutrally as "enabled" (never a false green).
     if (s.obsEnabled) rows.push(this.row('OBS Studio', this.integrations.obsConnected(), this.integrations.obsScenes.isLoading()));
-    if (s.voicemeeterEnabled && this.platform.voicemeeterSupported()) rows.push(this.row('Voicemeeter', false, false)); // no live signal (REST stub)
+    if (s.voicemeeterEnabled && this.platform.voicemeeterSupported()) rows.push(this.row('Voicemeeter', this.integrations.voicemeeterConnected(), this.integrations.vmAdvanced.isLoading()));
     if (this.platform.waveLinkSupported() && this.integrations.waveLinkSettings.value()?.enabled) {
       rows.push(this.row('Wave Link', this.integrations.waveLinkConnected(), this.integrations.waveLink.isLoading()));
     }
