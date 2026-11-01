@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
@@ -108,9 +110,24 @@ public class SaveService {
             StreamEx.ofValues(save.getDevices()).forEach(d -> StreamEx.of(d.getProfiles()).findFirst(p -> p.isMainProfile()).ifPresent(p -> d.setCurrentProfile(p.getName())));
         } catch (Exception e) {
             log.error("Unable to read file", e);
+            keepUnreadable(saveFile);
             loadFailed = true; // Prevent save-on-exit from overwriting a file we could not read
             save = new Save();
             isNew = true;
+        }
+    }
+
+    /**
+     * Copies a save file that could not be read next to it, before the new configuration can be written over it. The
+     * rolling backups are no substitute: they skip a snapshot within their interval and prune old ones.
+     */
+    private static void keepUnreadable(File saveFile) {
+        var copy = new File(saveFile.getParentFile(), saveFile.getName() + ".unreadable-" + DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").format(LocalDateTime.now()) + ".bak");
+        try {
+            FileUtils.copyFile(saveFile, copy);
+            log.error("Kept the configuration that could not be read as {}", copy);
+        } catch (IOException e) {
+            log.error("Unable to keep the configuration that could not be read", e);
         }
     }
 

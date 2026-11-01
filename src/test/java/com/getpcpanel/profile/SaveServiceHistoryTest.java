@@ -177,7 +177,7 @@ class SaveServiceHistoryTest {
         assertEquals(java.util.List.of("Settings"), sut.lastChange());
     }
 
-    private static final class NoEvents implements Event<Object> {
+    static final class NoEvents implements Event<Object> {
         @Override public void fire(Object event) { }
         @Override public <U> CompletionStage<U> fireAsync(U event) { throw new UnsupportedOperationException(); }
         @Override public <U> CompletionStage<U> fireAsync(U event, NotificationOptions options) { throw new UnsupportedOperationException(); }
