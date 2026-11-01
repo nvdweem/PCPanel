@@ -3,7 +3,7 @@
 <!-- Releasenotes without version are included in releases -->
 
 - (Windows) The **Voicemeeter** dial and button actions list the parameters of every strip and bus again, grouped per strip and bus with its label (e.g. *Input 1 · Mic*); you can also type any other Voicemeeter parameter. The button action can turn a parameter on or off and set a value again, and Voicemeeter shows *connected* when PCPanel reaches it. Voicemeeter actions set up in PCPanel 1.x (pick an input or output, then a parameter or button) show their settings and can be edited again, and are back in the action list as *Voicemeeter — strip or bus*.
-- New dial action **Action on change**: runs actions every time a knob or slider moves, one set when it moves up and another when it moves down.
+- New dial action **Action on change**: runs actions every time a knob or slider moves. While you turn it they run a few times a second, and always once more where it stops.
 - **Run command** now takes `{{ … }}` templates, with suggestions and a preview as you type. Used on a dial (under *Action on change* or *Action per step*), `{{ percent }}` is the control's position, so a command such as `"Twinkle Tray.exe" --All --Set={{ percent }}` makes a knob a screen-brightness dial. A Run command saved earlier keeps running exactly as before.
 
 ## [2.5.0]

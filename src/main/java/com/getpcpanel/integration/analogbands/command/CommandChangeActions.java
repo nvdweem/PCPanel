@@ -1,11 +1,11 @@
 package com.getpcpanel.integration.analogbands.command;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.getpcpanel.commands.Commands;
@@ -16,61 +16,48 @@ import com.getpcpanel.commands.command.DialAction;
 import com.getpcpanel.commands.meta.CommandCategory;
 import com.getpcpanel.commands.meta.CommandKind;
 import com.getpcpanel.commands.meta.CommandMeta;
+import com.getpcpanel.template.TemplateContext;
+import com.getpcpanel.util.CdiHelper;
+import com.getpcpanel.util.concurrent.Debouncer;
 
 import lombok.Getter;
 import lombok.ToString;
 import one.util.streamex.StreamEx;
 
 /**
- * Runs button actions whenever a dial or slider moves: the {@link #up} actions once for a reading above the previous
- * one, the {@link #down} actions for one below it. The actions run with the control's position, so a template such
- * as <code>{{ percent }}</code> in a Run command passes it on (<code>--Set={{ percent }}</code>).
- *
- * <p>The first reading after start-up or an edit only records the position. It lives on this in-memory instance.
+ * Runs button actions whenever a dial or slider moves, in either direction. The actions run with the control's
+ * position, so a template such as <code>{{ percent }}</code> in a Run command passes it on
+ * (<code>--Set={{ percent }}</code>). A sweep is throttled: the first move runs at once, then at most one run per
+ * {@link #THROTTLE_MS}, and the last position always runs, so the actions end where the control stops.
  */
 @Getter
 @ToString(callSuper = true)
 @JsonTypeName("analogbands.change")
 @CommandMeta(label = "Action on change", category = CommandCategory.system, kinds = {CommandKind.dial}, icon = "sliders")
 public class CommandChangeActions extends Command implements DialAction, NestedCommands {
-    @Nullable private final Commands up;
-    @Nullable private final Commands down;
+    static final long THROTTLE_MS = 150;
 
-    /** The previous raw 0-255 reading; -1 until the first one. */
-    @JsonIgnore private int last = -1;
+    @Nullable private final Commands commands;
 
     @JsonCreator
-    public CommandChangeActions(@JsonProperty("up") @Nullable Commands up, @JsonProperty("down") @Nullable Commands down) {
-        this.up = up;
-        this.down = down;
+    public CommandChangeActions(@JsonProperty("commands") @Nullable Commands commands) {
+        this.commands = commands;
     }
 
     @Override
     public List<Commands> nestedCommands() {
-        return StreamEx.of(up, down).nonNull().toList();
+        return StreamEx.of(commands).nonNull().toList();
     }
 
     @Override
     public void execute(DialActionParameters context) {
-        var direction = advance(context.dial().value(), context.initial());
-        var commands = direction > 0 ? up : down;
-        if (direction == 0 || !Commands.hasCommands(commands)) {
+        if (context.initial() || !Commands.hasCommands(commands)) {
             return;
         }
-        new PCPanelControlEvent(context.device(), 0, commands, false, context.dial(), PCPanelControlEvent.Source.DIAL).buildRunnable().run();
-    }
-
-    /**
-     * Feeds a raw 0-255 reading and returns which way it moved from the previous one: 1 up, -1 down, 0 unchanged
-     * (and always 0 for the initial sync or the first reading).
-     */
-    public synchronized int advance(int raw, boolean initial) {
-        var previous = last;
-        last = raw;
-        if (initial || previous < 0) {
-            return 0;
-        }
-        return Integer.signum(raw - previous);
+        var control = Math.max(0, TemplateContext.current().control());
+        var event = new PCPanelControlEvent(context.device(), control, commands, false, context.dial(), PCPanelControlEvent.Source.DIAL);
+        // Keyed by the control, not by `this`: a fresh instance is deserialised on every profile edit.
+        CdiHelper.getBean(Debouncer.class).throttleLeading("change " + context.device() + ' ' + control, event.buildRunnable(), THROTTLE_MS, TimeUnit.MILLISECONDS);
     }
 
     @Override

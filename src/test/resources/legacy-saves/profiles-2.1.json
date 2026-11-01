@@ -1130,8 +1130,7 @@
           "19" : {
             "commands" : [ {
               "_type" : "analogbands.change",
-              "up" : null,
-              "down" : null,
+              "commands" : null,
               "dialParams" : null,
               "invert" : false
             } ],

@@ -110,8 +110,7 @@ export interface CommandBrightness extends Command, DialAction {
 
 export interface CommandChangeActions extends Command, DialAction {
     _type: "analogbands.change";
-    down?: Commands;
-    up?: Commands;
+    commands?: Commands;
 }
 
 export interface CommandConverter {
