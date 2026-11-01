@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.DeserializationProblemHandler;
 import com.fasterxml.jackson.databind.jsontype.TypeIdResolver;
 import com.getpcpanel.commands.command.Command;
+import com.getpcpanel.commands.command.CommandUnknown;
 import com.getpcpanel.commands.meta.CommandMeta;
 
 import io.quarkus.arc.All;
@@ -29,7 +30,8 @@ import lombok.extern.log4j.Log4j2;
  * These are <em>not</em> registered as subtypes (that would risk them being chosen for serialization);
  * instead a {@link DeserializationProblemHandler} maps an unknown legacy id back to its command on
  * read only. So existing saves keep loading, and re-saving rewrites them with the nice current id —
- * a transparent one-way conversion.
+ * a transparent one-way conversion. Any other unknown id (a command from a newer version) is read as a
+ * {@link CommandUnknown}, which keeps it as it was, so the rest of the configuration still loads.
  */
 @Log4j2
 @Singleton
@@ -54,21 +56,21 @@ public class CommandSubtypeRegistrar implements ObjectMapperCustomizer {
                 }
             }
         }
-        if (!legacy.isEmpty()) {
-            // Resolve a legacy _type id (a command's old FQCN) to its current class on read only.
-            mapper.addHandler(new DeserializationProblemHandler() {
-                @Override
-                public JavaType handleUnknownTypeId(DeserializationContext ctxt, JavaType baseType, String subTypeId, TypeIdResolver idResolver, String failureMsg) {
-                    if (baseType.isTypeOrSubTypeOf(Command.class)) {
-                        var clazz = legacy.get(subTypeId);
-                        if (clazz != null) {
-                            return ctxt.getTypeFactory().constructType(clazz);
-                        }
-                    }
-                    return null; // not a known legacy id — let Jackson report the failure
+        // Resolve a legacy _type id (a command's old FQCN) to its current class on read only; keep any other.
+        mapper.addHandler(new DeserializationProblemHandler() {
+            @Override
+            public JavaType handleUnknownTypeId(DeserializationContext ctxt, JavaType baseType, String subTypeId, TypeIdResolver idResolver, String failureMsg) {
+                if (!baseType.isTypeOrSubTypeOf(Command.class)) {
+                    return null;
                 }
-            });
-        }
+                var clazz = legacy.get(subTypeId);
+                if (clazz == null) {
+                    log.warn("Keeping action of unknown type '{}' unchanged; it does nothing in this version", subTypeId);
+                    clazz = CommandUnknown.class;
+                }
+                return ctxt.getTypeFactory().constructType(clazz);
+            }
+        });
         log.debug("Registered {} command subtypes ({} legacy aliases) from {} module(s)", classes.size(), legacy.size(), modules.size());
     }
 }

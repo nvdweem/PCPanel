@@ -98,8 +98,10 @@ class CommandSubtypeRegistryTest {
         return result;
     }
 
+    /** {@link CommandUnknown} is no command of its own: it stands in for an id this build does not know. */
     private static Set<Class<?>> findConcreteCommandSubtypes() throws Exception {
-        return scan(c -> Command.class.isAssignableFrom(c) && !c.isInterface() && !Modifier.isAbstract(c.getModifiers()) && c != Command.class);
+        return scan(c -> Command.class.isAssignableFrom(c) && !c.isInterface() && !Modifier.isAbstract(c.getModifiers()) && c != Command.class
+                && c != CommandUnknown.class);
     }
 
     private static Set<Class<?>> scan(java.util.function.Predicate<Class<?>> keep) throws Exception {

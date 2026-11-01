@@ -409,6 +409,7 @@
                     <!-- Engine-internal interfaces a command implements; the UI contract has no use for them. -->
                     <excludeClasses>
                         <class>com.getpcpanel.commands.NestedCommands</class>
+                        <class>com.getpcpanel.commands.command.CommandUnknown</class>
                     </excludeClasses>
                     <optionalAnnotations>
                         <optionalAnnotation>javax.annotation.Nullable</optionalAnnotation>

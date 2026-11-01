@@ -21,6 +21,7 @@ import com.getpcpanel.commands.CommandsType;
 import com.getpcpanel.commands.command.ButtonAction;
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.commands.command.CommandNoOp;
+import com.getpcpanel.commands.command.CommandUnknown;
 import com.getpcpanel.commands.command.DialAction;
 import com.getpcpanel.device.provider.pcpanel.DescriptorFactory;
 import com.getpcpanel.device.provider.pcpanel.DeviceType;
@@ -170,14 +171,15 @@ public final class SaveFixtureGenerator {
 
     /**
      * Every command that can appear in a saved file, sorted for a stable layout. {@code CommandNoOp}
-     * is excluded because the {@link Commands} constructor strips it, so no save can contain one.
+     * is excluded because the {@link Commands} constructor strips it, so no save can contain one;
+     * {@code CommandUnknown} only stands in for a type a newer version wrote.
      */
     static List<Class<?>> concreteCommands() {
         return AppLikeMapper.scanProjectClasses().stream()
                             .<Class<?>>map(c -> c)
                             .filter(c -> Command.class.isAssignableFrom(c) && c != Command.class
                                     && !c.isInterface() && !java.lang.reflect.Modifier.isAbstract(c.getModifiers())
-                                    && c != CommandNoOp.class)
+                                    && c != CommandNoOp.class && c != CommandUnknown.class)
                             .sorted(Comparator.comparing(Class::getName))
                             .toList();
     }

@@ -2,6 +2,7 @@ package com.getpcpanel.commands.command;
 
 import javax.annotation.Nullable;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.getpcpanel.commands.DialValue;
 
@@ -22,12 +23,18 @@ import lombok.extern.log4j.Log4j2;
  * CDI SPI; {@link com.getpcpanel.commands.CommandSubtypeRegistrar} collects them via {@code @All} and
  * registers them with Jackson for deserialization. {@code typescript-generator} discovers the subtypes
  * from the {@code **.command.**} class scan and reads each {@code @JsonTypeName}.
+ *
+ * <p>The {@code _type} is visible to deserialization so {@link CommandUnknown} can keep it; every other command
+ * ignores it as a property.
  */
 @Log4j2
 @ToString
 @SuppressWarnings("InstanceofThis")
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "_type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = Command.TYPE_PROPERTY, visible = true)
+@JsonIgnoreProperties(Command.TYPE_PROPERTY)
 public abstract class Command {
+    public static final String TYPE_PROPERTY = "_type";
+
     public Runnable toRunnable(boolean initial, String deviceId, @Nullable DialValue vol) {
         // A command that is both a dial and a button action (e.g. the generic HTTP/MQTT/OSC outputs)
         // runs as a dial when a dial value is present, so {{value}} maps from the knob position; on a

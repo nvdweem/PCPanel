@@ -39,6 +39,7 @@ import com.getpcpanel.integration.discord.rest.dto.DiscordStatusDto;
 import com.getpcpanel.integration.voicemeeter.rest.VoiceMeeterResource;
 import com.getpcpanel.integration.mqtt.command.CommandMqttPublish;
 import com.getpcpanel.commands.command.CommandNoOp;
+import com.getpcpanel.commands.command.CommandUnknown;
 import com.getpcpanel.integration.obs.command.CommandObs;
 import com.getpcpanel.integration.obs.command.CommandObsAction;
 import com.getpcpanel.integration.obs.command.CommandObsAction.ObsActionType;
@@ -260,6 +261,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         CommandDisplaysOff.class,
         CommandOpenWebUi.class,
         CommandNoOp.class,
+        CommandUnknown.class,
         CommandObs.class,
         CommandObsAction.class,
         ObsActionType.class,
