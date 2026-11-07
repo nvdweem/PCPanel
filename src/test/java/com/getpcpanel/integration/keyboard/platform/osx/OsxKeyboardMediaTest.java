@@ -2,11 +2,14 @@ package com.getpcpanel.integration.keyboard.platform.osx;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import java.util.List;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
@@ -40,6 +43,31 @@ class OsxKeyboardMediaTest {
         }
         verify(keyboard.mediaControl).execute(button, false);
         verifyNoInteractions(keyboard.systemMediaKeys);
+    }
+
+    @Test
+    void withoutAccessibilityMacOsIsAskedForItOncePerRun() {
+        var keyboard = new OsxKeyboard();
+        keyboard.systemMediaKeys = mock(OsxSystemMediaKeys.class);
+        keyboard.mediaControl = mock(OsxMediaControl.class);
+        try (var permissions = mockStatic(OsxPermissionHelper.class)) {
+            permissions.when(OsxPermissionHelper::isAccessibilityGranted).thenReturn(false);
+            keyboard.sendMediaKey(VolumeButton.playPause, List.of());
+            keyboard.sendMediaKey(VolumeButton.next, List.of());
+            permissions.verify(OsxPermissionHelper::requestAccessibility, times(1));
+        }
+    }
+
+    @Test
+    void withAccessibilityMacOsIsNotAsked() {
+        var keyboard = new OsxKeyboard();
+        keyboard.systemMediaKeys = mock(OsxSystemMediaKeys.class);
+        keyboard.mediaControl = mock(OsxMediaControl.class);
+        try (var permissions = mockStatic(OsxPermissionHelper.class)) {
+            permissions.when(OsxPermissionHelper::isAccessibilityGranted).thenReturn(true);
+            keyboard.sendMediaKey(VolumeButton.playPause, List.of());
+            permissions.verify(OsxPermissionHelper::requestAccessibility, never());
+        }
     }
 
     @ParameterizedTest

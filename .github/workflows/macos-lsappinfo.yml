@@ -1,9 +1,10 @@
-# Runs the macOS process lookup (OsxProcessHelper) against the real lsappinfo on GitHub's macOS images:
-# the frontmost app (focus volume, focus override, closing the focused app) and the running-app list.
+# Runs the macOS-only tests that need the real OS on GitHub's macOS images: the process lookup
+# (OsxProcessHelper) against lsappinfo (the frontmost app and the running-app list), the system media-key
+# NSEvents (built, never posted) and the Accessibility check with its prompt options.
 # Manual only: macOS runners are the expensive ones. The test log prints the raw lsappinfo output of
 # each image, which shows the format a macOS version answers in.
 
-name: macOS lsappinfo
+name: macOS native tests
 env:
   JAVA_VERSION: '25'        # GraalVM CE 25 — keep in sync with build-and-release.yml
 
@@ -15,7 +16,7 @@ permissions:
 
 jobs:
   lsappinfo:
-    name: lsappinfo (${{ matrix.runner }})
+    name: macOS (${{ matrix.runner }})
     strategy:
       fail-fast: false
       matrix:
@@ -32,8 +33,8 @@ jobs:
           distribution: 'graalvm-community'
           cache: 'maven'
 
-      - name: Test against lsappinfo
+      - name: Test against macOS
         run: >
           ./mvnw -B test -Dquarkus.native.enabled=false -Dpcpanel.mactest=true
-          -Dtest='OsxProcessHelperMacTest,OsxProcessHelperTest' -Dsurefire.failIfNoSpecifiedTests=false
+          -Dtest='OsxProcessHelperMacTest,OsxProcessHelperTest,OsxSystemMediaKeysMacTest,OsxPermissionHelperMacTest' -Dsurefire.failIfNoSpecifiedTests=false
 

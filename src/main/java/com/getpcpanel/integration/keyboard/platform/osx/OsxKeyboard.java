@@ -201,6 +201,7 @@ class OsxKeyboard implements Keyboard {
     private void warnIfAccessibilityNotGranted() {
         if (!OsxPermissionHelper.isAccessibilityGranted() && accessibilityWarned.compareAndSet(false, true)) {
             log.warn("Keystrokes and system media controls require Accessibility permission: System Settings > Privacy & Security > Accessibility > enable PCPanel");
+            OsxPermissionHelper.requestAccessibility();
         }
     }
 

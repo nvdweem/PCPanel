@@ -44,9 +44,10 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
 ./mvnw verify -Pnative      # native build + failsafe integration tests against the runner binary
 ```
 
-- macOS-only behaviour can be checked without a Mac: the manual `macOS lsappinfo` workflow
+- macOS-only behaviour can be checked without a Mac: the manual `macOS native tests` workflow
   (`.github/workflows/macos-lsappinfo.yml`) runs the `-Dpcpanel.mactest=true` tests for the process lookup
-  (`OsxProcessHelperMacTest`) on GitHub's macOS images, printing the raw `lsappinfo` output of each.
+  (`OsxProcessHelperMacTest`, printing the raw `lsappinfo` output of each image), the media-key NSEvents
+  (`OsxSystemMediaKeysMacTest`) and the Accessibility check (`OsxPermissionHelperMacTest`) on GitHub's macOS images.
 - `package` produces a native executable at `target/*-runner` (Linux) / `target/*-runner.exe` (Windows).
 - CI (`.github/workflows/build-and-release.yml`) builds the native image on Windows and Linux via
   `mvn -B package -Pnative`, wraps it in installers (Windows Inno Setup `.exe`, Linux `.deb` /
@@ -595,7 +596,8 @@ for the `{{ value }}` token in the YAML before sending.
 **macOS media buttons (`integration/keyboard/platform/osx/`):** play/pause, next and previous post the system media
 keys (`OsxSystemMediaKeys`: an AppKit system-defined `NSEvent`, converted to a `CGEvent` and posted like a physical
 media key), so macOS picks the player. Posting needs Accessibility; without it, and for Stop, Mute and a Spotify
-target, `OsxMediaControl` drives Music.app/Spotify through AppleScript.
+target, `OsxMediaControl` drives Music.app/Spotify through AppleScript. The first keystroke or media key sent without
+Accessibility shows macOS's own Accessibility prompt (`OsxPermissionHelper.requestAccessibility`), once per run.
 
 **Templates (`template/`):** the overlay name and the output commands' text fields (HTTP url/headers/body,
 MQTT topic/payload, OSC address, Home Assistant action YAML, the Run command) are `{{ … }}` templates rendered by **Qute**
