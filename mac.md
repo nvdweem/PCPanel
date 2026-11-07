@@ -22,10 +22,8 @@ architecture-specific: download the `aarch64` `.dmg` for Apple Silicon (M1 and n
    - On older macOS, right-click `PCPanel.app` → **Open** → **Open** in the dialog also worked, but
      Apple removed that shortcut in macOS 15.
 
-   Note: the ad-hoc signature is what makes the quarantine-removal workaround actually function on
-   macOS 26 — earlier builds were *unsigned* on Intel and *half-signed* on Apple Silicon (a valid
-   binary signature but no sealed bundle manifest), which macOS 26 reports as "PCPanel is damaged
-   and can't be opened" and which removing the quarantine flag could not fix (see issue #101).
+   If macOS reports "PCPanel is damaged and can't be opened", the download is a build from before
+   the bundle was signed (see issue #101): download the current release and try again.
 
 ## Permissions
 
@@ -41,7 +39,9 @@ macOS guards the APIs PCPanel needs behind privacy (TCC) permissions. Grant them
 
 Because the app is only ad-hoc signed (its signature is regenerated on every build, so its identity
 changes), macOS may forget these grants after an update; re-add PCPanel if a feature stops working
-after upgrading. PCPanel logs a hint when it detects a missing permission.
+after upgrading. The first keystroke or media key PCPanel sends without Accessibility opens macOS's
+own Accessibility prompt (once per run); for the other permissions PCPanel logs a hint when one is
+missing.
 
 ## What works
 
@@ -59,9 +59,12 @@ after upgrading. PCPanel logs a hint when it detects a missing permission.
   by macOS, including compatible browser media sessions. Requires Accessibility permission; without it
   they control Music.app through AppleScript.
   With no active media session, behavior follows the system default, which can open a player.
-- Existing Spotify-targeted media commands keep using AppleScript, and Stop keeps pausing Music.app
-  when Spotify is not targeted. Those AppleScript paths only control an already-running player.
-- Run program / end program / profile switching, plus the OBS, OSC, MQTT and Wave Link integrations.
+- Spotify-targeted media commands use AppleScript, and Stop pauses Music.app when Spotify is not
+  targeted. These AppleScript paths only control an already-running player.
+- Opening an app, file or website, ending a program, profile switching, setting the clipboard and
+  turning the displays off.
+- The panel's lights go off while the Mac sleeps and come back on wake.
+- The OBS, OSC, MQTT, Home Assistant, Discord and Wave Link integrations.
 
 ## Limitations
 
