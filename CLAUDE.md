@@ -247,6 +247,13 @@ injection, and cross-cutting communication uses the **CDI event bus** (`jakarta.
 fire + `@Observes`) heavily rather than direct calls. `docs/events.md` catalogs the events with their
 firers and observers — keep it current when you add or remove an event.
 
+**macOS media keys:** `OsxKeyboard` routes default play/pause/next/previous through
+`OsxSystemMediaKeys`, which creates NSEvent system-defined key-down/up pairs and posts their borrowed
+CGEvents while the autorelease pool is live. The NSPoint argument is passed by value, with reflection,
+proxy and runtime-initialization registration for native builds. Existing Spotify-specific AppleScript
+targeting and legacy Stop/Mute handling remain in `OsxMediaControl`; configurable macOS app targeting
+is separate work. Tests construct real NSEvents on macOS without posting them or changing playback.
+
 **Hardware path (`device/`):** the device layer is the hardware-abstraction layer (HAL) and is **not**
 an integration — it provides no commands. `DeviceScanner` (in `device/provider/pcpanel/`) discovers HID
 devices via hid4java; `DeviceCommunicationHandler` (one per device, own thread + queue, same package)

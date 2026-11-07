@@ -24,8 +24,8 @@ import lombok.extern.log4j.Log4j2;
 /**
  * macOS {@link Keyboard} backend: synthesises keystrokes through CoreGraphics {@code CGEvent}s,
  * replacing {@link java.awt.Robot} (AWT is unavailable in the macOS GraalVM native image). Media keys
- * delegate to {@link OsxMediaControl} (AppleScript), since macOS has no media-key API safely reachable
- * from Java. A combo ending in a {@code scroll_*} token posts a scroll-wheel {@code CGEvent} carrying the
+ * use system-defined AppKit events, or {@link OsxMediaControl} for explicit Spotify targeting and
+ * legacy Stop/Mute handling. A combo ending in a {@code scroll_*} token posts a scroll-wheel {@code CGEvent} carrying the
  * modifier flags, and {@code lock} posts the system lock-screen shortcut {@code Ctrl+Cmd+Q}.
  *
  * <p>Architecture independent: every native handle is passed as an opaque {@link Pointer} and every
@@ -46,6 +46,9 @@ class OsxKeyboard implements Keyboard {
 
     @Inject
     OsxMediaControl mediaControl;
+
+    @Inject
+    OsxSystemMediaKeys systemMediaKeys;
 
     private interface CoreGraphics extends Library {
         CoreGraphics INSTANCE = Native.load("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics", CoreGraphics.class);
@@ -176,14 +179,23 @@ class OsxKeyboard implements Keyboard {
 
     @Override
     public void sendMediaKey(VolumeButton button, List<String> apps) {
-        // Per-window targeting isn't available on macOS; honour a Spotify preference (else Music.app).
         var spotify = apps.stream().anyMatch(a -> a != null && a.regionMatches(true, 0, "spotify", 0, "spotify".length()));
-        mediaControl.execute(button, spotify);
+        if (spotify || button == VolumeButton.stop || button == VolumeButton.mute) {
+            mediaControl.execute(button, spotify);
+            return;
+        }
+        warnIfAccessibilityNotGranted();
+        try {
+            systemMediaKeys.send(button);
+            log.debug("Posted macOS system media key '{}'", button);
+        } catch (Throwable e) {
+            log.error("Unable to post macOS system media key '{}'", button, e);
+        }
     }
 
     private void warnIfAccessibilityNotGranted() {
         if (!OsxPermissionHelper.isAccessibilityGranted() && accessibilityWarned.compareAndSet(false, true)) {
-            log.warn("Keystrokes require Accessibility permission: System Settings > Privacy & Security > Accessibility > enable PCPanel");
+            log.warn("Keystrokes and system media controls require Accessibility permission: System Settings > Privacy & Security > Accessibility > enable PCPanel");
         }
     }
 
