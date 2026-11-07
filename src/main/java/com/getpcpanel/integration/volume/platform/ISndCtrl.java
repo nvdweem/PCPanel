@@ -25,7 +25,24 @@ public interface ISndCtrl {
 
     void setProcessVolume(String fileName, String device, float volume);
 
+    /** One dial update for an ordered group; backends may share discovery within this call. */
+    default void setProcessesVolume(Collection<String> fileNames, String device, float volume) {
+        fileNames.forEach(name -> setProcessVolume(name, device, volume));
+    }
+
     void setFocusVolume(float volume);
+
+    /**
+     * Resolve the routing name and deferred OS action for one focus-volume request. Backends that
+     * need a process identity can capture it here, so routing and application use the same target.
+     * The default retains the existing platform focus-volume behavior.
+     */
+    default FocusedVolume focusedVolume(float volume) {
+        return new FocusedVolume(getFocusApplication(), () -> setFocusVolume(volume));
+    }
+
+    record FocusedVolume(String application, Runnable apply) {
+    }
 
     /**
      * Mutes or toggles mute for the currently focused application.

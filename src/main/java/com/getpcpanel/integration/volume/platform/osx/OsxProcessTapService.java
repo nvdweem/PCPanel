@@ -393,6 +393,11 @@ class OsxProcessTapService {
     }
 
     private @Nullable Target resolve(int pid, int outputDeviceId) {
+        // A terminal-launched PCPanel can belong to the terminal's coalition. Never capture our
+        // own re-rendered audio, including callers that bypass application/coalition resolution.
+        if (pid == ProcessHandle.current().pid()) {
+            return null;
+        }
         var processObject = wrapper.translatePidToProcessObject(pid);
         if (processObject == 0) {
             log.debug("No CoreAudio process object for pid {}, not tapping", pid);

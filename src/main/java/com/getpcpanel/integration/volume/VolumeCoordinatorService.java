@@ -31,8 +31,9 @@ public class VolumeCoordinatorService {
     @Inject SaveService saveService;
 
     public void setFocusVolume(double value, String device) {
-        var application = sndCtrl.getFocusApplication();
         var floatValue = (float) value;
+        var focus = sndCtrl.focusedVolume(floatValue);
+        var application = focus.application();
 
         // Explicit Focus Override rules (issue #49) win over everything: the user has deliberately
         // redirected this app's focus dial to specific targets (and, with "include source" on, the source
@@ -60,7 +61,7 @@ public class VolumeCoordinatorService {
             return;
         }
         log.debug("Focus volume: resolving OS audio stream for focused app {}", application);
-        sndCtrl.setFocusVolume(floatValue);
+        focus.apply().run();
     }
 
     /** The app with focus, as the focus dial sees it. */

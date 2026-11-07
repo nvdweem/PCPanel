@@ -247,6 +247,14 @@ injection, and cross-cutting communication uses the **CDI event bus** (`jakarta.
 fire + `@Observes`) heavily rather than direct calls. `docs/events.md` catalogs the events with their
 firers and observers — keep it current when you add or remove an event.
 
+**macOS volume discovery:** `ISndCtrl.setProcessesVolume` keeps scalar delegation on other backends;
+`SndCtrlOsx` shares one fresh application inventory among a command's targets, without caching it across
+commands. Its `focusedVolume` operation captures one foreground PID/start time and routing name, then
+defers coalition discovery and application until the coordinator's override/skip/redirector checks pass.
+The deferred action revalidates that process lifetime. Coalition and tap resolution exclude PCPanel's
+own PID so a terminal-launched instance cannot tap its own re-rendered audio. Preserve bundle-ID/PWA
+matching, helper lifetime checks and output-migration synchronization when changing these paths.
+
 **Hardware path (`device/`):** the device layer is the hardware-abstraction layer (HAL) and is **not**
 an integration — it provides no commands. `DeviceScanner` (in `device/provider/pcpanel/`) discovers HID
 devices via hid4java; `DeviceCommunicationHandler` (one per device, own thread + queue, same package)

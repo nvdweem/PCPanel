@@ -198,20 +198,60 @@ class SndCtrlOsx implements ISndCtrl {
 
     @Override
     public void setProcessVolume(String fileName, @Nullable String device, float volume) {
+        setProcessesVolume(List.of(fileName), device, volume);
+    }
+
+    @Override
+    public void setProcessesVolume(Collection<String> fileNames, @Nullable String device, float volume) {
+        if (fileNames.isEmpty()) {
+            return;
+        }
+        var timed = log.isDebugEnabled();
+        var started = timed ? System.nanoTime() : 0;
+        // Fresh for each command, shared only by its targets: never reuse focus/coalition data
+        // across dial updates, where apps and their audio helpers may have changed lifetime.
         var apps = processHelper.listApps();
         if (apps.isEmpty()) {
-            fallbackPids(fileName).forEach(pid -> tapService.setVolume(pid, volume));
+            var processes = fallbackProcesses();
+            for (var fileName : fileNames) {
+                var baseName = new File(fileName).getName();
+                processes.stream().filter(app -> matchesFallbackApp(app, fileName, baseName))
+                        .forEach(app -> tapService.setVolume(app.pid(), volume));
+            }
         } else {
-            matchingApps(fileName, apps).forEach(app -> tapService.setApplicationVolume(app.pid(), resolveAudioPids(app), volume));
+            for (var fileName : fileNames) {
+                matchingApps(fileName, apps).forEach(app -> tapService.setApplicationVolume(app.pid(), resolveAudioPids(app), volume));
+            }
+        }
+        if (timed) {
+            log.debug("App volume: targets={} gain={} finished in {} ms", fileNames, volume, (System.nanoTime() - started) / 1_000_000.0);
         }
     }
 
     @Override
     public void setFocusVolume(float volume) {
-        var app = focusedApp();
-        if (app != null) {
+        focusedVolume(volume).apply().run();
+    }
+
+    @Override
+    public FocusedVolume focusedVolume(float volume) {
+        var timed = log.isDebugEnabled();
+        var started = timed ? System.nanoTime() : 0;
+        var front = processHelper.getFrontmostApp();
+        var identity = front == null ? null : ProcessIdentity.find(front.pid());
+        return new FocusedVolume(focusApplication(front), () -> {
+            if (identity == null || !identity.equals(ProcessIdentity.find(identity.pid()))) {
+                return;
+            }
+            var app = focusedApp(front);
+            if (!identity.equals(ProcessIdentity.find(identity.pid()))) {
+                return; // the app may have exited while LaunchServices answered the inventory query
+            }
             tapService.setApplicationVolume(app.pid(), resolveAudioPids(app), volume);
-        }
+            if (timed) {
+                log.debug("Focus volume: pid={} gain={} finished in {} ms", app.pid(), volume, (System.nanoTime() - started) / 1_000_000.0);
+            }
+        });
     }
 
     private @Nullable OsxProcessHelper.RunningApp focusedApp() {
@@ -219,6 +259,10 @@ class SndCtrlOsx implements ISndCtrl {
         if (front == null || front.pid() <= 0) {
             return null;
         }
+        return focusedApp(front);
+    }
+
+    private OsxProcessHelper.RunningApp focusedApp(OsxProcessHelper.FrontmostApp front) {
         return processHelper.listApps().stream()
                 .filter(app -> app.pid() == front.pid())
                 .findFirst()
@@ -272,10 +316,14 @@ class SndCtrlOsx implements ISndCtrl {
     }
 
     private List<Integer> resolveAudioPids(OsxProcessHelper.RunningApp app) {
+        var self = ProcessHandle.current().pid();
+        if (app.pid() == self) {
+            return List.of();
+        }
         var pids = new LinkedHashSet<Integer>();
         pids.add(app.pid());
         for (var childPid : app.coalitionPids()) {
-            if (childPid != app.pid() && wrapper.translatePidToProcessObject(childPid) != 0) {
+            if (childPid != self && childPid != app.pid() && wrapper.translatePidToProcessObject(childPid) != 0) {
                 pids.add(childPid);
             }
         }
@@ -317,7 +365,10 @@ class SndCtrlOsx implements ISndCtrl {
 
     @Override
     public String getFocusApplication() {
-        var app = processHelper.getFrontmostApp();
+        return focusApplication(processHelper.getFrontmostApp());
+    }
+
+    private static String focusApplication(@Nullable OsxProcessHelper.FrontmostApp app) {
         if (app == null) {
             return "";
         }

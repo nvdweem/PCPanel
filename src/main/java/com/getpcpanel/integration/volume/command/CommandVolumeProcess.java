@@ -52,7 +52,7 @@ public class CommandVolumeProcess extends CommandVolume implements DialAction, L
         if (!context.initial() && unMuteOnVolumeChange) {
             snd.muteProcesses(new HashSet<>(targets), MuteType.unmute);
         }
-        targets.forEach(process -> snd.setProcessVolume(process, device, context.dial().getValue(this, 0, 1)));
+        snd.setProcessesVolume(targets, device, context.dial().getValue(this, 0, 1));
     }
 
     /** The level of the apps it names; unknown for an app group, which has no single level. */

@@ -61,6 +61,22 @@ class OsxProcessTapServiceTest {
     }
 
     @Test
+    void neverCreatesASelfTapThroughDirectOrCoalitionVolumeAndMute() {
+        var self = Math.toIntExact(ProcessHandle.current().pid());
+        alive.add(self);
+        service.setVolume(self, 0.3f);
+        service.mute(self, MuteType.mute);
+        service.setApplicationVolume(FIREFOX, List.of(self, MUSIC), 0.4f);
+        service.muteApplication(FIREFOX, List.of(self, MUSIC), MuteType.mute);
+        coreAudio.defaultOutput = HEADPHONES;
+        assertTrue(service.migrateToDefaultOutput());
+
+        assertTrue(factory.created.stream().noneMatch(tap -> tap.pid == self));
+        assertEquals(1, factory.liveCount());
+        assertTrue(factory.live(MUSIC).muted);
+    }
+
+    @Test
     void movesEveryTapToTheNewDefaultOutputKeepingVolumeAndMute() {
         service.setVolume(FIREFOX, 0.3f);
         service.setVolume(MUSIC, 0.6f);

@@ -89,6 +89,88 @@ class SndCtrlOsxTest {
     }
 
     @Test
+    void groupedVolumeSharesOneFreshSnapshotAndKeepsSameNamedPwasIsolated() {
+        var path = "/System/Library/CoreServices/Web App.app/Contents/MacOS/Web App";
+        var first = new OsxProcessHelper.RunningApp(101, "Music", path, "Foreground", "pwa.first", Set.of(501));
+        var second = new OsxProcessHelper.RunningApp(202, "Music", path, "Foreground", "pwa.second", Set.of(502));
+        var replacement = new OsxProcessHelper.RunningApp(101, "Music", path, "Foreground", "pwa.first", Set.of(503));
+        when(processHelper.listApps()).thenReturn(List.of(first, second), List.of(replacement, second));
+        when(wrapper.translatePidToProcessObject(anyInt())).thenAnswer(c -> (int) c.getArgument(0) + 1000);
+
+        sndCtrl.setProcessesVolume(List.of("pwa.first", "not-running"), null, 0.4f);
+        verify(processHelper).listApps();
+        verify(tapService).setApplicationVolume(101, List.of(101, 501), 0.4f);
+        verify(tapService, never()).setApplicationVolume(eq(202), anyList(), anyFloat());
+
+        sndCtrl.setProcessesVolume(List.of("pwa.first", "pwa.second"), null, 0.6f);
+        verify(processHelper, times(2)).listApps();
+        verify(tapService).setApplicationVolume(101, List.of(101, 503), 0.6f);
+        verify(tapService).setApplicationVolume(202, List.of(202, 502), 0.6f);
+    }
+
+    @Test
+    void focusedVolumeKeepsTheResolvedPwaWhenFocusChangesBeforeApplication() {
+        var path = "/System/Library/CoreServices/Web App.app/Contents/MacOS/Web App";
+        var first = new OsxProcessHelper.RunningApp(101, "Music", path, "Foreground", "pwa.first", Set.of(501));
+        var second = new OsxProcessHelper.RunningApp(202, "Music", path, "Foreground", "pwa.second", Set.of(502));
+        when(processHelper.getFrontmostApp()).thenReturn(
+                new OsxProcessHelper.FrontmostApp(101, "Music", path, "pwa.first"),
+                new OsxProcessHelper.FrontmostApp(202, "Music", path, "pwa.second"));
+        when(processHelper.listApps()).thenReturn(List.of(first, second));
+        when(wrapper.translatePidToProcessObject(anyInt())).thenAnswer(c -> (int) c.getArgument(0) + 1000);
+
+        var focus = sndCtrl.focusedVolume(0.4f);
+        assertEquals("Music", focus.application());
+        verify(processHelper, never()).listApps(); // no inventory when an override/redirector owns it
+        focus.apply().run();
+        verify(processHelper).getFrontmostApp();
+        verify(tapService).setApplicationVolume(101, List.of(101, 501), 0.4f);
+        verify(tapService, never()).setApplicationVolume(eq(202), anyList(), anyFloat());
+
+        sndCtrl.focusedVolume(0.6f).apply().run();
+        verify(processHelper, times(2)).getFrontmostApp();
+        verify(tapService).setApplicationVolume(202, List.of(202, 502), 0.6f);
+    }
+
+    @Test
+    void resolvedFocusIsIgnoredIfItsPidChangesLifetime() {
+        when(processHelper.getFrontmostApp()).thenReturn(new OsxProcessHelper.FrontmostApp(101, "Music", "/Music"));
+        var focus = sndCtrl.focusedVolume(0.4f);
+        identities.when(() -> ProcessIdentity.find(101)).thenReturn(new ProcessIdentity(101, Instant.EPOCH.plusSeconds(1)));
+
+        focus.apply().run();
+
+        verify(processHelper, never()).listApps();
+        verify(tapService, never()).setApplicationVolume(anyInt(), anyList(), anyFloat());
+    }
+
+    @Test
+    void resolvedFocusIsIgnoredIfItsPidChangesWhileListingApps() {
+        when(processHelper.getFrontmostApp()).thenReturn(new OsxProcessHelper.FrontmostApp(101, "Music", "/Music"));
+        when(processHelper.listApps()).thenAnswer(call -> {
+            identities.when(() -> ProcessIdentity.find(101)).thenReturn(new ProcessIdentity(101, Instant.EPOCH.plusSeconds(1)));
+            return List.of(new OsxProcessHelper.RunningApp(101, "Other", "/Other", "Foreground"));
+        });
+
+        sndCtrl.focusedVolume(0.4f).apply().run();
+
+        verify(tapService, never()).setApplicationVolume(anyInt(), anyList(), anyFloat());
+    }
+
+    @Test
+    void terminalCoalitionDoesNotSelectPcPanelsOwnAudio() {
+        var self = Math.toIntExact(ProcessHandle.current().pid());
+        var terminal = new OsxProcessHelper.RunningApp(101, "Terminal", "/Terminal", "Foreground", Set.of(self, 501));
+        var pcpanel = new OsxProcessHelper.RunningApp(self, "PCPanel", "/PCPanel", "Foreground", Set.of(501));
+        when(processHelper.listApps()).thenReturn(List.of(terminal, pcpanel));
+        when(wrapper.translatePidToProcessObject(501)).thenReturn(1501);
+
+        assertEquals(List.of(101, 501), sndCtrl.pidsFor("Terminal"));
+        assertTrue(sndCtrl.pidsFor("PCPanel").isEmpty());
+        verify(wrapper, never()).translatePidToProcessObject(self);
+    }
+
+    @Test
     @DisplayName("pidsFor matches Safari PWA by app name and includes audio-active WebKit GPU PID")
     void pidsForMatchesPwaAndGpuProcess() {
         var pwa = new OsxProcessHelper.RunningApp(
