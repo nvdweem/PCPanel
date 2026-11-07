@@ -3,8 +3,7 @@ package com.getpcpanel.integration.keyboard.platform.osx;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import org.junit.jupiter.api.condition.EnabledOnOs;
-import org.junit.jupiter.api.condition.OS;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -12,8 +11,8 @@ import com.getpcpanel.integration.keyboard.command.CommandMedia.VolumeButton;
 import com.sun.jna.NativeLibrary;
 import com.sun.jna.Pointer;
 
-/** Constructs and inspects real NSEvents without posting them or changing playback. */
-@EnabledOnOs(OS.MAC)
+/** Constructs and inspects real NSEvents without posting them or changing playback; enable with {@code -Dpcpanel.mactest=true}. */
+@EnabledIfSystemProperty(named = "pcpanel.mactest", matches = "true")
 class OsxSystemMediaKeysMacTest {
     @ParameterizedTest
     @CsvSource({"playPause,true", "playPause,false", "next,true", "next,false", "prev,true", "prev,false"})

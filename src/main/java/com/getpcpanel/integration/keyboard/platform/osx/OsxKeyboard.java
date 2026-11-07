@@ -50,7 +50,7 @@ class OsxKeyboard implements Keyboard {
     @Inject
     OsxSystemMediaKeys systemMediaKeys;
 
-    private interface CoreGraphics extends Library {
+    interface CoreGraphics extends Library {
         CoreGraphics INSTANCE = Native.load("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics", CoreGraphics.class);
 
         // CGEventRef CGEventCreateKeyboardEvent(CGEventSourceRef source, CGKeyCode virtualKey, bool keyDown)
@@ -79,7 +79,7 @@ class OsxKeyboard implements Keyboard {
         void CFRelease(Pointer cf);
     }
 
-    private static final int K_CG_HID_EVENT_TAP = 0;
+    static final int K_CG_HID_EVENT_TAP = 0;
     private static final int K_CG_SCROLL_EVENT_UNIT_LINE = 1;
 
     // CGEventFlags (uint64) modifier masks.
@@ -184,7 +184,12 @@ class OsxKeyboard implements Keyboard {
             mediaControl.execute(button, spotify);
             return;
         }
-        warnIfAccessibilityNotGranted();
+        if (!OsxPermissionHelper.isAccessibilityGranted()) {
+            // macOS drops a posted media key without Accessibility; AppleScript to Music.app only needs Automation.
+            warnIfAccessibilityNotGranted();
+            mediaControl.execute(button, false);
+            return;
+        }
         try {
             systemMediaKeys.send(button);
             log.debug("Posted macOS system media key '{}'", button);

@@ -29,6 +29,20 @@ class OsxKeyboardMediaTest {
     }
 
     @ParameterizedTest
+    @EnumSource(value = VolumeButton.class, names = {"playPause", "next", "prev"})
+    void withoutAccessibilityDefaultMediaCommandsControlMusic(VolumeButton button) {
+        var keyboard = new OsxKeyboard();
+        keyboard.systemMediaKeys = mock(OsxSystemMediaKeys.class);
+        keyboard.mediaControl = mock(OsxMediaControl.class);
+        try (var permissions = mockStatic(OsxPermissionHelper.class)) {
+            permissions.when(OsxPermissionHelper::isAccessibilityGranted).thenReturn(false);
+            keyboard.sendMediaKey(button, List.of());
+        }
+        verify(keyboard.mediaControl).execute(button, false);
+        verifyNoInteractions(keyboard.systemMediaKeys);
+    }
+
+    @ParameterizedTest
     @EnumSource(value = VolumeButton.class)
     void explicitSpotifyRoutingIsUnchanged(VolumeButton button) {
         var keyboard = new OsxKeyboard();

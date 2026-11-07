@@ -247,13 +247,6 @@ injection, and cross-cutting communication uses the **CDI event bus** (`jakarta.
 fire + `@Observes`) heavily rather than direct calls. `docs/events.md` catalogs the events with their
 firers and observers — keep it current when you add or remove an event.
 
-**macOS media keys:** `OsxKeyboard` routes default play/pause/next/previous through
-`OsxSystemMediaKeys`, which creates NSEvent system-defined key-down/up pairs and posts their borrowed
-CGEvents while the autorelease pool is live. The NSPoint argument is passed by value, with reflection,
-proxy and runtime-initialization registration for native builds. Existing Spotify-specific AppleScript
-targeting and legacy Stop/Mute handling remain in `OsxMediaControl`; configurable macOS app targeting
-is separate work. Tests construct real NSEvents on macOS without posting them or changing playback.
-
 **Hardware path (`device/`):** the device layer is the hardware-abstraction layer (HAL) and is **not**
 an integration — it provides no commands. `DeviceScanner` (in `device/provider/pcpanel/`) discovers HID
 devices via hid4java; `DeviceCommunicationHandler` (one per device, own thread + queue, same package)
@@ -598,6 +591,11 @@ links out to that page on the configured server. `HaActionYaml` (snakeyaml, `Saf
 the YAML into the `domain.service` + flat body the REST API wants. The dial command additionally maps
 the 0..1 dial position to a number via min/max or an `exp4j` formula (variable `x`) and substitutes it
 for the `{{ value }}` token in the YAML before sending.
+
+**macOS media buttons (`integration/keyboard/platform/osx/`):** play/pause, next and previous post the system media
+keys (`OsxSystemMediaKeys`: an AppKit system-defined `NSEvent`, converted to a `CGEvent` and posted like a physical
+media key), so macOS picks the player. Posting needs Accessibility; without it, and for Stop, Mute and a Spotify
+target, `OsxMediaControl` drives Music.app/Spotify through AppleScript.
 
 **Templates (`template/`):** the overlay name and the output commands' text fields (HTTP url/headers/body,
 MQTT topic/payload, OSC address, Home Assistant action YAML, the Run command) are `{{ … }}` templates rendered by **Qute**

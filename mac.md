@@ -56,7 +56,8 @@ after upgrading. PCPanel logs a hint when it detects a missing permission.
   it at the dial's volume. Requires the System Audio Recording permission; returning a dial to full
   volume removes the tap so the app's audio path is completely untouched again.
 - Default media play/pause, next and previous send native system media keys to the player selected
-  by macOS, including compatible browser media sessions. Requires Accessibility permission.
+  by macOS, including compatible browser media sessions. Requires Accessibility permission; without it
+  they control Music.app through AppleScript.
   With no active media session, behavior follows the system default, which can open a player.
 - Existing Spotify-targeted media commands keep using AppleScript, and Stop keeps pausing Music.app
   when Spotify is not targeted. Those AppleScript paths only control an already-running player.

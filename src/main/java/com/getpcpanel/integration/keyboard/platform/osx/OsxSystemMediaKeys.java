@@ -93,12 +93,6 @@ class OsxSystemMediaKeys {
         void objc_autoreleasePoolPop(Pointer pool);
     }
 
-    interface CoreGraphics extends Library {
-        CoreGraphics INSTANCE = Native.load("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics", CoreGraphics.class);
-
-        void CGEventPost(int tap, Pointer event);
-    }
-
     static class CocoaEvents implements Events {
         // Keep AppKit loaded for the lifetime of the NSEvent class and its Objective-C methods.
         private static final NativeLibrary APP_KIT = NativeLibrary.getInstance("AppKit");
@@ -132,7 +126,7 @@ class OsxSystemMediaKeys {
 
         @Override
         public void post(Pointer event) {
-            CoreGraphics.INSTANCE.CGEventPost(0, event); // kCGHIDEventTap
+            OsxKeyboard.CoreGraphics.INSTANCE.CGEventPost(OsxKeyboard.K_CG_HID_EVENT_TAP, event);
         }
     }
 }

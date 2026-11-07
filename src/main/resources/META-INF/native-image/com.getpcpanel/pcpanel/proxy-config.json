@@ -49,7 +49,6 @@
   {"interfaces": ["com.getpcpanel.integration.keyboard.platform.osx.OsxKeyboard$CoreGraphics"]},
   {"interfaces": ["com.getpcpanel.integration.keyboard.platform.osx.OsxKeyboard$CoreFoundation"]},
   {"interfaces": ["com.getpcpanel.integration.keyboard.platform.osx.OsxSystemMediaKeys$Objc"]},
-  {"interfaces": ["com.getpcpanel.integration.keyboard.platform.osx.OsxSystemMediaKeys$CoreGraphics"]},
   {"interfaces": ["com.getpcpanel.util.os.OsxPermissionHelper$ApplicationServicesLib"]},
   {"interfaces": ["com.getpcpanel.util.os.OsxPermissionHelper$IOKitLib"]}
 ]
