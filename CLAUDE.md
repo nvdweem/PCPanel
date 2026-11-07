@@ -247,14 +247,6 @@ injection, and cross-cutting communication uses the **CDI event bus** (`jakarta.
 fire + `@Observes`) heavily rather than direct calls. `docs/events.md` catalogs the events with their
 firers and observers — keep it current when you add or remove an event.
 
-**macOS volume discovery:** `ISndCtrl.setProcessesVolume` keeps scalar delegation on other backends;
-`SndCtrlOsx` shares one fresh application inventory among a command's targets, without caching it across
-commands. Its `focusedVolume` operation captures one foreground PID/start time and routing name, then
-defers coalition discovery and application until the coordinator's override/skip/redirector checks pass.
-The deferred action revalidates that process lifetime. Coalition and tap resolution exclude PCPanel's
-own PID so a terminal-launched instance cannot tap its own re-rendered audio. Preserve bundle-ID/PWA
-matching, helper lifetime checks and output-migration synchronization when changing these paths.
-
 **Hardware path (`device/`):** the device layer is the hardware-abstraction layer (HAL) and is **not**
 an integration — it provides no commands. `DeviceScanner` (in `device/provider/pcpanel/`) discovers HID
 devices via hid4java; `DeviceCommunicationHandler` (one per device, own thread + queue, same package)
@@ -338,6 +330,12 @@ Quarkus `@IfBuildProperty(name="pcpanel.build.os", ...)` keyed off `pcpanel.buil
 time from `os.detected.name`), so **a given build only contains one platform's beans** — guard
 optional platform beans with `Instance<T>` injection, and use `CdiHelper` to fetch beans from
 non-CDI code. On Linux many native calls degrade to a no-op `ISndCtrl`.
+
+**macOS app volume (`platform/osx/SndCtrlOsx`):** one dial update lists the running apps once for all its targets
+(`ISndCtrl.setProcessesVolume`; other backends default to one `setProcessVolume` per target), never cached across
+updates. `focusedVolume` resolves the focused app once, for both the coordinator's routing (overrides, skip, redirectors)
+and the deferred OS action, which re-checks that process lifetime (`ProcessIdentity`). PCPanel's own PID is never
+tapped, so a terminal-launched instance whose terminal coalition includes it cannot capture its own audio.
 
 **Persistence (`profile/`):** All user config (`Save` → devices/`Profile`s/command maps) is a single
 JSON file at `${pcpanel.root}/profiles.json` managed by `SaveService`. Custom Jackson deserializers

@@ -214,9 +214,7 @@ class SndCtrlOsx implements ISndCtrl {
         if (apps.isEmpty()) {
             var processes = fallbackProcesses();
             for (var fileName : fileNames) {
-                var baseName = new File(fileName).getName();
-                processes.stream().filter(app -> matchesFallbackApp(app, fileName, baseName))
-                        .forEach(app -> tapService.setVolume(app.pid(), volume));
+                fallbackPids(fileName, processes).forEach(pid -> tapService.setVolume(pid, volume));
             }
         } else {
             for (var fileName : fileNames) {
@@ -240,12 +238,14 @@ class SndCtrlOsx implements ISndCtrl {
         var front = processHelper.getFrontmostApp();
         var identity = front == null ? null : ProcessIdentity.find(front.pid());
         return new FocusedVolume(focusApplication(front), () -> {
+            // Checked before and after the app listing: skip the listing for an app that is gone, and never act on
+            // a PID reused while LaunchServices answered.
             if (identity == null || !identity.equals(ProcessIdentity.find(identity.pid()))) {
                 return;
             }
             var app = focusedApp(front);
             if (!identity.equals(ProcessIdentity.find(identity.pid()))) {
-                return; // the app may have exited while LaunchServices answered the inventory query
+                return;
             }
             tapService.setApplicationVolume(app.pid(), resolveAudioPids(app), volume);
             if (timed) {
@@ -281,10 +281,13 @@ class SndCtrlOsx implements ISndCtrl {
     @Override
     public void muteProcesses(Set<String> fileNames, MuteType mute) {
         var apps = processHelper.listApps();
-        for (var fileName : fileNames) {
-            if (apps.isEmpty()) {
-                fallbackPids(fileName).forEach(pid -> tapService.mute(pid, mute));
-            } else {
+        if (apps.isEmpty()) {
+            var processes = fallbackProcesses();
+            for (var fileName : fileNames) {
+                fallbackPids(fileName, processes).forEach(pid -> tapService.mute(pid, mute));
+            }
+        } else {
+            for (var fileName : fileNames) {
                 matchingApps(fileName, apps).forEach(app -> muteApp(app, mute));
             }
         }
@@ -298,14 +301,14 @@ class SndCtrlOsx implements ISndCtrl {
     List<Integer> pidsFor(String fileName) {
         var apps = processHelper.listApps();
         if (apps.isEmpty()) {
-            return fallbackPids(fileName);
+            return fallbackPids(fileName, fallbackProcesses());
         }
         return matchingApps(fileName, apps).stream().flatMap(app -> audioPidsFor(app).stream()).distinct().toList();
     }
 
-    private List<Integer> fallbackPids(String fileName) {
+    private static List<Integer> fallbackPids(String fileName, List<RunningApplication> processes) {
         var baseName = new File(fileName).getName();
-        return fallbackProcesses().stream().filter(app -> matchesFallbackApp(app, fileName, baseName))
+        return processes.stream().filter(app -> matchesFallbackApp(app, fileName, baseName))
                 .map(RunningApplication::pid).toList();
     }
 
