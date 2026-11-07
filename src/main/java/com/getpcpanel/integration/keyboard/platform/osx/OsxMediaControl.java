@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
 /**
- * Controls Music.app or Spotify through AppleScript, macOS has no media-key API that is safely reachable from Java.
+ * Explicit Spotify control and legacy Stop/Mute behavior through AppleScript.
  */
 @Log4j2
 @ApplicationScoped

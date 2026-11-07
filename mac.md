@@ -35,7 +35,7 @@ macOS guards the APIs PCPanel needs behind privacy (TCC) permissions. Grant them
 | Permission           | Needed for                                              | Where to enable |
 |----------------------|---------------------------------------------------------|-----------------|
 | **Input Monitoring** | Reading the PCPanel device (without it the device does not even appear) | Privacy & Security → Input Monitoring |
-| **Accessibility**    | Sending keystroke / shortcut mappings                   | Privacy & Security → Accessibility |
+| **Accessibility**    | Sending keystrokes, shortcuts and default media controls | Privacy & Security → Accessibility |
 | **Automation**       | Controlling Music.app / Spotify from the Media button   | Privacy & Security → Automation (prompted on first use) |
 | **System Audio Recording** | Per-application / focused-application volume and mute | Privacy & Security → Screen & System Audio Recording (prompted on first use) |
 
@@ -55,8 +55,11 @@ after upgrading. PCPanel logs a hint when it detects a missing permission.
   CoreAudio process taps: PCPanel taps the target app's audio (muting its direct output) and re-renders
   it at the dial's volume. Requires the System Audio Recording permission; returning a dial to full
   volume removes the tap so the app's audio path is completely untouched again.
-- Media control of Music.app and Spotify (AppleScript; the player is only controlled if it is already
-  running, never launched).
+- Default media play/pause, next and previous send native system media keys to the player selected
+  by macOS, including compatible browser media sessions. Requires Accessibility permission.
+  With no active media session, behavior follows the system default, which can open a player.
+- Existing Spotify-targeted media commands keep using AppleScript, and Stop keeps pausing Music.app
+  when Spotify is not targeted. Those AppleScript paths only control an already-running player.
 - Run program / end program / profile switching, plus the OBS, OSC, MQTT and Wave Link integrations.
 
 ## Limitations

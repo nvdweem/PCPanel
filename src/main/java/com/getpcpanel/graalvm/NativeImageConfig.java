@@ -529,6 +529,9 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         "com.getpcpanel.util.tray.mac.MacAppKit$ReopenImp",
         "com.getpcpanel.util.tray.mac.MacAppKit$TerminateImp",
 
+        // JNA reflects the by-value NSPoint fields and constructor for media-key events.
+        "com.getpcpanel.integration.keyboard.platform.osx.OsxSystemMediaKeys$Point",
+
         // macOS CoreAudio path (GET /api/audio/*, default-device switching). JNA reflectively
         // instantiates these Structures (no-arg constructor + field access). The CoreFoundation class
         // initializer itself builds a CFTypeID, so the whole jna-platform CoreFoundation inner-class

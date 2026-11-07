@@ -2,6 +2,7 @@
 
 <!-- Releasenotes without version are included in releases -->
 
+- (macOS) Default media play/pause, next and previous buttons follow the system's selected player instead of always controlling Music.app. These actions require Accessibility permission; existing Spotify-targeted commands are unchanged.
 - Going back to an older version no longer empties your configuration when it holds an action that version doesn't have: the action is kept as it is and does nothing until you update again. A configuration that can't be read at all is now kept next to it as `profiles.json.unreadable-<date>.bak` before PCPanel starts with an empty one.
 - (Windows) The **Voicemeeter** dial and button actions list the parameters of every strip and bus again, grouped per strip and bus with its label (e.g. *Input 1 · Mic*); you can also type any other Voicemeeter parameter. The button action can turn a parameter on or off and set a value again, and Voicemeeter shows *connected* when PCPanel reaches it. Voicemeeter actions set up in PCPanel 1.x (pick an input or output, then a parameter or button) show their settings and can be edited again, and are back in the action list as *Voicemeeter — strip or bus*.
 - (Windows) App volume dials, such as one set to *System Sounds*, are applied again when PCPanel starts: the panel could send its knob positions before Windows had listed the apps, and the level was then lost until you turned the knob.

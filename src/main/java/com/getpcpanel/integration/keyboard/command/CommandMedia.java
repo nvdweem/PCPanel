@@ -25,8 +25,9 @@ import lombok.ToString;
  * at specific applications. {@link #apps} is an ordered preference list of target executables (e.g.
  * {@code "Spotify.exe"}): on Windows the first one running receives the action directly, and only if
  * none are running is the global media key posted — so a browser can't hijack the key from Spotify.
- * This per-app targeting is a Windows feature; other platforms fall back to the global media key (see
- * {@link Keyboard#sendMediaKey}). All platform behaviour lives in the {@link Keyboard} backend.
+ * Per-app targeting is a Windows feature, with Spotify also supported on macOS. Default play/pause
+ * and track actions use the platform's global media keys (see {@link Keyboard#sendMediaKey}).
+ * All platform behaviour lives in the {@link Keyboard} backend.
  */
 @Getter
 @ToString(callSuper = true)
