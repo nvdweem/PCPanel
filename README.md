@@ -128,9 +128,9 @@ updating, autostart and Wayland tray setup, are in [linux.md](linux.md).
 ### macOS
 
 macOS support is experimental and community-contributed. Device volume, mute and default-device
-switching work; per-application volume is not possible on stock macOS. The app is unsigned, so
-Gatekeeper needs a one-time workaround. See [mac.md](mac.md) for installation and required
-permissions.
+switching work, along with per-application and focused-app volume on macOS 14.4 or newer. The app is
+ad-hoc signed but not notarized, so macOS asks for a one-time approval before opening it. See
+[mac.md](mac.md) for installation and required permissions.
 
 ## Migrating from the official app
 
