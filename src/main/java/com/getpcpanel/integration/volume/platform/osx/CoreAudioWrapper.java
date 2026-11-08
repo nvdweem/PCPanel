@@ -48,6 +48,7 @@ public class CoreAudioWrapper {
     static final int PROP_VOLUME_SCALAR = fourcc("volm");
     static final int PROP_MUTE = fourcc("mute");
     private static final int PROP_RUN_LOOP = fourcc("rnlp");
+    static final int PROP_SLEEPING_IS_ALLOWED = fourcc("slep");
     private static final int PROP_TRANSLATE_PID_TO_PROCESS_OBJECT = fourcc("id2p");
     private static final int PROP_PREFERRED_STEREO_CHANNELS = fourcc("dch2");
     private static final int[] FALLBACK_CHANNELS = { 1, 2 };
@@ -74,6 +75,16 @@ public class CoreAudioWrapper {
             var status = ca().AudioObjectSetPropertyData(SYSTEM_OBJECT, address(PROP_RUN_LOOP, SCOPE_GLOBAL, ELEMENT_MAIN), 0, null, (int) data.size(), data);
             if (status != 0) {
                 log.debug("Unable to set CoreAudio run loop ({})", status);
+            }
+        }
+        // A process tap's aggregate device keeps its IO running after the tapped app goes quiet, and coreaudiod holds
+        // an idle-sleep assertion for running IO. The tapped app holds its own assertion while it plays, so the Mac
+        // still stays awake for playing audio; PCPanel's re-render alone must not keep it awake.
+        try (var data = new Memory(Integer.BYTES)) {
+            data.setInt(0, 1);
+            var status = ca().AudioObjectSetPropertyData(SYSTEM_OBJECT, address(PROP_SLEEPING_IS_ALLOWED, SCOPE_GLOBAL, ELEMENT_MAIN), 0, null, (int) data.size(), data);
+            if (status != 0) {
+                log.warn("Unable to allow idle sleep during audio IO ({}), per-app volume may keep the Mac awake", status);
             }
         }
     }
