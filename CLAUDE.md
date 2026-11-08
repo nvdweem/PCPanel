@@ -340,7 +340,10 @@ tapped, so a terminal-launched instance whose terminal coalition includes it can
 Per-app volume is a `ProcessTap`: a CoreAudio process tap wrapped in a private aggregate device whose IO proc
 re-renders the app at its gain. coreaudiod holds an idle-sleep assertion for any running IO, so `CoreAudioWrapper.init`
 sets `kAudioHardwarePropertySleepingIsAllowed` for the process: PCPanel's re-render never keeps the Mac awake, while the
-tapped app keeps its own assertion when it plays. Taps started from a shell (a JVM run, a test harness) are created
+tapped app keeps its own assertion when it plays. The aggregate starts its IO with the app's first sound but keeps
+it running once the app goes quiet, so `ProcessTap` stops and starts it again then (its `pir?` listener and a 10 s
+check, both on the `tap-idle` thread, read `piro`), returning it to waiting for the next sound; a tap that cannot
+restart reports `alive() == false` and `OsxProcessTapService.refresh` recreates it. Taps started from a shell (a JVM run, a test harness) are created
 but receive silence, since only an app bundle holds the *System Audio Recording* consent; test per-app volume with an
 assembled, ad-hoc signed `PCPanel.app` (as the `buildMac` job builds it) opened through `open`.
 

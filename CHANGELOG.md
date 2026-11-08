@@ -3,6 +3,7 @@
 <!-- Releasenotes without version are included in releases -->
 
 - (macOS) Turning an app's volume down or muting it with PCPanel no longer stops the Mac from going to sleep on its own. The Mac still stays awake while that app plays sound, as it does without PCPanel.
+- (macOS) PCPanel uses less power while an app you turned down or muted is quiet.
 - (macOS) App-volume sliders targeting several apps and focused-app volume controls respond faster. PCPanel also avoids capturing its own audio when launched from a terminal.
 - (macOS) The media play/pause, next and previous buttons control the player macOS picks, as the keyboard's media keys do (including YouTube in Safari), instead of always Music.app. This needs the Accessibility permission, which macOS asks for the first time you press one; until it is granted they keep controlling Music.app. Buttons set to Spotify are unchanged.
 - Going back to an older version no longer empties your configuration when it holds an action that version doesn't have: the action is kept as it is and does nothing until you update again. A configuration that can't be read at all is now kept next to it as `profiles.json.unreadable-<date>.bak` before PCPanel starts with an empty one.

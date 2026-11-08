@@ -305,7 +305,7 @@ class OsxProcessTapService {
             }
         }
         var output = wrapper.getDefaultDevice(true);
-        return taps.values().stream().allMatch(entry -> entry.tap() != null && entry.outputDeviceId() == output);
+        return taps.values().stream().allMatch(entry -> entry.tap() != null && entry.tap().alive() && entry.outputDeviceId() == output);
     }
 
     @PreDestroy
@@ -363,7 +363,7 @@ class OsxProcessTapService {
 
     /**
      * A tap renders to the device that was default at creation; recreate it when the default moved (or an earlier
-     * move failed), and drop it when the process ended. Everything the new tap needs is resolved before the old one
+     * move failed, or the tap stopped re-rendering), and drop it when the process ended. Everything the new tap needs is resolved before the old one
      * closes; when the new tap cannot be created the old output gets one back, so the app keeps its volume and
      * mute while the move is retried.
      */
@@ -374,7 +374,7 @@ class OsxProcessTapService {
             return null;
         }
         var output = wrapper.getDefaultDevice(true);
-        if (output == 0 || entry.tap() != null && entry.outputDeviceId() == output) {
+        if (output == 0 || entry.tap() != null && entry.tap().alive() && entry.outputDeviceId() == output) {
             return entry;
         }
         var target = resolve(identity.pid(), output);
