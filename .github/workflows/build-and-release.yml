@@ -18,7 +18,8 @@
 
 name: Build & Release
 env:
-  JAVA_VERSION: '25'        # GraalVM CE 25 — Quarkus 3.34.1 supports Java 25
+  GRAALVM_VERSION: '25i-latest'   # GraalVM CE 25's newest innovation release: JDK 25 patches ship only there
+  JAVA_VERSION: '25'               # Intel macOS only: GraalVM CE's last x64 macOS build is 25.0.1, innovation releases have none
 
 # Releasing is triggered by a TAG, and the tag IS the version — nothing in the working tree
 # carries a release version. That is deliberate: when a maintenance line (releases/2.0) never edits
@@ -86,9 +87,9 @@ jobs:
       # was the only artifact off the workspace drive; without it every produced artifact stays under
       # target/ on one drive and the native build is clean.
       - name: Set up GraalVM CE
-        uses: graalvm/setup-graalvm@6f3fa030c4b8f77c1f554a860f593a654538fa38 # v1.5.6
+        uses: graalvm/setup-graalvm@f70bc8032f90a104502824a54bcb94b6f01715bc # v1.6.8
         with:
-          java-version: ${{ env.JAVA_VERSION }}
+          version: ${{ env.GRAALVM_VERSION }}
           distribution: 'graalvm-community'
 
       # The Maven repository is cached here rather than through setup-graalvm's `cache: maven`, which keys
@@ -389,9 +390,9 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
       - name: Set up GraalVM CE
-        uses: graalvm/setup-graalvm@6f3fa030c4b8f77c1f554a860f593a654538fa38 # v1.5.6
+        uses: graalvm/setup-graalvm@f70bc8032f90a104502824a54bcb94b6f01715bc # v1.6.8
         with:
-          java-version: ${{ env.JAVA_VERSION }}
+          version: ${{ env.GRAALVM_VERSION }}
           distribution: 'graalvm-community'
           native-image-job-reports: 'true'
 
@@ -785,9 +786,10 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
       - name: Set up GraalVM CE
-        uses: graalvm/setup-graalvm@6f3fa030c4b8f77c1f554a860f593a654538fa38 # v1.5.6
+        uses: graalvm/setup-graalvm@f70bc8032f90a104502824a54bcb94b6f01715bc # v1.6.8
         with:
-          java-version: ${{ env.JAVA_VERSION }}
+          version: ${{ matrix.runner != 'macos-15-intel' && env.GRAALVM_VERSION || '' }}
+          java-version: ${{ matrix.runner == 'macos-15-intel' && env.JAVA_VERSION || '' }}
           distribution: 'graalvm-community'
           native-image-job-reports: 'true'
 

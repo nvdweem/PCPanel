@@ -14,7 +14,7 @@
 name: CodeQL
 
 env:
-  JAVA_VERSION: '25'        # GraalVM CE 25 — keep in sync with pr-ci.yml and build-and-release.yml
+  GRAALVM_VERSION: '25i-latest'   # GraalVM CE 25's newest innovation release: JDK 25 patches ship only there — keep in sync with build-and-release.yml
 
 # Scheduled and on-demand only — deliberately not on pull_request. Code scanning here is a
 # periodic sweep of the whole tree, not a per-change gate, and PR CI already runs the test suite.
@@ -59,9 +59,9 @@ jobs:
 
       - name: Set up GraalVM CE
         if: matrix.language == 'java-kotlin'
-        uses: graalvm/setup-graalvm@6f3fa030c4b8f77c1f554a860f593a654538fa38 # v1.5.6
+        uses: graalvm/setup-graalvm@f70bc8032f90a104502824a54bcb94b6f01715bc # v1.6.8
         with:
-          java-version: ${{ env.JAVA_VERSION }}
+          version: ${{ env.GRAALVM_VERSION }}
           distribution: 'graalvm-community'
           cache: 'maven'
 

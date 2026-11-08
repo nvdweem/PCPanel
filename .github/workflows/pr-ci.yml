@@ -4,7 +4,7 @@
 
 name: PR CI
 env:
-  JAVA_VERSION: '25'        # GraalVM CE 25 — keep in sync with build-and-release.yml
+  GRAALVM_VERSION: '25i-latest'   # GraalVM CE 25's newest innovation release: JDK 25 patches ship only there — keep in sync with build-and-release.yml
 
 on:
   pull_request:
@@ -29,9 +29,9 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
       - name: Set up GraalVM CE
-        uses: graalvm/setup-graalvm@6f3fa030c4b8f77c1f554a860f593a654538fa38 # v1.5.6
+        uses: graalvm/setup-graalvm@f70bc8032f90a104502824a54bcb94b6f01715bc # v1.6.8
         with:
-          java-version: ${{ env.JAVA_VERSION }}
+          version: ${{ env.GRAALVM_VERSION }}
           distribution: 'graalvm-community'
 
       # Same cache as build-and-release.yml (see the comment there), so a PR starts from the newest build's
