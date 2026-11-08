@@ -40,6 +40,11 @@ public class DeviceCommunicationHandler {
     private final HidDevice device;
 
     private static final int COM_TIMEOUT_MILLIS = 100;
+    /**
+     * How often an idle writer checks that its device is still connected. Queued output wakes it at once; a removed
+     * device is only noticed through this check, since removal does not stop the handler's threads.
+     */
+    private static final int WRITER_IDLE_CHECK_MILLIS = 1_000;
 
     private static final int PACKET_LENGTH = 64;
     private static final int FIRST_NON_INITIAL_READS = 20; // Could have been 9 (dials/sliders of the pro) but take 20 to be safe
@@ -159,7 +164,7 @@ public class DeviceCommunicationHandler {
     private void writer() {
         while (isConnected()) {
             try {
-                var reports = output.next(COM_TIMEOUT_MILLIS);
+                var reports = output.next(WRITER_IDLE_CHECK_MILLIS);
                 if (reports != null) {
                     try {
                         for (var report : reports) {
