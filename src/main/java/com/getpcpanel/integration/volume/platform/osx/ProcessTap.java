@@ -1,8 +1,21 @@
 package com.getpcpanel.integration.volume.platform.osx;
 
+import java.time.Duration;
 import java.util.Arrays;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import javax.annotation.Nullable;
+
+import com.getpcpanel.util.concurrent.AppThreads;
+import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
@@ -16,6 +29,12 @@ import lombok.extern.log4j.Log4j2;
  * {@link #setGain}. Gain 0 is true silence; {@link #close()} removes the tap and the process's own output
  * resumes untouched.
  *
+ * <p>The aggregate starts its IO with the process's first sound ({@code tapautostart}) but keeps it running after the
+ * process goes quiet, calling the IO proc about a hundred times a second for nothing. So once the process has no
+ * output running the aggregate is stopped and started again, which puts it back to waiting for the next sound. A
+ * change of the process's running state ('pir?'; 'piro' itself sends no notification) asks for that check, and a
+ * slow periodic one covers what that misses: a process that keeps its input running, or IO resumed by a wake.
+ *
  * <p>Creating a tap requires the "System Audio Recording" TCC consent
  * ({@code NSAudioCaptureUsageDescription}); without it creation fails with an OSStatus error.
  */
@@ -28,12 +47,46 @@ final class ProcessTap implements Tap {
     // each 16 bytes: UInt32 mNumberChannels, UInt32 mDataByteSize, void *mData.
     private static final int ABL_BUFFERS_OFFSET = 8;
     private static final int ABL_BUFFER_SIZE = 16;
+    private static final int PROP_IS_RUNNING = CoreAudioWrapper.fourcc("pir?");
+    private static final int PROP_IS_RUNNING_OUTPUT = CoreAudioWrapper.fourcc("piro");
+    static final Duration IDLE_CHECK_PERIOD = Duration.ofSeconds(10);
+    private static final ScheduledExecutorService IDLE = Executors.newSingleThreadScheduledExecutor(AppThreads.factory("tap-idle", true));
+    // Listeners CoreAudio failed to remove may still be called, so they stay reachable for good.
+    private static final Set<Object> UNREMOVED_LISTENERS = ConcurrentHashMap.newKeySet();
+    private static final Hal COREAUDIO = new Hal() {
+        @Override
+        public int runningOutput(int processObject) {
+            try (var data = new Memory(Integer.BYTES)) {
+                var size = new IntByReference(Integer.BYTES);
+                var status = CoreAudioLib.INSTANCE.AudioObjectGetPropertyData(processObject, globalAddress(PROP_IS_RUNNING_OUTPUT), 0, null, size, data);
+                return status != 0 ? -1 : data.getInt(0) == 0 ? 0 : 1;
+            }
+        }
+
+        @Override
+        public int start(int aggregateId, Pointer ioProcId) {
+            return CoreAudioTapLib.INSTANCE.AudioDeviceStart(aggregateId, ioProcId);
+        }
+
+        @Override
+        public int stop(int aggregateId, Pointer ioProcId) {
+            return CoreAudioTapLib.INSTANCE.AudioDeviceStop(aggregateId, ioProcId);
+        }
+    };
 
     private final int tapId;
     private final int aggregateId;
+    private final int processObject;
+    private final Hal hal;
+    private @Nullable Runnable onDead;
     private Pointer ioProcId;
-    // Strong reference: JNA only weakly tracks callbacks, but CoreAudio keeps the function pointer.
+    // Strong references: JNA only weakly tracks callbacks, but CoreAudio keeps the function pointers.
     @SuppressWarnings({ "FieldCanBeLocal", "unused" }) private CoreAudioTapLib.AudioDeviceIOProc renderProc;
+    private @Nullable CoreAudioLib.AudioObjectPropertyListenerProc runningListener;
+    private @Nullable ScheduledFuture<?> idleCheck;
+    private final AtomicBoolean idleCheckQueued = new AtomicBoolean();
+    private volatile boolean renderedSinceArmed;
+    private volatile boolean failed;
     private volatile float gain;
     private volatile boolean muted;
     private boolean closed;
@@ -48,9 +101,21 @@ final class ProcessTap implements Tap {
         }
     }
 
-    private ProcessTap(int tapId, int aggregateId, float gain, boolean muted) {
+    /** The CoreAudio calls of the idle check. */
+    interface Hal {
+        /** 1 while the process runs output IO, 0 while it runs none, -1 when it cannot be read (the process is gone). */
+        int runningOutput(int processObject);
+
+        int start(int aggregateId, Pointer ioProcId);
+
+        int stop(int aggregateId, Pointer ioProcId);
+    }
+
+    ProcessTap(int tapId, int aggregateId, int processObject, Hal hal, float gain, boolean muted) {
         this.tapId = tapId;
         this.aggregateId = aggregateId;
+        this.processObject = processObject;
+        this.hal = hal;
         this.gain = Math.clamp(gain, 0, 1);
         this.muted = muted;
     }
@@ -87,9 +152,10 @@ final class ProcessTap implements Tap {
                 ObjcFoundation.release(description);
             }
 
-            var result = new ProcessTap(tapId, aggregateId, initialGain, initialMuted);
+            var result = new ProcessTap(tapId, aggregateId, processObject, COREAUDIO, initialGain, initialMuted);
             log.debug("Starting process tap {} aggregate {} process object {} output '{}' initial gain {} muted {}", tapId, aggregateId, processObject, outputDeviceUid, initialGain, initialMuted);
             result.startRendering();
+            result.watchIdle();
             return result;
         } catch (RuntimeException e) {
             if (aggregateId != 0) {
@@ -141,6 +207,79 @@ final class ProcessTap implements Tap {
         }
     }
 
+    private void watchIdle() {
+        CoreAudioLib.AudioObjectPropertyListenerProc listener = (objectId, numberAddresses, addresses, clientData) -> {
+            queueIdleCheck();
+            return 0;
+        };
+        var status = CoreAudioLib.INSTANCE.AudioObjectAddPropertyListener(processObject, globalAddress(PROP_IS_RUNNING), listener, null);
+        if (status == 0) {
+            runningListener = listener;
+        } else {
+            log.debug("Unable to follow process object {} running state ({}), checking it every {}", processObject, fourCharCode(status), IDLE_CHECK_PERIOD);
+        }
+        idleCheck = IDLE.scheduleWithFixedDelay(this::checkIdle, IDLE_CHECK_PERIOD.toMillis(), IDLE_CHECK_PERIOD.toMillis(), TimeUnit.MILLISECONDS);
+    }
+
+    /** Called on CoreAudio's notification thread, which must not stop or start devices: hands the check over. */
+    private void queueIdleCheck() {
+        if (!idleCheckQueued.compareAndSet(false, true)) {
+            return;
+        }
+        try {
+            IDLE.execute(() -> {
+                idleCheckQueued.set(false);
+                checkIdle();
+            });
+        } catch (RejectedExecutionException e) {
+            idleCheckQueued.set(false);
+        }
+    }
+
+    /**
+     * Puts the aggregate back to waiting for the process's next sound when it rendered since it last waited and the
+     * process now runs no output. A process that cannot be read is left alone: it is gone, and the service closes its tap.
+     */
+    synchronized void checkIdle() {
+        if (closed || failed || !renderedSinceArmed || hal.runningOutput(processObject) != 0) {
+            return;
+        }
+        logOnError(hal.stop(aggregateId, ioProcId), "AudioDeviceStop");
+        renderedSinceArmed = false;
+        var status = hal.start(aggregateId, ioProcId);
+        if (status == 0) {
+            log.trace("Process tap {} idle, waiting for the next sound", tapId);
+        } else {
+            failed = true;
+            log.warn("Unable to restart process tap {} after its process went quiet ({}), recreating it", tapId, fourCharCode(status));
+            if (onDead != null) {
+                onDead.run();
+            }
+        }
+    }
+
+    @Override
+    public boolean alive() {
+        return !failed;
+    }
+
+    @Override
+    public synchronized void whenDead(Runnable onDead) {
+        this.onDead = onDead;
+        if (failed) {
+            onDead.run();
+        }
+    }
+
+    /** Whether the aggregate's IO ran since it last started waiting for a sound. */
+    boolean renderedSinceArmed() {
+        return renderedSinceArmed;
+    }
+
+    private static CoreAudioLib.AudioObjectPropertyAddress globalAddress(int selector) {
+        return new CoreAudioLib.AudioObjectPropertyAddress(selector, CoreAudioWrapper.SCOPE_GLOBAL, 0);
+    }
+
     private static void throwOnError(int status, String call) {
         if (status != 0) {
             throw new TapCreationException(call, status);
@@ -162,7 +301,8 @@ final class ProcessTap implements Tap {
      * the trailing 2-channel input buffer (taps follow the sub-device's own streams in the aggregate's
      * input list); all other output stays silent.
      */
-    private int render(Pointer inputData, Pointer outputData) {
+    int render(@Nullable Pointer inputData, @Nullable Pointer outputData) {
+        renderedSinceArmed = true;
         if (inputData == null || outputData == null) {
             return 0;
         }
@@ -230,6 +370,16 @@ final class ProcessTap implements Tap {
         }
         closed = true;
         log.debug("Closing process tap {} aggregate {} gain {} muted {}", tapId, aggregateId, gain, muted);
+        if (idleCheck != null) {
+            idleCheck.cancel(false);
+        }
+        if (runningListener != null) {
+            var status = CoreAudioLib.INSTANCE.AudioObjectRemovePropertyListener(processObject, globalAddress(PROP_IS_RUNNING), runningListener, null);
+            if (status != 0) {
+                UNREMOVED_LISTENERS.add(runningListener);
+                logOnError(status, "AudioObjectRemovePropertyListener");
+            }
+        }
         var lib = CoreAudioTapLib.INSTANCE;
         logOnError(lib.AudioDeviceStop(aggregateId, ioProcId), "AudioDeviceStop");
         logOnError(lib.AudioDeviceDestroyIOProcID(aggregateId, ioProcId), "AudioDeviceDestroyIOProcID");

@@ -137,6 +137,41 @@ class OsxProcessTapServiceTest {
     }
 
     @Test
+    void recreatesATapThatStoppedRenderingAsSoonAsItSaysSo() {
+        service.setVolume(FIREFOX, 0.3f);
+        var dead = factory.live(FIREFOX);
+
+        dead.die();
+
+        await(() -> dead.closed && factory.liveOn(FIREFOX, SPEAKERS));
+        assertEquals(0.3f, factory.live(FIREFOX).gain);
+    }
+
+    @Test
+    void aMuteWhoseTapStoppedRenderingIsNotReportedAsApplied() {
+        service.mute(FIREFOX, MuteType.mute);
+        assertTrue(service.isMuted(FIREFOX));
+
+        factory.live(FIREFOX).alive = false;
+
+        assertFalse(service.isMuted(FIREFOX));
+    }
+
+    @Test
+    void recreatesATapThatStoppedRenderingOnTheNextVolumeChange() {
+        service.setVolume(FIREFOX, 0.3f);
+        var dead = factory.live(FIREFOX);
+        dead.alive = false;
+
+        service.setVolume(FIREFOX, 0.4f);
+
+        assertTrue(dead.closed);
+        var live = factory.live(FIREFOX);
+        assertEquals(uid(SPEAKERS), live.uid);
+        assertEquals(0.4f, live.gain);
+    }
+
+    @Test
     void keepsTapsWhileTheDefaultOutputCannotBeRead() {
         service.setVolume(FIREFOX, 0.3f);
 
@@ -464,6 +499,8 @@ class OsxProcessTapServiceTest {
         volatile float gain;
         volatile boolean muted;
         volatile boolean closed;
+        volatile boolean alive = true;
+        volatile Runnable onDead = () -> { };
 
         FakeTap(int pid, String uid, float gain, boolean muted) {
             this.pid = pid;
@@ -481,6 +518,21 @@ class OsxProcessTapServiceTest {
         @Override
         public void setMuted(boolean muted) {
             this.muted = muted;
+        }
+
+        @Override
+        public boolean alive() {
+            return alive;
+        }
+
+        @Override
+        public void whenDead(Runnable onDead) {
+            this.onDead = onDead;
+        }
+
+        void die() {
+            alive = false;
+            onDead.run();
         }
 
         @Override

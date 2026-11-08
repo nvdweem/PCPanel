@@ -10,6 +10,18 @@ public interface Tap extends AutoCloseable {
 
     void setMuted(boolean muted);
 
+    /** False once the tap stopped re-rendering its process (which then plays untouched) and needs recreating. */
+    default boolean alive() {
+        return true;
+    }
+
+    /**
+     * Runs {@code onDead} once {@link #alive()} turns false, at once if it already is. It may run on any thread, with
+     * the tap's lock held, so it must only queue work.
+     */
+    default void whenDead(Runnable onDead) {
+    }
+
     @Override
     void close();
 

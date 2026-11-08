@@ -337,6 +337,15 @@ non-CDI code. On Linux many native calls degrade to a no-op `ISndCtrl`.
 updates. `focusedVolume` resolves the focused app once, for both the coordinator's routing (overrides, skip, redirectors)
 and the deferred OS action, which re-checks that process lifetime (`ProcessIdentity`). PCPanel's own PID is never
 tapped, so a terminal-launched instance whose terminal coalition includes it cannot capture its own audio.
+Per-app volume is a `ProcessTap`: a CoreAudio process tap wrapped in a private aggregate device whose IO proc
+re-renders the app at its gain. coreaudiod holds an idle-sleep assertion for any running IO, so `CoreAudioWrapper.init`
+sets `kAudioHardwarePropertySleepingIsAllowed` for the process: PCPanel's re-render never keeps the Mac awake, while the
+tapped app keeps its own assertion when it plays. The aggregate starts its IO with the app's first sound but keeps
+it running once the app goes quiet, so `ProcessTap` stops and starts it again then (its `pir?` listener and a 10 s
+check, both on the `tap-idle` thread, read `piro`), returning it to waiting for the next sound; a tap that cannot
+restart reports `alive() == false` and `OsxProcessTapService.refresh` recreates it. Taps started from a shell (a JVM run, a test harness) are created
+but receive silence, since only an app bundle holds the *System Audio Recording* consent; test per-app volume with an
+assembled, ad-hoc signed `PCPanel.app` (as the `buildMac` job builds it) opened through `open`.
 
 **Persistence (`profile/`):** All user config (`Save` → devices/`Profile`s/command maps) is a single
 JSON file at `${pcpanel.root}/profiles.json` managed by `SaveService`. Custom Jackson deserializers

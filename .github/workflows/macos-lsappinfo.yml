@@ -38,5 +38,5 @@ jobs:
       - name: Test against macOS
         run: >
           ./mvnw -B test -Dquarkus.native.enabled=false -Dpcpanel.mactest=true
-          -Dtest='OsxProcessHelperMacTest,OsxProcessHelperTest,OsxSystemMediaKeysMacTest,OsxPermissionHelperMacTest' -Dsurefire.failIfNoSpecifiedTests=false
+          -Dtest='OsxProcessHelperMacTest,OsxProcessHelperTest,OsxSystemMediaKeysMacTest,OsxPermissionHelperMacTest,CoreAudioWrapperMacTest' -Dsurefire.failIfNoSpecifiedTests=false
 

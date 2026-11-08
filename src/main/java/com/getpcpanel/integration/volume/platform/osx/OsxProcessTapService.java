@@ -91,7 +91,7 @@ class OsxProcessTapService {
 
         /** Whether the process is muted right now, not merely meant to be. */
         boolean mutedNow() {
-            return tap != null && muted;
+            return tap != null && tap.alive() && muted;
         }
     }
 
@@ -245,6 +245,15 @@ class OsxProcessTapService {
      * queues the move; changes arriving while one is queued are covered by it.
      */
     void defaultOutputChanged() {
+        queueMigration();
+    }
+
+    /** A tap stopped re-rendering on its own: recreated like a move, with the same retries. Only queues. */
+    void tapDied() {
+        queueMigration();
+    }
+
+    private void queueMigration() {
         if (!supported || !migrationQueued.compareAndSet(false, true)) {
             return;
         }
@@ -287,7 +296,8 @@ class OsxProcessTapService {
     }
 
     /**
-     * Recreates every tap that does not render to the current default output, keeping its volume and mute.
+     * Recreates every tap that does not render to the current default output, or stopped rendering, keeping its volume
+     * and mute.
      *
      * @return whether every tap now renders to the default output
      */
@@ -305,7 +315,7 @@ class OsxProcessTapService {
             }
         }
         var output = wrapper.getDefaultDevice(true);
-        return taps.values().stream().allMatch(entry -> entry.tap() != null && entry.outputDeviceId() == output);
+        return taps.values().stream().allMatch(entry -> entry.tap() != null && entry.tap().alive() && entry.outputDeviceId() == output);
     }
 
     @PreDestroy
@@ -363,7 +373,7 @@ class OsxProcessTapService {
 
     /**
      * A tap renders to the device that was default at creation; recreate it when the default moved (or an earlier
-     * move failed), and drop it when the process ended. Everything the new tap needs is resolved before the old one
+     * move failed, or the tap stopped re-rendering), and drop it when the process ended. Everything the new tap needs is resolved before the old one
      * closes; when the new tap cannot be created the old output gets one back, so the app keeps its volume and
      * mute while the move is retried.
      */
@@ -374,7 +384,7 @@ class OsxProcessTapService {
             return null;
         }
         var output = wrapper.getDefaultDevice(true);
-        if (output == 0 || entry.tap() != null && entry.outputDeviceId() == output) {
+        if (output == 0 || entry.tap() != null && entry.tap().alive() && entry.outputDeviceId() == output) {
             return entry;
         }
         var target = resolve(identity.pid(), output);
@@ -414,6 +424,7 @@ class OsxProcessTapService {
     private @Nullable Entry create(Target target, ProcessIdentity owner, float gain, boolean muted) {
         try {
             var tap = tapFactory.create(target.processObject(), target.outputUid(), gain, muted);
+            tap.whenDead(this::tapDied);
             log.debug("Tapped pid={} owner={} processObject={} output='{}' gain={} muted={}", target.pid(), owner, target.processObject(), target.outputUid(), gain, muted);
             return new Entry(tap, target.outputDeviceId(), owner, target.processObject(), gain, muted);
         } catch (RuntimeException e) {
