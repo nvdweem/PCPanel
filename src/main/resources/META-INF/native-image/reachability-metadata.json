@@ -58,27 +58,6 @@
       "type": "com.fasterxml.jackson.databind.ser.Serializers[]"
     },
     {
-      "type": "com.getpcpanel.CachingConfig"
-    },
-    {
-      "type": "com.getpcpanel.CachingConfig_ScheduledInvoker_commandIconEvict_1746bd5084218066632083278dbd97519115ea8b",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
-      "type": "com.getpcpanel.CachingConfig_ScheduledInvoker_iconEvict_4def39007bffef20da699f924a6606580474cee2",
-      "methods": [
-        {
-          "name": "<init>",
-          "parameterTypes": []
-        }
-      ]
-    },
-    {
       "type": "com.getpcpanel.Json"
     },
     {
