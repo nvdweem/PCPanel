@@ -59,11 +59,11 @@ final class AlertState {
     /**
      * Takes a new list. An alert that is still the same alert (same position, trigger and app, or else the same
      * trigger, app and light elsewhere in the list) stays lit through a change of colour, effect or the like;
-     * switched-off and removed alerts go dark.
+     * switched-off and removed alerts go dark. Returns whether the list changed.
      */
-    synchronized void configure(List<NotificationAlert> next) {
+    synchronized boolean configure(List<NotificationAlert> next) {
         if (next.equals(alerts)) {
-            return;
+            return false;
         }
         var moved = carryOver(alerts, next);
         for (var lit : active.values()) {
@@ -75,6 +75,7 @@ final class AlertState {
         previews.clear();
         previews.putAll(keptPreviews);
         alerts = List.copyOf(next);
+        return true;
     }
 
     /** For each old position, where that alert is in {@code next}, or -1 when it is gone. */
@@ -114,6 +115,11 @@ final class AlertState {
             }
         });
         return result;
+    }
+
+    /** Whether any alert is switched on, so something could light it. */
+    synchronized boolean anyEnabled() {
+        return alerts.stream().anyMatch(a -> !a.disabled());
     }
 
     synchronized boolean hasTrigger(AlertTrigger trigger) {
