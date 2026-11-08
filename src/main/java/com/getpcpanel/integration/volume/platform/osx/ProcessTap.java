@@ -78,6 +78,7 @@ final class ProcessTap implements Tap {
     private final int aggregateId;
     private final int processObject;
     private final Hal hal;
+    private @Nullable Runnable onDead;
     private Pointer ioProcId;
     // Strong references: JNA only weakly tracks callbacks, but CoreAudio keeps the function pointers.
     @SuppressWarnings({ "FieldCanBeLocal", "unused" }) private CoreAudioTapLib.AudioDeviceIOProc renderProc;
@@ -250,13 +251,29 @@ final class ProcessTap implements Tap {
             log.trace("Process tap {} idle, waiting for the next sound", tapId);
         } else {
             failed = true;
-            log.warn("Unable to restart process tap {} after its process went quiet ({}), recreating it on the next volume change", tapId, fourCharCode(status));
+            log.warn("Unable to restart process tap {} after its process went quiet ({}), recreating it", tapId, fourCharCode(status));
+            if (onDead != null) {
+                onDead.run();
+            }
         }
     }
 
     @Override
     public boolean alive() {
         return !failed;
+    }
+
+    @Override
+    public synchronized void whenDead(Runnable onDead) {
+        this.onDead = onDead;
+        if (failed) {
+            onDead.run();
+        }
+    }
+
+    /** Whether the aggregate's IO ran since it last started waiting for a sound. */
+    boolean renderedSinceArmed() {
+        return renderedSinceArmed;
     }
 
     private static CoreAudioLib.AudioObjectPropertyAddress globalAddress(int selector) {

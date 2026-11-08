@@ -604,6 +604,7 @@ class SndCtrlOsxTest {
         tapService.muteApplication(100, List.of(100, 101), MuteType.toggle);
         assertFalse(tapService.isMuted(101));
         var recovered = mock(Tap.class);
+        when(recovered.alive()).thenReturn(true);
         doReturn(recovered).when(tapFactory).create(eq(1), eq("output"), eq(1f), anyBoolean());
         tapService.muteApplication(100, List.of(100, 101), MuteType.toggle);
         assertTrue(tapService.isMuted(101));
@@ -741,6 +742,7 @@ class SndCtrlOsxTest {
     void identityChangeDuringTapCreationClosesUnownedTap() {
         when(wrapper.translatePidToProcessObject(100)).thenReturn(1);
         var tap = mock(Tap.class);
+        when(tap.alive()).thenReturn(true);
         doAnswer(call -> {
             identities.when(() -> ProcessIdentity.find(100)).thenReturn(new ProcessIdentity(100, Instant.EPOCH.plusSeconds(1)));
             return tap;
@@ -886,6 +888,7 @@ class SndCtrlOsxTest {
     void ownerChangeDuringHelperCreationDisposesTap() {
         when(wrapper.translatePidToProcessObject(101)).thenReturn(1);
         var tap = mock(Tap.class);
+        when(tap.alive()).thenReturn(true);
         doAnswer(call -> {
             identities.when(() -> ProcessIdentity.find(100)).thenReturn(new ProcessIdentity(100, Instant.EPOCH.plusSeconds(1)));
             return tap;

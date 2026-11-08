@@ -17,11 +17,14 @@ class ProcessTapIdleTest {
 
     private FakeHal hal;
     private ProcessTap tap;
+    private int deaths;
 
     @BeforeEach
     void setUp() {
         hal = new FakeHal();
+        deaths = 0;
         tap = new ProcessTap(1, 2, PROCESS_OBJECT, hal, 0.5f, false);
+        tap.whenDead(() -> deaths++);
     }
 
     @Test
@@ -53,6 +56,7 @@ class ProcessTapIdleTest {
 
         assertEquals(List.of("stop", "start"), hal.calls);
         assertTrue(tap.alive());
+        assertFalse(tap.renderedSinceArmed());
     }
 
     @Test
@@ -88,6 +92,7 @@ class ProcessTapIdleTest {
         tap.checkIdle();
 
         assertFalse(tap.alive());
+        assertEquals(1, deaths, "asks once to be recreated");
         assertEquals(List.of("stop", "start"), hal.calls);
     }
 
