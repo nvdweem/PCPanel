@@ -23,7 +23,7 @@
         <start-class>com.getpcpanel.Main</start-class>
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-        <quarkus.platform.version>3.37.4</quarkus.platform.version>
+        <quarkus.platform.version>3.40.1</quarkus.platform.version>
 
         <maven.build.timestamp.format>yy.ww.WWkkmm</maven.build.timestamp.format>
         <app.version>${project.baseversion}.${github.build}</app.version>
@@ -32,10 +32,10 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <jna.version>5.19.1</jna.version>
-        <asm.version>9.10.1</asm.version>
-        <dbus-java.version>5.2.0</dbus-java.version>
-        <lombok.version>1.18.46</lombok.version>
-        <typescript-generator.version>4.1.1</typescript-generator.version>
+        <asm.version>9.11.1</asm.version>
+        <dbus-java.version>5.2.2</dbus-java.version>
+        <lombok.version>1.18.48</lombok.version>
+        <typescript-generator.version>4.2.1</typescript-generator.version>
         <mcp-server.version>1.13.1</mcp-server.version>
         <archunit.version>1.5.1</archunit.version>
 
@@ -90,6 +90,17 @@
                 <version>${quarkus.platform.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <!-- Security patch releases ahead of the Quarkus BOM; drop each once the BOM catches up. -->
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-api</artifactId>
+                <version>2.26.1</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>33.7.2-jre</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -152,7 +163,7 @@
         <dependency>
             <groupId>io.quarkiverse.quinoa</groupId>
             <artifactId>quarkus-quinoa</artifactId>
-            <version>2.8.3</version>
+            <version>2.9.3</version>
         </dependency>
 
         <!-- Jackson -->
@@ -184,7 +195,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-collections4</artifactId>
-            <version>4.5.0</version>
+            <version>4.6.0</version>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
@@ -301,7 +312,7 @@
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
-            <version>2.6</version>
+            <version>2.7</version>
         </dependency>
 
         <!-- D-Bus support for Linux Wayland system tray (StatusNotifierItem protocol) -->
