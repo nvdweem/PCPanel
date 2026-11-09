@@ -40,6 +40,11 @@ public class DeviceCommunicationHandler {
     private final HidDevice device;
 
     private static final int COM_TIMEOUT_MILLIS = 100;
+    /**
+     * How often an idle writer checks that its device is still connected. Queued output wakes it at once; a removed
+     * device is only noticed through this check, since removal does not stop the handler's threads.
+     */
+    private static final int WRITER_IDLE_CHECK_MILLIS = 1_000;
 
     private static final int PACKET_LENGTH = 64;
     private static final int FIRST_NON_INITIAL_READS = 20; // Could have been 9 (dials/sliders of the pro) but take 20 to be safe
@@ -72,6 +77,7 @@ public class DeviceCommunicationHandler {
         writerThread = AppThreads.named("HIDWriter " + device.getSerialNumber(), true, this::writer);
         // Start the rolling-average worker here (not in its constructor) so it does not publish a
         // reference to this not-yet-constructed handler, and so it only runs once the device is live.
+        rollingAverageSetter.setName("HIDRolling " + device.getSerialNumber());
         rollingAverageSetter.setDaemon(true);
         rollingAverageSetter.start();
         readerThread.start();
@@ -159,7 +165,7 @@ public class DeviceCommunicationHandler {
     private void writer() {
         while (isConnected()) {
             try {
-                var reports = output.next(COM_TIMEOUT_MILLIS);
+                var reports = output.next(WRITER_IDLE_CHECK_MILLIS);
                 if (reports != null) {
                     try {
                         for (var report : reports) {
@@ -199,7 +205,7 @@ public class DeviceCommunicationHandler {
         }
     }
 
-    private void interpretInputData(boolean initial, byte[] data) {
+    void interpretInputData(boolean initial, byte[] data) {
         if (data[0] == INPUT_CODE_KNOB_CHANGE) {
             var knob = data[1] & 0xFF;
             var value = normalizeAnalog(knob, data[2] & 0xFF);
@@ -371,10 +377,11 @@ public class DeviceCommunicationHandler {
         @Override
         public void run() {
             while (running) {
-                // Park while there is nothing to roll (i.e. until the first rolling-average knob event
-                // for this device); the 10ms cadence below would otherwise spin forever for nothing.
+                // Park while there is nothing to roll: every knob has settled on its last value (already sent) or
+                // none has moved yet. setKnob adds a value before it notifies under wakeLock, so a value added while
+                // this checks is either seen by the check or wakes the wait.
                 synchronized (wakeLock) {
-                    while (running && targets.isEmpty()) {
+                    while (running && !rolling()) {
                         try {
                             wakeLock.wait();
                         } catch (InterruptedException e) {
@@ -399,6 +406,18 @@ public class DeviceCommunicationHandler {
                     return;
                 }
             }
+        }
+
+        /** Whether a knob still has values to average: one holding a single value has sent it and settled. */
+        private boolean rolling() {
+            for (var timeToValue : targets.values()) {
+                synchronized (timeToValue) {
+                    if (timeToValue.size() > 1) {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         private void handleRoll(Integer knob, Deque<Pair<Long, Integer>> timeToValue) {

@@ -9,12 +9,14 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockingDetails;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.BooleanSupplier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -162,5 +164,66 @@ class AlertServiceTest {
         assertEquals("java.lang.IllegalStateException: no windows", sut.titleFailure, "reported, once at warning level");
         assertTrue(sut.pollTitlesOnce(true));
         assertNull(sut.titleFailure, "a good read clears it");
+    }
+    @Test
+    void withNoAlertSwitchedOnTheLightsWaitUntilWoken() {
+        save.setNotificationAlerts(List.of());
+        assertEquals(AlertService.UNTIL_WOKEN, sut.tick(0));
+
+        save.setNotificationAlerts(List.of(new NotificationAlert(AlertTrigger.TASKBAR_FLASH, "discord.exe", "knob:0", "#ff0000", false, null, true, null)));
+        assertEquals(AlertService.UNTIL_WOKEN, sut.tick(1), "a switched-off alert lights nothing");
+    }
+
+    @Test
+    void aSwitchedOnAlertKeepsTheLightsTicking() {
+        assertTrue(sut.tick(0) > 0);
+    }
+
+    @Test
+    void removingALitAlertClearsItsLightBeforeWaiting() {
+        sut.preview(0);
+        sut.tick(0);
+        assertTrue(sut.getOverrideColorProvider().getDialOverride("pro", 0).isPresent());
+
+        save.setNotificationAlerts(List.of());
+        assertEquals(AlertService.UNTIL_WOKEN, sut.tick(1));
+        assertTrue(sut.getOverrideColorProvider().getDialOverride("pro", 0).isEmpty(), "the light is cleared");
+        verify(sut.alertLighting, atLeastOnce()).update(device, false);
+    }
+
+    @Test
+    void theThreadsWaitWithoutAlertsAndWakeWhenASaveAddsThem() throws InterruptedException {
+        save.setNotificationAlerts(List.of());
+        sut.start();
+        try {
+            assertTrue(eventually(() -> state("notification-lights") == Thread.State.WAITING), "the lights wait");
+            assertTrue(eventually(() -> state("notification-lights-titles") == Thread.State.WAITING), "the titles wait");
+
+            save.setNotificationAlerts(List.of(new NotificationAlert(AlertTrigger.WINDOW_TITLE, "", "knob:0", "#ff0000", false, null, false, null,
+                    null, null, "ringing", null)));
+            sut.onSave(new SaveService.SaveEvent(save, false));
+
+            assertTrue(eventually(() -> state("notification-lights") == Thread.State.TIMED_WAITING), "the lights tick again");
+            assertTrue(eventually(() -> mockingDetails(sut.windowTitles).getInvocations().stream()
+                                                                         .anyMatch(i -> i.getMethod().getName().equals("titles"))), "the titles are read");
+        } finally {
+            sut.stop();
+        }
+    }
+
+    private static Thread.State state(String name) {
+        return Thread.getAllStackTraces().keySet().stream().filter(t -> t.getName().equals(name)).findFirst()
+                     .map(Thread::getState).orElse(Thread.State.TERMINATED);
+    }
+
+    private static boolean eventually(BooleanSupplier condition) throws InterruptedException {
+        var deadline = System.currentTimeMillis() + 5_000;
+        while (System.currentTimeMillis() < deadline) {
+            if (condition.getAsBoolean()) {
+                return true;
+            }
+            Thread.sleep(20);
+        }
+        return condition.getAsBoolean();
     }
 }

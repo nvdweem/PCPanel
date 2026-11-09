@@ -16,7 +16,9 @@ import com.getpcpanel.device.Device;
 import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.device.lightshow.LightShow.Layout;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.profile.WindowFocusChangedEvent;
+import com.getpcpanel.profile.dto.NotificationAlert;
 import com.getpcpanel.profile.dto.NotificationAlert.AlertTrigger;
 import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
 import com.getpcpanel.profile.dto.SingleKnobLightingConfig.SINGLE_KNOB_MODE;
@@ -66,6 +68,8 @@ public class AlertService implements IOverrideColorProviderProvider {
     private static final long MIC_POLL_MS = 1_000;
     private static final long NOTIFICATION_POLL_MS = 2_000;
     private static final long TITLE_POLL_MS = 1_000;
+    /** What {@link #tick} returns when nothing can light up until a save, preview or flash wakes the thread. */
+    static final long UNTIL_WOKEN = -1;
 
     @Inject SaveService save;
     @Inject DeviceHolder devices;
@@ -148,12 +152,36 @@ public class AlertService implements IOverrideColorProviderProvider {
     }
 
     void onFlash(@Observes TaskbarFlashEvent event) {
-        state.configure(save.get().getNotificationAlerts());
+        configure(save.get().getNotificationAlerts());
         state.onFlash(event.exe(), System.currentTimeMillis());
+        wake(thread);
     }
 
     void onFocus(@Observes WindowFocusChangedEvent event) {
         state.onFocus(event.application());
+        wake(thread);
+    }
+
+    /** A save may add, change or remove alerts: takes them in, then has the lights brought up to date. */
+    void onSave(@Observes SaveEvent event) {
+        configure(save.get().getNotificationAlerts());
+        wake(thread);
+    }
+
+    /**
+     * Takes in the saved alerts, and wakes the titles thread when they changed, so it starts or stops reading titles.
+     * The state changes first, so the woken thread sees the new alerts.
+     */
+    private void configure(List<NotificationAlert> configured) {
+        if (state.configure(configured)) {
+            wake(titleThread);
+        }
+    }
+
+    private static void wake(@Nullable Thread t) {
+        if (t != null) {
+            LockSupport.unpark(t);
+        }
     }
 
     /** Notification senders seen, for picking an alert's source. */
@@ -167,12 +195,9 @@ public class AlertService implements IOverrideColorProviderProvider {
         if (index < 0 || index >= configured.size()) {
             return false;
         }
-        state.configure(configured);
+        configure(configured);
         state.preview(index, System.currentTimeMillis() + PREVIEW_MS);
-        var t = thread;
-        if (t != null) {
-            LockSupport.unpark(t); // show it now rather than at the next tick
-        }
+        wake(thread); // show it now rather than at the next tick
         return true;
     }
 
@@ -184,7 +209,11 @@ public class AlertService implements IOverrideColorProviderProvider {
             } catch (Throwable t) {
                 log.warn("Notification lights failed to update", t);
             }
-            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(wait));
+            if (wait == UNTIL_WOKEN) {
+                LockSupport.park();
+            } else {
+                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(wait));
+            }
         }
     }
 
@@ -192,7 +221,11 @@ public class AlertService implements IOverrideColorProviderProvider {
         var reading = false;
         while (running) {
             reading = pollTitlesOnce(reading);
-            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(TITLE_POLL_MS));
+            if (state.hasTrigger(AlertTrigger.WINDOW_TITLE)) {
+                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(TITLE_POLL_MS));
+            } else {
+                LockSupport.park(); // until the alerts change
+            }
         }
     }
 
@@ -222,7 +255,10 @@ public class AlertService implements IOverrideColorProviderProvider {
         }
     }
 
-    /** Brings the lights up to date; returns how many milliseconds until they need it again. */
+    /**
+     * Brings the lights up to date; returns how many milliseconds until they need it again, or {@link #UNTIL_WOKEN} when
+     * no alert is switched on and none is lit.
+     */
     long tick(long now) {
         synchronized (ticking) {
             return shutDown ? AlertState.TICK_MS : update(now);
@@ -230,7 +266,7 @@ public class AlertService implements IOverrideColorProviderProvider {
     }
 
     private long update(long now) {
-        state.configure(save.get().getNotificationAlerts());
+        configure(save.get().getNotificationAlerts());
         if (now - micPolledAt >= MIC_POLL_MS) {
             micPolledAt = now;
             state.onMicUsers(state.hasTrigger(AlertTrigger.MIC_IN_USE) ? micUsage.appsUsingMic() : Set.of(), now);
@@ -267,7 +303,7 @@ public class AlertService implements IOverrideColorProviderProvider {
             }
         }
         alertLighting.retain(serials);
-        return frame.nextTickMs();
+        return frame.indexes().isEmpty() && !state.anyEnabled() ? UNTIL_WOKEN : frame.nextTickMs();
     }
 
     /** Whether one of {@code targets} is a light {@code device} has. */
