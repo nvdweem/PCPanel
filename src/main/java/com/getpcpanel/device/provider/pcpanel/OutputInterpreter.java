@@ -59,6 +59,11 @@ public final class OutputInterpreter {
     private static final byte PREFIX_MINI = 6;
     private static final byte PREFIX_PRO = 5;
     private static final int MAX_BYTE = 255;
+    /**
+     * What a light that is off shows. The panel keeps a light's last colour for an empty (all-zero) entry, so a light
+     * set to off is sent as static black.
+     */
+    private static final String OFF = "#000000";
 
     public void sendInit(String deviceSerialNumber) {
         var handler = deviceScanner.getConnectedDevice(deviceSerialNumber);
@@ -105,7 +110,7 @@ public final class OutputInterpreter {
             lightBrightness[i] = knob == null ? null : knob.getOverrideBrightness();
             var mode = knob == null || knob.getMode() == null ? SingleKnobLightingConfig.SINGLE_KNOB_MODE.NONE : knob.getMode();
             switch (mode) {
-                case NONE -> colors[i] = "#000000";
+                case NONE -> colors[i] = OFF;
                 case STATIC, AUDIO_LEVEL -> colors[i] = knob.getColor1();
                 case VOLUME_GRADIENT -> {
                     colors[i] = knob.getColor2();
@@ -278,7 +283,8 @@ public final class OutputInterpreter {
         for (var knobConfig : knobConfigs) {
             knobData.light(knobConfig.getOverrideBrightness()).mark();
             var ignored = switch (knobConfig.getMode()) {
-                case NONE -> knobData;
+                case NONE -> knobData.append(COLOR_STATIC)
+                                     .appendHex(OFF);
                 // An audio-level light without a live level (no meter here) shows its loud colour.
                 case STATIC, AUDIO_LEVEL -> {
                     var c1 = knobConfig.getColor1();
@@ -305,7 +311,8 @@ public final class OutputInterpreter {
             var sliderLabelConfig = overrideColorService.getSliderLabelOverride(deviceSerial, i).orElse(sliderLabelConfigs[i]);
             sliderLabelData.mark();
             var ignored = switch (sliderLabelConfig.getMode()) {
-                case NONE -> sliderLabelData;
+                case NONE -> sliderLabelData.append(COLOR_STATIC)
+                                            .appendHex(OFF);
                 case STATIC -> {
                     var c1 = sliderLabelConfig.getColor();
                     yield sliderLabelData.append(1)
@@ -332,7 +339,9 @@ public final class OutputInterpreter {
         for (var sliderConfig : sliderConfigs) {
             sliderData.light(sliderConfig.getOverrideBrightness()).mark();
             var ignored = switch (sliderConfig.getMode()) {
-                case NONE -> sliderData;
+                case NONE -> sliderData.append(COLOR_STATIC)
+                                       .appendHex(OFF)
+                                       .appendHex(OFF);
                 case STATIC, AUDIO_LEVEL -> {
                     var c1 = sliderConfig.getColor1();
                     yield sliderData.append(1)
@@ -359,7 +368,7 @@ public final class OutputInterpreter {
     static byte[] buildLogoData(int brightness, SingleLogoLightingConfig logoConfig) {
         var logoData = new ByteWriter(brightness).light(logoConfig.getOverrideBrightness()).append(PREFIX_PRO, CUSTOM_LOGO);
         var ignored = switch (logoConfig.getMode()) {
-            case NONE -> logoConfig;
+            case NONE -> logoData.append(COLOR_STATIC).appendHex(OFF);
             case STATIC, AUDIO_LEVEL -> {
                 var c1 = logoConfig.getColor();
                 yield logoData.append(COLOR_STATIC).appendHex(c1);
