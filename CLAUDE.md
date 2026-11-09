@@ -671,6 +671,11 @@ Key constraints baked into those args, change with care:
   GNU ld / ld64, so never add them to the shared block.
 - Reachability metadata lives under `src/main/resources/META-INF/native-image/`. Regenerate it with
   the tracing agent via `generate-native-configs.cmd` (Windows) or the commands in README.md.
+- **The unit tests also run under the tracing agent.** CI's metadata step (`mvn -Pnative-config-gen test`) runs the
+  whole suite with the native-image agent attached, and under it Mockito cannot mock a non-public interface (it
+  defines the mock in a separate class loader and refuses a non-public type). Fake such an interface by hand, as
+  `OsxSystemMediaKeysTest` does, or make it public, as `Tap` is. A test that errors there only shows up as the
+  "metadata generation failed" warning, and the native build then goes ahead with incomplete metadata.
 - A REST DTO returning `List<SomeRecordDto>` needs **both** the element record and its array type
   (`SomeRecordDto[]`) registered for reflection — Jackson reflectively instantiates the array per
   `List` during serialization. The tracing agent only records what it observes, so an endpoint traced
