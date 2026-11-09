@@ -8,7 +8,7 @@ import { DeviceStateService } from '../../services/device-state.service';
 import { DeviceService } from '../../services/device.service';
 import { IntegrationDataService } from '../../features/commands/integration-data.service';
 import { AppPickerComponent, BottomBarComponent, IconComponent, MenuComponent, MenuItem, ModalComponent, ToastService, ToggleComponent } from '../../ui';
-import { shortLabel } from '../../devices/visual/device-visual.util';
+import { ledScreenColor, shortLabel } from '../../devices/visual/device-visual.util';
 import { DeviceCapabilitiesService } from '../../services/device-capabilities.service';
 import { Commands, ProfileSettingsDto } from '../../models/generated/backend.types';
 
@@ -107,11 +107,13 @@ export class DeviceComponent {
   }
 
   knobColor(i: number): string {
-    return this.snap()?.dialColors?.[i] ?? '#FFB020';
+    const c = this.snap()?.dialColors?.[i];
+    return c ? ledScreenColor(c) : '#FFB020';
   }
 
   sliderColor(j: number): string {
-    return this.snap()?.sliderColors?.[j]?.[0] ?? '#FFB020';
+    const c = this.snap()?.sliderColors?.[j]?.[0];
+    return c ? ledScreenColor(c) : '#FFB020';
   }
 
   sliderRotateText(j: number): string {

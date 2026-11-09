@@ -7,7 +7,7 @@ import { Commands, LightingConfig } from '../../models/generated/backend.types';
 import { PcKnobComponent } from './pc-knob.component';
 import { PcFaderComponent } from './pc-fader.component';
 import { PcLogoComponent } from './pc-logo.component';
-import { analogPct, controlVisual, knobColor, overlayIconImageSrc, processNameOf, shortLabel } from './device-visual.util';
+import { analogPct, controlVisual, knobColor, ledScreenColor, overlayIconImageSrc, processNameOf, shortLabel } from './device-visual.util';
 import { resolveVolGrad } from '../pcpanel/lighting-animation';
 import { ControlClick, ControlKind } from './control-click';
 
@@ -20,11 +20,12 @@ interface ChipVM { tag?: string; icon?: string; label: string; slot?: 'press' | 
 interface KnobVM { index: number; label: string; pct: number; color: string; off: boolean; selected: boolean; chips: ChipVM[]; anim: string; dur: string; bmin: number; }
 interface FaderVM { index: number; label: string; pct: number; colors: string[]; labelColor: string; off: boolean; selected: boolean; chips: ChipVM[]; anim: string; dur: string; bmin: number; }
 
+/** Whether a screen colour (already through `ledScreenColor`) is dark enough to draw the control as unlit. */
 function nearBlack(hex: string): boolean {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
   if (!m) return false;
   const n = parseInt(m[1], 16);
-  return (0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255)) < 18;
+  return (0.299 * (n >> 16 & 255) + 0.587 * (n >> 8 & 255) + 0.114 * (n & 255)) < 8;
 }
 
 /** The Wave Link channel id a command acts on (so its Elgato icon can be looked up), or undefined. */
@@ -321,7 +322,8 @@ export class PcDeviceComponent {
       const segs = (s.sliderColors?.[j] ?? []).map(c => controlVisual(c, cfg, '#2A2E37').fill);
       const first = segs[0] ?? '#2A2E37';
       const vis = controlVisual(s.sliderColors?.[j]?.[0], cfg, '#2A2E37');
-      const labelColor = s.sliderLabelColors?.[j] || first;
+      const label = s.sliderLabelColors?.[j];
+      const labelColor = label ? ledScreenColor(label) : first;
       const off = segs.every(nearBlack);
       out.push({
         index: analogIdx, label: `S${j + 1}`, pct: analogPct(s.analogValues?.[analogIdx]),

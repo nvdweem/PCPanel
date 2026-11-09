@@ -38,12 +38,31 @@ function localPathOf(value: string): string | undefined {
   }
 }
 
-/** Resolve a backend color (possibly a $RAINBOW!/$BREATH token) + the device's
- *  global animation context into an SVG/CSS-ready {fill, animClass, ...}. */
+/** The colour a screen shows for a light set to `color`. The panel drives each LED channel in proportion to its
+ *  value, so a light set to `#1a0000` glows a clearly visible red, while a screen treats channel values as
+ *  sRGB-encoded and draws the same hex as near black. Encoding each channel as sRGB makes the preview show what
+ *  the panel shows. Anything other than a `#rrggbb` colour (an animation token) is returned unchanged. */
+export function ledScreenColor(color: string): string {
+  const m = /^#([0-9a-f]{6})$/i.exec(color);
+  if (!m) return color;
+  const n = parseInt(m[1], 16);
+  return '#' + [n >> 16 & 255, n >> 8 & 255, n & 255]
+    .map(v => Math.round(srgbEncode(v / 255) * 255).toString(16).padStart(2, '0'))
+    .join('');
+}
+
+function srgbEncode(linear: number): number {
+  return linear <= 0.0031308 ? 12.92 * linear : 1.055 * Math.pow(linear, 1 / 2.4) - 0.055;
+}
+
+/** Resolve a backend light color (possibly a $RAINBOW!/$BREATH token) + the device's
+ *  global animation context into an SVG/CSS-ready {fill, animClass, ...}. The fallback is a UI colour and is
+ *  used as is. */
 export function controlVisual(color: string | undefined, config: LightingConfig | null | undefined, fallback: string): ColorVisual {
-  if (!config) return { fill: color || fallback, animClass: '', animDuration: '0s', breathMin: 0.18 };
+  const fill = color ? ledScreenColor(color) : fallback;
+  if (!config) return { fill, animClass: '', animDuration: '0s', breathMin: 0.18 };
   return resolveColorVisual(
-    color || fallback,
+    fill,
     lightingAnimClass(config),
     lightingAnimDuration(config),
     lightingBreathMin(config),
