@@ -295,10 +295,11 @@ export class PcDeviceComponent {
     for (let i = 0; i < total; i++) {
       const pct = analogPct(s.analogValues?.[i]);
       // A volume-gradient knob's colour is a $VOLGRAD! token resolved against the live value here;
-      // a plain colour (static / mute-override) passes through unchanged.
-      const raw = knobColor(s.dialColors, i, total, cfg, '#2A2E37');
+      // a plain colour (static / mute-override) passes through unchanged. No light colour leaves it empty, so
+      // controlVisual uses the UI fallback as is rather than converting it like a light colour.
+      const raw = knobColor(s.dialColors, i, total, cfg, '');
       const color = resolveVolGrad(raw, pct) ?? raw;
-      const vis = controlVisual(color, cfg, '#2A2E37');
+      const vis = controlVisual(color || undefined, cfg, '#2A2E37');
       const off = nearBlack(vis.fill);
       const selected = this.selectedKind() === 'dial' && this.selectedIndex() === i;
       out.push({
