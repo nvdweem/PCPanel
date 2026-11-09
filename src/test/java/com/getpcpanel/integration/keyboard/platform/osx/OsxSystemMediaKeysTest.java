@@ -2,13 +2,13 @@ package com.getpcpanel.integration.keyboard.platform.osx;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-import static org.mockito.ArgumentMatchers.any;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.annotation.Nullable;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -28,65 +28,84 @@ class OsxSystemMediaKeysTest {
 
     @Test
     void completePairIsPreparedBeforePostingAndPoolOutlivesBothPosts() {
-        var events = mock(OsxSystemMediaKeys.Events.class);
-        var pool = Pointer.createConstant(1);
-        var down = Pointer.createConstant(2);
-        var up = Pointer.createConstant(3);
-        var downCg = Pointer.createConstant(4);
-        var upCg = Pointer.createConstant(5);
-        when(events.pushPool()).thenReturn(pool);
-        when(events.create(16, true)).thenReturn(down);
-        when(events.create(16, false)).thenReturn(up);
-        when(events.cgEvent(down)).thenReturn(downCg);
-        when(events.cgEvent(up)).thenReturn(upCg);
+        var events = new RecordingEvents();
 
         new OsxSystemMediaKeys(events).send(VolumeButton.playPause);
 
-        var ordered = inOrder(events);
-        ordered.verify(events).pushPool();
-        ordered.verify(events).create(16, true);
-        ordered.verify(events).create(16, false);
-        ordered.verify(events).cgEvent(down);
-        ordered.verify(events).cgEvent(up);
-        ordered.verify(events).post(downCg);
-        ordered.verify(events).post(upCg);
-        ordered.verify(events).popPool(pool);
+        assertEquals(List.of("pushPool", "create 16 down", "create 16 up", "cgEvent 2", "cgEvent 3", "post 4", "post 5", "popPool 1"),
+                events.calls);
     }
 
     @Test
     void failedReleaseConstructionDoesNotPostAPartialPressAndReleasesPool() {
-        var events = mock(OsxSystemMediaKeys.Events.class);
-        var pool = Pointer.createConstant(1);
-        when(events.pushPool()).thenReturn(pool);
-        when(events.create(16, true)).thenReturn(Pointer.createConstant(2));
+        var events = new RecordingEvents();
+        events.created.put(false, null);
 
         assertThrows(IllegalStateException.class, () -> new OsxSystemMediaKeys(events).send(VolumeButton.playPause));
 
-        verify(events, never()).post(any());
-        verify(events).popPool(pool);
+        assertEquals(List.of("pushPool", "create 16 down", "create 16 up", "popPool 1"), events.calls);
     }
 
     @Test
     void failedCgConversionDoesNotPostAPartialPressAndReleasesPool() {
-        var events = mock(OsxSystemMediaKeys.Events.class);
-        var pool = Pointer.createConstant(1);
-        var down = Pointer.createConstant(2);
-        var up = Pointer.createConstant(3);
-        when(events.pushPool()).thenReturn(pool);
-        when(events.create(16, true)).thenReturn(down);
-        when(events.create(16, false)).thenReturn(up);
-        when(events.cgEvent(down)).thenReturn(Pointer.createConstant(4));
+        var events = new RecordingEvents();
+        events.converted.put(3L, null);
 
         assertThrows(IllegalStateException.class, () -> new OsxSystemMediaKeys(events).send(VolumeButton.playPause));
 
-        verify(events, never()).post(any());
-        verify(events).popPool(pool);
+        assertEquals(List.of("pushPool", "create 16 down", "create 16 up", "cgEvent 2", "cgEvent 3", "popPool 1"), events.calls);
     }
 
     @Test
     void unsupportedActionDoesNotLoadNativeFrameworks() {
-        var events = mock(OsxSystemMediaKeys.Events.class);
+        var events = new RecordingEvents();
+
         assertThrows(IllegalArgumentException.class, () -> new OsxSystemMediaKeys(events).send(VolumeButton.stop));
-        verifyNoInteractions(events);
+
+        assertEquals(List.of(), events.calls);
+    }
+
+    /**
+     * Writes down every call with its arguments, as the address of each pointer. A hand-written fake rather than a
+     * Mockito mock: {@code Events} is package-private, and Mockito cannot mock a package-private interface under the
+     * native-image tracing agent (the CI metadata run). The pool is 1, the press 2 and the release 3, converted to
+     * 4 and 5; an entry in {@link #created} or {@link #converted} overrides that, {@code null} for a failure.
+     */
+    private static final class RecordingEvents implements OsxSystemMediaKeys.Events {
+        final List<String> calls = new ArrayList<>();
+        final Map<Boolean, Pointer> created = new HashMap<>(Map.of(true, Pointer.createConstant(2), false, Pointer.createConstant(3)));
+        final Map<Long, Pointer> converted = new HashMap<>(Map.of(2L, Pointer.createConstant(4), 3L, Pointer.createConstant(5)));
+
+        @Override
+        public Pointer pushPool() {
+            calls.add("pushPool");
+            return Pointer.createConstant(1);
+        }
+
+        @Override
+        public void popPool(Pointer pool) {
+            calls.add("popPool " + address(pool));
+        }
+
+        @Override
+        public @Nullable Pointer create(int key, boolean down) {
+            calls.add("create " + key + (down ? " down" : " up"));
+            return created.get(down);
+        }
+
+        @Override
+        public @Nullable Pointer cgEvent(Pointer event) {
+            calls.add("cgEvent " + address(event));
+            return converted.get(address(event));
+        }
+
+        @Override
+        public void post(Pointer event) {
+            calls.add("post " + address(event));
+        }
+
+        private static long address(Pointer p) {
+            return Pointer.nativeValue(p);
+        }
     }
 }
