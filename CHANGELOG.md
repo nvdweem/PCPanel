@@ -2,6 +2,7 @@
 
 <!-- Releasenotes without version are included in releases -->
 
+- The device view shows dim light colours the way the panel shows them: a light set to a dark colour such as `#03001a` glows visibly on the panel, and now shows as a visible colour on screen too, instead of looking switched off.
 - (macOS) Turning an app's volume down or muting it with PCPanel no longer stops the Mac from going to sleep on its own. The Mac still stays awake while that app plays sound, as it does without PCPanel.
 - (macOS) PCPanel uses less power while an app you turned down or muted is quiet.
 - (macOS) App-volume sliders targeting several apps and focused-app volume controls respond faster. PCPanel also avoids capturing its own audio when launched from a terminal.
