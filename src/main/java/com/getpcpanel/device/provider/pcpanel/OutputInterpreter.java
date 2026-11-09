@@ -305,10 +305,18 @@ public final class OutputInterpreter {
     }
 
     private byte[] buildSliderLabelData(String deviceSerial, int brightness, SingleSliderLabelLightingConfig[] sliderLabelConfigs) {
+        var resolved = new SingleSliderLabelLightingConfig[sliderLabelConfigs.length];
+        for (var i = 0; i < sliderLabelConfigs.length; i++) {
+            resolved[i] = overrideColorService.getSliderLabelOverride(deviceSerial, i).orElse(sliderLabelConfigs[i]);
+        }
+        return buildSliderLabelData(brightness, resolved);
+    }
+
+    /** The slider label lights, overrides already applied. */
+    static byte[] buildSliderLabelData(int brightness, SingleSliderLabelLightingConfig[] sliderLabelConfigs) {
         var sliderLabelData = new ByteWriter(brightness).append(PREFIX_PRO, CUSTOM_SLIDER_LABEL);
 
-        for (var i = 0; i < sliderLabelConfigs.length; i++) {
-            var sliderLabelConfig = overrideColorService.getSliderLabelOverride(deviceSerial, i).orElse(sliderLabelConfigs[i]);
+        for (var sliderLabelConfig : sliderLabelConfigs) {
             sliderLabelData.mark();
             var ignored = switch (sliderLabelConfig.getMode()) {
                 case NONE -> sliderLabelData.append(COLOR_STATIC)

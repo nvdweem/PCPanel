@@ -8,6 +8,8 @@ import com.getpcpanel.profile.dto.SingleKnobLightingConfig;
 import com.getpcpanel.profile.dto.SingleKnobLightingConfig.SINGLE_KNOB_MODE;
 import com.getpcpanel.profile.dto.SingleLogoLightingConfig;
 import com.getpcpanel.profile.dto.SingleLogoLightingConfig.SINGLE_LOGO_MODE;
+import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig;
+import com.getpcpanel.profile.dto.SingleSliderLabelLightingConfig.SINGLE_SLIDER_LABEL_MODE;
 import com.getpcpanel.profile.dto.SingleSliderLightingConfig;
 import com.getpcpanel.profile.dto.SingleSliderLightingConfig.SINGLE_SLIDER_MODE;
 
@@ -23,6 +25,13 @@ class OutputInterpreterOffTest {
         return out;
     }
 
+    private static SingleSliderLabelLightingConfig label(SINGLE_SLIDER_LABEL_MODE mode, String color) {
+        var label = new SingleSliderLabelLightingConfig();
+        label.setMode(mode);
+        label.setColor(color);
+        return label;
+    }
+
     @Test
     void aKnobThatIsOffIsSentAsStaticBlack() {
         var data = OutputInterpreter.buildKnobData((byte) 5, PANEL, new SingleKnobLightingConfig[] {
@@ -31,6 +40,23 @@ class OutputInterpreterOffTest {
 
         assertArrayEquals(new int[] { 1, 0xFF, 0, 0 }, unsigned(data, 2, 6), "the lit knob");
         assertArrayEquals(new int[] { 1, 0, 0, 0, 0, 0, 0 }, unsigned(data, 9, 16), "the knob that is off");
+    }
+
+    @Test
+    void aMiniKnobThatIsOffIsSentAsStaticBlackEvenWithItsOwnBrightness() {
+        var data = OutputInterpreter.buildKnobData((byte) 6, PANEL, new SingleKnobLightingConfig[] {
+                new SingleKnobLightingConfig().setMode(SINGLE_KNOB_MODE.NONE).setOverrideBrightness(100) });
+
+        assertArrayEquals(new int[] { 6, 2, 1, 0, 0, 0 }, unsigned(data, 0, 6));
+    }
+
+    @Test
+    void aSliderLabelThatIsOffIsSentAsStaticBlack() {
+        var data = OutputInterpreter.buildSliderLabelData(PANEL, new SingleSliderLabelLightingConfig[] {
+                label(SINGLE_SLIDER_LABEL_MODE.STATIC, "#00FF00"), label(SINGLE_SLIDER_LABEL_MODE.NONE, null) });
+
+        assertArrayEquals(new int[] { 1, 0, 0xFF, 0 }, unsigned(data, 2, 6), "the lit label");
+        assertArrayEquals(new int[] { 1, 0, 0, 0 }, unsigned(data, 9, 13), "the label that is off");
     }
 
     @Test
