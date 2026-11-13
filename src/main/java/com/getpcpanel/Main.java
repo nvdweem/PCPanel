@@ -70,8 +70,10 @@ public class Main implements QuarkusApplication {
     /**
      * Whether to bypass the single-instance file check. The {@code skipfilecheck} arg (IDE/side-by-side
      * launches) and the {@code pcpanel.skip-file-check} system property both suppress it. The {@code %dev}
-     * profile sets that property as MicroProfile config, but dev mode does not run {@link #main} at all —
-     * it invokes {@link #run} directly — so this pre-boot gate never fires there.
+     * profile's {@code pcpanel.skip-file-check} is MicroProfile config, not a system property, so it does not
+     * reach this gate: dev mode runs {@link #main} (again on every live reload) and takes the lock like any
+     * other start. A reload finds the lock already held by its own process, which
+     * {@link FileChecker#heldByAnotherProcess} counts as no duplicate.
      */
     @SuppressWarnings("AccessOfSystemProperties")
     private static boolean skipFileCheck(Set<String> argSet) {
@@ -138,6 +140,7 @@ public class Main implements QuarkusApplication {
         var root = PcPanelRoot.resolve();
         System.setProperty("pcpanel.root", root.toString());
         System.setProperty("quarkus.log.file.path", root.resolve("logs").resolve("logging.log").toString());
+        System.setProperty("quarkus.log.handler.file.\"lighting-trace\".path", root.resolve("logs").resolve("lighting-trace.log").toString());
     }
 
     /**
@@ -168,12 +171,16 @@ public class Main implements QuarkusApplication {
     public int run(String... args) throws Exception {
         // The single-instance lock is taken in main(), before the container starts. Now that CDI is up,
         // begin watching for a later relaunch so we can raise the window. No-op when the check was skipped
-        // (skipfilecheck / %dev), so nothing holds the lock.
+        // (the skipfilecheck arg), so nothing holds the lock.
         FileChecker.startWatching();
-        // On macOS this thread is the process's first, the only one AppKit runs on: the menu bar icon runs its event
-        // loop here until Quarkus is asked to exit. Anywhere else, or without the icon, this thread just waits.
-        if (!CdiHelper.getOptionalBean(MacMenuBar.class).map(MacMenuBar::runOnMainThread).orElse(false)) {
-            Quarkus.waitForExit();
+        try {
+            // On macOS this thread is the process's first, the only one AppKit runs on: the menu bar icon runs its event
+            // loop here until Quarkus is asked to exit. Anywhere else (or without the icon) this thread just waits.
+            if (!CdiHelper.getOptionalBean(MacMenuBar.class).map(MacMenuBar::runOnMainThread).orElse(false)) {
+                Quarkus.waitForExit();
+            }
+        } finally {
+            FileChecker.stopWatching(); // a dev-mode restart starts a watcher of its own
         }
         return 0;
     }

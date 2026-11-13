@@ -7,6 +7,9 @@ import com.getpcpanel.util.concurrent.AppThreads;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.channels.FileChannel;
+import java.nio.channels.OverlappingFileLockException;
+import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.StandardWatchEventKinds;
@@ -23,6 +26,8 @@ public class FileChecker implements Runnable {
     private static volatile FileChecker instance;
     @SuppressWarnings("FieldCanBeLocal") // If this field is local then the lock will be released.
     private RandomAccessFile randomFile;
+    private volatile WatchService watcher;
+    private volatile boolean stopped;
 
     // Resolved at call time (runtime), never cached in a static field: a static initializer runs at
     // native-image BUILD time, which would bake in the build machine's user.home (e.g. the CI runner's
@@ -91,6 +96,28 @@ public class FileChecker implements Runnable {
         AppThreads.named("File Checker Thread", true, checker).start();
     }
 
+    /**
+     * Ends the watch when the app it serves stops, so a dev-mode restart does not leave this app's watcher reacting
+     * to relaunches on behalf of a container that is gone. The single-instance lock stays held until the process
+     * exits: released any earlier, a relaunch could connect to the panel while this instance is still switching its
+     * lights off.
+     */
+    public static void stopWatching() {
+        var checker = instance;
+        if (checker == null) {
+            return;
+        }
+        checker.stopped = true;
+        var service = checker.watcher;
+        if (service != null) {
+            try {
+                service.close();
+            } catch (IOException e) {
+                log.debug("Unable to close the relaunch watcher", e);
+            }
+        }
+    }
+
     public FileChecker() {
         if (!reopenFile().delete()) {
             log.trace("Unable to delete {}", reopenFile());
@@ -103,9 +130,22 @@ public class FileChecker implements Runnable {
 
     private boolean isDuplicate() throws IOException {
         randomFile = new RandomAccessFile(lockFile(), "rw");
-        var channel = randomFile.getChannel();
-        var lock = channel.tryLock();
-        return lock == null;
+        return heldByAnotherProcess(randomFile.getChannel());
+    }
+
+    /**
+     * Whether another process holds the single-instance lock; takes it otherwise. A lock this process already holds
+     * is no duplicate: that is a dev-mode live reload, which runs {@code Main.main()} again in the same JVM (in a new
+     * class loader, so with fresh statics) while the previous start's lock is still held. Java refuses a second lock
+     * on the file within one process; the reloaded start carries on without one.
+     */
+    static boolean heldByAnotherProcess(FileChannel channel) throws IOException {
+        try {
+            return channel.tryLock() == null;
+        } catch (OverlappingFileLockException e) {
+            log.info("This process already holds the single-instance lock (a dev-mode restart); carrying on.");
+            return false;
+        }
     }
 
     private static void signalRunningInstanceAndExit(boolean userLaunch) throws IOException {
@@ -157,6 +197,10 @@ public class FileChecker implements Runnable {
             log.error("Unable to start watch service", e);
             return;
         }
+        this.watcher = watcher;
+        if (stopped) { // stopWatching() ran before the service existed
+            stopWatching();
+        }
         var folder = reopenFile().getParentFile().toPath();
         WatchKey watchkey = null;
         try {
@@ -164,7 +208,7 @@ public class FileChecker implements Runnable {
         } catch (IOException e) {
             log.error("Unable to register for event in file checker", e);
         }
-        while (started.get()) {
+        while (started.get() && !stopped) {
             try {
                 var key = watcher.take();
                 key.reset();
@@ -182,6 +226,8 @@ public class FileChecker implements Runnable {
                         AppEvents.fire(new ShowMainEvent());
                     }
                 }
+            } catch (ClosedWatchServiceException e) {
+                break; // stopWatching()
             } catch (Exception e) {
                 log.error("Error in checking file", e);
             }
