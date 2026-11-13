@@ -49,6 +49,7 @@ class SaveServiceHistoryTest {
         sut.templateMigration = new TemplateSaveMigration();
         sut.eventBus = new NoEvents();
         sut.debouncer = new com.getpcpanel.util.concurrent.Debouncer();
+        sut.originalSaveFile = () -> null; // never the machine's own original-software save or its dialog
         sut.load();
 
         sut.get().createSaveForNewDevice("dev", DeviceType.PCPANEL_PRO);

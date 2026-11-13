@@ -14,6 +14,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
 
@@ -454,12 +455,23 @@ public class SaveService {
         oldVersionEncountered = version.replace('.', '_');
     }
 
-    private void tryMigrate(File saveFile) {
+    /**
+     * Where the original PCPanel software keeps its save file; null where there is none. A field so a test can point
+     * it elsewhere: on a machine that has run the original software, migration asks with a modal dialog, which would
+     * otherwise hold a test run until someone answers it.
+     */
+    Supplier<File> originalSaveFile = SaveService::originalSoftwareSaveFile;
+
+    private static File originalSoftwareSaveFile() {
         @SuppressWarnings("CallToSystemGetenv") var localAppData = System.getenv("LOCALAPPDATA");
-        if (localAppData == null) { // Not Windows: nothing to migrate from
+        return localAppData == null ? null : new File(localAppData, "PCPanel Software/save.json"); // null: not Windows
+    }
+
+    private void tryMigrate(File saveFile) {
+        var oldFile = originalSaveFile.get();
+        if (oldFile == null) {
             return;
         }
-        var oldFile = new File(localAppData, "PCPanel Software/save.json");
         if (oldFile.exists() && confirmMigrate()) {
             try {
                 Files.copy(oldFile.toPath(), saveFile.toPath());
