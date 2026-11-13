@@ -9,6 +9,7 @@ import { PlatformService } from '../../services/platform.service';
 import { DebugService, DeviceTypeOverride, OsOverride } from '../../services/debug.service';
 import { UpdateService } from '../../services/update.service';
 import { AutostartService } from '../../services/autostart.service';
+import { LightingTraceService } from '../../services/lighting-trace.service';
 import { DeviceStateService } from '../../services/device-state.service';
 import { HistoryService } from '../../services/history.service';
 import {
@@ -64,6 +65,7 @@ export class SettingsComponent {
   readonly debug = inject(DebugService);
   readonly updates = inject(UpdateService);
   readonly autostart = inject(AutostartService);
+  readonly lightingTrace = inject(LightingTraceService);
   readonly state = inject(DeviceStateService);
   private readonly history = inject(HistoryService);
 

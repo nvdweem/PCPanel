@@ -1,5 +1,6 @@
 package com.getpcpanel.device.provider.pcpanel;
 
+import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;
@@ -36,8 +37,11 @@ public class DeviceCommunicationHandler {
     private final Event<Object> eventBus;
     private final DeviceScanner deviceScanner;
     private final SaveService saveService;
+    private final LightingTrace trace;
     private final String key;
     private final HidDevice device;
+    /** How long without a lighting write before the last state is sent again; zero turns that off. */
+    private final Duration lightingRefresh;
 
     private static final int COM_TIMEOUT_MILLIS = 100;
     /**
@@ -61,9 +65,12 @@ public class DeviceCommunicationHandler {
     private Thread readerThread;
     private Thread writerThread;
 
-    public DeviceCommunicationHandler(DeviceScanner deviceScanner, SaveService saveService, Event<Object> eventBus, String key, HidDevice device, DeviceDescriptor descriptor) {
+    public DeviceCommunicationHandler(DeviceScanner deviceScanner, SaveService saveService, LightingTrace trace, Event<Object> eventBus, String key, HidDevice device,
+            DeviceDescriptor descriptor, Duration lightingRefresh) {
+        this.lightingRefresh = lightingRefresh;
         this.deviceScanner = deviceScanner;
         this.saveService = saveService;
+        this.trace = trace;
         this.eventBus = eventBus;
         this.key = key;
         this.device = device;
@@ -123,11 +130,13 @@ public class DeviceCommunicationHandler {
     }
 
     public void sendMessage(byte[]... data) {
+        trace.requested(key, "message", data);
         output.enqueue(data);
     }
 
     /** Sets the complete LED state; replaces a previous state that has not been written yet. */
     public void sendLighting(byte[]... data) {
+        trace.requested(key, "lighting", data);
         output.replaceLighting(data);
     }
 
@@ -144,7 +153,9 @@ public class DeviceCommunicationHandler {
                 switch (val) {
                     case -1 -> {
                         if (!stopping.get()) {
-                            log.error("DCH ERR: {}", device.getLastErrorMessage());
+                            var error = device.getLastErrorMessage();
+                            log.error("DCH ERR: {}", error);
+                            trace.device(key, "read error, dropping the device: " + error);
                             deviceScanner.deviceRemoved(key, device);
                         }
                         return;
@@ -166,10 +177,17 @@ public class DeviceCommunicationHandler {
         while (isConnected()) {
             try {
                 var reports = output.next(WRITER_IDLE_CHECK_MILLIS);
-                if (reports != null) {
+                if (reports == null) {
+                    output.refreshLighting(lightingRefresh);
+                } else {
                     try {
-                        for (var report : reports) {
-                            sendMessageReal(report);
+                        var results = new int[reports.length];
+                        for (var i = 0; i < reports.length; i++) {
+                            results[i] = sendMessageReal(reports[i]);
+                        }
+                        if (trace.enabled()) {
+                            var failed = Arrays.stream(results).anyMatch(r -> r < 0);
+                            trace.written(key, reports, results, failed ? device.getLastErrorMessage() : null);
                         }
                     } finally {
                         output.written();
@@ -190,7 +208,8 @@ public class DeviceCommunicationHandler {
         return !stopping.get() && deviceScanner.getConnectedDevice(key) == this;
     }
 
-    private void sendMessageReal(byte[] info) {
+    /** Writes one report; returns hidapi's answer, negative on failure. */
+    private int sendMessageReal(byte[] info) {
         if (info.length > PACKET_LENGTH)
             throw new IllegalArgumentException("info cannot be greater than packet_length");
         var message = new byte[PACKET_LENGTH];
@@ -203,6 +222,7 @@ public class DeviceCommunicationHandler {
         } else {
             log.error("{} {}     {}", device.getLastErrorMessage(), val, Arrays.toString(info), new Exception().fillInStackTrace());
         }
+        return val;
     }
 
     void interpretInputData(boolean initial, byte[] data) {

@@ -160,8 +160,12 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
   duplicate check must happen pre-boot because the device layer connects to the shared PCPanel on the
   container's `StartupEvent` — if a second launch booted the container before detecting it was a
   duplicate, its own `ShutdownEvent` would `provider.stop()` and switch the LEDs off on the
-  still-running first instance. Dev mode never runs `main()` (Quarkus calls `run()` directly), so the
-  pre-boot check is inert there and `%dev.skip-file-check` only ever mattered to the old `run()`-time check.
+  still-running first instance. Dev mode does run `main()`, on the first start and again on every live
+  reload, so it takes the lock like any other start; `%dev.pcpanel.skip-file-check` is MicroProfile config,
+  which the pre-boot gate (a system property check) never reads. A reload runs in a new class loader while
+  the previous start's lock is still held by the same JVM, so `tryLock` throws `OverlappingFileLockException`;
+  `FileChecker.heldByAnotherProcess` counts that as no duplicate (`FileCheckerLockTest`). The lock is
+  deliberately never released before the process exits; `Main.run()` only stops the relaunch watcher.
   A duplicate launch only asks the running instance to open the UI when a **person** started it. The OS
   autostart entries (`HKCU\Run` and the elevated scheduled task) both pass the `quiet` arg —
   `Main.isAutostartLaunch` — and a duplicate marked that way exits silently. Windows can legitimately
@@ -251,7 +255,15 @@ firers and observers — keep it current when you add or remove an event.
 **Hardware path (`device/`):** the device layer is the hardware-abstraction layer (HAL) and is **not**
 an integration — it provides no commands. `DeviceScanner` (in `device/provider/pcpanel/`) discovers HID
 devices via hid4java; `DeviceCommunicationHandler` (one per device, own thread + queue, same package)
-reads knob/button input and writes RGB/output. `Device` subclasses (`PCPanelMini/Pro/RGB`, in `device/`)
+reads knob/button input and writes RGB/output. Its `HidOutputQueue` writes messages in order and lighting as
+the newest complete LED state only. A PCPanel Pro has been traced dropping its LEDs on its own for hours while its
+input kept working with no lighting sent by the app; one ordinary lighting write relit it. The firmware cannot be
+asked whether its lights are on (the descriptor declares a 1-byte feature report; every request for it fails
+with `ERROR_GEN_FAILURE`), so the writer re-sends the last lighting state it wrote after
+`pcpanel.lighting.refresh-interval` (default `5m`, `0s` off) without one. Every lighting write is a complete
+state, so the repeat restores exactly what the panel was last told (dark frames included). A refresh never
+overrides a newer state. Re-sending an unchanged static colour shows no flicker (watched on a Pro at 10 s); whether
+a firmware animation (rainbow, wave, breath) restarts on a repeat is unmeasured. `Device` subclasses (`PCPanelMini/Pro/RGB`, in `device/`)
 model each hardware variant; `DeviceHolder` (in `device/`) is the cross-provider registry. Physical input
 becomes a `PCPanelControlEvent` / `ButtonClickEvent` on the event bus.
 
@@ -515,6 +527,15 @@ then strips from the URL. Two rules to keep:
   from its own log line). `AccessLogSecretExclusionTest` guards this. `ApiExceptionLogger` complements
   it by logging the *reason* a matched resource rejected a request; a path matching no resource reaches
   only the access log, so the pair tells the two apart.
+- **The lighting trace (`device/provider/pcpanel/LightingTrace`, Settings → Debug) is the instrument for "the
+  lights went out by themselves".** Opt-in, kept on across restarts by a `lighting-trace.on` marker file in the
+  data dir (not in `Save`), it writes `${pcpanel.root}/logs/lighting-trace.log` (its own handler, not rotated on
+  boot; its path is re-resolved in `Main` for the native image like `logging.log`). Every report handed to a
+  PCPanel is logged with the app code that sent it (a stack walk past the device plumbing). A lighting state also
+  carries `LightingFrames`' verdict read from its bytes: `DARK` means the app told every light to show nothing. Each
+  write's hidapi result, connects, disconnects, hid4java attach/detach events, `SystemEvent`s and the user's
+  *Mark* go to the same file. `LightingFrames` reads reports with `OutputInterpreter`'s own codes, so a
+  protocol change belongs in both. Serials are masked to their last four characters.
 
 **Web-exposure security model:** the API has no per-request credential of its own, so two independent
 layers guard it — a *network-origin* layer and an *authentication* layer.

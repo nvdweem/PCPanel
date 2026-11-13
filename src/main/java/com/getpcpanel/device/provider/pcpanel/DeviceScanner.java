@@ -49,6 +49,7 @@ public class DeviceScanner implements HidServicesListener, DeviceProvider {
     private static final long RECONCILE_INTERVAL_MS = 3000;
     @Inject Event<Object> eventBus;
     @Inject DeviceCommunicationHandlerFactory deviceCommunicationHandlerFactory;
+    @Inject LightingTrace trace;
 
     private HidServices hidServices;
     private Thread reconcileThread;
@@ -181,6 +182,7 @@ public class DeviceScanner implements HidServicesListener, DeviceProvider {
             if (!device.isOpen() && !device.open()) {
                 // Log once per device; the reconcile thread keeps retrying, so we don't want to spam every interval.
                 if (failedToOpen.add(k)) {
+                    trace.device(k, "open failed; retrying");
                     log.error("Unable to open device {}, it won't be possible to use the panel yet; will keep retrying", k);
                     if (SystemUtils.IS_OS_MAC && !OsxPermissionHelper.isInputMonitoringGranted()) {
                         log.error("macOS requires the Input Monitoring permission: " +
@@ -205,6 +207,7 @@ public class DeviceScanner implements HidServicesListener, DeviceProvider {
         if (created[0] != null) {
             failedToOpen.remove(key);
             log.info("Connected to PCPanel {} ({})", key, deviceType);
+            trace.device(key, "connected (" + deviceType + ")");
             created[0].start();
             fireEvent(new DeviceConnectedEvent(key, deviceType, descriptor));
         }
@@ -215,8 +218,10 @@ public class DeviceScanner implements HidServicesListener, DeviceProvider {
             throw new IllegalArgumentException("serialNum or device cannot be null serialNum: " + key + " device: " + device);
         // Stop retrying a panel that has been unplugged (it may never have opened, so it is not in connectedDeviceMap).
         failedToOpen.remove(key);
-        if (connectedDeviceMap.remove(key) != null)
+        if (connectedDeviceMap.remove(key) != null) {
+            trace.device(key, "disconnected");
             fireEvent(new DeviceDisconnectedEvent(key));
+        }
     }
 
     private void foundPCPanel(HidDevice newPCPanel, DeviceType deviceType) {
@@ -241,12 +246,16 @@ public class DeviceScanner implements HidServicesListener, DeviceProvider {
 
     @Override
     public void hidDeviceAttached(HidServicesEvent event) {
-        determineType(event.getHidDevice()).ifPresent(type -> foundPCPanel(event.getHidDevice(), type));
+        determineType(event.getHidDevice()).ifPresent(type -> {
+            trace.device(event.getHidDevice().getSerialNumber(), "hid4java: attached");
+            foundPCPanel(event.getHidDevice(), type);
+        });
     }
 
     @Override
     public void hidDeviceDetached(HidServicesEvent event) {
         if (determineType(event.getHidDevice()).isPresent()) {
+            trace.device(event.getHidDevice().getSerialNumber(), "hid4java: detached");
             lostPCPanel(event.getHidDevice());
         }
     }
@@ -254,6 +263,7 @@ public class DeviceScanner implements HidServicesListener, DeviceProvider {
     @Override
     public void hidFailure(HidServicesEvent event) {
         if (determineType(event.getHidDevice()).isPresent()) {
+            trace.device(event.getHidDevice().getSerialNumber(), "hid4java: failure");
             lostPCPanel(event.getHidDevice());
         }
     }

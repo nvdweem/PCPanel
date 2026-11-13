@@ -19,6 +19,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.getpcpanel.device.DeviceHolder;
+import com.getpcpanel.device.provider.pcpanel.LightingTrace;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.report.dto.BugReportRequest;
 import com.getpcpanel.report.dto.BugReportResponse;
@@ -53,6 +54,7 @@ public class BugReportService {
     @Inject PlatformResource platform;
     @Inject DeviceHolder devices;
     @Inject ObjectMapper mapper;
+    @Inject LightingTrace lightingTrace;
 
     @ConfigProperty(name = "quarkus.log.file.path")
     String logFilePath;
@@ -104,15 +106,16 @@ public class BugReportService {
         return new BugReportResponse(fileName, target.getAbsolutePath(), issueUrl);
     }
 
-    /** The application log and the access log, each with its most recent rotation when one exists. */
+    /**
+     * The application log, the access log and the lighting trace, each with its most recent rotation when one exists.
+     * The trace is empty unless the user switched it on.
+     */
     private List<Path> logFiles() {
         var candidates = new ArrayList<Path>();
-        var appLog = Path.of(logFilePath);
-        candidates.add(appLog);
-        candidates.add(appLog.resolveSibling(appLog.getFileName() + ".1"));
-        var accessLog = Path.of(accessLogDirectory, accessLogBaseName + ".log");
-        candidates.add(accessLog);
-        candidates.add(accessLog.resolveSibling(accessLog.getFileName() + ".1"));
+        for (var file : List.of(Path.of(logFilePath), Path.of(accessLogDirectory, accessLogBaseName + ".log"), Path.of(lightingTrace.file()))) {
+            candidates.add(file);
+            candidates.add(file.resolveSibling(file.getFileName() + ".1"));
+        }
         return candidates.stream().filter(Files::isReadable).toList();
     }
 
