@@ -28,6 +28,20 @@ public class KnobSetting {
     private String overlayIcon;
     /** Replaces the name the overlay derives from this control's actions. Blank keeps the derived name. */
     private String overlayName;
+    /*
+     * The overlay icon and name per action slot. Blank falls back to overlayIcon/overlayName above, the default for
+     * every slot of the control.
+     */
+    private String turnOverlayIcon;
+    private String turnOverlayName;
+    private String pressOverlayIcon;
+    private String pressOverlayName;
+    private String dblPressOverlayIcon;
+    private String dblPressOverlayName;
+    private String holdOverlayIcon;
+    private String holdOverlayName;
+    private String releaseOverlayIcon;
+    private String releaseOverlayName;
     private int buttonDebounce = 50;
 
     /** The legacy flag as read, so the two properties settle the curve the same in either order. */
@@ -55,6 +69,16 @@ public class KnobSetting {
         curve = source.curve;
         overlayIcon = source.overlayIcon;
         overlayName = source.overlayName;
+        turnOverlayIcon = source.turnOverlayIcon;
+        turnOverlayName = source.turnOverlayName;
+        pressOverlayIcon = source.pressOverlayIcon;
+        pressOverlayName = source.pressOverlayName;
+        dblPressOverlayIcon = source.dblPressOverlayIcon;
+        dblPressOverlayName = source.dblPressOverlayName;
+        holdOverlayIcon = source.holdOverlayIcon;
+        holdOverlayName = source.holdOverlayName;
+        releaseOverlayIcon = source.releaseOverlayIcon;
+        releaseOverlayName = source.releaseOverlayName;
         buttonDebounce = source.buttonDebounce;
     }
 

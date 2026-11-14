@@ -743,11 +743,21 @@ export interface KeyboardCommandModule extends CommandModule {
 export interface KnobSetting {
     buttonDebounce: number;
     curve?: string;
+    dblPressOverlayIcon: string;
+    dblPressOverlayName: string;
+    holdOverlayIcon: string;
+    holdOverlayName: string;
     logarithmic: boolean;
     maxTrim: number;
     minTrim: number;
     overlayIcon: string;
     overlayName: string;
+    pressOverlayIcon: string;
+    pressOverlayName: string;
+    releaseOverlayIcon: string;
+    releaseOverlayName: string;
+    turnOverlayIcon: string;
+    turnOverlayName: string;
 }
 
 export interface LevelReadable {

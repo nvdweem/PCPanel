@@ -68,46 +68,20 @@
           <input class="pc-field-input" type="number" min="0" max="200" [value]="knob().buttonDebounce"
                  (input)="setKnob('buttonDebounce', clampDebounce(+$any($event.target).value))">
         </div>
-        <div class="setting-row overlay-icon">
-          <div>
-            <div class="oi-title">Overlay icon</div>
-            <div class="oi-sub">shown in the pop-up</div>
-          </div>
-          <button class="oi-pick" cdkOverlayOrigin #oi="cdkOverlayOrigin" (click)="iconPickerOpen.set(true); refreshProcesses()">
-            <span class="oi-tile">
-              @if (overlayIconPreview(); as src) {
-                <img [src]="src" alt="">
-              } @else {
-                {{ (knob().overlayIcon || '?').charAt(0).toUpperCase() }}
-              }
-            </span>
-            <pc-icon name="pencil" [size]="13"></pc-icon>
-          </button>
-          <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="oi" [cdkConnectedOverlayOpen]="iconPickerOpen()"
-                       [cdkConnectedOverlayHasBackdrop]="true" cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
-                       [cdkConnectedOverlayWidth]="280" [cdkConnectedOverlayOffsetY]="6"
-                       (backdropClick)="iconPickerOpen.set(false)" (detach)="iconPickerOpen.set(false)">
-            <div class="oi-picker">
-              <pc-app-picker [items]="processItems()" (picked)="setOverlayIcon($event)"></pc-app-picker>
-              <div class="oi-actions">
-                <button type="button" class="oi-action" (click)="customIconInput.click()">
-                  <pc-icon name="plus" [size]="14"></pc-icon> Upload custom image…
-                </button>
-                @if (knob().overlayIcon) {
-                  <button type="button" class="oi-action danger" (click)="clearOverlayIcon()">
-                    <pc-icon name="trash" [size]="14"></pc-icon> Clear
-                  </button>
-                }
-              </div>
-              <input #customIconInput type="file" accept="image/*" hidden (change)="onCustomIcon($event)">
+        @if (defaultOverlay(); as f) {
+          <div class="setting-row overlay-icon">
+            <div>
+              <div class="oi-title">Overlay icon</div>
+              <div class="oi-sub">{{ isSlider() ? 'shown in the pop-up' : 'default for every action' }}</div>
             </div>
-          </ng-template>
-        </div>
-        <div class="pc-field">
-          <div class="pc-field-label">Overlay name</div>
-          <pc-template-input [mono]="false" placeholder="Automatic" [context]="overlayTemplateContext()"
-                             [value]="knob().overlayName || ''" (valueChange)="setKnob('overlayName', $event)"></pc-template-input>
-        </div>
+            <ng-container *ngTemplateOutlet="iconPicker; context: { $implicit: f }"></ng-container>
+          </div>
+          <div class="pc-field">
+            <div class="pc-field-label">Overlay name</div>
+            <pc-template-input [mono]="false" placeholder="Automatic" [context]="f.context"
+                               [value]="knob()[f.name] || ''" (valueChange)="setKnob(f.name, $event)"></pc-template-input>
+          </div>
+        }
       </div>
 
       @if (!isSlider()) {
@@ -183,6 +157,17 @@
               </div>
             }
           </div>
+
+          @if (slotOverlay(); as f) {
+            <div class="slot-overlay">
+              <div class="micro-label">OVERLAY · {{ slotOverlayLabel() }}</div>
+              <div class="so-row">
+                <ng-container *ngTemplateOutlet="iconPicker; context: { $implicit: f }"></ng-container>
+                <pc-template-input class="so-name" [mono]="false" [placeholder]="knob().overlayName || 'Automatic'" [context]="f.context"
+                                   [value]="knob()[f.name] || ''" (valueChange)="setKnob(f.name, $event)"></pc-template-input>
+              </div>
+            </div>
+          }
         </div>
 
         <!-- Add column -->
@@ -195,3 +180,37 @@
 } @else {
   <div class="loading-screen"><span class="micro-label">Loading control…</span></div>
 }
+
+<!-- The overlay icon picker of one field: the control's default, or a button slot's own. -->
+<ng-template #iconPicker let-f>
+  <button class="oi-pick" cdkOverlayOrigin #oi="cdkOverlayOrigin" (click)="iconPickerOpen.set(f.icon); refreshProcesses()"
+          [title]="knob()[f.icon] || f.icon === 'overlayIcon' ? 'Overlay icon' : 'Same as the default overlay icon'">
+    <span class="oi-tile" [class.inherited]="!knob()[f.icon] && f.icon !== 'overlayIcon'">
+      @if (overlayIconPreview(f.icon); as src) {
+        <img [src]="src" alt="">
+      } @else {
+        {{ (knob()[f.icon] || (f.icon !== 'overlayIcon' && knob().overlayIcon) || '?').charAt(0).toUpperCase() }}
+      }
+    </span>
+    <pc-icon name="pencil" [size]="13"></pc-icon>
+  </button>
+  <ng-template cdkConnectedOverlay [cdkConnectedOverlayOrigin]="oi" [cdkConnectedOverlayOpen]="iconPickerOpen() === f.icon"
+               [cdkConnectedOverlayHasBackdrop]="true" cdkConnectedOverlayBackdropClass="cdk-overlay-transparent-backdrop"
+               [cdkConnectedOverlayWidth]="280" [cdkConnectedOverlayOffsetY]="6"
+               (backdropClick)="iconPickerOpen.set(null)" (detach)="iconPickerOpen.set(null)">
+    <div class="oi-picker">
+      <pc-app-picker [items]="processItems()" (picked)="setOverlayIcon(f.icon, $event)"></pc-app-picker>
+      <div class="oi-actions">
+        <button type="button" class="oi-action" (click)="customIconInput.click()">
+          <pc-icon name="plus" [size]="14"></pc-icon> Upload custom image…
+        </button>
+        @if (knob()[f.icon]) {
+          <button type="button" class="oi-action danger" (click)="clearOverlayIcon(f.icon)">
+            <pc-icon name="trash" [size]="14"></pc-icon> Clear
+          </button>
+        }
+      </div>
+      <input #customIconInput type="file" accept="image/*" hidden (change)="onCustomIcon(f.icon, $event)">
+    </div>
+  </ng-template>
+</ng-template>

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { HistoryButtonsComponent } from '../../features/history/history-buttons.component';
 import { HistoryService } from '../../services/history.service';
-import { Location } from '@angular/common';
+import { Location, NgTemplateOutlet } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { DeviceStateService } from '../../services/device-state.service';
@@ -30,7 +30,31 @@ import { OverlayModule } from '@angular/cdk/overlay';
 type Slot = 'rotate' | 'press' | 'dblpress' | 'hold' | 'release';
 
 const EMPTY: Commands = { commands: [], type: 'allAtOnce' };
-const EMPTY_KNOB: KnobSetting = { minTrim: 0, maxTrim: 100, logarithmic: false, overlayIcon: '', overlayName: '', buttonDebounce: 50 };
+const EMPTY_KNOB: KnobSetting = {
+  minTrim: 0, maxTrim: 100, logarithmic: false, overlayIcon: '', overlayName: '', buttonDebounce: 50,
+  turnOverlayIcon: '', turnOverlayName: '',
+  pressOverlayIcon: '', pressOverlayName: '', dblPressOverlayIcon: '', dblPressOverlayName: '',
+  holdOverlayIcon: '', holdOverlayName: '', releaseOverlayIcon: '', releaseOverlayName: '',
+};
+
+type OverlayIconKey = 'overlayIcon' | 'turnOverlayIcon' | 'pressOverlayIcon' | 'dblPressOverlayIcon' | 'holdOverlayIcon' | 'releaseOverlayIcon';
+type OverlayNameKey = 'overlayName' | 'turnOverlayName' | 'pressOverlayName' | 'dblPressOverlayName' | 'holdOverlayName' | 'releaseOverlayName';
+
+/** One overlay icon + name pair: the control's default, or an action slot's own. */
+interface OverlayField {
+  icon: OverlayIconKey;
+  name: OverlayNameKey;
+  context: TemplateContext;
+}
+
+/** The overlay fields of each action slot, and the caption of its overlay block. */
+const SLOT_OVERLAY: Record<Slot, { icon: OverlayIconKey; name: OverlayNameKey; label: string }> = {
+  rotate: { icon: 'turnOverlayIcon', name: 'turnOverlayName', label: 'ON ROTATE' },
+  press: { icon: 'pressOverlayIcon', name: 'pressOverlayName', label: 'ON PRESS' },
+  dblpress: { icon: 'dblPressOverlayIcon', name: 'dblPressOverlayName', label: 'ON DOUBLE PRESS' },
+  hold: { icon: 'holdOverlayIcon', name: 'holdOverlayName', label: 'ON HOLD' },
+  release: { icon: 'releaseOverlayIcon', name: 'releaseOverlayName', label: 'ON RELEASE' },
+};
 /** Last entry of the curve picker: opens the library rather than selecting a curve. */
 const EDIT_CURVES = '__edit-curves__';
 
@@ -41,7 +65,7 @@ const EDIT_CURVES = '__edit-curves__';
     DragDropModule, OverlayModule, RouterLink, IconComponent, SelectComponent,
     AppPickerComponent, PcKnobComponent, PcFaderComponent, CommandFieldsComponent,
     ControlLightingComponent, MappingPreviewComponent, CommandPickerComponent,
-    CurveGraphComponent, TemplateInputComponent,
+    CurveGraphComponent, TemplateInputComponent, NgTemplateOutlet,
   ],
   templateUrl: './control.component.html',
   styleUrl: './control.component.scss',
@@ -86,8 +110,16 @@ export class ControlComponent {
   readonly activeSlot = signal<Slot>('rotate');
   /** Template fields of the active slot's actions render against this control. */
   readonly templateContext = computed<TemplateContext>(() => ({ serial: this.serial(), control: +this.index(), slot: this.activeSlot() }));
-  /** The overlay name renders against this control's turn actions and its current percentage. */
-  readonly overlayTemplateContext = computed<TemplateContext>(() => ({ serial: this.serial(), control: +this.index(), slot: 'overlay' }));
+  /** The control's default overlay icon and name: shown for any action slot without its own, and for a slider.
+   *  The name renders against the turn actions and the current percentage. */
+  readonly defaultOverlay = computed<OverlayField>(() => ({ icon: 'overlayIcon', name: 'overlayName', context: this.overlayContext('overlay') }));
+  /** The active slot's own overlay icon and name; null on a slider, whose only slot is the default above. */
+  readonly slotOverlay = computed<OverlayField | null>(() => {
+    if (this.isSlider()) return null;
+    const slot = this.activeSlot();
+    return { icon: SLOT_OVERLAY[slot].icon, name: SLOT_OVERLAY[slot].name, context: this.overlayContext(slot === 'rotate' ? 'overlay' : slot) };
+  });
+  readonly slotOverlayLabel = computed(() => SLOT_OVERLAY[this.activeSlot()].label);
   readonly expanded = signal<number>(0);
   readonly lightingMode = computed(() => this.snap()?.lightingConfig?.lightingMode ?? null);
   readonly isCustomLighting = computed(() => this.lightingMode() === 'CUSTOM');
@@ -95,7 +127,8 @@ export class ControlComponent {
     ALL_COLOR: 'Solid color', ALL_RAINBOW: 'Rainbow', ALL_WAVE: 'Wave',
     ALL_BREATH: 'Breath', SINGLE_COLOR: 'Per-LED color', CUSTOM: 'Per-control',
   }[this.lightingMode() ?? ''] ?? 'a global'));
-  readonly iconPickerOpen = signal(false);
+  /** The overlay icon whose picker is open. */
+  readonly iconPickerOpen = signal<OverlayIconKey | null>(null);
 
   // Local editable state, seeded once per (serial,index).
   readonly rotate = signal<Commands>(EMPTY);
@@ -303,34 +336,41 @@ export class ControlComponent {
     this.save();
   }
 
-  /** The stored overlay icon as an <img> src when it is a renderable image (custom upload data-URI, app-icon
+  /** A stored overlay icon (else the default one) as an <img> src when it is a renderable image (custom upload data-URI, app-icon
    *  snapshot, a bundled classpath asset, or a local image file) rather than a bare letter fallback. */
-  readonly overlayIconPreview = computed(() => overlayIconImageSrc(this.knob().overlayIcon) ?? null);
+  overlayIconPreview(field: OverlayIconKey): string | null {
+    const k = this.knob();
+    return overlayIconImageSrc(k[field] || k.overlayIcon) ?? null;
+  }
 
-  setOverlayIcon(key: string): void {
+  private overlayContext(slot: string): TemplateContext {
+    return { serial: this.serial(), control: +this.index(), slot };
+  }
+
+  setOverlayIcon(field: OverlayIconKey, key: string): void {
     // Snapshot the picked app's real icon (a data-URI) so the overlay shows it even when that app is not
     // running; fall back to the bare key (the backend still resolves legacy process names — issue #121).
     const item = this.processItems().find(i => i.key === key);
-    this.setKnob('overlayIcon', item?.icon ?? key);
-    this.iconPickerOpen.set(false);
+    this.setKnob(field, item?.icon ?? key);
+    this.iconPickerOpen.set(null);
   }
 
   /** Clear the per-control override so the overlay falls back to the command-derived icon. */
-  clearOverlayIcon(): void {
-    this.setKnob('overlayIcon', '');
-    this.iconPickerOpen.set(false);
+  clearOverlayIcon(field: OverlayIconKey): void {
+    this.setKnob(field, '');
+    this.iconPickerOpen.set(null);
   }
 
   /** Let the user pick any image file as the overlay icon (issue #122). We downscale it to a small PNG
    *  data-URI in the browser so it renders identically to app icons and keeps profiles.json compact. */
-  async onCustomIcon(ev: Event): Promise<void> {
+  async onCustomIcon(field: OverlayIconKey, ev: Event): Promise<void> {
     const input = ev.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = '';
     if (!file) return;
     try {
-      this.setKnob('overlayIcon', await downscaleImageToPng(file, 64));
-      this.iconPickerOpen.set(false);
+      this.setKnob(field, await downscaleImageToPng(file, 64));
+      this.iconPickerOpen.set(null);
     } catch {
       this.toast.show('Could not read that image', { kind: 'error' });
     }

@@ -25,6 +25,7 @@ import com.getpcpanel.device.Device;
 import com.getpcpanel.device.descriptor.AnalogKind;
 import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.profile.BaseLayerService;
+import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.profile.dto.KnobSetting;
@@ -182,8 +183,10 @@ public class Overlay {
 
     /**
      * What a button action did ("Spotify · Muted", "Default: Headphones"). Skipped when the button's actions carry an
-     * overlay text the user typed: {@link #handleControl} already shows the overlay for that press. The event is fired
-     * inside the press's {@link TemplateContext}, which holds the actions that ran.
+     * overlay text the user typed, or the pressed slot has an overlay name of its own: {@link #handleControl} already
+     * shows the overlay for that press. Otherwise the control's default overlay name and icon apply, the name with
+     * {@code {{ name }}} being what the action did. The event is fired inside the press's {@link TemplateContext},
+     * which holds the actions that ran.
      */
     public void onButtonFeedback(@Observes ButtonFeedbackEvent event) {
         try {
@@ -192,12 +195,17 @@ public class Overlay {
                 return;
             }
             var commands = commandsThatRan(event);
-            if (hasTypedOverlayText(commands)) {
+            var profile = save.getProfile(event.serial()).orElse(null);
+            var setting = profile == null ? null : baseLayer.effectiveKnobSetting(event.serial(), profile, event.button());
+            var slot = profile == null ? null : slotOf(event.serial(), profile, event.button(), commands);
+            if (hasTypedOverlayText(commands) || OverlaySlot.hasOwnName(setting, slot)) {
                 return;
             }
             // Icon decoding needs libawt (Windows only), as in determineIconImage.
-            var icon = Platform.isWindows() && commands != null && iconService != null ? iconService.getImageFrom(commands, null) : null;
-            overlay.show(new OverlayContent(event.level() == null ? -1 : event.level(), icon, event.text(), null));
+            var icon = Platform.isWindows() && commands != null && iconService != null ? iconService.getImageFrom(commands, OverlaySlot.icon(setting, slot)) : null;
+            var name = overlayName(setting, slot, event::text,
+                    (template, derived) -> templates.render(template, TemplateContext.current().withName(derived), () -> template));
+            overlay.show(new OverlayContent(event.level() == null ? -1 : event.level(), icon, name, null));
         } catch (Throwable t) {
             log.warn("Overlay failed to show button feedback; ignoring (hardware control is unaffected)", t);
         }
@@ -226,7 +234,7 @@ public class Overlay {
             return;
         }
         var cai = pre.get();
-        if (hasOverlay(cai.command) && pred.test(cai.command)) {
+        if ((hasOverlay(cai.command) || cai.named && Commands.hasCommands(cai.command)) && pred.test(cai.command)) {
             overlay.show(new OverlayContent(value, cai.icon, cai.name, cai.barColorCss));
         }
     }
@@ -256,36 +264,60 @@ public class Overlay {
     private CommandAndIcon determineIconImage(PCPanelControlEvent event) {
         return save.getProfile(event.serialNum()).map(profile -> {
             var data = event.cmd();
-            var setting = event.vol() == null ? null : baseLayer.effectiveKnobSetting(event.serialNum(), profile, event.knob());
+            var slot = event.vol() != null ? OverlaySlot.TURN : slotOf(event.serialNum(), profile, event.knob(), data);
+            var setting = baseLayer.effectiveKnobSetting(event.serialNum(), profile, event.knob());
             // Icon decoding needs libawt (Windows only); elsewhere the overlay is a no-op that ignores
             // the icon, so skip the BufferedImage lookup entirely to stay libawt-free.
-            var icon = Platform.isWindows() ? iconService.getImageFrom(data, setting) : null;
+            var icon = Platform.isWindows() ? iconService.getImageFrom(data, OverlaySlot.icon(setting, slot)) : null;
             Supplier<String> detected = () -> targetName(data);
-            return new CommandAndIcon(data, icon, overlayName(setting, detected, (template, name) -> {
-                var scope = event.templateScope().withName(name);
+            var name = overlayName(setting, slot, detected, (template, derived) -> {
+                var scope = event.templateScope().withName(derived);
                 var percent = event.vol() == null ? null : Math.round(event.vol().getValue(null, 0f, 100f));
                 return templates.render(template, scope.withValue(percent), () -> template);
-            }), barColorFromLight(event));
+            });
+            return new CommandAndIcon(data, icon, name, OverlaySlot.hasOwnName(setting, slot), barColorFromLight(event));
         }).orElse(CommandAndIcon.DEFAULT);
     }
 
     /**
-     * The name the overlay shows: the per-control override a user typed ({@link KnobSetting#getOverlayName()}),
-     * or the name derived from the control's actions when that is blank. {@code detected} is only resolved on
-     * the fallback path or when the override's template uses {@code {{ name }}}, since deriving it can query the
-     * OS for the focused application.
+     * Which button slot {@code commands} are: the press that runs them hands over the very {@link Commands} the profile
+     * holds for that slot. Null when they are none of the control's slots.
      */
-    static String overlayName(@Nullable KnobSetting setting, Supplier<String> detected, BiFunction<String, Supplier<String>, String> render) {
-        var override = setting == null ? null : setting.getOverlayName();
-        if (StringUtils.isBlank(override)) {
+    @Nullable
+    private OverlaySlot slotOf(String serial, Profile profile, int button, @Nullable Commands commands) {
+        if (commands == null) {
+            return null;
+        }
+        if (commands == baseLayer.effectiveButton(serial, profile, button)) {
+            return OverlaySlot.PRESS;
+        }
+        if (commands == baseLayer.effectiveDblButton(serial, profile, button)) {
+            return OverlaySlot.DOUBLE_PRESS;
+        }
+        if (commands == baseLayer.effectiveHoldButton(serial, profile, button)) {
+            return OverlaySlot.HOLD;
+        }
+        return commands == baseLayer.effectiveReleaseButton(serial, profile, button) ? OverlaySlot.RELEASE : null;
+    }
+
+    /**
+     * The name the overlay shows: the one the user typed for the slot ({@link OverlaySlot#name}, falling back to the
+     * control's default), or the name derived from the control's actions when that is blank. {@code detected} is only
+     * resolved on the fallback path or when the typed name's template uses {@code {{ name }}}, since deriving it can
+     * query the OS for the focused application.
+     */
+    static String overlayName(@Nullable KnobSetting setting, @Nullable OverlaySlot slot, Supplier<String> detected,
+            BiFunction<String, Supplier<String>, String> render) {
+        var typed = OverlaySlot.name(setting, slot);
+        if (StringUtils.isBlank(typed)) {
             return detected.get();
         }
-        var text = StringUtils.strip(override);
+        var text = StringUtils.strip(typed);
         return TemplateService.hasTags(text) ? StringUtils.strip(render.apply(text, detected)) : text;
     }
 
-    static String overlayName(@Nullable KnobSetting setting, Supplier<String> detected) {
-        return overlayName(setting, detected, (template, name) -> template);
+    static String overlayName(@Nullable KnobSetting setting, @Nullable OverlaySlot slot, Supplier<String> detected) {
+        return overlayName(setting, slot, detected, (template, name) -> template);
     }
 
     /** The bar colour to use, sourced from the moved control's current light, when "bar follows light"
@@ -381,7 +413,8 @@ public class Overlay {
         return command.buildLabel();
     }
 
-    private record CommandAndIcon(Commands command, Image icon, String name, @Nullable String barColorCss) {
-        static final CommandAndIcon DEFAULT = new CommandAndIcon(Commands.EMPTY, null, "", null);
+    /** {@code named}: the name is one the user typed for the control, which shows the overlay on its own. */
+    private record CommandAndIcon(Commands command, Image icon, String name, boolean named, @Nullable String barColorCss) {
+        static final CommandAndIcon DEFAULT = new CommandAndIcon(Commands.EMPTY, null, "", false, null);
     }
 }

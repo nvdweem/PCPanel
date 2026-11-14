@@ -116,7 +116,7 @@ public class IconService {
 
     @CacheResult(cacheName = "command-icon")
     @Nonnull
-    public BufferedImage getImageFrom(@Nullable Commands commands, @Nullable KnobSetting override) {
+    public BufferedImage getImageFrom(@Nullable Commands commands, @Nullable String overrideIcon) {
         // Icon extraction/decoding (ImageIO, JIconExtract) needs libawt, which only the Windows native
         // image bundles. On macOS and Linux short-circuit to the blank default to keep the path libawt-free.
         if (!SystemUtils.IS_OS_WINDOWS) {
@@ -126,11 +126,9 @@ public class IconService {
             return DEFAULT;
         }
 
+        var override = resolveOverrideIcon(overrideIcon);
         if (override != null) {
-            var overrideIcon = resolveOverrideIcon(override.getOverlayIcon());
-            if (overrideIcon != null) {
-                return overrideIcon;
-            }
+            return override;
         }
 
         //noinspection ObjectEquality
@@ -146,8 +144,8 @@ public class IconService {
     }
 
     /**
-     * Resolve the per-control overlay icon a user picked for a dial/slider (stored in
-     * {@link KnobSetting#getOverlayIcon()}). The string can be, in priority order:
+     * Resolve the per-control overlay icon a user picked for a control (stored in
+     * {@link KnobSetting#getOverlayIcon()} for turning it and {@link KnobSetting#getPressOverlayIcon()} for pressing it). The string can be, in priority order:
      * <ul>
      *   <li>a {@code data:image/png;base64,...} URI — a custom image the user uploaded, or a snapshot of an
      *       app icon taken from the picker (issues #121/#122);</li>
