@@ -25,7 +25,7 @@ const isOff = (c: string | undefined): boolean => !c || !c.trim();
     </div>
     @if (on()) {
       <pc-color-picker label="Muted colour" [value]="color() || '#FF0000'" (valueChange)="colorChange.emit($event)"></pc-color-picker>
-      <pc-light-target label="Muted when this is muted" followLabel="What this control controls"
+      <pc-light-target label="Muted when this is muted" followLabel="What this control controls" [voicemeeter]="true"
                        [value]="target()" (valueChange)="targetChange.emit($event)"></pc-light-target>
     }
   `,

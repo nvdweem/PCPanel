@@ -84,6 +84,16 @@ class VoiceMeeterMuteResolverTest {
         assertTrue(muted.isEmpty(), "a strip VoiceMeeter has never reported on is unknown, not unmuted");
     }
 
+    /** The lighting page's picker names a strip or bus 1-based, as {@code VoiceMeeter: Input|Output <n>, Mute}. */
+    @Test
+    void aPickedStripOrBusFollowsItsMuteButton() {
+        var resolver = resolverWithMuted(ControlType.STRIP, 0, true);
+        resolver.onMute(new VoiceMeeterMuteEvent(ControlType.BUS, 1, ButtonType.MUTE, false));
+
+        assertEquals(true, resolver.resolve(Commands.EMPTY, "VoiceMeeter: Input 1, Mute").orElseThrow());
+        assertEquals(false, resolver.resolve(Commands.EMPTY, "VoiceMeeter: Output 2, Mute").orElseThrow());
+    }
+
     /** Minimal {@link Event}; the resolver only ever fires on it, and nothing here observes. */
     private static final class NoopEvent implements Event<MuteOverridesDirtyEvent> {
         private final List<Object> fired = new CopyOnWriteArrayList<>();
