@@ -20,6 +20,7 @@ import com.getpcpanel.integration.volume.command.CommandVolumeDefaultDevice;
 import com.getpcpanel.integration.volume.command.CommandVolumeDefaultDeviceToggle;
 import com.getpcpanel.integration.volume.command.CommandVolumeFocus;
 import com.getpcpanel.commands.command.DialAction;
+import com.getpcpanel.commands.meta.CommandMeta;
 import com.getpcpanel.integration.volume.platform.ISndCtrl;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.device.descriptor.AnalogKind;
@@ -395,12 +396,20 @@ public class Overlay {
         return colors != null && index >= 0 && index < colors.length ? colors[index] : null;
     }
 
-    /** A best-effort name of what the control affects, for the overlay's app-name line. */
+    /**
+     * A best-effort name of what the control affects, for the overlay's app-name line: the first action that names its
+     * target, else the name of the first action's type (e.g. "Brightness").
+     */
     private String targetName(Commands commands) {
         return StreamEx.of(commands.getCommands())
                        .map(this::nameOf)
                        .findFirst(StringUtils::isNotBlank)
-                       .orElse("");
+                       .orElseGet(() -> StreamEx.of(commands.getCommands()).map(Overlay::typeLabel).findFirst(StringUtils::isNotBlank).orElse(""));
+    }
+
+    static String typeLabel(Command command) {
+        var meta = command.getClass().getAnnotation(CommandMeta.class);
+        return meta == null ? "" : meta.label();
     }
 
     private String nameOf(Command command) {

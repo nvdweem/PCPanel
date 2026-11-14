@@ -13,6 +13,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import com.getpcpanel.integration.device.command.CommandBrightness;
 import com.getpcpanel.profile.dto.KnobSetting;
 
 /**
@@ -104,6 +105,12 @@ class OverlayNameOverrideTest {
         assertFalse(OverlaySlot.hasOwnName(setting, OverlaySlot.PRESS));
         assertFalse(OverlaySlot.hasOwnName(setting, OverlaySlot.TURN));
         assertFalse(OverlaySlot.hasOwnName(setting, null));
+    }
+
+    /** An action that names no target, such as brightness, is named by its type. */
+    @Test
+    void anActionWithoutATargetIsNamedByItsType() {
+        assertEquals("Brightness", Overlay.typeLabel(new CommandBrightness(null)));
     }
 
     private static KnobSetting setting(String overlayName) {
