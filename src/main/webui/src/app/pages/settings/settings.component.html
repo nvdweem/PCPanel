@@ -1285,6 +1285,25 @@
           </div>
 
           <div class="divider"></div>
+          <div class="micro-label section-label">LIGHTING TRACE</div>
+          <div class="pc-card pad stack">
+            <div class="row">
+              <div class="row-text">
+                <div class="row-label">Record what is sent to the lights</div>
+                <div class="row-sub">Every lighting change sent to the panel and the part of PCPanel that sent it, in {{ lightingTrace.file() }}. Stays on across restarts until switched off.</div>
+              </div>
+              <pc-toggle [value]="lightingTrace.enabled()" (valueChange)="lightingTrace.set($event)"></pc-toggle>
+            </div>
+            <div class="row">
+              <div class="row-text">
+                <div class="row-label">The lights just went out</div>
+                <div class="row-sub">Marks this moment in the trace. Press it before touching any lighting setting.</div>
+              </div>
+              <button class="pc-btn ghost" [disabled]="!lightingTrace.enabled()" (click)="lightingTrace.markLightsOut()">Mark</button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
           <div class="micro-label section-label">ONBOARDING DIALOGS</div>
           <div class="pc-card pad stack">
             <div class="row">

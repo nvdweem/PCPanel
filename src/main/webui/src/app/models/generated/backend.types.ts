@@ -783,6 +783,15 @@ export interface LightingConfig {
 export interface LightingConfigBuilder {
 }
 
+export interface LightingTraceRequestDto {
+    enabled: boolean;
+}
+
+export interface LightingTraceStateDto {
+    enabled: boolean;
+    file: string;
+}
+
 export interface LightOutputSpec {
     colorModel: LightColorModel;
     group: LightGroupKind;

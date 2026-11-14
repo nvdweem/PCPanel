@@ -37,27 +37,35 @@ public final class OutputInterpreter {
     @Inject
     SleepDetector sleep;
 
+    // The Mini/Pro report codes are package-private so LightingFrames reads reports with the same codes they are
+    // written with.
     private static final byte[] OUTPUT_CODE_INIT = { 1 };
-    private static final byte ANIMATION_RAINBOW_HORIZONTAL = 1;
-    private static final byte ANIMATION_RAINBOW_VERTICAL = 2;
-    private static final byte ANIMATION_WAVE = 3;
-    private static final byte ANIMATION_BREATH = 4;
-    private static final byte COLOR_STATIC = 1;
-    private static final byte COLOR_GRADIENT = 2;
-    private static final byte CUSTOM_SLIDER = 0;
-    private static final byte CUSTOM_SLIDER_LABEL = 1;
-    private static final byte CUSTOM_KNOB = 2;
-    private static final byte CUSTOM_LOGO = 3;
-    private static final byte LOGO_RAINBOW = 2;
-    private static final byte LOGO_BREATH = 3;
-    private static final byte MODE_LIGHT_ANIMATION = 4;
+    static final byte ANIMATION_RAINBOW_HORIZONTAL = 1;
+    static final byte ANIMATION_RAINBOW_VERTICAL = 2;
+    static final byte ANIMATION_WAVE = 3;
+    static final byte ANIMATION_BREATH = 4;
+    /** The second byte of a whole-panel colour report, per model. */
+    static final byte STATIC_COLOR_PRO = 2;
+    static final byte STATIC_COLOR_MINI = 5;
+    static final byte COLOR_STATIC = 1;
+    static final byte COLOR_GRADIENT = 2;
+    static final byte SLIDER_VOLUME_GRADIENT = 3;
+    static final byte CUSTOM_SLIDER = 0;
+    static final byte CUSTOM_SLIDER_LABEL = 1;
+    static final byte CUSTOM_KNOB = 2;
+    static final byte CUSTOM_LOGO = 3;
+    static final byte LOGO_RAINBOW = 2;
+    static final byte LOGO_BREATH = 3;
+    static final byte MODE_LIGHT_ANIMATION = 4;
+    /** Bytes per light in a per-control report: its mode, then up to two colours. */
+    static final int SLOT_LENGTH = 7;
     private static final byte OUTPUT_CODE_RGB_RGB = 1;
     private static final byte OUTPUT_CODE_RGB = 2;
     private static final byte OUTPUT_CODE_RGB_RAINBOW = 3;
     private static final byte OUTPUT_CODE_RGB_WAVE = 4;
     private static final byte OUTPUT_CODE_RGB_BREATH = 5;
-    private static final byte PREFIX_MINI = 6;
-    private static final byte PREFIX_PRO = 5;
+    static final byte PREFIX_MINI = 6;
+    static final byte PREFIX_PRO = 5;
     private static final int MAX_BYTE = 255;
     /**
      * What a light that is off shows. The panel keeps a light's last colour for an empty (all-zero) entry, so a light
@@ -196,7 +204,7 @@ public final class OutputInterpreter {
             return;
         }
         switch (mode) {
-            case ALL_COLOR -> writeAllColor(handler, PREFIX_MINI, (byte) 5, config);
+            case ALL_COLOR -> writeAllColor(handler, PREFIX_MINI, STATIC_COLOR_MINI, config);
             case ALL_RAINBOW -> writeAllRainbow(handler, PREFIX_MINI, config);
             case ALL_WAVE -> writeAllWave(handler, PREFIX_MINI, config);
             case ALL_BREATH -> writeAllBreath(handler, PREFIX_MINI, config);
@@ -215,7 +223,7 @@ public final class OutputInterpreter {
             return;
         }
         switch (mode) {
-            case ALL_COLOR -> writeAllColor(handler, PREFIX_PRO, (byte) 2, config);
+            case ALL_COLOR -> writeAllColor(handler, PREFIX_PRO, STATIC_COLOR_PRO, config);
             case ALL_RAINBOW -> writeAllRainbow(handler, PREFIX_PRO, config);
             case ALL_WAVE -> writeAllWave(handler, PREFIX_PRO, config);
             case ALL_BREATH -> writeAllBreath(handler, PREFIX_PRO, config);
@@ -230,42 +238,56 @@ public final class OutputInterpreter {
     }
 
     private void writeAllColor(DeviceCommunicationHandler handler, byte prefix, byte secondPrefix, LightingConfig config) {
-        var c1 = config.allColor();
-        var data = new ByteWriter(config.getGlobalBrightness()).append(prefix, MODE_LIGHT_ANIMATION, secondPrefix).appendHex(c1).get();
-        handler.sendLighting(new byte[][] { data });
+        handler.sendLighting(new byte[][] { allColorReport(prefix, secondPrefix, config) });
     }
 
     private void writeAllRainbow(DeviceCommunicationHandler handler, byte prefix, LightingConfig config) {
-        var data = new ByteWriter(config.getGlobalBrightness()).append(prefix, MODE_LIGHT_ANIMATION, (config.rainbowVertical() == 1) ? ANIMATION_RAINBOW_VERTICAL : ANIMATION_RAINBOW_HORIZONTAL)
-                                                               .append(config.rainbowPhaseShift(),
-                                                                       -1)
-                                                               .appendBrightness(config.rainbowBrightness())
-                                                               .append(config.rainbowSpeed(),
-                                                                       config.rainbowReverse())
-                                                               .get();
-        handler.sendLighting(new byte[][] { data });
+        handler.sendLighting(new byte[][] { allRainbowReport(prefix, config) });
     }
 
     private void writeAllWave(DeviceCommunicationHandler handler, byte prefix, LightingConfig config) {
-        var data = new ByteWriter(config.getGlobalBrightness())
+        handler.sendLighting(new byte[][] { allWaveReport(prefix, config) });
+    }
+
+    private void writeAllBreath(DeviceCommunicationHandler handler, byte prefix, LightingConfig config) {
+        handler.sendLighting(new byte[][] { allBreathReport(prefix, config) });
+    }
+
+    /** The Mini/Pro whole-panel colour report; {@code secondPrefix} is the model's static-colour code. */
+    static byte[] allColorReport(byte prefix, byte secondPrefix, LightingConfig config) {
+        return new ByteWriter(config.getGlobalBrightness()).append(prefix, MODE_LIGHT_ANIMATION, secondPrefix).appendHex(config.allColor()).get();
+    }
+
+    static byte[] allRainbowReport(byte prefix, LightingConfig config) {
+        return new ByteWriter(config.getGlobalBrightness()).append(prefix, MODE_LIGHT_ANIMATION, (config.rainbowVertical() == 1) ? ANIMATION_RAINBOW_VERTICAL : ANIMATION_RAINBOW_HORIZONTAL)
+                                                           .append(config.rainbowPhaseShift(),
+                                                                   -1)
+                                                           .appendBrightness(config.rainbowBrightness())
+                                                           .append(config.rainbowSpeed(),
+                                                                   config.rainbowReverse())
+                                                           .get();
+    }
+
+    static byte[] allWaveReport(byte prefix, LightingConfig config) {
+        return new ByteWriter(config.getGlobalBrightness())
                 .append(prefix, MODE_LIGHT_ANIMATION, ANIMATION_WAVE)
                 .append(config.waveHue(),
                         -1)
                 .appendBrightness(config.waveBrightness())
                 .append(config.waveSpeed(),
                         config.waveReverse(),
-                        config.waveBounce());
-        handler.sendLighting(new byte[][] { data.get() });
+                        config.waveBounce())
+                .get();
     }
 
-    private void writeAllBreath(DeviceCommunicationHandler handler, byte prefix, LightingConfig config) {
-        var data = new ByteWriter(config.getGlobalBrightness())
+    static byte[] allBreathReport(byte prefix, LightingConfig config) {
+        return new ByteWriter(config.getGlobalBrightness())
                 .append(prefix, MODE_LIGHT_ANIMATION, ANIMATION_BREATH)
                 .append(config.breathHue(),
                         -1)
                 .appendBrightness(config.breathBrightness())
-                .append(config.breathSpeed());
-        handler.sendLighting(new byte[][] { data.get() });
+                .append(config.breathSpeed())
+                .get();
     }
 
     private byte[] buildKnobData(String deviceSerial, byte prefix, int brightness, SingleKnobLightingConfig[] knobConfigs) {
@@ -299,7 +321,7 @@ public final class OutputInterpreter {
                                   .appendHex(c2);
                 }
             };
-            knobData.skipFromMark(7);
+            knobData.skipFromMark(SLOT_LENGTH);
         }
         return knobData.get();
     }
@@ -323,11 +345,11 @@ public final class OutputInterpreter {
                                             .appendHex(OFF);
                 case STATIC -> {
                     var c1 = sliderLabelConfig.getColor();
-                    yield sliderLabelData.append(1)
+                    yield sliderLabelData.append(COLOR_STATIC)
                                          .appendHex(c1);
                 }
             };
-            sliderLabelData.skipFromMark(7);
+            sliderLabelData.skipFromMark(SLOT_LENGTH);
         }
         return sliderLabelData.get();
     }
@@ -352,18 +374,18 @@ public final class OutputInterpreter {
                                        .appendHex(OFF);
                 case STATIC, AUDIO_LEVEL -> {
                     var c1 = sliderConfig.getColor1();
-                    yield sliderData.append(1)
+                    yield sliderData.append(COLOR_STATIC)
                                     .appendHex(c1)
                                     .appendHex(c1);
                 }
-                case STATIC_GRADIENT -> sliderData.append(1)
+                case STATIC_GRADIENT -> sliderData.append(COLOR_STATIC)
                                                   .appendHex(sliderConfig.getColor1())
                                                   .appendHex(sliderConfig.getColor2());
-                case VOLUME_GRADIENT -> sliderData.append(3)
+                case VOLUME_GRADIENT -> sliderData.append(SLIDER_VOLUME_GRADIENT)
                                                   .appendHex(sliderConfig.getColor1())
                                                   .appendHex(sliderConfig.getColor2());
             };
-            sliderData.skipFromMark(7);
+            sliderData.skipFromMark(SLOT_LENGTH);
         }
         return sliderData.get();
     }

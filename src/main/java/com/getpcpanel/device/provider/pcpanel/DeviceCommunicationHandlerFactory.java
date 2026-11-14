@@ -1,5 +1,8 @@
 package com.getpcpanel.device.provider.pcpanel;
 
+import java.time.Duration;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.hid4java.HidDevice;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
@@ -19,8 +22,13 @@ public class DeviceCommunicationHandlerFactory {
     DeviceScanner deviceScanner;
     @Inject
     SaveService saveService;
+    @Inject
+    LightingTrace trace;
+    /** A panel can drop its LEDs while it keeps working; its last lighting is sent again after this long without one. */
+    @ConfigProperty(name = "pcpanel.lighting.refresh-interval")
+    Duration lightingRefresh;
 
     public DeviceCommunicationHandler build(String key, HidDevice device, DeviceDescriptor descriptor) {
-        return new DeviceCommunicationHandler(deviceScanner, saveService, eventBus, key, device, descriptor);
+        return new DeviceCommunicationHandler(deviceScanner, saveService, trace, eventBus, key, device, descriptor, lightingRefresh);
     }
 }

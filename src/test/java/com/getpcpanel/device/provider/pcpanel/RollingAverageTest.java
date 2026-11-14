@@ -7,6 +7,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BooleanSupplier;
@@ -49,8 +50,8 @@ class RollingAverageTest {
         var device = mock(HidDevice.class);
         when(device.getSerialNumber()).thenReturn(SERIAL);
         // Not connected as far as the scanner knows, so the reader and writer threads end at once.
-        handler = new DeviceCommunicationHandler(mock(DeviceScanner.class), saveService, events, SERIAL, device,
-                DescriptorFactory.forType(DeviceType.PCPANEL_PRO));
+        handler = new DeviceCommunicationHandler(mock(DeviceScanner.class), saveService, mock(LightingTrace.class), events, SERIAL, device,
+                DescriptorFactory.forType(DeviceType.PCPANEL_PRO), Duration.ZERO);
         handler.start();
     }
 
