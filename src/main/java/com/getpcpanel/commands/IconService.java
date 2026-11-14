@@ -49,6 +49,7 @@ public class IconService {
     public BufferedImage VOICEMEETER;
     public BufferedImage DEVICE;
     public BufferedImage SYSTEM_SOUND;
+    public BufferedImage BRIGHTNESS;
 
     @Nullable
     private static BufferedImage loadImage(String path) {
@@ -92,6 +93,7 @@ public class IconService {
         VOICEMEETER = loadImage("/assets/voicemeeter.png");
         DEVICE = loadImage("/assets/device.png");
         SYSTEM_SOUND = loadImage("/assets/systemsounds.ico");
+        BRIGHTNESS = loadImage("/assets/brightness.png");
 
         imageHandlers.put(Command.class, (a, b) -> DEFAULT);
 
@@ -99,7 +101,7 @@ public class IconService {
         imageHandlers.put(CommandVolumeProcess.class, IconService::getRunningProcessIcon);
         imageHandlers.put(CommandVolumeFocus.class, IconService::getFocusProcessIcon);
         imageHandlers.put(CommandVolumeDevice.class, IconService::getDeviceIcon);
-        imageHandlers.put(CommandBrightness.class, IconService::getBrightnessIcon);
+        imageHandlers.put(CommandBrightness.class, (is, cmd) -> BRIGHTNESS == null ? DEFAULT : BRIGHTNESS);
 
         // Buttons
         imageHandlers.put(CommandVolumeDefaultDeviceAdvanced.class, IconService::getDeviceIcon);
@@ -304,9 +306,5 @@ public class IconService {
             imageHandlers.put((Class<? extends Command>) icon, (BiFunction<IconService, ? extends Command, BufferedImage>) handler);
             return handler;
         }
-    }
-
-    private BufferedImage getBrightnessIcon(Command command) {
-        return DEFAULT;
     }
 }
