@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.device.descriptor.DeviceDescriptor;
 import com.getpcpanel.device.descriptor.LightGroupKind;
+import com.getpcpanel.integration.device.dto.BrightnessOwner;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.dto.LightingConfig;
@@ -45,7 +46,9 @@ public record DeviceSnapshotDto(
         List<String> dialColors,
         List<String> sliderLabelColors,
         List<List<String>> sliderColors,
-        String logoColor
+        String logoColor,
+        // What sets the brightness instead of lightingConfig.globalBrightness; null when that applies.
+        @Nullable BrightnessOwner brightnessOwner
 ) implements WsEvent {
     /**
      * WsEvent type discriminator understood by the frontend.
@@ -54,7 +57,8 @@ public record DeviceSnapshotDto(
         return "device_snapshot";
     }
 
-    public static DeviceSnapshotDto from(Device device, DeviceSave deviceSave, ProVisualColorsService proVisualColorsService) {
+    public static DeviceSnapshotDto from(Device device, DeviceSave deviceSave, ProVisualColorsService proVisualColorsService,
+            @Nullable BrightnessOwner brightnessOwner) {
         var dt = device.deviceType();
         var descriptor = device.descriptor();
         var profile = device.currentProfile();
@@ -93,7 +97,8 @@ public record DeviceSnapshotDto(
                 visualColors.dialColors(),
                 visualColors.sliderLabelColors(),
                 visualColors.sliderColors(),
-                visualColors.logoColor()
+                visualColors.logoColor(),
+                brightnessOwner
         );
     }
 }

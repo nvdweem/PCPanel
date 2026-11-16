@@ -3,6 +3,8 @@ package com.getpcpanel.rest;
 import java.util.List;
 
 import com.getpcpanel.device.provider.pcpanel.ProVisualColorsService;
+import com.getpcpanel.integration.device.BrightnessService;
+import com.getpcpanel.integration.device.BrightnessService.BrightnessOwnerChangedEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.getpcpanel.alerts.AlertsLitEvent;
@@ -19,10 +21,13 @@ import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.profile.dto.KnobSetting;
 import com.getpcpanel.profile.dto.LightingConfig;
 import com.getpcpanel.device.provider.pcpanel.ProVisualColorsService.ProVisualColors;
+import com.getpcpanel.device.Device;
+import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.rest.model.dto.DeviceSnapshotDto;
 import com.getpcpanel.rest.model.dto.ProfileSnapshotDto;
 import com.getpcpanel.rest.model.ws.WsAlertsLitEvent;
 import com.getpcpanel.rest.model.ws.WsAssignmentChangedEvent;
+import com.getpcpanel.rest.model.ws.WsBrightnessOwnerEvent;
 import com.getpcpanel.rest.model.ws.WsButtonEvent;
 import com.getpcpanel.rest.model.ws.WsControlSettingChangedEvent;
 import com.getpcpanel.rest.model.ws.WsDeviceConnectedEvent;
@@ -50,6 +55,7 @@ public class EventBroadcaster {
     @Inject DeviceHolder deviceHolder;
     @Inject ProVisualColorsService proVisualColorsService;
     @Inject WebSocketBroadcastQueue broadcastQueue;
+    @Inject BrightnessService brightnessService;
 
     // The version check runs once at startup and may complete before any browser opens the
     // websocket. Cache the result so EventWebSocket can replay it to clients that connect later.
@@ -86,8 +92,12 @@ public class EventBroadcaster {
             return;
         }
 
-        var snapshot = DeviceSnapshotDto.from(event.device(), save, proVisualColorsService);
-        broadcast(new WsDeviceConnectedEvent(snapshot));
+        broadcast(new WsDeviceConnectedEvent(snapshot(event.device(), save)));
+    }
+
+    /** The device's full state for the UI, as sent when it connects and to every client that connects later. */
+    DeviceSnapshotDto snapshot(Device device, DeviceSave save) {
+        return DeviceSnapshotDto.from(device, save, proVisualColorsService, brightnessService.owner(device.getSerialNumber()).orElse(null));
     }
 
     public void onDeviceDisconnected(@Observes DeviceDisconnectedEvent event) {
@@ -130,6 +140,10 @@ public class EventBroadcaster {
     public void onVisualColorsChanged(@Observes VisualColorsChangedEvent event) {
         var colors = colorsFor(event.serial());
         broadcast(new WsVisualColorsChangedEvent(event.serial(), colors.dialColors(), colors.sliderLabelColors(), colors.sliderColors(), colors.logoColor()));
+    }
+
+    public void onBrightnessOwnerChanged(@Observes BrightnessOwnerChangedEvent event) {
+        broadcast(new WsBrightnessOwnerEvent(event.serial(), event.owner()));
     }
 
     public void onAssignmentChanged(@Observes AssignmentChangedEvent event) {

@@ -196,6 +196,7 @@ export class DeviceStateService implements OnDestroy {
       case 'new_version_available':
       case 'history_changed':
       case 'alerts_lit':
+      case 'brightness_owner':
         return true;
       case true:
         return false;
@@ -287,6 +288,10 @@ export class DeviceStateService implements OnDestroy {
           baseLayerSnapshot: d.baseLayerSnapshot && event.profile === d.baseLayerSnapshot.name
             ? applyKnobSetting(d.baseLayerSnapshot, event) : d.baseLayerSnapshot,
         })));
+        return true;
+
+      case 'brightness_owner':
+        this._devices.update(patch(event.serial, d => ({...d, brightnessOwner: event.owner})));
         return true;
 
       case 'new_version_available':

@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -22,6 +25,11 @@ import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.Save;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.profile.SaveService.SaveEvent;
+import com.getpcpanel.integration.device.BrightnessService.BrightnessOwnerChangedEvent;
+import com.getpcpanel.integration.device.dto.BrightnessOwner;
+
+import jakarta.enterprise.event.Event;
 import com.getpcpanel.integration.device.command.CommandBrightness;
 import com.getpcpanel.device.provider.pcpanel.DeviceType;
 import com.getpcpanel.profile.Profile;
@@ -117,5 +125,60 @@ class BrightnessServiceTest {
         sut.curves = mock(CurveService.class);
         when(sut.curves.calculatorFor(any())).thenReturn(new DialValueCalculator(null, Curve.LINEAR));
         return sut;
+    }
+
+    @Test
+    void ownerNamesTheBrightnessDialAndItsProfile() {
+        var sut = serviceWithBrightnessDialAt(255);
+        assertEquals(Optional.of(BrightnessOwner.dial(2, "p")), sut.owner("s"));
+    }
+
+    @Test
+    void ownerIsTheButtonWhileItsBrightnessWins() {
+        var sut = serviceWithBrightnessDialAt(255);
+        sut.setButtonBrightness("s", 20);
+        assertEquals(Optional.of(BrightnessOwner.button()), sut.owner("s"));
+        sut.clearButtonBrightness("s");
+        assertEquals(Optional.of(BrightnessOwner.dial(2, "p")), sut.owner("s"));
+    }
+
+    @Test
+    void noOwnerWithoutADialOrAButton() {
+        assertTrue(new BrightnessService().owner("s").isEmpty());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void announcesAnOwnerOnlyWhenItChanges() {
+        var sut = serviceWithBrightnessDialAt(255);
+        sut.ownerChanged = mock(Event.class);
+
+        sut.onSave(new SaveEvent(sut.saveService.get(), false));
+        verify(sut.ownerChanged).fire(new BrightnessOwnerChangedEvent("s", BrightnessOwner.dial(2, "p")));
+
+        sut.onSave(new SaveEvent(sut.saveService.get(), false));
+        sut.clearButtonBrightness("s");
+        verify(sut.ownerChanged, times(2)).fire(any());
+
+        sut.setButtonBrightness("s", 20);
+        sut.setButtonBrightness("s", 30);
+        verify(sut.ownerChanged, times(1)).fire(new BrightnessOwnerChangedEvent("s", BrightnessOwner.button()));
+
+        sut.clearButtonBrightness("s");
+        verify(sut.ownerChanged, times(2)).fire(new BrightnessOwnerChangedEvent("s", BrightnessOwner.dial(2, "p")));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void aSaveWithoutTheDialClearsTheOwner() {
+        var sut = serviceWithBrightnessDialAt(255);
+        sut.ownerChanged = mock(Event.class);
+        sut.onSave(new SaveEvent(sut.saveService.get(), false));
+
+        sut.saveService.get().getDevices().get("s").setProfiles(List.of(profile("p")));
+        sut.onSave(new SaveEvent(sut.saveService.get(), false));
+
+        verify(sut.ownerChanged).fire(new BrightnessOwnerChangedEvent("s", null));
+        verify(sut.ownerChanged, never()).fire(new BrightnessOwnerChangedEvent("other", null));
     }
 }

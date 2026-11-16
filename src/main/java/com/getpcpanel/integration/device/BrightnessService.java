@@ -15,12 +15,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
 import com.getpcpanel.integration.device.command.CommandBrightness;
+import com.getpcpanel.integration.device.dto.BrightnessOwner;
 import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.profile.Profile;
 import com.getpcpanel.profile.SaveService;
+import com.getpcpanel.profile.SaveService.SaveEvent;
 import com.getpcpanel.profile.dto.KnobSetting;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import lombok.extern.log4j.Log4j2;
 
@@ -39,6 +43,9 @@ import lombok.extern.log4j.Log4j2;
  *
  * <p>The {@code OptionalInt} is empty when neither a button nor a brightness control sets it, in which case the saved
  * {@code globalBrightness} is used as before.
+ *
+ * <p>{@link #owner} says which of the two sets it; a {@link BrightnessOwnerChangedEvent} follows every change of it,
+ * so the UI can grey out a brightness slider that would change nothing.
  */
 @Log4j2
 @ApplicationScoped
@@ -49,16 +56,50 @@ public class BrightnessService {
     DeviceHolder devices;
     @Inject
     CurveService curves;
+    @Inject
+    Event<BrightnessOwnerChangedEvent> ownerChanged;
     private final Map<String, Integer> buttonBrightness = new ConcurrentHashMap<>();
+    private final Map<String, Optional<BrightnessOwner>> announcedOwners = new ConcurrentHashMap<>();
 
     /** Sets the device's brightness (0-100) from a button; it wins over the brightness dial until that moves. */
     public void setButtonBrightness(String serial, int percent) {
         buttonBrightness.put(serial, Math.clamp(percent, 0, 100));
+        announceOwner(serial);
     }
 
     /** Hands the device's brightness back to its brightness dial (or the saved value). */
     public void clearButtonBrightness(String serial) {
-        buttonBrightness.remove(serial);
+        if (buttonBrightness.remove(serial) != null) {
+            announceOwner(serial);
+        }
+    }
+
+    /** What sets the device's brightness instead of its saved value, or empty when the saved value applies. */
+    public Optional<BrightnessOwner> owner(String serial) {
+        if (buttonBrightness.containsKey(serial)) {
+            return Optional.of(BrightnessOwner.button());
+        }
+        if (saveService == null || saveService.get() == null) {
+            return Optional.empty();
+        }
+        var deviceSave = saveService.get().getDevices().get(serial);
+        if (deviceSave == null) {
+            return Optional.empty();
+        }
+        return bestBrightnessControl(deviceSave.getProfiles()).map(c -> BrightnessOwner.dial(c.index(), c.profile()));
+    }
+
+    /** A save can add or remove a brightness dial in any profile, so every device's owner is checked again. */
+    void onSave(@Observes SaveEvent event) {
+        event.save().getDevices().keySet().forEach(this::announceOwner);
+    }
+
+    private void announceOwner(String serial) {
+        var owner = owner(serial);
+        var previous = announcedOwners.put(serial, owner);
+        if (!owner.equals(previous) && ownerChanged != null) {
+            ownerChanged.fire(new BrightnessOwnerChangedEvent(serial, owner.orElse(null)));
+        }
     }
 
     /** The runtime global brightness (0-100) for a device, or empty when neither a button nor an analog input sets it. */
@@ -99,17 +140,21 @@ public class BrightnessService {
         return profiles.stream()
                        .flatMap(p -> p.getDialData().entrySet().stream()
                                       .map(e -> e.getValue().getCommand(CommandBrightness.class)
-                                                 .map(cmd -> new BrightnessControl(e.getKey(), cmd, p.getKnobSettings().get(e.getKey())))
+                                                 .map(cmd -> new BrightnessControl(e.getKey(), p.getName(), cmd, p.getKnobSettings().get(e.getKey())))
                                                  .orElse(null))
                                       .filter(Objects::nonNull))
                        .min(Comparator.comparing((BrightnessControl b) -> !b.shaped())
                                       .thenComparingInt(BrightnessControl::index));
     }
 
-    record BrightnessControl(int index, CommandBrightness command, @Nullable KnobSetting knobSetting) {
+    record BrightnessControl(int index, String profile, CommandBrightness command, @Nullable KnobSetting knobSetting) {
         /** Carries a response curve rather than running straight through — finer low-end control. */
         boolean shaped() {
             return knobSetting != null && StringUtils.isNotBlank(knobSetting.getCurve());
         }
+    }
+
+    /** What sets a device's brightness changed; {@code owner} is null when its saved brightness applies again. */
+    public record BrightnessOwnerChangedEvent(String serial, @Nullable BrightnessOwner owner) {
     }
 }

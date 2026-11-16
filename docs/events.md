@@ -49,6 +49,7 @@ up to date when you add or remove an event or an observer.
 | `AssignmentChangedEvent` (`EventBroadcaster.…`) | `DeviceResource`, `CommandsResource` | `EventBroadcaster` (→ UI) |
 | `DeviceRenamedEvent` (`EventBroadcaster.…`) | `DeviceResource` | `EventBroadcaster` (→ UI) |
 | `GlobalBrightnessChangedEvent` | `MqttDeviceColorService` | `MqttDeviceService` |
+| `BrightnessOwnerChangedEvent` (`BrightnessService.…`) | `BrightnessService` (a button set or released the brightness; a save added or removed a brightness dial) | `EventBroadcaster` (→ UI `brightness_owner`, which greys out the brightness slider) |
 
 ## Native audio
 

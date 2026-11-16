@@ -10,6 +10,7 @@ import com.getpcpanel.rest.model.dto.DeviceSnapshotDto;
 @JsonTypeInfo(use = Id.NAME, include = As.PROPERTY, property = "type")
 @JsonSubTypes({
         @Type(value = WsAssignmentChangedEvent.class, name = "assignment_changed"),
+        @Type(value = WsBrightnessOwnerEvent.class, name = "brightness_owner"),
         @Type(value = WsButtonEvent.class, name = "button_press"),
         @Type(value = WsDeviceConnectedEvent.class, name = "device_connected"),
         @Type(value = WsDeviceDisconnectedEvent.class, name = "device_disconnected"),

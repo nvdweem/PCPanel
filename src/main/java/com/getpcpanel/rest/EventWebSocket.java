@@ -1,6 +1,5 @@
 package com.getpcpanel.rest;
 
-import com.getpcpanel.device.provider.pcpanel.ProVisualColorsService;
 import java.time.Duration;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -11,7 +10,6 @@ import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.rest.auth.SessionAuthFilter;
 import com.getpcpanel.rest.auth.SessionTokenService;
-import com.getpcpanel.rest.model.dto.DeviceSnapshotDto;
 import com.getpcpanel.rest.model.ws.WsDeviceConnectedEvent;
 import com.getpcpanel.util.app.AppShutdownState;
 
@@ -30,7 +28,6 @@ public class EventWebSocket {
     @Inject ObjectMapper objectMapper;
     @Inject DeviceHolder deviceHolder;
     @Inject SaveService saveService;
-    @Inject ProVisualColorsService proVisualColorsService;
     @Inject EventBroadcaster eventBroadcaster;
     @Inject SessionTokenService sessionTokens;
 
@@ -86,7 +83,7 @@ public class EventWebSocket {
                     return;
                 }
 
-                var snapshot = DeviceSnapshotDto.from(device, deviceSave, proVisualColorsService);
+                var snapshot = eventBroadcaster.snapshot(device, deviceSave);
                 var connectedEvent = new WsDeviceConnectedEvent(snapshot);
                 var json = objectMapper.writeValueAsString(connectedEvent);
                 connection.sendText(json).await().atMost(WebSocketBroadcastQueue.SEND_TIMEOUT);

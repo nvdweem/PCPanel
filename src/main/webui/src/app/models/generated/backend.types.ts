@@ -53,6 +53,12 @@ export interface BandTransition {
     fire: boolean;
 }
 
+export interface BrightnessOwner {
+    analogIndex?: number;
+    profile?: string;
+    source: BrightnessSource;
+}
+
 export interface BugReportRequest {
     consoleEntries?: ClientLogEntry[];
     deviceSerial?: string;
@@ -571,6 +577,7 @@ export interface DeviceSnapshotDto extends WsEvent {
     analogCount: number;
     analogValues: number[];
     baseLayerSnapshot?: ProfileSnapshotDto;
+    brightnessOwner?: BrightnessOwner;
     buttonCount: number;
     currentProfile: string;
     currentProfileSnapshot: ProfileSnapshotDto;
@@ -1177,6 +1184,12 @@ export interface WsAssignmentChangedEvent extends WsEvent {
     type: "assignment_changed";
 }
 
+export interface WsBrightnessOwnerEvent extends WsEvent {
+    owner?: BrightnessOwner;
+    serial: string;
+    type: "brightness_owner";
+}
+
 export interface WsButtonEvent extends WsEvent {
     button: number;
     pressed: boolean;
@@ -1209,7 +1222,7 @@ export interface WsDeviceRenamedEvent extends WsEvent {
 }
 
 export interface WsEvent {
-    type: "device_snapshot" | "alerts_lit" | "assignment_changed" | "button_press" | "control_setting_changed" | "device_connected" | "device_disconnected" | "device_renamed" | "history_changed" | "knob_rotate" | "lighting_changed" | "new_version_available" | "profile_switched" | "visual_colors_changed";
+    type: "device_snapshot" | "alerts_lit" | "assignment_changed" | "brightness_owner" | "button_press" | "control_setting_changed" | "device_connected" | "device_disconnected" | "device_renamed" | "history_changed" | "knob_rotate" | "lighting_changed" | "new_version_available" | "profile_switched" | "visual_colors_changed";
 }
 
 export interface WsHistoryChangedEvent extends WsEvent {
@@ -1269,6 +1282,8 @@ export type AlertTrigger = "TASKBAR_FLASH" | "MIC_IN_USE" | "NOTIFICATION" | "WI
 
 export type AnalogKind = "KNOB" | "SLIDER" | "ENCODER";
 
+export type BrightnessSource = "DIAL" | "BUTTON";
+
 export type ButtonControlMode = "ENABLE" | "DISABLE" | "TOGGLE" | "STRING";
 
 export type ButtonType = "MONO" | "MUTE" | "SOLO" | "MC" | "EQ" | "A1" | "A2" | "A3" | "A4" | "A5" | "B1" | "B2" | "B3" | "SEL" | "MIXA" | "MIXB" | "REPEAT" | "COMPOSITE";
@@ -1327,4 +1342,4 @@ export type VolumeButton = "mute" | "next" | "prev" | "stop" | "playPause";
 
 export type WaveLinkCommandTarget = "Input" | "Channel" | "Mix" | "Output" | "MixMaster";
 
-export type WsEventUnion = WsAssignmentChangedEvent | WsButtonEvent | WsDeviceConnectedEvent | WsDeviceDisconnectedEvent | WsDeviceRenamedEvent | WsKnobEvent | WsLightingChangedEvent | WsProfileSwitchedEvent | WsVisualColorsChangedEvent | DeviceSnapshotDto | WsControlSettingChangedEvent | WsNewVersionAvailableEvent | WsHistoryChangedEvent | WsAlertsLitEvent;
+export type WsEventUnion = WsAssignmentChangedEvent | WsBrightnessOwnerEvent | WsButtonEvent | WsDeviceConnectedEvent | WsDeviceDisconnectedEvent | WsDeviceRenamedEvent | WsKnobEvent | WsLightingChangedEvent | WsProfileSwitchedEvent | WsVisualColorsChangedEvent | DeviceSnapshotDto | WsControlSettingChangedEvent | WsNewVersionAvailableEvent | WsHistoryChangedEvent | WsAlertsLitEvent;

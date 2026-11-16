@@ -16,6 +16,9 @@ import { ToastService } from '../toast/toast.service';
  * Brightness has two modes: uncontrolled (default) writes the device snapshot directly (Home /
  * Advanced); controlled (bind `brightness` + listen to the outputs) lets the parent own it — the
  * Lighting editor uses this so brightness flows through its local config instead of fighting it.
+ *
+ * While a brightness dial or a button sets the brightness, the saved value the slider edits has no effect,
+ * so the slider is disabled and its tooltip names what sets it.
  */
 @Component({
   selector: 'pc-bottom-bar',
@@ -24,11 +27,14 @@ import { ToastService } from '../toast/toast.service';
   template: `
     <footer class="strip">
       @if (showBrightness()) {
-        <pc-icon name="sun" [size]="17" [strokeWidth]="1.8" class="sun"></pc-icon>
-        <div class="bright">
-          <pc-slider [value]="level()" (valueChange)="onBrightnessInput($event)" (changeEnd)="commitBrightness($event)"></pc-slider>
+        <div class="brightness" [class.locked]="brightnessOwnedBy()" [attr.title]="brightnessOwnedBy()">
+          <pc-icon name="sun" [size]="17" [strokeWidth]="1.8" class="sun"></pc-icon>
+          <div class="bright">
+            <pc-slider [value]="level()" [disabled]="!!brightnessOwnedBy()"
+                       (valueChange)="onBrightnessInput($event)" (changeEnd)="commitBrightness($event)"></pc-slider>
+          </div>
+          <span class="bright-val mono">{{ level() }}%</span>
         </div>
-        <span class="bright-val mono">{{ level() }}%</span>
       }
 
       <span class="spacer"></span>
@@ -51,6 +57,8 @@ import { ToastService } from '../toast/toast.service';
   styles: [`
     :host { display: block; flex: none; }
     .strip { height: 74px; display: flex; align-items: center; gap: 20px; padding: 0 24px; border-top: 1px solid var(--line-soft); background: #0D0E12; }
+    .brightness { display: flex; align-items: center; gap: 20px; }
+    .brightness.locked .sun, .brightness.locked .bright-val { opacity: .5; }
     .sun { color: var(--accent); }
     .bright { width: 200px; }
     .bright-val { font-size: 12.5px; color: var(--accent); min-width: 34px; }
@@ -92,6 +100,17 @@ export class BottomBarComponent {
   readonly level = computed(() => this.controlled()
     ? (this.brightness() ?? 0)
     : (this.pendingBrightness() ?? this.snap()?.lightingConfig?.globalBrightness ?? 0));
+  /** Why the slider changes nothing (shown as its tooltip), or null when it sets the brightness. */
+  readonly brightnessOwnedBy = computed<string | null>(() => {
+    const s = this.snap();
+    const owner = s?.brightnessOwner;
+    if (!s || !owner) return null;
+    if (owner.source === 'BUTTON') return 'Set by a button (Run dial actions at a level)';
+    const index = owner.analogIndex ?? 0;
+    const control = s.descriptor.analogInputs.find(a => a.index === index)?.label ?? `K${index + 1}`;
+    const where = owner.profile && owner.profile !== s.currentProfile ? ` in profile “${owner.profile}”` : '';
+    return `Set by the Brightness action on ${control}${where}`;
+  });
   readonly profileOptions = computed<SelectOption[]>(() => (this.snap()?.profiles ?? []).map(p => ({ value: p, label: p })));
   readonly currentProfile = computed(() => this.snap()?.currentProfile ?? '');
 

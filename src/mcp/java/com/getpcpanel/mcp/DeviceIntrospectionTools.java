@@ -10,6 +10,7 @@ import com.getpcpanel.profile.SaveService;
 import com.getpcpanel.device.rest.DeviceResource;
 import com.getpcpanel.device.rest.MidiResource;
 import com.getpcpanel.device.provider.pcpanel.ProVisualColorsService;
+import com.getpcpanel.integration.device.BrightnessService;
 import com.getpcpanel.device.rest.SerialResource;
 import com.getpcpanel.rest.model.dto.DeviceDto;
 import com.getpcpanel.rest.model.dto.DeviceSnapshotDto;
@@ -37,6 +38,7 @@ public class DeviceIntrospectionTools {
     @Inject DeviceHolder deviceHolder;
     @Inject SaveService saveService;
     @Inject ProVisualColorsService proVisualColorsService;
+    @Inject BrightnessService brightnessService;
 
     @Tool(description = "List all devices, both live (connected=true) and persisted-but-offline "
             + "(connected=false). Each carries its capability descriptor (providerId, deviceKindId, "
@@ -54,7 +56,8 @@ public class DeviceIntrospectionTools {
             return new DeviceSnapshot(false, "No connected device with serial '" + serial + "'", null);
         }
         var deviceSave = saveService.get().getDeviceSave(serial);
-        var snapshot = DeviceSnapshotDto.from(device, deviceSave, proVisualColorsService);
+        var snapshot = DeviceSnapshotDto.from(device, deviceSave, proVisualColorsService,
+                brightnessService.owner(device.getSerialNumber()).orElse(null));
         return new DeviceSnapshot(true, null, snapshot);
     }
 

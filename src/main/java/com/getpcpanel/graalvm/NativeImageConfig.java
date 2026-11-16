@@ -111,6 +111,9 @@ import com.getpcpanel.integration.volume.FocusVolumeTarget;
 import com.getpcpanel.profile.dto.CurveDefinition;
 import com.getpcpanel.profile.dto.NotificationAlert;
 import com.getpcpanel.rest.model.ws.WsAlertsLitEvent;
+import com.getpcpanel.rest.model.ws.WsBrightnessOwnerEvent;
+import com.getpcpanel.integration.device.dto.BrightnessOwner;
+import com.getpcpanel.integration.device.dto.BrightnessSource;
 import com.getpcpanel.profile.dto.SaveBackup;
 import com.getpcpanel.rest.model.dto.HistoryDto;
 import com.getpcpanel.profile.dto.CurveMode;
@@ -473,6 +476,10 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
         NotificationAlert.AlertEffect.class,
         // Pushed over the WebSocket as "alerts_lit"; not reached by the REST or Command walks.
         WsAlertsLitEvent.class,
+        // Pushed over the WebSocket as "brightness_owner" and inside the device snapshot.
+        WsBrightnessOwnerEvent.class,
+        BrightnessOwner.class,
+        BrightnessSource.class,
         CurvePoint.class,
         CurvePoint[].class,
         CurveMode.class,
