@@ -14,6 +14,7 @@ import com.getpcpanel.util.io.FileUtil;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
+import one.util.streamex.StreamEx;
 
 /**
  * The facts about a running install that a reporter can never be expected to supply accurately:
@@ -70,6 +71,7 @@ public class SystemInfoCollector {
 
         appendFocusDiagnostics(out);
         appendSection(out, "Audio backend", sndCtrl.isResolvable() ? sndCtrl.get().audioDiagnostics() : Map.of());
+        appendAudioDevices(out);
 
         out.append("\nIntegrations enabled\n");
         append(out, "obs", String.valueOf(save.isObsEnabled()));
@@ -94,6 +96,25 @@ public class SystemInfoCollector {
     private void appendFocusDiagnostics(StringBuilder out) {
         appendSection(out, "Focused-window detection",
                 processHelper.isResolvable() ? processHelper.get().focusDiagnostics() : Map.of());
+    }
+
+    /**
+     * The audio devices present, with the ids actions store. An action pointing at an id missing here is aimed at a
+     * device that is gone or that Windows has given a new id.
+     */
+    private void appendAudioDevices(StringBuilder out) {
+        if (!sndCtrl.isResolvable()) {
+            return;
+        }
+        var audioDevices = StreamEx.ofValues(sndCtrl.get().getDevicesMap())
+                .sortedBy(d -> (d.dataflow() == null ? "" : d.dataflow().name()) + d.name())
+                .toList();
+        out.append("\nAudio devices (").append(audioDevices.size()).append(" present)\n");
+        for (var device : audioDevices) {
+            out.append("  - ").append(device.name())
+               .append(" [").append(device.dataflow() == null ? "?" : device.isOutput() ? "output" : "input").append(']')
+               .append(" id ").append(device.id()).append('\n');
+        }
     }
 
     /** Writes a titled block of label/value facts, or nothing at all when the platform reported none. */
