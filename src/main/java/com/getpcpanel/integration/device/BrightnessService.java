@@ -39,7 +39,8 @@ import lombok.extern.log4j.Log4j2;
  * curve (finer low-end control), then the lowest analog index — so the behaviour is predictable.
  *
  * <p>A button can set the brightness too ({@link #setButtonBrightness}, from "Run dial actions at a level"): that value wins
- * until the brightness dial on the same device moves again ({@link #clearButtonBrightness}). It lives in memory only.
+ * until the brightness dial on the same device moves again, or, on a device without one, until the saved brightness is
+ * changed ({@link #clearButtonBrightness}). It lives in memory only.
  *
  * <p>The {@code OptionalInt} is empty when neither a button nor a brightness control sets it, in which case the saved
  * {@code globalBrightness} is used as before.
@@ -76,17 +77,19 @@ public class BrightnessService {
 
     /** What sets the device's brightness instead of its saved value, or empty when the saved value applies. */
     public Optional<BrightnessOwner> owner(String serial) {
+        var dial = brightnessDial(serial);
         if (buttonBrightness.containsKey(serial)) {
-            return Optional.of(BrightnessOwner.button());
+            return Optional.of(dial.map(c -> BrightnessOwner.buttonOver(c.index(), c.profile())).orElseGet(BrightnessOwner::button));
         }
+        return dial.map(c -> BrightnessOwner.dial(c.index(), c.profile()));
+    }
+
+    private Optional<BrightnessControl> brightnessDial(String serial) {
         if (saveService == null || saveService.get() == null) {
             return Optional.empty();
         }
         var deviceSave = saveService.get().getDevices().get(serial);
-        if (deviceSave == null) {
-            return Optional.empty();
-        }
-        return bestBrightnessControl(deviceSave.getProfiles()).map(c -> BrightnessOwner.dial(c.index(), c.profile()));
+        return deviceSave == null ? Optional.empty() : bestBrightnessControl(deviceSave.getProfiles());
     }
 
     /** A save can add or remove a brightness dial in any profile, so every device's owner is checked again. */

@@ -17,8 +17,9 @@ import { ToastService } from '../toast/toast.service';
  * Advanced); controlled (bind `brightness` + listen to the outputs) lets the parent own it — the
  * Lighting editor uses this so brightness flows through its local config instead of fighting it.
  *
- * While a brightness dial or a button sets the brightness, the saved value the slider edits has no effect,
- * so the slider is disabled and its tooltip names what sets it.
+ * While a brightness dial sets the brightness, or a button does until that dial turns, the saved value the slider
+ * edits has no effect, so the slider is disabled and its tooltip names what sets it. A button's brightness on a device
+ * without a brightness dial gives way to the slider.
  */
 @Component({
   selector: 'pc-bottom-bar',
@@ -27,10 +28,10 @@ import { ToastService } from '../toast/toast.service';
   template: `
     <footer class="strip">
       @if (showBrightness()) {
-        <div class="brightness" [class.locked]="brightnessOwnedBy()" [attr.title]="brightnessOwnedBy()">
+        <div class="brightness" [class.locked]="brightnessLock().locked" [attr.title]="brightnessLock().reason">
           <pc-icon name="sun" [size]="17" [strokeWidth]="1.8" class="sun"></pc-icon>
           <div class="bright">
-            <pc-slider [value]="level()" [disabled]="!!brightnessOwnedBy()"
+            <pc-slider [value]="level()" [disabled]="brightnessLock().locked"
                        (valueChange)="onBrightnessInput($event)" (changeEnd)="commitBrightness($event)"></pc-slider>
           </div>
           <span class="bright-val mono">{{ level() }}%</span>
@@ -100,16 +101,23 @@ export class BottomBarComponent {
   readonly level = computed(() => this.controlled()
     ? (this.brightness() ?? 0)
     : (this.pendingBrightness() ?? this.snap()?.lightingConfig?.globalBrightness ?? 0));
-  /** Why the slider changes nothing (shown as its tooltip), or null when it sets the brightness. */
-  readonly brightnessOwnedBy = computed<string | null>(() => {
+  /**
+   * Whether the slider changes nothing, and why (its tooltip). A brightness dial always wins; a button's brightness
+   * wins until its dial moves, or, without a dial, until the slider moves, so the slider stays usable then.
+   */
+  readonly brightnessLock = computed<{ locked: boolean; reason: string | null }>(() => {
     const s = this.snap();
     const owner = s?.brightnessOwner;
-    if (!s || !owner) return null;
-    if (owner.source === 'BUTTON') return 'Set by a button (Run dial actions at a level)';
-    const index = owner.analogIndex ?? 0;
-    const control = s.descriptor.analogInputs.find(a => a.index === index)?.label ?? `K${index + 1}`;
+    if (!s || !owner) return { locked: false, reason: null };
+    if (owner.analogIndex == null) {
+      return { locked: false, reason: 'Set by a button (Run dial actions at a level) until you move this slider' };
+    }
+    const control = s.descriptor.analogInputs.find(a => a.index === owner.analogIndex)?.label ?? `K${owner.analogIndex + 1}`;
     const where = owner.profile && owner.profile !== s.currentProfile ? ` in profile “${owner.profile}”` : '';
-    return `Set by the Brightness action on ${control}${where}`;
+    const reason = owner.source === 'BUTTON'
+      ? `Set by a button (Run dial actions at a level) until you turn ${control}${where}`
+      : `Set by the Brightness action on ${control}${where}`;
+    return { locked: true, reason };
   });
   readonly profileOptions = computed<SelectOption[]>(() => (this.snap()?.profiles ?? []).map(p => ({ value: p, label: p })));
   readonly currentProfile = computed(() => this.snap()?.currentProfile ?? '');

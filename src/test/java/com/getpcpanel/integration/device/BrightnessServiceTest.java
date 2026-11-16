@@ -137,9 +137,16 @@ class BrightnessServiceTest {
     void ownerIsTheButtonWhileItsBrightnessWins() {
         var sut = serviceWithBrightnessDialAt(255);
         sut.setButtonBrightness("s", 20);
-        assertEquals(Optional.of(BrightnessOwner.button()), sut.owner("s"));
+        assertEquals(Optional.of(BrightnessOwner.buttonOver(2, "p")), sut.owner("s"), "names the dial that takes over");
         sut.clearButtonBrightness("s");
         assertEquals(Optional.of(BrightnessOwner.dial(2, "p")), sut.owner("s"));
+    }
+
+    @Test
+    void aButtonWithoutABrightnessDialNamesNoDial() {
+        var sut = new BrightnessService();
+        sut.setButtonBrightness("s", 40);
+        assertEquals(Optional.of(BrightnessOwner.button()), sut.owner("s"));
     }
 
     @Test
@@ -162,7 +169,7 @@ class BrightnessServiceTest {
 
         sut.setButtonBrightness("s", 20);
         sut.setButtonBrightness("s", 30);
-        verify(sut.ownerChanged, times(1)).fire(new BrightnessOwnerChangedEvent("s", BrightnessOwner.button()));
+        verify(sut.ownerChanged, times(1)).fire(new BrightnessOwnerChangedEvent("s", BrightnessOwner.buttonOver(2, "p")));
 
         sut.clearButtonBrightness("s");
         verify(sut.ownerChanged, times(2)).fire(new BrightnessOwnerChangedEvent("s", BrightnessOwner.dial(2, "p")));

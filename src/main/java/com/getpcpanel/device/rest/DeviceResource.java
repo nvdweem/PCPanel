@@ -7,6 +7,7 @@ import java.util.Optional;
 import com.getpcpanel.commands.Commands;
 import com.getpcpanel.device.Device;
 import com.getpcpanel.device.DeviceHolder;
+import com.getpcpanel.integration.device.BrightnessService;
 import com.getpcpanel.profile.DeviceSave;
 import com.getpcpanel.profile.LightingChangedToDefaultEvent;
 import com.getpcpanel.profile.Profile;
@@ -49,6 +50,7 @@ import one.util.streamex.StreamEx;
 public class DeviceResource {
     @Inject DeviceHolder deviceHolder;
     @Inject SaveService saveService;
+    @Inject BrightnessService brightnessService;
     @Inject Event<Object> eventBus;
 
     @GET
@@ -328,6 +330,10 @@ public class DeviceResource {
     @Path("/{serial}/lighting")
     public Response setLighting(@PathParam("serial") String serial, LightingConfig config) {
         var device = deviceHolder.getDevice(serial).orElseThrow(NotFoundException::new);
+        if (config.getGlobalBrightness() != device.getSavedLightingConfig().getGlobalBrightness()) {
+            // Moving the brightness slider takes over from a brightness a button set.
+            brightnessService.clearButtonBrightness(serial);
+        }
         device.setSavedLighting(config);
         saveService.save();
         eventBus.fire(new LightingChangedToDefaultEvent(serial));
