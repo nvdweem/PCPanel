@@ -10,6 +10,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
@@ -173,6 +174,38 @@ public class SaveService {
         redo.clear();
         apply(restored);
         log.info("Restored configuration from backup {}", name);
+        return true;
+    }
+
+    /**
+     * Rewrites every occurrence of each key in the configuration to its value, as one undoable step. Meant for
+     * identifiers that are unique wherever they appear (an audio endpoint id), so a plain text replacement reaches
+     * every action, list and template holding one without knowing where they live. Connected devices are
+     * re-announced, as on a restore.
+     *
+     * @return whether anything changed
+     */
+    public boolean replaceIds(Map<String, String> replacements) {
+        synchronized (this) {
+            writePending();
+            var now = json.writePretty(save);
+            var next = now;
+            for (var replacement : replacements.entrySet()) {
+                next = next.replace(replacement.getKey(), replacement.getValue());
+            }
+            if (next.equals(now)) {
+                return false;
+            }
+            push(undo, now);
+            redo.clear();
+            groupOpen = false;
+            try {
+                apply(read(next));
+            } catch (IOException e) {
+                log.error("Unable to write the configuration", e);
+            }
+        }
+        announceHistory();
         return true;
     }
 

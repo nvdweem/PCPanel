@@ -76,6 +76,20 @@ class SaveServiceHistoryTest {
     }
 
     @Test
+    void replacingIdsIsOneUndoableStep() {
+        sut.get().getDeviceSave("dev").setDisplayName("{0.0.0.00000000}.{old}");
+        sut.save();
+        sut.checkpoint();
+
+        assertTrue(sut.replaceIds(java.util.Map.of("{0.0.0.00000000}.{old}", "{0.0.0.00000000}.{new}")));
+        assertEquals("{0.0.0.00000000}.{new}", sut.get().getDeviceSave("dev").getDisplayName());
+        assertFalse(sut.replaceIds(java.util.Map.of("{0.0.0.00000000}.{old}", "{0.0.0.00000000}.{new}")), "nothing left to replace");
+
+        assertTrue(sut.undo());
+        assertEquals("{0.0.0.00000000}.{old}", sut.get().getDeviceSave("dev").getDisplayName());
+    }
+
+    @Test
     void aProfileSwitchIsNotAnEdit() {
         while (sut.undo()) {
             // back to the start, with nothing left to undo
