@@ -175,6 +175,23 @@ JNIEXPORT jstring JNICALL Java_com_getpcpanel_integration_volume_platform_window
 
 /*
  * Class:     com_getpcpanel_integration_volume_platform_windows_SndCtrlNative
+ * Method:    describeEndpoint
+ * Signature: (Ljava/lang/String;)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_com_getpcpanel_integration_volume_platform_windows_SndCtrlNative_describeEndpoint(JNIEnv* env, jobject, jstring jDeviceId) {
+    auto description = DescribeEndpoint(str(env, jDeviceId));
+    // Converted like the names deviceAdded reports (JThread::jstr), so the two compare equal.
+    int needed = WideCharToMultiByte(CP_ACP, 0, description.c_str(), -1, nullptr, 0, nullptr, nullptr);
+    if (needed <= 0) {
+        return env->NewStringUTF("");
+    }
+    std::string converted(needed, '\0');
+    WideCharToMultiByte(CP_ACP, 0, description.c_str(), -1, converted.data(), needed, nullptr, nullptr);
+    return env->NewStringUTF(converted.c_str());
+}
+
+/*
+ * Class:     com_getpcpanel_integration_volume_platform_windows_SndCtrlNative
  * Method:    hasAudioPolicyConfigFactory
  * Signature: ()Z
  */

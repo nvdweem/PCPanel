@@ -30,5 +30,8 @@ enum SndCtrlNative {
 
     public native boolean hasAudioPolicyConfigFactory();
 
+    /** "name, interface name, data flow", one per line, of an endpoint, present or not; empty when Windows does not know it. */
+    public native String describeEndpoint(String deviceId);
+
     public native void triggerAv();
 }

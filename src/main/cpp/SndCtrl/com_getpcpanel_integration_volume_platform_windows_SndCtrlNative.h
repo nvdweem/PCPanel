@@ -89,6 +89,14 @@ JNIEXPORT jstring JNICALL Java_com_getpcpanel_integration_volume_platform_window
 
 /*
  * Class:     com_getpcpanel_integration_volume_platform_windows_SndCtrlNative
+ * Method:    describeEndpoint
+ * Signature: (Ljava/lang/String;)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_com_getpcpanel_integration_volume_platform_windows_SndCtrlNative_describeEndpoint
+(JNIEnv*, jobject, jstring);
+
+/*
+ * Class:     com_getpcpanel_integration_volume_platform_windows_SndCtrlNative
  * Method:    hasAudioPolicyConfigFactory
  * Signature: ()Z
  */

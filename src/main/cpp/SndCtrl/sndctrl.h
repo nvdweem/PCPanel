@@ -8,7 +8,16 @@
 struct SDeviceNameId {
     co_ptr<WCHAR> name;
     co_ptr<WCHAR> id;
+    // The name the driver gives the hardware ("Schiit Modi 3+"), which a rename in Windows leaves alone.
+    co_ptr<WCHAR> interfaceName;
 };
+
+// Reads a string property of an endpoint's store, or null when it is absent or not a string.
+co_ptr<WCHAR> StringProperty(IPropertyStore& props, const PROPERTYKEY& key);
+
+// Name, interface name and data flow, one per line, of the endpoint with this id, whether or not it is still present;
+// empty when Windows does not know the id.
+wstring DescribeEndpoint(const wstring& id);
 
 class SndCtrl : public DeviceListenerCB
 {

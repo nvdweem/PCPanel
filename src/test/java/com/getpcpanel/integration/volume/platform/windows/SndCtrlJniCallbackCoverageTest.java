@@ -41,7 +41,7 @@ class SndCtrlJniCallbackCoverageTest {
     @Test
     void everyCallbackIsRegisteredForJni() throws Exception {
         var callbacks = callbacksInCppSources();
-        assertTrue(callbacks.contains("deviceAdded (Ljava/lang/String;Ljava/lang/String;FZI)Lcom/getpcpanel/integration/volume/platform/AudioDevice;"),
+        assertTrue(callbacks.contains("deviceAdded (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FZI)Lcom/getpcpanel/integration/volume/platform/AudioDevice;"),
                 "sanity: expected to read deviceAdded from the C++ sources, found " + callbacks);
         var registered = jniRegisteredMethods();
 

@@ -634,6 +634,17 @@
           ]
         },
         {
+          "name": "deviceAdded",
+          "parameterTypes": [
+            "java.lang.String",
+            "java.lang.String",
+            "java.lang.String",
+            "float",
+            "boolean",
+            "int"
+          ]
+        },
+        {
           "name": "deviceRemoved",
           "parameterTypes": [
             "java.lang.String"

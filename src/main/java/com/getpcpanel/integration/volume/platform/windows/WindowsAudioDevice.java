@@ -39,10 +39,23 @@ class WindowsAudioDevice extends AudioDevice {
      * rather than running observers on the caller — see {@link CallbackEventBus}.
      */
     @Nullable private final transient CallbackEventBus callbackEvents;
+    /** The name the driver gives the hardware ("Schiit Modi 3+"); null when the DLL does not report it. */
+    @Nullable private final transient String interfaceName;
 
     public WindowsAudioDevice(Event<Object> eventBus, @Nullable CallbackEventBus callbackEvents, String name, String id) {
+        this(eventBus, callbackEvents, name, id, null);
+    }
+
+    public WindowsAudioDevice(Event<Object> eventBus, @Nullable CallbackEventBus callbackEvents, String name, String id, @Nullable String interfaceName) {
         super(eventBus, name, id);
         this.callbackEvents = callbackEvents;
+        this.interfaceName = interfaceName;
+    }
+
+    @Nullable
+    @JsonIgnore
+    public String interfaceName() {
+        return interfaceName;
     }
 
     @JsonIgnore

@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -299,8 +300,13 @@ public class SndCtrlWindows implements ISndCtrl {
         }
     }
 
+    /** Called by a {@code SndCtrl.dll} that does not report the hardware name. */
     public AudioDevice deviceAdded(String name, String id, float volume, boolean muted, int dataFlow) {
-        var result = new WindowsAudioDevice(eventBus, callbackEvents, name, id).volume(volume).muted(muted).dataflow(DataFlow.from(dataFlow));
+        return deviceAdded(name, id, null, volume, muted, dataFlow);
+    }
+
+    public AudioDevice deviceAdded(String name, String id, @Nullable String interfaceName, float volume, boolean muted, int dataFlow) {
+        var result = new WindowsAudioDevice(eventBus, callbackEvents, name, id, StringUtils.trimToNull(interfaceName)).volume(volume).muted(muted).dataflow(DataFlow.from(dataFlow));
         synchronized (devices) {
             devices.put(id, result);
         }
@@ -353,6 +359,34 @@ public class SndCtrlWindows implements ISndCtrl {
                            .filter(s -> s.executable() != null && StringUtils.containsIgnoreCase(s.executable().getAbsolutePath(), process))
                            .map(AudioSession::pid)
                            .toImmutableSet();
+        }
+    }
+
+    /**
+     * What Windows knows of the endpoint {@code deviceId}, also when it is no longer present. Empty when Windows does
+     * not know it, or the loaded {@code SndCtrl.dll} cannot tell.
+     */
+    public Optional<KnownEndpoint> describeEndpoint(String deviceId) {
+        String description;
+        try {
+            description = SndCtrlNative.instance.describeEndpoint(deviceId);
+        } catch (LinkageError e) {
+            log.debug("SndCtrl.dll cannot describe endpoints", e);
+            return Optional.empty();
+        }
+        return parseDescription(description);
+    }
+
+    /** Reads "name, interface name, data flow", one per line, as {@link SndCtrlNative#describeEndpoint} answers. */
+    static Optional<KnownEndpoint> parseDescription(@Nullable String description) {
+        var fields = StringUtils.defaultString(description).split("\n", -1);
+        if (fields.length != 3 || StringUtils.isBlank(fields[0])) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(new KnownEndpoint(fields[0], StringUtils.trimToNull(fields[1]), DataFlow.from(Integer.parseInt(fields[2].trim())), 0, 0));
+        } catch (RuntimeException e) {
+            return Optional.empty();
         }
     }
 

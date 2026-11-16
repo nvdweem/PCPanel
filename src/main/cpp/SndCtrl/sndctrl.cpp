@@ -135,10 +135,12 @@ void SndCtrl::DeviceAdded(CComPtr<IMMDevice> cpDevice) {
     if (*thread) {
         auto nameStr = thread.jstr(nameAndId.name.get());
         auto idStr = thread.jstr(nameAndId.id.get());
+        auto interfaceNameStr = thread.jstr(nameAndId.interfaceName.get());
         auto dataFlow = getDataFlow(*cpDevice);
-        auto jObj = pJni->CallObject(thread, "deviceAdded", "(Ljava/lang/String;Ljava/lang/String;FZI)Lcom/getpcpanel/integration/volume/platform/AudioDevice;",
-            nameStr, idStr, volume, muted, dataFlow
+        auto jObj = pJni->CallObject(thread, "deviceAdded", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FZI)Lcom/getpcpanel/integration/volume/platform/AudioDevice;",
+            nameStr, idStr, interfaceNameStr, volume, muted, dataFlow
         );
+        thread.DoneWith(interfaceNameStr);
         NULLRETURN(jObj);
         auto device = make_unique<AudioDevice>(deviceId, cpDevice, dataFlow, jObj);
         {
@@ -302,37 +304,74 @@ CComPtr<IMMDevice> SndCtrl::DeviceFromCollection(IMMDeviceCollection& collection
     return pDevice;
 }
 
+co_ptr<WCHAR> StringProperty(IPropertyStore& props, const PROPERTYKEY& key) {
+    PROPVARIANT value;
+    PropVariantInit(&value);
+    if (props.GetValue(key, &value) != S_OK) {
+        return co_ptr<WCHAR>(nullptr);
+    }
+    // Only VT_LPWSTR carries a string in pwszVal. The property value comes from the device driver, so
+    // any other type would be reinterpreted as a pointer here and then both dereferenced and freed.
+    // Adopting pwszVal takes over its allocation, which is why only the non-string case clears.
+    if (value.vt == VT_LPWSTR) {
+        return co_ptr<WCHAR>(value.pwszVal);
+    }
+    PropVariantClear(&value);
+    return co_ptr<WCHAR>(nullptr);
+}
+
 SDeviceNameId SndCtrl::DeviceNameId(IMMDevice& device) {
     LPWSTR pwszID = NULL;
     if (device.GetId(&pwszID) != S_OK) {
         cout << "Unable to get device id" << endl;
     }
 
-    PROPVARIANT varName;
-    PropVariantInit(&varName);
-
+    co_ptr<WCHAR> name(nullptr);
+    co_ptr<WCHAR> interfaceName(nullptr);
     // OpenPropertyStore can fail (e.g. a device disappearing mid-enumeration); guard the null store
     // rather than dereferencing it. Writing into the CComPtr out-param adopts the single reference it
     // returns without an extra AddRef.
     CComPtr<IPropertyStore> props;
     if (SUCCEEDED(device.OpenPropertyStore(STGM_READ, &props)) && props) {
-        // Get the endpoint's friendly-name property.
-        if (props->GetValue(PKEY_Device_FriendlyName, &varName) != S_OK) {
-            cout << "Unable to get name for " << pwszID << endl;
+        name = StringProperty(*props, PKEY_Device_FriendlyName);
+        if (!name) {
+            cout << "Unable to get name for device" << endl;
         }
+        interfaceName = StringProperty(*props, PKEY_DeviceInterface_FriendlyName);
     }
 
-    // Only VT_LPWSTR carries a string in pwszVal. The property value comes from the device driver, so
-    // any other type would be reinterpreted as a pointer here and then both dereferenced and freed.
-    // Adopting pwszVal takes over its allocation, which is why only the non-string case clears.
-    LPWSTR pwszName = nullptr;
-    if (varName.vt == VT_LPWSTR) {
-        pwszName = varName.pwszVal;
-    } else {
-        PropVariantClear(&varName);
-    }
+    return SDeviceNameId{ std::move(name), co_ptr<WCHAR>(pwszID), std::move(interfaceName) };
+}
 
-    return SDeviceNameId{ co_ptr<WCHAR>(pwszName), co_ptr<WCHAR>(pwszID) };
+/**
+ * Looks the endpoint up on a thread of its own, in a multithreaded apartment it sets up and tears down itself, so the
+ * calling (Java) thread's COM state is never touched and SndCtrl need not be running. Windows keeps an endpoint it
+ * has replaced (a driver reinstalled, the device moved to another port) as not present, properties and all, which is
+ * what lets the app recognise the replacement.
+ */
+wstring DescribeEndpoint(const wstring& id) {
+    wstring result;
+    std::thread([&id, &result]() {
+        if (FAILED(CoInitializeEx(nullptr, COINIT_MULTITHREADED))) {
+            return;
+        }
+        {
+            CComPtr<IMMDeviceEnumerator> cpEnumerator;
+            if (SUCCEEDED(CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void**)&cpEnumerator)) && cpEnumerator) {
+                CComPtr<IMMDevice> cpDevice;
+                CComPtr<IPropertyStore> props;
+                if (SUCCEEDED(cpEnumerator->GetDevice(id.c_str(), &cpDevice)) && cpDevice
+                    && SUCCEEDED(cpDevice->OpenPropertyStore(STGM_READ, &props)) && props) {
+                    auto name = StringProperty(*props, PKEY_Device_FriendlyName);
+                    auto interfaceName = StringProperty(*props, PKEY_DeviceInterface_FriendlyName);
+                    result = wstring(name ? name.get() : L"") + L"\n" + (interfaceName ? interfaceName.get() : L"") + L"\n"
+                             + to_wstring((int) getDataFlow(*cpDevice));
+                }
+            }
+        }
+        CoUninitialize();
+    }).join();
+    return result;
 }
 
 CComPtr<IAudioEndpointVolume> SndCtrl::GetVolumeControl(IMMDevice& device) {
