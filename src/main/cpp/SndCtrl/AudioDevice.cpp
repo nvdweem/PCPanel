@@ -13,10 +13,12 @@ AudioDevice::AudioDevice(wstring id, CComPtr<IMMDevice> cpDevice, EDataFlow data
 
     auto cpSessionManager = Activate(*cpDevice);
     NULLRETURN(cpSessionManager)
+    AttachSessions(cpSessionManager);
+}
 
+void AudioDevice::AttachSessions(CComPtr<IAudioSessionManager2> cpSessionManager) {
     cpSessionListener.Set(new SessionListener(*this, cpSessionManager));
 
-    // Get current sessions
     auto cpSessionList = GetSessionEnumerator(*cpSessionManager);
     if (cpSessionList) {
         auto sessionCount = GetCount(*cpSessionList);
@@ -26,6 +28,45 @@ AudioDevice::AudioDevice(wstring id, CComPtr<IMMDevice> cpDevice, EDataFlow data
             SessionAdded(session);
         }
     }
+}
+
+void AudioDevice::RebuildSessions() {
+    std::lock_guard<std::mutex> rebuilding(rebuildMutex);
+    auto cpSessionManager = Activate(*cpDevice);
+    NULLRETURN(cpSessionManager)
+
+    unordered_map<int, list<unique_ptr<AudioSession>>> stale;
+    {
+        std::lock_guard<std::recursive_timed_mutex> lock(g_audioMutex);
+        stale.swap(sessions);
+    }
+
+    // The fresh handles reach Java before the stale ones leave it: Java keeps an app's session for as long as one of
+    // its handles is registered, so the session stays in place rather than disappearing and coming back.
+    AttachSessions(cpSessionManager);
+    {
+        JThread thread;
+        for (auto& entry : stale) {
+            for (auto& session : entry.second) {
+                jlong pointer = reinterpret_cast<std::uintptr_t>(session.get());
+                jni->CallVoid(thread, "removeSession", "(JI)V", pointer, entry.first);
+            }
+        }
+    }
+
+    // Released on a thread of its own, as SessionRemoved does: releasing a handle unregisters its event sink, and a
+    // notification for it may be running at this moment.
+    if (!stale.empty()) {
+        std::thread([s = std::move(stale)]() mutable { s.clear(); }).detach();
+    }
+}
+
+void AudioDevice::SessionDisconnected(AudioSessionDisconnectReason reason) {
+    // An endpoint that went away is handled where it is removed, which also releases this device.
+    if (reason == DisconnectReasonDeviceRemoval) {
+        return;
+    }
+    RequestSessionRebuild(id);
 }
 
 void AudioDevice::SetVolume(float volume) {
@@ -38,28 +79,27 @@ void AudioDevice::Mute(bool muted) {
     cpVolume->SetMute(muted, nullptr);
 }
 
-bool AudioDevice::SetProcessVolume(int pid, float volume) {
+template<typename Call> SessionCall AudioDevice::ForEachSessionOf(int pid, Call call) {
     std::lock_guard<std::recursive_timed_mutex> lock(g_audioMutex);
     auto entry = sessions.find(pid);
-    if (entry != sessions.end()) {
-        for (auto& sess : entry->second) {
-            sess->SetVolume(volume);
-        }
-        return true;
+    if (entry == sessions.end()) {
+        return SessionCall::NotFound;
     }
-    return false;
+    auto result = SessionCall::Applied;
+    for (auto& sess : entry->second) {
+        if (call(*sess) == AUDCLNT_E_DEVICE_INVALIDATED) {
+            result = SessionCall::Invalidated;
+        }
+    }
+    return result;
 }
 
-bool AudioDevice::MuteProcess(int pid, bool muted) {
-    std::lock_guard<std::recursive_timed_mutex> lock(g_audioMutex);
-    auto entry = sessions.find(pid);
-    if (entry != sessions.end()) {
-        for (auto& sess : entry->second) {
-            sess->Mute(muted);
-        }
-        return true;
-    }
-    return false;
+SessionCall AudioDevice::SetProcessVolume(int pid, float volume) {
+    return ForEachSessionOf(pid, [volume](AudioSession& sess) { return sess.SetVolume(volume); });
+}
+
+SessionCall AudioDevice::MuteProcess(int pid, bool muted) {
+    return ForEachSessionOf(pid, [muted](AudioSession& sess) { return sess.Mute(muted); });
 }
 
 void AudioDevice::SetDefault(EDataFlow dataFlow, ERole role) {

@@ -66,14 +66,14 @@ void AudioSession::Init(JniCaller& audioDevice, AudioSessionListenerCB& callback
     }
 }
 
-void AudioSession::SetVolume(float volume) {
-    NULLRETURN(cpVolumeControl)
-    cpVolumeControl->SetMasterVolume(volume, nullptr);
+HRESULT AudioSession::SetVolume(float volume) {
+    NULLRETURNVAL(cpVolumeControl, E_POINTER)
+    return cpVolumeControl->SetMasterVolume(volume, nullptr);
 }
 
-void AudioSession::Mute(bool muted) {
-    NULLRETURN(cpVolumeControl)
-    cpVolumeControl->SetMute(muted, nullptr);
+HRESULT AudioSession::Mute(bool muted) {
+    NULLRETURNVAL(cpVolumeControl, E_POINTER)
+    return cpVolumeControl->SetMute(muted, nullptr);
 }
 
 basic_string<TCHAR> AudioSession::GetProductName() {

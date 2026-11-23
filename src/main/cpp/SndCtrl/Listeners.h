@@ -264,6 +264,8 @@ public:
 class AudioSessionListenerCB {
 public:
     virtual void SessionRemoved(AudioSession& session) = 0;
+    // The session handle no longer reaches its session; the session itself may well carry on.
+    virtual void SessionDisconnected(AudioSessionDisconnectReason reason) = 0;
 };
 
 class AudioSessionListener : public Listener, public IAudioSessionEvents {
@@ -306,7 +308,10 @@ public:
     }
     virtual HRESULT STDMETHODCALLTYPE OnChannelVolumeChanged(DWORD ChannelCount, float NewChannelVolumeArray[], DWORD ChangedChannel, LPCGUID EventContext) { return S_OK; }
     virtual HRESULT STDMETHODCALLTYPE OnGroupingParamChanged(LPCGUID NewGroupingParam, LPCGUID EventContext) { return S_OK; }
-    virtual HRESULT STDMETHODCALLTYPE OnSessionDisconnected(AudioSessionDisconnectReason DisconnectReason) { return S_OK; }
+    virtual HRESULT STDMETHODCALLTYPE OnSessionDisconnected(AudioSessionDisconnectReason DisconnectReason) {
+        callback.SessionDisconnected(DisconnectReason);
+        return S_OK;
+    }
     virtual HRESULT STDMETHODCALLTYPE OnSimpleVolumeChanged(float NewVolume, BOOL NewMute, LPCGUID EventContext) {
         JThread env;
         if (*env) {
