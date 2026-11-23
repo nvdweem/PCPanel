@@ -4,8 +4,141 @@
 #include "helpers.h"
 #include "roapi.h"
 #include "winstring.h"
+#include <condition_variable>
+#include <deque>
+#include <future>
+#include <set>
 
 std::atomic<SndCtrl*> pSndCtrl{ nullptr };
+
+/**
+ * How long a disconnected session's endpoint is left to settle before its sessions are read again. Measured on a
+ * Bluetooth headset reconnecting: Windows renegotiated the format about 150 ms after the endpoint came back, which
+ * invalidated every session handle, and announced the sessions again up to 1.6 s after that. Reading earlier can take
+ * a handle that is invalidated in turn; the next volume call then finds it so and reads them once more.
+ */
+constexpr auto SESSION_REBUILD_SETTLE = std::chrono::seconds(2);
+
+namespace {
+/**
+ * The one thread that re-reads devices' sessions, in a multithreaded apartment for the life of the process, so the
+ * session handles it takes belong to an apartment that stays. The command thread is a Java thread whose COM state is
+ * not ours to set, and a notification callback may not block. Never destroyed, like SndCtrl itself: its thread waits
+ * on it until the process ends.
+ */
+class SessionRebuildWorker {
+public:
+    static SessionRebuildWorker& Get() {
+        static auto* worker = new SessionRebuildWorker();
+        return *worker;
+    }
+
+    std::future<void> Post(shared_ptr<AudioDevice> device) {
+        std::promise<void> done;
+        auto result = done.get_future();
+        {
+            std::lock_guard<std::mutex> lock(mutex);
+            queue.emplace_back(std::move(device), std::move(done));
+        }
+        wake.notify_one();
+        return result;
+    }
+
+private:
+    std::mutex mutex;
+    std::condition_variable wake;
+    std::deque<std::pair<shared_ptr<AudioDevice>, std::promise<void>>> queue;
+
+    SessionRebuildWorker() {
+        std::thread([this]() { Run(); }).detach();
+    }
+
+    void Run() {
+        if (FAILED(CoInitializeEx(nullptr, COINIT_MULTITHREADED))) {
+            cerr << "SessionRebuildWorker: unable to enter the multithreaded apartment" << endl;
+        }
+        JThread thread; // attached to the JVM once, for the thread's lifetime
+        for (;;) {
+            std::unique_lock<std::mutex> lock(mutex);
+            wake.wait(lock, [this]() { return !queue.empty(); });
+            auto job = std::move(queue.front());
+            queue.pop_front();
+            lock.unlock();
+
+            job.first->RebuildSessions();
+            job.second.set_value();
+        }
+    }
+};
+
+std::mutex rebuildRequestsMutex;
+std::set<wstring> rebuildRequests;
+}
+
+void RequestSessionRebuild(const wstring& deviceId) {
+    {
+        std::lock_guard<std::mutex> lock(rebuildRequestsMutex);
+        if (!rebuildRequests.insert(deviceId).second) {
+            return; // one is already waiting; a session disconnect arrives once per session
+        }
+    }
+    std::thread([deviceId]() {
+        std::this_thread::sleep_for(SESSION_REBUILD_SETTLE);
+        {
+            // Cleared before the rebuild, so a disconnect during it asks for another.
+            std::lock_guard<std::mutex> lock(rebuildRequestsMutex);
+            rebuildRequests.erase(deviceId);
+        }
+        auto* ctrl = pSndCtrl.load();
+        if (ctrl) {
+            ctrl->RebuildSessions(deviceId);
+        }
+    }).detach();
+}
+
+void SndCtrl::RebuildSessions(const wstring& deviceId) {
+    shared_ptr<AudioDevice> device;
+    {
+        auto lock = lockAudioForJavaCall();
+        if (!lock.owns_lock()) {
+            cerr << "RebuildSessions: audio lock unavailable, skipping" << endl;
+            return;
+        }
+        auto found = devices.find(deviceId);
+        if (found == devices.end()) {
+            return;
+        }
+        device = found->second;
+    }
+    SessionRebuildWorker::Get().Post(std::move(device));
+}
+
+template<typename Call> void SndCtrl::ApplyToSessions(const char* what, const wstring& deviceId, Call call) {
+    shared_ptr<AudioDevice> device;
+    {
+        auto lock = lockAudioForJavaCall();
+        if (!lock.owns_lock()) {
+            cerr << what << ": audio lock unavailable, skipping" << endl;
+            return;
+        }
+        auto found = devices.find(deviceId);
+        if (found == devices.end() || call(*found->second) != SessionCall::Invalidated) {
+            return;
+        }
+        device = found->second;
+    }
+
+    // Re-read without the audio lock, which the rebuild takes itself, and bounded like the lock: this is the thread
+    // that runs every dial and button.
+    if (SessionRebuildWorker::Get().Post(device).wait_for(AUDIO_LOCK_TIMEOUT) != std::future_status::ready) {
+        cerr << what << ": re-reading the sessions took too long, skipping" << endl;
+        return;
+    }
+    auto lock = lockAudioForJavaCall();
+    if (lock.owns_lock()) {
+        call(*device);
+    }
+}
 wstring SndCtrl::MMDEVAPI_DEVICE_PREFIX = L"\\\\?\\SWD#MMDEVAPI#";
 wstring SndCtrl::MMDEVAPI_RENDER_POSTFIX = L"#{e6327cad-dcec-4949-ae8a-991e976a79d2}";
 wstring SndCtrl::MMDEVAPI_CAPTURE_POSTFIX = L"#{2eef81be-33fa-4800-9670-1cd474972c3f}";
@@ -85,9 +218,11 @@ void SndCtrl::InitDevices() {
  * one command thread that needs the mutex for any volume call. AudioDevice::SessionRemoved already does
  * this for sessions, and for the same reason.
  *
- * The thread owns the device outright, so it depends on nothing that could outlive it.
+ * The thread holds its own reference, so it depends on nothing that could outlive it. When a session rebuild still
+ * holds one, the device goes when that rebuild lets go of it, on the rebuild worker or the command thread, neither of
+ * which is a notification callback.
  */
-static void ReleaseOffCallbackThread(std::unique_ptr<AudioDevice> device) {
+static void ReleaseOffCallbackThread(shared_ptr<AudioDevice> device) {
     if (device) {
         std::thread([d = std::move(device)]() mutable { d.reset(); }).detach();
     }
@@ -142,12 +277,12 @@ void SndCtrl::DeviceAdded(CComPtr<IMMDevice> cpDevice) {
         );
         thread.DoneWith(interfaceNameStr);
         NULLRETURN(jObj);
-        auto device = make_unique<AudioDevice>(deviceId, cpDevice, dataFlow, jObj);
+        auto device = make_shared<AudioDevice>(deviceId, cpDevice, dataFlow, jObj);
         {
             std::lock_guard<std::recursive_timed_mutex> lock(g_audioMutex);
             // insert (not insert_or_assign): if another notification won the race, keep the registered
-            // device. The loser is released below.
-            devices.insert({ deviceId, std::move(device) });
+            // device. This reference is released below, which releases the loser.
+            devices.insert({ deviceId, device });
         }
         ReleaseOffCallbackThread(std::move(device));
         thread.DoneWith(nameStr);
@@ -159,7 +294,7 @@ void SndCtrl::DeviceAdded(CComPtr<IMMDevice> cpDevice) {
 void SndCtrl::DeviceRemoved(wstring deviceId) {
     // Take the device out under the mutex, then tell Java without holding it: the callback runs
     // application code, which the volume calls waiting on this mutex should not be behind.
-    std::unique_ptr<AudioDevice> removed;
+    shared_ptr<AudioDevice> removed;
     {
         std::lock_guard<std::recursive_timed_mutex> lock(g_audioMutex);
         auto found = devices.find(deviceId);
@@ -205,27 +340,11 @@ void SndCtrl::MuteDevice(wstring deviceId, bool muted) {
 }
 
 void SndCtrl::SetProcessVolume(wstring deviceId, int pid, float volume) {
-    auto lock = lockAudioForJavaCall();
-    if (!lock.owns_lock()) {
-        cerr << "SetProcessVolume: audio lock unavailable, skipping" << endl;
-        return;
-    }
-    auto found = devices.find(deviceId);
-    if (found != devices.end()) {
-        found->second->SetProcessVolume(pid, volume);
-    }
+    ApplyToSessions("SetProcessVolume", deviceId, [pid, volume](AudioDevice& device) { return device.SetProcessVolume(pid, volume); });
 }
 
 void SndCtrl::MuteProcess(wstring deviceId, int pid, bool muted) {
-    auto lock = lockAudioForJavaCall();
-    if (!lock.owns_lock()) {
-        cerr << "MuteProcess: audio lock unavailable, skipping" << endl;
-        return;
-    }
-    auto found = devices.find(deviceId);
-    if (found != devices.end()) {
-        found->second->MuteProcess(pid, muted);
-    }
+    ApplyToSessions("MuteProcess", deviceId, [pid, muted](AudioDevice& device) { return device.MuteProcess(pid, muted); });
 }
 
 void SndCtrl::SetFocusVolume(float volume) {
@@ -238,7 +357,12 @@ void SndCtrl::SetFocusVolume(float volume) {
     bool found = false;
     for (auto& entry : devices) {
         if (entry.second->IsOutput()) {
-            found = entry.second->SetProcessVolume(pid, volume) || found;
+            auto result = entry.second->SetProcessVolume(pid, volume);
+            if (result == SessionCall::Invalidated) {
+                // Re-read for the next turn of the dial rather than wait here with the audio lock held.
+                SessionRebuildWorker::Get().Post(entry.second);
+            }
+            found = result != SessionCall::NotFound || found;
         }
     }
     if (found) {

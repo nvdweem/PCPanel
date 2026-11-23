@@ -17,8 +17,9 @@ public:
     AudioSession(const AudioSession&) = delete;
 
     void Init(JniCaller& audioDevice, AudioSessionListenerCB& callback);
-    void SetVolume(float volume);
-    void Mute(bool muted);
+    // The HRESULT Windows answered: AUDCLNT_E_DEVICE_INVALIDATED means this handle no longer reaches the session.
+    HRESULT SetVolume(float volume);
+    HRESULT Mute(bool muted);
 
     int GetPid() const {
         return pid;

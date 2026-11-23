@@ -29,7 +29,9 @@ private:
     shared_ptr<JniCaller> pJni;
     unique_ptr<FocusListener> pFocusListener;
     CComPtr<IMMDeviceEnumerator> cpEnumerator;
-    unordered_map<wstring, unique_ptr<AudioDevice>> devices;
+    // Shared, so a rebuild of a device's sessions, which runs without the audio lock, keeps the device alive when the
+    // endpoint is removed meanwhile.
+    unordered_map<wstring, shared_ptr<AudioDevice>> devices;
     StoppingHandle<DeviceListener> cpDeviceListener;
     IAudioPolicyConfigFactory* pPolicyConfigFactory;
 
@@ -55,8 +57,14 @@ public:
     }
     bool SetPersistedDefaultAudioEndpoint(int pid, EDataFlow flow, wstring deviceId);
     wstring GetPersistedDefaultAudioEndpoint(int pid, EDataFlow flow);
+
+    // Re-reads the sessions of the endpoint with this id, if it is still known. Takes the audio lock itself.
+    void RebuildSessions(const wstring& deviceId);
 private:
     void InitDevices();
+    // Applies call to a device's sessions; when a handle turns out invalidated, re-reads the device's sessions and
+    // applies it once more.
+    template<typename Call> void ApplyToSessions(const char* what, const wstring& deviceId, Call call);
 
     CComPtr<IMMDeviceCollection> EnumAudioEndpoints(IMMDeviceEnumerator& enumerator);
     UINT GetCount(IMMDeviceCollection& collection);
