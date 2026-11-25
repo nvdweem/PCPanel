@@ -11,7 +11,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.getpcpanel.util.CdiHelper;
 import com.getpcpanel.integration.program.IPlatformCommand;
 import com.getpcpanel.template.TemplateContext;
-import com.getpcpanel.template.Templates;
 
 import lombok.Getter;
 import lombok.ToString;
@@ -36,7 +35,7 @@ public class CommandRun extends Command implements ButtonAction {
 
     @Override
     public void execute() {
-        CdiHelper.getBean(IPlatformCommand.class).exec(Templates.render(command, TemplateContext.current()));
+        CdiHelper.getBean(IPlatformCommand.class).run(command, TemplateContext.current());
     }
 
     @Override

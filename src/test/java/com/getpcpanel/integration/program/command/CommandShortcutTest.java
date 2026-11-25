@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.getpcpanel.template.TemplateSegment;
 import com.getpcpanel.AppLikeMapper;
 import com.getpcpanel.commands.command.Command;
 import com.getpcpanel.integration.program.IPlatformCommand;
@@ -130,7 +131,7 @@ class CommandShortcutTest {
         final List<String> opened = new ArrayList<>();
 
         @Override
-        public void exec(String shortcut) {
+        public void exec(List<TemplateSegment> command) {
             throw new AssertionError("a shortcut goes through openOrRun");
         }
 

@@ -9,6 +9,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.getpcpanel.template.TemplateSegment;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -71,8 +73,8 @@ class OpenOrRunTest {
         final List<String> calls = new ArrayList<>();
 
         @Override
-        public void exec(String shortcut) {
-            calls.add("exec " + shortcut);
+        public void exec(List<TemplateSegment> command) {
+            calls.add("exec " + CommandLine.text(command));
         }
 
         @Override
