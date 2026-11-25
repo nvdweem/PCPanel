@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { CommandDef, COMMAND_BY_TYPE, defaultFocusApp, FieldDef, isLevelReadable, LiveSource } from './command-catalog';
 import { CommandPickerComponent } from './command-picker.component';
 import { mappingCurve, TrimRange } from './mapping-curve.util';
+import { convertDeviceRef, deviceSelectOptions, hasDuplicateNames, NamedDevice } from './device-options.util';
 import { IntegrationDataService, VoiceMeeterParams } from './integration-data.service';
 import { CurveDefinition } from '../../models/generated/backend.types';
 import {
@@ -12,6 +13,8 @@ import {
   SelectComponent, SelectOption, SliderComponent, TemplateInputComponent, ToggleComponent,
 } from '../../ui';
 import { TemplateContext } from '../../services/template.service';
+
+type DeviceField = Extract<FieldDef, { kind: 'device' }>;
 
 type Cmd = Record<string, any>;
 
@@ -91,6 +94,12 @@ type Cmd = Record<string, any>;
               <pc-toggle [value]="!!val($any(f).key)" [disabled]="toggleDisabled($any(f))" (valueChange)="set($any(f).key, $event)"></pc-toggle>
             </div>
           }
+          @case ('endpoint-id-toggle') {
+            <div class="row-between">
+              <span class="rlabel">{{ $any(f).label }}</span>
+              <pc-toggle [value]="!!val($any(f).key)" (valueChange)="setEndpointIds($any(f).key, $event)"></pc-toggle>
+            </div>
+          }
           @case ('select') {
             <div class="field-block">
               <div class="flabel">{{ $any(f).label }}</div>
@@ -116,7 +125,7 @@ type Cmd = Record<string, any>;
           @case ('device') {
             <div class="field-block">
               <div class="flabel">{{ $any(f).label }}</div>
-              <pc-select [block]="true" [options]="deviceOptions($any(f).filter, $any(f).defaultLabel, $any(f).byName, val($any(f).key))"
+              <pc-select [block]="true" [options]="deviceOptions($any(f), val($any(f).key))"
                          [value]="val($any(f).key)" [searchable]="true" [allowCustom]="!!$any(f).byName"
                          placeholder="—" (valueChange)="set($any(f).key, $event)"></pc-select>
             </div>
@@ -512,6 +521,7 @@ export class CommandFieldsComponent {
   /** Fields whose optional `showWhen` condition (another field equals a value) is met — hides irrelevant inputs. */
   visibleFields(): FieldDef[] {
     return this.def().fields.filter(f => {
+      if (f.kind === 'endpoint-id-toggle' && !this.val(f.key) && !this.idFieldsShareNames(f.key)) return false;
       const w = (f as any).showWhen as { key: string; equals: string } | undefined;
       return !w || this.val(w.key) === w.equals;
     });
@@ -629,18 +639,40 @@ export class CommandFieldsComponent {
     }
   }
 
-  deviceOptions(filter: 'output' | 'input' | 'all' | undefined, defaultLabel?: string, byName?: boolean, current?: any): SelectOption[] {
+  private devicesFor(filter: DeviceField['filter']): NamedDevice[] {
     const res = filter === 'output' ? this.data.outputDevices : filter === 'input' ? this.data.inputDevices : this.data.audioDevices;
-    const devices = res.value() ?? [];
-    const opts: SelectOption[] = devices.map(d => ({ value: byName ? d.name : d.id, label: d.name }));
-    // A byName field configured before it stored names holds an endpoint id, which the backend still
-    // resolves. Name it so the field reads as the device it points at; picking from the list stores the name.
-    if (byName) {
-      const byId = devices.find(d => d.id === current);
-      if (byId) opts.unshift({ value: byId.id, label: byId.name, hint: 'by id' });
-    }
+    return res.value() ?? [];
+  }
+
+  /** Whether this byName field currently stores endpoint ids (its command's idKey switch is on). */
+  private storesIds(f: DeviceField): boolean {
+    return !f.byName || (!!f.idKey && !!this.val(f.idKey));
+  }
+
+  deviceOptions(f: DeviceField, current?: any): SelectOption[] {
+    const opts = deviceSelectOptions(this.devicesFor(f.filter), this.storesIds(f), current);
     // For commands where a blank device means "use the default device", make that explicitly selectable.
-    return defaultLabel ? [{ value: '', label: defaultLabel }, ...opts] : opts;
+    return f.defaultLabel ? [{ value: '', label: f.defaultLabel }, ...opts] : opts;
+  }
+
+  /** The device fields an endpoint-id toggle under {@code key} switches. */
+  private idFields(key: string): DeviceField[] {
+    return this.def().fields.filter((f): f is DeviceField => f.kind === 'device' && f.idKey === key);
+  }
+
+  /** Whether two devices listed by one of the fields the toggle under {@code key} switches share a name. */
+  private idFieldsShareNames(key: string): boolean {
+    return [...new Set(this.idFields(key).map(f => f.filter))].some(filter => hasDuplicateNames(this.devicesFor(filter)));
+  }
+
+  /** Switches the fields under {@code key} between names and ids, converting each value that names exactly one device. */
+  setEndpointIds(key: string, on: boolean): void {
+    const fields = this.idFields(key);
+    this.command.update(c => {
+      const next: Record<string, any> = { ...c, [key]: on };
+      for (const f of fields) next[f.key] = convertDeviceRef(c[f.key] ?? '', this.devicesFor(f.filter), on);
+      return next;
+    });
   }
 
   // ── input mapping (Start/End as displayed positions 0..100) ──────────────────

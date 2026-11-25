@@ -257,6 +257,10 @@
         {
           "name": "getOverlayText",
           "parameterTypes": []
+        },
+        {
+          "name": "isUseEndpointId",
+          "parameterTypes": []
         }
       ]
     },
@@ -299,6 +303,12 @@
           "name": "name",
           "parameterTypes": [
             "java.lang.String"
+          ]
+        },
+        {
+          "name": "useEndpointId",
+          "parameterTypes": [
+            "boolean"
           ]
         }
       ]

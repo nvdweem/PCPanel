@@ -414,6 +414,7 @@ export interface CommandVolumeDefaultDeviceAdvanced extends CommandVolume, Butto
     mediaPb: string;
     mediaRec: string;
     name: string;
+    useEndpointId: boolean;
 }
 
 export interface CommandVolumeDefaultDeviceAdvancedBuilder {
