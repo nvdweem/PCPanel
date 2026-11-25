@@ -33,6 +33,12 @@ public class CommandVolumeDefaultDeviceAdvanced extends CommandVolume implements
     private final String mediaRec;
     private final String communicationPb;
     private final String communicationRec;
+    /**
+     * The editor stores endpoint ids in the four device fields instead of names: the only way to tell
+     * apart devices Windows gives the same name. {@link #execute()} needs no flag for it, since an id
+     * resolves before any name does.
+     */
+    private final boolean useEndpointId;
 
     @Override
     public void execute() {
