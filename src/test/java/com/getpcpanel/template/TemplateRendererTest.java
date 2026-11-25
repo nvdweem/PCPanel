@@ -198,4 +198,22 @@ class TemplateRendererTest {
         assertEquals("Channel 500", render("{{ wl.channel.ch500.name }}", data));
         assertEquals(1, lookups.get());
     }
+
+    @Test
+    void segmentsTellTheUsersTextApartFromTagOutput() {
+        var data = data();
+        assertEquals(List.of(TemplateSegment.literal("echo "), TemplateSegment.value("Spotify"), TemplateSegment.literal(" at "),
+                        TemplateSegment.value("42"), TemplateSegment.literal("%")),
+                renderer.renderSegments("echo {{ name }} at {{ percent }}%", data::get));
+        assertEquals(List.of(TemplateSegment.literal("a muted b")), renderer.renderSegments("a {{#if muted}}muted{{/if}} b", data::get));
+        assertEquals(List.of(TemplateSegment.literal("plain {{ unknown }}")), renderer.renderSegments("plain {{ unknown }}", data::get));
+    }
+
+    @Test
+    void tagOutputCannotPassItselfOffAsTheUsersText() {
+        var data = data();
+        data.put("name", "\uE000anything:0\uE001 & calc");
+        var segments = renderer.renderSegments("run {{ name }}", data::get);
+        assertEquals(List.of(TemplateSegment.literal("run "), TemplateSegment.value("\uE000anything:0\uE001 & calc")), segments);
+    }
 }

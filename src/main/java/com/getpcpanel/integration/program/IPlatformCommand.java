@@ -12,6 +12,9 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.getpcpanel.platform.LinuxBuild;
+import com.getpcpanel.template.TemplateScope;
+import com.getpcpanel.template.TemplateSegment;
+import com.getpcpanel.template.Templates;
 import com.getpcpanel.platform.MacBuild;
 import com.getpcpanel.platform.WindowsBuild;
 import io.quarkus.arc.Unremovable;
@@ -39,8 +42,21 @@ public abstract class IPlatformCommand {
      */
     private static final Pattern URL = Pattern.compile("^[A-Za-z][A-Za-z0-9+.-]+:.*");
 
-    /** Runs a program or a command line. */
-    public abstract void exec(String shortcut);
+    /** Runs a program or a command line the user wrote. */
+    public void exec(String shortcut) {
+        exec(List.of(TemplateSegment.literal(shortcut)));
+    }
+
+    /** Renders a Run command's template and runs it, keeping what its tags produce from acting as shell syntax. */
+    public void run(String template, TemplateScope scope) {
+        exec(Templates.renderSegments(template, scope));
+    }
+
+    /**
+     * Runs a program or a command line. The literal segments are the user's text; the others are template output,
+     * which only ever becomes (part of) an argument.
+     */
+    public abstract void exec(List<TemplateSegment> command);
 
     /** Opens a website, folder or document in the app the desktop has for it. */
     public abstract void open(String target);
@@ -105,13 +121,14 @@ public abstract class IPlatformCommand {
         }
 
         @Override
-        public void exec(String shortcut) {
+        public void exec(List<TemplateSegment> command) {
+            var shortcut = CommandLine.text(command);
             try {
                 var file = new File(shortcut);
                 if (file.isDirectory()) {
                     processes.launch("gio", "open", shortcut);
                 } else {
-                    processes.launch(ProcessHelper.splitCommandLine(shortcut));
+                    processes.launch(CommandLine.argv(command));
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -156,13 +173,14 @@ public abstract class IPlatformCommand {
         private final ProcessHelper processes;
 
         @Override
-        public void exec(String shortcut) {
+        public void exec(List<TemplateSegment> command) {
+            var shortcut = CommandLine.text(command);
             try {
                 var file = new File(shortcut);
                 if (file.exists()) {
                     processes.launch("/usr/bin/open", file.getAbsolutePath());
                 } else {
-                    processes.launch(ProcessHelper.splitCommandLine(shortcut));
+                    processes.launch(CommandLine.argv(command));
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -219,7 +237,8 @@ public abstract class IPlatformCommand {
         private static final Set<String> DIRECTLY_LAUNCHABLE = Set.of("exe", "com");
 
         @Override
-        public void exec(String shortcut) {
+        public void exec(List<TemplateSegment> command) {
+            var shortcut = CommandLine.text(command);
             var file = new File(shortcut);
             try {
                 if (file.isDirectory()) {
@@ -240,9 +259,9 @@ public abstract class IPlatformCommand {
                 } else {
                     // Free-form input: a bare program name resolved via PATH, a URL / protocol handler, or a
                     // full command line with arguments the user typed. The shell is doing real work here
-                    // (PATH lookup, argument parsing, ShellExecute of URLs), so it stays. The binding comes
-                    // from the trusted local user, so this is a robustness choice, not an injection boundary.
-                    processes.launch(ProcessHelper.splitCommandLine("cmd.exe /c \"" + shortcut + "\""));
+                    // (PATH lookup, argument parsing, ShellExecute of URLs, the user's pipes and &&), so it
+                    // stays; template output in it is encoded so the shell reads it as text (CommandLine).
+                    processes.launch(ProcessHelper.splitCommandLine("cmd.exe /c \"" + CommandLine.cmdLine(command) + "\""));
                 }
             } catch (IOException e) {
                 log.error("Unable to run {}", shortcut, e);

@@ -83,6 +83,24 @@ public class TemplateService {
         }
     }
 
+    /**
+     * Renders {@code source} as {@link TemplateSegment}s, telling the user's text apart from tag output. Never
+     * throws: when rendering fails the whole source is one literal segment, as {@link #render} would return it.
+     */
+    public List<TemplateSegment> renderSegments(String source, TemplateScope scope) {
+        if (!hasTags(source)) {
+            return List.of(TemplateSegment.literal(source));
+        }
+        try {
+            return renderer.renderSegments(source, name -> root(name, scope));
+        } catch (RuntimeException e) {
+            if (reportedFailures.add(source)) {
+                log.warn("Template could not be rendered, using it as written: {}", source, e);
+            }
+            return List.of(TemplateSegment.literal(source));
+        }
+    }
+
     /** A render for the editor preview: the output, the tags that stayed text, and any error. */
     public TemplateResult preview(String source, TemplateScope scope) {
         try {

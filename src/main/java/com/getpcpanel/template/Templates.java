@@ -1,5 +1,7 @@
 package com.getpcpanel.template;
 
+import java.util.List;
+
 import javax.annotation.Nullable;
 
 import com.getpcpanel.util.CdiHelper;
@@ -23,6 +25,16 @@ public final class Templates {
         return CdiHelper.getOptionalBean(TemplateService.class)
                         .map(service -> service.render(template, scope.withValue(TemplateFunctions.normalize(value)), () -> ValueInterpolator.interpolate(template, value)))
                         .orElseGet(() -> ValueInterpolator.interpolate(template, value));
+    }
+
+    /** Renders a button action's template field as {@link TemplateSegment}s, for a consumer that escapes tag output. */
+    public static List<TemplateSegment> renderSegments(String template, TemplateScope scope) {
+        if (!TemplateService.hasTags(template)) {
+            return List.of(TemplateSegment.literal(template));
+        }
+        return CdiHelper.getOptionalBean(TemplateService.class)
+                        .map(service -> service.renderSegments(template, scope))
+                        .orElseGet(() -> List.of(TemplateSegment.literal(template)));
     }
 
     /** Renders a template field that has no value of its own (a button action). */
