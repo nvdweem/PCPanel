@@ -377,6 +377,9 @@ data dir is `~/.pcpanel` on Windows/macOS; on Linux it is resolved by `util/PcPa
 and immutable distros persist settings without a host grant. `PcPanelRoot.resolve()` is the single
 source of truth: `Main` publishes it as the `pcpanel.root` system property for the native image, and
 the non-CDI `FileChecker`/`HidDebug` call it directly. See `linux.md` for the user-facing details.
+`FileUtil` makes the data dir owner-only (`rwx------`) on POSIX file systems at startup: `profiles.json` and
+its backups hold integration credentials in plain text, so that folder permission is what keeps other local
+accounts out of them.
 
 **A persisted JSON property needs a backing field, or the save file loses it.**
 `quarkus.rest.jackson.optimization.enable-reflection-free-serializers=false` in
