@@ -18,7 +18,7 @@ import lombok.extern.log4j.Log4j2;
  * layer): the guard decides <em>where</em> a request may come from, this filter decides <em>whether the
  * caller holds the session</em> the tray handed to the real browser.
  *
- * <p>Only {@code /api/**} and {@code /ws/**} are gated. The static UI shell (index.html, JS bundles)
+ * <p>Only {@code /api/**}, {@code /ws/**} and {@code /mcp/**} are gated. The static UI shell (index.html, JS bundles)
  * is served without a session — it holds no secret, and a caller cannot do anything with it until it
  * has the cookie. The one exception among the gated paths is {@link #BOOTSTRAP_PATH}, which mints the
  * session and therefore cannot itself require one (it is authenticated by the single-use nonce instead).
@@ -74,14 +74,15 @@ public class SessionAuthFilter {
     }
 
     /**
-     * The control surface that must be authenticated: the JSON API and the event WebSocket. This is
+     * The control surface that must be authenticated: the JSON API, the event WebSocket and the MCP server's
+     * endpoints (only in a build with the {@code mcp} profile; it can drive the app as the API can). This is
      * intentionally method-agnostic — a GET on {@code /api} is gated exactly like a POST — which is what
      * keeps a future state-changing GET from being reachable cross-site without the session (the
      * CSRF-via-GET trap {@link com.getpcpanel.rest.LocalHttpGuard} leaves open by allowing an absent
      * Origin).
      */
     static boolean isProtected(String path) {
-        return path.startsWith("/api/") || path.startsWith("/ws/");
+        return path.startsWith("/api/") || path.startsWith("/ws/") || path.equals("/mcp") || path.startsWith("/mcp/");
     }
 
     /**

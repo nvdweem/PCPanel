@@ -13,6 +13,9 @@ class SessionAuthFilterTest {
         assertTrue(SessionAuthFilter.isProtected("/api/settings"));
         assertTrue(SessionAuthFilter.isProtected("/api/system/quit"));
         assertTrue(SessionAuthFilter.isProtected("/ws/events"));
+        assertTrue(SessionAuthFilter.isProtected("/mcp"));
+        assertTrue(SessionAuthFilter.isProtected("/mcp/sse"));
+        assertTrue(SessionAuthFilter.requiresSession("/mcp;x=1/sse"));
         // The session probe must be gated (unauth → 401), so a stale-cookie WebSocket rejection surfaces
         // the auth gate. Only /api/auth/bootstrap is additionally exempted (inside guard()).
         assertTrue(SessionAuthFilter.isProtected("/api/auth/status"));
@@ -24,6 +27,7 @@ class SessionAuthFilterTest {
         assertFalse(SessionAuthFilter.isProtected("/index.html"));
         assertFalse(SessionAuthFilter.isProtected("/main-ABC123.js"));
         assertFalse(SessionAuthFilter.isProtected("/assets/icon.png"));
+        assertFalse(SessionAuthFilter.isProtected("/mcpanel.png"));
     }
 
     /**
