@@ -25,6 +25,7 @@ import com.getpcpanel.commands.CommandsType;
 import com.getpcpanel.device.DeviceHolder;
 import com.getpcpanel.device.provider.pcpanel.DeviceType;
 import com.getpcpanel.integration.volume.command.CommandVolumeDefaultDevice;
+import com.getpcpanel.integration.volume.command.CommandVolumeDefaultDeviceAdvanced;
 import com.getpcpanel.integration.volume.command.CommandVolumeDefaultDeviceToggle;
 import com.getpcpanel.integration.volume.platform.DataFlow;
 import com.getpcpanel.profile.Profile;
@@ -146,6 +147,24 @@ class EndpointRecoveryTest {
         sndCtrl.present("Speakers (Schiit Modi 3+)", MODI, "Schiit Modi 3+");
         sut.check();
         assertTrue(saveText().contains(OLD));
+    }
+
+    @Test
+    void anAdvancedDefaultDeviceNameIsPinnedToItsOnlyDeviceInOneUndoableStep() throws Exception {
+        var profile = saveService.get().getDeviceSave("dev").getProfiles().stream().filter(p -> "A".equals(p.getName())).findFirst().orElseThrow();
+        profile.setButtonData(4, new Commands(List.of(CommandVolumeDefaultDeviceAdvanced.builder().mediaPb("Schiit").build()), CommandsType.allAtOnce));
+        saveService.save();
+        sndCtrl.present("Speakers (Schiit Modi 3+)", MODI, "Schiit Modi 3+");
+
+        sut.check();
+        var pinned = saveText();
+        sut.check();
+
+        assertTrue(pinned.contains("\"mediaPb\" : \"" + MODI + "\""), pinned);
+        assertTrue(pinned.contains("\"mediaPbName\" : \"Schiit\""), pinned);
+        assertEquals(pinned, saveText(), "a second check finds nothing left to pin");
+        assertTrue(saveService.undo());
+        assertTrue(saveText().contains("\"mediaPb\" : \"Schiit\""), "undo reaches the state before pinning, so the second check added no step");
     }
 
     private static final class FakeSndCtrl extends SndCtrlWindows {

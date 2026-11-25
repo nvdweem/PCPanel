@@ -33,12 +33,14 @@ public class CommandVolumeDefaultDeviceAdvanced extends CommandVolume implements
     private final String mediaRec;
     private final String communicationPb;
     private final String communicationRec;
-    /**
-     * The editor stores endpoint ids in the four device fields instead of names: the only way to tell
-     * apart devices Windows gives the same name. {@link #execute()} needs no flag for it, since an id
-     * resolves before any name does.
+    /*
+     * The name of the device each field above was set to, tried when its endpoint id is not connected. A field
+     * holding a name instead of an id leaves this blank until EndpointRecovery resolves the name to one device.
      */
-    private final boolean useEndpointId;
+    @Nullable private final String mediaPbName;
+    @Nullable private final String mediaRecName;
+    @Nullable private final String communicationPbName;
+    @Nullable private final String communicationRecName;
 
     @Override
     public void execute() {
@@ -51,10 +53,10 @@ public class CommandVolumeDefaultDeviceAdvanced extends CommandVolume implements
         // roleConsole with it, and leaves roleCommunications — the "Default Communications Device" —
         // to the two communication fields.
         var windowsSndCtrl = windowsSndCtrlOpt.get();
-        windowsSndCtrl.setDefaultDevice(mediaPb, DataFlow.dfRender, Role.roleMultimedia);
-        windowsSndCtrl.setDefaultDevice(mediaRec, DataFlow.dfCapture, Role.roleMultimedia);
-        windowsSndCtrl.setDefaultDevice(communicationPb, DataFlow.dfRender, Role.roleCommunications);
-        windowsSndCtrl.setDefaultDevice(communicationRec, DataFlow.dfCapture, Role.roleCommunications);
+        windowsSndCtrl.setDefaultDevice(mediaPb, mediaPbName, DataFlow.dfRender, Role.roleMultimedia);
+        windowsSndCtrl.setDefaultDevice(mediaRec, mediaRecName, DataFlow.dfCapture, Role.roleMultimedia);
+        windowsSndCtrl.setDefaultDevice(communicationPb, communicationPbName, DataFlow.dfRender, Role.roleCommunications);
+        windowsSndCtrl.setDefaultDevice(communicationRec, communicationRecName, DataFlow.dfCapture, Role.roleCommunications);
     }
 
     @Nullable

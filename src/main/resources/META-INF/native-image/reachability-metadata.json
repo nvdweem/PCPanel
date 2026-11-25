@@ -259,7 +259,19 @@
           "parameterTypes": []
         },
         {
-          "name": "isUseEndpointId",
+          "name": "getCommunicationPbName",
+          "parameterTypes": []
+        },
+        {
+          "name": "getCommunicationRecName",
+          "parameterTypes": []
+        },
+        {
+          "name": "getMediaPbName",
+          "parameterTypes": []
+        },
+        {
+          "name": "getMediaRecName",
           "parameterTypes": []
         }
       ]
@@ -306,9 +318,27 @@
           ]
         },
         {
-          "name": "useEndpointId",
+          "name": "communicationPbName",
           "parameterTypes": [
-            "boolean"
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "communicationRecName",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "mediaPbName",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "mediaRecName",
+          "parameterTypes": [
+            "java.lang.String"
           ]
         }
       ]

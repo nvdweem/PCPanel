@@ -33,12 +33,9 @@ export type FieldDef = (
   // everythingElse: offers the app groups "All apps", "All apps without their own control" and "All apps except the focused one"
   | { kind: 'apps'; key: string; label: string; single?: boolean; everythingElse?: boolean }  // single: pick exactly one app (still stored as a 1-element array)
   // defaultLabel: adds a selectable empty option (e.g. "Default device") for commands where blank = the default
-  // byName: stores the device's *name* and accepts free text, which the backend matches on part of a name
-  // idKey: with byName, the field stores endpoint ids instead while the command's boolean under this key is on
-  | { kind: 'device'; key: string; label: string; filter?: 'output' | 'input' | 'all'; defaultLabel?: string; byName?: boolean; idKey?: string }
-  // switches the device fields whose idKey is this key between names and endpoint ids, converting what they hold;
-  // offered while two devices those fields list share a name (and while it is on, so it can be switched off)
-  | { kind: 'endpoint-id-toggle'; key: string; label: string }
+  // nameKey: a picked device's name goes under this key too, for the backend to fall back on while its id is not
+  // connected; the field also accepts free text, which the backend matches on part of a device name
+  | { kind: 'device'; key: string; label: string; filter?: 'output' | 'input' | 'all'; defaultLabel?: string; nameKey?: string }
   | { kind: 'mute'; key: string; label: string }
   | { kind: 'keystroke' }                       // CommandKeystroke: KEY/TEXT toggle + combo/text
   | { kind: 'open-or-focus' }                   // CommandShortcut: App / Website / File or folder; for an app, don't-start-twice and minimise toggles
@@ -160,13 +157,12 @@ const FIELD_DEFS: FieldDef_[] = [
   },
   {
     type: P + 'CommandVolumeDefaultDeviceAdvanced',
-    buildEmpty: () => ({ _type: P + 'CommandVolumeDefaultDeviceAdvanced', communicationPb: '', communicationRec: '', mediaPb: '', mediaRec: '', name: '', overlayText: '', useEndpointId: false }),
+    buildEmpty: () => ({ _type: P + 'CommandVolumeDefaultDeviceAdvanced', communicationPb: '', communicationRec: '', mediaPb: '', mediaRec: '', name: '', overlayText: '' }),
     fields: [
-      { kind: 'endpoint-id-toggle', key: 'useEndpointId', label: 'Use endpoint ID' },
-      { kind: 'device', key: 'mediaPb', label: 'Media — playback', filter: 'output', byName: true, idKey: 'useEndpointId' },
-      { kind: 'device', key: 'mediaRec', label: 'Media — recording', filter: 'input', byName: true, idKey: 'useEndpointId' },
-      { kind: 'device', key: 'communicationPb', label: 'Comms — playback', filter: 'output', byName: true, idKey: 'useEndpointId' },
-      { kind: 'device', key: 'communicationRec', label: 'Comms — recording', filter: 'input', byName: true, idKey: 'useEndpointId' },
+      { kind: 'device', key: 'mediaPb', label: 'Media — playback', filter: 'output', nameKey: 'mediaPbName' },
+      { kind: 'device', key: 'mediaRec', label: 'Media — recording', filter: 'input', nameKey: 'mediaRecName' },
+      { kind: 'device', key: 'communicationPb', label: 'Comms — playback', filter: 'output', nameKey: 'communicationPbName' },
+      { kind: 'device', key: 'communicationRec', label: 'Comms — recording', filter: 'input', nameKey: 'communicationRecName' },
     ],
   },
   {

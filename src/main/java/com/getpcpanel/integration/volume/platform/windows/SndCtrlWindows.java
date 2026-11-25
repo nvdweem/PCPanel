@@ -151,12 +151,20 @@ public class SndCtrlWindows implements ISndCtrl {
      * leaves that default alone, so an action can set only the pairs it cares about.
      */
     public void setDefaultDevice(String deviceRef, DataFlow flow, Role role) {
+        setDefaultDevice(deviceRef, null, flow, role);
+    }
+
+    /** As {@link #setDefaultDevice(String, DataFlow, Role)}, trying {@code deviceName} when {@code deviceRef} matches no connected device. */
+    public void setDefaultDevice(String deviceRef, @Nullable String deviceName, DataFlow flow, Role role) {
         if (StringUtils.isBlank(deviceRef)) {
             return;
         }
         String deviceId;
         synchronized (devices) {
             deviceId = resolveDeviceRef(devices.values(), deviceRef, flow);
+            if (deviceId == null && StringUtils.isNotBlank(deviceName)) {
+                deviceId = resolveDeviceRef(devices.values(), deviceName, flow);
+            }
         }
         if (deviceId == null) {
             log.warn("No connected {} device matches '{}', leaving the {} default alone", flow, deviceRef, role);
