@@ -567,7 +567,7 @@ to `GET /api/auth/bootstrap` (`AuthResource`), which swaps it for a session toke
 `HttpOnly; SameSite=Strict; Path=/` cookie and redirects to `/` (dropping the nonce from the URL). So
 the long-lived secret never transits a URL/command line, and `SameSite=Strict` is what stops the
 auto-attached cookie from reintroducing CSRF. `SessionAuthFilter` (one order behind `LocalHttpGuard`)
-requires a valid cookie on every `/api/**` + `/ws/**` request (bootstrap exempted; static shell left
+requires a valid cookie on every `/api/**`, `/ws/**` + `/mcp/**` (the dev-only MCP server) request (bootstrap exempted; static shell left
 open — it holds no secret); `EventWebSocket.onOpen` re-checks it on the WS handshake. **The gate must
 decide on the same path form the router dispatches on**, or it is a full auth bypass: it keys off
 `ctx.normalizedPath()` (which collapses `.`/`..` segments and repeated slashes) with matrix parameters
