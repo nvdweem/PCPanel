@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { CommandDef, COMMAND_BY_TYPE, defaultFocusApp, FieldDef, isLevelReadable, LiveSource } from './command-catalog';
 import { CommandPickerComponent } from './command-picker.component';
 import { mappingCurve, TrimRange } from './mapping-curve.util';
+import { deviceSelectOptions, NamedDevice } from './device-options.util';
 import { IntegrationDataService, VoiceMeeterParams } from './integration-data.service';
 import { CurveDefinition } from '../../models/generated/backend.types';
 import {
@@ -12,6 +13,8 @@ import {
   SelectComponent, SelectOption, SliderComponent, TemplateInputComponent, ToggleComponent,
 } from '../../ui';
 import { TemplateContext } from '../../services/template.service';
+
+type DeviceField = Extract<FieldDef, { kind: 'device' }>;
 
 type Cmd = Record<string, any>;
 
@@ -116,9 +119,9 @@ type Cmd = Record<string, any>;
           @case ('device') {
             <div class="field-block">
               <div class="flabel">{{ $any(f).label }}</div>
-              <pc-select [block]="true" [options]="deviceOptions($any(f).filter, $any(f).defaultLabel, $any(f).byName, val($any(f).key))"
-                         [value]="val($any(f).key)" [searchable]="true" [allowCustom]="!!$any(f).byName"
-                         placeholder="—" (valueChange)="set($any(f).key, $event)"></pc-select>
+              <pc-select [block]="true" [options]="deviceOptions($any(f), val($any(f).key))"
+                         [value]="val($any(f).key)" [searchable]="true" [allowCustom]="!!$any(f).nameKey"
+                         placeholder="—" (valueChange)="setDevice($any(f), $event)"></pc-select>
             </div>
           }
           @case ('apps') {
@@ -629,18 +632,26 @@ export class CommandFieldsComponent {
     }
   }
 
-  deviceOptions(filter: 'output' | 'input' | 'all' | undefined, defaultLabel?: string, byName?: boolean, current?: any): SelectOption[] {
+  private devicesFor(filter: DeviceField['filter']): NamedDevice[] {
     const res = filter === 'output' ? this.data.outputDevices : filter === 'input' ? this.data.inputDevices : this.data.audioDevices;
-    const devices = res.value() ?? [];
-    const opts: SelectOption[] = devices.map(d => ({ value: byName ? d.name : d.id, label: d.name }));
-    // A byName field configured before it stored names holds an endpoint id, which the backend still
-    // resolves. Name it so the field reads as the device it points at; picking from the list stores the name.
-    if (byName) {
-      const byId = devices.find(d => d.id === current);
-      if (byId) opts.unshift({ value: byId.id, label: byId.name, hint: 'by id' });
-    }
+    return res.value() ?? [];
+  }
+
+  deviceOptions(f: DeviceField, current?: any): SelectOption[] {
+    const opts = deviceSelectOptions(this.devicesFor(f.filter), current, f.nameKey ? this.val(f.nameKey) : undefined);
     // For commands where a blank device means "use the default device", make that explicitly selectable.
-    return defaultLabel ? [{ value: '', label: defaultLabel }, ...opts] : opts;
+    return f.defaultLabel ? [{ value: '', label: f.defaultLabel }, ...opts] : opts;
+  }
+
+  /** Typed text is stored as it is and gets no name: the backend matches it on part of a device name. */
+  setDevice(f: DeviceField, value: string): void {
+    if (!f.nameKey || value === this.val(f.key)) {
+      this.set(f.key, value);
+      return;
+    }
+    const nameKey = f.nameKey;
+    const device = this.devicesFor(f.filter).find(d => d.id === value);
+    this.command.update(c => ({ ...c, [f.key]: value, [nameKey]: device?.name ?? '' }));
   }
 
   // ── input mapping (Start/End as displayed positions 0..100) ──────────────────

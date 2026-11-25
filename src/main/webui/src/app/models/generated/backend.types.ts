@@ -410,9 +410,13 @@ export interface CommandVolumeDefaultDevice extends CommandVolume, ButtonAction 
 export interface CommandVolumeDefaultDeviceAdvanced extends CommandVolume, ButtonAction {
     _type: "volume.default-device-advanced";
     communicationPb: string;
+    communicationPbName?: string;
     communicationRec: string;
+    communicationRecName?: string;
     mediaPb: string;
+    mediaPbName?: string;
     mediaRec: string;
+    mediaRecName?: string;
     name: string;
 }
 

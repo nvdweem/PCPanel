@@ -77,6 +77,56 @@ class SndCtrlWindowsDefaultDeviceTest {
     }
 
     @Test
+    void anEndpointIdPicksOneOfTwoDevicesWithTheSameName() {
+        var snd = withDevices();
+        var twinA = "{0.0.0.00000000}.{11111111-0000-0000-0000-000000000000}";
+        var twinB = "{0.0.0.00000000}.{22222222-0000-0000-0000-000000000000}";
+        snd.deviceAdded("Headphones (USB Audio)", twinA, 1f, false, DataFlow.dfRender.ordinal());
+        snd.deviceAdded("Headphones (USB Audio)", twinB, 1f, false, DataFlow.dfRender.ordinal());
+
+        snd.setDefaultDevice(twinA, DataFlow.dfRender, Role.roleMultimedia);
+        snd.setDefaultDevice(twinB, DataFlow.dfRender, Role.roleCommunications);
+
+        assertEquals(List.of(twinA, twinB), snd.switchedTo);
+    }
+
+    @Test
+    void aConnectedIdWinsOverTheNameStoredWithIt() {
+        var snd = withDevices();
+
+        snd.setDefaultDevice(SPEAKERS_ID, "Headset", DataFlow.dfRender, Role.roleMultimedia);
+
+        assertEquals(List.of(SPEAKERS_ID), snd.switchedTo);
+    }
+
+    @Test
+    void anIdThatIsNotConnectedFallsBackToItsName() {
+        var snd = withDevices();
+
+        snd.setDefaultDevice("{0.0.0.00000000}.{99999999-0000-0000-0000-000000000000}", "Headset", DataFlow.dfRender, Role.roleMultimedia);
+
+        assertEquals(List.of(HEADSET_ID), snd.switchedTo);
+    }
+
+    @Test
+    void theNameFallbackOnlyConsidersDevicesOnTheRequestedFlow() {
+        var snd = withDevices();
+
+        snd.setDefaultDevice("{0.0.0.00000000}.{99999999-0000-0000-0000-000000000000}", "Yeti", DataFlow.dfRender, Role.roleMultimedia);
+
+        assertEquals(List.of(), snd.switchedTo);
+    }
+
+    @Test
+    void aBlankReferenceIgnoresItsName() {
+        var snd = withDevices();
+
+        snd.setDefaultDevice("", "Headset", DataFlow.dfRender, Role.roleMultimedia);
+
+        assertEquals(List.of(), snd.switchedTo);
+    }
+
+    @Test
     void anUnknownReferenceChangesNothing() {
         var snd = withDevices();
 

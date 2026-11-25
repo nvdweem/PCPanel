@@ -257,6 +257,22 @@
         {
           "name": "getOverlayText",
           "parameterTypes": []
+        },
+        {
+          "name": "getCommunicationPbName",
+          "parameterTypes": []
+        },
+        {
+          "name": "getCommunicationRecName",
+          "parameterTypes": []
+        },
+        {
+          "name": "getMediaPbName",
+          "parameterTypes": []
+        },
+        {
+          "name": "getMediaRecName",
+          "parameterTypes": []
         }
       ]
     },
@@ -297,6 +313,30 @@
         },
         {
           "name": "name",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "communicationPbName",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "communicationRecName",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "mediaPbName",
+          "parameterTypes": [
+            "java.lang.String"
+          ]
+        },
+        {
+          "name": "mediaRecName",
           "parameterTypes": [
             "java.lang.String"
           ]

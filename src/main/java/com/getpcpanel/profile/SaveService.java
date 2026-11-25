@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
@@ -201,6 +202,35 @@ public class SaveService {
             groupOpen = false;
             try {
                 apply(read(next));
+            } catch (IOException e) {
+                log.error("Unable to write the configuration", e);
+            }
+        }
+        announceHistory();
+        return true;
+    }
+
+    /**
+     * Lets {@code rewriter} change the configuration as a JSON document, as one undoable step when it reports a change.
+     * For changes that depend on where a value sits, which {@link #replaceIds} cannot express. Connected devices are
+     * re-announced, as on a restore.
+     *
+     * @param rewriter changes the document in place and returns whether it changed anything
+     * @return whether anything changed
+     */
+    public boolean rewrite(Predicate<JsonNode> rewriter) {
+        synchronized (this) {
+            writePending();
+            var now = json.writePretty(save);
+            var document = json.readTree(now);
+            if (!rewriter.test(document)) {
+                return false;
+            }
+            push(undo, now);
+            redo.clear();
+            groupOpen = false;
+            try {
+                apply(read(json.writePretty(document)));
             } catch (IOException e) {
                 log.error("Unable to write the configuration", e);
             }

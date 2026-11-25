@@ -35,7 +35,8 @@ import one.util.streamex.EntryStream;
  * audio backend is ready, and after each device change, the configuration's endpoint ids are checked: one that is
  * missing and clearly replaced is rewritten to its replacement's id throughout the configuration, as an undoable
  * change. An id the app never saw (configured before this existed) is described by Windows itself, which keeps a
- * replaced endpoint's properties.
+ * replaced endpoint's properties. The same check pins advanced default device actions that hold a device name to
+ * the one device it matches ({@link AdvancedDefaultDeviceNames}).
  */
 @Log4j2
 @ApplicationScoped
@@ -101,6 +102,7 @@ public class EndpointRecovery {
             if (!known.equals(before)) {
                 write(known);
             }
+            saveService.rewrite(save -> AdvancedDefaultDeviceNames.pin(save, present.values()));
         } catch (RuntimeException e) {
             log.warn("Unable to check the configured audio devices", e);
         }
