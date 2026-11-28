@@ -34,6 +34,12 @@ class ObsWebSocketClientTest {
     private static final String PASSWORD = "secret";
     private static final String SALT = "c2FsdA==";
     private static final String CHALLENGE = "Y2hhbGxlbmdl";
+    /**
+     * How long a connection may take to open and identify. Generous on purpose: whichever test runs first
+     * pays for starting Vert.x and the shared HttpClient, which under the native-image tracing agent took
+     * 4 s on a fast machine and over 5 s on the macOS Intel runner. A normal connection takes milliseconds.
+     */
+    private static final long CONNECT_TIMEOUT_MS = 30_000;
 
     private static Vertx vertx;
     private final List<JsonNode> requests = Collections.synchronizedList(new ArrayList<>());
@@ -138,7 +144,7 @@ class ObsWebSocketClientTest {
     void doesNotConnectWithAWrongPassword() throws Exception {
         var port = startServer(true);
         client = new ObsWebSocketClient(MAPPER, "wrong", c -> {}, e -> {});
-        client.connect("127.0.0.1", port, 5_000);
+        client.connect("127.0.0.1", port, CONNECT_TIMEOUT_MS);
         Thread.sleep(500);
 
         assertFalse(client.isConnected());
@@ -146,8 +152,9 @@ class ObsWebSocketClientTest {
 
     private ObsWebSocketClient connect(int port, String password) throws Exception {
         var c = new ObsWebSocketClient(MAPPER, password, connected -> {}, e -> {});
-        c.connect("127.0.0.1", port, 5_000);
-        for (var i = 0; i < 100 && !c.isConnected(); i++) {
+        var until = System.currentTimeMillis() + CONNECT_TIMEOUT_MS;
+        c.connect("127.0.0.1", port, CONNECT_TIMEOUT_MS);
+        while (!c.isConnected() && System.currentTimeMillis() < until) {
             Thread.sleep(20);
         }
         assertTrue(c.isConnected(), "client did not identify");
@@ -172,7 +179,7 @@ class ObsWebSocketClientTest {
         server = vertx.createHttpServer()
                                  .webSocketHandler(ws -> handle(ws, authRequired))
                                  .listen(0, "127.0.0.1")
-                                 .toCompletionStage().toCompletableFuture().get(5, TimeUnit.SECONDS);
+                                 .toCompletionStage().toCompletableFuture().get(CONNECT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         return server.actualPort();
     }
 
