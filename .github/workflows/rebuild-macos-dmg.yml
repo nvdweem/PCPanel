@@ -1,0 +1,174 @@
+# Rebuild ONE macOS .dmg for an existing stable release and attach it to that release.
+#
+# For when the best-effort macOS leg of a tag build failed (Build & Release still publishes without that
+# .dmg). This builds only the chosen runner's .dmg from the tag's sources, with the same steps as the
+# buildMac job of build-and-release.yml, and only ADDS it to the release: nothing else of the release,
+# its update channels or its other assets is touched, and an existing file of the same name is never
+# replaced (the upload fails instead).
+#
+# `tests-from` optionally takes the test sources (src/test) from another commit, for when the failure
+# was a flaky test fixed after the tag; the shipped code is always exactly the tag's.
+name: Rebuild macOS .dmg for a release
+env:
+  GRAALVM_VERSION: '25i-latest'   # keep in sync with build-and-release.yml
+  JAVA_VERSION: '25'               # Intel macOS only: GraalVM CE's last x64 macOS build is 25.0.1
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to build and attach to (e.g. v2.6.0)
+        required: true
+        type: string
+      runner:
+        description: Which .dmg to build
+        type: choice
+        options: [macos-15-intel, macos-latest]
+        default: macos-15-intel
+      tests-from:
+        description: Optional commit to take src/test from (empty = the tag's own tests)
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  buildMac:
+    name: macOS .dmg for ${{ inputs.tag }} (${{ inputs.runner }})
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: refs/tags/${{ inputs.tag }}
+          fetch-depth: 0
+
+      - name: Take the tests from ${{ inputs.tests-from }}
+        if: inputs.tests-from != ''
+        run: |
+          set -euxo pipefail
+          git rm -r -q --cached src/test
+          rm -rf src/test
+          git checkout "${{ inputs.tests-from }}" -- src/test
+          git status --short | head -50
+
+      - name: Set up GraalVM CE
+        uses: graalvm/setup-graalvm@f70bc8032f90a104502824a54bcb94b6f01715bc # v1.6.8
+        with:
+          version: ${{ inputs.runner != 'macos-15-intel' && env.GRAALVM_VERSION || '' }}
+          java-version: ${{ inputs.runner == 'macos-15-intel' && env.JAVA_VERSION || '' }}
+          distribution: 'graalvm-community'
+          native-image-job-reports: 'true'
+
+      - name: Cache Maven repository
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.m2/repository
+          key: maven-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: maven-build-${{ runner.os }}-${{ runner.arch }}-
+
+      - name: Set up Node 24
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: src/main/webui/package-lock.json
+
+      # The tag decides the version, exactly as for the tag build itself.
+      - name: Compute app version
+        id: ver
+        run: |
+          set -euo pipefail
+          bash packaging/ci-version.sh "refs/tags/${{ inputs.tag }}" | tee -a "$GITHUB_OUTPUT"
+          grep -qx 'isRelease=true' <(bash packaging/ci-version.sh "refs/tags/${{ inputs.tag }}") \
+            || { echo "::error::${{ inputs.tag }} is not a release tag"; exit 1; }
+
+      # Unlike the release workflow, nothing below is continue-on-error: a failure must show as a red
+      # run, not as a green one without a .dmg.
+      - name: Generate native-image metadata
+        run: mvn -Pnative-config-gen test -Dquarkus.native.enabled=false --file pom.xml
+
+      - name: Build native image (macOS)
+        run: mvn -B package -Pnative -Dquarkus.application.version=${{ steps.ver.outputs.version }} -DskipUnitTests=true ${{ steps.ver.outputs.mvnVersionArgs }} --file pom.xml
+
+      - name: Assemble .app bundle
+        run: |
+          set -euxo pipefail
+          exe=$(ls target/*-runner | head -1)
+          app="target/PCPanel.app"
+          mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
+          cp "$exe" "$app/Contents/MacOS/PCPanel"
+          chmod +x "$app/Contents/MacOS/PCPanel"
+          cp target/*.dylib "$app/Contents/MacOS/" 2>/dev/null || true
+          cp app-icon.icns "$app/Contents/Resources/PCPanel.icns" 2>/dev/null || true
+          cat > "$app/Contents/Info.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleName</key><string>PCPanel</string>
+            <key>CFBundleDisplayName</key><string>PCPanel</string>
+            <key>CFBundleIdentifier</key><string>com.getpcpanel.PCPanel</string>
+            <key>CFBundleVersion</key><string>${{ steps.ver.outputs.version }}</string>
+            <key>CFBundleShortVersionString</key><string>${{ steps.ver.outputs.version }}</string>
+            <key>CFBundleExecutable</key><string>PCPanel</string>
+            <key>CFBundleIconFile</key><string>PCPanel</string>
+            <key>CFBundlePackageType</key><string>APPL</string>
+            <key>LSMinimumSystemVersion</key><string>11.0</string>
+            <key>NSHighResolutionCapable</key><true/>
+            <!-- A menu bar app (MacMenuBar): no Dock icon or app menu. -->
+            <key>LSUIElement</key><true/>
+            <key>NSAudioCaptureUsageDescription</key><string>PCPanel taps an application's audio to control its volume (per-app and focused-app volume).</string>
+          </dict>
+          </plist>
+          PLIST
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist"
+
+      # See build-and-release.yml for why the bundle is signed ad-hoc inside-out and what the smoke test proves.
+      - name: Sign and smoke-test the .app bundle
+        run: |
+          set -euxo pipefail
+          app="target/PCPanel.app"
+          bin="$app/Contents/MacOS/PCPanel"
+          xattr -cr "$app"
+          find "$app/Contents" -type f \( -name '*.dylib' -o -name '*.jnilib' -o -name '*.so' \) \
+            -exec codesign --force --sign - --timestamp=none {} +
+          codesign --force --sign - --timestamp=none "$app"
+          bash packaging/smoke-test.sh "$bin" --port 7654 \
+            --require /api/devices --require /api/audio/devices --require /api/audio/applications \
+            --require /api/audio/selftest \
+            --require-hid --quit-check
+          codesign --verify --deep --strict --verbose=4 "$app"
+
+      - name: Create .dmg
+        id: dmg
+        run: |
+          set -euxo pipefail
+          arch=$(uname -m)   # arm64 or x86_64
+          app="target/PCPanel.app"
+          dmg="target/PCPanel-${{ steps.ver.outputs.version }}-${arch}.dmg"
+          appkb=$(du -sk "$app" | awk '{print $1}')
+          sizemb=$(( appkb / 1024 + 300 ))
+          for attempt in 1 2 3 4 5; do
+            if hdiutil create -volname PCPanel -srcfolder "$app" -ov -format UDRW -size "${sizemb}m" target/PCPanel-rw.dmg; then break; fi
+            if [ "$attempt" = 5 ]; then exit 1; fi
+            sleep $(( attempt * 5 ))
+          done
+          hdiutil convert target/PCPanel-rw.dmg -format UDZO -ov -o "$dmg"
+          rm -f target/PCPanel-rw.dmg
+          ls -lh "$dmg"
+          echo "dmg=$dmg" >> "$GITHUB_OUTPUT"
+
+      - name: Store .dmg artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: macos-dmg-${{ runner.arch }}
+          path: ${{ steps.dmg.outputs.dmg }}
+          if-no-files-found: error
+
+      # No --clobber: this only ever adds a missing .dmg and fails rather than replace a published file.
+      - name: Attach to the ${{ inputs.tag }} release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ inputs.tag }}" "${{ steps.dmg.outputs.dmg }}"
