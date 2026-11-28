@@ -1,7 +1,7 @@
 # Rebuild ONE macOS .dmg for an existing stable release and attach it to that release.
 #
-# For when the best-effort macOS leg of a tag build failed (Build & Release still publishes without that
-# .dmg). This builds only the chosen runner's .dmg from the tag's sources, with the same steps as the
+# For when a release is missing a macOS .dmg (before macOS failures blocked Build & Release, a failed
+# macOS leg still published the release without it). This builds only the chosen runner's .dmg from the tag's sources, with the same steps as the
 # buildMac job of build-and-release.yml, and only ADDS it to the release: nothing else of the release,
 # its update channels or its other assets is touched, and an existing file of the same name is never
 # replaced (the upload fails instead).

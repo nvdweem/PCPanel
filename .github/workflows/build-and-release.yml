@@ -11,10 +11,9 @@
 #   Windows : per-user Inno Setup installer (no admin, installs under %LOCALAPPDATA%,
 #             optional autostart on sign-in, launches after install)
 #   Linux   : .deb (standard) + AppImage + best-effort Flatpak bundle
-#   macOS   : best-effort .app bundled into an architecture-specific .dmg, ad-hoc signed
-#             (valid signature, but not notarized — no Apple Developer ID). The macOS build
-#             is experimental and runs continue-on-error so it never blocks the Windows/Linux
-#             release if a runner image changes.
+#   macOS   : .app bundled into an architecture-specific .dmg (Apple Silicon and Intel), ad-hoc
+#             signed (valid signature, but not notarized — no Apple Developer ID). A failed macOS
+#             leg blocks the release like a failed Windows or Linux build.
 
 name: Build & Release
 env:
@@ -460,9 +459,8 @@ jobs:
         # check the macOS job runs, which catches the "compiles fine, 500s at runtime" native-image
         # class (#102). /api/devices is required (HID + device layer must serialize). /api/audio/* is
         # lenient: the CI runner has no PulseAudio and Linux audio degrades to a no-op ISndCtrl by
-        # design, so a non-200 there warns rather than fails. Mirrors the macOS intent — NOT
-        # continue-on-error (a real runtime regression turns this job red), but preRelease gates on the
-        # job outcome and a red Linux job is meaningful since Linux is a shipped platform.
+        # design, so a non-200 there warns rather than fails. Like the macOS smoke test it is NOT
+        # continue-on-error: a real runtime regression turns this job red and blocks the release.
         run: |
           exe=$(ls target/*-runner | head -1)
           bash packaging/smoke-test.sh "$exe" --port 7766 \
@@ -766,7 +764,7 @@ jobs:
           exit 1
 
   buildMac:
-    name: macOS .dmg (best-effort)
+    name: macOS .dmg
     # A native image is architecture-specific machine code, so an Apple Silicon (arm64) build does NOT
     # run on Intel Macs (and Rosetta only goes x86_64 -> arm64, not the reverse). We therefore build
     # both architectures:
@@ -818,9 +816,8 @@ jobs:
         run: bash packaging/ci-version.sh >> "$GITHUB_OUTPUT"
 
       # Regenerate reachability metadata for THIS OS before compiling (see the Windows job for the
-      # rationale). Best-effort like the rest of the macOS leg: the headless runner makes the AWT
-      # generation tests fail, but merge mode persists whatever was captured before the failure, and
-      # a failure here must not block the Windows/Linux release.
+      # rationale). Non-blocking as on Windows and Linux: a failure falls back to the committed metadata,
+      # and the build below then runs the unit tests itself, so a failing test still turns the job red.
       - name: Generate native-image metadata
         id: gen
         continue-on-error: true
@@ -834,7 +831,6 @@ jobs:
       # beans are included automatically; no extra flags are needed.
       - name: Build native image (macOS)
         id: build
-        continue-on-error: true
         # Bake the build-numbered version (<baseversion>.<run>) into the app so the UI footer reports it
         # instead of the bare ${project.version} (2.0-SNAPSHOT). Unit tests are skipped when the metadata
         # step already passed them.
@@ -842,11 +838,6 @@ jobs:
 
       - name: Assemble .app bundle
         id: assemble
-        # Tolerated like the rest of the macOS leg: if the native build above failed there is no
-        # runner binary to wrap, so this step fails and the sign/verify/dmg steps below are skipped,
-        # the job stays green, and the Windows/Linux release is never blocked. A *signing* regression,
-        # by contrast, fails the dedicated (non-continue-on-error) step below and turns the job red.
-        continue-on-error: true
         run: |
           set -euxo pipefail
           exe=$(ls target/*-runner | head -1)
@@ -880,12 +871,8 @@ jobs:
           PLIST
 
       - name: Sign and smoke-test the .app bundle
-        # Runs only when assembly produced a bundle, so a tolerated native-build failure doesn't turn
-        # the job red. Intentionally NOT continue-on-error: if the assembled app can't be signed or
-        # won't actually run, this job MUST go red so the regression is caught. That failure still does
-        # not block the release — preRelease gates only on the Windows/Linux jobs (its `if` uses
-        # !cancelled()).
-        if: steps.assemble.outcome == 'success'
+        # If the assembled app can't be signed or won't actually run, this job goes red and, like every
+        # macOS step, blocks the release (preRelease requires buildMac).
         run: |
           set -euxo pipefail
           app="target/PCPanel.app"
@@ -936,10 +923,6 @@ jobs:
           codesign --display --verbose=4 "$app" || true
 
       - name: Create .dmg
-        # An `if:` without a status function is ANDed with success(), so this is skipped automatically
-        # if the sign/verify step failed — we never package an unverified bundle. Gating on assembly
-        # also cleanly skips it when the native build was the thing that failed.
-        if: steps.assemble.outcome == 'success'
         run: |
           set -euxo pipefail
           arch=$(uname -m)   # arm64 or x86_64
@@ -968,7 +951,7 @@ jobs:
         with:
           name: macos-dmg-${{ runner.arch }}
           path: ./target/PCPanel-*.dmg
-          if-no-files-found: ignore
+          if-no-files-found: error
 
   preRelease:
     name: Publish (release or snapshot)
@@ -978,9 +961,10 @@ jobs:
       - buildFlatpak
       - buildMac
     runs-on: ubuntu-latest
-    # Wait for every build (so a successful Flatpak/macOS artifact is ready to attach) but only require
-    # the Windows and Linux installers — Flatpak and macOS are best-effort and must never block a release.
-    if: ${{ !cancelled() && needs.buildWindows.result == 'success' && needs.buildLinux.result == 'success' }}
+    # Wait for every build (so a successful Flatpak artifact is ready to attach) and require the Windows,
+    # Linux and macOS installers. Only the Flatpak is best-effort; macOS may be skipped by a manual run's
+    # skip-macos input, but a failed macOS leg blocks the release.
+    if: ${{ !cancelled() && needs.buildWindows.result == 'success' && needs.buildLinux.result == 'success' && (needs.buildMac.result == 'success' || needs.buildMac.result == 'skipped') }}
     steps:
       - name: Fetch Sources
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3

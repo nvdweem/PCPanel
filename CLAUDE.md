@@ -49,9 +49,11 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
   (`OsxProcessHelperMacTest`, printing the raw `lsappinfo` output of each image), the media-key NSEvents
   (`OsxSystemMediaKeysMacTest`) and the Accessibility check (`OsxPermissionHelperMacTest`) on GitHub's macOS images.
 - `package` produces a native executable at `target/*-runner` (Linux) / `target/*-runner.exe` (Windows).
-- CI (`.github/workflows/build-and-release.yml`) builds the native image on Windows and Linux via
-  `mvn -B package -Pnative`, wraps it in installers (Windows Inno Setup `.exe`, Linux `.deb` /
-  AppImage / Flatpak — see `packaging/`), and publishes a per-branch pre-release. The native image is
+- CI (`.github/workflows/build-and-release.yml`) builds the native image on Windows, Linux and macOS
+  (Apple Silicon and Intel) via `mvn -B package -Pnative`, wraps it in installers (Windows Inno Setup
+  `.exe`, Linux `.deb` / AppImage / Flatpak — see `packaging/`, macOS `.dmg`), and publishes a per-branch
+  pre-release. A failed Windows, Linux or macOS build blocks publishing; only the Flatpak is best-effort.
+  `rebuild-macos-dmg.yml` builds one missing `.dmg` for an existing release and adds it. The native image is
   NOT self-contained: it loads companion `*.dll`/`*.so` libraries from its own directory, so every
   artifact must bundle them alongside the executable. **Windows code signing** goes through SignPath
   (SignPath Foundation, free for open source): the Windows job stamps `PCPanel.exe`'s icon + version info
