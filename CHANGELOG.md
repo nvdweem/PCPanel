@@ -2,6 +2,8 @@
 
 <!-- Releasenotes without version are included in releases -->
 
+## [2.6.0]
+
 - (Windows) The **Advanced default device** action remembers the exact device you picked, so it can switch between two audio devices with the same name, such as two identical USB headsets; devices sharing a name are listed with their Windows ID. Existing actions are tied to their device the first time PCPanel finds exactly one device with that name; a name two connected devices share needs picking again. When the picked device is not connected, the action falls back to its name.
 - (Windows) App volume knobs and sliders keep controlling an app on a Bluetooth headset after the headset is switched off and back on, instead of only on your other outputs until PCPanel is restarted.
 - (Windows) Knobs and buttons set to a specific audio device keep working after Windows gives that device a new identity, which happens when a Windows update reinstalls its driver or a USB device moves to another port. PCPanel recognises the device by its hardware and updates the actions that use it (which you can undo), also for actions set up before this version. A device that is only unplugged keeps its actions.
