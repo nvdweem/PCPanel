@@ -2,6 +2,9 @@
 
 <!-- Releasenotes without version are included in releases -->
 
+- What a `{{ … }}` template puts into a **Run command**, such as a Discord member's name, reaches the program as text inside the argument where you placed it: it cannot add arguments or start other commands, even when it contains spaces, quotes, `&`, `|` or `%`. Your own text in the command (quotes, `&&`, pipes) works as before.
+- (Linux, macOS) PCPanel's settings folder, which holds the passwords and tokens of your integrations (MQTT, Home Assistant, Discord, OBS), its backups and logs, can only be opened by your own account. Other accounts on the same computer could read it before.
+
 ## [2.6.0]
 
 - (Windows) The **Advanced default device** action remembers the exact device you picked, so it can switch between two audio devices with the same name, such as two identical USB headsets; devices sharing a name are listed with their Windows ID. Existing actions are tied to their device the first time PCPanel finds exactly one device with that name; a name two connected devices share needs picking again. When the picked device is not connected, the action falls back to its name.
@@ -25,8 +28,6 @@
 - The overlay of a dial set to **Brightness** shows a brightness icon and the name *Brightness*, instead of the PCPanel logo without a name. Other actions without an app or device are named after the action too.
 - New dial action **Action on change**: runs actions every time a knob or slider moves. While you turn it they run at most every 150 ms (adjustable, 0 runs them on every move), and always once more where it stops.
 - **Run command** now takes `{{ … }}` templates, with suggestions and a preview as you type. Used on a dial (under *Action on change* or *Action per step*), `{{ percent }}` is the control's position, so a command such as `"Twinkle Tray.exe" --All --Set={{ percent }}` makes a knob a screen-brightness dial. A Run command saved earlier keeps running exactly as before.
-- What a `{{ … }}` template puts into a **Run command**, such as a Discord member's name, reaches the program as text inside the argument where you placed it: it cannot add arguments or start other commands, even when it contains spaces, quotes, `&`, `|` or `%`. Your own text in the command (quotes, `&&`, pipes) works as before.
-- (Linux, macOS) PCPanel's settings folder, which holds the passwords and tokens of your integrations (MQTT, Home Assistant, Discord, OBS), its backups and logs, can only be opened by your own account. Other accounts on the same computer could read it before.
 
 ## [2.5.0]
 
