@@ -222,12 +222,17 @@ class AlertLightingTest {
         waitFor(() -> lightShow.isRunning(device.getSerialNumber()), "the show starts");
         device.relight(); // something re-sends the lighting during the show
         waitFor(() -> !lightShow.isRunning(device.getSerialNumber()), "the show ends");
+        // Drawing resumes on the loop's next tick (FRAME_MS later), not the moment the show ends.
+        waitFor(() -> {
+            var sent = device.frames();
+            var last = lastIndexOfColor(sent, SHOW_COLOR);
+            return last >= 0 && indexOfColor(sent, "#123456", last) > last;
+        }, "the notification frame is back after the show");
         var frames = device.frames();
         var firstShow = indexOfColor(frames, SHOW_COLOR, 0);
         var lastShow = lastIndexOfColor(frames, SHOW_COLOR);
         assertTrue(firstShow > 0, "the show played");
         assertEquals(-1, indexOfColor(frames.subList(firstShow, lastShow + 1), "#123456", 0), "no notification frame during the show");
-        assertTrue(indexOfColor(frames, "#123456", lastShow) > lastShow, "the notification frame is back after the show");
         assertEquals(List.of(), device.sends(), "the panel's own lighting was never sent meanwhile");
         sut.update(device, false);
         assertEquals(List.of(base), device.sends());
