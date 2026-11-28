@@ -120,6 +120,12 @@ final class CommandLine {
                 text.chars().filter(CmdLineWriter::plain).forEach(c -> emit((char) c));
                 return;
             }
+            if (!cmdQuoted && !closePending && !text.isEmpty() && text.chars().allMatch(CmdLineWriter::bare)) {
+                // Nothing in it means anything to either parser, so it goes as is: a number or a name arrives exactly
+                // as before templates were encoded, also for a built-in such as echo that prints quotes.
+                text.chars().forEach(c -> emit((char) c));
+                return;
+            }
             // Ordinary characters go inside quotes, where cmd.exe reads nothing as syntax and spaces do not split the
             // argument. A quote and %/! cannot be made safe there, so they go outside, caret-escaped. Quotes are only
             // opened and closed when the next character needs it: a close directly followed by an open ("") is read
@@ -184,6 +190,15 @@ final class CommandLine {
             for (var i = backslashes; i > 0; i--) {
                 emit('\\');
             }
+        }
+
+        /**
+         * Safe outside quotes for cmd.exe and the C runtime alike: ASCII letters and digits and a few marks. No space
+         * (it splits), no backslash (it escapes a quote the user's text may put next), no non-ASCII (a program reading
+         * its arguments in the ANSI code page may turn a look-alike into a quote).
+         */
+        private static boolean bare(int c) {
+            return c < 128 && Character.isLetterOrDigit(c) || "-_.:/+@#~".indexOf(c) >= 0;
         }
 
         private static boolean plain(int c) {

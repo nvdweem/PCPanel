@@ -59,6 +59,16 @@ class CommandLineTest {
     }
 
     @Test
+    void aValueWithNothingToEncodeIsWrittenAsIs() {
+        assertEquals("echo Tray.exe --Set=Standaard > out.txt", CommandLine.cmdLine(segments("echo Tray.exe --Set={{v}} > out.txt", "Standaard")));
+        assertEquals("prog.exe --Set=42 x", CommandLine.cmdLine(segments("prog.exe --Set={{v}} x", "42")));
+        assertEquals("prog.exe C:\\dir\\a-b_1.txt", CommandLine.cmdLine(segments("prog.exe C:\\dir\\{{v}}", "a-b_1.txt")));
+        // Anything else still goes inside quotes.
+        assertEquals("prog.exe --Set=\"John Smith\"", CommandLine.cmdLine(segments("prog.exe --Set={{v}}", "John Smith")));
+        assertEquals("prog.exe \"Caf\u00e9\"", CommandLine.cmdLine(segments("prog.exe {{v}}", "Caf\u00e9")));
+    }
+
+    @Test
     void userTextIsCopiedAsWritten() {
         var line = "prog.exe \"a b\" ^& %USERPROFILE% && echo done | more > out.txt";
         assertEquals(line, CommandLine.cmdLine(List.of(TemplateSegment.literal(line))));
