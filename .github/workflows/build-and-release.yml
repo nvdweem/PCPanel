@@ -10,7 +10,7 @@
 #
 #   Windows : per-user Inno Setup installer (no admin, installs under %LOCALAPPDATA%,
 #             optional autostart on sign-in, launches after install)
-#   Linux   : .deb (standard) + AppImage + best-effort Flatpak bundle
+#   Linux   : .deb (standard) + AppImage + Flatpak bundle (and the Flatpak repo on GitHub Pages)
 #   macOS   : .app bundled into an architecture-specific .dmg (Apple Silicon and Intel), ad-hoc
 #             signed (valid signature, but not notarized — no Apple Developer ID). A failed macOS
 #             leg blocks the release like a failed Windows or Linux build.
@@ -586,14 +586,11 @@ jobs:
   # ships the GNOME Platform + SDK (GNOME rather than plain freedesktop for the WebKitGTK the app window
   # uses). That removes the ~16 min `flatpak install` download the old host-based step paid on every run
   # (the module itself is buildsystem: simple — no compile).
-  # Best-effort: the flatpak-builder step is continue-on-error so a failure never blocks the release.
+  # A failed Flatpak build or gh-pages publish blocks the release like any other platform's build.
   buildFlatpak:
-    name: Linux Flatpak (best-effort)
+    name: Linux Flatpak
     needs: buildLinux
     runs-on: ubuntu-latest
-    # Job-level continue-on-error: even a container-start failure (bad image, infra) must not fail the
-    # run or block the release. preRelease gates only on the required Windows/Linux jobs (see its `if`).
-    continue-on-error: true
     # contents: write is for pushing the updated OSTree repo to the gh-pages branch (Flatpak updates).
     permissions:
       contents: write
@@ -669,7 +666,6 @@ jobs:
       # this run. The single-file .flatpak bundle is still produced as a direct-download release asset.
       - name: Build Flatpak (OSTree repo + bundle)
         id: flatpak
-        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -736,8 +732,7 @@ jobs:
       # built and attached as a .flatpak bundle but must not take one of them over.
       - name: Publish Flatpak repo to GitHub Pages
         id: publish
-        if: steps.flatpak.outcome == 'success' && github.repository == 'nvdweem/PCPanel' && steps.chan.outputs.feedsSharedChannel == 'true'
-        continue-on-error: true
+        if: github.repository == 'nvdweem/PCPanel' && steps.chan.outputs.feedsSharedChannel == 'true'
         uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -746,22 +741,11 @@ jobs:
           force_orphan: true
 
       - name: Store Flatpak artifact
-        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: linux-flatpak
           path: PCPanel-*.flatpak
-          if-no-files-found: ignore
-
-      # Make a Flatpak/Pages failure VISIBLE. Both steps above are continue-on-error so the release is
-      # never blocked (.deb + AppImage still ship), but that previously let a real failure show up green.
-      # This marks the JOB red when the build failed or the gh-pages publish failed; the job-level
-      # continue-on-error still keeps the overall run — and the release — passing.
-      - name: Flag Flatpak/Pages failure
-        if: always() && (steps.flatpak.outcome != 'success' || steps.publish.outcome == 'failure')
-        run: |
-          echo "::error::Flatpak build or gh-pages publish failed (build=${{ steps.flatpak.outcome }}, publish=${{ steps.publish.outcome }}); gh-pages was NOT updated. The release still shipped .deb + AppImage."
-          exit 1
+          if-no-files-found: error
 
   buildMac:
     name: macOS .dmg
@@ -961,10 +945,9 @@ jobs:
       - buildFlatpak
       - buildMac
     runs-on: ubuntu-latest
-    # Wait for every build (so a successful Flatpak artifact is ready to attach) and require the Windows,
-    # Linux and macOS installers. Only the Flatpak is best-effort; macOS may be skipped by a manual run's
-    # skip-macos input, but a failed macOS leg blocks the release.
-    if: ${{ !cancelled() && needs.buildWindows.result == 'success' && needs.buildLinux.result == 'success' && (needs.buildMac.result == 'success' || needs.buildMac.result == 'skipped') }}
+    # Every build must succeed: Windows, Linux, the Flatpak and macOS. macOS may be skipped by a manual
+    # run's skip-macos input, but a failed macOS leg blocks the release like any other.
+    if: ${{ !cancelled() && needs.buildWindows.result == 'success' && needs.buildLinux.result == 'success' && needs.buildFlatpak.result == 'success' && (needs.buildMac.result == 'success' || needs.buildMac.result == 'skipped') }}
     steps:
       - name: Fetch Sources
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3

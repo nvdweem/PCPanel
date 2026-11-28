@@ -52,7 +52,8 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
 - CI (`.github/workflows/build-and-release.yml`) builds the native image on Windows, Linux and macOS
   (Apple Silicon and Intel) via `mvn -B package -Pnative`, wraps it in installers (Windows Inno Setup
   `.exe`, Linux `.deb` / AppImage / Flatpak — see `packaging/`, macOS `.dmg`), and publishes a per-branch
-  pre-release. A failed Windows, Linux or macOS build blocks publishing; only the Flatpak is best-effort.
+  pre-release. Every build blocks publishing when it fails: Windows, Linux (`.deb`/AppImage and Flatpak,
+  including its gh-pages repo) and both macOS legs.
   `rebuild-macos-dmg.yml` builds one missing `.dmg` for an existing release and adds it. The native image is
   NOT self-contained: it loads companion `*.dll`/`*.so` libraries from its own directory, so every
   artifact must bundle them alongside the executable. **Windows code signing** goes through SignPath
