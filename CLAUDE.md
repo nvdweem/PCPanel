@@ -147,7 +147,7 @@ install before running Maven, e.g. `export JAVA_HOME=~/.jdks/graalvm-ce-25.0.2`
     forward** into `main` (`releases/2.0` → `main`), so ancestry is real and the same hunks don't
     re-conflict. Anything meant for both lines should be based on their merge base; anything
     release-only stays on the release branch. Patch by tagging `v2.0.85`, `v2.0.86`, … off that branch.
-  - **Current line: `main` (working towards 2.5.0).** The version skips 2.2–2.4 on purpose: the original
+  - **Current line: `main` (working towards 2.6.1).** The version skips 2.2–2.4 on purpose: the original
     PCPanel software stopped at v2.3.3, so no Community Edition release shares a number with one of its
     releases. `releases/2.0` is retired (last release `v2.0.97`) and gets no more pushes; base work, fixes
     included, on `origin/main`. A 2.1 patch that must not carry the 2.5 work is cut as `releases/2.1` from the
